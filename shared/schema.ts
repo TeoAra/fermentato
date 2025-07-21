@@ -67,9 +67,16 @@ export const pubs = pgTable("pubs", {
   websiteUrl: varchar("website_url"),
   description: text("description"),
   imageUrl: varchar("image_url"),
+  logoUrl: varchar("logo_url"), // Logo del pub
   rating: decimal("rating", { precision: 2, scale: 1 }).default("0"),
   isActive: boolean("is_active").default(true),
   openingHours: jsonb("opening_hours"), // Store hours as JSON
+  // Social Media Links
+  facebookUrl: varchar("facebook_url"),
+  instagramUrl: varchar("instagram_url"),
+  twitterUrl: varchar("twitter_url"),
+  tiktokUrl: varchar("tiktok_url"),
+  // Business Info
   ownerId: varchar("owner_id").references(() => users.id),
   vatNumber: varchar("vat_number"), // P.IVA
   businessName: varchar("business_name"),
@@ -88,6 +95,7 @@ export const beers = pgTable("beers", {
   description: text("description"),
   logoUrl: varchar("logo_url"),
   color: varchar("color"), // Beer color
+  isBottled: boolean("is_bottled").default(false), // Se disponibile in bottiglia
   createdAt: timestamp("created_at").defaultNow(),
 });
 
@@ -101,6 +109,19 @@ export const tapList = pgTable("tap_list", {
   priceMedium: decimal("price_medium", { precision: 5, scale: 2 }), // 0.4L
   priceLarge: decimal("price_large", { precision: 5, scale: 2 }), // 0.5L
   tapNumber: integer("tap_number"),
+  addedAt: timestamp("added_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Cantina (Bottle list) - beers available in bottles at pubs
+export const bottleList = pgTable("bottle_list", {
+  id: serial("id").primaryKey(),
+  pubId: integer("pub_id").references(() => pubs.id).notNull(),
+  beerId: integer("beer_id").references(() => beers.id).notNull(),
+  isActive: boolean("is_active").default(true),
+  priceBottle: decimal("price_bottle", { precision: 5, scale: 2 }), // Prezzo bottiglia
+  bottleSize: varchar("bottle_size").default("0.33L"), // Dimensione bottiglia
+  quantity: integer("quantity"), // Quantità disponibile
   addedAt: timestamp("added_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
@@ -149,6 +170,7 @@ export const pubsRelations = relations(pubs, ({ one, many }) => ({
     references: [users.id],
   }),
   tapList: many(tapList),
+  bottleList: many(bottleList),
   menuCategories: many(menuCategories),
   favorites: many(favorites),
 }));
@@ -159,6 +181,7 @@ export const beersRelations = relations(beers, ({ one, many }) => ({
     references: [breweries.id],
   }),
   tapList: many(tapList),
+  bottleList: many(bottleList),
   favorites: many(favorites),
 }));
 
@@ -169,6 +192,17 @@ export const tapListRelations = relations(tapList, ({ one }) => ({
   }),
   beer: one(beers, {
     fields: [tapList.beerId],
+    references: [beers.id],
+  }),
+}));
+
+export const bottleListRelations = relations(bottleList, ({ one }) => ({
+  pub: one(pubs, {
+    fields: [bottleList.pubId],
+    references: [pubs.id],
+  }),
+  beer: one(beers, {
+    fields: [bottleList.beerId],
     references: [beers.id],
   }),
 }));
@@ -219,6 +253,9 @@ export type Beer = typeof beers.$inferSelect;
 export type InsertTapList = typeof tapList.$inferInsert;
 export type TapList = typeof tapList.$inferSelect;
 
+export type InsertBottleList = typeof bottleList.$inferInsert;
+export type BottleList = typeof bottleList.$inferSelect;
+
 export type InsertMenuCategory = typeof menuCategories.$inferInsert;
 export type MenuCategory = typeof menuCategories.$inferSelect;
 
@@ -246,6 +283,12 @@ export const insertBeerSchema = createInsertSchema(beers).omit({
 });
 
 export const insertTapListSchema = createInsertSchema(tapList).omit({
+  id: true,
+  addedAt: true,
+  updatedAt: true,
+});
+
+export const insertBottleListSchema = createInsertSchema(bottleList).omit({
   id: true,
   addedAt: true,
   updatedAt: true,

@@ -2,7 +2,7 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { setupAuth, isAuthenticated } from "./replitAuth";
-import { insertPubSchema, insertTapListSchema, insertMenuCategorySchema, insertMenuItemSchema, pubRegistrationSchema } from "@shared/schema";
+import { insertPubSchema, insertTapListSchema, insertBottleListSchema, insertMenuCategorySchema, insertMenuItemSchema, pubRegistrationSchema } from "@shared/schema";
 import { z } from "zod";
 
 export async function registerRoutes(app: Express): Promise<Server> {
@@ -70,6 +70,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error fetching menu:", error);
       res.status(500).json({ message: "Failed to fetch menu" });
+    }
+  });
+
+  // Get bottle list (cantina) for a pub
+  app.get("/api/pubs/:id/bottles", async (req, res) => {
+    try {
+      const pubId = parseInt(req.params.id);
+      const bottleList = await storage.getBottleListByPub(pubId);
+      res.json(bottleList);
+    } catch (error) {
+      console.error("Error fetching bottle list:", error);
+      res.status(500).json({ message: "Failed to fetch bottle list" });
     }
   });
 
@@ -242,6 +254,58 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error removing beer from tap:", error);
       res.status(500).json({ message: "Failed to remove beer from tap" });
+    }
+  });
+
+  // Add beer to bottle list (only pub owner)
+  app.post("/api/pubs/:id/bottles", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const pubId = parseInt(req.params.id);
+      
+      // Check if user owns the pub
+      const existingPub = await storage.getPub(pubId);
+      if (!existingPub || existingPub.ownerId !== userId) {
+        return res.status(403).json({ message: "Not authorized to modify this pub's bottle list" });
+      }
+
+      const bottleData = insertBottleListSchema.parse({ ...req.body, pubId });
+      const bottleItem = await storage.addBeerToBottles(bottleData);
+      res.status(201).json(bottleItem);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: "Validation error", errors: error.errors });
+      }
+      console.error("Error adding beer to bottle list:", error);
+      res.status(500).json({ message: "Failed to add beer to bottle list" });
+    }
+  });
+
+  // Update bottle item (only pub owner)
+  app.patch("/api/bottles/:id", isAuthenticated, async (req: any, res) => {
+    try {
+      const bottleId = parseInt(req.params.id);
+      const bottleData = insertBottleListSchema.partial().parse(req.body);
+      const updatedBottle = await storage.updateBottleItem(bottleId, bottleData);
+      res.json(updatedBottle);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: "Validation error", errors: error.errors });
+      }
+      console.error("Error updating bottle item:", error);
+      res.status(500).json({ message: "Failed to update bottle item" });
+    }
+  });
+
+  // Remove beer from bottle list (only pub owner)
+  app.delete("/api/bottles/:id", isAuthenticated, async (req: any, res) => {
+    try {
+      const bottleId = parseInt(req.params.id);
+      await storage.removeBeerFromBottles(bottleId);
+      res.status(204).send();
+    } catch (error) {
+      console.error("Error removing beer from bottle list:", error);
+      res.status(500).json({ message: "Failed to remove beer from bottle list" });
     }
   });
 

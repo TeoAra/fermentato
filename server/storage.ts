@@ -4,6 +4,7 @@ import {
   breweries,
   beers,
   tapList,
+  bottleList,
   menuCategories,
   menuItems,
   favorites,
@@ -17,6 +18,8 @@ import {
   type InsertBeer,
   type TapList,
   type InsertTapList,
+  type BottleList,
+  type InsertBottleList,
   type MenuCategory,
   type InsertMenuCategory,
   type MenuItem,
@@ -58,6 +61,12 @@ export interface IStorage {
   addBeerToTap(tapItem: InsertTapList): Promise<TapList>;
   updateTapItem(id: number, tapItem: Partial<InsertTapList>): Promise<TapList>;
   removeBeerFromTap(id: number): Promise<void>;
+
+  // Bottle list operations (cantina)
+  getBottleListByPub(pubId: number): Promise<(BottleList & { beer: Beer & { brewery: Brewery } })[]>;
+  addBeerToBottles(bottleItem: InsertBottleList): Promise<BottleList>;
+  updateBottleItem(id: number, bottleItem: Partial<InsertBottleList>): Promise<BottleList>;
+  removeBeerFromBottles(id: number): Promise<void>;
 
   // Menu operations
   getMenuByPub(pubId: number): Promise<(MenuCategory & { items: MenuItem[] })[]>;
@@ -237,6 +246,44 @@ export class DatabaseStorage implements IStorage {
     await db.update(tapList).set({ isActive: false }).where(eq(tapList.id, id));
   }
 
+  // Bottle list operations (cantina)
+  async getBottleListByPub(pubId: number): Promise<(BottleList & { beer: Beer & { brewery: Brewery } })[]> {
+    return await db
+      .select()
+      .from(bottleList)
+      .leftJoin(beers, eq(bottleList.beerId, beers.id))
+      .leftJoin(breweries, eq(beers.breweryId, breweries.id))
+      .where(and(eq(bottleList.pubId, pubId), eq(bottleList.isActive, true)))
+      .orderBy(asc(beers.name))
+      .then(rows => 
+        rows.map(row => ({
+          ...row.bottle_list,
+          beer: {
+            ...row.beers!,
+            brewery: row.breweries!,
+          },
+        }))
+      );
+  }
+
+  async addBeerToBottles(bottleItem: InsertBottleList): Promise<BottleList> {
+    const [bottle] = await db.insert(bottleList).values(bottleItem).returning();
+    return bottle;
+  }
+
+  async updateBottleItem(id: number, bottleItem: Partial<InsertBottleList>): Promise<BottleList> {
+    const [bottle] = await db
+      .update(bottleList)
+      .set({ ...bottleItem, updatedAt: new Date() })
+      .where(eq(bottleList.id, id))
+      .returning();
+    return bottle;
+  }
+
+  async removeBeerFromBottles(id: number): Promise<void> {
+    await db.update(bottleList).set({ isActive: false }).where(eq(bottleList.id, id));
+  }
+
   // Menu operations
   async getMenuByPub(pubId: number): Promise<(MenuCategory & { items: MenuItem[] })[]> {
     const categories = await db
@@ -293,11 +340,11 @@ export class DatabaseStorage implements IStorage {
     let whereCondition = eq(favorites.userId, userId);
     
     if (beerId) {
-      whereCondition = and(whereCondition, eq(favorites.beerId, beerId));
+      whereCondition = and(whereCondition, eq(favorites.beerId, beerId))!;
     }
     
     if (pubId) {
-      whereCondition = and(whereCondition, eq(favorites.pubId, pubId));
+      whereCondition = and(whereCondition, eq(favorites.pubId, pubId))!;
     }
 
     await db.delete(favorites).where(whereCondition);
