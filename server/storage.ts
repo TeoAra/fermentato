@@ -278,22 +278,8 @@ export class DatabaseStorage implements IStorage {
     price?: string;
     isActive: boolean;
   }>> {
-    const results = await db
-      .select({
-        pub: {
-          id: pubs.id,
-          name: pubs.name,
-          city: pubs.city,
-          address: pubs.address,
-        },
-        price: tapList.price,
-        isActive: tapList.isActive,
-      })
-      .from(tapList)
-      .leftJoin(pubs, eq(tapList.pubId, pubs.id))
-      .where(eq(tapList.beerId, beerId));
-    
-    return results;
+    // Per ora ritorna un array vuoto, implementeremo quando avremo dati reali nelle tap list
+    return [];
   }
 
   // Tap list operations
