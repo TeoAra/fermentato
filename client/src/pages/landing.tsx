@@ -1,7 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { useQuery } from "@tanstack/react-query";
 import { MapPin, Beer, Star } from "lucide-react";
-import Header from "@/components/header";
 import Footer from "@/components/footer";
 import PubCard from "@/components/pub-card";
 import BreweryCard from "@/components/brewery-card";
@@ -17,7 +16,6 @@ export default function Landing() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <Header />
       
       {/* Hero Section */}
       <section className="beer-gradient text-white py-16">

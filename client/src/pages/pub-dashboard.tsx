@@ -108,9 +108,10 @@ export default function PubDashboard() {
   const queryClient = useQueryClient();
   const [selectedPub, setSelectedPub] = useState<Pub | null>(null);
 
-  // Get user's pubs
+  // Get user's pubs (use demo route if demo user)
+  const isDemoUser = localStorage.getItem('demo_user');
   const { data: pubs = [], isLoading: pubsLoading } = useQuery({
-    queryKey: ["/api/my-pubs"],
+    queryKey: isDemoUser ? ["/api/demo-pubs"] : ["/api/my-pubs"],
     enabled: isAuthenticated,
   });
 

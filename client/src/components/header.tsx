@@ -2,13 +2,24 @@ import { Link, useLocation } from "wouter";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Beer, Settings, LogOut, Search, Home } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Beer, Settings, LogOut, Search } from "lucide-react";
 import type { User } from "@shared/schema";
+import { useState } from "react";
 
 export default function Header() {
   const { user, isAuthenticated } = useAuth();
   const [location] = useLocation();
   const typedUser = user as User | undefined;
+  const [searchQuery, setSearchQuery] = useState("");
+
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (searchQuery.trim()) {
+      // TODO: Implement search functionality
+      console.log("Searching for:", searchQuery);
+    }
+  };
 
   return (
     <header className="sticky top-0 z-50 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700">
@@ -22,19 +33,22 @@ export default function Header() {
             </span>
           </Link>
 
+          {/* Search Bar */}
+          <div className="flex-1 max-w-md mx-8">
+            <form onSubmit={handleSearch} className="relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+              <Input
+                type="search"
+                placeholder="Cerca pub, birre, birrifici..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-10 pr-4"
+              />
+            </form>
+          </div>
+
           {/* Navigation */}
-          <nav className="hidden md:flex items-center gap-6">
-            <Link href="/">
-              <Button 
-                variant={location === "/" ? "default" : "ghost"}
-                size="sm"
-                className="flex items-center gap-2"
-              >
-                <Home className="h-4 w-4" />
-                Home
-              </Button>
-            </Link>
-            
+          <nav className="hidden md:flex items-center gap-4">
             {isAuthenticated && (
               <Link href="/dashboard">
                 <Button 
@@ -66,7 +80,15 @@ export default function Header() {
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => window.location.href = "/api/logout"}
+                  onClick={() => {
+                    // Check if demo user
+                    if (localStorage.getItem('demo_user')) {
+                      localStorage.removeItem('demo_user');
+                      window.location.reload();
+                    } else {
+                      window.location.href = "/api/logout";
+                    }
+                  }}
                   className="flex items-center gap-2"
                 >
                   <LogOut className="h-4 w-4" />
@@ -74,12 +96,32 @@ export default function Header() {
                 </Button>
               </>
             ) : (
-              <Button
-                onClick={() => window.location.href = "/api/login"}
-                className="bg-orange-600 hover:bg-orange-700"
-              >
-                Accedi
-              </Button>
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    // Demo login simulation
+                    localStorage.setItem('demo_user', JSON.stringify({
+                      id: 'demo_pub_owner',
+                      email: 'pub@demo.it',
+                      firstName: 'Mario',
+                      lastName: 'Rossi',
+                      userType: 'pub_owner'
+                    }));
+                    window.location.reload();
+                  }}
+                  className="text-orange-600 border-orange-600 hover:bg-orange-50"
+                >
+                  Demo Pub
+                </Button>
+                <Button
+                  onClick={() => window.location.href = "/api/login"}
+                  className="bg-orange-600 hover:bg-orange-700"
+                >
+                  Accedi
+                </Button>
+              </div>
             )}
           </div>
         </div>

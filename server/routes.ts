@@ -175,6 +175,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Demo user's pubs (for testing without auth)
+  app.get("/api/demo-pubs", async (req, res) => {
+    try {
+      const pubs = await storage.getPubsByOwner('demo_pub_owner');
+      res.json(pubs);
+    } catch (error) {
+      console.error("Error fetching demo pubs:", error);
+      res.status(500).json({ message: "Failed to fetch demo pubs" });
+    }
+  });
+
   // Update pub (only owner can update)
   app.patch("/api/pubs/:id", isAuthenticated, async (req: any, res) => {
     try {
