@@ -18,7 +18,8 @@ interface SearchResultsProps {
 
 export default function SearchResults({ query, onClose }: SearchResultsProps) {
   const { data: results, isLoading } = useQuery<SearchResult>({
-    queryKey: ["/api/search", { q: query }],
+    queryKey: ["/api/search", query],
+    queryFn: () => fetch(`/api/search?q=${encodeURIComponent(query)}`).then(res => res.json()),
     enabled: query.length > 2,
   });
 
