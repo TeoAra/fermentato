@@ -123,6 +123,40 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Beer routes
+  app.get('/api/beers', async (req, res) => {
+    try {
+      const beers = await storage.getBeers();
+      res.json(beers);
+    } catch (error) {
+      console.error("Error fetching beers:", error);
+      res.status(500).json({ message: "Failed to fetch beers" });
+    }
+  });
+
+  app.get('/api/beers/:id', async (req, res) => {
+    try {
+      const beer = await storage.getBeerWithBrewery(parseInt(req.params.id));
+      if (!beer) {
+        return res.status(404).json({ message: "Beer not found" });
+      }
+      res.json(beer);
+    } catch (error) {
+      console.error("Error fetching beer:", error);
+      res.status(500).json({ message: "Failed to fetch beer" });
+    }
+  });
+
+  app.get('/api/beers/:id/taps', async (req, res) => {
+    try {
+      const tapLocations = await storage.getBeerTapLocations(parseInt(req.params.id));
+      res.json(tapLocations);
+    } catch (error) {
+      console.error("Error fetching beer tap locations:", error);
+      res.status(500).json({ message: "Failed to fetch beer tap locations" });
+    }
+  });
+
   // Search endpoints
   app.get("/api/search", async (req, res) => {
     try {

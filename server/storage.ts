@@ -258,6 +258,44 @@ export class DatabaseStorage implements IStorage {
       .limit(5);
   }
 
+  async getBeerWithBrewery(id: number): Promise<(Beer & { brewery?: Brewery }) | undefined> {
+    const [result] = await db
+      .select()
+      .from(beers)
+      .leftJoin(breweries, eq(beers.breweryId, breweries.id))
+      .where(eq(beers.id, id));
+    
+    if (!result) return undefined;
+    
+    return {
+      ...result.beers,
+      brewery: result.breweries || undefined,
+    };
+  }
+
+  async getBeerTapLocations(beerId: number): Promise<Array<{
+    pub: { id: number; name: string; city: string; address: string };
+    price?: string;
+    isActive: boolean;
+  }>> {
+    const results = await db
+      .select({
+        pub: {
+          id: pubs.id,
+          name: pubs.name,
+          city: pubs.city,
+          address: pubs.address,
+        },
+        price: tapList.price,
+        isActive: tapList.isActive,
+      })
+      .from(tapList)
+      .leftJoin(pubs, eq(tapList.pubId, pubs.id))
+      .where(eq(tapList.beerId, beerId));
+    
+    return results;
+  }
+
   // Tap list operations
   async getTapListByPub(pubId: number): Promise<(TapList & { beer: Beer & { brewery: Brewery } })[]> {
     return await db

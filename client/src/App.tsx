@@ -10,6 +10,7 @@ import Landing from "@/pages/landing";
 import Home from "@/pages/home";
 import PubDetail from "@/pages/pub-detail";
 import BreweryDetail from "@/pages/brewery-detail";
+import BeerDetail from "@/pages/beer-detail";
 import PubDashboard from "@/pages/pub-dashboard";
 import PubRegistration from "@/pages/pub-registration";
 
@@ -25,12 +26,14 @@ function Router() {
             <Route path="/" component={Landing} />
             <Route path="/pub/:id" component={PubDetail} />
             <Route path="/brewery/:id" component={BreweryDetail} />
+            <Route path="/beer/:id" component={BeerDetail} />
           </>
         ) : (
           <>
             <Route path="/" component={Home} />
             <Route path="/pub/:id" component={PubDetail} />
             <Route path="/brewery/:id" component={BreweryDetail} />
+            <Route path="/beer/:id" component={BeerDetail} />
             <Route path="/dashboard" component={PubDashboard} />
             <Route path="/register-pub" component={PubRegistration} />
           </>
