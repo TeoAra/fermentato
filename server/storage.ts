@@ -31,7 +31,7 @@ import {
   type InsertRating,
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, desc, asc, like, and, or, sql } from "drizzle-orm";
+import { eq, desc, asc, like, ilike, and, or, sql } from "drizzle-orm";
 
 export interface IStorage {
   // User operations (mandatory for Replit Auth)
@@ -146,6 +146,35 @@ export class DatabaseStorage implements IStorage {
   }
 
   async searchPubs(query: string): Promise<Pub[]> {
+    const searchTerms = query.toLowerCase().split(' ').filter(term => term.length > 0);
+    
+    if (searchTerms.length === 0) return [];
+    
+    // Se ci sono più termini, cerca che tutti siano presenti nel nome
+    if (searchTerms.length > 1) {
+      const conditions = searchTerms.map(term => 
+        or(
+          ilike(pubs.name, `%${term}%`),
+          ilike(pubs.city, `%${term}%`),
+          ilike(pubs.address, `%${term}%`),
+          ilike(pubs.description, `%${term}%`)
+        )
+      );
+      
+      return await db
+        .select()
+        .from(pubs)
+        .where(
+          and(
+            eq(pubs.isActive, true),
+            ...conditions
+          )
+        )
+        .orderBy(desc(pubs.rating))
+        .limit(5);
+    }
+    
+    // Ricerca singola
     return await db
       .select()
       .from(pubs)
@@ -153,13 +182,15 @@ export class DatabaseStorage implements IStorage {
         and(
           eq(pubs.isActive, true),
           or(
-            like(pubs.name, `%${query}%`),
-            like(pubs.city, `%${query}%`),
-            like(pubs.address, `%${query}%`)
+            ilike(pubs.name, `%${query}%`),
+            ilike(pubs.city, `%${query}%`),
+            ilike(pubs.address, `%${query}%`),
+            ilike(pubs.description, `%${query}%`)
           )
         )
       )
-      .orderBy(desc(pubs.rating));
+      .orderBy(desc(pubs.rating))
+      .limit(5);
   }
 
   // Brewery operations
@@ -183,12 +214,14 @@ export class DatabaseStorage implements IStorage {
       .from(breweries)
       .where(
         or(
-          like(breweries.name, `%${query}%`),
-          like(breweries.location, `%${query}%`),
-          like(breweries.region, `%${query}%`)
+          ilike(breweries.name, `%${query}%`),
+          ilike(breweries.location, `%${query}%`),
+          ilike(breweries.region, `%${query}%`),
+          ilike(breweries.description, `%${query}%`)
         )
       )
-      .orderBy(desc(breweries.rating));
+      .orderBy(desc(breweries.rating))
+      .limit(5);
   }
 
   // Beer operations
@@ -216,11 +249,13 @@ export class DatabaseStorage implements IStorage {
       .from(beers)
       .where(
         or(
-          like(beers.name, `%${query}%`),
-          like(beers.style, `%${query}%`)
+          ilike(beers.name, `%${query}%`),
+          ilike(beers.style, `%${query}%`),
+          ilike(beers.description, `%${query}%`)
         )
       )
-      .orderBy(asc(beers.name));
+      .orderBy(asc(beers.name))
+      .limit(5);
   }
 
   // Tap list operations

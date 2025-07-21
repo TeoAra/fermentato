@@ -1,6 +1,6 @@
 import { useParams } from "wouter";
 import { useQuery } from "@tanstack/react-query";
-import { Star, MapPin, Globe, Beer } from "lucide-react";
+import { Star, MapPin, Beer } from "lucide-react";
 import Header from "@/components/header";
 import Footer from "@/components/footer";
 import { Card, CardContent } from "@/components/ui/card";
@@ -87,17 +87,7 @@ export default function BreweryDetail() {
                   <p className="text-gray-600 mb-4">{brewery.description}</p>
                 )}
 
-                {brewery.websiteUrl && (
-                  <a
-                    href={brewery.websiteUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center text-primary hover:text-orange-600"
-                  >
-                    <Globe className="mr-2" size={16} />
-                    Visita il sito web
-                  </a>
-                )}
+
               </div>
             </div>
           </CardContent>
