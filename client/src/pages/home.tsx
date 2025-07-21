@@ -3,6 +3,8 @@ import { useAuth } from "@/hooks/useAuth";
 import Footer from "@/components/footer";
 import PubCard from "@/components/pub-card";
 import BreweryCard from "@/components/brewery-card";
+import FavoritesButton from "@/components/favorites-button";
+import RatingStars from "@/components/rating-stars";
 import { Button } from "@/components/ui/button";
 import { Beer, Heart, MapPin } from "lucide-react";
 import { Link } from "wouter";

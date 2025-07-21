@@ -8,6 +8,7 @@ import {
   menuCategories,
   menuItems,
   favorites,
+  ratings,
   type User,
   type UpsertUser,
   type Pub,
@@ -26,6 +27,8 @@ import {
   type InsertMenuItem,
   type Favorite,
   type InsertFavorite,
+  type Rating,
+  type InsertRating,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, asc, like, and, or, sql } from "drizzle-orm";
@@ -77,7 +80,19 @@ export interface IStorage {
   // Favorites operations
   getFavoritesByUser(userId: string): Promise<Favorite[]>;
   addFavorite(favorite: InsertFavorite): Promise<Favorite>;
-  removeFavorite(userId: string, beerId?: number, pubId?: number): Promise<void>;
+  removeFavorite(userId: string, pubId: number): Promise<void>;
+
+  // Rating operations
+  addRating(rating: InsertRating): Promise<Rating>;
+  getRatingsByPub(pubId: number): Promise<Rating[]>;
+  getRatingByUserAndPub(userId: string, pubId: number): Promise<Rating | undefined>;
+
+  // Search operations
+  search(query: string): Promise<{
+    pubs: Pub[];
+    breweries: Brewery[];
+    beers: (Beer & { brewery: Brewery })[];
+  }>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -336,18 +351,65 @@ export class DatabaseStorage implements IStorage {
     return favorite;
   }
 
-  async removeFavorite(userId: string, beerId?: number, pubId?: number): Promise<void> {
-    let whereCondition = eq(favorites.userId, userId);
-    
-    if (beerId) {
-      whereCondition = and(whereCondition, eq(favorites.beerId, beerId))!;
-    }
-    
-    if (pubId) {
-      whereCondition = and(whereCondition, eq(favorites.pubId, pubId))!;
-    }
+  async removeFavorite(userId: string, pubId: number): Promise<void> {
+    await db.delete(favorites).where(
+      and(eq(favorites.userId, userId), eq(favorites.pubId, pubId))
+    );
+  }
 
-    await db.delete(favorites).where(whereCondition);
+  // Rating operations
+  async addRating(ratingData: InsertRating): Promise<Rating> {
+    const [rating] = await db
+      .insert(ratings)
+      .values(ratingData)
+      .onConflictDoUpdate({
+        target: [ratings.userId, ratings.pubId],
+        set: {
+          rating: ratingData.rating,
+          updatedAt: new Date(),
+        },
+      })
+      .returning();
+    return rating;
+  }
+
+  async getRatingsByPub(pubId: number): Promise<Rating[]> {
+    return await db.select().from(ratings).where(eq(ratings.pubId, pubId));
+  }
+
+  async getRatingByUserAndPub(userId: string, pubId: number): Promise<Rating | undefined> {
+    const [rating] = await db
+      .select()
+      .from(ratings)
+      .where(and(eq(ratings.userId, userId), eq(ratings.pubId, pubId)));
+    return rating;
+  }
+
+  // Search operations
+  async search(query: string): Promise<{
+    pubs: Pub[];
+    breweries: Brewery[];
+    beers: (Beer & { brewery: Brewery })[];
+  }> {
+    const [pubResults, breweryResults, beerResults] = await Promise.all([
+      this.searchPubs(query),
+      this.searchBreweries(query),
+      this.searchBeers(query),
+    ]);
+
+    // Get brewery info for beers
+    const beersWithBrewery = await Promise.all(
+      beerResults.map(async (beer) => {
+        const brewery = await this.getBrewery(beer.breweryId);
+        return { ...beer, brewery: brewery! };
+      })
+    );
+
+    return {
+      pubs: pubResults,
+      breweries: breweryResults,
+      beers: beersWithBrewery,
+    };
   }
 }
 

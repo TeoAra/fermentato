@@ -5,21 +5,35 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Beer, Settings, LogOut, Search } from "lucide-react";
 import type { User } from "@shared/schema";
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
+import SearchResults from "@/components/search-results";
 
 export default function Header() {
   const { user, isAuthenticated } = useAuth();
   const [location] = useLocation();
   const typedUser = user as User | undefined;
   const [searchQuery, setSearchQuery] = useState("");
+  const [showResults, setShowResults] = useState(false);
+  const searchRef = useRef<HTMLDivElement>(null);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     if (searchQuery.trim()) {
-      // TODO: Implement search functionality
       console.log("Searching for:", searchQuery);
     }
   };
+
+  // Close search results when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (searchRef.current && !searchRef.current.contains(event.target as Node)) {
+        setShowResults(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   return (
     <header className="sticky top-0 z-50 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700">
@@ -34,16 +48,26 @@ export default function Header() {
           </Link>
 
           {/* Search Bar */}
-          <div className="flex-1 max-w-md mx-8">
+          <div className="flex-1 max-w-md mx-8" ref={searchRef}>
             <form onSubmit={handleSearch} className="relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
               <Input
                 type="search"
                 placeholder="Cerca pub, birre, birrifici..."
                 value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
+                onChange={(e) => {
+                  setSearchQuery(e.target.value);
+                  setShowResults(e.target.value.length > 2);
+                }}
+                onFocus={() => setShowResults(searchQuery.length > 2)}
                 className="pl-10 pr-4"
               />
+              {showResults && (
+                <SearchResults 
+                  query={searchQuery} 
+                  onClose={() => setShowResults(false)} 
+                />
+              )}
             </form>
           </div>
 

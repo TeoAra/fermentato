@@ -9,6 +9,7 @@ import {
   boolean,
   decimal,
   integer,
+  unique,
 } from "drizzle-orm/pg-core";
 import { relations } from "drizzle-orm";
 import { createInsertSchema } from "drizzle-zod";
@@ -159,6 +160,19 @@ export const favorites = pgTable("favorites", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+// Ratings table
+export const ratings = pgTable("ratings", {
+  id: serial("id").primaryKey(),
+  userId: varchar("user_id").notNull().references(() => users.id),
+  pubId: integer("pub_id").notNull().references(() => pubs.id),
+  rating: integer("rating").notNull(), // 1-5 stars
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+}, (table) => [
+  // One rating per user per pub
+  unique("unique_user_pub_rating").on(table.userId, table.pubId),
+]);
+
 // Relations
 export const breweriesRelations = relations(breweries, ({ many }) => ({
   beers: many(beers),
@@ -237,6 +251,17 @@ export const favoritesRelations = relations(favorites, ({ one }) => ({
   }),
 }));
 
+export const ratingsRelations = relations(ratings, ({ one }) => ({
+  user: one(users, {
+    fields: [ratings.userId],
+    references: [users.id],
+  }),
+  pub: one(pubs, {
+    fields: [ratings.pubId],
+    references: [pubs.id],
+  }),
+}));
+
 // Types
 export type UpsertUser = typeof users.$inferInsert;
 export type User = typeof users.$inferSelect;
@@ -264,6 +289,9 @@ export type MenuItem = typeof menuItems.$inferSelect;
 
 export type InsertFavorite = typeof favorites.$inferInsert;
 export type Favorite = typeof favorites.$inferSelect;
+
+export type InsertRating = typeof ratings.$inferInsert;
+export type Rating = typeof ratings.$inferSelect;
 
 // Insert schemas
 export const insertBrewerySchema = createInsertSchema(breweries).omit({
@@ -308,6 +336,12 @@ export const insertMenuItemSchema = createInsertSchema(menuItems).omit({
 export const insertFavoriteSchema = createInsertSchema(favorites).omit({
   id: true,
   createdAt: true,
+});
+
+export const insertRatingSchema = createInsertSchema(ratings).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
 });
 
 // Custom schemas for forms

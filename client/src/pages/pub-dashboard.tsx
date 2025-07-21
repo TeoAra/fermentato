@@ -110,23 +110,23 @@ export default function PubDashboard() {
 
   // Get user's pubs (use demo route if demo user)
   const isDemoUser = localStorage.getItem('demo_user');
-  const { data: pubs = [], isLoading: pubsLoading } = useQuery({
+  const { data: pubs = [], isLoading: pubsLoading } = useQuery<Pub[]>({
     queryKey: isDemoUser ? ["/api/demo-pubs"] : ["/api/my-pubs"],
     enabled: isAuthenticated,
   });
 
   // Get pub details, tap list, bottle list, and menu
-  const { data: tapList = [] } = useQuery({
+  const { data: tapList = [] } = useQuery<TapItem[]>({
     queryKey: ["/api/pubs", selectedPub?.id, "taplist"],
     enabled: !!selectedPub?.id,
   });
 
-  const { data: bottleList = [] } = useQuery({
+  const { data: bottleList = [] } = useQuery<BottleItem[]>({
     queryKey: ["/api/pubs", selectedPub?.id, "bottles"],
     enabled: !!selectedPub?.id,
   });
 
-  const { data: menu = [] } = useQuery({
+  const { data: menu = [] } = useQuery<MenuCategory[]>({
     queryKey: ["/api/pubs", selectedPub?.id, "menu"],
     enabled: !!selectedPub?.id,
   });

@@ -371,11 +371,40 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+
+
+  // Search route
+  app.get("/api/search", async (req, res) => {
+    try {
+      const query = req.query.q as string;
+      if (!query || query.length < 2) {
+        return res.json({ pubs: [], breweries: [], beers: [] });
+      }
+      const results = await storage.search(query);
+      res.json(results);
+    } catch (error) {
+      console.error("Error searching:", error);
+      res.status(500).json({ message: "Failed to search" });
+    }
+  });
+
+  // Favorites routes
+  app.get("/api/favorites", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const favorites = await storage.getFavoritesByUser(userId);
+      res.json(favorites);
+    } catch (error) {
+      console.error("Error fetching favorites:", error);
+      res.status(500).json({ message: "Failed to fetch favorites" });
+    }
+  });
+
   app.post("/api/favorites", isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
-      const favoriteData = { ...req.body, userId };
-      const favorite = await storage.addFavorite(favoriteData);
+      const { pubId } = req.body;
+      const favorite = await storage.addFavorite({ userId, pubId });
       res.status(201).json(favorite);
     } catch (error) {
       console.error("Error adding favorite:", error);
@@ -383,15 +412,39 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.delete("/api/favorites", isAuthenticated, async (req: any, res) => {
+  app.delete("/api/favorites/:pubId", isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
-      const { beerId, pubId } = req.query;
-      await storage.removeFavorite(userId, beerId ? parseInt(beerId as string) : undefined, pubId ? parseInt(pubId as string) : undefined);
+      const pubId = parseInt(req.params.pubId);
+      await storage.removeFavorite(userId, pubId);
       res.status(204).send();
     } catch (error) {
       console.error("Error removing favorite:", error);
       res.status(500).json({ message: "Failed to remove favorite" });
+    }
+  });
+
+  // Rating routes
+  app.post("/api/ratings", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { pubId, rating } = req.body;
+      const ratingRecord = await storage.addRating({ userId, pubId, rating });
+      res.status(201).json(ratingRecord);
+    } catch (error) {
+      console.error("Error adding rating:", error);
+      res.status(500).json({ message: "Failed to add rating" });
+    }
+  });
+
+  app.get("/api/pubs/:id/ratings", async (req, res) => {
+    try {
+      const pubId = parseInt(req.params.id);
+      const ratings = await storage.getRatingsByPub(pubId);
+      res.json(ratings);
+    } catch (error) {
+      console.error("Error fetching ratings:", error);
+      res.status(500).json({ message: "Failed to fetch ratings" });
     }
   });
 

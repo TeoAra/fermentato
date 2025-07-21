@@ -4,6 +4,8 @@ import { MapPin, Beer, Star } from "lucide-react";
 import Footer from "@/components/footer";
 import PubCard from "@/components/pub-card";
 import BreweryCard from "@/components/brewery-card";
+import FavoritesButton from "@/components/favorites-button";
+import RatingStars from "@/components/rating-stars";
 
 export default function Landing() {
   const { data: pubs, isLoading: pubsLoading } = useQuery({
