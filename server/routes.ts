@@ -448,6 +448,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Import data route (admin only for demo)
+  app.post("/api/import-data", async (req, res) => {
+    try {
+      const { importAllData } = await import("./import-data");
+      await importAllData();
+      res.json({ message: "Data imported successfully" });
+    } catch (error) {
+      console.error("Error importing data:", error);
+      res.status(500).json({ message: "Failed to import data" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }
