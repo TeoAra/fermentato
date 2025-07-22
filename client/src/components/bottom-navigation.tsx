@@ -61,51 +61,51 @@ export function BottomNavigation() {
             </div>
           </Link>
 
-          {/* Attività - Equidistante tra Home e centro */}
-          <div className="flex-1 flex justify-center">
-            <Link href="/activity">
-              <div className={`flex flex-col items-center justify-center py-2 px-3 transition-colors ${
-                location.startsWith("/activity")
-                  ? "text-orange-600 dark:text-orange-400"
-                  : "text-gray-600 dark:text-gray-400 hover:text-orange-600 dark:hover:text-orange-400"
-              }`}>
-                <MapPin className="h-5 w-5 mb-1" />
-                <span className="text-xs font-medium">Attività</span>
-              </div>
-            </Link>
-          </div>
+          {/* Attività - Vicina a Home */}
+          <Link href="/activity">
+            <div className={`flex flex-col items-center justify-center py-2 px-2 ml-4 transition-colors ${
+              location.startsWith("/activity")
+                ? "text-orange-600 dark:text-orange-400"
+                : "text-gray-600 dark:text-gray-400 hover:text-orange-600 dark:hover:text-orange-400"
+            }`}>
+              <MapPin className="h-5 w-5 mb-1" />
+              <span className="text-xs font-medium">Attività</span>
+            </div>
+          </Link>
 
-          {/* Cerca - Centro assoluto */}
-          <div className="absolute left-1/2 transform -translate-x-1/2">
-            <button
-              onClick={() => setIsSearchOpen(true)}
-              className="bg-orange-600 hover:bg-orange-700 dark:bg-orange-500 dark:hover:bg-orange-600 text-white rounded-full p-4 shadow-lg transition-all duration-200 transform active:scale-95"
-            >
-              <Search className="h-6 w-6" />
-              <span className="sr-only">Cerca</span>
-            </button>
-          </div>
+          {/* Spazio flex per centrare il pulsante */}
+          <div className="flex-1"></div>
 
-          {/* Notifiche - Equidistante tra centro e Dashboard */}
-          <div className="flex-1 flex justify-center">
-            <Link href="/notifications">
-              <div className={`flex flex-col items-center justify-center py-2 px-3 transition-colors ${
-                location.startsWith("/notification")
-                  ? "text-orange-600 dark:text-orange-400"
-                  : "text-gray-600 dark:text-gray-400 hover:text-orange-600 dark:hover:text-orange-400"
-              }`}>
-                <div className="relative">
-                  <Bell className="h-5 w-5 mb-1" />
-                  {isAuthenticated && (
-                    <div className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-4 w-4 flex items-center justify-center min-w-[16px]">
-                      3
-                    </div>
-                  )}
-                </div>
-                <span className="text-xs font-medium">Notifiche</span>
+          {/* Cerca - Centro assoluto con più spazio */}
+          <button
+            onClick={() => setIsSearchOpen(true)}
+            className="bg-orange-600 hover:bg-orange-700 dark:bg-orange-500 dark:hover:bg-orange-600 text-white rounded-full p-5 mx-4 shadow-lg transition-all duration-200 transform active:scale-95"
+          >
+            <Search className="h-7 w-7" />
+            <span className="sr-only">Cerca</span>
+          </button>
+
+          {/* Spazio flex per bilanciare */}
+          <div className="flex-1"></div>
+
+          {/* Notifiche - Vicina a Dashboard */}
+          <Link href="/notifications">
+            <div className={`flex flex-col items-center justify-center py-2 px-2 mr-4 transition-colors ${
+              location.startsWith("/notification")
+                ? "text-orange-600 dark:text-orange-400"
+                : "text-gray-600 dark:text-gray-400 hover:text-orange-600 dark:hover:text-orange-400"
+            }`}>
+              <div className="relative">
+                <Bell className="h-5 w-5 mb-1" />
+                {isAuthenticated && (
+                  <div className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-4 w-4 flex items-center justify-center min-w-[16px]">
+                    3
+                  </div>
+                )}
               </div>
-            </Link>
-          </div>
+              <span className="text-xs font-medium">Notifiche</span>
+            </div>
+          </Link>
 
           {/* Dashboard - Estremo destro senza spazi */}
           {isAuthenticated ? (

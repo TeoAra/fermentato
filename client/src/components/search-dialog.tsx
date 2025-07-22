@@ -34,7 +34,7 @@ export default function SearchDialog({ isOpen, onClose }: SearchDialogProps) {
     queryKey: ["/api/search", debouncedSearch],
     queryFn: async () => {
       if (debouncedSearch.length < 2) return null;
-      const response = await fetch(`/api/search/${encodeURIComponent(debouncedSearch)}`);
+      const response = await fetch(`/api/search?q=${encodeURIComponent(debouncedSearch)}`);
       if (!response.ok) throw new Error('Search failed');
       return response.json();
     },
