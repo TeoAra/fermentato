@@ -61,12 +61,6 @@ export default function SearchDialog({ isOpen, onClose }: SearchDialogProps) {
               className="border-none shadow-none focus-visible:ring-0 text-base"
               autoFocus
             />
-            <button
-              onClick={handleClose}
-              className="p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
-            >
-              <X className="h-5 w-5" />
-            </button>
           </div>
         </DialogHeader>
 
