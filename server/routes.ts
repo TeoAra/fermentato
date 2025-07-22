@@ -221,6 +221,52 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Demo login endpoint (creates a fake session)
+  app.post("/api/demo-login", async (req, res) => {
+    try {
+      // Create fake user session for demo
+      const demoUser = {
+        id: 'demo_pub_owner',
+        email: 'demo@fermenta.to',
+        firstName: 'Demo',
+        lastName: 'User',
+        profileImageUrl: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&h=150&fit=crop&crop=face'
+      };
+      
+      // Store in session (simplified for demo)
+      (req.session as any).demoUser = demoUser;
+      res.json({ success: true, user: demoUser });
+    } catch (error) {
+      console.error("Error in demo login:", error);
+      res.status(500).json({ message: "Failed to login demo user" });
+    }
+  });
+
+  // Demo auth check
+  app.get("/api/demo-auth/user", async (req, res) => {
+    try {
+      if ((req.session as any).demoUser) {
+        res.json((req.session as any).demoUser);
+      } else {
+        res.status(401).json({ message: "Unauthorized" });
+      }
+    } catch (error) {
+      console.error("Error checking demo auth:", error);
+      res.status(500).json({ message: "Failed to check auth" });
+    }
+  });
+
+  // Demo logout
+  app.post("/api/demo-logout", async (req, res) => {
+    try {
+      (req.session as any).demoUser = null;
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error in demo logout:", error);
+      res.status(500).json({ message: "Failed to logout demo user" });
+    }
+  });
+
   // Update pub (only owner can update)
   app.patch("/api/pubs/:id", isAuthenticated, async (req: any, res) => {
     try {
@@ -245,10 +291,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Add beer to tap (only pub owner)
-  app.post("/api/pubs/:id/taplist", isAuthenticated, async (req: any, res) => {
+  // Demo middleware for protected routes
+  const isDemoAuthenticated = (req: any, res: any, next: any) => {
+    if ((req.session as any).demoUser) {
+      req.user = { claims: { sub: (req.session as any).demoUser.id } };
+      return next();
+    }
+    return res.status(401).json({ message: "Unauthorized" });
+  };
+
+  // Add beer to tap (pub owner or demo user)
+  app.post("/api/pubs/:id/taplist", async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      let userId: string;
+      
+      // Check if demo user or authenticated user
+      if ((req.session as any).demoUser) {
+        userId = (req.session as any).demoUser.id;
+      } else if (req.user?.claims?.sub) {
+        userId = req.user.claims.sub;
+      } else {
+        return res.status(401).json({ message: "Unauthorized" });
+      }
+      
       const pubId = parseInt(req.params.id);
       
       // Check if user owns the pub
@@ -269,16 +334,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Update tap item (only pub owner)
-  app.patch("/api/taplist/:id", isAuthenticated, async (req: any, res) => {
+  // Update tap item (pub owner or demo user)
+  app.patch("/api/taplist/:id", async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      let userId: string;
+      
+      // Check if demo user or authenticated user
+      if ((req.session as any).demoUser) {
+        userId = (req.session as any).demoUser.id;
+      } else if (req.user?.claims?.sub) {
+        userId = req.user.claims.sub;
+      } else {
+        return res.status(401).json({ message: "Unauthorized" });
+      }
+      
       const tapId = parseInt(req.params.id);
-      
-      // Get tap item to check pub ownership
-      const tapItems = await storage.getTapListByPub(0); // This needs to be improved
-      // For now, we'll trust the frontend to only send valid requests
-      
       const tapData = insertTapListSchema.partial().parse(req.body);
       const updatedTap = await storage.updateTapItem(tapId, tapData);
       res.json(updatedTap);
@@ -291,9 +361,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Remove beer from tap (only pub owner)
-  app.delete("/api/taplist/:id", isAuthenticated, async (req: any, res) => {
+  // Remove beer from tap (pub owner or demo user)
+  app.delete("/api/taplist/:id", async (req: any, res) => {
     try {
+      let userId: string;
+      
+      // Check if demo user or authenticated user
+      if ((req.session as any).demoUser) {
+        userId = (req.session as any).demoUser.id;
+      } else if (req.user?.claims?.sub) {
+        userId = req.user.claims.sub;
+      } else {
+        return res.status(401).json({ message: "Unauthorized" });
+      }
+      
       const tapId = parseInt(req.params.id);
       await storage.removeBeerFromTap(tapId);
       res.status(204).send();
@@ -303,10 +384,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Add beer to bottle list (only pub owner)
-  app.post("/api/pubs/:id/bottles", isAuthenticated, async (req: any, res) => {
+  // Add beer to bottle list (pub owner or demo user)
+  app.post("/api/pubs/:id/bottles", async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      let userId: string;
+      
+      // Check if demo user or authenticated user
+      if ((req.session as any).demoUser) {
+        userId = (req.session as any).demoUser.id;
+      } else if (req.user?.claims?.sub) {
+        userId = req.user.claims.sub;
+      } else {
+        return res.status(401).json({ message: "Unauthorized" });
+      }
+      
       const pubId = parseInt(req.params.id);
       
       // Check if user owns the pub

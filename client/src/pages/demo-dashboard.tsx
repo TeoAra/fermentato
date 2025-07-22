@@ -7,7 +7,8 @@ import { Badge } from "@/components/ui/badge";
 import { TapListManager } from "@/components/taplist-manager";
 import { BottleListManager } from "@/components/bottle-list-manager";
 import { MenuManager } from "@/components/menu-manager";
-import { Beer, Wine, Utensils, Building2 } from "lucide-react";
+import { useDemoAuth } from "@/hooks/useDemoAuth";
+import { Beer, Wine, Utensils, Building2, LogIn, LogOut } from "lucide-react";
 
 interface Pub {
   id: number;
@@ -85,6 +86,7 @@ interface MenuItem {
 
 export default function DemoDashboard() {
   const [selectedPub, setSelectedPub] = useState<Pub | null>(null);
+  const { user, isAuthenticated, isLoading, login, logout, isLoggingIn, isLoggingOut } = useDemoAuth();
 
   // Set demo user flag
   useEffect(() => {
@@ -118,8 +120,27 @@ export default function DemoDashboard() {
     }
   }, [pubs, selectedPub]);
 
-  if (pubsLoading) {
+  if (isLoading || pubsLoading) {
     return <div className="flex items-center justify-center h-64">Caricamento...</div>;
+  }
+
+  if (!isAuthenticated) {
+    return (
+      <div className="max-w-md mx-auto mt-8 p-6 bg-white dark:bg-gray-800 rounded-lg shadow">
+        <h2 className="text-2xl font-bold mb-4">Accesso Demo Richiesto</h2>
+        <p className="text-gray-600 dark:text-gray-300 mb-6">
+          Per testare le funzionalità di gestione del pub, effettua l'accesso demo.
+        </p>
+        <Button 
+          onClick={() => login()} 
+          disabled={isLoggingIn}
+          className="w-full"
+        >
+          <LogIn className="w-4 h-4 mr-2" />
+          {isLoggingIn ? "Accesso in corso..." : "Accedi come Demo Pub"}
+        </Button>
+      </div>
+    );
   }
 
   if (!pubs || pubs.length === 0) {
@@ -143,11 +164,27 @@ export default function DemoDashboard() {
           <p className="text-gray-600 dark:text-gray-300 mt-2">
             Gestisci i tuoi pub e le loro tap list (modalità demo)
           </p>
+          {user && (
+            <p className="text-sm text-gray-500 mt-1">
+              Benvenuto, {user.firstName} {user.lastName}
+            </p>
+          )}
         </div>
-        <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
-          <Building2 className="w-4 h-4 mr-2" />
-          Modalità Demo
-        </Badge>
+        <div className="flex items-center gap-4">
+          <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
+            <Building2 className="w-4 h-4 mr-2" />
+            Modalità Demo
+          </Badge>
+          <Button 
+            variant="outline" 
+            size="sm"
+            onClick={() => logout()}
+            disabled={isLoggingOut}
+          >
+            <LogOut className="w-4 h-4 mr-2" />
+            {isLoggingOut ? "Disconnessione..." : "Esci"}
+          </Button>
+        </div>
       </div>
 
       {/* Selezione Pub */}
