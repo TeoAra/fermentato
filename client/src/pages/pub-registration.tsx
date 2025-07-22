@@ -72,14 +72,15 @@ export default function PubRegistration() {
 
   const registrationMutation = useMutation({
     mutationFn: async (data: PubRegistrationForm) => {
-      return apiRequest("POST", "/api/pubs", data);
+      const response = await apiRequest("POST", "/api/pubs", data);
+      return response.json();
     },
     onSuccess: (pub) => {
       queryClient.invalidateQueries({ queryKey: ["/api/my-pubs"] });
       queryClient.invalidateQueries({ queryKey: ["/api/pubs"] });
       toast({
         title: "Successo!",
-        description: `Il pub "${pub.name}" è stato registrato correttamente`,
+        description: `Il pub "${pub?.name || 'il tuo pub'}" è stato registrato correttamente`,
       });
       navigate("/pub-dashboard");
     },

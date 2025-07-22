@@ -460,7 +460,22 @@ export class DatabaseStorage implements IStorage {
     const beersWithBrewery = await Promise.all(
       beerResults.map(async (beer) => {
         const brewery = await this.getBrewery(beer.breweryId);
-        return { ...beer, brewery: brewery! };
+        return { 
+          ...beer, 
+          brewery: brewery || { 
+            id: beer.breweryId, 
+            name: 'Birrificio sconosciuto',
+            location: '',
+            region: '',
+            description: null,
+            logoUrl: null,
+            websiteUrl: null,
+            latitude: null,
+            longitude: null,
+            rating: '0',
+            createdAt: new Date()
+          }
+        };
       })
     );
 

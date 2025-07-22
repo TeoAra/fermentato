@@ -68,9 +68,12 @@ export function TapListManager({ pubId, tapList }: TapListManagerProps) {
     queryKey: ["/api/search", searchTerm],
     queryFn: async () => {
       if (searchTerm.length < 2) return null;
-      const response = await fetch(`/api/search?q=${encodeURIComponent(searchTerm)}`);
+      const response = await fetch(`/api/search?q=${encodeURIComponent(searchTerm)}`, {
+        credentials: "include",
+      });
       if (!response.ok) throw new Error('Search failed');
-      return response.json();
+      const data = await response.json();
+      return data;
     },
     enabled: searchTerm.length >= 2,
   });
@@ -227,12 +230,12 @@ export function TapListManager({ pubId, tapList }: TapListManagerProps) {
                             className="p-3 hover:bg-gray-50 cursor-pointer border-b last:border-b-0"
                             onClick={() => {
                               setFormData({ ...formData, beerId: beer.id.toString() });
-                              setSearchTerm(`${beer.name} - ${beer.brewery.name}`);
+                              setSearchTerm(`${beer.name} - ${beer.brewery?.name || 'Birrificio sconosciuto'}`);
                             }}
                           >
                             <div className="font-medium">{beer.name}</div>
                             <div className="text-sm text-gray-500">
-                              {beer.brewery.name} • {beer.style} • {beer.abv}% ABV
+                              {beer.brewery?.name || 'Birrificio sconosciuto'} • {beer.style} • {beer.abv}% ABV
                             </div>
                           </div>
                         ))}
@@ -251,38 +254,53 @@ export function TapListManager({ pubId, tapList }: TapListManagerProps) {
                   </div>
                 )}
 
-                {/* Prezzi */}
-                <div className="grid grid-cols-3 gap-4">
-                  <div>
-                    <Label>Prezzo Piccola (€)</Label>
-                    <Input
-                      type="number"
-                      step="0.10"
-                      placeholder="4.50"
-                      value={formData.priceSmall}
-                      onChange={(e) => setFormData({ ...formData, priceSmall: e.target.value })}
-                    />
+                {/* Sistema Prezzi per Misure */}
+                <div className="space-y-3">
+                  <Label className="text-sm font-medium">Prezzi per Misura</Label>
+                  <div className="grid grid-cols-3 gap-3">
+                    <div className="space-y-1">
+                      <Label className="text-xs text-gray-600">Piccola (0.20L)</Label>
+                      <Input
+                        type="number"
+                        step="0.01"
+                        min="0"
+                        placeholder="4.50"
+                        value={formData.priceSmall}
+                        onChange={(e) => setFormData({ ...formData, priceSmall: e.target.value })}
+                        className="text-center"
+                      />
+                      <span className="text-xs text-gray-500 block text-center">€</span>
+                    </div>
+                    <div className="space-y-1">
+                      <Label className="text-xs text-gray-600">Media (0.40L)</Label>
+                      <Input
+                        type="number"
+                        step="0.01"
+                        min="0"
+                        placeholder="7.50"
+                        value={formData.priceMedium}
+                        onChange={(e) => setFormData({ ...formData, priceMedium: e.target.value })}
+                        className="text-center"
+                      />
+                      <span className="text-xs text-gray-500 block text-center">€</span>
+                    </div>
+                    <div className="space-y-1">
+                      <Label className="text-xs text-gray-600">Grande (0.50L)</Label>
+                      <Input
+                        type="number"
+                        step="0.01"
+                        min="0"
+                        placeholder="9.00"
+                        value={formData.priceLarge}
+                        onChange={(e) => setFormData({ ...formData, priceLarge: e.target.value })}
+                        className="text-center"
+                      />
+                      <span className="text-xs text-gray-500 block text-center">€</span>
+                    </div>
                   </div>
-                  <div>
-                    <Label>Prezzo Media (€)</Label>
-                    <Input
-                      type="number"
-                      step="0.10"
-                      placeholder="7.00"
-                      value={formData.priceMedium}
-                      onChange={(e) => setFormData({ ...formData, priceMedium: e.target.value })}
-                    />
-                  </div>
-                  <div>
-                    <Label>Prezzo Grande (€)</Label>
-                    <Input
-                      type="number"
-                      step="0.10"
-                      placeholder="8.50"
-                      value={formData.priceLarge}
-                      onChange={(e) => setFormData({ ...formData, priceLarge: e.target.value })}
-                    />
-                  </div>
+                  <p className="text-xs text-gray-500 italic">
+                    Ogni pub può impostare i propri prezzi per le diverse misure. Lascia vuoti i prezzi non utilizzati.
+                  </p>
                 </div>
 
                 {/* Numero Spina e Descrizione */}
