@@ -2,6 +2,7 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { setupAuth, isAuthenticated } from "./replitAuth";
+import { seedDemoData } from "./demo-data";
 import { insertPubSchema, insertTapListSchema, insertBottleListSchema, insertMenuCategorySchema, insertMenuItemSchema, pubRegistrationSchema } from "@shared/schema";
 import { z } from "zod";
 
@@ -491,6 +492,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error importing data:", error);
       res.status(500).json({ message: "Failed to import data" });
+    }
+  });
+
+  // Demo data seeding endpoint
+  app.post("/api/seed-demo", async (req, res) => {
+    try {
+      const result = await seedDemoData();
+      res.json(result);
+    } catch (error) {
+      console.error("Error seeding demo data:", error);
+      res.status(500).json({ message: "Failed to seed demo data" });
     }
   });
 
