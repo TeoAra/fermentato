@@ -9,6 +9,35 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 
+// Funzione per controllare se un pub è aperto ora
+function isOpenNow(openingHours: any) {
+  if (!openingHours) return false;
+  
+  const now = new Date();
+  const currentDay = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'][now.getDay()];
+  const currentTime = now.getHours() * 60 + now.getMinutes();
+  
+  const todayHours = openingHours[currentDay];
+  if (!todayHours || todayHours.isClosed) return false;
+  
+  // Se ha orari, controlla se è nell'intervallo
+  if (todayHours.open && todayHours.close) {
+    const [openHour, openMin] = todayHours.open.split(':').map(Number);
+    const [closeHour, closeMin] = todayHours.close.split(':').map(Number);
+    const openTime = openHour * 60 + openMin;
+    const closeTime = closeHour * 60 + closeMin;
+    
+    if (closeTime < openTime) {
+      // Orario attraversa la mezzanotte
+      return currentTime >= openTime || currentTime <= closeTime;
+    } else {
+      return currentTime >= openTime && currentTime <= closeTime;
+    }
+  }
+  
+  return true; // Se non ha orari specifici ma non è chiuso, considera aperto
+}
+
 export default function PubDetail() {
   const { id } = useParams();
   
@@ -259,27 +288,7 @@ export default function PubDetail() {
   );
 }
 
-// Utility function to check if pub is open now
-function isOpenNow(openingHours: any): boolean {
-  if (!openingHours) return false;
-  
-  const now = new Date();
-  const dayNames = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
-  const currentDay = dayNames[now.getDay()];
-  const currentTime = now.getHours() * 100 + now.getMinutes(); // HHMM format
-  
-  const dayHours = openingHours[currentDay];
-  if (!dayHours || dayHours.isClosed) return false;
-  
-  if (dayHours.open && dayHours.close) {
-    const openTime = parseInt(dayHours.open.replace(':', ''));
-    const closeTime = parseInt(dayHours.close.replace(':', ''));
-    
-    return currentTime >= openTime && currentTime <= closeTime;
-  }
-  
-  return false;
-}
+
 
 // Component to display opening hours
 function OpeningHoursDisplay({ openingHours }: { openingHours: any }) {

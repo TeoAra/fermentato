@@ -4,6 +4,35 @@ import { Badge } from "@/components/ui/badge";
 import { Link } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 
+// Funzione per controllare se un pub è aperto ora
+function isOpenNow(openingHours: any) {
+  if (!openingHours) return false;
+  
+  const now = new Date();
+  const currentDay = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'][now.getDay()];
+  const currentTime = now.getHours() * 60 + now.getMinutes();
+  
+  const todayHours = openingHours[currentDay];
+  if (!todayHours || todayHours.isClosed) return false;
+  
+  // Se ha orari, controlla se è nell'intervallo
+  if (todayHours.open && todayHours.close) {
+    const [openHour, openMin] = todayHours.open.split(':').map(Number);
+    const [closeHour, closeMin] = todayHours.close.split(':').map(Number);
+    const openTime = openHour * 60 + openMin;
+    const closeTime = closeHour * 60 + closeMin;
+    
+    if (closeTime < openTime) {
+      // Orario attraversa la mezzanotte
+      return currentTime >= openTime || currentTime <= closeTime;
+    } else {
+      return currentTime >= openTime && currentTime <= closeTime;
+    }
+  }
+  
+  return true; // Se non ha orari specifici ma non è chiuso, considera aperto
+}
+
 interface PubCardProps {
   pub: {
     id: number;
@@ -14,6 +43,7 @@ interface PubCardProps {
     coverImageUrl?: string | null;
     logoUrl?: string | null;
     isActive: boolean;
+    openingHours?: any;
   };
 }
 
@@ -60,9 +90,9 @@ export default function PubCard({ pub }: PubCardProps) {
               <Beer className="w-3 h-3 mr-1" />
               {beersOnTap} spine attive
             </Badge>
-            <span className={`flex items-center ${pub.isActive ? 'text-green-600' : 'text-red-600'}`}>
+            <span className={`flex items-center ${isOpenNow(pub.openingHours) ? 'text-green-600' : 'text-red-600'}`}>
               <Clock className="w-4 h-4 mr-1" />
-              {pub.isActive ? 'Attivo' : 'Non attivo'}
+              {isOpenNow(pub.openingHours) ? 'Aperto ora' : 'Chiuso ora'}
             </span>
           </div>
         </CardContent>
