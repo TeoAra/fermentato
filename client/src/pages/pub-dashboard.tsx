@@ -1,32 +1,23 @@
 import { useState, useEffect } from "react";
-import { useAuth } from "@/hooks/useAuth";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Label } from "@/components/ui/label";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
-import { useToast } from "@/hooks/use-toast";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { TapListManager } from "@/components/taplist-manager";
 import { BottleListManager } from "@/components/bottle-list-manager";
 import { MenuManager } from "@/components/menu-manager";
+import { useToast } from "@/hooks/use-toast";
+import { isUnauthorizedError } from "@/lib/authUtils";
 import { 
-  Settings, 
-  Beer, 
-  Wine, 
-  Utensils, 
-  Facebook, 
-  Instagram, 
-  Twitter,
-  Plus,
-  Edit,
-  Trash2,
-  Upload,
-  Globe
+  Beer, Wine, Utensils, Building2, Plus, AlertCircle, LogIn,
+  Facebook, Instagram, X as Twitter, Music, Clock
 } from "lucide-react";
 import { SiFacebook, SiInstagram, SiX, SiTiktok } from "react-icons/si";
 
@@ -36,18 +27,17 @@ interface Pub {
   address: string;
   city: string;
   region: string;
-  phone?: string;
-  email?: string;
-  websiteUrl?: string;
   description?: string;
   imageUrl?: string;
   logoUrl?: string;
+  phone?: string;
+  email?: string;
+  websiteUrl?: string;
   facebookUrl?: string;
   instagramUrl?: string;
   twitterUrl?: string;
   tiktokUrl?: string;
-  vatNumber?: string;
-  businessName?: string;
+  ownerId: string;
 }
 
 interface TapItem {
@@ -84,9 +74,10 @@ interface BottleItem {
       name: string;
     };
   };
-  priceBottle: string;
-  bottleSize: string;
-  quantity?: number;
+  price: string;
+  quantity: number;
+  size?: string;
+  vintage?: string;
   description?: string;
   isVisible: boolean;
 }
@@ -96,6 +87,7 @@ interface MenuCategory {
   name: string;
   description?: string;
   isVisible: boolean;
+  orderIndex: number;
   items: MenuItem[];
 }
 
@@ -104,60 +96,75 @@ interface MenuItem {
   name: string;
   description?: string;
   price: string;
-  allergens?: string[];
+  allergens: string[];
   isVisible: boolean;
   isAvailable: boolean;
   imageUrl?: string;
+  orderIndex: number;
 }
 
 export default function PubDashboard() {
   const { user, isAuthenticated, isLoading } = useAuth();
   const { toast } = useToast();
-  const queryClient = useQueryClient();
   const [selectedPub, setSelectedPub] = useState<Pub | null>(null);
 
-  // Get user's pubs (use demo route if demo user)
-  const isDemoUser = localStorage.getItem('demo_user');
-  const { data: pubs = [], isLoading: pubsLoading } = useQuery<Pub[]>({
-    queryKey: isDemoUser ? ["/api/demo-pubs"] : ["/api/my-pubs"],
+  // Check authentication
+  useEffect(() => {
+    if (!isLoading && !isAuthenticated) {
+      toast({
+        title: "Accesso Richiesto",
+        description: "Devi effettuare l'accesso per gestire i tuoi pub.",
+        variant: "destructive",
+      });
+      setTimeout(() => {
+        window.location.href = "/api/login";
+      }, 1000);
+      return;
+    }
+  }, [isAuthenticated, isLoading, toast]);
+
+  // Get user's pubs
+  const { data: pubs = [], isLoading: pubsLoading, error: pubsError } = useQuery<Pub[]>({
+    queryKey: ["/api/my-pubs"],
     enabled: isAuthenticated,
   });
 
-  // Get pub details, tap list, bottle list, and menu
-  const { data: tapList = [] } = useQuery<TapItem[]>({
+  // Get pub details when pub is selected
+  const { data: tapList = [], error: tapListError } = useQuery<TapItem[]>({
     queryKey: ["/api/pubs", selectedPub?.id, "taplist"],
     enabled: !!selectedPub?.id,
   });
 
-  const { data: bottleList = [] } = useQuery<BottleItem[]>({
+  const { data: bottleList = [], error: bottleListError } = useQuery<BottleItem[]>({
     queryKey: ["/api/pubs", selectedPub?.id, "bottles"],
     enabled: !!selectedPub?.id,
   });
 
-  const { data: menu = [] } = useQuery<MenuCategory[]>({
+  const { data: menu = [], error: menuError } = useQuery<MenuCategory[]>({
     queryKey: ["/api/pubs", selectedPub?.id, "menu"],
     enabled: !!selectedPub?.id,
   });
 
-  // Update pub mutation
-  const updatePubMutation = useMutation({
-    mutationFn: async (data: Partial<Pub>) => {
-      if (!selectedPub) throw new Error("No pub selected");
-      return apiRequest(`/api/pubs/${selectedPub.id}`, "PATCH", data);
-    },
-    onSuccess: () => {
-      toast({ title: "Pub aggiornato con successo" });
-      queryClient.invalidateQueries({ queryKey: ["/api/my-pubs"] });
-    },
-    onError: (error) => {
-      toast({
-        title: "Errore",
-        description: "Impossibile aggiornare il pub",
-        variant: "destructive",
-      });
-    },
-  });
+  // Handle unauthorized errors
+  useEffect(() => {
+    const errors = [pubsError, tapListError, bottleListError, menuError].filter(Boolean);
+    
+    for (const error of errors) {
+      if (error && isUnauthorizedError(error as Error)) {
+        toast({
+          title: "Sessione Scaduta",
+          description: "La tua sessione è scaduta. Effettua nuovamente l'accesso.",
+          variant: "destructive",
+        });
+        setTimeout(() => {
+          window.location.href = "/api/login";
+        }, 1000);
+        return;
+      }
+    }
+  }, [pubsError, tapListError, bottleListError, menuError, toast]);
 
+  // Select first pub when pubs are loaded
   useEffect(() => {
     if (pubs && pubs.length > 0 && !selectedPub) {
       setSelectedPub(pubs[0]);
@@ -165,18 +172,28 @@ export default function PubDashboard() {
   }, [pubs, selectedPub]);
 
   if (isLoading || pubsLoading) {
-    return <div className="flex items-center justify-center h-64">Caricamento...</div>;
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-600 mx-auto mb-4"></div>
+          <p>Caricamento dashboard...</p>
+        </div>
+      </div>
+    );
   }
 
   if (!isAuthenticated) {
     return (
       <div className="max-w-md mx-auto mt-8 p-6 bg-white dark:bg-gray-800 rounded-lg shadow">
         <h2 className="text-2xl font-bold mb-4">Accesso Richiesto</h2>
-        <p className="text-gray-600 dark:text-gray-300 mb-4">
-          Devi essere autenticato come proprietario di un pub per accedere alla dashboard.
+        <p className="text-gray-600 dark:text-gray-300 mb-6">
+          Per gestire i tuoi pub devi prima effettuare l'accesso.
         </p>
-        <Button onClick={() => window.location.href = "/api/login"}>
-          Accedi
+        <Button asChild className="w-full">
+          <a href="/api/login">
+            <LogIn className="w-4 h-4 mr-2" />
+            Accedi con Replit
+          </a>
         </Button>
       </div>
     );
@@ -184,85 +201,130 @@ export default function PubDashboard() {
 
   if (!pubs || pubs.length === 0) {
     return (
-      <div className="max-w-md mx-auto mt-8 p-6 bg-white dark:bg-gray-800 rounded-lg shadow">
-        <h2 className="text-2xl font-bold mb-4">Nessun Pub Registrato</h2>
-        <p className="text-gray-600 dark:text-gray-300 mb-4">
-          Non hai ancora registrato nessun pub. Registra il tuo pub per iniziare.
-        </p>
-        <Button onClick={() => window.location.href = "/register-pub"}>
-          Registra Pub
-        </Button>
+      <div className="max-w-2xl mx-auto mt-8 p-6 bg-white dark:bg-gray-800 rounded-lg shadow">
+        <div className="text-center">
+          <Building2 className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+          <h2 className="text-2xl font-bold mb-4">Nessun Pub Registrato</h2>
+          <p className="text-gray-600 dark:text-gray-300 mb-6">
+            Non hai ancora registrato nessun pub. Inizia registrando il tuo primo locale.
+          </p>
+          <Button asChild>
+            <a href="/pub-registration">
+              <Plus className="w-4 h-4 mr-2" />
+              Registra il tuo Pub
+            </a>
+          </Button>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="mb-8">
+    <div className="container mx-auto px-4 py-8">
+      <div className="flex items-center justify-between mb-8">
+        <div>
           <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
             Dashboard Pub
           </h1>
-          <p className="text-gray-600 dark:text-gray-300">
-            Gestisci il tuo pub, tap list, cantina e menu
+          <p className="text-gray-600 dark:text-gray-300 mt-2">
+            Gestisci i tuoi pub e le loro tap list
           </p>
+          {user && (
+            <p className="text-sm text-gray-500 mt-1">
+              Benvenuto, {user.firstName} {user.lastName}
+            </p>
+          )}
         </div>
+        <div className="flex items-center gap-4">
+          <Button asChild variant="outline" size="sm">
+            <a href="/pub-registration">
+              <Plus className="w-4 h-4 mr-2" />
+              Aggiungi Pub
+            </a>
+          </Button>
+          <Button asChild variant="outline" size="sm">
+            <a href="/api/logout">
+              Esci
+            </a>
+          </Button>
+        </div>
+      </div>
 
-        {/* Pub Selection */}
-        {pubs.length > 1 && (
-          <Card className="mb-6">
-            <CardHeader>
-              <CardTitle>Seleziona Pub</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {pubs.map((pub: Pub) => (
-                  <Card
+      {/* Selezione Pub */}
+      {pubs.length > 1 && (
+        <Card className="mb-6">
+          <CardContent className="pt-6">
+            <div className="flex items-center gap-4">
+              <span className="font-medium">Pub selezionato:</span>
+              <div className="flex gap-2 flex-wrap">
+                {pubs.map((pub) => (
+                  <Button
                     key={pub.id}
-                    className={`cursor-pointer transition-all ${
-                      selectedPub?.id === pub.id
-                        ? "ring-2 ring-orange-500 bg-orange-50 dark:bg-orange-900/20"
-                        : "hover:shadow-md"
-                    }`}
+                    variant={selectedPub?.id === pub.id ? "default" : "outline"}
+                    size="sm"
                     onClick={() => setSelectedPub(pub)}
                   >
-                    <CardContent className="p-4">
-                      <h3 className="font-semibold">{pub.name}</h3>
-                      <p className="text-sm text-gray-600 dark:text-gray-300">
-                        {pub.city}, {pub.region}
-                      </p>
-                    </CardContent>
-                  </Card>
+                    {pub.name}
+                  </Button>
                 ))}
               </div>
-            </CardContent>
-          </Card>
-        )}
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
-        {selectedPub && (
-          <Tabs defaultValue="info" className="space-y-6">
+      {selectedPub && (
+        <div className="space-y-6">
+          {/* Info Pub */}
+          <Card>
+            <CardHeader>
+              <div className="flex items-start justify-between">
+                <div>
+                  <CardTitle className="text-2xl">{selectedPub.name}</CardTitle>
+                  <CardDescription className="text-lg">
+                    {selectedPub.address}, {selectedPub.city} ({selectedPub.region})
+                  </CardDescription>
+                  {selectedPub.description && (
+                    <p className="text-gray-600 dark:text-gray-300 mt-2">
+                      {selectedPub.description}
+                    </p>
+                  )}
+                </div>
+                {selectedPub.logoUrl && (
+                  <img
+                    src={selectedPub.logoUrl}
+                    alt={selectedPub.name}
+                    className="w-16 h-16 rounded-lg object-cover"
+                  />
+                )}
+              </div>
+            </CardHeader>
+          </Card>
+
+          {/* Tabs per gestione */}
+          <Tabs defaultValue="taplist" className="space-y-6">
             <TabsList className="grid w-full grid-cols-4">
               <TabsTrigger value="info" className="flex items-center gap-2">
-                <Settings className="w-4 h-4" />
-                Info & Social
+                <Building2 className="w-4 h-4" />
+                Info Pub
               </TabsTrigger>
               <TabsTrigger value="taplist" className="flex items-center gap-2">
                 <Beer className="w-4 h-4" />
-                Tap List
+                Tap List ({tapList.length})
               </TabsTrigger>
-              <TabsTrigger value="cantina" className="flex items-center gap-2">
+              <TabsTrigger value="bottles" className="flex items-center gap-2">
                 <Wine className="w-4 h-4" />
-                Cantina
+                Cantina ({bottleList.length})
               </TabsTrigger>
               <TabsTrigger value="menu" className="flex items-center gap-2">
                 <Utensils className="w-4 h-4" />
-                Menu Cibo
+                Menu ({menu.length})
               </TabsTrigger>
             </TabsList>
 
-            {/* Informazioni e Social Media */}
+            {/* Info Pub Tab */}
             <TabsContent value="info">
-              <PubInfoTab pub={selectedPub} onUpdate={updatePubMutation.mutate} />
+              <PubInfoTab pub={selectedPub} />
             </TabsContent>
 
             {/* Tap List */}
@@ -270,8 +332,8 @@ export default function PubDashboard() {
               <TapListManager pubId={selectedPub.id} tapList={tapList} />
             </TabsContent>
 
-            {/* Cantina (Bottle List) */}
-            <TabsContent value="cantina">
+            {/* Cantina Birre */}
+            <TabsContent value="bottles">
               <BottleListManager pubId={selectedPub.id} bottleList={bottleList} />
             </TabsContent>
 
@@ -280,14 +342,16 @@ export default function PubDashboard() {
               <MenuManager pubId={selectedPub.id} menu={menu} />
             </TabsContent>
           </Tabs>
-        )}
-      </div>
+        </div>
+      )}
     </div>
   );
 }
 
-// Componente per gestire le informazioni del pub e social media
-function PubInfoTab({ pub, onUpdate }: { pub: Pub; onUpdate: (data: Partial<Pub>) => void }) {
+// Componente per gestire le informazioni del pub
+function PubInfoTab({ pub }: { pub: Pub }) {
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
   const [formData, setFormData] = useState({
     name: pub.name || "",
     description: pub.description || "",
@@ -302,9 +366,40 @@ function PubInfoTab({ pub, onUpdate }: { pub: Pub; onUpdate: (data: Partial<Pub>
     tiktokUrl: pub.tiktokUrl || "",
   });
 
+  const updatePubMutation = useMutation({
+    mutationFn: async (data: any) => {
+      return apiRequest(`/api/pubs/${pub.id}`, "PATCH", data);
+    },
+    onSuccess: () => {
+      toast({
+        title: "Successo",
+        description: "Informazioni pub aggiornate correttamente",
+      });
+      queryClient.invalidateQueries({ queryKey: ["/api/my-pubs"] });
+    },
+    onError: (error) => {
+      if (isUnauthorizedError(error)) {
+        toast({
+          title: "Sessione Scaduta",
+          description: "Effettua nuovamente l'accesso.",
+          variant: "destructive",
+        });
+        setTimeout(() => {
+          window.location.href = "/api/login";
+        }, 1000);
+        return;
+      }
+      toast({
+        title: "Errore",
+        description: "Impossibile aggiornare le informazioni",
+        variant: "destructive",
+      });
+    },
+  });
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    onUpdate(formData);
+    updatePubMutation.mutate(formData);
   };
 
   return (
@@ -391,8 +486,12 @@ function PubInfoTab({ pub, onUpdate }: { pub: Pub; onUpdate: (data: Partial<Pub>
               />
             </div>
 
-            <Button type="submit" className="w-full">
-              Salva Informazioni
+            <Button 
+              type="submit" 
+              className="w-full" 
+              disabled={updatePubMutation.isPending}
+            >
+              {updatePubMutation.isPending ? "Salvataggio..." : "Salva Informazioni"}
             </Button>
           </form>
         </CardContent>
@@ -457,331 +556,8 @@ function PubInfoTab({ pub, onUpdate }: { pub: Pub; onUpdate: (data: Partial<Pub>
               placeholder="https://tiktok.com/@miopub"
             />
           </div>
-
-          <Button 
-            onClick={() => onUpdate(formData)} 
-            className="w-full"
-          >
-            Salva Social Media
-          </Button>
         </CardContent>
       </Card>
-    </div>
-  );
-}
-
-// Componente per gestire la Tap List
-function TapListTab({ pubId, tapList }: { pubId: number; tapList: TapItem[] }) {
-  return (
-    <Card>
-      <CardHeader>
-        <div className="flex justify-between items-center">
-          <div>
-            <CardTitle>Tap List</CardTitle>
-            <CardDescription>
-              Gestisci le birre alla spina del tuo pub
-            </CardDescription>
-          </div>
-          <Button>
-            <Plus className="w-4 h-4 mr-2" />
-            Aggiungi Birra
-          </Button>
-        </div>
-      </CardHeader>
-      <CardContent>
-        {tapList.length === 0 ? (
-          <div className="text-center py-8">
-            <Beer className="w-12 h-12 mx-auto text-gray-400 mb-4" />
-            <p className="text-gray-600 dark:text-gray-300">
-              Nessuna birra in tap list. Aggiungi la prima birra!
-            </p>
-          </div>
-        ) : (
-          <div className="space-y-4">
-            {tapList.map((item) => (
-              <div key={item.id} className="flex items-center justify-between p-4 border rounded-lg">
-                <div className="flex items-center gap-4">
-                  {item.beer.logoUrl && (
-                    <img
-                      src={item.beer.logoUrl}
-                      alt={item.beer.name}
-                      className="w-12 h-12 object-cover rounded"
-                    />
-                  )}
-                  <div>
-                    <h3 className="font-semibold">{item.beer.name}</h3>
-                    <p className="text-sm text-gray-600 dark:text-gray-300">
-                      {item.beer.brewery.name} • {item.beer.style} • {item.beer.abv}%
-                    </p>
-                    {item.tapNumber && (
-                      <Badge variant="outline" className="mt-1">
-                        Spina {item.tapNumber}
-                      </Badge>
-                    )}
-                  </div>
-                </div>
-                <div className="flex items-center gap-4">
-                  <div className="text-right">
-                    {item.priceSmall && (
-                      <p className="text-sm">Piccola: €{item.priceSmall}</p>
-                    )}
-                    {item.priceMedium && (
-                      <p className="text-sm">Media: €{item.priceMedium}</p>
-                    )}
-                    {item.priceLarge && (
-                      <p className="text-sm">Grande: €{item.priceLarge}</p>
-                    )}
-                  </div>
-                  <div className="flex gap-2">
-                    <Button variant="outline" size="sm">
-                      <Edit className="w-4 h-4" />
-                    </Button>
-                    <Button variant="outline" size="sm">
-                      <Trash2 className="w-4 h-4" />
-                    </Button>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </CardContent>
-    </Card>
-  );
-}
-
-// Componente per gestire la Cantina (Bottle List)
-function CantinaTab({ pubId, bottleList }: { pubId: number; bottleList: BottleItem[] }) {
-  return (
-    <Card>
-      <CardHeader>
-        <div className="flex justify-between items-center">
-          <div>
-            <CardTitle>Cantina Birre</CardTitle>
-            <CardDescription>
-              Gestisci le birre in bottiglia del tuo pub
-            </CardDescription>
-          </div>
-          <Button>
-            <Plus className="w-4 h-4 mr-2" />
-            Aggiungi Bottiglia
-          </Button>
-        </div>
-      </CardHeader>
-      <CardContent>
-        {bottleList.length === 0 ? (
-          <div className="text-center py-8">
-            <Wine className="w-12 h-12 mx-auto text-gray-400 mb-4" />
-            <p className="text-gray-600 dark:text-gray-300">
-              Nessuna birra in cantina. Aggiungi la prima bottiglia!
-            </p>
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {bottleList.map((item) => (
-              <Card key={item.id} className="p-4">
-                <div className="flex items-start gap-3">
-                  {item.beer.logoUrl && (
-                    <img
-                      src={item.beer.logoUrl}
-                      alt={item.beer.name}
-                      className="w-10 h-10 object-cover rounded"
-                    />
-                  )}
-                  <div className="flex-1">
-                    <h3 className="font-semibold text-sm">{item.beer.name}</h3>
-                    <p className="text-xs text-gray-600 dark:text-gray-300">
-                      {item.beer.brewery.name}
-                    </p>
-                    <p className="text-xs text-gray-500">
-                      {item.beer.style} • {item.beer.abv}%
-                    </p>
-                  </div>
-                </div>
-                <Separator className="my-3" />
-                <div className="space-y-1">
-                  <div className="flex justify-between text-sm">
-                    <span>Prezzo:</span>
-                    <span className="font-semibold">€{item.priceBottle}</span>
-                  </div>
-                  <div className="flex justify-between text-sm">
-                    <span>Formato:</span>
-                    <span>{item.bottleSize}</span>
-                  </div>
-                  {item.quantity && (
-                    <div className="flex justify-between text-sm">
-                      <span>Disponibili:</span>
-                      <Badge variant={item.quantity > 5 ? "default" : "destructive"}>
-                        {item.quantity}
-                      </Badge>
-                    </div>
-                  )}
-                </div>
-                <div className="flex gap-2 mt-3">
-                  <Button variant="outline" size="sm" className="flex-1">
-                    <Edit className="w-3 h-3" />
-                  </Button>
-                  <Button variant="outline" size="sm" className="flex-1">
-                    <Trash2 className="w-3 h-3" />
-                  </Button>
-                </div>
-              </Card>
-            ))}
-          </div>
-        )}
-      </CardContent>
-    </Card>
-  );
-}
-
-// Componente per gestire il Menu Cibo
-function MenuTab({ pubId, menu }: { pubId: number; menu: MenuCategory[] }) {
-  const [selectedCategory, setSelectedCategory] = useState<MenuCategory | null>(null);
-
-  return (
-    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-      {/* Lista Categorie */}
-      <Card>
-        <CardHeader>
-          <div className="flex justify-between items-center">
-            <div>
-              <CardTitle>Categorie Menu</CardTitle>
-              <CardDescription>
-                Gestisci le categorie del menu
-              </CardDescription>
-            </div>
-            <Button size="sm">
-              <Plus className="w-4 h-4" />
-            </Button>
-          </div>
-        </CardHeader>
-        <CardContent>
-          {menu.length === 0 ? (
-            <div className="text-center py-8">
-              <Utensils className="w-8 h-8 mx-auto text-gray-400 mb-2" />
-              <p className="text-sm text-gray-600 dark:text-gray-300">
-                Nessuna categoria menu
-              </p>
-            </div>
-          ) : (
-            <div className="space-y-2">
-              {menu.map((category) => (
-                <div
-                  key={category.id}
-                  className={`p-3 rounded-lg cursor-pointer transition-colors ${
-                    selectedCategory?.id === category.id
-                      ? "bg-orange-100 dark:bg-orange-900/20 border-orange-300"
-                      : "hover:bg-gray-100 dark:hover:bg-gray-800"
-                  }`}
-                  onClick={() => setSelectedCategory(category)}
-                >
-                  <h3 className="font-medium">{category.name}</h3>
-                  <p className="text-sm text-gray-600 dark:text-gray-300">
-                    {category.items.length} prodotti
-                  </p>
-                  {category.description && (
-                    <p className="text-xs text-gray-500 mt-1">
-                      {category.description}
-                    </p>
-                  )}
-                </div>
-              ))}
-            </div>
-          )}
-        </CardContent>
-      </Card>
-
-      {/* Prodotti della Categoria Selezionata */}
-      <div className="lg:col-span-2">
-        <Card>
-          <CardHeader>
-            <div className="flex justify-between items-center">
-              <div>
-                <CardTitle>
-                  {selectedCategory ? selectedCategory.name : "Seleziona una categoria"}
-                </CardTitle>
-                <CardDescription>
-                  {selectedCategory 
-                    ? `Gestisci i prodotti della categoria ${selectedCategory.name}`
-                    : "Seleziona una categoria per vedere i prodotti"
-                  }
-                </CardDescription>
-              </div>
-              {selectedCategory && (
-                <Button size="sm">
-                  <Plus className="w-4 h-4 mr-2" />
-                  Aggiungi Prodotto
-                </Button>
-              )}
-            </div>
-          </CardHeader>
-          <CardContent>
-            {!selectedCategory ? (
-              <div className="text-center py-12">
-                <Utensils className="w-12 h-12 mx-auto text-gray-400 mb-4" />
-                <p className="text-gray-600 dark:text-gray-300">
-                  Seleziona una categoria per vedere i prodotti
-                </p>
-              </div>
-            ) : selectedCategory.items.length === 0 ? (
-              <div className="text-center py-12">
-                <Utensils className="w-12 h-12 mx-auto text-gray-400 mb-4" />
-                <p className="text-gray-600 dark:text-gray-300">
-                  Nessun prodotto in questa categoria
-                </p>
-                <Button className="mt-4">
-                  <Plus className="w-4 h-4 mr-2" />
-                  Aggiungi Primo Prodotto
-                </Button>
-              </div>
-            ) : (
-              <div className="space-y-4">
-                {selectedCategory.items.map((item) => (
-                  <div key={item.id} className="p-4 border rounded-lg">
-                    <div className="flex justify-between items-start">
-                      <div className="flex-1">
-                        <div className="flex items-center gap-3">
-                          <h3 className="font-semibold">{item.name}</h3>
-                          <Badge variant={item.isAvailable ? "default" : "secondary"}>
-                            {item.isAvailable ? "Disponibile" : "Non disponibile"}
-                          </Badge>
-                        </div>
-                        {item.description && (
-                          <p className="text-sm text-gray-600 dark:text-gray-300 mt-1">
-                            {item.description}
-                          </p>
-                        )}
-                        {item.allergens && item.allergens.length > 0 && (
-                          <div className="flex flex-wrap gap-1 mt-2">
-                            {item.allergens.map((allergen) => (
-                              <Badge key={allergen} variant="outline" className="text-xs">
-                                {allergen}
-                              </Badge>
-                            ))}
-                          </div>
-                        )}
-                      </div>
-                      <div className="text-right ml-4">
-                        <p className="text-lg font-bold text-orange-600">
-                          €{item.price}
-                        </p>
-                        <div className="flex gap-1 mt-2">
-                          <Button variant="outline" size="sm">
-                            <Edit className="w-3 h-3" />
-                          </Button>
-                          <Button variant="outline" size="sm">
-                            <Trash2 className="w-3 h-3" />
-                          </Button>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      </div>
     </div>
   );
 }

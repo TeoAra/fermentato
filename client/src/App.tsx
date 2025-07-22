@@ -41,28 +41,17 @@ function Router() {
       {/* Main Content */}
       <main className="lg:pt-0 pt-14 pb-16 lg:pb-0">
         <Switch>
-          {isLoading || !isAuthenticated ? (
-            <>
-              <Route path="/" component={Landing} />
-              <Route path="/pub/:id" component={PubDetail} />
-              <Route path="/brewery/:id" component={BreweryDetail} />
-              <Route path="/beer/:id" component={BeerDetail} />
-            </>
-          ) : (
-            <>
-              <Route path="/" component={Home} />
-              <Route path="/pub/:id" component={PubDetail} />
-              <Route path="/brewery/:id" component={BreweryDetail} />
-              <Route path="/beer/:id" component={BeerDetail} />
-                <Route path="/dashboard" component={Dashboard} />
-              <Route path="/pub-registration" component={PubRegistration} />
-              <Route path="/pub-dashboard" component={PubDashboard} />
-              <Route path="/demo" component={DemoDashboard} />
-              <Route path="/demo-dashboard" component={DemoDashboard} />
-              <Route path="/notifications" component={Notifications} />
-              <Route path="/activity" component={Activity} />
-            </>
-          )}
+          <Route path="/" component={isLoading || !isAuthenticated ? Landing : Home} />
+          <Route path="/pub/:id" component={PubDetail} />
+          <Route path="/brewery/:id" component={BreweryDetail} />
+          <Route path="/beer/:id" component={BeerDetail} />
+          <Route path="/dashboard" component={Dashboard} />
+          <Route path="/pub-registration" component={PubRegistration} />
+          <Route path="/pub-dashboard" component={PubDashboard} />
+          <Route path="/demo" component={DemoDashboard} />
+          <Route path="/demo-dashboard" component={DemoDashboard} />
+          <Route path="/notifications" component={Notifications} />
+          <Route path="/activity" component={Activity} />
           <Route component={NotFound} />
         </Switch>
       </main>

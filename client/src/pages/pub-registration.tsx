@@ -70,16 +70,16 @@ export default function PubRegistration() {
 
   const registrationMutation = useMutation({
     mutationFn: async (data: PubRegistrationForm) => {
-      const response = await apiRequest("POST", "/api/pubs", data);
-      return response.json();
+      return apiRequest("/api/pubs", "POST", data);
     },
     onSuccess: (pub) => {
       queryClient.invalidateQueries({ queryKey: ["/api/my-pubs"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/pubs"] });
       toast({
         title: "Successo!",
         description: `Il pub "${pub.name}" è stato registrato correttamente`,
       });
-      navigate("/dashboard");
+      navigate("/pub-dashboard");
     },
     onError: (error) => {
       if (isUnauthorizedError(error)) {
@@ -97,7 +97,7 @@ export default function PubRegistration() {
       console.error("Registration error:", error);
       toast({
         title: "Errore nella Registrazione",
-        description: "Si è verificato un errore durante la registrazione del pub. Riprova.",
+        description: error.message || "Si è verificato un errore durante la registrazione del pub",
         variant: "destructive",
       });
     },

@@ -198,10 +198,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Get pubs owned by current user
-  app.get("/api/my-pubs", isAuthenticated, async (req: any, res) => {
+  // Get pubs owned by current user (or demo user)
+  app.get("/api/my-pubs", async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      let userId: string;
+      
+      // Check if demo user or authenticated user
+      if ((req.session as any).demoUser) {
+        userId = (req.session as any).demoUser.id;
+      } else if (req.user?.claims?.sub) {
+        userId = req.user.claims.sub;
+      } else {
+        return res.status(401).json({ message: "Unauthorized" });
+      }
+      
       const pubs = await storage.getPubsByOwner(userId);
       res.json(pubs);
     } catch (error) {
@@ -267,10 +277,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Update pub (only owner can update)
-  app.patch("/api/pubs/:id", isAuthenticated, async (req: any, res) => {
+  // Update pub (owner or demo user can update)
+  app.patch("/api/pubs/:id", async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      let userId: string;
+      
+      // Check if demo user or authenticated user
+      if ((req.session as any).demoUser) {
+        userId = (req.session as any).demoUser.id;
+      } else if (req.user?.claims?.sub) {
+        userId = req.user.claims.sub;
+      } else {
+        return res.status(401).json({ message: "Unauthorized" });
+      }
+      
       const pubId = parseInt(req.params.id);
       
       // Check if user owns the pub
