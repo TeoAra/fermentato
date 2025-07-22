@@ -58,6 +58,7 @@ function Router() {
               <Route path="/pub-registration" component={PubRegistration} />
               <Route path="/pub-dashboard" component={PubDashboard} />
               <Route path="/demo" component={DemoDashboard} />
+              <Route path="/demo-dashboard" component={DemoDashboard} />
               <Route path="/notifications" component={Notifications} />
               <Route path="/activity" component={Activity} />
             </>

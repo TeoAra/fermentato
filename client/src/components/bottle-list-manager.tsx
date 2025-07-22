@@ -8,7 +8,6 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import { 
@@ -18,8 +17,7 @@ import {
   Trash2, 
   Eye, 
   EyeOff,
-  Search,
-  Package
+  Search
 } from "lucide-react";
 
 interface BottleItem {
@@ -35,9 +33,10 @@ interface BottleItem {
       name: string;
     };
   };
-  priceBottle: string;
-  bottleSize: string;
-  quantity?: number;
+  price: string;
+  quantity: number;
+  size?: string;
+  vintage?: string;
   description?: string;
   isVisible: boolean;
 }
@@ -47,23 +46,16 @@ interface BottleListManagerProps {
   bottleList: BottleItem[];
 }
 
-const bottleSizes = [
-  { value: "0.33L", label: "0.33L" },
-  { value: "0.5L", label: "0.5L" },
-  { value: "0.75L", label: "0.75L" },
-  { value: "1L", label: "1L" },
-  { value: "1.5L", label: "1.5L (Magnum)" },
-];
-
 export function BottleListManager({ pubId, bottleList }: BottleListManagerProps) {
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<BottleItem | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [formData, setFormData] = useState({
     beerId: "",
-    priceBottle: "",
-    bottleSize: "0.33L",
+    price: "",
     quantity: "",
+    size: "33cl",
+    vintage: "",
     description: "",
     isVisible: true,
   });
@@ -71,7 +63,7 @@ export function BottleListManager({ pubId, bottleList }: BottleListManagerProps)
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  // Search beers for adding to bottles
+  // Search beers for adding to bottle list
   const { data: searchResults } = useQuery({
     queryKey: ["/api/search", searchTerm],
     queryFn: async () => {
@@ -83,124 +75,124 @@ export function BottleListManager({ pubId, bottleList }: BottleListManagerProps)
     enabled: searchTerm.length >= 2,
   });
 
-  // Add beer to bottles
+  // Add bottle item mutation
   const addBottleMutation = useMutation({
     mutationFn: async (data: any) => {
       return apiRequest(`/api/pubs/${pubId}/bottles`, "POST", data);
     },
     onSuccess: () => {
+      toast({ title: "Birra aggiunta alla cantina!" });
       queryClient.invalidateQueries({ queryKey: ["/api/pubs", pubId, "bottles"] });
       setIsAddDialogOpen(false);
       resetForm();
-      toast({
-        title: "Successo",
-        description: "Birra aggiunta alla cantina",
-      });
     },
     onError: () => {
-      toast({
-        title: "Errore",
-        description: "Errore nell'aggiungere la birra",
-        variant: "destructive",
-      });
+      toast({ title: "Errore", description: "Impossibile aggiungere la birra", variant: "destructive" });
     },
   });
 
-  // Update bottle item
+  // Update bottle item mutation
   const updateBottleMutation = useMutation({
-    mutationFn: async ({ id, data }: { id: number; data: any }) => {
-      return apiRequest(`/api/bottles/${id}`, "PATCH", data);
+    mutationFn: async (data: any) => {
+      return apiRequest(`/api/pubs/${pubId}/bottles/${editingItem?.id}`, "PATCH", data);
     },
     onSuccess: () => {
+      toast({ title: "Birra aggiornata!" });
       queryClient.invalidateQueries({ queryKey: ["/api/pubs", pubId, "bottles"] });
       setEditingItem(null);
-      toast({
-        title: "Successo",
-        description: "Bottiglia aggiornata",
-      });
+      resetForm();
     },
     onError: () => {
-      toast({
-        title: "Errore",
-        description: "Errore nell'aggiornamento",
-        variant: "destructive",
-      });
+      toast({ title: "Errore", description: "Impossibile aggiornare la birra", variant: "destructive" });
     },
   });
 
-  // Delete bottle item
+  // Delete bottle item mutation
   const deleteBottleMutation = useMutation({
     mutationFn: async (id: number) => {
-      return apiRequest(`/api/bottles/${id}`, "DELETE");
+      return apiRequest(`/api/pubs/${pubId}/bottles/${id}`, "DELETE");
+    },
+    onSuccess: () => {
+      toast({ title: "Birra rimossa dalla cantina!" });
+      queryClient.invalidateQueries({ queryKey: ["/api/pubs", pubId, "bottles"] });
+    },
+    onError: () => {
+      toast({ title: "Errore", description: "Impossibile rimuovere la birra", variant: "destructive" });
+    },
+  });
+
+  // Toggle visibility mutation
+  const toggleVisibilityMutation = useMutation({
+    mutationFn: async ({ id, isVisible }: { id: number; isVisible: boolean }) => {
+      return apiRequest(`/api/pubs/${pubId}/bottles/${id}`, "PATCH", { isVisible });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/pubs", pubId, "bottles"] });
-      toast({
-        title: "Successo",
-        description: "Birra rimossa dalla cantina",
-      });
     },
     onError: () => {
-      toast({
-        title: "Errore",
-        description: "Errore nella rimozione",
-        variant: "destructive",
-      });
+      toast({ title: "Errore", description: "Impossibile aggiornare la visibilità", variant: "destructive" });
     },
   });
 
   const resetForm = () => {
     setFormData({
       beerId: "",
-      priceBottle: "",
-      bottleSize: "0.33L",
+      price: "",
       quantity: "",
+      size: "33cl",
+      vintage: "",
       description: "",
       isVisible: true,
     });
     setSearchTerm("");
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!formData.beerId || !formData.priceBottle) return;
+  const startEdit = (item: BottleItem) => {
+    setEditingItem(item);
+    setFormData({
+      beerId: item.beer.id.toString(),
+      price: item.price || "",
+      quantity: item.quantity?.toString() || "",
+      size: item.size || "33cl",
+      vintage: item.vintage || "",
+      description: item.description || "",
+      isVisible: item.isVisible,
+    });
+  };
 
-    const data = {
-      ...formData,
+  const handleSubmit = () => {
+    if (!formData.beerId) {
+      toast({ title: "Errore", description: "Seleziona una birra", variant: "destructive" });
+      return;
+    }
+
+    if (!formData.price || !formData.quantity) {
+      toast({ title: "Errore", description: "Inserisci prezzo e quantità", variant: "destructive" });
+      return;
+    }
+
+    const submitData = {
       beerId: parseInt(formData.beerId),
-      quantity: formData.quantity ? parseInt(formData.quantity) : null,
+      price: formData.price,
+      quantity: parseInt(formData.quantity),
+      size: formData.size || null,
+      vintage: formData.vintage || null,
+      description: formData.description || null,
+      isVisible: formData.isVisible,
     };
 
     if (editingItem) {
-      updateBottleMutation.mutate({
-        id: editingItem.id,
-        data,
-      });
+      updateBottleMutation.mutate(submitData);
     } else {
-      addBottleMutation.mutate(data);
+      addBottleMutation.mutate(submitData);
     }
-  };
-
-  const toggleVisibility = (item: BottleItem) => {
-    updateBottleMutation.mutate({
-      id: item.id,
-      data: { isVisible: !item.isVisible },
-    });
   };
 
   return (
     <Card>
       <CardHeader>
-        <div className="flex justify-between items-center">
-          <div>
-            <CardTitle className="flex items-center gap-2">
-              <Wine className="w-5 h-5" />
-              Cantina Birre
-            </CardTitle>
-            <CardDescription>
-              Gestisci le birre in bottiglia disponibili nel tuo pub
-            </CardDescription>
-          </div>
+        <CardTitle className="flex items-center justify-between">
+          <span>Gestione Cantina Birre</span>
           <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
             <DialogTrigger asChild>
               <Button>
@@ -208,121 +200,130 @@ export function BottleListManager({ pubId, bottleList }: BottleListManagerProps)
                 Aggiungi Birra
               </Button>
             </DialogTrigger>
-            <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
+            <DialogContent className="max-w-2xl">
               <DialogHeader>
                 <DialogTitle>
                   {editingItem ? "Modifica Birra" : "Aggiungi Birra alla Cantina"}
                 </DialogTitle>
                 <DialogDescription>
-                  {editingItem ? "Modifica i dettagli della birra" : "Cerca e aggiungi una birra alla tua cantina"}
+                  {editingItem ? "Modifica i dettagli della birra" : "Cerca e seleziona una birra da aggiungere alla cantina"}
                 </DialogDescription>
               </DialogHeader>
-              <form onSubmit={handleSubmit} className="space-y-4">
-                {/* Beer Search */}
-                <div>
-                  <Label htmlFor="beer-search">Cerca Birra</Label>
-                  <div className="relative">
-                    <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-                    <Input
-                      id="beer-search"
-                      placeholder="Cerca birra..."
-                      value={searchTerm}
-                      onChange={(e) => setSearchTerm(e.target.value)}
-                      className="pl-9"
-                    />
-                  </div>
-                  {searchResults?.beers?.length > 0 && (
-                    <div className="mt-2 border rounded-md max-h-40 overflow-y-auto">
-                      {searchResults.beers.slice(0, 5).map((beer: any) => (
-                        <button
-                          key={beer.id}
-                          type="button"
-                          onClick={() => {
-                            setFormData({ ...formData, beerId: beer.id.toString() });
-                            setSearchTerm(beer.name);
-                          }}
-                          className="w-full text-left p-2 hover:bg-gray-50 dark:hover:bg-gray-800 border-b last:border-b-0"
-                        >
-                          <div className="font-medium">{beer.name}</div>
-                          <div className="text-sm text-gray-500">
-                            {beer.brewery.name} • {beer.style} • {beer.abv}%
-                          </div>
-                        </button>
-                      ))}
+
+              <div className="space-y-4">
+                {/* Ricerca Birra */}
+                {!editingItem && (
+                  <div className="space-y-2">
+                    <Label>Cerca Birra</Label>
+                    <div className="relative">
+                      <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                      <Input
+                        placeholder="Cerca birra per nome o birrificio..."
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        className="pl-10"
+                      />
                     </div>
-                  )}
-                </div>
+                    {searchResults?.beers && searchResults.beers.length > 0 && (
+                      <div className="max-h-40 overflow-y-auto border rounded-md">
+                        {searchResults.beers.map((beer: any) => (
+                          <div
+                            key={beer.id}
+                            className="p-3 hover:bg-gray-50 cursor-pointer border-b last:border-b-0"
+                            onClick={() => {
+                              setFormData({ ...formData, beerId: beer.id.toString() });
+                              setSearchTerm(`${beer.name} - ${beer.brewery.name}`);
+                            }}
+                          >
+                            <div className="font-medium">{beer.name}</div>
+                            <div className="text-sm text-gray-500">
+                              {beer.brewery.name} • {beer.style} • {beer.abv}% ABV
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
 
-                {/* Price and Size */}
-                <div className="grid grid-cols-2 gap-2">
+                {/* Birra Selezionata (per editing) */}
+                {editingItem && (
+                  <div className="p-3 bg-gray-50 rounded-md">
+                    <div className="font-medium">{editingItem.beer.name}</div>
+                    <div className="text-sm text-gray-500">
+                      {editingItem.beer.brewery.name} • {editingItem.beer.style} • {editingItem.beer.abv}% ABV
+                    </div>
+                  </div>
+                )}
+
+                {/* Prezzo e Quantità */}
+                <div className="grid grid-cols-3 gap-4">
                   <div>
-                    <Label htmlFor="priceBottle">Prezzo Bottiglia *</Label>
+                    <Label>Prezzo (€)</Label>
                     <Input
-                      id="priceBottle"
                       type="number"
-                      step="0.01"
-                      placeholder="0.00"
-                      value={formData.priceBottle}
-                      onChange={(e) => setFormData({ ...formData, priceBottle: e.target.value })}
-                      required
+                      step="0.10"
+                      placeholder="5.50"
+                      value={formData.price}
+                      onChange={(e) => setFormData({ ...formData, price: e.target.value })}
                     />
                   </div>
                   <div>
-                    <Label htmlFor="bottleSize">Dimensione</Label>
-                    <Select value={formData.bottleSize} onValueChange={(value) => setFormData({ ...formData, bottleSize: value })}>
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {bottleSizes.map((size) => (
-                          <SelectItem key={size.value} value={size.value}>
-                            {size.label}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                    <Label>Quantità</Label>
+                    <Input
+                      type="number"
+                      placeholder="24"
+                      value={formData.quantity}
+                      onChange={(e) => setFormData({ ...formData, quantity: e.target.value })}
+                    />
+                  </div>
+                  <div>
+                    <Label>Formato</Label>
+                    <select
+                      className="w-full p-2 border rounded-md"
+                      value={formData.size}
+                      onChange={(e) => setFormData({ ...formData, size: e.target.value })}
+                    >
+                      <option value="33cl">33cl</option>
+                      <option value="50cl">50cl</option>
+                      <option value="66cl">66cl</option>
+                      <option value="75cl">75cl</option>
+                    </select>
                   </div>
                 </div>
 
-                {/* Quantity */}
-                <div>
-                  <Label htmlFor="quantity">Quantità Disponibile</Label>
-                  <Input
-                    id="quantity"
-                    type="number"
-                    placeholder="Es. 12"
-                    value={formData.quantity}
-                    onChange={(e) => setFormData({ ...formData, quantity: e.target.value })}
-                  />
+                {/* Annata e Visibilità */}
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label>Annata (opzionale)</Label>
+                    <Input
+                      placeholder="2023"
+                      value={formData.vintage}
+                      onChange={(e) => setFormData({ ...formData, vintage: e.target.value })}
+                    />
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <Switch
+                      id="visible"
+                      checked={formData.isVisible}
+                      onCheckedChange={(checked) => setFormData({ ...formData, isVisible: checked })}
+                    />
+                    <Label htmlFor="visible">Visibile al pubblico</Label>
+                  </div>
                 </div>
 
-                {/* Description */}
                 <div>
-                  <Label htmlFor="description">Descrizione (opzionale)</Label>
+                  <Label>Descrizione (opzionale)</Label>
                   <Textarea
-                    id="description"
-                    placeholder="Note aggiuntive sulla birra..."
+                    placeholder="Note sulla birra, caratteristiche particolari..."
                     value={formData.description}
                     onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                    rows={3}
                   />
                 </div>
 
-                {/* Visibility */}
-                <div className="flex items-center space-x-2">
-                  <Switch
-                    id="isVisible"
-                    checked={formData.isVisible}
-                    onCheckedChange={(checked) => setFormData({ ...formData, isVisible: checked })}
-                  />
-                  <Label htmlFor="isVisible">Visibile ai clienti</Label>
-                </div>
-
-                <div className="flex gap-2">
-                  <Button type="submit" className="flex-1" disabled={!formData.beerId || !formData.priceBottle}>
-                    {editingItem ? "Aggiorna" : "Aggiungi"}
-                  </Button>
+                <div className="flex justify-end space-x-2 pt-4">
                   <Button
-                    type="button"
                     variant="outline"
                     onClick={() => {
                       setIsAddDialogOpen(false);
@@ -332,102 +333,116 @@ export function BottleListManager({ pubId, bottleList }: BottleListManagerProps)
                   >
                     Annulla
                   </Button>
+                  <Button
+                    onClick={handleSubmit}
+                    disabled={addBottleMutation.isPending || updateBottleMutation.isPending}
+                  >
+                    {editingItem ? "Aggiorna" : "Aggiungi"}
+                  </Button>
                 </div>
-              </form>
+              </div>
             </DialogContent>
           </Dialog>
-        </div>
+        </CardTitle>
+        <CardDescription>
+          Gestisci le birre in bottiglia della cantina
+        </CardDescription>
       </CardHeader>
       <CardContent>
         {bottleList.length === 0 ? (
-          <div className="text-center py-8">
-            <Wine className="w-12 h-12 mx-auto text-gray-400 mb-4" />
-            <p className="text-gray-600 dark:text-gray-300">
-              Nessuna birra in cantina. Aggiungi la prima birra!
-            </p>
+          <div className="text-center py-8 text-gray-500">
+            <Wine className="w-12 h-12 mx-auto mb-4 text-gray-300" />
+            <p>Nessuna birra in cantina.</p>
+            <p className="text-sm">Clicca "Aggiungi Birra" per iniziare.</p>
           </div>
         ) : (
           <div className="space-y-4">
             {bottleList.map((item) => (
-              <div key={item.id} className="flex items-center justify-between p-4 border rounded-lg">
-                <div className="flex items-center gap-4 flex-1">
-                  {item.beer.logoUrl && (
-                    <img
-                      src={item.beer.logoUrl}
-                      alt={item.beer.name}
-                      className="w-12 h-12 object-cover rounded"
-                    />
-                  )}
+              <div
+                key={item.id}
+                className={`border rounded-lg p-4 ${!item.isVisible ? 'opacity-60 bg-gray-50' : ''}`}
+              >
+                <div className="flex items-start justify-between">
                   <div className="flex-1">
-                    <div className="flex items-center gap-2">
-                      <h3 className="font-semibold">{item.beer.name}</h3>
+                    <div className="flex items-center gap-2 mb-2">
+                      <Badge variant="outline" className="text-xs">
+                        {item.size || "33cl"}
+                      </Badge>
+                      {item.vintage && (
+                        <Badge variant="outline" className="text-xs">
+                          {item.vintage}
+                        </Badge>
+                      )}
                       {!item.isVisible && (
                         <Badge variant="secondary" className="text-xs">
+                          <EyeOff className="w-3 h-3 mr-1" />
                           Nascosta
                         </Badge>
                       )}
                     </div>
-                    <p className="text-sm text-gray-600 dark:text-gray-300">
-                      {item.beer.brewery.name} • {item.beer.style} • {item.beer.abv}%
-                    </p>
-                    <div className="flex items-center gap-2 mt-1">
-                      <Badge variant="outline" className="text-xs">
-                        <Package className="w-3 h-3 mr-1" />
-                        {item.bottleSize}
-                      </Badge>
-                      {item.quantity && (
-                        <Badge variant="outline" className="text-xs">
-                          Qty: {item.quantity}
-                        </Badge>
+                    
+                    <div className="flex items-center gap-3 mb-3">
+                      {item.beer.logoUrl && (
+                        <img
+                          src={item.beer.logoUrl}
+                          alt={item.beer.name}
+                          className="w-12 h-12 rounded-lg object-cover"
+                        />
                       )}
+                      <div>
+                        <h3 className="font-semibold text-lg">{item.beer.name}</h3>
+                        <p className="text-gray-600">{item.beer.brewery.name}</p>
+                        <p className="text-sm text-gray-500">
+                          {item.beer.style} • {item.beer.abv}% ABV
+                        </p>
+                      </div>
                     </div>
+
                     {item.description && (
-                      <p className="text-sm text-gray-500 mt-1">{item.description}</p>
+                      <p className="text-sm text-gray-600 mb-3">{item.description}</p>
                     )}
+
+                    <div className="flex gap-4 text-sm">
+                      <span className="font-medium">
+                        Prezzo: €{item.price}
+                      </span>
+                      <span className="text-gray-600">
+                        Disponibili: {item.quantity}
+                      </span>
+                    </div>
                   </div>
-                </div>
-                
-                <div className="flex items-center gap-4">
-                  <div className="text-right">
-                    <p className="font-semibold">€{item.priceBottle}</p>
-                    <p className="text-sm text-gray-500">{item.bottleSize}</p>
-                  </div>
-                  
-                  <div className="flex gap-1">
+
+                  <div className="flex items-center gap-2 ml-4">
                     <Button
+                      variant="outline"
                       size="sm"
-                      variant="ghost"
-                      onClick={() => toggleVisibility(item)}
+                      onClick={() => {
+                        toggleVisibilityMutation.mutate({
+                          id: item.id,
+                          isVisible: !item.isVisible
+                        });
+                      }}
                     >
-                      {item.isVisible ? (
-                        <Eye className="w-4 h-4" />
-                      ) : (
-                        <EyeOff className="w-4 h-4" />
-                      )}
+                      {item.isVisible ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                     </Button>
                     <Button
+                      variant="outline"
                       size="sm"
-                      variant="ghost"
                       onClick={() => {
-                        setEditingItem(item);
-                        setFormData({
-                          beerId: item.beer.id.toString(),
-                          priceBottle: item.priceBottle,
-                          bottleSize: item.bottleSize,
-                          quantity: item.quantity?.toString() || "",
-                          description: item.description || "",
-                          isVisible: item.isVisible,
-                        });
-                        setSearchTerm(item.beer.name);
+                        startEdit(item);
                         setIsAddDialogOpen(true);
                       }}
                     >
                       <Edit className="w-4 h-4" />
                     </Button>
                     <Button
+                      variant="outline"
                       size="sm"
-                      variant="ghost"
-                      onClick={() => deleteBottleMutation.mutate(item.id)}
+                      onClick={() => {
+                        if (confirm('Sei sicuro di voler rimuovere questa birra dalla cantina?')) {
+                          deleteBottleMutation.mutate(item.id);
+                        }
+                      }}
                     >
                       <Trash2 className="w-4 h-4" />
                     </Button>

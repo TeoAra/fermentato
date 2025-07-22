@@ -241,7 +241,7 @@ export default function PubDashboard() {
 
         {selectedPub && (
           <Tabs defaultValue="info" className="space-y-6">
-            <TabsList className="grid w-full grid-cols-5">
+            <TabsList className="grid w-full grid-cols-4">
               <TabsTrigger value="info" className="flex items-center gap-2">
                 <Settings className="w-4 h-4" />
                 Info & Social
