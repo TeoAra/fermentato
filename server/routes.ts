@@ -300,7 +300,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(403).json({ message: "Not authorized to update this pub" });
       }
 
-      const pubData = insertPubSchema.partial().parse(req.body);
+      // Include logoUrl and coverImageUrl in update data
+      const updateData = {
+        ...req.body,
+        logoUrl: req.body.logoUrl || null,
+        coverImageUrl: req.body.coverImageUrl || null,
+      };
+      
+      const pubData = insertPubSchema.partial().parse(updateData);
       const updatedPub = await storage.updatePub(pubId, pubData);
       res.json(updatedPub);
     } catch (error) {

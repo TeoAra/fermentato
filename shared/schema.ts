@@ -325,6 +325,9 @@ export const insertPubSchema = createInsertSchema(pubs).omit({
   id: true,
   createdAt: true,
   updatedAt: true,
+}).extend({
+  logoUrl: z.string().url().optional().nullable(),
+  coverImageUrl: z.string().url().optional().nullable(),
 });
 
 export const insertBeerSchema = createInsertSchema(beers).omit({

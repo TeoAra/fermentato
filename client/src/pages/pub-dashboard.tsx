@@ -13,6 +13,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { TapListManager } from "@/components/taplist-manager";
 import { BottleListManager } from "@/components/bottle-list-manager";
 import { MenuManager } from "@/components/menu-manager";
+import { ImageUpload } from "@/components/image-upload";
 import { useToast } from "@/hooks/use-toast";
 import { isUnauthorizedError } from "@/lib/authUtils";
 import { 
@@ -28,8 +29,9 @@ interface Pub {
   city: string;
   region: string;
   description?: string;
-  imageUrl?: string;
+  imageUrl?: string; // Legacy field
   logoUrl?: string;
+  coverImageUrl?: string;
   phone?: string;
   email?: string;
   websiteUrl?: string;
@@ -358,17 +360,23 @@ function PubInfoTab({ pub }: { pub: Pub }) {
     phone: pub.phone || "",
     email: pub.email || "",
     websiteUrl: pub.websiteUrl || "",
-    logoUrl: pub.logoUrl || "",
-    imageUrl: pub.imageUrl || "",
     facebookUrl: pub.facebookUrl || "",
     instagramUrl: pub.instagramUrl || "",
     twitterUrl: pub.twitterUrl || "",
     tiktokUrl: pub.tiktokUrl || "",
   });
+  
+  const [logoUrl, setLogoUrl] = useState<string | null>(pub.logoUrl || null);
+  const [coverImageUrl, setCoverImageUrl] = useState<string | null>(pub.coverImageUrl || null);
 
   const updatePubMutation = useMutation({
     mutationFn: async (data: any) => {
-      return apiRequest(`/api/pubs/${pub.id}`, "PATCH", data);
+      const submitData = {
+        ...data,
+        logoUrl,
+        coverImageUrl,
+      };
+      return apiRequest(`/api/pubs/${pub.id}`, "PATCH", submitData);
     },
     onSuccess: () => {
       toast({
@@ -466,24 +474,27 @@ function PubInfoTab({ pub }: { pub: Pub }) {
               />
             </div>
 
-            <div>
-              <Label htmlFor="logoUrl">Logo URL</Label>
-              <Input
-                id="logoUrl"
-                value={formData.logoUrl}
-                onChange={(e) => setFormData({ ...formData, logoUrl: e.target.value })}
-                placeholder="https://example.com/logo.png"
-              />
-            </div>
-
-            <div>
-              <Label htmlFor="imageUrl">Immagine Copertina URL</Label>
-              <Input
-                id="imageUrl"
-                value={formData.imageUrl}
-                onChange={(e) => setFormData({ ...formData, imageUrl: e.target.value })}
-                placeholder="https://example.com/cover.jpg"
-              />
+            {/* Immagini */}
+            <div className="space-y-4">
+              <h4 className="text-lg font-semibold">Immagini</h4>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <ImageUpload
+                  label="Logo del Pub"
+                  currentImageUrl={logoUrl || undefined}
+                  onImageChange={setLogoUrl}
+                  folder="pub-logos"
+                  aspectRatio="square"
+                  maxSize={2}
+                />
+                <ImageUpload
+                  label="Immagine Copertina"
+                  currentImageUrl={coverImageUrl || undefined}
+                  onImageChange={setCoverImageUrl}
+                  folder="pub-covers"
+                  aspectRatio="landscape"
+                  maxSize={5}
+                />
+              </div>
             </div>
 
             <Button 
