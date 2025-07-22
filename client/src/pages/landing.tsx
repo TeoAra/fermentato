@@ -4,8 +4,6 @@ import { MapPin, Beer, Star } from "lucide-react";
 import Footer from "@/components/footer";
 import PubCard from "@/components/pub-card";
 import BreweryCard from "@/components/brewery-card";
-import FavoritesButton from "@/components/favorites-button";
-import RatingStars from "@/components/rating-stars";
 
 export default function Landing() {
   const { data: pubs, isLoading: pubsLoading } = useQuery({
@@ -62,14 +60,14 @@ export default function Landing() {
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {pubs?.slice(0, 3).map((pub: any) => (
+              {Array.isArray(pubs) ? pubs.slice(0, 3).map((pub: any) => (
                 <PubCard 
                   key={pub.id} 
                   pub={pub} 
                   beersOnTap={Math.floor(Math.random() * 15) + 5}
                   isOpen={Math.random() > 0.3}
                 />
-              ))}
+              )) : null}
             </div>
           )}
         </section>
@@ -91,13 +89,13 @@ export default function Landing() {
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-              {breweries?.slice(0, 4).map((brewery: any) => (
+              {Array.isArray(breweries) ? breweries.slice(0, 4).map((brewery: any) => (
                 <BreweryCard 
                   key={brewery.id} 
                   brewery={brewery}
                   beerCount={Math.floor(Math.random() * 20) + 5}
                 />
-              ))}
+              )) : null}
             </div>
           )}
         </section>

@@ -3,8 +3,6 @@ import { useAuth } from "@/hooks/useAuth";
 import Footer from "@/components/footer";
 import PubCard from "@/components/pub-card";
 import BreweryCard from "@/components/brewery-card";
-import FavoritesButton from "@/components/favorites-button";
-import RatingStars from "@/components/rating-stars";
 import { Button } from "@/components/ui/button";
 import { Beer, Heart, MapPin } from "lucide-react";
 import { Link } from "wouter";
@@ -80,7 +78,7 @@ export default function Home() {
               <h3 className="text-xl font-semibold mb-2">I Tuoi Preferiti</h3>
               <p className="text-gray-600 mb-4">Gestisci le tue birre e pub preferiti</p>
               <Button variant="outline" className="w-full">
-                Vedi Preferiti ({favorites?.length || 0})
+                Vedi Preferiti ({Array.isArray(favorites) ? favorites.length : 0})
               </Button>
             </div>
           </div>
@@ -103,14 +101,14 @@ export default function Home() {
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {pubs?.slice(0, 3).map((pub: any) => (
+              {Array.isArray(pubs) ? pubs.slice(0, 3).map((pub: any) => (
                 <PubCard 
                   key={pub.id} 
                   pub={pub} 
                   beersOnTap={Math.floor(Math.random() * 15) + 5}
                   isOpen={Math.random() > 0.3}
                 />
-              ))}
+              )) : null}
             </div>
           )}
         </section>
@@ -132,13 +130,13 @@ export default function Home() {
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-              {breweries?.slice(0, 4).map((brewery: any) => (
+              {Array.isArray(breweries) ? breweries.slice(0, 4).map((brewery: any) => (
                 <BreweryCard 
                   key={brewery.id} 
                   brewery={brewery}
                   beerCount={Math.floor(Math.random() * 20) + 5}
                 />
-              ))}
+              )) : null}
             </div>
           )}
         </section>

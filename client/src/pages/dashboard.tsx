@@ -49,19 +49,8 @@ export default function Dashboard() {
 
   // Mock data per ora - in futuro dal backend
   const { data: userPubs } = useQuery({
-    queryKey: ["/api/user/pubs"],
-    enabled: isAuthenticated,
-    queryFn: () => Promise.resolve([
-      {
-        id: 1,
-        name: "Il Mio Pub",
-        address: "Via Roma, 123",
-        tapCount: 8,
-        activeBeers: 6,
-        todayCustomers: 24,
-        monthlyRevenue: 12500
-      }
-    ])
+    queryKey: ["/api/my-pubs"],
+    enabled: isAuthenticated
   });
 
   const { data: userFavorites } = useQuery({
@@ -69,7 +58,7 @@ export default function Dashboard() {
     enabled: isAuthenticated
   });
 
-  const isPubOwner = user?.role === "pub_owner" || (userPubs && userPubs.length > 0);
+  const isPubOwner = user?.userType === "pub_owner" || (userPubs && userPubs.length > 0);
 
   if (isLoading) {
     return (
