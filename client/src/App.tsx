@@ -16,7 +16,7 @@ import PubDashboard from "@/pages/pub-dashboard";
 import PubRegistration from "@/pages/pub-registration";
 import Notifications from "@/pages/notifications";
 import Activity from "@/pages/activity";
-import Dashboard from "@/pages/dashboard";
+import Dashboard from "@/pages/dashboard-simple";
 import { MobileHeader } from "@/components/mobile-header";
 import { BottomNavigation } from "@/components/bottom-navigation";
 
@@ -45,11 +45,7 @@ function Router() {
           <Route path="/brewery/:id" component={BreweryDetail} />
           <Route path="/beer/:id" component={BeerDetail} />
           {/* Dashboard routes based on user type */}
-          {user?.userType === 'pub_owner' ? (
-            <Route path="/dashboard" component={PubDashboard} />
-          ) : (
-            <Route path="/dashboard" component={Dashboard} />
-          )}
+          <Route path="/dashboard" component={user?.userType === 'pub_owner' ? PubDashboard : Dashboard} />
           <Route path="/pub-registration" component={PubRegistration} />
           <Route path="/notifications" component={Notifications} />
           <Route path="/activity" component={Activity} />

@@ -32,6 +32,14 @@ export default function Dashboard() {
   const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState("overview");
 
+  // Redirect pub owners to pub dashboard
+  useEffect(() => {
+    if (user?.userType === 'pub_owner') {
+      window.location.href = '/dashboard'; // Will be caught by routing
+      return;
+    }
+  }, [user]);
+
   // Redirect to login if not authenticated
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
