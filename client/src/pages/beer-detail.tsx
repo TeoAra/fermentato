@@ -119,7 +119,7 @@ export default function BeerDetail() {
                     
                     {beer.brewery && (
                       <Link href={`/brewery/${beer.brewery.id}`}>
-                        <div className="flex items-center text-lg text-primary hover:text-orange-600 transition-colors cursor-pointer mb-3">
+                        <div className="flex items-center text-xl text-primary hover:text-orange-600 transition-colors cursor-pointer mb-6">
                           <Building className="mr-2" size={20} />
                           {beer.brewery.name}
                           <span className="text-gray-500 ml-2">• {beer.brewery.location}, {beer.brewery.region}</span>
@@ -127,26 +127,6 @@ export default function BeerDetail() {
                       </Link>
                     )}
                   </div>
-                </div>
-
-                <div className="flex flex-wrap gap-3 mb-6">
-                  <Badge variant="outline" className="text-lg px-3 py-1">
-                    {beer.style}
-                  </Badge>
-                  <Badge variant="outline" className="text-lg px-3 py-1">
-                    {beer.abv}% ABV
-                  </Badge>
-                  {beer.ibu && (
-                    <Badge variant="outline" className="text-lg px-3 py-1">
-                      {beer.ibu} IBU
-                    </Badge>
-                  )}
-                  {beer.color && (
-                    <Badge variant="outline" className="text-lg px-3 py-1">
-                      <Eye className="mr-1" size={16} />
-                      {beer.color}
-                    </Badge>
-                  )}
                 </div>
 
                 {beer.description && (
