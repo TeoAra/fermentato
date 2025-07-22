@@ -39,6 +39,7 @@ interface Pub {
   instagramUrl?: string;
   twitterUrl?: string;
   tiktokUrl?: string;
+  openingHours?: any;
   ownerId: string;
 }
 
@@ -305,7 +306,7 @@ export default function PubDashboard() {
 
           {/* Tabs per gestione */}
           <Tabs defaultValue="taplist" className="space-y-6">
-            <TabsList className="grid w-full grid-cols-4">
+            <TabsList className="grid w-full grid-cols-5">
               <TabsTrigger value="info" className="flex items-center gap-2">
                 <Building2 className="w-4 h-4" />
                 Info Pub
@@ -321,6 +322,10 @@ export default function PubDashboard() {
               <TabsTrigger value="menu" className="flex items-center gap-2">
                 <Utensils className="w-4 h-4" />
                 Menu ({menu.length})
+              </TabsTrigger>
+              <TabsTrigger value="orari" className="flex items-center gap-2">
+                <Clock className="w-4 h-4" />
+                Orari
               </TabsTrigger>
             </TabsList>
 
@@ -342,6 +347,11 @@ export default function PubDashboard() {
             {/* Menu Cibo */}
             <TabsContent value="menu">
               <MenuManager pubId={selectedPub.id} menu={menu} />
+            </TabsContent>
+
+            {/* Orari Apertura */}
+            <TabsContent value="orari">
+              <OpeningHoursManager pub={selectedPub} />
             </TabsContent>
           </Tabs>
         </div>
@@ -570,5 +580,136 @@ function PubInfoTab({ pub }: { pub: Pub }) {
         </CardContent>
       </Card>
     </div>
+  );
+}
+
+// Componente per gestire gli orari di apertura
+function OpeningHoursManager({ pub }: { pub: Pub }) {
+  const [openingHours, setOpeningHours] = useState<any>(pub.openingHours || {});
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+
+  const updateHoursMutation = useMutation({
+    mutationFn: async (hours: any) => {
+      return apiRequest("/api/pubs/" + pub.id, "PATCH", { openingHours: hours });
+    },
+    onSuccess: () => {
+      toast({
+        title: "Successo",
+        description: "Orari di apertura aggiornati",
+      });
+      queryClient.invalidateQueries({ queryKey: ["/api/my-pubs"] });
+    },
+    onError: (error) => {
+      if (isUnauthorizedError(error)) {
+        toast({
+          title: "Sessione Scaduta",
+          description: "Effettua nuovamente l'accesso.",
+          variant: "destructive",
+        });
+        setTimeout(() => {
+          window.location.href = "/api/login";
+        }, 1000);
+        return;
+      }
+      toast({
+        title: "Errore",
+        description: "Impossibile aggiornare gli orari",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const days = [
+    { key: 'monday', label: 'Lunedì' },
+    { key: 'tuesday', label: 'Martedì' },
+    { key: 'wednesday', label: 'Mercoledì' },
+    { key: 'thursday', label: 'Giovedì' },
+    { key: 'friday', label: 'Venerdì' },
+    { key: 'saturday', label: 'Sabato' },
+    { key: 'sunday', label: 'Domenica' },
+  ];
+
+  const handleHoursChange = (day: string, type: 'open' | 'close', value: string) => {
+    setOpeningHours((prev: any) => ({
+      ...prev,
+      [day]: {
+        ...prev[day],
+        [type]: value,
+        isClosed: false,
+      },
+    }));
+  };
+
+  const toggleClosed = (day: string) => {
+    setOpeningHours((prev: any) => ({
+      ...prev,
+      [day]: {
+        ...prev[day],
+        isClosed: !prev[day]?.isClosed,
+      },
+    }));
+  };
+
+  const handleSave = () => {
+    updateHoursMutation.mutate(openingHours);
+  };
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Orari di Apertura</CardTitle>
+        <CardDescription>
+          Configura gli orari di apertura per ogni giorno della settimana
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        <div className="space-y-4">
+          {days.map((day) => (
+            <div key={day.key} className="flex items-center justify-between p-4 border rounded-lg">
+              <div className="flex items-center space-x-4">
+                <div className="w-24">
+                  <Label className="font-medium">{day.label}</Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <Input
+                    type="time"
+                    value={openingHours[day.key]?.open || "12:00"}
+                    onChange={(e) => handleHoursChange(day.key, 'open', e.target.value)}
+                    disabled={openingHours[day.key]?.isClosed}
+                    className="w-32"
+                  />
+                  <span>-</span>
+                  <Input
+                    type="time"
+                    value={openingHours[day.key]?.close || "23:00"}
+                    onChange={(e) => handleHoursChange(day.key, 'close', e.target.value)}
+                    disabled={openingHours[day.key]?.isClosed}
+                    className="w-32"
+                  />
+                </div>
+              </div>
+              <div className="flex items-center space-x-2">
+                <input
+                  type="checkbox"
+                  checked={openingHours[day.key]?.isClosed || false}
+                  onChange={() => toggleClosed(day.key)}
+                  className="rounded"
+                />
+                <Label className="text-sm text-gray-600">Chiuso</Label>
+              </div>
+            </div>
+          ))}
+          <div className="flex justify-end">
+            <Button
+              onClick={handleSave}
+              disabled={updateHoursMutation.isPending}
+            >
+              {updateHoursMutation.isPending ? "Salvando..." : "Salva Orari"}
+            </Button>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
   );
 }

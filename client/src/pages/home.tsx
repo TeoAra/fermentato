@@ -109,8 +109,6 @@ export default function Home() {
                   <PubCard 
                     key={pub.id} 
                     pub={pub} 
-                    beersOnTap={Math.floor(Math.random() * 15) + 5}
-                    isOpen={Math.random() > 0.3}
                   />
                 )) : null}
                 {Array.isArray(pubs) && pubs.filter((pub: any) => pub.ownerId === user.id).length === 0 && (
@@ -148,8 +146,6 @@ export default function Home() {
                   <PubCard 
                     key={pub.id} 
                     pub={pub} 
-                    beersOnTap={Math.floor(Math.random() * 15) + 5}
-                    isOpen={Math.random() > 0.3}
                   />
                 )) : null}
               </div>

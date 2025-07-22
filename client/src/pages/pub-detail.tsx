@@ -62,8 +62,8 @@ export default function PubDetail() {
         <Card className="mb-8 overflow-hidden">
           <div className="relative">
             <img
-              src={pub.imageUrl || "https://images.unsplash.com/photo-1514933651103-005eec06c04b?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&h=400"}
-              alt={`${pub.name} - Interno`}
+              src={pub.coverImageUrl || "https://images.unsplash.com/photo-1514933651103-005eec06c04b?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&h=400"}
+              alt={`${pub.name} - Copertina`}
               className="w-full h-64 md:h-80 object-cover"
             />
             <div className="absolute inset-0 bg-black bg-opacity-40"></div>
