@@ -1,7 +1,5 @@
-import { Search, Menu, X } from "lucide-react";
-import { useState } from "react";
+import { Menu, X } from "lucide-react";
 import { Link, useLocation } from "wouter";
-import SearchDialog from "./search-dialog";
 
 interface MobileHeaderProps {
   onMenuToggle: () => void;
@@ -9,7 +7,6 @@ interface MobileHeaderProps {
 }
 
 export function MobileHeader({ onMenuToggle, isMenuOpen }: MobileHeaderProps) {
-  const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [location] = useLocation();
 
   return (
@@ -78,11 +75,7 @@ export function MobileHeader({ onMenuToggle, isMenuOpen }: MobileHeaderProps) {
         )}
       </header>
 
-      {/* Search Dialog */}
-      <SearchDialog 
-        isOpen={isSearchOpen} 
-        onClose={() => setIsSearchOpen(false)} 
-      />
+      {/* Rimuovo il Search Dialog dal mobile header perché ora è gestito dalla bottom nav */}
     </>
   );
 }
