@@ -104,15 +104,7 @@ export default function Header() {
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => {
-                    // Check if demo user
-                    if (localStorage.getItem('demo_user')) {
-                      localStorage.removeItem('demo_user');
-                      window.location.reload();
-                    } else {
-                      window.location.href = "/api/logout";
-                    }
-                  }}
+                  onClick={() => window.location.href = "/api/logout"}
                   className="flex items-center gap-2"
                 >
                   <LogOut className="h-4 w-4" />
@@ -121,24 +113,6 @@ export default function Header() {
               </>
             ) : (
               <div className="flex items-center gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => {
-                    // Demo login simulation
-                    localStorage.setItem('demo_user', JSON.stringify({
-                      id: 'demo_pub_owner',
-                      email: 'pub@demo.it',
-                      firstName: 'Mario',
-                      lastName: 'Rossi',
-                      userType: 'pub_owner'
-                    }));
-                    window.location.reload();
-                  }}
-                  className="text-orange-600 border-orange-600 hover:bg-orange-50"
-                >
-                  Demo Pub
-                </Button>
                 <Button
                   onClick={() => window.location.href = "/api/login"}
                   className="bg-orange-600 hover:bg-orange-700"
