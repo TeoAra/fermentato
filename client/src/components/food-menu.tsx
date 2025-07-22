@@ -1,6 +1,8 @@
+import { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { AlertTriangle, Wheat, Milk, Egg } from "lucide-react";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { AlertTriangle, Wheat, Milk, Egg, ChevronDown, ChevronRight } from "lucide-react";
 
 interface FoodMenuProps {
   menu: Array<{
@@ -26,6 +28,8 @@ const allergenIcons: Record<string, { icon: any; color: string; label: string }>
 };
 
 export default function FoodMenu({ menu }: FoodMenuProps) {
+  const [openCategories, setOpenCategories] = useState<Set<number>>(new Set());
+
   if (!menu || menu.length === 0) {
     return (
       <div className="text-center py-8">
@@ -38,65 +42,100 @@ export default function FoodMenu({ menu }: FoodMenuProps) {
     return allergenIcons[allergen.toLowerCase()] || allergenIcons.default;
   };
 
+  const toggleCategory = (categoryId: number) => {
+    const newOpenCategories = new Set(openCategories);
+    if (newOpenCategories.has(categoryId)) {
+      newOpenCategories.delete(categoryId);
+    } else {
+      newOpenCategories.add(categoryId);
+    }
+    setOpenCategories(newOpenCategories);
+  };
+
   return (
-    <div>
-      <h3 className="text-2xl font-bold text-secondary mb-6">Menu Cibo</h3>
+    <div className="space-y-3">
+      <h3 className="text-xl sm:text-2xl font-bold text-secondary mb-4 sm:mb-6">Menu Cibo</h3>
       
-      {menu.map((category) => (
-        <div key={category.id} className="mb-8">
-          <h4 className="text-xl font-semibold text-secondary mb-4 border-b border-gray-200 pb-2">
-            {category.name}
-          </h4>
-          {category.description && (
-            <p className="text-gray-600 mb-4">{category.description}</p>
-          )}
-          
-          <div className="space-y-4">
-            {category.items.map((item) => (
-              <Card key={item.id} className="p-4">
-                <div className="flex justify-between items-start">
-                  <div className="flex-1">
-                    <div className="flex items-center space-x-2 mb-2">
-                      <h5 className="font-semibold text-lg">{item.name}</h5>
-                      {!item.isAvailable && (
-                        <Badge variant="destructive">Non Disponibile</Badge>
-                      )}
-                    </div>
-                    
-                    {item.description && (
-                      <p className="text-gray-600 text-sm mb-2">{item.description}</p>
+      {menu.map((category) => {
+        const isOpen = openCategories.has(category.id);
+        return (
+          <Collapsible key={category.id} open={isOpen} onOpenChange={() => toggleCategory(category.id)}>
+            <CollapsibleTrigger className="w-full">
+              <Card className="cursor-pointer hover:shadow-md transition-shadow">
+                <div className="p-3 sm:p-4 flex items-center justify-between">
+                  <div className="text-left flex-1">
+                    <h4 className="text-lg sm:text-xl font-semibold text-secondary">
+                      {category.name}
+                    </h4>
+                    {category.description && (
+                      <p className="text-gray-600 text-sm mt-1">{category.description}</p>
                     )}
-                    
-                    {item.allergens && item.allergens.length > 0 && (
-                      <div className="flex flex-wrap gap-2">
-                        {item.allergens.map((allergen) => {
-                          const allergenInfo = getAllergenInfo(allergen);
-                          const Icon = allergenInfo.icon;
-                          
-                          return (
-                            <Badge 
-                              key={allergen} 
-                              variant="outline"
-                              className={`inline-flex items-center px-2 py-1 rounded-full text-xs ${allergenInfo.color}`}
-                            >
-                              <Icon className="w-3 h-3 mr-1" />
-                              {allergenInfo.label}
-                            </Badge>
-                          );
-                        })}
-                      </div>
+                    <p className="text-xs sm:text-sm text-gray-500 mt-1">
+                      {category.items.length} {category.items.length === 1 ? 'piatto' : 'piatti'}
+                    </p>
+                  </div>
+                  <div className="ml-4 flex-shrink-0">
+                    {isOpen ? (
+                      <ChevronDown className="w-5 h-5 text-gray-500" />
+                    ) : (
+                      <ChevronRight className="w-5 h-5 text-gray-500" />
                     )}
                   </div>
-                  
-                  <span className="font-bold text-primary text-lg ml-4">
-                    €{item.price}
-                  </span>
                 </div>
               </Card>
-            ))}
-          </div>
-        </div>
-      ))}
+            </CollapsibleTrigger>
+            
+            <CollapsibleContent>
+              <div className="mt-2 space-y-3">
+                {category.items.map((item) => (
+                  <Card key={item.id} className="p-3 sm:p-4 ml-2 sm:ml-4 border-l-4 border-l-primary/20">
+                    <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-2 sm:gap-4">
+                      <div className="flex-1">
+                        <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2 mb-2">
+                          <h5 className="font-semibold text-base sm:text-lg">{item.name}</h5>
+                          {!item.isAvailable && (
+                            <Badge variant="destructive" className="text-xs w-fit">Non Disponibile</Badge>
+                          )}
+                        </div>
+                        
+                        {item.description && (
+                          <p className="text-gray-600 text-sm mb-2">{item.description}</p>
+                        )}
+                        
+                        {item.allergens && item.allergens.length > 0 && (
+                          <div className="flex flex-wrap gap-1 sm:gap-2 mb-2">
+                            {item.allergens.map((allergen) => {
+                              const allergenInfo = getAllergenInfo(allergen);
+                              const Icon = allergenInfo.icon;
+                              
+                              return (
+                                <Badge 
+                                  key={allergen} 
+                                  variant="outline"
+                                  className={`inline-flex items-center px-2 py-1 rounded-full text-xs ${allergenInfo.color}`}
+                                >
+                                  <Icon className="w-3 h-3 mr-1" />
+                                  {allergenInfo.label}
+                                </Badge>
+                              );
+                            })}
+                          </div>
+                        )}
+                      </div>
+                      
+                      <div className="flex-shrink-0 text-right">
+                        <span className="text-lg sm:text-xl font-bold text-primary">
+                          €{item.price}
+                        </span>
+                      </div>
+                    </div>
+                  </Card>
+                ))}
+              </div>
+            </CollapsibleContent>
+          </Collapsible>
+        );
+      })}
     </div>
   );
 }
