@@ -12,6 +12,7 @@ import { Store, MapPin, Phone, Mail, Globe, Building, FileText } from "lucide-re
 import { useLocation } from "wouter";
 
 import AddressAutocomplete from "@/components/address-autocomplete";
+import { ImageUpload } from "@/components/image-upload";
 
 import Header from "@/components/header";
 import Footer from "@/components/footer";
@@ -36,6 +37,8 @@ export default function PubRegistration() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [, navigate] = useLocation();
+  const [logoUrl, setLogoUrl] = useState<string | null>(null);
+  const [coverImageUrl, setCoverImageUrl] = useState<string | null>(null);
 
   // Redirect to login if not authenticated
   useEffect(() => {
@@ -107,7 +110,12 @@ export default function PubRegistration() {
   });
 
   const onSubmit = (data: PubRegistrationForm) => {
-    registrationMutation.mutate(data);
+    const submitData = {
+      ...data,
+      logoUrl,
+      coverImageUrl,
+    };
+    registrationMutation.mutate(submitData);
   };
 
   // Show loading while checking authentication
@@ -292,6 +300,26 @@ export default function PubRegistration() {
                       </FormItem>
                     )}
                   />
+
+                  {/* Immagini */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <ImageUpload
+                      label="Logo del Pub"
+                      currentImageUrl={logoUrl}
+                      onImageChange={setLogoUrl}
+                      folder="pub-logos"
+                      aspectRatio="square"
+                      maxSize={2}
+                    />
+                    <ImageUpload
+                      label="Immagine Copertina"
+                      currentImageUrl={coverImageUrl}
+                      onImageChange={setCoverImageUrl}
+                      folder="pub-covers"
+                      aspectRatio="landscape"
+                      maxSize={5}
+                    />
+                  </div>
                 </div>
 
                 {/* Address */}

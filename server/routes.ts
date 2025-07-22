@@ -2,6 +2,7 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { setupAuth, isAuthenticated } from "./replitAuth";
+import { upload, uploadImage } from "./cloudinary";
 import { seedDemoData } from "./demo-data";
 import { insertPubSchema, insertTapListSchema, insertBottleListSchema, insertMenuCategorySchema, insertMenuItemSchema, pubRegistrationSchema } from "@shared/schema";
 import { z } from "zod";
@@ -591,6 +592,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error fetching ratings:", error);
       res.status(500).json({ message: "Failed to fetch ratings" });
+    }
+  });
+
+  // Image upload routes
+  app.post('/api/upload/image', isAuthenticated, upload.single('image'), async (req, res) => {
+    try {
+      if (!req.file) {
+        return res.status(400).json({ message: 'Nessun file fornito' });
+      }
+
+      const folder = req.body.folder || 'general';
+      const imageUrl = await uploadImage(req.file.buffer, folder);
+
+      res.json({ url: imageUrl });
+    } catch (error) {
+      console.error('Error uploading image:', error);
+      res.status(500).json({ message: 'Errore durante l\'upload dell\'immagine' });
     }
   });
 

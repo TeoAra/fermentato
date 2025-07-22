@@ -67,8 +67,9 @@ export const pubs = pgTable("pubs", {
   email: varchar("email"),
   websiteUrl: varchar("website_url"),
   description: text("description"),
-  imageUrl: varchar("image_url"),
-  logoUrl: varchar("logo_url"), // Logo del pub
+  imageUrl: varchar("image_url"), // Legacy field
+  logoUrl: varchar("logo_url"), // Cloudinary URL for pub logo
+  coverImageUrl: varchar("cover_image_url"), // Cloudinary URL for cover image
   rating: decimal("rating", { precision: 2, scale: 1 }).default("0"),
   isActive: boolean("is_active").default(true),
   openingHours: jsonb("opening_hours"), // Store hours as JSON

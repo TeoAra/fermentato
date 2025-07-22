@@ -40,12 +40,14 @@ Preferred communication style: Simple, everyday language.
 
 ### Data Models
 - **Users**: Basic profile information with role differentiation
-- **Pubs**: Pub information with owner relationships and location data
+- **Pubs**: Pub information with owner relationships, location data, logo and cover images
 - **Breweries**: Brewery profiles with geographic information
 - **Beers**: Beer catalog with style, ABV, and brewery relationships
 - **Tap Lists**: Real-time beer availability at pubs with pricing
 - **Menu System**: Food menu management with categories and allergen tracking
 - **Favorites**: User preference tracking
+- **Pub Sizes**: Custom drink size configurations per pub
+- **Image Assets**: Cloudinary-hosted images for pubs and breweries
 
 ### Component Architecture
 - **Shared Components**: Reusable UI components (PubCard, BreweryCard, TapList, etc.)
@@ -90,7 +92,7 @@ Preferred communication style: Simple, everyday language.
 ### Core Dependencies
 - **Database**: Neon PostgreSQL (serverless)
 - **Authentication**: Replit Auth services
-- **CDN**: Unsplash for placeholder images
+- **Image CDN**: Cloudinary for optimized image upload and delivery
 - **WebSocket**: For real-time Neon connections
 
 ### Development Tools
