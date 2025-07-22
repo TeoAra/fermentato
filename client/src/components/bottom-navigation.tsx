@@ -61,9 +61,8 @@ export function BottomNavigation() {
             </div>
           </Link>
 
-          {/* Contenitore flex per centrare tutto il resto */}
-          <div className="flex-1 flex items-center justify-center">
-            {/* Attività */}
+          {/* Attività - Equidistante tra Home e centro */}
+          <div className="flex-1 flex justify-center">
             <Link href="/activity">
               <div className={`flex flex-col items-center justify-center py-2 px-3 transition-colors ${
                 location.startsWith("/activity")
@@ -74,19 +73,21 @@ export function BottomNavigation() {
                 <span className="text-xs font-medium">Attività</span>
               </div>
             </Link>
+          </div>
 
-            {/* Cerca - Centro assoluto */}
-            <div className="absolute left-1/2 transform -translate-x-1/2">
-              <button
-                onClick={() => setIsSearchOpen(true)}
-                className="bg-orange-600 hover:bg-orange-700 dark:bg-orange-500 dark:hover:bg-orange-600 text-white rounded-full p-4 shadow-lg transition-all duration-200 transform active:scale-95"
-              >
-                <Search className="h-6 w-6" />
-                <span className="sr-only">Cerca</span>
-              </button>
-            </div>
+          {/* Cerca - Centro assoluto */}
+          <div className="absolute left-1/2 transform -translate-x-1/2">
+            <button
+              onClick={() => setIsSearchOpen(true)}
+              className="bg-orange-600 hover:bg-orange-700 dark:bg-orange-500 dark:hover:bg-orange-600 text-white rounded-full p-4 shadow-lg transition-all duration-200 transform active:scale-95"
+            >
+              <Search className="h-6 w-6" />
+              <span className="sr-only">Cerca</span>
+            </button>
+          </div>
 
-            {/* Notifiche */}
+          {/* Notifiche - Equidistante tra centro e Dashboard */}
+          <div className="flex-1 flex justify-center">
             <Link href="/notifications">
               <div className={`flex flex-col items-center justify-center py-2 px-3 transition-colors ${
                 location.startsWith("/notification")
