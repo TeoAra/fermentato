@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/useAuth";
+import { useEffect } from "react";
 import Footer from "@/components/footer";
 import PubCard from "@/components/pub-card";
 import BreweryCard from "@/components/brewery-card";
@@ -9,6 +10,13 @@ import { Link } from "wouter";
 
 export default function Home() {
   const { user } = useAuth();
+  
+  // Redirect pub owners to their dashboard
+  useEffect(() => {
+    if (user?.userType === 'pub_owner') {
+      window.location.href = '/dashboard';
+    }
+  }, [user]);
   
   const { data: pubs, isLoading: pubsLoading } = useQuery({
     queryKey: ["/api/pubs"],
