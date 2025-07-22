@@ -106,10 +106,12 @@ export const tapList = pgTable("tap_list", {
   pubId: integer("pub_id").references(() => pubs.id).notNull(),
   beerId: integer("beer_id").references(() => beers.id).notNull(),
   isActive: boolean("is_active").default(true),
+  isVisible: boolean("is_visible").default(true), // Può essere nascosta temporaneamente
   priceSmall: decimal("price_small", { precision: 5, scale: 2 }), // 0.2L
   priceMedium: decimal("price_medium", { precision: 5, scale: 2 }), // 0.4L
   priceLarge: decimal("price_large", { precision: 5, scale: 2 }), // 0.5L
   tapNumber: integer("tap_number"),
+  description: text("description"), // Note personalizzate del pub
   addedAt: timestamp("added_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
@@ -120,9 +122,11 @@ export const bottleList = pgTable("bottle_list", {
   pubId: integer("pub_id").references(() => pubs.id).notNull(),
   beerId: integer("beer_id").references(() => beers.id).notNull(),
   isActive: boolean("is_active").default(true),
+  isVisible: boolean("is_visible").default(true), // Può essere nascosta temporaneamente
   priceBottle: decimal("price_bottle", { precision: 5, scale: 2 }), // Prezzo bottiglia
   bottleSize: varchar("bottle_size").default("0.33L"), // Dimensione bottiglia
   quantity: integer("quantity"), // Quantità disponibile
+  description: text("description"), // Note personalizzate del pub
   addedAt: timestamp("added_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
@@ -133,6 +137,7 @@ export const menuCategories = pgTable("menu_categories", {
   pubId: integer("pub_id").references(() => pubs.id).notNull(),
   name: varchar("name").notNull(),
   description: text("description"),
+  isVisible: boolean("is_visible").default(true),
   orderIndex: integer("order_index").default(0),
   createdAt: timestamp("created_at").defaultNow(),
 });
@@ -145,7 +150,9 @@ export const menuItems = pgTable("menu_items", {
   description: text("description"),
   price: decimal("price", { precision: 5, scale: 2 }).notNull(),
   allergens: jsonb("allergens"), // Array of allergens
+  isVisible: boolean("is_visible").default(true),
   isAvailable: boolean("is_available").default(true),
+  imageUrl: varchar("image_url"),
   orderIndex: integer("order_index").default(0),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),

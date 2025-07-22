@@ -11,6 +11,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
+import { TapListManager } from "@/components/taplist-manager";
+import { BottleListManager } from "@/components/bottle-list-manager";
+import { MenuManager } from "@/components/menu-manager";
 import { 
   Settings, 
   Beer, 
@@ -64,6 +67,8 @@ interface TapItem {
   priceMedium?: string;
   priceLarge?: string;
   tapNumber?: number;
+  description?: string;
+  isVisible: boolean;
 }
 
 interface BottleItem {
@@ -82,13 +87,15 @@ interface BottleItem {
   priceBottle: string;
   bottleSize: string;
   quantity?: number;
+  description?: string;
+  isVisible: boolean;
 }
 
 interface MenuCategory {
   id: number;
   name: string;
   description?: string;
-  orderIndex: number;
+  isVisible: boolean;
   items: MenuItem[];
 }
 
@@ -98,8 +105,9 @@ interface MenuItem {
   description?: string;
   price: string;
   allergens?: string[];
+  isVisible: boolean;
   isAvailable: boolean;
-  orderIndex: number;
+  imageUrl?: string;
 }
 
 export default function PubDashboard() {
@@ -135,13 +143,7 @@ export default function PubDashboard() {
   const updatePubMutation = useMutation({
     mutationFn: async (data: Partial<Pub>) => {
       if (!selectedPub) throw new Error("No pub selected");
-      return apiRequest(`/api/pubs/${selectedPub.id}`, {
-        method: "PATCH",
-        body: JSON.stringify(data),
-        headers: {
-          "Content-Type": "application/json",
-        },
-      });
+      return apiRequest(`/api/pubs/${selectedPub.id}`, "PATCH", data);
     },
     onSuccess: () => {
       toast({ title: "Pub aggiornato con successo" });
@@ -265,17 +267,17 @@ export default function PubDashboard() {
 
             {/* Tap List */}
             <TabsContent value="taplist">
-              <TapListTab pubId={selectedPub.id} tapList={tapList} />
+              <TapListManager pubId={selectedPub.id} tapList={tapList} />
             </TabsContent>
 
             {/* Cantina (Bottle List) */}
             <TabsContent value="cantina">
-              <CantinaTab pubId={selectedPub.id} bottleList={bottleList} />
+              <BottleListManager pubId={selectedPub.id} bottleList={bottleList} />
             </TabsContent>
 
             {/* Menu Cibo */}
             <TabsContent value="menu">
-              <MenuTab pubId={selectedPub.id} menu={menu} />
+              <MenuManager pubId={selectedPub.id} menu={menu} />
             </TabsContent>
           </Tabs>
         )}
