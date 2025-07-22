@@ -11,6 +11,8 @@ import { z } from "zod";
 import { Store, MapPin, Phone, Mail, Globe, Building, FileText } from "lucide-react";
 import { useLocation } from "wouter";
 
+import AddressAutocomplete from "@/components/address-autocomplete";
+
 import Header from "@/components/header";
 import Footer from "@/components/footer";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -307,9 +309,15 @@ export default function PubRegistration() {
                           Indirizzo Completo *
                         </FormLabel>
                         <FormControl>
-                          <Input 
-                            placeholder="es. Via Roma 123"
-                            {...field} 
+                          <AddressAutocomplete
+                            value={field.value || ""}
+                            onChange={(address, city, region, postalCode) => {
+                              field.onChange(address);
+                              if (city) form.setValue("city", city);
+                              if (region) form.setValue("region", region);
+                              if (postalCode) form.setValue("postalCode", postalCode);
+                            }}
+                            placeholder="Via Roma 123, Milano"
                           />
                         </FormControl>
                         <FormMessage />

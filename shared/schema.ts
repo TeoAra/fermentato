@@ -355,4 +355,9 @@ export const insertRatingSchema = createInsertSchema(ratings).omit({
 export const pubRegistrationSchema = insertPubSchema.extend({
   vatNumber: z.string().min(11, "P.IVA deve essere di almeno 11 caratteri"),
   businessName: z.string().min(1, "Ragione sociale è obbligatoria"),
+  description: z.string().nullable().optional(),
+  postalCode: z.string().nullable().optional(),
+  phone: z.string().nullable().optional(),
+  email: z.string().email("Email non valida").nullable().optional(),
+  websiteUrl: z.string().url("URL non valido").nullable().optional(),
 });

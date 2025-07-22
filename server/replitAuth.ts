@@ -102,9 +102,11 @@ export async function setupAuth(app: Express) {
   passport.deserializeUser((user: Express.User, cb) => cb(null, user));
 
   app.get("/api/login", (req, res, next) => {
-    // In development, use first domain from REPLIT_DOMAINS for localhost 
-    const hostname = req.hostname === 'localhost' ? 
-      process.env.REPLIT_DOMAINS!.split(',')[0] : req.hostname;
+    // In development, use first domain from REPLIT_DOMAINS for localhost/127.0.0.1
+    let hostname = req.hostname;
+    if (hostname === 'localhost' || hostname === '127.0.0.1' || hostname.includes('localhost')) {
+      hostname = process.env.REPLIT_DOMAINS!.split(',')[0];
+    }
     
     passport.authenticate(`replitauth:${hostname}`, {
       prompt: "login consent",
@@ -113,9 +115,11 @@ export async function setupAuth(app: Express) {
   });
 
   app.get("/api/callback", (req, res, next) => {
-    // In development, use first domain from REPLIT_DOMAINS for localhost
-    const hostname = req.hostname === 'localhost' ? 
-      process.env.REPLIT_DOMAINS!.split(',')[0] : req.hostname;
+    // In development, use first domain from REPLIT_DOMAINS for localhost/127.0.0.1
+    let hostname = req.hostname;
+    if (hostname === 'localhost' || hostname === '127.0.0.1' || hostname.includes('localhost')) {
+      hostname = process.env.REPLIT_DOMAINS!.split(',')[0];
+    }
     
     passport.authenticate(`replitauth:${hostname}`, {
       successReturnToOrRedirect: "/",
