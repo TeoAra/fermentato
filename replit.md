@@ -15,6 +15,9 @@ Fermenta.to is a full-stack web application for discovering Italian craft beers,
 ✅ **Database Schema** - Supporto logoUrl e coverImageUrl, validazione Zod per upload immagini
 ✅ **Database Pulito** - Eliminati i 6 pub demo fake, rimane solo "Luppolino Pub" realmente registrato
 ✅ **Sistema Pulito** - Solo pub reali in home e pub consigliati, nessuna demo data, errori LSP risolti
+✅ **Scraping Globale Implementato** - Sistema completo per raccolta birre da fonti internazionali (Open Brewery DB + dati curated)
+✅ **Database Arricchito** - Aggiunti 30+ birrifici globali e 50+ nuove birre autentiche dai cataloghi reali
+✅ **API Statistics** - Endpoint /api/stats per monitorare crescita database e distribuzione birre/stili
 
 ## User Preferences
 

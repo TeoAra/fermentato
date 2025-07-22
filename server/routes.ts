@@ -90,6 +90,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get all beers (public endpoint for browsing catalog)
+  app.get("/api/beers", async (req, res) => {
+    try {
+      const beers = await storage.getBeers();
+      res.json(beers);
+    } catch (error) {
+      console.error("Error fetching all beers:", error);
+      res.status(500).json({ message: "Failed to fetch beers" });
+    }
+  });
+
   // Get pub by ID
   app.get("/api/pubs/:id", async (req, res) => {
     try {
@@ -234,7 +245,70 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Database statistics endpoint
+  app.get("/api/stats", async (req, res) => {
+    try {
+      const [allPubs, allBreweries, allBeers] = await Promise.all([
+        storage.getPubs(),
+        storage.getBreweries(),
+        storage.getBeers(),
+      ]);
+
+      // Calculate statistics
+      const stats = {
+        totalPubs: allPubs.length,
+        totalBreweries: allBreweries.length,
+        totalBeers: allBeers.length,
+        averageBeersPerBrewery: allBreweries.length > 0 ? Math.round(allBeers.length / allBreweries.length) : 0,
+        topBeerStyles: allBeers.reduce((acc: Record<string, number>, beer) => {
+          const style = beer.style || "Unknown";
+          acc[style] = (acc[style] || 0) + 1;
+          return acc;
+        }, {}),
+        breweryLocations: allBreweries.reduce((acc: Record<string, number>, brewery) => {
+          const location = brewery.location || "Unknown";
+          acc[location] = (acc[location] || 0) + 1;
+          return acc;
+        }, {}),
+        lastUpdated: new Date().toISOString()
+      };
+
+      res.json(stats);
+    } catch (error) {
+      console.error("Error fetching database stats:", error);
+      res.status(500).json({ message: "Failed to fetch database statistics" });
+    }
+  });
+
   // Protected routes - authentication required
+
+  // Admin route for global beer scraping
+  app.post("/api/admin/scrape-beers", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const user = await storage.getUser(userId);
+      
+      if (!user) {
+        return res.status(403).json({ message: "Unauthorized" });
+      }
+
+      // Import the scraping function dynamically
+      const { globalBeerScraping } = await import("./global-beer-scraper");
+      
+      // Run scraping in background
+      globalBeerScraping()
+        .then(() => console.log("✅ Global beer scraping completed"))
+        .catch(err => console.error("❌ Scraping error:", err));
+
+      res.json({ 
+        message: "Global beer scraping started in background",
+        status: "processing"
+      });
+    } catch (error) {
+      console.error("Error starting scraping:", error);
+      res.status(500).json({ message: "Failed to start scraping" });
+    }
+  });
 
   // Register a new pub (one per user)
   app.post("/api/pubs", isAuthenticated, async (req: any, res) => {

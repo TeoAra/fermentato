@@ -346,6 +346,4 @@ async function scrapeAndAddBeers() {
 export { scrapeAndAddBeers };
 
 // Esegui direttamente se chiamato da CLI
-if (import.meta.main) {
-  scrapeAndAddBeers();
-}
+// (Questo è gestito dallo script principale)
