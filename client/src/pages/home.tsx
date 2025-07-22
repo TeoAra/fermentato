@@ -11,12 +11,7 @@ import { Link } from "wouter";
 export default function Home() {
   const { user } = useAuth();
   
-  // Redirect pub owners to their dashboard
-  useEffect(() => {
-    if (user?.userType === 'pub_owner') {
-      window.location.href = '/dashboard';
-    }
-  }, [user]);
+  // Note: Removed automatic redirect - pub owners can navigate freely
   
   const { data: pubs, isLoading: pubsLoading } = useQuery({
     queryKey: ["/api/pubs"],
@@ -92,34 +87,75 @@ export default function Home() {
           </div>
         </section>
 
-        {/* Featured Pubs */}
-        <section className="mb-12">
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="text-3xl font-bold text-secondary">Pub Consigliati</h2>
-            <a href="#" className="text-primary hover:text-orange-600 font-semibold">
-              Vedi tutti
-            </a>
-          </div>
+        {/* I Tuoi Pub (solo per pub owner) */}
+        {user?.userType === 'pub_owner' && (
+          <section className="mb-12">
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-3xl font-bold text-secondary">I Tuoi Pub</h2>
+              <Link href="/pub-registration">
+                <Button className="bg-primary text-white hover:bg-primary/90">
+                  + Aggiungi Pub
+                </Button>
+              </Link>
+            </div>
+            
+            {pubsLoading ? (
+              <div className="animate-pulse">
+                <div className="bg-white rounded-xl shadow-md h-80 w-full max-w-md"></div>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {Array.isArray(pubs) ? pubs.filter((pub: any) => pub.ownerId === user.id).map((pub: any) => (
+                  <PubCard 
+                    key={pub.id} 
+                    pub={pub} 
+                    beersOnTap={Math.floor(Math.random() * 15) + 5}
+                    isOpen={Math.random() > 0.3}
+                  />
+                )) : null}
+                {Array.isArray(pubs) && pubs.filter((pub: any) => pub.ownerId === user.id).length === 0 && (
+                  <div className="col-span-full text-center py-12">
+                    <p className="text-gray-500 mb-4">Non hai ancora registrato nessun pub</p>
+                    <Link href="/pub-registration">
+                      <Button>Registra il tuo primo pub</Button>
+                    </Link>
+                  </div>
+                )}
+              </div>
+            )}
+          </section>
+        )}
 
-          {pubsLoading ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {[...Array(3)].map((_, i) => (
-                <div key={i} className="bg-white rounded-xl shadow-md h-80 animate-pulse" />
-              ))}
+        {/* Pub in Evidenza (solo per clienti) */}
+        {user?.userType !== 'pub_owner' && (
+          <section className="mb-12">
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-3xl font-bold text-secondary">Pub Consigliati</h2>
+              <a href="#" className="text-primary hover:text-orange-600 font-semibold">
+                Vedi tutti
+              </a>
             </div>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {Array.isArray(pubs) ? pubs.slice(0, 3).map((pub: any) => (
-                <PubCard 
-                  key={pub.id} 
-                  pub={pub} 
-                  beersOnTap={Math.floor(Math.random() * 15) + 5}
-                  isOpen={Math.random() > 0.3}
-                />
-              )) : null}
-            </div>
-          )}
-        </section>
+
+            {pubsLoading ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {[...Array(3)].map((_, i) => (
+                  <div key={i} className="bg-white rounded-xl shadow-md h-80 animate-pulse" />
+                ))}
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {Array.isArray(pubs) ? pubs.slice(0, 3).map((pub: any) => (
+                  <PubCard 
+                    key={pub.id} 
+                    pub={pub} 
+                    beersOnTap={Math.floor(Math.random() * 15) + 5}
+                    isOpen={Math.random() > 0.3}
+                  />
+                )) : null}
+              </div>
+            )}
+          </section>
+        )}
 
         {/* Breweries */}
         <section className="mb-12">

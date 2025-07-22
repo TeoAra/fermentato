@@ -14,7 +14,6 @@ import { useLocation } from "wouter";
 import AddressAutocomplete from "@/components/address-autocomplete";
 import { ImageUpload } from "@/components/image-upload";
 
-import Header from "@/components/header";
 import Footer from "@/components/footer";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -124,8 +123,7 @@ export default function PubRegistration() {
   if (isLoading) {
     return (
       <div className="min-h-screen bg-gray-50">
-        <Header />
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8 pt-20 lg:pt-8">
           <div className="animate-pulse">
             <div className="h-8 bg-gray-300 rounded mb-6"></div>
             <div className="h-96 bg-gray-300 rounded"></div>
@@ -142,9 +140,7 @@ export default function PubRegistration() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <Header />
-      
-      <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8 pt-20 lg:pt-8">
         {/* Header */}
         <div className="text-center mb-8">
           <div className="flex items-center justify-center mb-4">
@@ -292,7 +288,8 @@ export default function PubRegistration() {
                           <Textarea 
                             placeholder="Racconta ai tuoi clienti cosa rende speciale il tuo pub..."
                             className="min-h-[100px]"
-                            {...field} 
+                            {...field}
+                            value={field.value || ""}
                           />
                         </FormControl>
                         <FormDescription>
@@ -307,7 +304,7 @@ export default function PubRegistration() {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <ImageUpload
                       label="Logo del Pub"
-                      currentImageUrl={logoUrl}
+                      currentImageUrl={logoUrl || undefined}
                       onImageChange={setLogoUrl}
                       folder="pub-logos"
                       aspectRatio="square"
@@ -315,7 +312,7 @@ export default function PubRegistration() {
                     />
                     <ImageUpload
                       label="Immagine Copertina"
-                      currentImageUrl={coverImageUrl}
+                      currentImageUrl={coverImageUrl || undefined}
                       onImageChange={setCoverImageUrl}
                       folder="pub-covers"
                       aspectRatio="landscape"
@@ -408,7 +405,8 @@ export default function PubRegistration() {
                           <FormControl>
                             <Input 
                               placeholder="es. 20121"
-                              {...field} 
+                              {...field}
+                              value={field.value || ""}
                             />
                           </FormControl>
                           <FormMessage />
@@ -438,7 +436,8 @@ export default function PubRegistration() {
                             <Input 
                               placeholder="es. +39 02 1234567"
                               type="tel"
-                              {...field} 
+                              {...field}
+                              value={field.value || ""}
                             />
                           </FormControl>
                           <FormMessage />
@@ -459,7 +458,8 @@ export default function PubRegistration() {
                             <Input 
                               placeholder="es. info@iltuopub.it"
                               type="email"
-                              {...field} 
+                              {...field}
+                              value={field.value || ""}
                             />
                           </FormControl>
                           <FormMessage />
@@ -481,7 +481,8 @@ export default function PubRegistration() {
                           <Input 
                             placeholder="es. https://www.iltuopub.it"
                             type="url"
-                            {...field} 
+                            {...field}
+                            value={field.value || ""}
                           />
                         </FormControl>
                         <FormDescription>
