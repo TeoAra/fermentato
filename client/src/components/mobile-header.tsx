@@ -28,13 +28,7 @@ export function MobileHeader({ onMenuToggle, isMenuOpen }: MobileHeaderProps) {
 
           {/* Actions */}
           <div className="flex items-center space-x-2">
-            <button
-              onClick={() => setIsSearchOpen(true)}
-              className="p-2 text-gray-600 dark:text-gray-300 hover:text-orange-600 dark:hover:text-orange-400 transition-colors"
-              aria-label="Cerca"
-            >
-              <Search className="h-5 w-5" />
-            </button>
+            {/* Ricerca rimossa dal mobile header per evitare ridondanza con bottom nav */}
             
             <button
               onClick={onMenuToggle}
