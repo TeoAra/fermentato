@@ -376,7 +376,7 @@ function PubInfoTab({ pub }: { pub: Pub }) {
         logoUrl,
         coverImageUrl,
       };
-      return apiRequest(`/api/pubs/${pub.id}`, "PATCH", submitData);
+      return apiRequest("/api/pubs/" + pub.id, "PATCH", submitData);
     },
     onSuccess: () => {
       toast({

@@ -45,12 +45,7 @@ function Router() {
           <Route path="/brewery/:id" component={BreweryDetail} />
           <Route path="/beer/:id" component={BeerDetail} />
           {/* Dashboard routes based on user type */}
-          <Route path="/dashboard" component={() => {
-            if (user?.userType === 'pub_owner') {
-              return <PubDashboard />;
-            }
-            return <Dashboard />;
-          }} />
+          <Route path="/dashboard" component={user?.userType === 'pub_owner' ? PubDashboard : Dashboard} />
           <Route path="/pub-registration" component={PubRegistration} />
           <Route path="/pub-dashboard" component={PubDashboard} />
           <Route path="/notifications" component={Notifications} />

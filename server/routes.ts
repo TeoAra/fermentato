@@ -182,13 +182,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Protected routes - authentication required
 
-  // Register a new pub (requires authentication)
+  // Register a new pub (one per user)
   app.post("/api/pubs", isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
-      const pubData = pubRegistrationSchema.parse({ ...req.body, ownerId: userId });
       
+      // Check if user already has a pub
+      const existingPubs = await storage.getPubsByOwner(userId);
+      if (existingPubs.length > 0) {
+        return res.status(400).json({ message: "Un utente può registrare solo un pub" });
+      }
+      
+      const pubData = pubRegistrationSchema.parse({ ...req.body, ownerId: userId });
       const pub = await storage.createPub(pubData);
+      
+      // Update user type to pub_owner
+      await storage.updateUserType(userId, 'pub_owner');
+      
       res.status(201).json(pub);
     } catch (error) {
       if (error instanceof z.ZodError) {

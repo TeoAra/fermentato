@@ -75,17 +75,19 @@ export default function PubRegistration() {
 
   const registrationMutation = useMutation({
     mutationFn: async (data: PubRegistrationForm) => {
-      const response = await apiRequest("POST", "/api/pubs", data);
+      const response = await apiRequest("/api/pubs", "POST", data);
       return response.json();
     },
     onSuccess: (pub) => {
       queryClient.invalidateQueries({ queryKey: ["/api/my-pubs"] });
       queryClient.invalidateQueries({ queryKey: ["/api/pubs"] });
+      // Update user type to pub_owner after successful pub creation
+      queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
       toast({
         title: "Successo!",
         description: `Il pub "${pub?.name || 'il tuo pub'}" è stato registrato correttamente`,
       });
-      navigate("/pub-dashboard");
+      navigate("/dashboard"); // Now will redirect to pub dashboard
     },
     onError: (error) => {
       if (isUnauthorizedError(error)) {

@@ -4,6 +4,14 @@
 
 Fermenta.to is a full-stack web application for discovering Italian craft beers, pubs, and breweries. The platform serves two main user types: customers who want to discover beers and pubs, and pub owners who can manage their establishments and tap lists. Built with React frontend, Express backend, and PostgreSQL database, using modern technologies like Drizzle ORM, Tailwind CSS, and shadcn/ui components.
 
+## Recent Changes (January 2025)
+
+✅ **Sistema Upload Immagini Completato** - Integrazione Cloudinary con drag&drop per logo e copertina pub
+✅ **Dashboard Unificate** - Routing automatico: pub owner → /dashboard (ora pub-dashboard), clienti → dashboard standard  
+✅ **Un Pub Per Utente** - Controllo server-side impedisce registrazione multipla, userType aggiornato automaticamente
+✅ **API Endpoints Corretti** - Risolti errori fetch PATCH /api/pubs/:id per aggiornamento dati pub
+✅ **Database Schema** - Supporto logoUrl e coverImageUrl, validazione Zod per upload immagini
+
 ## User Preferences
 
 Preferred communication style: Simple, everyday language.
