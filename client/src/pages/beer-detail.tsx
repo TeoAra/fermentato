@@ -27,15 +27,33 @@ interface Beer {
   };
 }
 
-interface TapLocation {
-  pub: {
-    id: number;
-    name: string;
-    city: string;
-    address: string;
-  };
-  price?: string;
-  isActive: boolean;
+interface BeerAvailability {
+  tapLocations: Array<{
+    pub: {
+      id: number;
+      name: string;
+      city: string;
+      address: string;
+    };
+    tapItem: {
+      id: number;
+      price?: string;
+      isActive: boolean;
+    };
+  }>;
+  bottleLocations: Array<{
+    pub: {
+      id: number;
+      name: string;
+      city: string;
+      address: string;
+    };
+    bottleItem: {
+      id: number;
+      price?: string;
+      isActive: boolean;
+    };
+  }>;
 }
 
 export default function BeerDetail() {
@@ -46,8 +64,8 @@ export default function BeerDetail() {
     enabled: !!id,
   });
 
-  const { data: tapLocations = [], isLoading: tapLoading } = useQuery<TapLocation[]>({
-    queryKey: ["/api/beers", id, "taps"],
+  const { data: availability, isLoading: availabilityLoading } = useQuery<BeerAvailability>({
+    queryKey: ["/api/beers", id, "availability"],
     enabled: !!id,
   });
 
@@ -174,44 +192,81 @@ export default function BeerDetail() {
           <CardContent className="p-6">
             <h2 className="text-2xl font-bold text-secondary mb-6">Dove Trovare Questa Birra</h2>
             
-            {tapLoading ? (
+            {availabilityLoading ? (
               <div className="space-y-4">
                 {[...Array(3)].map((_, i) => (
                   <div key={i} className="h-16 bg-gray-200 rounded animate-pulse"></div>
                 ))}
               </div>
-            ) : tapLocations.length > 0 ? (
-              <div className="space-y-4">
-                {tapLocations.map((location, index) => (
-                  <div key={index}>
-                    <Link href={`/pub/${location.pub.id}`}>
-                      <div className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50 transition-colors cursor-pointer">
-                        <div className="flex items-center space-x-4">
-                          <div className="w-3 h-3 bg-green-500 rounded-full"></div>
-                          <div>
-                            <h3 className="font-semibold text-lg">{location.pub.name}</h3>
-                            <p className="text-gray-600 flex items-center">
-                              <MapPin className="mr-1" size={16} />
-                              {location.pub.address}, {location.pub.city}
-                            </p>
-                          </div>
-                        </div>
-                        
-                        <div className="text-right">
-                          {location.price && (
-                            <div className="text-lg font-semibold text-primary">
-                              {location.price}
+            ) : availability && (availability.tapLocations.length > 0 || availability.bottleLocations.length > 0) ? (
+              <div className="space-y-6">
+                {/* Tap Locations */}
+                {availability.tapLocations.length > 0 && (
+                  <div>
+                    <h3 className="text-lg font-semibold text-orange-600 mb-3 flex items-center">
+                      <BeerIcon className="mr-2" size={20} />
+                      Alla Spina ({availability.tapLocations.length} pub)
+                    </h3>
+                    <div className="space-y-3">
+                      {availability.tapLocations.map((location, index) => (
+                        <Link key={`tap-${index}`} href={`/pub/${location.pub.id}`}>
+                          <div className="flex items-center justify-between p-4 border rounded-lg hover:bg-orange-50 transition-colors cursor-pointer">
+                            <div className="flex items-center space-x-4">
+                              <div className="w-3 h-3 bg-orange-500 rounded-full"></div>
+                              <div>
+                                <h4 className="font-semibold text-lg">{location.pub.name}</h4>
+                                <p className="text-gray-600 flex items-center">
+                                  <MapPin className="mr-1" size={16} />
+                                  {location.pub.address}, {location.pub.city}
+                                </p>
+                              </div>
                             </div>
-                          )}
-                          <Badge variant={location.isActive ? "default" : "secondary"}>
-                            {location.isActive ? "Disponibile" : "Non Disponibile"}
-                          </Badge>
-                        </div>
-                      </div>
-                    </Link>
-                    {index < tapLocations.length - 1 && <Separator className="my-2" />}
+                            
+                            <div className="text-right">
+                              <Badge variant="default" className="bg-orange-100 text-orange-800">
+                                Alla Spina
+                              </Badge>
+                            </div>
+                          </div>
+                        </Link>
+                      ))}
+                    </div>
                   </div>
-                ))}
+                )}
+
+                {/* Bottle Locations */}
+                {availability.bottleLocations.length > 0 && (
+                  <div>
+                    <h3 className="text-lg font-semibold text-green-600 mb-3 flex items-center">
+                      <Droplets className="mr-2" size={20} />
+                      In Bottiglia ({availability.bottleLocations.length} pub)
+                    </h3>
+                    <div className="space-y-3">
+                      {availability.bottleLocations.map((location, index) => (
+                        <Link key={`bottle-${index}`} href={`/pub/${location.pub.id}`}>
+                          <div className="flex items-center justify-between p-4 border rounded-lg hover:bg-green-50 transition-colors cursor-pointer">
+                            <div className="flex items-center space-x-4">
+                              <div className="w-3 h-3 bg-green-500 rounded-full"></div>
+                              <div>
+                                <h4 className="font-semibold text-lg">{location.pub.name}</h4>
+                                <p className="text-gray-600 flex items-center">
+                                  <MapPin className="mr-1" size={16} />
+                                  {location.pub.address}, {location.pub.city}
+                                </p>
+                              </div>
+                            </div>
+                            
+                            <div className="text-right">
+                              <Badge variant="default" className="bg-green-100 text-green-800">
+                                Bottiglia
+                              </Badge>
+                            </div>
+                          </div>
+                        </Link>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
             ) : (
               <div className="text-center py-8">

@@ -59,6 +59,17 @@ export interface IStorage {
   getBeersByBrewery(breweryId: number): Promise<Beer[]>;
   createBeer(beer: InsertBeer): Promise<Beer>;
   searchBeers(query: string): Promise<Beer[]>;
+  getBeerWithBrewery(id: number): Promise<(Beer & { brewery?: Brewery }) | undefined>;
+  getBeerAvailability(beerId: number): Promise<{
+    tapLocations: Array<{
+      pub: Pub;
+      tapItem: TapList;
+    }>;
+    bottleLocations: Array<{
+      pub: Pub;
+      bottleItem: BottleList;
+    }>;
+  }>;
 
   // Tap list operations
   getTapListByPub(pubId: number): Promise<(TapList & { beer: Beer & { brewery: Brewery } })[]>;
@@ -244,6 +255,73 @@ export class DatabaseStorage implements IStorage {
     return beer;
   }
 
+  async getBeerWithBrewery(id: number): Promise<(Beer & { brewery?: Brewery }) | undefined> {
+    const [result] = await db
+      .select()
+      .from(beers)
+      .leftJoin(breweries, eq(beers.breweryId, breweries.id))
+      .where(eq(beers.id, id));
+    
+    if (!result) return undefined;
+    
+    return {
+      ...result.beers,
+      brewery: result.breweries || undefined,
+    };
+  }
+
+  async getBeerAvailability(beerId: number): Promise<{
+    tapLocations: Array<{
+      pub: Pub;
+      tapItem: TapList;
+    }>;
+    bottleLocations: Array<{
+      pub: Pub;
+      bottleItem: BottleList;
+    }>;
+  }> {
+    // Get tap locations
+    const tapResults = await db
+      .select()
+      .from(tapList)
+      .leftJoin(pubs, eq(tapList.pubId, pubs.id))
+      .where(
+        and(
+          eq(tapList.beerId, beerId),
+          eq(tapList.isActive, true),
+          eq(tapList.isVisible, true)
+        )
+      );
+
+    // Get bottle locations
+    const bottleResults = await db
+      .select()
+      .from(bottleList)
+      .leftJoin(pubs, eq(bottleList.pubId, pubs.id))
+      .where(
+        and(
+          eq(bottleList.beerId, beerId),
+          eq(bottleList.isActive, true),
+          eq(bottleList.isVisible, true)
+        )
+      );
+
+    return {
+      tapLocations: tapResults
+        .filter(result => result.pubs)
+        .map(result => ({
+          pub: result.pubs!,
+          tapItem: result.tap_list,
+        })),
+      bottleLocations: bottleResults
+        .filter(result => result.pubs)
+        .map(result => ({
+          pub: result.pubs!,
+          bottleItem: result.bottle_list,
+        })),
+    };
+  }
+
   async getBeersByBrewery(breweryId: number): Promise<Beer[]> {
     return await db.select().from(beers).where(eq(beers.breweryId, breweryId)).orderBy(asc(beers.name));
   }
@@ -289,29 +367,7 @@ export class DatabaseStorage implements IStorage {
     }));
   }
 
-  async getBeerWithBrewery(id: number): Promise<(Beer & { brewery?: Brewery }) | undefined> {
-    const [result] = await db
-      .select()
-      .from(beers)
-      .leftJoin(breweries, eq(beers.breweryId, breweries.id))
-      .where(eq(beers.id, id));
-    
-    if (!result) return undefined;
-    
-    return {
-      ...result.beers,
-      brewery: result.breweries || undefined,
-    };
-  }
 
-  async getBeerTapLocations(beerId: number): Promise<Array<{
-    pub: { id: number; name: string; city: string; address: string };
-    price?: string;
-    isActive: boolean;
-  }>> {
-    // Per ora ritorna un array vuoto, implementeremo quando avremo dati reali nelle tap list
-    return [];
-  }
 
   // Tap list operations
   async getTapListByPub(pubId: number): Promise<(TapList & { beer: Beer & { brewery: Brewery } })[]> {

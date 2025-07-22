@@ -1,9 +1,10 @@
-import { useParams } from "wouter";
+import { useParams, Link } from "wouter";
 import { useQuery } from "@tanstack/react-query";
-import { Star, MapPin, Beer } from "lucide-react";
+import { Star, MapPin, Beer, Globe } from "lucide-react";
 import Footer from "@/components/footer";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 
 export default function BreweryDetail() {
   const { id } = useParams();
@@ -83,6 +84,19 @@ export default function BreweryDetail() {
                   <p className="text-gray-600 mb-4">{brewery.description}</p>
                 )}
 
+                {brewery?.websiteUrl && (
+                  <div className="flex items-center space-x-2">
+                    <Globe className="text-gray-500" size={16} />
+                    <a 
+                      href={brewery.websiteUrl} 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="text-primary hover:underline"
+                    >
+                      Sito Web Ufficiale
+                    </a>
+                  </div>
+                )}
 
               </div>
             </div>
@@ -103,36 +117,41 @@ export default function BreweryDetail() {
             ) : beers.length > 0 ? (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {beers.map((beer: any) => (
-                  <Card key={beer.id} className="hover:shadow-md transition-shadow">
-                    <CardContent className="p-4">
-                      <div className="flex items-start space-x-4">
-                        <img
-                          src={beer.logoUrl || "https://images.unsplash.com/photo-1571613316887-6f8d5cbf7ef7?ixlib=rb-4.0.3&auto=format&fit=crop&w=80&h=80"}
-                          alt={`${beer.name} logo`}
-                          className="w-16 h-16 rounded object-cover"
-                        />
-                        
-                        <div className="flex-1">
-                          <h3 className="font-semibold text-lg text-secondary mb-1">
-                            {beer.name}
-                          </h3>
+                  <Link key={beer.id} href={`/beer/${beer.id}`}>
+                    <Card className="hover:shadow-md transition-all hover:scale-105 cursor-pointer">
+                      <CardContent className="p-4">
+                        <div className="flex items-start space-x-4">
+                          <img
+                            src={beer.logoUrl || "https://images.unsplash.com/photo-1608270586620-248524c67de9?w=80&h=120&fit=crop"}
+                            alt={`${beer.name} bottle`}
+                            className="w-16 h-24 rounded object-cover shadow-sm"
+                          />
                           
-                          <div className="flex flex-wrap gap-2 mb-2">
-                            <Badge variant="outline">{beer.style}</Badge>
-                            {beer.abv && (
-                              <Badge variant="outline">{beer.abv}% ABV</Badge>
+                          <div className="flex-1">
+                            <h3 className="font-semibold text-lg text-secondary mb-1 hover:text-primary transition-colors">
+                              {beer.name}
+                            </h3>
+                            
+                            <div className="flex flex-wrap gap-2 mb-2">
+                              <Badge variant="outline">{beer.style}</Badge>
+                              {beer.abv && (
+                                <Badge variant="outline">{beer.abv}% ABV</Badge>
+                              )}
+                              {beer.ibu && (
+                                <Badge variant="outline">{beer.ibu} IBU</Badge>
+                              )}
+                            </div>
+                          
+                            {beer.description && (
+                              <p className="text-gray-600 text-sm mt-2 line-clamp-2">
+                                {beer.description}
+                              </p>
                             )}
                           </div>
-                          
-                          {beer.description && (
-                            <p className="text-sm text-gray-600 line-clamp-2">
-                              {beer.description}
-                            </p>
-                          )}
                         </div>
-                      </div>
-                    </CardContent>
-                  </Card>
+                      </CardContent>
+                    </Card>
+                  </Link>
                 ))}
               </div>
             ) : (

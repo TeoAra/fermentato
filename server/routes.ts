@@ -36,6 +36,60 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get beer details by ID
+  app.get("/api/beers/:id", async (req, res) => {
+    try {
+      const beerId = parseInt(req.params.id);
+      const beer = await storage.getBeer(beerId);
+      if (!beer) {
+        return res.status(404).json({ message: "Beer not found" });
+      }
+      res.json(beer);
+    } catch (error) {
+      console.error("Error fetching beer:", error);
+      res.status(500).json({ message: "Failed to fetch beer" });
+    }
+  });
+
+  // Get where a beer is available (tap and bottle)
+  app.get("/api/beers/:id/availability", async (req, res) => {
+    try {
+      const beerId = parseInt(req.params.id);
+      const availability = await storage.getBeerAvailability(beerId);
+      res.json(availability);
+    } catch (error) {
+      console.error("Error fetching beer availability:", error);
+      res.status(500).json({ message: "Failed to fetch beer availability" });
+    }
+  });
+
+  // Get brewery details by ID
+  app.get("/api/breweries/:id", async (req, res) => {
+    try {
+      const breweryId = parseInt(req.params.id);
+      const brewery = await storage.getBrewery(breweryId);
+      if (!brewery) {
+        return res.status(404).json({ message: "Brewery not found" });
+      }
+      res.json(brewery);
+    } catch (error) {
+      console.error("Error fetching brewery:", error);
+      res.status(500).json({ message: "Failed to fetch brewery" });
+    }
+  });
+
+  // Get all beers from a brewery
+  app.get("/api/breweries/:id/beers", async (req, res) => {
+    try {
+      const breweryId = parseInt(req.params.id);
+      const beers = await storage.getBeersByBrewery(breweryId);
+      res.json(beers);
+    } catch (error) {
+      console.error("Error fetching brewery beers:", error);
+      res.status(500).json({ message: "Failed to fetch brewery beers" });
+    }
+  });
+
   // Get pub by ID
   app.get("/api/pubs/:id", async (req, res) => {
     try {

@@ -1,5 +1,6 @@
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Link } from "wouter";
 
 interface TapListProps {
   tapList: Array<{
@@ -46,8 +47,16 @@ export default function TapList({ tapList }: TapListProps) {
                 className="w-12 h-12 rounded-full object-cover"
               />
               <div>
-                <h4 className="font-semibold text-lg text-secondary">{tap.beer.name}</h4>
-                <p className="text-gray-600">{tap.beer.brewery.name}</p>
+                <Link href={`/beer/${tap.beer.id}`}>
+                  <h4 className="font-semibold text-lg text-secondary hover:text-primary cursor-pointer transition-colors">
+                    {tap.beer.name}
+                  </h4>
+                </Link>
+                <Link href={`/brewery/${tap.beer.brewery.id}`}>
+                  <p className="text-gray-600 hover:text-primary cursor-pointer transition-colors">
+                    {tap.beer.brewery.name}
+                  </p>
+                </Link>
                 <div className="flex items-center space-x-2">
                   <Badge variant="outline">{tap.beer.style}</Badge>
                   {tap.beer.abv && (
