@@ -48,7 +48,7 @@ export function BottomNavigation() {
   return (
     <>
       <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-50 bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-800 safe-area-pb">
-        <div className="flex items-center py-2">
+        <div className="relative flex items-center py-2">
           {/* Home - Estremo sinistro senza spazi */}
           <Link href="/">
             <div className={`flex flex-col items-center justify-center py-2 px-3 transition-colors ${
@@ -76,13 +76,15 @@ export function BottomNavigation() {
             </Link>
 
             {/* Cerca - Centro assoluto */}
-            <button
-              onClick={() => setIsSearchOpen(true)}
-              className="bg-orange-600 hover:bg-orange-700 dark:bg-orange-500 dark:hover:bg-orange-600 text-white rounded-full p-4 mx-6 shadow-lg transition-all duration-200 transform active:scale-95"
-            >
-              <Search className="h-6 w-6" />
-              <span className="sr-only">Cerca</span>
-            </button>
+            <div className="absolute left-1/2 transform -translate-x-1/2">
+              <button
+                onClick={() => setIsSearchOpen(true)}
+                className="bg-orange-600 hover:bg-orange-700 dark:bg-orange-500 dark:hover:bg-orange-600 text-white rounded-full p-4 shadow-lg transition-all duration-200 transform active:scale-95"
+              >
+                <Search className="h-6 w-6" />
+                <span className="sr-only">Cerca</span>
+              </button>
+            </div>
 
             {/* Notifiche */}
             <Link href="/notifications">

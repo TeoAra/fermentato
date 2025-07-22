@@ -1,9 +1,8 @@
 import { useState, useEffect } from "react";
-import { Search, X } from "lucide-react";
-import { Dialog, DialogContent, DialogHeader } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { MapPin, Beer, Building } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
+import { Search, X, MapPin, Building, Beer } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
 
 interface SearchDialogProps {
   isOpen: boolean;
@@ -46,7 +45,7 @@ export default function SearchDialog({ isOpen, onClose }: SearchDialogProps) {
     <Dialog open={isOpen} onOpenChange={handleClose}>
       <DialogContent className="max-w-2xl max-h-[80vh] p-0 gap-0 overflow-hidden">
         <DialogHeader className="p-4 pb-0">
-          <h2 className="sr-only">Ricerca</h2>
+          <DialogTitle className="sr-only">Ricerca</DialogTitle>
           <div className="flex items-center space-x-2">
             <Search className="h-5 w-5 text-gray-400" />
             <Input
