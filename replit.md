@@ -18,6 +18,8 @@ Fermenta.to is a full-stack web application for discovering Italian craft beers,
 ✅ **Scraping Globale Implementato** - Sistema completo per raccolta birre da fonti internazionali (Open Brewery DB + dati curated)
 ✅ **Database Arricchito** - Aggiunti 30+ birrifici globali e 50+ nuove birre autentiche dai cataloghi reali
 ✅ **API Statistics** - Endpoint /api/stats per monitorare crescita database e distribuzione birre/stili
+✅ **Unificazione Birrifici** - Sistema automatico per consolidare duplicati (Baladin/Birra Baladin, Del Borgo/AB InBev, ecc.)
+✅ **Database Ottimizzato** - Eliminati 54 birrifici duplicati, consolidate 7000+ birre sotto nomi canonici
 
 ## User Preferences
 

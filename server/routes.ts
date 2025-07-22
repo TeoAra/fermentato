@@ -310,6 +310,34 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Admin route for unifying duplicate breweries
+  app.post("/api/admin/unify-breweries", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const user = await storage.getUser(userId);
+      
+      if (!user) {
+        return res.status(403).json({ message: "Unauthorized" });
+      }
+
+      // Import the unification function dynamically
+      const { unifyBreweries } = await import("./unify-breweries");
+      
+      // Run unification in background
+      unifyBreweries()
+        .then(() => console.log("✅ Brewery unification completed"))
+        .catch(err => console.error("❌ Unification error:", err));
+
+      res.json({ 
+        message: "Brewery unification started in background",
+        status: "processing"
+      });
+    } catch (error) {
+      console.error("Error starting unification:", error);
+      res.status(500).json({ message: "Failed to start unification" });
+    }
+  });
+
   // Register a new pub (one per user)
   app.post("/api/pubs", isAuthenticated, async (req: any, res) => {
     try {
