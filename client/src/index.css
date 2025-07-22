@@ -2,6 +2,17 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Mobile-first responsive utilities */
+@layer utilities {
+  .safe-area-pb {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+  
+  .safe-area-pt {
+    padding-top: env(safe-area-inset-top);
+  }
+}
+
 :root {
   --background: hsl(0, 0%, 100%);
   --foreground: hsl(20, 14.3%, 4.1%);
