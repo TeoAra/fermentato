@@ -70,7 +70,7 @@ export default function PubRegistration() {
 
   const registrationMutation = useMutation({
     mutationFn: async (data: PubRegistrationForm) => {
-      return apiRequest("/api/pubs", "POST", data);
+      return apiRequest("POST", "/api/pubs", data);
     },
     onSuccess: (pub) => {
       queryClient.invalidateQueries({ queryKey: ["/api/my-pubs"] });
