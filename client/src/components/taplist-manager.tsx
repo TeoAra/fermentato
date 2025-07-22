@@ -407,27 +407,31 @@ export function TapListManager({ pubId, tapList }: TapListManagerProps) {
                       </div>
                     </div>
 
-                    {item.description && (
-                      <p className="text-sm text-gray-600 mb-3">{item.description}</p>
-                    )}
-
-                    <div className="flex gap-4 text-sm">
+                    <div className="flex gap-4 text-sm mb-3">
                       {item.priceSmall && (
                         <span className="font-medium">
-                          Piccola: €{item.priceSmall}
+                          Piccola (0.20L): €{item.priceSmall}
                         </span>
                       )}
                       {item.priceMedium && (
                         <span className="font-medium">
-                          Media: €{item.priceMedium}
+                          Media (0.40L): €{item.priceMedium}
                         </span>
                       )}
                       {item.priceLarge && (
                         <span className="font-medium">
-                          Grande: €{item.priceLarge}
+                          Grande (0.50L): €{item.priceLarge}
                         </span>
                       )}
                     </div>
+
+                    {item.description && (
+                      <div className="bg-orange-50 border-l-4 border-orange-200 p-2 rounded">
+                        <p className="text-sm text-gray-700 italic">
+                          Note del pub: {item.description}
+                        </p>
+                      </div>
+                    )}
                   </div>
 
                   <div className="flex items-center gap-2 ml-4">

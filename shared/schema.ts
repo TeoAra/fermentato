@@ -100,6 +100,17 @@ export const beers = pgTable("beers", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+// Pub sizes - misure personalizzabili per ogni pub
+export const pubSizes = pgTable("pub_sizes", {
+  id: serial("id").primaryKey(),
+  pubId: integer("pub_id").references(() => pubs.id).notNull(),
+  sizeName: varchar("size_name").notNull(), // es. "Piccola", "Media", "Grande", "Boccale"
+  sizeVolume: varchar("size_volume").notNull(), // es. "0.20L", "0.40L", "0.50L", "1L"
+  orderIndex: integer("order_index").default(0), // ordine di visualizzazione
+  isActive: boolean("is_active").default(true),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
 // Tap list - which beers are currently on tap at which pubs
 export const tapList = pgTable("tap_list", {
   id: serial("id").primaryKey(),
@@ -107,6 +118,9 @@ export const tapList = pgTable("tap_list", {
   beerId: integer("beer_id").references(() => beers.id).notNull(),
   isActive: boolean("is_active").default(true),
   isVisible: boolean("is_visible").default(true), // Può essere nascosta temporaneamente
+  // Prezzi flessibili - JSON con misure personalizzate del pub
+  prices: jsonb("prices"), // es. {"0.20L": "4.50", "0.40L": "7.50", "0.50L": "9.00"}
+  // Manteniamo i campi legacy per compatibilità
   priceSmall: decimal("price_small", { precision: 5, scale: 2 }), // 0.2L
   priceMedium: decimal("price_medium", { precision: 5, scale: 2 }), // 0.4L
   priceLarge: decimal("price_large", { precision: 5, scale: 2 }), // 0.5L

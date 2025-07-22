@@ -243,10 +243,14 @@ export class DatabaseStorage implements IStorage {
     return beer;
   }
 
-  async searchBeers(query: string): Promise<Beer[]> {
-    return await db
-      .select()
+  async searchBeers(query: string): Promise<(Beer & { brewery: Brewery })[]> {
+    const results = await db
+      .select({
+        beer: beers,
+        brewery: breweries,
+      })
       .from(beers)
+      .leftJoin(breweries, eq(beers.breweryId, breweries.id))
       .where(
         or(
           ilike(beers.name, `%${query}%`),
@@ -256,6 +260,23 @@ export class DatabaseStorage implements IStorage {
       )
       .orderBy(asc(beers.name))
       .limit(5);
+
+    return results.map(result => ({
+      ...result.beer,
+      brewery: result.brewery || { 
+        id: result.beer.breweryId, 
+        name: 'Birrificio sconosciuto',
+        location: '',
+        region: '',
+        description: null,
+        logoUrl: null,
+        websiteUrl: null,
+        latitude: null,
+        longitude: null,
+        rating: '0',
+        createdAt: new Date()
+      }
+    }));
   }
 
   async getBeerWithBrewery(id: number): Promise<(Beer & { brewery?: Brewery }) | undefined> {
@@ -456,28 +477,8 @@ export class DatabaseStorage implements IStorage {
       this.searchBeers(query),
     ]);
 
-    // Get brewery info for beers
-    const beersWithBrewery = await Promise.all(
-      beerResults.map(async (beer) => {
-        const brewery = await this.getBrewery(beer.breweryId);
-        return { 
-          ...beer, 
-          brewery: brewery || { 
-            id: beer.breweryId, 
-            name: 'Birrificio sconosciuto',
-            location: '',
-            region: '',
-            description: null,
-            logoUrl: null,
-            websiteUrl: null,
-            latitude: null,
-            longitude: null,
-            rating: '0',
-            createdAt: new Date()
-          }
-        };
-      })
-    );
+    // Get brewery info for beers - usa il metodo aggiornato searchBeers
+    const beersWithBrewery = beerResults;
 
     return {
       pubs: pubResults,
