@@ -1,7 +1,7 @@
 import { useParams } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
-import { Star, MapPin, Clock, Phone, Globe } from "lucide-react";
+import { Star, MapPin, Clock, Phone, Globe, Wine } from "lucide-react";
 import Footer from "@/components/footer";
 import TapList from "@/components/tap-list";
 import FoodMenu from "@/components/food-menu";
@@ -24,6 +24,11 @@ export default function PubDetail() {
 
   const { data: menu, isLoading: menuLoading } = useQuery({
     queryKey: ["/api/pubs", id, "menu"],
+    enabled: !!id,
+  });
+
+  const { data: bottles, isLoading: bottlesLoading } = useQuery({
+    queryKey: ["/api/pubs", id, "bottles"],
     enabled: !!id,
   });
 
@@ -95,9 +100,9 @@ export default function PubDetail() {
                     <span className="text-gray-500 ml-1">recensioni</span>
                   </div>
                   
-                  <div className="flex items-center text-green-600">
+                  <div className={`flex items-center ${isOpenNow(pub.openingHours) ? 'text-green-600' : 'text-red-600'}`}>
                     <Clock className="mr-1" size={16} />
-                    <span className="text-sm">Aperto ora</span>
+                    <span className="text-sm">{isOpenNow(pub.openingHours) ? 'Aperto ora' : 'Chiuso ora'}</span>
                   </div>
                 </div>
               </div>
@@ -143,8 +148,9 @@ export default function PubDetail() {
         <Card>
           <CardContent className="p-6">
             <Tabs defaultValue="taplist" className="w-full">
-              <TabsList className="grid w-full grid-cols-3">
+              <TabsList className="grid w-full grid-cols-4">
                 <TabsTrigger value="taplist">Tap List</TabsTrigger>
+                <TabsTrigger value="bottles">Cantina</TabsTrigger>
                 <TabsTrigger value="menu">Menu Cibo</TabsTrigger>
                 <TabsTrigger value="info">Informazioni</TabsTrigger>
               </TabsList>
@@ -158,6 +164,18 @@ export default function PubDetail() {
                   </div>
                 ) : (
                   <TapList tapList={tapList || []} />
+                )}
+              </TabsContent>
+              
+              <TabsContent value="bottles" className="mt-6">
+                {bottlesLoading ? (
+                  <div className="space-y-4">
+                    {[...Array(3)].map((_, i) => (
+                      <div key={i} className="h-20 bg-gray-200 rounded animate-pulse"></div>
+                    ))}
+                  </div>
+                ) : (
+                  <BottleList bottles={bottles || []} />
                 )}
               </TabsContent>
               
@@ -191,12 +209,14 @@ export default function PubDetail() {
                     </div>
                   </div>
 
-                  {pub.openingHours && (
-                    <div>
-                      <h3 className="text-xl font-semibold mb-4">Orari di Apertura</h3>
+                  <div>
+                    <h3 className="text-xl font-semibold mb-4">Orari di Apertura</h3>
+                    {pub.openingHours ? (
+                      <OpeningHoursDisplay openingHours={pub.openingHours} />
+                    ) : (
                       <p className="text-gray-600">Informazioni sugli orari non disponibili</p>
-                    </div>
-                  )}
+                    )}
+                  </div>
 
                   <div>
                     <h3 className="text-xl font-semibold mb-4">Contatti</h3>
@@ -225,6 +245,119 @@ export default function PubDetail() {
       </main>
 
       <Footer />
+    </div>
+  );
+}
+
+// Utility function to check if pub is open now
+function isOpenNow(openingHours: any): boolean {
+  if (!openingHours) return false;
+  
+  const now = new Date();
+  const dayNames = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+  const currentDay = dayNames[now.getDay()];
+  const currentTime = now.getHours() * 100 + now.getMinutes(); // HHMM format
+  
+  const dayHours = openingHours[currentDay];
+  if (!dayHours || dayHours.isClosed) return false;
+  
+  if (dayHours.open && dayHours.close) {
+    const openTime = parseInt(dayHours.open.replace(':', ''));
+    const closeTime = parseInt(dayHours.close.replace(':', ''));
+    
+    return currentTime >= openTime && currentTime <= closeTime;
+  }
+  
+  return false;
+}
+
+// Component to display opening hours
+function OpeningHoursDisplay({ openingHours }: { openingHours: any }) {
+  const days = [
+    { key: 'monday', label: 'Lunedì' },
+    { key: 'tuesday', label: 'Martedì' },
+    { key: 'wednesday', label: 'Mercoledì' },
+    { key: 'thursday', label: 'Giovedì' },
+    { key: 'friday', label: 'Venerdì' },
+    { key: 'saturday', label: 'Sabato' },
+    { key: 'sunday', label: 'Domenica' },
+  ];
+
+  return (
+    <div className="space-y-2">
+      {days.map((day) => {
+        const dayHours = openingHours[day.key];
+        return (
+          <div key={day.key} className="flex justify-between items-center py-2 border-b border-gray-100 last:border-b-0">
+            <span className="font-medium">{day.label}</span>
+            <span className="text-gray-600">
+              {dayHours?.isClosed ? (
+                <span className="text-red-600">Chiuso</span>
+              ) : dayHours?.open && dayHours?.close ? (
+                `${dayHours.open} - ${dayHours.close}`
+              ) : (
+                <span className="text-gray-400">Non definito</span>
+              )}
+            </span>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+// Component to display bottle list
+function BottleList({ bottles }: { bottles: any[] }) {
+  if (!bottles || bottles.length === 0) {
+    return (
+      <div className="text-center py-8">
+        <Wine className="mx-auto w-16 h-16 text-gray-300 mb-4" />
+        <p className="text-gray-500">Cantina birre non disponibile</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-4">
+      <h3 className="text-2xl font-bold text-secondary mb-6">Cantina Birre</h3>
+      
+      {bottles.map((bottle: any) => (
+        <Card key={bottle.id} className="p-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-4">
+              {bottle.beer.logoUrl && (
+                <img
+                  src={bottle.beer.logoUrl}
+                  alt={bottle.beer.name}
+                  className="w-12 h-12 rounded-lg object-cover"
+                />
+              )}
+              <div>
+                <h4 className="font-semibold text-lg">{bottle.beer.name}</h4>
+                <p className="text-gray-600">{bottle.beer.brewery.name}</p>
+                <div className="flex items-center space-x-2 mt-1">
+                  <Badge variant="outline">{bottle.beer.style}</Badge>
+                  <span className="text-sm text-gray-500">{bottle.beer.abv}% ABV</span>
+                  <span className="text-sm text-gray-500">{bottle.bottleSize}</span>
+                </div>
+                {bottle.description && (
+                  <p className="text-sm text-gray-600 mt-1">{bottle.description}</p>
+                )}
+              </div>
+            </div>
+            
+            <div className="text-right">
+              <span className="text-lg font-bold text-primary">€{bottle.priceBottle}</span>
+              {bottle.quantity && (
+                <p className="text-sm text-gray-500">Disponibili: {bottle.quantity}</p>
+              )}
+              {!bottle.isActive && (
+                <Badge variant="destructive" className="ml-2">Non Disponibile</Badge>
+              )}
+            </div>
+          </div>
+        </Card>
+      ))}
     </div>
   );
 }
