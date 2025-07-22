@@ -223,29 +223,30 @@ export default function PubDashboard() {
   }
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="flex items-center justify-between mb-8">
+    <div className="container mx-auto px-2 sm:px-4 py-4 sm:py-8">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4 sm:mb-8 gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">
             Dashboard Pub
           </h1>
-          <p className="text-gray-600 dark:text-gray-300 mt-2">
+          <p className="text-gray-600 dark:text-gray-300 mt-2 text-sm sm:text-base">
             Gestisci i tuoi pub e le loro tap list
           </p>
           {user && (
-            <p className="text-sm text-gray-500 mt-1">
+            <p className="text-xs sm:text-sm text-gray-500 mt-1">
               Benvenuto, {user.firstName} {user.lastName}
             </p>
           )}
         </div>
-        <div className="flex items-center gap-4">
-          <Button asChild variant="outline" size="sm">
+        <div className="flex items-center gap-2 sm:gap-4">
+          <Button asChild variant="outline" size="sm" className="text-xs sm:text-sm">
             <a href="/pub-registration">
-              <Plus className="w-4 h-4 mr-2" />
-              Aggiungi Pub
+              <Plus className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
+              <span className="hidden sm:inline">Aggiungi Pub</span>
+              <span className="sm:hidden">+ Pub</span>
             </a>
           </Button>
-          <Button asChild variant="outline" size="sm">
+          <Button asChild variant="outline" size="sm" className="text-xs sm:text-sm">
             <a href="/api/logout">
               Esci
             </a>
@@ -306,26 +307,31 @@ export default function PubDashboard() {
 
           {/* Tabs per gestione */}
           <Tabs defaultValue="taplist" className="space-y-6">
-            <TabsList className="grid w-full grid-cols-5">
-              <TabsTrigger value="info" className="flex items-center gap-2">
-                <Building2 className="w-4 h-4" />
-                Info Pub
+            <TabsList className="grid w-full grid-cols-3 sm:grid-cols-5 h-auto gap-1">
+              <TabsTrigger value="info" className="flex items-center gap-1 text-xs sm:text-sm px-1 sm:px-3 py-2">
+                <Building2 className="w-3 h-3 sm:w-4 sm:h-4" />
+                <span className="hidden sm:inline">Info Pub</span>
+                <span className="sm:hidden">Info</span>
               </TabsTrigger>
-              <TabsTrigger value="taplist" className="flex items-center gap-2">
-                <Beer className="w-4 h-4" />
-                Tap List ({tapList.length})
+              <TabsTrigger value="taplist" className="flex items-center gap-1 text-xs sm:text-sm px-1 sm:px-3 py-2">
+                <Beer className="w-3 h-3 sm:w-4 sm:h-4" />
+                <span className="hidden sm:inline">Tap List ({tapList.length})</span>
+                <span className="sm:hidden">Spine</span>
               </TabsTrigger>
-              <TabsTrigger value="bottles" className="flex items-center gap-2">
-                <Wine className="w-4 h-4" />
-                Cantina ({bottleList.length})
+              <TabsTrigger value="bottles" className="flex items-center gap-1 text-xs sm:text-sm px-1 sm:px-3 py-2">
+                <Wine className="w-3 h-3 sm:w-4 sm:h-4" />
+                <span className="hidden sm:inline">Cantina ({bottleList.length})</span>
+                <span className="sm:hidden">Cantina</span>
               </TabsTrigger>
-              <TabsTrigger value="menu" className="flex items-center gap-2">
-                <Utensils className="w-4 h-4" />
-                Menu ({menu.length})
+              <TabsTrigger value="menu" className="flex items-center gap-1 text-xs sm:text-sm px-1 sm:px-3 py-2">
+                <Utensils className="w-3 h-3 sm:w-4 sm:h-4" />
+                <span className="hidden sm:inline">Menu ({menu.length})</span>
+                <span className="sm:hidden">Menu</span>
               </TabsTrigger>
-              <TabsTrigger value="orari" className="flex items-center gap-2">
-                <Clock className="w-4 h-4" />
-                Orari
+              <TabsTrigger value="orari" className="flex items-center gap-1 text-xs sm:text-sm px-1 sm:px-3 py-2">
+                <Clock className="w-3 h-3 sm:w-4 sm:h-4" />
+                <span className="hidden sm:inline">Orari</span>
+                <span className="sm:hidden">Orari</span>
               </TabsTrigger>
             </TabsList>
 

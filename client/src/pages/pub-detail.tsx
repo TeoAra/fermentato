@@ -62,56 +62,66 @@ export default function PubDetail() {
   return (
     <div className="min-h-screen bg-gray-50">
       
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <main className="max-w-7xl mx-auto px-2 sm:px-4 lg:px-8 py-4 sm:py-8">
         {/* Pub Header */}
-        <Card className="mb-8 overflow-hidden">
+        <Card className="mb-4 sm:mb-8 overflow-hidden">
           <div className="relative">
             <img
               src={pub.coverImageUrl || "https://images.unsplash.com/photo-1514933651103-005eec06c04b?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&h=400"}
               alt={`${pub.name} - Copertina`}
-              className="w-full h-64 md:h-80 object-cover"
+              className="w-full h-48 sm:h-64 md:h-80 object-cover"
             />
             <div className="absolute inset-0 bg-black bg-opacity-40"></div>
-            <div className="absolute bottom-4 left-4 text-white">
-              <div className="flex items-center space-x-2 mb-2">
-                <h1 className="text-3xl font-bold">{pub.name}</h1>
+            <div className="absolute bottom-2 sm:bottom-4 left-2 sm:left-4 text-white pr-4">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:space-x-2 mb-2">
+                <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold break-words">{pub.name}</h1>
                 {!pub.isActive && (
-                  <Badge variant="destructive">Temporaneamente Chiuso</Badge>
+                  <Badge variant="destructive" className="mt-1 sm:mt-0 w-fit">Temporaneamente Chiuso</Badge>
                 )}
               </div>
-              <p className="text-lg flex items-center">
-                <MapPin className="mr-2" size={20} />
-                {pub.address}, {pub.city}
+              <p className="text-sm sm:text-lg flex items-start sm:items-center">
+                <MapPin className="mr-1 sm:mr-2 mt-1 sm:mt-0 flex-shrink-0" size={16} />
+                <span className="break-words">{pub.address}, {pub.city}</span>
               </p>
             </div>
           </div>
 
-          <CardContent className="p-6">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <div className="md:col-span-2">
+          <CardContent className="p-3 sm:p-6">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 lg:gap-6">
+              <div className="lg:col-span-2">
                 {pub.description && (
-                  <p className="text-gray-600 mb-4">{pub.description}</p>
+                  <p className="text-gray-600 mb-4 text-sm sm:text-base">{pub.description}</p>
                 )}
                 
-                <div className="flex items-center space-x-4 mb-4">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:space-x-4 space-y-2 sm:space-y-0 mb-4">
                   <div className="flex items-center">
-                    <Star className="text-yellow-400 mr-1" size={20} />
-                    <span className="font-semibold">{pub.rating || "N/A"}</span>
-                    <span className="text-gray-500 ml-1">recensioni</span>
+                    <Star className="text-yellow-400 mr-1" size={16} />
+                    <span className="font-semibold text-sm sm:text-base">{pub.rating || "N/A"}</span>
+                    <span className="text-gray-500 ml-1 text-sm sm:text-base">recensioni</span>
                   </div>
                   
                   <div className={`flex items-center ${isOpenNow(pub.openingHours) ? 'text-green-600' : 'text-red-600'}`}>
-                    <Clock className="mr-1" size={16} />
+                    <Clock className="mr-1" size={14} />
                     <span className="text-sm">{isOpenNow(pub.openingHours) ? 'Aperto ora' : 'Chiuso ora'}</span>
                   </div>
                 </div>
               </div>
 
-              <div className="space-y-3">
+              <div className="space-y-3 mt-4 lg:mt-0">
+                {pub.logoUrl && (
+                  <div className="flex justify-center lg:justify-start mb-4">
+                    <img 
+                      src={pub.logoUrl}
+                      alt={`${pub.name} - Logo`}
+                      className="w-16 h-16 sm:w-20 sm:h-20 object-cover rounded-lg"
+                    />
+                  </div>
+                )}
+                
                 {pub.phone && (
                   <div className="flex items-center">
-                    <Phone className="mr-2 text-gray-500" size={16} />
-                    <a href={`tel:${pub.phone}`} className="text-primary hover:underline">
+                    <Phone className="mr-2 text-gray-500 flex-shrink-0" size={16} />
+                    <a href={`tel:${pub.phone}`} className="text-primary hover:underline text-sm sm:text-base break-all">
                       {pub.phone}
                     </a>
                   </div>
@@ -119,12 +129,12 @@ export default function PubDetail() {
                 
                 {pub.websiteUrl && (
                   <div className="flex items-center">
-                    <Globe className="mr-2 text-gray-500" size={16} />
+                    <Globe className="mr-2 text-gray-500 flex-shrink-0" size={16} />
                     <a 
                       href={pub.websiteUrl} 
                       target="_blank" 
                       rel="noopener noreferrer"
-                      className="text-primary hover:underline"
+                      className="text-primary hover:underline text-sm sm:text-base"
                     >
                       Sito Web
                     </a>
@@ -133,8 +143,8 @@ export default function PubDetail() {
 
                 {pub.email && (
                   <div className="flex items-center">
-                    <span className="mr-2 text-gray-500">@</span>
-                    <a href={`mailto:${pub.email}`} className="text-primary hover:underline">
+                    <span className="mr-2 text-gray-500 flex-shrink-0">@</span>
+                    <a href={`mailto:${pub.email}`} className="text-primary hover:underline text-sm sm:text-base break-all">
                       {pub.email}
                     </a>
                   </div>
@@ -146,13 +156,13 @@ export default function PubDetail() {
 
         {/* Tabs */}
         <Card>
-          <CardContent className="p-6">
+          <CardContent className="p-3 sm:p-6">
             <Tabs defaultValue="taplist" className="w-full">
-              <TabsList className="grid w-full grid-cols-4">
-                <TabsTrigger value="taplist">Tap List</TabsTrigger>
-                <TabsTrigger value="bottles">Cantina</TabsTrigger>
-                <TabsTrigger value="menu">Menu Cibo</TabsTrigger>
-                <TabsTrigger value="info">Informazioni</TabsTrigger>
+              <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4 h-auto">
+                <TabsTrigger value="taplist" className="text-xs sm:text-sm px-1 sm:px-3">Tap List</TabsTrigger>
+                <TabsTrigger value="bottles" className="text-xs sm:text-sm px-1 sm:px-3">Cantina</TabsTrigger>
+                <TabsTrigger value="menu" className="text-xs sm:text-sm px-1 sm:px-3">Menu</TabsTrigger>
+                <TabsTrigger value="info" className="text-xs sm:text-sm px-1 sm:px-3">Info</TabsTrigger>
               </TabsList>
               
               <TabsContent value="taplist" className="mt-6">
