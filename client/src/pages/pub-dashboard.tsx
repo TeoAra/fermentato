@@ -18,7 +18,7 @@ import { useToast } from "@/hooks/use-toast";
 import { isUnauthorizedError } from "@/lib/authUtils";
 import { 
   Beer, Wine, Utensils, Building2, Plus, AlertCircle, LogIn,
-  Facebook, Instagram, X as Twitter, Music, Clock
+  Facebook, Instagram, X as Twitter, Music, Clock, MapPin, Phone, Globe
 } from "lucide-react";
 import { SiFacebook, SiInstagram, SiX, SiTiktok } from "react-icons/si";
 
@@ -282,25 +282,73 @@ export default function PubDashboard() {
           {/* Info Pub */}
           <Card>
             <CardHeader>
-              <div className="flex items-start justify-between">
-                <div>
-                  <CardTitle className="text-2xl">{selectedPub.name}</CardTitle>
-                  <CardDescription className="text-lg">
-                    {selectedPub.address}, {selectedPub.city} ({selectedPub.region})
-                  </CardDescription>
+              <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+                <div className="flex-1">
+                  {/* Nome con logo rotondo */}
+                  <div className="flex items-center gap-3 mb-3">
+                    {selectedPub.logoUrl && (
+                      <img
+                        src={selectedPub.logoUrl}
+                        alt={selectedPub.name}
+                        className="w-12 h-12 sm:w-16 sm:h-16 rounded-full object-cover border-2 border-gray-200 shadow-sm"
+                      />
+                    )}
+                    <CardTitle className="text-2xl sm:text-3xl">{selectedPub.name}</CardTitle>
+                  </div>
+                  
+                  {/* Indirizzo con mappa */}
+                  <div className="flex items-start gap-2 mb-3">
+                    <MapPin className="text-primary flex-shrink-0 mt-1" size={18} />
+                    <div>
+                      <CardDescription className="text-base font-medium text-gray-800 dark:text-gray-200">
+                        {selectedPub.address}
+                      </CardDescription>
+                      <CardDescription className="text-sm text-gray-600">
+                        {selectedPub.city}, {selectedPub.region}
+                      </CardDescription>
+                      <button 
+                        className="text-primary hover:text-primary/80 text-sm font-medium mt-1 hover:underline"
+                        onClick={() => {
+                          const address = encodeURIComponent(`${selectedPub.address}, ${selectedPub.city}, Italia`);
+                          window.open(`https://maps.google.com/maps?q=${address}`, '_blank');
+                        }}
+                      >
+                        Vedi su Google Maps
+                      </button>
+                    </div>
+                  </div>
+
                   {selectedPub.description && (
-                    <p className="text-gray-600 dark:text-gray-300 mt-2">
+                    <p className="text-gray-600 dark:text-gray-300 mt-3 bg-gray-50 dark:bg-gray-700 p-3 rounded-lg">
                       {selectedPub.description}
                     </p>
                   )}
                 </div>
-                {selectedPub.logoUrl && (
-                  <img
-                    src={selectedPub.logoUrl}
-                    alt={selectedPub.name}
-                    className="w-16 h-16 rounded-lg object-cover"
-                  />
-                )}
+                
+                {/* Info aggiuntive visibili */}
+                <div className="space-y-2 text-sm">
+                  {selectedPub.phone && (
+                    <div className="flex items-center gap-2">
+                      <Phone className="text-primary" size={16} />
+                      <a href={`tel:${selectedPub.phone}`} className="text-gray-700 hover:text-primary font-medium">
+                        {selectedPub.phone}
+                      </a>
+                    </div>
+                  )}
+                  {selectedPub.websiteUrl && (
+                    <div className="flex items-center gap-2">
+                      <Globe className="text-primary" size={16} />
+                      <a 
+                        href={selectedPub.websiteUrl} 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        className="text-gray-700 hover:text-primary font-medium"
+                      >
+                        Sito Web
+                      </a>
+                    </div>
+                  )}
+                </div>
               </div>
             </CardHeader>
           </Card>

@@ -1,7 +1,7 @@
 import { useParams } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
-import { Star, MapPin, Clock, Phone, Globe, Wine } from "lucide-react";
+import { Star, MapPin, Clock, Phone, Globe, Wine, Facebook, Instagram } from "lucide-react";
 import Footer from "@/components/footer";
 import TapList from "@/components/tap-list";
 import FoodMenu from "@/components/food-menu";
@@ -102,16 +102,33 @@ export default function PubDetail() {
             />
             <div className="absolute inset-0 bg-black bg-opacity-40"></div>
             <div className="absolute bottom-2 sm:bottom-4 left-2 sm:left-4 text-white pr-4">
-              <div className="flex flex-col sm:flex-row sm:items-center sm:space-x-2 mb-2">
-                <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold break-words">{pub.name}</h1>
+              <div className="flex flex-col sm:flex-row sm:items-center sm:space-x-3 mb-3">
+                <div className="flex items-center space-x-3">
+                  {pub.logoUrl && (
+                    <img
+                      src={pub.logoUrl}
+                      alt={`${pub.name} - Logo`}
+                      className="w-12 h-12 sm:w-16 sm:h-16 rounded-full object-cover border-2 border-white shadow-lg"
+                    />
+                  )}
+                  <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold break-words">{pub.name}</h1>
+                </div>
                 {!pub.isActive && (
-                  <Badge variant="destructive" className="mt-1 sm:mt-0 w-fit">Temporaneamente Chiuso</Badge>
+                  <Badge variant="destructive" className="mt-2 sm:mt-0 w-fit">Temporaneamente Chiuso</Badge>
                 )}
               </div>
-              <p className="text-sm sm:text-lg flex items-start sm:items-center">
-                <MapPin className="mr-1 sm:mr-2 mt-1 sm:mt-0 flex-shrink-0" size={16} />
-                <span className="break-words">{pub.address}, {pub.city}</span>
-              </p>
+              
+              {/* Mappa cliccabile al posto dell'indirizzo */}
+              <div 
+                className="inline-flex items-center bg-black/30 backdrop-blur-sm rounded-lg px-3 py-2 cursor-pointer hover:bg-black/40 transition-colors"
+                onClick={() => {
+                  const address = encodeURIComponent(`${pub.address}, ${pub.city}, Italia`);
+                  window.open(`https://maps.google.com/maps?q=${address}`, '_blank');
+                }}
+              >
+                <MapPin className="mr-2 flex-shrink-0" size={16} />
+                <span className="text-sm sm:text-base">Vedi su Mappa</span>
+              </div>
             </div>
           </div>
 
@@ -136,21 +153,33 @@ export default function PubDetail() {
                 </div>
               </div>
 
-              <div className="space-y-3 mt-4 lg:mt-0">
-                {pub.logoUrl && (
-                  <div className="flex justify-center lg:justify-start mb-4">
-                    <img 
-                      src={pub.logoUrl}
-                      alt={`${pub.name} - Logo`}
-                      className="w-16 h-16 sm:w-20 sm:h-20 object-cover rounded-lg"
-                    />
+              <div className="space-y-4 mt-4 lg:mt-0">
+                <h3 className="text-lg font-semibold text-secondary border-b border-gray-200 pb-2">Informazioni Contatto</h3>
+                
+                {/* Indirizzo completo con mappa */}
+                <div className="space-y-2">
+                  <div className="flex items-start">
+                    <MapPin className="mr-3 text-primary flex-shrink-0 mt-1" size={18} />
+                    <div>
+                      <p className="font-medium text-gray-800">{pub.address}</p>
+                      <p className="text-gray-600 text-sm">{pub.city}, {pub.region}</p>
+                      <button 
+                        className="text-primary hover:text-primary/80 text-sm font-medium mt-1 hover:underline"
+                        onClick={() => {
+                          const address = encodeURIComponent(`${pub.address}, ${pub.city}, Italia`);
+                          window.open(`https://maps.google.com/maps?q=${address}`, '_blank');
+                        }}
+                      >
+                        Apri in Google Maps
+                      </button>
+                    </div>
                   </div>
-                )}
+                </div>
                 
                 {pub.phone && (
                   <div className="flex items-center">
-                    <Phone className="mr-2 text-gray-500 flex-shrink-0" size={16} />
-                    <a href={`tel:${pub.phone}`} className="text-primary hover:underline text-sm sm:text-base break-all">
+                    <Phone className="mr-3 text-primary flex-shrink-0" size={18} />
+                    <a href={`tel:${pub.phone}`} className="text-gray-800 font-medium hover:text-primary hover:underline text-base break-all">
                       {pub.phone}
                     </a>
                   </div>
@@ -158,26 +187,52 @@ export default function PubDetail() {
                 
                 {pub.websiteUrl && (
                   <div className="flex items-center">
-                    <Globe className="mr-2 text-gray-500 flex-shrink-0" size={16} />
+                    <Globe className="mr-3 text-primary flex-shrink-0" size={18} />
                     <a 
                       href={pub.websiteUrl} 
                       target="_blank" 
                       rel="noopener noreferrer"
-                      className="text-primary hover:underline text-sm sm:text-base"
+                      className="text-gray-800 font-medium hover:text-primary hover:underline text-base"
                     >
-                      Sito Web
+                      Visita il Sito Web
                     </a>
                   </div>
                 )}
 
                 {pub.email && (
                   <div className="flex items-center">
-                    <span className="mr-2 text-gray-500 flex-shrink-0">@</span>
-                    <a href={`mailto:${pub.email}`} className="text-primary hover:underline text-sm sm:text-base break-all">
+                    <span className="mr-3 text-primary flex-shrink-0 text-lg">@</span>
+                    <a href={`mailto:${pub.email}`} className="text-gray-800 font-medium hover:text-primary hover:underline text-base break-all">
                       {pub.email}
                     </a>
                   </div>
                 )}
+                
+                {/* Social Media - se presenti */}
+                <div className="flex items-center gap-4 pt-2">
+                  {pub.facebookUrl && (
+                    <a 
+                      href={pub.facebookUrl} 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="text-blue-600 hover:text-blue-800 transition-colors"
+                      title="Facebook"
+                    >
+                      <Facebook size={20} />
+                    </a>
+                  )}
+                  {pub.instagramUrl && (
+                    <a 
+                      href={pub.instagramUrl} 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="text-pink-600 hover:text-pink-800 transition-colors"
+                      title="Instagram"
+                    >
+                      <Instagram size={20} />
+                    </a>
+                  )}
+                </div>
               </div>
             </div>
           </CardContent>
