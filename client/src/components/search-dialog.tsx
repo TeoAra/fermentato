@@ -46,6 +46,7 @@ export default function SearchDialog({ isOpen, onClose }: SearchDialogProps) {
     <Dialog open={isOpen} onOpenChange={handleClose}>
       <DialogContent className="max-w-2xl max-h-[80vh] p-0 gap-0 overflow-hidden">
         <DialogHeader className="p-4 pb-0">
+          <h2 className="sr-only">Ricerca</h2>
           <div className="flex items-center space-x-2">
             <Search className="h-5 w-5 text-gray-400" />
             <Input
@@ -129,7 +130,7 @@ export default function SearchDialog({ isOpen, onClose }: SearchDialogProps) {
                           <div className="flex-1 min-w-0">
                             <div className="font-medium text-sm truncate">{beer.name}</div>
                             <div className="text-xs text-gray-500 truncate">
-                              {beer.brewery?.name} • {beer.style} • {beer.abv}%
+                              {beer.style} • {beer.abv}%
                             </div>
                           </div>
                         </a>

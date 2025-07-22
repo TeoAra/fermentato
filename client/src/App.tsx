@@ -14,6 +14,8 @@ import BreweryDetail from "@/pages/brewery-detail";
 import BeerDetail from "@/pages/beer-detail";
 import PubDashboard from "@/pages/pub-dashboard";
 import PubRegistration from "@/pages/pub-registration";
+import Notifications from "@/pages/notifications";
+import Activity from "@/pages/activity";
 import { MobileHeader } from "@/components/mobile-header";
 import { BottomNavigation } from "@/components/bottom-navigation";
 
@@ -52,8 +54,8 @@ function Router() {
               <Route path="/beer/:id" component={BeerDetail} />
               <Route path="/dashboard" component={PubDashboard} />
               <Route path="/register-pub" component={PubRegistration} />
-            <Route path="/pubs" component={Home} />
-            <Route path="/breweries" component={Home} />
+            <Route path="/notifications" component={Notifications} />
+            <Route path="/activity" component={Activity} />
             </>
           )}
           <Route component={NotFound} />
