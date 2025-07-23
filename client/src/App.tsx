@@ -22,10 +22,12 @@ import UserDashboard from "@/pages/user-dashboard";
 import AdminDashboard from "@/pages/admin-dashboard";
 import { MobileHeader } from "@/components/mobile-header";
 import { BottomNavigation } from "@/components/bottom-navigation";
+import type { User } from "@shared/schema";
 
 function Router() {
-  const { isAuthenticated, isLoading, user } = useAuth();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const { isAuthenticated, isLoading, user } = useAuth();
+  const typedUser = user as User | null;
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-950">
@@ -48,21 +50,11 @@ function Router() {
           <Route path="/brewery/:id" component={BreweryDetail} />
           <Route path="/beer/:id" component={BeerDetail} />
           {/* Dashboard routes based on user type */}
-          <Route path="/dashboard" component={() => {
-            console.log('User data:', user);
-            console.log('User type:', user?.userType);
-            
-            if (user?.userType === 'admin') {
-              console.log('Showing AdminDashboard');
-              return <AdminDashboard />;
-            } else if (user?.userType === 'pub_owner') {
-              console.log('Showing SmartPubDashboard');
-              return <SmartPubDashboard />;
-            } else {
-              console.log('Showing UserDashboard');
-              return <UserDashboard />;
-            }
-          }} />
+          <Route path="/dashboard" component={
+            typedUser?.userType === 'admin' ? AdminDashboard :
+            typedUser?.userType === 'pub_owner' ? SmartPubDashboard : 
+            UserDashboard
+          } />
           <Route path="/pub-registration" component={PubRegistration} />
           <Route path="/notifications" component={Notifications} />
           <Route path="/activity" component={Activity} />
