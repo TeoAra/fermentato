@@ -48,11 +48,21 @@ function Router() {
           <Route path="/brewery/:id" component={BreweryDetail} />
           <Route path="/beer/:id" component={BeerDetail} />
           {/* Dashboard routes based on user type */}
-          <Route path="/dashboard" component={
-            user?.userType === 'admin' ? AdminDashboard :
-            user?.userType === 'pub_owner' ? SmartPubDashboard : 
-            UserDashboard
-          } />
+          <Route path="/dashboard" component={() => {
+            console.log('User data:', user);
+            console.log('User type:', user?.userType);
+            
+            if (user?.userType === 'admin') {
+              console.log('Showing AdminDashboard');
+              return <AdminDashboard />;
+            } else if (user?.userType === 'pub_owner') {
+              console.log('Showing SmartPubDashboard');
+              return <SmartPubDashboard />;
+            } else {
+              console.log('Showing UserDashboard');
+              return <UserDashboard />;
+            }
+          }} />
           <Route path="/pub-registration" component={PubRegistration} />
           <Route path="/notifications" component={Notifications} />
           <Route path="/activity" component={Activity} />
