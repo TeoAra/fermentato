@@ -52,6 +52,7 @@ export interface IStorage {
   getBrewery(id: number): Promise<Brewery | undefined>;
   createBrewery(brewery: InsertBrewery): Promise<Brewery>;
   searchBreweries(query: string): Promise<Brewery[]>;
+  getRandomBreweries(limit?: number): Promise<Brewery[]>;
 
   // Beer operations
   getBeers(): Promise<Beer[]>;
@@ -243,6 +244,14 @@ export class DatabaseStorage implements IStorage {
       )
       .orderBy(desc(breweries.rating))
       .limit(5);
+  }
+
+  async getRandomBreweries(limit: number = 4): Promise<Brewery[]> {
+    return await db
+      .select()
+      .from(breweries)
+      .orderBy(sql`RANDOM()`)
+      .limit(limit);
   }
 
   // Beer operations

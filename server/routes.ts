@@ -155,7 +155,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Get all breweries
   app.get("/api/breweries", async (req, res) => {
     try {
-      const breweries = await storage.getBreweries();
+      const random = req.query.random === 'true';
+      const limit = req.query.limit ? parseInt(req.query.limit as string) : undefined;
+      
+      let breweries;
+      if (random) {
+        breweries = await storage.getRandomBreweries(limit || 4);
+      } else {
+        breweries = await storage.getBreweries();
+      }
+      
       res.json(breweries);
     } catch (error) {
       console.error("Error fetching breweries:", error);
@@ -214,13 +223,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get('/api/beers/:id/taps', async (req, res) => {
+  app.get("/api/beers/:id/availability", async (req, res) => {
     try {
-      const tapLocations = await storage.getBeerTapLocations(parseInt(req.params.id));
-      res.json(tapLocations);
+      const beerId = parseInt(req.params.id);
+      const locations = await storage.getBeerAvailability(beerId);
+      res.json(locations);
     } catch (error) {
-      console.error("Error fetching beer tap locations:", error);
-      res.status(500).json({ message: "Failed to fetch beer tap locations" });
+      console.error("Error fetching beer availability:", error);
+      res.status(500).json({ message: "Failed to fetch beer availability" });
     }
   });
 

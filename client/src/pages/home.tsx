@@ -18,7 +18,8 @@ export default function Home() {
   });
 
   const { data: breweries, isLoading: breweriesLoading } = useQuery({
-    queryKey: ["/api/breweries"],
+    queryKey: ["/api/breweries", "random"],
+    queryFn: () => fetch("/api/breweries?random=true&limit=4").then(res => res.json()),
   });
 
   const { data: favorites } = useQuery({
@@ -153,13 +154,23 @@ export default function Home() {
           </section>
         )}
 
-        {/* Breweries */}
+        {/* Random Breweries */}
         <section className="mb-12">
           <div className="flex items-center justify-between mb-6">
-            <h2 className="text-3xl font-bold text-secondary">Birrifici in Evidenza</h2>
-            <a href="#" className="text-primary hover:text-orange-600 font-semibold">
-              Esplora tutti
-            </a>
+            <div>
+              <h2 className="text-3xl font-bold text-secondary">Scopri Nuovi Birrifici</h2>
+              <p className="text-gray-600 mt-1">Birrifici casuali dal nostro database globale</p>
+            </div>
+            <Button 
+              variant="outline"
+              onClick={() => {
+                // Refresh solo i birrifici casuali
+                window.location.reload();
+              }}
+              className="text-primary hover:text-orange-600"
+            >
+              🎲 Cambia Selezione
+            </Button>
           </div>
 
           {breweriesLoading ? (
