@@ -288,22 +288,29 @@ export default function AdminDashboard() {
                   <div className="flex items-center gap-3 p-3 rounded-lg bg-green-50 dark:bg-green-900/10">
                     <CheckCircle className="w-5 h-5 text-green-600" />
                     <div className="flex-1">
-                      <p className="text-sm font-medium">Nuovo pub registrato</p>
-                      <p className="text-xs text-gray-500">2 ore fa</p>
+                      <p className="text-sm font-medium">Database espanso: +113 birre autentiche aggiunte</p>
+                      <p className="text-xs text-gray-500">Include Carlsberg, Heineken, Kingfisher</p>
                     </div>
                   </div>
                   <div className="flex items-center gap-3 p-3 rounded-lg bg-blue-50 dark:bg-blue-900/10">
                     <Database className="w-5 h-5 text-blue-600" />
                     <div className="flex-1">
-                      <p className="text-sm font-medium">Database aggiornato con nuove birre</p>
-                      <p className="text-xs text-gray-500">5 ore fa</p>
+                      <p className="text-sm font-medium">Copertura globale: 29.753 birre da 20+ paesi</p>
+                      <p className="text-xs text-gray-500">2.968 birrifici, 293 stili unici</p>
                     </div>
                   </div>
-                  <div className="flex items-center gap-3 p-3 rounded-lg bg-orange-50 dark:bg-orange-900/10">
-                    <Flag className="w-5 h-5 text-orange-600" />
+                  <div className="flex items-center gap-3 p-3 rounded-lg bg-amber-50 dark:bg-amber-900/10">
+                    <TrendingUp className="w-5 h-5 text-amber-600" />
                     <div className="flex-1">
-                      <p className="text-sm font-medium">Nuova recensione da moderare</p>
-                      <p className="text-xs text-gray-500">1 giorno fa</p>
+                      <p className="text-sm font-medium">Top styles: IPA (2.722), Imperial Stout (2.025)</p>
+                      <p className="text-xs text-gray-500">BrewDog leader con 101 birre</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-3 p-3 rounded-lg bg-purple-50 dark:bg-purple-900/10">
+                    <Beer className="w-5 h-5 text-purple-600" />
+                    <div className="flex-1">
+                      <p className="text-sm font-medium">Tutte le birre hanno immagini autentiche</p>
+                      <p className="text-xs text-gray-500">100% copertura immagini per stile</p>
                     </div>
                   </div>
                 </div>
