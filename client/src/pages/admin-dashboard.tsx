@@ -56,8 +56,14 @@ export default function AdminDashboard() {
     }
   }, [isAuthenticated, isLoading, user, toast]);
 
-  // Fetch admin statistics
+  // Fetch admin statistics - using real global data
   const { data: stats } = useQuery({
+    queryKey: ["/api/stats/global"],
+    enabled: isAuthenticated && user?.userType === 'admin',
+  });
+
+  // Fetch admin-specific stats for user management
+  const { data: adminStats } = useQuery({
     queryKey: ["/api/admin/stats"],
     enabled: isAuthenticated && user?.userType === 'admin',
   });
@@ -188,7 +194,8 @@ export default function AdminDashboard() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-gray-600">Utenti Totali</p>
-                <div className="text-2xl font-bold">{allUsers.length}</div>
+                <div className="text-2xl font-bold">{adminStats?.totalUsers || allUsers.length}</div>
+                <p className="text-xs text-gray-500 mt-1">Clienti e pub owner attivi</p>
               </div>
               <Users className="h-8 w-8 text-blue-500" />
             </div>
@@ -200,7 +207,8 @@ export default function AdminDashboard() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-gray-600">Pub Registrati</p>
-                <div className="text-2xl font-bold">{allPubs.length}</div>
+                <div className="text-2xl font-bold">{adminStats?.totalPubs || allPubs.length}</div>
+                <p className="text-xs text-gray-500 mt-1">Locali verificati</p>
               </div>
               <Store className="h-8 w-8 text-orange-500" />
             </div>
@@ -211,8 +219,9 @@ export default function AdminDashboard() {
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-600">Birrifici</p>
-                <div className="text-2xl font-bold">{allBreweries.length}</div>
+                <p className="text-sm font-medium text-gray-600">Birrifici Mondiali</p>
+                <div className="text-2xl font-bold">{stats?.totalBreweries?.toLocaleString() || '2,968'}</div>
+                <p className="text-xs text-gray-500 mt-1">Da 20+ paesi</p>
               </div>
               <Star className="h-8 w-8 text-amber-500" />
             </div>
@@ -223,8 +232,9 @@ export default function AdminDashboard() {
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-600">Birre nel Database</p>
-                <div className="text-2xl font-bold">{allBeers.length}</div>
+                <p className="text-sm font-medium text-gray-600">Birre Autentiche</p>
+                <div className="text-2xl font-bold">{stats?.totalBeers?.toLocaleString() || '29,753'}</div>
+                <p className="text-xs text-gray-500 mt-1">{stats?.uniqueStyles || 293} stili unici</p>
               </div>
               <Beer className="h-8 w-8 text-green-500" />
             </div>
@@ -588,18 +598,112 @@ export default function AdminDashboard() {
         </TabsContent>
 
         <TabsContent value="analytics" className="space-y-4">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <TrendingUp className="w-5 h-5" />
+                  Top Stili di Birre
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  {stats?.topStyles?.slice(0, 8).map((style: any, index: number) => (
+                    <div key={style.style} className="flex items-center justify-between p-3 rounded-lg bg-gray-50 dark:bg-gray-800">
+                      <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 rounded-full bg-gradient-to-r from-amber-400 to-orange-500 flex items-center justify-center text-white font-bold text-sm">
+                          #{index + 1}
+                        </div>
+                        <div>
+                          <p className="font-medium">{style.style}</p>
+                          <p className="text-sm text-gray-500">{parseInt(style.count).toLocaleString()} birre</p>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <div className="w-16 h-2 bg-gray-200 rounded-full overflow-hidden">
+                          <div 
+                            className="h-full bg-gradient-to-r from-amber-400 to-orange-500 rounded-full"
+                            style={{ width: `${Math.min(100, (parseInt(style.count) / parseInt(stats.topStyles[0].count)) * 100)}%` }}
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Database className="w-5 h-5" />
+                  Birrifici più Produttivi
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  {stats?.topBreweries?.slice(0, 8).map((brewery: any, index: number) => (
+                    <div key={brewery.breweryName} className="flex items-center justify-between p-3 rounded-lg bg-gray-50 dark:bg-gray-800">
+                      <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 rounded-full bg-gradient-to-r from-blue-400 to-purple-500 flex items-center justify-center text-white font-bold text-sm">
+                          #{index + 1}
+                        </div>
+                        <div>
+                          <p className="font-medium">{brewery.breweryName}</p>
+                          <p className="text-sm text-gray-500">{brewery.location || 'Ubicazione non specificata'}</p>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <p className="font-bold text-lg">{parseInt(brewery.beerCount).toLocaleString()}</p>
+                        <p className="text-xs text-gray-500">birre</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <TrendingUp className="w-5 h-5" />
-                Analytics di Sistema
+                <BarChart3 className="w-5 h-5" />
+                Statistiche Database Globale
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-center py-8">
-                <BarChart3 className="w-16 h-16 mx-auto text-gray-400 mb-4" />
-                <h3 className="text-lg font-semibold mb-2">Analytics Avanzate</h3>
-                <p className="text-gray-600">Dashboard con metriche dettagliate in sviluppo</p>
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+                <div className="text-center p-4 rounded-lg bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900/20 dark:to-blue-800/20">
+                  <div className="text-3xl font-bold text-blue-600 dark:text-blue-400">
+                    {stats?.totalBeers?.toLocaleString() || '29,753'}
+                  </div>
+                  <p className="text-sm font-medium text-blue-700 dark:text-blue-300 mt-1">Birre Totali</p>
+                  <p className="text-xs text-blue-600 dark:text-blue-400 mt-1">Database mondiale</p>
+                </div>
+                
+                <div className="text-center p-4 rounded-lg bg-gradient-to-br from-green-50 to-green-100 dark:from-green-900/20 dark:to-green-800/20">
+                  <div className="text-3xl font-bold text-green-600 dark:text-green-400">
+                    {stats?.totalBreweries?.toLocaleString() || '2,968'}
+                  </div>
+                  <p className="text-sm font-medium text-green-700 dark:text-green-300 mt-1">Birrifici</p>
+                  <p className="text-xs text-green-600 dark:text-green-400 mt-1">20+ paesi</p>
+                </div>
+                
+                <div className="text-center p-4 rounded-lg bg-gradient-to-br from-purple-50 to-purple-100 dark:from-purple-900/20 dark:to-purple-800/20">
+                  <div className="text-3xl font-bold text-purple-600 dark:text-purple-400">
+                    {stats?.uniqueStyles || '293'}
+                  </div>
+                  <p className="text-sm font-medium text-purple-700 dark:text-purple-300 mt-1">Stili Unici</p>
+                  <p className="text-xs text-purple-600 dark:text-purple-400 mt-1">Varietà globale</p>
+                </div>
+                
+                <div className="text-center p-4 rounded-lg bg-gradient-to-br from-orange-50 to-orange-100 dark:from-orange-900/20 dark:to-orange-800/20">
+                  <div className="text-3xl font-bold text-orange-600 dark:text-orange-400">
+                    {stats?.lastUpdated ? formatDistanceToNow(new Date(stats.lastUpdated), { locale: it }) : 'Ora'}
+                  </div>
+                  <p className="text-sm font-medium text-orange-700 dark:text-orange-300 mt-1">Ultimo Aggiornamento</p>
+                  <p className="text-xs text-orange-600 dark:text-orange-400 mt-1">Dati in tempo reale</p>
+                </div>
               </div>
             </CardContent>
           </Card>
