@@ -595,6 +595,61 @@ export class DatabaseStorage implements IStorage {
     return user;
   }
 
+  // Admin operations
+  async getUserCount(): Promise<number> {
+    const result = await db.select({ count: sql`count(*)`.mapWith(Number) }).from(users);
+    return result[0].count;
+  }
+
+  async getPubCount(): Promise<number> {
+    const result = await db.select({ count: sql`count(*)`.mapWith(Number) }).from(pubs);
+    return result[0].count;
+  }
+
+  async getBreweryCount(): Promise<number> {
+    const result = await db.select({ count: sql`count(*)`.mapWith(Number) }).from(breweries);
+    return result[0].count;
+  }
+
+  async getBeerCount(): Promise<number> {
+    const result = await db.select({ count: sql`count(*)`.mapWith(Number) }).from(beers);
+    return result[0].count;
+  }
+
+  async getAllUsers(): Promise<User[]> {
+    return await db.select().from(users).orderBy(desc(users.createdAt));
+  }
+
+  async getAllPubs(): Promise<Pub[]> {
+    return await db.select().from(pubs).orderBy(desc(pubs.createdAt));
+  }
+
+  async getAllBreweries(): Promise<Brewery[]> {
+    return await db.select().from(breweries).orderBy(desc(breweries.createdAt));
+  }
+
+  async getAllBeers(): Promise<Beer[]> {
+    return await db.select().from(beers).orderBy(desc(beers.id)).limit(100);
+  }
+
+  async updateBeer(beerId: number, updates: Partial<InsertBeer>): Promise<Beer> {
+    const [beer] = await db
+      .update(beers)
+      .set(updates)
+      .where(eq(beers.id, beerId))
+      .returning();
+    return beer;
+  }
+
+  async updateBrewery(breweryId: number, updates: Partial<InsertBrewery>): Promise<Brewery> {
+    const [brewery] = await db
+      .update(breweries)
+      .set(updates)
+      .where(eq(breweries.id, breweryId))
+      .returning();
+    return brewery;
+  }
+
 
 
   // Rating operations

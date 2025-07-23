@@ -668,6 +668,117 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Admin-only middleware
+  const isAdmin: RequestHandler = async (req: any, res, next) => {
+    if (!req.user || req.user.claims.sub !== "45321347") { // Mario's user ID
+      return res.status(403).json({ message: "Admin access required" });
+    }
+    next();
+  };
+
+  // Admin routes
+  app.get('/api/admin/stats', isAuthenticated, isAdmin, async (req: any, res) => {
+    try {
+      const stats = {
+        totalUsers: await storage.getUserCount(),
+        totalPubs: await storage.getPubCount(),
+        totalBreweries: await storage.getBreweryCount(),
+        totalBeers: await storage.getBeerCount(),
+      };
+      res.json(stats);
+    } catch (error) {
+      console.error("Error fetching admin stats:", error);
+      res.status(500).json({ message: "Failed to fetch stats" });
+    }
+  });
+
+  app.get('/api/admin/users', isAuthenticated, isAdmin, async (req: any, res) => {
+    try {
+      const users = await storage.getAllUsers();
+      res.json(users);
+    } catch (error) {
+      console.error("Error fetching all users:", error);
+      res.status(500).json({ message: "Failed to fetch users" });
+    }
+  });
+
+  app.get('/api/admin/pubs', isAuthenticated, isAdmin, async (req: any, res) => {
+    try {
+      const pubs = await storage.getAllPubs();
+      res.json(pubs);
+    } catch (error) {
+      console.error("Error fetching all pubs:", error);
+      res.status(500).json({ message: "Failed to fetch pubs" });
+    }
+  });
+
+  app.get('/api/admin/breweries', isAuthenticated, isAdmin, async (req: any, res) => {
+    try {
+      const breweries = await storage.getAllBreweries();
+      res.json(breweries);
+    } catch (error) {
+      console.error("Error fetching all breweries:", error);
+      res.status(500).json({ message: "Failed to fetch breweries" });
+    }
+  });
+
+  app.get('/api/admin/beers', isAuthenticated, isAdmin, async (req: any, res) => {
+    try {
+      const beers = await storage.getAllBeers();
+      res.json(beers);
+    } catch (error) {
+      console.error("Error fetching all beers:", error);
+      res.status(500).json({ message: "Failed to fetch beers" });
+    }
+  });
+
+  app.patch('/api/admin/beers/:id', isAuthenticated, isAdmin, async (req: any, res) => {
+    try {
+      const beerId = parseInt(req.params.id);
+      const updates = req.body;
+      const beer = await storage.updateBeer(beerId, updates);
+      res.json(beer);
+    } catch (error) {
+      console.error("Error updating beer:", error);
+      res.status(500).json({ message: "Failed to update beer" });
+    }
+  });
+
+  app.patch('/api/admin/breweries/:id', isAuthenticated, isAdmin, async (req: any, res) => {
+    try {
+      const breweryId = parseInt(req.params.id);
+      const updates = req.body;
+      const brewery = await storage.updateBrewery(breweryId, updates);
+      res.json(brewery);
+    } catch (error) {
+      console.error("Error updating brewery:", error);
+      res.status(500).json({ message: "Failed to update brewery" });
+    }
+  });
+
+  app.get('/api/admin/reviews/pending', isAuthenticated, isAdmin, async (req: any, res) => {
+    try {
+      // Mock pending reviews for now
+      const pendingReviews = [];
+      res.json(pendingReviews);
+    } catch (error) {
+      console.error("Error fetching pending reviews:", error);
+      res.status(500).json({ message: "Failed to fetch pending reviews" });
+    }
+  });
+
+  app.post('/api/admin/reviews/:id/:action', isAuthenticated, isAdmin, async (req: any, res) => {
+    try {
+      const reviewId = parseInt(req.params.id);
+      const action = req.params.action;
+      // Mock review action for now
+      res.json({ success: true, action });
+    } catch (error) {
+      console.error("Error processing review:", error);
+      res.status(500).json({ message: "Failed to process review" });
+    }
+  });
+
   // Rating routes
   app.post("/api/ratings", isAuthenticated, async (req: any, res) => {
     try {

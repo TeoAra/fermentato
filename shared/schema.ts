@@ -35,7 +35,7 @@ export const users = pgTable("users", {
   profileImageUrl: varchar("profile_image_url"),
   nickname: varchar("nickname").unique(),
   bio: text("bio"),
-  userType: varchar("user_type").notNull().default("customer"), // 'customer' or 'pub_owner'
+  userType: varchar("user_type").notNull().default("customer"), // 'customer', 'pub_owner', or 'admin'
   joinedAt: timestamp("joined_at").defaultNow(),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
