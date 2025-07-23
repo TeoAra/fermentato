@@ -669,11 +669,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Admin-only middleware
-  const isAdmin: RequestHandler = async (req: any, res, next) => {
-    if (!req.user || req.user.claims.sub !== "45321347") { // Mario's user ID
+  const isAdmin = async (req: any, res: any, next: any) => {
+    const userId = req.user?.claims?.sub;
+    if (!userId) {
       return res.status(403).json({ message: "Admin access required" });
     }
-    next();
+    
+    try {
+      const user = await storage.getUser(userId);
+      if (!user || user.userType !== 'admin') {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+      next();
+    } catch (error) {
+      return res.status(500).json({ message: "Error verifying admin status" });
+    }
   };
 
   // Admin routes
@@ -759,7 +769,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get('/api/admin/reviews/pending', isAuthenticated, isAdmin, async (req: any, res) => {
     try {
       // Mock pending reviews for now
-      const pendingReviews = [];
+      const pendingReviews: any[] = [];
       res.json(pendingReviews);
     } catch (error) {
       console.error("Error fetching pending reviews:", error);
