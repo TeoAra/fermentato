@@ -110,7 +110,7 @@ export default function BreweryDetail() {
                       <CardContent className="p-4">
                         <div className="flex items-start space-x-4">
                           <img
-                            src={beer.logoUrl || "https://images.unsplash.com/photo-1608270586620-248524c67de9?w=80&h=120&fit=crop"}
+                            src={beer.imageUrl || beer.bottleImageUrl || beer.logoUrl || "https://images.unsplash.com/photo-1608270586620-248524c67de9?w=80&h=120&fit=crop"}
                             alt={`${beer.name} bottle`}
                             className="w-16 h-24 rounded object-cover shadow-sm"
                           />

@@ -98,7 +98,9 @@ export const beers = pgTable("beers", {
   abv: decimal("abv", { precision: 3, scale: 1 }),
   ibu: integer("ibu"),
   description: text("description"),
-  logoUrl: varchar("logo_url"),
+  logoUrl: varchar("logo_url"), // Logo/etichetta della birra
+  imageUrl: varchar("image_url"), // Immagine principale della birra
+  bottleImageUrl: varchar("bottle_image_url"), // Immagine della bottiglia
   color: varchar("color"), // Beer color
   isBottled: boolean("is_bottled").default(false), // Se disponibile in bottiglia
   createdAt: timestamp("created_at").defaultNow(),

@@ -15,6 +15,8 @@ interface Beer {
   ibu?: number;
   description?: string;
   logoUrl?: string;
+  imageUrl?: string;
+  bottleImageUrl?: string;
   color?: string;
   isBottled?: boolean;
   breweryId: number;
@@ -106,7 +108,7 @@ export default function BeerDetail() {
             <div className="flex flex-col md:flex-row items-start md:items-center space-y-6 md:space-y-0 md:space-x-8">
               <div className="flex-shrink-0">
                 <img
-                  src={beer.logoUrl || "https://images.unsplash.com/photo-1608270586620-248524c67de9?w=200&h=200&fit=crop"}
+                  src={beer.bottleImageUrl || beer.imageUrl || beer.logoUrl || "https://images.unsplash.com/photo-1608270586620-248524c67de9?w=200&h=200&fit=crop"}
                   alt={`${beer.name} bottle`}
                   className="w-32 h-48 object-cover rounded-lg shadow-lg"
                 />

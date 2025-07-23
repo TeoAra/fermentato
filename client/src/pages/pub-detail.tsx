@@ -399,13 +399,11 @@ function BottleList({ bottles }: { bottles: any[] }) {
         <Card key={bottle.id} className="p-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
-              {bottle.beer.logoUrl && (
-                <img
-                  src={bottle.beer.logoUrl}
-                  alt={bottle.beer.name}
-                  className="w-12 h-12 rounded-lg object-cover"
-                />
-              )}
+              <img
+                src={bottle.beer.bottleImageUrl || bottle.beer.imageUrl || bottle.beer.logoUrl || "https://images.unsplash.com/photo-1608270586620-248524c67de9?w=80&h=80&fit=crop"}
+                alt={bottle.beer.name}
+                className="w-12 h-12 rounded-lg object-cover"
+              />
               <div>
                 <h4 className="font-semibold text-lg">{bottle.beer.name}</h4>
                 <p className="text-gray-600">{bottle.beer.brewery.name}</p>
