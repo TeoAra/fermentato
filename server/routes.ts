@@ -563,7 +563,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Favorites routes
+  // Universal Favorites routes
   app.get("/api/favorites", isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
@@ -575,11 +575,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.get("/api/favorites/:itemType", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const itemType = req.params.itemType as 'pub' | 'brewery' | 'beer';
+      if (!['pub', 'brewery', 'beer'].includes(itemType)) {
+        return res.status(400).json({ message: "Invalid item type" });
+      }
+      const favorites = await storage.getFavoritesByType(userId, itemType);
+      res.json(favorites);
+    } catch (error) {
+      console.error("Error fetching favorites by type:", error);
+      res.status(500).json({ message: "Failed to fetch favorites" });
+    }
+  });
+
   app.post("/api/favorites", isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
-      const { pubId } = req.body;
-      const favorite = await storage.addFavorite({ userId, pubId });
+      const { itemType, itemId } = req.body;
+      
+      if (!['pub', 'brewery', 'beer'].includes(itemType)) {
+        return res.status(400).json({ message: "Invalid item type" });
+      }
+      
+      const favorite = await storage.addFavorite({ userId, itemType, itemId });
       res.status(201).json(favorite);
     } catch (error) {
       console.error("Error adding favorite:", error);
@@ -587,15 +607,64 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.delete("/api/favorites/:pubId", isAuthenticated, async (req: any, res) => {
+  app.delete("/api/favorites/:itemType/:itemId", isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
-      const pubId = parseInt(req.params.pubId);
-      await storage.removeFavorite(userId, pubId);
+      const itemType = req.params.itemType as 'pub' | 'brewery' | 'beer';
+      const itemId = parseInt(req.params.itemId);
+      
+      if (!['pub', 'brewery', 'beer'].includes(itemType)) {
+        return res.status(400).json({ message: "Invalid item type" });
+      }
+      
+      await storage.removeFavorite(userId, itemType, itemId);
       res.status(204).send();
     } catch (error) {
       console.error("Error removing favorite:", error);
       res.status(500).json({ message: "Failed to remove favorite" });
+    }
+  });
+
+  app.get("/api/favorites/:itemType/:itemId/check", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const itemType = req.params.itemType as 'pub' | 'brewery' | 'beer';
+      const itemId = parseInt(req.params.itemId);
+      
+      if (!['pub', 'brewery', 'beer'].includes(itemType)) {
+        return res.status(400).json({ message: "Invalid item type" });
+      }
+      
+      const isFavorite = await storage.isFavorite(userId, itemType, itemId);
+      res.json({ isFavorite });
+    } catch (error) {
+      console.error("Error checking favorite:", error);
+      res.status(500).json({ message: "Failed to check favorite" });
+    }
+  });
+
+  // User profile and activities routes
+  app.patch('/api/user/profile', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const updates = req.body;
+      const user = await storage.updateUserProfile(userId, updates);
+      res.json(user);
+    } catch (error) {
+      console.error("Error updating user profile:", error);
+      res.status(500).json({ message: "Failed to update profile" });
+    }
+  });
+
+  app.get('/api/user-activities', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const limit = parseInt(req.query.limit as string) || 20;
+      const activities = await storage.getUserActivities(userId, limit);
+      res.json(activities);
+    } catch (error) {
+      console.error("Error fetching user activities:", error);
+      res.status(500).json({ message: "Failed to fetch activities" });
     }
   });
 

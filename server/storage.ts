@@ -8,6 +8,7 @@ import {
   menuCategories,
   menuItems,
   favorites,
+  userActivities,
   ratings,
   type User,
   type UpsertUser,
@@ -27,6 +28,8 @@ import {
   type InsertMenuItem,
   type Favorite,
   type InsertFavorite,
+  type UserActivity,
+  type InsertUserActivity,
   type Rating,
   type InsertRating,
 } from "@shared/schema";
@@ -515,21 +518,84 @@ export class DatabaseStorage implements IStorage {
     return item;
   }
 
-  // Favorites operations
+  // Favorites operations (universal system)
   async getFavoritesByUser(userId: string): Promise<Favorite[]> {
     return await db.select().from(favorites).where(eq(favorites.userId, userId));
   }
 
+  async getFavoritesByType(userId: string, itemType: 'pub' | 'brewery' | 'beer'): Promise<Favorite[]> {
+    return await db
+      .select()
+      .from(favorites)
+      .where(and(eq(favorites.userId, userId), eq(favorites.itemType, itemType)));
+  }
+
   async addFavorite(favoriteData: InsertFavorite): Promise<Favorite> {
+    // Add user activity
+    await this.addUserActivity({
+      userId: favoriteData.userId,
+      activityType: 'favorite_added',
+      itemType: favoriteData.itemType,
+      itemId: favoriteData.itemId,
+      description: `Aggiunto ${favoriteData.itemType} ai preferiti`,
+    });
+
     const [favorite] = await db.insert(favorites).values(favoriteData).returning();
     return favorite;
   }
 
-  async removeFavorite(userId: string, pubId: number): Promise<void> {
-    await db.delete(favorites).where(
-      and(eq(favorites.userId, userId), eq(favorites.pubId, pubId))
-    );
+  async removeFavorite(userId: string, itemType: 'pub' | 'brewery' | 'beer', itemId: number): Promise<void> {
+    await db
+      .delete(favorites)
+      .where(
+        and(
+          eq(favorites.userId, userId),
+          eq(favorites.itemType, itemType),
+          eq(favorites.itemId, itemId)
+        )
+      );
   }
+
+  async isFavorite(userId: string, itemType: 'pub' | 'brewery' | 'beer', itemId: number): Promise<boolean> {
+    const [favorite] = await db
+      .select()
+      .from(favorites)
+      .where(
+        and(
+          eq(favorites.userId, userId),
+          eq(favorites.itemType, itemType),
+          eq(favorites.itemId, itemId)
+        )
+      );
+    return !!favorite;
+  }
+
+  // User activities operations
+  async getUserActivities(userId: string, limit: number = 20): Promise<UserActivity[]> {
+    return await db
+      .select()
+      .from(userActivities)
+      .where(eq(userActivities.userId, userId))
+      .orderBy(desc(userActivities.createdAt))
+      .limit(limit);
+  }
+
+  async addUserActivity(activityData: InsertUserActivity): Promise<UserActivity> {
+    const [activity] = await db.insert(userActivities).values(activityData).returning();
+    return activity;
+  }
+
+  // User profile operations
+  async updateUserProfile(userId: string, updates: Partial<UpsertUser>): Promise<User> {
+    const [user] = await db
+      .update(users)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(eq(users.id, userId))
+      .returning();
+    return user;
+  }
+
+
 
   // Rating operations
   async addRating(ratingData: InsertRating): Promise<Rating> {

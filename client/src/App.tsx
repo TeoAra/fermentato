@@ -13,10 +13,12 @@ import PubDetail from "@/pages/pub-detail";
 import BreweryDetail from "@/pages/brewery-detail";
 import BeerDetail from "@/pages/beer-detail";
 import PubDashboard from "@/pages/pub-dashboard";
+import SmartPubDashboard from "@/pages/smart-pub-dashboard";
 import PubRegistration from "@/pages/pub-registration";
 import Notifications from "@/pages/notifications";
 import Activity from "@/pages/activity";
 import Dashboard from "@/pages/dashboard-simple";
+import UserDashboard from "@/pages/user-dashboard";
 import { MobileHeader } from "@/components/mobile-header";
 import { BottomNavigation } from "@/components/bottom-navigation";
 
@@ -45,7 +47,7 @@ function Router() {
           <Route path="/brewery/:id" component={BreweryDetail} />
           <Route path="/beer/:id" component={BeerDetail} />
           {/* Dashboard routes based on user type */}
-          <Route path="/dashboard" component={user?.userType === 'pub_owner' ? PubDashboard : Dashboard} />
+          <Route path="/dashboard" component={user?.userType === 'pub_owner' ? SmartPubDashboard : UserDashboard} />
           <Route path="/pub-registration" component={PubRegistration} />
           <Route path="/notifications" component={Notifications} />
           <Route path="/activity" component={Activity} />

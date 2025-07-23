@@ -33,7 +33,10 @@ export const users = pgTable("users", {
   firstName: varchar("first_name"),
   lastName: varchar("last_name"),
   profileImageUrl: varchar("profile_image_url"),
+  nickname: varchar("nickname").unique(),
+  bio: text("bio"),
   userType: varchar("user_type").notNull().default("customer"), // 'customer' or 'pub_owner'
+  joinedAt: timestamp("joined_at").defaultNow(),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
@@ -173,12 +176,26 @@ export const menuItems = pgTable("menu_items", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
-// User favorites
+// User favorites (universal system)
 export const favorites = pgTable("favorites", {
   id: serial("id").primaryKey(),
-  userId: varchar("user_id").references(() => users.id).notNull(),
-  beerId: integer("beer_id").references(() => beers.id),
-  pubId: integer("pub_id").references(() => pubs.id),
+  userId: varchar("user_id").references(() => users.id, { onDelete: "cascade" }).notNull(),
+  itemType: varchar("item_type").notNull(), // 'pub', 'brewery', 'beer'
+  itemId: integer("item_id").notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+}, (table) => [
+  unique().on(table.userId, table.itemType, table.itemId)
+]);
+
+// User activities table for tracking user actions
+export const userActivities = pgTable("user_activities", {
+  id: serial("id").primaryKey(),
+  userId: varchar("user_id").references(() => users.id, { onDelete: "cascade" }).notNull(),
+  activityType: varchar("activity_type").notNull(), // 'favorite_added', 'pub_visited', 'beer_rated', 'profile_updated'
+  itemType: varchar("item_type"), // 'pub', 'brewery', 'beer', 'profile'
+  itemId: integer("item_id"),
+  description: text("description"),
+  metadata: jsonb("metadata"), // Additional data for activity
   createdAt: timestamp("created_at").defaultNow(),
 });
 
@@ -263,13 +280,12 @@ export const favoritesRelations = relations(favorites, ({ one }) => ({
     fields: [favorites.userId],
     references: [users.id],
   }),
-  beer: one(beers, {
-    fields: [favorites.beerId],
-    references: [beers.id],
-  }),
-  pub: one(pubs, {
-    fields: [favorites.pubId],
-    references: [pubs.id],
+}));
+
+export const userActivitiesRelations = relations(userActivities, ({ one }) => ({
+  user: one(users, {
+    fields: [userActivities.userId],
+    references: [users.id],
   }),
 }));
 
@@ -311,6 +327,9 @@ export type MenuItem = typeof menuItems.$inferSelect;
 
 export type InsertFavorite = typeof favorites.$inferInsert;
 export type Favorite = typeof favorites.$inferSelect;
+
+export type InsertUserActivity = typeof userActivities.$inferInsert;
+export type UserActivity = typeof userActivities.$inferSelect;
 
 export type InsertRating = typeof ratings.$inferInsert;
 export type Rating = typeof ratings.$inferSelect;
@@ -359,6 +378,11 @@ export const insertMenuItemSchema = createInsertSchema(menuItems).omit({
 });
 
 export const insertFavoriteSchema = createInsertSchema(favorites).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const insertUserActivitySchema = createInsertSchema(userActivities).omit({
   id: true,
   createdAt: true,
 });
