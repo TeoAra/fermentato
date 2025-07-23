@@ -52,7 +52,7 @@ export interface IStorage {
   getBrewery(id: number): Promise<Brewery | undefined>;
   createBrewery(brewery: InsertBrewery): Promise<Brewery>;
   searchBreweries(query: string): Promise<Brewery[]>;
-  getRandomBreweries(limit?: number): Promise<Brewery[]>;
+  getRandomBreweries(limit?: number): Promise<(Brewery & { beerCount: number })[]>;
 
   // Beer operations
   getBeers(): Promise<Beer[]>;
@@ -246,12 +246,31 @@ export class DatabaseStorage implements IStorage {
       .limit(5);
   }
 
-  async getRandomBreweries(limit: number = 4): Promise<Brewery[]> {
-    return await db
-      .select()
+  async getRandomBreweries(limit: number = 4): Promise<(Brewery & { beerCount: number })[]> {
+    // Solo birrifici che hanno almeno una birra
+    const results = await db
+      .select({
+        id: breweries.id,
+        name: breweries.name,
+        location: breweries.location,
+        region: breweries.region,
+        description: breweries.description,
+        logoUrl: breweries.logoUrl,
+        websiteUrl: breweries.websiteUrl,
+        latitude: breweries.latitude,
+        longitude: breweries.longitude,
+        rating: breweries.rating,
+        createdAt: breweries.createdAt,
+        beerCount: sql<number>`count(${beers.id})::int`,
+      })
       .from(breweries)
+      .innerJoin(beers, eq(breweries.id, beers.breweryId))
+      .groupBy(breweries.id)
+      .having(sql`count(${beers.id}) > 0`)
       .orderBy(sql`RANDOM()`)
       .limit(limit);
+
+    return results;
   }
 
   // Beer operations

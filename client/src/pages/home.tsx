@@ -185,7 +185,7 @@ export default function Home() {
                 <BreweryCard 
                   key={brewery.id} 
                   brewery={brewery}
-                  beerCount={Math.floor(Math.random() * 20) + 5}
+                  beerCount={brewery.beerCount || Math.floor(Math.random() * 15) + 3}
                 />
               )) : null}
             </div>

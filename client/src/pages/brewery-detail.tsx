@@ -84,19 +84,7 @@ export default function BreweryDetail() {
                   <p className="text-gray-600 mb-4">{brewery.description}</p>
                 )}
 
-                {brewery?.websiteUrl && (
-                  <div className="flex items-center space-x-2">
-                    <Globe className="text-gray-500" size={16} />
-                    <a 
-                      href={brewery.websiteUrl} 
-                      target="_blank" 
-                      rel="noopener noreferrer"
-                      className="text-primary hover:underline"
-                    >
-                      Sito Web Ufficiale
-                    </a>
-                  </div>
-                )}
+
 
               </div>
             </div>
