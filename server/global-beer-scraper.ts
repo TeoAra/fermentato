@@ -1,442 +1,318 @@
 import { db } from "./db";
-import { beers, breweries, insertBeerSchema, insertBrewerySchema } from "@shared/schema";
-import { eq, ilike } from "drizzle-orm";
+import { breweries, beers } from "@shared/schema";
+import { eq } from "drizzle-orm";
 
-interface OpenBreweryAPI {
-  id: string;
-  name: string;
-  brewery_type: string;
-  address_1: string;
-  city: string;
-  state_province: string;
-  country: string;
-  longitude?: string;
-  latitude?: string;
-  phone?: string;
-  website_url?: string;
-  state?: string;
-}
+// Open Brewery DB - API gratuita per birrifici mondiali
+const OPEN_BREWERY_API = "https://api.openbrewerydb.org/v1/breweries";
 
-interface BeerData {
-  name: string;
-  style: string;
-  abv: string;
-  ibu?: number;
-  description?: string;
-  color?: string;
-  isBottled: boolean;
-  logoUrl?: string;
-}
+// Beer.db API - Database birre open source
+const BEER_DB_API = "http://prost.herokuapp.com/api";
 
-// Dati globali raccolti da diverse fonti per birrifici famosi
-const GLOBAL_BEER_DATA: Record<string, BeerData[]> = {
-  // Dogfish Head (USA)
-  "dogfish head": [
-    {
-      name: "60 Minute IPA",
-      style: "American IPA",
-      abv: "6.0",
-      ibu: 60,
-      description: "Continously hopped IPA with citrus and floral notes",
-      color: "Golden amber",
-      isBottled: true
-    },
-    {
-      name: "90 Minute IPA",
-      style: "Imperial IPA",
-      abv: "9.0",
-      ibu: 90,
-      description: "Imperial IPA with intense hop character and caramel malt backbone",
-      color: "Deep amber",
-      isBottled: true
-    },
-    {
-      name: "120 Minute IPA",
-      style: "American Double IPA",
-      abv: "15.0",
-      ibu: 120,
-      description: "Extreme beer with massive hop flavor and alcohol warmth",
-      color: "Deep copper",
-      isBottled: true
-    }
-  ],
-  
-  // Stone Brewing (USA)
-  "stone brewing": [
-    {
-      name: "Stone IPA",
-      style: "American IPA",
-      abv: "6.9",
-      ibu: 77,
-      description: "Bold, citrusy American IPA with tropical fruit notes",
-      color: "Golden amber",
-      isBottled: true
-    },
-    {
-      name: "Arrogant Bastard Ale",
-      style: "American Strong Ale",
-      abv: "7.2",
-      ibu: 100,
-      description: "Aggressive ale with intense hop bitterness and malt character",
-      color: "Deep amber",
-      isBottled: true
-    }
-  ],
-
-  // BrewDog (UK)
-  "brewdog": [
-    {
-      name: "Punk IPA",
-      style: "India Pale Ale",
-      abv: "5.6",
-      ibu: 45,
-      description: "Post-modern classic with tropical fruit flavours and sharp bitter finish",
-      color: "Golden",
-      isBottled: true
-    },
-    {
-      name: "Dead Pony Club",
-      style: "Session IPA",
-      abv: "3.8",
-      ibu: 35,
-      description: "Sessionable IPA packed with hop character despite lower ABV",
-      color: "Pale gold",
-      isBottled: true
-    },
-    {
-      name: "Elvis Juice",
-      style: "Grapefruit IPA",
-      abv: "6.5",
-      ibu: 40,
-      description: "IPA infused with grapefruit for citrus explosion",
-      color: "Golden amber",
-      isBottled: true
-    }
-  ],
-
-  // Cantillon (Belgium)
-  "cantillon": [
-    {
-      name: "Gueuze 100% Lambic",
-      style: "Gueuze",
-      abv: "5.0",
-      ibu: 10,
-      description: "Traditional Belgian lambic with wild fermentation and tart character",
-      color: "Golden yellow",
-      isBottled: true
-    },
-    {
-      name: "Kriek 100% Lambic",
-      style: "Fruit Lambic",
-      abv: "5.0",
-      ibu: 8,
-      description: "Cherry lambic with intense fruit flavors and wild yeast character",
-      color: "Deep red",
-      isBottled: true
-    }
-  ],
-
-  // Weihenstephan (Germany)
-  "weihenstephan": [
-    {
-      name: "Hefeweizen",
-      style: "Hefeweizen",
-      abv: "5.4",
-      ibu: 14,
-      description: "Classic Bavarian wheat beer with banana and clove notes",
-      color: "Cloudy golden",
-      isBottled: true
-    },
-    {
-      name: "Pilsner",
-      style: "German Pilsner",
-      abv: "5.1",
-      ibu: 28,
-      description: "Traditional German pilsner with noble hop character",
-      color: "Golden",
-      isBottled: true
-    }
-  ],
-
-  // Founders (USA)
-  "founders brewing": [
-    {
-      name: "All Day IPA",
-      style: "Session IPA",
-      abv: "4.7",
-      ibu: 42,
-      description: "Low ABV IPA with full hop flavor for all-day drinking",
-      color: "Golden",
-      isBottled: true
-    },
-    {
-      name: "Kentucky Breakfast Stout",
-      style: "Imperial Stout",
-      abv: "12.0",
-      ibu: 70,
-      description: "Bourbon barrel-aged stout with coffee and chocolate notes",
-      color: "Black",
-      isBottled: true
-    }
-  ],
-
-  // Bell's (USA)
-  "bell's brewery": [
-    {
-      name: "Two Hearted Ale",
-      style: "American IPA",
-      abv: "7.0",
-      ibu: 55,
-      description: "Perfectly balanced IPA with Centennial hops",
-      color: "Amber",
-      isBottled: true
-    },
-    {
-      name: "Hopslam",
-      style: "Double IPA",
-      abv: "10.0",
-      ibu: 70,
-      description: "Honey-infused double IPA with intense hop character",
-      color: "Golden amber",
-      isBottled: true
-    }
-  ],
-
-  // Duvel (Belgium)
-  "duvel": [
-    {
-      name: "Duvel",
-      style: "Belgian Golden Strong Ale",
-      abv: "8.5",
-      ibu: 32,
-      description: "Classic Belgian strong ale with complex yeast character",
-      color: "Golden",
-      isBottled: true
-    },
-    {
-      name: "Duvel Tripel Hop",
-      style: "Belgian Strong Ale",
-      abv: "9.5",
-      ibu: 40,
-      description: "Duvel with additional American hops for extra complexity",
-      color: "Golden amber",
-      isBottled: true
-    }
-  ],
-
-  // Chimay (Belgium)
-  "chimay": [
-    {
-      name: "Chimay Blue",
-      style: "Belgian Quadrupel",
-      abv: "9.0",
-      ibu: 25,
-      description: "Dark Trappist ale with rich fruit and spice notes",
-      color: "Dark brown",
-      isBottled: true
-    },
-    {
-      name: "Chimay Red",
-      style: "Belgian Dubbel",
-      abv: "7.0",
-      ibu: 20,
-      description: "Copper-colored Trappist ale with caramel and fruit flavors",
-      color: "Copper red",
-      isBottled: true
-    }
-  ],
-
-  // Russian River (USA)
-  "russian river": [
-    {
-      name: "Pliny the Elder",
-      style: "Double IPA",
-      abv: "8.0",
-      ibu: 100,
-      description: "Legendary West Coast DIPA with intense hop aroma and flavor",
-      color: "Golden amber",
-      isBottled: true
-    },
-    {
-      name: "Blind Pig IPA",
-      style: "American IPA",
-      abv: "6.25",
-      ibu: 70,
-      description: "Classic American IPA with citrus and pine hop character",
-      color: "Golden",
-      isBottled: true
-    }
-  ]
+// Stili di birra comuni con immagini appropriate
+const BEER_STYLES_IMAGES = {
+  // Stili principali
+  "IPA": "https://images.unsplash.com/photo-1608270586620-248524c67de9?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
+  "India Pale Ale": "https://images.unsplash.com/photo-1608270586620-248524c67de9?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
+  "Pale Ale": "https://images.unsplash.com/photo-1608270586620-248524c67de9?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
+  "Lager": "https://images.unsplash.com/photo-1574216364975-51fcb7fffd8e?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
+  "Pilsner": "https://images.unsplash.com/photo-1566919317267-b5e1b2bb2b15?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
+  "Stout": "https://images.unsplash.com/photo-1572490122747-3968b75cc699?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
+  "Porter": "https://images.unsplash.com/photo-1569529465841-dfecdab7503b?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
+  "Wheat": "https://images.unsplash.com/photo-1618183479302-1e0aa382c36b?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
+  "Weizen": "https://images.unsplash.com/photo-1618183479302-1e0aa382c36b?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
+  "Belgian Ale": "https://images.unsplash.com/photo-1551538827-9c037cb4f32d?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
+  "Saison": "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
+  "Lambic": "https://images.unsplash.com/photo-1551538827-9c037cb4f32d?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
+  "Blonde": "https://images.unsplash.com/photo-1574216364975-51fcb7fffd8e?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
+  "Amber": "https://images.unsplash.com/photo-1569529465841-dfecdab7503b?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80"
 };
 
-async function fetchGlobalBreweries() {
-  console.log("🌍 Raccogliendo birrifici globali da Open Brewery DB...");
+// Birre famose mondiali con dati reali
+const WORLD_FAMOUS_BEERS = [
+  // Belgio
+  { name: "Chimay Blue", brewery: "Chimay", country: "Belgium", style: "Belgian Strong Ale", abv: 9.0, ibu: 35 },
+  { name: "Westmalle Tripel", brewery: "Westmalle", country: "Belgium", style: "Belgian Tripel", abv: 9.5, ibu: 38 },
+  { name: "Orval", brewery: "Orval", country: "Belgium", style: "Belgian Pale Ale", abv: 6.2, ibu: 32 },
+  { name: "Rochefort 10", brewery: "Rochefort", country: "Belgium", style: "Belgian Quadrupel", abv: 11.3, ibu: 27 },
+  { name: "Duvel", brewery: "Duvel Moortgat", country: "Belgium", style: "Belgian Strong Ale", abv: 8.5, ibu: 32 },
   
-  const countries = ["United States", "United Kingdom", "Belgium", "Germany", "Netherlands", "Italy", "France", "Czech Republic"];
-  const allBreweries: OpenBreweryAPI[] = [];
+  // Germania
+  { name: "Weihenstephaner Hefeweizen", brewery: "Weihenstephan", country: "Germany", style: "Hefeweizen", abv: 5.4, ibu: 14 },
+  { name: "Augustiner Lagerbier Hell", brewery: "Augustiner-Bräu", country: "Germany", style: "Munich Helles", abv: 5.2, ibu: 20 },
+  { name: "Schneider Weisse TAP 7", brewery: "Schneider Weisse", country: "Germany", style: "Hefeweizen", abv: 5.4, ibu: 14 },
+  { name: "Spaten München", brewery: "Spaten-Franziskaner-Bräu", country: "Germany", style: "Munich Helles", abv: 5.2, ibu: 20 },
   
-  for (const country of countries) {
-    try {
-      const response = await fetch(`https://api.openbrewerydb.org/v1/breweries?by_country=${encodeURIComponent(country)}&per_page=50`);
-      if (response.ok) {
-        const breweries: OpenBreweryAPI[] = await response.json();
-        allBreweries.push(...breweries);
-        console.log(`  ✅ ${country}: ${breweries.length} birrifici trovati`);
+  // Repubblica Ceca
+  { name: "Pilsner Urquell", brewery: "Pilsner Urquell", country: "Czech Republic", style: "Czech Pilsner", abv: 4.4, ibu: 40 },
+  { name: "Budweiser Budvar", brewery: "Budweiser Budvar", country: "Czech Republic", style: "Czech Lager", abv: 5.0, ibu: 20 },
+  { name: "Staropramen", brewery: "Staropramen", country: "Czech Republic", style: "Czech Lager", abv: 5.0, ibu: 18 },
+  
+  // USA
+  { name: "Sierra Nevada Pale Ale", brewery: "Sierra Nevada", country: "USA", style: "American Pale Ale", abv: 5.6, ibu: 38 },
+  { name: "Sam Adams Boston Lager", brewery: "Boston Beer Company", country: "USA", style: "Vienna Lager", abv: 4.9, ibu: 30 },
+  { name: "Dogfish Head 60 Minute IPA", brewery: "Dogfish Head", country: "USA", style: "American IPA", abv: 6.0, ibu: 60 },
+  { name: "Stone IPA", brewery: "Stone Brewing", country: "USA", style: "American IPA", abv: 6.9, ibu: 71 },
+  { name: "Brooklyn Lager", brewery: "Brooklyn Brewery", country: "USA", style: "American Amber Lager", abv: 5.2, ibu: 33 },
+  
+  // Regno Unito
+  { name: "Fuller's London Pride", brewery: "Fuller's", country: "UK", style: "English Bitter", abv: 4.7, ibu: 31 },
+  { name: "Guinness Draught", brewery: "Guinness", country: "Ireland", style: "Irish Stout", abv: 4.2, ibu: 45 },
+  { name: "Young's Double Chocolate Stout", brewery: "Young's", country: "UK", style: "Sweet Stout", abv: 5.2, ibu: 28 },
+  { name: "Samuel Smith's Imperial IPA", brewery: "Samuel Smith", country: "UK", style: "English IPA", abv: 7.0, ibu: 65 },
+  
+  // Canada
+  { name: "Unibroue La Fin du Monde", brewery: "Unibroue", country: "Canada", style: "Belgian Tripel", abv: 9.0, ibu: 19 },
+  { name: "Molson Canadian", brewery: "Molson", country: "Canada", style: "North American Lager", abv: 5.0, ibu: 10 },
+  
+  // Australia
+  { name: "Coopers Pale Ale", brewery: "Coopers", country: "Australia", style: "Australian Pale Ale", abv: 4.5, ibu: 35 },
+  { name: "Little Creatures Pale Ale", brewery: "Little Creatures", country: "Australia", style: "Australian Pale Ale", abv: 5.2, ibu: 40 },
+  
+  // Giappone
+  { name: "Asahi Super Dry", brewery: "Asahi", country: "Japan", style: "Japanese Rice Lager", abv: 5.0, ibu: 16 },
+  { name: "Sapporo Premium", brewery: "Sapporo", country: "Japan", style: "Japanese Lager", abv: 4.9, ibu: 18 },
+  { name: "Kirin Ichiban", brewery: "Kirin", country: "Japan", style: "Japanese Lager", abv: 5.0, ibu: 18 },
+  
+  // Messico
+  { name: "Corona Extra", brewery: "Grupo Modelo", country: "Mexico", style: "Mexican Lager", abv: 4.5, ibu: 18 },
+  { name: "Dos Equis Lager", brewery: "Cuauhtémoc Moctezuma", country: "Mexico", style: "Mexican Lager", abv: 4.2, ibu: 15 },
+  
+  // Brasile
+  { name: "Brahma", brewery: "AmBev", country: "Brazil", style: "American Lager", abv: 4.3, ibu: 10 },
+  { name: "Antarctica", brewery: "AmBev", country: "Brazil", style: "American Lager", abv: 4.5, ibu: 12 }
+];
+
+interface BreweryData {
+  name: string;
+  location: string;
+  region: string;
+  country: string;
+  brewery_type?: string;
+  website_url?: string;
+  phone?: string;
+  latitude?: string;
+  longitude?: string;
+}
+
+async function fetchFromOpenBreweryDB(): Promise<BreweryData[]> {
+  console.log("🌍 Fetching breweries from Open Brewery DB...");
+  
+  try {
+    const countries = ['united_states', 'canada', 'united_kingdom', 'germany', 'belgium', 'france', 'australia', 'netherlands'];
+    const allBreweries: BreweryData[] = [];
+    
+    for (const country of countries) {
+      console.log(`Fetching breweries from ${country}...`);
+      
+      const response = await fetch(`${OPEN_BREWERY_API}?by_country=${country}&per_page=50`);
+      if (!response.ok) {
+        console.log(`⚠️ Error fetching from ${country}: ${response.status}`);
+        continue;
       }
-    } catch (error) {
-      console.log(`  ❌ Errore per ${country}:`, error);
+      
+      const data = await response.json();
+      const breweries = data.map((brewery: any) => ({
+        name: brewery.name,
+        location: brewery.city || 'Unknown',
+        region: brewery.state_province || brewery.state || 'Unknown',
+        country: brewery.country || country.replace('_', ' ').toUpperCase(),
+        brewery_type: brewery.brewery_type,
+        website_url: brewery.website_url,
+        phone: brewery.phone,
+        latitude: brewery.latitude,
+        longitude: brewery.longitude
+      }));
+      
+      allBreweries.push(...breweries);
+      
+      // Rate limiting
+      await new Promise(resolve => setTimeout(resolve, 500));
     }
+    
+    console.log(`✅ Fetched ${allBreweries.length} breweries from Open Brewery DB`);
+    return allBreweries;
+    
+  } catch (error) {
+    console.error("❌ Error fetching from Open Brewery DB:", error);
+    return [];
   }
-  
-  return allBreweries;
 }
 
-async function addBreweryToDatabase(breweryData: OpenBreweryAPI) {
-  // Controlla se il birrificio esiste già
-  const existing = await db
-    .select()
-    .from(breweries)
-    .where(ilike(breweries.name, `%${breweryData.name}%`))
-    .limit(1);
-
-  if (existing.length > 0) {
-    return existing[0];
-  }
-
-  // Crea nuovo birrificio
-  const newBrewery = {
-    name: breweryData.name,
-    location: breweryData.city || "Unknown",
-    region: breweryData.state_province || breweryData.country || "Unknown",
-    description: `${breweryData.brewery_type} brewery located in ${breweryData.city}, ${breweryData.country}`,
-    logoUrl: "https://images.unsplash.com/photo-1571613316887-6f8d5cbf7ef7?w=200&h=200&fit=crop",
-    websiteUrl: breweryData.website_url || null,
-    latitude: breweryData.latitude ? parseFloat(breweryData.latitude) : null,
-    longitude: breweryData.longitude ? parseFloat(breweryData.longitude) : null,
-    rating: "4.0"
-  };
-
-  const [inserted] = await db.insert(breweries).values(newBrewery).returning();
-  return inserted;
-}
-
-async function addBeersForBrewery(brewery: any, beersData: BeerData[]) {
+async function addWorldBreweries(breweries: BreweryData[]): Promise<number> {
   let addedCount = 0;
   
-  for (const beerData of beersData) {
-    // Verifica se la birra esiste già
-    const existingBeer = await db
-      .select()
-      .from(beers)
-      .where(eq(beers.name, beerData.name))
-      .limit(1);
-
-    if (existingBeer.length === 0) {
-      const newBeer = {
-        ...beerData,
-        breweryId: brewery.id,
-        logoUrl: beerData.logoUrl || "https://images.unsplash.com/photo-1608270586620-248524c67de9?w=200&h=200&fit=crop"
-      };
-
-      await db.insert(beers).values(newBeer);
-      addedCount++;
-      console.log(`    ✅ Aggiunta: ${beerData.name} (${beerData.style})`);
+  for (const breweryData of breweries) {
+    try {
+      // Verifica se il birrificio esiste già
+      const existing = await db
+        .select()
+        .from(breweries)
+        .where(eq(breweries.name, breweryData.name))
+        .limit(1);
+        
+      if (existing.length === 0) {
+        await db
+          .insert(breweries)
+          .values({
+            name: breweryData.name,
+            location: breweryData.location,
+            region: breweryData.region,
+            country: breweryData.country,
+            websiteUrl: breweryData.website_url,
+            phoneNumber: breweryData.phone,
+            // Aggiungi logo generico basato sul paese
+            logoUrl: getCountryBreweryLogo(breweryData.country)
+          });
+          
+        addedCount++;
+        console.log(`✅ Added brewery: ${breweryData.name} (${breweryData.country})`);
+      }
+    } catch (error) {
+      console.log(`⚠️ Error adding brewery ${breweryData.name}:`, error);
     }
   }
   
   return addedCount;
 }
 
-async function globalBeerScraping() {
-  console.log("🚀 Avvio scraping globale delle birre...");
+async function addWorldFamousBeers(): Promise<number> {
+  let addedCount = 0;
+  
+  for (const beerData of WORLD_FAMOUS_BEERS) {
+    try {
+      // Trova o crea il birrificio
+      let brewery = await db
+        .select()
+        .from(breweries)
+        .where(eq(breweries.name, beerData.brewery))
+        .limit(1);
+        
+      if (brewery.length === 0) {
+        // Crea il birrificio se non esiste
+        const [newBrewery] = await db
+          .insert(breweries)
+          .values({
+            name: beerData.brewery,
+            location: "Unknown",
+            region: "Unknown", 
+            country: beerData.country,
+            logoUrl: getCountryBreweryLogo(beerData.country)
+          })
+          .returning();
+          
+        brewery = [newBrewery];
+        console.log(`✅ Created brewery: ${beerData.brewery}`);
+      }
+      
+      // Verifica se la birra esiste già
+      const existingBeer = await db
+        .select()
+        .from(beers)
+        .where(eq(beers.name, beerData.name))
+        .limit(1);
+        
+      if (existingBeer.length === 0) {
+        const styleImage = getImageForStyle(beerData.style);
+        
+        await db
+          .insert(beers)
+          .values({
+            name: beerData.name,
+            breweryId: brewery[0].id,
+            style: beerData.style,
+            abv: beerData.abv.toString(),
+            ibu: beerData.ibu,
+            description: `Famous ${beerData.style} from ${beerData.country}. Known worldwide for its exceptional quality and authentic taste.`,
+            imageUrl: styleImage,
+            bottleImageUrl: styleImage,
+            logoUrl: styleImage,
+            isBottled: true
+          });
+          
+        addedCount++;
+        console.log(`✅ Added beer: ${beerData.name} by ${beerData.brewery}`);
+      }
+    } catch (error) {
+      console.log(`⚠️ Error adding beer ${beerData.name}:`, error);
+    }
+  }
+  
+  return addedCount;
+}
+
+function getImageForStyle(style: string): string {
+  // Cerca corrispondenza esatta
+  if (BEER_STYLES_IMAGES[style]) {
+    return BEER_STYLES_IMAGES[style];
+  }
+  
+  // Cerca corrispondenza parziale
+  for (const [styleName, imageUrl] of Object.entries(BEER_STYLES_IMAGES)) {
+    if (style.toLowerCase().includes(styleName.toLowerCase())) {
+      return imageUrl;
+    }
+  }
+  
+  // Fallback generico
+  return "https://images.unsplash.com/photo-1608270586620-248524c67de9?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80";
+}
+
+function getCountryBreweryLogo(country: string): string {
+  const logoMap: { [key: string]: string } = {
+    "Belgium": "https://images.unsplash.com/photo-1571613316887-6f8d5cbf7ef7?w=100&h=100&fit=crop",
+    "Germany": "https://images.unsplash.com/photo-1571613316887-6f8d5cbf7ef7?w=100&h=100&fit=crop", 
+    "USA": "https://images.unsplash.com/photo-1571613316887-6f8d5cbf7ef7?w=100&h=100&fit=crop",
+    "UK": "https://images.unsplash.com/photo-1571613316887-6f8d5cbf7ef7?w=100&h=100&fit=crop",
+    "Ireland": "https://images.unsplash.com/photo-1571613316887-6f8d5cbf7ef7?w=100&h=100&fit=crop",
+    "Canada": "https://images.unsplash.com/photo-1571613316887-6f8d5cbf7ef7?w=100&h=100&fit=crop",
+    "Australia": "https://images.unsplash.com/photo-1571613316887-6f8d5cbf7ef7?w=100&h=100&fit=crop",
+    "Japan": "https://images.unsplash.com/photo-1571613316887-6f8d5cbf7ef7?w=100&h=100&fit=crop",
+    "Czech Republic": "https://images.unsplash.com/photo-1571613316887-6f8d5cbf7ef7?w=100&h=100&fit=crop"
+  };
+  
+  return logoMap[country] || "https://images.unsplash.com/photo-1571613316887-6f8d5cbf7ef7?w=100&h=100&fit=crop";
+}
+
+async function scrapeWorldBeers() {
+  console.log("🍺 Starting global beer scraping...");
   
   try {
-    // Step 1: Ottieni birrifici globali da API
-    const globalBreweries = await fetchGlobalBreweries();
-    console.log(`📊 Totale birrifici trovati: ${globalBreweries.length}`);
-
-    let totalBreweriesAdded = 0;
-    let totalBeersAdded = 0;
-
-    // Step 2: Processa ogni birrificio
-    for (const breweryData of globalBreweries.slice(0, 30)) { // Limitiamo per evitare overload
-      try {
-        // Aggiungi birrificio al database
-        const brewery = await addBreweryToDatabase(breweryData);
-        
-        if (brewery) {
-          // Cerca birre corrispondenti nei nostri dati curated
-          const breweryNameLower = brewery.name.toLowerCase();
-          
-          for (const [key, beersData] of Object.entries(GLOBAL_BEER_DATA)) {
-            if (breweryNameLower.includes(key) || key.includes(breweryNameLower)) {
-              console.log(`🍺 Aggiungendo birre per ${brewery.name}...`);
-              const added = await addBeersForBrewery(brewery, beersData);
-              totalBeersAdded += added;
-              break;
-            }
-          }
-          
-          totalBreweriesAdded++;
-        }
-      } catch (error) {
-        console.log(`  ⚠️ Errore processando ${breweryData.name}:`, error);
-      }
-    }
-
-    // Step 3: Aggiungi dati speciali per birrifici famosi non trovati via API
-    console.log("🌟 Aggiungendo birrifici famosi mancanti...");
+    // 1. Aggiungi birrifici da Open Brewery DB
+    console.log("📍 Phase 1: Adding world breweries...");
+    const breweryData = await fetchFromOpenBreweryDB();
+    const breweriesAdded = await addWorldBreweries(breweryData);
     
-    const famousBreweries = [
-      {
-        name: "Russian River Brewing Company",
-        location: "Santa Rosa",
-        region: "California",
-        description: "Famous for Pliny the Elder and sour beers",
-        country: "United States"
-      },
-      {
-        name: "Cantillon Brewery",
-        location: "Brussels",
-        region: "Brussels",
-        description: "Traditional lambic brewery since 1900",
-        country: "Belgium"
-      }
-    ];
-
-    for (const famousData of famousBreweries) {
-      const brewery = await addBreweryToDatabase({
-        id: famousData.name.toLowerCase().replace(/\s+/g, '-'),
-        name: famousData.name,
-        brewery_type: "micro",
-        address_1: "",
-        city: famousData.location,
-        state_province: famousData.region,
-        country: famousData.country
-      });
-
-      const breweryKey = Object.keys(GLOBAL_BEER_DATA).find(key => 
-        famousData.name.toLowerCase().includes(key)
-      );
-
-      if (breweryKey && brewery) {
-        const added = await addBeersForBrewery(brewery, GLOBAL_BEER_DATA[breweryKey]);
-        totalBeersAdded += added;
-      }
-    }
-
-    console.log(`\n🎉 Scraping globale completato!`);
-    console.log(`📈 Statistiche:`);
-    console.log(`   • Birrifici processati: ${totalBreweriesAdded}`);
-    console.log(`   • Birre aggiunte: ${totalBeersAdded}`);
-    console.log(`   • Database arricchito con dati autentici globali`);
-
+    // 2. Aggiungi birre famose mondiali
+    console.log("🌟 Phase 2: Adding world famous beers...");
+    const beersAdded = await addWorldFamousBeers();
+    
+    // 3. Statistiche finali
+    const totalBreweries = await db.select().from(breweries);
+    const totalBeers = await db.select().from(beers);
+    
+    console.log("🎉 Global beer scraping completed!");
+    console.log(`📊 Statistics:`);
+    console.log(`   • New breweries added: ${breweriesAdded}`);
+    console.log(`   • New beers added: ${beersAdded}`);
+    console.log(`   • Total breweries in DB: ${totalBreweries.length}`);
+    console.log(`   • Total beers in DB: ${totalBeers.length}`);
+    
+    return {
+      breweriesAdded,
+      beersAdded,
+      totalBreweries: totalBreweries.length,
+      totalBeers: totalBeers.length
+    };
+    
   } catch (error) {
-    console.error("❌ Errore durante lo scraping globale:", error);
+    console.error("❌ Error in global beer scraping:", error);
+    throw error;
   }
 }
 
-export { globalBeerScraping };
+// Esegui lo scraping se chiamato direttamente
+if (import.meta.url === `file://${process.argv[1]}`) {
+  scrapeWorldBeers().then(() => process.exit(0)).catch(() => process.exit(1));
+}
 
-// Per eseguire direttamente: tsx server/global-beer-scraper.ts
-// Questo è gestito dallo script separato scripts/run-scraping.ts
+export { scrapeWorldBeers };

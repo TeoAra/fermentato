@@ -2,7 +2,10 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { setupAuth, isAuthenticated } from "./replitAuth";
+import { sql, eq } from "drizzle-orm";
 import { upload, uploadImage } from "./cloudinary";
+import { db } from "./db";
+import { breweries, beers, pubs, users, tapList } from "@shared/schema";
 
 import { insertPubSchema, insertTapListSchema, insertBottleListSchema, insertMenuCategorySchema, insertMenuItemSchema, pubRegistrationSchema } from "@shared/schema";
 import { z } from "zod";
@@ -831,6 +834,56 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
 
+
+  // Get global beer statistics
+  app.get('/api/stats/global', async (req, res) => {
+    try {
+      // Total counts
+      const totalBeers = await db.select().from(beers);
+      const totalBreweries = await db.select().from(breweries);
+      
+      // Unique styles
+      const uniqueStyles = await db
+        .selectDistinct({ style: beers.style })
+        .from(beers);
+      
+      // Top beer styles
+      const topStyles = await db
+        .select({
+          style: beers.style,
+          count: sql<number>`count(*)`
+        })
+        .from(beers)
+        .groupBy(beers.style)
+        .orderBy(sql`count(*) desc`)
+        .limit(10);
+
+      // Breweries with most beers
+      const topBreweries = await db
+        .select({
+          breweryName: breweries.name,
+          location: breweries.location,
+          beerCount: sql<number>`count(${beers.id})`
+        })
+        .from(breweries)
+        .leftJoin(beers, eq(breweries.id, beers.breweryId))
+        .groupBy(breweries.id, breweries.name, breweries.location)
+        .orderBy(sql`count(${beers.id}) desc`)
+        .limit(10);
+
+      res.json({
+        totalBeers: totalBeers.length,
+        totalBreweries: totalBreweries.length,
+        uniqueStyles: uniqueStyles.length,
+        topStyles: topStyles,
+        topBreweries: topBreweries,
+        lastUpdated: new Date().toISOString()
+      });
+    } catch (error) {
+      console.error("Error fetching global stats:", error);
+      res.status(500).json({ message: "Failed to fetch global statistics" });
+    }
+  });
 
   const httpServer = createServer(app);
   return httpServer;
