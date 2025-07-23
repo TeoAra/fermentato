@@ -31,7 +31,7 @@ Fermenta.to is a full-stack web application for discovering Italian craft beers,
 ✅ **Copertura Mondiale** - Database include birre da USA, Germania, Belgio, Regno Unito, Canada, Australia, Giappone, Messico, Repubblica Ceca, Olanda, Spagna, Portogallo, Francia, Brasile, Danimarca, Svezia, Finlandia, Norvegia, Svizzera, Austria, Israele, India
 ✅ **293 Stili Unici** - Varietà completa di stili birrari da tutto il mondo, da IPA americane a Weizen tedesche
 ✅ **API Statistiche Globali** - Endpoint /api/stats/global per monitorare crescita database e top birrifici/stili
-✅ **29.753 Birre Totali** - Database massivamente espanso con birre autentiche da 20+ paesi
+✅ **29.753 Birre Totali Autentiche** - Database massivamente espanso con birre reali verificate da 20+ paesi
 ✅ **2.968 Birrifici Mondiali** - Copertura completa di birrifici storici e craft da tutti i continenti
 
 ## User Preferences
