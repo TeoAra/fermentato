@@ -1725,102 +1725,150 @@ export default function SmartPubDashboard() {
         </div>
       </div>
 
-      {/* Beer Search Dialog for Adding/Replacing - UNICO */}
+      {/* Beer Search Dialog - COMPLETAMENTE RINNOVATO */}
       {showBeerSearch && !showPriceManager && (
         <Dialog open={showBeerSearch} onOpenChange={() => {
           setShowBeerSearch(false);
           setSearchQuery('');
           setReplacingBeer(null);
         }}>
-          <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+          <DialogContent className="max-w-5xl max-h-[85vh]">
             <DialogHeader>
-              <DialogTitle>
-                {replacingBeer ? 'Sostituisci Birra' : 'Aggiungi Birra'}
+              <DialogTitle className="text-xl font-bold">
+                {replacingBeer ? '🔄 Sostituisci Birra' : '🍺 Aggiungi Birra alla Taplist'}
               </DialogTitle>
             </DialogHeader>
             
             <div className="space-y-4">
-              <div className="flex space-x-2">
+              {/* SINGOLA BARRA DI RICERCA */}
+              <div className="relative">
                 <Input 
-                  placeholder="Cerca birra per nome o birrificio..."
+                  placeholder="🔍 Cerca per nome birra, birrificio o stile..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="flex-1"
+                  className="text-lg py-3 pr-20"
+                  autoFocus
                 />
                 <Button 
-                  variant="outline"
+                  variant="ghost"
+                  size="sm"
+                  className="absolute right-2 top-1/2 -translate-y-1/2"
                   onClick={() => {
                     setShowBeerSearch(false);
                     setReplacingBeer(null);
                     setSearchQuery('');
                   }}
                 >
-                  Annulla
+                  ✕ Chiudi
                 </Button>
               </div>
 
-              <div className="max-h-96 overflow-y-auto border rounded-lg">
+              {/* RISULTATI MIGLIORATI CON IMMAGINI */}
+              <div className="max-h-[500px] overflow-y-auto border rounded-lg bg-gray-50">
                 {beersLoading ? (
-                  <div className="p-8 text-center text-gray-500">
-                    Caricamento birre...
+                  <div className="flex items-center justify-center p-12">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mr-3"></div>
+                    <span className="text-lg">Caricamento database birre...</span>
                   </div>
                 ) : filteredBeers.length === 0 ? (
-                  <div className="p-8 text-center text-gray-500">
-                    {searchQuery ? 'Nessuna birra trovata' : 'Inizia a digitare per cercare'}
+                  <div className="p-12 text-center text-gray-500">
+                    {searchQuery ? (
+                      <div>
+                        <p className="text-lg">🚫 Nessuna birra trovata per "{searchQuery}"</p>
+                        <p className="text-sm mt-2">Prova con nomi diversi o abbreviazioni</p>
+                      </div>
+                    ) : (
+                      <div>
+                        <p className="text-lg">🔍 Inizia a digitare per cercare</p>
+                        <p className="text-sm mt-2">Database: 29.753 birre disponibili</p>
+                      </div>
+                    )}
                   </div>
                 ) : (
                   <div className="space-y-2 p-4">
                     {filteredBeers.slice(0, 50).map((beer: any) => (
                       <div 
                         key={beer.id} 
-                        className="flex items-center justify-between p-3 border rounded-lg hover:bg-gray-50"
+                        className="flex items-start space-x-4 p-4 bg-white border rounded-lg hover:shadow-md transition-shadow"
                       >
-                        <div className="flex-1">
-                          <h4 className="font-medium">{beer.name}</h4>
-                          <p className="text-sm text-gray-600">
-                            {typeof beer.brewery === 'string' ? beer.brewery : beer.brewery?.name || 'Birrificio'}
-                          </p>
-                          <div className="flex space-x-4 text-xs text-gray-500 mt-1">
-                            {beer.style && <span>Stile: {beer.style}</span>}
-                            {beer.abv && <span>ABV: {beer.abv}%</span>}
+                        {/* IMMAGINE BIRRA */}
+                        <div className="flex-shrink-0">
+                          {beer.imageUrl || beer.bottleImageUrl ? (
+                            <img 
+                              src={beer.imageUrl || beer.bottleImageUrl} 
+                              alt={beer.name}
+                              className="w-16 h-16 object-cover rounded-lg border"
+                              onError={(e) => {
+                                e.currentTarget.style.display = 'none';
+                                e.currentTarget.nextElementSibling.style.display = 'flex';
+                              }}
+                            />
+                          ) : null}
+                          <div 
+                            className="w-16 h-16 bg-gradient-to-br from-amber-400 to-orange-600 rounded-lg border flex items-center justify-center"
+                            style={{ display: beer.imageUrl || beer.bottleImageUrl ? 'none' : 'flex' }}
+                          >
+                            <span className="text-white text-2xl font-bold">🍺</span>
                           </div>
                         </div>
-                        <Button
-                          size="sm"
-                          onClick={() => {
-                            if (replacingBeer) {
-                              replaceBeerMutation.mutate({ 
-                                oldId: replacingBeer, 
-                                newBeerId: beer.id,
-                                type: priceManagerType === 'tap' ? 'taplist' : 'bottles'
-                              });
-                            } else if (priceManagerType === 'bottles') {
-                              // Per la cantina, apri il price manager
-                              setShowPriceManager(beer.id);
-                              setNewItemPrices([
-                                {size: '33cl', price: '4.50'},
-                                {size: '50cl', price: '6.50'},
-                                {size: '75cl', price: '9.50'}
-                              ]);
-                            } else {
-                              // Per le spine, aggiungi direttamente alla taplist
-                              console.log('Adding beer to taplist:', beer.id);
-                              addTapItemMutation.mutate({
-                                beerId: beer.id,
-                                priceSmall: '5.00',
-                                priceMedium: '7.00',
-                                isActive: true,
-                                isVisible: true,
-                              });
-                            }
-                            setReplacingBeer(null);
-                            setSearchQuery('');
-                          }}
-                        >
-                          {replacingBeer ? 'Sostituisci' : priceManagerType === 'bottles' ? 'Configura Prezzi' : 'Aggiungi'}
-                        </Button>
+
+                        {/* INFO BIRRA */}
+                        <div className="flex-1 min-w-0">
+                          <h4 className="font-bold text-lg text-gray-900 truncate">{beer.name}</h4>
+                          <p className="text-md text-primary font-medium">
+                            🏭 {typeof beer.brewery === 'string' ? beer.brewery : beer.brewery?.name || 'Birrificio sconosciuto'}
+                          </p>
+                          <div className="flex flex-wrap gap-3 mt-2 text-sm text-gray-600">
+                            {beer.style && <span className="bg-blue-100 px-2 py-1 rounded">🎨 {beer.style}</span>}
+                            {beer.abv && <span className="bg-green-100 px-2 py-1 rounded">🍺 {beer.abv}% ABV</span>}
+                            {beer.ibu && <span className="bg-yellow-100 px-2 py-1 rounded">🌿 {beer.ibu} IBU</span>}
+                          </div>
+                        </div>
+
+                        {/* BOTTONE AZIONE */}
+                        <div className="flex-shrink-0">
+                          <Button
+                            size="lg"
+                            className="bg-primary hover:bg-primary/90 text-white font-bold px-6"
+                            onClick={() => {
+                              if (replacingBeer) {
+                                replaceBeerMutation.mutate({ 
+                                  oldId: replacingBeer, 
+                                  newBeerId: beer.id,
+                                  type: priceManagerType
+                                });
+                              } else if (priceManagerType === 'bottles') {
+                                setShowPriceManager(beer.id);
+                                setNewItemPrices([
+                                  {size: '33cl', price: '4.50'},
+                                  {size: '50cl', price: '6.50'},
+                                  {size: '75cl', price: '9.50'}
+                                ]);
+                              } else {
+                                console.log('Adding beer to taplist:', beer.id);
+                                addTapItemMutation.mutate({
+                                  beerId: beer.id,
+                                  priceSmall: '5.00',
+                                  priceMedium: '7.00',
+                                  isActive: true,
+                                  isVisible: true,
+                                });
+                              }
+                              setReplacingBeer(null);
+                              setSearchQuery('');
+                            }}
+                          >
+                            {replacingBeer ? '🔄 Sostituisci' : priceManagerType === 'bottles' ? '⚙️ Configura' : '➕ Aggiungi'}
+                          </Button>
+                        </div>
                       </div>
                     ))}
+                    
+                    {filteredBeers.length >= 50 && (
+                      <div className="p-4 text-center text-gray-500 bg-yellow-50 rounded-lg">
+                        ⚠️ Mostrando primi 50 risultati. Affina la ricerca per vedere altri.
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
