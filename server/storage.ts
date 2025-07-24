@@ -93,10 +93,12 @@ export interface IStorage {
   createMenuItem(item: InsertMenuItem): Promise<MenuItem>;
   updateMenuItem(id: number, item: Partial<InsertMenuItem>): Promise<MenuItem>;
 
-  // Favorites operations
+  // Favorites operations (universal system)
   getFavoritesByUser(userId: string): Promise<Favorite[]>;
+  getFavoritesByType(userId: string, itemType: 'pub' | 'brewery' | 'beer'): Promise<Favorite[]>;
   addFavorite(favorite: InsertFavorite): Promise<Favorite>;
-  removeFavorite(userId: string, pubId: number): Promise<void>;
+  removeFavorite(userId: string, itemType: 'pub' | 'brewery' | 'beer', itemId: number): Promise<void>;
+  isFavorite(userId: string, itemType: 'pub' | 'brewery' | 'beer', itemId: number): Promise<boolean>;
 
   // Rating operations
   addRating(rating: InsertRating): Promise<Rating>;
@@ -701,6 +703,8 @@ export class DatabaseStorage implements IStorage {
       beers: beersWithBrewery,
     };
   }
+
+
 }
 
 export const storage = new DatabaseStorage();

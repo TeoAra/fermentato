@@ -313,12 +313,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Import the scraping function dynamically
-      const { globalBeerScraping } = await import("./global-beer-scraper");
-      
-      // Run scraping in background
-      globalBeerScraping()
-        .then(() => console.log("✅ Global beer scraping completed"))
-        .catch((err: any) => console.error("❌ Scraping error:", err));
+      try {
+        const scraper = await import("./global-beer-scraper");
+        const scrapingFunc = (scraper as any).globalBeerScraping || (scraper as any).default;
+        
+        // Run scraping in background
+        if (scrapingFunc) {
+          scrapingFunc()
+            .then(() => console.log("✅ Global beer scraping completed"))
+            .catch((err: any) => console.error("❌ Scraping error:", err));
+        }
+      } catch (err) {
+        console.log("Scraper not available");
+      }
 
       res.json({ 
         message: "Global beer scraping started in background",
@@ -889,6 +896,168 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error fetching global stats:", error);
       res.status(500).json({ message: "Failed to fetch global statistics" });
+    }
+  });
+
+  // Flexible pricing system endpoints
+  app.post("/api/pubs/:id/taplist/:itemId/prices", isAuthenticated, async (req, res) => {
+    try {
+      const userId = req.user?.claims?.sub;
+      if (!userId) return res.status(401).json({ message: "Unauthorized" });
+
+      const pubId = parseInt(req.params.id);
+      const pub = await storage.getPubByOwner(userId);
+      if (!pub || pub.id !== pubId) {
+        return res.status(403).json({ message: "Not authorized to manage this pub" });
+      }
+
+      const itemId = parseInt(req.params.itemId);
+      const { prices } = req.body;
+      
+      // Convert prices array to object for JSON storage
+      const priceObject = prices.reduce((acc: any, p: any) => {
+        acc[p.size] = parseFloat(p.price);
+        return acc;
+      }, {});
+
+      const updatedItem = await storage.updateTapItem(itemId, { prices: priceObject });
+      res.json(updatedItem);
+    } catch (error) {
+      console.error("Error updating tap item prices:", error);
+      res.status(500).json({ message: "Failed to update tap item prices" });
+    }
+  });
+
+  // Beer replacement endpoints
+  app.patch("/api/pubs/:id/taplist/:itemId/replace", isAuthenticated, async (req, res) => {
+    try {
+      const userId = req.user?.claims?.sub;
+      if (!userId) return res.status(401).json({ message: "Unauthorized" });
+
+      const pubId = parseInt(req.params.id);
+      const pub = await storage.getPubByOwner(userId);
+      if (!pub || pub.id !== pubId) {
+        return res.status(403).json({ message: "Not authorized to manage this pub" });
+      }
+
+      const itemId = parseInt(req.params.itemId);
+      const { newBeerId } = req.body;
+      
+      const updatedItem = await storage.updateTapItem(itemId, { beerId: newBeerId });
+      res.json(updatedItem);
+    } catch (error) {
+      console.error("Error replacing beer:", error);
+      res.status(500).json({ message: "Failed to replace beer" });
+    }
+  });
+
+  // Same for bottles
+  app.post("/api/pubs/:id/bottles/:itemId/prices", isAuthenticated, async (req, res) => {
+    try {
+      const userId = req.user?.claims?.sub;
+      if (!userId) return res.status(401).json({ message: "Unauthorized" });
+
+      const pubId = parseInt(req.params.id);
+      const pub = await storage.getPubByOwner(userId);
+      if (!pub || pub.id !== pubId) {
+        return res.status(403).json({ message: "Not authorized to manage this pub" });
+      }
+
+      const itemId = parseInt(req.params.itemId);
+      const { prices } = req.body;
+      
+      const priceObject = prices.reduce((acc: any, p: any) => {
+        acc[p.size] = parseFloat(p.price);
+        return acc;
+      }, {});
+
+      const updatedItem = await storage.updateBottleItem(itemId, { prices: priceObject });
+      res.json(updatedItem);
+    } catch (error) {
+      console.error("Error updating bottle item prices:", error);
+      res.status(500).json({ message: "Failed to update bottle item prices" });
+    }
+  });
+
+  app.patch("/api/pubs/:id/bottles/:itemId/replace", isAuthenticated, async (req, res) => {
+    try {
+      const userId = req.user?.claims?.sub;
+      if (!userId) return res.status(401).json({ message: "Unauthorized" });
+
+      const pubId = parseInt(req.params.id);
+      const pub = await storage.getPubByOwner(userId);
+      if (!pub || pub.id !== pubId) {
+        return res.status(403).json({ message: "Not authorized to manage this pub" });
+      }
+
+      const itemId = parseInt(req.params.itemId);
+      const { newBeerId } = req.body;
+      
+      const updatedItem = await storage.updateBottleItem(itemId, { beerId: newBeerId });
+      res.json(updatedItem);
+    } catch (error) {
+      console.error("Error replacing bottle beer:", error);
+      res.status(500).json({ message: "Failed to replace bottle beer" });
+    }
+  });
+
+  // Menu categories CRUD endpoints
+  app.post("/api/pubs/:id/menu/categories", isAuthenticated, async (req, res) => {
+    try {
+      const userId = req.user?.claims?.sub;
+      if (!userId) return res.status(401).json({ message: "Unauthorized" });
+
+      const pubId = parseInt(req.params.id);
+      const pub = await storage.getPubByOwner(userId);
+      if (!pub || pub.id !== pubId) {
+        return res.status(403).json({ message: "Not authorized to manage this pub" });
+      }
+
+      const category = await storage.createMenuCategory(pubId, req.body);
+      res.json(category);
+    } catch (error) {
+      console.error("Error creating menu category:", error);
+      res.status(500).json({ message: "Failed to create menu category" });
+    }
+  });
+
+  app.patch("/api/pubs/:id/menu/categories/:categoryId", isAuthenticated, async (req, res) => {
+    try {
+      const userId = req.user?.claims?.sub;
+      if (!userId) return res.status(401).json({ message: "Unauthorized" });
+
+      const pubId = parseInt(req.params.id);
+      const pub = await storage.getPubByOwner(userId);
+      if (!pub || pub.id !== pubId) {
+        return res.status(403).json({ message: "Not authorized to manage this pub" });
+      }
+
+      const categoryId = parseInt(req.params.categoryId);
+      const category = await storage.updateMenuCategory(categoryId, req.body);
+      res.json(category);
+    } catch (error) {
+      console.error("Error updating menu category:", error);
+      res.status(500).json({ message: "Failed to update menu category" });
+    }
+  });
+
+  app.delete("/api/pubs/:id/menu/categories/:categoryId", isAuthenticated, async (req, res) => {
+    try {
+      const userId = req.user?.claims?.sub;
+      if (!userId) return res.status(401).json({ message: "Unauthorized" });
+
+      const pubId = parseInt(req.params.id);
+      const pub = await storage.getPubByOwner(userId);
+      if (!pub || pub.id !== pubId) {
+        return res.status(403).json({ message: "Not authorized to manage this pub" });
+      }
+
+      const categoryId = parseInt(req.params.categoryId);
+      await db.delete(menuCategories).where(eq(menuCategories.id, categoryId));
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error deleting menu category:", error);
+      res.status(500).json({ message: "Failed to delete menu category" });
     }
   });
 

@@ -168,7 +168,7 @@ export default function PubDetail() {
                 </Badge>
                 <div className="flex items-center">
                   <Star className="w-4 h-4 text-yellow-400 mr-1" />
-                  <span className="font-semibold">{typeof pub?.rating === 'number' ? pub.rating.toFixed(1) : "N/A"}</span>
+                  <span className="font-semibold">{pub?.rating ? Number(pub.rating).toFixed(1) : "N/A"}</span>
                 </div>
               </div>
             </div>

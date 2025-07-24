@@ -125,7 +125,7 @@ export const tapList = pgTable("tap_list", {
   isActive: boolean("is_active").default(true),
   isVisible: boolean("is_visible").default(true), // Può essere nascosta temporaneamente
   // Prezzi flessibili - JSON con misure personalizzate del pub
-  prices: jsonb("prices"), // es. {"0.20L": "4.50", "0.40L": "7.50", "0.50L": "9.00"}
+  prices: jsonb("prices").$type<Record<string, number>>(), // es. {"Piccola": 4.50, "Media": 7.50, "Grande": 9.00}
   // Manteniamo i campi legacy per compatibilità
   priceSmall: decimal("price_small", { precision: 5, scale: 2 }), // 0.2L
   priceMedium: decimal("price_medium", { precision: 5, scale: 2 }), // 0.4L
@@ -143,6 +143,9 @@ export const bottleList = pgTable("bottle_list", {
   beerId: integer("beer_id").references(() => beers.id).notNull(),
   isActive: boolean("is_active").default(true),
   isVisible: boolean("is_visible").default(true), // Può essere nascosta temporaneamente
+  // Prezzi flessibili per bottiglie con misure personalizzate
+  prices: jsonb("prices").$type<Record<string, number>>(), // es. {"33cl": 5.50, "50cl": 7.50, "75cl": 12.00}
+  // Manteniamo compatibilità legacy
   priceBottle: decimal("price_bottle", { precision: 5, scale: 2 }), // Prezzo bottiglia
   bottleSize: varchar("bottle_size").default("0.33L"), // Dimensione bottiglia
   quantity: integer("quantity"), // Quantità disponibile

@@ -51,6 +51,9 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { formatDistanceToNow } from "date-fns";
 import { it } from "date-fns/locale";
+import FlexiblePriceManager from "@/components/flexible-price-manager";
+import BeerSearchEnhanced from "@/components/beer-search-enhanced";
+import MenuCategoryManager from "@/components/menu-category-manager";
 
 type DashboardSection = 'overview' | 'taplist' | 'menu' | 'analytics' | 'settings' | 'profile';
 
@@ -59,7 +62,7 @@ export default function SmartPubDashboard() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [currentSection, setCurrentSection] = useState<DashboardSection>('overview');
-  const [editingItem, setEditingItem] = useState<number | null>(null);
+  const [editingItem, setEditingItem] = useState<number | string | null>(null);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [editData, setEditData] = useState<any>({});
   const [searchQuery, setSearchQuery] = useState('');
@@ -67,6 +70,10 @@ export default function SmartPubDashboard() {
   const [showBeerSearch, setShowBeerSearch] = useState(false);
   const [draggedItem, setDraggedItem] = useState<number | null>(null);
   const [lastProfileUpdate, setLastProfileUpdate] = useState<Date | null>(null);
+  const [newItemPrices, setNewItemPrices] = useState<{size: string, price: string}[]>([{size: '', price: ''}]);
+  const [replacingBeer, setReplacingBeer] = useState<number | null>(null);
+  const [showPriceManager, setShowPriceManager] = useState<number | null>(null);
+  const [priceManagerType, setPriceManagerType] = useState<'taplist' | 'bottles'>('taplist');
 
   // Fetch pub data
   const { data: userPubs, isLoading: pubsLoading } = useQuery({
@@ -144,13 +151,52 @@ export default function SmartPubDashboard() {
   });
 
   const updateMenuItemMutation = useMutation({
-    mutationFn: async ({ id, data }: { id: number; data: any }) => {
-      return apiRequest(`/api/pubs/${currentPub?.id}/menu/${id}`, 'PATCH', data);
+    mutationFn: async ({ id, data }: { id: number | string; data: any }) => {
+      if (id === -1) {
+        // Create new category
+        return apiRequest(`/api/pubs/${currentPub?.id}/menu/categories`, 'POST', data);
+      } else if (id === -2) {
+        // Create new product
+        return apiRequest(`/api/pubs/${currentPub?.id}/menu/products`, 'POST', data);
+      } else {
+        // Update existing
+        return apiRequest(`/api/pubs/${currentPub?.id}/menu/${id}`, 'PATCH', data);
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/pubs", currentPub?.id, "menu"] });
       setEditingItem(null);
+      setEditData({});
       toast({ title: "Menu aggiornato", description: "Le modifiche sono state salvate" });
+    },
+  });
+
+  // Add multiple prices mutation
+  const addMultiplePricesMutation = useMutation({
+    mutationFn: async ({ id, prices, type = 'taplist' }: { id: number; prices: {size: string, price: string}[]; type: 'taplist' | 'bottles' }) => {
+      const validPrices = prices.filter(p => p.size && p.price);
+      return apiRequest(`/api/pubs/${currentPub?.id}/${type}/${id}/prices`, 'POST', { prices: validPrices });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/pubs", currentPub?.id, "taplist"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/pubs", currentPub?.id, "bottles"] });
+      toast({ title: "Prezzi aggiornati", description: "I prezzi sono stati salvati con successo" });
+      setNewItemPrices([{size: '', price: ''}]);
+      setEditingItem(null);
+    },
+  });
+
+  // Replace beer mutation
+  const replaceBeerMutation = useMutation({
+    mutationFn: async ({ oldId, newBeerId, type = 'taplist' }: { oldId: number; newBeerId: number; type: 'taplist' | 'bottles' }) => {
+      return apiRequest(`/api/pubs/${currentPub?.id}/${type}/${oldId}/replace`, 'PATCH', { newBeerId });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/pubs", currentPub?.id, "taplist"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/pubs", currentPub?.id, "bottles"] });
+      toast({ title: "Birra sostituita", description: "La birra è stata sostituita con successo" });
+      setReplacingBeer(null);
+      setShowBeerSearch(false);
     },
   });
 
@@ -1414,7 +1460,7 @@ export default function SmartPubDashboard() {
                           <div className="grid grid-cols-2 gap-4">
                             <div className="text-center p-3 bg-gray-50 rounded">
                               <div className="text-2xl font-bold text-primary">
-                                {currentPub?.rating?.toFixed(1) || 'N/A'}
+                                {currentPub?.rating && typeof currentPub.rating === 'number' ? currentPub.rating.toFixed(1) : 'N/A'}
                               </div>
                               <div className="text-xs text-gray-600">Rating Medio</div>
                             </div>
