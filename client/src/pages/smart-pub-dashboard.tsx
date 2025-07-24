@@ -1776,9 +1776,19 @@ export default function SmartPubDashboard() {
                             if (replacingBeer) {
                               replaceBeerMutation.mutate({ 
                                 oldId: replacingBeer, 
-                                newBeerId: beer.id 
+                                newBeerId: beer.id,
+                                type: priceManagerType 
                               });
+                            } else if (priceManagerType === 'bottles') {
+                              // Per la cantina, apri il price manager
+                              setShowPriceManager(beer.id);
+                              setNewItemPrices([
+                                {size: '33cl', price: '4.50'},
+                                {size: '50cl', price: '6.50'},
+                                {size: '75cl', price: '9.50'}
+                              ]);
                             } else {
+                              // Per le spine, aggiungi direttamente
                               addTapItemMutation.mutate({
                                 beerId: beer.id,
                                 priceSmall: '5.00',
