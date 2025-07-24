@@ -41,9 +41,12 @@ Fermenta.to is a full-stack web application for discovering Italian craft beers,
 ✅ **Tabelle Moderne Mobile-Friendly** - Gestione contenuti ottimizzata per mobile con ricerca funzionante e modifica in-place
 ✅ **Dati Admin Completamente Veritieri** - Endpoint corretti mostrano pub Luppolino e tutte le 29.753 birre autentiche
 ✅ **Dashboard Pub Smart Completa** - Menu mobile con logout/login, sezioni taplist, menu, analytics, profile e settings completamente popolate
-✅ **Gestione Tap List Avanzata** - Edit inline prezzi, aggiunta/rimozione birre, visualizzazione bottiglie e menu categorizzato
+✅ **Gestione Tap List Avanzata** - Ricerca birre, edit inline prezzi multipli (piccola/media), ordine spine, note personali, visualizza/nascondi/rimuovi
+✅ **Cantina Birre Completa** - Gestione bottiglie con prezzi multipli (33cl/50cl/75cl), note cantina, visualizza/nascondi/rimuovi
+✅ **Menu Prodotti Avanzato** - Categorie con titolo/descrizione/visibilità, prodotti con prezzi multipli, allergeni, categorie multiple
+✅ **Profilo Pub Completo** - Dati pubblici/privati separati, restrizione 30 giorni per dati sensibili, autocompletamento indirizzo, social media
 ✅ **Analytics Pub Realistiche** - Statistiche visite, birre popolari, rating, recensioni con grafici settimanali
-✅ **Profilo Pub Completo** - Modifica informazioni, contatti, upload immagini logo/copertina, impostazioni orari e notifiche
+✅ **Sistema Permissions Avanzato** - Admin bypass restrizioni, controllo modifiche dati privati con localStorage, badge informativi
 
 ## User Preferences
 

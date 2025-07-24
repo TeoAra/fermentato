@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
@@ -7,6 +7,9 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
 import { 
   Store, 
   Beer, 
@@ -37,7 +40,13 @@ import {
   UserPlus,
   Save,
   Trash2,
-  Bell
+  Bell,
+  Search,
+  ArrowUp,
+  ArrowDown,
+  Package,
+  Clock,
+  Upload
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { formatDistanceToNow } from "date-fns";
@@ -53,6 +62,11 @@ export default function SmartPubDashboard() {
   const [editingItem, setEditingItem] = useState<number | null>(null);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [editData, setEditData] = useState<any>({});
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedBeers, setSelectedBeers] = useState<any[]>([]);
+  const [showBeerSearch, setShowBeerSearch] = useState(false);
+  const [draggedItem, setDraggedItem] = useState<number | null>(null);
+  const [lastProfileUpdate, setLastProfileUpdate] = useState<Date | null>(null);
 
   // Fetch pub data
   const { data: userPubs, isLoading: pubsLoading } = useQuery({
@@ -79,6 +93,18 @@ export default function SmartPubDashboard() {
     queryKey: ["/api/pubs", currentPub?.id, "menu"],
     enabled: !!currentPub?.id,
   });
+
+  // Fetch all beers for search
+  const { data: allBeers = [], isLoading: beersLoading } = useQuery({
+    queryKey: ["/api/beers"],
+    enabled: showBeerSearch,
+  });
+
+  // Filter beers based on search
+  const filteredBeers = (Array.isArray(allBeers) ? allBeers : []).filter((beer: any) => 
+    beer.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    (typeof beer.brewery === 'string' ? beer.brewery : beer.brewery?.name)?.toLowerCase().includes(searchQuery.toLowerCase())
+  );
 
   // Type assertions for data
   const typedTapList = Array.isArray(tapList) ? tapList : [];
@@ -134,9 +160,33 @@ export default function SmartPubDashboard() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/my-pubs"] });
+      setLastProfileUpdate(new Date());
       toast({ title: "Profilo aggiornato", description: "Le informazioni del pub sono state aggiornate" });
     },
   });
+
+  // Check if user can update private data (30-day restriction)
+  const canUpdatePrivateData = () => {
+    if ((user as any)?.userType === 'admin') return true;
+    if (!lastProfileUpdate) return true;
+    const daysSinceUpdate = (Date.now() - lastProfileUpdate.getTime()) / (1000 * 60 * 60 * 24);
+    return daysSinceUpdate >= 30;
+  };
+
+  // Load last profile update from localStorage
+  useEffect(() => {
+    const saved = localStorage.getItem(`pub-${currentPub?.id}-last-update`);
+    if (saved) {
+      setLastProfileUpdate(new Date(saved));
+    }
+  }, [currentPub?.id]);
+
+  // Save last profile update to localStorage
+  useEffect(() => {
+    if (lastProfileUpdate && currentPub?.id) {
+      localStorage.setItem(`pub-${currentPub.id}-last-update`, lastProfileUpdate.toISOString());
+    }
+  }, [lastProfileUpdate, currentPub?.id]);
 
   if (!isAuthenticated || (user as any)?.userType !== 'pub_owner') {
     return (
@@ -400,61 +450,168 @@ export default function SmartPubDashboard() {
                   <div className="space-y-6">
                     <div className="flex items-center justify-between">
                       <h2 className="text-2xl font-bold text-gray-900">Gestione Spine e Bottiglie</h2>
-                      <Button onClick={() => setEditingItem(-1)} className="bg-primary">
-                        <Plus className="w-4 h-4 mr-2" />
-                        Aggiungi Birra
-                      </Button>
+                      <Dialog open={showBeerSearch} onOpenChange={setShowBeerSearch}>
+                        <DialogTrigger asChild>
+                          <Button className="bg-primary">
+                            <Plus className="w-4 h-4 mr-2" />
+                            Cerca e Aggiungi Birra
+                          </Button>
+                        </DialogTrigger>
+                        <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+                          <DialogHeader>
+                            <DialogTitle>Cerca Birra da Aggiungere</DialogTitle>
+                          </DialogHeader>
+                          <div className="space-y-4">
+                            <div className="relative">
+                              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                              <Input
+                                placeholder="Cerca per nome birra o birrificio..."
+                                value={searchQuery}
+                                onChange={(e) => setSearchQuery(e.target.value)}
+                                className="pl-10"
+                              />
+                            </div>
+                            <div className="max-h-64 overflow-y-auto space-y-2">
+                              {beersLoading ? (
+                                <div className="text-center py-4">Caricamento birre...</div>
+                              ) : filteredBeers.slice(0, 20).map((beer: any) => (
+                                <div key={beer.id} className="flex items-center justify-between p-2 border rounded hover:bg-gray-50">
+                                  <div>
+                                    <p className="font-medium text-sm">{beer.name}</p>
+                                    <p className="text-xs text-gray-600">
+                                      {typeof beer.brewery === 'string' ? beer.brewery : beer.brewery?.name}
+                                    </p>
+                                  </div>
+                                  <Button 
+                                    size="sm" 
+                                    onClick={() => {
+                                      setSelectedBeers([...selectedBeers, beer]);
+                                      setShowBeerSearch(false);
+                                      setSearchQuery('');
+                                    }}
+                                  >
+                                    Seleziona
+                                  </Button>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        </DialogContent>
+                      </Dialog>
                     </div>
 
                     {/* Tap List Management */}
                     <Card>
                       <CardHeader>
-                        <CardTitle className="flex items-center">
-                          <Beer className="mr-2" />
-                          Birre alla Spina ({typedTapList.length})
+                        <CardTitle className="flex items-center justify-between">
+                          <div className="flex items-center">
+                            <Beer className="mr-2" />
+                            Birre alla Spina ({typedTapList.length})
+                          </div>
+                          <div className="text-xs text-gray-500">Trascina per riordinare</div>
                         </CardTitle>
                       </CardHeader>
                       <CardContent>
                         <div className="space-y-4">
-                          {typedTapList.map((item: any) => (
-                            <div key={item.id} className="flex items-center justify-between p-4 border rounded-lg">
-                              <div className="flex-1">
-                                {editingItem === item.id ? (
-                                  <div className="space-y-2">
-                                    <Input 
-                                      placeholder="Prezzo"
-                                      value={editData.price || item.price || ''}
-                                      onChange={(e) => setEditData({ ...editData, price: e.target.value })}
-                                    />
-                                    <div className="flex space-x-2">
-                                      <Button size="sm" onClick={() => updateTapItemMutation.mutate({ id: item.id, data: editData })}>
-                                        <Save className="w-4 h-4 mr-1" />
-                                        Salva
-                                      </Button>
-                                      <Button size="sm" variant="outline" onClick={() => setEditingItem(null)}>
-                                        Annulla
-                                      </Button>
+                          {typedTapList.map((item: any, index: number) => (
+                            <div 
+                              key={item.id} 
+                              className="flex items-center justify-between p-4 border rounded-lg cursor-move hover:bg-gray-50"
+                              draggable
+                              onDragStart={() => setDraggedItem(item.id)}
+                            >
+                              <div className="flex items-center space-x-3">
+                                <div className="flex flex-col items-center space-y-1">
+                                  <Button size="sm" variant="ghost" className="h-6 w-6 p-0">
+                                    <ArrowUp className="w-3 h-3" />
+                                  </Button>
+                                  <span className="text-xs font-medium bg-gray-100 px-2 py-1 rounded">
+                                    {index + 1}
+                                  </span>
+                                  <Button size="sm" variant="ghost" className="h-6 w-6 p-0">
+                                    <ArrowDown className="w-3 h-3" />
+                                  </Button>
+                                </div>
+                                <div className="flex-1">
+                                  {editingItem === item.id ? (
+                                    <div className="space-y-3">
+                                      <div className="grid grid-cols-2 gap-3">
+                                        <div>
+                                          <Label>Prezzo Piccola (€)</Label>
+                                          <Input 
+                                            placeholder="5.00"
+                                            value={editData.priceSmall || ''}
+                                            onChange={(e) => setEditData({ ...editData, priceSmall: e.target.value })}
+                                          />
+                                        </div>
+                                        <div>
+                                          <Label>Prezzo Media (€)</Label>
+                                          <Input 
+                                            placeholder="7.00"
+                                            value={editData.priceMedium || ''}
+                                            onChange={(e) => setEditData({ ...editData, priceMedium: e.target.value })}
+                                          />
+                                        </div>
+                                      </div>
+                                      <div>
+                                        <Label>Note Personali</Label>
+                                        <Textarea 
+                                          placeholder="Note sulla birra, abbinamenti, etc..."
+                                          value={editData.notes || ''}
+                                          onChange={(e) => setEditData({ ...editData, notes: e.target.value })}
+                                          rows={2}
+                                        />
+                                      </div>
+                                      <div className="flex space-x-2">
+                                        <Button size="sm" onClick={() => updateTapItemMutation.mutate({ id: item.id, data: editData })}>
+                                          <Save className="w-4 h-4 mr-1" />
+                                          Salva
+                                        </Button>
+                                        <Button size="sm" variant="outline" onClick={() => setEditingItem(null)}>
+                                          Annulla
+                                        </Button>
+                                      </div>
                                     </div>
-                                  </div>
-                                ) : (
-                                  <>
-                                    <h4 className="font-semibold">{item.beer?.name || 'Nome birra'}</h4>
-                                    <p className="text-sm text-gray-600">
-                                      {typeof item.beer?.brewery === 'string' 
-                                        ? item.beer.brewery 
-                                        : item.beer?.brewery?.name || 'Birrificio'}
-                                    </p>
-                                    <div className="flex items-center space-x-4 mt-2">
-                                      <Badge variant={item.isActive ? "default" : "secondary"}>
-                                        {item.isActive ? "Disponibile" : "Esaurita"}
-                                      </Badge>
-                                      <span className="text-sm font-medium">€{item.price || '0.00'}</span>
-                                    </div>
-                                  </>
-                                )}
+                                  ) : (
+                                    <>
+                                      <h4 className="font-semibold">{item.beer?.name || 'Nome birra'}</h4>
+                                      <p className="text-sm text-gray-600">
+                                        {typeof item.beer?.brewery === 'string' 
+                                          ? item.beer.brewery 
+                                          : item.beer?.brewery?.name || 'Birrificio'}
+                                      </p>
+                                      <div className="flex items-center space-x-4 mt-2">
+                                        <Badge variant={item.isActive ? "default" : "secondary"}>
+                                          {item.isActive ? "Disponibile" : "Esaurita"}
+                                        </Badge>
+                                        <div className="flex space-x-2 text-sm">
+                                          <span>Piccola: €{item.priceSmall || '0.00'}</span>
+                                          <span>Media: €{item.priceMedium || '0.00'}</span>
+                                        </div>
+                                      </div>
+                                      {item.notes && (
+                                        <p className="text-xs text-gray-500 mt-1 italic">{item.notes}</p>
+                                      )}
+                                    </>
+                                  )}
+                                </div>
                               </div>
                               <div className="flex space-x-2">
-                                <Button size="sm" variant="outline" onClick={() => { setEditingItem(item.id); setEditData({ price: item.price }); }}>
+                                <Button 
+                                  size="sm" 
+                                  variant="outline" 
+                                  onClick={() => updateTapItemMutation.mutate({ id: item.id, data: { isActive: !item.isActive } })}
+                                >
+                                  {item.isActive ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                                </Button>
+                                <Button size="sm" variant="outline" onClick={() => { 
+                                  setEditingItem(item.id); 
+                                  setEditData({ 
+                                    priceSmall: item.priceSmall, 
+                                    priceMedium: item.priceMedium, 
+                                    notes: item.notes 
+                                  }); 
+                                }}>
                                   <Edit3 className="w-4 h-4" />
                                 </Button>
                                 <Button size="sm" variant="outline" onClick={() => removeTapItemMutation.mutate(item.id)}>
@@ -467,42 +624,132 @@ export default function SmartPubDashboard() {
                             <div className="text-center py-8 text-gray-500">
                               <Beer className="mx-auto mb-4" size={48} />
                               <p>Nessuna birra alla spina</p>
-                              <p className="text-sm">Aggiungi le prime birre al tuo tap list</p>
+                              <p className="text-sm">Cerca e aggiungi le prime birre al tuo tap list</p>
                             </div>
                           )}
                         </div>
                       </CardContent>
                     </Card>
 
-                    {/* Bottle List */}
+                    {/* Bottle List / Cantina */}
                     <Card>
                       <CardHeader>
-                        <CardTitle className="flex items-center">
-                          <Store className="mr-2" />
-                          Birre in Bottiglia ({typedBottleList.length})
+                        <CardTitle className="flex items-center justify-between">
+                          <div className="flex items-center">
+                            <Package className="mr-2" />
+                            Cantina Birre in Bottiglia ({typedBottleList.length})
+                          </div>
+                          <Button size="sm" onClick={() => setShowBeerSearch(true)} variant="outline">
+                            <Plus className="w-4 h-4 mr-2" />
+                            Aggiungi alla Cantina
+                          </Button>
                         </CardTitle>
                       </CardHeader>
                       <CardContent>
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                          {typedBottleList.slice(0, 6).map((item: any) => (
-                            <div key={item.id} className="p-3 border rounded-lg">
-                              <h5 className="font-medium text-sm">{item.beer?.name || 'Nome birra'}</h5>
-                              <p className="text-xs text-gray-600">{item.beer?.brewery?.name || 'Birrificio'}</p>
-                              <div className="flex items-center justify-between mt-2">
-                                <Badge variant={item.isActive ? "default" : "secondary"} className="text-xs">
-                                  {item.isActive ? "Disponibile" : "Esaurita"}
-                                </Badge>
-                                <span className="text-sm font-medium">€{item.price || '0.00'}</span>
+                        <div className="space-y-4">
+                          {typedBottleList.map((item: any) => (
+                            <div key={item.id} className="flex items-center justify-between p-3 border rounded-lg">
+                              <div className="flex-1">
+                                {editingItem === `bottle-${item.id}` ? (
+                                  <div className="space-y-3">
+                                    <div className="grid grid-cols-3 gap-3">
+                                      <div>
+                                        <Label>Prezzo 33cl (€)</Label>
+                                        <Input 
+                                          placeholder="4.50"
+                                          value={editData.price33cl || ''}
+                                          onChange={(e) => setEditData({ ...editData, price33cl: e.target.value })}
+                                        />
+                                      </div>
+                                      <div>
+                                        <Label>Prezzo 50cl (€)</Label>
+                                        <Input 
+                                          placeholder="6.50"
+                                          value={editData.price50cl || ''}
+                                          onChange={(e) => setEditData({ ...editData, price50cl: e.target.value })}
+                                        />
+                                      </div>
+                                      <div>
+                                        <Label>Prezzo 75cl (€)</Label>
+                                        <Input 
+                                          placeholder="9.50"
+                                          value={editData.price75cl || ''}
+                                          onChange={(e) => setEditData({ ...editData, price75cl: e.target.value })}
+                                        />
+                                      </div>
+                                    </div>
+                                    <div>
+                                      <Label>Note Cantina</Label>
+                                      <Textarea 
+                                        placeholder="Annata, conservazione, note di degustazione..."
+                                        value={editData.notes || ''}
+                                        onChange={(e) => setEditData({ ...editData, notes: e.target.value })}
+                                        rows={2}
+                                      />
+                                    </div>
+                                    <div className="flex space-x-2">
+                                      <Button size="sm" onClick={() => updateTapItemMutation.mutate({ id: item.id, data: editData })}>
+                                        <Save className="w-4 h-4 mr-1" />
+                                        Salva
+                                      </Button>
+                                      <Button size="sm" variant="outline" onClick={() => setEditingItem(null)}>
+                                        Annulla
+                                      </Button>
+                                    </div>
+                                  </div>
+                                ) : (
+                                  <>
+                                    <h5 className="font-medium">{item.beer?.name || 'Nome birra'}</h5>
+                                    <p className="text-sm text-gray-600">{item.beer?.brewery?.name || 'Birrificio'}</p>
+                                    <div className="flex items-center space-x-4 mt-2">
+                                      <Badge variant={item.isActive ? "default" : "secondary"} className="text-xs">
+                                        {item.isActive ? "Disponibile" : "Esaurita"}
+                                      </Badge>
+                                      <div className="flex space-x-2 text-xs">
+                                        {item.price33cl && <span>33cl: €{item.price33cl}</span>}
+                                        {item.price50cl && <span>50cl: €{item.price50cl}</span>}
+                                        {item.price75cl && <span>75cl: €{item.price75cl}</span>}
+                                      </div>
+                                    </div>
+                                    {item.notes && (
+                                      <p className="text-xs text-gray-500 mt-1 italic">{item.notes}</p>
+                                    )}
+                                  </>
+                                )}
+                              </div>
+                              <div className="flex space-x-2">
+                                <Button 
+                                  size="sm" 
+                                  variant="outline" 
+                                  onClick={() => updateTapItemMutation.mutate({ id: item.id, data: { isActive: !item.isActive } })}
+                                >
+                                  {item.isActive ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                                </Button>
+                                <Button size="sm" variant="outline" onClick={() => { 
+                                  setEditingItem(`bottle-${item.id}` as any); 
+                                  setEditData({ 
+                                    price33cl: item.price33cl, 
+                                    price50cl: item.price50cl, 
+                                    price75cl: item.price75cl, 
+                                    notes: item.notes 
+                                  }); 
+                                }}>
+                                  <Edit3 className="w-4 h-4" />
+                                </Button>
+                                <Button size="sm" variant="outline" onClick={() => removeTapItemMutation.mutate(item.id)}>
+                                  <Trash2 className="w-4 h-4" />
+                                </Button>
                               </div>
                             </div>
                           ))}
+                          {typedBottleList.length === 0 && (
+                            <div className="text-center py-8 text-gray-500">
+                              <Package className="mx-auto mb-4" size={48} />
+                              <p>Nessuna birra in cantina</p>
+                              <p className="text-sm">Inizia a costruire la tua selezione di bottiglie</p>
+                            </div>
+                          )}
                         </div>
-                        {typedBottleList.length === 0 && (
-                          <div className="text-center py-8 text-gray-500">
-                            <Store className="mx-auto mb-4" size={48} />
-                            <p>Nessuna birra in bottiglia</p>
-                          </div>
-                        )}
                       </CardContent>
                     </Card>
                   </div>
@@ -511,77 +758,236 @@ export default function SmartPubDashboard() {
                   <div className="space-y-6">
                     <div className="flex items-center justify-between">
                       <h2 className="text-2xl font-bold text-gray-900">Gestione Menu</h2>
-                      <Button className="bg-primary">
-                        <Plus className="w-4 h-4 mr-2" />
-                        Aggiungi Categoria
-                      </Button>
+                      <div className="flex space-x-2">
+                        <Button variant="outline" onClick={() => setEditingItem(-2)}>
+                          <Plus className="w-4 h-4 mr-2" />
+                          Aggiungi Prodotto
+                        </Button>
+                        <Button className="bg-primary" onClick={() => setEditingItem(-1)}>
+                          <Plus className="w-4 h-4 mr-2" />
+                          Aggiungi Categoria
+                        </Button>
+                      </div>
                     </div>
 
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                      {typedMenuData.map((category: any) => (
-                        <Card key={category.id}>
-                          <CardHeader>
-                            <CardTitle className="flex items-center justify-between">
-                              <div className="flex items-center">
-                                <Utensils className="mr-2" />
-                                {category.name}
-                              </div>
-                              <Button size="sm" variant="outline" onClick={() => { setEditingItem(category.id); setEditData(category); }}>
-                                <Edit3 className="w-4 h-4" />
-                              </Button>
-                            </CardTitle>
-                          </CardHeader>
-                          <CardContent>
-                            {editingItem === category.id ? (
+                    {/* Categories Management */}
+                    <Card>
+                      <CardHeader>
+                        <CardTitle className="flex items-center">
+                          <Utensils className="mr-2" />
+                          Categorie Menu ({typedMenuData.length})
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="space-y-4">
+                          {editingItem === -1 && (
+                            <div className="p-4 border-2 border-dashed border-primary/20 rounded-lg">
                               <div className="space-y-3">
-                                <Input 
-                                  placeholder="Nome categoria"
-                                  value={editData.name || ''}
-                                  onChange={(e) => setEditData({ ...editData, name: e.target.value })}
-                                />
-                                <Textarea
-                                  placeholder="Descrizione"
-                                  value={editData.description || ''}
-                                  onChange={(e) => setEditData({ ...editData, description: e.target.value })}
-                                />
+                                <div>
+                                  <Label>Nome Categoria</Label>
+                                  <Input 
+                                    placeholder="Es. Antipasti, Primi Piatti, Dolci..."
+                                    value={editData.name || ''}
+                                    onChange={(e) => setEditData({ ...editData, name: e.target.value })}
+                                  />
+                                </div>
+                                <div>
+                                  <Label>Descrizione</Label>
+                                  <Textarea
+                                    placeholder="Descrizione della categoria..."
+                                    value={editData.description || ''}
+                                    onChange={(e) => setEditData({ ...editData, description: e.target.value })}
+                                    rows={2}
+                                  />
+                                </div>
                                 <div className="flex space-x-2">
-                                  <Button size="sm" onClick={() => updateMenuItemMutation.mutate({ id: category.id, data: editData })}>
+                                  <Button size="sm" onClick={() => updateMenuItemMutation.mutate({ id: -1, data: editData })}>
                                     <Save className="w-4 h-4 mr-1" />
-                                    Salva
+                                    Crea Categoria
                                   </Button>
                                   <Button size="sm" variant="outline" onClick={() => setEditingItem(null)}>
                                     Annulla
                                   </Button>
                                 </div>
                               </div>
-                            ) : (
-                              <>
-                                <p className="text-gray-600 text-sm mb-3">{category.description}</p>
-                                <div className="space-y-2">
-                                  <div className="flex items-center justify-between text-sm">
-                                    <span className="text-gray-500">Creata il:</span>
-                                    <span>{new Date(category.createdAt).toLocaleDateString('it-IT')}</span>
+                            </div>
+                          )}
+                          
+                          {typedMenuData.map((category: any) => (
+                            <div key={category.id} className="flex items-center justify-between p-4 border rounded-lg">
+                              <div className="flex-1">
+                                {editingItem === category.id ? (
+                                  <div className="space-y-3">
+                                    <Input 
+                                      placeholder="Nome categoria"
+                                      value={editData.name || ''}
+                                      onChange={(e) => setEditData({ ...editData, name: e.target.value })}
+                                    />
+                                    <Textarea
+                                      placeholder="Descrizione"
+                                      value={editData.description || ''}
+                                      onChange={(e) => setEditData({ ...editData, description: e.target.value })}
+                                      rows={2}
+                                    />
+                                    <div className="flex space-x-2">
+                                      <Button size="sm" onClick={() => updateMenuItemMutation.mutate({ id: category.id, data: editData })}>
+                                        <Save className="w-4 h-4 mr-1" />
+                                        Salva
+                                      </Button>
+                                      <Button size="sm" variant="outline" onClick={() => setEditingItem(null)}>
+                                        Annulla
+                                      </Button>
+                                    </div>
                                   </div>
-                                  <Badge variant="outline">Menu Category</Badge>
-                                </div>
-                              </>
-                            )}
-                          </CardContent>
-                        </Card>
-                      ))}
-                      
-                      {typedMenuData.length === 0 && (
-                        <div className="col-span-full text-center py-12">
-                          <Utensils className="mx-auto mb-4 text-gray-400" size={64} />
-                          <h3 className="text-lg font-medium text-gray-900 mb-2">Nessun menu configurato</h3>
-                          <p className="text-gray-600 mb-4">Inizia aggiungendo le prime categorie del tuo menu</p>
-                          <Button className="bg-primary">
-                            <Plus className="w-4 h-4 mr-2" />
-                            Aggiungi Prima Categoria
-                          </Button>
+                                ) : (
+                                  <>
+                                    <h4 className="font-semibold">{category.name}</h4>
+                                    <p className="text-sm text-gray-600">{category.description}</p>
+                                    <div className="flex items-center space-x-4 mt-2">
+                                      <Badge variant={category.isVisible ? "default" : "secondary"}>
+                                        {category.isVisible ? "Visibile" : "Nascosta"}
+                                      </Badge>
+                                      <span className="text-xs text-gray-500">
+                                        Creata: {new Date(category.createdAt).toLocaleDateString('it-IT')}
+                                      </span>
+                                    </div>
+                                  </>
+                                )}
+                              </div>
+                              <div className="flex space-x-2">
+                                <Button 
+                                  size="sm" 
+                                  variant="outline" 
+                                  onClick={() => updateMenuItemMutation.mutate({ id: category.id, data: { isVisible: !category.isVisible } })}
+                                >
+                                  {category.isVisible ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                                </Button>
+                                <Button size="sm" variant="outline" onClick={() => { 
+                                  setEditingItem(category.id); 
+                                  setEditData(category); 
+                                }}>
+                                  <Edit3 className="w-4 h-4" />
+                                </Button>
+                                <Button size="sm" variant="outline" onClick={() => updateMenuItemMutation.mutate({ id: category.id, data: { deleted: true } })}>
+                                  <Trash2 className="w-4 h-4" />
+                                </Button>
+                              </div>
+                            </div>
+                          ))}
+                          
+                          {typedMenuData.length === 0 && (
+                            <div className="text-center py-8 text-gray-500">
+                              <Utensils className="mx-auto mb-4" size={48} />
+                              <p>Nessuna categoria menu</p>
+                              <p className="text-sm">Crea le prime categorie per organizzare il tuo menu</p>
+                            </div>
+                          )}
                         </div>
-                      )}
-                    </div>
+                      </CardContent>
+                    </Card>
+
+                    {/* Products Management */}
+                    <Card>
+                      <CardHeader>
+                        <CardTitle className="flex items-center">
+                          <Package className="mr-2" />
+                          Prodotti del Menu
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="space-y-4">
+                          {editingItem === -2 && (
+                            <div className="p-4 border-2 border-dashed border-primary/20 rounded-lg">
+                              <div className="space-y-3">
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                  <div>
+                                    <Label>Nome Prodotto</Label>
+                                    <Input 
+                                      placeholder="Es. Bruschetta della casa"
+                                      value={editData.name || ''}
+                                      onChange={(e) => setEditData({ ...editData, name: e.target.value })}
+                                    />
+                                  </div>
+                                  <div>
+                                    <Label>Categoria</Label>
+                                    <Select onValueChange={(value) => setEditData({ ...editData, categoryId: value })}>
+                                      <SelectTrigger>
+                                        <SelectValue placeholder="Seleziona categoria" />
+                                      </SelectTrigger>
+                                      <SelectContent>
+                                        {typedMenuData.map((cat: any) => (
+                                          <SelectItem key={cat.id} value={cat.id.toString()}>
+                                            {cat.name}
+                                          </SelectItem>
+                                        ))}
+                                      </SelectContent>
+                                    </Select>
+                                  </div>
+                                </div>
+                                <div>
+                                  <Label>Descrizione</Label>
+                                  <Textarea
+                                    placeholder="Descrizione del prodotto, ingredienti..."
+                                    value={editData.description || ''}
+                                    onChange={(e) => setEditData({ ...editData, description: e.target.value })}
+                                    rows={2}
+                                  />
+                                </div>
+                                <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                                  <div>
+                                    <Label>Prezzo Base (€)</Label>
+                                    <Input 
+                                      placeholder="12.00"
+                                      value={editData.basePrice || ''}
+                                      onChange={(e) => setEditData({ ...editData, basePrice: e.target.value })}
+                                    />
+                                  </div>
+                                  <div>
+                                    <Label>Prezzo Alternativo (€)</Label>
+                                    <Input 
+                                      placeholder="15.00"
+                                      value={editData.altPrice || ''}
+                                      onChange={(e) => setEditData({ ...editData, altPrice: e.target.value })}
+                                    />
+                                  </div>
+                                  <div>
+                                    <Label>Descrizione Prezzo Alt.</Label>
+                                    <Input 
+                                      placeholder="Porzione grande"
+                                      value={editData.altPriceDesc || ''}
+                                      onChange={(e) => setEditData({ ...editData, altPriceDesc: e.target.value })}
+                                    />
+                                  </div>
+                                </div>
+                                <div>
+                                  <Label>Allergeni</Label>
+                                  <Input 
+                                    placeholder="Es. Glutine, Lattosio, Uova (separati da virgola)"
+                                    value={editData.allergens || ''}
+                                    onChange={(e) => setEditData({ ...editData, allergens: e.target.value })}
+                                  />
+                                </div>
+                                <div className="flex space-x-2">
+                                  <Button size="sm" onClick={() => updateMenuItemMutation.mutate({ id: -2, data: editData })}>
+                                    <Save className="w-4 h-4 mr-1" />
+                                    Crea Prodotto
+                                  </Button>
+                                  <Button size="sm" variant="outline" onClick={() => { setEditingItem(null); setEditData({}); }}>
+                                    Annulla
+                                  </Button>
+                                </div>
+                              </div>
+                            </div>
+                          )}
+                          
+                          <div className="text-center py-8 text-gray-500">
+                            <Package className="mx-auto mb-4" size={48} />
+                            <p>Nessun prodotto aggiunto</p>
+                            <p className="text-sm">I prodotti del menu verranno visualizzati qui</p>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
                   </div>
                 )}
                 {currentSection === 'analytics' && (
@@ -822,7 +1228,15 @@ export default function SmartPubDashboard() {
                 )}
                 {currentSection === 'profile' && (
                   <div className="space-y-6">
-                    <h2 className="text-2xl font-bold text-gray-900">Profilo Pub</h2>
+                    <div className="flex items-center justify-between">
+                      <h2 className="text-2xl font-bold text-gray-900">Profilo Pub</h2>
+                      {!canUpdatePrivateData() && (
+                        <div className="flex items-center space-x-2 text-orange-600 bg-orange-50 px-3 py-1 rounded-md">
+                          <Clock className="w-4 h-4" />
+                          <span className="text-sm">Dati privati modificabili ogni 30 giorni</span>
+                        </div>
+                      )}
+                    </div>
                     
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                       {/* Basic Information */}
@@ -830,39 +1244,54 @@ export default function SmartPubDashboard() {
                         <CardHeader>
                           <CardTitle className="flex items-center">
                             <Store className="mr-2" />
-                            Informazioni Generali
+                            Informazioni Pubbliche
                           </CardTitle>
                         </CardHeader>
                         <CardContent className="space-y-4">
                           <div>
-                            <label className="text-sm font-medium text-gray-700">Nome Pub</label>
+                            <Label>Nome Pub</Label>
                             <Input 
-                              value={currentPub?.name || ''} 
+                              value={editData.name || currentPub?.name || ''} 
                               onChange={(e) => setEditData({ ...editData, name: e.target.value })}
-                              className="mt-1"
+                              placeholder="Nome del tuo pub"
                             />
                           </div>
                           <div>
-                            <label className="text-sm font-medium text-gray-700">Indirizzo</label>
+                            <Label>Indirizzo Completo</Label>
                             <Input 
-                              value={currentPub?.address || ''} 
+                              value={editData.address || currentPub?.address || ''} 
                               onChange={(e) => setEditData({ ...editData, address: e.target.value })}
-                              className="mt-1"
+                              placeholder="Via Roma 123, 20100 Milano MI"
                             />
+                            <p className="text-xs text-gray-500 mt-1">
+                              Inserisci l'indirizzo completo con città e provincia
+                            </p>
                           </div>
                           <div>
-                            <label className="text-sm font-medium text-gray-700">Descrizione</label>
+                            <Label>Descrizione</Label>
                             <Textarea 
-                              value={currentPub?.description || ''} 
+                              value={editData.description || currentPub?.description || ''} 
                               onChange={(e) => setEditData({ ...editData, description: e.target.value })}
-                              className="mt-1"
+                              placeholder="Descrivi il tuo pub, l'atmosfera, la specialità..."
                               rows={3}
                             />
                           </div>
-                          <Button onClick={() => updatePubProfileMutation.mutate(editData)} className="w-full">
-                            <Save className="w-4 h-4 mr-2" />
-                            Salva Modifiche
-                          </Button>
+                          <div>
+                            <Label>Tipologia</Label>
+                            <Select onValueChange={(value) => setEditData({ ...editData, category: value })}>
+                              <SelectTrigger>
+                                <SelectValue placeholder={currentPub?.category || "Seleziona tipologia"} />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="birreria">Birreria</SelectItem>
+                                <SelectItem value="pub">Pub</SelectItem>
+                                <SelectItem value="brew_pub">Brew Pub</SelectItem>
+                                <SelectItem value="tap_room">Tap Room</SelectItem>
+                                <SelectItem value="wine_bar">Wine Bar</SelectItem>
+                                <SelectItem value="cocktail_bar">Cocktail Bar</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
                         </CardContent>
                       </Card>
 
@@ -871,47 +1300,149 @@ export default function SmartPubDashboard() {
                         <CardHeader>
                           <CardTitle className="flex items-center">
                             <Phone className="mr-2" />
-                            Contatti
+                            Contatti e Social
                           </CardTitle>
                         </CardHeader>
                         <CardContent className="space-y-4">
                           <div>
-                            <label className="text-sm font-medium text-gray-700">Telefono</label>
+                            <Label>Telefono</Label>
                             <Input 
-                              value={currentPub?.phone || ''} 
+                              value={editData.phone || currentPub?.phone || ''} 
                               onChange={(e) => setEditData({ ...editData, phone: e.target.value })}
-                              className="mt-1"
+                              placeholder="+39 02 1234567"
                             />
                           </div>
                           <div>
-                            <label className="text-sm font-medium text-gray-700">Email</label>
+                            <Label>Email Pubblica</Label>
                             <Input 
-                              value={currentPub?.email || ''} 
+                              value={editData.email || currentPub?.email || ''} 
                               onChange={(e) => setEditData({ ...editData, email: e.target.value })}
-                              className="mt-1"
+                              placeholder="info@iltuopub.it"
                             />
                           </div>
                           <div>
-                            <label className="text-sm font-medium text-gray-700">Sito Web</label>
+                            <Label>Sito Web</Label>
                             <Input 
-                              value={currentPub?.website || ''} 
+                              value={editData.website || currentPub?.website || ''} 
                               onChange={(e) => setEditData({ ...editData, website: e.target.value })}
-                              className="mt-1"
+                              placeholder="https://www.iltuopub.it"
                             />
                           </div>
-                          <div className="pt-4">
-                            <h4 className="font-medium text-gray-900 mb-2">Statistiche</h4>
-                            <div className="space-y-2 text-sm">
-                              <div className="flex justify-between">
-                                <span className="text-gray-600">Rating:</span>
-                                <span className="font-medium">{currentPub?.rating?.toFixed(1) || 'N/A'} ⭐</span>
+                          <div>
+                            <Label>Instagram</Label>
+                            <Input 
+                              value={editData.instagram || currentPub?.instagram || ''} 
+                              onChange={(e) => setEditData({ ...editData, instagram: e.target.value })}
+                              placeholder="@iltuopub"
+                            />
+                          </div>
+                          <div>
+                            <Label>Facebook</Label>
+                            <Input 
+                              value={editData.facebook || currentPub?.facebook || ''} 
+                              onChange={(e) => setEditData({ ...editData, facebook: e.target.value })}
+                              placeholder="Il Tuo Pub"
+                            />
+                          </div>
+                        </CardContent>
+                      </Card>
+
+                      {/* Private Data */}
+                      <Card className={!canUpdatePrivateData() ? "opacity-60" : ""}>
+                        <CardHeader>
+                          <CardTitle className="flex items-center justify-between">
+                            <div className="flex items-center">
+                              <MapPin className="mr-2" />
+                              Dati Privati
+                            </div>
+                            {!canUpdatePrivateData() && (
+                              <Badge variant="secondary" className="text-xs">
+                                Bloccato per {Math.ceil(30 - (lastProfileUpdate ? (Date.now() - lastProfileUpdate.getTime()) / (1000 * 60 * 60 * 24) : 30))} giorni
+                              </Badge>
+                            )}
+                          </CardTitle>
+                        </CardHeader>
+                        <CardContent className="space-y-4">
+                          <div>
+                            <Label>Codice Fiscale / P.IVA</Label>
+                            <Input 
+                              value={editData.vatNumber || currentPub?.vatNumber || ''} 
+                              onChange={(e) => setEditData({ ...editData, vatNumber: e.target.value })}
+                              placeholder="IT12345678901"
+                              disabled={!canUpdatePrivateData()}
+                            />
+                          </div>
+                          <div>
+                            <Label>Ragione Sociale</Label>
+                            <Input 
+                              value={editData.legalName || currentPub?.legalName || ''} 
+                              onChange={(e) => setEditData({ ...editData, legalName: e.target.value })}
+                              placeholder="Il Tuo Pub S.r.l."
+                              disabled={!canUpdatePrivateData()}
+                            />
+                          </div>
+                          <div>
+                            <Label>Email Fatturazione</Label>
+                            <Input 
+                              value={editData.billingEmail || currentPub?.billingEmail || ''} 
+                              onChange={(e) => setEditData({ ...editData, billingEmail: e.target.value })}
+                              placeholder="fatturazione@iltuopub.it"
+                              disabled={!canUpdatePrivateData()}
+                            />
+                          </div>
+                          <div>
+                            <Label>Telefono Privato</Label>
+                            <Input 
+                              value={editData.privatePhone || currentPub?.privatePhone || ''} 
+                              onChange={(e) => setEditData({ ...editData, privatePhone: e.target.value })}
+                              placeholder="+39 333 1234567"
+                              disabled={!canUpdatePrivateData()}
+                            />
+                          </div>
+                        </CardContent>
+                      </Card>
+
+                      {/* Statistics and Info */}
+                      <Card>
+                        <CardHeader>
+                          <CardTitle className="flex items-center">
+                            <Activity className="mr-2" />
+                            Statistiche e Info
+                          </CardTitle>
+                        </CardHeader>
+                        <CardContent className="space-y-4">
+                          <div className="grid grid-cols-2 gap-4">
+                            <div className="text-center p-3 bg-gray-50 rounded">
+                              <div className="text-2xl font-bold text-primary">
+                                {currentPub?.rating?.toFixed(1) || 'N/A'}
                               </div>
-                              <div className="flex justify-between">
-                                <span className="text-gray-600">Registrato il:</span>
-                                <span className="font-medium">
-                                  {currentPub?.createdAt ? new Date(currentPub.createdAt).toLocaleDateString('it-IT') : 'N/A'}
-                                </span>
+                              <div className="text-xs text-gray-600">Rating Medio</div>
+                            </div>
+                            <div className="text-center p-3 bg-gray-50 rounded">
+                              <div className="text-2xl font-bold text-primary">
+                                {typedTapList.length}
                               </div>
+                              <div className="text-xs text-gray-600">Birre alla Spina</div>
+                            </div>
+                          </div>
+                          <div className="space-y-2 text-sm">
+                            <div className="flex justify-between">
+                              <span className="text-gray-600">Registrato il:</span>
+                              <span className="font-medium">
+                                {currentPub?.createdAt ? new Date(currentPub.createdAt).toLocaleDateString('it-IT') : 'N/A'}
+                              </span>
+                            </div>
+                            <div className="flex justify-between">
+                              <span className="text-gray-600">Ultimo aggiornamento:</span>
+                              <span className="font-medium">
+                                {lastProfileUpdate ? lastProfileUpdate.toLocaleDateString('it-IT') : 'Mai'}
+                              </span>
+                            </div>
+                            <div className="flex justify-between">
+                              <span className="text-gray-600">Stato:</span>
+                              <Badge variant={currentPub?.isActive ? "default" : "secondary"}>
+                                {currentPub?.isActive ? "Attivo" : "Inattivo"}
+                              </Badge>
                             </div>
                           </div>
                         </CardContent>
@@ -928,40 +1459,100 @@ export default function SmartPubDashboard() {
                         <CardContent>
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div>
-                              <label className="text-sm font-medium text-gray-700 mb-2 block">Logo</label>
-                              <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
+                              <Label className="mb-2 block">Logo del Pub</Label>
+                              <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-primary transition-colors">
                                 {currentPub?.logoUrl ? (
-                                  <img 
-                                    src={currentPub.logoUrl} 
-                                    alt="Logo pub" 
-                                    className="w-24 h-24 mx-auto rounded-full object-cover mb-4"
-                                  />
+                                  <div className="relative">
+                                    <img 
+                                      src={currentPub.logoUrl} 
+                                      alt="Logo pub" 
+                                      className="w-24 h-24 mx-auto rounded-full object-cover mb-4"
+                                    />
+                                    <Button variant="outline" size="sm" className="mb-2">
+                                      <Upload className="w-4 h-4 mr-2" />
+                                      Cambia Logo
+                                    </Button>
+                                  </div>
                                 ) : (
-                                  <Image className="mx-auto mb-4 text-gray-400" size={48} />
+                                  <>
+                                    <Image className="mx-auto mb-4 text-gray-400" size={48} />
+                                    <Button variant="outline" size="sm">
+                                      <Upload className="w-4 h-4 mr-2" />
+                                      Carica Logo
+                                    </Button>
+                                  </>
                                 )}
-                                <Button variant="outline" size="sm">
-                                  <Plus className="w-4 h-4 mr-2" />
-                                  Carica Logo
-                                </Button>
+                                <p className="text-xs text-gray-500 mt-2">
+                                  Formato: JPG, PNG. Max 2MB. Consigliato: 400x400px
+                                </p>
                               </div>
                             </div>
                             <div>
-                              <label className="text-sm font-medium text-gray-700 mb-2 block">Immagine di Copertina</label>
-                              <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
+                              <Label className="mb-2 block">Immagine di Copertina</Label>
+                              <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-primary transition-colors">
                                 {currentPub?.coverImageUrl ? (
-                                  <img 
-                                    src={currentPub.coverImageUrl} 
-                                    alt="Copertina pub" 
-                                    className="w-full h-24 mx-auto rounded object-cover mb-4"
-                                  />
+                                  <div className="relative">
+                                    <img 
+                                      src={currentPub.coverImageUrl} 
+                                      alt="Copertina pub" 
+                                      className="w-full h-24 mx-auto rounded object-cover mb-4"
+                                    />
+                                    <Button variant="outline" size="sm" className="mb-2">
+                                      <Upload className="w-4 h-4 mr-2" />
+                                      Cambia Copertina
+                                    </Button>
+                                  </div>
                                 ) : (
-                                  <Image className="mx-auto mb-4 text-gray-400" size={48} />
+                                  <>
+                                    <Image className="mx-auto mb-4 text-gray-400" size={48} />
+                                    <Button variant="outline" size="sm">
+                                      <Upload className="w-4 h-4 mr-2" />
+                                      Carica Copertina
+                                    </Button>
+                                  </>
                                 )}
-                                <Button variant="outline" size="sm">
-                                  <Plus className="w-4 h-4 mr-2" />
-                                  Carica Copertina
-                                </Button>
+                                <p className="text-xs text-gray-500 mt-2">
+                                  Formato: JPG, PNG. Max 5MB. Consigliato: 1200x400px
+                                </p>
                               </div>
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+
+                      {/* Save Button */}
+                      <Card className="lg:col-span-2">
+                        <CardContent className="pt-6">
+                          <div className="flex justify-between items-center">
+                            <div className="text-sm text-gray-600">
+                              {Object.keys(editData).length > 0 ? (
+                                <span className="text-orange-600">⚠️ Hai modifiche non salvate</span>
+                              ) : (
+                                <span>✅ Profilo aggiornato</span>
+                              )}
+                            </div>
+                            <div className="flex space-x-2">
+                              <Button 
+                                variant="outline" 
+                                onClick={() => setEditData({})}
+                                disabled={Object.keys(editData).length === 0}
+                              >
+                                Annulla Modifiche
+                              </Button>
+                              <Button 
+                                onClick={() => updatePubProfileMutation.mutate(editData)} 
+                                disabled={Object.keys(editData).length === 0 || updatePubProfileMutation.isPending}
+                                className="min-w-32"
+                              >
+                                {updatePubProfileMutation.isPending ? (
+                                  "Salvando..."
+                                ) : (
+                                  <>
+                                    <Save className="w-4 h-4 mr-2" />
+                                    Salva Tutto
+                                  </>
+                                )}
+                              </Button>
                             </div>
                           </div>
                         </CardContent>
@@ -969,6 +1560,7 @@ export default function SmartPubDashboard() {
                     </div>
                   </div>
                 )}
+
               </div>
             </div>
           </main>
