@@ -64,7 +64,7 @@ export default function AdminDashboardNew() {
     );
   }
 
-  if (!isAuthenticated || user?.userType !== 'admin') {
+  if (!isAuthenticated || (user as any)?.userType !== 'admin') {
     return null;
   }
 

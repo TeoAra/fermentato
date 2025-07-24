@@ -64,20 +64,55 @@ export default function AdminContent() {
   const [editingItem, setEditingItem] = useState<number | null>(null);
   const [editData, setEditData] = useState<any>({});
 
+  // Client-side filtering function
+  const filterData = (data: any[], searchTerm: string) => {
+    if (!searchTerm.trim()) return data;
+    
+    return data?.filter((item: any) => {
+      const searchLower = searchTerm.toLowerCase();
+      if (selectedType === 'beers') {
+        return (
+          item.name?.toLowerCase().includes(searchLower) ||
+          item.brewery?.toLowerCase().includes(searchLower) ||
+          item.style?.toLowerCase().includes(searchLower)
+        );
+      } else if (selectedType === 'breweries') {
+        return (
+          item.name?.toLowerCase().includes(searchLower) ||
+          item.location?.toLowerCase().includes(searchLower) ||
+          item.country?.toLowerCase().includes(searchLower)
+        );
+      } else if (selectedType === 'pubs') {
+        return (
+          item.name?.toLowerCase().includes(searchLower) ||
+          item.city?.toLowerCase().includes(searchLower) ||
+          item.address?.toLowerCase().includes(searchLower)
+        );
+      }
+      return false;
+    }) || [];
+  };
+
   const { data: beers, isLoading: beersLoading } = useQuery<Beer[]>({
-    queryKey: ["/api/admin/beers", { search: searchTerm }],
+    queryKey: ["/api/admin/beers"],
     enabled: isAuthenticated && user?.userType === 'admin' && selectedType === 'beers',
   });
 
   const { data: breweries, isLoading: breweriesLoading } = useQuery<Brewery[]>({
-    queryKey: ["/api/admin/breweries", { search: searchTerm }],
+    queryKey: ["/api/admin/breweries"], 
     enabled: isAuthenticated && user?.userType === 'admin' && selectedType === 'breweries',
   });
 
   const { data: pubs, isLoading: pubsLoading } = useQuery({
-    queryKey: ["/api/admin/pubs", { search: searchTerm }],
+    queryKey: ["/api/admin/pubs"],
     enabled: isAuthenticated && user?.userType === 'admin' && selectedType === 'pubs',
   });
+
+  // Apply client-side filtering
+  const filteredData = filterData(
+    selectedType === 'beers' ? beers : selectedType === 'breweries' ? breweries : pubs, 
+    searchTerm
+  );
 
   // Update mutations
   const updateBeerMutation = useMutation({
@@ -142,16 +177,45 @@ export default function AdminContent() {
     setEditData({});
   };
 
-  const filteredBeers = beers?.filter(beer => 
-    beer.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    beer.brewery.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    beer.style.toLowerCase().includes(searchTerm.toLowerCase())
-  ) || [];
+  // User management actions
+  const suspendUserMutation = useMutation({
+    mutationFn: async (userId: string) => {
+      return apiRequest(`/api/admin/users/${userId}/suspend`, "PATCH");
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/users"] });
+      toast({
+        title: "Utente sospeso",
+        description: "L'utente è stato sospeso con successo",
+      });
+    },
+  });
 
-  const filteredBreweries = breweries?.filter(brewery => 
-    brewery.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    brewery.location?.toLowerCase().includes(searchTerm.toLowerCase())
-  ) || [];
+  const deleteUserMutation = useMutation({
+    mutationFn: async (userId: string) => {
+      return apiRequest(`/api/admin/users/${userId}`, "DELETE");
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/users"] });
+      toast({
+        title: "Utente eliminato",
+        description: "L'utente è stato eliminato con successo",
+      });
+    },
+  });
+
+  const verifyPubMutation = useMutation({
+    mutationFn: async (pubId: number) => {
+      return apiRequest(`/api/admin/pubs/${pubId}/verify`, "PATCH");
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/pubs"] });
+      toast({
+        title: "Pub verificato",
+        description: "Il pub è stato verificato con successo",
+      });
+    },
+  });
 
   if (isLoading) {
     return (
@@ -181,7 +245,9 @@ export default function AdminContent() {
         <div className="flex items-center gap-2">
           <Badge variant="secondary" className="bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">
             <CheckCircle className="w-3 h-3 mr-1" />
-            {selectedType === 'beers' ? `${filteredBeers.length} birre` : `${filteredBreweries.length} birrifici`}
+            {selectedType === 'beers' ? `${filteredData.length} birre` : 
+             selectedType === 'breweries' ? `${filteredData.length} birrifici` : 
+             `${filteredData.length} pub`}
           </Badge>
         </div>
       </div>
@@ -208,6 +274,15 @@ export default function AdminContent() {
               <Building className="w-4 h-4" />
               Birrifici
             </Button>
+            <Button 
+              variant={selectedType === 'pubs' ? 'default' : 'ghost'}
+              size="sm"
+              onClick={() => setSelectedType('pubs')}
+              className="flex items-center gap-2"
+            >
+              <Store className="w-4 h-4" />
+              Pub
+            </Button>
           </div>
         </div>
         
@@ -215,7 +290,7 @@ export default function AdminContent() {
           <div className="relative flex-1 sm:w-80">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
             <Input
-              placeholder={`Cerca ${selectedType === 'beers' ? 'birre' : 'birrifici'}...`}
+              placeholder={`Cerca ${selectedType === 'beers' ? 'birre' : selectedType === 'breweries' ? 'birrifici' : 'pub'}...`}
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="pl-10"
@@ -237,7 +312,7 @@ export default function AdminContent() {
               <p className="text-gray-600">Caricamento birre...</p>
             </div>
           ) : (
-            filteredBeers.map((beer) => (
+            filteredData.map((beer) => (
               <Card key={beer.id} className="hover:shadow-md transition-shadow">
                 <CardContent className="p-6">
                   {editingItem === beer.id ? (
@@ -555,22 +630,69 @@ export default function AdminContent() {
       )}
 
       {/* Empty State */}
-      {((selectedType === 'beers' && filteredBeers.length === 0) || 
-        (selectedType === 'breweries' && filteredBreweries.length === 0)) && 
-        !beersLoading && !breweriesLoading && (
+      {filteredData.length === 0 && 
+        !beersLoading && !breweriesLoading && !pubsLoading && (
         <Card>
           <CardContent className="p-12 text-center">
             <div className="w-16 h-16 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center mx-auto mb-4">
               {selectedType === 'beers' ? <Beer className="w-8 h-8 text-gray-400" /> : <Building className="w-8 h-8 text-gray-400" />}
             </div>
             <h3 className="text-lg font-semibold mb-2">
-              Nessun {selectedType === 'beers' ? 'birra' : 'birrificio'} trovato
+              Nessun {selectedType === 'beers' ? 'birra' : selectedType === 'breweries' ? 'birrificio' : 'pub'} trovato
             </h3>
             <p className="text-gray-600 dark:text-gray-400">
               Modifica i termini di ricerca o i filtri per trovare contenuti.
             </p>
           </CardContent>
         </Card>
+      )}
+
+      {/* Pub Management Section */}
+      {selectedType === 'pubs' && (
+        <div className="grid gap-4">
+          {pubsLoading ? (
+            <div className="text-center py-12">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+              <p className="text-gray-600">Caricamento pub...</p>
+            </div>
+          ) : (
+            filteredData.map((pub: any) => (
+              <Card key={pub.id} className="hover:shadow-md transition-shadow">
+                <CardContent className="p-6">
+                  <div className="flex items-start justify-between">
+                    <div className="flex items-center gap-4">
+                      {pub.logoUrl && (
+                        <img src={pub.logoUrl} alt={pub.name} className="w-16 h-16 rounded-lg object-cover" />
+                      )}
+                      <div>
+                        <h3 className="text-lg font-semibold">{pub.name}</h3>
+                        <p className="text-gray-600">{pub.address}, {pub.city}</p>
+                        <div className="flex items-center gap-2 mt-2">
+                          <Badge variant="secondary">ID: {pub.id}</Badge>
+                          <Badge className="bg-green-100 text-green-800">Verificato</Badge>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="flex gap-2">
+                      <Button 
+                        size="sm" 
+                        variant="outline"
+                        onClick={() => verifyPubMutation.mutate(pub.id)}
+                        disabled={verifyPubMutation.isPending}
+                      >
+                        <CheckCircle className="w-4 h-4 mr-2" />
+                        Verifica
+                      </Button>
+                      <Button size="sm" variant="outline">
+                        <Edit3 className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            ))
+          )}
+        </div>
       )}
     </div>
   );
