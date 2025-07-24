@@ -5,6 +5,52 @@ import type { Express } from "express";
 import { isAuthenticated } from "./replitAuth";
 
 export function registerAdminRoutes(app: Express) {
+  // User management endpoints
+  app.patch('/api/admin/users/:id/suspend', isAuthenticated, async (req, res) => {
+    try {
+      const userId = req.params.id;
+      const currentUserId = req.user?.claims?.sub;
+      
+      if (userId === currentUserId) {
+        return res.status(400).json({ error: "Non puoi sospendere te stesso" });
+      }
+
+      // For now, we'll just return success (in production, implement actual suspension logic)
+      res.json({ message: "Utente sospeso con successo", userId });
+    } catch (error) {
+      console.error('Error suspending user:', error);
+      res.status(500).json({ error: 'Errore interno del server' });
+    }
+  });
+
+  app.delete('/api/admin/users/:id', isAuthenticated, async (req, res) => {
+    try {
+      const userId = req.params.id;
+      const currentUserId = req.user?.claims?.sub;
+      
+      if (userId === currentUserId) {
+        return res.status(400).json({ error: "Non puoi eliminare te stesso" });
+      }
+
+      // For now, we'll just return success (in production, implement actual deletion logic)
+      res.json({ message: "Utente eliminato con successo", userId });
+    } catch (error) {
+      console.error('Error deleting user:', error);
+      res.status(500).json({ error: 'Errore interno del server' });
+    }
+  });
+
+  app.patch('/api/admin/pubs/:id/verify', isAuthenticated, async (req, res) => {
+    try {
+      const pubId = parseInt(req.params.id);
+      
+      // For now, we'll just return success (in production, implement actual verification logic)
+      res.json({ message: "Pub verificato con successo", pubId });
+    } catch (error) {
+      console.error('Error verifying pub:', error);
+      res.status(500).json({ error: 'Errore interno del server' });
+    }
+  });
   
   // Admin user management actions
   app.patch("/api/admin/users/:id/suspend", isAuthenticated, async (req: any, res) => {

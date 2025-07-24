@@ -23,7 +23,8 @@ import {
   ChevronRight,
   Info,
   AlertCircle,
-  CheckCircle
+  CheckCircle,
+  Store
 } from "lucide-react";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
@@ -95,24 +96,24 @@ export default function AdminContent() {
 
   const { data: beers, isLoading: beersLoading } = useQuery<Beer[]>({
     queryKey: ["/api/admin/beers"],
-    enabled: isAuthenticated && user?.userType === 'admin' && selectedType === 'beers',
+    enabled: isAuthenticated && (user as any)?.userType === 'admin' && selectedType === 'beers',
   });
 
   const { data: breweries, isLoading: breweriesLoading } = useQuery<Brewery[]>({
     queryKey: ["/api/admin/breweries"], 
-    enabled: isAuthenticated && user?.userType === 'admin' && selectedType === 'breweries',
+    enabled: isAuthenticated && (user as any)?.userType === 'admin' && selectedType === 'breweries',
   });
 
   const { data: pubs, isLoading: pubsLoading } = useQuery({
     queryKey: ["/api/admin/pubs"],
-    enabled: isAuthenticated && user?.userType === 'admin' && selectedType === 'pubs',
+    enabled: isAuthenticated && (user as any)?.userType === 'admin' && selectedType === 'pubs',
   });
 
   // Apply client-side filtering
   const filteredData = filterData(
     selectedType === 'beers' ? beers : selectedType === 'breweries' ? breweries : pubs, 
     searchTerm
-  );
+  ) || [];
 
   // Update mutations
   const updateBeerMutation = useMutation({
@@ -230,7 +231,7 @@ export default function AdminContent() {
     );
   }
 
-  if (!isAuthenticated || user?.userType !== 'admin') {
+  if (!isAuthenticated || (user as any)?.userType !== 'admin') {
     return null;
   }
 
@@ -245,9 +246,9 @@ export default function AdminContent() {
         <div className="flex items-center gap-2">
           <Badge variant="secondary" className="bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">
             <CheckCircle className="w-3 h-3 mr-1" />
-            {selectedType === 'beers' ? `${filteredData.length} birre` : 
-             selectedType === 'breweries' ? `${filteredData.length} birrifici` : 
-             `${filteredData.length} pub`}
+            {selectedType === 'beers' ? `${filteredData?.length || 0} birre` : 
+             selectedType === 'breweries' ? `${filteredData?.length || 0} birrifici` : 
+             `${filteredData?.length || 0} pub`}
           </Badge>
         </div>
       </div>
@@ -312,7 +313,7 @@ export default function AdminContent() {
               <p className="text-gray-600">Caricamento birre...</p>
             </div>
           ) : (
-            filteredData.map((beer) => (
+            (filteredData || []).map((beer) => (
               <Card key={beer.id} className="hover:shadow-md transition-shadow">
                 <CardContent className="p-6">
                   {editingItem === beer.id ? (
@@ -445,7 +446,7 @@ export default function AdminContent() {
                           <div className="flex items-center gap-4 text-xs text-gray-500">
                             <span className="flex items-center gap-1">
                               <Calendar className="w-3 h-3" />
-                              {formatDistanceToNow(new Date(beer.createdAt), { addSuffix: true, locale: it })}
+                              {beer.createdAt ? formatDistanceToNow(new Date(beer.createdAt), { addSuffix: true, locale: it }) : 'Data non disponibile'}
                             </span>
                             {beer.imageUrl && (
                               <span className="flex items-center gap-1">
@@ -473,7 +474,7 @@ export default function AdminContent() {
               <p className="text-gray-600">Caricamento birrifici...</p>
             </div>
           ) : (
-            filteredBreweries.map((brewery) => (
+            (filteredData || []).map((brewery: any) => (
               <Card key={brewery.id} className="hover:shadow-md transition-shadow">
                 <CardContent className="p-6">
                   {editingItem === brewery.id ? (
@@ -611,7 +612,7 @@ export default function AdminContent() {
                           <div className="flex items-center gap-4 text-xs text-gray-500">
                             <span className="flex items-center gap-1">
                               <Calendar className="w-3 h-3" />
-                              {formatDistanceToNow(new Date(brewery.createdAt), { addSuffix: true, locale: it })}
+                              {brewery.createdAt ? formatDistanceToNow(new Date(brewery.createdAt), { addSuffix: true, locale: it }) : 'Data non disponibile'}
                             </span>
                             <span className="flex items-center gap-1">
                               <Beer className="w-3 h-3" />
@@ -630,7 +631,7 @@ export default function AdminContent() {
       )}
 
       {/* Empty State */}
-      {filteredData.length === 0 && 
+      {(filteredData?.length === 0) && 
         !beersLoading && !breweriesLoading && !pubsLoading && (
         <Card>
           <CardContent className="p-12 text-center">
@@ -656,7 +657,7 @@ export default function AdminContent() {
               <p className="text-gray-600">Caricamento pub...</p>
             </div>
           ) : (
-            filteredData.map((pub: any) => (
+            (filteredData || []).map((pub: any) => (
               <Card key={pub.id} className="hover:shadow-md transition-shadow">
                 <CardContent className="p-6">
                   <div className="flex items-start justify-between">
