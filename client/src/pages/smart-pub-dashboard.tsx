@@ -163,6 +163,26 @@ export default function SmartPubDashboard() {
     },
   });
 
+  const toggleTapItemVisibilityMutation = useMutation({
+    mutationFn: async ({ id, isVisible }: { id: number, isVisible: boolean }) => {
+      return apiRequest(`/api/pubs/${currentPub?.id}/taplist/${id}`, 'PATCH', { isVisible });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/pubs", currentPub?.id, "taplist"] });
+      toast({ title: "Visibilità aggiornata", description: "Modifica salvata" });
+    },
+  });
+
+  const reorderTapItemMutation = useMutation({
+    mutationFn: async ({ id, newPosition }: { id: number, newPosition: number }) => {
+      return apiRequest(`/api/pubs/${currentPub?.id}/taplist/${id}`, 'PATCH', { tapNumber: newPosition });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/pubs", currentPub?.id, "taplist"] });
+      toast({ title: "Ordine aggiornato", description: "Posizione salvata" });
+    },
+  });
+
   const updateMenuItemMutation = useMutation({
     mutationFn: async ({ id, data }: { id: number | string; data: any }) => {
       if (id === -1) {
@@ -561,13 +581,27 @@ export default function SmartPubDashboard() {
                             >
                               <div className="flex items-center space-x-3">
                                 <div className="flex flex-col items-center space-y-1">
-                                  <Button size="sm" variant="ghost" className="h-6 w-6 p-0">
+                                  <Button 
+                                    size="sm" 
+                                    variant="ghost" 
+                                    className="h-6 w-6 p-0" 
+                                    onClick={() => reorderTapItemMutation.mutate({ id: item.id, newPosition: index })}
+                                    disabled={index === 0}
+                                    title="Sposta in su"
+                                  >
                                     <ArrowUp className="w-3 h-3" />
                                   </Button>
                                   <span className="text-xs font-medium bg-gray-100 px-2 py-1 rounded">
                                     {index + 1}
                                   </span>
-                                  <Button size="sm" variant="ghost" className="h-6 w-6 p-0">
+                                  <Button 
+                                    size="sm" 
+                                    variant="ghost" 
+                                    className="h-6 w-6 p-0" 
+                                    onClick={() => reorderTapItemMutation.mutate({ id: item.id, newPosition: index + 2 })}
+                                    disabled={index === typedTapList.length - 1}
+                                    title="Sposta in giù"
+                                  >
                                     <ArrowDown className="w-3 h-3" />
                                   </Button>
                                 </div>
@@ -646,10 +680,10 @@ export default function SmartPubDashboard() {
                                 <Button 
                                   size="sm" 
                                   variant="outline" 
-                                  onClick={() => updateTapItemMutation.mutate({ id: item.id, data: { isActive: !item.isActive } })}
-                                  title={item.isActive ? "Nascondi birra" : "Mostra birra"}
+                                  onClick={() => toggleTapItemVisibilityMutation.mutate({ id: item.id, isVisible: !item.isVisible })}
+                                  title={item.isVisible ? "Nascondi birra" : "Mostra birra"}
                                 >
-                                  {item.isActive ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                                  {item.isVisible ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                                 </Button>
                                 <Button 
                                   size="sm" 
