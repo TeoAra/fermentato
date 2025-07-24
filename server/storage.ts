@@ -437,7 +437,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   async removeBeerFromTap(id: number): Promise<void> {
-    await db.update(tapList).set({ isActive: false }).where(eq(tapList.id, id));
+    await db.delete(tapList).where(eq(tapList.id, id));
   }
 
   // Bottle list operations (cantina)
@@ -475,7 +475,78 @@ export class DatabaseStorage implements IStorage {
   }
 
   async removeBeerFromBottles(id: number): Promise<void> {
-    await db.update(bottleList).set({ isActive: false }).where(eq(bottleList.id, id));
+    await db.delete(bottleList).where(eq(bottleList.id, id));
+  }
+
+  // Menu category CRUD operations
+  async createMenuCategory(pubId: number, categoryData: any): Promise<any> {
+    const [category] = await db.insert(menuCategories).values({
+      pubId,
+      name: categoryData.name || 'Nuova Categoria',
+      description: categoryData.description || null,
+      isVisible: categoryData.isVisible !== false,
+      orderIndex: categoryData.orderIndex || 0
+    }).returning();
+    return category;
+  }
+
+  async updateMenuCategory(id: number, categoryData: any): Promise<any> {
+    const [category] = await db
+      .update(menuCategories)
+      .set({
+        name: categoryData.name,
+        description: categoryData.description,
+        isVisible: categoryData.isVisible,
+        orderIndex: categoryData.orderIndex
+      })
+      .where(eq(menuCategories.id, id))
+      .returning();
+    return category;
+  }
+
+  async deleteMenuCategory(id: number): Promise<void> {
+    // First delete all items in this category
+    await db.delete(menuItems).where(eq(menuItems.categoryId, id));
+    // Then delete the category
+    await db.delete(menuCategories).where(eq(menuCategories.id, id));
+  }
+
+  // Menu item CRUD operations
+  async createMenuItem(categoryId: number, itemData: any): Promise<any> {
+    const [item] = await db.insert(menuItems).values({
+      categoryId,
+      name: itemData.name || 'Nuovo Prodotto',
+      description: itemData.description || null,
+      price: itemData.price || '0.00',
+      allergens: itemData.allergens || null,
+      isVisible: itemData.isVisible !== false,
+      isAvailable: itemData.isAvailable !== false,
+      imageUrl: itemData.imageUrl || null,
+      orderIndex: itemData.orderIndex || 0
+    }).returning();
+    return item;
+  }
+
+  async updateMenuItem(id: number, itemData: any): Promise<any> {
+    const [item] = await db
+      .update(menuItems)
+      .set({
+        name: itemData.name,
+        description: itemData.description,
+        price: itemData.price,
+        allergens: itemData.allergens,
+        isVisible: itemData.isVisible,
+        isAvailable: itemData.isAvailable,
+        imageUrl: itemData.imageUrl,
+        orderIndex: itemData.orderIndex
+      })
+      .where(eq(menuItems.id, id))
+      .returning();
+    return item;
+  }
+
+  async deleteMenuItem(id: number): Promise<void> {
+    await db.delete(menuItems).where(eq(menuItems.id, id));
   }
 
   // Menu operations

@@ -609,11 +609,18 @@ export default function SmartPubDashboard() {
                                         />
                                       </div>
                                       <div className="flex space-x-2">
-                                        <Button size="sm" onClick={() => updateTapItemMutation.mutate({ id: item.id, data: editData })}>
+                                        <Button 
+                                          size="sm" 
+                                          onClick={() => updateTapItemMutation.mutate({ id: item.id, data: editData })}
+                                          disabled={updateTapItemMutation.isPending}
+                                        >
                                           <Save className="w-4 h-4 mr-1" />
-                                          Salva
+                                          {updateTapItemMutation.isPending ? 'Salvando...' : 'Salva'}
                                         </Button>
-                                        <Button size="sm" variant="outline" onClick={() => setEditingItem(null)}>
+                                        <Button size="sm" variant="outline" onClick={() => {
+                                          setEditingItem(null);
+                                          setEditData({});
+                                        }}>
                                           Annulla
                                         </Button>
                                       </div>
@@ -647,20 +654,47 @@ export default function SmartPubDashboard() {
                                   size="sm" 
                                   variant="outline" 
                                   onClick={() => updateTapItemMutation.mutate({ id: item.id, data: { isActive: !item.isActive } })}
+                                  title={item.isActive ? "Nascondi birra" : "Mostra birra"}
                                 >
                                   {item.isActive ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                                 </Button>
-                                <Button size="sm" variant="outline" onClick={() => { 
-                                  setEditingItem(item.id); 
-                                  setEditData({ 
-                                    priceSmall: item.priceSmall, 
-                                    priceMedium: item.priceMedium, 
-                                    notes: item.notes 
-                                  }); 
-                                }}>
+                                <Button 
+                                  size="sm" 
+                                  variant="outline" 
+                                  onClick={() => { 
+                                    setEditingItem(item.id); 
+                                    setEditData({ 
+                                      priceSmall: item.priceSmall, 
+                                      priceMedium: item.priceMedium, 
+                                      notes: item.notes 
+                                    }); 
+                                  }}
+                                  title="Modifica prezzi e note"
+                                >
                                   <Edit3 className="w-4 h-4" />
                                 </Button>
-                                <Button size="sm" variant="outline" onClick={() => removeTapItemMutation.mutate(item.id)}>
+                                <Button 
+                                  size="sm" 
+                                  variant="outline" 
+                                  onClick={() => {
+                                    setReplacingBeer(item.id);
+                                    setShowBeerSearch(true);
+                                    setSearchQuery('');
+                                  }}
+                                  title="Sostituisci con altra birra"
+                                >
+                                  <Search className="w-4 h-4" />
+                                </Button>
+                                <Button 
+                                  size="sm" 
+                                  variant="destructive" 
+                                  onClick={() => {
+                                    if (confirm(`Sei sicuro di voler eliminare "${item.beer?.name || 'questa birra'}" dalla tap list?`)) {
+                                      removeTapItemMutation.mutate(item.id);
+                                    }
+                                  }}
+                                  title="Elimina dalla tap list"
+                                >
                                   <Trash2 className="w-4 h-4" />
                                 </Button>
                               </div>
@@ -782,7 +816,16 @@ export default function SmartPubDashboard() {
                                 }}>
                                   <Edit3 className="w-4 h-4" />
                                 </Button>
-                                <Button size="sm" variant="outline" onClick={() => removeTapItemMutation.mutate(item.id)}>
+                                <Button 
+                                  size="sm" 
+                                  variant="destructive" 
+                                  onClick={() => {
+                                    if (confirm(`Sei sicuro di voler eliminare "${item.beer?.name || 'questa birra'}" dalla cantina?`)) {
+                                      removeTapItemMutation.mutate(item.id);
+                                    }
+                                  }}
+                                  title="Elimina dalla cantina"
+                                >
                                   <Trash2 className="w-4 h-4" />
                                 </Button>
                               </div>
@@ -1635,6 +1678,96 @@ export default function SmartPubDashboard() {
           })}
         </div>
       </div>
+
+      {/* Beer Search Dialog for Adding/Replacing */}
+      {showBeerSearch && (
+        <Dialog open={showBeerSearch} onOpenChange={setShowBeerSearch}>
+          <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>
+                {replacingBeer ? 'Sostituisci Birra' : 'Aggiungi Birra'}
+              </DialogTitle>
+            </DialogHeader>
+            
+            <div className="space-y-4">
+              <div className="flex space-x-2">
+                <Input 
+                  placeholder="Cerca birra per nome o birrificio..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="flex-1"
+                />
+                <Button 
+                  variant="outline"
+                  onClick={() => {
+                    setShowBeerSearch(false);
+                    setReplacingBeer(null);
+                    setSearchQuery('');
+                  }}
+                >
+                  Annulla
+                </Button>
+              </div>
+
+              <div className="max-h-96 overflow-y-auto border rounded-lg">
+                {beersLoading ? (
+                  <div className="p-8 text-center text-gray-500">
+                    Caricamento birre...
+                  </div>
+                ) : filteredBeers.length === 0 ? (
+                  <div className="p-8 text-center text-gray-500">
+                    {searchQuery ? 'Nessuna birra trovata' : 'Inizia a digitare per cercare'}
+                  </div>
+                ) : (
+                  <div className="space-y-2 p-4">
+                    {filteredBeers.slice(0, 50).map((beer: any) => (
+                      <div 
+                        key={beer.id} 
+                        className="flex items-center justify-between p-3 border rounded-lg hover:bg-gray-50"
+                      >
+                        <div className="flex-1">
+                          <h4 className="font-medium">{beer.name}</h4>
+                          <p className="text-sm text-gray-600">
+                            {typeof beer.brewery === 'string' ? beer.brewery : beer.brewery?.name || 'Birrificio'}
+                          </p>
+                          <div className="flex space-x-4 text-xs text-gray-500 mt-1">
+                            {beer.style && <span>Stile: {beer.style}</span>}
+                            {beer.abv && <span>ABV: {beer.abv}%</span>}
+                          </div>
+                        </div>
+                        <Button
+                          size="sm"
+                          onClick={() => {
+                            if (replacingBeer) {
+                              replaceBeerMutation.mutate({ 
+                                oldId: replacingBeer, 
+                                newBeerId: beer.id 
+                              });
+                            } else {
+                              addTapItemMutation.mutate({
+                                beerId: beer.id,
+                                priceSmall: '5.00',
+                                priceMedium: '7.00',
+                                isActive: true,
+                                isVisible: true,
+                              });
+                            }
+                            setShowBeerSearch(false);
+                            setReplacingBeer(null);
+                            setSearchQuery('');
+                          }}
+                        >
+                          {replacingBeer ? 'Sostituisci' : 'Aggiungi'}
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
+      )}
     </div>
   );
 }
