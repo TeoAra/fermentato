@@ -93,10 +93,7 @@ export default function AdminContent() {
   // Update mutations
   const updateBeerMutation = useMutation({
     mutationFn: async ({ id, data }: { id: number; data: any }) => {
-      return apiRequest(`/api/admin/beers/${id}`, {
-        method: 'PATCH',
-        body: JSON.stringify(data),
-      });
+      return apiRequest(`/api/admin/beers/${id}`, 'PATCH', data);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/admin/beers"] });
@@ -111,10 +108,7 @@ export default function AdminContent() {
 
   const updateBreweryMutation = useMutation({
     mutationFn: async ({ id, data }: { id: number; data: any }) => {
-      return apiRequest(`/api/admin/breweries/${id}`, {
-        method: 'PATCH',
-        body: JSON.stringify(data),
-      });
+      return apiRequest(`/api/admin/breweries/${id}`, 'PATCH', data);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/admin/breweries"] });
@@ -129,10 +123,7 @@ export default function AdminContent() {
 
   const updatePubMutation = useMutation({
     mutationFn: async ({ id, data }: { id: number; data: any }) => {
-      return apiRequest(`/api/admin/pubs/${id}`, {
-        method: 'PATCH',
-        body: JSON.stringify(data),
-      });
+      return apiRequest(`/api/admin/pubs/${id}`, 'PATCH', data);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/admin/pubs"] });
@@ -148,7 +139,7 @@ export default function AdminContent() {
   // Delete mutations
   const deleteBeerMutation = useMutation({
     mutationFn: async (id: number) => {
-      return apiRequest(`/api/admin/beers/${id}`, { method: 'DELETE' });
+      return apiRequest(`/api/admin/beers/${id}`, 'DELETE');
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/admin/beers"] });
@@ -161,7 +152,7 @@ export default function AdminContent() {
 
   const deleteBreweryMutation = useMutation({
     mutationFn: async (id: number) => {
-      return apiRequest(`/api/admin/breweries/${id}`, { method: 'DELETE' });
+      return apiRequest(`/api/admin/breweries/${id}`, 'DELETE');
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/admin/breweries"] });
@@ -174,7 +165,7 @@ export default function AdminContent() {
 
   const deletePubMutation = useMutation({
     mutationFn: async (id: number) => {
-      return apiRequest(`/api/admin/pubs/${id}`, { method: 'DELETE' });
+      return apiRequest(`/api/admin/pubs/${id}`, 'DELETE');
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/admin/pubs"] });

@@ -5,10 +5,10 @@ import { Link } from "wouter";
 interface BreweryCardProps {
   brewery: {
     id: number;
-    name: string;
-    location: string;
-    region: string;
-    rating: string | null;
+    name: string | any;
+    location: string | any;
+    region: string | any;
+    rating: string | number | null;
     logoUrl?: string | null;
   };
   beerCount?: number;
