@@ -2,6 +2,7 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { setupAuth, isAuthenticated } from "./replitAuth";
+import { registerAdminRoutes } from "./routes-admin";
 import { sql, eq } from "drizzle-orm";
 import { upload, uploadImage } from "./cloudinary";
 import { db } from "./db";
@@ -13,6 +14,9 @@ import { z } from "zod";
 export async function registerRoutes(app: Express): Promise<Server> {
   // Auth middleware
   await setupAuth(app);
+
+  // Register admin routes
+  registerAdminRoutes(app);
 
   // Auth routes
   app.get('/api/auth/user', isAuthenticated, async (req: any, res) => {
@@ -311,7 +315,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Run scraping in background
       globalBeerScraping()
         .then(() => console.log("✅ Global beer scraping completed"))
-        .catch(err => console.error("❌ Scraping error:", err));
+        .catch((err: any) => console.error("❌ Scraping error:", err));
 
       res.json({ 
         message: "Global beer scraping started in background",
@@ -339,7 +343,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Run unification in background
       unifyBreweries()
         .then(() => console.log("✅ Brewery unification completed"))
-        .catch(err => console.error("❌ Unification error:", err));
+        .catch((err: any) => console.error("❌ Unification error:", err));
 
       res.json({ 
         message: "Brewery unification started in background",

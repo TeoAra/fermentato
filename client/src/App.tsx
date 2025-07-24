@@ -20,6 +20,10 @@ import Activity from "@/pages/activity";
 import Dashboard from "@/pages/dashboard-simple";
 import UserDashboard from "@/pages/user-dashboard";
 import AdminDashboard from "@/pages/admin-dashboard";
+import AdminDashboardNew from "@/pages/admin-dashboard-new";
+import AdminAnalytics from "@/pages/admin-analytics";
+import AdminContent from "@/pages/admin-content";
+import AdminModeration from "@/pages/admin-moderation";
 import { MobileHeader } from "@/components/mobile-header";
 import { BottomNavigation } from "@/components/bottom-navigation";
 import type { User } from "@shared/schema";
@@ -51,10 +55,15 @@ function Router() {
           <Route path="/beer/:id" component={BeerDetail} />
           {/* Dashboard routes based on user type */}
           <Route path="/dashboard" component={
-            typedUser?.userType === 'admin' ? AdminDashboard :
+            typedUser?.userType === 'admin' ? AdminDashboardNew :
             typedUser?.userType === 'pub_owner' ? SmartPubDashboard : 
             UserDashboard
           } />
+          <Route path="/admin" component={AdminDashboardNew} />
+          <Route path="/admin/analytics" component={AdminAnalytics} />
+          <Route path="/admin/content" component={AdminContent} />
+          <Route path="/admin/moderation" component={AdminModeration} />
+          <Route path="/admin/users" component={AdminDashboard} />
           <Route path="/pub-registration" component={PubRegistration} />
           <Route path="/notifications" component={Notifications} />
           <Route path="/activity" component={Activity} />
