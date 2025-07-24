@@ -1017,7 +1017,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const itemId = parseInt(req.params.itemId);
       const { newBeerId } = req.body;
       
-      const updatedItem = await storage.updateTapItem(itemId, { beerId: newBeerId });
+      console.log('Replacing beer:', { itemId, newBeerId });
+      
+      const updatedItem = await storage.updateTapListItem(itemId, { beerId: newBeerId });
+      console.log('Beer replacement result:', updatedItem);
       res.json(updatedItem);
     } catch (error) {
       console.error("Error replacing beer:", error);

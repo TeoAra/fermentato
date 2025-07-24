@@ -243,15 +243,23 @@ export default function SmartPubDashboard() {
   // Replace beer mutation
   const replaceBeerMutation = useMutation({
     mutationFn: async ({ oldId, newBeerId, type = 'taplist' }: { oldId: number; newBeerId: number; type: 'taplist' | 'bottles' }) => {
+      console.log('Replacing beer:', { oldId, newBeerId, type });
       return apiRequest(`/api/pubs/${currentPub?.id}/${type}/${oldId}/replace`, 'PATCH', { newBeerId });
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
+      console.log('Beer replacement success:', data);
       queryClient.invalidateQueries({ queryKey: ["/api/pubs", currentPub?.id, "taplist"] });
       queryClient.invalidateQueries({ queryKey: ["/api/pubs", currentPub?.id, "bottles"] });
+      queryClient.refetchQueries({ queryKey: ["/api/pubs", currentPub?.id, "taplist"] });
+      queryClient.refetchQueries({ queryKey: ["/api/pubs", currentPub?.id, "bottles"] });
       toast({ title: "Birra sostituita", description: "La birra è stata sostituita con successo" });
       setReplacingBeer(null);
       setShowBeerSearch(false);
     },
+    onError: (error) => {
+      console.error('Beer replacement error:', error);
+      toast({ title: "Errore", description: "Impossibile sostituire la birra", variant: "destructive" });
+    }
   });
 
   const updatePubProfileMutation = useMutation({
@@ -596,7 +604,7 @@ export default function SmartPubDashboard() {
                           {typedTapList.map((item: any, index: number) => (
                             <div 
                               key={item.id} 
-                              className="flex items-center justify-between p-4 border rounded-lg cursor-move hover:bg-gray-50"
+                              className={`flex items-center justify-between p-4 border rounded-lg cursor-move hover:bg-gray-50 ${!item.isVisible ? 'opacity-60 bg-gray-50 border-dashed' : ''}`}
                               draggable
                               onDragStart={() => setDraggedItem(item.id)}
                             >
@@ -686,8 +694,16 @@ export default function SmartPubDashboard() {
                                           {item.isActive ? "Disponibile" : "Esaurita"}
                                         </Badge>
                                         <div className="flex space-x-2 text-sm">
-                                          <span>Piccola: €{item.priceSmall || '0.00'}</span>
-                                          <span>Media: €{item.priceMedium || '0.00'}</span>
+                                          {item.prices && typeof item.prices === 'object' ? (
+                                            Object.entries(item.prices).map(([size, price]) => (
+                                              <span key={size}>{size}: €{price}</span>
+                                            ))
+                                          ) : (
+                                            <>
+                                              <span>Piccola: €{item.priceSmall || '0.00'}</span>
+                                              <span>Media: €{item.priceMedium || '0.00'}</span>
+                                            </>
+                                          )}
                                         </div>
                                       </div>
                                       {item.notes && (
@@ -1833,7 +1849,7 @@ export default function SmartPubDashboard() {
                         <div className="flex-1 min-w-0">
                           <h4 className="font-bold text-lg text-gray-900 truncate">{beer.name}</h4>
                           <p className="text-md text-primary font-medium">
-                            🏭 {typeof beer.brewery === 'string' ? beer.brewery : beer.brewery?.name || 'Birrificio sconosciuto'}
+                            🏭 {beer.breweryName || beer.brewery?.name || 'Birrificio'}
                           </p>
                           <div className="flex flex-wrap gap-3 mt-2 text-sm text-gray-600">
                             {beer.style && <span className="bg-blue-100 px-2 py-1 rounded">🎨 {beer.style}</span>}

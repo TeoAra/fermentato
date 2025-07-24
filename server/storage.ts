@@ -382,22 +382,22 @@ export class DatabaseStorage implements IStorage {
       .orderBy(asc(beers.name))
       .limit(5);
 
-    return results.map(result => ({
-      ...result.beer,
-      brewery: result.brewery || { 
-        id: result.beer.breweryId, 
-        name: 'Birrificio sconosciuto',
-        location: '',
-        region: '',
-        description: null,
-        logoUrl: null,
-        websiteUrl: null,
-        latitude: null,
-        longitude: null,
-        rating: '0',
-        createdAt: new Date()
+    return results.map(result => {
+      if (result.brewery) {
+        return {
+          ...result.beer,
+          brewery: result.brewery,
+          breweryName: result.brewery.name
+        };
+      } else {
+        // Fallback: cerca il birrificio separatamente se non c'è il join
+        return {
+          ...result.beer,
+          brewery: null,
+          breweryName: 'Birrificio'
+        };
       }
-    }));
+    });
   }
 
 
@@ -409,7 +409,7 @@ export class DatabaseStorage implements IStorage {
       .from(tapList)
       .leftJoin(beers, eq(tapList.beerId, beers.id))
       .leftJoin(breweries, eq(beers.breweryId, breweries.id))
-      .where(and(eq(tapList.pubId, pubId), eq(tapList.isActive, true)))
+      .where(and(eq(tapList.pubId, pubId), eq(tapList.isActive, true), eq(tapList.isVisible, true)))
       .orderBy(asc(tapList.tapNumber))
       .then(rows => 
         rows.map(row => ({
