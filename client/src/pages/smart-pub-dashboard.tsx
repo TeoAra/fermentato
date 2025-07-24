@@ -71,7 +71,7 @@ export default function SmartPubDashboard() {
   const [selectedBeers, setSelectedBeers] = useState<any[]>([]);
   const [showBeerSearch, setShowBeerSearch] = useState(false);
   const [draggedItem, setDraggedItem] = useState<number | null>(null);
-  const [priceManagerType, setPriceManagerType] = useState<'tap' | 'bottles'>('tap');
+  const [priceManagerType, setPriceManagerType] = useState<'taplist' | 'bottles'>('taplist');
   const [showPriceManager, setShowPriceManager] = useState<number | null>(null);
   const [newItemPrices, setNewItemPrices] = useState<Array<{size: string, price: string, format?: string}>>([]);
   const [selectedAllergens, setSelectedAllergens] = useState<string[]>([]);
@@ -215,6 +215,20 @@ export default function SmartPubDashboard() {
     },
   });
 
+  // Mutation to add beer to bottles with multiple formats and prices
+  const addBottleItemMutation = useMutation({
+    mutationFn: async (data: any) => {
+      return apiRequest(`/api/pubs/${currentPub?.id}/bottles`, 'POST', data);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [`/api/pubs/${currentPub?.id}/bottles`] });
+      toast({ title: "Birra aggiunta alla cantina!" });
+    },
+    onError: () => {
+      toast({ title: "Errore nell'aggiunta della birra alla cantina", variant: "destructive" });
+    },
+  });
+
   // Check if user can update private data (30-day restriction)
   const canUpdatePrivateData = () => {
     if ((user as any)?.userType === 'admin') return true;
@@ -225,9 +239,11 @@ export default function SmartPubDashboard() {
 
   // Load last profile update from localStorage
   useEffect(() => {
-    const saved = localStorage.getItem(`pub-${currentPub?.id}-last-update`);
-    if (saved) {
-      setLastProfileUpdate(new Date(saved));
+    if (currentPub?.id) {
+      const saved = localStorage.getItem(`pub-${currentPub.id}-last-update`);
+      if (saved) {
+        setLastProfileUpdate(new Date(saved));
+      }
     }
   }, [currentPub?.id]);
 
@@ -272,20 +288,6 @@ export default function SmartPubDashboard() {
       </div>
     );
   }
-
-  // Mutation to add beer to bottles with multiple formats and prices
-  const addBottleItemMutation = useMutation({
-    mutationFn: async (data: any) => {
-      return apiRequest(`/api/pubs/${currentPub?.id}/bottles`, 'POST', data);
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [`/api/pubs/${currentPub?.id}/bottles`] });
-      toast({ title: "Birra aggiunta alla cantina!" });
-    },
-    onError: () => {
-      toast({ title: "Errore nell'aggiunta della birra alla cantina", variant: "destructive" });
-    },
-  });
 
 
 
@@ -1777,7 +1779,7 @@ export default function SmartPubDashboard() {
                               replaceBeerMutation.mutate({ 
                                 oldId: replacingBeer, 
                                 newBeerId: beer.id,
-                                type: priceManagerType 
+                                type: priceManagerType === 'tap' ? 'taplist' : 'bottles'
                               });
                             } else if (priceManagerType === 'bottles') {
                               // Per la cantina, apri il price manager
