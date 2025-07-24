@@ -195,7 +195,11 @@ export default function SmartPubDashboard() {
                 <div key={item.id} className="flex items-center justify-between">
                   <div>
                     <p className="font-medium">{item.beer?.name || 'Nome non disponibile'}</p>
-                    <p className="text-sm text-gray-600">{item.beer?.brewery || 'Birrificio'}</p>
+                    <p className="text-sm text-gray-600">
+                      {typeof item.beer?.brewery === 'string' 
+                        ? item.beer.brewery 
+                        : item.beer?.brewery?.name || 'Birrificio'}
+                    </p>
                   </div>
                   <Badge variant="outline">€{item.price || '0.00'}</Badge>
                 </div>

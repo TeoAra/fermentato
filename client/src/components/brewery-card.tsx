@@ -26,12 +26,12 @@ export default function BreweryCard({ brewery, beerCount = 0 }: BreweryCardProps
           />
           
           <h3 className="font-semibold text-lg text-secondary mb-2 hover:text-primary transition-colors">
-            {brewery.name}
+            {typeof brewery.name === 'string' ? brewery.name : brewery.name?.toString() || 'Birrificio'}
           </h3>
           
           <p className="text-gray-600 text-sm mb-2 flex items-center justify-center">
             <MapPin className="w-4 h-4 mr-1" />
-            {brewery.location}, {brewery.region}
+            {typeof brewery.location === 'string' ? brewery.location : brewery.location?.name || 'Località'}, {typeof brewery.region === 'string' ? brewery.region : brewery.region?.name || 'Regione'}
           </p>
           
           <div className="text-sm text-gray-500 mb-3">
@@ -44,7 +44,7 @@ export default function BreweryCard({ brewery, beerCount = 0 }: BreweryCardProps
                 <Star key={i} className="w-4 h-4 fill-current" />
               ))}
             </div>
-            <span className="ml-2 text-sm text-gray-600">{brewery.rating || "N/A"}</span>
+            <span className="ml-2 text-sm text-gray-600">{typeof brewery.rating === 'string' || typeof brewery.rating === 'number' ? brewery.rating : "N/A"}</span>
           </div>
         </CardContent>
       </Card>
