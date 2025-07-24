@@ -1,17 +1,15 @@
-import { useState } from "react";
-import { useQuery, useMutation } from "@tanstack/react-query";
+import { useState, useRef } from "react";
 import { useAuth } from "@/hooks/useAuth";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Badge } from "@/components/ui/badge";
-import { 
-  Edit3, 
-  Save, 
-  X, 
-  Beer, 
-  Building, 
+import { useQuery, useMutation } from "@tanstack/react-query";
+import { Link } from "wouter";
+import {
+  ArrowLeft,
+  Edit,
+  Save,
+  X,
+  Trash2,
+  Plus,
+  Upload,
   Search,
   Filter,
   Eye,
@@ -20,53 +18,174 @@ import {
   Calendar,
   Image,
   ExternalLink,
-  ChevronRight,
-  Info,
-  AlertCircle,
   CheckCircle,
+  AlertCircle,
+  Beer,
+  Building,
   Store
 } from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { trackEvent } from "@/lib/analytics";
 import { formatDistanceToNow } from "date-fns";
 import { it } from "date-fns/locale";
 
-interface Beer {
-  id: number;
-  name: string;
-  brewery: string;
-  breweryId: number;
-  style: string;
-  abv: number | null;
-  ibu: number | null;
-  description: string | null;
-  imageUrl: string | null;
-  bottleImageUrl: string | null;
-  createdAt: string;
-}
-
-interface Brewery {
-  id: number;
-  name: string;
-  location: string | null;
-  description: string | null;
-  founded: number | null;
-  website: string | null;
-  logoUrl: string | null;
-  beerCount: number;
-  createdAt: string;
-}
-
 export default function AdminContent() {
-  const { user, isAuthenticated, isLoading } = useAuth();
+  const { user, isAuthenticated } = useAuth();
   const { toast } = useToast();
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedType, setSelectedType] = useState<"beers" | "breweries" | "pubs">("beers");
   const [editingItem, setEditingItem] = useState<number | null>(null);
   const [editData, setEditData] = useState<any>({});
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Client-side filtering function
+  // Data queries
+  const { data: beers = [], isLoading: beersLoading } = useQuery({
+    queryKey: ["/api/admin/beers"],
+    enabled: selectedType === 'beers',
+  });
+
+  const { data: breweries = [], isLoading: breweriesLoading } = useQuery({
+    queryKey: ["/api/admin/breweries"],
+    enabled: selectedType === 'breweries',
+  });
+
+  const { data: pubs = [], isLoading: pubsLoading } = useQuery({
+    queryKey: ["/api/admin/pubs"],
+    enabled: selectedType === 'pubs',
+  });
+
+  // Image upload mutation
+  const uploadImageMutation = useMutation({
+    mutationFn: async (file: File) => {
+      const formData = new FormData();
+      formData.append('image', file);
+      const response = await fetch('/api/upload-image', {
+        method: 'POST',
+        body: formData,
+      });
+      if (!response.ok) throw new Error('Upload failed');
+      return response.json();
+    },
+    onSuccess: (data) => {
+      toast({
+        title: "Immagine caricata",
+        description: "L'immagine è stata caricata con successo",
+      });
+      return data.url;
+    },
+    onError: () => {
+      toast({
+        title: "Errore upload",
+        description: "Errore durante il caricamento dell'immagine",
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Update mutations
+  const updateBeerMutation = useMutation({
+    mutationFn: async ({ id, data }: { id: number; data: any }) => {
+      return apiRequest(`/api/admin/beers/${id}`, {
+        method: 'PATCH',
+        body: JSON.stringify(data),
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/beers"] });
+      setEditingItem(null);
+      setEditData({});
+      toast({
+        title: "Birra aggiornata",
+        description: "Le modifiche sono state salvate con successo",
+      });
+    },
+  });
+
+  const updateBreweryMutation = useMutation({
+    mutationFn: async ({ id, data }: { id: number; data: any }) => {
+      return apiRequest(`/api/admin/breweries/${id}`, {
+        method: 'PATCH',
+        body: JSON.stringify(data),
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/breweries"] });
+      setEditingItem(null);
+      setEditData({});
+      toast({
+        title: "Birrificio aggiornato",
+        description: "Le modifiche sono state salvate con successo",
+      });
+    },
+  });
+
+  const updatePubMutation = useMutation({
+    mutationFn: async ({ id, data }: { id: number; data: any }) => {
+      return apiRequest(`/api/admin/pubs/${id}`, {
+        method: 'PATCH',
+        body: JSON.stringify(data),
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/pubs"] });
+      setEditingItem(null);
+      setEditData({});
+      toast({
+        title: "Pub aggiornato",
+        description: "Le modifiche sono state salvate con successo",
+      });
+    },
+  });
+
+  // Delete mutations
+  const deleteBeerMutation = useMutation({
+    mutationFn: async (id: number) => {
+      return apiRequest(`/api/admin/beers/${id}`, { method: 'DELETE' });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/beers"] });
+      toast({
+        title: "Birra eliminata",
+        description: "La birra è stata rimossa dal database",
+      });
+    },
+  });
+
+  const deleteBreweryMutation = useMutation({
+    mutationFn: async (id: number) => {
+      return apiRequest(`/api/admin/breweries/${id}`, { method: 'DELETE' });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/breweries"] });
+      toast({
+        title: "Birrificio eliminato",
+        description: "Il birrificio è stato rimosso dal database",
+      });
+    },
+  });
+
+  const deletePubMutation = useMutation({
+    mutationFn: async (id: number) => {
+      return apiRequest(`/api/admin/pubs/${id}`, { method: 'DELETE' });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/pubs"] });
+      toast({
+        title: "Pub eliminato",
+        description: "Il pub è stato rimosso dal database",
+      });
+    },
+  });
+
+  // Filter data based on search
   const filterData = (data: any[], searchTerm: string) => {
     if (!searchTerm.trim()) return data;
     
@@ -82,622 +201,494 @@ export default function AdminContent() {
         return (
           item.name?.toLowerCase().includes(searchLower) ||
           item.location?.toLowerCase().includes(searchLower) ||
-          item.country?.toLowerCase().includes(searchLower)
+          item.region?.toLowerCase().includes(searchLower)
         );
       } else if (selectedType === 'pubs') {
         return (
-          item.name?.toLowerCase().includes(searchLower) ||
-          item.city?.toLowerCase().includes(searchLower) ||
-          item.address?.toLowerCase().includes(searchLower)
+          item.pubs?.name?.toLowerCase().includes(searchLower) ||
+          item.pubs?.address?.toLowerCase().includes(searchLower) ||
+          item.pubs?.city?.toLowerCase().includes(searchLower)
         );
       }
       return false;
     }) || [];
   };
 
-  const { data: beers, isLoading: beersLoading } = useQuery<Beer[]>({
-    queryKey: ["/api/admin/beers"],
-    enabled: isAuthenticated && (user as any)?.userType === 'admin' && selectedType === 'beers',
-  });
-
-  const { data: breweries, isLoading: breweriesLoading } = useQuery<Brewery[]>({
-    queryKey: ["/api/admin/breweries"], 
-    enabled: isAuthenticated && (user as any)?.userType === 'admin' && selectedType === 'breweries',
-  });
-
-  const { data: pubs, isLoading: pubsLoading } = useQuery({
-    queryKey: ["/api/admin/pubs"],
-    enabled: isAuthenticated && (user as any)?.userType === 'admin' && selectedType === 'pubs',
-  });
-
-  // Apply client-side filtering
-  const filteredData = filterData(
-    selectedType === 'beers' ? beers : selectedType === 'breweries' ? breweries : pubs, 
-    searchTerm
-  ) || [];
-
-  // Update mutations
-  const updateBeerMutation = useMutation({
-    mutationFn: async ({ id, data }: { id: number; data: any }) => {
-      return apiRequest(`/api/admin/beers/${id}`, "PATCH", data);
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/admin/beers"] });
-      setEditingItem(null);
-      setEditData({});
-      trackEvent('admin_beer_update', 'content_management', 'beer_edited');
-      toast({
-        title: "Birra aggiornata",
-        description: "Le modifiche sono state salvate con successo",
-      });
-    },
-    onError: () => {
-      toast({
-        title: "Errore",
-        description: "Errore durante l'aggiornamento",
-        variant: "destructive",
-      });
-    },
-  });
-
-  const updateBreweryMutation = useMutation({
-    mutationFn: async ({ id, data }: { id: number; data: any }) => {
-      return apiRequest(`/api/admin/breweries/${id}`, "PATCH", data);
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/admin/breweries"] });
-      setEditingItem(null);
-      setEditData({});
-      toast({
-        title: "Birrificio aggiornato",
-        description: "Le modifiche sono state salvate con successo",
-      });
-    },
-    onError: () => {
-      toast({
-        title: "Errore",
-        description: "Errore durante l'aggiornamento",
-        variant: "destructive",
-      });
-    },
-  });
-
   const handleEdit = (item: any) => {
     setEditingItem(item.id);
-    setEditData(item);
+    setEditData(selectedType === 'pubs' ? item.pubs : item);
   };
 
   const handleSave = () => {
     if (selectedType === 'beers') {
       updateBeerMutation.mutate({ id: editingItem!, data: editData });
-    } else {
+    } else if (selectedType === 'breweries') {
       updateBreweryMutation.mutate({ id: editingItem!, data: editData });
+    } else if (selectedType === 'pubs') {
+      updatePubMutation.mutate({ id: editingItem!, data: editData });
     }
   };
 
-  const handleCancel = () => {
-    setEditingItem(null);
-    setEditData({});
+  const handleDelete = (id: number) => {
+    if (confirm(`Sei sicuro di voler eliminare questo ${selectedType.slice(0, -1)}?`)) {
+      if (selectedType === 'beers') {
+        deleteBeerMutation.mutate(id);
+      } else if (selectedType === 'breweries') {
+        deleteBreweryMutation.mutate(id);
+      } else if (selectedType === 'pubs') {
+        deletePubMutation.mutate(id);
+      }
+    }
   };
 
-  // User management actions
-  const suspendUserMutation = useMutation({
-    mutationFn: async (userId: string) => {
-      return apiRequest(`/api/admin/users/${userId}/suspend`, "PATCH");
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/admin/users"] });
-      trackEvent('admin_user_suspend', 'user_management', 'user_suspended');
-      toast({
-        title: "Utente sospeso",
-        description: "L'utente è stato sospeso con successo",
-      });
-    },
-  });
+  const handleImageUpload = async (field: string) => {
+    if (fileInputRef.current) {
+      fileInputRef.current.click();
+      fileInputRef.current.onchange = async (e) => {
+        const file = (e.target as HTMLInputElement).files?.[0];
+        if (file) {
+          try {
+            const result = await uploadImageMutation.mutateAsync(file);
+            setEditData(prev => ({ ...prev, [field]: result.url }));
+          } catch (error) {
+            console.error('Upload error:', error);
+          }
+        }
+      };
+    }
+  };
 
-  const deleteUserMutation = useMutation({
-    mutationFn: async (userId: string) => {
-      return apiRequest(`/api/admin/users/${userId}`, "DELETE");
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/admin/users"] });
-      toast({
-        title: "Utente eliminato",
-        description: "L'utente è stato eliminato con successo",
-      });
-    },
-  });
+  const getCurrentData = () => {
+    switch (selectedType) {
+      case 'beers':
+        return beers;
+      case 'breweries':
+        return breweries;
+      case 'pubs':
+        return pubs;
+      default:
+        return [];
+    }
+  };
 
-  const verifyPubMutation = useMutation({
-    mutationFn: async (pubId: number) => {
-      return apiRequest(`/api/admin/pubs/${pubId}/verify`, "PATCH");
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/admin/pubs"] });
-      toast({
-        title: "Pub verificato",
-        description: "Il pub è stato verificato con successo",
-      });
-    },
-  });
+  const isLoading = beersLoading || breweriesLoading || pubsLoading;
+  const filteredData = filterData(getCurrentData(), searchTerm);
 
-  if (isLoading) {
+  if (!isAuthenticated || (user as any)?.userType !== 'admin') {
     return (
-      <div className="container mx-auto px-4 py-8">
-        <div className="flex items-center justify-center min-h-screen">
-          <div className="text-center space-y-4">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
-            <p className="text-gray-600">Caricamento gestione contenuti...</p>
-          </div>
-        </div>
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <Card className="w-full max-w-md">
+          <CardContent className="p-6 text-center">
+            <AlertCircle className="mx-auto text-red-500 mb-4" size={48} />
+            <h1 className="text-xl font-bold mb-2">Accesso Negato</h1>
+            <p className="text-gray-600 mb-4">Solo gli amministratori possono accedere a questa sezione.</p>
+            <Link href="/">
+              <Button>Torna alla Home</Button>
+            </Link>
+          </CardContent>
+        </Card>
       </div>
     );
   }
 
-  if (!isAuthenticated || (user as any)?.userType !== 'admin') {
-    return null;
-  }
-
   return (
-    <div className="container mx-auto px-4 py-6 max-w-7xl space-y-6">
+    <div className="min-h-screen bg-gray-50">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Gestione Contenuti</h1>
-          <p className="text-gray-600 dark:text-gray-400 mt-1">Modifica e gestisci birre e birrifici del database</p>
-        </div>
-        <div className="flex items-center gap-2">
-          <Badge variant="secondary" className="bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">
-            <CheckCircle className="w-3 h-3 mr-1" />
-            {selectedType === 'beers' ? `${filteredData?.length || 0} birre` : 
-             selectedType === 'breweries' ? `${filteredData?.length || 0} birrifici` : 
-             `${filteredData?.length || 0} pub`}
-          </Badge>
+      <div className="bg-white border-b border-gray-200">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex items-center justify-between h-16">
+            <div className="flex items-center space-x-4">
+              <Link href="/admin">
+                <Button variant="ghost" size="sm">
+                  <ArrowLeft className="w-4 h-4 mr-2" />
+                  Admin Dashboard
+                </Button>
+              </Link>
+              <h1 className="text-xl font-semibold">Gestione Contenuti</h1>
+            </div>
+          </div>
         </div>
       </div>
 
-      {/* Controls */}
-      <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
-        <div className="flex items-center gap-4">
-          <div className="flex rounded-lg border border-gray-200 dark:border-gray-700 p-1">
-            <Button 
-              variant={selectedType === 'beers' ? 'default' : 'ghost'}
-              size="sm"
-              onClick={() => setSelectedType('beers')}
-              className="flex items-center gap-2"
-            >
-              <Beer className="w-4 h-4" />
-              Birre
-            </Button>
-            <Button 
-              variant={selectedType === 'breweries' ? 'default' : 'ghost'}
-              size="sm"
-              onClick={() => setSelectedType('breweries')}
-              className="flex items-center gap-2"
-            >
-              <Building className="w-4 h-4" />
-              Birrifici
-            </Button>
-            <Button 
-              variant={selectedType === 'pubs' ? 'default' : 'ghost'}
-              size="sm"
-              onClick={() => setSelectedType('pubs')}
-              className="flex items-center gap-2"
-            >
-              <Store className="w-4 h-4" />
-              Pub
-            </Button>
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Controls */}
+        <div className="mb-8 space-y-4">
+          <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
+            <Tabs value={selectedType} onValueChange={(value: any) => setSelectedType(value)} className="w-full">
+              <TabsList className="grid w-full grid-cols-3 max-w-md">
+                <TabsTrigger value="beers" className="flex items-center">
+                  <Beer className="w-4 h-4 mr-2" />
+                  Birre ({Array.isArray(beers) ? beers.length : 0})
+                </TabsTrigger>
+                <TabsTrigger value="breweries" className="flex items-center">
+                  <Building className="w-4 h-4 mr-2" />
+                  Birrifici ({Array.isArray(breweries) ? breweries.length : 0})
+                </TabsTrigger>
+                <TabsTrigger value="pubs" className="flex items-center">
+                  <Store className="w-4 h-4 mr-2" />
+                  Pub ({Array.isArray(pubs) ? pubs.length : 0})
+                </TabsTrigger>
+              </TabsList>
+            </Tabs>
+          </div>
+
+          <div className="flex flex-col sm:flex-row gap-4">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
+              <Input
+                placeholder={`Cerca ${selectedType === 'beers' ? 'birre' : selectedType === 'breweries' ? 'birrifici' : 'pub'}...`}
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-10"
+              />
+            </div>
           </div>
         </div>
-        
-        <div className="flex items-center gap-3 w-full sm:w-auto">
-          <div className="relative flex-1 sm:w-80">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-            <Input
-              placeholder={`Cerca ${selectedType === 'beers' ? 'birre' : selectedType === 'breweries' ? 'birrifici' : 'pub'}...`}
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10"
-            />
-          </div>
-          <Button variant="outline" size="sm">
-            <Filter className="w-4 h-4 mr-2" />
-            Filtri
-          </Button>
-        </div>
-      </div>
 
-      {/* Content Grid */}
-      {selectedType === 'beers' && (
-        <div className="grid gap-4">
-          {beersLoading ? (
-            <div className="text-center py-12">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
-              <p className="text-gray-600">Caricamento birre...</p>
-            </div>
-          ) : (
-            (filteredData || []).map((beer) => (
-              <Card key={beer.id} className="hover:shadow-md transition-shadow">
-                <CardContent className="p-6">
-                  {editingItem === beer.id ? (
-                    // Edit Mode
-                    <div className="space-y-4">
-                      <div className="flex items-center justify-between mb-4">
-                        <h3 className="text-lg font-semibold flex items-center gap-2">
-                          <Edit3 className="w-5 h-5" />
-                          Modifica Birra
-                        </h3>
-                        <div className="flex gap-2">
-                          <Button size="sm" onClick={handleSave} disabled={updateBeerMutation.isPending}>
-                            <Save className="w-4 h-4 mr-2" />
-                            Salva
-                          </Button>
-                          <Button size="sm" variant="outline" onClick={handleCancel}>
-                            <X className="w-4 h-4 mr-2" />
-                            Annulla
-                          </Button>
-                        </div>
-                      </div>
-                      
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
-                          <label className="text-sm font-medium mb-2 block">Nome Birra</label>
-                          <Input
-                            value={editData.name || ''}
-                            onChange={(e) => setEditData({...editData, name: e.target.value})}
-                            placeholder="Nome della birra"
-                          />
-                        </div>
-                        <div>
-                          <label className="text-sm font-medium mb-2 block">Stile</label>
-                          <Input
-                            value={editData.style || ''}
-                            onChange={(e) => setEditData({...editData, style: e.target.value})}
-                            placeholder="Stile della birra"
-                          />
-                        </div>
-                        <div>
-                          <label className="text-sm font-medium mb-2 block">ABV (%)</label>
-                          <Input
-                            type="number"
-                            step="0.1"
-                            value={editData.abv || ''}
-                            onChange={(e) => setEditData({...editData, abv: parseFloat(e.target.value) || null})}
-                            placeholder="5.0"
-                          />
-                        </div>
-                        <div>
-                          <label className="text-sm font-medium mb-2 block">IBU</label>
-                          <Input
-                            type="number"
-                            value={editData.ibu || ''}
-                            onChange={(e) => setEditData({...editData, ibu: parseInt(e.target.value) || null})}
-                            placeholder="25"
-                          />
-                        </div>
-                        <div className="md:col-span-2">
-                          <label className="text-sm font-medium mb-2 block">Descrizione</label>
-                          <Textarea
-                            value={editData.description || ''}
-                            onChange={(e) => setEditData({...editData, description: e.target.value})}
-                            placeholder="Descrizione della birra..."
-                            rows={3}
-                          />
-                        </div>
-                      </div>
-                    </div>
-                  ) : (
-                    // View Mode
-                    <div className="flex items-start justify-between">
-                      <div className="flex items-start gap-4 flex-1">
-                        {beer.imageUrl && (
-                          <div className="w-16 h-16 rounded-lg overflow-hidden bg-gray-100 dark:bg-gray-800 flex-shrink-0">
-                            <img 
-                              src={beer.imageUrl} 
-                              alt={beer.name}
-                              className="w-full h-full object-cover"
-                            />
-                          </div>
-                        )}
-                        <div className="flex-1">
-                          <div className="flex items-start justify-between mb-2">
-                            <div>
-                              <h3 className="text-xl font-semibold text-gray-900 dark:text-white">
-                                {beer.name}
-                              </h3>
-                              <p className="text-gray-600 dark:text-gray-400">
-                                {beer.brewery} • {beer.style}
-                              </p>
-                            </div>
-                            <div className="flex gap-2">
-                              <Button size="sm" variant="outline" onClick={() => handleEdit(beer)}>
-                                <Edit3 className="w-4 h-4 mr-2" />
-                                Modifica
-                              </Button>
-                              <Button size="sm" variant="outline">
-                                <Eye className="w-4 h-4 mr-2" />
-                                Visualizza
-                              </Button>
-                            </div>
-                          </div>
-                          
-                          <div className="flex flex-wrap gap-4 mb-3">
-                            {beer.abv && (
-                              <Badge variant="secondary">
-                                ABV: {beer.abv}%
-                              </Badge>
-                            )}
-                            {beer.ibu && (
-                              <Badge variant="secondary">
-                                IBU: {beer.ibu}
-                              </Badge>
-                            )}
-                            <Badge variant="outline">
-                              ID: {beer.id}
-                            </Badge>
-                          </div>
-                          
-                          {beer.description && (
-                            <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">
-                              {beer.description.length > 150 
-                                ? `${beer.description.substring(0, 150)}...` 
-                                : beer.description
-                              }
-                            </p>
-                          )}
-                          
-                          <div className="flex items-center gap-4 text-xs text-gray-500">
-                            <span className="flex items-center gap-1">
-                              <Calendar className="w-3 h-3" />
-                              {beer.createdAt ? formatDistanceToNow(new Date(beer.createdAt), { addSuffix: true, locale: it }) : 'Data non disponibile'}
-                            </span>
-                            {beer.imageUrl && (
-                              <span className="flex items-center gap-1">
-                                <Image className="w-3 h-3" />
-                                Immagine disponibile
-                              </span>
-                            )}
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-            ))
-          )}
-        </div>
-      )}
-
-      {selectedType === 'breweries' && (
-        <div className="grid gap-4">
-          {breweriesLoading ? (
-            <div className="text-center py-12">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
-              <p className="text-gray-600">Caricamento birrifici...</p>
-            </div>
-          ) : (
-            (filteredData || []).map((brewery: any) => (
-              <Card key={brewery.id} className="hover:shadow-md transition-shadow">
-                <CardContent className="p-6">
-                  {editingItem === brewery.id ? (
-                    // Edit Mode
-                    <div className="space-y-4">
-                      <div className="flex items-center justify-between mb-4">
-                        <h3 className="text-lg font-semibold flex items-center gap-2">
-                          <Edit3 className="w-5 h-5" />
-                          Modifica Birrificio
-                        </h3>
-                        <div className="flex gap-2">
-                          <Button size="sm" onClick={handleSave} disabled={updateBreweryMutation.isPending}>
-                            <Save className="w-4 h-4 mr-2" />
-                            Salva
-                          </Button>
-                          <Button size="sm" variant="outline" onClick={handleCancel}>
-                            <X className="w-4 h-4 mr-2" />
-                            Annulla
-                          </Button>
-                        </div>
-                      </div>
-                      
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
-                          <label className="text-sm font-medium mb-2 block">Nome Birrificio</label>
-                          <Input
-                            value={editData.name || ''}
-                            onChange={(e) => setEditData({...editData, name: e.target.value})}
-                            placeholder="Nome del birrificio"
-                          />
-                        </div>
-                        <div>
-                          <label className="text-sm font-medium mb-2 block">Ubicazione</label>
-                          <Input
-                            value={editData.location || ''}
-                            onChange={(e) => setEditData({...editData, location: e.target.value})}
-                            placeholder="Città, Paese"
-                          />
-                        </div>
-                        <div>
-                          <label className="text-sm font-medium mb-2 block">Anno di Fondazione</label>
-                          <Input
-                            type="number"
-                            value={editData.founded || ''}
-                            onChange={(e) => setEditData({...editData, founded: parseInt(e.target.value) || null})}
-                            placeholder="1995"
-                          />
-                        </div>
-                        <div>
-                          <label className="text-sm font-medium mb-2 block">Sito Web</label>
-                          <Input
-                            value={editData.website || ''}
-                            onChange={(e) => setEditData({...editData, website: e.target.value})}
-                            placeholder="https://example.com"
-                          />
-                        </div>
-                        <div className="md:col-span-2">
-                          <label className="text-sm font-medium mb-2 block">Descrizione</label>
-                          <Textarea
-                            value={editData.description || ''}
-                            onChange={(e) => setEditData({...editData, description: e.target.value})}
-                            placeholder="Descrizione del birrificio..."
-                            rows={3}
-                          />
-                        </div>
-                      </div>
-                    </div>
-                  ) : (
-                    // View Mode
-                    <div className="flex items-start justify-between">
-                      <div className="flex items-start gap-4 flex-1">
-                        {brewery.logoUrl && (
-                          <div className="w-16 h-16 rounded-lg overflow-hidden bg-gray-100 dark:bg-gray-800 flex-shrink-0">
-                            <img 
-                              src={brewery.logoUrl} 
-                              alt={brewery.name}
-                              className="w-full h-full object-cover"
-                            />
-                          </div>
-                        )}
-                        <div className="flex-1">
-                          <div className="flex items-start justify-between mb-2">
-                            <div>
-                              <h3 className="text-xl font-semibold text-gray-900 dark:text-white">
-                                {brewery.name}
-                              </h3>
-                              <div className="flex items-center gap-2 text-gray-600 dark:text-gray-400">
-                                {brewery.location && (
-                                  <span className="flex items-center gap-1">
-                                    <MapPin className="w-4 h-4" />
-                                    {brewery.location}
-                                  </span>
-                                )}
-                                {brewery.founded && (
-                                  <span>• Fondato nel {brewery.founded}</span>
-                                )}
-                              </div>
-                            </div>
-                            <div className="flex gap-2">
-                              <Button size="sm" variant="outline" onClick={() => handleEdit(brewery)}>
-                                <Edit3 className="w-4 h-4 mr-2" />
-                                Modifica
-                              </Button>
-                              <Button size="sm" variant="outline">
-                                <Eye className="w-4 h-4 mr-2" />
-                                Visualizza
-                              </Button>
-                            </div>
-                          </div>
-                          
-                          <div className="flex flex-wrap gap-4 mb-3">
-                            <Badge variant="secondary">
-                              {brewery.beerCount} birre
-                            </Badge>
-                            {brewery.website && (
-                              <Badge variant="outline" className="cursor-pointer" onClick={() => window.open(brewery.website!, '_blank')}>
-                                <ExternalLink className="w-3 h-3 mr-1" />
-                                Sito Web
-                              </Badge>
-                            )}
-                            <Badge variant="outline">
-                              ID: {brewery.id}
-                            </Badge>
-                          </div>
-                          
-                          {brewery.description && (
-                            <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">
-                              {brewery.description.length > 150 
-                                ? `${brewery.description.substring(0, 150)}...` 
-                                : brewery.description
-                              }
-                            </p>
-                          )}
-                          
-                          <div className="flex items-center gap-4 text-xs text-gray-500">
-                            <span className="flex items-center gap-1">
-                              <Calendar className="w-3 h-3" />
-                              {brewery.createdAt ? formatDistanceToNow(new Date(brewery.createdAt), { addSuffix: true, locale: it }) : 'Data non disponibile'}
-                            </span>
-                            <span className="flex items-center gap-1">
-                              <Beer className="w-3 h-3" />
-                              {brewery.beerCount} birre prodotte
-                            </span>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-            ))
-          )}
-        </div>
-      )}
-
-      {/* Empty State */}
-      {(filteredData?.length === 0) && 
-        !beersLoading && !breweriesLoading && !pubsLoading && (
+        {/* Content */}
         <Card>
-          <CardContent className="p-12 text-center">
-            <div className="w-16 h-16 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center mx-auto mb-4">
-              {selectedType === 'beers' ? <Beer className="w-8 h-8 text-gray-400" /> : <Building className="w-8 h-8 text-gray-400" />}
-            </div>
-            <h3 className="text-lg font-semibold mb-2">
-              Nessun {selectedType === 'beers' ? 'birra' : selectedType === 'breweries' ? 'birrificio' : 'pub'} trovato
-            </h3>
-            <p className="text-gray-600 dark:text-gray-400">
-              Modifica i termini di ricerca o i filtri per trovare contenuti.
-            </p>
+          <CardHeader>
+            <CardTitle className="flex items-center justify-between">
+              <span>
+                {selectedType === 'beers' ? 'Gestione Birre' : 
+                 selectedType === 'breweries' ? 'Gestione Birrifici' : 'Gestione Pub'}
+              </span>
+              <Badge variant="secondary">
+                {filteredData.length} risultati
+              </Badge>
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {isLoading ? (
+              <div className="space-y-4">
+                {[...Array(5)].map((_, i) => (
+                  <div key={i} className="animate-pulse">
+                    <div className="h-20 bg-gray-200 rounded"></div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {filteredData.map((item: any) => {
+                  const isEditing = editingItem === item.id;
+                  const displayItem = selectedType === 'pubs' ? item.pubs : item;
+                  
+                  return (
+                    <div key={item.id} className="border rounded-lg p-4 hover:bg-gray-50">
+                      {isEditing ? (
+                        // Edit Mode
+                        <div className="space-y-4">
+                          <div className="flex items-center justify-between">
+                            <h3 className="font-semibold">Modifica {selectedType.slice(0, -1)}</h3>
+                            <div className="flex space-x-2">
+                              <Button size="sm" onClick={handleSave} disabled={updateBeerMutation.isPending || updateBreweryMutation.isPending || updatePubMutation.isPending}>
+                                <Save className="w-4 h-4" />
+                              </Button>
+                              <Button size="sm" variant="outline" onClick={() => {setEditingItem(null); setEditData({})}}>
+                                <X className="w-4 h-4" />
+                              </Button>
+                            </div>
+                          </div>
+
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                              <label className="block text-sm font-medium mb-1">Nome</label>
+                              <Input
+                                value={editData.name || ''}
+                                onChange={(e) => setEditData(prev => ({ ...prev, name: e.target.value }))}
+                              />
+                            </div>
+
+                            {selectedType === 'beers' && (
+                              <>
+                                <div>
+                                  <label className="block text-sm font-medium mb-1">Stile</label>
+                                  <Input
+                                    value={editData.style || ''}
+                                    onChange={(e) => setEditData(prev => ({ ...prev, style: e.target.value }))}
+                                  />
+                                </div>
+                                <div>
+                                  <label className="block text-sm font-medium mb-1">ABV (%)</label>
+                                  <Input
+                                    type="number"
+                                    step="0.1"
+                                    value={editData.abv || ''}
+                                    onChange={(e) => setEditData(prev => ({ ...prev, abv: parseFloat(e.target.value) }))}
+                                  />
+                                </div>
+                                <div>
+                                  <label className="block text-sm font-medium mb-1">IBU</label>
+                                  <Input
+                                    type="number"
+                                    value={editData.ibu || ''}
+                                    onChange={(e) => setEditData(prev => ({ ...prev, ibu: parseInt(e.target.value) }))}
+                                  />
+                                </div>
+                                <div className="md:col-span-2">
+                                  <label className="block text-sm font-medium mb-1">Immagine Principale</label>
+                                  <div className="flex items-center space-x-2">
+                                    <Input
+                                      value={editData.imageUrl || ''}
+                                      onChange={(e) => setEditData(prev => ({ ...prev, imageUrl: e.target.value }))}
+                                      placeholder="URL immagine"
+                                    />
+                                    <Button size="sm" variant="outline" onClick={() => handleImageUpload('imageUrl')}>
+                                      <Upload className="w-4 h-4" />
+                                    </Button>
+                                  </div>
+                                </div>
+                                <div className="md:col-span-2">
+                                  <label className="block text-sm font-medium mb-1">Immagine Bottiglia</label>
+                                  <div className="flex items-center space-x-2">
+                                    <Input
+                                      value={editData.bottleImageUrl || ''}
+                                      onChange={(e) => setEditData(prev => ({ ...prev, bottleImageUrl: e.target.value }))}
+                                      placeholder="URL immagine bottiglia"
+                                    />
+                                    <Button size="sm" variant="outline" onClick={() => handleImageUpload('bottleImageUrl')}>
+                                      <Upload className="w-4 h-4" />
+                                    </Button>
+                                  </div>
+                                </div>
+                              </>
+                            )}
+
+                            {selectedType === 'breweries' && (
+                              <>
+                                <div>
+                                  <label className="block text-sm font-medium mb-1">Località</label>
+                                  <Input
+                                    value={editData.location || ''}
+                                    onChange={(e) => setEditData(prev => ({ ...prev, location: e.target.value }))}
+                                  />
+                                </div>
+                                <div>
+                                  <label className="block text-sm font-medium mb-1">Regione</label>
+                                  <Input
+                                    value={editData.region || ''}
+                                    onChange={(e) => setEditData(prev => ({ ...prev, region: e.target.value }))}
+                                  />
+                                </div>
+                                <div>
+                                  <label className="block text-sm font-medium mb-1">Anno Fondazione</label>
+                                  <Input
+                                    type="number"
+                                    value={editData.founded || ''}
+                                    onChange={(e) => setEditData(prev => ({ ...prev, founded: parseInt(e.target.value) }))}
+                                  />
+                                </div>
+                                <div>
+                                  <label className="block text-sm font-medium mb-1">Sito Web</label>
+                                  <Input
+                                    value={editData.websiteUrl || ''}
+                                    onChange={(e) => setEditData(prev => ({ ...prev, websiteUrl: e.target.value }))}
+                                  />
+                                </div>
+                                <div className="md:col-span-2">
+                                  <label className="block text-sm font-medium mb-1">Logo</label>
+                                  <div className="flex items-center space-x-2">
+                                    <Input
+                                      value={editData.logoUrl || ''}
+                                      onChange={(e) => setEditData(prev => ({ ...prev, logoUrl: e.target.value }))}
+                                      placeholder="URL logo"
+                                    />
+                                    <Button size="sm" variant="outline" onClick={() => handleImageUpload('logoUrl')}>
+                                      <Upload className="w-4 h-4" />
+                                    </Button>
+                                  </div>
+                                </div>
+                              </>
+                            )}
+
+                            {selectedType === 'pubs' && (
+                              <>
+                                <div>
+                                  <label className="block text-sm font-medium mb-1">Indirizzo</label>
+                                  <Input
+                                    value={editData.address || ''}
+                                    onChange={(e) => setEditData(prev => ({ ...prev, address: e.target.value }))}
+                                  />
+                                </div>
+                                <div>
+                                  <label className="block text-sm font-medium mb-1">Città</label>
+                                  <Input
+                                    value={editData.city || ''}
+                                    onChange={(e) => setEditData(prev => ({ ...prev, city: e.target.value }))}
+                                  />
+                                </div>
+                                <div>
+                                  <label className="block text-sm font-medium mb-1">Telefono</label>
+                                  <Input
+                                    value={editData.phone || ''}
+                                    onChange={(e) => setEditData(prev => ({ ...prev, phone: e.target.value }))}
+                                  />
+                                </div>
+                                <div>
+                                  <label className="block text-sm font-medium mb-1">Sito Web</label>
+                                  <Input
+                                    value={editData.websiteUrl || ''}
+                                    onChange={(e) => setEditData(prev => ({ ...prev, websiteUrl: e.target.value }))}
+                                  />
+                                </div>
+                                <div className="md:col-span-2">
+                                  <label className="block text-sm font-medium mb-1">Logo</label>
+                                  <div className="flex items-center space-x-2">
+                                    <Input
+                                      value={editData.logoUrl || ''}
+                                      onChange={(e) => setEditData(prev => ({ ...prev, logoUrl: e.target.value }))}
+                                      placeholder="URL logo"
+                                    />
+                                    <Button size="sm" variant="outline" onClick={() => handleImageUpload('logoUrl')}>
+                                      <Upload className="w-4 h-4" />
+                                    </Button>
+                                  </div>
+                                </div>
+                                <div className="md:col-span-2">
+                                  <label className="block text-sm font-medium mb-1">Immagine Copertina</label>
+                                  <div className="flex items-center space-x-2">
+                                    <Input
+                                      value={editData.coverImageUrl || ''}
+                                      onChange={(e) => setEditData(prev => ({ ...prev, coverImageUrl: e.target.value }))}
+                                      placeholder="URL immagine copertina"
+                                    />
+                                    <Button size="sm" variant="outline" onClick={() => handleImageUpload('coverImageUrl')}>
+                                      <Upload className="w-4 h-4" />
+                                    </Button>
+                                  </div>
+                                </div>
+                              </>
+                            )}
+
+                            <div className="md:col-span-2">
+                              <label className="block text-sm font-medium mb-1">Descrizione</label>
+                              <Textarea
+                                value={editData.description || ''}
+                                onChange={(e) => setEditData(prev => ({ ...prev, description: e.target.value }))}
+                                rows={3}
+                              />
+                            </div>
+                          </div>
+                        </div>
+                      ) : (
+                        // View Mode
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center space-x-4">
+                            {(displayItem.imageUrl || displayItem.logoUrl || displayItem.bottleImageUrl) && (
+                              <img
+                                src={displayItem.imageUrl || displayItem.logoUrl || displayItem.bottleImageUrl}
+                                alt={displayItem.name}
+                                className="w-16 h-16 object-cover rounded"
+                              />
+                            )}
+                            <div>
+                              <h3 className="font-semibold text-lg">{displayItem.name}</h3>
+                              {selectedType === 'beers' && (
+                                <div className="flex items-center space-x-2 text-sm text-gray-600">
+                                  <span>{displayItem.brewery}</span>
+                                  <span>•</span>
+                                  <span>{displayItem.style}</span>
+                                  {displayItem.abv && (
+                                    <>
+                                      <span>•</span>
+                                      <span>{displayItem.abv}% ABV</span>
+                                    </>
+                                  )}
+                                </div>
+                              )}
+                              {selectedType === 'breweries' && (
+                                <div className="flex items-center space-x-2 text-sm text-gray-600">
+                                  {displayItem.location && <span>{displayItem.location}</span>}
+                                  {displayItem.region && (
+                                    <>
+                                      <span>•</span>
+                                      <span>{displayItem.region}</span>
+                                    </>
+                                  )}
+                                  {displayItem.founded && (
+                                    <>
+                                      <span>•</span>
+                                      <span>Fondato nel {displayItem.founded}</span>
+                                    </>
+                                  )}
+                                </div>
+                              )}
+                              {selectedType === 'pubs' && (
+                                <div className="flex items-center space-x-2 text-sm text-gray-600">
+                                  <MapPin className="w-4 h-4" />
+                                  <span>{displayItem.address}</span>
+                                  {displayItem.city && (
+                                    <>
+                                      <span>•</span>
+                                      <span>{displayItem.city}</span>
+                                    </>
+                                  )}
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                          
+                          <div className="flex items-center space-x-2">
+                            {selectedType === 'pubs' && (
+                              <Link href={`/pub/${item.id}`}>
+                                <Button size="sm" variant="outline">
+                                  <Eye className="w-4 h-4" />
+                                </Button>
+                              </Link>
+                            )}
+                            {selectedType === 'beers' && (
+                              <Link href={`/beer/${item.id}`}>
+                                <Button size="sm" variant="outline">
+                                  <Eye className="w-4 h-4" />
+                                </Button>
+                              </Link>
+                            )}
+                            {selectedType === 'breweries' && (
+                              <Link href={`/brewery/${item.id}`}>
+                                <Button size="sm" variant="outline">
+                                  <Eye className="w-4 h-4" />
+                                </Button>
+                              </Link>
+                            )}
+                            <Button size="sm" variant="outline" onClick={() => handleEdit(item)}>
+                              <Edit className="w-4 h-4" />
+                            </Button>
+                            <Button 
+                              size="sm" 
+                              variant="outline" 
+                              onClick={() => handleDelete(item.id)}
+                              className="text-red-600 hover:text-red-700"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </Button>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+
+                {filteredData.length === 0 && !isLoading && (
+                  <div className="text-center py-12">
+                    <AlertCircle className="mx-auto text-gray-400 mb-4" size={48} />
+                    <p className="text-gray-500">
+                      {searchTerm ? 'Nessun risultato trovato' : `Nessun ${selectedType.slice(0, -1)} disponibile`}
+                    </p>
+                  </div>
+                )}
+              </div>
+            )}
           </CardContent>
         </Card>
-      )}
 
-      {/* Pub Management Section */}
-      {selectedType === 'pubs' && (
-        <div className="grid gap-4">
-          {pubsLoading ? (
-            <div className="text-center py-12">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
-              <p className="text-gray-600">Caricamento pub...</p>
-            </div>
-          ) : (
-            (filteredData || []).map((pub: any) => (
-              <Card key={pub.id} className="hover:shadow-md transition-shadow">
-                <CardContent className="p-6">
-                  <div className="flex items-start justify-between">
-                    <div className="flex items-center gap-4">
-                      {pub.logoUrl && (
-                        <img src={pub.logoUrl} alt={pub.name} className="w-16 h-16 rounded-lg object-cover" />
-                      )}
-                      <div>
-                        <h3 className="text-lg font-semibold">{pub.name}</h3>
-                        <p className="text-gray-600">{pub.address}, {pub.city}</p>
-                        <div className="flex items-center gap-2 mt-2">
-                          <Badge variant="secondary">ID: {pub.id}</Badge>
-                          <Badge className="bg-green-100 text-green-800">Verificato</Badge>
-                        </div>
-                      </div>
-                    </div>
-                    <div className="flex gap-2">
-                      <Button 
-                        size="sm" 
-                        variant="outline"
-                        onClick={() => verifyPubMutation.mutate(pub.id)}
-                        disabled={verifyPubMutation.isPending}
-                      >
-                        <CheckCircle className="w-4 h-4 mr-2" />
-                        Verifica
-                      </Button>
-                      <Button size="sm" variant="outline">
-                        <Edit3 className="w-4 h-4" />
-                      </Button>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            ))
-          )}
-        </div>
-      )}
+        {/* Hidden file input for uploads */}
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="image/*"
+          style={{ display: 'none' }}
+        />
+      </main>
     </div>
   );
 }

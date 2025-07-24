@@ -54,11 +54,25 @@ function isOpenNow(openingHours: any) {
   return true;
 }
 
+interface Pub {
+  id: number;
+  name: string;
+  address: string;
+  city?: string;
+  phone?: string;
+  websiteUrl?: string;
+  description?: string;
+  logoUrl?: string;
+  coverImageUrl?: string;
+  rating?: number;
+  openingHours?: any;
+}
+
 export default function PubDetail() {
   const { id } = useParams();
   const [activeTab, setActiveTab] = useState("taplist");
   
-  const { data: pub, isLoading: pubLoading } = useQuery({
+  const { data: pub, isLoading: pubLoading } = useQuery<Pub>({
     queryKey: ["/api/pubs", id],
     enabled: !!id,
   });
@@ -106,15 +120,15 @@ export default function PubDetail() {
     );
   }
 
-  const isOpen = isOpenNow(pub.openingHours);
+  const isOpen = pub ? isOpenNow(pub.openingHours) : false;
 
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Hero Section with Cover Image */}
       <div className="relative h-80 md:h-96 overflow-hidden">
         <img
-          src={pub.coverImageUrl || "https://images.unsplash.com/photo-1544145945-f90425340c7e?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&h=600"}
-          alt={`Cover ${pub.name}`}
+          src={pub?.coverImageUrl || "https://images.unsplash.com/photo-1544145945-f90425340c7e?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&h=600"}
+          alt={`Cover ${pub?.name || 'pub'}`}
           className="w-full h-full object-cover"
         />
         <div className="absolute inset-0 bg-black bg-opacity-40" />
@@ -141,20 +155,20 @@ export default function PubDetail() {
         <div className="absolute bottom-0 left-0 right-0 p-6 text-white">
           <div className="flex items-center space-x-4 mb-4">
             <Avatar className="w-16 h-16 border-2 border-white">
-              <AvatarImage src={pub.logoUrl} alt={pub.name} />
+              <AvatarImage src={pub?.logoUrl} alt={pub?.name} />
               <AvatarFallback className="text-xl font-bold">
-                {pub.name.split(' ').map((word: string) => word[0]).join('').slice(0, 2)}
+                {pub?.name?.split(' ').map((word: string) => word[0]).join('').slice(0, 2) || 'PB'}
               </AvatarFallback>
             </Avatar>
             <div>
-              <h1 className="text-3xl md:text-4xl font-bold">{pub.name}</h1>
+              <h1 className="text-3xl md:text-4xl font-bold">{pub?.name}</h1>
               <div className="flex items-center space-x-4 mt-2">
                 <Badge variant={isOpen ? "default" : "secondary"} className={isOpen ? "bg-green-500" : "bg-red-500"}>
                   {isOpen ? "Aperto ora" : "Chiuso"}
                 </Badge>
                 <div className="flex items-center">
                   <Star className="w-4 h-4 text-yellow-400 mr-1" />
-                  <span className="font-semibold">{pub.rating?.toFixed(1) || "N/A"}</span>
+                  <span className="font-semibold">{typeof pub?.rating === 'number' ? pub.rating.toFixed(1) : "N/A"}</span>
                 </div>
               </div>
             </div>
@@ -170,7 +184,7 @@ export default function PubDetail() {
             <CardContent className="p-4 text-center">
               <MapPin className="w-6 h-6 text-primary mx-auto mb-2" />
               <h3 className="font-semibold text-sm">Indirizzo</h3>
-              <p className="text-xs text-gray-600">{pub.address}</p>
+              <p className="text-xs text-gray-600">{pub?.address}</p>
             </CardContent>
           </Card>
           
@@ -178,7 +192,7 @@ export default function PubDetail() {
             <CardContent className="p-4 text-center">
               <Phone className="w-6 h-6 text-primary mx-auto mb-2" />
               <h3 className="font-semibold text-sm">Telefono</h3>
-              <p className="text-xs text-gray-600">{pub.phone || "Non disponibile"}</p>
+              <p className="text-xs text-gray-600">{pub?.phone || "Non disponibile"}</p>
             </CardContent>
           </Card>
           
@@ -187,7 +201,7 @@ export default function PubDetail() {
               <Globe className="w-6 h-6 text-primary mx-auto mb-2" />
               <h3 className="font-semibold text-sm">Sito Web</h3>
               <p className="text-xs text-gray-600">
-                {pub.websiteUrl ? (
+                {pub?.websiteUrl ? (
                   <a href={pub.websiteUrl} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">
                     Visita
                   </a>
@@ -198,14 +212,14 @@ export default function PubDetail() {
         </div>
 
         {/* Description */}
-        {pub.description && (
+        {pub?.description && (
           <Card className="mb-8">
             <CardContent className="p-6">
               <h2 className="text-xl font-bold mb-4 flex items-center">
                 <Camera className="w-5 h-5 mr-2" />
                 Chi Siamo
               </h2>
-              <p className="text-gray-700 leading-relaxed">{pub.description}</p>
+              <p className="text-gray-700 leading-relaxed">{pub?.description}</p>
             </CardContent>
           </Card>
         )}
@@ -332,10 +346,10 @@ export default function PubDetail() {
               <div className="space-y-4">
                 <div>
                   <h3 className="font-semibold mb-2">Indirizzo</h3>
-                  <p className="text-gray-600">{pub.address}</p>
+                  <p className="text-gray-600">{pub?.address}</p>
                 </div>
                 
-                {pub.phone && (
+                {pub?.phone && (
                   <div>
                     <h3 className="font-semibold mb-2">Telefono</h3>
                     <a href={`tel:${pub.phone}`} className="text-primary hover:underline">
@@ -349,7 +363,7 @@ export default function PubDetail() {
                     <MapPin className="w-4 h-4 mr-2" />
                     Indicazioni
                   </Button>
-                  {pub.phone && (
+                  {pub?.phone && (
                     <Button variant="outline" className="flex-1">
                       <Phone className="w-4 h-4 mr-2" />
                       Chiama
@@ -369,7 +383,7 @@ export default function PubDetail() {
             </CardHeader>
             <CardContent>
               <div className="space-y-2">
-                {pub.openingHours ? Object.entries(pub.openingHours).map(([day, hours]: [string, any]) => (
+                {pub?.openingHours ? Object.entries(pub.openingHours).map(([day, hours]: [string, any]) => (
                   <div key={day} className="flex justify-between items-center">
                     <span className="capitalize font-medium">
                       {day === 'monday' ? 'Lunedì' :
