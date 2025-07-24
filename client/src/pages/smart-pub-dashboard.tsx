@@ -136,12 +136,21 @@ export default function SmartPubDashboard() {
 
   const addTapItemMutation = useMutation({
     mutationFn: async (data: any) => {
+      console.log('Mutation called with data:', data);
+      console.log('Current pub ID:', currentPub?.id);
       return apiRequest(`/api/pubs/${currentPub?.id}/taplist`, 'POST', data);
     },
-    onSuccess: () => {
+    onSuccess: (result) => {
+      console.log('Mutation success:', result);
       queryClient.invalidateQueries({ queryKey: ["/api/pubs", currentPub?.id, "taplist"] });
       toast({ title: "Birra aggiunta", description: "Nuova birra aggiunta alla tap list" });
+      setShowBeerSearch(false);
+      setSearchQuery('');
     },
+    onError: (error) => {
+      console.error('Mutation error:', error);
+      toast({ title: "Errore", description: "Impossibile aggiungere la birra", variant: "destructive" });
+    }
   });
 
   const removeTapItemMutation = useMutation({
@@ -1795,6 +1804,7 @@ export default function SmartPubDashboard() {
                               ]);
                             } else {
                               // Per le spine, aggiungi direttamente alla taplist
+                              console.log('Adding beer to taplist:', beer.id);
                               addTapItemMutation.mutate({
                                 beerId: beer.id,
                                 priceSmall: '5.00',
@@ -1802,7 +1812,6 @@ export default function SmartPubDashboard() {
                                 isActive: true,
                                 isVisible: true,
                               });
-                              setShowBeerSearch(false);
                             }
                             setReplacingBeer(null);
                             setSearchQuery('');

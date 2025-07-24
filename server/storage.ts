@@ -427,6 +427,27 @@ export class DatabaseStorage implements IStorage {
     return tap;
   }
 
+  async addTapListItem(pubId: number, itemData: any): Promise<TapList> {
+    console.log('Storage: Adding tap list item:', { pubId, itemData });
+    
+    const [item] = await db
+      .insert(tapList)
+      .values({
+        pubId,
+        beerId: itemData.beerId,
+        priceSmall: itemData.priceSmall,
+        priceMedium: itemData.priceMedium,
+        isActive: itemData.isActive,
+        isVisible: itemData.isVisible,
+        tapNumber: itemData.position || 1,
+        notes: itemData.notes || null
+      })
+      .returning();
+    
+    console.log('Storage: Tap list item created:', item);
+    return item;
+  }
+
   async updateTapItem(id: number, tapItem: Partial<InsertTapList>): Promise<TapList> {
     const [tap] = await db
       .update(tapList)
