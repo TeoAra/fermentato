@@ -443,6 +443,39 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Update tap list item (pub owner only)
+  app.patch('/api/pubs/:pubId/taplist/:id', isAuthenticated, async (req, res) => {
+    try {
+      const { pubId, id } = req.params;
+      const data = req.body;
+      
+      console.log('PATCH taplist item:', { pubId, id, data });
+      
+      const item = await storage.updateTapListItem(parseInt(id), data);
+      console.log('Updated taplist item:', item);
+      res.json(item);
+    } catch (error) {
+      console.error('Error updating tap list item:', error);
+      res.status(500).json({ message: 'Failed to update tap list item' });
+    }
+  });
+
+  // Delete tap list item (pub owner only)
+  app.delete('/api/pubs/:pubId/taplist/:id', isAuthenticated, async (req, res) => {
+    try {
+      const { pubId, id } = req.params;
+      
+      console.log('DELETE taplist item:', { pubId, id });
+      
+      await storage.removeTapListItem(parseInt(id));
+      console.log('Deleted taplist item:', id);
+      res.status(200).json({ success: true });
+    } catch (error) {
+      console.error('Error deleting tap list item:', error);
+      res.status(500).json({ message: 'Failed to delete tap list item' });
+    }
+  });
+
   // Update pub (owner only)
   app.patch("/api/pubs/:id", isAuthenticated, async (req: any, res) => {
     try {

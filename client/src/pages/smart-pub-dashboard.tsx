@@ -155,32 +155,53 @@ export default function SmartPubDashboard() {
 
   const removeTapItemMutation = useMutation({
     mutationFn: async (id: number) => {
+      console.log('Removing tap item:', id);
       return apiRequest(`/api/pubs/${currentPub?.id}/taplist/${id}`, 'DELETE');
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
+      console.log('Remove success:', data);
       queryClient.invalidateQueries({ queryKey: ["/api/pubs", currentPub?.id, "taplist"] });
+      queryClient.refetchQueries({ queryKey: ["/api/pubs", currentPub?.id, "taplist"] });
       toast({ title: "Birra rimossa", description: "Birra rimossa dalla tap list" });
     },
+    onError: (error) => {
+      console.error('Remove error:', error);
+      toast({ title: "Errore", description: "Impossibile rimuovere la birra", variant: "destructive" });
+    }
   });
 
   const toggleTapItemVisibilityMutation = useMutation({
     mutationFn: async ({ id, isVisible }: { id: number, isVisible: boolean }) => {
+      console.log('Updating visibility:', { id, isVisible });
       return apiRequest(`/api/pubs/${currentPub?.id}/taplist/${id}`, 'PATCH', { isVisible });
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
+      console.log('Visibility update success:', data);
       queryClient.invalidateQueries({ queryKey: ["/api/pubs", currentPub?.id, "taplist"] });
+      queryClient.refetchQueries({ queryKey: ["/api/pubs", currentPub?.id, "taplist"] });
       toast({ title: "Visibilità aggiornata", description: "Modifica salvata" });
     },
+    onError: (error) => {
+      console.error('Visibility update error:', error);
+      toast({ title: "Errore", description: "Impossibile aggiornare la visibilità", variant: "destructive" });
+    }
   });
 
   const reorderTapItemMutation = useMutation({
     mutationFn: async ({ id, newPosition }: { id: number, newPosition: number }) => {
+      console.log('Reordering tap item:', { id, newPosition });
       return apiRequest(`/api/pubs/${currentPub?.id}/taplist/${id}`, 'PATCH', { tapNumber: newPosition });
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
+      console.log('Reorder success:', data);
       queryClient.invalidateQueries({ queryKey: ["/api/pubs", currentPub?.id, "taplist"] });
+      queryClient.refetchQueries({ queryKey: ["/api/pubs", currentPub?.id, "taplist"] });
       toast({ title: "Ordine aggiornato", description: "Posizione salvata" });
     },
+    onError: (error) => {
+      console.error('Reorder error:', error);
+      toast({ title: "Errore", description: "Impossibile riordinare", variant: "destructive" });
+    }
   });
 
   const updateMenuItemMutation = useMutation({

@@ -471,6 +471,39 @@ export class DatabaseStorage implements IStorage {
     await db.delete(tapList).where(eq(tapList.id, id));
   }
 
+  async updateTapListItem(id: number, data: any): Promise<TapList> {
+    console.log('Storage: Updating tap list item:', { id, data });
+    
+    // Convert price array to object if provided
+    let updateData = { ...data };
+    if (data.prices && Array.isArray(data.prices)) {
+      updateData.prices = data.prices.reduce((acc: Record<string, number>, p: any) => {
+        acc[p.size] = parseFloat(p.price);
+        return acc;
+      }, {});
+    }
+    
+    const [item] = await db
+      .update(tapList)
+      .set({
+        ...updateData,
+        updatedAt: new Date(),
+      })
+      .where(eq(tapList.id, id))
+      .returning();
+    
+    console.log('Storage: Updated tap list item result:', item);
+    return item;
+  }
+
+  async removeTapListItem(id: number): Promise<void> {
+    console.log('Storage: Removing tap list item:', id);
+    
+    await db.delete(tapList).where(eq(tapList.id, id));
+    
+    console.log('Storage: Removed tap list item:', id);
+  }
+
   // Bottle list operations (cantina)
   async getBottleListByPub(pubId: number): Promise<(BottleList & { beer: Beer & { brewery: Brewery } })[]> {
     return await db
