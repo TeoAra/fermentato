@@ -637,49 +637,82 @@ export default function SmartPubDashboard() {
                                 </div>
                                 <div className="flex-1">
                                   {editingItem === item.id ? (
-                                    <div className="space-y-3">
-                                      <div className="grid grid-cols-2 gap-3">
-                                        <div>
-                                          <Label>Prezzo Piccola (€)</Label>
-                                          <Input 
-                                            placeholder="5.00"
-                                            value={editData.priceSmall || ''}
-                                            onChange={(e) => setEditData({ ...editData, priceSmall: e.target.value })}
+                                    <div className="space-y-4">
+                                      <div className="p-4 border rounded-lg bg-gray-50">
+                                        <div className="flex items-center space-x-4 mb-4">
+                                          <img
+                                            src={item.beer?.brewery?.logoUrl || "https://images.unsplash.com/photo-1571613316887-6f8d5cbf7ef7?ixlib=rb-4.0.3&auto=format&fit=crop&w=80&h=80"}
+                                            alt={`Logo ${item.beer?.brewery?.name || 'birrificio'}`}
+                                            className="w-12 h-12 rounded-full object-cover"
                                           />
+                                          <div>
+                                            <h4 className="font-semibold">{item.beer?.name}</h4>
+                                            <p className="text-sm text-gray-600">{item.beer?.brewery?.name || item.beer?.breweryName}</p>
+                                            <div className="flex items-center space-x-2 mt-1">
+                                              <Badge variant="outline" className="text-xs">{item.beer?.style}</Badge>
+                                              {item.beer?.abv && <Badge variant="outline" className="text-xs">{item.beer?.abv}% ABV</Badge>}
+                                            </div>
+                                          </div>
                                         </div>
-                                        <div>
-                                          <Label>Prezzo Media (€)</Label>
-                                          <Input 
-                                            placeholder="7.00"
-                                            value={editData.priceMedium || ''}
-                                            onChange={(e) => setEditData({ ...editData, priceMedium: e.target.value })}
-                                          />
-                                        </div>
-                                      </div>
-                                      <div>
-                                        <Label>Note Personali</Label>
-                                        <Textarea 
-                                          placeholder="Note sulla birra, abbinamenti, etc..."
-                                          value={editData.notes || ''}
-                                          onChange={(e) => setEditData({ ...editData, notes: e.target.value })}
-                                          rows={2}
+                                        
+                                        <FlexiblePriceManager
+                                          prices={item.prices || []}
+                                          onChange={(prices) => setEditData({ ...editData, prices })}
+                                          pubSizes={currentPub?.customSizes || []}
                                         />
-                                      </div>
-                                      <div className="flex space-x-2">
-                                        <Button 
-                                          size="sm" 
-                                          onClick={() => updateTapItemMutation.mutate({ id: item.id, data: editData })}
-                                          disabled={updateTapItemMutation.isPending}
-                                        >
-                                          <Save className="w-4 h-4 mr-1" />
-                                          {updateTapItemMutation.isPending ? 'Salvando...' : 'Salva'}
-                                        </Button>
-                                        <Button size="sm" variant="outline" onClick={() => {
-                                          setEditingItem(null);
-                                          setEditData({});
-                                        }}>
-                                          Annulla
-                                        </Button>
+                                        
+                                        <div className="mt-4 grid grid-cols-2 gap-3">
+                                          <div>
+                                            <Label>Numero Spina</Label>
+                                            <Input 
+                                              type="number"
+                                              placeholder="1"
+                                              value={editData.tapNumber || ''}
+                                              onChange={(e) => setEditData({ ...editData, tapNumber: e.target.value })}
+                                            />
+                                          </div>
+                                          <div>
+                                            <Label>Stato</Label>
+                                            <div className="flex items-center space-x-4 mt-2">
+                                              <label className="flex items-center space-x-2">
+                                                <input 
+                                                  type="checkbox"
+                                                  checked={editData.isVisible !== false}
+                                                  onChange={(e) => setEditData({ ...editData, isVisible: e.target.checked })}
+                                                  className="rounded"
+                                                />
+                                                <span className="text-sm">Visibile al pubblico</span>
+                                              </label>
+                                            </div>
+                                          </div>
+                                        </div>
+                                        
+                                        <div className="mt-4">
+                                          <Label>Note Spina</Label>
+                                          <Textarea 
+                                            placeholder="Note sulla birra, descrizione, abbinamenti..."
+                                            value={editData.description || ''}
+                                            onChange={(e) => setEditData({ ...editData, description: e.target.value })}
+                                            rows={3}
+                                          />
+                                        </div>
+                                        
+                                        <div className="flex space-x-2 mt-4">
+                                          <Button 
+                                            size="sm" 
+                                            onClick={() => updateTapItemMutation.mutate({ id: item.id, data: editData })}
+                                            disabled={updateTapItemMutation.isPending}
+                                          >
+                                            <Save className="w-4 h-4 mr-1" />
+                                            {updateTapItemMutation.isPending ? 'Salvando...' : 'Salva Modifiche'}
+                                          </Button>
+                                          <Button size="sm" variant="outline" onClick={() => {
+                                            setEditingItem(null);
+                                            setEditData({});
+                                          }}>
+                                            Annulla
+                                          </Button>
+                                        </div>
                                       </div>
                                     </div>
                                   ) : (
@@ -729,12 +762,16 @@ export default function SmartPubDashboard() {
                                   onClick={() => { 
                                     setEditingItem(item.id); 
                                     setEditData({ 
+                                      prices: item.prices ? Object.entries(item.prices).map(([size, price]) => ({ size, price: price.toString() })) : [],
                                       priceSmall: item.priceSmall, 
                                       priceMedium: item.priceMedium, 
+                                      tapNumber: item.tapNumber,
+                                      description: item.description,
+                                      isVisible: item.isVisible,
                                       notes: item.notes 
                                     }); 
                                   }}
-                                  title="Modifica prezzi e note"
+                                  title="Modifica tutti i campi"
                                 >
                                   <Edit3 className="w-4 h-4" />
                                 </Button>
