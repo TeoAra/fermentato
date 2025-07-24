@@ -54,7 +54,7 @@ import { useToast } from "@/hooks/use-toast";
 import { formatDistanceToNow } from "date-fns";
 import { it } from "date-fns/locale";
 import FlexiblePriceManager from "@/components/flexible-price-manager";
-import BeerSearchEnhanced from "@/components/beer-search-enhanced";
+
 import MenuCategoryManager from "@/components/menu-category-manager";
 
 type DashboardSection = 'overview' | 'taplist' | 'menu' | 'analytics' | 'settings' | 'profile';
@@ -527,54 +527,16 @@ export default function SmartPubDashboard() {
                   <div className="space-y-6">
                     <div className="flex items-center justify-between">
                       <h2 className="text-2xl font-bold text-gray-900">Gestione Spine e Bottiglie</h2>
-                      <Dialog open={showBeerSearch} onOpenChange={setShowBeerSearch}>
-                        <DialogTrigger asChild>
-                          <Button className="bg-primary">
-                            <Plus className="w-4 h-4 mr-2" />
-                            Cerca e Aggiungi Birra
-                          </Button>
-                        </DialogTrigger>
-                        <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
-                          <DialogHeader>
-                            <DialogTitle>Cerca Birra da Aggiungere</DialogTitle>
-                          </DialogHeader>
-                          <div className="space-y-4">
-                            <div className="relative">
-                              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-                              <Input
-                                placeholder="Cerca per nome birra o birrificio..."
-                                value={searchQuery}
-                                onChange={(e) => setSearchQuery(e.target.value)}
-                                className="pl-10"
-                              />
-                            </div>
-                            <div className="max-h-64 overflow-y-auto space-y-2">
-                              {beersLoading ? (
-                                <div className="text-center py-4">Caricamento birre...</div>
-                              ) : filteredBeers.slice(0, 20).map((beer: any) => (
-                                <div key={beer.id} className="flex items-center justify-between p-2 border rounded hover:bg-gray-50">
-                                  <div>
-                                    <p className="font-medium text-sm">{beer.name}</p>
-                                    <p className="text-xs text-gray-600">
-                                      {typeof beer.brewery === 'string' ? beer.brewery : beer.brewery?.name}
-                                    </p>
-                                  </div>
-                                  <Button 
-                                    size="sm" 
-                                    onClick={() => {
-                                      setSelectedBeers([...selectedBeers, beer]);
-                                      setShowBeerSearch(false);
-                                      setSearchQuery('');
-                                    }}
-                                  >
-                                    Seleziona
-                                  </Button>
-                                </div>
-                              ))}
-                            </div>
-                          </div>
-                        </DialogContent>
-                      </Dialog>
+                      <Button 
+                        className="bg-primary"
+                        onClick={() => {
+                          setPriceManagerType('tap');
+                          setShowBeerSearch(true);
+                        }}
+                      >
+                        <Plus className="w-4 h-4 mr-2" />
+                        Aggiungi Birra
+                      </Button>
                     </div>
 
                     {/* Tap List Management */}
