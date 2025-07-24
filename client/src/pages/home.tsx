@@ -106,13 +106,13 @@ export default function Home() {
               </div>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {Array.isArray(pubs) ? pubs.filter((pub: any) => pub.ownerId === user.id).map((pub: any) => (
+                {Array.isArray(myPubs) ? myPubs.map((pub: any) => (
                   <PubCard 
                     key={pub.id} 
                     pub={pub} 
                   />
                 )) : null}
-                {Array.isArray(pubs) && pubs.filter((pub: any) => pub.ownerId === user.id).length === 0 && (
+                {Array.isArray(myPubs) && myPubs.length === 0 && (
                   <div className="col-span-full text-center py-12">
                     <p className="text-gray-500 mb-4">Non hai ancora registrato nessun pub</p>
                     <Link href="/pub-registration">
