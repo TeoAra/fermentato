@@ -279,8 +279,21 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Beer operations
-  async getBeers(): Promise<Beer[]> {
-    return await db.select().from(beers).orderBy(asc(beers.name));
+  async getBeers(): Promise<(Beer & { brewery: Brewery, breweryName: string })[]> {
+    const results = await db
+      .select({
+        beer: beers,
+        brewery: breweries,
+      })
+      .from(beers)
+      .leftJoin(breweries, eq(beers.breweryId, breweries.id))
+      .orderBy(asc(beers.name));
+
+    return results.map(result => ({
+      ...result.beer,
+      brewery: result.brewery!,
+      breweryName: result.brewery?.name || 'Birrificio Sconosciuto'
+    }));
   }
 
   async getBeer(id: number): Promise<Beer | undefined> {
@@ -364,7 +377,7 @@ export class DatabaseStorage implements IStorage {
     return beer;
   }
 
-  async searchBeers(query: string): Promise<(Beer & { brewery: Brewery })[]> {
+  async searchBeers(query: string): Promise<(Beer & { brewery: Brewery, breweryName: string })[]> {
     const results = await db
       .select({
         beer: beers,
@@ -376,28 +389,18 @@ export class DatabaseStorage implements IStorage {
         or(
           ilike(beers.name, `%${query}%`),
           ilike(beers.style, `%${query}%`),
-          ilike(beers.description, `%${query}%`)
+          ilike(beers.description, `%${query}%`),
+          ilike(breweries.name, `%${query}%`)
         )
       )
       .orderBy(asc(beers.name))
-      .limit(5);
+      .limit(50);
 
-    return results.map(result => {
-      if (result.brewery) {
-        return {
-          ...result.beer,
-          brewery: result.brewery,
-          breweryName: result.brewery.name
-        };
-      } else {
-        // Fallback: cerca il birrificio separatamente se non c'è il join
-        return {
-          ...result.beer,
-          brewery: null,
-          breweryName: 'Birrificio'
-        };
-      }
-    });
+    return results.map(result => ({
+      ...result.beer,
+      brewery: result.brewery!,
+      breweryName: result.brewery?.name || 'Birrificio Sconosciuto'
+    }));
   }
 
 
@@ -410,6 +413,25 @@ export class DatabaseStorage implements IStorage {
       .leftJoin(beers, eq(tapList.beerId, beers.id))
       .leftJoin(breweries, eq(beers.breweryId, breweries.id))
       .where(and(eq(tapList.pubId, pubId), eq(tapList.isActive, true), eq(tapList.isVisible, true)))
+      .orderBy(asc(tapList.tapNumber))
+      .then(rows => 
+        rows.map(row => ({
+          ...row.tap_list,
+          beer: {
+            ...row.beers!,
+            brewery: row.breweries!,
+          },
+        }))
+      );
+  }
+
+  async getTapListByPubForOwner(pubId: number): Promise<(TapList & { beer: Beer & { brewery: Brewery } })[]> {
+    return await db
+      .select()
+      .from(tapList)
+      .leftJoin(beers, eq(tapList.beerId, beers.id))
+      .leftJoin(breweries, eq(beers.breweryId, breweries.id))
+      .where(and(eq(tapList.pubId, pubId), eq(tapList.isActive, true)))
       .orderBy(asc(tapList.tapNumber))
       .then(rows => 
         rows.map(row => ({
