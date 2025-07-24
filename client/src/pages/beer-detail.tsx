@@ -1,11 +1,26 @@
 import { useParams, Link } from "wouter";
 import { useQuery } from "@tanstack/react-query";
-import { Star, MapPin, Beer as BeerIcon, Thermometer, Eye, Droplets, Wheat, Building } from "lucide-react";
+import { 
+  Star, 
+  MapPin, 
+  Beer as BeerIcon, 
+  Thermometer, 
+  Eye, 
+  Droplets, 
+  Wheat, 
+  Building,
+  ArrowLeft,
+  Heart,
+  Share2,
+  Wine,
+  Store
+} from "lucide-react";
 import Footer from "@/components/footer";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 
 interface Beer {
   id: number;
@@ -74,9 +89,9 @@ export default function BeerDetail() {
   if (beerLoading) {
     return (
       <div className="min-h-screen bg-gray-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <div className="animate-pulse">
-            <div className="h-64 bg-gray-300 rounded-xl mb-8"></div>
+        <div className="animate-pulse">
+          <div className="h-80 bg-gray-300"></div>
+          <div className="max-w-7xl mx-auto px-4 py-8">
             <div className="h-8 bg-gray-300 rounded mb-4"></div>
             <div className="h-4 bg-gray-300 rounded mb-8"></div>
           </div>
@@ -87,12 +102,14 @@ export default function BeerDetail() {
 
   if (!beer) {
     return (
-      <div className="min-h-screen bg-gray-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <div className="text-center">
-            <h1 className="text-2xl font-bold text-gray-900 mb-4">Birra non trovata</h1>
-            <p className="text-gray-600">La birra che stai cercando non esiste o è stata rimossa.</p>
-          </div>
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <BeerIcon className="mx-auto text-gray-400 mb-4" size={64} />
+          <h1 className="text-2xl font-bold text-gray-900 mb-4">Birra non trovata</h1>
+          <p className="text-gray-600">La birra che stai cercando non esiste.</p>
+          <Link href="/">
+            <Button className="mt-4">Torna alla Home</Button>
+          </Link>
         </div>
       </div>
     );
@@ -100,200 +117,304 @@ export default function BeerDetail() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Beer Header */}
-        <Card className="mb-8">
-          <CardContent className="p-8">
-            <div className="flex flex-col md:flex-row items-start md:items-center space-y-6 md:space-y-0 md:space-x-8">
-              <div className="flex-shrink-0">
+      {/* Hero Section */}
+      <div className="relative h-80 md:h-96 beer-gradient">
+        <div className="absolute inset-0 bg-black bg-opacity-20" />
+        
+        {/* Back Button */}
+        <div className="absolute top-4 left-4">
+          <Button variant="secondary" size="sm" onClick={() => window.history.back()}>
+            <ArrowLeft className="w-4 h-4 mr-2" />
+            Indietro
+          </Button>
+        </div>
+
+        {/* Action Buttons */}
+        <div className="absolute top-4 right-4 flex space-x-2">
+          <Button variant="secondary" size="sm">
+            <Heart className="w-4 h-4" />
+          </Button>
+          <Button variant="secondary" size="sm">
+            <Share2 className="w-4 h-4" />
+          </Button>
+        </div>
+
+        {/* Beer Info */}
+        <div className="absolute bottom-0 left-0 right-0 p-6 text-white">
+          <div className="max-w-7xl mx-auto">
+            <div className="flex items-end space-x-6">
+              <div className="w-32 h-40 bg-white rounded-lg shadow-lg overflow-hidden">
                 <img
-                  src={beer.bottleImageUrl || beer.imageUrl || beer.logoUrl || "https://images.unsplash.com/photo-1608270586620-248524c67de9?w=200&h=200&fit=crop"}
-                  alt={`${beer.name} bottle`}
-                  className="w-32 h-48 object-cover rounded-lg shadow-lg"
+                  src={beer.bottleImageUrl || beer.imageUrl || "https://images.unsplash.com/photo-1608270586620-248524c67de9?ixlib=rb-4.0.3&auto=format&fit=crop&w=200&h=300"}
+                  alt={beer.name}
+                  className="w-full h-full object-cover"
                 />
               </div>
               
               <div className="flex-1">
-                <div className="flex items-start justify-between mb-4">
-                  <div>
-                    <h1 className="text-4xl font-bold text-secondary mb-2">{beer.name}</h1>
-                    
-                    {beer.brewery && (
-                      <Link href={`/brewery/${beer.brewery.id}`}>
-                        <div className="flex items-center text-xl text-primary hover:text-orange-600 transition-colors cursor-pointer mb-6">
-                          <Building className="mr-2" size={20} />
-                          {beer.brewery.name}
-                          <span className="text-gray-500 ml-2">• {beer.brewery.location}, {beer.brewery.region}</span>
-                        </div>
-                      </Link>
-                    )}
-                  </div>
-                </div>
-
-                {beer.description && (
-                  <p className="text-gray-600 text-lg leading-relaxed mb-6">{beer.description}</p>
-                )}
-
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                  <div className="text-center">
-                    <Droplets className="mx-auto text-blue-500 mb-2" size={24} />
-                    <div className="text-sm text-gray-500">Gradazione</div>
-                    <div className="font-semibold">{beer.abv}%</div>
-                  </div>
-                  
+                <h1 className="text-3xl md:text-4xl font-bold mb-2">{beer.name}</h1>
+                <div className="flex items-center space-x-4 mb-4">
+                  <Badge variant="secondary" className="bg-white/20 text-white border-white/30">
+                    {beer.style}
+                  </Badge>
+                  <span className="text-lg font-semibold">{beer.abv}% ABV</span>
                   {beer.ibu && (
-                    <div className="text-center">
-                      <Wheat className="mx-auto text-yellow-600 mb-2" size={24} />
-                      <div className="text-sm text-gray-500">Amaro</div>
-                      <div className="font-semibold">{beer.ibu} IBU</div>
-                    </div>
-                  )}
-                  
-                  <div className="text-center">
-                    <BeerIcon className="mx-auto text-orange-500 mb-2" size={24} />
-                    <div className="text-sm text-gray-500">Stile</div>
-                    <div className="font-semibold">{beer.style}</div>
-                  </div>
-                  
-                  {beer.color && (
-                    <div className="text-center">
-                      <Eye className="mx-auto text-amber-600 mb-2" size={24} />
-                      <div className="text-sm text-gray-500">Colore</div>
-                      <div className="font-semibold">{beer.color}</div>
-                    </div>
+                    <span className="text-lg">{beer.ibu} IBU</span>
                   )}
                 </div>
+                
+                {beer.brewery && (
+                  <Link href={`/brewery/${beer.brewery.id}`}>
+                    <div className="flex items-center space-x-3 text-orange-100 hover:text-white transition-colors">
+                      <Avatar className="w-8 h-8">
+                        <AvatarImage src={beer.brewery.logoUrl} />
+                        <AvatarFallback className="text-xs">
+                          {beer.brewery.name.slice(0, 2)}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div>
+                        <p className="font-semibold">{beer.brewery.name}</p>
+                        <p className="text-sm">{beer.brewery.location}, {beer.brewery.region}</p>
+                      </div>
+                    </div>
+                  </Link>
+                )}
               </div>
             </div>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
+      </div>
 
-        {/* Where to Find This Beer */}
-        <Card className="mb-8">
-          <CardContent className="p-6">
-            <h2 className="text-2xl font-bold text-secondary mb-6">Dove Trovare Questa Birra</h2>
-            
-            {availabilityLoading ? (
-              <div className="space-y-4">
-                {[...Array(3)].map((_, i) => (
-                  <div key={i} className="h-16 bg-gray-200 rounded animate-pulse"></div>
-                ))}
-              </div>
-            ) : availability && (availability.tapLocations.length > 0 || availability.bottleLocations.length > 0) ? (
-              <div className="space-y-6">
-                {/* Tap Locations */}
-                {availability.tapLocations.length > 0 && (
-                  <div>
-                    <h3 className="text-lg font-semibold text-orange-600 mb-3 flex items-center">
-                      <BeerIcon className="mr-2" size={20} />
-                      Alla Spina ({availability.tapLocations.length} pub)
-                    </h3>
-                    <div className="space-y-3">
-                      {availability.tapLocations.map((location, index) => (
-                        <Link key={`tap-${index}`} href={`/pub/${location.pub.id}`}>
-                          <div className="flex items-center justify-between p-4 border rounded-lg hover:bg-orange-50 transition-colors cursor-pointer">
-                            <div className="flex items-center space-x-4">
-                              <div className="w-3 h-3 bg-orange-500 rounded-full"></div>
-                              <div>
-                                <h4 className="font-semibold text-lg">{location.pub.name}</h4>
-                                <p className="text-gray-600 flex items-center">
-                                  <MapPin className="mr-1" size={16} />
-                                  {location.pub.address}, {location.pub.city}
-                                </p>
-                              </div>
-                            </div>
-                            
-                            <div className="text-right">
-                              <Badge variant="default" className="bg-orange-100 text-orange-800">
-                                Alla Spina
-                              </Badge>
-                            </div>
-                          </div>
-                        </Link>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {/* Bottle Locations */}
-                {availability.bottleLocations.length > 0 && (
-                  <div>
-                    <h3 className="text-lg font-semibold text-green-600 mb-3 flex items-center">
-                      <Droplets className="mr-2" size={20} />
-                      In Bottiglia ({availability.bottleLocations.length} pub)
-                    </h3>
-                    <div className="space-y-3">
-                      {availability.bottleLocations.map((location, index) => (
-                        <Link key={`bottle-${index}`} href={`/pub/${location.pub.id}`}>
-                          <div className="flex items-center justify-between p-4 border rounded-lg hover:bg-green-50 transition-colors cursor-pointer">
-                            <div className="flex items-center space-x-4">
-                              <div className="w-3 h-3 bg-green-500 rounded-full"></div>
-                              <div>
-                                <h4 className="font-semibold text-lg">{location.pub.name}</h4>
-                                <p className="text-gray-600 flex items-center">
-                                  <MapPin className="mr-1" size={16} />
-                                  {location.pub.address}, {location.pub.city}
-                                </p>
-                              </div>
-                            </div>
-                            
-                            <div className="text-right">
-                              <Badge variant="default" className="bg-green-100 text-green-800">
-                                Bottiglia
-                              </Badge>
-                            </div>
-                          </div>
-                        </Link>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </div>
-            ) : (
-              <div className="text-center py-8">
-                <BeerIcon className="mx-auto text-gray-400 mb-4" size={48} />
-                <p className="text-gray-500 text-lg">
-                  Questa birra non è attualmente disponibile in nessun pub
-                </p>
-                <p className="text-gray-400 mt-2">
-                  Controlla più tardi o contatta direttamente il birrificio
-                </p>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-
-        {/* Brewery Info */}
-        {beer.brewery && (
+      {/* Main Content */}
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        
+        {/* Quick Stats */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
           <Card>
-            <CardContent className="p-6">
-              <h2 className="text-2xl font-bold text-secondary mb-6">Il Birrificio</h2>
-              
-              <Link href={`/brewery/${beer.brewery.id}`}>
-                <div className="flex items-center space-x-6 p-4 border rounded-lg hover:bg-gray-50 transition-colors cursor-pointer">
-                  <img
-                    src={beer.brewery.logoUrl || "https://images.unsplash.com/photo-1571613316887-6f8d5cbf7ef7?w=80&h=80&fit=crop"}
-                    alt={`${beer.brewery.name} logo`}
-                    className="w-16 h-16 rounded-full object-cover"
-                  />
-                  
-                  <div className="flex-1">
-                    <h3 className="text-xl font-semibold text-secondary">{beer.brewery.name}</h3>
-                    <p className="text-gray-600 flex items-center mt-1">
-                      <MapPin className="mr-1" size={16} />
-                      {beer.brewery.location}, {beer.brewery.region}
-                    </p>
-                  </div>
-                  
-                  <Button variant="outline">
-                    Visita Birrificio
-                  </Button>
-                </div>
-              </Link>
+            <CardContent className="p-4 text-center">
+              <Thermometer className="w-6 h-6 text-primary mx-auto mb-2" />
+              <h3 className="font-semibold text-sm">ABV</h3>
+              <p className="text-lg font-bold text-primary">{beer.abv}%</p>
             </CardContent>
           </Card>
-        )}
+          
+          {beer.ibu && (
+            <Card>
+              <CardContent className="p-4 text-center">
+                <Droplets className="w-6 h-6 text-primary mx-auto mb-2" />
+                <h3 className="font-semibold text-sm">IBU</h3>
+                <p className="text-lg font-bold text-primary">{beer.ibu}</p>
+              </CardContent>
+            </Card>
+          )}
+          
+          <Card>
+            <CardContent className="p-4 text-center">
+              <Wheat className="w-6 h-6 text-primary mx-auto mb-2" />
+              <h3 className="font-semibold text-sm">Stile</h3>
+              <p className="text-sm font-semibold">{beer.style}</p>
+            </CardContent>
+          </Card>
+          
+          <Card>
+            <CardContent className="p-4 text-center">
+              <Eye className="w-6 h-6 text-primary mx-auto mb-2" />
+              <h3 className="font-semibold text-sm">Colore</h3>
+              <p className="text-sm">{beer.color || "Ambrato"}</p>
+            </CardContent>
+          </Card>
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          {/* Description */}
+          <div className="lg:col-span-2 space-y-6">
+            {beer.description && (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center">
+                    <BeerIcon className="w-5 h-5 mr-2" />
+                    Descrizione
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-gray-700 leading-relaxed">{beer.description}</p>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Availability */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center">
+                  <MapPin className="w-5 h-5 mr-2" />
+                  Dove Trovarla
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {availabilityLoading ? (
+                  <div className="animate-pulse space-y-4">
+                    {[...Array(3)].map((_, i) => (
+                      <div key={i} className="h-16 bg-gray-200 rounded" />
+                    ))}
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {/* Tap Locations */}
+                    {availability?.tapLocations && availability.tapLocations.length > 0 && (
+                      <div>
+                        <h3 className="font-semibold mb-3 flex items-center">
+                          <BeerIcon className="w-4 h-4 mr-2" />
+                          Alla Spina
+                        </h3>
+                        <div className="space-y-2">
+                          {availability.tapLocations.map((location, index) => (
+                            <Link key={index} href={`/pub/${location.pub.id}`}>
+                              <div className="flex items-center justify-between p-3 border rounded-lg hover:bg-gray-50 transition-colors">
+                                <div>
+                                  <h4 className="font-semibold">{location.pub.name}</h4>
+                                  <p className="text-sm text-gray-600">{location.pub.address}</p>
+                                </div>
+                                <div className="text-right">
+                                  {location.tapItem.price && (
+                                    <p className="font-bold">€{location.tapItem.price}</p>
+                                  )}
+                                  <Badge variant={location.tapItem.isActive ? "default" : "secondary"}>
+                                    {location.tapItem.isActive ? "Disponibile" : "Esaurita"}
+                                  </Badge>
+                                </div>
+                              </div>
+                            </Link>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Bottle Locations */}
+                    {availability?.bottleLocations && availability.bottleLocations.length > 0 && (
+                      <div>
+                        <h3 className="font-semibold mb-3 flex items-center">
+                          <Wine className="w-4 h-4 mr-2" />
+                          In Bottiglia
+                        </h3>
+                        <div className="space-y-2">
+                          {availability.bottleLocations.map((location, index) => (
+                            <Link key={index} href={`/pub/${location.pub.id}`}>
+                              <div className="flex items-center justify-between p-3 border rounded-lg hover:bg-gray-50 transition-colors">
+                                <div>
+                                  <h4 className="font-semibold">{location.pub.name}</h4>
+                                  <p className="text-sm text-gray-600">{location.pub.address}</p>
+                                </div>
+                                <div className="text-right">
+                                  {location.bottleItem.price && (
+                                    <p className="font-bold">€{location.bottleItem.price}</p>
+                                  )}
+                                  <Badge variant={location.bottleItem.isActive ? "default" : "secondary"}>
+                                    {location.bottleItem.isActive ? "Disponibile" : "Esaurita"}
+                                  </Badge>
+                                </div>
+                              </div>
+                            </Link>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {(!availability?.tapLocations?.length && !availability?.bottleLocations?.length) && (
+                      <p className="text-center text-gray-500 py-8">
+                        Nessuna disponibilità trovata nei pub registrati
+                      </p>
+                    )}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Sidebar */}
+          <div className="space-y-6">
+            {/* Brewery Info */}
+            {beer.brewery && (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center">
+                    <Building className="w-5 h-5 mr-2" />
+                    Birrificio
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <Link href={`/brewery/${beer.brewery.id}`}>
+                    <div className="flex items-center space-x-3 p-3 border rounded-lg hover:bg-gray-50 transition-colors">
+                      <Avatar className="w-12 h-12">
+                        <AvatarImage src={beer.brewery.logoUrl} />
+                        <AvatarFallback>
+                          {beer.brewery.name.slice(0, 2)}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div>
+                        <h3 className="font-semibold">{beer.brewery.name}</h3>
+                        <p className="text-sm text-gray-600">
+                          {beer.brewery.location}, {beer.brewery.region}
+                        </p>
+                      </div>
+                    </div>
+                  </Link>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Quick Actions */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Azioni Rapide</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <Button className="w-full">
+                  <Heart className="w-4 h-4 mr-2" />
+                  Aggiungi ai Preferiti
+                </Button>
+                <Button variant="outline" className="w-full">
+                  <Share2 className="w-4 h-4 mr-2" />
+                  Condividi Birra
+                </Button>
+                <Button variant="outline" className="w-full">
+                  <Store className="w-4 h-4 mr-2" />
+                  Trova Negozi
+                </Button>
+              </CardContent>
+            </Card>
+
+            {/* Technical Details */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Dettagli Tecnici</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">Gradazione:</span>
+                    <span className="font-semibold">{beer.abv}% ABV</span>
+                  </div>
+                  {beer.ibu && (
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Amarezza:</span>
+                      <span className="font-semibold">{beer.ibu} IBU</span>
+                    </div>
+                  )}
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">Stile:</span>
+                    <span className="font-semibold">{beer.style}</span>
+                  </div>
+                  {beer.color && (
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Colore:</span>
+                      <span className="font-semibold">{beer.color}</span>
+                    </div>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
       </main>
 
       <Footer />

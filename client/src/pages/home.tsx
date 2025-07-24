@@ -1,17 +1,14 @@
-import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/useAuth";
-import { useEffect } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { Link } from "wouter";
+import { Beer, MapPin, Heart, Store, TrendingUp } from "lucide-react";
 import Footer from "@/components/footer";
 import PubCard from "@/components/pub-card";
 import BreweryCard from "@/components/brewery-card";
 import { Button } from "@/components/ui/button";
-import { Beer, Heart, MapPin } from "lucide-react";
-import { Link } from "wouter";
 
 export default function Home() {
-  const { user } = useAuth();
-  
-  // Note: Removed automatic redirect - pub owners can navigate freely
+  const { user, isAuthenticated } = useAuth();
   
   const { data: pubs, isLoading: pubsLoading } = useQuery({
     queryKey: ["/api/pubs"],
@@ -27,6 +24,12 @@ export default function Home() {
     enabled: !!user,
   });
 
+  // Fetch user's own pubs for pub owners
+  const { data: myPubs } = useQuery({
+    queryKey: ["/api/my-pubs"],
+    enabled: isAuthenticated && (user as any)?.userType === 'pub_owner',
+  });
+
   return (
     <div className="min-h-screen bg-gray-50">
       
@@ -36,14 +39,14 @@ export default function Home() {
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-3xl md:text-4xl font-bold mb-2">
-                Ciao {user?.firstName || 'Birraio'}! 🍺
+                Ciao {(user as any)?.firstName || 'Birraio'}! 🍺
               </h1>
               <p className="text-xl text-orange-100">
                 Scopri nuove birre e gestisci i tuoi preferiti
               </p>
             </div>
             
-            {user?.userType === 'pub_owner' && (
+            {(user as any)?.userType === 'pub_owner' && (
               <Link href="/dashboard">
                 <Button className="bg-white text-primary hover:bg-gray-100">
                   <Beer className="mr-2" />
@@ -89,7 +92,7 @@ export default function Home() {
         </section>
 
         {/* I Tuoi Pub (solo per pub owner) */}
-        {user?.userType === 'pub_owner' && (
+        {(user as any)?.userType === 'pub_owner' && (
           <section className="mb-12">
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-3xl font-bold text-secondary">I Tuoi Pub</h2>
@@ -126,7 +129,7 @@ export default function Home() {
         )}
 
         {/* Pub in Evidenza (solo per clienti) */}
-        {user?.userType !== 'pub_owner' && (
+        {(user as any)?.userType !== 'pub_owner' && (
           <section className="mb-12">
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-3xl font-bold text-secondary">Pub Consigliati</h2>
@@ -154,23 +157,13 @@ export default function Home() {
           </section>
         )}
 
-        {/* Random Breweries */}
+        {/* Birrifici in Evidenza */}
         <section className="mb-12">
           <div className="flex items-center justify-between mb-6">
-            <div>
-              <h2 className="text-3xl font-bold text-secondary">Scopri Nuovi Birrifici</h2>
-              <p className="text-gray-600 mt-1">Birrifici casuali dal nostro database globale</p>
-            </div>
-            <Button 
-              variant="outline"
-              onClick={() => {
-                // Refresh solo i birrifici casuali
-                window.location.reload();
-              }}
-              className="text-primary hover:text-orange-600"
-            >
-              🎲 Cambia Selezione
-            </Button>
+            <h2 className="text-3xl font-bold text-secondary">Birrifici Artigianali</h2>
+            <a href="#" className="text-primary hover:text-orange-600 font-semibold">
+              Esplora tutti
+            </a>
           </div>
 
           {breweriesLoading ? (
@@ -181,15 +174,35 @@ export default function Home() {
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-              {Array.isArray(breweries) ? breweries.slice(0, 4).map((brewery: any) => (
-                <BreweryCard 
-                  key={brewery.id} 
-                  brewery={brewery}
-                  beerCount={brewery.beerCount || Math.floor(Math.random() * 15) + 3}
-                />
+              {Array.isArray(breweries) ? breweries.map((brewery: any) => (
+                <BreweryCard key={brewery.id} brewery={brewery} />
               )) : null}
             </div>
           )}
+        </section>
+
+        {/* Statistiche Platform */}
+        <section className="mb-12 bg-white rounded-xl shadow-md p-8">
+          <h2 className="text-3xl font-bold text-center text-secondary mb-8">
+            La Community Fermenta.to
+          </h2>
+          
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <div className="text-center">
+              <div className="text-4xl font-bold text-primary mb-2">29,753</div>
+              <div className="text-gray-600">Birre nel Catalogo</div>
+            </div>
+            
+            <div className="text-center">
+              <div className="text-4xl font-bold text-primary mb-2">2,968</div>
+              <div className="text-gray-600">Birrifici Mondiali</div>
+            </div>
+            
+            <div className="text-center">
+              <div className="text-4xl font-bold text-primary mb-2">293</div>
+              <div className="text-gray-600">Stili Diversi</div>
+            </div>
+          </div>
         </section>
       </main>
 
