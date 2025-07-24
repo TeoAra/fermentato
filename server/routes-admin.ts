@@ -9,7 +9,7 @@ export function registerAdminRoutes(app: Express) {
   app.patch('/api/admin/users/:id/suspend', isAuthenticated, async (req, res) => {
     try {
       const userId = req.params.id;
-      const currentUserId = req.user?.claims?.sub;
+      const currentUserId = (req.user as any)?.claims?.sub;
       
       if (userId === currentUserId) {
         return res.status(400).json({ error: "Non puoi sospendere te stesso" });
@@ -26,7 +26,7 @@ export function registerAdminRoutes(app: Express) {
   app.delete('/api/admin/users/:id', isAuthenticated, async (req, res) => {
     try {
       const userId = req.params.id;
-      const currentUserId = req.user?.claims?.sub;
+      const currentUserId = (req.user as any)?.claims?.sub;
       
       if (userId === currentUserId) {
         return res.status(400).json({ error: "Non puoi eliminare te stesso" });
@@ -239,7 +239,8 @@ export function registerAdminRoutes(app: Express) {
       const results = await query
         .orderBy(breweries.name)
         .limit(parseInt(limit))
-        .offset(offset);
+        .offset(offset)
+        .execute();
 
       res.json(results);
     } catch (error) {
@@ -271,7 +272,8 @@ export function registerAdminRoutes(app: Express) {
       const results = await query
         .orderBy(pubs.name)
         .limit(parseInt(limit))
-        .offset(offset);
+        .offset(offset)
+        .execute();
 
       res.json(results);
     } catch (error) {
@@ -309,7 +311,8 @@ export function registerAdminRoutes(app: Express) {
       const results = await query
         .orderBy(users.createdAt)
         .limit(parseInt(limit))
-        .offset(offset);
+        .offset(offset)
+        .execute();
 
       res.json(results);
     } catch (error) {

@@ -28,6 +28,7 @@ import {
 } from "lucide-react";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+import { trackEvent } from "@/lib/analytics";
 import { formatDistanceToNow } from "date-fns";
 import { it } from "date-fns/locale";
 
@@ -124,6 +125,7 @@ export default function AdminContent() {
       queryClient.invalidateQueries({ queryKey: ["/api/admin/beers"] });
       setEditingItem(null);
       setEditData({});
+      trackEvent('admin_beer_update', 'content_management', 'beer_edited');
       toast({
         title: "Birra aggiornata",
         description: "Le modifiche sono state salvate con successo",
@@ -185,6 +187,7 @@ export default function AdminContent() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/admin/users"] });
+      trackEvent('admin_user_suspend', 'user_management', 'user_suspended');
       toast({
         title: "Utente sospeso",
         description: "L'utente è stato sospeso con successo",
