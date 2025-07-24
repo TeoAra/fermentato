@@ -9,6 +9,8 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { AllergenSelector, AllergenDisplay } from "@/components/allergen-selector";
+import { PriceFormatManager } from "@/components/price-format-manager";
 import { Label } from "@/components/ui/label";
 import { 
   Store, 
@@ -69,11 +71,13 @@ export default function SmartPubDashboard() {
   const [selectedBeers, setSelectedBeers] = useState<any[]>([]);
   const [showBeerSearch, setShowBeerSearch] = useState(false);
   const [draggedItem, setDraggedItem] = useState<number | null>(null);
-  const [lastProfileUpdate, setLastProfileUpdate] = useState<Date | null>(null);
-  const [newItemPrices, setNewItemPrices] = useState<{size: string, price: string}[]>([{size: '', price: ''}]);
-  const [replacingBeer, setReplacingBeer] = useState<number | null>(null);
+  const [priceManagerType, setPriceManagerType] = useState<'tap' | 'bottles'>('tap');
   const [showPriceManager, setShowPriceManager] = useState<number | null>(null);
-  const [priceManagerType, setPriceManagerType] = useState<'taplist' | 'bottles'>('taplist');
+  const [newItemPrices, setNewItemPrices] = useState<Array<{size: string, price: string, format?: string}>>([]);
+  const [selectedAllergens, setSelectedAllergens] = useState<string[]>([]);
+  const [lastProfileUpdate, setLastProfileUpdate] = useState<Date | null>(null);
+  const [replacingBeer, setReplacingBeer] = useState<number | null>(null);
+
 
   // Fetch pub data
   const { data: userPubs, isLoading: pubsLoading } = useQuery({
@@ -268,6 +272,22 @@ export default function SmartPubDashboard() {
       </div>
     );
   }
+
+  // Mutation to add beer to bottles with multiple formats and prices
+  const addBottleItemMutation = useMutation({
+    mutationFn: async (data: any) => {
+      return apiRequest(`/api/pubs/${currentPub?.id}/bottles`, 'POST', data);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [`/api/pubs/${currentPub?.id}/bottles`] });
+      toast({ title: "Birra aggiunta alla cantina!" });
+    },
+    onError: () => {
+      toast({ title: "Errore nell'aggiunta della birra alla cantina", variant: "destructive" });
+    },
+  });
+
+
 
   const sections = [
     { id: 'overview', name: 'Dashboard', icon: TrendingUp },
@@ -677,11 +697,14 @@ export default function SmartPubDashboard() {
                                   size="sm" 
                                   variant="outline" 
                                   onClick={() => {
-                                    setReplacingBeer(item.id);
-                                    setShowBeerSearch(true);
-                                    setSearchQuery('');
+                                    if (!showBeerSearch) {
+                                      setReplacingBeer(item.id);
+                                      setShowBeerSearch(true);
+                                      setSearchQuery('');
+                                    }
                                   }}
                                   title="Sostituisci con altra birra"
+                                  disabled={showBeerSearch}
                                 >
                                   <Search className="w-4 h-4" />
                                 </Button>
@@ -719,7 +742,19 @@ export default function SmartPubDashboard() {
                             <Package className="mr-2" />
                             Cantina Birre in Bottiglia ({typedBottleList.length})
                           </div>
-                          <Button size="sm" onClick={() => setShowBeerSearch(true)} variant="outline">
+                          <Button 
+                            size="sm" 
+                            onClick={() => {
+                              if (!showBeerSearch) {
+                                setPriceManagerType('bottles');
+                                setShowBeerSearch(true);
+                                setSearchQuery('');
+                                setReplacingBeer(null);
+                              }
+                            }} 
+                            variant="outline"
+                            disabled={showBeerSearch}
+                          >
                             <Plus className="w-4 h-4 mr-2" />
                             Aggiungi alla Cantina
                           </Button>
@@ -1757,7 +1792,7 @@ export default function SmartPubDashboard() {
                             setSearchQuery('');
                           }}
                         >
-                          {replacingBeer ? 'Sostituisci' : 'Aggiungi'}
+                          {replacingBeer ? 'Sostituisci' : priceManagerType === 'bottles' ? 'Configura Prezzi' : 'Aggiungi'}
                         </Button>
                       </div>
                     ))}
@@ -1765,6 +1800,36 @@ export default function SmartPubDashboard() {
                 )}
               </div>
             </div>
+          </DialogContent>
+        </Dialog>
+      )}
+
+      {/* Price Manager Dialog for Bottles */}
+      {showPriceManager && (
+        <Dialog open={!!showPriceManager} onOpenChange={() => setShowPriceManager(null)}>
+          <DialogContent className="max-w-3xl">
+            <PriceFormatManager
+              type={priceManagerType}
+              initialPrices={newItemPrices}
+              onSave={(prices) => {
+                // Add beer to bottles with configured prices
+                addBottleItemMutation.mutate({
+                  beerId: showPriceManager,
+                  prices: prices,
+                  isActive: true,
+                  isVisible: true,
+                });
+                setShowPriceManager(null);
+                setNewItemPrices([]);
+                setShowBeerSearch(false);
+                setSearchQuery('');
+              }}
+              onCancel={() => {
+                setShowPriceManager(null);
+                setNewItemPrices([]);
+              }}
+              beerName="Nuova birra"
+            />
           </DialogContent>
         </Dialog>
       )}
