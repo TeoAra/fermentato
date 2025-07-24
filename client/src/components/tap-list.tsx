@@ -71,23 +71,36 @@ export default function TapList({ tapList }: TapListProps) {
             
             <div className="text-right">
               <div className="space-y-1">
-                {tap.priceSmall && (
-                  <div className="flex items-center space-x-2">
-                    <span className="text-sm text-gray-500">0.2L</span>
-                    <span className="font-semibold text-primary">€{tap.priceSmall}</span>
-                  </div>
-                )}
-                {tap.priceMedium && (
-                  <div className="flex items-center space-x-2">
-                    <span className="text-sm text-gray-500">0.4L</span>
-                    <span className="font-semibold text-primary">€{tap.priceMedium}</span>
-                  </div>
-                )}
-                {tap.priceLarge && (
-                  <div className="flex items-center space-x-2">
-                    <span className="text-sm text-gray-500">0.5L</span>
-                    <span className="font-semibold text-primary">€{tap.priceLarge}</span>
-                  </div>
+                {/* Display flexible prices if available */}
+                {tap.prices && typeof tap.prices === 'object' && Object.keys(tap.prices).length > 0 ? (
+                  Object.entries(tap.prices).map(([size, price]) => (
+                    <div key={size} className="flex items-center space-x-2">
+                      <span className="text-sm text-gray-500">{size}</span>
+                      <span className="font-semibold text-primary">€{Number(price).toFixed(2)}</span>
+                    </div>
+                  ))
+                ) : (
+                  // Fallback to legacy prices
+                  <>
+                    {tap.priceSmall && (
+                      <div className="flex items-center space-x-2">
+                        <span className="text-sm text-gray-500">0.2L</span>
+                        <span className="font-semibold text-primary">€{tap.priceSmall}</span>
+                      </div>
+                    )}
+                    {tap.priceMedium && (
+                      <div className="flex items-center space-x-2">
+                        <span className="text-sm text-gray-500">0.4L</span>
+                        <span className="font-semibold text-primary">€{tap.priceMedium}</span>
+                      </div>
+                    )}
+                    {tap.priceLarge && (
+                      <div className="flex items-center space-x-2">
+                        <span className="text-sm text-gray-500">0.5L</span>
+                        <span className="font-semibold text-primary">€{tap.priceLarge}</span>
+                      </div>
+                    )}
+                  </>
                 )}
               </div>
             </div>

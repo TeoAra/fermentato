@@ -114,7 +114,8 @@ export default function SmartPubDashboard() {
   // Filter beers based on search
   const filteredBeers = (Array.isArray(allBeers) ? allBeers : []).filter((beer: any) => 
     beer.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    (typeof beer.brewery === 'string' ? beer.brewery : beer.brewery?.name)?.toLowerCase().includes(searchQuery.toLowerCase())
+    beer.breweryName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    beer.brewery?.name?.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   // Type assertions for data

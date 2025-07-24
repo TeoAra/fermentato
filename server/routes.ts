@@ -130,7 +130,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/pubs/:id/taplist", async (req, res) => {
     try {
       const pubId = parseInt(req.params.id);
-      const tapList = await storage.getTapListByPub(pubId);
+      if (isNaN(pubId)) {
+        return res.status(400).json({ message: "Invalid pub ID" });
+      }
+
+      // Check if user is the pub owner (authenticated endpoint)
+      let isOwner = false;
+      try {
+        if (req.user?.claims?.sub) {
+          const userId = req.user.claims.sub;
+          const userPubs = await storage.getPubsByOwner(userId);
+          isOwner = userPubs.some(pub => pub.id === pubId);
+        }
+      } catch (e) {
+        // Not authenticated or other error, treat as public
+      }
+
+      // Use appropriate method based on ownership
+      const tapList = isOwner 
+        ? await storage.getTapListByPubForOwner(pubId)
+        : await storage.getTapListByPub(pubId);
+      
       res.json(tapList);
     } catch (error) {
       console.error("Error fetching tap list:", error);
