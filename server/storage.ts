@@ -430,17 +430,27 @@ export class DatabaseStorage implements IStorage {
   async addTapListItem(pubId: number, itemData: any): Promise<TapList> {
     console.log('Storage: Adding tap list item:', { pubId, itemData });
     
+    // Convert price array to object if provided
+    let pricesObj = null;
+    if (itemData.prices && Array.isArray(itemData.prices)) {
+      pricesObj = itemData.prices.reduce((acc: Record<string, number>, p: any) => {
+        acc[p.size] = parseFloat(p.price);
+        return acc;
+      }, {});
+    }
+    
     const [item] = await db
       .insert(tapList)
       .values({
         pubId,
         beerId: itemData.beerId,
-        priceSmall: itemData.priceSmall,
-        priceMedium: itemData.priceMedium,
+        priceSmall: itemData.priceSmall ? itemData.priceSmall.toString() : null,
+        priceMedium: itemData.priceMedium ? itemData.priceMedium.toString() : null,
+        prices: pricesObj,
         isActive: itemData.isActive,
         isVisible: itemData.isVisible,
         tapNumber: itemData.position || 1,
-        notes: itemData.notes || null
+        description: itemData.notes || null
       })
       .returning();
     

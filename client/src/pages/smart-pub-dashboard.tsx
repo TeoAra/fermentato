@@ -1807,20 +1807,18 @@ export default function SmartPubDashboard() {
                                   {size: '75cl', price: '9.50'}
                                 ]);
                               } else {
-                                console.log('Adding beer to taplist:', beer.id);
-                                addTapItemMutation.mutate({
-                                  beerId: beer.id,
-                                  priceSmall: '5.00',
-                                  priceMedium: '7.00',
-                                  isActive: true,
-                                  isVisible: true,
-                                });
+                                // Per le spine, apri sempre il price manager per configurare le taglie
+                                setShowPriceManager(beer.id);
+                                setNewItemPrices([
+                                  {size: 'Piccola (20cl)', price: '4.00'},
+                                  {size: 'Media (40cl)', price: '6.50'}
+                                ]);
                               }
                               setReplacingBeer(null);
                               setSearchQuery('');
                             }}
                           >
-                            {replacingBeer ? '🔄 Sostituisci' : priceManagerType === 'bottles' ? '⚙️ Configura' : '➕ Aggiungi'}
+                            {replacingBeer ? '🔄 Sostituisci' : '⚙️ Configura Prezzi'}
                           </Button>
                         </div>
                       </div>
@@ -1839,21 +1837,34 @@ export default function SmartPubDashboard() {
         </Dialog>
       )}
 
-      {/* Price Manager Dialog for Bottles */}
+      {/* Flexible Price Manager Dialog */}
       {showPriceManager && (
         <Dialog open={!!showPriceManager} onOpenChange={() => setShowPriceManager(null)}>
-          <DialogContent className="max-w-3xl">
-            <PriceFormatManager
+          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+            <FlexiblePriceManager
               type={priceManagerType}
               initialPrices={newItemPrices}
               onSave={(prices) => {
-                // Add beer to bottles with configured prices
-                addBottleItemMutation.mutate({
-                  beerId: showPriceManager,
-                  prices: prices,
-                  isActive: true,
-                  isVisible: true,
-                });
+                console.log('Saving prices:', prices, 'for beer:', showPriceManager, 'type:', priceManagerType);
+                
+                if (priceManagerType === 'bottles') {
+                  // Add beer to bottles with configured prices
+                  addBottleItemMutation.mutate({
+                    beerId: showPriceManager,
+                    prices: prices,
+                    isActive: true,
+                    isVisible: true,
+                  });
+                } else {
+                  // Add beer to taplist with configured prices
+                  addTapItemMutation.mutate({
+                    beerId: showPriceManager,
+                    prices: prices,
+                    isActive: true,
+                    isVisible: true,
+                  });
+                }
+                
                 setShowPriceManager(null);
                 setNewItemPrices([]);
                 setShowBeerSearch(false);

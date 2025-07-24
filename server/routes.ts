@@ -412,7 +412,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: 'Invalid pub ID' });
       }
 
-      const { beerId, priceSmall, priceMedium, isActive = true, isVisible = true } = req.body;
+      const { beerId, priceSmall, priceMedium, prices, isActive = true, isVisible = true } = req.body;
       
       console.log('Adding to taplist:', { pubId, beerId, priceSmall, priceMedium, isActive, isVisible });
       
@@ -423,8 +423,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const item = await storage.addTapListItem(pubId, {
         beerId: parseInt(beerId),
-        priceSmall: parseFloat(priceSmall) || 5.00,
-        priceMedium: parseFloat(priceMedium) || 7.00,
+        priceSmall: priceSmall ? parseFloat(priceSmall) : null,
+        priceMedium: priceMedium ? parseFloat(priceMedium) : null,
+        prices: prices || null,
         isActive: Boolean(isActive),
         isVisible: Boolean(isVisible),
         position: 0
