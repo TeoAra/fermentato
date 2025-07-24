@@ -1716,9 +1716,13 @@ export default function SmartPubDashboard() {
         </div>
       </div>
 
-      {/* Beer Search Dialog for Adding/Replacing */}
-      {showBeerSearch && (
-        <Dialog open={showBeerSearch} onOpenChange={setShowBeerSearch}>
+      {/* Beer Search Dialog for Adding/Replacing - UNICO */}
+      {showBeerSearch && !showPriceManager && (
+        <Dialog open={showBeerSearch} onOpenChange={() => {
+          setShowBeerSearch(false);
+          setSearchQuery('');
+          setReplacingBeer(null);
+        }}>
           <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>
@@ -1790,7 +1794,7 @@ export default function SmartPubDashboard() {
                                 {size: '75cl', price: '9.50'}
                               ]);
                             } else {
-                              // Per le spine, aggiungi direttamente
+                              // Per le spine, aggiungi direttamente alla taplist
                               addTapItemMutation.mutate({
                                 beerId: beer.id,
                                 priceSmall: '5.00',
@@ -1798,8 +1802,8 @@ export default function SmartPubDashboard() {
                                 isActive: true,
                                 isVisible: true,
                               });
+                              setShowBeerSearch(false);
                             }
-                            setShowBeerSearch(false);
                             setReplacingBeer(null);
                             setSearchQuery('');
                           }}

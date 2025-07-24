@@ -404,6 +404,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Add item to tap list
+  app.post('/api/pubs/:pubId/taplist', isAuthenticated, async (req, res) => {
+    try {
+      const pubId = parseInt(req.params.pubId);
+      const { beerId, priceSmall, priceMedium, isActive = true, isVisible = true } = req.body;
+      
+      console.log('Adding to taplist:', { pubId, beerId, priceSmall, priceMedium, isActive, isVisible });
+      
+      const item = await storage.addTapListItem(pubId, {
+        beerId: parseInt(beerId),
+        priceSmall: parseFloat(priceSmall) || 5.00,
+        priceMedium: parseFloat(priceMedium) || 7.00,
+        isActive,
+        isVisible
+      });
+      
+      console.log('Taplist item added:', item);
+      res.json(item);
+    } catch (error) {
+      console.error("Error adding tap list item:", error);
+      res.status(500).json({ message: 'Failed to add tap list item', error: error.message });
+    }
+  });
+
   // Update pub (owner only)
   app.patch("/api/pubs/:id", isAuthenticated, async (req: any, res) => {
     try {
