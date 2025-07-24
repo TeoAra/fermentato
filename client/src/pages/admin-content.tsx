@@ -60,18 +60,23 @@ export default function AdminContent() {
   const { user, isAuthenticated, isLoading } = useAuth();
   const { toast } = useToast();
   const [searchTerm, setSearchTerm] = useState("");
-  const [selectedType, setSelectedType] = useState<"beers" | "breweries">("beers");
+  const [selectedType, setSelectedType] = useState<"beers" | "breweries" | "pubs">("beers");
   const [editingItem, setEditingItem] = useState<number | null>(null);
   const [editData, setEditData] = useState<any>({});
 
   const { data: beers, isLoading: beersLoading } = useQuery<Beer[]>({
-    queryKey: ["/api/admin/beers"],
+    queryKey: ["/api/admin/beers", { search: searchTerm }],
     enabled: isAuthenticated && user?.userType === 'admin' && selectedType === 'beers',
   });
 
   const { data: breweries, isLoading: breweriesLoading } = useQuery<Brewery[]>({
-    queryKey: ["/api/admin/breweries"],
+    queryKey: ["/api/admin/breweries", { search: searchTerm }],
     enabled: isAuthenticated && user?.userType === 'admin' && selectedType === 'breweries',
+  });
+
+  const { data: pubs, isLoading: pubsLoading } = useQuery({
+    queryKey: ["/api/admin/pubs", { search: searchTerm }],
+    enabled: isAuthenticated && user?.userType === 'admin' && selectedType === 'pubs',
   });
 
   // Update mutations

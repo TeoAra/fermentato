@@ -14,11 +14,13 @@ import BreweryDetail from "@/pages/brewery-detail";
 import BeerDetail from "@/pages/beer-detail";
 import PubDashboard from "@/pages/pub-dashboard";
 import SmartPubDashboard from "@/pages/smart-pub-dashboard";
+import PubDashboardNew from "@/pages/pub-dashboard-new";
 import PubRegistration from "@/pages/pub-registration";
 import Notifications from "@/pages/notifications";
 import Activity from "@/pages/activity";
 import Dashboard from "@/pages/dashboard-simple";
 import UserDashboard from "@/pages/user-dashboard";
+import UserDashboardNew from "@/pages/user-dashboard-new";
 import AdminDashboard from "@/pages/admin-dashboard";
 import AdminDashboardNew from "@/pages/admin-dashboard-new";
 import AdminAnalytics from "@/pages/admin-analytics";
@@ -56,8 +58,8 @@ function Router() {
           {/* Dashboard routes based on user type */}
           <Route path="/dashboard" component={
             typedUser?.userType === 'admin' ? AdminDashboardNew :
-            typedUser?.userType === 'pub_owner' ? SmartPubDashboard : 
-            UserDashboard
+            typedUser?.userType === 'pub_owner' ? PubDashboardNew : 
+            UserDashboardNew
           } />
           <Route path="/admin" component={AdminDashboardNew} />
           <Route path="/admin/analytics" component={AdminAnalytics} />

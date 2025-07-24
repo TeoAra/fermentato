@@ -55,6 +55,167 @@ export function registerAdminRoutes(app: Express) {
     }
   });
 
+  // Admin-only data endpoints
+  app.get("/api/admin/beers", isAuthenticated, async (req: any, res) => {
+    try {
+      if (req.user?.claims?.sub !== "45321347") {
+        return res.status(403).json({ message: "Forbidden" });
+      }
+
+      const { search, page = 1, limit = 20 } = req.query;
+      const offset = (parseInt(page) - 1) * parseInt(limit);
+
+      let query = db
+        .select({
+          id: beers.id,
+          name: beers.name,
+          brewery: breweries.name,
+          style: beers.style,
+          abv: beers.abv,
+          ibu: beers.ibu,
+          description: beers.description,
+          imageUrl: beers.imageUrl,
+          bottleImageUrl: beers.bottleImageUrl,
+        })
+        .from(beers)
+        .leftJoin(breweries, eq(beers.breweryId, breweries.id));
+
+      if (search) {
+        query = query.where(sql`${beers.name} ILIKE ${'%' + search + '%'} OR ${breweries.name} ILIKE ${'%' + search + '%'}`);
+      }
+
+      const results = await query
+        .orderBy(beers.name)
+        .limit(parseInt(limit))
+        .offset(offset);
+
+      res.json(results);
+    } catch (error) {
+      console.error("Error fetching beers:", error);
+      res.status(500).json({ message: "Failed to fetch beers" });
+    }
+  });
+
+  app.get("/api/admin/breweries", isAuthenticated, async (req: any, res) => {
+    try {
+      if (req.user?.claims?.sub !== "45321347") {
+        return res.status(403).json({ message: "Forbidden" });
+      }
+
+      const { search, page = 1, limit = 20 } = req.query;
+      const offset = (parseInt(page) - 1) * parseInt(limit);
+
+      let query = db
+        .select({
+          id: breweries.id,
+          name: breweries.name,
+          location: breweries.location,
+          country: breweries.country,
+          founded: breweries.founded,
+          description: breweries.description,
+          website: breweries.website,
+          imageUrl: breweries.imageUrl,
+          beerCount: sql<number>`(SELECT COUNT(*) FROM ${beers} WHERE ${beers.breweryId} = ${breweries.id})`,
+        })
+        .from(breweries);
+
+      if (search) {
+        query = query.where(sql`${breweries.name} ILIKE ${'%' + search + '%'} OR ${breweries.location} ILIKE ${'%' + search + '%'}`);
+      }
+
+      const results = await query
+        .orderBy(breweries.name)
+        .limit(parseInt(limit))
+        .offset(offset);
+
+      res.json(results);
+    } catch (error) {
+      console.error("Error fetching breweries:", error);
+      res.status(500).json({ message: "Failed to fetch breweries" });
+    }
+  });
+
+  app.get("/api/admin/pubs", isAuthenticated, async (req: any, res) => {
+    try {
+      if (req.user?.claims?.sub !== "45321347") {
+        return res.status(403).json({ message: "Forbidden" });
+      }
+
+      const { search, page = 1, limit = 20 } = req.query;
+      const offset = (parseInt(page) - 1) * parseInt(limit);
+
+      let query = db
+        .select({
+          id: pubs.id,
+          name: pubs.name,
+          address: pubs.address,
+          city: pubs.city,
+          phone: pubs.phone,
+          email: pubs.email,
+          website: pubs.website,
+          description: pubs.description,
+          logoUrl: pubs.logoUrl,
+          coverImageUrl: pubs.coverImageUrl,
+          ownerName: sql<string>`${users.firstName} || ' ' || ${users.lastName}`,
+          ownerEmail: users.email,
+        })
+        .from(pubs)
+        .leftJoin(users, eq(pubs.ownerId, users.id));
+
+      if (search) {
+        query = query.where(sql`${pubs.name} ILIKE ${'%' + search + '%'} OR ${pubs.city} ILIKE ${'%' + search + '%'}`);
+      }
+
+      const results = await query
+        .orderBy(pubs.name)
+        .limit(parseInt(limit))
+        .offset(offset);
+
+      res.json(results);
+    } catch (error) {
+      console.error("Error fetching pubs:", error);
+      res.status(500).json({ message: "Failed to fetch pubs" });
+    }
+  });
+
+  app.get("/api/admin/users", isAuthenticated, async (req: any, res) => {
+    try {
+      if (req.user?.claims?.sub !== "45321347") {
+        return res.status(403).json({ message: "Forbidden" });
+      }
+
+      const { search, page = 1, limit = 20 } = req.query;
+      const offset = (parseInt(page) - 1) * parseInt(limit);
+
+      let query = db
+        .select({
+          id: users.id,
+          email: users.email,
+          firstName: users.firstName,
+          lastName: users.lastName,
+          userType: users.userType,
+          profileImageUrl: users.profileImageUrl,
+          createdAt: users.createdAt,
+          updatedAt: users.updatedAt,
+        })
+        .from(users);
+
+      if (search) {
+        query = query.where(sql`${users.email} ILIKE ${'%' + search + '%'} OR ${users.firstName} ILIKE ${'%' + search + '%'} OR ${users.lastName} ILIKE ${'%' + search + '%'}`);
+      }
+
+      const results = await query
+        .orderBy(users.createdAt)
+        .limit(parseInt(limit))
+        .offset(offset);
+
+      res.json(results);
+    } catch (error) {
+      console.error("Error fetching users:", error);
+      res.status(500).json({ message: "Failed to fetch users" });
+    }
+  });
+
   // Beer and brewery update endpoints
   app.patch("/api/admin/beers/:id", isAuthenticated, async (req: any, res) => {
     try {
