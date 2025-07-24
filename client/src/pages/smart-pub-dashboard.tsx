@@ -1,59 +1,48 @@
+import { useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
-import { useEffect, useState } from "react";
-import { useToast } from "@/hooks/use-toast";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { 
   Store, 
   Beer, 
   Users, 
   TrendingUp, 
   Plus, 
-  BarChart3, 
-  Star, 
-  MapPin,
-  Clock,
-  Edit3,
-  Settings,
-  Menu as MenuIcon,
-  Utensils,
-  Image,
-  Upload,
-  DollarSign,
+  Edit3, 
   Eye,
   EyeOff,
+  DollarSign,
   Calendar,
-  Sparkles,
-  Activity
+  Activity,
+  Settings,
+  Image,
+  MapPin,
+  Phone,
+  Mail,
+  Globe,
+  ArrowLeft,
+  ChevronRight,
+  Menu as MenuIcon,
+  Utensils,
+  BarChart3
 } from "lucide-react";
-import { Link } from "wouter";
+import { useToast } from "@/hooks/use-toast";
 import { formatDistanceToNow } from "date-fns";
 import { it } from "date-fns/locale";
 
-export default function SmartPubDashboard() {
-  const { toast } = useToast();
-  const { user, isAuthenticated, isLoading } = useAuth();
-  const queryClient = useQueryClient();
-  const [activeTab, setActiveTab] = useState("overview");
+type DashboardSection = 'overview' | 'taplist' | 'menu' | 'analytics' | 'settings' | 'profile';
 
-  // Redirect non-pub-owners
-  useEffect(() => {
-    if (!isLoading && (!isAuthenticated || user?.userType !== 'pub_owner')) {
-      toast({
-        title: "Accesso negato",
-        description: "Solo i proprietari di pub possono accedere a questa dashboard",
-        variant: "destructive",
-      });
-      setTimeout(() => {
-        window.location.href = user ? "/" : "/api/login";
-      }, 1000);
-      return;
-    }
-  }, [isAuthenticated, isLoading, user, toast]);
+export default function SmartPubDashboard() {
+  const { user, isAuthenticated } = useAuth();
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+  const [currentSection, setCurrentSection] = useState<DashboardSection>('overview');
+  const [editingItem, setEditingItem] = useState<number | null>(null);
 
   // Fetch pub data
   const { data: userPubs, isLoading: pubsLoading } = useQuery({
@@ -69,425 +58,608 @@ export default function SmartPubDashboard() {
     enabled: !!currentPub?.id,
   });
 
+  // Fetch bottle list
+  const { data: bottleList = [] } = useQuery({
+    queryKey: ["/api/pubs", currentPub?.id, "bottles"],
+    enabled: !!currentPub?.id,
+  });
+
   // Fetch menu data
   const { data: menuData = [] } = useQuery({
     queryKey: ["/api/pubs", currentPub?.id, "menu"],
     enabled: !!currentPub?.id,
   });
 
-  // Mock analytics data (in real app, this would come from the backend)
-  const analyticsData = {
-    dailyVisitors: 127,
-    weeklyGrowth: 12.5,
-    popularBeers: 8,
-    averageRating: 4.7,
-    revenue: 2340,
-    events: 3
+  const sections = [
+    { id: 'overview', name: 'Dashboard', icon: TrendingUp },
+    { id: 'taplist', name: 'Spine e Bottiglie', icon: Beer },
+    { id: 'menu', name: 'Menu Cibo', icon: Utensils },
+    { id: 'analytics', name: 'Analytics', icon: BarChart3 },
+    { id: 'profile', name: 'Profilo Pub', icon: Store },
+    { id: 'settings', name: 'Impostazioni', icon: Settings },
+  ];
+
+  const renderMobileHeader = () => (
+    <div className="md:hidden bg-white dark:bg-gray-900 border-b p-4 flex items-center gap-3">
+      {currentSection !== 'overview' && (
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => setCurrentSection('overview')}
+          className="text-orange-600 dark:text-orange-400"
+        >
+          <ArrowLeft className="h-4 w-4" />
+        </Button>
+      )}
+      <h1 className="text-lg font-semibold text-gray-900 dark:text-white">
+        {sections.find(s => s.id === currentSection)?.name || 'Dashboard'}
+      </h1>
+    </div>
+  );
+
+  const renderOverview = () => (
+    <div className="space-y-6">
+      {/* Welcome Section */}
+      <Card className="bg-gradient-to-br from-orange-50 to-red-100 dark:from-orange-950 dark:to-red-900 border-orange-200 dark:border-orange-800">
+        <CardContent className="p-6">
+          <div className="flex items-center gap-4">
+            <div className="bg-orange-500 p-4 rounded-xl">
+              <Store className="h-8 w-8 text-white" />
+            </div>
+            <div>
+              <h2 className="text-2xl font-bold text-orange-900 dark:text-orange-100">
+                {currentPub?.name || 'Il Tuo Pub'}
+              </h2>
+              <p className="text-orange-700 dark:text-orange-300">
+                Gestisci il tuo locale dalla dashboard
+              </p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Quick Stats */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <Card className="hover:shadow-md transition-shadow">
+          <CardContent className="p-4">
+            <div className="flex items-center gap-3">
+              <div className="bg-blue-100 dark:bg-blue-900 p-2 rounded-lg">
+                <Beer className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+              </div>
+              <div>
+                <p className="text-xl font-bold text-gray-900 dark:text-white">
+                  {tapList.length}
+                </p>
+                <p className="text-xs text-gray-500 dark:text-gray-400">Spine Attive</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="hover:shadow-md transition-shadow">
+          <CardContent className="p-4">
+            <div className="flex items-center gap-3">
+              <div className="bg-green-100 dark:bg-green-900 p-2 rounded-lg">
+                <Beer className="h-5 w-5 text-green-600 dark:text-green-400" />
+              </div>
+              <div>
+                <p className="text-xl font-bold text-gray-900 dark:text-white">
+                  {bottleList.length}
+                </p>
+                <p className="text-xs text-gray-500 dark:text-gray-400">Bottiglie</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="hover:shadow-md transition-shadow">
+          <CardContent className="p-4">
+            <div className="flex items-center gap-3">
+              <div className="bg-purple-100 dark:bg-purple-900 p-2 rounded-lg">
+                <Utensils className="h-5 w-5 text-purple-600 dark:text-purple-400" />
+              </div>
+              <div>
+                <p className="text-xl font-bold text-gray-900 dark:text-white">
+                  {menuData.reduce((acc: number, cat: any) => acc + (cat.items?.length || 0), 0)}
+                </p>
+                <p className="text-xs text-gray-500 dark:text-gray-400">Piatti Menu</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="hover:shadow-md transition-shadow">
+          <CardContent className="p-4">
+            <div className="flex items-center gap-3">
+              <div className="bg-orange-100 dark:bg-orange-900 p-2 rounded-lg">
+                <TrendingUp className="h-5 w-5 text-orange-600 dark:text-orange-400" />
+              </div>
+              <div>
+                <p className="text-xl font-bold text-gray-900 dark:text-white">4.8</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400">Rating Medio</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Navigation Menu - Mobile Only */}
+      <div className="md:hidden grid grid-cols-2 gap-4">
+        {sections.slice(1).map((section) => {
+          const Icon = section.icon;
+          return (
+            <Card 
+              key={section.id}
+              className="cursor-pointer hover:shadow-md transition-all active:scale-95"
+              onClick={() => setCurrentSection(section.id as DashboardSection)}
+            >
+              <CardContent className="p-4 text-center">
+                <Icon className="h-6 w-6 mx-auto mb-2 text-orange-600 dark:text-orange-400" />
+                <p className="font-medium text-sm text-gray-900 dark:text-white">{section.name}</p>
+                <ChevronRight className="h-4 w-4 mx-auto mt-1 text-gray-400" />
+              </CardContent>
+            </Card>
+          );
+        })}
+      </div>
+
+      {/* Recent Activity */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Activity className="h-5 w-5" />
+            Attività Recenti
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-3">
+            {[
+              { action: 'Aggiunta nuova birra', item: 'Punk IPA', time: '2 ore fa', type: 'beer' },
+              { action: 'Modificato prezzo', item: 'Super Baladin', time: '1 giorno fa', type: 'price' },
+              { action: 'Nuovo piatto menu', item: 'Hamburger Gourmet', time: '3 giorni fa', type: 'food' }
+            ].map((activity, index) => (
+              <div key={index} className="flex items-center gap-3 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                <div className={`p-2 rounded-full ${
+                  activity.type === 'beer' ? 'bg-blue-100 dark:bg-blue-900' :
+                  activity.type === 'price' ? 'bg-green-100 dark:bg-green-900' :
+                  'bg-purple-100 dark:bg-purple-900'
+                }`}>
+                  {activity.type === 'beer' ? <Beer className="h-4 w-4 text-blue-600 dark:text-blue-400" /> :
+                   activity.type === 'price' ? <DollarSign className="h-4 w-4 text-green-600 dark:text-green-400" /> :
+                   <Utensils className="h-4 w-4 text-purple-600 dark:text-purple-400" />}
+                </div>
+                <div className="flex-1">
+                  <p className="font-medium text-sm">{activity.action}: {activity.item}</p>
+                  <p className="text-xs text-gray-500">{activity.time}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  );
+
+  const renderTapList = () => (
+    <div className="space-y-6">
+      <div className="flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center">
+        <div>
+          <h3 className="text-xl font-semibold">Gestione Birre</h3>
+          <p className="text-gray-600 dark:text-gray-400">Spine attive e bottiglie disponibili</p>
+        </div>
+        <Button className="w-full sm:w-auto">
+          <Plus className="h-4 w-4 mr-2" />
+          Aggiungi Birra
+        </Button>
+      </div>
+
+      {/* Tap List */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Beer className="h-5 w-5 text-blue-600" />
+            Spine Attive ({tapList.length})
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          {tapList.length === 0 ? (
+            <p className="text-gray-500 dark:text-gray-400 text-center py-8">
+              Nessuna birra alla spina configurata
+            </p>
+          ) : (
+            <div className="space-y-3">
+              {tapList.map((tap: any) => (
+                <div key={tap.id} className="flex flex-col sm:flex-row items-start sm:items-center gap-3 p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                  {tap.beer?.imageUrl && (
+                    <img 
+                      src={tap.beer.imageUrl} 
+                      alt={tap.beer.name}
+                      className="w-12 h-12 rounded object-cover flex-shrink-0"
+                    />
+                  )}
+                  <div className="flex-1 min-w-0">
+                    <div className="flex flex-col sm:flex-row sm:items-center gap-2">
+                      <h4 className="font-medium truncate">{tap.beer?.name}</h4>
+                      <Badge variant="secondary" className="text-xs">
+                        {tap.beer?.style}
+                      </Badge>
+                      {tap.isActive ? (
+                        <Badge className="bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">
+                          <Eye className="h-3 w-3 mr-1" />
+                          Attiva
+                        </Badge>
+                      ) : (
+                        <Badge variant="destructive">
+                          <EyeOff className="h-3 w-3 mr-1" />
+                          Non attiva
+                        </Badge>
+                      )}
+                    </div>
+                    <p className="text-sm text-gray-500">{tap.beer?.brewery}</p>
+                    <div className="flex items-center gap-4 mt-1">
+                      <span className="text-sm font-medium">€{tap.price}</span>
+                      <span className="text-xs text-gray-500">{tap.size}ml</span>
+                      {tap.beer?.abv && <span className="text-xs text-gray-500">{tap.beer.abv}% ABV</span>}
+                    </div>
+                  </div>
+                  <div className="flex gap-2 flex-shrink-0">
+                    <Button variant="outline" size="sm">
+                      <Edit3 className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Bottle List */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Beer className="h-5 w-5 text-green-600" />
+            Bottiglie Disponibili ({bottleList.length})
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          {bottleList.length === 0 ? (
+            <p className="text-gray-500 dark:text-gray-400 text-center py-8">
+              Nessuna bottiglia in cantina configurata
+            </p>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {bottleList.map((bottle: any) => (
+                <div key={bottle.id} className="flex items-center gap-3 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                  {bottle.beer?.bottleImageUrl && (
+                    <img 
+                      src={bottle.beer.bottleImageUrl} 
+                      alt={bottle.beer.name}
+                      className="w-10 h-10 rounded object-cover flex-shrink-0"
+                    />
+                  )}
+                  <div className="flex-1 min-w-0">
+                    <h4 className="font-medium text-sm truncate">{bottle.beer?.name}</h4>
+                    <p className="text-xs text-gray-500">{bottle.beer?.brewery}</p>
+                    <div className="flex items-center gap-2 mt-1">
+                      <span className="text-sm font-medium">€{bottle.price}</span>
+                      <span className="text-xs text-gray-500">{bottle.size}ml</span>
+                    </div>
+                  </div>
+                  <Button variant="outline" size="sm">
+                    <Edit3 className="h-3 w-3" />
+                  </Button>
+                </div>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+    </div>
+  );
+
+  const renderMenu = () => (
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          <Utensils className="h-5 w-5" />
+          Menu Cibo
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
+        {menuData.length === 0 ? (
+          <div className="text-center py-8">
+            <Utensils className="h-12 w-12 mx-auto mb-4 text-gray-400" />
+            <p className="text-gray-500 dark:text-gray-400 mb-4">Nessun menu configurato</p>
+            <Button>
+              <Plus className="h-4 w-4 mr-2" />
+              Crea Menu
+            </Button>
+          </div>
+        ) : (
+          <div className="space-y-6">
+            {menuData.map((category: any) => (
+              <div key={category.id} className="border rounded-lg p-4">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-lg font-semibold">{category.name}</h3>
+                  <Button variant="outline" size="sm">
+                    <Plus className="h-4 w-4 mr-2" />
+                    Aggiungi Piatto
+                  </Button>
+                </div>
+                <div className="space-y-3">
+                  {category.items?.map((item: any) => (
+                    <div key={item.id} className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800 rounded">
+                      <div>
+                        <h4 className="font-medium">{item.name}</h4>
+                        <p className="text-sm text-gray-500">{item.description}</p>
+                        <span className="text-sm font-medium">€{item.price}</span>
+                      </div>
+                      <Button variant="outline" size="sm">
+                        <Edit3 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+
+  const renderAnalytics = () => (
+    <div className="space-y-6">
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <BarChart3 className="h-5 w-5" />
+            Analytics Pub
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <h4 className="font-medium mb-3">Birre più Richieste</h4>
+              <div className="space-y-2">
+                {['Punk IPA', 'Super Baladin', 'Guinness'].map((beer, index) => (
+                  <div key={beer} className="flex items-center justify-between p-2 bg-gray-50 dark:bg-gray-800 rounded">
+                    <span className="text-sm">{beer}</span>
+                    <Badge variant="secondary">{[45, 32, 28][index]} ordini</Badge>
+                  </div>
+                ))}
+              </div>
+            </div>
+            <div>
+              <h4 className="font-medium mb-3">Visitatori Ultima Settimana</h4>
+              <div className="text-center py-8">
+                <div className="text-3xl font-bold text-blue-600">245</div>
+                <p className="text-sm text-gray-500">visitatori unici</p>
+              </div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  );
+
+  const renderProfile = () => (
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          <Store className="h-5 w-5" />
+          Profilo Pub
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-6">
+        {currentPub ? (
+          <>
+            <div className="flex items-center gap-4">
+              {currentPub.logoUrl && (
+                <img 
+                  src={currentPub.logoUrl} 
+                  alt={currentPub.name}
+                  className="w-20 h-20 rounded-lg object-cover"
+                />
+              )}
+              <div>
+                <h3 className="text-xl font-semibold">{currentPub.name}</h3>
+                <p className="text-gray-500">{currentPub.city}</p>
+                <Badge className="mt-1">Pub Verificato</Badge>
+              </div>
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-4">
+                <div>
+                  <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Indirizzo</label>
+                  <div className="flex items-center gap-2 mt-1 p-2 bg-gray-50 dark:bg-gray-800 rounded border">
+                    <MapPin className="h-4 w-4 text-gray-400" />
+                    <span className="text-sm">{currentPub.address}</span>
+                  </div>
+                </div>
+                
+                <div>
+                  <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Telefono</label>
+                  <div className="flex items-center gap-2 mt-1 p-2 bg-gray-50 dark:bg-gray-800 rounded border">
+                    <Phone className="h-4 w-4 text-gray-400" />
+                    <span className="text-sm">{currentPub.phone || 'Non specificato'}</span>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="space-y-4">
+                <div>
+                  <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Email</label>
+                  <div className="flex items-center gap-2 mt-1 p-2 bg-gray-50 dark:bg-gray-800 rounded border">
+                    <Mail className="h-4 w-4 text-gray-400" />
+                    <span className="text-sm">{currentPub.email || 'Non specificato'}</span>
+                  </div>
+                </div>
+                
+                <div>
+                  <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Sito Web</label>
+                  <div className="flex items-center gap-2 mt-1 p-2 bg-gray-50 dark:bg-gray-800 rounded border">
+                    <Globe className="h-4 w-4 text-gray-400" />
+                    <span className="text-sm">{currentPub.website || 'Non specificato'}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div>
+              <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Descrizione</label>
+              <p className="mt-1 p-3 bg-gray-50 dark:bg-gray-800 rounded border text-sm">
+                {currentPub.description || 'Nessuna descrizione disponibile'}
+              </p>
+            </div>
+
+            <Button className="w-full">
+              <Edit3 className="h-4 w-4 mr-2" />
+              Modifica Profilo Pub
+            </Button>
+          </>
+        ) : (
+          <div className="text-center py-8">
+            <Store className="h-12 w-12 mx-auto mb-4 text-gray-400" />
+            <p className="text-gray-500 dark:text-gray-400 mb-4">Nessun pub registrato</p>
+            <Button>Registra il Tuo Pub</Button>
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+
+  const renderSettings = () => (
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          <Settings className="h-5 w-5" />
+          Impostazioni Pub
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
+          <div>
+            <h4 className="font-medium">Visibilità Pubblica</h4>
+            <p className="text-sm text-gray-500">Il pub è visibile nelle ricerche</p>
+          </div>
+          <Badge className="bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">
+            Attivo
+          </Badge>
+        </div>
+        
+        <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
+          <div>
+            <h4 className="font-medium">Notifiche Ordini</h4>
+            <p className="text-sm text-gray-500">Ricevi notifiche per nuovi ordini</p>
+          </div>
+          <Button variant="outline" size="sm">Gestisci</Button>
+        </div>
+
+        <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
+          <div>
+            <h4 className="font-medium">Orari di Apertura</h4>
+            <p className="text-sm text-gray-500">Configura gli orari del locale</p>
+          </div>
+          <Button variant="outline" size="sm">Modifica</Button>
+        </div>
+      </CardContent>
+    </Card>
+  );
+
+  const renderContent = () => {
+    switch (currentSection) {
+      case 'overview':
+        return renderOverview();
+      case 'taplist':
+        return renderTapList();
+      case 'menu':
+        return renderMenu();
+      case 'analytics':
+        return renderAnalytics();
+      case 'profile':
+        return renderProfile();
+      case 'settings':
+        return renderSettings();
+      default:
+        return renderOverview();
+    }
   };
 
-  if (isLoading || pubsLoading) {
+  if (!isAuthenticated || user?.userType !== 'pub_owner') {
     return (
-      <div className="container mx-auto px-4 py-8">
-        <div className="flex items-center justify-center min-h-screen">
-          <div className="text-center space-y-4">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
-            <p className="text-gray-600">Caricamento dashboard...</p>
-          </div>
-        </div>
+      <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900">
+        <Card className="w-full max-w-md">
+          <CardContent className="p-6 text-center">
+            <Store className="h-12 w-12 mx-auto mb-4 text-gray-400" />
+            <h2 className="text-xl font-semibold mb-2">Accesso Riservato</h2>
+            <p className="text-gray-600 dark:text-gray-400 mb-4">
+              Solo i proprietari di pub possono accedere a questa dashboard
+            </p>
+            <Button asChild className="w-full">
+              <a href={user ? "/" : "/api/login"}>
+                {user ? "Torna alla Home" : "Accedi"}
+              </a>
+            </Button>
+          </CardContent>
+        </Card>
       </div>
     );
   }
 
-  if (!currentPub) {
+  if (pubsLoading) {
     return (
-      <div className="container mx-auto px-4 py-8">
-        <div className="text-center space-y-6">
-          <div className="w-24 h-24 bg-orange-100 dark:bg-orange-900/20 rounded-full flex items-center justify-center mx-auto">
-            <Store className="w-12 h-12 text-orange-600" />
-          </div>
-          <div>
-            <h1 className="text-2xl font-bold mb-2">Benvenuto su Fermenta.to!</h1>
-            <p className="text-gray-600 mb-4">
-              Registra il tuo pub per iniziare a gestire tap list, menu e molto altro.
-            </p>
-            <Link href="/pub-registration">
-              <Button className="gap-2">
-                <Plus className="w-4 h-4" />
-                Registra il Tuo Pub
-              </Button>
-            </Link>
-          </div>
+      <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orange-600 mx-auto mb-4"></div>
+          <p className="text-gray-600 dark:text-gray-400">Caricamento dashboard...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="container mx-auto px-4 py-6 max-w-7xl">
-      {/* Smart Header with Pub Info */}
-      <div className="bg-gradient-to-r from-orange-500 to-amber-500 rounded-xl p-6 mb-8 text-white relative overflow-hidden">
-        <div className="absolute inset-0 bg-black/20"></div>
-        <div className="relative z-10">
-          <div className="flex flex-col md:flex-row items-start md:items-center gap-4">
-            <div className="flex-shrink-0">
-              <div className="w-20 h-20 bg-white/20 rounded-full flex items-center justify-center backdrop-blur-sm">
-                {currentPub.logoUrl ? (
-                  <img 
-                    src={currentPub.logoUrl} 
-                    alt={currentPub.name}
-                    className="w-16 h-16 rounded-full object-cover"
-                  />
-                ) : (
-                  <Store className="w-10 h-10" />
-                )}
-              </div>
-            </div>
-            
-            <div className="flex-1">
-              <h1 className="text-3xl font-bold mb-2">{currentPub.name}</h1>
-              <div className="flex items-center gap-4 text-white/90">
-                <div className="flex items-center gap-1">
-                  <MapPin className="w-4 h-4" />
-                  <span>{currentPub.city}, {currentPub.region}</span>
-                </div>
-                <div className="flex items-center gap-1">
-                  <Star className="w-4 h-4 fill-current" />
-                  <span>{currentPub.rating || "N/A"}</span>
-                </div>
-                <div className="flex items-center gap-1">
-                  <Clock className="w-4 h-4" />
-                  <span>Aperto ora</span>
-                </div>
-              </div>
-            </div>
-            
-            <div className="flex gap-2">
-              <Button variant="secondary" size="sm" className="gap-2 bg-white/20 hover:bg-white/30 border-0">
-                <Edit3 className="w-4 h-4" />
-                Modifica Pub
-              </Button>
-              <Button variant="secondary" size="sm" className="gap-2 bg-white/20 hover:bg-white/30 border-0">
-                <Settings className="w-4 h-4" />
-                Impostazioni
-              </Button>
-            </div>
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+      {renderMobileHeader()}
+      
+      <div className="container mx-auto px-4 py-6">
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+          {/* Desktop Sidebar */}
+          <div className="hidden lg:block">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Store className="h-5 w-5" />
+                  Dashboard Pub
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-2">
+                {sections.map((section) => {
+                  const Icon = section.icon;
+                  return (
+                    <Button
+                      key={section.id}
+                      variant={currentSection === section.id ? "default" : "ghost"}
+                      className="w-full justify-start"
+                      onClick={() => setCurrentSection(section.id as DashboardSection)}
+                    >
+                      <Icon className="h-4 w-4 mr-2" />
+                      {section.name}
+                    </Button>
+                  );
+                })}
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Main Content */}
+          <div className="lg:col-span-3">
+            {renderContent()}
           </div>
         </div>
-        
-        {/* Decorative elements */}
-        <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -translate-y-16 translate-x-16"></div>
-        <div className="absolute bottom-0 left-1/3 w-24 h-24 bg-white/10 rounded-full translate-y-12"></div>
       </div>
-
-      {/* Smart Analytics Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-        <Card className="group hover:shadow-lg transition-all duration-300 hover:-translate-y-1">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Visitatori Oggi</p>
-                <div className="text-2xl font-bold">{analyticsData.dailyVisitors}</div>
-                <p className="text-xs text-green-600 flex items-center gap-1 mt-1">
-                  <TrendingUp className="w-3 h-3" />
-                  +{analyticsData.weeklyGrowth}% questa settimana
-                </p>
-              </div>
-              <div className="w-12 h-12 bg-blue-100 dark:bg-blue-900/20 rounded-full flex items-center justify-center group-hover:scale-110 transition-transform">
-                <Users className="h-6 w-6 text-blue-600" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="group hover:shadow-lg transition-all duration-300 hover:-translate-y-1">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Birre in Carta</p>
-                <div className="text-2xl font-bold">{tapList.length}</div>
-                <p className="text-xs text-gray-500 mt-1">{analyticsData.popularBeers} popolari</p>
-              </div>
-              <div className="w-12 h-12 bg-amber-100 dark:bg-amber-900/20 rounded-full flex items-center justify-center group-hover:scale-110 transition-transform">
-                <Beer className="h-6 w-6 text-amber-600" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="group hover:shadow-lg transition-all duration-300 hover:-translate-y-1">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Rating Medio</p>
-                <div className="text-2xl font-bold">{analyticsData.averageRating}</div>
-                <p className="text-xs text-yellow-600 flex items-center gap-1 mt-1">
-                  <Star className="w-3 h-3 fill-current" />
-                  Eccellente
-                </p>
-              </div>
-              <div className="w-12 h-12 bg-yellow-100 dark:bg-yellow-900/20 rounded-full flex items-center justify-center group-hover:scale-110 transition-transform">
-                <Star className="h-6 w-6 text-yellow-600" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="group hover:shadow-lg transition-all duration-300 hover:-translate-y-1">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Ricavi Oggi</p>
-                <div className="text-2xl font-bold">€{analyticsData.revenue}</div>
-                <p className="text-xs text-green-600 flex items-center gap-1 mt-1">
-                  <TrendingUp className="w-3 h-3" />
-                  +18% vs ieri
-                </p>
-              </div>
-              <div className="w-12 h-12 bg-green-100 dark:bg-green-900/20 rounded-full flex items-center justify-center group-hover:scale-110 transition-transform">
-                <DollarSign className="h-6 w-6 text-green-600" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Smart Tabs with Icons and Badges */}
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-4 lg:grid-cols-6 mb-6">
-          <TabsTrigger value="overview" className="gap-2">
-            <Activity className="w-4 h-4" />
-            <span className="hidden sm:inline">Panoramica</span>
-          </TabsTrigger>
-          <TabsTrigger value="taplist" className="gap-2">
-            <Beer className="w-4 h-4" />
-            <span className="hidden sm:inline">Tap List</span>
-            <Badge variant="secondary" className="ml-1">{tapList.length}</Badge>
-          </TabsTrigger>
-          <TabsTrigger value="menu" className="gap-2">
-            <MenuIcon className="w-4 h-4" />
-            <span className="hidden sm:inline">Menu</span>
-          </TabsTrigger>
-          <TabsTrigger value="analytics" className="gap-2">
-            <BarChart3 className="w-4 h-4" />
-            <span className="hidden sm:inline">Analytics</span>
-          </TabsTrigger>
-          <TabsTrigger value="media" className="gap-2">
-            <Image className="w-4 h-4" />
-            <span className="hidden sm:inline">Media</span>
-          </TabsTrigger>
-          <TabsTrigger value="events" className="gap-2">
-            <Calendar className="w-4 h-4" />
-            <span className="hidden sm:inline">Eventi</span>
-            <Badge variant="secondary" className="ml-1">{analyticsData.events}</Badge>
-          </TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="overview" className="space-y-6">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* Quick Actions */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Sparkles className="w-5 h-5 text-orange-500" />
-                  Azioni Rapide
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                <Button className="w-full justify-start gap-3 h-12">
-                  <Plus className="w-5 h-5" />
-                  Aggiungi Nuova Birra alla Tap List
-                </Button>
-                <Button variant="outline" className="w-full justify-start gap-3 h-12">
-                  <Upload className="w-5 h-5" />
-                  Carica Foto del Pub
-                </Button>
-                <Button variant="outline" className="w-full justify-start gap-3 h-12">
-                  <Utensils className="w-5 h-5" />
-                  Aggiorna Menu Cibo
-                </Button>
-                <Button variant="outline" className="w-full justify-start gap-3 h-12">
-                  <Calendar className="w-5 h-5" />
-                  Programma Evento
-                </Button>
-              </CardContent>
-            </Card>
-
-            {/* Recent Activity */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Activity className="w-5 h-5 text-blue-500" />
-                  Attività Recenti
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  <div className="flex items-center gap-3 p-3 rounded-lg bg-green-50 dark:bg-green-900/10">
-                    <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                    <div className="flex-1">
-                      <p className="text-sm font-medium">Nuova birra aggiunta alla tap list</p>
-                      <p className="text-xs text-gray-500">2 ore fa</p>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-3 p-3 rounded-lg bg-blue-50 dark:bg-blue-900/10">
-                    <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-                    <div className="flex-1">
-                      <p className="text-sm font-medium">Menu cibo aggiornato</p>
-                      <p className="text-xs text-gray-500">5 ore fa</p>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-3 p-3 rounded-lg bg-orange-50 dark:bg-orange-900/10">
-                    <div className="w-2 h-2 bg-orange-500 rounded-full"></div>
-                    <div className="flex-1">
-                      <p className="text-sm font-medium">Nuovo evento programmato</p>
-                      <p className="text-xs text-gray-500">1 giorno fa</p>
-                    </div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-        </TabsContent>
-
-        <TabsContent value="taplist" className="space-y-4">
-          <div className="flex justify-between items-center">
-            <h3 className="text-lg font-semibold">Gestione Tap List</h3>
-            <Button className="gap-2">
-              <Plus className="w-4 h-4" />
-              Aggiungi Birra
-            </Button>
-          </div>
-          
-          {tapList.length > 0 ? (
-            <div className="grid gap-4">
-              {tapList.map((item: any) => (
-                <Card key={item.id} className="hover:shadow-md transition-shadow">
-                  <CardContent className="p-4">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-4">
-                        <div className="w-12 h-12 bg-amber-100 rounded-lg flex items-center justify-center">
-                          <Beer className="w-6 h-6 text-amber-600" />
-                        </div>
-                        <div>
-                          <h4 className="font-semibold">Birra #{item.beerId}</h4>
-                          <p className="text-sm text-gray-600">€{item.price || "N/A"} • {item.size || "0.4L"}</p>
-                          <div className="flex items-center gap-2 mt-1">
-                            <Badge variant={item.isActive ? "default" : "secondary"}>
-                              {item.isActive ? "Attiva" : "Non disponibile"}
-                            </Badge>
-                          </div>
-                        </div>
-                      </div>
-                      <div className="flex gap-2">
-                        <Button size="sm" variant="outline">
-                          <Edit3 className="w-4 h-4" />
-                        </Button>
-                        <Button size="sm" variant="outline">
-                          {item.isActive ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                        </Button>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          ) : (
-            <Card>
-              <CardContent className="p-8 text-center">
-                <Beer className="w-16 h-16 mx-auto text-gray-400 mb-4" />
-                <h3 className="text-lg font-semibold mb-2">Nessuna birra in tap list</h3>
-                <p className="text-gray-600 mb-4">Inizia aggiungendo le prime birre alla tua collezione</p>
-                <Button className="gap-2">
-                  <Plus className="w-4 h-4" />
-                  Aggiungi Prima Birra
-                </Button>
-              </CardContent>
-            </Card>
-          )}
-        </TabsContent>
-
-        <TabsContent value="menu" className="space-y-4">
-          <div className="flex justify-between items-center">
-            <h3 className="text-lg font-semibold">Menu Cibo</h3>
-            <Button className="gap-2">
-              <Plus className="w-4 h-4" />
-              Nuovo Piatto
-            </Button>
-          </div>
-          <Card>
-            <CardContent className="p-8 text-center">
-              <Utensils className="w-16 h-16 mx-auto text-gray-400 mb-4" />
-              <h3 className="text-lg font-semibold mb-2">Menu in costruzione</h3>
-              <p className="text-gray-600 mb-4">Aggiungi categorie e piatti per il tuo menu</p>
-              <Button className="gap-2">
-                <Plus className="w-4 h-4" />
-                Crea Menu
-              </Button>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="analytics" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <BarChart3 className="w-5 h-5" />
-                Analytics Avanzate
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-center py-8">
-                <BarChart3 className="w-16 h-16 mx-auto text-gray-400 mb-4" />
-                <h3 className="text-lg font-semibold mb-2">Analytics in arrivo</h3>
-                <p className="text-gray-600">Presto disponibili grafici dettagliati su visite, vendite e preferenze</p>
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="media" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Image className="w-5 h-5" />
-                Gestione Media
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-center py-8">
-                <Image className="w-16 h-16 mx-auto text-gray-400 mb-4" />
-                <h3 className="text-lg font-semibold mb-2">Galleria Media</h3>
-                <p className="text-gray-600 mb-4">Carica foto del tuo pub, piatti e birre</p>
-                <Button className="gap-2">
-                  <Upload className="w-4 h-4" />
-                  Carica Foto
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="events" className="space-y-4">
-          <div className="flex justify-between items-center">
-            <h3 className="text-lg font-semibold">Eventi e Promozioni</h3>
-            <Button className="gap-2">
-              <Plus className="w-4 h-4" />
-              Nuovo Evento
-            </Button>
-          </div>
-          <Card>
-            <CardContent className="p-8 text-center">
-              <Calendar className="w-16 h-16 mx-auto text-gray-400 mb-4" />
-              <h3 className="text-lg font-semibold mb-2">Nessun evento programmato</h3>
-              <p className="text-gray-600 mb-4">Crea eventi per attirare più clienti</p>
-              <Button className="gap-2">
-                <Plus className="w-4 h-4" />
-                Programma Evento
-              </Button>
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
     </div>
   );
 }

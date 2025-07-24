@@ -115,7 +115,7 @@ export function registerAdminRoutes(app: Express) {
           description: breweries.description,
           website: breweries.website,
           imageUrl: breweries.imageUrl,
-          beerCount: sql<number>`(SELECT COUNT(*) FROM ${beers} WHERE ${beers.breweryId} = ${breweries.id})`,
+          beerCount: sql<number>`(SELECT COUNT(*)::int FROM ${beers} WHERE ${beers.breweryId} = ${breweries.id})`,
         })
         .from(breweries);
 
@@ -156,7 +156,7 @@ export function registerAdminRoutes(app: Express) {
           description: pubs.description,
           logoUrl: pubs.logoUrl,
           coverImageUrl: pubs.coverImageUrl,
-          ownerName: sql<string>`${users.firstName} || ' ' || ${users.lastName}`,
+          ownerName: sql<string>`COALESCE(${users.firstName}, '') || ' ' || COALESCE(${users.lastName}, '')`,
           ownerEmail: users.email,
         })
         .from(pubs)

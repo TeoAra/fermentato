@@ -1,64 +1,42 @@
+import { useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
-import { useEffect, useState } from "react";
-import { useToast } from "@/hooks/use-toast";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { apiRequest } from "@/lib/queryClient";
+import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Heart, Star, Beer, Store, Settings, User, Activity, Calendar, Edit3, Save, X } from "lucide-react";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { 
+  User, 
+  Heart, 
+  Activity, 
+  Star, 
+  Beer, 
+  Store, 
+  Calendar,
+  TrendingUp,
+  MapPin,
+  Eye,
+  Settings,
+  LogOut,
+  ChevronRight,
+  ArrowLeft
+} from "lucide-react";
 import { Link } from "wouter";
 import { formatDistanceToNow } from "date-fns";
 import { it } from "date-fns/locale";
 
+type DashboardSection = 'overview' | 'favorites' | 'activity' | 'profile' | 'settings';
+
 export default function UserDashboard() {
-  const { toast } = useToast();
-  const { user, isAuthenticated, isLoading } = useAuth();
-  const queryClient = useQueryClient();
-  const [isEditingProfile, setIsEditingProfile] = useState(false);
-  const [profileData, setProfileData] = useState({
-    nickname: "",
-    bio: "",
-    profileImageUrl: "",
-  });
+  const { user, isAuthenticated } = useAuth();
+  const [currentSection, setCurrentSection] = useState<DashboardSection>('overview');
 
-  // Redirect to login if not authenticated
-  useEffect(() => {
-    if (!isLoading && !isAuthenticated) {
-      toast({
-        title: "Accesso richiesto",
-        description: "Effettua l'accesso per vedere la dashboard...",
-        variant: "destructive",
-      });
-      setTimeout(() => {
-        window.location.href = "/api/login";
-      }, 500);
-      return;
-    }
-  }, [isAuthenticated, isLoading, toast]);
-
-  // Initialize profile data when user loads
-  useEffect(() => {
-    if (user) {
-      setProfileData({
-        nickname: user.nickname || "",
-        bio: user.bio || "",
-        profileImageUrl: user.profileImageUrl || "",
-      });
-    }
-  }, [user]);
-
-  // Fetch user favorites
+  // Fetch user data
   const { data: favorites = [] } = useQuery({
     queryKey: ["/api/favorites"],
     enabled: isAuthenticated,
   });
 
-  // Fetch user activities
   const { data: activities = [] } = useQuery({
     queryKey: ["/api/user-activities"],
     enabled: isAuthenticated,
@@ -69,394 +47,406 @@ export default function UserDashboard() {
   const breweryFavorites = favorites.filter((fav: any) => fav.itemType === 'brewery');
   const beerFavorites = favorites.filter((fav: any) => fav.itemType === 'beer');
 
-  // Update profile mutation
-  const updateProfileMutation = useMutation({
-    mutationFn: async (data: any) => {
-      return apiRequest("/api/user/profile", {
-        method: "PATCH",
-        body: JSON.stringify(data),
-        headers: { "Content-Type": "application/json" },
-      });
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
-      setIsEditingProfile(false);
-      toast({
-        title: "Profilo aggiornato",
-        description: "Le modifiche al tuo profilo sono state salvate",
-      });
-    },
-    onError: () => {
-      toast({
-        title: "Errore",
-        description: "Impossibile aggiornare il profilo",
-        variant: "destructive",
-      });
-    },
-  });
+  const sections = [
+    { id: 'overview', name: 'Dashboard', icon: TrendingUp },
+    { id: 'favorites', name: 'Preferiti', icon: Heart },
+    { id: 'activity', name: 'Attività', icon: Activity },
+    { id: 'profile', name: 'Profilo', icon: User },
+    { id: 'settings', name: 'Impostazioni', icon: Settings },
+  ];
 
-  const handleSaveProfile = () => {
-    updateProfileMutation.mutate(profileData);
-  };
+  const renderMobileHeader = () => (
+    <div className="md:hidden bg-white dark:bg-gray-900 border-b p-4 flex items-center gap-3">
+      {currentSection !== 'overview' && (
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => setCurrentSection('overview')}
+          className="text-blue-600 dark:text-blue-400"
+        >
+          <ArrowLeft className="h-4 w-4" />
+        </Button>
+      )}
+      <h1 className="text-lg font-semibold text-gray-900 dark:text-white">
+        {sections.find(s => s.id === currentSection)?.name || 'Dashboard'}
+      </h1>
+    </div>
+  );
 
-  if (isLoading) {
-    return (
-      <div className="container mx-auto px-4 py-8">
-        <div className="flex items-center justify-center min-h-screen">
-          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary"></div>
-        </div>
-      </div>
-    );
-  }
+  const renderOverview = () => (
+    <div className="space-y-6">
+      {/* Welcome Section */}
+      <Card className="bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-blue-950 dark:to-indigo-900 border-blue-200 dark:border-blue-800">
+        <CardContent className="p-6">
+          <div className="flex items-center gap-4">
+            <Avatar className="h-16 w-16">
+              <AvatarImage src={user?.profileImageUrl || ''} />
+              <AvatarFallback className="bg-blue-500 text-white text-lg">
+                {user?.firstName?.[0]}{user?.lastName?.[0]}
+              </AvatarFallback>
+            </Avatar>
+            <div>
+              <h2 className="text-2xl font-bold text-blue-900 dark:text-blue-100">
+                Ciao, {user?.firstName || 'Utente'}!
+              </h2>
+              <p className="text-blue-700 dark:text-blue-300">
+                Benvenuto nella tua dashboard personale
+              </p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
 
-  if (!isAuthenticated) {
-    return null;
-  }
-
-  return (
-    <div className="container mx-auto px-4 py-8 max-w-6xl">
-      {/* Header with Profile */}
-      <div className="flex flex-col md:flex-row gap-6 mb-8">
-        <Card className="md:w-1/3">
+      {/* Quick Stats */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <Card className="hover:shadow-md transition-shadow">
           <CardContent className="p-6">
-            <div className="flex flex-col items-center text-center">
-              <Avatar className="w-24 h-24 mb-4">
-                <AvatarImage 
-                  src={profileData.profileImageUrl || user?.profileImageUrl} 
-                  alt={user?.firstName || "User"} 
-                />
-                <AvatarFallback className="text-2xl">
-                  {(user?.firstName?.[0] || user?.email?.[0] || "U").toUpperCase()}
-                </AvatarFallback>
-              </Avatar>
-              
-              {isEditingProfile ? (
-                <div className="w-full space-y-3">
-                  <Input
-                    placeholder="Nickname"
-                    value={profileData.nickname}
-                    onChange={(e) => setProfileData({ ...profileData, nickname: e.target.value })}
-                  />
-                  <Textarea
-                    placeholder="Racconta qualcosa di te..."
-                    value={profileData.bio}
-                    onChange={(e) => setProfileData({ ...profileData, bio: e.target.value })}
-                    rows={3}
-                  />
-                  <div className="flex gap-2">
-                    <Button 
-                      size="sm" 
-                      onClick={handleSaveProfile}
-                      disabled={updateProfileMutation.isPending}
-                    >
-                      <Save className="w-4 h-4 mr-1" />
-                      Salva
-                    </Button>
-                    <Button 
-                      size="sm" 
-                      variant="outline"
-                      onClick={() => setIsEditingProfile(false)}
-                    >
-                      <X className="w-4 h-4 mr-1" />
-                      Annulla
-                    </Button>
-                  </div>
-                </div>
-              ) : (
-                <>
-                  <h1 className="text-2xl font-bold mb-2">
-                    {profileData.nickname || user?.firstName || "Utente"}
-                  </h1>
-                  <p className="text-gray-600 dark:text-gray-400 mb-2">
-                    {user?.email}
-                  </p>
-                  {profileData.bio && (
-                    <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
-                      {profileData.bio}
-                    </p>
-                  )}
-                  <div className="flex items-center gap-2 text-sm text-gray-500 mb-4">
-                    <Calendar className="w-4 h-4" />
-                    Iscritto {formatDistanceToNow(new Date(user?.joinedAt || user?.createdAt || new Date()), { 
-                      addSuffix: true, 
-                      locale: it 
-                    })}
-                  </div>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => setIsEditingProfile(true)}
-                  >
-                    <Edit3 className="w-4 h-4 mr-1" />
-                    Modifica Profilo
-                  </Button>
-                </>
-              )}
+            <div className="flex items-center gap-3">
+              <div className="bg-red-100 dark:bg-red-900 p-3 rounded-lg">
+                <Heart className="h-6 w-6 text-red-600 dark:text-red-400" />
+              </div>
+              <div>
+                <p className="text-2xl font-bold text-gray-900 dark:text-white">
+                  {favorites.length}
+                </p>
+                <p className="text-sm text-gray-500 dark:text-gray-400">Preferiti Totali</p>
+              </div>
             </div>
           </CardContent>
         </Card>
 
-        {/* Quick Stats */}
-        <div className="md:w-2/3 grid grid-cols-1 md:grid-cols-3 gap-4">
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-600 dark:text-gray-400">
-                    Pub Preferiti
-                  </p>
-                  <div className="text-2xl font-bold">{pubFavorites.length}</div>
-                </div>
-                <Store className="h-8 w-8 text-orange-500" />
+        <Card className="hover:shadow-md transition-shadow">
+          <CardContent className="p-6">
+            <div className="flex items-center gap-3">
+              <div className="bg-green-100 dark:bg-green-900 p-3 rounded-lg">
+                <Activity className="h-6 w-6 text-green-600 dark:text-green-400" />
               </div>
-            </CardContent>
-          </Card>
+              <div>
+                <p className="text-2xl font-bold text-gray-900 dark:text-white">
+                  {activities.length}
+                </p>
+                <p className="text-sm text-gray-500 dark:text-gray-400">Attività Recenti</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
 
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-600 dark:text-gray-400">
-                    Birrifici Seguiti
-                  </p>
-                  <div className="text-2xl font-bold">{breweryFavorites.length}</div>
-                </div>
-                <Star className="h-8 w-8 text-yellow-500" />
+        <Card className="hover:shadow-md transition-shadow">
+          <CardContent className="p-6">
+            <div className="flex items-center gap-3">
+              <div className="bg-blue-100 dark:bg-blue-900 p-3 rounded-lg">
+                <Star className="h-6 w-6 text-blue-600 dark:text-blue-400" />
               </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-600 dark:text-gray-400">
-                    Birre Preferite
-                  </p>
-                  <div className="text-2xl font-bold">{beerFavorites.length}</div>
-                </div>
-                <Beer className="h-8 w-8 text-amber-500" />
+              <div>
+                <p className="text-2xl font-bold text-gray-900 dark:text-white">
+                  {pubFavorites.length}
+                </p>
+                <p className="text-sm text-gray-500 dark:text-gray-400">Pub Preferiti</p>
               </div>
-            </CardContent>
-          </Card>
-        </div>
+            </div>
+          </CardContent>
+        </Card>
       </div>
 
-      {/* Main Content Tabs */}
-      <Tabs defaultValue="favorites" className="w-full">
-        <TabsList className="grid w-full grid-cols-3">
-          <TabsTrigger value="favorites">Preferiti</TabsTrigger>
-          <TabsTrigger value="activity">Attività</TabsTrigger>
-          <TabsTrigger value="settings">Impostazioni</TabsTrigger>
-        </TabsList>
+      {/* Navigation Menu - Only on mobile overview */}
+      <div className="md:hidden grid grid-cols-2 gap-4">
+        {sections.slice(1).map((section) => {
+          const Icon = section.icon;
+          return (
+            <Card 
+              key={section.id}
+              className="cursor-pointer hover:shadow-md transition-all active:scale-95"
+              onClick={() => setCurrentSection(section.id as DashboardSection)}
+            >
+              <CardContent className="p-6 text-center">
+                <Icon className="h-8 w-8 mx-auto mb-2 text-blue-600 dark:text-blue-400" />
+                <p className="font-medium text-gray-900 dark:text-white">{section.name}</p>
+                <ChevronRight className="h-4 w-4 mx-auto mt-1 text-gray-400" />
+              </CardContent>
+            </Card>
+          );
+        })}
+      </div>
+    </div>
+  );
 
-        <TabsContent value="favorites" className="space-y-6">
-          {/* Pub Favorites */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Store className="w-5 h-5" />
-                Pub Preferiti ({pubFavorites.length})
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              {pubFavorites.length > 0 ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {pubFavorites.map((favorite: any) => (
-                    <Card key={favorite.id} className="hover:shadow-md transition-shadow">
-                      <CardContent className="p-4">
-                        <div className="flex items-center gap-3">
-                          <div className="w-12 h-12 bg-orange-100 dark:bg-orange-900/20 rounded-lg flex items-center justify-center">
-                            <Store className="h-6 w-6 text-orange-600" />
-                          </div>
-                          <div className="flex-1">
-                            <p className="font-medium">Pub #{favorite.itemId}</p>
-                            <p className="text-sm text-gray-600 dark:text-gray-400">
-                              Aggiunto {formatDistanceToNow(new Date(favorite.createdAt), { 
-                                addSuffix: true, 
-                                locale: it 
-                              })}
-                            </p>
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  ))}
+  const renderFavorites = () => (
+    <div className="space-y-6">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        {/* Pub Favorites */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Store className="h-5 w-5 text-orange-600" />
+              Pub ({pubFavorites.length})
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            {pubFavorites.length === 0 ? (
+              <p className="text-gray-500 dark:text-gray-400 text-sm">Nessun pub preferito</p>
+            ) : (
+              pubFavorites.slice(0, 3).map((fav: any) => (
+                <div key={fav.id} className="flex items-center gap-3 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                  <Store className="h-4 w-4 text-orange-600" />
+                  <div className="flex-1 min-w-0">
+                    <p className="font-medium text-sm truncate">{fav.itemName}</p>
+                    <p className="text-xs text-gray-500">{fav.itemLocation}</p>
+                  </div>
                 </div>
-              ) : (
-                <p className="text-gray-500 dark:text-gray-400 text-center py-8">
-                  Non hai ancora pub preferiti. Inizia a esplorare!
-                </p>
-              )}
-            </CardContent>
-          </Card>
+              ))
+            )}
+          </CardContent>
+        </Card>
 
-          {/* Brewery Favorites */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Star className="w-5 h-5" />
-                Birrifici Seguiti ({breweryFavorites.length})
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              {breweryFavorites.length > 0 ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {breweryFavorites.map((favorite: any) => (
-                    <Card key={favorite.id} className="hover:shadow-md transition-shadow">
-                      <CardContent className="p-4">
-                        <div className="flex items-center gap-3">
-                          <div className="w-12 h-12 bg-yellow-100 dark:bg-yellow-900/20 rounded-lg flex items-center justify-center">
-                            <Star className="h-6 w-6 text-yellow-600" />
-                          </div>
-                          <div className="flex-1">
-                            <p className="font-medium">Birrificio #{favorite.itemId}</p>
-                            <p className="text-sm text-gray-600 dark:text-gray-400">
-                              Seguito {formatDistanceToNow(new Date(favorite.createdAt), { 
-                                addSuffix: true, 
-                                locale: it 
-                              })}
-                            </p>
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  ))}
+        {/* Brewery Favorites */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Beer className="h-5 w-5 text-amber-600" />
+              Birrifici ({breweryFavorites.length})
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            {breweryFavorites.length === 0 ? (
+              <p className="text-gray-500 dark:text-gray-400 text-sm">Nessun birrificio preferito</p>
+            ) : (
+              breweryFavorites.slice(0, 3).map((fav: any) => (
+                <div key={fav.id} className="flex items-center gap-3 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                  <Beer className="h-4 w-4 text-amber-600" />
+                  <div className="flex-1 min-w-0">
+                    <p className="font-medium text-sm truncate">{fav.itemName}</p>
+                    <p className="text-xs text-gray-500">{fav.itemLocation}</p>
+                  </div>
                 </div>
-              ) : (
-                <p className="text-gray-500 dark:text-gray-400 text-center py-8">
-                  Non segui ancora nessun birrificio. Scopri nuovi produttori!
-                </p>
-              )}
-            </CardContent>
-          </Card>
+              ))
+            )}
+          </CardContent>
+        </Card>
 
-          {/* Beer Favorites */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Beer className="w-5 h-5" />
-                Birre Preferite ({beerFavorites.length})
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              {beerFavorites.length > 0 ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {beerFavorites.map((favorite: any) => (
-                    <Card key={favorite.id} className="hover:shadow-md transition-shadow">
-                      <CardContent className="p-4">
-                        <div className="flex items-center gap-3">
-                          <div className="w-12 h-12 bg-amber-100 dark:bg-amber-900/20 rounded-lg flex items-center justify-center">
-                            <Beer className="h-6 w-6 text-amber-600" />
-                          </div>
-                          <div className="flex-1">
-                            <p className="font-medium">Birra #{favorite.itemId}</p>
-                            <p className="text-sm text-gray-600 dark:text-gray-400">
-                              Aggiunta {formatDistanceToNow(new Date(favorite.createdAt), { 
-                                addSuffix: true, 
-                                locale: it 
-                              })}
-                            </p>
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  ))}
+        {/* Beer Favorites */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Star className="h-5 w-5 text-yellow-600" />
+              Birre ({beerFavorites.length})
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            {beerFavorites.length === 0 ? (
+              <p className="text-gray-500 dark:text-gray-400 text-sm">Nessuna birra preferita</p>
+            ) : (
+              beerFavorites.slice(0, 3).map((fav: any) => (
+                <div key={fav.id} className="flex items-center gap-3 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                  <Star className="h-4 w-4 text-yellow-600" />
+                  <div className="flex-1 min-w-0">
+                    <p className="font-medium text-sm truncate">{fav.itemName}</p>
+                    <p className="text-xs text-gray-500">{fav.itemStyle}</p>
+                  </div>
                 </div>
-              ) : (
-                <p className="text-gray-500 dark:text-gray-400 text-center py-8">
-                  Non hai ancora birre preferite. Inizia a degustare!
-                </p>
-              )}
-            </CardContent>
-          </Card>
-        </TabsContent>
+              ))
+            )}
+          </CardContent>
+        </Card>
+      </div>
+    </div>
+  );
 
-        <TabsContent value="activity" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Activity className="w-5 h-5" />
-                Attività Recenti
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              {activities.length > 0 ? (
-                <div className="space-y-4">
-                  {activities.map((activity: any) => (
-                    <div key={activity.id} className="flex items-center gap-3 p-3 rounded-lg bg-gray-50 dark:bg-gray-800">
-                      <div className="w-10 h-10 bg-blue-100 dark:bg-blue-900/20 rounded-full flex items-center justify-center">
-                        <Activity className="h-5 w-5 text-blue-600" />
-                      </div>
-                      <div className="flex-1">
-                        <p className="text-sm">{activity.description}</p>
-                        <p className="text-xs text-gray-500">
-                          {formatDistanceToNow(new Date(activity.createdAt), { 
-                            addSuffix: true, 
-                            locale: it 
-                          })}
-                        </p>
-                      </div>
-                    </div>
-                  ))}
+  const renderActivity = () => (
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          <Activity className="h-5 w-5" />
+          Attività Recenti
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
+        {activities.length === 0 ? (
+          <p className="text-gray-500 dark:text-gray-400">Nessuna attività recente</p>
+        ) : (
+          <div className="space-y-4">
+            {activities.slice(0, 10).map((activity: any) => (
+              <div key={activity.id} className="flex items-start gap-3 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                <div className="bg-blue-100 dark:bg-blue-900 p-2 rounded-full flex-shrink-0">
+                  <Activity className="h-4 w-4 text-blue-600 dark:text-blue-400" />
                 </div>
-              ) : (
-                <p className="text-gray-500 dark:text-gray-400 text-center py-8">
-                  Nessuna attività recente
-                </p>
-              )}
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="settings" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Settings className="w-5 h-5" />
-                Impostazioni Account
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="flex items-center justify-between p-4 rounded-lg border">
-                <div>
-                  <h4 className="font-medium">Notifiche Email</h4>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">
-                    Ricevi aggiornamenti sui tuoi pub preferiti
+                <div className="flex-1">
+                  <p className="font-medium text-sm">{activity.description}</p>
+                  <p className="text-xs text-gray-500">
+                    {formatDistanceToNow(new Date(activity.createdAt), { addSuffix: true, locale: it })}
                   </p>
                 </div>
-                <Button variant="outline" size="sm">
-                  Configura
-                </Button>
               </div>
-              
-              <div className="flex items-center justify-between p-4 rounded-lg border">
-                <div>
-                  <h4 className="font-medium">Privacy</h4>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">
-                    Gestisci la visibilità del tuo profilo
-                  </p>
-                </div>
-                <Button variant="outline" size="sm">
-                  Modifica
-                </Button>
-              </div>
-              
-              <div className="flex items-center justify-between p-4 rounded-lg border border-red-200">
-                <div>
-                  <h4 className="font-medium text-red-600">Elimina Account</h4>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">
-                    Rimuovi permanentemente il tuo account
-                  </p>
-                </div>
-                <Button variant="destructive" size="sm">
-                  Elimina
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
+            ))}
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+
+  const renderProfile = () => (
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          <User className="h-5 w-5" />
+          Profilo Utente
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-6">
+        <div className="flex items-center gap-4">
+          <Avatar className="h-20 w-20">
+            <AvatarImage src={user?.profileImageUrl || ''} />
+            <AvatarFallback className="bg-blue-500 text-white text-xl">
+              {user?.firstName?.[0]}{user?.lastName?.[0]}
+            </AvatarFallback>
+          </Avatar>
+          <div>
+            <h3 className="text-xl font-semibold">{user?.firstName} {user?.lastName}</h3>
+            <p className="text-gray-500">{user?.email}</p>
+            <Badge variant="secondary" className="mt-1">
+              {user?.userType === 'customer' ? 'Cliente' : 'Utente'}
+            </Badge>
+          </div>
+        </div>
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Nome</label>
+            <p className="mt-1 p-2 bg-gray-50 dark:bg-gray-800 rounded border">
+              {user?.firstName || 'Non specificato'}
+            </p>
+          </div>
+          <div>
+            <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Cognome</label>
+            <p className="mt-1 p-2 bg-gray-50 dark:bg-gray-800 rounded border">
+              {user?.lastName || 'Non specificato'}
+            </p>
+          </div>
+          <div className="md:col-span-2">
+            <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Email</label>
+            <p className="mt-1 p-2 bg-gray-50 dark:bg-gray-800 rounded border">
+              {user?.email}
+            </p>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  );
+
+  const renderSettings = () => (
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          <Settings className="h-5 w-5" />
+          Impostazioni Account
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
+          <div>
+            <h4 className="font-medium">Notifiche Email</h4>
+            <p className="text-sm text-gray-500">Ricevi aggiornamenti sui tuoi pub preferiti</p>
+          </div>
+          <Button variant="outline" size="sm">Gestisci</Button>
+        </div>
+        
+        <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
+          <div>
+            <h4 className="font-medium">Privacy</h4>
+            <p className="text-sm text-gray-500">Controlla la visibilità del tuo profilo</p>
+          </div>
+          <Button variant="outline" size="sm">Modifica</Button>
+        </div>
+
+        <div className="pt-4 border-t">
+          <Button 
+            variant="destructive" 
+            className="w-full"
+            onClick={() => window.location.href = '/api/logout'}
+          >
+            <LogOut className="h-4 w-4 mr-2" />
+            Esci dall'Account
+          </Button>
+        </div>
+      </CardContent>
+    </Card>
+  );
+
+  const renderContent = () => {
+    switch (currentSection) {
+      case 'overview':
+        return renderOverview();
+      case 'favorites':
+        return renderFavorites();
+      case 'activity':
+        return renderActivity();
+      case 'profile':
+        return renderProfile();
+      case 'settings':
+        return renderSettings();
+      default:
+        return renderOverview();
+    }
+  };
+
+  if (!isAuthenticated) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900">
+        <Card className="w-full max-w-md">
+          <CardContent className="p-6 text-center">
+            <User className="h-12 w-12 mx-auto mb-4 text-gray-400" />
+            <h2 className="text-xl font-semibold mb-2">Accesso Richiesto</h2>
+            <p className="text-gray-600 dark:text-gray-400 mb-4">
+              Effettua l'accesso per vedere la tua dashboard
+            </p>
+            <Button asChild className="w-full">
+              <a href="/api/login">Accedi</a>
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+      {renderMobileHeader()}
+      
+      <div className="container mx-auto px-4 py-6">
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+          {/* Desktop Sidebar */}
+          <div className="hidden lg:block">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <User className="h-5 w-5" />
+                  Dashboard Utente
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-2">
+                {sections.map((section) => {
+                  const Icon = section.icon;
+                  return (
+                    <Button
+                      key={section.id}
+                      variant={currentSection === section.id ? "default" : "ghost"}
+                      className="w-full justify-start"
+                      onClick={() => setCurrentSection(section.id as DashboardSection)}
+                    >
+                      <Icon className="h-4 w-4 mr-2" />
+                      {section.name}
+                    </Button>
+                  );
+                })}
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Main Content */}
+          <div className="lg:col-span-3">
+            {renderContent()}
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
