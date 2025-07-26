@@ -146,7 +146,24 @@ export default function PubDetail() {
           <Button variant="secondary" size="sm">
             <Heart className="w-4 h-4" />
           </Button>
-          <Button variant="secondary" size="sm">
+          <Button 
+            variant="secondary" 
+            size="sm"
+            onClick={() => {
+              if (navigator.share) {
+                navigator.share({
+                  title: `${pub?.name || 'Pub'}`,
+                  text: `Scopri ${pub?.name || 'questo fantastico pub'} su Fermenta.to!`,
+                  url: window.location.href
+                });
+              } else {
+                // Fallback: copia URL negli appunti
+                navigator.clipboard.writeText(window.location.href).then(() => {
+                  alert('Link copiato negli appunti!');
+                });
+              }
+            }}
+          >
             <Share2 className="w-4 h-4" />
           </Button>
         </div>
@@ -180,11 +197,20 @@ export default function PubDetail() {
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Quick Info Cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 -mt-8 mb-8 relative z-10">
-          <Card className="bg-white shadow-lg">
+          <Card 
+            className="bg-white shadow-lg cursor-pointer hover:shadow-xl transition-shadow"
+            onClick={() => {
+              if (pub?.address) {
+                const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(pub.address)}`;
+                window.open(mapsUrl, '_blank');
+              }
+            }}
+          >
             <CardContent className="p-4 text-center">
               <MapPin className="w-6 h-6 text-primary mx-auto mb-2" />
               <h3 className="font-semibold text-sm">Indirizzo</h3>
-              <p className="text-xs text-gray-600">{pub?.address}</p>
+              <p className="text-xs text-gray-600 hover:text-primary transition-colors">{pub?.address}</p>
+              <p className="text-xs text-primary mt-1">Tocca per aprire Maps</p>
             </CardContent>
           </Card>
           
@@ -226,88 +252,108 @@ export default function PubDetail() {
 
         {/* Main Tabs */}
         <Tabs defaultValue="taplist" className="mb-8">
-          <TabsList className="grid w-full grid-cols-3 mb-6">
-            <TabsTrigger value="taplist" className="flex items-center">
-              <Beer className="w-4 h-4 mr-2" />
-              Birre ({Array.isArray(tapList) ? tapList.length : 0})
+          <TabsList className="grid w-full grid-cols-3 mb-6 h-auto p-1">
+            <TabsTrigger value="taplist" className="flex flex-col sm:flex-row items-center p-3 text-xs sm:text-sm">
+              <Beer className="w-4 h-4 sm:mr-2 mb-1 sm:mb-0" />
+              <span className="text-center">
+                Birre<br className="sm:hidden" />
+                <span className="hidden sm:inline"> </span>({Array.isArray(tapList) ? tapList.length : 0})
+              </span>
             </TabsTrigger>
-            <TabsTrigger value="bottles" className="flex items-center">
-              <Wine className="w-4 h-4 mr-2" />
-              Cantina ({Array.isArray(bottles) ? bottles.length : 0})
+            <TabsTrigger value="bottles" className="flex flex-col sm:flex-row items-center p-3 text-xs sm:text-sm">
+              <Wine className="w-4 h-4 sm:mr-2 mb-1 sm:mb-0" />
+              <span className="text-center">
+                Cantina<br className="sm:hidden" />
+                <span className="hidden sm:inline"> </span>({Array.isArray(bottles) ? bottles.length : 0})
+              </span>
             </TabsTrigger>
-            <TabsTrigger value="menu" className="flex items-center">
-              <Utensils className="w-4 h-4 mr-2" />
-              Menu ({Array.isArray(menu) ? menu.length : 0})
+            <TabsTrigger value="menu" className="flex flex-col sm:flex-row items-center p-3 text-xs sm:text-sm">
+              <Utensils className="w-4 h-4 sm:mr-2 mb-1 sm:mb-0" />
+              <span className="text-center">
+                Menu<br className="sm:hidden" />
+                <span className="hidden sm:inline"> </span>({Array.isArray(menu) ? menu.length : 0})
+              </span>
             </TabsTrigger>
           </TabsList>
 
-          <TabsContent value="taplist">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center">
-                  <Beer className="w-5 h-5 mr-2" />
-                  Birre alla Spina
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                {tapLoading ? (
-                  <div className="animate-pulse space-y-4">
-                    {[...Array(3)].map((_, i) => (
-                      <div key={i} className="h-20 bg-gray-200 rounded" />
-                    ))}
-                  </div>
-                ) : (
-                  <TapList tapList={Array.isArray(tapList) ? tapList : []} />
-                )}
-              </CardContent>
-            </Card>
+          <TabsContent value="taplist" className="mt-0">
+            {tapLoading ? (
+              <div className="space-y-3">
+                {[...Array(3)].map((_, i) => (
+                  <Card key={i} className="animate-pulse">
+                    <div className="p-4 flex items-center gap-4">
+                      <div className="w-14 h-14 bg-gray-200 rounded-lg" />
+                      <div className="flex-1 space-y-2">
+                        <div className="h-4 bg-gray-200 rounded w-3/4" />
+                        <div className="h-3 bg-gray-200 rounded w-1/2" />
+                      </div>
+                      <div className="w-20 h-8 bg-gray-200 rounded" />
+                    </div>
+                  </Card>
+                ))}
+              </div>
+            ) : (
+              <TapList tapList={Array.isArray(tapList) ? tapList : []} />
+            )}
           </TabsContent>
 
-          <TabsContent value="bottles">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center">
-                  <Wine className="w-5 h-5 mr-2" />
-                  Cantina Birre
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                {bottlesLoading ? (
-                  <div className="animate-pulse space-y-4">
-                    {[...Array(3)].map((_, i) => (
-                      <div key={i} className="h-20 bg-gray-200 rounded" />
-                    ))}
-                  </div>
-                ) : (
-                  <div className="space-y-4">
-                    {Array.isArray(bottles) && bottles.length > 0 ? bottles.map((bottle: any) => (
-                      <div key={bottle.id} className="flex items-center justify-between p-4 border rounded-lg">
-                        <div className="flex items-center space-x-4">
-                          <img
-                            src={bottle.beer?.bottleImageUrl || bottle.beer?.imageUrl || "https://images.unsplash.com/photo-1608270586620-248524c67de9?ixlib=rb-4.0.3&auto=format&fit=crop&w=100&h=100"}
-                            alt={bottle.beer?.name}
-                            className="w-12 h-12 object-cover rounded"
-                          />
-                          <div>
-                            <h3 className="font-semibold">{bottle.beer?.name}</h3>
-                            <p className="text-sm text-gray-600">{bottle.beer?.brewery}</p>
-                            <p className="text-sm text-gray-500">{bottle.beer?.style} • {bottle.beer?.abv}%</p>
+          <TabsContent value="bottles" className="mt-0">
+            {bottlesLoading ? (
+              <div className="space-y-3">
+                {[...Array(3)].map((_, i) => (
+                  <Card key={i} className="animate-pulse">
+                    <div className="p-4 flex items-center gap-4">
+                      <div className="w-14 h-14 bg-gray-200 rounded-lg" />
+                      <div className="flex-1 space-y-2">
+                        <div className="h-4 bg-gray-200 rounded w-3/4" />
+                        <div className="h-3 bg-gray-200 rounded w-1/2" />
+                      </div>
+                      <div className="w-20 h-8 bg-gray-200 rounded" />
+                    </div>
+                  </Card>
+                ))}
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {Array.isArray(bottles) && bottles.length > 0 ? bottles.map((bottle: any) => (
+                  <Card key={bottle.id} className="overflow-hidden hover:shadow-md transition-all duration-200">
+                    <div className="p-4">
+                      <div className="flex items-center gap-4">
+                        <img
+                          src={bottle.beer?.bottleImageUrl || bottle.beer?.imageUrl || "https://images.unsplash.com/photo-1608270586620-248524c67de9?ixlib=rb-4.0.3&auto=format&fit=crop&w=100&h=100"}
+                          alt={bottle.beer?.name}
+                          className="w-14 h-14 object-cover rounded-lg shadow-sm flex-shrink-0"
+                        />
+                        <div className="flex-1 min-w-0">
+                          <h3 className="font-semibold text-base truncate">{bottle.beer?.name}</h3>
+                          <p className="text-sm text-gray-600 truncate">{bottle.beer?.brewery?.name || bottle.beer?.brewery}</p>
+                          <div className="flex items-center gap-2 mt-1">
+                            <Badge variant="outline" className="text-xs">{bottle.beer?.style}</Badge>
+                            {bottle.beer?.abv && <Badge variant="outline" className="text-xs">{bottle.beer?.abv}% ABV</Badge>}
                           </div>
                         </div>
-                        <div className="text-right">
-                          <p className="font-bold text-lg">€{bottle.price}</p>
-                          <Badge variant={bottle.isActive ? "default" : "secondary"}>
-                            {bottle.isActive ? "Disponibile" : "Esaurita"}
-                          </Badge>
+                        <div className="text-right flex-shrink-0">
+                          <div className="bg-gray-50 rounded-lg p-2 min-w-[80px]">
+                            <p className="font-bold text-lg text-primary">€{bottle.price}</p>
+                            <Badge variant={bottle.isActive ? "default" : "secondary"} className="text-xs">
+                              {bottle.isActive ? "Disponibile" : "Esaurita"}
+                            </Badge>
+                          </div>
                         </div>
                       </div>
-                    )) : (
-                      <p className="text-center text-gray-500 py-8">Nessuna birra in bottiglia disponibile</p>
-                    )}
+                    </div>
+                  </Card>
+                )) : (
+                  <div className="text-center py-12">
+                    <div className="text-gray-400 mb-4">
+                      <Wine className="w-16 h-16 mx-auto" />
+                    </div>
+                    <p className="text-gray-500 text-lg font-medium">Nessuna birra in bottiglia disponibile</p>
+                    <p className="text-gray-400 text-sm mt-1">Torna presto per vedere le novità!</p>
                   </div>
                 )}
-              </CardContent>
-            </Card>
+              </div>
+            )}
           </TabsContent>
 
           <TabsContent value="menu">
@@ -359,12 +405,24 @@ export default function PubDetail() {
                 )}
 
                 <div className="flex space-x-4">
-                  <Button className="flex-1">
+                  <Button 
+                    className="flex-1"
+                    onClick={() => {
+                      if (pub?.address) {
+                        const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(pub.address)}`;
+                        window.open(mapsUrl, '_blank');
+                      }
+                    }}
+                  >
                     <MapPin className="w-4 h-4 mr-2" />
                     Indicazioni
                   </Button>
                   {pub?.phone && (
-                    <Button variant="outline" className="flex-1">
+                    <Button 
+                      variant="outline" 
+                      className="flex-1"
+                      onClick={() => window.open(`tel:${pub.phone}`, '_self')}
+                    >
                       <Phone className="w-4 h-4 mr-2" />
                       Chiama
                     </Button>
