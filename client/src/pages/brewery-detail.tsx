@@ -144,7 +144,7 @@ export default function BreweryDetail() {
             <CardContent className="p-4 text-center">
               <Award className="w-6 h-6 text-primary mx-auto mb-2" />
               <h3 className="font-semibold text-sm">Rating</h3>
-              <p className="text-xs text-gray-600">{(brewery as any)?.rating?.toFixed(1) || "N/A"}</p>
+              <p className="text-xs text-gray-600">{typeof (brewery as any)?.rating === 'number' ? (brewery as any)?.rating.toFixed(1) : (brewery as any)?.rating || "N/A"}</p>
             </CardContent>
           </Card>
         </div>
@@ -278,7 +278,7 @@ export default function BreweryDetail() {
                   <span className="text-gray-600">Rating Medio:</span>
                   <div className="flex items-center">
                     <Star className="w-4 h-4 text-yellow-400 mr-1" />
-                    <span className="font-bold">{(brewery as any)?.rating?.toFixed(1) || "N/A"}</span>
+                    <span className="font-bold">{typeof (brewery as any)?.rating === 'number' ? (brewery as any)?.rating.toFixed(1) : (brewery as any)?.rating || "N/A"}</span>
                   </div>
                 </div>
                 {(brewery as any)?.founded && (
