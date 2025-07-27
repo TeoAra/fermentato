@@ -1397,6 +1397,80 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Search beers for admin (global search)
+  app.get("/api/admin/beers/search", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const user = await storage.getUser(userId);
+      
+      if (user?.userType !== 'admin') {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+
+      const { q: query = '', limit = 100 } = req.query;
+      const beers = await storage.searchBeersGlobal(query, parseInt(limit));
+      res.json(beers);
+    } catch (error) {
+      console.error("Error searching beers:", error);
+      res.status(500).json({ message: "Failed to search beers" });
+    }
+  });
+
+  // Search breweries for admin (global search)
+  app.get("/api/admin/breweries/search", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const user = await storage.getUser(userId);
+      
+      if (user?.userType !== 'admin') {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+
+      const { q: query = '', limit = 100 } = req.query;
+      const breweries = await storage.searchBreweriesGlobal(query, parseInt(limit));
+      res.json(breweries);
+    } catch (error) {
+      console.error("Error searching breweries:", error);
+      res.status(500).json({ message: "Failed to search breweries" });
+    }
+  });
+
+  // Create new beer (admin)
+  app.post("/api/admin/beers", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const user = await storage.getUser(userId);
+      
+      if (user?.userType !== 'admin') {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+
+      const beer = await storage.createBeer(req.body);
+      res.json(beer);
+    } catch (error) {
+      console.error("Error creating beer:", error);
+      res.status(500).json({ message: "Failed to create beer" });
+    }
+  });
+
+  // Create new brewery (admin)
+  app.post("/api/admin/breweries", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const user = await storage.getUser(userId);
+      
+      if (user?.userType !== 'admin') {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+
+      const brewery = await storage.createBrewery(req.body);
+      res.json(brewery);
+    } catch (error) {
+      console.error("Error creating brewery:", error);
+      res.status(500).json({ message: "Failed to create brewery" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }

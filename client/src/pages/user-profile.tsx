@@ -488,13 +488,13 @@ export default function UserProfile() {
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <Heart className="w-5 h-5" />
-                  Preferiti ({favorites.length})
+                  Preferiti ({favorites?.length || 0})
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                {favorites.length > 0 ? (
+                {favorites && favorites.length > 0 ? (
                   <div className="space-y-2">
-                    {favorites.slice(0, 5).map((fav: any) => (
+                    {(favorites || []).slice(0, 5).map((fav: any) => (
                       <div key={fav.id} className="flex items-center justify-between">
                         <div className="flex items-center gap-2">
                           <Badge variant="outline" className="capitalize">
@@ -507,9 +507,9 @@ export default function UserProfile() {
                         </span>
                       </div>
                     ))}
-                    {favorites.length > 5 && (
+                    {favorites && favorites.length > 5 && (
                       <p className="text-sm text-gray-500 text-center">
-                        e altri {favorites.length - 5} preferiti...
+                        e altri {(favorites?.length || 0) - 5} preferiti...
                       </p>
                     )}
                   </div>

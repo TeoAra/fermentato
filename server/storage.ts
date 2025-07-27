@@ -923,6 +923,83 @@ export class DatabaseStorage implements IStorage {
     await db.delete(users).where(eq(users.id, userId));
   }
 
+  // Global search operations for admin
+  async searchBeersGlobal(query: string, limit: number = 100): Promise<any[]> {
+    if (!query.trim()) {
+      return await db.select({
+        id: beers.id,
+        name: beers.name,
+        style: beers.style,
+        abv: beers.abv,
+        ibu: beers.ibu,
+        description: beers.description,
+        imageUrl: beers.imageUrl,
+        color: beers.color,
+        breweryId: beers.breweryId,
+        brewery: {
+          id: breweries.id,
+          name: breweries.name,
+        }
+      })
+      .from(beers)
+      .leftJoin(breweries, eq(beers.breweryId, breweries.id))
+      .limit(limit);
+    }
+
+    return await db.select({
+      id: beers.id,
+      name: beers.name,
+      style: beers.style,
+      abv: beers.abv,
+      ibu: beers.ibu,
+      description: beers.description,
+      imageUrl: beers.imageUrl,
+      color: beers.color,
+      breweryId: beers.breweryId,
+      brewery: {
+        id: breweries.id,
+        name: breweries.name,
+      }
+    })
+    .from(beers)
+    .leftJoin(breweries, eq(beers.breweryId, breweries.id))
+    .where(
+      or(
+        ilike(beers.name, `%${query}%`),
+        ilike(beers.style, `%${query}%`),
+        ilike(breweries.name, `%${query}%`)
+      )
+    )
+    .limit(limit);
+  }
+
+  async searchBreweriesGlobal(query: string, limit: number = 100): Promise<any[]> {
+    if (!query.trim()) {
+      return await db.select().from(breweries).limit(limit);
+    }
+
+    return await db.select()
+      .from(breweries)
+      .where(
+        or(
+          ilike(breweries.name, `%${query}%`),
+          ilike(breweries.location, `%${query}%`),
+          ilike(breweries.region, `%${query}%`)
+        )
+      )
+      .limit(limit);
+  }
+
+  async createBeer(beerData: any): Promise<any> {
+    const [beer] = await db.insert(beers).values(beerData).returning();
+    return beer;
+  }
+
+  async createBrewery(breweryData: any): Promise<any> {
+    const [brewery] = await db.insert(breweries).values(breweryData).returning();
+    return brewery;
+  }
+
   // Admin operations
   async getUserCount(): Promise<number> {
     const result = await db.select({ count: sql`count(*)`.mapWith(Number) }).from(users);

@@ -445,7 +445,33 @@ export default function BeerDetail() {
                   <Heart className={`w-4 h-4 mr-2 ${isBeerFavorited ? 'fill-current' : ''}`} />
                   {isBeerFavorited ? 'Rimuovi dai Favoriti' : 'Aggiungi ai Favoriti'}
                 </Button>
-                <Button variant="outline" className="w-full">
+                
+                {/* Beer Tasting Form Integrated */}
+                <BeerTastingForm 
+                  beerId={parseInt(id || '0')} 
+                  beerName={beer?.name || ''} 
+                  existingTasting={null} 
+                />
+                
+                <Button 
+                  variant="outline" 
+                  className="w-full"
+                  onClick={() => {
+                    if (navigator.share) {
+                      navigator.share({
+                        title: `${beer?.name} - Fermenta.to`,
+                        text: `Scopri ${beer?.name} di ${beer?.brewery?.name} su Fermenta.to!`,
+                        url: window.location.href,
+                      });
+                    } else {
+                      navigator.clipboard.writeText(window.location.href);
+                      toast({
+                        title: "Link copiato!",
+                        description: "Il link è stato copiato negli appunti",
+                      });
+                    }
+                  }}
+                >
                   <Share2 className="w-4 h-4 mr-2" />
                   Condividi Birra
                 </Button>
@@ -488,12 +514,7 @@ export default function BeerDetail() {
             </Card>
           </div>
 
-          {/* Beer Tasting Form - Under Availability */}
-          <BeerTastingForm 
-            beerId={parseInt(id || '0')} 
-            beerName={beer?.name || ''} 
-            existingTasting={null} 
-          />
+
         </div>
       </main>
 
