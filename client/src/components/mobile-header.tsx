@@ -1,5 +1,7 @@
-import { Menu, X } from "lucide-react";
+import { Menu, X, LogOut, LogIn, User, Settings } from "lucide-react";
 import { Link, useLocation } from "wouter";
+import { useAuth } from "@/hooks/useAuth";
+import { Button } from "@/components/ui/button";
 
 interface MobileHeaderProps {
   onMenuToggle: () => void;
@@ -8,6 +10,7 @@ interface MobileHeaderProps {
 
 export function MobileHeader({ onMenuToggle, isMenuOpen }: MobileHeaderProps) {
   const [location] = useLocation();
+  const { isAuthenticated, user } = useAuth();
 
   return (
     <>
@@ -61,7 +64,7 @@ export function MobileHeader({ onMenuToggle, isMenuOpen }: MobileHeaderProps) {
                 </div>
               </Link>
               
-              <Link href="/breweries" onClick={onMenuToggle}>
+              <Link href="/explore/breweries" onClick={onMenuToggle}>
                 <div className={`block px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
                   location.startsWith("/brewer") 
                     ? "bg-orange-50 dark:bg-orange-900/20 text-orange-600 dark:text-orange-400" 
@@ -70,6 +73,66 @@ export function MobileHeader({ onMenuToggle, isMenuOpen }: MobileHeaderProps) {
                   Birrifici
                 </div>
               </Link>
+
+              {isAuthenticated && (
+                <>
+                  <Link href="/dashboard" onClick={onMenuToggle}>
+                    <div className={`block px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                      location === "/dashboard" 
+                        ? "bg-orange-50 dark:bg-orange-900/20 text-orange-600 dark:text-orange-400" 
+                        : "text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800"
+                    }`}>
+                      <User className="w-4 h-4 inline-block mr-2" />
+                      Il Mio Profilo
+                    </div>
+                  </Link>
+
+                  {(user as any)?.userType === 'admin' && (
+                    <Link href="/admin" onClick={onMenuToggle}>
+                      <div className={`block px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                        location.startsWith("/admin") 
+                          ? "bg-orange-50 dark:bg-orange-900/20 text-orange-600 dark:text-orange-400" 
+                          : "text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800"
+                      }`}>
+                        <Settings className="w-4 h-4 inline-block mr-2" />
+                        Admin Panel
+                      </div>
+                    </Link>
+                  )}
+
+                  <div className="border-t border-gray-200 dark:border-gray-700 my-2"></div>
+                  
+                  <Button
+                    variant="ghost"
+                    className="w-full justify-start px-3 py-2 text-sm font-medium text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/20"
+                    onClick={() => {
+                      onMenuToggle();
+                      window.location.href = '/api/logout';
+                    }}
+                  >
+                    <LogOut className="w-4 h-4 mr-2" />
+                    Logout
+                  </Button>
+                </>
+              )}
+
+              {!isAuthenticated && (
+                <>
+                  <div className="border-t border-gray-200 dark:border-gray-700 my-2"></div>
+                  
+                  <Button
+                    variant="ghost"
+                    className="w-full justify-start px-3 py-2 text-sm font-medium text-orange-600 hover:text-orange-700 hover:bg-orange-50 dark:hover:bg-orange-900/20"
+                    onClick={() => {
+                      onMenuToggle();
+                      window.location.href = '/api/login';
+                    }}
+                  >
+                    <LogIn className="w-4 h-4 mr-2" />
+                    Accedi
+                  </Button>
+                </>
+              )}
             </nav>
           </div>
         )}
