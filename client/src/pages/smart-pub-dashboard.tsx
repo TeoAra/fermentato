@@ -571,16 +571,6 @@ export default function SmartPubDashboard() {
                   <div className="space-y-6">
                     <div className="flex items-center justify-between">
                       <h2 className="text-2xl font-bold text-gray-900">Gestione Spine e Bottiglie</h2>
-                      <Button 
-                        className="bg-primary"
-                        onClick={() => {
-                          setPriceManagerType('tap');
-                          setShowBeerSearch(true);
-                        }}
-                      >
-                        <Plus className="w-4 h-4 mr-2" />
-                        Aggiungi Birra
-                      </Button>
                     </div>
 
                     {/* Tap List Management */}
@@ -591,7 +581,16 @@ export default function SmartPubDashboard() {
                             <Beer className="mr-2" />
                             Birre alla Spina ({typedTapList.length})
                           </div>
-                          <div className="text-xs text-gray-500">Trascina per riordinare</div>
+                          <Button 
+                            className="bg-primary"
+                            onClick={() => {
+                              setPriceManagerType('tap');
+                              setShowBeerSearch(true);
+                            }}
+                          >
+                            <Plus className="w-4 h-4 mr-2" />
+                            Aggiungi Birra
+                          </Button>
                         </CardTitle>
                       </CardHeader>
                       <CardContent>

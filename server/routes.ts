@@ -193,7 +193,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Use appropriate method based on ownership
       const tapList = isOwner 
         ? await storage.getTapListByPubForOwner(pubId)
-        : await storage.getTapListByPub(pubId);
+        : await storage.getTapList(pubId);
       
       res.json(tapList);
     } catch (error) {
@@ -218,7 +218,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/pubs/:id/bottles", async (req, res) => {
     try {
       const pubId = parseInt(req.params.id);
-      const bottleList = await storage.getBottleListByPub(pubId);
+      const bottleList = await storage.getBottleList(pubId);
       res.json(bottleList);
     } catch (error) {
       console.error("Error fetching bottle list:", error);
