@@ -745,7 +745,13 @@ export class DatabaseStorage implements IStorage {
             itemName = brewery?.name || `Birrificio #${favorite.itemId}`;
           } else if (favorite.itemType === 'beer') {
             const beer = await this.getBeer(parseInt(favorite.itemId));
-            itemName = beer?.name || `Birra #${favorite.itemId}`;
+            if (beer) {
+              // Get brewery name for the beer
+              const brewery = beer.breweryId ? await this.getBrewery(beer.breweryId) : null;
+              itemName = brewery ? `${beer.name} - ${brewery.name}` : beer.name;
+            } else {
+              itemName = `Birra #${favorite.itemId}`;
+            }
           }
         } catch (error) {
           // Fallback to ID if item not found
