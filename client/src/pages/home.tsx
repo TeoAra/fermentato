@@ -1,15 +1,127 @@
 import { useAuth } from "@/hooks/useAuth";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Link } from "wouter";
-import { Beer, MapPin, Heart, Store, TrendingUp } from "lucide-react";
+import { Beer, MapPin, Heart, Store, TrendingUp, Star } from "lucide-react";
 import Footer from "@/components/footer";
 import PubCard from "@/components/pub-card";
 import BreweryCard from "@/components/brewery-card";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
+
+// Square Card Components
+function BrewerySquareCard({ brewery }: { brewery: any }) {
+  const { isAuthenticated } = useAuth();
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+
+  // Check if brewery is favorited
+  const { data: favorites = [] } = useQuery({
+    queryKey: ["/api/favorites"],
+    enabled: isAuthenticated,
+  });
+
+  const isBreweryFavorited = Array.isArray(favorites) && favorites.some((fav: any) => 
+    fav.itemType === 'brewery' && fav.itemId === brewery.id
+  );
+
+  // Favorite mutation
+  const favoriteMutation = useMutation({
+    mutationFn: async ({ action }: { action: 'add' | 'remove' }) => {
+      if (action === 'add') {
+        return apiRequest('/api/favorites', 'POST', { itemType: 'brewery', itemId: brewery.id });
+      } else {
+        return apiRequest(`/api/favorites/brewery/${brewery.id}`, 'DELETE');
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/favorites"] });
+      toast({
+        title: "Successo",
+        description: isBreweryFavorited ? "Rimosso dai favoriti" : "Aggiunto ai favoriti",
+      });
+    },
+  });
+
+  const handleFavoriteToggle = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    if (!isAuthenticated) {
+      toast({
+        title: "Accesso richiesto",
+        description: "Effettua l'accesso per aggiungere ai favoriti",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    favoriteMutation.mutate({
+      action: isBreweryFavorited ? 'remove' : 'add'
+    });
+  };
+
+  return (
+    <Link href={`/brewery/${brewery.id}`}>
+      <Card className="overflow-hidden hover:shadow-lg transition-all duration-200 cursor-pointer group h-48 relative">
+        <CardContent className="p-4 h-full flex flex-col">
+          {/* Favorite Button */}
+          {isAuthenticated && (
+            <Button
+              variant="ghost"
+              size="sm"
+              className={`absolute top-2 right-2 h-8 w-8 p-0 z-10 ${isBreweryFavorited ? 'text-red-600 hover:text-red-700' : 'text-gray-400 hover:text-red-600'}`}
+              onClick={handleFavoriteToggle}
+              disabled={favoriteMutation.isPending}
+            >
+              <Heart className={`w-4 h-4 ${isBreweryFavorited ? 'fill-current' : ''}`} />
+            </Button>
+          )}
+
+          <div className="relative w-full h-24 mb-3 rounded-lg overflow-hidden bg-gray-100">
+            <img
+              src={brewery.logoUrl || "https://images.unsplash.com/photo-1571613316887-6f8d5cbf7ef7?ixlib=rb-4.0.3&auto=format&fit=crop&w=200&h=150"}
+              alt={`Logo ${brewery.name}`}
+              className="w-full h-full object-cover group-hover:scale-105 transition-transform"
+            />
+          </div>
+          
+          <div className="flex-1 flex flex-col">
+            <h3 className="font-semibold text-sm mb-1 line-clamp-1 group-hover:text-primary transition-colors">
+              {brewery.name}
+            </h3>
+            
+            <div className="flex items-center gap-1 text-xs text-gray-600 mb-2">
+              <MapPin className="w-3 h-3 flex-shrink-0" />
+              <span className="line-clamp-1">
+                {brewery.location}, {brewery.region || brewery.country}
+              </span>
+            </div>
+            
+            <div className="flex flex-wrap gap-1 mt-auto">
+              <Badge variant="outline" className="text-xs px-2 py-0.5 h-auto">
+                <Beer className="w-3 h-3 mr-1" />
+                {brewery.beerCount || 0} birre
+              </Badge>
+              
+              {brewery.rating && (
+                <div className="flex items-center gap-1">
+                  <Star className="w-3 h-3 text-yellow-400 fill-current" />
+                  <span className="text-xs text-gray-600 font-medium">
+                    {typeof brewery.rating === 'number' ? brewery.rating.toFixed(1) : '0.0'}
+                  </span>
+                </div>
+              )}
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    </Link>
+  );
+}
 
 export default function Home() {
   const { user, isAuthenticated } = useAuth();
@@ -260,21 +372,21 @@ export default function Home() {
         <section className="mb-12">
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-3xl font-bold text-secondary">Birrifici Artigianali</h2>
-            <a href="#" className="text-primary hover:text-orange-600 font-semibold">
+            <Link href="/explore/breweries" className="text-primary hover:text-orange-600 font-semibold">
               Esplora tutti
-            </a>
+            </Link>
           </div>
 
           {breweriesLoading ? (
-            <div className="grid grid-cols-1 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
               {[...Array(4)].map((_, i) => (
-                <div key={i} className="bg-white rounded-lg shadow-md h-24 animate-pulse" />
+                <div key={i} className="bg-white rounded-lg shadow-md h-48 animate-pulse" />
               ))}
             </div>
           ) : (
-            <div className="grid grid-cols-1 gap-4">
-              {Array.isArray(breweries) ? breweries.map((brewery: any) => (
-                <BreweryCard key={brewery.id} brewery={brewery} beerCount={brewery.beerCount || 0} />
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+              {Array.isArray(breweries) ? breweries.slice(0, 4).map((brewery: any) => (
+                <BrewerySquareCard key={brewery.id} brewery={brewery} />
               )) : null}
             </div>
           )}

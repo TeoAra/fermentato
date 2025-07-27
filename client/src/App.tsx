@@ -26,6 +26,8 @@ import AdminDashboardNew from "@/pages/admin-dashboard-new";
 import AdminAnalytics from "@/pages/admin-analytics";
 import AdminContent from "@/pages/admin-content";
 import AdminModeration from "@/pages/admin-moderation";
+import ExplorePubs from "@/pages/explore-pubs";
+import ExploreBreweries from "@/pages/explore-breweries";
 import { MobileHeader } from "@/components/mobile-header";
 import { BottomNavigation } from "@/components/bottom-navigation";
 import type { User } from "@shared/schema";
@@ -58,6 +60,8 @@ function Router() {
           <Route path="/pub/:id" component={PubDetail} />
           <Route path="/brewery/:id" component={BreweryDetail} />
           <Route path="/beer/:id" component={BeerDetail} />
+          <Route path="/explore/pubs" component={ExplorePubs} />
+          <Route path="/explore/breweries" component={ExploreBreweries} />
           {/* Dashboard routes based on user type */}
           <Route path="/dashboard" component={
             typedUser?.userType === 'admin' ? AdminDashboardNew :

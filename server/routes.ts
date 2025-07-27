@@ -43,6 +43,37 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get all pubs for explore page
+  app.get("/api/pubs/all", async (req, res) => {
+    try {
+      const pubs = await storage.getAllPubs();
+      res.json(pubs);
+    } catch (error) {
+      console.error("Error fetching all pubs:", error);
+      res.status(500).json({ message: "Failed to fetch all pubs" });
+    }
+  });
+
+  // Get all breweries for explore page
+  app.get("/api/breweries/all", async (req, res) => {
+    try {
+      const breweries = await storage.getAllBreweries();
+      
+      // Add beer count for each brewery
+      const breweriesWithCount = await Promise.all(
+        breweries.map(async (brewery: any) => {
+          const beerCount = await storage.getBeerCountByBrewery(brewery.id);
+          return { ...brewery, beerCount };
+        })
+      );
+      
+      res.json(breweriesWithCount);
+    } catch (error) {
+      console.error("Error fetching all breweries:", error);
+      res.status(500).json({ message: "Failed to fetch all breweries" });
+    }
+  });
+
   // Get beer details by ID
   app.get("/api/beers/:id", async (req, res) => {
     try {
