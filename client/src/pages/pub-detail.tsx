@@ -214,15 +214,7 @@ export default function PubDetail() {
             </Button>
           )}
           
-          <Button 
-            variant="secondary" 
-            size="sm"
-            className={isPubFavorited ? 'bg-red-600 hover:bg-red-700 text-white' : ''}
-            onClick={handleFavoriteToggle}
-            disabled={favoriteMutation.isPending}
-          >
-            <Heart className={`w-4 h-4 ${isPubFavorited ? 'fill-current' : ''}`} />
-          </Button>
+
           <Button 
             variant="secondary" 
             size="sm"

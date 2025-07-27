@@ -4,7 +4,8 @@ import { useToast } from "@/hooks/use-toast";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Heart, Star, Beer, Settings } from "lucide-react";
+import { Heart, Star, Beer, Settings, Shield } from "lucide-react";
+import { Link } from "wouter";
 
 export default function Dashboard() {
   const { toast } = useToast();
@@ -73,10 +74,14 @@ export default function Dashboard() {
           </p>
         </div>
         <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm">
-            <Settings className="h-4 w-4 mr-2" />
-            Impostazioni
-          </Button>
+          {user?.userType === 'admin' && (
+            <Link href="/admin">
+              <Button className="bg-red-600 hover:bg-red-700 text-white">
+                <Shield className="w-4 h-4 mr-2" />
+                Pannello Admin
+              </Button>
+            </Link>
+          )}
         </div>
       </div>
 
