@@ -1587,7 +1587,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const { q: query = '', limit = 100 } = req.query;
-      const beers = await storage.searchBeersGlobal(query, parseInt(limit));
+      const allBeers = await storage.getBeers();
+      const beers = allBeers.filter(beer => 
+        beer.name.toLowerCase().includes(query.toString().toLowerCase()) ||
+        beer.style?.toLowerCase().includes(query.toString().toLowerCase())
+      ).slice(0, parseInt(limit.toString()) || 100);
       res.json(beers);
     } catch (error) {
       console.error("Error searching beers:", error);
@@ -1606,7 +1610,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const { q: query = '', limit = 100 } = req.query;
-      const breweries = await storage.searchBreweriesGlobal(query, parseInt(limit));
+      const allBreweries = await storage.getBreweries();
+      const breweries = allBreweries.filter(brewery => 
+        brewery.name.toLowerCase().includes(query.toString().toLowerCase()) ||
+        brewery.location?.toLowerCase().includes(query.toString().toLowerCase())
+      ).slice(0, parseInt(limit.toString()) || 100);
       res.json(breweries);
     } catch (error) {
       console.error("Error searching breweries:", error);

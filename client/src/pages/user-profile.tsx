@@ -37,6 +37,7 @@ import type { User as UserType } from "@shared/schema";
 import UserFavoritesSection from "@/components/UserFavoritesSection";
 import BeerTastingsEditor from "@/components/BeerTastingsEditorNew";
 import { PubAutocomplete } from "@/components/PubAutocomplete";
+import { StyleMultiSelect } from "@/components/StyleMultiSelect";
 
 export default function UserProfile() {
   const { user, isAuthenticated, isLoading } = useAuth();
@@ -255,15 +256,11 @@ export default function UserProfile() {
                         const formData = new FormData();
                         formData.append('image', file);
                         
-                        const response = await fetch('/api/user/upload-profile-image', {
-                          method: 'POST',
-                          body: formData,
-                        });
+                        const response = await apiRequest('/api/user/upload-profile-image', 'POST', formData);
                         
-                        if (response.ok) {
-                          const { imageUrl } = await response.json();
+                        if (response.imageUrl) {
                           // Update user profile with new image
-                          await updateProfileMutation.mutateAsync({ profileImageUrl: imageUrl });
+                          await updateProfileMutation.mutateAsync({ profileImageUrl: response.imageUrl });
                           toast({
                             title: "Immagine caricata",
                             description: "L'immagine del profilo è stata aggiornata con successo",
@@ -285,51 +282,10 @@ export default function UserProfile() {
               </div>
 
               <div className="flex-1 text-center md:text-left">
-                {/* Nickname with Edit Button */}
-                <div className="flex items-center justify-center md:justify-start gap-2 mb-2">
-                  {isEditingNickname ? (
-                    <div className="flex items-center gap-2">
-                      <Input
-                        value={tempNickname}
-                        onChange={(e) => setTempNickname(e.target.value)}
-                        className="w-48"
-                        placeholder="Inserisci nickname"
-                      />
-                      <Button
-                        size="sm"
-                        onClick={handleNicknameSave}
-                        disabled={nicknameUpdateMutation.isPending || !canUpdateNickname()}
-                      >
-                        <Save className="w-4 h-4" />
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => {
-                          setIsEditingNickname(false);
-                          setTempNickname(typedUser.nickname || "");
-                        }}
-                      >
-                        <X className="w-4 h-4" />
-                      </Button>
-                    </div>
-                  ) : (
-                    <>
-                      <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-                        {typedUser.nickname || "Utente senza nome"}
-                      </h1>
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        onClick={() => setIsEditingNickname(true)}
-                        disabled={!canUpdateNickname()}
-                        title={!canUpdateNickname() ? `Disponibile tra ${getDaysUntilNicknameUpdate()} giorni` : "Modifica nickname"}
-                      >
-                        <Edit3 className="w-3 h-3" />
-                      </Button>
-                    </>
-                  )}
-                </div>
+                {/* Nome Utente Semplice */}
+                <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
+                  {typedUser.nickname || "Utente senza nome"}
+                </h1>
 
                 <div className="flex items-center justify-center md:justify-start gap-2 mb-2">
                   <Badge variant={typedUser.userType === 'admin' ? 'default' : 'secondary'}>

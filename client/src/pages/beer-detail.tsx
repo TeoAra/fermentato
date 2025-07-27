@@ -498,10 +498,7 @@ export default function BeerDetail() {
                   <Share2 className="w-4 h-4 mr-2" />
                   Condividi Birra
                 </Button>
-                <Button variant="outline" className="w-full">
-                  <Store className="w-4 h-4 mr-2" />
-                  Trova Negozi
-                </Button>
+
               </CardContent>
             </Card>
 

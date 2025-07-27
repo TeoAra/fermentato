@@ -21,7 +21,7 @@ import Notifications from "@/pages/notifications";
 import Activity from "@/pages/activity";
 import Dashboard from "@/pages/dashboard-simple";
 import UserDashboard from "@/pages/user-dashboard";
-import UserProfile from "@/pages/user-profile";
+import UserProfile from "@/pages/user-profile-new";
 import AdminDashboard from "@/pages/admin-dashboard";
 import AdminDashboardNew from "@/pages/admin-dashboard-new";
 import AdminAnalytics from "@/pages/admin-analytics";
