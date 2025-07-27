@@ -1,5 +1,5 @@
 import { useParams, Link } from "wouter";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { 
   Star, 
   MapPin, 
@@ -21,6 +21,9 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import { useAuth } from "@/hooks/useAuth";
+import { useToast } from "@/hooks/use-toast";
+import { apiRequest } from "@/lib/queryClient";
 
 interface Beer {
   id: number;
@@ -75,6 +78,9 @@ interface BeerAvailability {
 
 export default function BeerDetail() {
   const { id } = useParams();
+  const { user, isAuthenticated } = useAuth();
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
   
   const { data: beer, isLoading: beerLoading } = useQuery<Beer>({
     queryKey: ["/api/beers", id],
@@ -85,6 +91,64 @@ export default function BeerDetail() {
     queryKey: ["/api/beers", id, "availability"],
     enabled: !!id,
   });
+
+  // Check if beer is favorited
+  const { data: favorites = [] } = useQuery({
+    queryKey: ["/api/favorites"],
+    enabled: isAuthenticated,
+  });
+
+  const isBeerFavorited = Array.isArray(favorites) && favorites.some((fav: any) => 
+    fav.itemType === 'beer' && fav.itemId === parseInt(id || '0')
+  );
+
+  // Favorite mutation
+  const favoriteMutation = useMutation({
+    mutationFn: async ({ itemType, itemId, action }: { itemType: string, itemId: number, action: 'add' | 'remove' }) => {
+      if (action === 'add') {
+        return apiRequest('/api/favorites', {
+          method: 'POST',
+          body: JSON.stringify({ itemType, itemId }),
+          headers: { 'Content-Type': 'application/json' }
+        });
+      } else {
+        return apiRequest(`/api/favorites/${itemType}/${itemId}`, {
+          method: 'DELETE'
+        });
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/favorites"] });
+      toast({
+        title: "Successo",
+        description: isBeerFavorited ? "Rimossa dai favoriti" : "Aggiunta ai favoriti",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Errore",
+        description: "Non è stato possibile aggiornare i favoriti",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const handleFavoriteToggle = () => {
+    if (!isAuthenticated) {
+      toast({
+        title: "Accesso richiesto",
+        description: "Effettua l'accesso per aggiungere ai favoriti",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    favoriteMutation.mutate({
+      itemType: 'beer',
+      itemId: parseInt(id || '0'),
+      action: isBeerFavorited ? 'remove' : 'add'
+    });
+  };
 
   if (beerLoading) {
     return (
@@ -368,9 +432,13 @@ export default function BeerDetail() {
                 <CardTitle>Azioni Rapide</CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
-                <Button className="w-full">
-                  <Heart className="w-4 h-4 mr-2" />
-                  Aggiungi ai Preferiti
+                <Button 
+                  className={`w-full ${isBeerFavorited ? 'bg-red-600 hover:bg-red-700' : ''}`}
+                  onClick={handleFavoriteToggle}
+                  disabled={favoriteMutation.isPending}
+                >
+                  <Heart className={`w-4 h-4 mr-2 ${isBeerFavorited ? 'fill-current' : ''}`} />
+                  {isBeerFavorited ? 'Rimuovi dai Favoriti' : 'Aggiungi ai Favoriti'}
                 </Button>
                 <Button variant="outline" className="w-full">
                   <Share2 className="w-4 h-4 mr-2" />

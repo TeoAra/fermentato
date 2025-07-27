@@ -1,5 +1,5 @@
 import { useParams, Link } from "wouter";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { 
   Star, 
   MapPin, 
@@ -16,9 +16,17 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import { useAuth } from "@/hooks/useAuth";
+import { useToast } from "@/hooks/use-toast";
+import { apiRequest } from "@/lib/queryClient";
+import { useState } from "react";
 
 export default function BreweryDetail() {
   const { id } = useParams();
+  const { user, isAuthenticated } = useAuth();
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+  const [showAllBeers, setShowAllBeers] = useState(false);
   
   const { data: brewery, isLoading: breweryLoading } = useQuery({
     queryKey: ["/api/breweries", id],
@@ -29,6 +37,64 @@ export default function BreweryDetail() {
     queryKey: ["/api/breweries", id, "beers"],
     enabled: !!id,
   });
+
+  // Check if brewery is favorited
+  const { data: favorites = [] } = useQuery({
+    queryKey: ["/api/favorites"],
+    enabled: isAuthenticated,
+  });
+
+  const isBreweryFavorited = Array.isArray(favorites) && favorites.some((fav: any) => 
+    fav.itemType === 'brewery' && fav.itemId === parseInt(id || '0')
+  );
+
+  // Favorite mutation
+  const favoriteMutation = useMutation({
+    mutationFn: async ({ itemType, itemId, action }: { itemType: string, itemId: number, action: 'add' | 'remove' }) => {
+      if (action === 'add') {
+        return apiRequest('/api/favorites', {
+          method: 'POST',
+          body: JSON.stringify({ itemType, itemId }),
+          headers: { 'Content-Type': 'application/json' }
+        });
+      } else {
+        return apiRequest(`/api/favorites/${itemType}/${itemId}`, {
+          method: 'DELETE'
+        });
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/favorites"] });
+      toast({
+        title: "Successo",
+        description: isBreweryFavorited ? "Rimosso dai favoriti" : "Aggiunto ai favoriti",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Errore",
+        description: "Non è stato possibile aggiornare i favoriti",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const handleFavoriteToggle = () => {
+    if (!isAuthenticated) {
+      toast({
+        title: "Accesso richiesto",
+        description: "Effettua l'accesso per aggiungere ai favoriti",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    favoriteMutation.mutate({
+      itemType: 'brewery',
+      itemId: parseInt(id || '0'),
+      action: isBreweryFavorited ? 'remove' : 'add'
+    });
+  };
 
   if (breweryLoading) {
     return (
@@ -182,34 +248,42 @@ export default function BreweryDetail() {
                     ))}
                   </div>
                 ) : (
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {Array.isArray(beers) && beers.length > 0 ? beers.slice(0, 8).map((beer: any) => (
-                      <Link key={beer.id} href={`/beer/${beer.id}`}>
-                        <div className="flex items-center space-x-3 p-3 border rounded-lg hover:bg-gray-50 transition-colors">
-                          <img
-                            src={beer.imageUrl || beer.bottleImageUrl || "https://images.unsplash.com/photo-1608270586620-248524c67de9?ixlib=rb-4.0.3&auto=format&fit=crop&w=60&h=60"}
-                            alt={beer.name}
-                            className="w-12 h-12 object-cover rounded"
-                          />
-                          <div className="flex-1">
-                            <h3 className="font-semibold text-sm">{beer.name}</h3>
-                            <p className="text-xs text-gray-600">{beer.style}</p>
-                            <p className="text-xs text-primary font-medium">{beer.abv}% ABV</p>
+                  <div className={`grid grid-cols-1 md:grid-cols-2 gap-4 ${showAllBeers ? '' : ''}`}>
+                    {Array.isArray(beers) && beers.length > 0 ? 
+                      (showAllBeers ? beers : beers.slice(0, 8)).map((beer: any) => (
+                        <Link key={beer.id} href={`/beer/${beer.id}`}>
+                          <div className="flex items-center space-x-3 p-3 border rounded-lg hover:bg-gray-50 transition-colors">
+                            <img
+                              src={beer.imageUrl || beer.bottleImageUrl || "https://images.unsplash.com/photo-1608270586620-248524c67de9?ixlib=rb-4.0.3&auto=format&fit=crop&w=60&h=60"}
+                              alt={beer.name}
+                              className="w-12 h-12 object-cover rounded"
+                            />
+                            <div className="flex-1">
+                              <h3 className="font-semibold text-sm">{beer.name}</h3>
+                              <p className="text-xs text-gray-600">{beer.style}</p>
+                              <p className="text-xs text-primary font-medium">{beer.abv}% ABV</p>
+                            </div>
                           </div>
-                        </div>
-                      </Link>
-                    )) : (
-                      <p className="text-center text-gray-500 py-8 col-span-2">
-                        Nessuna birra disponibile per questo birrificio
-                      </p>
-                    )}
+                        </Link>
+                      )) : (
+                        <p className="text-center text-gray-500 py-8 col-span-2">
+                          Nessuna birra disponibile per questo birrificio
+                        </p>
+                      )
+                    }
                   </div>
                 )}
                 
                 {Array.isArray(beers) && beers.length > 8 && (
                   <div className="text-center mt-6">
-                    <Button variant="outline">
-                      Vedi tutte le {beers.length} birre
+                    <Button 
+                      variant="outline"
+                      onClick={() => setShowAllBeers(!showAllBeers)}
+                    >
+                      {showAllBeers ? 
+                        `Mostra meno birre` : 
+                        `Vedi tutte le ${beers.length} birre`
+                      }
                     </Button>
                   </div>
                 )}
@@ -249,9 +323,13 @@ export default function BreweryDetail() {
                 )}
 
                 <div className="pt-4">
-                  <Button className="w-full mb-2">
-                    <Heart className="w-4 h-4 mr-2" />
-                    Segui Birrificio
+                  <Button 
+                    className={`w-full mb-2 ${isBreweryFavorited ? 'bg-red-600 hover:bg-red-700' : ''}`}
+                    onClick={handleFavoriteToggle}
+                    disabled={favoriteMutation.isPending}
+                  >
+                    <Heart className={`w-4 h-4 mr-2 ${isBreweryFavorited ? 'fill-current' : ''}`} />
+                    {isBreweryFavorited ? 'Rimuovi dai Favoriti' : 'Aggiungi ai Favoriti'}
                   </Button>
                   <Button variant="outline" className="w-full">
                     <Share2 className="w-4 h-4 mr-2" />

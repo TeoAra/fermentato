@@ -1,5 +1,5 @@
 import { useParams, Link } from "wouter";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { 
   Star, 
@@ -26,6 +26,9 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import { useAuth } from "@/hooks/useAuth";
+import { useToast } from "@/hooks/use-toast";
+import { apiRequest } from "@/lib/queryClient";
 
 // Funzione per controllare se un pub è aperto ora
 function isOpenNow(openingHours: any) {
@@ -71,6 +74,9 @@ interface Pub {
 export default function PubDetail() {
   const { id } = useParams();
   const [activeTab, setActiveTab] = useState("taplist");
+  const { user, isAuthenticated } = useAuth();
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
   
   const { data: pub, isLoading: pubLoading } = useQuery<Pub>({
     queryKey: ["/api/pubs", id],
@@ -91,6 +97,64 @@ export default function PubDetail() {
     queryKey: ["/api/pubs", id, "bottles"],
     enabled: !!id,
   });
+
+  // Check if pub is favorited
+  const { data: favorites = [] } = useQuery({
+    queryKey: ["/api/favorites"],
+    enabled: isAuthenticated,
+  });
+
+  const isPubFavorited = Array.isArray(favorites) && favorites.some((fav: any) => 
+    fav.itemType === 'pub' && fav.itemId === parseInt(id || '0')
+  );
+
+  // Favorite mutation
+  const favoriteMutation = useMutation({
+    mutationFn: async ({ itemType, itemId, action }: { itemType: string, itemId: number, action: 'add' | 'remove' }) => {
+      if (action === 'add') {
+        return apiRequest('/api/favorites', {
+          method: 'POST',
+          body: JSON.stringify({ itemType, itemId }),
+          headers: { 'Content-Type': 'application/json' }
+        });
+      } else {
+        return apiRequest(`/api/favorites/${itemType}/${itemId}`, {
+          method: 'DELETE'
+        });
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/favorites"] });
+      toast({
+        title: "Successo",
+        description: isPubFavorited ? "Rimosso dai favoriti" : "Aggiunto ai favoriti",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Errore",
+        description: "Non è stato possibile aggiornare i favoriti",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const handleFavoriteToggle = () => {
+    if (!isAuthenticated) {
+      toast({
+        title: "Accesso richiesto",
+        description: "Effettua l'accesso per aggiungere ai favoriti",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    favoriteMutation.mutate({
+      itemType: 'pub',
+      itemId: parseInt(id || '0'),
+      action: isPubFavorited ? 'remove' : 'add'
+    });
+  };
 
   if (pubLoading) {
     return (
@@ -143,8 +207,14 @@ export default function PubDetail() {
 
         {/* Action Buttons */}
         <div className="absolute top-4 right-4 flex space-x-2">
-          <Button variant="secondary" size="sm">
-            <Heart className="w-4 h-4" />
+          <Button 
+            variant="secondary" 
+            size="sm"
+            className={isPubFavorited ? 'bg-red-600 hover:bg-red-700 text-white' : ''}
+            onClick={handleFavoriteToggle}
+            disabled={favoriteMutation.isPending}
+          >
+            <Heart className={`w-4 h-4 ${isPubFavorited ? 'fill-current' : ''}`} />
           </Button>
           <Button 
             variant="secondary" 

@@ -676,7 +676,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/favorites", isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
-      const favorites = await storage.getFavoritesByUser(userId);
+      const favorites = await storage.getUserFavorites(userId);
       res.json(favorites);
     } catch (error) {
       console.error("Error fetching favorites:", error);

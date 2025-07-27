@@ -94,10 +94,10 @@ export interface IStorage {
   updateMenuItem(id: number, item: Partial<InsertMenuItem>): Promise<MenuItem>;
 
   // Favorites operations (universal system)
-  getFavoritesByUser(userId: string): Promise<Favorite[]>;
+  getUserFavorites(userId: string): Promise<Favorite[]>;
   getFavoritesByType(userId: string, itemType: 'pub' | 'brewery' | 'beer'): Promise<Favorite[]>;
-  addFavorite(favorite: InsertFavorite): Promise<Favorite>;
-  removeFavorite(userId: string, itemType: 'pub' | 'brewery' | 'beer', itemId: number): Promise<void>;
+  addFavorite(userId: string, itemType: string, itemId: number): Promise<Favorite>;
+  removeFavorite(userId: string, itemType: string, itemId: number): Promise<void>;
   isFavorite(userId: string, itemType: 'pub' | 'brewery' | 'beer', itemId: number): Promise<boolean>;
 
   // Rating operations
@@ -633,6 +633,57 @@ export class DatabaseStorage implements IStorage {
 
   async deleteMenuItem(id: number): Promise<void> {
     await db.delete(menuItems).where(eq(menuItems.id, id));
+  }
+
+  // Favorites operations
+  async getUserFavorites(userId: string): Promise<Favorite[]> {
+    return await db.select().from(favorites).where(eq(favorites.userId, userId));
+  }
+
+  async getFavoritesByType(userId: string, itemType: 'pub' | 'brewery' | 'beer'): Promise<Favorite[]> {
+    return await db
+      .select()
+      .from(favorites)
+      .where(and(eq(favorites.userId, userId), eq(favorites.itemType, itemType)));
+  }
+
+  async addFavorite(userId: string, itemType: string, itemId: number): Promise<Favorite> {
+    const [favorite] = await db
+      .insert(favorites)
+      .values({
+        userId,
+        itemType,
+        itemId,
+      })
+      .onConflictDoNothing()
+      .returning();
+    return favorite;
+  }
+
+  async removeFavorite(userId: string, itemType: string, itemId: number): Promise<void> {
+    await db
+      .delete(favorites)
+      .where(
+        and(
+          eq(favorites.userId, userId),
+          eq(favorites.itemType, itemType),
+          eq(favorites.itemId, itemId)
+        )
+      );
+  }
+
+  async isFavorite(userId: string, itemType: 'pub' | 'brewery' | 'beer', itemId: number): Promise<boolean> {
+    const [favorite] = await db
+      .select()
+      .from(favorites)
+      .where(
+        and(
+          eq(favorites.userId, userId),
+          eq(favorites.itemType, itemType),
+          eq(favorites.itemId, itemId)
+        )
+      );
+    return !!favorite;
   }
 
   // Menu operations
