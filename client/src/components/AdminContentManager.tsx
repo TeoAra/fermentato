@@ -11,10 +11,10 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Search, Plus, Edit, Trash2, BeerIcon, Building2 } from "lucide-react";
+import { Search, Plus, Edit, Trash2, BeerIcon, Building2, MapPin } from "lucide-react";
 
 interface AdminContentManagerProps {
-  type: 'beers' | 'breweries';
+  type: 'beers' | 'breweries' | 'pubs';
 }
 
 export default function AdminContentManager({ type }: AdminContentManagerProps) {
@@ -29,7 +29,11 @@ export default function AdminContentManager({ type }: AdminContentManagerProps) 
   // Search mutation for global search
   const searchMutation = useMutation({
     mutationFn: async (query: string) => {
-      const endpoint = type === 'beers' ? '/api/admin/beers/search' : '/api/admin/breweries/search';
+      let endpoint = '';
+      if (type === 'beers') endpoint = '/api/admin/beers/search';
+      else if (type === 'breweries') endpoint = '/api/admin/breweries/search';
+      else if (type === 'pubs') endpoint = '/api/pubs';
+      
       const params = new URLSearchParams({ q: query, limit: '100' });
       return await fetch(`${endpoint}?${params}`, {
         headers: { 'Content-Type': 'application/json' },
@@ -53,13 +57,16 @@ export default function AdminContentManager({ type }: AdminContentManagerProps) 
   // Create mutation
   const createMutation = useMutation({
     mutationFn: async (itemData: any) => {
-      const endpoint = type === 'beers' ? '/api/admin/beers' : '/api/admin/breweries';
+      let endpoint = '';
+      if (type === 'beers') endpoint = '/api/admin/beers';
+      else if (type === 'breweries') endpoint = '/api/admin/breweries';
+      else if (type === 'pubs') endpoint = '/api/pubs';
       return await apiRequest(endpoint, "POST", itemData);
     },
     onSuccess: () => {
       toast({
         title: "Elemento creato",
-        description: `${type === 'beers' ? 'Birra' : 'Birrificio'} creato con successo`,
+        description: `${type === 'beers' ? 'Birra' : type === 'breweries' ? 'Birrificio' : 'Pub'} creato con successo`,
       });
       setCreateDialogOpen(false);
       if (searchQuery) {
@@ -78,13 +85,16 @@ export default function AdminContentManager({ type }: AdminContentManagerProps) 
   // Update mutation
   const updateMutation = useMutation({
     mutationFn: async ({ id, data }: { id: number; data: any }) => {
-      const endpoint = type === 'beers' ? `/api/beers/${id}` : `/api/breweries/${id}`;
+      let endpoint = '';
+      if (type === 'beers') endpoint = `/api/beers/${id}`;
+      else if (type === 'breweries') endpoint = `/api/breweries/${id}`;
+      else if (type === 'pubs') endpoint = `/api/pubs/${id}`;
       return await apiRequest(endpoint, "PATCH", data);
     },
     onSuccess: () => {
       toast({
         title: "Elemento aggiornato",
-        description: `${type === 'beers' ? 'Birra' : 'Birrificio'} aggiornato con successo`,
+        description: `${type === 'beers' ? 'Birra' : type === 'breweries' ? 'Birrificio' : 'Pub'} aggiornato con successo`,
       });
       setEditingItem(null);
       if (searchQuery) {
@@ -120,6 +130,9 @@ export default function AdminContentManager({ type }: AdminContentManagerProps) 
       data.abv = parseFloat(data.abv);
       data.ibu = data.ibu ? parseInt(data.ibu) : null;
       data.breweryId = parseInt(data.breweryId);
+    } else if (type === 'pubs') {
+      data.latitude = data.latitude ? parseFloat(data.latitude) : null;
+      data.longitude = data.longitude ? parseFloat(data.longitude) : null;
     }
     
     createMutation.mutate(data);
@@ -136,6 +149,9 @@ export default function AdminContentManager({ type }: AdminContentManagerProps) 
       data.abv = parseFloat(data.abv);
       data.ibu = data.ibu ? parseInt(data.ibu) : null;
       data.breweryId = parseInt(data.breweryId);
+    } else if (type === 'pubs') {
+      data.latitude = data.latitude ? parseFloat(data.latitude) : null;
+      data.longitude = data.longitude ? parseFloat(data.longitude) : null;
     }
     
     updateMutation.mutate({ id: editingItem.id, data });
@@ -309,22 +325,165 @@ export default function AdminContentManager({ type }: AdminContentManagerProps) 
     );
   };
 
+  const PubForm = ({ item, onSubmit }: { item?: any; onSubmit: (data: FormData) => void }) => {
+    const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+      e.preventDefault();
+      const formData = new FormData(e.currentTarget);
+      onSubmit(formData);
+    };
+
+    return (
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <div>
+          <Label htmlFor="name">Nome Pub *</Label>
+          <Input 
+            id="name" 
+            name="name" 
+            defaultValue={item?.name} 
+            required 
+            className="mt-1"
+          />
+        </div>
+
+        <div>
+          <Label htmlFor="address">Indirizzo *</Label>
+          <Input 
+            id="address" 
+            name="address" 
+            defaultValue={item?.address} 
+            required 
+            className="mt-1"
+          />
+        </div>
+
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <Label htmlFor="city">Città *</Label>
+            <Input 
+              id="city" 
+              name="city" 
+              defaultValue={item?.city} 
+              required 
+              className="mt-1"
+            />
+          </div>
+          <div>
+            <Label htmlFor="phone">Telefono *</Label>
+            <Input 
+              id="phone" 
+              name="phone" 
+              type="tel" 
+              defaultValue={item?.phone} 
+              required 
+              className="mt-1"
+            />
+          </div>
+        </div>
+
+        <div>
+          <Label htmlFor="email">Email *</Label>
+          <Input 
+            id="email" 
+            name="email" 
+            type="email" 
+            defaultValue={item?.email} 
+            required 
+            className="mt-1"
+          />
+        </div>
+
+        <div>
+          <Label htmlFor="description">Descrizione *</Label>
+          <Textarea 
+            id="description" 
+            name="description" 
+            defaultValue={item?.description} 
+            required 
+            className="mt-1"
+            rows={4}
+          />
+        </div>
+
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <Label htmlFor="latitude">Latitudine</Label>
+            <Input 
+              id="latitude" 
+              name="latitude" 
+              type="number" 
+              step="0.000001" 
+              defaultValue={item?.latitude} 
+              className="mt-1"
+            />
+          </div>
+          <div>
+            <Label htmlFor="longitude">Longitudine</Label>
+            <Input 
+              id="longitude" 
+              name="longitude" 
+              type="number" 
+              step="0.000001" 
+              defaultValue={item?.longitude} 
+              className="mt-1"
+            />
+          </div>
+        </div>
+
+        <div>
+          <Label htmlFor="logoUrl">URL Logo</Label>
+          <Input 
+            id="logoUrl" 
+            name="logoUrl" 
+            type="url" 
+            defaultValue={item?.logoUrl} 
+            className="mt-1"
+          />
+        </div>
+
+        <div>
+          <Label htmlFor="coverImageUrl">URL Immagine di Copertina</Label>
+          <Input 
+            id="coverImageUrl" 
+            name="coverImageUrl" 
+            type="url" 
+            defaultValue={item?.coverImageUrl} 
+            className="mt-1"
+          />
+        </div>
+
+        <Button type="submit" className="w-full">
+          {item ? 'Aggiorna Pub' : 'Crea Pub'}
+        </Button>
+      </form>
+    );
+  };
+
   return (
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
-          {type === 'beers' ? <BeerIcon className="w-5 h-5" /> : <Building2 className="w-5 h-5" />}
-          Gestione {type === 'beers' ? 'Birre' : 'Birrifici'}
+          {type === 'beers' ? <BeerIcon className="w-5 h-5" /> : type === 'breweries' ? <Building2 className="w-5 h-5" /> : <MapPin className="w-5 h-5" />}
+          Gestione {type === 'beers' ? 'Birre' : type === 'breweries' ? 'Birrifici' : 'Pub'}
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
-        {/* Search Section */}
+        {/* Search Section - Real-time search */}
         <div className="flex gap-2">
           <Input
-            placeholder={`Cerca ${type === 'beers' ? 'birre' : 'birrifici'}...`}
+            placeholder={`Cerca ${type === 'beers' ? 'birre' : type === 'breweries' ? 'birrifici' : 'pub'}...`}
             value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
+            onChange={(e) => {
+              setSearchQuery(e.target.value);
+              // Auto-search after 300ms delay
+              setTimeout(() => {
+                if (e.target.value.trim().length > 0) {
+                  setIsSearching(true);
+                  searchMutation.mutate(e.target.value);
+                } else {
+                  setSearchResults([]);
+                }
+              }, 300);
+            }}
           />
           <Button onClick={handleSearch} disabled={isSearching}>
             <Search className="w-4 h-4" />
@@ -353,6 +512,9 @@ export default function AdminContentManager({ type }: AdminContentManagerProps) 
                   {type === 'breweries' && (
                     <p className="text-sm text-gray-600">{item.location}</p>
                   )}
+                  {type === 'pubs' && (
+                    <p className="text-sm text-gray-600">{item.address}</p>
+                  )}
                 </div>
                 <Button
                   variant="outline"
@@ -373,19 +535,21 @@ export default function AdminContentManager({ type }: AdminContentManagerProps) 
               <DialogTrigger asChild>
                 <Button>
                   <Plus className="w-4 h-4 mr-2" />
-                  Crea {type === 'beers' ? 'Birra' : 'Birrificio'}
+                  Crea {type === 'beers' ? 'Birra' : type === 'breweries' ? 'Birrificio' : 'Pub'}
                 </Button>
               </DialogTrigger>
               <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
                 <DialogHeader>
                   <DialogTitle>
-                    Crea {type === 'beers' ? 'Nuova Birra' : 'Nuovo Birrificio'}
+                    Crea {type === 'beers' ? 'Nuova Birra' : type === 'breweries' ? 'Nuovo Birrificio' : 'Nuovo Pub'}
                   </DialogTitle>
                 </DialogHeader>
                 {type === 'beers' ? (
                   <BeerForm onSubmit={handleCreate} />
-                ) : (
+                ) : type === 'breweries' ? (
                   <BreweryForm onSubmit={handleCreate} />
+                ) : (
+                  <PubForm onSubmit={handleCreate} />
                 )}
               </DialogContent>
             </Dialog>
@@ -397,14 +561,16 @@ export default function AdminContentManager({ type }: AdminContentManagerProps) 
           <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>
-                Modifica {type === 'beers' ? 'Birra' : 'Birrificio'}
+                Modifica {type === 'beers' ? 'Birra' : type === 'breweries' ? 'Birrificio' : 'Pub'}
               </DialogTitle>
             </DialogHeader>
             {editingItem && (
               type === 'beers' ? (
                 <BeerForm item={editingItem} onSubmit={handleUpdate} />
-              ) : (
+              ) : type === 'breweries' ? (
                 <BreweryForm item={editingItem} onSubmit={handleUpdate} />
+              ) : (
+                <PubForm item={editingItem} onSubmit={handleUpdate} />
               )
             )}
           </DialogContent>

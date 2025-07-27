@@ -58,6 +58,7 @@ export default function UserProfile() {
   });
 
   const [tempNickname, setTempNickname] = useState(typedUser?.nickname || "");
+  const [profileImageFile, setProfileImageFile] = useState<File | null>(null);
 
   // Handle redirects for unauthenticated users
   useEffect(() => {
@@ -222,7 +223,7 @@ export default function UserProfile() {
             <div className="flex flex-col md:flex-row items-center gap-6">
               {/* Profile Image - Clickable */}
               <div className="relative">
-                <Avatar className="w-24 h-24 cursor-pointer" onClick={() => setIsEditing(true)}>
+                <Avatar className="w-24 h-24 cursor-pointer" onClick={() => document.getElementById('profile-image-input')?.click()}>
                   <AvatarImage src={typedUser.profileImageUrl || ""} />
                   <AvatarFallback className="bg-amber-600 text-white text-2xl">
                     {typedUser.nickname?.[0]?.toUpperCase() || typedUser.email?.[0]?.toUpperCase() || 'U'}
@@ -231,6 +232,24 @@ export default function UserProfile() {
                 <div className="absolute bottom-0 right-0 bg-amber-600 rounded-full p-1">
                   <Upload className="w-3 h-3 text-white" />
                 </div>
+                <input
+                  id="profile-image-input"
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) {
+                      setProfileImageFile(file);
+                      // TODO: Implement image upload
+                      toast({
+                        title: "Funzione in sviluppo",
+                        description: "L'upload delle immagini sarà disponibile presto",
+                        variant: "default",
+                      });
+                    }
+                  }}
+                />
               </div>
 
               <div className="flex-1 text-center md:text-left">
@@ -295,7 +314,7 @@ export default function UserProfile() {
                 {typedUser.userType === 'admin' && (
                   <div className="mt-2">
                     <Button asChild size="sm" className="bg-red-600 hover:bg-red-700">
-                      <Link href="/admin-dashboard">
+                      <Link href="/admin/dashboard">
                         <Shield className="w-4 h-4 mr-2" />
                         Pannello Admin
                       </Link>
@@ -450,6 +469,11 @@ export default function UserProfile() {
                           <div>
                             <h4 className="font-medium">{tasting.beer.name}</h4>
                             <p className="text-sm text-gray-600">{tasting.brewery?.name}</p>
+                            {tasting.notes && (
+                              <p className="text-xs text-gray-700 dark:text-gray-300 italic mt-1 bg-gray-50 dark:bg-gray-800 px-2 py-1 rounded">
+                                "{tasting.notes}"
+                              </p>
+                            )}
                             <p className="text-xs text-gray-500">
                               {new Date(tasting.tastedAt).toLocaleDateString('it-IT')}
                             </p>

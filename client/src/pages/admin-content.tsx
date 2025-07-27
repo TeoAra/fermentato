@@ -24,9 +24,10 @@ export default function AdminContent() {
 
         {/* Content Tabs */}
         <Tabs defaultValue="beers" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-2">
+          <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="beers">Birre</TabsTrigger>
             <TabsTrigger value="breweries">Birrifici</TabsTrigger>
+            <TabsTrigger value="pubs">Pub</TabsTrigger>
           </TabsList>
 
           <TabsContent value="beers">
@@ -35,6 +36,10 @@ export default function AdminContent() {
 
           <TabsContent value="breweries">
             <AdminContentManager type="breweries" />
+          </TabsContent>
+
+          <TabsContent value="pubs">
+            <AdminContentManager type="pubs" />
           </TabsContent>
         </Tabs>
       </div>
