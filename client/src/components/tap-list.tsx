@@ -95,7 +95,13 @@ export default function TapList({ tapList }: TapListProps) {
                       Object.entries(tap.prices).map(([size, price]) => (
                         <div key={size} className="flex justify-between items-center">
                           <span className="text-xs text-gray-600 font-medium">
-                            {size.replace(/\([^)]*\)/, '').trim()}
+                            {(() => {
+                              const cleanSize = size.replace(/\([^)]*\)/, '').trim();
+                              const numericFormat = cleanSize === 'Piccola' ? '0.2l' : 
+                                                  cleanSize === 'Media' ? '0.4l' : 
+                                                  cleanSize === 'Grande' || cleanSize === 'Boccale' ? '1l' : '';
+                              return `${cleanSize}${numericFormat ? ` (${numericFormat})` : ''}`;
+                            })()}
                           </span>
                           <span className="text-sm font-bold text-primary">€{Number(price).toFixed(2)}</span>
                         </div>
@@ -105,19 +111,19 @@ export default function TapList({ tapList }: TapListProps) {
                       <>
                         {tap.priceSmall && (
                           <div className="flex justify-between items-center">
-                            <span className="text-xs text-gray-600 font-medium">Piccola</span>
+                            <span className="text-xs text-gray-600 font-medium">Piccola (0.2l)</span>
                             <span className="text-sm font-bold text-primary">€{tap.priceSmall}</span>
                           </div>
                         )}
                         {tap.priceMedium && (
                           <div className="flex justify-between items-center">
-                            <span className="text-xs text-gray-600 font-medium">Media</span>
+                            <span className="text-xs text-gray-600 font-medium">Media (0.4l)</span>
                             <span className="text-sm font-bold text-primary">€{tap.priceMedium}</span>
                           </div>
                         )}
                         {tap.priceLarge && (
                           <div className="flex justify-between items-center">
-                            <span className="text-xs text-gray-600 font-medium">Grande</span>
+                            <span className="text-xs text-gray-600 font-medium">Boccale (1l)</span>
                             <span className="text-sm font-bold text-primary">€{tap.priceLarge}</span>
                           </div>
                         )}
