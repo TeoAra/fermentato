@@ -27,10 +27,15 @@ import {
   ChevronUp,
   Trash2,
   AlertTriangle,
-  Settings
+  Settings,
+  Building,
+  Store
 } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Link } from "wouter";
 import type { User as UserType } from "@shared/schema";
+import UserFavoritesSection from "@/components/UserFavoritesSection";
+import BeerTastingsEditor from "@/components/BeerTastingsEditor";
 
 export default function UserProfile() {
   const { user, isAuthenticated, isLoading } = useAuth();
@@ -43,6 +48,7 @@ export default function UserProfile() {
   const [showAccountSettings, setShowAccountSettings] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [isEditingNickname, setIsEditingNickname] = useState(false);
+  const [newNickname, setNewNickname] = useState(typedUser?.nickname || "");
   
   const [editedProfile, setEditedProfile] = useState({
     nickname: typedUser?.nickname || "",
@@ -314,7 +320,7 @@ export default function UserProfile() {
                 {typedUser.userType === 'admin' && (
                   <div className="mt-2">
                     <Button asChild size="sm" className="bg-red-600 hover:bg-red-700">
-                      <Link href="/admin/dashboard">
+                      <Link href="/admin">
                         <Shield className="w-4 h-4 mr-2" />
                         Pannello Admin
                       </Link>
@@ -447,65 +453,8 @@ export default function UserProfile() {
               </CardContent>
             </Card>
 
-            {/* Beer Tastings */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Beer className="w-5 h-5" />
-                  Birre Assaggiate ({beerTastings.length})
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                {beerTastings.length > 0 ? (
-                  <div className="space-y-3">
-                    {beerTastings.slice(0, 5).map((tasting: any) => (
-                      <div key={tasting.id} className="flex items-center justify-between p-3 border rounded-lg">
-                        <div className="flex items-center gap-3">
-                          <img
-                            src={tasting.beer.imageUrl || '/default-beer.jpg'}
-                            alt={tasting.beer.name}
-                            className="w-10 h-10 rounded object-cover"
-                          />
-                          <div>
-                            <h4 className="font-medium">{tasting.beer.name}</h4>
-                            <p className="text-sm text-gray-600">{tasting.brewery?.name}</p>
-                            {tasting.notes && (
-                              <p className="text-xs text-gray-700 dark:text-gray-300 italic mt-1 bg-gray-50 dark:bg-gray-800 px-2 py-1 rounded">
-                                "{tasting.notes}"
-                              </p>
-                            )}
-                            <p className="text-xs text-gray-500">
-                              {new Date(tasting.tastedAt).toLocaleDateString('it-IT')}
-                            </p>
-                          </div>
-                        </div>
-                        <div className="flex items-center gap-1">
-                          {[1, 2, 3, 4, 5].map((star) => (
-                            <Star
-                              key={star}
-                              className={`w-4 h-4 ${
-                                star <= (tasting.rating || 0)
-                                  ? "fill-amber-400 text-amber-400"
-                                  : "text-gray-300"
-                              }`}
-                            />
-                          ))}
-                        </div>
-                      </div>
-                    ))}
-                    {beerTastings.length > 5 && (
-                      <p className="text-sm text-gray-500 text-center">
-                        e altre {beerTastings.length - 5} birre...
-                      </p>
-                    )}
-                  </div>
-                ) : (
-                  <p className="text-gray-500 dark:text-gray-400 text-center py-4">
-                    Non hai ancora assaggiato nessuna birra
-                  </p>
-                )}
-              </CardContent>
-            </Card>
+            {/* Beer Tastings with Editor */}
+            <BeerTastingsEditor beerTastings={beerTastings} />
 
             {/* Favorites */}
             <Card>
@@ -658,6 +607,9 @@ export default function UserProfile() {
             </Card>
           </div>
         </div>
+
+        {/* User Favorites Section */}
+        <UserFavoritesSection enrichedFavorites={enrichedFavorites} />
       </div>
     </div>
   );

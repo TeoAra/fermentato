@@ -11,7 +11,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Search, Plus, Edit, Trash2, BeerIcon, Building2, MapPin } from "lucide-react";
+import { Search, Plus, Edit, Trash2, BeerIcon, Building2, MapPin, Upload } from "lucide-react";
 
 interface AdminContentManagerProps {
   type: 'beers' | 'breweries' | 'pubs';
@@ -181,21 +181,7 @@ export default function AdminContentManager({ type }: AdminContentManagerProps) 
           />
         </div>
 
-        <div>
-          <Label htmlFor="breweryId">Birrificio *</Label>
-          <Select name="breweryId" defaultValue={item?.breweryId?.toString()}>
-            <SelectTrigger className="mt-1">
-              <SelectValue placeholder="Seleziona birrificio..." />
-            </SelectTrigger>
-            <SelectContent>
-              {breweries.map((brewery: any) => (
-                <SelectItem key={brewery.id} value={brewery.id.toString()}>
-                  {brewery.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
+        <BrewerySearchField defaultBrewery={item?.brewery} />
 
         <div>
           <Label htmlFor="style">Stile *</Label>
@@ -245,15 +231,21 @@ export default function AdminContentManager({ type }: AdminContentManagerProps) 
         </div>
 
         <div>
-          <Label htmlFor="imageUrl">URL Immagine *</Label>
-          <Input 
-            id="imageUrl" 
-            name="imageUrl" 
-            type="url" 
-            defaultValue={item?.imageUrl} 
-            required 
-            className="mt-1"
-          />
+          <Label htmlFor="imageUrl">Immagine Birra *</Label>
+          <div className="flex gap-2 mt-1">
+            <Input 
+              id="imageUrl" 
+              name="imageUrl" 
+              type="url" 
+              defaultValue={item?.imageUrl} 
+              required 
+              placeholder="URL immagine birra"
+              className="flex-1"
+            />
+            <Button type="button" variant="outline" size="sm">
+              <Upload className="w-4 h-4" />
+            </Button>
+          </div>
         </div>
 
         <div>
@@ -455,6 +447,86 @@ export default function AdminContentManager({ type }: AdminContentManagerProps) 
           {item ? 'Aggiorna Pub' : 'Crea Pub'}
         </Button>
       </form>
+    );
+  };
+
+  // Component for brewery search with autocomplete
+  const BrewerySearchField = ({ defaultBrewery }: { defaultBrewery?: any }) => {
+    const [searchQuery, setSearchQuery] = useState(defaultBrewery?.name || "");
+    const [selectedBrewery, setSelectedBrewery] = useState(defaultBrewery);
+    const [breweryResults, setBreweryResults] = useState<any[]>([]);
+    const [showResults, setShowResults] = useState(false);
+
+    const searchBreweries = async (query: string) => {
+      if (query.length < 2) {
+        setBreweryResults([]);
+        return;
+      }
+      
+      try {
+        const response = await fetch(`/api/admin/breweries/search?q=${encodeURIComponent(query)}&limit=10`, {
+          credentials: 'include'
+        });
+        const results = await response.json();
+        setBreweryResults(results);
+        setShowResults(true);
+      } catch (error) {
+        console.error('Error searching breweries:', error);
+      }
+    };
+
+    const selectBrewery = (brewery: any) => {
+      setSelectedBrewery(brewery);
+      setSearchQuery(brewery.name);
+      setShowResults(false);
+      setBreweryResults([]);
+    };
+
+    return (
+      <div className="relative">
+        <Label htmlFor="brewerySearch">Birrificio *</Label>
+        <Input
+          id="brewerySearch"
+          type="text"
+          value={searchQuery}
+          onChange={(e) => {
+            setSearchQuery(e.target.value);
+            searchBreweries(e.target.value);
+          }}
+          onFocus={() => {
+            if (breweryResults.length > 0) setShowResults(true);
+          }}
+          onBlur={() => {
+            // Delay to allow clicking on results
+            setTimeout(() => setShowResults(false), 200);
+          }}
+          placeholder="Cerca birrificio..."
+          required
+          className="mt-1"
+        />
+        <input
+          type="hidden"
+          name="breweryId"
+          value={selectedBrewery?.id || ""}
+          required
+        />
+        
+        {showResults && breweryResults.length > 0 && (
+          <div className="absolute z-10 w-full mt-1 bg-white dark:bg-gray-800 border rounded-md shadow-lg max-h-60 overflow-y-auto">
+            {breweryResults.map((brewery) => (
+              <button
+                key={brewery.id}
+                type="button"
+                onClick={() => selectBrewery(brewery)}
+                className="w-full px-3 py-2 text-left hover:bg-gray-100 dark:hover:bg-gray-700 border-b last:border-b-0"
+              >
+                <div className="font-medium">{brewery.name}</div>
+                <div className="text-sm text-gray-600 dark:text-gray-400">{brewery.location}</div>
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
     );
   };
 

@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { useParams, Link } from "wouter";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { 
@@ -82,6 +83,7 @@ export default function BeerDetail() {
   const { user, isAuthenticated } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const [showTastingForm, setShowTastingForm] = useState(false);
   
   const { data: beer, isLoading: beerLoading } = useQuery<Beer>({
     queryKey: ["/api/beers", id],
@@ -102,6 +104,15 @@ export default function BeerDetail() {
   const isBeerFavorited = Array.isArray(favorites) && favorites.some((fav: any) => 
     fav.itemType === 'beer' && fav.itemId === parseInt(id || '0')
   );
+
+  // Check if user has already tasted this beer
+  const { data: userTastings = [] } = useQuery({
+    queryKey: ["/api/user/beer-tastings"],
+    enabled: isAuthenticated,
+  });
+
+  const existingTasting = userTastings.find((tasting: any) => tasting.beerId === parseInt(id || '0'));
+  const hasTasted = !!existingTasting;
 
   // Favorite mutation
   const favoriteMutation = useMutation({
@@ -447,11 +458,23 @@ export default function BeerDetail() {
                 </Button>
                 
                 {/* Beer Tasting Form Integrated */}
-                <BeerTastingForm 
-                  beerId={parseInt(id || '0')} 
-                  beerName={beer?.name || ''} 
-                  existingTasting={null} 
-                />
+                {hasTasted ? (
+                  <Button 
+                    className="w-full bg-green-600 hover:bg-green-700"
+                    onClick={() => {
+                      // Open edit existing tasting modal
+                      setShowTastingForm(true);
+                    }}
+                  >
+                    ✓ Hai bevuto questa birra il {new Date(existingTasting.tastedAt).toLocaleDateString('it-IT')}
+                  </Button>
+                ) : (
+                  <BeerTastingForm 
+                    beerId={parseInt(id || '0')} 
+                    beerName={beer?.name || ''} 
+                    existingTasting={null} 
+                  />
+                )}
                 
                 <Button 
                   variant="outline" 

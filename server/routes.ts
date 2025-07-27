@@ -827,6 +827,36 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get user beer tastings
+  app.get('/api/user/beer-tastings', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const tastings = await storage.getUserBeerTastings(userId);
+      res.json(tastings);
+    } catch (error) {
+      console.error("Error fetching beer tastings:", error);
+      res.status(500).json({ message: "Failed to fetch beer tastings" });
+    }
+  });
+
+  // Update beer tasting
+  app.patch('/api/user/beer-tastings/:id', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const tastingId = parseInt(req.params.id);
+      const { personalNotes, rating } = req.body;
+
+      const updatedTasting = await storage.updateBeerTasting(tastingId, userId, { 
+        personalNotes, 
+        rating 
+      });
+      res.json(updatedTasting);
+    } catch (error) {
+      console.error("Error updating beer tasting:", error);
+      res.status(500).json({ message: "Failed to update beer tasting" });
+    }
+  });
+
   // Admin-only middleware
   const isAdmin = async (req: any, res: any, next: any) => {
     const userId = req.user?.claims?.sub;
