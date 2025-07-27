@@ -309,8 +309,8 @@ export class DatabaseStorage implements IStorage {
         breweryRegion: breweries.region,
       })
       .from(tapList)
-      .innerJoin(beers, eq(tapList.beerId, beers.id))
-      .innerJoin(breweries, eq(beers.breweryId, breweries.id))
+      .leftJoin(beers, eq(tapList.beerId, beers.id))
+      .leftJoin(breweries, eq(beers.breweryId, breweries.id))
       .where(eq(tapList.pubId, pubId))
       .orderBy(asc(tapList.tapNumber));
 
@@ -396,70 +396,12 @@ export class DatabaseStorage implements IStorage {
   // Bottle list operations
   async getBottleList(pubId: number): Promise<BottleList[]> {
     const results = await db
-      .select({
-        id: bottleList.id,
-        pubId: bottleList.pubId,
-        beerId: bottleList.beerId,
-        isActive: bottleList.isActive,
-        isVisible: bottleList.isVisible,
-        prices: bottleList.prices,
-        priceBottle: bottleList.priceBottle,
-        bottleSize: bottleList.bottleSize,
-        quantity: bottleList.quantity,
-        description: bottleList.description,
-        addedAt: bottleList.addedAt,
-        updatedAt: bottleList.updatedAt,
-
-        beerName: beers.name,
-        beerStyle: beers.style,
-        beerAbv: beers.abv,
-        beerIbu: beers.ibu,
-        beerDescription: beers.description,
-        beerImageUrl: beers.imageUrl,
-        beerBottleImageUrl: beers.bottleImageUrl,
-        breweryId: breweries.id,
-        breweryName: breweries.name,
-        breweryLogoUrl: breweries.logoUrl,
-        breweryCountry: breweries.country,
-        breweryRegion: breweries.region,
-      })
+      .select()
       .from(bottleList)
-      .innerJoin(beers, eq(bottleList.beerId, beers.id))
-      .innerJoin(breweries, eq(beers.breweryId, breweries.id))
       .where(eq(bottleList.pubId, pubId))
-      .orderBy(asc(beers.name));
+      .orderBy(asc(bottleList.id));
 
-    return results.map(row => ({
-      id: row.id,
-      pubId: row.pubId,
-      beerId: row.beerId,
-      isActive: row.isActive,
-      isVisible: row.isVisible,
-      prices: row.prices,
-      priceBottle: row.priceBottle,
-      bottleSize: row.bottleSize,
-      quantity: row.quantity,
-      notes: row.description,
-      addedAt: row.addedAt,
-      updatedAt: row.updatedAt,
-      beer: {
-        id: row.beerId,
-        name: row.beerName,
-        style: row.beerStyle,
-        abv: row.beerAbv,
-        ibu: row.beerIbu,
-        description: row.beerDescription,
-        imageUrl: row.beerImageUrl,
-        bottleImageUrl: row.beerBottleImageUrl,
-        brewery: {
-          id: row.breweryId,
-          name: row.breweryName,
-          logoUrl: row.breweryLogoUrl,
-          country: row.breweryCountry,
-          region: row.breweryRegion,
-        }
-      }
-    }));
+    return results;
   }
 
   async addToBottleList(item: InsertBottleList): Promise<BottleList> {

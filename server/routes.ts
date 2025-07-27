@@ -869,6 +869,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Reorder menu categories 
+  app.patch("/api/pubs/:id/menu/categories/:categoryId/reorder", isAuthenticated, async (req, res) => {
+    try {
+      const userId = (req.user as any)?.claims?.sub;
+      if (!userId) return res.status(401).json({ message: "Unauthorized" });
+
+      const pubId = parseInt(req.params.id);
+      const pubs = await storage.getPubsByOwner(userId);
+      const pub = pubs.length > 0 ? pubs[0] : null;
+      if (!pub || pub.id !== pubId) {
+        return res.status(403).json({ message: "Not authorized to manage this pub" });
+      }
+
+      const categoryId = parseInt(req.params.categoryId);
+      const { newOrderIndex } = req.body;
+      
+      const category = await storage.updateMenuCategory(categoryId, { orderIndex: newOrderIndex });
+      res.json(category);
+    } catch (error) {
+      console.error("Error reordering menu category:", error);
+      res.status(500).json({ message: "Failed to reorder menu category" });
+    }
+  });
+
   app.get("/api/favorites/:itemType/:itemId/check", isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
