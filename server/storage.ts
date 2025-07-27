@@ -32,6 +32,9 @@ import {
   type InsertUserActivity,
   type Rating,
   type InsertRating,
+  userBeerTastings,
+  type UserBeerTasting,
+  type InsertUserBeerTasting,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, asc, like, ilike, and, or, sql } from "drizzle-orm";
@@ -730,7 +733,9 @@ export class DatabaseStorage implements IStorage {
 
   // Favorites operations (universal system)
   async getFavoritesByUser(userId: string): Promise<any[]> {
+    console.log('Getting favorites for user:', userId);
     const userFavorites = await db.select().from(favorites).where(eq(favorites.userId, userId));
+    console.log('Raw favorites from DB:', userFavorites);
     
     // Get names for each favorite item
     const favoritesWithNames = await Promise.all(
@@ -754,10 +759,12 @@ export class DatabaseStorage implements IStorage {
             }
           }
         } catch (error) {
+          console.error('Error getting item name for favorite:', error);
           // Fallback to ID if item not found
           itemName = `${favorite.itemType} #${favorite.itemId}`;
         }
         
+        console.log('Favorite with name:', { ...favorite, itemName });
         return {
           ...favorite,
           itemName
@@ -765,6 +772,7 @@ export class DatabaseStorage implements IStorage {
       })
     );
     
+    console.log('Final favorites with names:', favoritesWithNames);
     return favoritesWithNames;
   }
 
@@ -872,6 +880,80 @@ export class DatabaseStorage implements IStorage {
 
   async getAllUsers(): Promise<User[]> {
     return await db.select().from(users).orderBy(desc(users.createdAt));
+  }
+
+  // User beer tastings operations
+  async getUserBeerTastings(userId: string): Promise<any[]> {
+    const tastings = await db
+      .select({
+        id: userBeerTastings.id,
+        beerId: userBeerTastings.beerId,
+        rating: userBeerTastings.rating,
+        personalNotes: userBeerTastings.personalNotes,
+        tastedAt: userBeerTastings.tastedAt,
+        pubId: userBeerTastings.pubId,
+        beer: {
+          id: beers.id,
+          name: beers.name,
+          style: beers.style,
+          abv: beers.abv,
+          imageUrl: beers.imageUrl
+        },
+        brewery: {
+          id: breweries.id,
+          name: breweries.name
+        },
+        pub: {
+          id: pubs.id,
+          name: pubs.name
+        }
+      })
+      .from(userBeerTastings)
+      .leftJoin(beers, eq(userBeerTastings.beerId, beers.id))
+      .leftJoin(breweries, eq(beers.breweryId, breweries.id))
+      .leftJoin(pubs, eq(userBeerTastings.pubId, pubs.id))
+      .where(eq(userBeerTastings.userId, userId))
+      .orderBy(desc(userBeerTastings.tastedAt));
+
+    return tastings;
+  }
+
+  async addBeerTasting(tastingData: InsertUserBeerTasting): Promise<UserBeerTasting> {
+    const [tasting] = await db.insert(userBeerTastings).values(tastingData).returning();
+    
+    // Add user activity
+    await this.addUserActivity({
+      userId: tastingData.userId,
+      activityType: 'beer_tasted',
+      itemType: 'beer',
+      itemId: tastingData.beerId,
+      description: `Assaggiata nuova birra`,
+    });
+
+    return tasting;
+  }
+
+  async updateBeerTasting(tastingId: number, userId: string, updates: Partial<InsertUserBeerTasting>): Promise<UserBeerTasting> {
+    const [tasting] = await db
+      .update(userBeerTastings)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(and(eq(userBeerTastings.id, tastingId), eq(userBeerTastings.userId, userId)))
+      .returning();
+    return tasting;
+  }
+
+  async removeBeerTasting(userId: string, beerId: number): Promise<void> {
+    await db
+      .delete(userBeerTastings)
+      .where(and(eq(userBeerTastings.userId, userId), eq(userBeerTastings.beerId, beerId)));
+  }
+
+  async getBeerTasting(userId: string, beerId: number): Promise<UserBeerTasting | undefined> {
+    const [tasting] = await db
+      .select()
+      .from(userBeerTastings)
+      .where(and(eq(userBeerTastings.userId, userId), eq(userBeerTastings.beerId, beerId)));
+    return tasting;
   }
 
   async getAllPubs(): Promise<Pub[]> {

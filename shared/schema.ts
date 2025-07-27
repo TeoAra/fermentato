@@ -204,6 +204,21 @@ export const userActivities = pgTable("user_activities", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+// User beer tastings - birre assaggiate con note personali
+export const userBeerTastings = pgTable("user_beer_tastings", {
+  id: serial("id").primaryKey(),
+  userId: varchar("user_id").references(() => users.id, { onDelete: "cascade" }).notNull(),
+  beerId: integer("beer_id").references(() => beers.id).notNull(),
+  rating: integer("rating"), // 1-5 stelle (opzionale)
+  personalNotes: text("personal_notes"), // Note personali dell'utente
+  tastedAt: timestamp("tasted_at").defaultNow(),
+  pubId: integer("pub_id").references(() => pubs.id), // Dove l'ha assaggiata (opzionale)
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+}, (table) => [
+  unique().on(table.userId, table.beerId) // Un record per utente per birra
+]);
+
 // Ratings table
 export const ratings = pgTable("ratings", {
   id: serial("id").primaryKey(),
@@ -338,6 +353,9 @@ export type UserActivity = typeof userActivities.$inferSelect;
 
 export type InsertRating = typeof ratings.$inferInsert;
 export type Rating = typeof ratings.$inferSelect;
+
+export type InsertUserBeerTasting = typeof userBeerTastings.$inferInsert;
+export type UserBeerTasting = typeof userBeerTastings.$inferSelect;
 
 // Insert schemas
 export const insertBrewerySchema = createInsertSchema(breweries).omit({

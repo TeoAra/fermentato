@@ -1266,6 +1266,67 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // User beer tastings endpoints
+  app.get("/api/user/beer-tastings", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const tastings = await storage.getUserBeerTastings(userId);
+      res.json(tastings);
+    } catch (error) {
+      console.error("Error fetching user beer tastings:", error);
+      res.status(500).json({ message: "Failed to fetch beer tastings" });
+    }
+  });
+
+  app.post("/api/user/beer-tastings", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const tastingData = { ...req.body, userId };
+      const tasting = await storage.addBeerTasting(tastingData);
+      res.status(201).json(tasting);
+    } catch (error) {
+      console.error("Error adding beer tasting:", error);
+      res.status(500).json({ message: "Failed to add beer tasting" });
+    }
+  });
+
+  app.patch("/api/user/beer-tastings/:id", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const tastingId = parseInt(req.params.id);
+      const updated = await storage.updateBeerTasting(tastingId, userId, req.body);
+      res.json(updated);
+    } catch (error) {
+      console.error("Error updating beer tasting:", error);
+      res.status(500).json({ message: "Failed to update beer tasting" });
+    }
+  });
+
+  app.delete("/api/user/beer-tastings/:beerId", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const beerId = parseInt(req.params.beerId);
+      await storage.removeBeerTasting(userId, beerId);
+      res.status(200).json({ success: true });
+    } catch (error) {
+      console.error("Error removing beer tasting:", error);
+      res.status(500).json({ message: "Failed to remove beer tasting" });
+    }
+  });
+
+  // User profile update endpoint
+  app.patch("/api/user/profile", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const profileData = req.body;
+      const updatedUser = await storage.updateUserProfile(userId, profileData);
+      res.json(updatedUser);
+    } catch (error) {
+      console.error("Error updating user profile:", error);
+      res.status(500).json({ message: "Failed to update user profile" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }
