@@ -493,14 +493,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: 'Beer ID is required' });
       }
 
-      const item = await storage.addTapListItem(pubId, {
+      const item = await storage.addBeerToTap({
+        pubId,
         beerId: parseInt(beerId),
         priceSmall: priceSmall ? parseFloat(priceSmall) : null,
         priceMedium: priceMedium ? parseFloat(priceMedium) : null,
         prices: prices || null,
         isActive: Boolean(isActive),
         isVisible: Boolean(isVisible),
-        position: 0
+        tapNumber: 0
       });
       
       console.log('Taplist item added successfully:', item);

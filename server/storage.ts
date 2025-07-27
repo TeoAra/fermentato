@@ -188,6 +188,11 @@ export class DatabaseStorage implements IStorage {
     return await db.select().from(breweries).orderBy(sql`RANDOM()`).limit(limit);
   }
 
+  async getBeerCountByBrewery(breweryId: number): Promise<number> {
+    const result = await db.select({ count: sql<number>`count(*)` }).from(beers).where(eq(beers.breweryId, breweryId));
+    return result[0]?.count || 0;
+  }
+
   async getBrewery(id: number): Promise<Brewery | undefined> {
     const [brewery] = await db.select().from(breweries).where(eq(breweries.id, id));
     return brewery;
@@ -354,6 +359,11 @@ export class DatabaseStorage implements IStorage {
     return tapItem;
   }
 
+  async addTapListItem(item: InsertTapList): Promise<TapList> {
+    const [tapItem] = await db.insert(tapList).values(item).returning();
+    return tapItem;
+  }
+
   async updateTapListItem(id: number, updates: Partial<InsertTapList>): Promise<TapList> {
     const [tapItem] = await db
       .update(tapList)
@@ -373,6 +383,10 @@ export class DatabaseStorage implements IStorage {
   }
 
   async removeFromTapList(id: number): Promise<void> {
+    await db.delete(tapList).where(eq(tapList.id, id));
+  }
+
+  async removeTapListItem(id: number): Promise<void> {
     await db.delete(tapList).where(eq(tapList.id, id));
   }
 
@@ -485,13 +499,17 @@ export class DatabaseStorage implements IStorage {
     await db.delete(bottleList).where(eq(bottleList.id, id));
   }
 
+  async removeBeerFromBottles(id: number): Promise<void> {
+    await db.delete(bottleList).where(eq(bottleList.id, id));
+  }
+
   // Menu operations
   async getMenuCategories(pubId: number): Promise<MenuCategory[]> {
     return await db
       .select()
       .from(menuCategories)
       .where(eq(menuCategories.pubId, pubId))
-      .orderBy(asc(menuCategories.displayOrder));
+      .orderBy(asc(menuCategories.orderIndex));
   }
 
   async getMenuByPub(pubId: number): Promise<any[]> {
@@ -522,7 +540,7 @@ export class DatabaseStorage implements IStorage {
   async updateMenuCategory(id: number, updates: Partial<InsertMenuCategory>): Promise<MenuCategory> {
     const [category] = await db
       .update(menuCategories)
-      .set({ ...updates, updatedAt: new Date() })
+      .set(updates)
       .where(eq(menuCategories.id, id))
       .returning();
     return category;
@@ -537,7 +555,7 @@ export class DatabaseStorage implements IStorage {
       .select()
       .from(menuItems)
       .where(eq(menuItems.categoryId, categoryId))
-      .orderBy(asc(menuItems.displayOrder));
+      .orderBy(asc(menuItems.orderIndex));
   }
 
   async createMenuItem(itemData: InsertMenuItem): Promise<MenuItem> {
@@ -564,7 +582,7 @@ export class DatabaseStorage implements IStorage {
       .select()
       .from(pubSizes)
       .where(eq(pubSizes.pubId, pubId))
-      .orderBy(asc(pubSizes.volume));
+      .orderBy(asc(pubSizes.orderIndex));
   }
 
   async createPubSize(sizeData: InsertPubSize): Promise<PubSize> {
@@ -754,6 +772,137 @@ export class DatabaseStorage implements IStorage {
       beer.name.toLowerCase().includes(query.toLowerCase()) ||
       beer.style?.toLowerCase().includes(query.toLowerCase())
     );
+  }
+
+  // Additional admin and utility methods
+  async getUserCount(): Promise<number> {
+    const result = await db.select({ count: sql<number>`count(*)` }).from(users);
+    return result[0]?.count || 0;
+  }
+
+  async getPubCount(): Promise<number> {
+    const result = await db.select({ count: sql<number>`count(*)` }).from(pubs);
+    return result[0]?.count || 0;
+  }
+
+  async getBreweryCount(): Promise<number> {
+    const result = await db.select({ count: sql<number>`count(*)` }).from(breweries);
+    return result[0]?.count || 0;
+  }
+
+  async getBeerCount(): Promise<number> {
+    const result = await db.select({ count: sql<number>`count(*)` }).from(beers);
+    return result[0]?.count || 0;
+  }
+
+  async getAllUsers(): Promise<User[]> {
+    return await db.select().from(users).orderBy(desc(users.createdAt));
+  }
+
+  async getAllPubs(): Promise<Pub[]> {
+    return await db.select().from(pubs).orderBy(desc(pubs.createdAt));
+  }
+
+  async getAllBreweries(): Promise<Brewery[]> {
+    return await db.select().from(breweries).orderBy(asc(breweries.name));
+  }
+
+  async getAllBeers(): Promise<Beer[]> {
+    return await db.select().from(beers).orderBy(asc(beers.name));
+  }
+
+  async updateUserType(userId: string, userType: string): Promise<User> {
+    const [user] = await db
+      .update(users)
+      .set({ userType, updatedAt: new Date() })
+      .where(eq(users.id, userId))
+      .returning();
+    return user;
+  }
+
+  async deleteUser(id: string): Promise<void> {
+    await db.delete(users).where(eq(users.id, id));
+  }
+
+  async getBeerWithBrewery(id: number): Promise<any> {
+    const [result] = await db
+      .select({
+        id: beers.id,
+        name: beers.name,
+        style: beers.style,
+        abv: beers.abv,
+        ibu: beers.ibu,
+        description: beers.description,
+        imageUrl: beers.imageUrl,
+        breweryId: beers.breweryId,
+        breweryName: breweries.name,
+        breweryCountry: breweries.country,
+      })
+      .from(beers)
+      .leftJoin(breweries, eq(beers.breweryId, breweries.id))
+      .where(eq(beers.id, id));
+    return result;
+  }
+
+  async getBeerAvailability(beerId: number): Promise<any[]> {
+    const tapAvailability = await db
+      .select({
+        type: sql<string>`'tap'`,
+        pubId: tapList.pubId,
+        pubName: pubs.name,
+        isActive: tapList.isActive,
+      })
+      .from(tapList)
+      .leftJoin(pubs, eq(tapList.pubId, pubs.id))
+      .where(eq(tapList.beerId, beerId));
+
+    const bottleAvailability = await db
+      .select({
+        type: sql<string>`'bottle'`,
+        pubId: bottleList.pubId,
+        pubName: pubs.name,
+        isActive: bottleList.isActive,
+      })
+      .from(bottleList)
+      .leftJoin(pubs, eq(bottleList.pubId, pubs.id))
+      .where(eq(bottleList.beerId, beerId));
+
+    return [...tapAvailability, ...bottleAvailability];
+  }
+
+  async addRating(rating: any): Promise<any> {
+    // Placeholder - implement based on ratings schema
+    return rating;
+  }
+
+  async getRatingsByPub(pubId: number): Promise<any[]> {
+    // Placeholder - implement based on ratings schema
+    return [];
+  }
+
+  async removeBeerTasting(id: number): Promise<void> {
+    await db.delete(userBeerTastings).where(eq(userBeerTastings.id, id));
+  }
+
+  async updateUserProfile(userId: string, updates: any): Promise<User> {
+    return this.updateUser(userId, updates);
+  }
+
+  async updateUserNickname(userId: string, nickname: string): Promise<User> {
+    return this.updateUser(userId, { nickname });
+  }
+
+  async getUserBeerTasting(userId: string, beerId: number): Promise<UserBeerTasting | undefined> {
+    const [tasting] = await db
+      .select()
+      .from(userBeerTastings)
+      .where(
+        and(
+          eq(userBeerTastings.userId, userId),
+          eq(userBeerTastings.beerId, beerId)
+        )
+      );
+    return tasting;
   }
 }
 
