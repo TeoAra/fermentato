@@ -586,14 +586,16 @@ export default function SmartPubDashboard() {
                             Birre alla Spina ({typedTapList.length})
                           </div>
                           <Button 
-                            className="bg-primary"
+                            className="bg-gradient-to-r from-amber-500 via-orange-500 to-red-500 hover:from-amber-600 hover:via-orange-600 hover:to-red-600 text-white font-bold shadow-lg transform transition-all duration-200 hover:scale-105 active:scale-95"
                             onClick={() => {
-                              setPriceManagerType('tap');
+                              setPriceManagerType('taplist');
                               setShowBeerSearch(true);
                             }}
                           >
+                            <span className="text-sm mr-1">🍺</span>
                             <Plus className="w-4 h-4 mr-2" />
-                            Aggiungi Birra
+                            <span className="hidden sm:inline">Aggiungi Birra</span>
+                            <span className="sm:hidden">Aggiungi</span>
                           </Button>
                         </CardTitle>
                       </CardHeader>
@@ -1834,27 +1836,39 @@ export default function SmartPubDashboard() {
           setSearchQuery('');
           setReplacingBeer(null);
         }}>
-          <DialogContent className="max-w-5xl max-h-[85vh]">
-            <DialogHeader>
-              <DialogTitle className="text-xl font-bold">
-                {replacingBeer ? '🔄 Sostituisci Birra' : '🍺 Aggiungi Birra alla Taplist'}
+          <DialogContent className="max-w-4xl w-[95vw] max-h-[90vh] p-3 md:p-6">
+            <DialogHeader className="pb-3">
+              <DialogTitle className="text-lg md:text-xl font-bold flex items-center justify-between">
+                <span>{replacingBeer ? '🔄 Sostituisci Birra' : '🍺 Aggiungi Birra alla Taplist'}</span>
+                <Button 
+                  variant="ghost"
+                  size="sm"
+                  className="text-gray-500 hover:text-gray-700 md:hidden"
+                  onClick={() => {
+                    setShowBeerSearch(false);
+                    setReplacingBeer(null);
+                    setSearchQuery('');
+                  }}
+                >
+                  ✕
+                </Button>
               </DialogTitle>
             </DialogHeader>
             
-            <div className="space-y-4">
-              {/* SINGOLA BARRA DI RICERCA */}
+            <div className="space-y-3">
+              {/* BARRA DI RICERCA MOBILE-FIRST */}
               <div className="relative">
                 <Input 
-                  placeholder="🔍 Cerca per nome birra, birrificio o stile..."
+                  placeholder="🔍 Cerca birra, birrificio o stile..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="text-lg py-3 pr-20"
+                  className="text-base md:text-lg py-2.5 md:py-3 pr-16 md:pr-20"
                   autoFocus
                 />
                 <Button 
                   variant="ghost"
                   size="sm"
-                  className="absolute right-2 top-1/2 -translate-y-1/2"
+                  className="absolute right-1 top-1/2 -translate-y-1/2 hidden md:block"
                   onClick={() => {
                     setShowBeerSearch(false);
                     setReplacingBeer(null);
@@ -1865,41 +1879,41 @@ export default function SmartPubDashboard() {
                 </Button>
               </div>
 
-              {/* RISULTATI MIGLIORATI CON IMMAGINI */}
-              <div className="max-h-[500px] overflow-y-auto border rounded-lg bg-gray-50">
+              {/* RISULTATI MOBILE-FIRST */}
+              <div className="max-h-[400px] md:max-h-[500px] overflow-y-auto border rounded-lg bg-gray-50">
                 {beersLoading ? (
-                  <div className="flex items-center justify-center p-12">
-                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mr-3"></div>
-                    <span className="text-lg">Caricamento database birre...</span>
+                  <div className="flex items-center justify-center p-6 md:p-12">
+                    <div className="animate-spin rounded-full h-6 w-6 md:h-8 md:w-8 border-b-2 border-primary mr-2 md:mr-3"></div>
+                    <span className="text-sm md:text-lg">Caricamento database birre...</span>
                   </div>
                 ) : filteredBeers.length === 0 ? (
-                  <div className="p-12 text-center text-gray-500">
+                  <div className="p-6 md:p-12 text-center text-gray-500">
                     {searchQuery ? (
                       <div>
-                        <p className="text-lg">🚫 Nessuna birra trovata per "{searchQuery}"</p>
-                        <p className="text-sm mt-2">Prova con nomi diversi o abbreviazioni</p>
+                        <p className="text-sm md:text-lg">🚫 Nessuna birra trovata per "{searchQuery}"</p>
+                        <p className="text-xs md:text-sm mt-1 md:mt-2">Prova con nomi diversi o abbreviazioni</p>
                       </div>
                     ) : (
                       <div>
-                        <p className="text-lg">🔍 Inizia a digitare per cercare</p>
-                        <p className="text-sm mt-2">Database: 29.753 birre disponibili</p>
+                        <p className="text-sm md:text-lg">🔍 Inizia a digitare per cercare</p>
+                        <p className="text-xs md:text-sm mt-1 md:mt-2">Database: 29.753 birre disponibili</p>
                       </div>
                     )}
                   </div>
                 ) : (
-                  <div className="space-y-2 p-4">
+                  <div className="space-y-1 md:space-y-2 p-2 md:p-4">
                     {filteredBeers.slice(0, 50).map((beer: any) => (
                       <div 
                         key={beer.id} 
-                        className="flex items-start space-x-4 p-4 bg-white border rounded-lg hover:shadow-md transition-shadow"
+                        className="flex items-start space-x-2 md:space-x-4 p-2 md:p-4 bg-white border rounded-lg hover:shadow-md transition-shadow"
                       >
-                        {/* IMMAGINE BIRRA */}
+                        {/* IMMAGINE BIRRA MOBILE-FIRST */}
                         <div className="flex-shrink-0">
                           {beer.imageUrl || beer.bottleImageUrl ? (
                             <img 
                               src={beer.imageUrl || beer.bottleImageUrl} 
                               alt={beer.name}
-                              className="w-16 h-16 object-cover rounded-lg border"
+                              className="w-12 h-12 md:w-16 md:h-16 object-cover rounded-lg border"
                               onError={(e) => {
                                 e.currentTarget.style.display = 'none';
                                 e.currentTarget.nextElementSibling.style.display = 'flex';
@@ -1907,31 +1921,31 @@ export default function SmartPubDashboard() {
                             />
                           ) : null}
                           <div 
-                            className="w-16 h-16 bg-gradient-to-br from-amber-400 to-orange-600 rounded-lg border flex items-center justify-center"
+                            className="w-12 h-12 md:w-16 md:h-16 bg-gradient-to-br from-amber-400 to-orange-600 rounded-lg border flex items-center justify-center"
                             style={{ display: beer.imageUrl || beer.bottleImageUrl ? 'none' : 'flex' }}
                           >
-                            <span className="text-white text-2xl font-bold">🍺</span>
+                            <span className="text-white text-lg md:text-2xl font-bold">🍺</span>
                           </div>
                         </div>
 
-                        {/* INFO BIRRA */}
+                        {/* INFO BIRRA MOBILE-FIRST */}
                         <div className="flex-1 min-w-0">
-                          <h4 className="font-bold text-lg text-gray-900 truncate">{beer.name}</h4>
-                          <p className="text-md text-primary font-medium">
+                          <h4 className="font-bold text-sm md:text-lg text-gray-900 truncate">{beer.name}</h4>
+                          <p className="text-xs md:text-md text-primary font-medium truncate">
                             🏭 {beer.breweryName || beer.brewery?.name || 'Birrificio'}
                           </p>
-                          <div className="flex flex-wrap gap-3 mt-2 text-sm text-gray-600">
-                            {beer.style && <span className="bg-blue-100 px-2 py-1 rounded">🎨 {beer.style}</span>}
-                            {beer.abv && <span className="bg-green-100 px-2 py-1 rounded">🍺 {beer.abv}% ABV</span>}
+                          <div className="flex flex-wrap gap-1 md:gap-3 mt-1 md:mt-2 text-xs md:text-sm text-gray-600">
+                            {beer.style && <span className="bg-blue-100 px-1.5 md:px-2 py-0.5 md:py-1 rounded text-xs">🎨 {beer.style}</span>}
+                            {beer.abv && <span className="bg-green-100 px-1.5 md:px-2 py-0.5 md:py-1 rounded text-xs">🍺 {beer.abv}% ABV</span>}
                             {beer.ibu && <span className="bg-yellow-100 px-2 py-1 rounded">🌿 {beer.ibu} IBU</span>}
                           </div>
                         </div>
 
-                        {/* BOTTONE AZIONE */}
+                        {/* BOTTONE AZIONE MOBILE-FIRST */}
                         <div className="flex-shrink-0">
                           <Button
-                            size="lg"
-                            className="bg-primary hover:bg-primary/90 text-white font-bold px-6"
+                            size="sm"
+                            className="bg-primary hover:bg-primary/90 text-white font-bold text-xs md:text-sm px-2 md:px-4 py-1.5 md:py-2 h-auto whitespace-nowrap"
                             onClick={() => {
                               if (replacingBeer) {
                                 replaceBeerMutation.mutate({ 
@@ -1958,7 +1972,8 @@ export default function SmartPubDashboard() {
                               setSearchQuery('');
                             }}
                           >
-                            {replacingBeer ? '🔄 Sostituisci' : '⚙️ Configura Prezzi'}
+                            <span className="md:hidden">⚙️</span>
+                            <span className="hidden md:inline">{replacingBeer ? '🔄 Sostituisci' : '⚙️ Aggiungi'}</span>
                           </Button>
                         </div>
                       </div>
