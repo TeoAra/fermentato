@@ -4,7 +4,7 @@ import { storage } from "./storage";
 import { setupAuth, isAuthenticated } from "./replitAuth";
 import { registerAdminRoutes } from "./routes-admin";
 import { sql, eq } from "drizzle-orm";
-import { upload, uploadImage } from "./cloudinary";
+import { upload, uploadImage, cloudinary } from "./cloudinary";
 import { db } from "./db";
 import { breweries, beers, pubs, users, tapList } from "@shared/schema";
 
@@ -46,7 +46,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Get all pubs for explore page
   app.get("/api/pubs/all", async (req, res) => {
     try {
-      const pubs = await storage.getAllPubs();
+      const pubs = await storage.getPubs();
       res.json(pubs);
     } catch (error) {
       console.error("Error fetching all pubs:", error);
@@ -57,13 +57,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Get all breweries for explore page
   app.get("/api/breweries/all", async (req, res) => {
     try {
-      const breweries = await storage.getAllBreweries();
+      const breweries = await storage.getBreweries();
       
       // Add beer count for each brewery
       const breweriesWithCount = await Promise.all(
         breweries.map(async (brewery: any) => {
-          const beerCount = await storage.getBeerCountByBrewery(brewery.id);
-          return { ...brewery, beerCount };
+          const beerCount = await storage.getBeersByBrewery(brewery.id);
+          return { ...brewery, beerCount: beerCount.length };
         })
       );
       
@@ -77,7 +77,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Get unique beer styles for dropdown (must be before beers/:id)
   app.get("/api/beers/styles", async (req, res) => {
     try {
-      const styles = await storage.getUniqueStyles();
+      const beers = await storage.getBeers();
+      const uniqueStyles = [...new Set(beers.map(beer => beer.style).filter(Boolean))];
+      const styles = uniqueStyles.map(style => ({ style }));
       res.json(styles);
     } catch (error) {
       console.error("Error fetching beer styles:", error);

@@ -73,3 +73,4 @@ export function getPublicIdFromUrl(url: string): string | null {
 }
 
 export default cloudinary;
+export { cloudinary };

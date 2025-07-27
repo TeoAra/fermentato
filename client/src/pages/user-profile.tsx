@@ -35,7 +35,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Link } from "wouter";
 import type { User as UserType } from "@shared/schema";
 import UserFavoritesSection from "@/components/UserFavoritesSection";
-import BeerTastingsEditor from "@/components/BeerTastingsEditor";
+import BeerTastingsEditor from "@/components/BeerTastingsEditorNew";
 import { PubAutocomplete } from "@/components/PubAutocomplete";
 
 export default function UserProfile() {
