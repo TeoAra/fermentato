@@ -64,9 +64,8 @@ function Router() {
           <Route path="/explore/breweries" component={ExploreBreweries} />
           {/* Dashboard routes based on user type */}
           <Route path="/dashboard" component={
-            typedUser?.userType === 'admin' ? AdminDashboardNew :
             typedUser?.userType === 'pub_owner' ? SmartPubDashboard : 
-            UserDashboard
+            Dashboard
           } />
           <Route path="/admin" component={AdminDashboardNew} />
           <Route path="/admin/analytics" component={AdminAnalytics} />
