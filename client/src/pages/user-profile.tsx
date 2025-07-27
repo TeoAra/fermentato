@@ -97,6 +97,12 @@ export default function UserProfile() {
     enabled: isAuthenticated,
   });
 
+  // Process enriched favorites with item names  
+  const enrichedFavorites = Array.isArray(favorites) ? favorites.map((fav: any) => ({
+    ...fav,
+    itemName: fav.itemName || `${fav.itemType} #${fav.itemId}`
+  })) : [];
+
   // Check if nickname can be updated (15 days limit)
   const canUpdateNickname = () => {
     if (!typedUser?.lastNicknameUpdate) return true;
@@ -456,33 +462,34 @@ export default function UserProfile() {
             {/* Beer Tastings with Editor */}
             <BeerTastingsEditor beerTastings={beerTastings} />
 
-            {/* Favorites */}
+            {/* Favorites Summary */}
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <Heart className="w-5 h-5" />
-                  Preferiti ({favorites?.length || 0})
+                  Preferiti ({enrichedFavorites?.length || 0})
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                {favorites && favorites.length > 0 ? (
+                {enrichedFavorites && enrichedFavorites.length > 0 ? (
                   <div className="space-y-2">
-                    {(favorites || []).slice(0, 5).map((fav: any) => (
+                    {enrichedFavorites.slice(0, 5).map((fav: any) => (
                       <div key={fav.id} className="flex items-center justify-between">
                         <div className="flex items-center gap-2">
                           <Badge variant="outline" className="capitalize">
-                            {fav.itemType}
+                            {fav.itemType === 'brewery' ? 'Birrificio' : 
+                             fav.itemType === 'pub' ? 'Pub' : 'Birra'}
                           </Badge>
-                          <span className="text-sm">{fav.itemName}</span>
+                          <span className="text-sm">{fav.itemName || `${fav.itemType} #${fav.itemId}`}</span>
                         </div>
                         <span className="text-xs text-gray-500">
                           {new Date(fav.createdAt).toLocaleDateString('it-IT')}
                         </span>
                       </div>
                     ))}
-                    {favorites && favorites.length > 5 && (
+                    {enrichedFavorites.length > 5 && (
                       <p className="text-sm text-gray-500 text-center">
-                        e altri {(favorites?.length || 0) - 5} preferiti...
+                        e altri {enrichedFavorites.length - 5} preferiti...
                       </p>
                     )}
                   </div>
