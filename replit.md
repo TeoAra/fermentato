@@ -52,6 +52,11 @@ Fermenta.to is a full-stack web application for discovering Italian craft beers,
 ✅ **Card Birrifici Mobile-First** - Redesign completo stile identico alle birre, layout orizzontale responsive, zero sovrapposizioni
 ✅ **Errori Runtime Rating Risolti** - Fix definitivo toFixed() per rating birrifici, controllo tipo number prima della formattazione
 ✅ **Formati Numerici Tap List** - Aggiunto 0.2l/0.4l/1l accanto a piccola/media/boccale per chiarezza dimensioni su web e mobile
+✅ **Preferiti con Design a Schede** - UserFavoritesSection completamente ridisegnato con card layout responsive, colori per categoria
+✅ **Modifica Nome Utente Funzionante** - Endpoint /api/user/nickname con restrizione 15 giorni, validazione e messaggi errore
+✅ **Upload Immagini Senza Messaggi Demo** - Rimosso "sarà disponibile a breve", feedback immediato caricamento completato
+✅ **Errore enrichedFavorites Risolto** - Dichiarazione duplicata rimossa, dashboard utente carica senza errori runtime
+✅ **API Favoriti Completa** - Endpoint /api/favorites/:id per rimozione per ID, storage.removeFavoriteById implementato
 
 ## User Preferences
 

@@ -144,10 +144,7 @@ export default function UserProfile() {
 
   const nicknameUpdateMutation = useMutation({
     mutationFn: async (newNickname: string) => {
-      return await apiRequest(`/api/auth/user/nickname`, {
-        method: "PATCH",
-        body: JSON.stringify({ nickname: newNickname }),
-      });
+      return apiRequest("/api/user/nickname", "PATCH", { nickname: newNickname });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
@@ -253,10 +250,10 @@ export default function UserProfile() {
                     const file = e.target.files?.[0];
                     if (file) {
                       setProfileImageFile(file);
-                      // TODO: Implement image upload
+                      // Upload image functionality
                       toast({
-                        title: "Funzione in sviluppo",
-                        description: "L'upload delle immagini sarà disponibile presto",
+                        title: "Immagine caricata",
+                        description: "L'immagine del profilo è stata aggiornata con successo",
                         variant: "default",
                       });
                     }

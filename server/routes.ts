@@ -722,6 +722,60 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Update user profile
+  app.patch('/api/user/profile', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const updates = req.body;
+      
+      const updatedUser = await storage.updateUser(userId, updates);
+      res.json(updatedUser);
+    } catch (error) {
+      console.error("Error updating user profile:", error);
+      res.status(500).json({ message: "Failed to update profile" });
+    }
+  });
+
+  // Update user nickname
+  app.patch('/api/user/nickname', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { nickname } = req.body;
+
+      if (!nickname || nickname.trim().length < 2) {
+        return res.status(400).json({ message: "Il nickname deve contenere almeno 2 caratteri" });
+      }
+
+      const user = await storage.getUser(userId);
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      // Check if 15 days have passed since last nickname update
+      if (user.lastNicknameUpdate) {
+        const lastUpdate = new Date(user.lastNicknameUpdate);
+        const now = new Date();
+        const daysDiff = (now.getTime() - lastUpdate.getTime()) / (1000 * 3600 * 24);
+        
+        if (daysDiff < 15) {
+          return res.status(400).json({ 
+            message: `Puoi cambiare il nickname solo ogni 15 giorni. Riprova tra ${Math.ceil(15 - daysDiff)} giorni.` 
+          });
+        }
+      }
+
+      const updatedUser = await storage.updateUser(userId, {
+        nickname: nickname.trim(),
+        lastNicknameUpdate: new Date(),
+      });
+
+      res.json(updatedUser);
+    } catch (error) {
+      console.error("Error updating nickname:", error);
+      res.status(500).json({ message: "Failed to update nickname" });
+    }
+  });
+
   // Universal Favorites routes
   app.get("/api/favorites", isAuthenticated, async (req: any, res) => {
     try {
@@ -780,6 +834,34 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(204).send();
     } catch (error) {
       console.error("Error removing favorite:", error);
+      res.status(500).json({ message: "Failed to remove favorite" });
+    }
+  });
+
+  // Delete favorite by ID (used by UserFavoritesSection)
+  app.delete("/api/favorites/:id", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const favoriteId = parseInt(req.params.id);
+      
+      await storage.removeFavoriteById(userId, favoriteId);
+      res.status(204).send();
+    } catch (error) {
+      console.error("Error removing favorite by ID:", error);
+      res.status(500).json({ message: "Failed to remove favorite" });
+    }
+  });
+
+  // Delete favorite by ID (used by UserFavoritesSection)
+  app.delete("/api/favorites/:id", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const favoriteId = parseInt(req.params.id);
+      
+      await storage.removeFavoriteById(userId, favoriteId);
+      res.status(204).send();
+    } catch (error) {
+      console.error("Error removing favorite by ID:", error);
       res.status(500).json({ message: "Failed to remove favorite" });
     }
   });
