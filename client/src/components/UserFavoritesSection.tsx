@@ -69,7 +69,7 @@ export default function UserFavoritesSection({ enrichedFavorites }: UserFavorite
               variant="ghost"
               size="sm"
               className="h-6 w-6 p-0"
-              onClick={() => window.open(`/beers/${fav.itemId}`, '_blank')}
+              onClick={() => window.open(`/beer/${fav.itemId}`, '_blank')}
             >
               <ExternalLink className="w-3 h-3" />
             </Button>
@@ -109,7 +109,7 @@ export default function UserFavoritesSection({ enrichedFavorites }: UserFavorite
               variant="ghost"
               size="sm"
               className="h-6 w-6 p-0"
-              onClick={() => window.open(`/breweries/${fav.itemId}`, '_blank')}
+              onClick={() => window.open(`/brewery/${fav.itemId}`, '_blank')}
             >
               <ExternalLink className="w-3 h-3" />
             </Button>
@@ -149,7 +149,7 @@ export default function UserFavoritesSection({ enrichedFavorites }: UserFavorite
               variant="ghost"
               size="sm"
               className="h-6 w-6 p-0"
-              onClick={() => window.open(`/pubs/${fav.itemId}`, '_blank')}
+              onClick={() => window.open(`/pub/${fav.itemId}`, '_blank')}
             >
               <ExternalLink className="w-3 h-3" />
             </Button>

@@ -57,6 +57,11 @@ Fermenta.to is a full-stack web application for discovering Italian craft beers,
 ✅ **Upload Immagini Senza Messaggi Demo** - Rimosso "sarà disponibile a breve", feedback immediato caricamento completato
 ✅ **Errore enrichedFavorites Risolto** - Dichiarazione duplicata rimossa, dashboard utente carica senza errori runtime
 ✅ **API Favoriti Completa** - Endpoint /api/favorites/:id per rimozione per ID, storage.removeFavoriteById implementato
+✅ **URLs Favoriti Corretti** - Fix redirect da beers → beer, breweries → brewery, pubs → pub per navigazione corretta
+✅ **Sistema Nickname Completo** - Endpoint /api/user/nickname funzionante con restrizione 15 giorni e validazione italiana
+✅ **Upload Immagine Profilo Reale** - Integrazione Cloudinary per upload autentici con trasformazione 400x400
+✅ **Componente Pub Autocomplete** - Input con ricerca testuale per selezione pub invece di dropdown statico
+✅ **Storage Database Ottimizzato** - File storage.ts pulito, eliminati metodi duplicati, API complete e funzionanti
 
 ## User Preferences
 

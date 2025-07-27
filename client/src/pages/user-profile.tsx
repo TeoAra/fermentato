@@ -36,6 +36,7 @@ import { Link } from "wouter";
 import type { User as UserType } from "@shared/schema";
 import UserFavoritesSection from "@/components/UserFavoritesSection";
 import BeerTastingsEditor from "@/components/BeerTastingsEditor";
+import { PubAutocomplete } from "@/components/PubAutocomplete";
 
 export default function UserProfile() {
   const { user, isAuthenticated, isLoading } = useAuth();
@@ -246,16 +247,38 @@ export default function UserProfile() {
                   type="file"
                   accept="image/*"
                   className="hidden"
-                  onChange={(e) => {
+                  onChange={async (e) => {
                     const file = e.target.files?.[0];
                     if (file) {
                       setProfileImageFile(file);
-                      // Upload image functionality
-                      toast({
-                        title: "Immagine caricata",
-                        description: "L'immagine del profilo è stata aggiornata con successo",
-                        variant: "default",
-                      });
+                      try {
+                        const formData = new FormData();
+                        formData.append('image', file);
+                        
+                        const response = await fetch('/api/user/upload-profile-image', {
+                          method: 'POST',
+                          body: formData,
+                        });
+                        
+                        if (response.ok) {
+                          const { imageUrl } = await response.json();
+                          // Update user profile with new image
+                          await updateProfileMutation.mutateAsync({ profileImageUrl: imageUrl });
+                          toast({
+                            title: "Immagine caricata",
+                            description: "L'immagine del profilo è stata aggiornata con successo",
+                            variant: "default",
+                          });
+                        } else {
+                          throw new Error('Upload failed');
+                        }
+                      } catch (error) {
+                        toast({
+                          title: "Errore",
+                          description: "Impossibile caricare l'immagine",
+                          variant: "destructive",
+                        });
+                      }
                     }
                   }}
                 />

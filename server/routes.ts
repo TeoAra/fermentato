@@ -889,11 +889,76 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const userId = req.user.claims.sub;
       const updates = req.body;
-      const user = await storage.updateUserProfile(userId, updates);
+      const user = await storage.updateUser(userId, updates);
       res.json(user);
     } catch (error) {
       console.error("Error updating user profile:", error);
       res.status(500).json({ message: "Failed to update profile" });
+    }
+  });
+
+  // Update nickname with 15-day restriction
+  app.patch('/api/user/nickname', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { nickname } = req.body;
+      
+      if (!nickname || nickname.trim().length === 0) {
+        return res.status(400).json({ message: "Nickname è obbligatorio" });
+      }
+      
+      if (nickname.length > 50) {
+        return res.status(400).json({ message: "Il nickname deve essere massimo 50 caratteri" });
+      }
+      
+      const user = await storage.getUser(userId);
+      if (!user) {
+        return res.status(404).json({ message: "Utente non trovato" });
+      }
+      
+      // Check if 15 days have passed since last update
+      if (user.lastNicknameUpdate) {
+        const lastUpdate = new Date(user.lastNicknameUpdate);
+        const now = new Date();
+        const daysDiff = (now.getTime() - lastUpdate.getTime()) / (1000 * 3600 * 24);
+        
+        if (daysDiff < 15) {
+          const daysRemaining = Math.ceil(15 - daysDiff);
+          return res.status(400).json({ 
+            message: `Puoi modificare il nickname tra ${daysRemaining} giorni` 
+          });
+        }
+      }
+      
+      const updatedUser = await storage.updateUser(userId, { 
+        nickname: nickname.trim(),
+        lastNicknameUpdate: new Date(),
+        updatedAt: new Date()
+      });
+      res.json(updatedUser);
+    } catch (error) {
+      console.error("Error updating nickname:", error);
+      res.status(500).json({ message: "Errore aggiornamento nickname" });
+    }
+  });
+
+  // Upload profile image
+  app.post('/api/user/upload-profile-image', isAuthenticated, upload.single('image'), async (req: any, res) => {
+    try {
+      if (!req.file) {
+        return res.status(400).json({ message: "Nessuna immagine caricata" });
+      }
+
+      const result = await cloudinary.uploader.upload(req.file.path, {
+        folder: 'profile-images',
+        public_id: `user-${req.user.claims.sub}-${Date.now()}`,
+        transformation: [{ width: 400, height: 400, crop: 'fill' }]
+      });
+
+      res.json({ imageUrl: result.secure_url });
+    } catch (error) {
+      console.error("Error uploading profile image:", error);
+      res.status(500).json({ message: "Errore upload immagine" });
     }
   });
 
