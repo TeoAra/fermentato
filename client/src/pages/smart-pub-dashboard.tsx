@@ -209,13 +209,13 @@ export default function SmartPubDashboard() {
     mutationFn: async ({ id, data }: { id: number | string; data: any }) => {
       if (id === -1) {
         // Create new category
-        return apiRequest(`/api/pubs/${currentPub?.id}/menu/categories`, 'POST', data);
+        return apiRequest(`/api/pubs/${currentPub?.id}/menu-categories`, 'POST', data);
       } else if (id === -2) {
         // Create new product
-        return apiRequest(`/api/pubs/${currentPub?.id}/menu/products`, 'POST', data);
+        return apiRequest(`/api/menu-items`, 'POST', data);
       } else {
         // Update existing
-        return apiRequest(`/api/pubs/${currentPub?.id}/menu/${id}`, 'PATCH', data);
+        return apiRequest(`/api/menu-categories/${id}`, 'PATCH', data);
       }
     },
     onSuccess: () => {
@@ -955,14 +955,21 @@ export default function SmartPubDashboard() {
                 )}
                 {currentSection === 'menu' && (
                   <div className="space-y-6">
-                    <div className="flex items-center justify-between">
-                      <h2 className="text-2xl font-bold text-gray-900">Gestione Menu</h2>
-                      <div className="flex space-x-2">
-                        <Button variant="outline" onClick={() => setEditingItem(-2)}>
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                      <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Gestione Menu</h2>
+                      <div className="flex flex-col sm:flex-row gap-2">
+                        <Button 
+                          variant="outline" 
+                          onClick={() => setEditingItem(-2)}
+                          className="w-full sm:w-auto"
+                        >
                           <Plus className="w-4 h-4 mr-2" />
                           Aggiungi Prodotto
                         </Button>
-                        <Button className="bg-primary" onClick={() => setEditingItem(-1)}>
+                        <Button 
+                          className="bg-primary w-full sm:w-auto" 
+                          onClick={() => setEditingItem(-1)}
+                        >
                           <Plus className="w-4 h-4 mr-2" />
                           Aggiungi Categoria
                         </Button>
@@ -1013,7 +1020,7 @@ export default function SmartPubDashboard() {
                           )}
                           
                           {typedMenuData.map((category: any) => (
-                            <div key={category.id} className="flex items-center justify-between p-4 border rounded-lg">
+                            <div key={category.id} className="flex flex-col sm:flex-row sm:items-center justify-between p-4 border rounded-lg space-y-3 sm:space-y-0">
                               <div className="flex-1">
                                 {editingItem === category.id ? (
                                   <div className="space-y-3">
@@ -1028,46 +1035,73 @@ export default function SmartPubDashboard() {
                                       onChange={(e) => setEditData({ ...editData, description: e.target.value })}
                                       rows={2}
                                     />
-                                    <div className="flex space-x-2">
-                                      <Button size="sm" onClick={() => updateMenuItemMutation.mutate({ id: category.id, data: editData })}>
+                                    <div className="flex flex-col sm:flex-row gap-2">
+                                      <Button 
+                                        size="sm" 
+                                        onClick={() => updateMenuItemMutation.mutate({ id: category.id, data: editData })}
+                                        className="w-full sm:w-auto"
+                                      >
                                         <Save className="w-4 h-4 mr-1" />
                                         Salva
                                       </Button>
-                                      <Button size="sm" variant="outline" onClick={() => setEditingItem(null)}>
+                                      <Button 
+                                        size="sm" 
+                                        variant="outline" 
+                                        onClick={() => setEditingItem(null)}
+                                        className="w-full sm:w-auto"
+                                      >
                                         Annulla
                                       </Button>
                                     </div>
                                   </div>
                                 ) : (
                                   <>
-                                    <h4 className="font-semibold">{category.name}</h4>
-                                    <p className="text-sm text-gray-600">{category.description}</p>
-                                    <div className="flex items-center space-x-4 mt-2">
+                                    <h4 className="font-semibold text-gray-900 dark:text-white">{category.name}</h4>
+                                    <p className="text-sm text-gray-600 dark:text-gray-300">{category.description}</p>
+                                    <div className="flex flex-wrap items-center gap-2 mt-2">
                                       <Badge variant={category.isVisible ? "default" : "secondary"}>
                                         {category.isVisible ? "Visibile" : "Nascosta"}
                                       </Badge>
-                                      <span className="text-xs text-gray-500">
+                                      <span className="text-xs text-gray-500 dark:text-gray-400">
                                         Creata: {new Date(category.createdAt).toLocaleDateString('it-IT')}
                                       </span>
                                     </div>
                                   </>
                                 )}
                               </div>
-                              <div className="flex space-x-2">
+                              <div className="flex flex-wrap gap-2 sm:flex-nowrap">
                                 <Button 
                                   size="sm" 
                                   variant="outline" 
                                   onClick={() => updateMenuItemMutation.mutate({ id: category.id, data: { isVisible: !category.isVisible } })}
+                                  className="flex-1 sm:flex-none"
+                                  title={category.isVisible ? "Nascondi categoria" : "Rendi visibile categoria"}
                                 >
                                   {category.isVisible ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                                 </Button>
-                                <Button size="sm" variant="outline" onClick={() => { 
-                                  setEditingItem(category.id); 
-                                  setEditData(category); 
-                                }}>
+                                <Button 
+                                  size="sm" 
+                                  variant="outline" 
+                                  onClick={() => { 
+                                    setEditingItem(category.id); 
+                                    setEditData(category); 
+                                  }}
+                                  className="flex-1 sm:flex-none"
+                                  title="Modifica categoria"
+                                >
                                   <Edit3 className="w-4 h-4" />
                                 </Button>
-                                <Button size="sm" variant="outline" onClick={() => updateMenuItemMutation.mutate({ id: category.id, data: { deleted: true } })}>
+                                <Button 
+                                  size="sm" 
+                                  variant="destructive" 
+                                  onClick={() => {
+                                    if (confirm(`Sei sicuro di voler eliminare la categoria "${category.name}"?`)) {
+                                      updateMenuItemMutation.mutate({ id: category.id, data: { deleted: true } });
+                                    }
+                                  }}
+                                  className="flex-1 sm:flex-none"
+                                  title="Elimina categoria"
+                                >
                                   <Trash2 className="w-4 h-4" />
                                 </Button>
                               </div>
