@@ -129,7 +129,8 @@ export default function SmartPubDashboard() {
       return apiRequest(`/api/pubs/${currentPub?.id}/taplist/${id}`, 'PATCH', data);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/pubs", currentPub?.id, "taplist"] });
+      queryClient.invalidateQueries({ queryKey: [`/api/pubs/${currentPub?.id}/taplist`] });
+      queryClient.refetchQueries({ queryKey: [`/api/pubs/${currentPub?.id}/taplist`] });
       setEditingItem(null);
       toast({ title: "Birra aggiornata", description: "Le modifiche sono state salvate" });
     },
@@ -143,7 +144,8 @@ export default function SmartPubDashboard() {
     },
     onSuccess: (result) => {
       console.log('Mutation success:', result);
-      queryClient.invalidateQueries({ queryKey: ["/api/pubs", currentPub?.id, "taplist"] });
+      queryClient.invalidateQueries({ queryKey: [`/api/pubs/${currentPub?.id}/taplist`] });
+      queryClient.refetchQueries({ queryKey: [`/api/pubs/${currentPub?.id}/taplist`] });
       toast({ title: "Birra aggiunta", description: "Nuova birra aggiunta alla tap list" });
       setShowBeerSearch(false);
       setSearchQuery('');
@@ -161,8 +163,8 @@ export default function SmartPubDashboard() {
     },
     onSuccess: (data) => {
       console.log('Remove success:', data);
-      queryClient.invalidateQueries({ queryKey: ["/api/pubs", currentPub?.id, "taplist"] });
-      queryClient.refetchQueries({ queryKey: ["/api/pubs", currentPub?.id, "taplist"] });
+      queryClient.invalidateQueries({ queryKey: [`/api/pubs/${currentPub?.id}/taplist`] });
+      queryClient.refetchQueries({ queryKey: [`/api/pubs/${currentPub?.id}/taplist`] });
       toast({ title: "Birra rimossa", description: "Birra rimossa dalla tap list" });
     },
     onError: (error) => {
@@ -178,8 +180,8 @@ export default function SmartPubDashboard() {
     },
     onSuccess: (data) => {
       console.log('Visibility update success:', data);
-      queryClient.invalidateQueries({ queryKey: ["/api/pubs", currentPub?.id, "taplist"] });
-      queryClient.refetchQueries({ queryKey: ["/api/pubs", currentPub?.id, "taplist"] });
+      queryClient.invalidateQueries({ queryKey: [`/api/pubs/${currentPub?.id}/taplist`] });
+      queryClient.refetchQueries({ queryKey: [`/api/pubs/${currentPub?.id}/taplist`] });
       toast({ title: "Visibilità aggiornata", description: "Modifica salvata" });
     },
     onError: (error) => {
@@ -195,8 +197,8 @@ export default function SmartPubDashboard() {
     },
     onSuccess: (data) => {
       console.log('Reorder success:', data);
-      queryClient.invalidateQueries({ queryKey: ["/api/pubs", currentPub?.id, "taplist"] });
-      queryClient.refetchQueries({ queryKey: ["/api/pubs", currentPub?.id, "taplist"] });
+      queryClient.invalidateQueries({ queryKey: [`/api/pubs/${currentPub?.id}/taplist`] });
+      queryClient.refetchQueries({ queryKey: [`/api/pubs/${currentPub?.id}/taplist`] });
       toast({ title: "Ordine aggiornato", description: "Posizione salvata" });
     },
     onError: (error) => {
@@ -219,7 +221,8 @@ export default function SmartPubDashboard() {
       }
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/pubs", currentPub?.id, "menu"] });
+      queryClient.invalidateQueries({ queryKey: [`/api/pubs/${currentPub?.id}/menu`] });
+      queryClient.refetchQueries({ queryKey: [`/api/pubs/${currentPub?.id}/menu`] });
       setEditingItem(null);
       setEditData({});
       toast({ title: "Menu aggiornato", description: "Le modifiche sono state salvate" });
@@ -249,10 +252,10 @@ export default function SmartPubDashboard() {
     },
     onSuccess: (data) => {
       console.log('Beer replacement success:', data);
-      queryClient.invalidateQueries({ queryKey: ["/api/pubs", currentPub?.id, "taplist"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/pubs", currentPub?.id, "bottles"] });
-      queryClient.refetchQueries({ queryKey: ["/api/pubs", currentPub?.id, "taplist"] });
-      queryClient.refetchQueries({ queryKey: ["/api/pubs", currentPub?.id, "bottles"] });
+      queryClient.invalidateQueries({ queryKey: [`/api/pubs/${currentPub?.id}/taplist`] });
+      queryClient.invalidateQueries({ queryKey: [`/api/pubs/${currentPub?.id}/bottles`] });
+      queryClient.refetchQueries({ queryKey: [`/api/pubs/${currentPub?.id}/taplist`] });
+      queryClient.refetchQueries({ queryKey: [`/api/pubs/${currentPub?.id}/bottles`] });
       toast({ title: "Birra sostituita", description: "La birra è stata sostituita con successo" });
       setReplacingBeer(null);
       setShowBeerSearch(false);
@@ -281,6 +284,7 @@ export default function SmartPubDashboard() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [`/api/pubs/${currentPub?.id}/bottles`] });
+      queryClient.refetchQueries({ queryKey: [`/api/pubs/${currentPub?.id}/bottles`] });
       toast({ title: "Birra aggiunta alla cantina!" });
     },
     onError: () => {

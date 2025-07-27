@@ -295,7 +295,6 @@ export class DatabaseStorage implements IStorage {
         tapNumber: tapList.tapNumber,
         addedAt: tapList.addedAt,
         updatedAt: tapList.updatedAt,
-        beerId2: beers.id,
         beerName: beers.name,
         beerStyle: beers.style,
         beerAbv: beers.abv,
@@ -330,7 +329,7 @@ export class DatabaseStorage implements IStorage {
       addedAt: row.addedAt,
       updatedAt: row.updatedAt,
       beer: {
-        id: row.beerId2,
+        id: row.beerId,
         name: row.beerName,
         style: row.beerStyle,
         abv: row.beerAbv,
@@ -410,7 +409,7 @@ export class DatabaseStorage implements IStorage {
         description: bottleList.description,
         addedAt: bottleList.addedAt,
         updatedAt: bottleList.updatedAt,
-        beerId2: beers.id,
+
         beerName: beers.name,
         beerStyle: beers.style,
         beerAbv: beers.abv,
@@ -444,7 +443,7 @@ export class DatabaseStorage implements IStorage {
       addedAt: row.addedAt,
       updatedAt: row.updatedAt,
       beer: {
-        id: row.beerId2,
+        id: row.beerId,
         name: row.beerName,
         style: row.beerStyle,
         abv: row.beerAbv,
