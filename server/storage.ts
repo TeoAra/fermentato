@@ -826,6 +826,15 @@ export class DatabaseStorage implements IStorage {
     return result[0].count;
   }
 
+  async getBeerCountByBrewery(breweryId: number): Promise<number> {
+    const result = await db
+      .select({ count: sql<number>`count(*)` })
+      .from(beers)
+      .where(eq(beers.breweryId, breweryId));
+    
+    return result[0]?.count || 0;
+  }
+
   async getAllUsers(): Promise<User[]> {
     return await db.select().from(users).orderBy(desc(users.createdAt));
   }

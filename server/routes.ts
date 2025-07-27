@@ -195,7 +195,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
         breweries = await storage.getBreweries();
       }
       
-      res.json(breweries);
+      // Add beer count for each brewery
+      const breweriesWithCount = await Promise.all(
+        breweries.map(async (brewery: any) => {
+          const beerCount = await storage.getBeerCountByBrewery(brewery.id);
+          return { ...brewery, beerCount };
+        })
+      );
+      
+      res.json(breweriesWithCount);
     } catch (error) {
       console.error("Error fetching breweries:", error);
       res.status(500).json({ message: "Failed to fetch breweries" });

@@ -1,21 +1,27 @@
 import { useAuth } from "@/hooks/useAuth";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Link } from "wouter";
 import { Beer, MapPin, Heart, Store, TrendingUp } from "lucide-react";
 import Footer from "@/components/footer";
 import PubCard from "@/components/pub-card";
 import BreweryCard from "@/components/brewery-card";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import { useToast } from "@/hooks/use-toast";
+import { apiRequest } from "@/lib/queryClient";
 
 export default function Home() {
   const { user, isAuthenticated } = useAuth();
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
   
   const { data: pubs, isLoading: pubsLoading } = useQuery({
     queryKey: ["/api/pubs"],
   });
 
   const { data: breweries, isLoading: breweriesLoading } = useQuery({
-    queryKey: ["/api/breweries", "random"],
+    queryKey: ["/api/breweries"],
     queryFn: () => fetch("/api/breweries?random=true&limit=4").then(res => res.json()),
   });
 
@@ -46,14 +52,25 @@ export default function Home() {
               </p>
             </div>
             
-            {(user as any)?.userType === 'pub_owner' && (
-              <Link href="/dashboard">
-                <Button className="bg-white text-primary hover:bg-gray-100">
-                  <Beer className="mr-2" />
-                  Dashboard Pub
-                </Button>
-              </Link>
-            )}
+            <div className="flex gap-3">
+              {(user as any)?.userType === 'pub_owner' && (
+                <Link href="/dashboard">
+                  <Button className="bg-white text-primary hover:bg-gray-100">
+                    <Beer className="mr-2" />
+                    Dashboard Pub
+                  </Button>
+                </Link>
+              )}
+              
+              {(user as any)?.userType === 'admin' && (
+                <Link href="/admin">
+                  <Button className="bg-yellow-500 text-white hover:bg-yellow-600">
+                    <TrendingUp className="mr-2" />
+                    Admin Panel
+                  </Button>
+                </Link>
+              )}
+            </div>
           </div>
         </div>
       </section>
@@ -157,6 +174,88 @@ export default function Home() {
           </section>
         )}
 
+        {/* I Tuoi Preferiti */}
+        {user && favorites && Array.isArray(favorites) && favorites.length > 0 && (
+          <section className="mb-12">
+            <h2 className="text-3xl font-bold text-secondary mb-8 text-center">
+              I Tuoi Preferiti ❤️
+            </h2>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              {/* Pub Preferiti */}
+              {favorites.filter(fav => fav.itemType === 'pub').length > 0 && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center">
+                      <Store className="w-5 h-5 mr-2" />
+                      Pub ({favorites.filter(fav => fav.itemType === 'pub').length})
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-3">
+                      {favorites.filter(fav => fav.itemType === 'pub').slice(0, 3).map((favorite: any) => (
+                        <Link key={favorite.id} href={`/pub/${favorite.itemId}`}>
+                          <div className="p-3 border rounded-lg hover:bg-gray-50 transition-colors">
+                            <div className="font-medium">Pub #{favorite.itemId}</div>
+                            <div className="text-sm text-gray-600">Clicca per vedere</div>
+                          </div>
+                        </Link>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+
+              {/* Birrifici Preferiti */}
+              {favorites.filter(fav => fav.itemType === 'brewery').length > 0 && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center">
+                      <Beer className="w-5 h-5 mr-2" />
+                      Birrifici ({favorites.filter(fav => fav.itemType === 'brewery').length})
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-3">
+                      {favorites.filter(fav => fav.itemType === 'brewery').slice(0, 3).map((favorite: any) => (
+                        <Link key={favorite.id} href={`/brewery/${favorite.itemId}`}>
+                          <div className="p-3 border rounded-lg hover:bg-gray-50 transition-colors">
+                            <div className="font-medium">Birrificio #{favorite.itemId}</div>
+                            <div className="text-sm text-gray-600">Clicca per vedere</div>
+                          </div>
+                        </Link>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+
+              {/* Birre Preferite */}
+              {favorites.filter(fav => fav.itemType === 'beer').length > 0 && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center">
+                      <Beer className="w-5 h-5 mr-2" />
+                      Birre ({favorites.filter(fav => fav.itemType === 'beer').length})
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-3">
+                      {favorites.filter(fav => fav.itemType === 'beer').slice(0, 3).map((favorite: any) => (
+                        <Link key={favorite.id} href={`/beer/${favorite.itemId}`}>
+                          <div className="p-3 border rounded-lg hover:bg-gray-50 transition-colors">
+                            <div className="font-medium">Birra #{favorite.itemId}</div>
+                            <div className="text-sm text-gray-600">Clicca per vedere</div>
+                          </div>
+                        </Link>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+            </div>
+          </section>
+        )}
+
         {/* Birrifici in Evidenza */}
         <section className="mb-12">
           <div className="flex items-center justify-between mb-6">
@@ -167,15 +266,15 @@ export default function Home() {
           </div>
 
           {breweriesLoading ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div className="grid grid-cols-1 gap-4">
               {[...Array(4)].map((_, i) => (
-                <div key={i} className="bg-white rounded-xl shadow-md h-64 animate-pulse" />
+                <div key={i} className="bg-white rounded-lg shadow-md h-24 animate-pulse" />
               ))}
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div className="grid grid-cols-1 gap-4">
               {Array.isArray(breweries) ? breweries.map((brewery: any) => (
-                <BreweryCard key={brewery.id} brewery={brewery} />
+                <BreweryCard key={brewery.id} brewery={brewery} beerCount={brewery.beerCount || 0} />
               )) : null}
             </div>
           )}

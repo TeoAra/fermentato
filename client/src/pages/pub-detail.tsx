@@ -112,15 +112,9 @@ export default function PubDetail() {
   const favoriteMutation = useMutation({
     mutationFn: async ({ itemType, itemId, action }: { itemType: string, itemId: number, action: 'add' | 'remove' }) => {
       if (action === 'add') {
-        return apiRequest('/api/favorites', {
-          method: 'POST',
-          body: JSON.stringify({ itemType, itemId }),
-          headers: { 'Content-Type': 'application/json' }
-        });
+        return apiRequest('/api/favorites', 'POST', { itemType, itemId });
       } else {
-        return apiRequest(`/api/favorites/${itemType}/${itemId}`, {
-          method: 'DELETE'
-        });
+        return apiRequest(`/api/favorites/${itemType}/${itemId}`, 'DELETE');
       }
     },
     onSuccess: () => {

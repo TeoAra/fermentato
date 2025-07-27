@@ -1,7 +1,12 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Star, MapPin, Beer } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Star, MapPin, Beer, Heart } from "lucide-react";
 import { Link } from "wouter";
+import { useAuth } from "@/hooks/useAuth";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useToast } from "@/hooks/use-toast";
+import { apiRequest } from "@/lib/queryClient";
 
 interface BreweryCardProps {
   brewery: {
@@ -16,9 +21,66 @@ interface BreweryCardProps {
 }
 
 export default function BreweryCard({ brewery, beerCount = 0 }: BreweryCardProps) {
+  const { isAuthenticated } = useAuth();
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+
+  // Check if brewery is favorited
+  const { data: favorites = [] } = useQuery({
+    queryKey: ["/api/favorites"],
+    enabled: isAuthenticated,
+  });
+
+  const isBreweryFavorited = Array.isArray(favorites) && favorites.some((fav: any) => 
+    fav.itemType === 'brewery' && fav.itemId === brewery.id
+  );
+
+  // Favorite mutation
+  const favoriteMutation = useMutation({
+    mutationFn: async ({ action }: { action: 'add' | 'remove' }) => {
+      if (action === 'add') {
+        return apiRequest('/api/favorites', 'POST', { itemType: 'brewery', itemId: brewery.id });
+      } else {
+        return apiRequest(`/api/favorites/brewery/${brewery.id}`, 'DELETE');
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/favorites"] });
+      toast({
+        title: "Successo",
+        description: isBreweryFavorited ? "Rimosso dai favoriti" : "Aggiunto ai favoriti",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Errore",
+        description: "Non è stato possibile aggiornare i favoriti",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const handleFavoriteToggle = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    if (!isAuthenticated) {
+      toast({
+        title: "Accesso richiesto",
+        description: "Effettua l'accesso per aggiungere ai favoriti",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    favoriteMutation.mutate({
+      action: isBreweryFavorited ? 'remove' : 'add'
+    });
+  };
+
   return (
     <Link href={`/brewery/${brewery.id}`}>
-      <Card className="overflow-hidden hover:shadow-md transition-all duration-200 border border-gray-100 cursor-pointer group">
+      <Card className="overflow-hidden hover:shadow-md transition-all duration-200 border border-gray-100 cursor-pointer group relative">
         <CardContent className="p-4">
           {/* Mobile-First Layout */}
           <div className="flex items-center gap-4">
@@ -62,11 +124,26 @@ export default function BreweryCard({ brewery, beerCount = 0 }: BreweryCardProps
               </div>
             </div>
             
-            {/* Indicator Arrow */}
-            <div className="flex-shrink-0 text-gray-400 group-hover:text-primary transition-colors">
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-              </svg>
+            {/* Favorite Button */}
+            <div className="flex-shrink-0 flex flex-col gap-2">
+              {isAuthenticated && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className={`h-8 w-8 p-0 ${isBreweryFavorited ? 'text-red-600 hover:text-red-700' : 'text-gray-400 hover:text-red-600'}`}
+                  onClick={handleFavoriteToggle}
+                  disabled={favoriteMutation.isPending}
+                >
+                  <Heart className={`w-4 h-4 ${isBreweryFavorited ? 'fill-current' : ''}`} />
+                </Button>
+              )}
+              
+              {/* Indicator Arrow */}
+              <div className="text-gray-400 group-hover:text-primary transition-colors">
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                </svg>
+              </div>
             </div>
           </div>
         </CardContent>
