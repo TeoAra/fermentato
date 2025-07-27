@@ -956,6 +956,17 @@ export class DatabaseStorage implements IStorage {
     return tasting;
   }
 
+  // Get unique beer styles for dropdowns
+  async getUniqueStyles(): Promise<string[]> {
+    const result = await db
+      .selectDistinct({ style: beers.style })
+      .from(beers)
+      .where(sql`${beers.style} IS NOT NULL AND ${beers.style} != ''`)
+      .orderBy(beers.style);
+    
+    return result.map(r => r.style).filter(Boolean);
+  }
+
   async getAllPubs(): Promise<Pub[]> {
     return await db.select().from(pubs).orderBy(desc(pubs.createdAt));
   }

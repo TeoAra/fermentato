@@ -1327,6 +1327,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get unique beer styles for dropdown
+  app.get("/api/beers/styles", async (req, res) => {
+    try {
+      const styles = await storage.getUniqueStyles();
+      res.json(styles);
+    } catch (error) {
+      console.error("Error fetching beer styles:", error);
+      res.status(500).json({ message: "Failed to fetch beer styles" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }
