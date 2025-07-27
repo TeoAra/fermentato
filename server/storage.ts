@@ -552,6 +552,32 @@ export class DatabaseStorage implements IStorage {
   async deleteBeerTasting(id: number): Promise<void> {
     await db.delete(userBeerTastings).where(eq(userBeerTastings.id, id));
   }
+
+  // Search methods
+  async searchPubs(query: string): Promise<Pub[]> {
+    const allPubs = await this.getPubs();
+    return allPubs.filter(pub => 
+      pub.name.toLowerCase().includes(query.toLowerCase()) ||
+      pub.address?.toLowerCase().includes(query.toLowerCase()) ||
+      pub.city?.toLowerCase().includes(query.toLowerCase())
+    );
+  }
+
+  async searchBreweries(query: string): Promise<Brewery[]> {
+    const allBreweries = await this.getBreweries();
+    return allBreweries.filter(brewery => 
+      brewery.name.toLowerCase().includes(query.toLowerCase()) ||
+      brewery.location?.toLowerCase().includes(query.toLowerCase())
+    );
+  }
+
+  async searchBeers(query: string): Promise<Beer[]> {
+    const allBeers = await this.getBeers();
+    return allBeers.filter(beer => 
+      beer.name.toLowerCase().includes(query.toLowerCase()) ||
+      beer.style?.toLowerCase().includes(query.toLowerCase())
+    );
+  }
 }
 
 export const storage = new DatabaseStorage();
