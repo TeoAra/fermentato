@@ -639,8 +639,43 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Favorites operations
-  async getUserFavorites(userId: string): Promise<Favorite[]> {
-    return await db.select().from(favorites).where(eq(favorites.userId, userId));
+  async getUserFavorites(userId: string): Promise<Array<Favorite & {itemName?: string}>> {
+    const userFavorites = await db.select().from(favorites).where(eq(favorites.userId, userId));
+    console.log('Raw favorites from DB:', userFavorites);
+    
+    // Enrich favorites with actual names
+    const enrichedFavorites = await Promise.all(
+      userFavorites.map(async (fav) => {
+        let itemName = '';
+        
+        try {
+          switch (fav.itemType) {
+            case 'pub':
+              const [pub] = await db.select({ name: pubs.name }).from(pubs).where(eq(pubs.id, fav.itemId));
+              itemName = pub?.name || '';
+              break;
+            case 'brewery':
+              const [brewery] = await db.select({ name: breweries.name }).from(breweries).where(eq(breweries.id, fav.itemId));
+              itemName = brewery?.name || '';
+              break;
+            case 'beer':
+              const [beer] = await db.select({ name: beers.name }).from(beers).where(eq(beers.id, fav.itemId));
+              itemName = beer?.name || '';
+              break;
+          }
+        } catch (error) {
+          console.log(`Could not fetch name for ${fav.itemType} ${fav.itemId}`);
+        }
+        
+        return {
+          ...fav,
+          itemName: itemName || `${fav.itemType} #${fav.itemId}`
+        };
+      })
+    );
+    
+    console.log('Enriched favorites:', enrichedFavorites);
+    return enrichedFavorites;
   }
 
   async getFavoritesByType(userId: string, itemType: 'pub' | 'brewery' | 'beer'): Promise<Favorite[]> {
@@ -956,15 +991,56 @@ export class DatabaseStorage implements IStorage {
     return tasting;
   }
 
-  // Get unique beer styles for dropdowns
-  async getUniqueStyles(): Promise<string[]> {
+  // Get unique beer styles with colors for visual selection
+  async getUniqueStyles(): Promise<Array<{style: string, color: string}>> {
     const result = await db
       .selectDistinct({ style: beers.style })
       .from(beers)
       .where(sql`${beers.style} IS NOT NULL AND ${beers.style} != ''`)
       .orderBy(beers.style);
     
-    return result.map(r => r.style).filter(Boolean);
+    // Map styles to beer colors based on typical characteristics
+    const styleColors: Record<string, string> = {
+      'IPA': '#E8A317', // Golden amber
+      'India Pale Ale': '#E8A317',
+      'American IPA': '#E8A317',
+      'Stout': '#2D1810', // Dark brown/black
+      'Imperial Stout': '#2D1810',
+      'Lager': '#F4D03F', // Light yellow
+      'Pilsner': '#F7DC6F', // Pale yellow
+      'Weizen': '#F8C471', // Wheat pale
+      'Wheat Beer': '#F8C471',
+      'Porter': '#8B4513', // Dark brown
+      'Ale': '#D68910', // Amber
+      'Pale Ale': '#F39C12', // Light amber
+      'Saison': '#F7DC6F', // Pale gold
+      'Belgian': '#E67E22', // Orange-amber
+      'Barleywine': '#A0522D', // Deep amber
+      'Bock': '#CD853F', // Medium brown
+      'Dunkel': '#8B4513', // Dark brown
+      'Hefeweizen': '#F8C471', // Cloudy wheat
+      'Red Ale': '#C0392B', // Red-amber
+      'Brown Ale': '#A0522D', // Brown
+      'Bitter': '#E67E22', // Copper
+      'Mild': '#8B4513', // Dark brown
+      'ESB': '#D68910', // Amber
+      'Tripel': '#F7DC6F', // Golden
+      'Dubbel': '#A0522D', // Dark amber
+      'Quadrupel': '#8B4513', // Dark brown
+      'Lambic': '#F4D03F', // Light yellow
+      'Sour': '#E74C3C', // Tart red
+      'Gose': '#F7DC6F', // Pale yellow
+      'Märzen': '#E67E22', // Amber
+      'Oktoberfest': '#E67E22', // Amber
+      'Kolsch': '#F7DC6F', // Very pale
+      'Schwarzbier': '#2D1810', // Black
+      'Rauchbier': '#8B4513', // Smoky brown
+    };
+    
+    return result.map(r => ({
+      style: r.style,
+      color: styleColors[r.style] || '#D68910' // Default amber color
+    })).filter(s => s.style);
   }
 
   async getAllPubs(): Promise<Pub[]> {

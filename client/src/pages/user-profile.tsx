@@ -40,7 +40,7 @@ export default function UserProfile() {
     firstName: typedUser?.firstName || "",
     lastName: typedUser?.lastName || "",
     bio: typedUser?.bio || "",
-    favoriteStyle: typedUser?.favoriteStyle || "",
+    favoriteStyles: typedUser?.favoriteStyles || [],
     profileImageUrl: typedUser?.profileImageUrl || "",
   });
   
@@ -101,7 +101,7 @@ export default function UserProfile() {
       firstName: typedUser?.firstName || "",
       lastName: typedUser?.lastName || "",
       bio: typedUser?.bio || "",
-      favoriteStyle: typedUser?.favoriteStyle || "",
+      favoriteStyles: typedUser?.favoriteStyles || [],
       profileImageUrl: typedUser?.profileImageUrl || "",
     });
     setIsEditing(false);
@@ -293,33 +293,84 @@ export default function UserProfile() {
                   </div>
                 )}
 
-                {/* Favorite Style from Database */}
+                {/* Favorite Styles - Multiple Selection with Colors */}
                 <div>
-                  <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                    Stile Preferito
+                  <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 block">
+                    Stili Preferiti (max 5)
                   </label>
                   {isEditing ? (
-                    <select
-                      value={editedProfile.favoriteStyle}
-                      onChange={(e) => setEditedProfile({ ...editedProfile, favoriteStyle: e.target.value })}
-                      className="mt-1 w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800"
-                    >
-                      <option value="">Seleziona uno stile...</option>
-                      {beerStyles.map((style: string) => (
-                        <option key={style} value={style}>{style}</option>
-                      ))}
-                    </select>
+                    <div className="mt-2 max-h-48 overflow-y-auto border rounded-lg p-3 bg-gray-50 dark:bg-gray-800">
+                      <div className="grid grid-cols-2 gap-2">
+                        {beerStyles.map((styleObj: any) => {
+                          const isSelected = editedProfile.favoriteStyles.includes(styleObj.style);
+                          return (
+                            <button
+                              key={styleObj.style}
+                              type="button"
+                              onClick={() => {
+                                const currentStyles = editedProfile.favoriteStyles;
+                                if (isSelected) {
+                                  // Remove style
+                                  setEditedProfile({
+                                    ...editedProfile,
+                                    favoriteStyles: currentStyles.filter(s => s !== styleObj.style)
+                                  });
+                                } else if (currentStyles.length < 5) {
+                                  // Add style (max 5)
+                                  setEditedProfile({
+                                    ...editedProfile,
+                                    favoriteStyles: [...currentStyles, styleObj.style]
+                                  });
+                                }
+                              }}
+                              className={`p-2 rounded-lg text-xs font-medium transition-all border-2 ${
+                                isSelected
+                                  ? 'border-amber-400 shadow-md transform scale-105'
+                                  : 'border-gray-200 dark:border-gray-600 hover:border-gray-300'
+                              }`}
+                              style={{
+                                backgroundColor: isSelected ? styleObj.color : 'transparent',
+                                color: isSelected ? '#fff' : 'inherit',
+                                textShadow: isSelected ? '0 1px 2px rgba(0,0,0,0.5)' : 'none'
+                              }}
+                              disabled={!isSelected && editedProfile.favoriteStyles.length >= 5}
+                            >
+                              {styleObj.style}
+                            </button>
+                          );
+                        })}
+                      </div>
+                      <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
+                        Selezionati: {editedProfile.favoriteStyles.length}/5
+                      </p>
+                    </div>
                   ) : (
-                    <p className="mt-1 text-gray-900 dark:text-gray-100 flex items-center gap-1">
-                      {typedUser.favoriteStyle ? (
-                        <>
-                          <Beer className="w-4 h-4" />
-                          {typedUser.favoriteStyle}
-                        </>
+                    <div className="mt-1">
+                      {typedUser.favoriteStyles && typedUser.favoriteStyles.length > 0 ? (
+                        <div className="flex flex-wrap gap-2">
+                          {typedUser.favoriteStyles.map((style: string) => {
+                            const styleObj = beerStyles.find((s: any) => s.style === style);
+                            return (
+                              <span
+                                key={style}
+                                className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium text-white shadow-sm"
+                                style={{
+                                  backgroundColor: styleObj?.color || '#D68910',
+                                  textShadow: '0 1px 2px rgba(0,0,0,0.5)'
+                                }}
+                              >
+                                <Beer className="w-3 h-3 mr-1" />
+                                {style}
+                              </span>
+                            );
+                          })}
+                        </div>
                       ) : (
-                        "Non specificato"
+                        <p className="text-gray-500 dark:text-gray-400 text-sm">
+                          Nessuno stile selezionato
+                        </p>
                       )}
-                    </p>
+                    </div>
                   )}
                 </div>
 
