@@ -729,8 +729,37 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Favorites operations (universal system)
-  async getFavoritesByUser(userId: string): Promise<Favorite[]> {
-    return await db.select().from(favorites).where(eq(favorites.userId, userId));
+  async getFavoritesByUser(userId: string): Promise<any[]> {
+    const userFavorites = await db.select().from(favorites).where(eq(favorites.userId, userId));
+    
+    // Get names for each favorite item
+    const favoritesWithNames = await Promise.all(
+      userFavorites.map(async (favorite) => {
+        let itemName = '';
+        try {
+          if (favorite.itemType === 'pub') {
+            const pub = await this.getPub(parseInt(favorite.itemId));
+            itemName = pub?.name || `Pub #${favorite.itemId}`;
+          } else if (favorite.itemType === 'brewery') {
+            const brewery = await this.getBrewery(parseInt(favorite.itemId));
+            itemName = brewery?.name || `Birrificio #${favorite.itemId}`;
+          } else if (favorite.itemType === 'beer') {
+            const beer = await this.getBeer(parseInt(favorite.itemId));
+            itemName = beer?.name || `Birra #${favorite.itemId}`;
+          }
+        } catch (error) {
+          // Fallback to ID if item not found
+          itemName = `${favorite.itemType} #${favorite.itemId}`;
+        }
+        
+        return {
+          ...favorite,
+          itemName
+        };
+      })
+    );
+    
+    return favoritesWithNames;
   }
 
   async getFavoritesByType(userId: string, itemType: 'pub' | 'brewery' | 'beer'): Promise<Favorite[]> {

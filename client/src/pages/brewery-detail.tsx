@@ -135,9 +135,19 @@ export default function BreweryDetail() {
 
         {/* Action Buttons */}
         <div className="absolute top-4 right-4 flex space-x-2">
-          <Button variant="secondary" size="sm">
-            <Heart className="w-4 h-4" />
-          </Button>
+          {/* Favorite Button */}
+          {isAuthenticated && (
+            <Button
+              variant="secondary"
+              size="sm"
+              className={`${isBreweryFavorited ? 'bg-red-100 border-red-300 text-red-700 hover:bg-red-200' : 'bg-white/90 hover:bg-white'}`}
+              onClick={handleFavoriteToggle}
+              disabled={favoriteMutation.isPending}
+            >
+              <Heart className={`w-4 h-4 ${isBreweryFavorited ? 'fill-current text-red-600' : ''}`} />
+            </Button>
+          )}
+          
           <Button variant="secondary" size="sm">
             <Share2 className="w-4 h-4" />
           </Button>

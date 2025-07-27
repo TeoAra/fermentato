@@ -298,8 +298,10 @@ export default function Home() {
                 <Card>
                   <CardHeader>
                     <CardTitle className="flex items-center">
-                      <Store className="w-5 h-5 mr-2" />
-                      Pub ({favorites.filter(fav => fav.itemType === 'pub').length})
+                      <Link href="/dashboard?tab=favorites" className="flex items-center hover:text-primary transition-colors">
+                        <Store className="w-5 h-5 mr-2" />
+                        Pub ({favorites.filter(fav => fav.itemType === 'pub').length})
+                      </Link>
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
@@ -307,7 +309,7 @@ export default function Home() {
                       {favorites.filter(fav => fav.itemType === 'pub').slice(0, 3).map((favorite: any) => (
                         <Link key={favorite.id} href={`/pub/${favorite.itemId}`}>
                           <div className="p-3 border rounded-lg hover:bg-gray-50 transition-colors">
-                            <div className="font-medium">Pub #{favorite.itemId}</div>
+                            <div className="font-medium">{favorite.itemName || `Pub #${favorite.itemId}`}</div>
                             <div className="text-sm text-gray-600">Clicca per vedere</div>
                           </div>
                         </Link>
@@ -322,8 +324,10 @@ export default function Home() {
                 <Card>
                   <CardHeader>
                     <CardTitle className="flex items-center">
-                      <Beer className="w-5 h-5 mr-2" />
-                      Birrifici ({favorites.filter(fav => fav.itemType === 'brewery').length})
+                      <Link href="/dashboard?tab=favorites" className="flex items-center hover:text-primary transition-colors">
+                        <Beer className="w-5 h-5 mr-2" />
+                        Birrifici ({favorites.filter(fav => fav.itemType === 'brewery').length})
+                      </Link>
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
@@ -331,7 +335,7 @@ export default function Home() {
                       {favorites.filter(fav => fav.itemType === 'brewery').slice(0, 3).map((favorite: any) => (
                         <Link key={favorite.id} href={`/brewery/${favorite.itemId}`}>
                           <div className="p-3 border rounded-lg hover:bg-gray-50 transition-colors">
-                            <div className="font-medium">Birrificio #{favorite.itemId}</div>
+                            <div className="font-medium">{favorite.itemName || `Birrificio #${favorite.itemId}`}</div>
                             <div className="text-sm text-gray-600">Clicca per vedere</div>
                           </div>
                         </Link>
@@ -346,8 +350,10 @@ export default function Home() {
                 <Card>
                   <CardHeader>
                     <CardTitle className="flex items-center">
-                      <Beer className="w-5 h-5 mr-2" />
-                      Birre ({favorites.filter(fav => fav.itemType === 'beer').length})
+                      <Link href="/dashboard?tab=favorites" className="flex items-center hover:text-primary transition-colors">
+                        <Beer className="w-5 h-5 mr-2" />
+                        Birre ({favorites.filter(fav => fav.itemType === 'beer').length})
+                      </Link>
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
@@ -355,7 +361,7 @@ export default function Home() {
                       {favorites.filter(fav => fav.itemType === 'beer').slice(0, 3).map((favorite: any) => (
                         <Link key={favorite.id} href={`/beer/${favorite.itemId}`}>
                           <div className="p-3 border rounded-lg hover:bg-gray-50 transition-colors">
-                            <div className="font-medium">Birra #{favorite.itemId}</div>
+                            <div className="font-medium">{favorite.itemName || `Birra #${favorite.itemId}`}</div>
                             <div className="text-sm text-gray-600">Clicca per vedere</div>
                           </div>
                         </Link>
