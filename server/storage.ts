@@ -19,12 +19,10 @@ import {
   type InsertBrewery,
   type Beer,
   type InsertBeer,
-  type TapListItem,
-  type InsertTapListItem,
-  type BottleListItem,
-  type InsertBottleListItem,
-  type PubSize,
-  type InsertPubSize,
+  type TapList,
+  type InsertTapList,
+  type BottleList,
+  type InsertBottleList,
   type MenuCategory,
   type InsertMenuCategory,
   type MenuItem,
@@ -70,16 +68,16 @@ export interface IStorage {
   searchBeers(query: string): Promise<Beer[]>;
 
   // Tap list operations
-  getTapList(pubId: number): Promise<TapListItem[]>;
-  getTapListByPubForOwner(pubId: number): Promise<TapListItem[]>;
-  addToTapList(item: InsertTapListItem): Promise<TapListItem>;
-  updateTapListItem(id: number, updates: Partial<InsertTapListItem>): Promise<TapListItem>;
+  getTapList(pubId: number): Promise<TapList[]>;
+  getTapListByPubForOwner(pubId: number): Promise<any[]>;
+  addToTapList(item: InsertTapList): Promise<TapList>;
+  updateTapListItem(id: number, updates: Partial<InsertTapList>): Promise<TapList>;
   removeFromTapList(id: number): Promise<void>;
 
   // Bottle list operations
-  getBottleList(pubId: number): Promise<BottleListItem[]>;
-  addToBottleList(item: InsertBottleListItem): Promise<BottleListItem>;
-  updateBottleListItem(id: number, updates: Partial<InsertBottleListItem>): Promise<BottleListItem>;
+  getBottleList(pubId: number): Promise<BottleList[]>;
+  addToBottleList(item: InsertBottleList): Promise<BottleList>;
+  updateBottleListItem(id: number, updates: Partial<InsertBottleList>): Promise<BottleList>;
   removeFromBottleList(id: number): Promise<void>;
 
   // Menu operations
@@ -186,6 +184,10 @@ export class DatabaseStorage implements IStorage {
     return await db.select().from(breweries).orderBy(asc(breweries.name));
   }
 
+  async getRandomBreweries(limit: number = 10): Promise<Brewery[]> {
+    return await db.select().from(breweries).orderBy(sql`RANDOM()`).limit(limit);
+  }
+
   async getBrewery(id: number): Promise<Brewery | undefined> {
     const [brewery] = await db.select().from(breweries).where(eq(breweries.id, id));
     return brewery;
@@ -250,19 +252,19 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Tap list operations
-  async getTapList(pubId: number): Promise<TapListItem[]> {
+  async getTapList(pubId: number): Promise<TapList[]> {
     return await db
       .select({
         id: tapList.id,
         pubId: tapList.pubId,
         beerId: tapList.beerId,
-        isAvailable: tapList.isAvailable,
+        isActive: tapList.isActive,
         priceSmall: tapList.priceSmall,
         priceMedium: tapList.priceMedium,
         priceLarge: tapList.priceLarge,
-        notes: tapList.notes,
+        description: tapList.description,
         tapNumber: tapList.tapNumber,
-        createdAt: tapList.createdAt,
+        addedAt: tapList.addedAt,
         updatedAt: tapList.updatedAt,
         beer: beers,
       })
@@ -273,55 +275,86 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getTapListByPubForOwner(pubId: number): Promise<any[]> {
-    return await db
+    const results = await db
       .select({
         id: tapList.id,
         pubId: tapList.pubId,
         beerId: tapList.beerId,
-        isAvailable: tapList.isAvailable,
+        isActive: tapList.isActive,
         isVisible: tapList.isVisible,
         prices: tapList.prices,
-        notes: tapList.notes,
+        priceSmall: tapList.priceSmall,
+        priceMedium: tapList.priceMedium,
+        priceLarge: tapList.priceLarge,
+        description: tapList.description,
         tapNumber: tapList.tapNumber,
-        position: tapList.position,
-        createdAt: tapList.createdAt,
+        addedAt: tapList.addedAt,
         updatedAt: tapList.updatedAt,
-        beer: {
-          id: beers.id,
-          name: beers.name,
-          style: beers.style,
-          abv: beers.abv,
-          ibu: beers.ibu,
-          description: beers.description,
-          imageUrl: beers.imageUrl,
-          bottleImageUrl: beers.bottleImageUrl,
-          brewery: {
-            id: breweries.id,
-            name: breweries.name,
-            logoUrl: breweries.logoUrl,
-            country: breweries.country,
-            region: breweries.region,
-          }
-        }
+        beerId2: beers.id,
+        beerName: beers.name,
+        beerStyle: beers.style,
+        beerAbv: beers.abv,
+        beerIbu: beers.ibu,
+        beerDescription: beers.description,
+        beerImageUrl: beers.imageUrl,
+        beerBottleImageUrl: beers.bottleImageUrl,
+        breweryId: breweries.id,
+        breweryName: breweries.name,
+        breweryLogoUrl: breweries.logoUrl,
+        breweryCountry: breweries.country,
+        breweryRegion: breweries.region,
       })
       .from(tapList)
       .innerJoin(beers, eq(tapList.beerId, beers.id))
       .innerJoin(breweries, eq(beers.breweryId, breweries.id))
       .where(eq(tapList.pubId, pubId))
-      .orderBy(asc(tapList.position));
+      .orderBy(asc(tapList.tapNumber));
+
+    return results.map(row => ({
+      id: row.id,
+      pubId: row.pubId,
+      beerId: row.beerId,
+      isActive: row.isActive,
+      isVisible: row.isVisible,
+      prices: row.prices,
+      priceSmall: row.priceSmall,
+      priceMedium: row.priceMedium,
+      priceLarge: row.priceLarge,
+      notes: row.description,
+      tapNumber: row.tapNumber,
+      addedAt: row.addedAt,
+      updatedAt: row.updatedAt,
+      beer: {
+        id: row.beerId2,
+        name: row.beerName,
+        style: row.beerStyle,
+        abv: row.beerAbv,
+        ibu: row.beerIbu,
+        description: row.beerDescription,
+        imageUrl: row.beerImageUrl,
+        bottleImageUrl: row.beerBottleImageUrl,
+        brewery: {
+          id: row.breweryId,
+          name: row.breweryName,
+          logoUrl: row.breweryLogoUrl,
+          country: row.breweryCountry,
+          region: row.breweryRegion,
+        }
+      }
+    }));
   }
 
-  async addToTapList(item: InsertTapListItem): Promise<TapListItem> {
+  async addToTapList(item: InsertTapList): Promise<TapList> {
     const [tapItem] = await db.insert(tapList).values(item).returning();
     return tapItem;
   }
 
-  async addBeerToTap(item: InsertTapListItem): Promise<TapListItem> {
+  async addBeerToTap(item: InsertTapList): Promise<TapList> {
     const [tapItem] = await db.insert(tapList).values(item).returning();
     return tapItem;
   }
 
-  async updateTapListItem(id: number, updates: Partial<InsertTapListItem>): Promise<TapListItem> {
+  async updateTapListItem(id: number, updates: Partial<InsertTapList>): Promise<TapList> {
     const [tapItem] = await db
       .update(tapList)
       .set({ ...updates, updatedAt: new Date() })
@@ -330,7 +363,7 @@ export class DatabaseStorage implements IStorage {
     return tapItem;
   }
 
-  async updateTapItem(id: number, updates: Partial<InsertTapListItem>): Promise<TapListItem> {
+  async updateTapItem(id: number, updates: Partial<InsertTapList>): Promise<TapList> {
     const [tapItem] = await db
       .update(tapList)
       .set({ ...updates, updatedAt: new Date() })
@@ -348,55 +381,85 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Bottle list operations
-  async getBottleList(pubId: number): Promise<BottleListItem[]> {
-    return await db
+  async getBottleList(pubId: number): Promise<BottleList[]> {
+    const results = await db
       .select({
         id: bottleList.id,
         pubId: bottleList.pubId,
         beerId: bottleList.beerId,
-        isAvailable: bottleList.isAvailable,
-        price330ml: bottleList.price330ml,
-        price500ml: bottleList.price500ml,
-        price750ml: bottleList.price750ml,
-        notes: bottleList.notes,
-        createdAt: bottleList.createdAt,
+        isActive: bottleList.isActive,
+        isVisible: bottleList.isVisible,
+        prices: bottleList.prices,
+        priceBottle: bottleList.priceBottle,
+        bottleSize: bottleList.bottleSize,
+        quantity: bottleList.quantity,
+        description: bottleList.description,
+        addedAt: bottleList.addedAt,
         updatedAt: bottleList.updatedAt,
-        beer: {
-          id: beers.id,
-          name: beers.name,
-          style: beers.style,
-          abv: beers.abv,
-          ibu: beers.ibu,
-          description: beers.description,
-          imageUrl: beers.imageUrl,
-          bottleImageUrl: beers.bottleImageUrl,
-          brewery: {
-            id: breweries.id,
-            name: breweries.name,
-            logoUrl: breweries.logoUrl,
-            country: breweries.country,
-            region: breweries.region,
-          }
-        }
+        beerId2: beers.id,
+        beerName: beers.name,
+        beerStyle: beers.style,
+        beerAbv: beers.abv,
+        beerIbu: beers.ibu,
+        beerDescription: beers.description,
+        beerImageUrl: beers.imageUrl,
+        beerBottleImageUrl: beers.bottleImageUrl,
+        breweryId: breweries.id,
+        breweryName: breweries.name,
+        breweryLogoUrl: breweries.logoUrl,
+        breweryCountry: breweries.country,
+        breweryRegion: breweries.region,
       })
       .from(bottleList)
       .innerJoin(beers, eq(bottleList.beerId, beers.id))
       .innerJoin(breweries, eq(beers.breweryId, breweries.id))
       .where(eq(bottleList.pubId, pubId))
       .orderBy(asc(beers.name));
+
+    return results.map(row => ({
+      id: row.id,
+      pubId: row.pubId,
+      beerId: row.beerId,
+      isActive: row.isActive,
+      isVisible: row.isVisible,
+      prices: row.prices,
+      priceBottle: row.priceBottle,
+      bottleSize: row.bottleSize,
+      quantity: row.quantity,
+      notes: row.description,
+      addedAt: row.addedAt,
+      updatedAt: row.updatedAt,
+      beer: {
+        id: row.beerId2,
+        name: row.beerName,
+        style: row.beerStyle,
+        abv: row.beerAbv,
+        ibu: row.beerIbu,
+        description: row.beerDescription,
+        imageUrl: row.beerImageUrl,
+        bottleImageUrl: row.beerBottleImageUrl,
+        brewery: {
+          id: row.breweryId,
+          name: row.breweryName,
+          logoUrl: row.breweryLogoUrl,
+          country: row.breweryCountry,
+          region: row.breweryRegion,
+        }
+      }
+    }));
   }
 
-  async addToBottleList(item: InsertBottleListItem): Promise<BottleListItem> {
+  async addToBottleList(item: InsertBottleList): Promise<BottleList> {
     const [bottleItem] = await db.insert(bottleList).values(item).returning();
     return bottleItem;
   }
 
-  async addBeerToBottles(item: InsertBottleListItem): Promise<BottleListItem> {
+  async addBeerToBottles(item: InsertBottleList): Promise<BottleList> {
     const [bottleItem] = await db.insert(bottleList).values(item).returning();
     return bottleItem;
   }
 
-  async updateBottleListItem(id: number, updates: Partial<InsertBottleListItem>): Promise<BottleListItem> {
+  async updateBottleListItem(id: number, updates: Partial<InsertBottleList>): Promise<BottleList> {
     const [bottleItem] = await db
       .update(bottleList)
       .set({ ...updates, updatedAt: new Date() })
@@ -405,7 +468,7 @@ export class DatabaseStorage implements IStorage {
     return bottleItem;
   }
 
-  async updateBottleItem(id: number, updates: Partial<InsertBottleListItem>): Promise<BottleListItem> {
+  async updateBottleItem(id: number, updates: Partial<InsertBottleList>): Promise<BottleList> {
     const [bottleItem] = await db
       .update(bottleList)
       .set({ ...updates, updatedAt: new Date() })
