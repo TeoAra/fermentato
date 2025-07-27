@@ -71,6 +71,7 @@ export interface IStorage {
 
   // Tap list operations
   getTapList(pubId: number): Promise<TapListItem[]>;
+  getTapListByPubForOwner(pubId: number): Promise<TapListItem[]>;
   addToTapList(item: InsertTapListItem): Promise<TapListItem>;
   updateTapListItem(id: number, updates: Partial<InsertTapListItem>): Promise<TapListItem>;
   removeFromTapList(id: number): Promise<void>;
@@ -83,6 +84,7 @@ export interface IStorage {
 
   // Menu operations
   getMenuCategories(pubId: number): Promise<MenuCategory[]>;
+  getMenuByPub(pubId: number): Promise<any[]>;
   createMenuCategory(category: InsertMenuCategory): Promise<MenuCategory>;
   updateMenuCategory(id: number, updates: Partial<InsertMenuCategory>): Promise<MenuCategory>;
   deleteMenuCategory(id: number): Promise<void>;
@@ -270,6 +272,45 @@ export class DatabaseStorage implements IStorage {
       .orderBy(asc(tapList.tapNumber));
   }
 
+  async getTapListByPubForOwner(pubId: number): Promise<any[]> {
+    return await db
+      .select({
+        id: tapList.id,
+        pubId: tapList.pubId,
+        beerId: tapList.beerId,
+        isAvailable: tapList.isAvailable,
+        isVisible: tapList.isVisible,
+        prices: tapList.prices,
+        notes: tapList.notes,
+        tapNumber: tapList.tapNumber,
+        position: tapList.position,
+        createdAt: tapList.createdAt,
+        updatedAt: tapList.updatedAt,
+        beer: {
+          id: beers.id,
+          name: beers.name,
+          style: beers.style,
+          abv: beers.abv,
+          ibu: beers.ibu,
+          description: beers.description,
+          imageUrl: beers.imageUrl,
+          bottleImageUrl: beers.bottleImageUrl,
+          brewery: {
+            id: breweries.id,
+            name: breweries.name,
+            logoUrl: breweries.logoUrl,
+            country: breweries.country,
+            region: breweries.region,
+          }
+        }
+      })
+      .from(tapList)
+      .innerJoin(beers, eq(tapList.beerId, beers.id))
+      .innerJoin(breweries, eq(beers.breweryId, breweries.id))
+      .where(eq(tapList.pubId, pubId))
+      .orderBy(asc(tapList.position));
+  }
+
   async addToTapList(item: InsertTapListItem): Promise<TapListItem> {
     const [tapItem] = await db.insert(tapList).values(item).returning();
     return tapItem;
@@ -335,6 +376,28 @@ export class DatabaseStorage implements IStorage {
       .from(menuCategories)
       .where(eq(menuCategories.pubId, pubId))
       .orderBy(asc(menuCategories.displayOrder));
+  }
+
+  async getMenuByPub(pubId: number): Promise<any[]> {
+    const categories = await db
+      .select()
+      .from(menuCategories)
+      .where(eq(menuCategories.pubId, pubId))
+      .orderBy(asc(menuCategories.displayOrder));
+
+    const items = await db
+      .select()
+      .from(menuItems)
+      .leftJoin(menuCategories, eq(menuItems.categoryId, menuCategories.id))
+      .where(eq(menuCategories.pubId, pubId))
+      .orderBy(asc(menuItems.displayOrder));
+
+    return categories.map(category => ({
+      ...category,
+      items: items
+        .filter(item => item.menu_items?.categoryId === category.id)
+        .map(item => item.menu_items),
+    }));
   }
 
   async createMenuCategory(categoryData: InsertMenuCategory): Promise<MenuCategory> {

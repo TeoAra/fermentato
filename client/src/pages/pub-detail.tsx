@@ -20,6 +20,7 @@ function isOpenNow(openingHours: any) {
   const todayHours = openingHours[currentDay];
   if (!todayHours || todayHours.isClosed) return false;
   
+  // Se ha orari, controlla se è nell'intervallo
   if (todayHours.open && todayHours.close) {
     const [openHour, openMin] = todayHours.open.split(':').map(Number);
     const [closeHour, closeMin] = todayHours.close.split(':').map(Number);
@@ -27,114 +28,45 @@ function isOpenNow(openingHours: any) {
     const closeTime = closeHour * 60 + closeMin;
     
     if (closeTime < openTime) {
+      // Orario attraversa la mezzanotte
       return currentTime >= openTime || currentTime <= closeTime;
     } else {
       return currentTime >= openTime && currentTime <= closeTime;
     }
   }
   
-  return true;
-}
-
-interface Pub {
-  id: number;
-  name: string;
-  address: string;
-  city?: string;
-  phone?: string;
-  websiteUrl?: string;
-  description?: string;
-  logoUrl?: string;
-  coverImageUrl?: string;
-  rating?: number;
-  openingHours?: any;
+  return true; // Se non ha orari specifici ma non è chiuso, considera aperto
 }
 
 export default function PubDetail() {
   const { id } = useParams();
-  const [activeTab, setActiveTab] = useState("taplist");
-  const { user, isAuthenticated } = useAuth();
-  const { toast } = useToast();
-  const queryClient = useQueryClient();
   
-  const { data: pub, isLoading: pubLoading } = useQuery<Pub>({
+  const { data: pub, isLoading: pubLoading } = useQuery({
     queryKey: ["/api/pubs", id],
     enabled: !!id,
   });
 
-  const { data: tapList = [], isLoading: tapLoading } = useQuery({
+  const { data: tapList, isLoading: tapLoading } = useQuery({
     queryKey: ["/api/pubs", id, "taplist"],
     enabled: !!id,
   });
 
-  const { data: menu = [], isLoading: menuLoading } = useQuery({
+  const { data: menu, isLoading: menuLoading } = useQuery({
     queryKey: ["/api/pubs", id, "menu"],
     enabled: !!id,
   });
 
-  const { data: bottles = [], isLoading: bottlesLoading } = useQuery({
+  const { data: bottles, isLoading: bottlesLoading } = useQuery({
     queryKey: ["/api/pubs", id, "bottles"],
     enabled: !!id,
   });
 
-  // Check if pub is favorited
-  const { data: favorites = [] } = useQuery({
-    queryKey: ["/api/favorites"],
-    enabled: isAuthenticated,
-  });
-
-  const isPubFavorited = Array.isArray(favorites) && favorites.some((fav: any) => 
-    fav.itemType === 'pub' && fav.itemId === parseInt(id || '0')
-  );
-
-  // Favorite mutation
-  const favoriteMutation = useMutation({
-    mutationFn: async ({ itemType, itemId, action }: { itemType: string, itemId: number, action: 'add' | 'remove' }) => {
-      if (action === 'add') {
-        return apiRequest('/api/favorites', 'POST', { itemType, itemId });
-      } else {
-        return apiRequest(`/api/favorites/${itemType}/${itemId}`, 'DELETE');
-      }
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/favorites"] });
-      toast({
-        title: "Successo",
-        description: isPubFavorited ? "Rimosso dai favoriti" : "Aggiunto ai favoriti",
-      });
-    },
-    onError: () => {
-      toast({
-        title: "Errore",
-        description: "Non è stato possibile aggiornare i favoriti",
-        variant: "destructive",
-      });
-    },
-  });
-
-  const handleFavoriteToggle = () => {
-    if (!isAuthenticated) {
-      toast({
-        title: "Accesso richiesto",
-        description: "Effettua l'accesso per aggiungere ai favoriti",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    favoriteMutation.mutate({
-      itemType: 'pub',
-      itemId: parseInt(id || '0'),
-      action: isPubFavorited ? 'remove' : 'add'
-    });
-  };
-
   if (pubLoading) {
     return (
       <div className="min-h-screen bg-gray-50">
-        <div className="animate-pulse">
-          <div className="h-80 bg-gray-300"></div>
-          <div className="max-w-7xl mx-auto px-4 py-8">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <div className="animate-pulse">
+            <div className="h-64 md:h-80 bg-gray-300 rounded-xl mb-8"></div>
             <div className="h-8 bg-gray-300 rounded mb-4"></div>
             <div className="h-4 bg-gray-300 rounded mb-8"></div>
           </div>
@@ -145,371 +77,283 @@ export default function PubDetail() {
 
   if (!pub) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <h1 className="text-2xl font-bold text-gray-900 mb-4">Pub non trovato</h1>
-          <p className="text-gray-600">Il pub che stai cercando non esiste.</p>
-          <Link href="/">
-            <Button className="mt-4">Torna alla Home</Button>
-          </Link>
+      <div className="min-h-screen bg-gray-50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <div className="text-center">
+            <h1 className="text-2xl font-bold text-gray-900 mb-4">Pub non trovato</h1>
+            <p className="text-gray-600">Il pub che stai cercando non esiste o è stato rimosso.</p>
+          </div>
         </div>
       </div>
     );
   }
 
-  const isOpen = pub ? isOpenNow(pub.openingHours) : false;
-
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Hero Section with Cover Image */}
-      <div className="relative h-80 md:h-96 overflow-hidden">
-        <img
-          src={pub?.coverImageUrl || "https://images.unsplash.com/photo-1544145945-f90425340c7e?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&h=600"}
-          alt={`Cover ${pub?.name || 'pub'}`}
-          className="w-full h-full object-cover"
-        />
-        <div className="absolute inset-0 bg-black bg-opacity-40" />
-        
-        {/* Back Button */}
-        <div className="absolute top-4 left-4">
-          <Button variant="secondary" size="sm" onClick={() => window.history.back()}>
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            Indietro
-          </Button>
-        </div>
-
-        {/* Action Buttons */}
-        <div className="absolute top-4 right-4 flex space-x-2">
-          {/* Favorite Button */}
-          {isAuthenticated && (
-            <Button
-              variant="secondary"
-              size="sm"
-              className={`${isPubFavorited ? 'bg-red-100 border-red-300 text-red-700 hover:bg-red-200' : 'bg-white/90 hover:bg-white'}`}
-              onClick={handleFavoriteToggle}
-              disabled={favoriteMutation.isPending}
-            >
-              <Heart className={`w-4 h-4 ${isPubFavorited ? 'fill-current text-red-600' : ''}`} />
-            </Button>
-          )}
-          
-
-          <Button 
-            variant="secondary" 
-            size="sm"
-            onClick={() => {
-              if (navigator.share) {
-                navigator.share({
-                  title: `${pub?.name || 'Pub'}`,
-                  text: `Scopri ${pub?.name || 'questo fantastico pub'} su Fermenta.to!`,
-                  url: window.location.href
-                });
-              } else {
-                // Fallback: copia URL negli appunti
-                navigator.clipboard.writeText(window.location.href).then(() => {
-                  alert('Link copiato negli appunti!');
-                });
-              }
-            }}
-          >
-            <Share2 className="w-4 h-4" />
-          </Button>
-        </div>
-
-        {/* Pub Info Overlay */}
-        <div className="absolute bottom-0 left-0 right-0 p-6 text-white">
-          <div className="flex items-center space-x-4 mb-4">
-            <Avatar className="w-16 h-16 border-2 border-white">
-              <AvatarImage src={pub?.logoUrl} alt={pub?.name} />
-              <AvatarFallback className="text-xl font-bold">
-                {pub?.name?.split(' ').map((word: string) => word[0]).join('').slice(0, 2) || 'PB'}
-              </AvatarFallback>
-            </Avatar>
-            <div>
-              <h1 className="text-3xl md:text-4xl font-bold">{pub?.name}</h1>
-              <div className="flex items-center space-x-4 mt-2">
-                <Badge variant={isOpen ? "default" : "secondary"} className={isOpen ? "bg-green-500" : "bg-red-500"}>
-                  {isOpen ? "Aperto ora" : "Chiuso"}
-                </Badge>
-                <div className="flex items-center">
-                  <Star className="w-4 h-4 text-yellow-400 mr-1" />
-                  <span className="font-semibold">{pub?.rating ? Number(pub.rating).toFixed(1) : "N/A"}</span>
+      
+      <main className="max-w-7xl mx-auto px-2 sm:px-4 lg:px-8 py-4 sm:py-8">
+        {/* Pub Header */}
+        <Card className="mb-4 sm:mb-8 overflow-hidden">
+          <div className="relative">
+            <img
+              src={pub.coverImageUrl || "https://images.unsplash.com/photo-1514933651103-005eec06c04b?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&h=400"}
+              alt={`${pub.name} - Copertina`}
+              className="w-full h-48 sm:h-64 md:h-80 object-cover"
+            />
+            <div className="absolute inset-0 bg-black bg-opacity-40"></div>
+            <div className="absolute bottom-2 sm:bottom-4 left-2 sm:left-4 text-white pr-4">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:space-x-3 mb-3">
+                <div className="flex items-center space-x-3">
+                  {pub.logoUrl && (
+                    <img
+                      src={pub.logoUrl}
+                      alt={`${pub.name} - Logo`}
+                      className="w-12 h-12 sm:w-16 sm:h-16 rounded-full object-cover border-2 border-white shadow-lg"
+                    />
+                  )}
+                  <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold break-words">{pub.name}</h1>
                 </div>
+                {!pub.isActive && (
+                  <Badge variant="destructive" className="mt-2 sm:mt-0 w-fit">Temporaneamente Chiuso</Badge>
+                )}
+              </div>
+              
+              {/* Mappa cliccabile al posto dell'indirizzo */}
+              <div 
+                className="inline-flex items-center bg-black/30 backdrop-blur-sm rounded-lg px-3 py-2 cursor-pointer hover:bg-black/40 transition-colors"
+                onClick={() => {
+                  const address = encodeURIComponent(`${pub.address}, ${pub.city}, Italia`);
+                  window.open(`https://maps.google.com/maps?q=${address}`, '_blank');
+                }}
+              >
+                <MapPin className="mr-2 flex-shrink-0" size={16} />
+                <span className="text-sm sm:text-base">Vedi su Mappa</span>
               </div>
             </div>
           </div>
-        </div>
-      </div>
 
-      {/* Main Content */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Quick Info Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 -mt-8 mb-8 relative z-10">
-          <Card 
-            className="bg-white shadow-lg cursor-pointer hover:shadow-xl transition-shadow"
-            onClick={() => {
-              if (pub?.address) {
-                const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(pub.address)}`;
-                window.open(mapsUrl, '_blank');
-              }
-            }}
-          >
-            <CardContent className="p-4 text-center">
-              <MapPin className="w-6 h-6 text-primary mx-auto mb-2" />
-              <h3 className="font-semibold text-sm">Indirizzo</h3>
-              <p className="text-xs text-gray-600 hover:text-primary transition-colors">{pub?.address}</p>
-              <p className="text-xs text-primary mt-1">Tocca per aprire Maps</p>
-            </CardContent>
-          </Card>
-          
-          <Card className="bg-white shadow-lg">
-            <CardContent className="p-4 text-center">
-              <Phone className="w-6 h-6 text-primary mx-auto mb-2" />
-              <h3 className="font-semibold text-sm">Telefono</h3>
-              <p className="text-xs text-gray-600">{pub?.phone || "Non disponibile"}</p>
-            </CardContent>
-          </Card>
-          
-          <Card className="bg-white shadow-lg">
-            <CardContent className="p-4 text-center">
-              <Globe className="w-6 h-6 text-primary mx-auto mb-2" />
-              <h3 className="font-semibold text-sm">Sito Web</h3>
-              <p className="text-xs text-gray-600">
-                {pub?.websiteUrl ? (
-                  <a href={pub.websiteUrl} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">
-                    Visita
-                  </a>
-                ) : "Non disponibile"}
-              </p>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Description */}
-        {pub?.description && (
-          <Card className="mb-8">
-            <CardContent className="p-6">
-              <h2 className="text-xl font-bold mb-4 flex items-center">
-                <Camera className="w-5 h-5 mr-2" />
-                Chi Siamo
-              </h2>
-              <p className="text-gray-700 leading-relaxed">{pub?.description}</p>
-            </CardContent>
-          </Card>
-        )}
-
-        {/* Main Tabs */}
-        <Tabs defaultValue="taplist" className="mb-8">
-          <TabsList className="grid w-full grid-cols-3 mb-6 h-auto p-1">
-            <TabsTrigger value="taplist" className="flex flex-col sm:flex-row items-center p-3 text-xs sm:text-sm">
-              <Beer className="w-4 h-4 sm:mr-2 mb-1 sm:mb-0" />
-              <span className="text-center">
-                Birre<br className="sm:hidden" />
-                <span className="hidden sm:inline"> </span>({Array.isArray(tapList) ? tapList.length : 0})
-              </span>
-            </TabsTrigger>
-            <TabsTrigger value="bottles" className="flex flex-col sm:flex-row items-center p-3 text-xs sm:text-sm">
-              <Wine className="w-4 h-4 sm:mr-2 mb-1 sm:mb-0" />
-              <span className="text-center">
-                Cantina<br className="sm:hidden" />
-                <span className="hidden sm:inline"> </span>({Array.isArray(bottles) ? bottles.length : 0})
-              </span>
-            </TabsTrigger>
-            <TabsTrigger value="menu" className="flex flex-col sm:flex-row items-center p-3 text-xs sm:text-sm">
-              <Utensils className="w-4 h-4 sm:mr-2 mb-1 sm:mb-0" />
-              <span className="text-center">
-                Menu<br className="sm:hidden" />
-                <span className="hidden sm:inline"> </span>({Array.isArray(menu) ? menu.length : 0})
-              </span>
-            </TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="taplist" className="mt-0">
-            {tapLoading ? (
-              <div className="space-y-3">
-                {[...Array(3)].map((_, i) => (
-                  <Card key={i} className="animate-pulse">
-                    <div className="p-4 flex items-center gap-4">
-                      <div className="w-14 h-14 bg-gray-200 rounded-lg" />
-                      <div className="flex-1 space-y-2">
-                        <div className="h-4 bg-gray-200 rounded w-3/4" />
-                        <div className="h-3 bg-gray-200 rounded w-1/2" />
-                      </div>
-                      <div className="w-20 h-8 bg-gray-200 rounded" />
-                    </div>
-                  </Card>
-                ))}
-              </div>
-            ) : (
-              <TapList tapList={Array.isArray(tapList) ? tapList : []} />
-            )}
-          </TabsContent>
-
-          <TabsContent value="bottles" className="mt-0">
-            {bottlesLoading ? (
-              <div className="space-y-3">
-                {[...Array(3)].map((_, i) => (
-                  <Card key={i} className="animate-pulse">
-                    <div className="p-4 flex items-center gap-4">
-                      <div className="w-14 h-14 bg-gray-200 rounded-lg" />
-                      <div className="flex-1 space-y-2">
-                        <div className="h-4 bg-gray-200 rounded w-3/4" />
-                        <div className="h-3 bg-gray-200 rounded w-1/2" />
-                      </div>
-                      <div className="w-20 h-8 bg-gray-200 rounded" />
-                    </div>
-                  </Card>
-                ))}
-              </div>
-            ) : (
-              <div className="space-y-3">
-                {Array.isArray(bottles) && bottles.length > 0 ? bottles.map((bottle: any) => (
-                  <Card key={bottle.id} className="overflow-hidden hover:shadow-md transition-all duration-200">
-                    <div className="p-4">
-                      <div className="flex items-center gap-4">
-                        <img
-                          src={bottle.beer?.bottleImageUrl || bottle.beer?.imageUrl || "https://images.unsplash.com/photo-1608270586620-248524c67de9?ixlib=rb-4.0.3&auto=format&fit=crop&w=100&h=100"}
-                          alt={bottle.beer?.name}
-                          className="w-14 h-14 object-cover rounded-lg shadow-sm flex-shrink-0"
-                        />
-                        <div className="flex-1 min-w-0">
-                          <h3 className="font-semibold text-base truncate">{bottle.beer?.name}</h3>
-                          <p className="text-sm text-gray-600 truncate">{bottle.beer?.brewery?.name || bottle.beer?.brewery}</p>
-                          <div className="flex items-center gap-2 mt-1">
-                            <Badge variant="outline" className="text-xs">{bottle.beer?.style}</Badge>
-                            {bottle.beer?.abv && <Badge variant="outline" className="text-xs">{bottle.beer?.abv}% ABV</Badge>}
-                          </div>
-                        </div>
-                        <div className="text-right flex-shrink-0">
-                          <div className="bg-gray-50 rounded-lg p-2 min-w-[80px]">
-                            <p className="font-bold text-lg text-primary">€{bottle.price}</p>
-                            <Badge variant={bottle.isActive ? "default" : "secondary"} className="text-xs">
-                              {bottle.isActive ? "Disponibile" : "Esaurita"}
-                            </Badge>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </Card>
-                )) : (
-                  <div className="text-center py-12">
-                    <div className="text-gray-400 mb-4">
-                      <Wine className="w-16 h-16 mx-auto" />
-                    </div>
-                    <p className="text-gray-500 text-lg font-medium">Nessuna birra in bottiglia disponibile</p>
-                    <p className="text-gray-400 text-sm mt-1">Torna presto per vedere le novità!</p>
-                  </div>
+          <CardContent className="p-3 sm:p-6">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 lg:gap-6">
+              <div className="lg:col-span-2">
+                {pub.description && (
+                  <p className="text-gray-600 mb-4 text-sm sm:text-base">{pub.description}</p>
                 )}
-              </div>
-            )}
-          </TabsContent>
-
-          <TabsContent value="menu">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center">
-                  <Utensils className="w-5 h-5 mr-2" />
-                  Menu Cibo
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                {menuLoading ? (
-                  <div className="animate-pulse space-y-4">
-                    {[...Array(3)].map((_, i) => (
-                      <div key={i} className="h-32 bg-gray-200 rounded" />
-                    ))}
+                
+                <div className="flex flex-col sm:flex-row sm:items-center sm:space-x-4 space-y-2 sm:space-y-0 mb-4">
+                  <div className="flex items-center">
+                    <Star className="text-yellow-400 mr-1" size={16} />
+                    <span className="font-semibold text-sm sm:text-base">{pub.rating || "N/A"}</span>
+                    <span className="text-gray-500 ml-1 text-sm sm:text-base">recensioni</span>
                   </div>
-                ) : (
-                  <FoodMenu menu={Array.isArray(menu) ? menu : []} />
-                )}
-              </CardContent>
-            </Card>
-          </TabsContent>
-        </Tabs>
+                  
+                  <div className={`flex items-center ${isOpenNow(pub.openingHours) ? 'text-green-600' : 'text-red-600'}`}>
+                    <Clock className="mr-1" size={14} />
+                    <span className="text-sm">{isOpenNow(pub.openingHours) ? 'Aperto ora' : 'Chiuso ora'}</span>
+                  </div>
+                </div>
+              </div>
 
-        {/* Contact & Location */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center">
-                <Navigation className="w-5 h-5 mr-2" />
-                Come Raggiungerci
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                <div>
-                  <h3 className="font-semibold mb-2">Indirizzo</h3>
-                  <p className="text-gray-600">{pub?.address}</p>
+              <div className="space-y-4 mt-4 lg:mt-0">
+                <h3 className="text-lg font-semibold text-secondary border-b border-gray-200 pb-2">Informazioni Contatto</h3>
+                
+                {/* Indirizzo completo con mappa */}
+                <div className="space-y-2">
+                  <div className="flex items-start">
+                    <MapPin className="mr-3 text-primary flex-shrink-0 mt-1" size={18} />
+                    <div>
+                      <p className="font-medium text-gray-800">{pub.address}</p>
+                      <p className="text-gray-600 text-sm">{pub.city}, {pub.region}</p>
+                      <button 
+                        className="text-primary hover:text-primary/80 text-sm font-medium mt-1 hover:underline"
+                        onClick={() => {
+                          const address = encodeURIComponent(`${pub.address}, ${pub.city}, Italia`);
+                          window.open(`https://maps.google.com/maps?q=${address}`, '_blank');
+                        }}
+                      >
+                        Apri in Google Maps
+                      </button>
+                    </div>
+                  </div>
                 </div>
                 
-                {pub?.phone && (
-                  <div>
-                    <h3 className="font-semibold mb-2">Telefono</h3>
-                    <a href={`tel:${pub.phone}`} className="text-primary hover:underline">
+                {pub.phone && (
+                  <div className="flex items-center">
+                    <Phone className="mr-3 text-primary flex-shrink-0" size={18} />
+                    <a href={`tel:${pub.phone}`} className="text-gray-800 font-medium hover:text-primary hover:underline text-base break-all">
                       {pub.phone}
                     </a>
                   </div>
                 )}
-
-                <div className="flex space-x-4">
-                  <Button 
-                    className="flex-1"
-                    onClick={() => {
-                      if (pub?.address) {
-                        const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(pub.address)}`;
-                        window.open(mapsUrl, '_blank');
-                      }
-                    }}
-                  >
-                    <MapPin className="w-4 h-4 mr-2" />
-                    Indicazioni
-                  </Button>
-                  {pub?.phone && (
-                    <Button 
-                      variant="outline" 
-                      className="flex-1"
-                      onClick={() => window.open(`tel:${pub.phone}`, '_self')}
+                
+                {pub.websiteUrl && (
+                  <div className="flex items-center">
+                    <Globe className="mr-3 text-primary flex-shrink-0" size={18} />
+                    <a 
+                      href={pub.websiteUrl} 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="text-gray-800 font-medium hover:text-primary hover:underline text-base"
                     >
-                      <Phone className="w-4 h-4 mr-2" />
-                      Chiama
-                    </Button>
+                      Visita il Sito Web
+                    </a>
+                  </div>
+                )}
+
+                {pub.email && (
+                  <div className="flex items-center">
+                    <span className="mr-3 text-primary flex-shrink-0 text-lg">@</span>
+                    <a href={`mailto:${pub.email}`} className="text-gray-800 font-medium hover:text-primary hover:underline text-base break-all">
+                      {pub.email}
+                    </a>
+                  </div>
+                )}
+                
+                {/* Social Media - se presenti */}
+                <div className="flex items-center gap-4 pt-2">
+                  {pub.facebookUrl && (
+                    <a 
+                      href={pub.facebookUrl} 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="text-blue-600 hover:text-blue-800 transition-colors"
+                      title="Facebook"
+                    >
+                      <Facebook size={20} />
+                    </a>
+                  )}
+                  {pub.instagramUrl && (
+                    <a 
+                      href={pub.instagramUrl} 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="text-pink-600 hover:text-pink-800 transition-colors"
+                      title="Instagram"
+                    >
+                      <Instagram size={20} />
+                    </a>
                   )}
                 </div>
               </div>
-            </CardContent>
-          </Card>
+            </div>
+          </CardContent>
+        </Card>
 
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center">
-                <Clock className="w-5 h-5 mr-2" />
-                Orari di Apertura
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-2">
-                {pub?.openingHours ? Object.entries(pub.openingHours).map(([day, hours]: [string, any]) => (
-                  <div key={day} className="flex justify-between items-center">
-                    <span className="capitalize font-medium">
-                      {day === 'monday' ? 'Lunedì' :
-                       day === 'tuesday' ? 'Martedì' :
-                       day === 'wednesday' ? 'Mercoledì' :
-                       day === 'thursday' ? 'Giovedì' :
-                       day === 'friday' ? 'Venerdì' :
-                       day === 'saturday' ? 'Sabato' : 'Domenica'}
-                    </span>
-                    <span className="text-gray-600">
-                      {hours.isClosed ? 'Chiuso' : 
-                       hours.open && hours.close ? `${hours.open} - ${hours.close}` : 'Aperto'}
-                    </span>
-                  </div>
-                )) : (
-                  <p className="text-gray-500">Orari non disponibili</p>
-                )}
-              </div>
-            </CardContent>
-          </Card>
+        {/* Tabs for different sections */}
+        <div className="mb-6">
+          <Tabs defaultValue="taplist" className="w-full">
+            <TabsList className="grid w-full grid-cols-3 lg:grid-cols-3 mb-6">
+              <TabsTrigger value="taplist" className="text-xs sm:text-sm">
+                <Wine className="mr-1 sm:mr-2" size={16} />
+                Spine
+              </TabsTrigger>
+              <TabsTrigger value="menu" className="text-xs sm:text-sm">
+                <span className="mr-1 sm:mr-2">🍽️</span>
+                Menu
+              </TabsTrigger>
+              <TabsTrigger value="bottles" className="text-xs sm:text-sm">
+                <span className="mr-1 sm:mr-2">🍺</span>
+                Cantina
+              </TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="taplist">
+              <TapList 
+                tapList={tapList || []} 
+                isLoading={tapLoading}
+                showOwnerControls={false}
+              />
+            </TabsContent>
+
+            <TabsContent value="menu">
+              <FoodMenu 
+                menuData={menu || []} 
+                isLoading={menuLoading}
+                showOwnerControls={false}
+              />
+            </TabsContent>
+
+            <TabsContent value="bottles">
+              <Card>
+                <CardContent className="p-4 sm:p-6">
+                  <h3 className="text-lg sm:text-xl font-semibold mb-4 sm:mb-6 text-center text-secondary">
+                    🍺 Cantina Birre
+                  </h3>
+                  {bottlesLoading ? (
+                    <div className="space-y-4">
+                      {[...Array(3)].map((_, i) => (
+                        <div key={i} className="animate-pulse flex items-center space-x-4 p-4 border rounded-lg">
+                          <div className="w-12 h-12 bg-gray-300 rounded"></div>
+                          <div className="flex-1 space-y-2">
+                            <div className="h-4 bg-gray-300 rounded w-3/4"></div>
+                            <div className="h-3 bg-gray-300 rounded w-1/2"></div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : bottles && bottles.length > 0 ? (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
+                      {bottles.map((bottle: any) => (
+                        <div key={bottle.id} className="border rounded-lg p-4 hover:shadow-md transition-shadow">
+                          <div className="flex items-start space-x-4">
+                            <img
+                              src={bottle.beer?.imageUrl || "https://images.unsplash.com/photo-1608667508764-33cf0db3f6a9?ixlib=rb-4.0.3&auto=format&fit=crop&w=80&h=80"}
+                              alt={bottle.beer?.name}
+                              className="w-16 h-16 object-cover rounded-lg flex-shrink-0"
+                            />
+                            <div className="flex-1 min-w-0">
+                              <h4 className="font-semibold text-gray-900 mb-1 break-words">
+                                {bottle.beer?.name}
+                              </h4>
+                              <p className="text-sm text-gray-600 mb-2 break-words">
+                                {bottle.beer?.brewery?.name || bottle.beer?.breweryName}
+                              </p>
+                              
+                              <div className="flex flex-wrap items-center gap-2 mb-2">
+                                <Badge variant="outline" className="text-xs">
+                                  {bottle.beer?.style}
+                                </Badge>
+                                {bottle.beer?.abv && (
+                                  <Badge variant="outline" className="text-xs">
+                                    {bottle.beer?.abv}% ABV
+                                  </Badge>
+                                )}
+                              </div>
+                              
+                              {bottle.prices && bottle.prices.length > 0 && (
+                                <div className="space-y-1">
+                                  {bottle.prices.map((price: any, index: number) => (
+                                    <div key={index} className="flex justify-between items-center text-sm">
+                                      <span className="text-gray-600">
+                                        {price.size} {price.format && `(${price.format})`}
+                                      </span>
+                                      <span className="font-semibold text-primary">
+                                        €{price.price}
+                                      </span>
+                                    </div>
+                                  ))}
+                                </div>
+                              )}
+                              
+                              {bottle.description && (
+                                <p className="text-xs text-gray-500 mt-2 break-words">
+                                  {bottle.description}
+                                </p>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="text-center py-8 sm:py-12">
+                      <Wine className="mx-auto text-gray-400 mb-4" size={48} />
+                      <p className="text-gray-500 text-base sm:text-lg">Nessuna birra disponibile in cantina al momento</p>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </TabsContent>
+          </Tabs>
         </div>
       </main>
 
