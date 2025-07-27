@@ -74,7 +74,7 @@ export default function Dashboard() {
           </p>
         </div>
         <div className="flex items-center gap-2">
-          {user?.userType === 'admin' && (
+          {user && user.userType === 'admin' && (
             <Link href="/admin">
               <Button className="bg-red-600 hover:bg-red-700 text-white">
                 <Shield className="w-4 h-4 mr-2" />
