@@ -24,6 +24,7 @@ import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
+import BeerTastingForm from "@/components/BeerTastingForm";
 
 interface Beer {
   id: number;
@@ -486,6 +487,13 @@ export default function BeerDetail() {
               </CardContent>
             </Card>
           </div>
+
+          {/* Beer Tasting Form - Under Availability */}
+          <BeerTastingForm 
+            beerId={parseInt(id || '0')} 
+            beerName={beer?.name || ''} 
+            existingTasting={null} 
+          />
         </div>
       </main>
 

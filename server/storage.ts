@@ -883,6 +883,46 @@ export class DatabaseStorage implements IStorage {
     return user;
   }
 
+  async updateUserNickname(userId: string, nickname: string): Promise<User> {
+    const [user] = await db
+      .update(users)
+      .set({ 
+        nickname, 
+        lastNicknameUpdate: new Date(),
+        updatedAt: new Date() 
+      })
+      .where(eq(users.id, userId))
+      .returning();
+    return user;
+  }
+
+  async deleteUser(userId: string): Promise<void> {
+    // Delete user's activities
+    await db.delete(userActivities).where(eq(userActivities.userId, userId));
+    
+    // Delete user's favorites
+    await db.delete(favorites).where(eq(favorites.userId, userId));
+    
+    // Delete user's beer tastings
+    await db.delete(userBeerTastings).where(eq(userBeerTastings.userId, userId));
+    
+    // Delete owned pubs (if pub owner)
+    const userPubs = await db.select({ id: pubs.id }).from(pubs).where(eq(pubs.ownerId, userId));
+    for (const pub of userPubs) {
+      // Delete pub's tap list
+      await db.delete(tapList).where(eq(tapList.pubId, pub.id));
+      // Delete pub's bottle list
+      await db.delete(bottleList).where(eq(bottleList.pubId, pub.id));
+      // Delete pub's menu items and categories
+      await db.delete(menuItems).where(sql`category_id IN (SELECT id FROM menu_categories WHERE pub_id = ${pub.id})`);
+      await db.delete(menuCategories).where(eq(menuCategories.pubId, pub.id));
+    }
+    await db.delete(pubs).where(eq(pubs.ownerId, userId));
+    
+    // Finally delete the user
+    await db.delete(users).where(eq(users.id, userId));
+  }
+
   // Admin operations
   async getUserCount(): Promise<number> {
     const result = await db.select({ count: sql`count(*)`.mapWith(Number) }).from(users);

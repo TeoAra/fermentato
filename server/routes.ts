@@ -1340,6 +1340,63 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
 
 
+  // Update nickname (with 15-day limit)
+  app.patch("/api/auth/user/nickname", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { nickname } = req.body;
+      
+      const user = await storage.getUser(userId);
+      if (user?.lastNicknameUpdate) {
+        const lastUpdate = new Date(user.lastNicknameUpdate);
+        const now = new Date();
+        const daysDiff = (now.getTime() - lastUpdate.getTime()) / (1000 * 3600 * 24);
+        
+        if (daysDiff < 15) {
+          return res.status(400).json({ 
+            message: `Puoi cambiare il nickname tra ${Math.ceil(15 - daysDiff)} giorni` 
+          });
+        }
+      }
+      
+      const updatedUser = await storage.updateUserNickname(userId, nickname);
+      res.json(updatedUser);
+    } catch (error) {
+      console.error("Error updating nickname:", error);
+      res.status(500).json({ message: "Failed to update nickname" });
+    }
+  });
+
+  // Get user's tasting for specific beer
+  app.get("/api/beers/:beerId/user-tasting", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const beerId = parseInt(req.params.beerId);
+      const tasting = await storage.getUserBeerTasting(userId, beerId);
+      res.json(tasting);
+    } catch (error) {
+      console.error("Error fetching user beer tasting:", error);
+      res.status(500).json({ message: "Failed to fetch user beer tasting" });
+    }
+  });
+
+  // Delete user account
+  app.delete("/api/auth/user/delete", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      
+      await storage.deleteUser(userId);
+      
+      // Destroy session
+      req.logout(() => {
+        res.json({ message: "Account deleted successfully" });
+      });
+    } catch (error) {
+      console.error("Error deleting user:", error);
+      res.status(500).json({ message: "Failed to delete user account" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }

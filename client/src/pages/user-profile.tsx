@@ -24,7 +24,10 @@ import {
   Key,
   Upload,
   ChevronDown,
-  ChevronUp
+  ChevronUp,
+  Trash2,
+  AlertTriangle,
+  Settings
 } from "lucide-react";
 import { Link } from "wouter";
 import type { User as UserType } from "@shared/schema";
@@ -34,42 +37,77 @@ export default function UserProfile() {
   const typedUser = user as UserType;
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  
+  // State management
   const [isEditing, setIsEditing] = useState(false);
+  const [showAccountSettings, setShowAccountSettings] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [isEditingNickname, setIsEditingNickname] = useState(false);
+  
   const [editedProfile, setEditedProfile] = useState({
     nickname: typedUser?.nickname || "",
-    firstName: typedUser?.firstName || "",
-    lastName: typedUser?.lastName || "",
     bio: typedUser?.bio || "",
     favoriteStyles: typedUser?.favoriteStyles || [],
     profileImageUrl: typedUser?.profileImageUrl || "",
   });
   
-  const [expandedSections, setExpandedSections] = useState({
-    profile: true,
-    tastings: false,
-    favorites: false,
-    account: false
+  const [accountSettings, setAccountSettings] = useState({
+    firstName: typedUser?.firstName || "",
+    lastName: typedUser?.lastName || "",
+    email: typedUser?.email || "",
   });
 
-  // Fetch user's beer tastings
+  const [tempNickname, setTempNickname] = useState(typedUser?.nickname || "");
+
+  // Handle redirects for unauthenticated users
+  useEffect(() => {
+    if (!isLoading && !isAuthenticated) {
+      toast({
+        title: "Accesso Richiesto",
+        description: "Devi effettuare l'accesso per vedere il profilo.",
+        variant: "destructive",
+      });
+      setTimeout(() => {
+        window.location.href = "/api/login";
+      }, 500);
+      return;
+    }
+  }, [isAuthenticated, isLoading, toast]);
+
+  // Data fetching
   const { data: beerTastings = [] } = useQuery({
     queryKey: ["/api/user/beer-tastings"],
     enabled: isAuthenticated,
   });
 
-  // Fetch user's favorites
   const { data: favorites = [] } = useQuery({
     queryKey: ["/api/favorites"],
     enabled: isAuthenticated,
   });
 
-  // Fetch unique beer styles for dropdown
   const { data: beerStyles = [] } = useQuery({
     queryKey: ["/api/beers/styles"],
     enabled: isAuthenticated,
   });
 
-  // Update profile mutation
+  // Check if nickname can be updated (15 days limit)
+  const canUpdateNickname = () => {
+    if (!typedUser?.lastNicknameUpdate) return true;
+    const lastUpdate = new Date(typedUser.lastNicknameUpdate);
+    const now = new Date();
+    const daysDiff = (now.getTime() - lastUpdate.getTime()) / (1000 * 3600 * 24);
+    return daysDiff >= 15;
+  };
+
+  const getDaysUntilNicknameUpdate = () => {
+    if (!typedUser?.lastNicknameUpdate) return 0;
+    const lastUpdate = new Date(typedUser.lastNicknameUpdate);
+    const now = new Date();
+    const daysDiff = (now.getTime() - lastUpdate.getTime()) / (1000 * 3600 * 24);
+    return Math.ceil(15 - daysDiff);
+  };
+
+  // Mutations
   const updateProfileMutation = useMutation({
     mutationFn: async (profileData: any) => {
       return apiRequest("/api/user/profile", "PATCH", profileData);
@@ -78,228 +116,222 @@ export default function UserProfile() {
       queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
       setIsEditing(false);
       toast({
-        title: "Successo",
-        description: "Profilo aggiornato con successo",
+        title: "Profilo aggiornato",
+        description: "Le modifiche sono state salvate con successo",
       });
     },
     onError: () => {
       toast({
         title: "Errore",
-        description: "Errore nell'aggiornamento del profilo",
+        description: "Impossibile aggiornare il profilo",
         variant: "destructive",
       });
     },
   });
 
+  const nicknameUpdateMutation = useMutation({
+    mutationFn: async (newNickname: string) => {
+      return await apiRequest(`/api/auth/user/nickname`, {
+        method: "PATCH",
+        body: JSON.stringify({ nickname: newNickname }),
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
+      setIsEditingNickname(false);
+      toast({
+        title: "Nickname aggiornato",
+        description: "Il tuo nickname è stato modificato con successo.",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Errore",
+        description: error.message || "Impossibile aggiornare il nickname.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const deleteAccountMutation = useMutation({
+    mutationFn: async () => {
+      return await apiRequest(`/api/auth/user/delete`, {
+        method: "DELETE",
+      });
+    },
+    onSuccess: () => {
+      toast({
+        title: "Account eliminato",
+        description: "Il tuo account è stato eliminato definitivamente.",
+      });
+      setTimeout(() => {
+        window.location.href = "/";
+      }, 1000);
+    },
+    onError: () => {
+      toast({
+        title: "Errore",
+        description: "Impossibile eliminare l'account.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Event handlers
   const handleSaveProfile = () => {
     updateProfileMutation.mutate(editedProfile);
   };
 
-  const handleCancelEdit = () => {
-    setEditedProfile({
-      nickname: typedUser?.nickname || "",
-      firstName: typedUser?.firstName || "",
-      lastName: typedUser?.lastName || "",
-      bio: typedUser?.bio || "",
-      favoriteStyles: typedUser?.favoriteStyles || [],
-      profileImageUrl: typedUser?.profileImageUrl || "",
-    });
-    setIsEditing(false);
+  const handleNicknameSave = () => {
+    if (!canUpdateNickname()) {
+      toast({
+        title: "Limite raggiunto",
+        description: `Puoi cambiare il nickname tra ${getDaysUntilNicknameUpdate()} giorni`,
+        variant: "destructive",
+      });
+      return;
+    }
+    nicknameUpdateMutation.mutate(tempNickname);
   };
 
-  const toggleSection = (section: keyof typeof expandedSections) => {
-    setExpandedSections(prev => ({
-      ...prev,
-      [section]: !prev[section]
-    }));
-  };
-
-  const canChangeEmail = () => {
-    if (!typedUser?.lastEmailChange) return true;
-    const daysSinceChange = (Date.now() - new Date(typedUser.lastEmailChange).getTime()) / (1000 * 60 * 60 * 24);
-    return daysSinceChange >= 15;
-  };
-
-  const canChangePassword = () => {
-    if (!typedUser?.lastPasswordChange) return true;
-    const daysSinceChange = (Date.now() - new Date(typedUser.lastPasswordChange).getTime()) / (1000 * 60 * 60 * 24);
-    return daysSinceChange >= 15;
+  const handleDeleteAccount = () => {
+    deleteAccountMutation.mutate();
   };
 
   if (isLoading) {
     return (
-      <div className="container mx-auto px-4 py-8 max-w-4xl">
-        <div className="animate-pulse space-y-6">
-          <div className="h-8 bg-gray-200 dark:bg-gray-700 rounded w-1/3"></div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="h-32 bg-gray-200 dark:bg-gray-700 rounded"></div>
-            <div className="h-32 bg-gray-200 dark:bg-gray-700 rounded"></div>
-            <div className="h-32 bg-gray-200 dark:bg-gray-700 rounded"></div>
-          </div>
+      <div className="min-h-screen bg-gradient-to-br from-amber-50 to-orange-100 dark:from-gray-900 dark:to-gray-800 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-amber-600 mx-auto"></div>
+          <p className="mt-4 text-gray-600 dark:text-gray-300">Caricamento profilo...</p>
         </div>
       </div>
     );
   }
 
   if (!isAuthenticated || !typedUser) {
-    return (
-      <div className="container mx-auto px-4 py-8 text-center">
-        <h1 className="text-2xl font-bold mb-4">Accesso richiesto</h1>
-        <p className="text-gray-600 mb-4">Effettua l'accesso per vedere il tuo profilo</p>
-        <Button asChild>
-          <a href="/api/login">Accedi</a>
-        </Button>
-      </div>
-    );
+    return null;
   }
 
   return (
-    <div className="container mx-auto px-4 py-4 max-w-4xl">
-      {/* Header Mobile-First */}
-      <div className="text-center mb-6">
-        <Avatar className="w-24 h-24 mx-auto mb-4">
-          <AvatarImage src={typedUser.profileImageUrl || ""} />
-          <AvatarFallback className="text-xl bg-amber-100 dark:bg-amber-900">
-            {typedUser.nickname?.charAt(0) || typedUser.firstName?.charAt(0) || 'U'}
-          </AvatarFallback>
-        </Avatar>
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-1">
-          {typedUser.userType === 'customer' ? (typedUser.nickname || 'Utente') : `${typedUser.firstName} ${typedUser.lastName}`}
-        </h1>
-        <p className="text-gray-600 dark:text-gray-400 text-sm mb-2">
-          {typedUser.email}
-        </p>
-        <Badge variant="outline" className="mb-4">
-          {typedUser.userType === 'admin' ? 'Amministratore' : 
-           typedUser.userType === 'pub_owner' ? 'Proprietario Pub' : 'Cliente'}
-        </Badge>
-        
-        {typedUser.userType === 'admin' && (
-          <Link href="/admin">
-            <Button className="bg-red-600 hover:bg-red-700 text-white mb-4">
-              <Shield className="w-4 h-4 mr-2" />
-              Pannello Admin
-            </Button>
-          </Link>
-        )}
-      </div>
+    <div className="min-h-screen bg-gradient-to-br from-amber-50 to-orange-100 dark:from-gray-900 dark:to-gray-800">
+      <div className="container mx-auto px-4 py-8">
+        {/* Header with Avatar and Basic Info */}
+        <Card className="mb-6">
+          <CardContent className="pt-6">
+            <div className="flex flex-col md:flex-row items-center gap-6">
+              {/* Profile Image - Clickable */}
+              <div className="relative">
+                <Avatar className="w-24 h-24 cursor-pointer" onClick={() => setIsEditing(true)}>
+                  <AvatarImage src={typedUser.profileImageUrl || ""} />
+                  <AvatarFallback className="bg-amber-600 text-white text-2xl">
+                    {typedUser.nickname?.[0]?.toUpperCase() || typedUser.email?.[0]?.toUpperCase() || 'U'}
+                  </AvatarFallback>
+                </Avatar>
+                <div className="absolute bottom-0 right-0 bg-amber-600 rounded-full p-1">
+                  <Upload className="w-3 h-3 text-white" />
+                </div>
+              </div>
 
-      {/* Mobile-First Sections */}
-      <div className="space-y-4">
+              <div className="flex-1 text-center md:text-left">
+                {/* Nickname with Edit Button */}
+                <div className="flex items-center justify-center md:justify-start gap-2 mb-2">
+                  {isEditingNickname ? (
+                    <div className="flex items-center gap-2">
+                      <Input
+                        value={tempNickname}
+                        onChange={(e) => setTempNickname(e.target.value)}
+                        className="w-48"
+                        placeholder="Inserisci nickname"
+                      />
+                      <Button
+                        size="sm"
+                        onClick={handleNicknameSave}
+                        disabled={nicknameUpdateMutation.isPending || !canUpdateNickname()}
+                      >
+                        <Save className="w-4 h-4" />
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => {
+                          setIsEditingNickname(false);
+                          setTempNickname(typedUser.nickname || "");
+                        }}
+                      >
+                        <X className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  ) : (
+                    <>
+                      <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+                        {typedUser.nickname || "Utente senza nome"}
+                      </h1>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => setIsEditingNickname(true)}
+                        disabled={!canUpdateNickname()}
+                        title={!canUpdateNickname() ? `Disponibile tra ${getDaysUntilNicknameUpdate()} giorni` : "Modifica nickname"}
+                      >
+                        <Edit3 className="w-3 h-3" />
+                      </Button>
+                    </>
+                  )}
+                </div>
 
-        {/* Profile Section */}
-        <Card>
-          <CardHeader className="cursor-pointer" onClick={() => toggleSection('profile')}>
-            <div className="flex items-center justify-between">
-              <CardTitle className="flex items-center gap-2">
-                <User className="w-5 h-5" />
-                Il Mio Profilo
-                <Badge variant="secondary" className="ml-2">
-                  {typedUser.userType === 'customer' ? 'Pubblico: Nickname' : 'Pubblico: Nome'}
-                </Badge>
-              </CardTitle>
-              <div className="flex items-center gap-2">
-                {!isEditing && expandedSections.profile && (
-                  <Button 
-                    variant="outline" 
-                    size="sm"
-                    onClick={(e) => { e.stopPropagation(); setIsEditing(true); }}
-                  >
-                    <Edit3 className="w-4 h-4" />
-                  </Button>
+                <div className="flex items-center justify-center md:justify-start gap-2 mb-2">
+                  <Badge variant={typedUser.userType === 'admin' ? 'default' : 'secondary'}>
+                    {typedUser.userType === 'admin' ? 'Amministratore' : 
+                     typedUser.userType === 'pub_owner' ? 'Proprietario Pub' : 'Cliente'}
+                  </Badge>
+                  <Badge variant="outline" className="text-xs">
+                    <Calendar className="w-3 h-3 mr-1" />
+                    Iscritto il {new Date(typedUser.createdAt).toLocaleDateString('it-IT')}
+                  </Badge>
+                </div>
+
+                {/* Admin Panel Button - Under Role */}
+                {typedUser.userType === 'admin' && (
+                  <div className="mt-2">
+                    <Button asChild size="sm" className="bg-red-600 hover:bg-red-700">
+                      <Link href="/admin-dashboard">
+                        <Shield className="w-4 h-4 mr-2" />
+                        Pannello Admin
+                      </Link>
+                    </Button>
+                  </div>
                 )}
-                {expandedSections.profile ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+
+                {typedUser.bio && (
+                  <p className="text-gray-600 dark:text-gray-300 mt-2">
+                    {typedUser.bio}
+                  </p>
+                )}
               </div>
             </div>
-          </CardHeader>
-          
-          {expandedSections.profile && (
-            <CardContent className="space-y-4">
-              {isEditing && (
-                <div className="flex gap-2 mb-4">
-                  <Button 
-                    size="sm" 
-                    onClick={handleSaveProfile}
-                    disabled={updateProfileMutation.isPending}
-                  >
-                    <Save className="w-4 h-4 mr-2" />
-                    Salva
-                  </Button>
-                  <Button 
-                    variant="outline" 
-                    size="sm"
-                    onClick={handleCancelEdit}
-                  >
-                    <X className="w-4 h-4 mr-2" />
-                    Annulla
-                  </Button>
-                </div>
-              )}
+          </CardContent>
+        </Card>
 
-              <div className="space-y-4">
-                {/* Nickname for customers, Name for owners/admins */}
-                {typedUser.userType === 'customer' ? (
-                  <div>
-                    <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                      Nickname (Pubblico)
-                    </label>
-                    {isEditing ? (
-                      <Input
-                        value={editedProfile.nickname}
-                        onChange={(e) => setEditedProfile({ ...editedProfile, nickname: e.target.value })}
-                        className="mt-1"
-                        placeholder="Il tuo nickname pubblico"
-                      />
-                    ) : (
-                      <p className="mt-1 text-gray-900 dark:text-gray-100 font-medium">
-                        {typedUser.nickname || "Non specificato"}
-                      </p>
-                    )}
-                  </div>
-                ) : (
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                        Nome (Pubblico)
-                      </label>
-                      {isEditing ? (
-                        <Input
-                          value={editedProfile.firstName}
-                          onChange={(e) => setEditedProfile({ ...editedProfile, firstName: e.target.value })}
-                          className="mt-1"
-                        />
-                      ) : (
-                        <p className="mt-1 text-gray-900 dark:text-gray-100 font-medium">
-                          {typedUser.firstName || "Non specificato"}
-                        </p>
-                      )}
-                    </div>
-                    <div>
-                      <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                        Cognome (Pubblico)
-                      </label>
-                      {isEditing ? (
-                        <Input
-                          value={editedProfile.lastName}
-                          onChange={(e) => setEditedProfile({ ...editedProfile, lastName: e.target.value })}
-                          className="mt-1"
-                        />
-                      ) : (
-                        <p className="mt-1 text-gray-900 dark:text-gray-100 font-medium">
-                          {typedUser.lastName || "Non specificato"}
-                        </p>
-                      )}
-                    </div>
-                  </div>
-                )}
-
-                {/* Favorite Styles - Multiple Selection with Colors */}
-                <div>
-                  <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 block">
-                    Stili Preferiti (max 5)
-                  </label>
-                  {isEditing ? (
-                    <div className="mt-2 max-h-48 overflow-y-auto border rounded-lg p-3 bg-gray-50 dark:bg-gray-800">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Left Column - Public Profile */}
+          <div className="lg:col-span-2 space-y-6">
+            {/* Favorite Styles */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center justify-between">
+                  <span>Stili Preferiti</span>
+                  {!isEditing && (
+                    <Button size="sm" variant="outline" onClick={() => setIsEditing(true)}>
+                      <Edit3 className="w-4 h-4" />
+                    </Button>
+                  )}
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {isEditing ? (
+                  <div className="space-y-4">
+                    <div className="max-h-48 overflow-y-auto border rounded-lg p-3 bg-gray-50 dark:bg-gray-800">
                       <div className="grid grid-cols-2 gap-2">
                         {beerStyles.map((styleObj: any) => {
                           const isSelected = editedProfile.favoriteStyles.includes(styleObj.style);
@@ -310,13 +342,11 @@ export default function UserProfile() {
                               onClick={() => {
                                 const currentStyles = editedProfile.favoriteStyles;
                                 if (isSelected) {
-                                  // Remove style
                                   setEditedProfile({
                                     ...editedProfile,
                                     favoriteStyles: currentStyles.filter(s => s !== styleObj.style)
                                   });
                                 } else if (currentStyles.length < 5) {
-                                  // Add style (max 5)
                                   setEditedProfile({
                                     ...editedProfile,
                                     favoriteStyles: [...currentStyles, styleObj.style]
@@ -344,289 +374,266 @@ export default function UserProfile() {
                         Selezionati: {editedProfile.favoriteStyles.length}/5
                       </p>
                     </div>
-                  ) : (
-                    <div className="mt-1">
-                      {typedUser.favoriteStyles && typedUser.favoriteStyles.length > 0 ? (
-                        <div className="flex flex-wrap gap-2">
-                          {typedUser.favoriteStyles.map((style: string) => {
-                            const styleObj = beerStyles.find((s: any) => s.style === style);
-                            return (
-                              <span
-                                key={style}
-                                className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium text-white shadow-sm"
-                                style={{
-                                  backgroundColor: styleObj?.color || '#D68910',
-                                  textShadow: '0 1px 2px rgba(0,0,0,0.5)'
-                                }}
-                              >
-                                <Beer className="w-3 h-3 mr-1" />
-                                {style}
-                              </span>
-                            );
-                          })}
-                        </div>
-                      ) : (
-                        <p className="text-gray-500 dark:text-gray-400 text-sm">
-                          Nessuno stile selezionato
-                        </p>
-                      )}
+                    
+                    <div className="flex gap-2">
+                      <Button onClick={handleSaveProfile} disabled={updateProfileMutation.isPending}>
+                        <Save className="w-4 h-4 mr-2" />
+                        {updateProfileMutation.isPending ? "Salvando..." : "Salva"}
+                      </Button>
+                      <Button
+                        variant="outline"
+                        onClick={() => {
+                          setIsEditing(false);
+                          setEditedProfile({
+                            nickname: typedUser?.nickname || "",
+                            bio: typedUser?.bio || "",
+                            favoriteStyles: typedUser?.favoriteStyles || [],
+                            profileImageUrl: typedUser?.profileImageUrl || "",
+                          });
+                        }}
+                      >
+                        <X className="w-4 h-4 mr-2" />
+                        Annulla
+                      </Button>
                     </div>
-                  )}
-                </div>
+                  </div>
+                ) : (
+                  <div>
+                    {typedUser.favoriteStyles && typedUser.favoriteStyles.length > 0 ? (
+                      <div className="flex flex-wrap gap-2">
+                        {typedUser.favoriteStyles.map((style: string) => {
+                          const styleObj = beerStyles.find((s: any) => s.style === style);
+                          return (
+                            <span
+                              key={style}
+                              className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium text-white shadow-sm"
+                              style={{
+                                backgroundColor: styleObj?.color || '#D68910',
+                                textShadow: '0 1px 2px rgba(0,0,0,0.5)'
+                              }}
+                            >
+                              <Beer className="w-3 h-3 mr-1" />
+                              {style}
+                            </span>
+                          );
+                        })}
+                      </div>
+                    ) : (
+                      <p className="text-gray-500 dark:text-gray-400 text-sm">
+                        Nessuno stile selezionato
+                      </p>
+                    )}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
 
-                {/* Bio */}
-                <div>
-                  <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                    Biografia
-                  </label>
-                  {isEditing ? (
-                    <Textarea
-                      value={editedProfile.bio}
-                      onChange={(e) => setEditedProfile({ ...editedProfile, bio: e.target.value })}
-                      className="mt-1"
-                      placeholder="Raccontaci qualcosa di te e delle tue preferenze birrarie..."
-                      rows={3}
-                    />
-                  ) : (
-                    <p className="mt-1 text-gray-900 dark:text-gray-100">
-                      {typedUser.bio || "Nessuna biografia inserita"}
-                    </p>
-                  )}
-                </div>
-
-                <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
-                  <Calendar className="w-4 h-4" />
-                  Membro dal {new Date(typedUser.createdAt).toLocaleDateString('it-IT')}
-                </div>
-              </div>
-            </CardContent>
-          )}
-        </Card>
-
-        {/* Beer Tastings Section */}
-        <Card>
-          <CardHeader className="cursor-pointer" onClick={() => toggleSection('tastings')}>
-            <div className="flex items-center justify-between">
-              <CardTitle className="flex items-center gap-2">
-                <Beer className="w-5 h-5" />
-                Birre Assaggiate ({beerTastings.length})
-              </CardTitle>
-              {expandedSections.tastings ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
-            </div>
-          </CardHeader>
-          
-          {expandedSections.tastings && (
-            <CardContent>
-              {beerTastings.length === 0 ? (
-                <div className="text-center py-8">
-                  <Beer className="w-12 h-12 mx-auto text-gray-400 mb-4" />
-                  <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">
-                    Nessuna birra assaggiata
-                  </h3>
-                  <p className="text-gray-600 dark:text-gray-400 mb-4">
-                    Inizia ad esplorare e assaggiare birre per tenere traccia dei tuoi gusti!
-                  </p>
-                  <Button asChild>
-                    <Link href="/explore/breweries">Esplora Birrifici</Link>
-                  </Button>
-                </div>
-              ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {beerTastings.map((tasting: any) => (
-                    <Card key={tasting.id} className="hover:shadow-md transition-shadow">
-                      <CardContent className="p-4">
-                        <div className="flex gap-3">
+            {/* Beer Tastings */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Beer className="w-5 h-5" />
+                  Birre Assaggiate ({beerTastings.length})
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {beerTastings.length > 0 ? (
+                  <div className="space-y-3">
+                    {beerTastings.slice(0, 5).map((tasting: any) => (
+                      <div key={tasting.id} className="flex items-center justify-between p-3 border rounded-lg">
+                        <div className="flex items-center gap-3">
                           <img
-                            src={tasting.beer?.imageUrl || "https://images.unsplash.com/photo-1608270586620-248524c67de9"}
-                            alt={tasting.beer?.name}
-                            className="w-12 h-12 rounded object-cover flex-shrink-0"
+                            src={tasting.beer.imageUrl || '/default-beer.jpg'}
+                            alt={tasting.beer.name}
+                            className="w-10 h-10 rounded object-cover"
                           />
-                          <div className="flex-1 min-w-0">
-                            <h4 className="font-medium text-sm line-clamp-1">
-                              {tasting.beer?.name}
-                            </h4>
-                            <p className="text-xs text-gray-600 line-clamp-1">
-                              {tasting.brewery?.name}
-                            </p>
-                            {tasting.rating && (
-                              <div className="flex items-center gap-1 mt-1">
-                                {[...Array(5)].map((_, i) => (
-                                  <Star 
-                                    key={i}
-                                    className={`w-3 h-3 ${i < tasting.rating ? 'text-yellow-400 fill-current' : 'text-gray-300'}`}
-                                  />
-                                ))}
-                              </div>
-                            )}
-                            {tasting.personalNotes && (
-                              <p className="text-xs text-gray-700 dark:text-gray-300 mt-2 line-clamp-2">
-                                {tasting.personalNotes}
-                              </p>
-                            )}
-                            <p className="text-xs text-gray-500 mt-1">
+                          <div>
+                            <h4 className="font-medium">{tasting.beer.name}</h4>
+                            <p className="text-sm text-gray-600">{tasting.brewery?.name}</p>
+                            <p className="text-xs text-gray-500">
                               {new Date(tasting.tastedAt).toLocaleDateString('it-IT')}
                             </p>
                           </div>
                         </div>
-                      </CardContent>
-                    </Card>
-                  ))}
-                </div>
-              )}
-            </CardContent>
-          )}
-        </Card>
-
-        {/* Favorites Section - Fixed Display */}
-        <Card>
-          <CardHeader className="cursor-pointer" onClick={() => toggleSection('favorites')}>
-            <div className="flex items-center justify-between">
-              <CardTitle className="flex items-center gap-2">
-                <Heart className="w-5 h-5 text-red-500" />
-                I Miei Preferiti ({favorites.length})
-              </CardTitle>
-              {expandedSections.favorites ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
-            </div>
-          </CardHeader>
-          
-          {expandedSections.favorites && (
-            <CardContent>
-              {favorites.length === 0 ? (
-                <div className="text-center py-8">
-                  <Heart className="w-12 h-12 mx-auto text-gray-400 mb-4" />
-                  <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">
-                    Nessun preferito salvato
-                  </h3>
-                  <p className="text-gray-600 dark:text-gray-400 mb-4">
-                    Inizia ad esplorare e salva i tuoi pub, birrifici e birre preferiti!
-                  </p>
-                  <div className="flex gap-2 justify-center flex-wrap">
-                    <Button asChild variant="outline" size="sm">
-                      <Link href="/explore/pubs">Esplora Pub</Link>
-                    </Button>
-                    <Button asChild size="sm">
-                      <Link href="/explore/breweries">Esplora Birrifici</Link>
-                    </Button>
-                  </div>
-                </div>
-              ) : (
-                <div className="space-y-4">
-                  {favorites.map((favorite: any) => {
-                    const getItemIcon = () => {
-                      switch (favorite.itemType) {
-                        case 'pub': return '🍺';
-                        case 'brewery': return '🏭';
-                        case 'beer': return '🍻';
-                        default: return '❤️';
-                      }
-                    };
-
-                    const getItemLink = () => {
-                      switch (favorite.itemType) {
-                        case 'pub': return `/pub/${favorite.itemId}`;
-                        case 'brewery': return `/brewery/${favorite.itemId}`;
-                        case 'beer': return `/beer/${favorite.itemId}`;
-                        default: return '#';
-                      }
-                    };
-
-                    return (
-                      <Link key={favorite.id} href={getItemLink()}>
-                        <div className="flex items-center gap-3 p-3 border rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
-                          <div className="text-2xl">{getItemIcon()}</div>
-                          <div className="flex-1 min-w-0">
-                            <div className="font-medium text-sm line-clamp-1">
-                              {favorite.itemName || `${favorite.itemType} #${favorite.itemId}`}
-                            </div>
-                            <div className="text-xs text-gray-600 dark:text-gray-400 capitalize">
-                              {favorite.itemType === 'pub' ? 'Pub' : 
-                               favorite.itemType === 'brewery' ? 'Birrificio' : 'Birra'}
-                            </div>
-                          </div>
-                          <div className="text-red-500">
-                            <Heart className="w-4 h-4 fill-current" />
-                          </div>
+                        <div className="flex items-center gap-1">
+                          {[1, 2, 3, 4, 5].map((star) => (
+                            <Star
+                              key={star}
+                              className={`w-4 h-4 ${
+                                star <= (tasting.rating || 0)
+                                  ? "fill-amber-400 text-amber-400"
+                                  : "text-gray-300"
+                              }`}
+                            />
+                          ))}
                         </div>
-                      </Link>
-                    );
-                  })}
-                </div>
-              )}
-            </CardContent>
-          )}
-        </Card>
-
-
-
-        {/* Account Settings Section */}
-        <Card>
-          <CardHeader className="cursor-pointer" onClick={() => toggleSection('account')}>
-            <div className="flex items-center justify-between">
-              <CardTitle className="flex items-center gap-2">
-                <Key className="w-5 h-5" />
-                Impostazioni Account
-              </CardTitle>
-              {expandedSections.account ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
-            </div>
-          </CardHeader>
-          
-          {expandedSections.account && (
-            <CardContent className="space-y-4">
-              <div className="grid grid-cols-1 gap-4">
-                <div className="p-4 border rounded-lg">
-                  <div className="flex items-center gap-2 mb-2">
-                    <Mail className="w-4 h-4" />
-                    <h4 className="font-medium">Modifica Email</h4>
-                  </div>
-                  <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">
-                    Email attuale: {typedUser.email}
-                  </p>
-                  {canChangeEmail() ? (
-                    <Button size="sm" variant="outline">
-                      Cambia Email
-                    </Button>
-                  ) : (
-                    <div>
-                      <p className="text-sm text-amber-600 dark:text-amber-400 mb-2">
-                        Puoi modificare l'email ogni 15 giorni
+                      </div>
+                    ))}
+                    {beerTastings.length > 5 && (
+                      <p className="text-sm text-gray-500 text-center">
+                        e altre {beerTastings.length - 5} birre...
                       </p>
-                      <Button size="sm" variant="outline" disabled>
-                        Cambia Email
+                    )}
+                  </div>
+                ) : (
+                  <p className="text-gray-500 dark:text-gray-400 text-center py-4">
+                    Non hai ancora assaggiato nessuna birra
+                  </p>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* Favorites */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Heart className="w-5 h-5" />
+                  Preferiti ({favorites.length})
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {favorites.length > 0 ? (
+                  <div className="space-y-2">
+                    {favorites.slice(0, 5).map((fav: any) => (
+                      <div key={fav.id} className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <Badge variant="outline" className="capitalize">
+                            {fav.itemType}
+                          </Badge>
+                          <span className="text-sm">{fav.itemName}</span>
+                        </div>
+                        <span className="text-xs text-gray-500">
+                          {new Date(fav.createdAt).toLocaleDateString('it-IT')}
+                        </span>
+                      </div>
+                    ))}
+                    {favorites.length > 5 && (
+                      <p className="text-sm text-gray-500 text-center">
+                        e altri {favorites.length - 5} preferiti...
+                      </p>
+                    )}
+                  </div>
+                ) : (
+                  <p className="text-gray-500 dark:text-gray-400 text-center py-4">
+                    Nessun preferito ancora
+                  </p>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Right Column - Account Settings */}
+          <div className="space-y-6">
+            {/* Account Settings */}
+            <Card>
+              <CardHeader>
+                <CardTitle 
+                  className="flex items-center justify-between cursor-pointer"
+                  onClick={() => setShowAccountSettings(!showAccountSettings)}
+                >
+                  <div className="flex items-center gap-2">
+                    <Settings className="w-5 h-5" />
+                    Impostazioni Account
+                  </div>
+                  {showAccountSettings ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+                </CardTitle>
+              </CardHeader>
+              {showAccountSettings && (
+                <CardContent className="space-y-4">
+                  <div>
+                    <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                      Nome
+                    </label>
+                    <Input
+                      value={accountSettings.firstName}
+                      onChange={(e) => setAccountSettings({ ...accountSettings, firstName: e.target.value })}
+                      placeholder="Il tuo nome"
+                    />
+                  </div>
+                  
+                  <div>
+                    <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                      Cognome
+                    </label>
+                    <Input
+                      value={accountSettings.lastName}
+                      onChange={(e) => setAccountSettings({ ...accountSettings, lastName: e.target.value })}
+                      placeholder="Il tuo cognome"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                      Email
+                    </label>
+                    <div className="flex gap-2">
+                      <Input
+                        value={accountSettings.email}
+                        onChange={(e) => setAccountSettings({ ...accountSettings, email: e.target.value })}
+                        placeholder="La tua email"
+                      />
+                      <Button size="sm" variant="outline">
+                        <Mail className="w-4 h-4" />
                       </Button>
                     </div>
-                  )}
-                </div>
-
-                <div className="p-4 border rounded-lg">
-                  <div className="flex items-center gap-2 mb-2">
-                    <Key className="w-4 h-4" />
-                    <h4 className="font-medium">Modifica Password</h4>
                   </div>
-                  <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">
-                    Ultimo cambio password: {typedUser.lastPasswordChange ? 
-                      new Date(typedUser.lastPasswordChange).toLocaleDateString('it-IT') : 'Mai'
-                    }
-                  </p>
-                  {canChangePassword() ? (
-                    <Button size="sm" variant="outline">
+
+                  <div>
+                    <Button variant="outline" className="w-full">
+                      <Key className="w-4 h-4 mr-2" />
                       Cambia Password
                     </Button>
-                  ) : (
-                    <div>
-                      <p className="text-sm text-amber-600 dark:text-amber-400 mb-2">
-                        Puoi modificare la password ogni 15 giorni
-                      </p>
-                      <Button size="sm" variant="outline" disabled>
-                        Cambia Password
-                      </Button>
-                    </div>
-                  )}
-                </div>
-              </div>
-            </CardContent>
-          )}
-        </Card>
+                  </div>
 
+                  <Separator />
+
+                  {/* Delete Account */}
+                  <div className="space-y-2">
+                    <Button
+                      variant="destructive"
+                      className="w-full"
+                      onClick={() => setShowDeleteConfirm(true)}
+                    >
+                      <Trash2 className="w-4 h-4 mr-2" />
+                      Elimina Account
+                    </Button>
+                    
+                    {showDeleteConfirm && (
+                      <div className="p-3 border border-red-200 rounded-lg bg-red-50 dark:bg-red-900/20">
+                        <div className="flex items-center gap-2 mb-2">
+                          <AlertTriangle className="w-4 h-4 text-red-600" />
+                          <span className="text-sm font-medium text-red-800 dark:text-red-200">
+                            Conferma eliminazione
+                          </span>
+                        </div>
+                        <p className="text-xs text-red-700 dark:text-red-300 mb-3">
+                          Questa azione è irreversibile. Tutti i tuoi dati saranno eliminati permanentemente.
+                        </p>
+                        <div className="flex gap-2">
+                          <Button
+                            size="sm"
+                            variant="destructive"
+                            onClick={handleDeleteAccount}
+                            disabled={deleteAccountMutation.isPending}
+                          >
+                            {deleteAccountMutation.isPending ? "Eliminando..." : "Conferma Eliminazione"}
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => setShowDeleteConfirm(false)}
+                          >
+                            Annulla
+                          </Button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </CardContent>
+              )}
+            </Card>
+          </div>
+        </div>
       </div>
     </div>
   );
