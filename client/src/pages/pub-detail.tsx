@@ -1,34 +1,13 @@
-import { useParams, Link } from "wouter";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useParams } from "wouter";
+import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
-import { 
-  Star, 
-  MapPin, 
-  Clock, 
-  Phone, 
-  Globe, 
-  Wine, 
-  Facebook, 
-  Instagram,
-  ArrowLeft,
-  Heart,
-  Share2,
-  Beer,
-  Utensils,
-  Camera,
-  Navigation
-} from "lucide-react";
+import { Star, MapPin, Clock, Phone, Globe, Wine, Facebook, Instagram } from "lucide-react";
 import Footer from "@/components/footer";
 import TapList from "@/components/tap-list";
 import FoodMenu from "@/components/food-menu";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
-import { useAuth } from "@/hooks/useAuth";
-import { useToast } from "@/hooks/use-toast";
-import { apiRequest } from "@/lib/queryClient";
 
 // Funzione per controllare se un pub è aperto ora
 function isOpenNow(openingHours: any) {
