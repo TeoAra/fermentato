@@ -1559,8 +1559,50 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Update user email
+  app.patch("/api/user/email", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { email } = req.body;
+
+      // Validate email
+      if (!email || email.trim().length === 0) {
+        return res.status(400).json({ message: "Email is required" });
+      }
+
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(email.trim())) {
+        return res.status(400).json({ message: "Invalid email format" });
+      }
+
+      // Check if user can update email (15-day restriction)
+      const user = await storage.getUser(userId);
+      if (user?.emailLastUpdated) {
+        const lastUpdate = new Date(user.emailLastUpdated);
+        const now = new Date();
+        const diffInDays = Math.ceil((now.getTime() - lastUpdate.getTime()) / (1000 * 3600 * 24));
+        
+        if (diffInDays < 15) {
+          return res.status(400).json({ 
+            message: `You can only update your email every 15 days. Try again in ${15 - diffInDays} days.` 
+          });
+        }
+      }
+
+      const updatedUser = await storage.updateUser(userId, { 
+        email: email.trim(),
+        emailLastUpdated: new Date()
+      });
+      
+      res.json(updatedUser);
+    } catch (error) {
+      console.error("Error updating email:", error);
+      res.status(500).json({ message: "Failed to update email" });
+    }
+  });
+
   // Delete user account
-  app.delete("/api/auth/user/delete", isAuthenticated, async (req: any, res) => {
+  app.delete("/api/user/delete", isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
       

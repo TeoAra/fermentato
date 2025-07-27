@@ -53,6 +53,9 @@ export default function UserProfile() {
   const [profileImageFile, setProfileImageFile] = useState<File | null>(null);
   const [isEditingNickname, setIsEditingNickname] = useState(false);
   const [tempNickname, setTempNickname] = useState("");
+  const [isEditingEmail, setIsEditingEmail] = useState(false);
+  const [tempEmail, setTempEmail] = useState("");
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
   const [editedProfile, setEditedProfile] = useState({
     nickname: "",
@@ -98,6 +101,7 @@ export default function UserProfile() {
         profileImageUrl: typedUser.profileImageUrl || "",
       });
       setTempNickname(typedUser.nickname || "");
+      setTempEmail(typedUser.email || "");
     }
   }, [typedUser]);
 
@@ -425,7 +429,7 @@ export default function UserProfile() {
                   Impostazioni Account
                 </CardTitle>
               </CardHeader>
-              <CardContent className="space-y-4">
+              <CardContent className="space-y-6">
                 <div>
                   <label className="block text-sm font-medium mb-2">Nome Utente (Nickname)</label>
                   {isEditingNickname ? (
@@ -482,14 +486,104 @@ export default function UserProfile() {
 
                 <div>
                   <label className="block text-sm font-medium mb-2">Email</label>
-                  <Input
-                    value={typedUser.email || ""}
-                    disabled
-                    className="opacity-60"
-                  />
+                  {isEditingEmail ? (
+                    <div className="flex items-center gap-2">
+                      <Input
+                        type="email"
+                        value={tempEmail}
+                        onChange={(e) => setTempEmail(e.target.value)}
+                        className="flex-1"
+                        placeholder="Inserisci email"
+                      />
+                      <Button
+                        size="sm"
+                        onClick={() => {
+                          // Handle email save logic here
+                          setIsEditingEmail(false);
+                        }}
+                      >
+                        <Save className="w-4 h-4" />
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => {
+                          setIsEditingEmail(false);
+                          setTempEmail(typedUser.email || "");
+                        }}
+                      >
+                        <X className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-2">
+                      <Input
+                        value={typedUser.email || ""}
+                        disabled
+                        className="flex-1"
+                      />
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => setIsEditingEmail(true)}
+                      >
+                        <Edit3 className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  )}
                   <p className="text-xs text-gray-500 mt-1">
-                    L'email non può essere modificata
+                    Puoi modificare l'email ogni 15 giorni
                   </p>
+                </div>
+
+                <div className="border-t pt-4">
+                  <h3 className="text-sm font-medium mb-4 text-red-600">Zona Pericolo</h3>
+                  {!showDeleteConfirm ? (
+                    <Button
+                      variant="destructive"
+                      onClick={() => setShowDeleteConfirm(true)}
+                      className="w-full"
+                    >
+                      Cancella Account
+                    </Button>
+                  ) : (
+                    <div className="space-y-3">
+                      <p className="text-sm text-gray-600">
+                        Sei sicuro? Questa azione non può essere annullata e tutti i tuoi dati verranno eliminati permanentemente.
+                      </p>
+                      <div className="flex gap-2">
+                        <Button
+                          variant="destructive"
+                          onClick={async () => {
+                            try {
+                              await apiRequest('/api/user/delete', 'DELETE');
+                              toast({
+                                title: "Account eliminato",
+                                description: "Il tuo account è stato eliminato con successo",
+                              });
+                              window.location.href = "/";
+                            } catch (error) {
+                              toast({
+                                title: "Errore",
+                                description: "Impossibile eliminare l'account",
+                                variant: "destructive",
+                              });
+                            }
+                          }}
+                          className="flex-1"
+                        >
+                          Sì, elimina definitivamente
+                        </Button>
+                        <Button
+                          variant="outline"
+                          onClick={() => setShowDeleteConfirm(false)}
+                          className="flex-1"
+                        >
+                          Annulla
+                        </Button>
+                      </div>
+                    </div>
+                  )}
                 </div>
               </CardContent>
             </Card>

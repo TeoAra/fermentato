@@ -38,6 +38,8 @@ export const users = pgTable("users", {
   favoriteStyles: varchar("favorite_styles").array(),
   userType: varchar("user_type").notNull().default("customer"), // 'customer', 'pub_owner', or 'admin'
   lastNicknameUpdate: timestamp("last_nickname_update").defaultNow(),
+  emailLastUpdated: timestamp("email_last_updated"),
+  passwordLastUpdated: timestamp("password_last_updated"),
   joinedAt: timestamp("joined_at").defaultNow(),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),

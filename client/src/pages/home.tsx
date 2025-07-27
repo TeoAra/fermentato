@@ -157,7 +157,7 @@ export default function Home() {
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-3xl md:text-4xl font-bold mb-2">
-                Ciao {(user as any)?.firstName || 'Birraio'}! 🍺
+                Ciao {(user as any)?.nickname || (user as any)?.firstName || 'Birraio'}! 🍺
               </h1>
               <p className="text-xl text-orange-100">
                 Scopri nuove birre e gestisci i tuoi preferiti
