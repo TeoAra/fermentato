@@ -476,64 +476,28 @@ export default function SmartPubDashboard() {
     </div>
   );
 
+  // Render mobile header for navigation
+  const renderMobileHeader = () => (
+    <div className="md:hidden bg-white dark:bg-gray-900 border-b p-4 flex items-center gap-3">
+      {currentSection !== 'overview' && (
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => setCurrentSection('overview')}
+          className="text-orange-600 dark:text-orange-400"
+        >
+          <ArrowLeft className="h-4 w-4" />
+        </Button>
+      )}
+      <h1 className="text-lg font-semibold text-gray-900 dark:text-white">
+        {sections.find(s => s.id === currentSection)?.name || 'Dashboard Pub'}
+      </h1>
+    </div>
+  );
+
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Mobile Header with Navigation */}
-      <div className="bg-white shadow-sm border-b md:hidden">
-        <div className="flex items-center justify-between p-4">
-          <Button variant="ghost" size="sm" onClick={() => window.history.back()}>
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            Indietro
-          </Button>
-          <h1 className="font-semibold">Dashboard Pub</h1>
-          <Button variant="ghost" size="sm" onClick={() => setMobileMenuOpen(!mobileMenuOpen)}>
-            {mobileMenuOpen ? <X className="w-5 h-5" /> : <MenuIcon className="w-5 h-5" />}
-          </Button>
-        </div>
-        
-        {/* Mobile Menu Dropdown */}
-        {mobileMenuOpen && (
-          <div className="absolute top-16 left-0 right-0 bg-white shadow-lg border-b z-50">
-            <div className="p-4 space-y-3">
-              <Button variant="ghost" className="w-full justify-start" onClick={() => { setMobileMenuOpen(false); window.location.href = '/'; }}>
-                <Home className="w-4 h-4 mr-2" />
-                Home
-              </Button>
-              <Button variant="ghost" className="w-full justify-start" onClick={() => { setMobileMenuOpen(false); window.location.href = '/dashboard'; }}>
-                <Users className="w-4 h-4 mr-2" />
-                Dashboard Utente
-              </Button>
-              <Button variant="ghost" className="w-full justify-start" onClick={() => { setMobileMenuOpen(false); window.location.href = '/activity'; }}>
-                <Activity className="w-4 h-4 mr-2" />
-                Attività
-              </Button>
-              <Button variant="ghost" className="w-full justify-start" onClick={() => { setMobileMenuOpen(false); window.location.href = '/notifications'; }}>
-                <Bell className="w-4 h-4 mr-2" />
-                Notifiche
-              </Button>
-              <div className="border-t pt-3">
-                {isAuthenticated ? (
-                  <Button variant="ghost" className="w-full justify-start text-red-600" onClick={() => { setMobileMenuOpen(false); window.location.href = '/api/logout'; }}>
-                    <LogOut className="w-4 h-4 mr-2" />
-                    Logout
-                  </Button>
-                ) : (
-                  <>
-                    <Button variant="ghost" className="w-full justify-start" onClick={() => { setMobileMenuOpen(false); window.location.href = '/api/login'; }}>
-                      <LogIn className="w-4 h-4 mr-2" />
-                      Login
-                    </Button>
-                    <Button variant="ghost" className="w-full justify-start" onClick={() => { setMobileMenuOpen(false); window.location.href = '/api/login'; }}>
-                      <UserPlus className="w-4 h-4 mr-2" />
-                      Registrati
-                    </Button>
-                  </>
-                )}
-              </div>
-            </div>
-          </div>
-        )}
-      </div>
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+      {renderMobileHeader()}
 
       <div className="flex">
         {/* Sidebar */}
@@ -572,7 +536,37 @@ export default function SmartPubDashboard() {
           <main className="flex-1 relative overflow-y-auto focus:outline-none">
             <div className="py-6">
               <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-8">
-                {currentSection === 'overview' && renderOverview()}
+                {/* Mobile Navigation Grid - Only show on overview section for mobile */}
+                {currentSection === 'overview' && (
+                  <div className="md:hidden mb-6">
+                    {renderOverview()}
+                    
+                    {/* Navigation Menu - Mobile Only */}
+                    <div className="grid grid-cols-2 gap-4 mt-6">
+                      {sections.slice(1).map((section) => {
+                        const Icon = section.icon;
+                        return (
+                          <Card 
+                            key={section.id}
+                            className="cursor-pointer hover:shadow-md transition-all active:scale-95"
+                            onClick={() => setCurrentSection(section.id as DashboardSection)}
+                          >
+                            <CardContent className="p-4 text-center">
+                              <Icon className="h-6 w-6 mx-auto mb-2 text-orange-600 dark:text-orange-400" />
+                              <p className="font-medium text-sm text-gray-900 dark:text-white">{section.name}</p>
+                              <ChevronRight className="h-4 w-4 mx-auto mt-1 text-gray-400" />
+                            </CardContent>
+                          </Card>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+                
+                {/* Desktop Content and Mobile Non-Overview Sections */}
+                <div className={currentSection === 'overview' ? 'hidden md:block' : ''}>
+                  {currentSection === 'overview' && renderOverview()}
+                </div>
                 {currentSection === 'taplist' && (
                   <div className="space-y-6">
                     <div className="flex items-center justify-between">
