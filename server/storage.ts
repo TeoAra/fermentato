@@ -695,27 +695,69 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Beer tastings operations
-  async getUserBeerTastings(userId: string): Promise<UserBeerTasting[]> {
-    return await db
+  async getUserBeerTastings(userId: string): Promise<any[]> {
+    const results = await db
       .select({
         id: userBeerTastings.id,
         userId: userBeerTastings.userId,
         beerId: userBeerTastings.beerId,
         rating: userBeerTastings.rating,
-        notes: userBeerTastings.notes,
+        personalNotes: userBeerTastings.personalNotes,
         tastedAt: userBeerTastings.tastedAt,
         createdAt: userBeerTastings.createdAt,
         updatedAt: userBeerTastings.updatedAt,
-        beer: beers,
+        pubId: userBeerTastings.pubId,
+        beerName: beers.name,
+        beerStyle: beers.style,
+        beerAbv: beers.abv,
+        beerImageUrl: beers.imageUrl,
+        breweryId: breweries.id,
+        breweryName: breweries.name,
       })
       .from(userBeerTastings)
       .innerJoin(beers, eq(userBeerTastings.beerId, beers.id))
+      .leftJoin(breweries, eq(beers.breweryId, breweries.id))
       .where(eq(userBeerTastings.userId, userId))
       .orderBy(desc(userBeerTastings.tastedAt));
+
+    return results.map(row => ({
+      id: row.id,
+      userId: row.userId,
+      beerId: row.beerId,
+      rating: row.rating,
+      personalNotes: row.personalNotes,
+      tastedAt: row.tastedAt,
+      createdAt: row.createdAt,
+      updatedAt: row.updatedAt,
+      pubId: row.pubId,
+      beer: {
+        id: row.beerId,
+        name: row.beerName,
+        style: row.beerStyle,
+        abv: row.beerAbv,
+        imageUrl: row.beerImageUrl,
+        brewery: {
+          id: row.breweryId,
+          name: row.breweryName,
+        }
+      }
+    }));
   }
 
   async addBeerTasting(tastingData: InsertUserBeerTasting): Promise<UserBeerTasting> {
-    const [tasting] = await db.insert(userBeerTastings).values(tastingData).returning();
+    const [tasting] = await db
+      .insert(userBeerTastings)
+      .values(tastingData)
+      .onConflictDoUpdate({
+        target: [userBeerTastings.userId, userBeerTastings.beerId],
+        set: {
+          rating: tastingData.rating,
+          personalNotes: tastingData.personalNotes,
+          tastedAt: tastingData.tastedAt || new Date(),
+          updatedAt: new Date(),
+        },
+      })
+      .returning();
     return tasting;
   }
 
