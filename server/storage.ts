@@ -257,8 +257,8 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Tap list operations
-  async getTapList(pubId: number): Promise<TapList[]> {
-    return await db
+  async getTapList(pubId: number): Promise<any[]> {
+    const results = await db
       .select({
         id: tapList.id,
         pubId: tapList.pubId,
@@ -271,12 +271,55 @@ export class DatabaseStorage implements IStorage {
         tapNumber: tapList.tapNumber,
         addedAt: tapList.addedAt,
         updatedAt: tapList.updatedAt,
-        beer: beers,
+        beerName: beers.name,
+        beerStyle: beers.style,
+        beerAbv: beers.abv,
+        beerIbu: beers.ibu,
+        beerDescription: beers.description,
+        beerImageUrl: beers.imageUrl,
+        beerBottleImageUrl: beers.bottleImageUrl,
+        breweryId: breweries.id,
+        breweryName: breweries.name,
+        breweryLogoUrl: breweries.logoUrl,
+        breweryCountry: breweries.country,
+        breweryRegion: breweries.region,
       })
       .from(tapList)
       .innerJoin(beers, eq(tapList.beerId, beers.id))
+      .leftJoin(breweries, eq(beers.breweryId, breweries.id))
       .where(eq(tapList.pubId, pubId))
       .orderBy(asc(tapList.tapNumber));
+
+    return results.map(row => ({
+      id: row.id,
+      pubId: row.pubId,
+      beerId: row.beerId,
+      isActive: row.isActive,
+      priceSmall: row.priceSmall,
+      priceMedium: row.priceMedium,
+      priceLarge: row.priceLarge,
+      description: row.description,
+      tapNumber: row.tapNumber,
+      addedAt: row.addedAt,
+      updatedAt: row.updatedAt,
+      beer: {
+        id: row.beerId,
+        name: row.beerName,
+        style: row.beerStyle,
+        abv: row.beerAbv,
+        ibu: row.beerIbu,
+        description: row.beerDescription,
+        imageUrl: row.beerImageUrl,
+        bottleImageUrl: row.beerBottleImageUrl,
+        brewery: {
+          id: row.breweryId,
+          name: row.breweryName,
+          logoUrl: row.breweryLogoUrl,
+          country: row.breweryCountry,
+          region: row.breweryRegion,
+        }
+      }
+    }));
   }
 
   async getTapListByPubForOwner(pubId: number): Promise<any[]> {
