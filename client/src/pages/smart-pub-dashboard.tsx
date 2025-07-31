@@ -248,7 +248,8 @@ export default function SmartPubDashboard() {
   const replaceBeerMutation = useMutation({
     mutationFn: async ({ oldId, newBeerId, type = 'taplist' }: { oldId: number; newBeerId: number; type: 'taplist' | 'bottles' }) => {
       console.log('Replacing beer:', { oldId, newBeerId, type });
-      return apiRequest(`/api/pubs/${currentPub?.id}/${type}/${oldId}/replace`, 'PATCH', { newBeerId });
+      const endpoint = type === 'taplist' ? 'taplist' : 'bottles';
+      return apiRequest(`/api/pubs/${currentPub?.id}/${endpoint}/${oldId}/replace`, 'PATCH', { newBeerId });
     },
     onSuccess: (data) => {
       console.log('Beer replacement success:', data);
@@ -290,6 +291,47 @@ export default function SmartPubDashboard() {
     onError: () => {
       toast({ title: "Errore nell'aggiunta della birra alla cantina", variant: "destructive" });
     },
+  });
+
+  // Mutations for bottle management
+  const updateBottleItemMutation = useMutation({
+    mutationFn: async ({ id, data }: { id: number; data: any }) => {
+      return apiRequest(`/api/pubs/${currentPub?.id}/bottles/${id}`, 'PATCH', data);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [`/api/pubs/${currentPub?.id}/bottles`] });
+      queryClient.refetchQueries({ queryKey: [`/api/pubs/${currentPub?.id}/bottles`] });
+      setEditingItem(null);
+      toast({ title: "Birra aggiornata", description: "Le modifiche sono state salvate" });
+    },
+  });
+
+  const removeBottleItemMutation = useMutation({
+    mutationFn: async (id: number) => {
+      return apiRequest(`/api/pubs/${currentPub?.id}/bottles/${id}`, 'DELETE');
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [`/api/pubs/${currentPub?.id}/bottles`] });
+      queryClient.refetchQueries({ queryKey: [`/api/pubs/${currentPub?.id}/bottles`] });
+      toast({ title: "Birra rimossa dalla cantina" });
+    },
+    onError: () => {
+      toast({ title: "Errore", description: "Impossibile rimuovere la birra", variant: "destructive" });
+    }
+  });
+
+  const toggleBottleItemVisibilityMutation = useMutation({
+    mutationFn: async ({ id, isVisible }: { id: number, isVisible: boolean }) => {
+      return apiRequest(`/api/pubs/${currentPub?.id}/bottles/${id}`, 'PATCH', { isVisible });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [`/api/pubs/${currentPub?.id}/bottles`] });
+      queryClient.refetchQueries({ queryKey: [`/api/pubs/${currentPub?.id}/bottles`] });
+      toast({ title: "Visibilità aggiornata" });
+    },
+    onError: () => {
+      toast({ title: "Errore", description: "Impossibile aggiornare la visibilità", variant: "destructive" });
+    }
   });
 
   // Check if user can update private data (30-day restriction)
@@ -655,9 +697,10 @@ export default function SmartPubDashboard() {
                                         </div>
                                         
                                         <FlexiblePriceManager
-                                          prices={item.prices || []}
-                                          onChange={(prices) => setEditData({ ...editData, prices })}
-                                          pubSizes={currentPub?.customSizes || []}
+                                          type="tap"
+                                          initialPrices={editData.prices || []}
+                                          onSave={(prices: any) => setEditData({ ...editData, prices })}
+                                          onCancel={() => {}}
                                         />
                                         
                                         <div className="mt-4 grid grid-cols-2 gap-3">
@@ -763,7 +806,7 @@ export default function SmartPubDashboard() {
                                     setEditData({ 
                                       prices: item.prices ? Object.entries(item.prices).map(([size, price]) => ({ 
                                         size, 
-                                        price: typeof price === 'object' && price !== null && 'price' in price ? price.price.toString() : price.toString() 
+                                        price: typeof price === 'object' && price !== null && 'price' in price ? (price as any).price.toString() : (price as any).toString() 
                                       })) : [],
                                       priceSmall: item.priceSmall, 
                                       priceMedium: item.priceMedium, 
@@ -783,6 +826,7 @@ export default function SmartPubDashboard() {
                                   onClick={() => {
                                     if (!showBeerSearch) {
                                       setReplacingBeer(item.id);
+                                      setPriceManagerType('tap');
                                       setShowBeerSearch(true);
                                       setSearchQuery('');
                                     }
@@ -847,8 +891,8 @@ export default function SmartPubDashboard() {
                       <CardContent>
                         <div className="space-y-4">
                           {typedBottleList.map((item: any) => (
-                            <div key={item.id} className="flex items-center justify-between p-3 border rounded-lg">
-                              <div className="flex-1">
+                            <div key={item.id} className="flex flex-col lg:flex-row lg:items-center lg:justify-between p-4 border rounded-lg bg-white dark:bg-gray-800 shadow-sm hover:shadow-md transition-shadow">
+                              <div className="flex-1 mb-3 lg:mb-0">
                                 {editingItem === `bottle-${item.id}` ? (
                                   <div className="space-y-3">
                                     <div className="grid grid-cols-3 gap-3">
@@ -887,7 +931,7 @@ export default function SmartPubDashboard() {
                                       />
                                     </div>
                                     <div className="flex space-x-2">
-                                      <Button size="sm" onClick={() => updateTapItemMutation.mutate({ id: item.id, data: editData })}>
+                                      <Button size="sm" onClick={() => updateBottleItemMutation.mutate({ id: item.id, data: editData })}>
                                         <Save className="w-4 h-4 mr-1" />
                                         Salva
                                       </Button>
@@ -916,34 +960,60 @@ export default function SmartPubDashboard() {
                                   </>
                                 )}
                               </div>
-                              <div className="flex space-x-2">
+                              <div className="flex flex-wrap gap-2 justify-end lg:justify-start">
                                 <Button 
                                   size="sm" 
                                   variant="outline" 
-                                  onClick={() => updateTapItemMutation.mutate({ id: item.id, data: { isActive: !item.isActive } })}
+                                  onClick={() => toggleBottleItemVisibilityMutation.mutate({ id: item.id, isVisible: !item.isVisible })}
+                                  title={item.isVisible ? "Nascondi birra" : "Mostra birra"}
+                                  className="flex-shrink-0"
                                 >
-                                  {item.isActive ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                                  {item.isVisible ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                                 </Button>
-                                <Button size="sm" variant="outline" onClick={() => { 
-                                  setEditingItem(`bottle-${item.id}` as any); 
-                                  setEditData({ 
-                                    price33cl: item.price33cl, 
-                                    price50cl: item.price50cl, 
-                                    price75cl: item.price75cl, 
-                                    notes: item.notes 
-                                  }); 
-                                }}>
+                                <Button 
+                                  size="sm" 
+                                  variant="outline" 
+                                  onClick={() => { 
+                                    setEditingItem(`bottle-${item.id}` as any); 
+                                    setEditData({ 
+                                      price33cl: item.price33cl, 
+                                      price50cl: item.price50cl, 
+                                      price75cl: item.price75cl, 
+                                      notes: item.notes 
+                                    }); 
+                                  }}
+                                  title="Modifica prezzi e note"
+                                  className="flex-shrink-0"
+                                >
                                   <Edit3 className="w-4 h-4" />
+                                </Button>
+                                <Button 
+                                  size="sm" 
+                                  variant="outline" 
+                                  onClick={() => {
+                                    if (!showBeerSearch) {
+                                      setReplacingBeer(item.id);
+                                      setPriceManagerType('bottles');
+                                      setShowBeerSearch(true);
+                                      setSearchQuery('');
+                                    }
+                                  }}
+                                  title="Sostituisci con altra birra"
+                                  disabled={showBeerSearch}
+                                  className="flex-shrink-0"
+                                >
+                                  <Search className="w-4 h-4" />
                                 </Button>
                                 <Button 
                                   size="sm" 
                                   variant="destructive" 
                                   onClick={() => {
                                     if (confirm(`Sei sicuro di voler eliminare "${item.beer?.name || 'questa birra'}" dalla cantina?`)) {
-                                      removeTapItemMutation.mutate(item.id);
+                                      removeBottleItemMutation.mutate(item.id);
                                     }
                                   }}
                                   title="Elimina dalla cantina"
+                                  className="flex-shrink-0"
                                 >
                                   <Trash2 className="w-4 h-4" />
                                 </Button>
@@ -1919,7 +1989,8 @@ export default function SmartPubDashboard() {
                               className="w-12 h-12 md:w-16 md:h-16 object-cover rounded-lg border"
                               onError={(e) => {
                                 e.currentTarget.style.display = 'none';
-                                e.currentTarget.nextElementSibling.style.display = 'flex';
+                                const nextElement = e.currentTarget.nextElementSibling as HTMLElement;
+                                if (nextElement) nextElement.style.display = 'flex';
                               }}
                             />
                           ) : null}
@@ -1954,7 +2025,7 @@ export default function SmartPubDashboard() {
                                 replaceBeerMutation.mutate({ 
                                   oldId: replacingBeer, 
                                   newBeerId: beer.id,
-                                  type: priceManagerType
+                                  type: priceManagerType === 'bottles' ? 'bottles' : 'taplist'
                                 });
                               } else if (priceManagerType === 'bottles') {
                                 setShowPriceManager(beer.id);
@@ -2000,7 +2071,7 @@ export default function SmartPubDashboard() {
         <Dialog open={!!showPriceManager} onOpenChange={() => setShowPriceManager(null)}>
           <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
             <FlexiblePriceManager
-              type={priceManagerType}
+              type={priceManagerType === 'taplist' ? 'tap' : priceManagerType}
               initialPrices={newItemPrices}
               onSave={(prices) => {
                 console.log('Saving prices:', prices, 'for beer:', showPriceManager, 'type:', priceManagerType);
