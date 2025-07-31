@@ -2087,7 +2087,7 @@ export default function SmartPubDashboard() {
         <Dialog open={!!showPriceManager} onOpenChange={() => setShowPriceManager(null)}>
           <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
             <FlexiblePriceManager
-              type={priceManagerType === 'taplist' ? 'tap' : 'bottle'}
+              type={priceManagerType === 'taplist' ? 'tap' : 'bottles'}
               initialPrices={newItemPrices}
               onSave={(prices) => {
                 console.log('Saving prices:', prices, 'for beer:', showPriceManager, 'type:', priceManagerType);
