@@ -103,7 +103,7 @@ export default function TapList({ tapList }: TapListProps) {
                               return `${cleanSize}${numericFormat ? ` (${numericFormat})` : ''}`;
                             })()}
                           </span>
-                          <span className="text-sm font-bold text-primary">€{Number(price).toFixed(2)}</span>
+                          <span className="text-sm font-bold text-primary">€{typeof price === 'object' ? JSON.stringify(price) : Number(price).toFixed(2)}</span>
                         </div>
                       ))
                     ) : (

@@ -324,10 +324,10 @@ export default function PubDetail() {
                                   {bottle.prices.map((price: any, index: number) => (
                                     <div key={index} className="flex justify-between items-center text-sm">
                                       <span className="text-gray-600">
-                                        {price.size} {price.format && `(${price.format})`}
+                                        {typeof price === 'object' ? price.size : price} {typeof price === 'object' && price.format && `(${price.format})`}
                                       </span>
                                       <span className="font-semibold text-primary">
-                                        €{price.price}
+                                        €{typeof price === 'object' ? price.price : price}
                                       </span>
                                     </div>
                                   ))}
