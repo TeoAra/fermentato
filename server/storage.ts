@@ -258,68 +258,49 @@ export class DatabaseStorage implements IStorage {
 
   // Tap list operations
   async getTapList(pubId: number): Promise<any[]> {
-    const results = await db
-      .select({
-        id: tapList.id,
-        pubId: tapList.pubId,
-        beerId: tapList.beerId,
-        isActive: tapList.isActive,
-        priceSmall: tapList.priceSmall,
-        priceMedium: tapList.priceMedium,
-        priceLarge: tapList.priceLarge,
-        description: tapList.description,
-        tapNumber: tapList.tapNumber,
-        addedAt: tapList.addedAt,
-        updatedAt: tapList.updatedAt,
-        beerName: beers.name,
-        beerStyle: beers.style,
-        beerAbv: beers.abv,
-        beerIbu: beers.ibu,
-        beerDescription: beers.description,
-        beerImageUrl: beers.imageUrl,
-        beerBottleImageUrl: beers.bottleImageUrl,
-        breweryId: breweries.id,
-        breweryName: breweries.name,
-        breweryLogoUrl: breweries.logoUrl,
-        breweryCountry: breweries.country,
-        breweryRegion: breweries.region,
-      })
-      .from(tapList)
-      .innerJoin(beers, eq(tapList.beerId, beers.id))
-      .leftJoin(breweries, eq(beers.breweryId, breweries.id))
-      .where(eq(tapList.pubId, pubId))
-      .orderBy(asc(tapList.tapNumber));
-
-    return results.map(row => ({
-      id: row.id,
-      pubId: row.pubId,
-      beerId: row.beerId,
-      isActive: row.isActive,
-      priceSmall: row.priceSmall,
-      priceMedium: row.priceMedium,
-      priceLarge: row.priceLarge,
-      description: row.description,
-      tapNumber: row.tapNumber,
-      addedAt: row.addedAt,
-      updatedAt: row.updatedAt,
-      beer: {
-        id: row.beerId,
-        name: row.beerName,
-        style: row.beerStyle,
-        abv: row.beerAbv,
-        ibu: row.beerIbu,
-        description: row.beerDescription,
-        imageUrl: row.beerImageUrl,
-        bottleImageUrl: row.beerBottleImageUrl,
-        brewery: {
-          id: row.breweryId,
-          name: row.breweryName,
-          logoUrl: row.breweryLogoUrl,
-          country: row.breweryCountry,
-          region: row.breweryRegion,
+    try {
+      const result = await db.execute(sql`
+        SELECT 
+          tl.id, tl.pub_id, tl.beer_id, tl.is_active, tl.price_small, tl.price_medium, tl.price_large,
+          tl.description, tl.tap_number, tl.added_at, tl.updated_at,
+          b.name as beer_name, b.style as beer_style, b.abv as beer_abv, b.image_url as beer_image_url,
+          br.id as brewery_id, br.name as brewery_name, br.logo_url as brewery_logo_url
+        FROM tap_list tl
+        INNER JOIN beers b ON tl.beer_id = b.id  
+        LEFT JOIN breweries br ON b.brewery_id = br.id
+        WHERE tl.pub_id = ${pubId}
+        ORDER BY tl.tap_number ASC
+      `);
+      
+      return result.rows.map((row: any) => ({
+        id: row.id,
+        pubId: row.pub_id,
+        beerId: row.beer_id,
+        isActive: row.is_active,
+        priceSmall: row.price_small,
+        priceMedium: row.price_medium,
+        priceLarge: row.price_large,
+        description: row.description,
+        tapNumber: row.tap_number,
+        addedAt: row.added_at,
+        updatedAt: row.updated_at,
+        beer: {
+          id: row.beer_id,
+          name: row.beer_name,
+          style: row.beer_style,
+          abv: row.beer_abv,
+          imageUrl: row.beer_image_url,
+          brewery: {
+            id: row.brewery_id,
+            name: row.brewery_name,
+            logoUrl: row.brewery_logo_url,
+          }
         }
-      }
-    }));
+      }));
+    } catch (error) {
+      console.error('Error in getTapList:', error);
+      return [];
+    }
   }
 
   async getTapListByPubForOwner(pubId: number): Promise<any[]> {
@@ -348,8 +329,6 @@ export class DatabaseStorage implements IStorage {
         breweryId: breweries.id,
         breweryName: breweries.name,
         breweryLogoUrl: breweries.logoUrl,
-        breweryCountry: breweries.country,
-        breweryRegion: breweries.region,
       })
       .from(tapList)
       .leftJoin(beers, eq(tapList.beerId, beers.id))
@@ -384,8 +363,7 @@ export class DatabaseStorage implements IStorage {
           id: row.breweryId,
           name: row.breweryName,
           logoUrl: row.breweryLogoUrl,
-          country: row.breweryCountry,
-          region: row.breweryRegion,
+
         }
       }
     }));
@@ -483,7 +461,7 @@ export class DatabaseStorage implements IStorage {
     await db.delete(bottleList).where(eq(bottleList.id, id));
   }
 
-  async removeBeerFromBottles(id: number): Promise<void> {
+  async removeBottleItem(id: number): Promise<void> {
     await db.delete(bottleList).where(eq(bottleList.id, id));
   }
 

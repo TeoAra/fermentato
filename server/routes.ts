@@ -686,6 +686,39 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Update bottle list item (pub owner only)
+  app.patch('/api/pubs/:pubId/bottles/:id', isAuthenticated, async (req, res) => {
+    try {
+      const { pubId, id } = req.params;
+      const data = req.body;
+      
+      console.log('PATCH bottle item:', { pubId, id, data });
+      
+      const item = await storage.updateBottleItem(parseInt(id), data);
+      console.log('Updated bottle item:', item);
+      res.json(item);
+    } catch (error) {
+      console.error('Error updating bottle item:', error);
+      res.status(500).json({ message: 'Failed to update bottle item' });
+    }
+  });
+
+  // Delete bottle list item (pub owner only)
+  app.delete('/api/pubs/:pubId/bottles/:id', isAuthenticated, async (req, res) => {
+    try {
+      const { pubId, id } = req.params;
+      
+      console.log('DELETE bottle item:', { pubId, id });
+      
+      await storage.removeBottleItem(parseInt(id));
+      console.log('Deleted bottle item:', id);
+      res.status(200).json({ success: true });
+    } catch (error) {
+      console.error('Error deleting bottle item:', error);
+      res.status(500).json({ message: 'Failed to delete bottle item' });
+    }
+  });
+
   // Create menu category (only pub owner)
   app.post("/api/pubs/:id/menu-categories", isAuthenticated, async (req: any, res) => {
     try {

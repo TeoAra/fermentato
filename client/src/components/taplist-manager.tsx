@@ -390,7 +390,13 @@ export function TapListManager({ pubId, tapList }: TapListManagerProps) {
                       )}
                     </div>
                     
-                    <div className="flex items-center gap-3 mb-3">
+                    <div 
+                      className="flex items-center gap-3 mb-3 cursor-pointer hover:bg-gray-50 p-2 rounded-lg -m-2"
+                      onClick={() => {
+                        startEdit(item);
+                        setIsAddDialogOpen(true);
+                      }}
+                    >
                       {item.beer.logoUrl && (
                         <img
                           src={item.beer.logoUrl}
@@ -398,29 +404,32 @@ export function TapListManager({ pubId, tapList }: TapListManagerProps) {
                           className="w-12 h-12 rounded-lg object-cover"
                         />
                       )}
-                      <div>
-                        <h3 className="font-semibold text-lg">{item.beer.name}</h3>
-                        <p className="text-gray-600">{item.beer.brewery.name}</p>
-                        <p className="text-sm text-gray-500">
+                      <div className="flex-1">
+                        <h3 className="font-semibold text-base">{item.beer.name}</h3>
+                        <p className="text-gray-600 text-sm">{item.beer.brewery.name}</p>
+                        <p className="text-xs text-gray-500">
                           {item.beer.style} • {item.beer.abv}% ABV
                         </p>
                       </div>
+                      <div className="text-right text-xs text-gray-400">
+                        Tocca per prezzi
+                      </div>
                     </div>
 
-                    <div className="flex gap-4 text-sm mb-3">
+                    <div className="flex flex-wrap gap-3 text-xs mb-3">
                       {item.priceSmall && (
-                        <span className="font-medium">
-                          Piccola (0.20L): €{item.priceSmall}
+                        <span className="bg-green-100 text-green-800 px-2 py-1 rounded-full">
+                          €{item.priceSmall} - Piccola
                         </span>
                       )}
                       {item.priceMedium && (
-                        <span className="font-medium">
-                          Media (0.40L): €{item.priceMedium}
+                        <span className="bg-blue-100 text-blue-800 px-2 py-1 rounded-full">
+                          €{item.priceMedium} - Media
                         </span>
                       )}
                       {item.priceLarge && (
-                        <span className="font-medium">
-                          Grande (0.50L): €{item.priceLarge}
+                        <span className="bg-orange-100 text-orange-800 px-2 py-1 rounded-full">
+                          €{item.priceLarge} - Grande
                         </span>
                       )}
                     </div>

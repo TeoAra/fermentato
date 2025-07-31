@@ -381,7 +381,13 @@ export function BottleListManager({ pubId, bottleList }: BottleListManagerProps)
                       )}
                     </div>
                     
-                    <div className="flex items-center gap-3 mb-3">
+                    <div 
+                      className="flex items-center gap-3 mb-3 cursor-pointer hover:bg-gray-50 p-2 rounded-lg -m-2"
+                      onClick={() => {
+                        startEdit(item);
+                        setIsAddDialogOpen(true);
+                      }}
+                    >
                       {item.beer.logoUrl && (
                         <img
                           src={item.beer.logoUrl}
@@ -389,12 +395,15 @@ export function BottleListManager({ pubId, bottleList }: BottleListManagerProps)
                           className="w-12 h-12 rounded-lg object-cover"
                         />
                       )}
-                      <div>
-                        <h3 className="font-semibold text-lg">{item.beer.name}</h3>
-                        <p className="text-gray-600">{item.beer.brewery.name}</p>
-                        <p className="text-sm text-gray-500">
+                      <div className="flex-1">
+                        <h3 className="font-semibold text-base">{item.beer.name}</h3>
+                        <p className="text-gray-600 text-sm">{item.beer.brewery.name}</p>
+                        <p className="text-xs text-gray-500">
                           {item.beer.style} • {item.beer.abv}% ABV
                         </p>
+                      </div>
+                      <div className="text-right text-xs text-gray-400">
+                        Tocca per prezzi
                       </div>
                     </div>
 
@@ -402,13 +411,18 @@ export function BottleListManager({ pubId, bottleList }: BottleListManagerProps)
                       <p className="text-sm text-gray-600 mb-3">{item.description}</p>
                     )}
 
-                    <div className="flex gap-4 text-sm">
-                      <span className="font-medium">
-                        Prezzo: €{item.price}
+                    <div className="flex flex-wrap gap-2 text-xs">
+                      <span className="bg-green-100 text-green-800 px-2 py-1 rounded-full">
+                        €{item.price}
                       </span>
-                      <span className="text-gray-600">
-                        Disponibili: {item.quantity}
+                      <span className="bg-gray-100 text-gray-800 px-2 py-1 rounded-full">
+                        Qty: {item.quantity}
                       </span>
+                      {item.size && (
+                        <span className="bg-blue-100 text-blue-800 px-2 py-1 rounded-full">
+                          {item.size}
+                        </span>
+                      )}
                     </div>
                   </div>
 
