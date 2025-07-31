@@ -74,6 +74,9 @@ Fermenta.to is a full-stack web application for discovering Italian craft beers,
 ✅ **Sistema Aggiornamenti Tempo Reale** - Ogni modifica (elimina/modifica/nascondi/sposta birre) si riflette istantaneamente nel profilo pub pubblico
 ✅ **Mutations Separate Corrette** - API endpoints specifici per tap list e bottiglie, sostituzione birre funzionante per entrambe le sezioni
 ✅ **Layout Mobile-First Ottimizzato** - Card responsive, pulsanti flex-wrap contenuti, navigazione intuitiva senza sovrapposizioni
+✅ **Design Ricerca Ottimizzato** - Rimossi colori vivaci, design pulito con testo compatto e nome birrificio chiaramente visibile
+✅ **Denominazione Semplificata** - "Cantina Birre in Bottiglia" rinominato in solo "Cantina" per UI più pulita
+✅ **Font Size Ridotto** - Testo più compatto e leggibile in tutte le sezioni ricerca birre per migliore UX mobile
 
 ## User Preferences
 
