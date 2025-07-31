@@ -766,11 +766,27 @@ export default function SmartPubDashboard() {
                                         <div className="flex space-x-2 mt-4">
                                           <Button 
                                             size="sm" 
-                                            onClick={() => updateTapItemMutation.mutate({ id: item.id, data: editData })}
+                                            onClick={() => {
+                                              updateTapItemMutation.mutate(
+                                                { id: item.id, data: editData },
+                                                {
+                                                  onSuccess: async () => {
+                                                    // Aggiornamento istantaneo
+                                                    await Promise.all([
+                                                      queryClient.invalidateQueries({ queryKey: [`/api/pubs/${currentPub?.id}/taplist`] }),
+                                                      queryClient.invalidateQueries({ queryKey: [`/api/pubs/${currentPub?.id}`] }),
+                                                      queryClient.refetchQueries({ queryKey: [`/api/pubs/${currentPub?.id}/taplist`] })
+                                                    ]);
+                                                    setEditingItem(null);
+                                                    setEditData({});
+                                                  }
+                                                }
+                                              );
+                                            }}
                                             disabled={updateTapItemMutation.isPending}
                                           >
                                             <Save className="w-4 h-4 mr-1" />
-                                            {updateTapItemMutation.isPending ? 'Salvando...' : 'Salva Modifiche'}
+                                            {updateTapItemMutation.isPending ? 'Salvando...' : 'Salva'}
                                           </Button>
                                           <Button size="sm" variant="outline" onClick={() => {
                                             setEditingItem(null);
@@ -782,96 +798,106 @@ export default function SmartPubDashboard() {
                                       </div>
                                     </div>
                                   ) : (
-                                    <>
-                                      <h4 className="font-semibold">{item.beer?.name || 'Nome birra'}</h4>
-                                      <p className="text-sm text-gray-600">
-                                        {typeof item.beer?.brewery === 'string' 
-                                          ? item.beer.brewery 
-                                          : item.beer?.brewery?.name || 'Birrificio'}
-                                      </p>
-                                      <div className="flex items-center space-x-4 mt-2">
-                                        <Badge variant={item.isActive ? "default" : "secondary"}>
-                                          {item.isActive ? "Disponibile" : "Esaurita"}
-                                        </Badge>
-                                        <div className="flex space-x-2 text-sm">
-                                          {item.prices && typeof item.prices === 'object' ? (
-                                            Object.entries(item.prices).map(([size, price]) => (
-                                              <span key={size}>{size}: €{typeof price === 'object' && price !== null && 'price' in price ? Number(price.price).toFixed(2) : Number(price).toFixed(2)}</span>
-                                            ))
-                                          ) : (
-                                            <>
-                                              <span>Piccola: €{item.priceSmall || '0.00'}</span>
-                                              <span>Media: €{item.priceMedium || '0.00'}</span>
-                                            </>
-                                          )}
+                                    <div className="space-y-2">
+                                      <div className="flex items-start justify-between">
+                                        <div className="flex-1 min-w-0">
+                                          <h4 className="font-semibold text-sm truncate">{item.beer?.name || 'Nome birra'}</h4>
+                                          <p className="text-xs text-gray-600 truncate">
+                                            {typeof item.beer?.brewery === 'string' 
+                                              ? item.beer.brewery 
+                                              : item.beer?.brewery?.name || 'Birrificio'}
+                                          </p>
+                                        </div>
+                                        <div className="flex items-center space-x-1 ml-2">
+                                          <Button 
+                                            size="sm" 
+                                            variant="outline" 
+                                            className="h-7 w-7 p-0" 
+                                            onClick={() => toggleTapItemVisibilityMutation.mutate({ id: item.id, isVisible: !item.isVisible })}
+                                            title={item.isVisible ? "Nascondi birra" : "Mostra birra"}
+                                          >
+                                            {item.isVisible ? <EyeOff className="w-3 h-3" /> : <Eye className="w-3 h-3" />}
+                                          </Button>
+                                          <Button 
+                                            size="sm" 
+                                            variant="outline" 
+                                            className="h-7 w-7 p-0" 
+                                            onClick={() => { 
+                                              setEditingItem(item.id); 
+                                              setEditData({ 
+                                                prices: item.prices ? Object.entries(item.prices).map(([size, price]) => ({ 
+                                                  size, 
+                                                  price: typeof price === 'object' && price !== null && 'price' in price ? (price as any).price.toString() : (price as any).toString() 
+                                                })) : [],
+                                                priceSmall: item.priceSmall, 
+                                                priceMedium: item.priceMedium, 
+                                                tapNumber: item.tapNumber,
+                                                description: item.description,
+                                                isVisible: item.isVisible,
+                                                notes: item.notes 
+                                              }); 
+                                            }}
+                                            title="Modifica"
+                                          >
+                                            <Edit3 className="w-3 h-3" />
+                                          </Button>
+                                          <Button 
+                                            size="sm" 
+                                            variant="outline" 
+                                            className="h-7 w-7 p-0" 
+                                            onClick={() => {
+                                              if (!showBeerSearch) {
+                                                setReplacingBeer(item.id);
+                                                setPriceManagerType('taplist');
+                                                setShowBeerSearch(true);
+                                                setSearchQuery('');
+                                              }
+                                            }}
+                                            title="Sostituisci"
+                                            disabled={showBeerSearch}
+                                          >
+                                            <Search className="w-3 h-3" />
+                                          </Button>
+                                          <Button 
+                                            size="sm" 
+                                            variant="destructive" 
+                                            className="h-7 w-7 p-0" 
+                                            onClick={() => {
+                                              if (confirm(`Sei sicuro di voler eliminare "${item.beer?.name || 'questa birra'}" dalla taplist?`)) {
+                                                removeTapItemMutation.mutate(item.id);
+                                              }
+                                            }}
+                                            title="Elimina"
+                                          >
+                                            <Trash2 className="w-3 h-3" />
+                                          </Button>
                                         </div>
                                       </div>
+                                      <div className="flex flex-wrap gap-1 mt-2">
+                                        {item.prices && typeof item.prices === 'object' ? (
+                                          Object.entries(item.prices).map(([size, price]) => {
+                                            const displaySize = size === 'small' ? '0.2l' : 
+                                                                size === 'medium' ? '0.4l' : 
+                                                                size === 'large' ? '1l' : size;
+                                            return (
+                                              <span key={size} className="bg-gray-100 px-2 py-1 rounded text-xs">
+                                                {displaySize}: €{typeof price === 'object' && price !== null && 'price' in price ? Number(price.price).toFixed(2) : Number(price).toFixed(2)}
+                                              </span>
+                                            );
+                                          })
+                                        ) : (
+                                          <>
+                                            <span className="bg-gray-100 px-2 py-1 rounded text-xs">0.2l: €{item.priceSmall || '0.00'}</span>
+                                            <span className="bg-gray-100 px-2 py-1 rounded text-xs">0.4l: €{item.priceMedium || '0.00'}</span>
+                                          </>
+                                        )}
+                                      </div>
                                       {item.notes && (
-                                        <p className="text-xs text-gray-500 mt-1 italic">{item.notes}</p>
+                                        <p className="text-xs text-gray-500 italic truncate">{item.notes}</p>
                                       )}
-                                    </>
+                                    </div>
                                   )}
                                 </div>
-                              </div>
-                              <div className="flex space-x-2">
-                                <Button 
-                                  size="sm" 
-                                  variant="outline" 
-                                  onClick={() => toggleTapItemVisibilityMutation.mutate({ id: item.id, isVisible: !item.isVisible })}
-                                  title={item.isVisible ? "Nascondi birra" : "Mostra birra"}
-                                >
-                                  {item.isVisible ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                                </Button>
-                                <Button 
-                                  size="sm" 
-                                  variant="outline" 
-                                  onClick={() => { 
-                                    setEditingItem(item.id); 
-                                    setEditData({ 
-                                      prices: item.prices ? Object.entries(item.prices).map(([size, price]) => ({ 
-                                        size, 
-                                        price: typeof price === 'object' && price !== null && 'price' in price ? (price as any).price.toString() : (price as any).toString() 
-                                      })) : [],
-                                      priceSmall: item.priceSmall, 
-                                      priceMedium: item.priceMedium, 
-                                      tapNumber: item.tapNumber,
-                                      description: item.description,
-                                      isVisible: item.isVisible,
-                                      notes: item.notes 
-                                    }); 
-                                  }}
-                                  title="Modifica tutti i campi"
-                                >
-                                  <Edit3 className="w-4 h-4" />
-                                </Button>
-                                <Button 
-                                  size="sm" 
-                                  variant="outline" 
-                                  onClick={() => {
-                                    if (!showBeerSearch) {
-                                      setReplacingBeer(item.id);
-                                      setPriceManagerType('taplist');
-                                      setShowBeerSearch(true);
-                                      setSearchQuery('');
-                                    }
-                                  }}
-                                  title="Sostituisci con altra birra"
-                                  disabled={showBeerSearch}
-                                >
-                                  <Search className="w-4 h-4" />
-                                </Button>
-                                <Button 
-                                  size="sm" 
-                                  variant="destructive" 
-                                  onClick={() => {
-                                    if (confirm(`Sei sicuro di voler eliminare "${item.beer?.name || 'questa birra'}" dalla taplist?`)) {
-                                      removeTapItemMutation.mutate(item.id);
-                                    }
-                                  }}
-                                  title="Elimina dalla taplist"
-                                >
-                                  <Trash2 className="w-4 h-4" />
-                                </Button>
                               </div>
                             </div>
                           ))}
@@ -914,7 +940,7 @@ export default function SmartPubDashboard() {
                       </CardHeader>
                       <CardContent>
                         <div className="space-y-4">
-                          {typedBottleList.map((item: any) => (
+                          {typedBottleList.map((item: any, index: number) => (
                             <div key={item.id} className="p-4 border rounded-lg bg-white dark:bg-gray-800 shadow-sm hover:shadow-md transition-shadow">
                               <div className="flex flex-col space-y-3">
                                 {editingItem === `bottle-${item.id}` ? (
@@ -955,11 +981,34 @@ export default function SmartPubDashboard() {
                                       />
                                     </div>
                                     <div className="flex space-x-2">
-                                      <Button size="sm" onClick={() => updateBottleItemMutation.mutate({ id: item.id, data: editData })}>
+                                      <Button 
+                                        size="sm" 
+                                        onClick={() => {
+                                          updateBottleItemMutation.mutate(
+                                            { id: item.id, data: editData },
+                                            {
+                                              onSuccess: async () => {
+                                                // Aggiornamento istantaneo
+                                                await Promise.all([
+                                                  queryClient.invalidateQueries({ queryKey: [`/api/pubs/${currentPub?.id}/bottles`] }),
+                                                  queryClient.invalidateQueries({ queryKey: [`/api/pubs/${currentPub?.id}`] }),
+                                                  queryClient.refetchQueries({ queryKey: [`/api/pubs/${currentPub?.id}/bottles`] })
+                                                ]);
+                                                setEditingItem(null);
+                                                setEditData({});
+                                              }
+                                            }
+                                          );
+                                        }}
+                                        disabled={updateBottleItemMutation.isPending}
+                                      >
                                         <Save className="w-4 h-4 mr-1" />
-                                        Salva
+                                        {updateBottleItemMutation.isPending ? 'Salvando...' : 'Salva'}
                                       </Button>
-                                      <Button size="sm" variant="outline" onClick={() => setEditingItem(null)}>
+                                      <Button size="sm" variant="outline" onClick={() => {
+                                        setEditingItem(null);
+                                        setEditData({});
+                                      }}>
                                         Annulla
                                       </Button>
                                     </div>
@@ -1988,7 +2037,7 @@ export default function SmartPubDashboard() {
                                 className="w-10 h-10 rounded object-cover flex-shrink-0"
                               />
                             )}
-                            <div className="flex-1 min-w-0">
+                            <div className="flex-1 min-w-0 max-w-[250px]">
                               <h4 className="text-sm font-medium text-gray-900 dark:text-white truncate">
                                 {beer.name}
                               </h4>
@@ -1996,11 +2045,11 @@ export default function SmartPubDashboard() {
                                 {beer.breweryName || beer.brewery?.name || 'Birrificio'}
                               </p>
                               <div className="flex items-center space-x-2 mt-1">
-                                <span className="text-xs text-gray-500">
+                                <span className="text-xs text-gray-500 truncate">
                                   {beer.style}
                                 </span>
                                 {beer.abv && (
-                                  <span className="text-xs text-gray-500">
+                                  <span className="text-xs text-gray-500 truncate">
                                     • {beer.abv}% ABV
                                   </span>
                                 )}
