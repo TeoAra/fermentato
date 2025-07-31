@@ -163,17 +163,21 @@ export default function SmartPubDashboard() {
       console.log('Removing tap item:', id);
       return apiRequest(`/api/pubs/${currentPub?.id}/taplist/${id}`, 'DELETE');
     },
-    onSuccess: (data) => {
+    onSuccess: async (data) => {
       console.log('Remove success:', data);
-      queryClient.invalidateQueries({ queryKey: [`/api/pubs/${currentPub?.id}/taplist`] });
-      queryClient.invalidateQueries({ queryKey: [`/api/pubs/${currentPub?.id}`] });
-      queryClient.refetchQueries({ queryKey: [`/api/pubs/${currentPub?.id}/taplist`] });
-      queryClient.refetchQueries({ queryKey: [`/api/pubs/${currentPub?.id}`] });
-      toast({ title: "Birra rimossa", description: "Birra rimossa dalla tap list" });
+      // Forza il refresh completo e immediato
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: [`/api/pubs/${currentPub?.id}/taplist`] }),
+        queryClient.invalidateQueries({ queryKey: [`/api/pubs/${currentPub?.id}`] }),
+        queryClient.invalidateQueries({ queryKey: ['/api/pubs'] }),
+        queryClient.refetchQueries({ queryKey: [`/api/pubs/${currentPub?.id}/taplist`] }),
+        queryClient.refetchQueries({ queryKey: [`/api/pubs/${currentPub?.id}`] })
+      ]);
+      toast({ title: "Birra eliminata", description: "Birra rimossa dalla taplist" });
     },
     onError: (error) => {
       console.error('Remove error:', error);
-      toast({ title: "Errore", description: "Impossibile rimuovere la birra", variant: "destructive" });
+      toast({ title: "Errore", description: "Impossibile eliminare la birra", variant: "destructive" });
     }
   });
 
@@ -182,12 +186,16 @@ export default function SmartPubDashboard() {
       console.log('Updating visibility:', { id, isVisible });
       return apiRequest(`/api/pubs/${currentPub?.id}/taplist/${id}`, 'PATCH', { isVisible });
     },
-    onSuccess: (data) => {
+    onSuccess: async (data) => {
       console.log('Visibility update success:', data);
-      queryClient.invalidateQueries({ queryKey: [`/api/pubs/${currentPub?.id}/taplist`] });
-      queryClient.invalidateQueries({ queryKey: [`/api/pubs/${currentPub?.id}`] });
-      queryClient.refetchQueries({ queryKey: [`/api/pubs/${currentPub?.id}/taplist`] });
-      queryClient.refetchQueries({ queryKey: [`/api/pubs/${currentPub?.id}`] });
+      // Forza aggiornamento immediato di tutte le query pertinenti
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: [`/api/pubs/${currentPub?.id}/taplist`] }),
+        queryClient.invalidateQueries({ queryKey: [`/api/pubs/${currentPub?.id}`] }),
+        queryClient.invalidateQueries({ queryKey: ['/api/pubs'] }),
+        queryClient.refetchQueries({ queryKey: [`/api/pubs/${currentPub?.id}/taplist`] }),
+        queryClient.refetchQueries({ queryKey: [`/api/pubs/${currentPub?.id}`] })
+      ]);
       toast({ title: "Visibilità aggiornata", description: "Modifica salvata" });
     },
     onError: (error) => {
@@ -641,7 +649,7 @@ export default function SmartPubDashboard() {
                         <CardTitle className="flex items-center justify-between">
                           <div className="flex items-center">
                             <Beer className="mr-2" />
-                            Birre alla Spina ({typedTapList.length})
+                            Taplist ({typedTapList.length})
                           </div>
                           <Button 
                             className="bg-gradient-to-r from-amber-500 via-orange-500 to-red-500 hover:from-amber-600 hover:via-orange-600 hover:to-red-600 text-white font-bold shadow-lg transform transition-all duration-200 hover:scale-105 active:scale-95"
@@ -856,11 +864,11 @@ export default function SmartPubDashboard() {
                                   size="sm" 
                                   variant="destructive" 
                                   onClick={() => {
-                                    if (confirm(`Sei sicuro di voler eliminare "${item.beer?.name || 'questa birra'}" dalla tap list?`)) {
+                                    if (confirm(`Sei sicuro di voler eliminare "${item.beer?.name || 'questa birra'}" dalla taplist?`)) {
                                       removeTapItemMutation.mutate(item.id);
                                     }
                                   }}
-                                  title="Elimina dalla tap list"
+                                  title="Elimina dalla taplist"
                                 >
                                   <Trash2 className="w-4 h-4" />
                                 </Button>
@@ -870,8 +878,8 @@ export default function SmartPubDashboard() {
                           {typedTapList.length === 0 && (
                             <div className="text-center py-8 text-gray-500">
                               <Beer className="mx-auto mb-4" size={48} />
-                              <p>Nessuna birra alla spina</p>
-                              <p className="text-sm">Cerca e aggiungi le prime birre al tuo tap list</p>
+                              <p>Nessuna birra nella taplist</p>
+                              <p className="text-sm">Cerca e aggiungi le prime birre alla tua taplist</p>
                             </div>
                           )}
                         </div>
