@@ -729,7 +729,7 @@ export default function SmartPubDashboard() {
                                         <div className="flex space-x-2 text-sm">
                                           {item.prices && typeof item.prices === 'object' ? (
                                             Object.entries(item.prices).map(([size, price]) => (
-                                              <span key={size}>{size}: €{price}</span>
+                                              <span key={size}>{size}: €{typeof price === 'object' && price !== null && 'price' in price ? Number(price.price).toFixed(2) : Number(price).toFixed(2)}</span>
                                             ))
                                           ) : (
                                             <>
@@ -761,7 +761,10 @@ export default function SmartPubDashboard() {
                                   onClick={() => { 
                                     setEditingItem(item.id); 
                                     setEditData({ 
-                                      prices: item.prices ? Object.entries(item.prices).map(([size, price]) => ({ size, price: price.toString() })) : [],
+                                      prices: item.prices ? Object.entries(item.prices).map(([size, price]) => ({ 
+                                        size, 
+                                        price: typeof price === 'object' && price !== null && 'price' in price ? price.price.toString() : price.toString() 
+                                      })) : [],
                                       priceSmall: item.priceSmall, 
                                       priceMedium: item.priceMedium, 
                                       tapNumber: item.tapNumber,
