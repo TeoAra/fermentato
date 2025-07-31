@@ -892,7 +892,7 @@ export default function SmartPubDashboard() {
                         <CardTitle className="flex items-center justify-between">
                           <div className="flex items-center">
                             <Package className="mr-2" />
-                            Cantina Birre in Bottiglia ({typedBottleList.length})
+                            Cantina ({typedBottleList.length})
                           </div>
                           <Button 
                             size="sm" 
@@ -1966,7 +1966,7 @@ export default function SmartPubDashboard() {
                       {filteredBeers.slice(0, 50).map((beer: any) => (
                         <div
                           key={beer.id}
-                          className="p-3 bg-white dark:bg-gray-700 rounded-lg border hover:border-primary transition-all cursor-pointer"
+                          className="p-3 bg-white dark:bg-gray-700 rounded-lg border hover:border-gray-300 transition-all cursor-pointer"
                           onClick={() => {
                             // Chiude ricerca e va direttamente al price manager
                             if (replacingBeer) {
@@ -1985,23 +1985,23 @@ export default function SmartPubDashboard() {
                               <img 
                                 src={beer.imageUrl} 
                                 alt={beer.name}
-                                className="w-12 h-12 rounded object-cover flex-shrink-0"
+                                className="w-10 h-10 rounded object-cover flex-shrink-0"
                               />
                             )}
                             <div className="flex-1 min-w-0">
-                              <h4 className="font-medium text-gray-900 dark:text-white truncate">
+                              <h4 className="text-sm font-medium text-gray-900 dark:text-white truncate">
                                 {beer.name}
                               </h4>
-                              <p className="text-sm text-gray-600 dark:text-gray-300 truncate">
+                              <p className="text-xs text-gray-600 dark:text-gray-300 truncate font-medium">
                                 {beer.breweryName || beer.brewery?.name || 'Birrificio'}
                               </p>
                               <div className="flex items-center space-x-2 mt-1">
-                                <span className="text-xs px-2 py-1 bg-orange-100 text-orange-800 rounded-full">
+                                <span className="text-xs text-gray-500">
                                   {beer.style}
                                 </span>
                                 {beer.abv && (
                                   <span className="text-xs text-gray-500">
-                                    {beer.abv}% ABV
+                                    • {beer.abv}% ABV
                                   </span>
                                 )}
                               </div>
