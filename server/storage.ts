@@ -261,7 +261,7 @@ export class DatabaseStorage implements IStorage {
     try {
       const result = await db.execute(sql`
         SELECT 
-          tl.id, tl.pub_id, tl.beer_id, tl.is_active, tl.price_small, tl.price_medium, tl.price_large,
+          tl.id, tl.pub_id, tl.beer_id, tl.is_active, tl.prices, tl.price_small, tl.price_medium, tl.price_large,
           tl.description, tl.tap_number, tl.added_at, tl.updated_at,
           b.name as beer_name, b.style as beer_style, b.abv as beer_abv, b.image_url as beer_image_url,
           br.id as brewery_id, br.name as brewery_name, br.logo_url as brewery_logo_url
@@ -277,6 +277,7 @@ export class DatabaseStorage implements IStorage {
         pubId: row.pub_id,
         beerId: row.beer_id,
         isActive: row.is_active,
+        prices: row.prices,
         priceSmall: row.price_small,
         priceMedium: row.price_medium,
         priceLarge: row.price_large,

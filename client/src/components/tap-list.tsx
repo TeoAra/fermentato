@@ -103,7 +103,19 @@ export default function TapList({ tapList }: TapListProps) {
                               return `${cleanSize}${numericFormat ? ` (${numericFormat})` : ''}`;
                             })()}
                           </span>
-                          <span className="text-sm font-bold text-primary">€{typeof price === 'object' ? JSON.stringify(price) : Number(price).toFixed(2)}</span>
+                          <span className="text-sm font-bold text-primary">
+                            €{(() => {
+                              if (typeof price === 'object' && price !== null) {
+                                // Se è un oggetto con proprietà price, usa quella
+                                if ('price' in price) {
+                                  return Number(price.price).toFixed(2);
+                                }
+                                // Altrimenti fallback a formato sicuro
+                                return "N/A";
+                              }
+                              return Number(price).toFixed(2);
+                            })()}
+                          </span>
                         </div>
                       ))
                     ) : (

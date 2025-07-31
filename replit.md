@@ -19,6 +19,8 @@ Fermenta.to is a full-stack web application for discovering Italian craft beers,
 ✅ **API Endpoints Bottles Completi** - Aggiunti PATCH/DELETE /api/pubs/:id/bottles/:id per consistenza con taplist
 ✅ **Dashboard Mobile Pub Completamente Funzionante** - Tap list, cantina birre, prezzi multipli, eliminazione confermata
 ✅ **Sistema Query Database Stabilizzato** - SQL dirette per taplist, rimossi campi inesistenti, zero errori LSP
+✅ **Fix Definitivo React Children Error** - Risolto rendering oggetti {size, price} in tap-list.tsx con controlli sicuri
+✅ **Rendering Prezzi Robusto** - Controlli typeof per oggetti price malformati, fallback "N/A" per dati inconsistenti
 ✅ **Scraping Globale Implementato** - Sistema completo per raccolta birre da fonti internazionali (Open Brewery DB + dati curated)
 ✅ **Database Arricchito** - Aggiunti 30+ birrifici globali e 50+ nuove birre autentiche dai cataloghi reali
 ✅ **API Statistics** - Endpoint /api/stats per monitorare crescita database e distribuzione birre/stili
