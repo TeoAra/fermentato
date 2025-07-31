@@ -130,7 +130,9 @@ export default function SmartPubDashboard() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [`/api/pubs/${currentPub?.id}/taplist`] });
+      queryClient.invalidateQueries({ queryKey: [`/api/pubs/${currentPub?.id}`] });
       queryClient.refetchQueries({ queryKey: [`/api/pubs/${currentPub?.id}/taplist`] });
+      queryClient.refetchQueries({ queryKey: [`/api/pubs/${currentPub?.id}`] });
       setEditingItem(null);
       toast({ title: "Birra aggiornata", description: "Le modifiche sono state salvate" });
     },
@@ -164,7 +166,9 @@ export default function SmartPubDashboard() {
     onSuccess: (data) => {
       console.log('Remove success:', data);
       queryClient.invalidateQueries({ queryKey: [`/api/pubs/${currentPub?.id}/taplist`] });
+      queryClient.invalidateQueries({ queryKey: [`/api/pubs/${currentPub?.id}`] });
       queryClient.refetchQueries({ queryKey: [`/api/pubs/${currentPub?.id}/taplist`] });
+      queryClient.refetchQueries({ queryKey: [`/api/pubs/${currentPub?.id}`] });
       toast({ title: "Birra rimossa", description: "Birra rimossa dalla tap list" });
     },
     onError: (error) => {
@@ -181,7 +185,9 @@ export default function SmartPubDashboard() {
     onSuccess: (data) => {
       console.log('Visibility update success:', data);
       queryClient.invalidateQueries({ queryKey: [`/api/pubs/${currentPub?.id}/taplist`] });
+      queryClient.invalidateQueries({ queryKey: [`/api/pubs/${currentPub?.id}`] });
       queryClient.refetchQueries({ queryKey: [`/api/pubs/${currentPub?.id}/taplist`] });
+      queryClient.refetchQueries({ queryKey: [`/api/pubs/${currentPub?.id}`] });
       toast({ title: "Visibilità aggiornata", description: "Modifica salvata" });
     },
     onError: (error) => {
@@ -198,7 +204,9 @@ export default function SmartPubDashboard() {
     onSuccess: (data) => {
       console.log('Reorder success:', data);
       queryClient.invalidateQueries({ queryKey: [`/api/pubs/${currentPub?.id}/taplist`] });
+      queryClient.invalidateQueries({ queryKey: [`/api/pubs/${currentPub?.id}`] });
       queryClient.refetchQueries({ queryKey: [`/api/pubs/${currentPub?.id}/taplist`] });
+      queryClient.refetchQueries({ queryKey: [`/api/pubs/${currentPub?.id}`] });
       toast({ title: "Ordine aggiornato", description: "Posizione salvata" });
     },
     onError: (error) => {
@@ -255,8 +263,10 @@ export default function SmartPubDashboard() {
       console.log('Beer replacement success:', data);
       queryClient.invalidateQueries({ queryKey: [`/api/pubs/${currentPub?.id}/taplist`] });
       queryClient.invalidateQueries({ queryKey: [`/api/pubs/${currentPub?.id}/bottles`] });
+      queryClient.invalidateQueries({ queryKey: [`/api/pubs/${currentPub?.id}`] });
       queryClient.refetchQueries({ queryKey: [`/api/pubs/${currentPub?.id}/taplist`] });
       queryClient.refetchQueries({ queryKey: [`/api/pubs/${currentPub?.id}/bottles`] });
+      queryClient.refetchQueries({ queryKey: [`/api/pubs/${currentPub?.id}`] });
       toast({ title: "Birra sostituita", description: "La birra è stata sostituita con successo" });
       setReplacingBeer(null);
       setShowBeerSearch(false);
@@ -300,7 +310,9 @@ export default function SmartPubDashboard() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [`/api/pubs/${currentPub?.id}/bottles`] });
+      queryClient.invalidateQueries({ queryKey: [`/api/pubs/${currentPub?.id}`] });
       queryClient.refetchQueries({ queryKey: [`/api/pubs/${currentPub?.id}/bottles`] });
+      queryClient.refetchQueries({ queryKey: [`/api/pubs/${currentPub?.id}`] });
       setEditingItem(null);
       toast({ title: "Birra aggiornata", description: "Le modifiche sono state salvate" });
     },
@@ -312,7 +324,9 @@ export default function SmartPubDashboard() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [`/api/pubs/${currentPub?.id}/bottles`] });
+      queryClient.invalidateQueries({ queryKey: [`/api/pubs/${currentPub?.id}`] });
       queryClient.refetchQueries({ queryKey: [`/api/pubs/${currentPub?.id}/bottles`] });
+      queryClient.refetchQueries({ queryKey: [`/api/pubs/${currentPub?.id}`] });
       toast({ title: "Birra rimossa dalla cantina" });
     },
     onError: () => {
@@ -326,7 +340,9 @@ export default function SmartPubDashboard() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [`/api/pubs/${currentPub?.id}/bottles`] });
+      queryClient.invalidateQueries({ queryKey: [`/api/pubs/${currentPub?.id}`] });
       queryClient.refetchQueries({ queryKey: [`/api/pubs/${currentPub?.id}/bottles`] });
+      queryClient.refetchQueries({ queryKey: [`/api/pubs/${currentPub?.id}`] });
       toast({ title: "Visibilità aggiornata" });
     },
     onError: () => {
@@ -826,7 +842,7 @@ export default function SmartPubDashboard() {
                                   onClick={() => {
                                     if (!showBeerSearch) {
                                       setReplacingBeer(item.id);
-                                      setPriceManagerType('tap');
+                                      setPriceManagerType('taplist');
                                       setShowBeerSearch(true);
                                       setSearchQuery('');
                                     }
@@ -891,8 +907,8 @@ export default function SmartPubDashboard() {
                       <CardContent>
                         <div className="space-y-4">
                           {typedBottleList.map((item: any) => (
-                            <div key={item.id} className="flex flex-col lg:flex-row lg:items-center lg:justify-between p-4 border rounded-lg bg-white dark:bg-gray-800 shadow-sm hover:shadow-md transition-shadow">
-                              <div className="flex-1 mb-3 lg:mb-0">
+                            <div key={item.id} className="p-4 border rounded-lg bg-white dark:bg-gray-800 shadow-sm hover:shadow-md transition-shadow">
+                              <div className="flex flex-col space-y-3">
                                 {editingItem === `bottle-${item.id}` ? (
                                   <div className="space-y-3">
                                     <div className="grid grid-cols-3 gap-3">
@@ -957,66 +973,66 @@ export default function SmartPubDashboard() {
                                     {item.notes && (
                                       <p className="text-xs text-gray-500 mt-1 italic">{item.notes}</p>
                                     )}
+                                    <div className="flex flex-wrap gap-2 mt-3">
+                                      <Button 
+                                        size="sm" 
+                                        variant="outline" 
+                                        onClick={() => toggleBottleItemVisibilityMutation.mutate({ id: item.id, isVisible: !item.isVisible })}
+                                        title={item.isVisible ? "Nascondi birra" : "Mostra birra"}
+                                        className="flex-shrink-0"
+                                      >
+                                        {item.isVisible ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                                      </Button>
+                                      <Button 
+                                        size="sm" 
+                                        variant="outline" 
+                                        onClick={() => { 
+                                          setEditingItem(`bottle-${item.id}` as any); 
+                                          setEditData({ 
+                                            price33cl: item.price33cl, 
+                                            price50cl: item.price50cl, 
+                                            price75cl: item.price75cl, 
+                                            notes: item.notes 
+                                          }); 
+                                        }}
+                                        title="Modifica prezzi e note"
+                                        className="flex-shrink-0"
+                                      >
+                                        <Edit3 className="w-4 h-4" />
+                                      </Button>
+                                      <Button 
+                                        size="sm" 
+                                        variant="outline" 
+                                        onClick={() => {
+                                          if (!showBeerSearch) {
+                                            setReplacingBeer(item.id);
+                                            setPriceManagerType('bottles');
+                                            setShowBeerSearch(true);
+                                            setSearchQuery('');
+                                          }
+                                        }}
+                                        title="Sostituisci con altra birra"
+                                        disabled={showBeerSearch}
+                                        className="flex-shrink-0"
+                                      >
+                                        <Search className="w-4 h-4" />
+                                      </Button>
+                                      <Button 
+                                        size="sm" 
+                                        variant="destructive" 
+                                        onClick={() => {
+                                          if (confirm(`Sei sicuro di voler eliminare "${item.beer?.name || 'questa birra'}" dalla cantina?`)) {
+                                            removeBottleItemMutation.mutate(item.id);
+                                          }
+                                        }}
+                                        title="Elimina dalla cantina"
+                                        className="flex-shrink-0"
+                                      >
+                                        <Trash2 className="w-4 h-4" />
+                                      </Button>
+                                    </div>
                                   </>
                                 )}
-                              </div>
-                              <div className="flex flex-wrap gap-2 justify-end lg:justify-start">
-                                <Button 
-                                  size="sm" 
-                                  variant="outline" 
-                                  onClick={() => toggleBottleItemVisibilityMutation.mutate({ id: item.id, isVisible: !item.isVisible })}
-                                  title={item.isVisible ? "Nascondi birra" : "Mostra birra"}
-                                  className="flex-shrink-0"
-                                >
-                                  {item.isVisible ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                                </Button>
-                                <Button 
-                                  size="sm" 
-                                  variant="outline" 
-                                  onClick={() => { 
-                                    setEditingItem(`bottle-${item.id}` as any); 
-                                    setEditData({ 
-                                      price33cl: item.price33cl, 
-                                      price50cl: item.price50cl, 
-                                      price75cl: item.price75cl, 
-                                      notes: item.notes 
-                                    }); 
-                                  }}
-                                  title="Modifica prezzi e note"
-                                  className="flex-shrink-0"
-                                >
-                                  <Edit3 className="w-4 h-4" />
-                                </Button>
-                                <Button 
-                                  size="sm" 
-                                  variant="outline" 
-                                  onClick={() => {
-                                    if (!showBeerSearch) {
-                                      setReplacingBeer(item.id);
-                                      setPriceManagerType('bottles');
-                                      setShowBeerSearch(true);
-                                      setSearchQuery('');
-                                    }
-                                  }}
-                                  title="Sostituisci con altra birra"
-                                  disabled={showBeerSearch}
-                                  className="flex-shrink-0"
-                                >
-                                  <Search className="w-4 h-4" />
-                                </Button>
-                                <Button 
-                                  size="sm" 
-                                  variant="destructive" 
-                                  onClick={() => {
-                                    if (confirm(`Sei sicuro di voler eliminare "${item.beer?.name || 'questa birra'}" dalla cantina?`)) {
-                                      removeBottleItemMutation.mutate(item.id);
-                                    }
-                                  }}
-                                  title="Elimina dalla cantina"
-                                  className="flex-shrink-0"
-                                >
-                                  <Trash2 className="w-4 h-4" />
-                                </Button>
                               </div>
                             </div>
                           ))}
@@ -2071,7 +2087,7 @@ export default function SmartPubDashboard() {
         <Dialog open={!!showPriceManager} onOpenChange={() => setShowPriceManager(null)}>
           <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
             <FlexiblePriceManager
-              type={priceManagerType === 'taplist' ? 'tap' : priceManagerType}
+              type={priceManagerType === 'taplist' ? 'tap' : 'bottle'}
               initialPrices={newItemPrices}
               onSave={(prices) => {
                 console.log('Saving prices:', prices, 'for beer:', showPriceManager, 'type:', priceManagerType);
