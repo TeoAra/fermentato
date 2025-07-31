@@ -1927,162 +1927,103 @@ export default function SmartPubDashboard() {
         }}>
           <DialogContent className="max-w-4xl w-[95vw] max-h-[90vh] p-3 md:p-6">
             <DialogHeader className="pb-3">
-              <DialogTitle className="text-lg md:text-xl font-bold flex items-center justify-between">
-                <span>{replacingBeer ? '🔄 Sostituisci Birra' : '🍺 Aggiungi Birra alla Taplist'}</span>
-                <Button 
-                  variant="ghost"
-                  size="sm"
-                  className="text-gray-500 hover:text-gray-700 md:hidden"
-                  onClick={() => {
-                    setShowBeerSearch(false);
-                    setReplacingBeer(null);
-                    setSearchQuery('');
-                  }}
-                >
-                  ✕
-                </Button>
+              <DialogTitle className="text-lg md:text-xl font-bold">
+                {replacingBeer ? '🔄 Sostituisci Birra' : '🍺 Aggiungi Birra alla Taplist'}
               </DialogTitle>
             </DialogHeader>
             
-            <div className="space-y-3">
-              {/* BARRA DI RICERCA MOBILE-FIRST */}
+            <div className="space-y-4">
+              {/* Search Input - Always visible in the dialog */}
               <div className="relative">
-                <Input 
-                  placeholder="🔍 Cerca birra, birrificio o stile..."
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
+                <Input
+                  placeholder="Cerca birra per nome o birrificio..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="text-base md:text-lg py-2.5 md:py-3 pr-16 md:pr-20"
+                  className="pl-10 w-full"
                   autoFocus
                 />
-                <Button 
-                  variant="ghost"
-                  size="sm"
-                  className="absolute right-1 top-1/2 -translate-y-1/2 hidden md:block"
-                  onClick={() => {
-                    setShowBeerSearch(false);
-                    setReplacingBeer(null);
-                    setSearchQuery('');
-                  }}
-                >
-                  ✕ Chiudi
-                </Button>
               </div>
-
-              {/* RISULTATI MOBILE-FIRST */}
-              <div className="max-h-[400px] md:max-h-[500px] overflow-y-auto border rounded-lg bg-gray-50">
-                {beersLoading ? (
-                  <div className="flex items-center justify-center p-6 md:p-12">
-                    <div className="animate-spin rounded-full h-6 w-6 md:h-8 md:w-8 border-b-2 border-primary mr-2 md:mr-3"></div>
-                    <span className="text-sm md:text-lg">Caricamento database birre...</span>
-                  </div>
-                ) : filteredBeers.length === 0 ? (
-                  <div className="p-6 md:p-12 text-center text-gray-500">
-                    {searchQuery ? (
-                      <div>
-                        <p className="text-sm md:text-lg">🚫 Nessuna birra trovata per "{searchQuery}"</p>
-                        <p className="text-xs md:text-sm mt-1 md:mt-2">Prova con nomi diversi o abbreviazioni</p>
-                      </div>
-                    ) : (
-                      <div>
-                        <p className="text-sm md:text-lg">🔍 Inizia a digitare per cercare</p>
-                        <p className="text-xs md:text-sm mt-1 md:mt-2">Database: 29.753 birre disponibili</p>
-                      </div>
-                    )}
-                  </div>
-                ) : (
-                  <div className="space-y-1 md:space-y-2 p-2 md:p-4">
-                    {filteredBeers.slice(0, 50).map((beer: any) => (
-                      <div 
-                        key={beer.id} 
-                        className="flex items-start space-x-2 md:space-x-4 p-2 md:p-4 bg-white border rounded-lg hover:shadow-md transition-shadow"
-                      >
-                        {/* IMMAGINE BIRRA MOBILE-FIRST */}
-                        <div className="flex-shrink-0">
-                          {beer.imageUrl || beer.bottleImageUrl ? (
-                            <img 
-                              src={beer.imageUrl || beer.bottleImageUrl} 
-                              alt={beer.name}
-                              className="w-12 h-12 md:w-16 md:h-16 object-cover rounded-lg border"
-                              onError={(e) => {
-                                e.currentTarget.style.display = 'none';
-                                const nextElement = e.currentTarget.nextElementSibling as HTMLElement;
-                                if (nextElement) nextElement.style.display = 'flex';
-                              }}
-                            />
-                          ) : null}
-                          <div 
-                            className="w-12 h-12 md:w-16 md:h-16 bg-gradient-to-br from-amber-400 to-orange-600 rounded-lg border flex items-center justify-center"
-                            style={{ display: beer.imageUrl || beer.bottleImageUrl ? 'none' : 'flex' }}
-                          >
-                            <span className="text-white text-lg md:text-2xl font-bold">🍺</span>
+              
+              {/* Results inside the same dialog */}
+              {searchQuery.length >= 2 && (
+                <div className="border rounded-lg max-h-96 overflow-y-auto bg-gray-50 dark:bg-gray-800">
+                  {beersLoading ? (
+                    <div className="p-8 text-center">
+                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
+                      <p className="mt-2 text-gray-600">Cercando birre...</p>
+                    </div>
+                  ) : filteredBeers && filteredBeers.length > 0 ? (
+                    <div className="p-2 space-y-2">
+                      {filteredBeers.slice(0, 50).map((beer: any) => (
+                        <div
+                          key={beer.id}
+                          className="p-3 bg-white dark:bg-gray-700 rounded-lg border hover:border-primary transition-all cursor-pointer"
+                          onClick={() => {
+                            // Chiude ricerca e va direttamente al price manager
+                            if (replacingBeer) {
+                              replaceBeerMutation.mutate({ 
+                                oldId: replacingBeer, 
+                                newBeerId: beer.id, 
+                                type: priceManagerType 
+                              });
+                            } else {
+                              setShowPriceManager(beer.id);
+                            }
+                          }}
+                        >
+                          <div className="flex items-start space-x-3">
+                            {beer.imageUrl && (
+                              <img 
+                                src={beer.imageUrl} 
+                                alt={beer.name}
+                                className="w-12 h-12 rounded object-cover flex-shrink-0"
+                              />
+                            )}
+                            <div className="flex-1 min-w-0">
+                              <h4 className="font-medium text-gray-900 dark:text-white truncate">
+                                {beer.name}
+                              </h4>
+                              <p className="text-sm text-gray-600 dark:text-gray-300 truncate">
+                                {beer.breweryName || beer.brewery?.name || 'Birrificio'}
+                              </p>
+                              <div className="flex items-center space-x-2 mt-1">
+                                <span className="text-xs px-2 py-1 bg-orange-100 text-orange-800 rounded-full">
+                                  {beer.style}
+                                </span>
+                                {beer.abv && (
+                                  <span className="text-xs text-gray-500">
+                                    {beer.abv}% ABV
+                                  </span>
+                                )}
+                              </div>
+                            </div>
                           </div>
                         </div>
-
-                        {/* INFO BIRRA MOBILE-FIRST */}
-                        <div className="flex-1 min-w-0">
-                          <h4 className="font-bold text-sm md:text-lg text-gray-900 truncate">{beer.name}</h4>
-                          <p className="text-xs md:text-md text-primary font-medium truncate">
-                            🏭 {beer.breweryName || beer.brewery?.name || 'Birrificio'}
-                          </p>
-                          <div className="flex flex-wrap gap-1 md:gap-3 mt-1 md:mt-2 text-xs md:text-sm text-gray-600">
-                            {beer.style && <span className="bg-blue-100 px-1.5 md:px-2 py-0.5 md:py-1 rounded text-xs">🎨 {beer.style}</span>}
-                            {beer.abv && <span className="bg-green-100 px-1.5 md:px-2 py-0.5 md:py-1 rounded text-xs">🍺 {beer.abv}% ABV</span>}
-                            {beer.ibu && <span className="bg-yellow-100 px-2 py-1 rounded">🌿 {beer.ibu} IBU</span>}
-                          </div>
-                        </div>
-
-                        {/* BOTTONE AZIONE MOBILE-FIRST */}
-                        <div className="flex-shrink-0">
-                          <Button
-                            size="sm"
-                            className="bg-primary hover:bg-primary/90 text-white font-bold text-xs md:text-sm px-2 md:px-4 py-1.5 md:py-2 h-auto whitespace-nowrap"
-                            onClick={() => {
-                              if (replacingBeer) {
-                                replaceBeerMutation.mutate({ 
-                                  oldId: replacingBeer, 
-                                  newBeerId: beer.id,
-                                  type: priceManagerType === 'bottles' ? 'bottles' : 'taplist'
-                                });
-                              } else if (priceManagerType === 'bottles') {
-                                setShowPriceManager(beer.id);
-                                setNewItemPrices([
-                                  {size: '33cl', price: '4.50'},
-                                  {size: '50cl', price: '6.50'},
-                                  {size: '75cl', price: '9.50'}
-                                ]);
-                              } else {
-                                // Per le spine, apri sempre il price manager per configurare le taglie
-                                setShowPriceManager(beer.id);
-                                setNewItemPrices([
-                                  {size: 'Piccola (20cl)', price: '4.00'},
-                                  {size: 'Media (40cl)', price: '6.50'}
-                                ]);
-                              }
-                              setReplacingBeer(null);
-                              setSearchQuery('');
-                            }}
-                          >
-                            <span className="md:hidden">⚙️</span>
-                            <span className="hidden md:inline">{replacingBeer ? '🔄 Sostituisci' : '⚙️ Aggiungi'}</span>
-                          </Button>
-                        </div>
-                      </div>
-                    ))}
-                    
-                    {filteredBeers.length >= 50 && (
-                      <div className="p-4 text-center text-gray-500 bg-yellow-50 rounded-lg">
-                        ⚠️ Mostrando primi 50 risultati. Affina la ricerca per vedere altri.
-                      </div>
-                    )}
-                  </div>
-                )}
-              </div>
+                      ))}
+                    </div>
+                  ) : searchQuery.length >= 2 ? (
+                    <div className="p-8 text-center text-gray-500">
+                      <p>Nessuna birra trovata per "{searchQuery}"</p>
+                      <p className="text-sm mt-1">Prova con un altro termine di ricerca</p>
+                    </div>
+                  ) : null}
+                </div>
+              )}
+              
+              {searchQuery.length < 2 && (
+                <div className="text-center py-8 text-gray-500">
+                  <Search className="mx-auto mb-4" size={48} />
+                  <p>Inserisci almeno 2 caratteri per cercare</p>
+                  <p className="text-sm mt-1">Cerca per nome birra o birrificio</p>
+                </div>
+              )}
             </div>
           </DialogContent>
         </Dialog>
       )}
 
-      {/* Flexible Price Manager Dialog */}
+      {/* Price Manager Dialog */}
       {showPriceManager && (
         <Dialog open={!!showPriceManager} onOpenChange={() => setShowPriceManager(null)}>
           <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
