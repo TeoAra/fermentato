@@ -144,13 +144,20 @@ export default function SmartPubDashboard() {
       console.log('Current pub ID:', currentPub?.id);
       return apiRequest(`/api/pubs/${currentPub?.id}/taplist`, 'POST', data);
     },
-    onSuccess: (result) => {
+    onSuccess: async (result) => {
       console.log('Mutation success:', result);
-      queryClient.invalidateQueries({ queryKey: [`/api/pubs/${currentPub?.id}/taplist`] });
-      queryClient.refetchQueries({ queryKey: [`/api/pubs/${currentPub?.id}/taplist`] });
+      // Aggiornamento istantaneo forzato
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: [`/api/pubs/${currentPub?.id}/taplist`] }),
+        queryClient.invalidateQueries({ queryKey: [`/api/pubs/${currentPub?.id}`] }),
+        queryClient.invalidateQueries({ queryKey: ['/api/pubs'] }),
+        queryClient.refetchQueries({ queryKey: [`/api/pubs/${currentPub?.id}/taplist`] }),
+        queryClient.refetchQueries({ queryKey: [`/api/pubs/${currentPub?.id}`] })
+      ]);
       toast({ title: "Birra aggiunta", description: "Nuova birra aggiunta alla tap list" });
       setShowBeerSearch(false);
       setSearchQuery('');
+      setNewItemPrices([{size: '', price: ''}]);
     },
     onError: (error) => {
       console.error('Mutation error:', error);
@@ -265,16 +272,20 @@ export default function SmartPubDashboard() {
     mutationFn: async ({ oldId, newBeerId, type = 'taplist' }: { oldId: number; newBeerId: number; type: 'taplist' | 'bottles' }) => {
       console.log('Replacing beer:', { oldId, newBeerId, type });
       const endpoint = type === 'taplist' ? 'taplist' : 'bottles';
-      return apiRequest(`/api/pubs/${currentPub?.id}/${endpoint}/${oldId}/replace`, 'PATCH', { newBeerId });
+      return apiRequest(`/api/pubs/${currentPub?.id}/${endpoint}/${oldId}`, 'PATCH', { beerId: newBeerId });
     },
-    onSuccess: (data) => {
+    onSuccess: async (data) => {
       console.log('Beer replacement success:', data);
-      queryClient.invalidateQueries({ queryKey: [`/api/pubs/${currentPub?.id}/taplist`] });
-      queryClient.invalidateQueries({ queryKey: [`/api/pubs/${currentPub?.id}/bottles`] });
-      queryClient.invalidateQueries({ queryKey: [`/api/pubs/${currentPub?.id}`] });
-      queryClient.refetchQueries({ queryKey: [`/api/pubs/${currentPub?.id}/taplist`] });
-      queryClient.refetchQueries({ queryKey: [`/api/pubs/${currentPub?.id}/bottles`] });
-      queryClient.refetchQueries({ queryKey: [`/api/pubs/${currentPub?.id}`] });
+      // Aggiornamento istantaneo forzato
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: [`/api/pubs/${currentPub?.id}/taplist`] }),
+        queryClient.invalidateQueries({ queryKey: [`/api/pubs/${currentPub?.id}/bottles`] }),
+        queryClient.invalidateQueries({ queryKey: [`/api/pubs/${currentPub?.id}`] }),
+        queryClient.invalidateQueries({ queryKey: ['/api/pubs'] }),
+        queryClient.refetchQueries({ queryKey: [`/api/pubs/${currentPub?.id}/taplist`] }),
+        queryClient.refetchQueries({ queryKey: [`/api/pubs/${currentPub?.id}/bottles`] }),
+        queryClient.refetchQueries({ queryKey: [`/api/pubs/${currentPub?.id}`] })
+      ]);
       toast({ title: "Birra sostituita", description: "La birra è stata sostituita con successo" });
       setReplacingBeer(null);
       setShowBeerSearch(false);
@@ -720,37 +731,33 @@ export default function SmartPubDashboard() {
                                           </div>
                                         </div>
                                         
-                                        <FlexiblePriceManager
-                                          type="tap"
-                                          initialPrices={editData.prices || []}
-                                          onSave={(prices: any) => setEditData({ ...editData, prices })}
-                                          onCancel={() => {}}
-                                        />
-                                        
-                                        <div className="mt-4 grid grid-cols-2 gap-3">
+                                        <div className="grid grid-cols-2 gap-2">
                                           <div>
-                                            <Label>Numero Spina</Label>
+                                            <Label>Prezzo 0.2l (€)</Label>
                                             <Input 
-                                              type="number"
-                                              placeholder="1"
-                                              value={editData.tapNumber || ''}
-                                              onChange={(e) => setEditData({ ...editData, tapNumber: e.target.value })}
+                                              placeholder="4.50"
+                                              value={editData.priceSmall || ''}
+                                              onChange={(e) => setEditData({ ...editData, priceSmall: e.target.value })}
                                             />
                                           </div>
                                           <div>
-                                            <Label>Stato</Label>
-                                            <div className="flex items-center space-x-4 mt-2">
-                                              <label className="flex items-center space-x-2">
-                                                <input 
-                                                  type="checkbox"
-                                                  checked={editData.isVisible !== false}
-                                                  onChange={(e) => setEditData({ ...editData, isVisible: e.target.checked })}
-                                                  className="rounded"
-                                                />
-                                                <span className="text-sm">Visibile al pubblico</span>
-                                              </label>
-                                            </div>
+                                            <Label>Prezzo 0.4l (€)</Label>
+                                            <Input 
+                                              placeholder="6.50"
+                                              value={editData.priceMedium || ''}
+                                              onChange={(e) => setEditData({ ...editData, priceMedium: e.target.value })}
+                                            />
                                           </div>
+                                        </div>
+                                        
+                                        <div className="mt-3">
+                                          <Label>Note Personali</Label>
+                                          <Textarea 
+                                            placeholder="Note sulla birra..."
+                                            value={editData.notes || ''}
+                                            onChange={(e) => setEditData({ ...editData, notes: e.target.value })}
+                                            rows={2}
+                                          />
                                         </div>
                                         
                                         <div className="mt-4">
@@ -874,7 +881,17 @@ export default function SmartPubDashboard() {
                                         </div>
                                       </div>
                                       <div className="flex flex-wrap gap-1 mt-2">
-                                        {item.prices && typeof item.prices === 'object' ? (
+                                        {item.prices && Array.isArray(item.prices) && item.prices.length > 0 ? (
+                                          item.prices.map((priceItem: any, idx: number) => {
+                                            const size = priceItem.size || '';
+                                            const price = priceItem.price || '0.00';
+                                            return (
+                                              <span key={idx} className="bg-gray-100 px-2 py-1 rounded text-xs">
+                                                {size}: €{Number(price).toFixed(2)}
+                                              </span>
+                                            );
+                                          })
+                                        ) : item.prices && typeof item.prices === 'object' ? (
                                           Object.entries(item.prices).map(([size, price]) => {
                                             const displaySize = size === 'small' ? '0.2l' : 
                                                                 size === 'medium' ? '0.4l' : 
@@ -887,8 +904,8 @@ export default function SmartPubDashboard() {
                                           })
                                         ) : (
                                           <>
-                                            <span className="bg-gray-100 px-2 py-1 rounded text-xs">0.2l: €{item.priceSmall || '0.00'}</span>
-                                            <span className="bg-gray-100 px-2 py-1 rounded text-xs">0.4l: €{item.priceMedium || '0.00'}</span>
+                                            {item.priceSmall && <span className="bg-gray-100 px-2 py-1 rounded text-xs">0.2l: €{Number(item.priceSmall).toFixed(2)}</span>}
+                                            {item.priceMedium && <span className="bg-gray-100 px-2 py-1 rounded text-xs">0.4l: €{Number(item.priceMedium).toFixed(2)}</span>}
                                           </>
                                         )}
                                       </div>
