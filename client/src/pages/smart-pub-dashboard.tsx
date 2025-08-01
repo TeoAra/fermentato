@@ -369,6 +369,21 @@ export default function SmartPubDashboard() {
     }
   });
 
+  // Delete category mutation
+  const deleteCategoryMutation = useMutation({
+    mutationFn: async (categoryId: number) => {
+      return apiRequest(`/api/menu-categories/${categoryId}`, 'DELETE');
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [`/api/pubs/${currentPub?.id}/menu`] });
+      queryClient.refetchQueries({ queryKey: [`/api/pubs/${currentPub?.id}/menu`] });
+      toast({ title: "Categoria eliminata", description: "Categoria rimossa dal menu" });
+    },
+    onError: () => {
+      toast({ title: "Errore", description: "Impossibile eliminare la categoria", variant: "destructive" });
+    }
+  });
+
   // Check if user can update private data (30-day restriction)
   const canUpdatePrivateData = () => {
     if ((user as any)?.userType === 'admin') return true;
@@ -1265,7 +1280,7 @@ export default function SmartPubDashboard() {
                                   variant="destructive" 
                                   onClick={() => {
                                     if (confirm(`Sei sicuro di voler eliminare la categoria "${category.name}"?`)) {
-                                      updateMenuItemMutation.mutate({ id: category.id, data: { deleted: true } });
+                                      deleteCategoryMutation.mutate(category.id);
                                     }
                                   }}
                                   className="flex-1 sm:flex-none"

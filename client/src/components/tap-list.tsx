@@ -108,7 +108,7 @@ export default function TapList({ tapList }: TapListProps) {
                               if (typeof price === 'object' && price !== null) {
                                 // Se è un oggetto con proprietà price, usa quella
                                 if ('price' in price) {
-                                  return Number(price.price).toFixed(2);
+                                  return Number((price as any).price).toFixed(2);
                                 }
                                 // Altrimenti fallback a formato sicuro
                                 return "N/A";

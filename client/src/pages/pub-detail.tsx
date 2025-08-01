@@ -265,11 +265,56 @@ export default function PubDetail() {
             </TabsContent>
 
             <TabsContent value="menu">
-              <FoodMenu 
-                menuData={menu || []} 
-                isLoading={menuLoading}
-                showOwnerControls={false}
-              />
+              <Card>
+                <CardContent className="p-4 sm:p-6">
+                  <h3 className="text-lg sm:text-xl font-semibold mb-4 sm:mb-6 text-center text-secondary">
+                    🍽️ Menu
+                  </h3>
+                  {menuLoading ? (
+                    <div className="space-y-4">
+                      {[...Array(3)].map((_, i) => (
+                        <div key={i} className="animate-pulse">
+                          <div className="h-6 bg-gray-300 rounded mb-2"></div>
+                          <div className="h-4 bg-gray-300 rounded mb-4"></div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : Array.isArray(menu) && menu.length > 0 ? (
+                    <div className="space-y-6">
+                      {menu.filter((category: any) => category.isVisible !== false).map((category: any) => (
+                        <div key={category.id} className="border rounded-lg p-4">
+                          <h4 className="text-lg font-semibold text-gray-900 mb-2">{category.name}</h4>
+                          {category.description && (
+                            <p className="text-gray-600 mb-4">{category.description}</p>
+                          )}
+                          {category.items && category.items.length > 0 && (
+                            <div className="space-y-3">
+                              {category.items.map((item: any) => (
+                                <div key={item.id} className="flex justify-between items-start">
+                                  <div className="flex-1">
+                                    <h5 className="font-medium text-gray-900">{item.name}</h5>
+                                    {item.description && (
+                                      <p className="text-sm text-gray-600">{item.description}</p>
+                                    )}
+                                  </div>
+                                  {item.price && (
+                                    <span className="font-semibold text-primary">€{Number(item.price).toFixed(2)}</span>
+                                  )}
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="text-center py-8 sm:py-12">
+                      <div className="text-gray-400 mb-4 text-4xl">🍽️</div>
+                      <p className="text-gray-500 text-base sm:text-lg">Menu non ancora disponibile</p>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
             </TabsContent>
 
             <TabsContent value="bottles">
@@ -290,7 +335,7 @@ export default function PubDetail() {
                         </div>
                       ))}
                     </div>
-                  ) : bottles && bottles.length > 0 ? (
+                  ) : Array.isArray(bottles) && bottles.length > 0 ? (
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
                       {bottles.map((bottle: any) => (
                         <div key={bottle.id} className="border rounded-lg p-4 hover:shadow-md transition-shadow">
@@ -302,10 +347,10 @@ export default function PubDetail() {
                             />
                             <div className="flex-1 min-w-0">
                               <h4 className="font-semibold text-gray-900 mb-1 break-words">
-                                {bottle.beer?.name}
+                                {bottle.beer?.name || 'Nome non disponibile'}
                               </h4>
                               <p className="text-sm text-gray-600 mb-2 break-words">
-                                {bottle.beer?.brewery?.name || bottle.beer?.breweryName}
+                                {bottle.beer?.brewery?.name || bottle.beer?.breweryName || 'Birrificio non disponibile'}
                               </p>
                               
                               <div className="flex flex-wrap items-center gap-2 mb-2">
@@ -324,10 +369,10 @@ export default function PubDetail() {
                                   {bottle.prices.map((price: any, index: number) => (
                                     <div key={index} className="flex justify-between items-center text-sm">
                                       <span className="text-gray-600">
-                                        {typeof price === 'object' ? price.size : price} {typeof price === 'object' && price.format && `(${price.format})`}
+                                        {typeof price === 'object' ? (price as any).size : price} {typeof price === 'object' && (price as any).format && `(${(price as any).format})`}
                                       </span>
                                       <span className="font-semibold text-primary">
-                                        €{typeof price === 'object' ? price.price : price}
+                                        €{typeof price === 'object' ? Number((price as any).price).toFixed(2) : Number(price).toFixed(2)}
                                       </span>
                                     </div>
                                   ))}
