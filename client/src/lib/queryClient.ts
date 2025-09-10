@@ -11,7 +11,7 @@ export async function apiRequest(
   url: string,
   method: string,
   data?: unknown | undefined,
-): Promise<Response> {
+): Promise<any> {
   const isFormData = data instanceof FormData;
   
   const res = await fetch(url, {
@@ -22,7 +22,13 @@ export async function apiRequest(
   });
 
   await throwIfResNotOk(res);
-  return res;
+  
+  // Parse JSON if response has content
+  if (res.status !== 204 && res.headers.get('content-type')?.includes('application/json')) {
+    return await res.json();
+  }
+  
+  return null;
 }
 
 type UnauthorizedBehavior = "returnNull" | "throw";

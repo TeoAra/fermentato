@@ -1056,19 +1056,35 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Upload profile image
-  app.post('/api/user/upload-profile-image', isAuthenticated, upload.single('image'), async (req: any, res) => {
+  app.post('/api/user/upload-profile-image', isAuthenticated, (req: any, res, next) => {
+    console.log('Request received:', req.method, req.url);
+    console.log('Content-Type:', req.headers['content-type']);
+    console.log('Body type:', typeof req.body);
+    
+    upload.single('image')(req, res, (err) => {
+      if (err) {
+        console.error('Multer error:', err);
+        return res.status(400).json({ message: "Errore durante l'upload: " + err.message });
+      }
+      
+      console.log('After multer - req.file:', !!req.file);
+      if (req.file) {
+        console.log('File details:', {
+          fieldname: req.file.fieldname,
+          originalname: req.file.originalname,
+          mimetype: req.file.mimetype,
+          size: req.file.size,
+          bufferLength: req.file.buffer?.length
+        });
+      }
+      
+      next();
+    });
+  }, async (req: any, res) => {
     try {
       if (!req.file) {
         return res.status(400).json({ message: "Nessuna immagine caricata" });
       }
-
-      console.log('File received:', {
-        fieldname: req.file.fieldname,
-        originalname: req.file.originalname,
-        mimetype: req.file.mimetype,
-        size: req.file.size,
-        bufferLength: req.file.buffer?.length
-      });
 
       const imageUrl = await uploadImage(
         req.file.buffer,

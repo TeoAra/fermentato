@@ -33,7 +33,7 @@ export async function uploadImage(
   return new Promise((resolve, reject) => {
     const uploadOptions: any = {
       folder: `fermenta-to/${folder}`,
-      resource_type: 'auto',
+      resource_type: 'image',
       format: 'webp',
       quality: 'auto:good',
     };
@@ -43,7 +43,7 @@ export async function uploadImage(
       uploadOptions.overwrite = true;
     }
 
-    cloudinary.uploader.upload_stream(
+    const stream = cloudinary.uploader.upload_stream(
       uploadOptions,
       (error, result) => {
         if (error) {
@@ -53,7 +53,9 @@ export async function uploadImage(
           resolve(result!.secure_url);
         }
       }
-    ).end(buffer);
+    );
+    
+    stream.end(buffer);
   });
 }
 
