@@ -4,7 +4,7 @@ import { useState } from "react";
 import { Star, MapPin, Clock, Phone, Globe, Wine, Facebook, Instagram } from "lucide-react";
 import Footer from "@/components/footer";
 import TapList from "@/components/tap-list";
-import FoodMenu from "@/components/food-menu";
+import LuppolinoMenu from "@/components/luppolino-menu";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -265,12 +265,9 @@ export default function PubDetail() {
             </TabsContent>
 
             <TabsContent value="menu">
-              <Card>
-                <CardContent className="p-4 sm:p-6">
-                  <h3 className="text-lg sm:text-xl font-semibold mb-4 sm:mb-6 text-center text-secondary">
-                    🍽️ Menu
-                  </h3>
-                  {menuLoading ? (
+              {menuLoading ? (
+                <Card>
+                  <CardContent className="p-4 sm:p-6">
                     <div className="space-y-4">
                       {[...Array(3)].map((_, i) => (
                         <div key={i} className="animate-pulse">
@@ -279,42 +276,13 @@ export default function PubDetail() {
                         </div>
                       ))}
                     </div>
-                  ) : Array.isArray(menu) && menu.length > 0 ? (
-                    <div className="space-y-6">
-                      {menu.filter((category: any) => category.isVisible !== false).map((category: any) => (
-                        <div key={category.id} className="border rounded-lg p-4">
-                          <h4 className="text-lg font-semibold text-gray-900 mb-2">{category.name}</h4>
-                          {category.description && (
-                            <p className="text-gray-600 mb-4">{category.description}</p>
-                          )}
-                          {category.items && category.items.length > 0 && (
-                            <div className="space-y-3">
-                              {category.items.map((item: any) => (
-                                <div key={item.id} className="flex justify-between items-start">
-                                  <div className="flex-1">
-                                    <h5 className="font-medium text-gray-900">{item.name}</h5>
-                                    {item.description && (
-                                      <p className="text-sm text-gray-600">{item.description}</p>
-                                    )}
-                                  </div>
-                                  {item.price && (
-                                    <span className="font-semibold text-primary">€{Number(item.price).toFixed(2)}</span>
-                                  )}
-                                </div>
-                              ))}
-                            </div>
-                          )}
-                        </div>
-                      ))}
-                    </div>
-                  ) : (
-                    <div className="text-center py-8 sm:py-12">
-                      <div className="text-gray-400 mb-4 text-4xl">🍽️</div>
-                      <p className="text-gray-500 text-base sm:text-lg">Menu non ancora disponibile</p>
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
+                  </CardContent>
+                </Card>
+              ) : (
+                <LuppolinoMenu 
+                  menu={Array.isArray(menu) ? menu.filter((category: any) => category.isVisible !== false) : []} 
+                />
+              )}
             </TabsContent>
 
             <TabsContent value="bottles">
