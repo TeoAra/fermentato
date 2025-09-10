@@ -46,6 +46,7 @@ export interface IStorage {
   getUser(id: string): Promise<User | undefined>;
   upsertUser(user: UpsertUser): Promise<User>;
   updateUser(id: string, updates: Partial<UpsertUser>): Promise<User>;
+  updateUserType(userId: string, userType: string): Promise<User>;
 
   // Pub operations
   getPubs(): Promise<Pub[]>;

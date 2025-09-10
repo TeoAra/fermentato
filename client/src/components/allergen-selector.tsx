@@ -23,9 +23,12 @@ interface AllergenSelectorProps {
 export function AllergenSelector({ selectedAllergens, onAllergensChange, className }: AllergenSelectorProps) {
   const [isOpen, setIsOpen] = useState(false);
 
-  const { data: allergens = [], isLoading } = useQuery({
+  const { data: allergens = [], isLoading, error } = useQuery({
     queryKey: ['/api/allergens'],
-    queryFn: () => fetch('/api/allergens').then(res => res.json()),
+    queryFn: () => fetch('/api/allergens').then(res => {
+      if (!res.ok) throw new Error('Failed to fetch allergens');
+      return res.json();
+    }),
   });
 
   const handleAllergenToggle = (allergenId: string) => {
@@ -44,6 +47,28 @@ export function AllergenSelector({ selectedAllergens, onAllergensChange, classNa
 
   if (isLoading) {
     return <div className={className}>Caricamento allergeni...</div>;
+  }
+
+  if (error) {
+    return (
+      <div className={className}>
+        <Label>Allergeni</Label>
+        <div className="text-red-500 text-sm p-2 border border-red-200 rounded">
+          ⚠️ Errore nel caricamento degli allergeni. Riprova più tardi.
+        </div>
+      </div>
+    );
+  }
+
+  if (allergens.length === 0) {
+    return (
+      <div className={className}>
+        <Label>Allergeni</Label>
+        <div className="text-gray-500 text-sm p-2 border border-gray-200 rounded">
+          Nessun allergene disponibile.
+        </div>
+      </div>
+    );
   }
 
   return (
