@@ -29,6 +29,7 @@ import AdminContent from "@/pages/admin-content";
 import AdminModeration from "@/pages/admin-moderation";
 import ExplorePubs from "@/pages/explore-pubs";
 import ExploreBreweries from "@/pages/explore-breweries";
+import DemoLoginPage from "@/pages/demo-login-page";
 import { MobileHeader } from "@/components/mobile-header";
 import { BottomNavigation } from "@/components/bottom-navigation";
 import type { User } from "@shared/schema";
@@ -58,6 +59,7 @@ function Router() {
       <main className="lg:pt-0 pt-14 pb-16 lg:pb-0">
         <Switch>
           <Route path="/" component={isLoading || !isAuthenticated ? Landing : Home} />
+          <Route path="/demo-login" component={DemoLoginPage} />
           <Route path="/pub/:id" component={PubDetail} />
           <Route path="/brewery/:id" component={BreweryDetail} />
           <Route path="/beer/:id" component={BeerDetail} />

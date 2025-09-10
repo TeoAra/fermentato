@@ -36,6 +36,7 @@ import {
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, desc, like, inArray, sql, or, asc, ilike } from "drizzle-orm";
+import { memoryStorageInstance } from "./memoryStorage";
 
 export interface IStorage {
   // User operations
@@ -911,4 +912,404 @@ export class DatabaseStorage implements IStorage {
   }
 }
 
-export const storage = new DatabaseStorage();
+// Storage wrapper with fallback to in-memory when database is disabled
+class StorageWrapper implements IStorage {
+  private databaseStorage = new DatabaseStorage();
+  private useMemoryFallback = false;
+
+  // Helper to detect database connection issues
+  private async isDBDisabled(error: any): Promise<boolean> {
+    const errorMessage = error?.message || error?.toString() || '';
+    return errorMessage.includes('endpoint has been disabled') || 
+           errorMessage.includes('database connection') ||
+           errorMessage.includes('connection to server');
+  }
+
+  // Wrapper method that automatically falls back to memory storage
+  private async dbCall<T>(
+    dbOperation: () => Promise<T>,
+    memoryOperation: () => Promise<T>
+  ): Promise<T> {
+    if (this.useMemoryFallback) {
+      console.log('Using memory storage (database disabled)');
+      return memoryOperation();
+    }
+
+    try {
+      return await dbOperation();
+    } catch (error) {
+      if (await this.isDBDisabled(error)) {
+        console.warn('Database disabled, switching to memory storage:', error.message);
+        this.useMemoryFallback = true;
+        return memoryOperation();
+      }
+      throw error;
+    }
+  }
+
+  // User operations
+  async getUser(id: string): Promise<User | undefined> {
+    return this.dbCall(
+      () => this.databaseStorage.getUser(id),
+      () => memoryStorageInstance.getUser(id)
+    );
+  }
+
+  async upsertUser(userData: UpsertUser): Promise<User> {
+    return this.dbCall(
+      () => this.databaseStorage.upsertUser(userData),
+      () => memoryStorageInstance.upsertUser(userData)
+    );
+  }
+
+  async updateUser(id: string, updates: Partial<UpsertUser>): Promise<User> {
+    return this.dbCall(
+      () => this.databaseStorage.updateUser(id, updates),
+      () => memoryStorageInstance.updateUser(id, updates)
+    );
+  }
+
+  // Pub operations
+  async getPubs(): Promise<Pub[]> {
+    return this.dbCall(
+      () => this.databaseStorage.getPubs(),
+      () => memoryStorageInstance.getPubs()
+    );
+  }
+
+  async getPub(id: number): Promise<Pub | undefined> {
+    return this.dbCall(
+      () => this.databaseStorage.getPub(id),
+      () => memoryStorageInstance.getPub(id)
+    );
+  }
+
+  async createPub(pubData: InsertPub): Promise<Pub> {
+    return this.dbCall(
+      () => this.databaseStorage.createPub(pubData),
+      () => memoryStorageInstance.createPub(pubData)
+    );
+  }
+
+  async updatePub(id: number, updates: Partial<InsertPub>): Promise<Pub> {
+    return this.dbCall(
+      () => this.databaseStorage.updatePub(id, updates),
+      () => memoryStorageInstance.updatePub(id, updates)
+    );
+  }
+
+  async deletePub(id: number): Promise<void> {
+    return this.dbCall(
+      () => this.databaseStorage.deletePub(id),
+      () => memoryStorageInstance.deletePub(id)
+    );
+  }
+
+  async getPubsByOwner(ownerId: string): Promise<Pub[]> {
+    return this.dbCall(
+      () => this.databaseStorage.getPubsByOwner(ownerId),
+      () => memoryStorageInstance.getPubsByOwner(ownerId)
+    );
+  }
+
+  // Brewery operations
+  async getBreweries(): Promise<Brewery[]> {
+    return this.dbCall(
+      () => this.databaseStorage.getBreweries(),
+      () => memoryStorageInstance.getBreweries()
+    );
+  }
+
+  async getBrewery(id: number): Promise<Brewery | undefined> {
+    return this.dbCall(
+      () => this.databaseStorage.getBrewery(id),
+      () => memoryStorageInstance.getBrewery(id)
+    );
+  }
+
+  async createBrewery(breweryData: InsertBrewery): Promise<Brewery> {
+    return this.dbCall(
+      () => this.databaseStorage.createBrewery(breweryData),
+      () => memoryStorageInstance.createBrewery(breweryData)
+    );
+  }
+
+  async updateBrewery(id: number, updates: Partial<InsertBrewery>): Promise<Brewery> {
+    return this.dbCall(
+      () => this.databaseStorage.updateBrewery(id, updates),
+      () => memoryStorageInstance.updateBrewery(id, updates)
+    );
+  }
+
+  async deleteBrewery(id: number): Promise<void> {
+    return this.dbCall(
+      () => this.databaseStorage.deleteBrewery(id),
+      () => memoryStorageInstance.deleteBrewery(id)
+    );
+  }
+
+  async getRandomBreweries(): Promise<Brewery[]> {
+    return this.dbCall(
+      () => this.databaseStorage.getRandomBreweries(),
+      () => memoryStorageInstance.getRandomBreweries()
+    );
+  }
+
+  // Beer operations
+  async getBeers(): Promise<Beer[]> {
+    return this.dbCall(
+      () => this.databaseStorage.getBeers(),
+      () => memoryStorageInstance.getBeers()
+    );
+  }
+
+  async getBeer(id: number): Promise<Beer | undefined> {
+    return this.dbCall(
+      () => this.databaseStorage.getBeer(id),
+      () => memoryStorageInstance.getBeer(id)
+    );
+  }
+
+  async createBeer(beerData: InsertBeer): Promise<Beer> {
+    return this.dbCall(
+      () => this.databaseStorage.createBeer(beerData),
+      () => memoryStorageInstance.createBeer(beerData)
+    );
+  }
+
+  async updateBeer(id: number, updates: Partial<InsertBeer>): Promise<Beer> {
+    return this.dbCall(
+      () => this.databaseStorage.updateBeer(id, updates),
+      () => memoryStorageInstance.updateBeer(id, updates)
+    );
+  }
+
+  async deleteBeer(id: number): Promise<void> {
+    return this.dbCall(
+      () => this.databaseStorage.deleteBeer(id),
+      () => memoryStorageInstance.deleteBeer(id)
+    );
+  }
+
+  async getBeersByBrewery(breweryId: number): Promise<Beer[]> {
+    return this.dbCall(
+      () => this.databaseStorage.getBeersByBrewery(breweryId),
+      () => memoryStorageInstance.getBeersByBrewery(breweryId)
+    );
+  }
+
+  async searchBeers(query: string): Promise<Beer[]> {
+    return this.dbCall(
+      () => this.databaseStorage.searchBeers(query),
+      () => memoryStorageInstance.searchBeers(query)
+    );
+  }
+
+  // Delegated methods for operations with basic fallback
+  async getTapList(pubId: number): Promise<TapList[]> {
+    return this.dbCall(
+      () => this.databaseStorage.getTapList(pubId),
+      () => memoryStorageInstance.getTapList(pubId)
+    );
+  }
+
+  async getTapListByPubForOwner(pubId: number): Promise<any[]> {
+    return this.dbCall(
+      () => this.databaseStorage.getTapListByPubForOwner(pubId),
+      () => memoryStorageInstance.getTapListByPubForOwner(pubId)
+    );
+  }
+
+  async addToTapList(item: InsertTapList): Promise<TapList> {
+    return this.dbCall(
+      () => this.databaseStorage.addToTapList(item),
+      () => memoryStorageInstance.addToTapList(item)
+    );
+  }
+
+  async updateTapListItem(id: number, updates: Partial<InsertTapList>): Promise<TapList> {
+    return this.dbCall(
+      () => this.databaseStorage.updateTapListItem(id, updates),
+      () => memoryStorageInstance.updateTapListItem(id, updates)
+    );
+  }
+
+  async removeFromTapList(id: number): Promise<void> {
+    return this.dbCall(
+      () => this.databaseStorage.removeFromTapList(id),
+      () => memoryStorageInstance.removeFromTapList(id)
+    );
+  }
+
+  // Simple delegations for other methods (stub implementations)
+  async getBottleList(pubId: number): Promise<BottleList[]> {
+    return this.dbCall(
+      () => this.databaseStorage.getBottleList(pubId),
+      () => memoryStorageInstance.getBottleList(pubId)
+    );
+  }
+
+  async addToBottleList(item: InsertBottleList): Promise<BottleList> {
+    return this.dbCall(
+      () => this.databaseStorage.addToBottleList(item),
+      () => memoryStorageInstance.addToBottleList(item)
+    );
+  }
+
+  async removeFromBottleList(id: number): Promise<void> {
+    return this.dbCall(
+      () => this.databaseStorage.removeFromBottleList(id),
+      () => memoryStorageInstance.removeFromBottleList(id)
+    );
+  }
+
+  // Placeholder implementations for all other required interface methods
+  async updateBottleListItem(id: number, updates: Partial<InsertBottleList>): Promise<BottleList> {
+    return this.dbCall(
+      () => this.databaseStorage.updateBottleListItem(id, updates),
+      async () => { throw new Error('Not implemented in memory storage'); }
+    );
+  }
+
+  async getBeerAvailability(beerId: number): Promise<any> {
+    return this.dbCall(
+      () => this.databaseStorage.getBeerAvailability(beerId),
+      async () => { return { taps: [], bottles: [] }; }
+    );
+  }
+
+  async getMenuCategories(pubId: number): Promise<MenuCategory[]> {
+    return this.dbCall(
+      () => this.databaseStorage.getMenuCategories(pubId),
+      async () => { return []; }
+    );
+  }
+
+  async createMenuCategory(category: InsertMenuCategory): Promise<MenuCategory> {
+    return this.dbCall(
+      () => this.databaseStorage.createMenuCategory(category),
+      async () => { throw new Error('Not implemented in memory storage'); }
+    );
+  }
+
+  async updateMenuCategory(id: number, updates: Partial<InsertMenuCategory>): Promise<MenuCategory> {
+    return this.dbCall(
+      () => this.databaseStorage.updateMenuCategory(id, updates),
+      async () => { throw new Error('Not implemented in memory storage'); }
+    );
+  }
+
+  async deleteMenuCategory(id: number): Promise<void> {
+    return this.dbCall(
+      () => this.databaseStorage.deleteMenuCategory(id),
+      async () => { }
+    );
+  }
+
+  async getMenuItems(categoryId: number): Promise<MenuItem[]> {
+    return this.dbCall(
+      () => this.databaseStorage.getMenuItems(categoryId),
+      async () => { return []; }
+    );
+  }
+
+  async createMenuItem(item: InsertMenuItem): Promise<MenuItem> {
+    return this.dbCall(
+      () => this.databaseStorage.createMenuItem(item),
+      async () => { throw new Error('Not implemented in memory storage'); }
+    );
+  }
+
+  async updateMenuItem(id: number, updates: Partial<InsertMenuItem>): Promise<MenuItem> {
+    return this.dbCall(
+      () => this.databaseStorage.updateMenuItem(id, updates),
+      async () => { throw new Error('Not implemented in memory storage'); }
+    );
+  }
+
+  async deleteMenuItem(id: number): Promise<void> {
+    return this.dbCall(
+      () => this.databaseStorage.deleteMenuItem(id),
+      async () => { }
+    );
+  }
+
+  async getFavorites(userId: string): Promise<Favorite[]> {
+    return this.dbCall(
+      () => this.databaseStorage.getFavorites(userId),
+      async () => { return []; }
+    );
+  }
+
+  async addFavorite(favorite: InsertFavorite): Promise<Favorite> {
+    return this.dbCall(
+      () => this.databaseStorage.addFavorite(favorite),
+      async () => { throw new Error('Not implemented in memory storage'); }
+    );
+  }
+
+  async removeFavorite(userId: string, itemType: 'pub' | 'brewery' | 'beer', itemId: number): Promise<void> {
+    return this.dbCall(
+      () => this.databaseStorage.removeFavorite(userId, itemType, itemId),
+      async () => { }
+    );
+  }
+
+  async removeFavoriteById(userId: string, favoriteId: number): Promise<void> {
+    return this.dbCall(
+      () => this.databaseStorage.removeFavoriteById(userId, favoriteId),
+      async () => { }
+    );
+  }
+
+  async isFavorite(userId: string, itemType: 'pub' | 'brewery' | 'beer', itemId: number): Promise<boolean> {
+    return this.dbCall(
+      () => this.databaseStorage.isFavorite(userId, itemType, itemId),
+      async () => { return false; }
+    );
+  }
+
+  async getUserActivities(userId: string, limit?: number): Promise<UserActivity[]> {
+    return this.dbCall(
+      () => this.databaseStorage.getUserActivities(userId, limit),
+      async () => { return []; }
+    );
+  }
+
+  async addUserActivity(activity: InsertUserActivity): Promise<UserActivity> {
+    return this.dbCall(
+      () => this.databaseStorage.addUserActivity(activity),
+      async () => { throw new Error('Not implemented in memory storage'); }
+    );
+  }
+
+  async getUserBeerTastings(userId: string): Promise<UserBeerTasting[]> {
+    return this.dbCall(
+      () => this.databaseStorage.getUserBeerTastings(userId),
+      async () => { return []; }
+    );
+  }
+
+  async addBeerTasting(tasting: InsertUserBeerTasting): Promise<UserBeerTasting> {
+    return this.dbCall(
+      () => this.databaseStorage.addBeerTasting(tasting),
+      async () => { throw new Error('Not implemented in memory storage'); }
+    );
+  }
+
+  async updateBeerTasting(id: number, updates: Partial<InsertUserBeerTasting>): Promise<UserBeerTasting> {
+    return this.dbCall(
+      () => this.databaseStorage.updateBeerTasting(id, updates),
+      async () => { throw new Error('Not implemented in memory storage'); }
+    );
+  }
+
+  async deleteBeerTasting(id: number): Promise<void> {
+    return this.dbCall(
+      () => this.databaseStorage.deleteBeerTasting(id),
+      async () => { }
+    );
+  }
+}
+
+export const storage = new StorageWrapper();
