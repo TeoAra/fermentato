@@ -249,6 +249,38 @@ export function registerAdminRoutes(app: Express) {
     }
   });
 
+  // Add missing brewery search endpoint
+  app.get("/api/admin/breweries/search", isAuthenticated, async (req: any, res) => {
+    try {
+      if (req.user?.claims?.sub !== "45321347") {
+        return res.status(403).json({ message: "Forbidden" });
+      }
+
+      const { q: search, limit = 20 } = req.query;
+
+      let query = db.select().from(breweries);
+
+      if (search) {
+        query = query.where(
+          or(
+            ilike(breweries.name, `%${search}%`),
+            ilike(breweries.location, `%${search}%`)
+          )
+        );
+      }
+
+      const results = await query
+        .orderBy(breweries.name)
+        .limit(parseInt(limit))
+        .execute();
+
+      res.json(results);
+    } catch (error) {
+      console.error("Error searching breweries:", error);
+      res.status(500).json({ message: "Failed to search breweries" });
+    }
+  });
+
   app.get("/api/admin/pubs", isAuthenticated, async (req: any, res) => {
     try {
       if (req.user?.claims?.sub !== "45321347") {
