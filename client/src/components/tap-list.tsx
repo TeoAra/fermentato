@@ -91,33 +91,48 @@ export default function TapList({ tapList }: TapListProps) {
               <div className="flex-shrink-0">
                 <div className="bg-gray-50 rounded-lg p-2 min-w-[120px]">
                   <div className="space-y-1">
-                    {tap.prices && typeof tap.prices === 'object' && Object.keys(tap.prices).length > 0 ? (
-                      Object.entries(tap.prices).map(([size, price]) => (
-                        <div key={size} className="flex justify-between items-center">
-                          <span className="text-xs text-gray-600 font-medium">
-                            {(() => {
-                              const cleanSize = size.replace(/\([^)]*\)/, '').trim();
-                              const numericFormat = cleanSize === 'Piccola' ? '0.2l' : 
-                                                  cleanSize === 'Media' ? '0.4l' : 
-                                                  cleanSize === 'Grande' || cleanSize === 'Boccale' ? '1l' : '';
-                              return `${cleanSize}${numericFormat ? ` (${numericFormat})` : ''}`;
-                            })()}
-                          </span>
-                          <span className="text-sm font-bold text-primary">
-                            €{(() => {
-                              if (typeof price === 'object' && price !== null) {
-                                // Se è un oggetto con proprietà price, usa quella
-                                if ('price' in price) {
-                                  return Number((price as any).price).toFixed(2);
+                    {tap.prices && typeof tap.prices === 'object' && (Array.isArray(tap.prices) ? tap.prices.length > 0 : Object.keys(tap.prices).length > 0) ? (
+                      Array.isArray(tap.prices) ? (
+                        // Gestisce array format: [{size: "Piccola (20cl)", price: "6"}]
+                        tap.prices.map((item: any, index: number) => (
+                          <div key={index} className="flex justify-between items-center">
+                            <span className="text-xs text-gray-600 font-medium">
+                              {item.size || 'N/A'}
+                            </span>
+                            <span className="text-sm font-bold text-primary">
+                              €{Number(item.price || 0).toFixed(2)}
+                            </span>
+                          </div>
+                        ))
+                      ) : (
+                        // Gestisce object format: {"Piccola (20cl)": "6"}
+                        Object.entries(tap.prices).map(([size, price]) => (
+                          <div key={size} className="flex justify-between items-center">
+                            <span className="text-xs text-gray-600 font-medium">
+                              {(() => {
+                                const cleanSize = size.replace(/\([^)]*\)/, '').trim();
+                                const numericFormat = cleanSize === 'Piccola' ? '0.2l' : 
+                                                    cleanSize === 'Media' ? '0.4l' : 
+                                                    cleanSize === 'Grande' || cleanSize === 'Boccale' ? '1l' : '';
+                                return `${cleanSize}${numericFormat ? ` (${numericFormat})` : ''}`;
+                              })()}
+                            </span>
+                            <span className="text-sm font-bold text-primary">
+                              €{(() => {
+                                if (typeof price === 'object' && price !== null) {
+                                  // Se è un oggetto con proprietà price, usa quella
+                                  if ('price' in price) {
+                                    return Number((price as any).price).toFixed(2);
+                                  }
+                                  // Altrimenti fallback a formato sicuro
+                                  return "N/A";
                                 }
-                                // Altrimenti fallback a formato sicuro
-                                return "N/A";
-                              }
-                              return Number(price).toFixed(2);
-                            })()}
-                          </span>
-                        </div>
-                      ))
+                                return Number(price).toFixed(2);
+                              })()}
+                            </span>
+                          </div>
+                        ))
+                      )
                     ) : (
                       // Fallback to legacy prices
                       <>

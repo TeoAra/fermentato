@@ -417,14 +417,50 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Bottle list operations
-  async getBottleList(pubId: number): Promise<BottleList[]> {
-    const results = await db
-      .select()
-      .from(bottleList)
-      .where(eq(bottleList.pubId, pubId))
-      .orderBy(asc(bottleList.id));
-
-    return results;
+  async getBottleList(pubId: number): Promise<any[]> {
+    try {
+      const result = await db.execute(sql`
+        SELECT 
+          bl.id, bl.pub_id, bl.beer_id, bl.is_active, bl.price_bottle, bl.bottle_size, bl.quantity,
+          bl.description, bl.added_at, bl.updated_at, bl.prices,
+          b.name as beer_name, b.style as beer_style, b.abv as beer_abv, b.image_url as beer_image_url,
+          br.id as brewery_id, br.name as brewery_name, br.logo_url as brewery_logo_url
+        FROM bottle_list bl
+        INNER JOIN beers b ON bl.beer_id = b.id  
+        LEFT JOIN breweries br ON b.brewery_id = br.id
+        WHERE bl.pub_id = ${pubId}
+        ORDER BY bl.id ASC
+      `);
+      
+      return result.rows.map((row: any) => ({
+        id: row.id,
+        pubId: row.pub_id,
+        beerId: row.beer_id,
+        isActive: row.is_active,
+        priceBottle: row.price_bottle,
+        bottleSize: row.bottle_size,
+        prices: row.prices,
+        quantity: row.quantity,
+        description: row.description,
+        addedAt: row.added_at,
+        updatedAt: row.updated_at,
+        beer: {
+          id: row.beer_id,
+          name: row.beer_name,
+          style: row.beer_style,
+          abv: row.beer_abv,
+          imageUrl: row.beer_image_url,
+          brewery: {
+            id: row.brewery_id,
+            name: row.brewery_name,
+            logoUrl: row.brewery_logo_url,
+          }
+        }
+      }));
+    } catch (error) {
+      console.error('Error in getBottleList:', error);
+      return [];
+    }
   }
 
   async addToBottleList(item: InsertBottleList): Promise<BottleList> {
