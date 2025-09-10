@@ -540,7 +540,7 @@ export class DatabaseStorage implements IStorage {
   async updateMenuCategory(id: number, updates: Partial<InsertMenuCategory>): Promise<MenuCategory> {
     const [category] = await db
       .update(menuCategories)
-      .set(updates)
+      .set({ ...updates, updatedAt: new Date() })
       .where(eq(menuCategories.id, id))
       .returning();
     return category;
