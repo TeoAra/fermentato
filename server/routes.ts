@@ -1062,13 +1062,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Nessuna immagine caricata" });
       }
 
-      const result = await cloudinary.uploader.upload(req.file.path, {
-        folder: 'profile-images',
-        public_id: `user-${req.user.claims.sub}-${Date.now()}`,
-        transformation: [{ width: 400, height: 400, crop: 'fill' }]
-      });
+      const imageUrl = await uploadImage(
+        req.file.buffer,
+        'profile-images',
+        `user-${req.user.claims.sub}-${Date.now()}`
+      );
 
-      res.json({ imageUrl: result.secure_url });
+      res.json({ imageUrl });
     } catch (error) {
       console.error("Error uploading profile image:", error);
       res.status(500).json({ message: "Errore upload immagine" });
