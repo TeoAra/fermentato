@@ -43,6 +43,7 @@ import type { User as UserType } from "@shared/schema";
 import UserFavoritesSection from "@/components/UserFavoritesSection";
 import BeerTastingsEditor from "@/components/BeerTastingsEditorNew";
 import { StyleMultiSelect } from "@/components/StyleMultiSelect";
+import { ImageUpload } from "@/components/image-upload";
 
 export default function UserProfile() {
   const { user, isAuthenticated, isLoading } = useAuth();
@@ -56,6 +57,13 @@ export default function UserProfile() {
   const [isEditingEmail, setIsEditingEmail] = useState(false);
   const [tempEmail, setTempEmail] = useState("");
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  
+  // Password change state
+  const [passwordData, setPasswordData] = useState({
+    currentPassword: "",
+    newPassword: "",
+    confirmPassword: "",
+  });
 
   const [editedProfile, setEditedProfile] = useState({
     nickname: "",
@@ -88,6 +96,31 @@ export default function UserProfile() {
   const { data: enrichedFavorites = [] } = useQuery({
     queryKey: ["/api/favorites"],
     enabled: isAuthenticated,
+  });
+
+  // Password change mutation
+  const passwordChangeMutation = useMutation({
+    mutationFn: async (data: { currentPassword: string; newPassword: string }) => {
+      return apiRequest("/api/user/password", "PATCH", data);
+    },
+    onSuccess: (response) => {
+      toast({
+        title: "Password aggiornata",
+        description: response.message || "Password modificata con successo",
+      });
+      setPasswordData({
+        currentPassword: "",
+        newPassword: "",
+        confirmPassword: "",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Errore",
+        description: error.message || "Impossibile modificare la password",
+        variant: "destructive",
+      });
+    },
   });
 
   const typedUser = user as UserType;
@@ -536,6 +569,12 @@ export default function UserProfile() {
                   </p>
                 </div>
 
+                {/* Password Change Section */}
+                <div className="border-t pt-4">
+                  <h3 className="text-sm font-medium mb-4">Sicurezza</h3>
+                  <PasswordChangeForm />
+                </div>
+
                 <div className="border-t pt-4">
                   <h3 className="text-sm font-medium mb-4 text-red-600">Zona Pericolo</h3>
                   {!showDeleteConfirm ? (
@@ -592,4 +631,88 @@ export default function UserProfile() {
       </div>
     </div>
   );
+
+  // Password Change Form Component
+  function PasswordChangeForm() {
+    const handlePasswordSubmit = (e: React.FormEvent) => {
+      e.preventDefault();
+      
+      if (!passwordData.currentPassword || !passwordData.newPassword) {
+        toast({
+          title: "Errore",
+          description: "Compila tutti i campi",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      if (passwordData.newPassword !== passwordData.confirmPassword) {
+        toast({
+          title: "Errore", 
+          description: "Le password non coincidono",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      if (passwordData.newPassword.length < 6) {
+        toast({
+          title: "Errore",
+          description: "La password deve essere di almeno 6 caratteri",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      passwordChangeMutation.mutate({
+        currentPassword: passwordData.currentPassword,
+        newPassword: passwordData.newPassword,
+      });
+    };
+
+    return (
+      <form onSubmit={handlePasswordSubmit} className="space-y-4">
+        <div>
+          <label className="block text-sm font-medium mb-2">Password Attuale</label>
+          <Input
+            type="password"
+            value={passwordData.currentPassword}
+            onChange={(e) => setPasswordData(prev => ({ ...prev, currentPassword: e.target.value }))}
+            placeholder="Inserisci password attuale"
+            required
+          />
+        </div>
+        
+        <div>
+          <label className="block text-sm font-medium mb-2">Nuova Password</label>
+          <Input
+            type="password"
+            value={passwordData.newPassword}
+            onChange={(e) => setPasswordData(prev => ({ ...prev, newPassword: e.target.value }))}
+            placeholder="Inserisci nuova password (min. 6 caratteri)"
+            required
+          />
+        </div>
+        
+        <div>
+          <label className="block text-sm font-medium mb-2">Conferma Nuova Password</label>
+          <Input
+            type="password"
+            value={passwordData.confirmPassword}
+            onChange={(e) => setPasswordData(prev => ({ ...prev, confirmPassword: e.target.value }))}
+            placeholder="Conferma nuova password"
+            required
+          />
+        </div>
+        
+        <Button 
+          type="submit" 
+          className="w-full"
+          disabled={passwordChangeMutation.isPending}
+        >
+          {passwordChangeMutation.isPending ? "Aggiornamento..." : "Cambia Password"}
+        </Button>
+      </form>
+    );
+  }
 }

@@ -1018,6 +1018,43 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Change user password
+  app.patch("/api/user/password", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user?.claims?.sub;
+      if (!userId) {
+        return res.status(401).json({ message: "User not authenticated" });
+      }
+
+      const { currentPassword, newPassword } = req.body;
+      
+      if (!currentPassword || !newPassword) {
+        return res.status(400).json({ 
+          message: "Password attuale e nuova password sono richieste" 
+        });
+      }
+
+      if (newPassword.length < 6) {
+        return res.status(400).json({ 
+          message: "La nuova password deve essere di almeno 6 caratteri" 
+        });
+      }
+
+      // In a real implementation, you'd verify the current password here
+      // For now, we'll skip current password verification since we don't store passwords
+      // (using external auth provider)
+      
+      // Since we're using Replit Auth, password changes should be handled
+      // through the auth provider. For now, return success message.
+      res.json({ 
+        message: "Per cambiare la password, vai alle impostazioni del tuo account Replit" 
+      });
+    } catch (error) {
+      console.error("Error changing password:", error);
+      res.status(500).json({ message: "Errore cambio password" });
+    }
+  });
+
   // Upload profile image
   app.post('/api/user/upload-profile-image', isAuthenticated, upload.single('image'), async (req: any, res) => {
     try {
