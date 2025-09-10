@@ -60,7 +60,7 @@ export default function AdminContentManager({ type }: AdminContentManagerProps) 
       let endpoint = '';
       if (type === 'beers') endpoint = '/api/admin/beers';
       else if (type === 'breweries') endpoint = '/api/admin/breweries';
-      else if (type === 'pubs') endpoint = '/api/pubs';
+      else if (type === 'pubs') endpoint = '/api/admin/pubs';
       return await apiRequest(endpoint, "POST", itemData);
     },
     onSuccess: () => {
@@ -86,8 +86,8 @@ export default function AdminContentManager({ type }: AdminContentManagerProps) 
   const updateMutation = useMutation({
     mutationFn: async ({ id, data }: { id: number; data: any }) => {
       let endpoint = '';
-      if (type === 'beers') endpoint = `/api/beers/${id}`;
-      else if (type === 'breweries') endpoint = `/api/breweries/${id}`;
+      if (type === 'beers') endpoint = `/api/admin/beers/${id}`;
+      else if (type === 'breweries') endpoint = `/api/admin/breweries/${id}`;
       else if (type === 'pubs') endpoint = `/api/pubs/${id}`;
       return await apiRequest(endpoint, "PATCH", data);
     },
