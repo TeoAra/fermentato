@@ -1236,7 +1236,21 @@ class StorageWrapper implements IStorage {
 
   async getFavorites(userId: string): Promise<Favorite[]> {
     return this.dbCall(
-      () => this.databaseStorage.getFavorites(userId),
+      () => this.databaseStorage.getUserFavorites(userId),
+      async () => { return []; }
+    );
+  }
+
+  async getUserFavorites(userId: string): Promise<Favorite[]> {
+    return this.dbCall(
+      () => this.databaseStorage.getUserFavorites(userId),
+      async () => { return []; }
+    );
+  }
+
+  async getMenuByPub(pubId: number): Promise<any> {
+    return this.dbCall(
+      () => this.databaseStorage.getMenuCategories(pubId),
       async () => { return []; }
     );
   }

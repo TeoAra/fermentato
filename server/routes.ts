@@ -268,8 +268,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Add beer count for each brewery
       const breweriesWithCount = await Promise.all(
         breweries.map(async (brewery: any) => {
-          const beerCount = await storage.getBeerCountByBrewery(brewery.id);
-          return { ...brewery, beerCount };
+          const beers = await storage.getBeersByBrewery(brewery.id);
+          return { ...brewery, beerCount: beers.length };
         })
       );
       
