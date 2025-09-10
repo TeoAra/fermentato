@@ -1331,7 +1331,7 @@ export default function SmartPubDashboard() {
                                   </div>
                                   <div>
                                     <Label>Categoria</Label>
-                                    <Select onValueChange={(value) => setEditData({ ...editData, categoryId: value })}>
+                                    <Select onValueChange={(value) => setEditData({ ...editData, categoryId: parseInt(value) })}>
                                       <SelectTrigger>
                                         <SelectValue placeholder="Seleziona categoria" />
                                       </SelectTrigger>
@@ -1385,7 +1385,22 @@ export default function SmartPubDashboard() {
                                   onAllergensChange={(allergens) => setEditData({ ...editData, allergens })}
                                 />
                                 <div className="flex space-x-2">
-                                  <Button size="sm" onClick={() => updateMenuItemMutation.mutate({ id: -2, data: editData })}>
+                                  <Button size="sm" onClick={() => {
+                                    // Prepara i dati per l'API mappando basePrice a price
+                                    const productData = {
+                                      name: editData.name,
+                                      description: editData.description || null,
+                                      categoryId: editData.categoryId,
+                                      price: editData.basePrice,
+                                      allergens: editData.allergens || [],
+                                      isVisible: true,
+                                      isAvailable: true,
+                                      orderIndex: 0
+                                    };
+                                    
+                                    console.log('Creating product with data:', productData);
+                                    updateMenuItemMutation.mutate({ id: -2, data: productData });
+                                  }}>
                                     <Save className="w-4 h-4 mr-1" />
                                     Crea Prodotto
                                   </Button>
