@@ -244,8 +244,8 @@ export default function SmartPubDashboard() {
       }
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [`/api/pubs/${currentPub?.id}/menu`] });
-      queryClient.refetchQueries({ queryKey: [`/api/pubs/${currentPub?.id}/menu`] });
+      queryClient.invalidateQueries({ queryKey: ["/api/pubs", currentPub?.id, "menu"] });
+      queryClient.refetchQueries({ queryKey: ["/api/pubs", currentPub?.id, "menu"] });
       setEditingItem(null);
       setEditData({});
       toast({ title: "Menu aggiornato", description: "Le modifiche sono state salvate" });
@@ -375,8 +375,8 @@ export default function SmartPubDashboard() {
       return apiRequest(`/api/menu-categories/${categoryId}`, 'DELETE');
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [`/api/pubs/${currentPub?.id}/menu`] });
-      queryClient.refetchQueries({ queryKey: [`/api/pubs/${currentPub?.id}/menu`] });
+      queryClient.invalidateQueries({ queryKey: ["/api/pubs", currentPub?.id, "menu"] });
+      queryClient.refetchQueries({ queryKey: ["/api/pubs", currentPub?.id, "menu"] });
       toast({ title: "Categoria eliminata", description: "Categoria rimossa dal menu" });
     },
     onError: () => {
