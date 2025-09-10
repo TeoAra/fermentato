@@ -31,10 +31,10 @@ export async function uploadImage(
   publicId?: string
 ): Promise<string> {
   return new Promise((resolve, reject) => {
-    const uploadOptions = {
+    const uploadOptions: any = {
       folder: `fermenta-to/${folder}`,
-      resource_type: 'image',
-      format: 'webp', // Convert to WebP for better performance
+      resource_type: 'auto',
+      format: 'webp',
       quality: 'auto:good',
     };
 
@@ -47,6 +47,7 @@ export async function uploadImage(
       uploadOptions,
       (error, result) => {
         if (error) {
+          console.error('Cloudinary upload error:', error);
           reject(error);
         } else {
           resolve(result!.secure_url);

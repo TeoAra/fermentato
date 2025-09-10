@@ -1062,6 +1062,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Nessuna immagine caricata" });
       }
 
+      console.log('File received:', {
+        fieldname: req.file.fieldname,
+        originalname: req.file.originalname,
+        mimetype: req.file.mimetype,
+        size: req.file.size,
+        bufferLength: req.file.buffer?.length
+      });
+
       const imageUrl = await uploadImage(
         req.file.buffer,
         'profile-images',
