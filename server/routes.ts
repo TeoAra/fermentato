@@ -2,6 +2,7 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { setupAuth, isAuthenticated } from "./replitAuth";
+import { setupJWTAuth, authenticateJWT, memoryStorage } from "./jwtAuth";
 import { registerAdminRoutes } from "./routes-admin";
 import { sql, eq } from "drizzle-orm";
 import { upload, uploadImage, cloudinary } from "./cloudinary";
@@ -12,21 +13,46 @@ import { insertPubSchema, insertTapListSchema, insertBottleListSchema, insertMen
 import { z } from "zod";
 
 export async function registerRoutes(app: Express): Promise<Server> {
-  // Auth middleware
-  await setupAuth(app);
+  // Setup alternative JWT auth (for when database is disabled)
+  setupJWTAuth(app);
+  
+  // Try to setup traditional auth, but continue if it fails
+  try {
+    await setupAuth(app);
+  } catch (error) {
+    console.warn("Database authentication unavailable, using JWT fallback:", error.message);
+  }
 
   // Register admin routes
   registerAdminRoutes(app);
 
-  // Auth routes
-  app.get('/api/auth/user', isAuthenticated, async (req: any, res) => {
+  // Auth routes - with fallback system
+  app.get('/api/auth/user', async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
-      const user = await storage.getUser(userId);
-      res.json(user);
+      // First try JWT authentication
+      const authHeader = req.headers.authorization;
+      if (authHeader && authHeader.startsWith('Bearer ')) {
+        const token = authHeader.split(' ')[1];
+        const decoded = require('./jwtAuth').verifyToken(token);
+        if (decoded) {
+          const user = await memoryStorage.getUser(decoded.userId);
+          if (user) {
+            return res.json(user);
+          }
+        }
+      }
+      
+      // Fallback to traditional auth if available
+      if (req.isAuthenticated && req.isAuthenticated()) {
+        const userId = req.user.claims.sub;
+        const user = await storage.getUser(userId);
+        return res.json(user);
+      }
+      
+      res.status(401).json({ message: "Unauthorized" });
     } catch (error) {
       console.error("Error fetching user:", error);
-      res.status(500).json({ message: "Failed to fetch user" });
+      res.status(401).json({ message: "Unauthorized" });
     }
   });
 
