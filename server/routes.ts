@@ -35,7 +35,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const token = authHeader.split(' ')[1];
         const decoded = require('./jwtAuth').verifyToken(token);
         if (decoded) {
-          const user = await memoryStorage.getUser(decoded.userId);
+          const user = await storage.getUser(decoded.userId);
           if (user) {
             return res.json(user);
           }
