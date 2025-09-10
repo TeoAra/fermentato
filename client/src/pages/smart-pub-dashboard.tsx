@@ -53,8 +53,8 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { formatDistanceToNow } from "date-fns";
 import { it } from "date-fns/locale";
+import { useMemo } from "react";
 import FlexiblePriceManager from "@/components/flexible-price-manager";
-
 import MenuCategoryManager from "@/components/menu-category-manager";
 
 type DashboardSection = 'overview' | 'taplist' | 'menu' | 'analytics' | 'settings' | 'profile';
@@ -104,6 +104,35 @@ export default function SmartPubDashboard() {
     queryKey: ["/api/pubs", currentPub?.id, "menu"],
     enabled: !!currentPub?.id,
   });
+
+  // Fetch all products for all categories in a single query
+  const { data: allCategoryProducts, isLoading: productsLoading } = useQuery({
+    queryKey: ["/api/pubs", currentPub?.id, "menu", "all-products"],
+    queryFn: async () => {
+      if (!currentPub?.id || !Array.isArray(menuData) || menuData.length === 0) return {};
+      
+      const productMap: Record<number, any[]> = {};
+      
+      // Fetch products for each category sequentially
+      for (const category of menuData) {
+        try {
+          const products = await apiRequest(`/api/pubs/${currentPub.id}/menu/categories/${category.id}/items`, 'GET');
+          productMap[category.id] = Array.isArray(products) ? products : [];
+        } catch (error) {
+          console.warn(`Failed to fetch products for category ${category.id}:`, error);
+          productMap[category.id] = [];
+        }
+      }
+      
+      return productMap;
+    },
+    enabled: !!currentPub?.id && Array.isArray(menuData) && menuData.length > 0,
+  });
+
+  // Create a safe reference to category products map
+  const categoryProductsMap = useMemo(() => {
+    return allCategoryProducts || {};
+  }, [allCategoryProducts]);
 
   // Fetch all beers for search
   const { data: allBeers = [], isLoading: beersLoading } = useQuery({
@@ -244,8 +273,11 @@ export default function SmartPubDashboard() {
       }
     },
     onSuccess: () => {
+      // Invalidate all menu-related queries including category products
       queryClient.invalidateQueries({ queryKey: ["/api/pubs", currentPub?.id, "menu"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/pubs", currentPub?.id, "menu", "all-products"] });
       queryClient.refetchQueries({ queryKey: ["/api/pubs", currentPub?.id, "menu"] });
+      queryClient.refetchQueries({ queryKey: ["/api/pubs", currentPub?.id, "menu", "all-products"] });
       setEditingItem(null);
       setEditData({});
       toast({ title: "Menu aggiornato", description: "Le modifiche sono state salvate" });
@@ -1246,10 +1278,45 @@ export default function SmartPubDashboard() {
                                       <Badge variant={category.isVisible ? "default" : "secondary"}>
                                         {category.isVisible ? "Visibile" : "Nascosta"}
                                       </Badge>
+                                      <Badge variant="outline">
+                                        {categoryProductsMap[category.id]?.length || 0} prodotti
+                                      </Badge>
                                       <span className="text-xs text-gray-500 dark:text-gray-400">
                                         Creata: {new Date(category.createdAt).toLocaleDateString('it-IT')}
                                       </span>
                                     </div>
+                                    
+                                    {/* Show products for this category */}
+                                    {categoryProductsMap[category.id]?.length > 0 && (
+                                      <div className="mt-3 space-y-2">
+                                        <h5 className="text-sm font-medium text-gray-700 dark:text-gray-300">Prodotti:</h5>
+                                        <div className="grid gap-2">
+                                          {(categoryProductsMap[category.id] || []).map((product: any) => (
+                                            <div key={product.id} className="flex items-center justify-between p-2 bg-gray-50 dark:bg-gray-800 rounded-md">
+                                              <div className="flex-1">
+                                                <div className="flex items-center gap-2">
+                                                  <h6 className="text-sm font-medium text-gray-900 dark:text-white">{product.name}</h6>
+                                                  {product.allergens && product.allergens.length > 0 && (
+                                                    <AllergenDisplay allergens={product.allergens} />
+                                                  )}
+                                                </div>
+                                                {product.description && (
+                                                  <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">{product.description}</p>
+                                                )}
+                                              </div>
+                                              <div className="flex items-center gap-2">
+                                                <Badge variant="outline" className="text-xs">
+                                                  €{product.price || '0.00'}
+                                                </Badge>
+                                                <Badge variant={product.isVisible ? "default" : "secondary"} className="text-xs">
+                                                  {product.isVisible ? "Visibile" : "Nascosto"}
+                                                </Badge>
+                                              </div>
+                                            </div>
+                                          ))}
+                                        </div>
+                                      </div>
+                                    )}
                                   </>
                                 )}
                               </div>
@@ -1412,11 +1479,74 @@ export default function SmartPubDashboard() {
                             </div>
                           )}
                           
-                          <div className="text-center py-8 text-gray-500">
-                            <Package className="mx-auto mb-4" size={48} />
-                            <p>Nessun prodotto aggiunto</p>
-                            <p className="text-sm">I prodotti del menu verranno visualizzati qui</p>
-                          </div>
+                          {/* Show all products grouped by category */}
+                          {typedMenuData.length > 0 ? (
+                            <div className="space-y-6">
+                              {typedMenuData.map((category: any) => {
+                                const products = categoryProductsMap[category.id] || [];
+                                return (
+                                  <div key={category.id} className="space-y-3">
+                                    <div className="flex items-center justify-between">
+                                      <h4 className="font-semibold text-gray-900 dark:text-white">{category.name}</h4>
+                                      <Badge variant="outline">{products.length} prodotti</Badge>
+                                    </div>
+                                    
+                                    {products.length > 0 ? (
+                                      <div className="grid gap-3">
+                                        {products.map((product: any) => (
+                                          <Card key={product.id} className="p-4">
+                                            <div className="flex items-start justify-between">
+                                              <div className="flex-1">
+                                                <div className="flex items-center gap-3 mb-2">
+                                                  <h5 className="font-medium text-gray-900 dark:text-white">{product.name}</h5>
+                                                  {product.allergens && product.allergens.length > 0 && (
+                                                    <AllergenDisplay allergens={product.allergens} />
+                                                  )}
+                                                </div>
+                                                {product.description && (
+                                                  <p className="text-sm text-gray-600 dark:text-gray-300 mb-2">{product.description}</p>
+                                                )}
+                                                <div className="flex items-center gap-2">
+                                                  <Badge variant="outline">
+                                                    €{product.price || '0.00'}
+                                                  </Badge>
+                                                  <Badge variant={product.isVisible ? "default" : "secondary"}>
+                                                    {product.isVisible ? "Visibile" : "Nascosto"}
+                                                  </Badge>
+                                                  <Badge variant={product.isAvailable ? "default" : "destructive"}>
+                                                    {product.isAvailable ? "Disponibile" : "Non disponibile"}
+                                                  </Badge>
+                                                </div>
+                                              </div>
+                                              <div className="flex gap-2">
+                                                <Button size="sm" variant="outline" title="Modifica prodotto">
+                                                  <Edit3 className="w-4 h-4" />
+                                                </Button>
+                                                <Button size="sm" variant="destructive" title="Elimina prodotto">
+                                                  <Trash2 className="w-4 h-4" />
+                                                </Button>
+                                              </div>
+                                            </div>
+                                          </Card>
+                                        ))}
+                                      </div>
+                                    ) : (
+                                      <div className="text-center py-6 text-gray-500 border-2 border-dashed border-gray-200 rounded-lg">
+                                        <Package className="mx-auto mb-2" size={32} />
+                                        <p className="text-sm">Nessun prodotto in questa categoria</p>
+                                      </div>
+                                    )}
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          ) : (
+                            <div className="text-center py-8 text-gray-500">
+                              <Package className="mx-auto mb-4" size={48} />
+                              <p>Nessuna categoria creata</p>
+                              <p className="text-sm">Crea prima delle categorie per organizzare i tuoi prodotti</p>
+                            </div>
+                          )}
                         </div>
                       </CardContent>
                     </Card>

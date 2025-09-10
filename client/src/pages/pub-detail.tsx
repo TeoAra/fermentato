@@ -1,13 +1,15 @@
 import { useParams, Link } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
-import { Star, MapPin, Clock, Phone, Globe, Wine, Facebook, Instagram } from "lucide-react";
+import { Star, MapPin, Clock, Phone, Globe, Wine, Facebook, Instagram, Settings, Edit } from "lucide-react";
 import Footer from "@/components/footer";
 import TapList from "@/components/tap-list";
 import LuppolinoMenu from "@/components/luppolino-menu";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { useAuth } from "@/hooks/useAuth";
 
 // Funzione per controllare se un pub è aperto ora
 function isOpenNow(openingHours: any) {
@@ -40,11 +42,15 @@ function isOpenNow(openingHours: any) {
 
 export default function PubDetail() {
   const { id } = useParams();
+  const { user, isAuthenticated } = useAuth();
   
   const { data: pub, isLoading: pubLoading } = useQuery({
     queryKey: ["/api/pubs", id],
     enabled: !!id,
   });
+
+  // Check if the current user is the owner of this pub (after pub data is loaded)
+  const isOwner = isAuthenticated && user && pub && (user as any).id === (pub as any).ownerId;
 
   const { data: tapList, isLoading: tapLoading } = useQuery({
     queryKey: ["/api/pubs", id, "taplist"],
@@ -102,19 +108,37 @@ export default function PubDetail() {
             />
             <div className="absolute inset-0 bg-black bg-opacity-40"></div>
             <div className="absolute bottom-2 sm:bottom-4 left-2 sm:left-4 text-white pr-4">
-              <div className="flex flex-col sm:flex-row sm:items-center sm:space-x-3 mb-3">
-                <div className="flex items-center space-x-3">
-                  {pub.logoUrl && (
-                    <img
-                      src={pub.logoUrl}
-                      alt={`${pub.name} - Logo`}
-                      className="w-12 h-12 sm:w-16 sm:h-16 rounded-full object-cover border-2 border-white shadow-lg"
-                    />
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-3">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:space-x-3">
+                  <div className="flex items-center space-x-3">
+                    {pub.logoUrl && (
+                      <img
+                        src={pub.logoUrl}
+                        alt={`${pub.name} - Logo`}
+                        className="w-12 h-12 sm:w-16 sm:h-16 rounded-full object-cover border-2 border-white shadow-lg"
+                      />
+                    )}
+                    <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold break-words">{pub.name}</h1>
+                  </div>
+                  {!pub.isActive && (
+                    <Badge variant="destructive" className="mt-2 sm:mt-0 w-fit">Temporaneamente Chiuso</Badge>
                   )}
-                  <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold break-words">{pub.name}</h1>
                 </div>
-                {!pub.isActive && (
-                  <Badge variant="destructive" className="mt-2 sm:mt-0 w-fit">Temporaneamente Chiuso</Badge>
+                
+                {/* Owner Controls */}
+                {isOwner && (
+                  <div className="mt-3 sm:mt-0">
+                    <Link href="/smart-pub-dashboard">
+                      <Button 
+                        className="bg-primary hover:bg-primary/90 text-white shadow-lg"
+                        data-testid="button-modify-pub"
+                      >
+                        <Settings className="w-4 h-4 mr-2" />
+                        <span className="hidden sm:inline">Gestisci Pub</span>
+                        <span className="sm:hidden">Gestisci</span>
+                      </Button>
+                    </Link>
+                  </div>
                 )}
               </div>
               

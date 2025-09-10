@@ -759,6 +759,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get menu items for a category (public)
+  app.get("/api/pubs/:pubId/menu/categories/:categoryId/items", async (req, res) => {
+    try {
+      const categoryId = parseInt(req.params.categoryId);
+      const items = await storage.getMenuItems(categoryId);
+      res.json(items);
+    } catch (error) {
+      console.error("Error fetching menu items:", error);
+      res.status(500).json({ message: "Failed to fetch menu items" });
+    }
+  });
+
   // Create menu item (only pub owner)
   app.post("/api/menu-items", isAuthenticated, async (req: any, res) => {
     try {
