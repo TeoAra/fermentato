@@ -8,6 +8,7 @@ import {
   pubSizes,
   menuCategories,
   menuItems,
+  allergens,
   favorites,
   userActivities,
   userBeerTastings,
@@ -27,6 +28,8 @@ import {
   type InsertMenuCategory,
   type MenuItem,
   type InsertMenuItem,
+  type Allergen,
+  type InsertAllergen,
   type Favorite,
   type InsertFavorite,
   type UserActivity,
@@ -91,6 +94,9 @@ export interface IStorage {
   createMenuItem(item: InsertMenuItem): Promise<MenuItem>;
   updateMenuItem(id: number, updates: Partial<InsertMenuItem>): Promise<MenuItem>;
   deleteMenuItem(id: number): Promise<void>;
+
+  // Allergen operations
+  getAllergens(): Promise<Allergen[]>;
 
   // Pub sizes operations
   getPubSizes(pubId: number): Promise<PubSize[]>;
@@ -574,6 +580,14 @@ export class DatabaseStorage implements IStorage {
 
   async deleteMenuItem(id: number): Promise<void> {
     await db.delete(menuItems).where(eq(menuItems.id, id));
+  }
+
+  // Allergen operations
+  async getAllergens(): Promise<Allergen[]> {
+    return await db
+      .select()
+      .from(allergens)
+      .orderBy(asc(allergens.orderIndex));
   }
 
   // Pub sizes operations
@@ -1311,6 +1325,14 @@ class StorageWrapper implements IStorage {
     return this.dbCall(
       () => this.databaseStorage.deleteMenuItem(id),
       async () => { }
+    );
+  }
+
+  // Allergen operations
+  async getAllergens(): Promise<Allergen[]> {
+    return this.dbCall(
+      () => this.databaseStorage.getAllergens(),
+      async () => { return []; }
     );
   }
 

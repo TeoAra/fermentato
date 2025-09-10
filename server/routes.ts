@@ -1498,6 +1498,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const categoryId = parseInt(req.params.categoryId);
+      console.log("UPDATE CATEGORY - Received req.body:", JSON.stringify(req.body, null, 2));
+      console.log("UPDATE CATEGORY - req.body keys:", Object.keys(req.body));
+      console.log("UPDATE CATEGORY - req.body values:", Object.values(req.body));
       const category = await storage.updateMenuCategory(categoryId, req.body);
       res.json(category);
     } catch (error) {
@@ -1832,6 +1835,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error creating brewery:", error);
       res.status(500).json({ message: "Failed to create brewery" });
+    }
+  });
+
+  // Get all allergens
+  app.get("/api/allergens", async (req, res) => {
+    try {
+      const allergens = await storage.getAllergens();
+      res.json(allergens);
+    } catch (error) {
+      console.error("Error fetching allergens:", error);
+      res.status(500).json({ message: "Failed to fetch allergens" });
     }
   });
 

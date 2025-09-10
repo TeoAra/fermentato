@@ -1144,7 +1144,7 @@ export default function SmartPubDashboard() {
                       <div className="flex flex-col sm:flex-row gap-2">
                         <Button 
                           variant="outline" 
-                          onClick={() => setEditingItem(-2)}
+                          onClick={() => { setEditingItem(-2); setEditData({ allergens: [] }); }}
                           className="w-full sm:w-auto"
                         >
                           <Plus className="w-4 h-4 mr-2" />
@@ -1268,7 +1268,11 @@ export default function SmartPubDashboard() {
                                   variant="outline" 
                                   onClick={() => { 
                                     setEditingItem(category.id); 
-                                    setEditData(category); 
+                                    setEditData({ 
+                                      name: category.name, 
+                                      description: category.description,
+                                      isVisible: category.isVisible 
+                                    }); 
                                   }}
                                   className="flex-1 sm:flex-none"
                                   title="Modifica categoria"
@@ -1376,20 +1380,16 @@ export default function SmartPubDashboard() {
                                     />
                                   </div>
                                 </div>
-                                <div>
-                                  <Label>Allergeni</Label>
-                                  <Input 
-                                    placeholder="Es. Glutine, Lattosio, Uova (separati da virgola)"
-                                    value={editData.allergens || ''}
-                                    onChange={(e) => setEditData({ ...editData, allergens: e.target.value })}
-                                  />
-                                </div>
+                                <AllergenSelector 
+                                  selectedAllergens={editData.allergens || []}
+                                  onAllergensChange={(allergens) => setEditData({ ...editData, allergens })}
+                                />
                                 <div className="flex space-x-2">
                                   <Button size="sm" onClick={() => updateMenuItemMutation.mutate({ id: -2, data: editData })}>
                                     <Save className="w-4 h-4 mr-1" />
                                     Crea Prodotto
                                   </Button>
-                                  <Button size="sm" variant="outline" onClick={() => { setEditingItem(null); setEditData({}); }}>
+                                  <Button size="sm" variant="outline" onClick={() => { setEditingItem(null); setEditData({ allergens: [] }); }}>
                                     Annulla
                                   </Button>
                                 </div>

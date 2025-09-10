@@ -169,6 +169,14 @@ export const menuCategories = pgTable("menu_categories", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+// Allergens reference table - 14 official allergens with emoji icons
+export const allergens = pgTable("allergens", {
+  id: serial("id").primaryKey(),
+  name: varchar("name").notNull().unique(),
+  emoji: varchar("emoji").notNull(),
+  orderIndex: integer("order_index").default(0),
+});
+
 // Food menu items
 export const menuItems = pgTable("menu_items", {
   id: serial("id").primaryKey(),
@@ -176,7 +184,7 @@ export const menuItems = pgTable("menu_items", {
   name: varchar("name").notNull(),
   description: text("description"),
   price: decimal("price", { precision: 5, scale: 2 }).notNull(),
-  allergens: jsonb("allergens"), // Array of allergens
+  allergens: jsonb("allergens").$type<string[]>(), // Array of allergen IDs
   isVisible: boolean("is_visible").default(true),
   isAvailable: boolean("is_available").default(true),
   imageUrl: varchar("image_url"),
@@ -346,6 +354,9 @@ export type BottleList = typeof bottleList.$inferSelect;
 export type InsertMenuCategory = typeof menuCategories.$inferInsert;
 export type MenuCategory = typeof menuCategories.$inferSelect;
 
+export type InsertAllergen = typeof allergens.$inferInsert;
+export type Allergen = typeof allergens.$inferSelect;
+
 export type InsertMenuItem = typeof menuItems.$inferInsert;
 export type MenuItem = typeof menuItems.$inferSelect;
 
@@ -396,6 +407,10 @@ export const insertBottleListSchema = createInsertSchema(bottleList).omit({
 export const insertMenuCategorySchema = createInsertSchema(menuCategories).omit({
   id: true,
   createdAt: true,
+});
+
+export const insertAllergenSchema = createInsertSchema(allergens).omit({
+  id: true,
 });
 
 export const insertMenuItemSchema = createInsertSchema(menuItems).omit({
