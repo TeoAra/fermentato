@@ -1,6 +1,6 @@
-import { Search, User, Bell, MapPin, Home } from "lucide-react";
+import { Search, User, Bell, MapPin, Home, Sparkles } from "lucide-react";
 import { Link, useLocation } from "wouter";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import SearchDialog from "./search-dialog";
 
@@ -8,6 +8,28 @@ export function BottomNavigation() {
   const [location] = useLocation();
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const { isAuthenticated } = useAuth();
+  const [isVisible, setIsVisible] = useState(true);
+  const [lastScrollY, setLastScrollY] = useState(0);
+
+  // Smart hide/show on scroll for better UX
+  useEffect(() => {
+    const handleScroll = () => {
+      const currentScrollY = window.scrollY;
+      const isScrollingDown = currentScrollY > lastScrollY;
+      const isScrolledEnough = currentScrollY > 100;
+      
+      if (isScrollingDown && isScrolledEnough) {
+        setIsVisible(false);
+      } else {
+        setIsVisible(true);
+      }
+      
+      setLastScrollY(currentScrollY);
+    };
+
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, [lastScrollY]);
 
   const navItems = [
     {
@@ -21,14 +43,6 @@ export function BottomNavigation() {
       label: "Attività",
       href: "/activity",
       isActive: location.startsWith("/activity")
-    },
-    {
-      icon: Search,
-      label: "Cerca",
-      href: "#",
-      isActive: false,
-      onClick: () => setIsSearchOpen(true),
-      isMainAction: true
     },
     {
       icon: Bell,
@@ -47,91 +61,178 @@ export function BottomNavigation() {
 
   return (
     <>
-      <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-50 bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-800 safe-area-pb">
-        <div className="relative flex items-center py-2">
-          {/* Home - Estremo sinistro senza spazi */}
-          <Link href="/">
-            <div className={`flex flex-col items-center justify-center py-2 px-3 transition-colors ${
-              location === "/"
-                ? "text-orange-600 dark:text-orange-400"
-                : "text-gray-600 dark:text-gray-400 hover:text-orange-600 dark:hover:text-orange-400"
-            }`}>
-              <Home className="h-5 w-5 mb-1" />
-              <span className="text-xs font-medium">Home</span>
+      {/* Mobile Bottom Navigation */}
+      <nav className={`lg:hidden fixed bottom-0 left-0 right-0 z-50 transition-all duration-300 ease-in-out transform ${
+        isVisible ? 'translate-y-0' : 'translate-y-full'
+      }`}>
+        {/* Glassmorphism background */}
+        <div className="bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl border-t border-white/20 dark:border-gray-800/50 shadow-2xl">
+          {/* Gradient overlay for depth */}
+          <div className="absolute inset-0 bg-gradient-to-t from-white/10 to-transparent dark:from-gray-800/10 pointer-events-none" />
+          
+          <div className="relative flex items-center justify-between px-4 py-3 safe-area-pb">
+            {/* Navigation Items */}
+            {navItems.map((item, index) => {
+              const Icon = item.icon;
+              const isActive = item.isActive;
+              
+              return (
+                <div key={item.label} className="flex-1 flex justify-center">
+                  {item.href.startsWith('/api/') ? (
+                    <a
+                      href={item.href}
+                      data-testid={`nav-${item.label.toLowerCase().replace(' ', '-')}`}
+                      className={`group flex flex-col items-center justify-center py-2 px-3 rounded-2xl transition-all duration-300 transform active:scale-95 ${
+                        isActive
+                          ? "text-orange-600 dark:text-orange-400 bg-orange-50 dark:bg-orange-900/20"
+                          : "text-gray-600 dark:text-gray-400 hover:text-orange-600 dark:hover:text-orange-400 hover:bg-gray-50 dark:hover:bg-gray-800/50"
+                      }`}
+                    >
+                      <div className="relative">
+                        <Icon className={`h-5 w-5 transition-all duration-300 ${
+                          isActive ? 'scale-110' : 'group-hover:scale-105'
+                        }`} />
+                        {item.badge > 0 && (
+                          <div className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center min-w-[20px] shadow-lg animate-pulse">
+                            {item.badge > 99 ? '99+' : item.badge}
+                          </div>
+                        )}
+                      </div>
+                      <span className={`text-xs font-medium mt-1 transition-all duration-300 ${
+                        isActive ? 'text-orange-600 dark:text-orange-400' : ''
+                      }`}>
+                        {item.label}
+                      </span>
+                      {isActive && (
+                        <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 w-1 h-1 bg-orange-500 rounded-full" />
+                      )}
+                    </a>
+                  ) : (
+                    <Link href={item.href}>
+                      <div
+                        data-testid={`nav-${item.label.toLowerCase().replace(' ', '-')}`}
+                        className={`group flex flex-col items-center justify-center py-2 px-3 rounded-2xl transition-all duration-300 transform active:scale-95 ${
+                          isActive
+                            ? "text-orange-600 dark:text-orange-400 bg-orange-50 dark:bg-orange-900/20"
+                            : "text-gray-600 dark:text-gray-400 hover:text-orange-600 dark:hover:text-orange-400 hover:bg-gray-50 dark:hover:bg-gray-800/50"
+                        }`}
+                      >
+                        <div className="relative">
+                          <Icon className={`h-5 w-5 transition-all duration-300 ${
+                            isActive ? 'scale-110' : 'group-hover:scale-105'
+                          }`} />
+                          {item.badge > 0 && (
+                            <div className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center min-w-[20px] shadow-lg animate-pulse">
+                              {item.badge > 99 ? '99+' : item.badge}
+                            </div>
+                          )}
+                        </div>
+                        <span className={`text-xs font-medium mt-1 transition-all duration-300 ${
+                          isActive ? 'text-orange-600 dark:text-orange-400' : ''
+                        }`}>
+                          {item.label}
+                        </span>
+                        {isActive && (
+                          <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 w-1 h-1 bg-orange-500 rounded-full" />
+                        )}
+                      </div>
+                    </Link>
+                  )}
+                </div>
+              );
+            })}
+            
+            {/* Central Search Button - Floating FAB */}
+            <div className="absolute left-1/2 top-0 transform -translate-x-1/2 -translate-y-1/2">
+              <button
+                onClick={() => setIsSearchOpen(true)}
+                data-testid="button-search"
+                className="group bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 dark:from-orange-400 dark:to-orange-500 text-white rounded-full p-4 shadow-2xl transition-all duration-300 transform active:scale-95 hover:scale-110 hover:shadow-orange-500/25 hover:shadow-2xl"
+              >
+                <div className="relative">
+                  <Search className="h-6 w-6 transition-transform duration-300 group-hover:rotate-12" />
+                  <Sparkles className="absolute -top-1 -right-1 h-3 w-3 text-white/70 animate-pulse" />
+                </div>
+                <span className="sr-only">Cerca pub, birrifici e birre</span>
+                
+                {/* Ripple effect */}
+                <div className="absolute inset-0 rounded-full bg-white/20 animate-ping opacity-0 group-active:animate-none group-active:opacity-100" />
+              </button>
             </div>
-          </Link>
-
-          {/* Attività - Vicina a Home */}
-          <Link href="/activity">
-            <div className={`flex flex-col items-center justify-center py-2 px-2 ml-4 transition-colors ${
-              location.startsWith("/activity")
-                ? "text-orange-600 dark:text-orange-400"
-                : "text-gray-600 dark:text-gray-400 hover:text-orange-600 dark:hover:text-orange-400"
-            }`}>
-              <MapPin className="h-5 w-5 mb-1" />
-              <span className="text-xs font-medium">Attività</span>
-            </div>
-          </Link>
-
-          {/* Spazio flex per centrare il pulsante */}
-          <div className="flex-1"></div>
-
-          {/* Cerca - Centro assoluto con più spazio */}
-          <button
-            onClick={() => setIsSearchOpen(true)}
-            className="bg-orange-600 hover:bg-orange-700 dark:bg-orange-500 dark:hover:bg-orange-600 text-white rounded-full p-5 mx-4 shadow-lg transition-all duration-200 transform active:scale-95"
-          >
-            <Search className="h-7 w-7" />
-            <span className="sr-only">Cerca</span>
-          </button>
-
-          {/* Spazio flex per bilanciare */}
-          <div className="flex-1"></div>
-
-          {/* Notifiche - Vicina a Dashboard */}
-          <Link href="/notifications">
-            <div className={`flex flex-col items-center justify-center py-2 px-2 mr-4 transition-colors ${
-              location.startsWith("/notification")
-                ? "text-orange-600 dark:text-orange-400"
-                : "text-gray-600 dark:text-gray-400 hover:text-orange-600 dark:hover:text-orange-400"
-            }`}>
-              <div className="relative">
-                <Bell className="h-5 w-5 mb-1" />
-                {isAuthenticated && (
-                  <div className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-4 w-4 flex items-center justify-center min-w-[16px]">
-                    3
-                  </div>
-                )}
-              </div>
-              <span className="text-xs font-medium">Notifiche</span>
-            </div>
-          </Link>
-
-          {/* Dashboard - Estremo destro senza spazi */}
-          {isAuthenticated ? (
-            <Link href="/dashboard">
-              <div className={`flex flex-col items-center justify-center py-2 px-3 transition-colors ${
-                location.startsWith("/dashboard")
-                  ? "text-orange-600 dark:text-orange-400"
-                  : "text-gray-600 dark:text-gray-400 hover:text-orange-600 dark:hover:text-orange-400"
-              }`}>
-                <User className="h-5 w-5 mb-1" />
-                <span className="text-xs font-medium">Dashboard</span>
-              </div>
-            </Link>
-          ) : (
-            <a
-              href="/api/login"
-              className="flex flex-col items-center justify-center py-2 px-3 text-gray-600 dark:text-gray-400 hover:text-orange-600 dark:hover:text-orange-400 transition-colors"
-            >
-              <User className="h-5 w-5 mb-1" />
-              <span className="text-xs font-medium">Accedi</span>
-            </a>
-          )}
+          </div>
         </div>
       </nav>
 
-      {/* Search Dialog */}
+      {/* Desktop/Tablet Navigation - Floating Sidebar or Top Bar */}
+      <nav className="hidden lg:flex fixed top-4 left-1/2 transform -translate-x-1/2 z-50">
+        <div className="bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl rounded-2xl border border-white/20 dark:border-gray-800/50 shadow-2xl px-6 py-3">
+          <div className="flex items-center space-x-8">
+            {navItems.map((item) => {
+              const Icon = item.icon;
+              const isActive = item.isActive;
+              
+              return (
+                <div key={item.label}>
+                  {item.href.startsWith('/api/') ? (
+                    <a
+                      href={item.href}
+                      data-testid={`nav-desktop-${item.label.toLowerCase().replace(' ', '-')}`}
+                      className={`group flex items-center space-x-2 py-2 px-4 rounded-xl transition-all duration-300 transform hover:scale-105 ${
+                        isActive
+                          ? "text-orange-600 dark:text-orange-400 bg-orange-50 dark:bg-orange-900/20"
+                          : "text-gray-600 dark:text-gray-400 hover:text-orange-600 dark:hover:text-orange-400 hover:bg-gray-50 dark:hover:bg-gray-800/50"
+                      }`}
+                    >
+                      <div className="relative">
+                        <Icon className="h-5 w-5" />
+                        {item.badge > 0 && (
+                          <div className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center min-w-[20px] shadow-lg">
+                            {item.badge > 99 ? '99+' : item.badge}
+                          </div>
+                        )}
+                      </div>
+                      <span className="text-sm font-medium">{item.label}</span>
+                    </a>
+                  ) : (
+                    <Link href={item.href}>
+                      <div
+                        data-testid={`nav-desktop-${item.label.toLowerCase().replace(' ', '-')}`}
+                        className={`group flex items-center space-x-2 py-2 px-4 rounded-xl transition-all duration-300 transform hover:scale-105 cursor-pointer ${
+                          isActive
+                            ? "text-orange-600 dark:text-orange-400 bg-orange-50 dark:bg-orange-900/20"
+                            : "text-gray-600 dark:text-gray-400 hover:text-orange-600 dark:hover:text-orange-400 hover:bg-gray-50 dark:hover:bg-gray-800/50"
+                        }`}
+                      >
+                        <div className="relative">
+                          <Icon className="h-5 w-5" />
+                          {item.badge > 0 && (
+                            <div className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center min-w-[20px] shadow-lg">
+                              {item.badge > 99 ? '99+' : item.badge}
+                            </div>
+                          )}
+                        </div>
+                        <span className="text-sm font-medium">{item.label}</span>
+                      </div>
+                    </Link>
+                  )}
+                </div>
+              );
+            })}
+            
+            {/* Desktop Search Button */}
+            <button
+              onClick={() => setIsSearchOpen(true)}
+              data-testid="button-search-desktop"
+              className="group flex items-center space-x-2 bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white py-2 px-4 rounded-xl transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-orange-500/25"
+            >
+              <Search className="h-5 w-5 group-hover:rotate-12 transition-transform duration-300" />
+              <span className="text-sm font-medium">Cerca</span>
+            </button>
+          </div>
+        </div>
+      </nav>
+
+      {/* Enhanced Search Dialog */}
       <SearchDialog 
         isOpen={isSearchOpen} 
         onClose={() => setIsSearchOpen(false)} 
