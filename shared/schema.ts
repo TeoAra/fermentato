@@ -420,6 +420,15 @@ export const insertRatingSchema = createInsertSchema(ratings).omit({
   updatedAt: true,
 });
 
+export const insertPubSizeSchema = createInsertSchema(pubSizes).omit({
+  id: true,
+  createdAt: true,
+});
+
+// Types
+export type PubSize = typeof pubSizes.$inferSelect;
+export type InsertPubSize = z.infer<typeof insertPubSizeSchema>;
+
 // Custom schemas for forms
 export const pubRegistrationSchema = insertPubSchema.extend({
   vatNumber: z.string().min(11, "P.IVA deve essere di almeno 11 caratteri"),

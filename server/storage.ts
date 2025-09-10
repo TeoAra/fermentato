@@ -207,7 +207,7 @@ export class DatabaseStorage implements IStorage {
   async updateBrewery(id: number, updates: Partial<InsertBrewery>): Promise<Brewery> {
     const [brewery] = await db
       .update(breweries)
-      .set({ ...updates, updatedAt: new Date() })
+      .set(updates)
       .where(eq(breweries.id, id))
       .returning();
     return brewery;
@@ -235,7 +235,7 @@ export class DatabaseStorage implements IStorage {
   async updateBeer(id: number, updates: Partial<InsertBeer>): Promise<Beer> {
     const [beer] = await db
       .update(beers)
-      .set({ ...updates, updatedAt: new Date() })
+      .set(updates)
       .where(eq(beers.id, id))
       .returning();
     return beer;
@@ -540,7 +540,7 @@ export class DatabaseStorage implements IStorage {
   async updateMenuCategory(id: number, updates: Partial<InsertMenuCategory>): Promise<MenuCategory> {
     const [category] = await db
       .update(menuCategories)
-      .set({ ...updates, updatedAt: new Date() })
+      .set(updates)
       .where(eq(menuCategories.id, id))
       .returning();
     return category;
