@@ -240,7 +240,7 @@ export default function SmartPubDashboard() {
         return apiRequest(`/api/menu-items`, 'POST', data);
       } else {
         // Update existing
-        return apiRequest(`/api/menu-categories/${id}`, 'PATCH', data);
+        return apiRequest(`/api/pubs/${currentPub?.id}/menu/categories/${id}`, 'PATCH', data);
       }
     },
     onSuccess: () => {
@@ -372,7 +372,7 @@ export default function SmartPubDashboard() {
   // Delete category mutation
   const deleteCategoryMutation = useMutation({
     mutationFn: async (categoryId: number) => {
-      return apiRequest(`/api/menu-categories/${categoryId}`, 'DELETE');
+      return apiRequest(`/api/pubs/${currentPub?.id}/menu/categories/${categoryId}`, 'DELETE');
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/pubs", currentPub?.id, "menu"] });
