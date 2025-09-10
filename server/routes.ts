@@ -331,16 +331,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get("/api/beers/:id/availability", async (req, res) => {
-    try {
-      const beerId = parseInt(req.params.id);
-      const locations = await storage.getBeerAvailability(beerId);
-      res.json(locations);
-    } catch (error) {
-      console.error("Error fetching beer availability:", error);
-      res.status(500).json({ message: "Failed to fetch beer availability" });
-    }
-  });
 
   // Search endpoints
   app.get("/api/search", async (req, res) => {

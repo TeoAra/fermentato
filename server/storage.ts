@@ -886,30 +886,74 @@ export class DatabaseStorage implements IStorage {
     return result;
   }
 
-  async getBeerAvailability(beerId: number): Promise<any[]> {
+  async getBeerAvailability(beerId: number): Promise<any> {
+    // Get tap locations
     const tapAvailability = await db
       .select({
-        type: sql<string>`'tap'`,
+        tapId: tapList.id,
         pubId: tapList.pubId,
         pubName: pubs.name,
+        pubAddress: pubs.address,
+        pubCity: pubs.city,
         isActive: tapList.isActive,
+        prices: tapList.prices,
+        priceSmall: tapList.priceSmall,
+        priceMedium: tapList.priceMedium,
+        priceLarge: tapList.priceLarge,
       })
       .from(tapList)
       .leftJoin(pubs, eq(tapList.pubId, pubs.id))
       .where(eq(tapList.beerId, beerId));
 
+    // Get bottle locations  
     const bottleAvailability = await db
       .select({
-        type: sql<string>`'bottle'`,
+        bottleId: bottleList.id,
         pubId: bottleList.pubId,
         pubName: pubs.name,
+        pubAddress: pubs.address,
+        pubCity: pubs.city,
         isActive: bottleList.isActive,
+        prices: bottleList.prices,
+        priceBottle: bottleList.priceBottle,
+        bottleSize: bottleList.bottleSize,
       })
       .from(bottleList)
       .leftJoin(pubs, eq(bottleList.pubId, pubs.id))
       .where(eq(bottleList.beerId, beerId));
 
-    return [...tapAvailability, ...bottleAvailability];
+    // Format response for frontend
+    return {
+      tapLocations: tapAvailability.map(tap => ({
+        pub: {
+          id: tap.pubId,
+          name: tap.pubName,
+          address: tap.pubAddress,
+          city: tap.pubCity,
+        },
+        tapItem: {
+          id: tap.tapId,
+          price: tap.priceSmall || tap.priceMedium, // Use first available price
+          prices: tap.prices,
+          isActive: tap.isActive,
+        }
+      })),
+      bottleLocations: bottleAvailability.map(bottle => ({
+        pub: {
+          id: bottle.pubId,
+          name: bottle.pubName,
+          address: bottle.pubAddress,
+          city: bottle.pubCity,
+        },
+        bottleItem: {
+          id: bottle.bottleId,
+          price: bottle.priceBottle,
+          prices: bottle.prices,
+          size: bottle.bottleSize,
+          isActive: bottle.isActive,
+        }
+      }))
+    };
   }
 
   async addRating(rating: any): Promise<any> {
