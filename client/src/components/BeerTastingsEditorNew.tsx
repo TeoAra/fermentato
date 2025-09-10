@@ -77,13 +77,13 @@ export default function BeerTastingsEditor({ beerTastings }: BeerTastingsEditorP
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Beer className="w-5 h-5" />
-            Birre Assaggiate ({beerTastings.length})
+            Birre Assaggiate ({beerTastings?.length || 0})
           </CardTitle>
         </CardHeader>
         <CardContent>
-          {beerTastings.length > 0 ? (
+          {beerTastings && beerTastings.length > 0 ? (
             <div className="space-y-3">
-              {beerTastings.slice(0, 10).map((tasting: any) => (
+              {beerTastings?.slice(0, 10).map((tasting: any) => (
                 <div key={tasting.id} className="flex items-center justify-between p-3 border rounded-lg">
                   <div className="flex items-center gap-3">
                     <img
@@ -129,9 +129,9 @@ export default function BeerTastingsEditor({ beerTastings }: BeerTastingsEditorP
                   </div>
                 </div>
               ))}
-              {beerTastings.length > 10 && (
+              {beerTastings && beerTastings.length > 10 && (
                 <p className="text-center text-sm text-gray-500 mt-4">
-                  ... e altre {beerTastings.length - 10} birre
+                  ... e altre {beerTastings?.length ? beerTastings.length - 10 : 0} birre
                 </p>
               )}
             </div>
