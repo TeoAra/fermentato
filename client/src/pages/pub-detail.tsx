@@ -1,4 +1,4 @@
-import { useParams } from "wouter";
+import { useParams, Link } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { Star, MapPin, Clock, Phone, Globe, Wine, Facebook, Instagram } from "lucide-react";
@@ -314,12 +314,16 @@ export default function PubDetail() {
                               className="w-16 h-16 object-cover rounded-lg flex-shrink-0"
                             />
                             <div className="flex-1 min-w-0">
-                              <h4 className="font-semibold text-gray-900 mb-1 break-words">
-                                {bottle.beer?.name || 'Nome non disponibile'}
-                              </h4>
-                              <p className="text-sm text-gray-600 mb-2 break-words">
-                                {bottle.beer?.brewery?.name || bottle.beer?.breweryName || 'Birrificio non disponibile'}
-                              </p>
+                              <Link href={`/beer/${bottle.beer?.id || bottle.beerId}`}>
+                                <h4 className="font-semibold text-gray-900 mb-1 break-words hover:text-primary cursor-pointer transition-colors">
+                                  {bottle.beer?.name || 'Nome non disponibile'}
+                                </h4>
+                              </Link>
+                              <Link href={`/brewery/${bottle.beer?.brewery?.id}`}>
+                                <p className="text-sm text-gray-600 mb-2 break-words hover:text-primary cursor-pointer transition-colors">
+                                  {bottle.beer?.brewery?.name || bottle.beer?.breweryName || 'Birrificio non disponibile'}
+                                </p>
+                              </Link>
                               
                               <div className="flex flex-wrap items-center gap-2 mb-2">
                                 <Badge variant="outline" className="text-xs">

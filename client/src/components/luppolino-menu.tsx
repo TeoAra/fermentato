@@ -118,7 +118,7 @@ export default function LuppolinoMenu({ menu }: LuppolinoMenuProps) {
               </div>
 
               {/* Items categoria */}
-              {hasItems && (isExpanded || category.items.length <= 3) && (
+              {hasItems && isExpanded && (
                 <div className="grid gap-6">
                   {category.items.map((item) => {
                     const formattedAllergens = formatAllergens(item.allergens);
@@ -193,14 +193,14 @@ export default function LuppolinoMenu({ menu }: LuppolinoMenuProps) {
                 </div>
               )}
 
-              {/* Indicatore "Clicca per vedere di più" */}
-              {hasItems && !isExpanded && category.items.length > 3 && (
+              {/* Indicatore per aprire categoria */}
+              {hasItems && !isExpanded && (
                 <div className="text-center pt-4">
                   <button
                     onClick={() => toggleCategory(category.id)}
                     className="text-orange-600 hover:text-orange-700 font-medium inline-flex items-center gap-2"
                   >
-                    Clicca per vedere la lista completa
+                    Clicca per vedere il menu
                     <ChevronDown className="w-4 h-4" />
                   </button>
                 </div>
