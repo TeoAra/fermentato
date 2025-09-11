@@ -492,45 +492,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Add item to tap list
-  app.post('/api/pubs/:pubId/taplist', isAuthenticated, async (req, res) => {
-    try {
-      const pubId = parseInt(req.params.pubId);
-      if (isNaN(pubId)) {
-        return res.status(400).json({ message: 'Invalid pub ID' });
-      }
-
-      const { beerId, priceSmall, priceMedium, prices, isActive = true, isVisible = true } = req.body;
-      
-      console.log('Adding to taplist:', { pubId, beerId, priceSmall, priceMedium, isActive, isVisible });
-      
-      // Validate required fields
-      if (!beerId) {
-        return res.status(400).json({ message: 'Beer ID is required' });
-      }
-
-      const item = await storage.addToTapList({
-        pubId,
-        beerId: parseInt(beerId),
-        priceSmall: priceSmall ? parseFloat(priceSmall) : null,
-        priceMedium: priceMedium ? parseFloat(priceMedium) : null,
-        prices: prices || null,
-        isActive: Boolean(isActive),
-        isVisible: Boolean(isVisible),
-        tapNumber: 0
-      });
-      
-      console.log('Taplist item added successfully:', item);
-      res.json(item);
-    } catch (error) {
-      console.error("Error adding tap list item:", error);
-      res.status(500).json({ 
-        message: 'Failed to add tap list item', 
-        error: error.message,
-        details: error
-      });
-    }
-  });
 
   // Update tap list item (pub owner only)
   app.patch('/api/pubs/:pubId/taplist/:id', isAuthenticated, async (req, res) => {
