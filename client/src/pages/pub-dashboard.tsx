@@ -232,11 +232,11 @@ export default function PubDashboard() {
           <p className="text-gray-600 dark:text-gray-300 mt-2 text-sm sm:text-base">
             Gestisci i tuoi pub e le loro tap list
           </p>
-          {user && (
+          {user ? (
             <p className="text-xs sm:text-sm text-gray-500 mt-1">
-              Benvenuto, {user.firstName} {user.lastName}
+              Benvenuto, {(user as any)?.firstName || 'Utente'} {(user as any)?.lastName || ''}
             </p>
-          )}
+          ) : null}
         </div>
         <div className="flex items-center gap-2 sm:gap-4">
           <Button asChild variant="outline" size="sm" className="text-xs sm:text-sm">
@@ -440,7 +440,7 @@ function PubInfoTab({ pub }: { pub: Pub }) {
         logoUrl,
         coverImageUrl,
       };
-      return apiRequest("/api/pubs/" + pub.id, "PATCH", submitData);
+      return apiRequest("/api/pubs/" + pub.id, { method: "PATCH" }, submitData);
     },
     onSuccess: () => {
       toast({
@@ -645,7 +645,7 @@ function OpeningHoursManager({ pub }: { pub: Pub }) {
 
   const updateHoursMutation = useMutation({
     mutationFn: async (hours: any) => {
-      return apiRequest("/api/pubs/" + pub.id, "PATCH", { openingHours: hours });
+      return apiRequest("/api/pubs/" + pub.id, { method: "PATCH" }, { openingHours: hours });
     },
     onSuccess: () => {
       toast({

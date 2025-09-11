@@ -934,6 +934,97 @@ export default function SmartPubDashboard() {
           </div>
         </Card>
 
+        {/* Opening Hours */}
+        <Card className="p-6">
+          <h3 className="text-lg font-semibold mb-4 flex items-center">
+            <Clock className="h-5 w-5 mr-2 text-orange-600" />
+            Orari di Apertura
+          </h3>
+          <p className="text-sm text-gray-600 dark:text-gray-400 mb-6">
+            Configura gli orari di apertura per ogni giorno della settimana. I clienti vedranno se sei attualmente aperto o chiuso.
+          </p>
+          <div className="space-y-4">
+            {[
+              { key: 'monday', label: 'Lunedì' },
+              { key: 'tuesday', label: 'Martedì' },
+              { key: 'wednesday', label: 'Mercoledì' },
+              { key: 'thursday', label: 'Giovedì' },
+              { key: 'friday', label: 'Venerdì' },
+              { key: 'saturday', label: 'Sabato' },
+              { key: 'sunday', label: 'Domenica' },
+            ].map((day) => {
+              const dayHours = settingsData.openingHours?.[day.key];
+              const isClosed = dayHours?.isClosed;
+              
+              return (
+                <div key={day.key} className="flex items-center justify-between p-4 border border-gray-200 dark:border-gray-700 rounded-xl bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+                  <div className="flex items-center space-x-4">
+                    <div className="w-20">
+                      <Label className="font-medium text-gray-900 dark:text-white">{day.label}</Label>
+                    </div>
+                    <div className="flex items-center space-x-3">
+                      <Input
+                        type="time"
+                        value={dayHours?.open || "12:00"}
+                        onChange={(e) => {
+                          const newHours = {
+                            ...settingsData.openingHours,
+                            [day.key]: {
+                              ...dayHours,
+                              open: e.target.value,
+                              isClosed: false,
+                            },
+                          };
+                          updateSettingsField('openingHours', newHours);
+                        }}
+                        disabled={isClosed}
+                        className="w-32"
+                        data-testid={`input-${day.key}-open`}
+                      />
+                      <span className="text-gray-500 dark:text-gray-400">-</span>
+                      <Input
+                        type="time"
+                        value={dayHours?.close || "23:00"}
+                        onChange={(e) => {
+                          const newHours = {
+                            ...settingsData.openingHours,
+                            [day.key]: {
+                              ...dayHours,
+                              close: e.target.value,
+                              isClosed: false,
+                            },
+                          };
+                          updateSettingsField('openingHours', newHours);
+                        }}
+                        disabled={isClosed}
+                        className="w-32"
+                        data-testid={`input-${day.key}-close`}
+                      />
+                    </div>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <Switch
+                      checked={isClosed || false}
+                      onCheckedChange={(checked) => {
+                        const newHours = {
+                          ...settingsData.openingHours,
+                          [day.key]: {
+                            ...dayHours,
+                            isClosed: checked,
+                          },
+                        };
+                        updateSettingsField('openingHours', newHours);
+                      }}
+                      data-testid={`switch-${day.key}-closed`}
+                    />
+                    <Label className="text-sm text-gray-600 dark:text-gray-400">Chiuso</Label>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </Card>
+
         {/* Social Media Links */}
         <Card className="p-6">
           <h3 className="text-lg font-semibold mb-4 flex items-center">
