@@ -613,7 +613,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(403).json({ message: "Not authorized to modify this pub's bottle list" });
       }
 
-      const bottleData = insertBottleListSchema.parse({ ...req.body, pubId });
+      // Map component fields to database fields
+      const { price, size, vintage, ...otherData } = req.body;
+      const bottleData = insertBottleListSchema.parse({ 
+        ...otherData, 
+        pubId,
+        priceBottle: price,    // Map price -> priceBottle 
+        bottleSize: size || "33cl",  // Map size -> bottleSize
+        description: vintage ? `${otherData.description || ""}\nAnnata: ${vintage}`.trim() : otherData.description
+      });
+      
       const bottleItem = await storage.addBeerToBottles(bottleData);
       res.status(201).json(bottleItem);
     } catch (error) {
@@ -635,11 +644,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.patch('/api/pubs/:pubId/bottles/:id', isAuthenticated, async (req, res) => {
     try {
       const { pubId, id } = req.params;
-      const data = req.body;
+      const userId = req.user.claims.sub;
       
-      console.log('PATCH bottle item:', { pubId, id, data });
+      // Check if user owns the pub
+      const existingPub = await storage.getPub(parseInt(pubId));
+      if (!existingPub || existingPub.ownerId !== userId) {
+        return res.status(403).json({ message: "Not authorized to modify this pub's bottle list" });
+      }
       
-      const item = await storage.updateBottleItem(parseInt(id), data);
+      // Map component fields to database fields
+      const { price, size, vintage, ...otherData } = req.body;
+      
+      const updateData: any = { ...otherData };
+      
+      // Map fields if they exist in the request
+      if (price !== undefined) updateData.priceBottle = price;
+      if (size !== undefined) updateData.bottleSize = size;
+      if (vintage !== undefined) {
+        // Handle vintage in description
+        const currentDescription = otherData.description || "";
+        updateData.description = vintage ? `${currentDescription}\nAnnata: ${vintage}`.trim() : currentDescription;
+      }
+      
+      console.log('PATCH bottle item:', { pubId, id, originalData: req.body, mappedData: updateData });
+      
+      const item = await storage.updateBottleItem(parseInt(id), updateData);
       console.log('Updated bottle item:', item);
       res.json(item);
     } catch (error) {

@@ -453,11 +453,11 @@ export function BottleListManager({ pubId, bottleList }: BottleListManagerProps)
                       )}
 
                       <div className="flex flex-wrap gap-2 text-xs">
-                        <span className="bg-green-100 text-green-800 px-2 py-1 rounded-full">
-                          €{safeItem.price}
+                        <span className="bg-green-100 text-green-800 px-2 py-1 rounded-full font-medium">
+                          €{safeItem.price || "0.00"}
                         </span>
                         <span className="bg-gray-100 text-gray-800 px-2 py-1 rounded-full">
-                          Qty: {safeItem.quantity}
+                          Qty: {safeItem.quantity || 0}
                         </span>
                         {safeItem.size && (
                           <span className="bg-blue-100 text-blue-800 px-2 py-1 rounded-full">

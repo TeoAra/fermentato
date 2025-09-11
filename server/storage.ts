@@ -476,9 +476,9 @@ export class DatabaseStorage implements IStorage {
     try {
       const result = await db.execute(sql`
         SELECT 
-          bl.id, bl.pub_id, bl.beer_id, bl.is_active, bl.price_bottle, bl.bottle_size, bl.quantity,
+          bl.id, bl.pub_id, bl.beer_id, bl.is_active, bl.is_visible, bl.price_bottle, bl.bottle_size, bl.quantity,
           bl.description, bl.added_at, bl.updated_at, bl.prices,
-          b.name as beer_name, b.style as beer_style, b.abv as beer_abv, b.image_url as beer_image_url,
+          b.name as beer_name, b.style as beer_style, b.abv as beer_abv, b.image_url as beer_image_url, b.logo_url as beer_logo_url,
           br.id as brewery_id, br.name as brewery_name, br.logo_url as brewery_logo_url
         FROM bottle_list bl
         INNER JOIN beers b ON bl.beer_id = b.id  
@@ -492,6 +492,11 @@ export class DatabaseStorage implements IStorage {
         pubId: row.pub_id,
         beerId: row.beer_id,
         isActive: row.is_active,
+        isVisible: row.is_visible,
+        // Map legacy fields to expected component field names
+        price: row.price_bottle, // Component expects 'price', not 'priceBottle'
+        size: row.bottle_size,   // Component expects 'size', not 'bottleSize' 
+        // Keep legacy fields for backward compatibility
         priceBottle: row.price_bottle,
         bottleSize: row.bottle_size,
         prices: row.prices,
@@ -505,6 +510,7 @@ export class DatabaseStorage implements IStorage {
           style: row.beer_style,
           abv: row.beer_abv,
           imageUrl: row.beer_image_url,
+          logoUrl: row.beer_logo_url, // Add beer logo for component
           brewery: {
             id: row.brewery_id,
             name: row.brewery_name,
