@@ -397,31 +397,31 @@ export default function PubDetail() {
           {/* Main Content */}
           <div className="lg:col-span-3">
             {/* Modern Tabs */}
-            <div className="glass-card rounded-2xl p-6 mb-8">
+            <div className="glass-card rounded-2xl p-3 md:p-6 mb-4 md:mb-8">
               <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-                <TabsList className="grid w-full grid-cols-3 mb-6 bg-white dark:bg-gray-900 rounded-2xl p-2 shadow-lg border border-gray-200 dark:border-gray-700">
+                <TabsList className="grid w-full grid-cols-3 mb-3 md:mb-6 bg-white dark:bg-gray-900 rounded-xl md:rounded-2xl p-1 md:p-2 shadow-lg border border-gray-200 dark:border-gray-700">
                   <TabsTrigger 
                     value="taplist" 
                     data-testid="tab-taplist"
-                    className="rounded-xl transition-all duration-300 font-semibold text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 data-[state=active]:bg-gradient-to-r data-[state=active]:from-amber-500 data-[state=active]:to-orange-600 data-[state=active]:text-white data-[state=active]:shadow-lg data-[state=active]:shadow-amber-500/20 data-[state=active]:scale-105"
+                    className="rounded-lg md:rounded-xl transition-all duration-300 text-xs md:text-sm font-medium md:font-semibold text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 data-[state=active]:bg-gradient-to-r data-[state=active]:from-amber-500 data-[state=active]:to-orange-600 data-[state=active]:text-white data-[state=active]:shadow-lg data-[state=active]:shadow-amber-500/20 data-[state=active]:scale-105 py-2 md:py-3"
                   >
-                    <Wine className="mr-2" size={18} />
+                    <Wine className="mr-1 md:mr-2" size={14} />
                     <span className="hidden sm:inline">Birre alla</span> Spine
                   </TabsTrigger>
                   <TabsTrigger 
                     value="bottles" 
                     data-testid="tab-bottles"
-                    className="rounded-xl transition-all duration-300 font-semibold text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 data-[state=active]:bg-gradient-to-r data-[state=active]:from-emerald-500 data-[state=active]:to-green-600 data-[state=active]:text-white data-[state=active]:shadow-lg data-[state=active]:shadow-emerald-500/20 data-[state=active]:scale-105"
+                    className="rounded-lg md:rounded-xl transition-all duration-300 text-xs md:text-sm font-medium md:font-semibold text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 data-[state=active]:bg-gradient-to-r data-[state=active]:from-emerald-500 data-[state=active]:to-green-600 data-[state=active]:text-white data-[state=active]:shadow-lg data-[state=active]:shadow-emerald-500/20 data-[state=active]:scale-105 py-2 md:py-3"
                   >
-                    <Sparkles className="mr-2" size={18} />
+                    <Sparkles className="mr-1 md:mr-2" size={14} />
                     Cantina
                   </TabsTrigger>
                   <TabsTrigger 
                     value="menu" 
                     data-testid="tab-menu"
-                    className="rounded-xl transition-all duration-300 font-semibold text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-500 data-[state=active]:to-indigo-600 data-[state=active]:text-white data-[state=active]:shadow-lg data-[state=active]:shadow-blue-500/20 data-[state=active]:scale-105"
+                    className="rounded-lg md:rounded-xl transition-all duration-300 text-xs md:text-sm font-medium md:font-semibold text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-500 data-[state=active]:to-indigo-600 data-[state=active]:text-white data-[state=active]:shadow-lg data-[state=active]:shadow-blue-500/20 data-[state=active]:scale-105 py-2 md:py-3"
                   >
-                    <span className="mr-2 text-lg">🍽️</span>
+                    <span className="mr-1 md:mr-2 text-sm md:text-lg">🍽️</span>
                     Menù
                   </TabsTrigger>
                 </TabsList>
