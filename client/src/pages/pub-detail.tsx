@@ -25,7 +25,7 @@ import {
   XCircle,
   Sparkles,
   TrendingUp,
-  Target
+  Target,
 } from "lucide-react";
 import Footer from "@/components/footer";
 import TapList from "@/components/tap-list";
@@ -446,18 +446,6 @@ export default function PubDetail() {
     setShowOpeningHours(true);
   };
 
-  const handleGetDirections = () => {
-    if (pub) {
-      const address = encodeURIComponent(`${(pub as any)?.address}, ${(pub as any)?.city}, Italia`);
-      window.open(`https://maps.google.com/maps?q=${address}`, '_blank');
-    }
-  };
-
-  const handleCallNow = () => {
-    if ((pub as any)?.phone) {
-      window.location.href = `tel:${(pub as any).phone}`;
-    }
-  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-indigo-50 dark:from-gray-950 dark:via-blue-950 dark:to-indigo-950">
@@ -742,30 +730,6 @@ export default function PubDetail() {
                 </CardTitle>
               </CardHeader>
               <CardContent className="p-6 space-y-6">
-                {/* Address */}
-                <div className="space-y-2">
-                  <div className="flex items-start space-x-3">
-                    <div className="p-2 rounded-lg bg-blue-100 dark:bg-blue-900">
-                      <MapPin className="h-4 w-4 text-blue-600 dark:text-blue-400" />
-                    </div>
-                    <div className="flex-1">
-                      <p className="font-semibold text-gray-900 dark:text-white">{(pub as any)?.address}</p>
-                      <p className="text-sm text-gray-600 dark:text-gray-400">{(pub as any)?.city}, {(pub as any)?.region}</p>
-                      <Button
-                        variant="link"
-                        className="p-0 h-auto text-primary hover:text-primary/80 text-sm"
-                        onClick={() => {
-                          const address = encodeURIComponent(`${(pub as any)?.address}, ${(pub as any)?.city}, Italia`);
-                          window.open(`https://maps.google.com/maps?q=${address}`, '_blank');
-                        }}
-                      >
-                        <Navigation className="h-3 w-3 mr-1" />
-                        Vedi su Google Maps
-                      </Button>
-                    </div>
-                  </div>
-                </div>
-
                 {/* Phone */}
                 {(pub as any)?.phone && (
                   <div className="flex items-center space-x-3">
@@ -863,31 +827,6 @@ export default function PubDetail() {
                 >
                   <Eye className="h-4 w-4 mr-2" />
                   Vedi Orari Completi
-                </Button>
-                <Button 
-                  variant="outline" 
-                  className="w-full hover:bg-blue-50 dark:hover:bg-blue-900 transition-all duration-300" 
-                  size="sm"
-                  onClick={handleGetDirections}
-                  data-testid="button-get-directions"
-                >
-                  <Navigation className="h-4 w-4 mr-2" />
-                  Come Arrivare
-                </Button>
-                <Button 
-                  variant="outline" 
-                  className={`w-full transition-all duration-300 ${
-                    (pub as any)?.phone 
-                      ? 'hover:bg-green-50 dark:hover:bg-green-900 cursor-pointer' 
-                      : 'opacity-50 cursor-not-allowed'
-                  }`}
-                  size="sm"
-                  onClick={handleCallNow}
-                  disabled={!(pub as any)?.phone}
-                  data-testid="button-call-now"
-                >
-                  <Phone className="h-4 w-4 mr-2" />
-                  {(pub as any)?.phone ? 'Chiama Ora' : 'Numero Non Disponibile'}
                 </Button>
               </CardContent>
             </Card>

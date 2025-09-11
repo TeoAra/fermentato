@@ -68,7 +68,7 @@ import { BottleListManager } from "@/components/bottle-list-manager";
 import { PubOwnerTopBar } from "@/components/pub-owner-top-bar";
 import { ImageUpload } from "@/components/image-upload";
 
-type DashboardSection = 'overview' | 'taplist' | 'bottles' | 'menu' | 'analytics' | 'settings' | 'profile';
+type DashboardSection = 'overview' | 'taplist' | 'bottles' | 'menu' | 'hours' | 'analytics' | 'settings' | 'profile';
 
 export default function SmartPubDashboard() {
   const { user, isAuthenticated } = useAuth();
@@ -313,6 +313,7 @@ export default function SmartPubDashboard() {
     { id: 'taplist', name: 'Taplist', icon: Beer, gradient: 'from-amber-500 to-orange-600' },
     { id: 'bottles', name: 'Cantina', icon: Wine, gradient: 'from-purple-500 to-violet-600' },
     { id: 'menu', name: 'Menu', icon: Utensils, gradient: 'from-green-500 to-emerald-600' },
+    { id: 'hours', name: 'Orari', icon: Clock, gradient: 'from-orange-500 to-red-600' },
     { id: 'analytics', name: 'Analytics', icon: BarChart3, gradient: 'from-indigo-500 to-blue-600' },
     { id: 'settings', name: 'Impostazioni', icon: Settings, gradient: 'from-gray-500 to-slate-600' },
     { id: 'profile', name: 'Profilo', icon: Users, gradient: 'from-rose-500 to-pink-600' },
@@ -756,6 +757,136 @@ export default function SmartPubDashboard() {
               </div>
             </div>
           ))}
+        </div>
+      </Card>
+    </div>
+  );
+
+  // Hours Section - Dedicated Opening Hours Management
+  const renderHours = () => (
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Gestione Orari</h2>
+          <p className="text-gray-600 dark:text-gray-400">Configura gli orari di apertura del tuo pub</p>
+        </div>
+        {settingsChanged && (
+          <Button 
+            onClick={handleSaveSettings}
+            disabled={updatePubMutation.isPending}
+            className="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700"
+            data-testid="button-save-hours"
+          >
+            {updatePubMutation.isPending ? (
+              <>
+                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
+                Salvando...
+              </>
+            ) : (
+              <>
+                <Save className="h-4 w-4 mr-2" />
+                Salva Orari
+              </>
+            )}
+          </Button>
+        )}
+      </div>
+
+      {/* Opening Hours Card */}
+      <Card className="p-6">
+        <h3 className="text-xl font-semibold mb-4 flex items-center">
+          <Clock className="h-6 w-6 mr-3 text-orange-600" />
+          Orari di Apertura
+        </h3>
+        <p className="text-sm text-gray-600 dark:text-gray-400 mb-6">
+          Configura gli orari di apertura per ogni giorno della settimana. I clienti vedranno in tempo reale se sei attualmente aperto o chiuso.
+        </p>
+        <div className="space-y-4">
+          {[
+            { key: 'monday', label: 'Lunedì' },
+            { key: 'tuesday', label: 'Martedì' },
+            { key: 'wednesday', label: 'Mercoledì' },
+            { key: 'thursday', label: 'Giovedì' },
+            { key: 'friday', label: 'Venerdì' },
+            { key: 'saturday', label: 'Sabato' },
+            { key: 'sunday', label: 'Domenica' },
+          ].map((day) => {
+            const dayHours = settingsData.openingHours?.[day.key];
+            const isClosed = dayHours?.isClosed;
+            
+            return (
+              <div key={day.key} className="flex items-center justify-between p-4 border border-gray-200 dark:border-gray-700 rounded-xl bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+                <div className="flex items-center space-x-4">
+                  <div className="w-20">
+                    <Label className="font-medium text-gray-900 dark:text-white">{day.label}</Label>
+                  </div>
+                  <div className="flex items-center space-x-3">
+                    <Input
+                      type="time"
+                      value={dayHours?.open || "12:00"}
+                      onChange={(e) => {
+                        const newHours = {
+                          ...settingsData.openingHours,
+                          [day.key]: {
+                            ...dayHours,
+                            open: e.target.value,
+                            isClosed: false,
+                          },
+                        };
+                        updateSettingsField('openingHours', newHours);
+                      }}
+                      disabled={isClosed}
+                      className="w-32"
+                      data-testid={`input-${day.key}-open`}
+                    />
+                    <span className="text-gray-500 dark:text-gray-400">-</span>
+                    <Input
+                      type="time"
+                      value={dayHours?.close || "23:00"}
+                      onChange={(e) => {
+                        const newHours = {
+                          ...settingsData.openingHours,
+                          [day.key]: {
+                            ...dayHours,
+                            close: e.target.value,
+                            isClosed: false,
+                          },
+                        };
+                        updateSettingsField('openingHours', newHours);
+                      }}
+                      disabled={isClosed}
+                      className="w-32"
+                      data-testid={`input-${day.key}-close`}
+                    />
+                  </div>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <Switch
+                    checked={isClosed || false}
+                    onCheckedChange={(checked) => {
+                      const newHours = {
+                        ...settingsData.openingHours,
+                        [day.key]: {
+                          ...dayHours,
+                          isClosed: checked,
+                        },
+                      };
+                      updateSettingsField('openingHours', newHours);
+                    }}
+                    data-testid={`switch-${day.key}-closed`}
+                  />
+                  <Label className="text-sm text-gray-600 dark:text-gray-400">Chiuso</Label>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+        
+        <div className="mt-6 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-700">
+          <p className="text-sm text-blue-700 dark:text-blue-300 flex items-center">
+            <Clock className="h-4 w-4 mr-2" />
+            <strong>Nota:</strong> Gli orari saranno visibili ai clienti sulla pagina del pub e determinano automaticamente se il locale appare come aperto o chiuso.
+          </p>
         </div>
       </Card>
     </div>
@@ -1413,12 +1544,13 @@ export default function SmartPubDashboard() {
               {currentSection === 'taplist' && renderTaplist()}
               {currentSection === 'bottles' && renderBottles()}
               {currentSection === 'menu' && renderMenu()}
+              {currentSection === 'hours' && renderHours()}
               {currentSection === 'analytics' && renderAnalytics()}
               {currentSection === 'settings' && renderSettings()}
               {currentSection === 'profile' && renderProfile()}
               
               {/* Fallback for unimplemented sections */}
-              {!['overview', 'taplist', 'bottles', 'menu', 'analytics', 'settings', 'profile'].includes(currentSection) && (
+              {!['overview', 'taplist', 'bottles', 'menu', 'hours', 'analytics', 'settings', 'profile'].includes(currentSection) && (
                 <div className="text-center py-16">
                   <div className="space-y-4">
                     <div className={`w-16 h-16 rounded-2xl bg-gradient-to-br ${sections.find(s => s.id === currentSection)?.gradient} mx-auto flex items-center justify-center`}>
