@@ -372,6 +372,70 @@ export type Rating = typeof ratings.$inferSelect;
 export type InsertUserBeerTasting = typeof userBeerTastings.$inferInsert;
 export type UserBeerTasting = typeof userBeerTastings.$inferSelect;
 
+// DTO Types for API responses (camelCase with proper numeric types)
+export interface TapListItemDTO {
+  id: number;
+  pubId: number;
+  beerId: number;
+  isActive: boolean;
+  isVisible: boolean;
+  prices?: Record<string, number>;
+  priceSmall?: number; // Decimal fields as numbers, not strings
+  priceMedium?: number;
+  priceLarge?: number;
+  description?: string;
+  tapNumber?: number;
+  addedAt: string;
+  updatedAt: string;
+  beer: {
+    id: number;
+    name: string;
+    style: string;
+    abv?: string;
+    ibu?: number;
+    description?: string;
+    imageUrl?: string;
+    logoUrl?: string;
+    brewery: {
+      id: number;
+      name: string;
+      logoUrl?: string;
+    };
+  };
+}
+
+export interface BottleListItemDTO {
+  id: number;
+  pubId: number;
+  beerId: number;
+  isActive: boolean;
+  isVisible: boolean;
+  prices?: Record<string, number>;
+  priceBottle?: number; // Decimal fields as numbers, not strings
+  price?: number; // Alternative field name expected by some components
+  bottleSize?: string;
+  size?: string; // Alternative field name expected by some components
+  vintage?: string;
+  quantity?: number;
+  description?: string;
+  addedAt: string;
+  updatedAt: string;
+  beer: {
+    id: number;
+    name: string;
+    style: string;
+    abv?: string;
+    description?: string;
+    imageUrl?: string;
+    logoUrl?: string;
+    brewery: {
+      id: number;
+      name: string;
+      logoUrl?: string;
+    };
+  };
+}
+
 // Insert schemas
 export const insertBrewerySchema = createInsertSchema(breweries).omit({
   id: true,

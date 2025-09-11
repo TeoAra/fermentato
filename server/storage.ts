@@ -43,6 +43,80 @@ import { db } from "./db";
 import { eq, and, desc, like, inArray, sql, or, asc, ilike } from "drizzle-orm";
 import { memoryStorageInstance } from "./memoryStorage";
 
+// Mapping utilities for field conversion
+function safeParseDecimal(value: any): number | undefined {
+  if (value === null || value === undefined || value === '') return undefined;
+  const parsed = parseFloat(value);
+  return isNaN(parsed) || parsed <= 0 ? undefined : parsed;
+}
+
+function mapTapDbRowToDto(row: any): any {
+  return {
+    id: row.id,
+    pubId: row.pub_id || row.pubId,
+    beerId: row.beer_id || row.beerId,
+    isActive: row.is_active !== undefined ? row.is_active : row.isActive,
+    isVisible: row.is_visible !== undefined ? row.is_visible : row.isVisible,
+    prices: row.prices,
+    priceSmall: safeParseDecimal(row.price_small || row.priceSmall),
+    priceMedium: safeParseDecimal(row.price_medium || row.priceMedium),
+    priceLarge: safeParseDecimal(row.price_large || row.priceLarge),
+    description: row.description,
+    tapNumber: row.tap_number || row.tapNumber,
+    addedAt: row.added_at || row.addedAt,
+    updatedAt: row.updated_at || row.updatedAt,
+    beer: {
+      id: row.beer_id || row.beerId,
+      name: row.beer_name || row.beerName,
+      style: row.beer_style || row.beerStyle,
+      abv: row.beer_abv || row.beerAbv,
+      ibu: row.beer_ibu || row.beerIbu,
+      description: row.beer_description || row.beerDescription,
+      imageUrl: row.beer_image_url || row.beerImageUrl,
+      logoUrl: row.beer_logo_url || row.beerLogoUrl,
+      brewery: {
+        id: row.brewery_id || row.breweryId,
+        name: row.brewery_name || row.breweryName,
+        logoUrl: row.brewery_logo_url || row.breweryLogoUrl,
+      }
+    }
+  };
+}
+
+function mapBottleDbRowToDto(row: any): any {
+  return {
+    id: row.id,
+    pubId: row.pub_id || row.pubId,
+    beerId: row.beer_id || row.beerId,
+    isActive: row.is_active !== undefined ? row.is_active : row.isActive,
+    isVisible: row.is_visible !== undefined ? row.is_visible : row.isVisible,
+    prices: row.prices,
+    priceBottle: safeParseDecimal(row.price_bottle || row.priceBottle),
+    price: safeParseDecimal(row.price_bottle || row.priceBottle), // Alternative field name
+    bottleSize: row.bottle_size || row.bottleSize,
+    size: row.bottle_size || row.bottleSize, // Alternative field name
+    vintage: row.vintage,
+    quantity: row.quantity,
+    description: row.description,
+    addedAt: row.added_at || row.addedAt,
+    updatedAt: row.updated_at || row.updatedAt,
+    beer: {
+      id: row.beer_id || row.beerId,
+      name: row.beer_name || row.beerName,
+      style: row.beer_style || row.beerStyle,
+      abv: row.beer_abv || row.beerAbv,
+      description: row.beer_description || row.beerDescription,
+      imageUrl: row.beer_image_url || row.beerImageUrl,
+      logoUrl: row.beer_logo_url || row.beerLogoUrl,
+      brewery: {
+        id: row.brewery_id || row.breweryId,
+        name: row.brewery_name || row.breweryName,
+        logoUrl: row.brewery_logo_url || row.breweryLogoUrl,
+      }
+    }
+  };
+}
+
 export interface IStorage {
   // User operations
   getUser(id: string): Promise<User | undefined>;
@@ -329,32 +403,7 @@ export class DatabaseStorage implements IStorage {
         ORDER BY tl.tap_number ASC
       `);
       
-      return result.rows.map((row: any) => ({
-        id: row.id,
-        pubId: row.pub_id,
-        beerId: row.beer_id,
-        isActive: row.is_active,
-        prices: row.prices,
-        priceSmall: row.price_small,
-        priceMedium: row.price_medium,
-        priceLarge: row.price_large,
-        description: row.description,
-        tapNumber: row.tap_number,
-        addedAt: row.added_at,
-        updatedAt: row.updated_at,
-        beer: {
-          id: row.beer_id,
-          name: row.beer_name,
-          style: row.beer_style,
-          abv: row.beer_abv,
-          imageUrl: row.beer_image_url,
-          brewery: {
-            id: row.brewery_id,
-            name: row.brewery_name,
-            logoUrl: row.brewery_logo_url,
-          }
-        }
-      }));
+      return result.rows.map((row: any) => mapTapDbRowToDto(row));
     } catch (error) {
       console.error('Error in getTapList:', error);
       return [];
@@ -394,36 +443,19 @@ export class DatabaseStorage implements IStorage {
       .where(eq(tapList.pubId, pubId))
       .orderBy(asc(tapList.tapNumber));
 
-    return results.map(row => ({
-      id: row.id,
-      pubId: row.pubId,
-      beerId: row.beerId,
-      isActive: row.isActive,
-      isVisible: row.isVisible,
-      prices: row.prices,
-      priceSmall: row.priceSmall,
-      priceMedium: row.priceMedium,
-      priceLarge: row.priceLarge,
-      notes: row.description,
-      tapNumber: row.tapNumber,
-      addedAt: row.addedAt,
-      updatedAt: row.updatedAt,
-      beer: {
-        id: row.beerId,
-        name: row.beerName,
-        style: row.beerStyle,
-        abv: row.beerAbv,
-        ibu: row.beerIbu,
-        description: row.beerDescription,
-        imageUrl: row.beerImageUrl,
-        bottleImageUrl: row.beerBottleImageUrl,
-        brewery: {
-          id: row.breweryId,
-          name: row.breweryName,
-          logoUrl: row.breweryLogoUrl,
-
-        }
-      }
+    return results.map(row => mapTapDbRowToDto({
+      ...row,
+      // Map Drizzle result fields to match the expected mapping format
+      beer_name: row.beerName,
+      beer_style: row.beerStyle,
+      beer_abv: row.beerAbv,
+      beer_ibu: row.beerIbu,
+      beer_description: row.beerDescription,
+      beer_image_url: row.beerImageUrl,
+      beer_bottle_image_url: row.beerBottleImageUrl,
+      brewery_id: row.breweryId,
+      brewery_name: row.breweryName,
+      brewery_logo_url: row.breweryLogoUrl,
     }));
   }
 
