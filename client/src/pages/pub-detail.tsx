@@ -374,10 +374,10 @@ export default function PubDetail() {
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
           <PubStatsCard 
             icon={Wine}
-            label="Spine Attive"
+            label="Taplist"
             value={Array.isArray(tapList) ? tapList.filter((t: any) => t.isVisible).length : 0}
             gradient="from-amber-500 to-orange-600"
-            description="Birre alla spina"
+            description="Alla spina"
           />
           <PubStatsCard 
             icon={Wine}
@@ -416,7 +416,7 @@ export default function PubDetail() {
                     className="rounded-lg md:rounded-xl transition-all duration-300 text-xs md:text-sm font-medium md:font-semibold text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 data-[state=active]:bg-gradient-to-r data-[state=active]:from-amber-500 data-[state=active]:to-orange-600 data-[state=active]:text-white data-[state=active]:shadow-lg data-[state=active]:shadow-amber-500/20 data-[state=active]:scale-105 py-2 md:py-3"
                   >
                     <Wine className="mr-1 md:mr-2" size={14} />
-                    <span className="hidden sm:inline">Birre alla</span> Spine
+                    Taplist
                   </TabsTrigger>
                   <TabsTrigger 
                     value="bottles" 
@@ -441,7 +441,7 @@ export default function PubDetail() {
                   <div className="flex items-center justify-between">
                     <h3 className="text-display-lg text-gray-900 dark:text-white flex items-center">
                       <Wine className="mr-3 h-6 w-6 text-amber-600" />
-                      Birre alla Spina
+                      Taplist
                     </h3>
                     <Badge variant="outline" className="bg-amber-50 dark:bg-amber-950 text-amber-800 dark:text-amber-200">
                       {Array.isArray(tapList) ? tapList.filter((t: any) => t.isVisible).length : 0} attive
