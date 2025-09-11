@@ -12,7 +12,8 @@ import {
   Crown,
   Sparkles,
   Store,
-  Home
+  Home,
+  User
 } from "lucide-react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
@@ -30,6 +31,7 @@ interface PubOwnerTopBarProps {
   }>;
   currentPub?: any;
   user?: any;
+  onLogout?: () => void;
 }
 
 export function PubOwnerTopBar({ 
@@ -37,7 +39,8 @@ export function PubOwnerTopBar({
   setCurrentSection, 
   sections, 
   currentPub,
-  user 
+  user,
+  onLogout 
 }: PubOwnerTopBarProps) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
@@ -78,9 +81,51 @@ export function PubOwnerTopBar({
                   <h1 className="text-lg font-bold text-gray-900 dark:text-white">
                     {currentPub?.name || 'Dashboard'}
                   </h1>
-                  <p className="text-xs text-gray-600 dark:text-gray-400">
-                    Pannello Gestionale
-                  </p>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <button 
+                        className="flex items-center space-x-1 text-xs text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 transition-colors duration-200 cursor-pointer group"
+                        data-testid="pannello-gestionale-dropdown"
+                      >
+                        <span>Pannello Gestionale</span>
+                        <ChevronDown className="h-3 w-3 transition-transform duration-200 group-hover:rotate-180" />
+                      </button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="start" className="w-48 glass-card border-white/20">
+                      <DropdownMenuItem 
+                        onClick={() => setCurrentSection('settings')}
+                        className="cursor-pointer"
+                        data-testid="menu-impostazioni"
+                      >
+                        <SettingsIcon className="mr-2 h-4 w-4" />
+                        <span>Impostazioni</span>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem 
+                        onClick={() => setCurrentSection('profile')}
+                        className="cursor-pointer"
+                        data-testid="menu-profilo"
+                      >
+                        <User className="mr-2 h-4 w-4" />
+                        <span>Profilo</span>
+                      </DropdownMenuItem>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem 
+                        onClick={() => {
+                          if (onLogout) {
+                            onLogout();
+                          } else {
+                            // Fallback logout logic
+                            window.location.href = '/';
+                          }
+                        }}
+                        className="cursor-pointer text-red-600 dark:text-red-400 focus:text-red-700 dark:focus:text-red-300"
+                        data-testid="menu-esci"
+                      >
+                        <LogOut className="mr-2 h-4 w-4" />
+                        <span>Esci</span>
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
                 </div>
               </motion.div>
 

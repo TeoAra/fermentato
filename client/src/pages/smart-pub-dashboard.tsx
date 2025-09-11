@@ -74,6 +74,24 @@ export default function SmartPubDashboard() {
   const { user, isAuthenticated } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
+
+  // Logout handler
+  const handleLogout = async () => {
+    try {
+      // Call logout endpoint
+      await apiRequest('/api/auth/logout', { method: 'POST' });
+      
+      // Clear query cache
+      queryClient.clear();
+      
+      // Redirect to home page
+      window.location.href = '/';
+    } catch (error) {
+      console.error('Logout error:', error);
+      // Even if logout fails, redirect to home
+      window.location.href = '/';
+    }
+  };
   const [currentSection, setCurrentSection] = useState<DashboardSection>('overview');
   const [editingItem, setEditingItem] = useState<number | string | null>(null);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -1383,6 +1401,7 @@ export default function SmartPubDashboard() {
         sections={sections as any}
         currentPub={currentPub}
         user={user}
+        onLogout={handleLogout}
       />
       
       {/* Main Content */}
