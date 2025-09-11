@@ -1,8 +1,12 @@
-import { Star, Beer, Clock, MapPin } from "lucide-react";
+import { Heart, Beer, Clock, MapPin } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Link } from "wouter";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useAuth } from "@/hooks/useAuth";
+import { useToast } from "@/hooks/use-toast";
+import { apiRequest } from "@/lib/queryClient";
 
 // Funzione per controllare se un pub è aperto ora
 function isOpenNow(openingHours: any) {
@@ -48,12 +52,78 @@ interface PubCardProps {
 }
 
 export default function PubCard({ pub }: PubCardProps) {
+  const { user, isAuthenticated } = useAuth();
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+
   // Fetch real tap list count
   const { data: tapList } = useQuery({
     queryKey: ["/api/pubs", pub.id, "taplist"],
   });
 
+  // Fetch favorites count for this pub
+  const { data: favoritesCountData } = useQuery({
+    queryKey: ["/api/favorites", "pub", pub.id, "count"],
+  });
+
+  // Check if current pub is in user's favorites
+  const { data: isFavoriteData } = useQuery<{ isFavorite: boolean }>({
+    queryKey: ["/api/favorites", "pub", pub.id, "check"],
+    enabled: isAuthenticated,
+  });
+
   const beersOnTap = Array.isArray(tapList) ? tapList.filter(item => item.isActive).length : 0;
+  const isFavorite = isFavoriteData?.isFavorite || false;
+  const favoritesCount = (favoritesCountData as any)?.count || 0;
+
+  // Toggle favorite mutation
+  const toggleFavoriteMutation = useMutation({
+    mutationFn: async () => {
+      if (isFavorite) {
+        return apiRequest(`/api/favorites/pub/${pub.id}`, { method: "DELETE" });
+      } else {
+        return apiRequest("/api/favorites", { method: "POST" }, { 
+          itemType: "pub", 
+          itemId: pub.id 
+        });
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/favorites"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/favorites", "pub", pub.id, "check"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/favorites", "pub", pub.id, "count"] });
+      
+      toast({
+        title: isFavorite ? "Rimosso dai preferiti" : "Aggiunto ai preferiti",
+        description: isFavorite 
+          ? "Il pub è stato rimosso dai tuoi preferiti" 
+          : "Il pub è stato aggiunto ai tuoi preferiti",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Errore",
+        description: "Impossibile aggiornare i preferiti",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const handleFavoriteClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    if (!isAuthenticated) {
+      toast({
+        title: "Accesso richiesto",
+        description: "Effettua l'accesso per aggiungere ai preferiti",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    toggleFavoriteMutation.mutate();
+  };
 
   return (
     <Link href={`/pub/${pub.id}`}>
@@ -74,9 +144,24 @@ export default function PubCard({ pub }: PubCardProps) {
         <CardContent className="p-6">
           <div className="flex items-center justify-between mb-2">
             <h3 className="text-xl font-semibold text-secondary truncate">{pub.name}</h3>
-            <div className="flex items-center">
-              <Star className="text-yellow-400 w-4 h-4" />
-              <span className="ml-1 text-gray-600">{pub.rating || "N/A"}</span>
+            <div className="flex items-center space-x-1">
+              <Button
+                variant="ghost"
+                size="sm"
+                className={`h-8 w-8 p-0 ${
+                  isFavorite 
+                    ? 'text-red-600 hover:text-red-700' 
+                    : 'text-gray-400 hover:text-red-600'
+                }`}
+                onClick={handleFavoriteClick}
+                disabled={toggleFavoriteMutation.isPending}
+                data-testid={`button-favorite-pub-${pub.id}`}
+              >
+                <Heart className={`w-4 h-4 ${isFavorite ? 'fill-current' : ''}`} />
+              </Button>
+              <span className="text-sm text-gray-600 font-medium">
+                {favoritesCount}
+              </span>
             </div>
           </div>
           
