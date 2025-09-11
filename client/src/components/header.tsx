@@ -3,7 +3,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { Beer, Settings, LogOut, Search, User, Bell, MapPin, Home } from "lucide-react";
+import { Beer, Search, Bell, MapPin, Home, User } from "lucide-react";
 import type { User as UserType } from "@shared/schema";
 import { useState, useRef, useEffect } from "react";
 import SearchResults from "@/components/search-results";
@@ -23,7 +23,7 @@ export default function Header() {
     (user as any)?.userType === 'pub_owner' && 
     (location.startsWith("/smart-pub-dashboard") || location.startsWith("/dashboard"));
 
-  // Desktop navigation items
+  // Desktop navigation items with essential auth functionality restored
   const navItems = [
     {
       icon: Home,
@@ -41,14 +41,15 @@ export default function Header() {
       icon: Bell,
       label: "Notifiche",
       href: "/notifications", 
-      isActive: location.startsWith("/notification"),
+      isActive: location.startsWith("/notifications"),
       badge: isAuthenticated ? 3 : 0
     },
+    // Essential auth entry point - single conditional item for clean UI
     {
       icon: User,
       label: isAuthenticated ? "Dashboard" : "Accedi",
       href: isAuthenticated ? "/dashboard" : "/api/login",
-      isActive: location.startsWith("/dashboard")
+      isActive: isAuthenticated && location.startsWith("/dashboard")
     }
   ];
 
@@ -168,37 +169,9 @@ export default function Header() {
               </form>
             </div>
 
-            {/* User Section */}
+            {/* User Section - Removed to eliminate redundancy with dashboard */}
             <div className="col-span-3 flex items-center justify-end gap-3">
-              {isAuthenticated ? (
-                <>
-                  {typedUser && location !== "/" && (
-                    <div className="flex items-center gap-2">
-                      <span className="text-sm text-gray-700 dark:text-gray-300">
-                        Ciao, {typedUser.firstName || typedUser.email}
-                      </span>
-                    </div>
-                  )}
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => window.location.href = "/api/logout"}
-                    className="flex items-center gap-2 bg-white/50 dark:bg-gray-800/50 border-white/20 dark:border-gray-700/50"
-                    data-testid="logout-button-desktop"
-                  >
-                    <LogOut className="h-4 w-4" />
-                    <span>Logout</span>
-                  </Button>
-                </>
-              ) : (
-                <Button
-                  onClick={() => window.location.href = "/api/login"}
-                  className="bg-orange-600 hover:bg-orange-700"
-                  data-testid="login-button-desktop"
-                >
-                  Accedi
-                </Button>
-              )}
+              {/* User section removed - functionality available in dashboard */}
             </div>
           </div>
         </div>
