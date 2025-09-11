@@ -525,32 +525,32 @@ export default function PubDetail() {
           {/* Main Content */}
           <div className="lg:col-span-3">
             {/* Modern Tabs */}
-            <div className="glass-card rounded-2xl p-3 md:p-6 mb-4 md:mb-8">
+            <div className="glass-card rounded-2xl p-2 sm:p-3 md:p-6 mb-4 md:mb-8 overflow-hidden">
               <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-                <TabsList className="grid w-full grid-cols-3 mb-3 md:mb-6 bg-white dark:bg-gray-900 rounded-xl md:rounded-2xl p-1 md:p-2 shadow-lg border border-gray-200 dark:border-gray-700">
+                <TabsList className="grid w-full grid-cols-3 mb-3 md:mb-6 bg-white dark:bg-gray-900 rounded-lg sm:rounded-xl md:rounded-2xl p-0.5 sm:p-1 md:p-2 shadow-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
                   <TabsTrigger 
                     value="taplist" 
                     data-testid="tab-taplist"
-                    className="rounded-lg md:rounded-xl transition-all duration-300 text-xs md:text-sm font-medium md:font-semibold text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 data-[state=active]:bg-gradient-to-r data-[state=active]:from-amber-500 data-[state=active]:to-orange-600 data-[state=active]:text-white data-[state=active]:shadow-lg data-[state=active]:shadow-amber-500/20 data-[state=active]:scale-105 py-2 md:py-3"
+                    className="rounded-md sm:rounded-lg md:rounded-xl transition-all duration-300 text-xs sm:text-xs md:text-sm font-medium md:font-semibold text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 data-[state=active]:bg-gradient-to-r data-[state=active]:from-amber-500 data-[state=active]:to-orange-600 data-[state=active]:text-white data-[state=active]:shadow-lg data-[state=active]:shadow-amber-500/20 data-[state=active]:scale-105 py-1.5 sm:py-2 md:py-3 px-1 sm:px-2 md:px-3 min-w-0 flex items-center justify-center"
                   >
-                    <Wine className="mr-1 md:mr-2" size={14} />
-                    Taplist
+                    <Wine className="mr-0.5 sm:mr-1 md:mr-2 flex-shrink-0" size={12} />
+                    <span className="truncate">Taplist</span>
                   </TabsTrigger>
                   <TabsTrigger 
                     value="bottles" 
                     data-testid="tab-bottles"
-                    className="rounded-lg md:rounded-xl transition-all duration-300 text-xs md:text-sm font-medium md:font-semibold text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 data-[state=active]:bg-gradient-to-r data-[state=active]:from-emerald-500 data-[state=active]:to-green-600 data-[state=active]:text-white data-[state=active]:shadow-lg data-[state=active]:shadow-emerald-500/20 data-[state=active]:scale-105 py-2 md:py-3"
+                    className="rounded-md sm:rounded-lg md:rounded-xl transition-all duration-300 text-xs sm:text-xs md:text-sm font-medium md:font-semibold text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 data-[state=active]:bg-gradient-to-r data-[state=active]:from-emerald-500 data-[state=active]:to-green-600 data-[state=active]:text-white data-[state=active]:shadow-lg data-[state=active]:shadow-emerald-500/20 data-[state=active]:scale-105 py-1.5 sm:py-2 md:py-3 px-1 sm:px-2 md:px-3 min-w-0 flex items-center justify-center"
                   >
-                    <Sparkles className="mr-1 md:mr-2" size={14} />
-                    Cantina
+                    <Sparkles className="mr-0.5 sm:mr-1 md:mr-2 flex-shrink-0" size={12} />
+                    <span className="truncate">Cantina</span>
                   </TabsTrigger>
                   <TabsTrigger 
                     value="menu" 
                     data-testid="tab-menu"
-                    className="rounded-lg md:rounded-xl transition-all duration-300 text-xs md:text-sm font-medium md:font-semibold text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-500 data-[state=active]:to-indigo-600 data-[state=active]:text-white data-[state=active]:shadow-lg data-[state=active]:shadow-blue-500/20 data-[state=active]:scale-105 py-2 md:py-3"
+                    className="rounded-md sm:rounded-lg md:rounded-xl transition-all duration-300 text-xs sm:text-xs md:text-sm font-medium md:font-semibold text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-500 data-[state=active]:to-indigo-600 data-[state=active]:text-white data-[state=active]:shadow-lg data-[state=active]:shadow-blue-500/20 data-[state=active]:scale-105 py-1.5 sm:py-2 md:py-3 px-1 sm:px-2 md:px-3 min-w-0 flex items-center justify-center"
                   >
-                    <span className="mr-1 md:mr-2 text-sm md:text-lg">🍽️</span>
-                    Menù
+                    <span className="mr-0.5 sm:mr-1 md:mr-2 text-xs sm:text-sm md:text-lg flex-shrink-0">🍽️</span>
+                    <span className="truncate">Menù</span>
                   </TabsTrigger>
                 </TabsList>
 
