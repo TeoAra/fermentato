@@ -22,23 +22,23 @@ import {
 
 interface BottleItem {
   id: number;
-  beer: {
-    id: number;
-    name: string;
-    style: string;
-    abv: string;
+  beer?: {
+    id?: number;
+    name?: string;
+    style?: string;
+    abv?: string;
     logoUrl?: string;
-    brewery: {
-      id: number;
-      name: string;
+    brewery?: {
+      id?: number;
+      name?: string;
     };
-  };
-  price: string;
-  quantity: number;
+  } | null;
+  price?: string;
+  quantity?: number;
   size?: string;
   vintage?: string;
   description?: string;
-  isVisible: boolean;
+  isVisible?: boolean;
 }
 
 interface BottleListManagerProps {
@@ -150,13 +150,13 @@ export function BottleListManager({ pubId, bottleList }: BottleListManagerProps)
   const startEdit = (item: BottleItem) => {
     setEditingItem(item);
     setFormData({
-      beerId: item.beer.id.toString(),
+      beerId: item.beer?.id?.toString() || "",
       price: item.price || "",
       quantity: item.quantity?.toString() || "",
       size: item.size || "33cl",
       vintage: item.vintage || "",
       description: item.description || "",
-      isVisible: item.isVisible,
+      isVisible: item.isVisible ?? true,
     });
   };
 
@@ -171,10 +171,24 @@ export function BottleListManager({ pubId, bottleList }: BottleListManagerProps)
       return;
     }
 
+    // Additional validation for numeric values
+    const beerIdNum = parseInt(formData.beerId);
+    const quantityNum = parseInt(formData.quantity);
+    
+    if (isNaN(beerIdNum) || beerIdNum <= 0) {
+      toast({ title: "Errore", description: "ID birra non valido", variant: "destructive" });
+      return;
+    }
+    
+    if (isNaN(quantityNum) || quantityNum <= 0) {
+      toast({ title: "Errore", description: "La quantità deve essere un numero positivo", variant: "destructive" });
+      return;
+    }
+
     const submitData = {
-      beerId: parseInt(formData.beerId),
+      beerId: beerIdNum,
       price: formData.price,
-      quantity: parseInt(formData.quantity),
+      quantity: quantityNum,
       size: formData.size || null,
       vintage: formData.vintage || null,
       description: formData.description || null,
@@ -228,16 +242,16 @@ export function BottleListManager({ pubId, bottleList }: BottleListManagerProps)
                       <div className="max-h-40 overflow-y-auto border rounded-md">
                         {searchResults.beers.map((beer: any) => (
                           <div
-                            key={beer.id}
+                            key={beer?.id || Math.random()}
                             className="p-3 hover:bg-gray-50 cursor-pointer border-b last:border-b-0"
                             onClick={() => {
-                              setFormData({ ...formData, beerId: beer.id.toString() });
-                              setSearchTerm(`${beer.name} - ${beer.brewery.name}`);
+                              setFormData({ ...formData, beerId: beer?.id?.toString() || "" });
+                              setSearchTerm(`${beer?.name || "Birra sconosciuta"} - ${beer?.brewery?.name || "Birrificio sconosciuto"}`);
                             }}
                           >
-                            <div className="font-medium">{beer.name}</div>
+                            <div className="font-medium">{beer?.name || "Birra sconosciuta"}</div>
                             <div className="text-sm text-gray-500">
-                              {beer.brewery.name} • {beer.style} • {beer.abv}% ABV
+                              {beer?.brewery?.name || "Birrificio sconosciuto"} • {beer?.style || "Stile sconosciuto"} • {beer?.abv || "0"}% ABV
                             </div>
                           </div>
                         ))}
@@ -249,9 +263,9 @@ export function BottleListManager({ pubId, bottleList }: BottleListManagerProps)
                 {/* Birra Selezionata (per editing) */}
                 {editingItem && (
                   <div className="p-3 bg-gray-50 rounded-md">
-                    <div className="font-medium">{editingItem.beer.name}</div>
+                    <div className="font-medium">{editingItem.beer?.name || "Birra sconosciuta"}</div>
                     <div className="text-sm text-gray-500">
-                      {editingItem.beer.brewery.name} • {editingItem.beer.style} • {editingItem.beer.abv}% ABV
+                      {editingItem.beer?.brewery?.name || "Birrificio sconosciuto"} • {editingItem.beer?.style || "Stile sconosciuto"} • {editingItem.beer?.abv || "0"}% ABV
                     </div>
                   </div>
                 )}
@@ -357,113 +371,141 @@ export function BottleListManager({ pubId, bottleList }: BottleListManagerProps)
           </div>
         ) : (
           <div className="space-y-4">
-            {bottleList.map((item) => (
-              <div
-                key={item.id}
-                className={`border rounded-lg p-4 ${!item.isVisible ? 'opacity-60 bg-gray-50' : ''}`}
-              >
-                <div className="flex items-start justify-between">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2 mb-2">
-                      <Badge variant="outline" className="text-xs">
-                        {item.size || "33cl"}
-                      </Badge>
-                      {item.vintage && (
+            {bottleList.map((item) => {
+              // Guard against undefined item or missing required fields
+              if (!item || !item.id) {
+                return null;
+              }
+              
+              const safeItem = {
+                ...item,
+                beer: item.beer || {},
+                isVisible: item.isVisible ?? true,
+                price: item.price || "0.00",
+                quantity: item.quantity || 0
+              };
+              
+              const safeBeer = {
+                name: safeItem.beer?.name || "Birra sconosciuta",
+                logoUrl: safeItem.beer?.logoUrl,
+                style: safeItem.beer?.style || "Stile sconosciuto",
+                abv: safeItem.beer?.abv || "0",
+                brewery: {
+                  name: safeItem.beer?.brewery?.name || "Birrificio sconosciuto"
+                }
+              };
+              
+              return (
+                <div
+                  key={item.id}
+                  className={`border rounded-lg p-4 ${!safeItem.isVisible ? 'opacity-60 bg-gray-50' : ''}`}
+                >
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 mb-2">
                         <Badge variant="outline" className="text-xs">
-                          {item.vintage}
+                          {safeItem.size || "33cl"}
                         </Badge>
-                      )}
-                      {!item.isVisible && (
-                        <Badge variant="secondary" className="text-xs">
-                          <EyeOff className="w-3 h-3 mr-1" />
-                          Nascosta
-                        </Badge>
-                      )}
-                    </div>
-                    
-                    <div 
-                      className="flex items-center gap-3 mb-3 cursor-pointer hover:bg-gray-50 p-2 rounded-lg -m-2"
-                      onClick={() => {
-                        startEdit(item);
-                        setIsAddDialogOpen(true);
-                      }}
-                    >
-                      {item.beer.logoUrl && (
-                        <img
-                          src={item.beer.logoUrl}
-                          alt={item.beer.name}
-                          className="w-12 h-12 rounded-lg object-cover"
-                        />
-                      )}
-                      <div className="flex-1">
-                        <h3 className="font-semibold text-base">{item.beer.name}</h3>
-                        <p className="text-gray-600 text-sm">{item.beer.brewery.name}</p>
-                        <p className="text-xs text-gray-500">
-                          {item.beer.style} • {item.beer.abv}% ABV
-                        </p>
+                        {safeItem.vintage && (
+                          <Badge variant="outline" className="text-xs">
+                            {safeItem.vintage}
+                          </Badge>
+                        )}
+                        {!safeItem.isVisible && (
+                          <Badge variant="secondary" className="text-xs">
+                            <EyeOff className="w-3 h-3 mr-1" />
+                            Nascosta
+                          </Badge>
+                        )}
                       </div>
-                      <div className="text-right text-xs text-gray-400">
-                        Tocca per prezzi
+                      
+                      <div 
+                        className="flex items-center gap-3 mb-3 cursor-pointer hover:bg-gray-50 p-2 rounded-lg -m-2"
+                        onClick={() => {
+                          startEdit(item);
+                          setIsAddDialogOpen(true);
+                        }}
+                      >
+                        {safeBeer.logoUrl && (
+                          <img
+                            src={safeBeer.logoUrl}
+                            alt={safeBeer.name}
+                            className="w-12 h-12 rounded-lg object-cover"
+                            onError={(e) => {
+                              e.currentTarget.style.display = 'none';
+                            }}
+                          />
+                        )}
+                        <div className="flex-1">
+                          <h3 className="font-semibold text-base">{safeBeer.name}</h3>
+                          <p className="text-gray-600 text-sm">{safeBeer.brewery.name}</p>
+                          <p className="text-xs text-gray-500">
+                            {safeBeer.style} • {safeBeer.abv}% ABV
+                          </p>
+                        </div>
+                        <div className="text-right text-xs text-gray-400">
+                          Tocca per prezzi
+                        </div>
                       </div>
-                    </div>
 
-                    {item.description && (
-                      <p className="text-sm text-gray-600 mb-3">{item.description}</p>
-                    )}
+                      {safeItem.description && (
+                        <p className="text-sm text-gray-600 mb-3">{safeItem.description}</p>
+                      )}
 
-                    <div className="flex flex-wrap gap-2 text-xs">
-                      <span className="bg-green-100 text-green-800 px-2 py-1 rounded-full">
-                        €{item.price}
-                      </span>
-                      <span className="bg-gray-100 text-gray-800 px-2 py-1 rounded-full">
-                        Qty: {item.quantity}
-                      </span>
-                      {item.size && (
-                        <span className="bg-blue-100 text-blue-800 px-2 py-1 rounded-full">
-                          {item.size}
+                      <div className="flex flex-wrap gap-2 text-xs">
+                        <span className="bg-green-100 text-green-800 px-2 py-1 rounded-full">
+                          €{safeItem.price}
                         </span>
-                      )}
+                        <span className="bg-gray-100 text-gray-800 px-2 py-1 rounded-full">
+                          Qty: {safeItem.quantity}
+                        </span>
+                        {safeItem.size && (
+                          <span className="bg-blue-100 text-blue-800 px-2 py-1 rounded-full">
+                            {safeItem.size}
+                          </span>
+                        )}
+                      </div>
                     </div>
-                  </div>
 
-                  <div className="flex items-center gap-2 ml-4">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => {
-                        toggleVisibilityMutation.mutate({
-                          id: item.id,
-                          isVisible: !item.isVisible
-                        });
-                      }}
-                    >
-                      {item.isVisible ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => {
-                        startEdit(item);
-                        setIsAddDialogOpen(true);
-                      }}
-                    >
-                      <Edit className="w-4 h-4" />
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => {
-                        if (confirm('Sei sicuro di voler rimuovere questa birra dalla cantina?')) {
-                          deleteBottleMutation.mutate(item.id);
-                        }
-                      }}
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </Button>
+                    <div className="flex items-center gap-2 ml-4">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          toggleVisibilityMutation.mutate({
+                            id: item.id,
+                            isVisible: !safeItem.isVisible
+                          });
+                        }}
+                      >
+                        {safeItem.isVisible ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          startEdit(item);
+                          setIsAddDialogOpen(true);
+                        }}
+                      >
+                        <Edit className="w-4 h-4" />
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          if (confirm('Sei sicuro di voler rimuovere questa birra dalla cantina?')) {
+                            deleteBottleMutation.mutate(item.id);
+                          }
+                        }}
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))}
+              );
+            }).filter(Boolean)}
           </div>
         )}
       </CardContent>
