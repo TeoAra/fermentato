@@ -209,6 +209,11 @@ export default function PubDetail() {
     enabled: !!id,
   });
 
+  const { data: favoritesCountData, isLoading: favoritesCountLoading } = useQuery({
+    queryKey: ["/api/favorites", "pub", id, "count"],
+    enabled: !!id,
+  });
+
   if (pubLoading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-indigo-50 dark:from-gray-950 dark:via-blue-950 dark:to-indigo-950">
@@ -318,8 +323,8 @@ export default function PubDetail() {
                             <span className="text-sm">{(pub as any)?.address}, {(pub as any)?.city}</span>
                           </div>
                           <div className="flex items-center">
-                            <Star className="h-4 w-4 mr-2 text-yellow-400" />
-                            <span className="text-sm">4.8 • 127 recensioni</span>
+                            <Heart className="h-4 w-4 mr-2 text-red-400" />
+                            <span className="text-sm">{favoritesCountData?.count || 0} preferiti</span>
                           </div>
                         </div>
                       </div>
@@ -389,11 +394,11 @@ export default function PubDetail() {
             description="Piatti disponibili"
           />
           <PubStatsCard 
-            icon={Award}
-            label="Rating"
-            value="4.8"
-            gradient="from-purple-500 to-pink-600"
-            description="Su 127 recensioni"
+            icon={Heart}
+            label="Preferiti"
+            value={favoritesCountData?.count || 0}
+            gradient="from-red-500 to-pink-600"
+            description="Utenti che lo adorano"
           />
         </div>
 

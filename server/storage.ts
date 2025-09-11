@@ -754,6 +754,19 @@ export class DatabaseStorage implements IStorage {
     );
   }
 
+  async getFavoritesCount(itemType: 'pub' | 'brewery' | 'beer', itemId: number): Promise<number> {
+    const result = await db
+      .select({ count: sql<number>`count(*)` })
+      .from(favorites)
+      .where(
+        and(
+          eq(favorites.itemType, itemType),
+          eq(favorites.itemId, itemId)
+        )
+      );
+    return result[0]?.count || 0;
+  }
+
   // User activities operations
   async getUserActivities(userId: string, limit: number = 20): Promise<UserActivity[]> {
     return await db

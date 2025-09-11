@@ -972,6 +972,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get favorites count for any item (public endpoint)
+  app.get("/api/favorites/:itemType/:itemId/count", async (req, res) => {
+    try {
+      const itemType = req.params.itemType as 'pub' | 'brewery' | 'beer';
+      const itemId = parseInt(req.params.itemId);
+      
+      if (!['pub', 'brewery', 'beer'].includes(itemType)) {
+        return res.status(400).json({ message: "Invalid item type" });
+      }
+      
+      const count = await storage.getFavoritesCount(itemType, itemId);
+      res.json({ count });
+    } catch (error) {
+      console.error("Error fetching favorites count:", error);
+      res.status(500).json({ message: "Failed to fetch favorites count" });
+    }
+  });
+
   // User profile and activities routes
   app.patch('/api/user/profile', isAuthenticated, async (req: any, res) => {
     try {
