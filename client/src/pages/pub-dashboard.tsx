@@ -18,7 +18,7 @@ import { useToast } from "@/hooks/use-toast";
 import { isUnauthorizedError } from "@/lib/authUtils";
 import { 
   Beer, Wine, Utensils, Building2, Plus, AlertCircle, LogIn,
-  Facebook, Instagram, X as Twitter, Music, Clock, MapPin, Phone, Globe
+  Facebook, Instagram, X as Twitter, Music, Clock, MapPin, Phone, Globe, Camera
 } from "lucide-react";
 import { SiFacebook, SiInstagram, SiX, SiTiktok } from "react-icons/si";
 
@@ -539,25 +539,56 @@ function PubInfoTab({ pub }: { pub: Pub }) {
             </div>
 
             {/* Immagini */}
-            <div className="space-y-4">
-              <h4 className="text-lg font-semibold">Immagini</h4>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="space-y-6">
+              <div>
+                <h4 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Immagini del Pub</h4>
+                <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                  Carica immagini professionali per dare al tuo pub un aspetto attraente
+                </p>
+              </div>
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                 <ImageUpload
                   label="Logo del Pub"
+                  description="Il logo rappresenta l'identità del tuo pub e apparirà nei risultati di ricerca"
                   currentImageUrl={logoUrl || undefined}
                   onImageChange={setLogoUrl}
                   folder="pub-logos"
                   aspectRatio="square"
                   maxSize={2}
+                  recommendedDimensions="400x400 px"
+                  acceptedFormats={['JPG', 'PNG', 'WebP']}
+                  showFileInfo={true}
                 />
                 <ImageUpload
                   label="Immagine Copertina"
+                  description="L'immagine di copertina verrà mostrata nella pagina principale del pub"
                   currentImageUrl={coverImageUrl || undefined}
                   onImageChange={setCoverImageUrl}
                   folder="pub-covers"
                   aspectRatio="landscape"
                   maxSize={5}
+                  recommendedDimensions="1200x630 px"
+                  acceptedFormats={['JPG', 'PNG', 'WebP']}
+                  showFileInfo={true}
                 />
+              </div>
+              <div className="bg-blue-50 dark:bg-blue-950/50 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
+                <div className="flex items-start gap-3">
+                  <div className="bg-blue-100 dark:bg-blue-900/50 rounded-full p-2 flex-shrink-0">
+                    <Camera className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+                  </div>
+                  <div>
+                    <h5 className="text-sm font-medium text-blue-900 dark:text-blue-100 mb-1">
+                      Consigli per le immagini
+                    </h5>
+                    <ul className="text-xs text-blue-800 dark:text-blue-200 space-y-1">
+                      <li>• Usa immagini di alta qualità e ben illuminate</li>
+                      <li>• Per il logo: semplice, leggibile anche in piccole dimensioni</li>
+                      <li>• Per la copertina: mostra l'atmosfera del tuo pub</li>
+                      <li>• Evita testo piccolo che potrebbe risultare illeggibile</li>
+                    </ul>
+                  </div>
+                </div>
               </div>
             </div>
 

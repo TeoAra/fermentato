@@ -780,16 +780,20 @@ export default function SmartPubDashboard() {
             <Image className="h-5 w-5 mr-2 text-blue-600" />
             Immagine di Copertina
           </h3>
-          <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+          <p className="text-sm text-gray-600 dark:text-gray-400 mb-6">
             L'immagine principale che rappresenta il tuo pub. Sarà mostrata nella pagina del pub e nei risultati di ricerca.
           </p>
           <ImageUpload
             label="Copertina Pub"
+            description="Immagine principale che verrà mostrata in evidenza sulla pagina del pub"
             currentImageUrl={settingsData.coverImageUrl}
             onImageChange={(url) => updateSettingsField('coverImageUrl', url)}
             folder="pub-covers"
             aspectRatio="landscape"
-            maxSize={10}
+            maxSize={8}
+            recommendedDimensions="1200x630 px"
+            acceptedFormats={['JPG', 'PNG', 'WebP']}
+            showFileInfo={true}
           />
         </Card>
 
@@ -799,16 +803,20 @@ export default function SmartPubDashboard() {
             <Users className="h-5 w-5 mr-2 text-purple-600" />
             Logo/Immagine Profilo
           </h3>
-          <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+          <p className="text-sm text-gray-600 dark:text-gray-400 mb-6">
             Il logo o l'immagine che identifica il tuo pub. Apparirà come avatar nelle liste e nelle mappe.
           </p>
           <ImageUpload
             label="Logo Pub"
+            description="Logo che identifica il pub, visibile in liste, mappe e risultati di ricerca"
             currentImageUrl={settingsData.logoUrl}
             onImageChange={(url) => updateSettingsField('logoUrl', url)}
             folder="pub-logos"
             aspectRatio="square"
-            maxSize={5}
+            maxSize={3}
+            recommendedDimensions="400x400 px"
+            acceptedFormats={['JPG', 'PNG', 'WebP']}
+            showFileInfo={true}
           />
         </Card>
 
