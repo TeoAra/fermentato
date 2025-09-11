@@ -36,6 +36,8 @@ import {
   type InsertUserActivity,
   type UserBeerTasting,
   type InsertUserBeerTasting,
+  type PubSize,
+  type InsertPubSize,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, desc, like, inArray, sql, or, asc, ilike } from "drizzle-orm";
@@ -157,6 +159,15 @@ export class DatabaseStorage implements IStorage {
       .update(users)
       .set({ ...updates, updatedAt: new Date() })
       .where(eq(users.id, id))
+      .returning();
+    return user;
+  }
+
+  async updateUserType(userId: string, userType: string): Promise<User> {
+    const [user] = await db
+      .update(users)
+      .set({ userType, updatedAt: new Date() })
+      .where(eq(users.id, userId))
       .returning();
     return user;
   }

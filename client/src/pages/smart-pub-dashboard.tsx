@@ -66,6 +66,7 @@ import MenuCategoryManager from "@/components/menu-category-manager";
 import { TapListManager } from "@/components/taplist-manager";
 import { BottleListManager } from "@/components/bottle-list-manager";
 import { PubOwnerTopBar } from "@/components/pub-owner-top-bar";
+import { ImageUpload } from "@/components/image-upload";
 
 type DashboardSection = 'overview' | 'taplist' | 'bottles' | 'menu' | 'analytics' | 'settings' | 'profile';
 
@@ -87,6 +88,10 @@ export default function SmartPubDashboard() {
   const [selectedAllergens, setSelectedAllergens] = useState<string[]>([]);
   const [lastProfileUpdate, setLastProfileUpdate] = useState<Date | null>(null);
   const [replacingBeer, setReplacingBeer] = useState<number | null>(null);
+  
+  // Settings form state
+  const [settingsData, setSettingsData] = useState<any>({});
+  const [settingsChanged, setSettingsChanged] = useState(false);
 
   // Fetch pub data
   const { data: userPubs, isLoading: pubsLoading } = useQuery({
@@ -95,6 +100,33 @@ export default function SmartPubDashboard() {
   });
 
   const currentPub = Array.isArray(userPubs) ? userPubs[0] : null;
+
+  // Initialize settings data when currentPub changes
+  useEffect(() => {
+    if (currentPub) {
+      setSettingsData({
+        name: currentPub.name || '',
+        description: currentPub.description || '',
+        address: currentPub.address || '',
+        city: currentPub.city || '',
+        region: currentPub.region || '',
+        postalCode: currentPub.postalCode || '',
+        phone: currentPub.phone || '',
+        email: currentPub.email || '',
+        websiteUrl: currentPub.websiteUrl || '',
+        facebookUrl: currentPub.facebookUrl || '',
+        instagramUrl: currentPub.instagramUrl || '',
+        twitterUrl: currentPub.twitterUrl || '',
+        logoUrl: currentPub.logoUrl || '',
+        coverImageUrl: currentPub.coverImageUrl || '',
+        openingHours: currentPub.openingHours || null,
+        isActive: currentPub.isActive ?? true,
+        businessName: currentPub.businessName || '',
+        vatNumber: currentPub.vatNumber || '',
+      });
+      setSettingsChanged(false);
+    }
+  }, [currentPub]);
 
   // Fetch tap list
   const { data: tapList = [] } = useQuery({
@@ -220,6 +252,42 @@ export default function SmartPubDashboard() {
       toast({ title: "Errore", description: "Impossibile eliminare la birra", variant: "destructive" });
     }
   });
+
+  // Pub update mutation
+  const updatePubMutation = useMutation({
+    mutationFn: async (data: any) => {
+      console.log('Updating pub with data:', data);
+      return apiRequest(`/api/pubs/${currentPub?.id}`, 'PATCH', data);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/my-pubs"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/pubs", currentPub?.id] });
+      setSettingsChanged(false);
+      toast({ 
+        title: "Impostazioni aggiornate", 
+        description: "Le modifiche sono state salvate correttamente" 
+      });
+    },
+    onError: (error) => {
+      console.error('Pub update error:', error);
+      toast({ 
+        title: "Errore", 
+        description: "Impossibile salvare le modifiche", 
+        variant: "destructive" 
+      });
+    }
+  });
+
+  // Helper functions for settings management
+  const updateSettingsField = (field: string, value: any) => {
+    setSettingsData((prev: any) => ({ ...prev, [field]: value }));
+    setSettingsChanged(true);
+  };
+
+  const handleSaveSettings = () => {
+    if (!settingsChanged) return;
+    updatePubMutation.mutate(settingsData);
+  };
 
   // Smart dashboard sections configuration
   const sections = [
@@ -675,55 +743,347 @@ export default function SmartPubDashboard() {
     </div>
   );
 
-  // Settings Section  
+  // Settings Section - Complete Implementation
   const renderSettings = () => (
     <div className="space-y-6">
-      <div>
-        <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Impostazioni</h2>
-        <p className="text-gray-600 dark:text-gray-400">Configurazioni del pub</p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Impostazioni Pub</h2>
+          <p className="text-gray-600 dark:text-gray-400">Gestisci tutti gli aspetti del tuo locale</p>
+        </div>
+        {settingsChanged && (
+          <Button 
+            onClick={handleSaveSettings}
+            disabled={updatePubMutation.isPending}
+            className="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700"
+            data-testid="button-save-all-settings"
+          >
+            {updatePubMutation.isPending ? (
+              <>
+                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
+                Salvando...
+              </>
+            ) : (
+              <>
+                <Save className="h-4 w-4 mr-2" />
+                Salva Tutte le Modifiche
+              </>
+            )}
+          </Button>
+        )}
       </div>
-      
+
       <div className="grid gap-6">
+        {/* Cover Image Section */}
         <Card className="p-6">
-          <h3 className="text-lg font-semibold mb-4">Informazioni Pub</h3>
-          <div className="grid gap-4">
+          <h3 className="text-lg font-semibold mb-4 flex items-center">
+            <Image className="h-5 w-5 mr-2 text-blue-600" />
+            Immagine di Copertina
+          </h3>
+          <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+            L'immagine principale che rappresenta il tuo pub. Sarà mostrata nella pagina del pub e nei risultati di ricerca.
+          </p>
+          <ImageUpload
+            label="Copertina Pub"
+            currentImageUrl={settingsData.coverImageUrl}
+            onImageChange={(url) => updateSettingsField('coverImageUrl', url)}
+            folder="pub-covers"
+            aspectRatio="landscape"
+            maxSize={10}
+          />
+        </Card>
+
+        {/* Logo/Profile Image Section */}
+        <Card className="p-6">
+          <h3 className="text-lg font-semibold mb-4 flex items-center">
+            <Users className="h-5 w-5 mr-2 text-purple-600" />
+            Logo/Immagine Profilo
+          </h3>
+          <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+            Il logo o l'immagine che identifica il tuo pub. Apparirà come avatar nelle liste e nelle mappe.
+          </p>
+          <ImageUpload
+            label="Logo Pub"
+            currentImageUrl={settingsData.logoUrl}
+            onImageChange={(url) => updateSettingsField('logoUrl', url)}
+            folder="pub-logos"
+            aspectRatio="square"
+            maxSize={5}
+          />
+        </Card>
+
+        {/* Basic Information */}
+        <Card className="p-6">
+          <h3 className="text-lg font-semibold mb-4 flex items-center">
+            <Store className="h-5 w-5 mr-2 text-orange-600" />
+            Informazioni Base
+          </h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <Label>Nome Pub</Label>
-              <Input defaultValue={currentPub?.name} data-testid="input-pub-name" />
+              <Label htmlFor="pub-name">Nome Pub *</Label>
+              <Input 
+                id="pub-name"
+                value={settingsData.name || ''}
+                onChange={(e) => updateSettingsField('name', e.target.value)}
+                placeholder="Es. Il Luppolino"
+                data-testid="input-pub-name"
+              />
             </div>
             <div>
-              <Label>Indirizzo</Label>
-              <Input defaultValue={currentPub?.address} data-testid="input-pub-address" />
+              <Label htmlFor="business-name">Nome Commerciale</Label>
+              <Input 
+                id="business-name"
+                value={settingsData.businessName || ''}
+                onChange={(e) => updateSettingsField('businessName', e.target.value)}
+                placeholder="Ragione sociale"
+                data-testid="input-business-name"
+              />
             </div>
             <div>
-              <Label>Descrizione</Label>
-              <Textarea defaultValue={currentPub?.description || ''} data-testid="textarea-pub-description" />
+              <Label htmlFor="pub-phone">Telefono</Label>
+              <Input 
+                id="pub-phone"
+                value={settingsData.phone || ''}
+                onChange={(e) => updateSettingsField('phone', e.target.value)}
+                placeholder="+39 012 345 6789"
+                data-testid="input-pub-phone"
+              />
+            </div>
+            <div>
+              <Label htmlFor="pub-email">Email</Label>
+              <Input 
+                id="pub-email"
+                type="email"
+                value={settingsData.email || ''}
+                onChange={(e) => updateSettingsField('email', e.target.value)}
+                placeholder="info@ilpub.it"
+                data-testid="input-pub-email"
+              />
+            </div>
+            <div>
+              <Label htmlFor="vat-number">Partita IVA</Label>
+              <Input 
+                id="vat-number"
+                value={settingsData.vatNumber || ''}
+                onChange={(e) => updateSettingsField('vatNumber', e.target.value)}
+                placeholder="12345678901"
+                data-testid="input-vat-number"
+              />
             </div>
           </div>
-          <div className="flex justify-end mt-4">
-            <Button data-testid="button-save-pub-info">
-              <Save className="h-4 w-4 mr-2" />
-              Salva Modifiche
-            </Button>
+          <div className="mt-4">
+            <Label htmlFor="pub-description">Descrizione</Label>
+            <Textarea 
+              id="pub-description"
+              value={settingsData.description || ''}
+              onChange={(e) => updateSettingsField('description', e.target.value)}
+              placeholder="Racconta la storia del tuo pub, cosa lo rende speciale..."
+              rows={4}
+              data-testid="textarea-pub-description"
+            />
           </div>
         </Card>
-        
+
+        {/* Address and Location */}
         <Card className="p-6">
-          <h3 className="text-lg font-semibold mb-4">Visibilità</h3>
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="font-medium">Pub Visibile</p>
-                <p className="text-sm text-gray-500">Il pub appare nei risultati di ricerca</p>
-              </div>
-              <Switch defaultChecked data-testid="switch-pub-visible" />
+          <h3 className="text-lg font-semibold mb-4 flex items-center">
+            <MapPin className="h-5 w-5 mr-2 text-red-600" />
+            Indirizzo e Posizione
+          </h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="md:col-span-2">
+              <Label htmlFor="pub-address">Indirizzo *</Label>
+              <Input 
+                id="pub-address"
+                value={settingsData.address || ''}
+                onChange={(e) => updateSettingsField('address', e.target.value)}
+                placeholder="Via Roma, 123"
+                data-testid="input-pub-address"
+              />
             </div>
-            <div className="flex items-center justify-between">
+            <div>
+              <Label htmlFor="pub-city">Città *</Label>
+              <Input 
+                id="pub-city"
+                value={settingsData.city || ''}
+                onChange={(e) => updateSettingsField('city', e.target.value)}
+                placeholder="Milano"
+                data-testid="input-pub-city"
+              />
+            </div>
+            <div>
+              <Label htmlFor="pub-region">Regione/Provincia</Label>
+              <Input 
+                id="pub-region"
+                value={settingsData.region || ''}
+                onChange={(e) => updateSettingsField('region', e.target.value)}
+                placeholder="Lombardia"
+                data-testid="input-pub-region"
+              />
+            </div>
+            <div>
+              <Label htmlFor="pub-postal">CAP</Label>
+              <Input 
+                id="pub-postal"
+                value={settingsData.postalCode || ''}
+                onChange={(e) => updateSettingsField('postalCode', e.target.value)}
+                placeholder="20121"
+                data-testid="input-pub-postal"
+              />
+            </div>
+          </div>
+        </Card>
+
+        {/* Social Media Links */}
+        <Card className="p-6">
+          <h3 className="text-lg font-semibold mb-4 flex items-center">
+            <Globe className="h-5 w-5 mr-2 text-blue-600" />
+            Social Media e Web
+          </h3>
+          <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+            Collega i tuoi profili social per aumentare la visibilità del pub.
+          </p>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <Label htmlFor="website-url">Sito Web</Label>
+              <Input 
+                id="website-url"
+                value={settingsData.websiteUrl || ''}
+                onChange={(e) => updateSettingsField('websiteUrl', e.target.value)}
+                placeholder="https://www.ilmiopub.it"
+                data-testid="input-website-url"
+              />
+            </div>
+            <div>
+              <Label htmlFor="facebook-url">Facebook</Label>
+              <Input 
+                id="facebook-url"
+                value={settingsData.facebookUrl || ''}
+                onChange={(e) => updateSettingsField('facebookUrl', e.target.value)}
+                placeholder="https://facebook.com/ilmiopub"
+                data-testid="input-facebook-url"
+              />
+            </div>
+            <div>
+              <Label htmlFor="instagram-url">Instagram</Label>
+              <Input 
+                id="instagram-url"
+                value={settingsData.instagramUrl || ''}
+                onChange={(e) => updateSettingsField('instagramUrl', e.target.value)}
+                placeholder="https://instagram.com/ilmiopub"
+                data-testid="input-instagram-url"
+              />
+            </div>
+            <div>
+              <Label htmlFor="twitter-url">Twitter/X</Label>
+              <Input 
+                id="twitter-url"
+                value={settingsData.twitterUrl || ''}
+                onChange={(e) => updateSettingsField('twitterUrl', e.target.value)}
+                placeholder="https://x.com/ilmiopub"
+                data-testid="input-twitter-url"
+              />
+            </div>
+          </div>
+        </Card>
+
+        {/* Visibility and Privacy Settings */}
+        <Card className="p-6">
+          <h3 className="text-lg font-semibold mb-4 flex items-center">
+            <Eye className="h-5 w-5 mr-2 text-green-600" />
+            Visibilità e Privacy
+          </h3>
+          <div className="space-y-4">
+            <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
               <div>
-                <p className="font-medium">Taplist Pubblica</p>
-                <p className="text-sm text-gray-500">Gli utenti possono vedere la taplist</p>
+                <p className="font-medium">Pub Attivo</p>
+                <p className="text-sm text-gray-500">Il pub è operativo e visibile al pubblico</p>
               </div>
-              <Switch defaultChecked data-testid="switch-taplist-visible" />
+              <Switch 
+                checked={settingsData.isActive ?? true}
+                onCheckedChange={(checked) => updateSettingsField('isActive', checked)}
+                data-testid="switch-pub-active"
+              />
+            </div>
+            <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
+              <div>
+                <p className="font-medium">Listato nei Risultati</p>
+                <p className="text-sm text-gray-500">Il pub appare nelle ricerche e nelle mappe</p>
+              </div>
+              <Switch 
+                checked={settingsData.isActive ?? true}
+                onCheckedChange={(checked) => updateSettingsField('isActive', checked)}
+                data-testid="switch-pub-visible"
+              />
+            </div>
+          </div>
+        </Card>
+
+        {/* Action Buttons */}
+        <Card className="p-6 bg-gradient-to-r from-blue-50 to-purple-50 dark:from-gray-800 dark:to-gray-700 border-blue-200 dark:border-gray-600">
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+            <div>
+              <h4 className="font-semibold text-gray-900 dark:text-white">Modifiche in Sospeso</h4>
+              <p className="text-sm text-gray-600 dark:text-gray-400">
+                {settingsChanged ? 
+                  'Hai delle modifiche non salvate. Clicca "Salva" per confermare.' : 
+                  'Tutte le modifiche sono state salvate.'}
+              </p>
+            </div>
+            <div className="flex gap-3">
+              {settingsChanged && (
+                <Button 
+                  variant="outline" 
+                  onClick={() => {
+                    // Reset to original data
+                    if (currentPub) {
+                      setSettingsData({
+                        name: currentPub.name || '',
+                        description: currentPub.description || '',
+                        address: currentPub.address || '',
+                        city: currentPub.city || '',
+                        region: currentPub.region || '',
+                        postalCode: currentPub.postalCode || '',
+                        phone: currentPub.phone || '',
+                        email: currentPub.email || '',
+                        websiteUrl: currentPub.websiteUrl || '',
+                        facebookUrl: currentPub.facebookUrl || '',
+                        instagramUrl: currentPub.instagramUrl || '',
+                        twitterUrl: currentPub.twitterUrl || '',
+                        logoUrl: currentPub.logoUrl || '',
+                        coverImageUrl: currentPub.coverImageUrl || '',
+                        openingHours: currentPub.openingHours || null,
+                        isActive: currentPub.isActive ?? true,
+                        businessName: currentPub.businessName || '',
+                        vatNumber: currentPub.vatNumber || '',
+                      });
+                      setSettingsChanged(false);
+                    }
+                  }}
+                  data-testid="button-reset-settings"
+                >
+                  <X className="h-4 w-4 mr-2" />
+                  Annulla
+                </Button>
+              )}
+              <Button 
+                onClick={handleSaveSettings}
+                disabled={!settingsChanged || updatePubMutation.isPending}
+                className="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700"
+                data-testid="button-save-settings"
+              >
+                {updatePubMutation.isPending ? (
+                  <>
+                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
+                    Salvando...
+                  </>
+                ) : (
+                  <>
+                    <Save className="h-4 w-4 mr-2" />
+                    Salva Impostazioni
+                  </>
+                )}
+              </Button>
             </div>
           </div>
         </Card>
