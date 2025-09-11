@@ -76,75 +76,78 @@ const ModernBeerCard = ({ beer, prices, className = "" }: {
   className?: string;
 }) => (
   <div className={`glass-card rounded-2xl p-6 hover:scale-102 transition-all duration-300 group ${className}`}>
-    <div className="flex items-start space-x-4">
-      <div className="relative">
-        <img
-          src={beer?.imageUrl || "https://images.unsplash.com/photo-1608667508764-33cf0db3f6a9?ixlib=rb-4.0.3&auto=format&fit=crop&w=100&h=100"}
-          alt={beer?.name}
-          className="w-16 h-16 object-cover rounded-xl flex-shrink-0 group-hover:scale-105 transition-transform duration-300"
-        />
-      </div>
-      
-      <div className="flex-1 min-w-0">
-        <Link href={`/beer/${beer?.id}`}>
-          <h4 className="font-bold text-gray-900 dark:text-white mb-1 break-words hover:text-primary cursor-pointer transition-colors text-lg group-hover:text-transparent group-hover:bg-gradient-to-r group-hover:from-amber-500 group-hover:to-orange-600 group-hover:bg-clip-text">
-            {beer?.name || 'Nome non disponibile'}
-          </h4>
-        </Link>
-        
-        <Link href={`/brewery/${beer?.brewery?.id}`}>
-          <p className="text-sm text-gray-600 dark:text-gray-400 mb-3 break-words hover:text-primary cursor-pointer transition-colors font-medium">
-            {beer?.brewery?.name || beer?.breweryName || 'Birrificio non disponibile'}
-          </p>
-        </Link>
-        
-        {/* Modern Badges */}
-        <div className="flex flex-wrap items-center gap-2 mb-3">
-          {beer?.style && (
-            <Badge variant="outline" className="text-xs bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-950 dark:to-indigo-950 border-blue-200 text-blue-800 dark:text-blue-200">
-              <Sparkles className="h-3 w-3 mr-1" />
-              {beer.style}
-            </Badge>
-          )}
-          {beer?.abv && (
-            <Badge variant="outline" className="text-xs bg-gradient-to-r from-orange-50 to-red-50 dark:from-orange-950 dark:to-red-950 border-orange-200 text-orange-800 dark:text-orange-200">
-              <Target className="h-3 w-3 mr-1" />
-              {beer.abv}% ABV
-            </Badge>
-          )}
+    <div className="flex items-start justify-between space-x-4">
+      {/* Left side: Beer image and details */}
+      <div className="flex items-start space-x-4 flex-1 min-w-0">
+        <div className="relative flex-shrink-0">
+          <img
+            src={beer?.imageUrl || "https://images.unsplash.com/photo-1608667508764-33cf0db3f6a9?ixlib=rb-4.0.3&auto=format&fit=crop&w=100&h=100"}
+            alt={beer?.name}
+            className="w-16 h-16 object-cover rounded-xl group-hover:scale-105 transition-transform duration-300"
+          />
         </div>
         
-        {/* Prices */}
-        {prices && prices.length > 0 && (
-          <div className="space-y-2">
-            <h5 className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Prezzi</h5>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-              {prices.map((price: any, index: number) => (
-                <div key={index} className="flex justify-between items-center text-sm bg-gray-50 dark:bg-gray-800 rounded-lg px-3 py-2">
-                  <span className="text-gray-600 dark:text-gray-400 font-medium">
-                    {typeof price === 'object' ? (price as any).size : price}
-                    {typeof price === 'object' && (price as any).format && (
-                      <span className="text-xs ml-1">({(price as any).format})</span>
-                    )}
-                  </span>
-                  <span className="font-bold text-primary text-base">
-                    €{typeof price === 'object' ? (price as any).price : price}
-                  </span>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-        
-        {/* Description */}
-        {beer?.description && (
-          <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
-            <p className="text-sm text-gray-600 dark:text-gray-400 line-clamp-3">
-              {beer.description}
+        <div className="flex-1 min-w-0">
+          <Link href={`/beer/${beer?.id}`}>
+            <h4 className="font-bold text-gray-900 dark:text-white mb-1 break-words hover:text-primary cursor-pointer transition-colors text-lg group-hover:text-transparent group-hover:bg-gradient-to-r group-hover:from-amber-500 group-hover:to-orange-600 group-hover:bg-clip-text">
+              {beer?.name || 'Nome non disponibile'}
+            </h4>
+          </Link>
+          
+          <Link href={`/brewery/${beer?.brewery?.id}`}>
+            <p className="text-sm text-gray-600 dark:text-gray-400 mb-3 break-words hover:text-primary cursor-pointer transition-colors font-medium">
+              {beer?.brewery?.name || beer?.breweryName || 'Birrificio non disponibile'}
             </p>
+          </Link>
+          
+          {/* Modern Badges */}
+          <div className="flex flex-wrap items-center gap-2 mb-3">
+            {beer?.style && (
+              <Badge variant="outline" className="text-xs bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-950 dark:to-indigo-950 border-blue-200 text-blue-800 dark:text-blue-200">
+                <Sparkles className="h-3 w-3 mr-1" />
+                {beer.style}
+              </Badge>
+            )}
+            {beer?.abv && (
+              <Badge variant="outline" className="text-xs bg-gradient-to-r from-orange-50 to-red-50 dark:from-orange-950 dark:to-red-950 border-orange-200 text-orange-800 dark:text-orange-200">
+                <Target className="h-3 w-3 mr-1" />
+                {beer.abv}% ABV
+              </Badge>
+            )}
           </div>
-        )}
+          
+          {/* Description */}
+          {beer?.description && (
+            <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+              <p className="text-sm text-gray-600 dark:text-gray-400 line-clamp-3">
+                {beer.description}
+              </p>
+            </div>
+          )}
+        </div>
       </div>
+
+      {/* Right side: Prices */}
+      {prices && prices.length > 0 && (
+        <div className="flex-shrink-0 text-right space-y-2 min-w-[120px]">
+          <h5 className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-3">Prezzi</h5>
+          <div className="space-y-2">
+            {prices.map((price: any, index: number) => (
+              <div key={index} className="bg-gray-50 dark:bg-gray-800 rounded-lg px-3 py-2 text-right">
+                <div className="text-xs text-gray-600 dark:text-gray-400 font-medium">
+                  {typeof price === 'object' ? (price as any).size : price}
+                  {typeof price === 'object' && (price as any).format && (
+                    <span className="ml-1">({(price as any).format})</span>
+                  )}
+                </div>
+                <div className="font-bold text-primary text-base mt-1">
+                  €{typeof price === 'object' ? (price as any).price : price}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   </div>
 );

@@ -49,69 +49,74 @@ export default function TapList({ tapList }: TapListProps) {
     <div className="space-y-4">      
       {tapList.map((tap) => (
         <div key={tap.id} className="border rounded-lg p-4 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors group">
-          <div className="">
-            <div className="flex items-start justify-between">
-              <div className="flex-1">
-                {/* Tap number badge */}
-                {tap.tapNumber && (
-                  <div className="flex items-center gap-2 mb-2">
-                    <span className="bg-gray-100 text-gray-800 px-2 py-1 rounded-full text-xs">
-                      Spina {tap.tapNumber}
-                    </span>
+          <div className="flex items-start justify-between space-x-4">
+            {/* Left side: Beer details */}
+            <div className="flex-1 min-w-0">
+              {/* Tap number badge */}
+              {tap.tapNumber && (
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="bg-gray-100 text-gray-800 px-2 py-1 rounded-full text-xs">
+                    Spina {tap.tapNumber}
+                  </span>
+                </div>
+              )}
+              
+              <div className="flex items-center gap-3 mb-3">
+                {(tap.beer.imageUrl || tap.beer.brewery.logoUrl) && (
+                  <img
+                    src={tap.beer.imageUrl || tap.beer.brewery.logoUrl || "https://images.unsplash.com/photo-1608270586620-248524c67de9?ixlib=rb-4.0.3&auto=format&fit=crop&w=100&h=100"}
+                    alt={tap.beer.name}
+                    className="w-12 h-12 rounded-lg object-cover flex-shrink-0"
+                  />
+                )}
+                <div className="flex-1 min-w-0">
+                  <Link href={`/beer/${tap.beer.id}`}>
+                    <h3 className="font-semibold text-base break-words hover:text-primary cursor-pointer transition-colors">
+                      {tap.beer.name}
+                    </h3>
+                  </Link>
+                  <Link href={`/brewery/${tap.beer.brewery.id}`}>
+                    <p className="text-gray-600 text-sm break-words hover:text-primary cursor-pointer transition-colors">
+                      {tap.beer.brewery.name}
+                    </p>
+                  </Link>
+                  <p className="text-xs text-gray-500">
+                    {tap.beer.style} • {tap.beer.abv}% ABV
+                  </p>
+                </div>
+              </div>
+
+              {/* Description if available */}
+              {tap.description && (
+                <div className="mt-4 pt-4 border-t border-gray-200/50 dark:border-gray-700/50">
+                  <p className="text-sm text-gray-700 dark:text-gray-300 italic leading-relaxed">{tap.description}</p>
+                </div>
+              )}
+            </div>
+
+            {/* Right side: Prices */}
+            <div className="flex-shrink-0 text-right space-y-2 min-w-[100px]">
+              <div className="space-y-2">
+                {tap.priceSmall && parseFloat(tap.priceSmall) > 0 && (
+                  <div className="bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400 px-3 py-2 rounded-lg text-right">
+                    <div className="text-xs font-medium">Piccola</div>
+                    <div className="font-bold text-sm">€{parseFloat(tap.priceSmall).toFixed(2)}</div>
                   </div>
                 )}
-                
-                <div className="flex items-center gap-3 mb-3">
-                  {(tap.beer.imageUrl || tap.beer.brewery.logoUrl) && (
-                    <img
-                      src={tap.beer.imageUrl || tap.beer.brewery.logoUrl || "https://images.unsplash.com/photo-1608270586620-248524c67de9?ixlib=rb-4.0.3&auto=format&fit=crop&w=100&h=100"}
-                      alt={tap.beer.name}
-                      className="w-12 h-12 rounded-lg object-cover"
-                    />
-                  )}
-                  <div className="flex-1">
-                    <Link href={`/beer/${tap.beer.id}`}>
-                      <h3 className="font-semibold text-base break-words hover:text-primary cursor-pointer transition-colors">
-                        {tap.beer.name}
-                      </h3>
-                    </Link>
-                    <Link href={`/brewery/${tap.beer.brewery.id}`}>
-                      <p className="text-gray-600 text-sm break-words hover:text-primary cursor-pointer transition-colors">
-                        {tap.beer.brewery.name}
-                      </p>
-                    </Link>
-                    <p className="text-xs text-gray-500">
-                      {tap.beer.style} • {tap.beer.abv}% ABV
-                    </p>
+                {tap.priceMedium && parseFloat(tap.priceMedium) > 0 && (
+                  <div className="bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-400 px-3 py-2 rounded-lg text-right">
+                    <div className="text-xs font-medium">Media</div>
+                    <div className="font-bold text-sm">€{parseFloat(tap.priceMedium).toFixed(2)}</div>
                   </div>
-                </div>
-
-                <div className="flex flex-wrap gap-2 text-xs">
-                  {tap.priceSmall && parseFloat(tap.priceSmall) > 0 && (
-                    <span className="bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400 px-2 py-1 rounded-full">
-                      €{parseFloat(tap.priceSmall).toFixed(2)} - Piccola
-                    </span>
-                  )}
-                  {tap.priceMedium && parseFloat(tap.priceMedium) > 0 && (
-                    <span className="bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-400 px-2 py-1 rounded-full">
-                      €{parseFloat(tap.priceMedium).toFixed(2)} - Media
-                    </span>
-                  )}
-                  {tap.priceLarge && parseFloat(tap.priceLarge) > 0 && (
-                    <span className="bg-orange-100 text-orange-800 dark:bg-orange-900/20 dark:text-orange-400 px-2 py-1 rounded-full">
-                      €{parseFloat(tap.priceLarge).toFixed(2)} - Grande
-                    </span>
-                  )}
-                </div>
+                )}
+                {tap.priceLarge && parseFloat(tap.priceLarge) > 0 && (
+                  <div className="bg-orange-100 text-orange-800 dark:bg-orange-900/20 dark:text-orange-400 px-3 py-2 rounded-lg text-right">
+                    <div className="text-xs font-medium">Grande</div>
+                    <div className="font-bold text-sm">€{parseFloat(tap.priceLarge).toFixed(2)}</div>
+                  </div>
+                )}
               </div>
             </div>
-            
-            {/* Description if available */}
-            {tap.description && (
-              <div className="mt-6 pt-4 border-t border-gray-200/50 dark:border-gray-700/50">
-                <p className="text-sm text-gray-700 dark:text-gray-300 italic leading-relaxed">{tap.description}</p>
-              </div>
-            )}
           </div>
         </div>
       ))}
