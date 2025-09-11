@@ -525,8 +525,10 @@ export default function PubDetail() {
                             <span className="text-sm text-center">{(pub as any)?.address}, {(pub as any)?.city}</span>
                           </div>
                           <div className="flex items-center">
-                            <Heart className="h-4 w-4 mr-2 text-red-400" />
-                            <span className="text-sm">{favoritesCountData?.count || 0} preferiti</span>
+                            <div className="flex items-center justify-center bg-red-500/20 backdrop-blur-sm border border-red-300/30 rounded-lg px-2 py-1 min-w-[3rem]">
+                              <Heart className="h-3.5 w-3.5 mr-1.5 text-red-400 fill-current" />
+                              <span className="text-xs font-semibold text-red-100">{favoritesCountData?.count || 0}</span>
+                            </div>
                           </div>
                         </div>
                       </div>
