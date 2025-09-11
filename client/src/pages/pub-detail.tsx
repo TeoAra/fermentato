@@ -4,7 +4,6 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { 
   Star, 
-  MapPin, 
   Clock, 
   Phone, 
   Globe, 
@@ -477,10 +476,10 @@ export default function PubDetail() {
           <div className="absolute inset-0 flex items-end">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full pb-12">
               <div className="glass-card rounded-2xl p-8 backdrop-blur-md bg-white/10 border border-white/20">
-                <div className="flex flex-col md:flex-row items-center md:items-center justify-between gap-6">
-                  <div className="flex items-center space-x-6 w-full md:w-auto justify-center md:justify-start">
+                <div className="flex flex-col md:flex-row items-center md:items-center justify-between gap-8">
+                  <div className="flex flex-col md:flex-row items-center space-y-4 md:space-y-0 md:space-x-6 w-full md:w-auto justify-center md:justify-start">
                     {(pub as any)?.logoUrl && (
-                      <Avatar className="h-20 w-20 ring-4 ring-white/30">
+                      <Avatar className="h-20 w-20 ring-4 ring-white/30 flex-shrink-0">
                         <AvatarImage src={(pub as any).logoUrl} alt={`${(pub as any).name} - Logo`} />
                         <AvatarFallback className="bg-gradient-to-br from-amber-500 to-orange-600 text-white text-2xl">
                           {(pub as any)?.name?.[0] || 'P'}
@@ -488,17 +487,17 @@ export default function PubDetail() {
                       </Avatar>
                     )}
                     <div className="text-center md:text-left">
-                      <h1 className="text-display-xl text-white mb-3 font-bold">
+                      <h1 className="text-2xl sm:text-3xl md:text-4xl text-white mb-4 font-bold leading-tight">
                         {(pub as any)?.name}
                       </h1>
-                      <div className="flex flex-col space-y-2">
-                        <div className="flex items-center justify-center md:justify-start space-x-4">
+                      <div className="flex flex-col sm:flex-row items-center justify-center md:justify-start space-y-3 sm:space-y-0 sm:space-x-4">
+                        <div className="flex items-center justify-center space-x-3">
                           <Badge 
                             className={`${
                               isOpen 
                                 ? 'bg-green-500/20 text-green-100 border-green-300/30' 
                                 : 'bg-red-500/20 text-red-100 border-red-300/30'
-                            } backdrop-blur-sm`}
+                            } backdrop-blur-sm px-3 py-2`}
                           >
                             {isOpen ? (
                               <>
@@ -513,23 +512,16 @@ export default function PubDetail() {
                             )}
                           </Badge>
                           {!(pub as any)?.isActive && (
-                            <Badge className="bg-orange-500/20 text-orange-100 border-orange-300/30 backdrop-blur-sm">
+                            <Badge className="bg-orange-500/20 text-orange-100 border-orange-300/30 backdrop-blur-sm px-3 py-2">
                               Temporaneamente Chiuso
                             </Badge>
                           )}
                         </div>
                         
-                        <div className="flex flex-col sm:flex-row items-center justify-center md:justify-start space-y-2 sm:space-y-0 sm:space-x-4 text-white/80">
-                          <div className="flex items-center">
-                            <MapPin className="h-4 w-4 mr-2" />
-                            <span className="text-sm text-center">{(pub as any)?.address}, {(pub as any)?.city}</span>
-                          </div>
-                          <div className="flex items-center">
-                            <div className="flex items-center justify-center bg-red-500/20 backdrop-blur-sm border border-red-300/30 rounded-lg px-2 py-1 min-w-[3rem]">
-                              <Heart className="h-3.5 w-3.5 mr-1.5 text-red-400 fill-current" />
-                              <span className="text-xs font-semibold text-red-100">{favoritesCountData?.count || 0}</span>
-                            </div>
-                          </div>
+                        <div className="flex items-center justify-center bg-red-500/20 backdrop-blur-sm border border-red-300/30 rounded-lg px-4 py-2.5 min-w-[5rem]">
+                          <Heart className="h-4 w-4 mr-2 text-red-400 fill-current" />
+                          <span className="text-sm font-bold text-red-100">{favoritesCountData?.count || 0}</span>
+                          <span className="text-xs text-red-200 ml-1 hidden sm:inline">preferiti</span>
                         </div>
                       </div>
                     </div>
