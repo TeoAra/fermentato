@@ -55,6 +55,7 @@ export interface IStorage {
   updatePub(id: number, updates: Partial<InsertPub>): Promise<Pub>;
   deletePub(id: number): Promise<void>;
   getPubsByOwner(ownerId: string): Promise<Pub[]>;
+  searchPubs(query: string): Promise<Pub[]>;
 
   // Brewery operations
   getBreweries(): Promise<Brewery[]>;
@@ -62,6 +63,7 @@ export interface IStorage {
   createBrewery(brewery: InsertBrewery): Promise<Brewery>;
   updateBrewery(id: number, updates: Partial<InsertBrewery>): Promise<Brewery>;
   deleteBrewery(id: number): Promise<void>;
+  searchBreweries(query: string): Promise<Brewery[]>;
 
   // Beer operations
   getBeers(): Promise<Beer[]>;
@@ -187,6 +189,20 @@ export class DatabaseStorage implements IStorage {
     return await db.select().from(pubs).where(eq(pubs.ownerId, ownerId));
   }
 
+  async searchPubs(query: string): Promise<Pub[]> {
+    return await db
+      .select()
+      .from(pubs)
+      .where(or(
+        ilike(pubs.name, `%${query}%`),
+        ilike(pubs.address, `%${query}%`),
+        ilike(pubs.city, `%${query}%`),
+        ilike(pubs.description, `%${query}%`)
+      ))
+      .orderBy(asc(pubs.name))
+      .limit(10);
+  }
+
   // Brewery operations
   async getBreweries(): Promise<Brewery[]> {
     return await db.select().from(breweries).orderBy(asc(breweries.name));
@@ -222,6 +238,19 @@ export class DatabaseStorage implements IStorage {
 
   async deleteBrewery(id: number): Promise<void> {
     await db.delete(breweries).where(eq(breweries.id, id));
+  }
+
+  async searchBreweries(query: string): Promise<Brewery[]> {
+    return await db
+      .select()
+      .from(breweries)
+      .where(or(
+        ilike(breweries.name, `%${query}%`),
+        ilike(breweries.location, `%${query}%`),
+        ilike(breweries.description, `%${query}%`)
+      ))
+      .orderBy(asc(breweries.name))
+      .limit(10);
   }
 
   // Beer operations
@@ -1107,6 +1136,13 @@ class StorageWrapper implements IStorage {
     );
   }
 
+  async searchPubs(query: string): Promise<Pub[]> {
+    return this.dbCall(
+      () => this.databaseStorage.searchPubs(query),
+      () => memoryStorageInstance.searchPubs(query)
+    );
+  }
+
   // Brewery operations
   async getBreweries(): Promise<Brewery[]> {
     return this.dbCall(
@@ -1140,6 +1176,13 @@ class StorageWrapper implements IStorage {
     return this.dbCall(
       () => this.databaseStorage.deleteBrewery(id),
       () => memoryStorageInstance.deleteBrewery(id)
+    );
+  }
+
+  async searchBreweries(query: string): Promise<Brewery[]> {
+    return this.dbCall(
+      () => this.databaseStorage.searchBreweries(query),
+      () => memoryStorageInstance.searchBreweries(query)
     );
   }
 

@@ -149,6 +149,16 @@ export class MemoryStorage {
     return updatedPub;
   }
 
+  async searchPubs(query: string): Promise<Pub[]> {
+    const lowerQuery = query.toLowerCase();
+    return Array.from(this.pubs.values()).filter(pub => 
+      pub.name.toLowerCase().includes(lowerQuery) ||
+      pub.address?.toLowerCase().includes(lowerQuery) ||
+      pub.city?.toLowerCase().includes(lowerQuery) ||
+      pub.description?.toLowerCase().includes(lowerQuery)
+    );
+  }
+
   async deletePub(id: number): Promise<void> {
     this.pubs.delete(id);
   }
@@ -184,6 +194,15 @@ export class MemoryStorage {
     const updatedBrewery = { ...brewery, ...updates, updatedAt: new Date() };
     this.breweries.set(id, updatedBrewery);
     return updatedBrewery;
+  }
+
+  async searchBreweries(query: string): Promise<Brewery[]> {
+    const lowerQuery = query.toLowerCase();
+    return Array.from(this.breweries.values()).filter(brewery => 
+      brewery.name.toLowerCase().includes(lowerQuery) ||
+      brewery.location?.toLowerCase().includes(lowerQuery) ||
+      brewery.description?.toLowerCase().includes(lowerQuery)
+    );
   }
 
   async deleteBrewery(id: number): Promise<void> {
