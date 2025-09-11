@@ -87,19 +87,19 @@ export default function TapList({ tapList }: TapListProps) {
                 </div>
 
                 <div className="flex flex-wrap gap-2 text-xs">
-                  {tap.priceSmall && Number(tap.priceSmall) > 0 && (
-                    <span className="bg-green-100 text-green-800 px-2 py-1 rounded-full">
-                      €{tap.priceSmall} - Piccola
+                  {tap.priceSmall && parseFloat(tap.priceSmall) > 0 && (
+                    <span className="bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400 px-2 py-1 rounded-full">
+                      €{parseFloat(tap.priceSmall).toFixed(2)} - Piccola
                     </span>
                   )}
-                  {tap.priceMedium && Number(tap.priceMedium) > 0 && (
-                    <span className="bg-blue-100 text-blue-800 px-2 py-1 rounded-full">
-                      €{tap.priceMedium} - Media
+                  {tap.priceMedium && parseFloat(tap.priceMedium) > 0 && (
+                    <span className="bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-400 px-2 py-1 rounded-full">
+                      €{parseFloat(tap.priceMedium).toFixed(2)} - Media
                     </span>
                   )}
-                  {tap.priceLarge && Number(tap.priceLarge) > 0 && (
-                    <span className="bg-orange-100 text-orange-800 px-2 py-1 rounded-full">
-                      €{tap.priceLarge} - Grande
+                  {tap.priceLarge && parseFloat(tap.priceLarge) > 0 && (
+                    <span className="bg-orange-100 text-orange-800 dark:bg-orange-900/20 dark:text-orange-400 px-2 py-1 rounded-full">
+                      €{parseFloat(tap.priceLarge).toFixed(2)} - Grande
                     </span>
                   )}
                 </div>
