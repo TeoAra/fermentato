@@ -556,7 +556,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       console.log('DELETE taplist item:', { pubId, id });
       
-      await storage.removeTapListItem(parseInt(id));
+      await storage.removeFromTapList(parseInt(id));
       console.log('Deleted taplist item:', id);
       res.status(200).json({ success: true });
     } catch (error) {
