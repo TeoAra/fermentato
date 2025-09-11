@@ -1,7 +1,7 @@
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Link } from "wouter";
-import { Wine, Sparkles, Crown, Target } from "lucide-react";
+import { Wine } from "lucide-react";
 
 interface TapListProps {
   tapList: Array<{
@@ -48,134 +48,60 @@ export default function TapList({ tapList }: TapListProps) {
   return (
     <div className="space-y-4">      
       {tapList.map((tap) => (
-        <div key={tap.id} className="glass-card rounded-2xl p-6 hover:scale-102 transition-all duration-300 group border border-white/20 backdrop-blur-sm bg-white/60 dark:bg-gray-900/60 shadow-lg hover:shadow-xl">
+        <div key={tap.id} className="border rounded-lg p-4 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors group">
           <div className="">
-            {/* Modern Layout */}
-            <div className="flex flex-col sm:flex-row sm:items-start gap-6">
-              
-              {/* Beer Image + Basic Info */}
-              <div className="flex items-start gap-4 flex-1">
-                <div className="relative flex-shrink-0">
-                  <img
-                    src={tap.beer.imageUrl || tap.beer.brewery.logoUrl || "https://images.unsplash.com/photo-1608270586620-248524c67de9?ixlib=rb-4.0.3&auto=format&fit=crop&w=100&h=100"}
-                    alt={tap.beer.name}
-                    className="w-16 h-16 sm:w-20 sm:h-20 rounded-xl object-cover shadow-lg group-hover:scale-105 transition-transform duration-300 ring-2 ring-white/50 dark:ring-gray-700/50"
-                  />
-                  {tap.tapNumber && (
-                    <div className="absolute -top-2 -right-2 bg-gradient-to-br from-amber-500 to-orange-600 text-white text-xs font-bold rounded-full w-7 h-7 flex items-center justify-center shadow-lg">
-                      {tap.tapNumber}
-                    </div>
-                  )}
-                  <div className="absolute -bottom-1 -left-1 w-6 h-6 bg-gradient-to-br from-amber-500 to-orange-600 rounded-full flex items-center justify-center">
-                    <Crown className="h-3 w-3 text-white" />
+            <div className="flex items-start justify-between">
+              <div className="flex-1">
+                {/* Tap number badge */}
+                {tap.tapNumber && (
+                  <div className="flex items-center gap-2 mb-2">
+                    <span className="bg-gray-100 text-gray-800 px-2 py-1 rounded-full text-xs">
+                      Spina {tap.tapNumber}
+                    </span>
                   </div>
-                </div>
+                )}
                 
-                <div className="flex-1 min-w-0">
-                  <Link href={`/beer/${tap.beer.id}`}>
-                    <h4 className="font-bold text-lg sm:text-xl text-gray-900 dark:text-white mb-2 break-words hover:text-transparent hover:bg-gradient-to-r hover:from-amber-500 hover:to-orange-600 hover:bg-clip-text cursor-pointer transition-all duration-300 group-hover:text-transparent group-hover:bg-gradient-to-r group-hover:from-amber-500 group-hover:to-orange-600 group-hover:bg-clip-text">
-                      {tap.beer.name}
-                    </h4>
-                  </Link>
-                  <Link href={`/brewery/${tap.beer.brewery.id}`}>
-                    <p className="text-sm text-gray-600 dark:text-gray-400 mb-3 break-words hover:text-primary cursor-pointer transition-colors font-medium">
-                      {tap.beer.brewery.name}
+                <div className="flex items-center gap-3 mb-3">
+                  {(tap.beer.imageUrl || tap.beer.brewery.logoUrl) && (
+                    <img
+                      src={tap.beer.imageUrl || tap.beer.brewery.logoUrl || "https://images.unsplash.com/photo-1608270586620-248524c67de9?ixlib=rb-4.0.3&auto=format&fit=crop&w=100&h=100"}
+                      alt={tap.beer.name}
+                      className="w-12 h-12 rounded-lg object-cover"
+                    />
+                  )}
+                  <div className="flex-1">
+                    <Link href={`/beer/${tap.beer.id}`}>
+                      <h3 className="font-semibold text-base break-words hover:text-primary cursor-pointer transition-colors">
+                        {tap.beer.name}
+                      </h3>
+                    </Link>
+                    <Link href={`/brewery/${tap.beer.brewery.id}`}>
+                      <p className="text-gray-600 text-sm break-words hover:text-primary cursor-pointer transition-colors">
+                        {tap.beer.brewery.name}
+                      </p>
+                    </Link>
+                    <p className="text-xs text-gray-500">
+                      {tap.beer.style} • {tap.beer.abv}% ABV
                     </p>
-                  </Link>
-                  
-                  {/* Modern Badges */}
-                  <div className="flex flex-wrap gap-2 mt-3">
-                    <Badge variant="outline" className="text-xs bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-950 dark:to-indigo-950 border-blue-200 text-blue-800 dark:text-blue-200 px-3 py-1">
-                      <Sparkles className="h-3 w-3 mr-1" />
-                      {tap.beer.style}
-                    </Badge>
-                    {tap.beer.abv && (
-                      <Badge variant="outline" className="text-xs bg-gradient-to-r from-orange-50 to-red-50 dark:from-orange-950 dark:to-red-950 border-orange-200 text-orange-800 dark:text-orange-200 px-3 py-1">
-                        <Target className="h-3 w-3 mr-1" />
-                        {tap.beer.abv}% ABV
-                      </Badge>
-                    )}
                   </div>
                 </div>
-              </div>
-            
-              {/* Prices Section - Modern Design */}
-              <div className="flex-shrink-0">
-                <div className="bg-gradient-to-br from-gray-50/80 to-blue-50/80 dark:from-gray-800/80 dark:to-blue-900/80 rounded-xl p-4 min-w-[140px] backdrop-blur-sm border border-white/50 dark:border-gray-700/50 shadow-sm">
-                  <h5 className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2 flex items-center">
-                    <Wine className="h-3 w-3 mr-1" />
-                    Prezzi
-                  </h5>
-                  <div className="space-y-2">
-                    {tap.prices && typeof tap.prices === 'object' && (Array.isArray(tap.prices) ? tap.prices.length > 0 : Object.keys(tap.prices).length > 0) ? (
-                      Array.isArray(tap.prices) ? (
-                        // Gestisce array format: [{size: "Piccola (20cl)", price: "6"}]
-                        tap.prices.filter((item: any) => item.price && Number(item.price) > 0).map((item: any, index: number) => (
-                          <div key={index} className="flex justify-between items-center bg-white/60 dark:bg-gray-900/60 rounded-lg px-3 py-2 hover:bg-white/80 dark:hover:bg-gray-900/80 transition-colors">
-                            <span className="text-xs text-gray-700 dark:text-gray-300 font-medium">
-                              {item.size || 'N/A'}
-                            </span>
-                            <span className="text-sm font-bold text-amber-600 dark:text-amber-400">
-                              €{Number(item.price).toFixed(2)}
-                            </span>
-                          </div>
-                        ))
-                      ) : (
-                        // Gestisce object format: {"Piccola (20cl)": "6"}
-                        Object.entries(tap.prices).filter(([size, price]) => {
-                          if (typeof price === 'object' && price !== null) {
-                            return 'price' in price && Number((price as any).price) > 0;
-                          }
-                          return Number(price) > 0;
-                        }).map(([size, price]) => (
-                          <div key={size} className="flex justify-between items-center bg-white/60 dark:bg-gray-900/60 rounded-lg px-3 py-2 hover:bg-white/80 dark:hover:bg-gray-900/80 transition-colors">
-                            <span className="text-xs text-gray-700 dark:text-gray-300 font-medium">
-                              {(() => {
-                                const cleanSize = size.replace(/\([^)]*\)/, '').trim();
-                                const numericFormat = cleanSize === 'Piccola' ? '0.2l' : 
-                                                    cleanSize === 'Media' ? '0.4l' : 
-                                                    cleanSize === 'Grande' || cleanSize === 'Boccale' ? '1l' : '';
-                                return `${cleanSize}${numericFormat ? ` (${numericFormat})` : ''}`;
-                              })()}
-                            </span>
-                            <span className="text-sm font-bold text-amber-600 dark:text-amber-400">
-                              €{(() => {
-                                if (typeof price === 'object' && price !== null) {
-                                  if ('price' in price) {
-                                    return Number((price as any).price).toFixed(2);
-                                  }
-                                  return "N/A";
-                                }
-                                return Number(price).toFixed(2);
-                              })()}
-                            </span>
-                          </div>
-                        ))
-                      )
-                    ) : (
-                      // Fallback to legacy prices
-                      <>
-                        {tap.priceSmall && Number(tap.priceSmall) > 0 && (
-                          <div className="flex justify-between items-center bg-white/60 dark:bg-gray-900/60 rounded-lg px-3 py-2 hover:bg-white/80 dark:hover:bg-gray-900/80 transition-colors">
-                            <span className="text-xs text-gray-700 dark:text-gray-300 font-medium">Piccola (0.2l)</span>
-                            <span className="text-sm font-bold text-amber-600 dark:text-amber-400">€{tap.priceSmall}</span>
-                          </div>
-                        )}
-                        {tap.priceMedium && Number(tap.priceMedium) > 0 && (
-                          <div className="flex justify-between items-center bg-white/60 dark:bg-gray-900/60 rounded-lg px-3 py-2 hover:bg-white/80 dark:hover:bg-gray-900/80 transition-colors">
-                            <span className="text-xs text-gray-700 dark:text-gray-300 font-medium">Media (0.4l)</span>
-                            <span className="text-sm font-bold text-amber-600 dark:text-amber-400">€{tap.priceMedium}</span>
-                          </div>
-                        )}
-                        {tap.priceLarge && Number(tap.priceLarge) > 0 && (
-                          <div className="flex justify-between items-center bg-white/60 dark:bg-gray-900/60 rounded-lg px-3 py-2 hover:bg-white/80 dark:hover:bg-gray-900/80 transition-colors">
-                            <span className="text-xs text-gray-700 dark:text-gray-300 font-medium">Boccale (1l)</span>
-                            <span className="text-sm font-bold text-amber-600 dark:text-amber-400">€{tap.priceLarge}</span>
-                          </div>
-                        )}
-                      </>
-                    )}
-                  </div>
+
+                <div className="flex flex-wrap gap-2 text-xs">
+                  {tap.priceSmall && Number(tap.priceSmall) > 0 && (
+                    <span className="bg-green-100 text-green-800 px-2 py-1 rounded-full">
+                      €{tap.priceSmall} - Piccola
+                    </span>
+                  )}
+                  {tap.priceMedium && Number(tap.priceMedium) > 0 && (
+                    <span className="bg-blue-100 text-blue-800 px-2 py-1 rounded-full">
+                      €{tap.priceMedium} - Media
+                    </span>
+                  )}
+                  {tap.priceLarge && Number(tap.priceLarge) > 0 && (
+                    <span className="bg-orange-100 text-orange-800 px-2 py-1 rounded-full">
+                      €{tap.priceLarge} - Grande
+                    </span>
+                  )}
                 </div>
               </div>
             </div>

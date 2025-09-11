@@ -509,7 +509,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: 'Beer ID is required' });
       }
 
-      const item = await storage.addBeerToTap({
+      const item = await storage.addToTapList({
         pubId,
         beerId: parseInt(beerId),
         priceSmall: priceSmall ? parseFloat(priceSmall) : null,
@@ -609,7 +609,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const tapData = insertTapListSchema.parse({ ...req.body, pubId });
-      const tapItem = await storage.addBeerToTap(tapData);
+      const tapItem = await storage.addToTapList(tapData);
       res.status(201).json(tapItem);
     } catch (error) {
       if (error instanceof z.ZodError) {
@@ -626,7 +626,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userId = req.user.claims.sub;
       const tapId = parseInt(req.params.id);
       const tapData = insertTapListSchema.partial().parse(req.body);
-      const updatedTap = await storage.updateTapItem(tapId, tapData);
+      const updatedTap = await storage.updateTapListItem(tapId, tapData);
       res.json(updatedTap);
     } catch (error) {
       if (error instanceof z.ZodError) {

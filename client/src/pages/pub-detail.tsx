@@ -26,7 +26,6 @@ import {
   XCircle,
   Sparkles,
   TrendingUp,
-  Crown,
   Target
 } from "lucide-react";
 import Footer from "@/components/footer";
@@ -85,9 +84,6 @@ const ModernBeerCard = ({ beer, prices, className = "" }: {
           alt={beer?.name}
           className="w-16 h-16 object-cover rounded-xl flex-shrink-0 group-hover:scale-105 transition-transform duration-300"
         />
-        <div className="absolute -top-2 -right-2 w-6 h-6 bg-gradient-to-br from-amber-500 to-orange-600 rounded-full flex items-center justify-center">
-          <Crown className="h-3 w-3 text-white" />
-        </div>
       </div>
       
       <div className="flex-1 min-w-0">
