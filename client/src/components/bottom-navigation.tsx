@@ -36,10 +36,8 @@ export function BottomNavigation() {
     (user as any)?.userType === 'pub_owner' && 
     (location.startsWith("/smart-pub-dashboard") || location.startsWith("/dashboard"));
 
-  // Don't render bottom navigation at all if pub owner is in dashboard
-  if (isPubOwnerInDashboard) {
-    return null;
-  }
+  // On mobile, completely hide navigation for pub owners in dashboard
+  // On desktop, we'll handle this more granularly per section
 
   const navItems = [
     {
@@ -71,10 +69,11 @@ export function BottomNavigation() {
 
   return (
     <>
-      {/* Mobile Bottom Navigation */}
-      <nav className={`lg:hidden fixed bottom-0 left-0 right-0 z-50 transition-all duration-300 ease-in-out transform ${
-        isVisible ? 'translate-y-0' : 'translate-y-full'
-      }`}>
+      {/* Mobile Bottom Navigation - Hidden completely for pub owners in dashboard */}
+      {!isPubOwnerInDashboard && (
+        <nav className={`lg:hidden fixed bottom-0 left-0 right-0 z-50 transition-all duration-300 ease-in-out transform ${
+          isVisible ? 'translate-y-0' : 'translate-y-full'
+        }`}>
         {/* Glassmorphism background */}
         <div className="bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl border-t border-white/20 dark:border-gray-800/50 shadow-2xl">
           {/* Gradient overlay for depth */}
@@ -172,9 +171,11 @@ export function BottomNavigation() {
           </div>
         </div>
       </nav>
+      )}
 
-      {/* Desktop/Tablet Navigation - Floating Sidebar or Top Bar */}
-      <nav className="hidden lg:flex fixed top-4 left-1/2 transform -translate-x-1/2 z-50">
+      {/* Desktop/Tablet Navigation - Floating Sidebar or Top Bar - Hidden for pub owners in dashboard */}
+      {!isPubOwnerInDashboard && (
+        <nav className="hidden lg:flex fixed top-4 left-1/2 transform -translate-x-1/2 z-50">
         <div className="bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl rounded-2xl border border-white/20 dark:border-gray-800/50 shadow-2xl px-6 py-3">
           <div className="flex items-center space-x-8">
             {navItems.map((item) => {
@@ -241,6 +242,7 @@ export function BottomNavigation() {
           </div>
         </div>
       </nav>
+      )}
 
       {/* Enhanced Search Dialog */}
       <SearchDialog 
