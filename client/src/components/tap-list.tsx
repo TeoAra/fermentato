@@ -55,14 +55,14 @@ export default function TapList({ tapList }: TapListProps) {
             <div className="flex-1 min-w-0">
               {/* Tap number badge */}
               {tap.tapNumber && (
-                <div className="flex items-center gap-2 mb-2">
-                  <span className="bg-gray-100 text-gray-800 px-2 py-1 rounded-full text-xs">
+                <div className="flex items-center gap-2 mb-3">
+                  <Badge variant="outline" className="text-xs font-medium">
                     Spina {tap.tapNumber}
-                  </span>
+                  </Badge>
                 </div>
               )}
               
-              <div className="flex items-center gap-3 mb-3">
+              <div className="flex items-center gap-3 mb-4">
                 <ImageWithFallback
                   src={tap.beer.imageUrl || tap.beer.brewery.logoUrl}
                   alt={tap.beer.name}
@@ -73,16 +73,16 @@ export default function TapList({ tapList }: TapListProps) {
                 />
                 <div className="flex-1 min-w-0">
                   <Link href={`/beer/${tap.beer.id}`}>
-                    <h3 className="font-semibold text-base break-words hover:text-primary cursor-pointer transition-colors">
+                    <h3 className="font-semibold text-lg break-words hover:text-primary cursor-pointer transition-colors text-gray-900 dark:text-white">
                       {tap.beer.name}
                     </h3>
                   </Link>
                   <Link href={`/brewery/${tap.beer.brewery.id}`}>
-                    <p className="text-gray-600 text-sm break-words hover:text-primary cursor-pointer transition-colors">
+                    <p className="text-gray-600 dark:text-gray-400 text-sm break-words hover:text-primary cursor-pointer transition-colors">
                       {tap.beer.brewery.name}
                     </p>
                   </Link>
-                  <p className="text-xs text-gray-500">
+                  <p className="text-xs text-gray-500 dark:text-gray-500 mt-1">
                     {tap.beer.style} • {tap.beer.abv}% ABV
                   </p>
                 </div>
@@ -90,31 +90,33 @@ export default function TapList({ tapList }: TapListProps) {
 
               {/* Description if available */}
               {tap.description && (
-                <div className="mt-4 pt-4 border-t border-gray-200/50 dark:border-gray-700/50">
-                  <p className="text-sm text-gray-700 dark:text-gray-300 italic leading-relaxed">{tap.description}</p>
+                <div className="mt-4 pt-3 border-t border-gray-200/50 dark:border-gray-700/50">
+                  <div className="bg-gray-50 dark:bg-gray-800/50 p-3 rounded-lg">
+                    <p className="text-sm text-gray-700 dark:text-gray-300 italic leading-relaxed">{tap.description}</p>
+                  </div>
                 </div>
               )}
             </div>
 
             {/* Right side: Prices */}
-            <div className="flex-shrink-0 text-right space-y-2 min-w-[100px]">
+            <div className="flex-shrink-0 min-w-[120px]">
               <div className="space-y-2">
                 {tap.priceSmall && parseFloat(tap.priceSmall) > 0 && (
-                  <div className="bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400 px-3 py-2 rounded-lg text-right">
-                    <div className="text-xs font-medium">Piccola</div>
-                    <div className="font-bold text-sm">€{parseFloat(tap.priceSmall).toFixed(2)}</div>
+                  <div className="text-right">
+                    <div className="text-xs text-gray-500 dark:text-gray-400">Piccola</div>
+                    <div className="font-semibold text-gray-900 dark:text-white">€{parseFloat(tap.priceSmall).toFixed(2)}</div>
                   </div>
                 )}
                 {tap.priceMedium && parseFloat(tap.priceMedium) > 0 && (
-                  <div className="bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-400 px-3 py-2 rounded-lg text-right">
-                    <div className="text-xs font-medium">Media</div>
-                    <div className="font-bold text-sm">€{parseFloat(tap.priceMedium).toFixed(2)}</div>
+                  <div className="text-right">
+                    <div className="text-xs text-gray-500 dark:text-gray-400">Media</div>
+                    <div className="font-semibold text-gray-900 dark:text-white">€{parseFloat(tap.priceMedium).toFixed(2)}</div>
                   </div>
                 )}
                 {tap.priceLarge && parseFloat(tap.priceLarge) > 0 && (
-                  <div className="bg-orange-100 text-orange-800 dark:bg-orange-900/20 dark:text-orange-400 px-3 py-2 rounded-lg text-right">
-                    <div className="text-xs font-medium">Grande</div>
-                    <div className="font-bold text-sm">€{parseFloat(tap.priceLarge).toFixed(2)}</div>
+                  <div className="text-right">
+                    <div className="text-xs text-gray-500 dark:text-gray-400">Grande</div>
+                    <div className="font-semibold text-gray-900 dark:text-white">€{parseFloat(tap.priceLarge).toFixed(2)}</div>
                   </div>
                 )}
               </div>

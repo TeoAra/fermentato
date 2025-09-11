@@ -208,35 +208,34 @@ export function TapListManager({ pubId, tapList }: TapListManagerProps) {
                 </DialogDescription>
               </DialogHeader>
 
-              <div className="space-y-4">
+              <div className="space-y-6">
                 {/* Ricerca Birra */}
                 {!editingItem && (
-                  <div className="space-y-2">
-                    <Label className="text-sm font-medium">Cerca Birra <span className="text-red-500">*</span></Label>
+                  <div className="space-y-3">
+                    <Label className="text-sm font-medium">Seleziona Birra</Label>
                     <div className="relative">
                       <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
                       <Input
-                        placeholder="Digita il nome della birra o del birrificio..."
+                        placeholder="Cerca per nome o birrificio..."
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
                         className="pl-10"
                         data-testid="input-beer-search"
                       />
                     </div>
-                    <p className="text-xs text-gray-500">Cerca nel nostro database di birre italiane e internazionali</p>
                     {searchResults?.beers && searchResults.beers.length > 0 && (
-                      <div className="max-h-40 overflow-y-auto border rounded-md">
+                      <div className="max-h-48 overflow-y-auto border rounded-lg bg-white">
                         {searchResults.beers.map((beer: any) => (
                           <div
                             key={beer.id}
-                            className="p-3 hover:bg-gray-50 cursor-pointer border-b last:border-b-0"
+                            className="p-3 hover:bg-gray-50 cursor-pointer border-b last:border-b-0 transition-colors"
                             onClick={() => {
                               setFormData({ ...formData, beerId: beer.id.toString() });
                               setSearchTerm(`${beer.name} - ${beer.brewery?.name || 'Birrificio sconosciuto'}`);
                             }}
                           >
-                            <div className="font-medium">{beer.name}</div>
-                            <div className="text-sm text-gray-500">
+                            <div className="font-medium text-gray-900">{beer.name}</div>
+                            <div className="text-sm text-gray-600">
                               {beer.brewery?.name || 'Birrificio sconosciuto'} • {beer.style} • {beer.abv}% ABV
                             </div>
                           </div>
@@ -248,20 +247,20 @@ export function TapListManager({ pubId, tapList }: TapListManagerProps) {
 
                 {/* Birra Selezionata (per editing) */}
                 {editingItem && (
-                  <div className="p-3 bg-gray-50 rounded-md">
-                    <div className="font-medium">{editingItem.beer.name}</div>
-                    <div className="text-sm text-gray-500">
+                  <div className="p-4 bg-gray-50 rounded-lg border">
+                    <div className="font-semibold text-gray-900">{editingItem.beer.name}</div>
+                    <div className="text-sm text-gray-600 mt-1">
                       {editingItem.beer.brewery.name} • {editingItem.beer.style} • {editingItem.beer.abv}% ABV
                     </div>
                   </div>
                 )}
 
-                {/* Sistema Prezzi per Misure */}
-                <div className="space-y-3">
-                  <Label className="text-sm font-medium">Prezzi per Misura <span className="text-gray-500 font-normal">(opzionale)</span></Label>
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                    <div className="space-y-1">
-                      <Label className="text-xs text-gray-600 font-medium">Piccola (0.20L)</Label>
+                {/* Prezzi per Misura */}
+                <div className="space-y-4">
+                  <Label className="text-sm font-medium">Prezzi</Label>
+                  <div className="grid grid-cols-3 gap-3">
+                    <div>
+                      <Label className="text-xs text-gray-600">Piccola</Label>
                       <Input
                         type="number"
                         step="0.10"
@@ -269,13 +268,11 @@ export function TapListManager({ pubId, tapList }: TapListManagerProps) {
                         placeholder="4.50"
                         value={formData.priceSmall}
                         onChange={(e) => setFormData({ ...formData, priceSmall: e.target.value })}
-                        className="text-center"
                         data-testid="input-price-small"
                       />
-                      <span className="text-xs text-gray-500 block text-center">€</span>
                     </div>
-                    <div className="space-y-1">
-                      <Label className="text-xs text-gray-600 font-medium">Media (0.40L)</Label>
+                    <div>
+                      <Label className="text-xs text-gray-600">Media</Label>
                       <Input
                         type="number"
                         step="0.10"
@@ -283,13 +280,11 @@ export function TapListManager({ pubId, tapList }: TapListManagerProps) {
                         placeholder="7.50"
                         value={formData.priceMedium}
                         onChange={(e) => setFormData({ ...formData, priceMedium: e.target.value })}
-                        className="text-center"
                         data-testid="input-price-medium"
                       />
-                      <span className="text-xs text-gray-500 block text-center">€</span>
                     </div>
-                    <div className="space-y-1">
-                      <Label className="text-xs text-gray-600 font-medium">Grande (0.50L)</Label>
+                    <div>
+                      <Label className="text-xs text-gray-600">Grande</Label>
                       <Input
                         type="number"
                         step="0.10"
@@ -297,59 +292,49 @@ export function TapListManager({ pubId, tapList }: TapListManagerProps) {
                         placeholder="9.00"
                         value={formData.priceLarge}
                         onChange={(e) => setFormData({ ...formData, priceLarge: e.target.value })}
-                        className="text-center"
                         data-testid="input-price-large"
                       />
-                      <span className="text-xs text-gray-500 block text-center">€</span>
                     </div>
                   </div>
-                  <p className="text-xs text-gray-500 italic">
-                    Imposta i prezzi solo per le misure che offri. Puoi sempre modificarli in seguito.
-                  </p>
                 </div>
 
-                {/* Numero Spina e Descrizione */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {/* Dettagli Aggiuntivi */}
+                <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <Label className="text-sm font-medium">Numero Spina <span className="text-gray-500 font-normal">(opzionale)</span></Label>
+                    <Label className="text-sm font-medium">Numero Spina</Label>
                     <Input
                       type="number"
                       min="1"
                       max="50"
-                      placeholder="es. 1, 2, 3..."
+                      placeholder="1, 2, 3..."
                       value={formData.tapNumber}
                       onChange={(e) => setFormData({ ...formData, tapNumber: e.target.value })}
                       data-testid="input-tap-number"
                     />
-                    <p className="text-xs text-gray-500 mt-1">Numero identificativo della spina (se utilizzato)</p>
                   </div>
-                  <div className="flex flex-col justify-center">
-                    <div className="flex items-center space-x-2">
-                      <Switch
-                        id="visible"
-                        checked={formData.isVisible}
-                        onCheckedChange={(checked) => setFormData({ ...formData, isVisible: checked })}
-                        data-testid="switch-tap-visible"
-                      />
-                      <Label htmlFor="visible" className="text-sm font-medium">Visibile al pubblico</Label>
-                    </div>
-                    <p className="text-xs text-gray-500 mt-1">I clienti potranno vedere questa birra nella tap list</p>
+                  <div className="flex items-center space-x-3 pt-6">
+                    <Switch
+                      id="visible"
+                      checked={formData.isVisible}
+                      onCheckedChange={(checked) => setFormData({ ...formData, isVisible: checked })}
+                      data-testid="switch-tap-visible"
+                    />
+                    <Label htmlFor="visible" className="text-sm font-medium">Visibile al pubblico</Label>
                   </div>
                 </div>
 
                 <div>
-                  <Label className="text-sm font-medium">Descrizione <span className="text-gray-500 font-normal">(opzionale)</span></Label>
+                  <Label className="text-sm font-medium">Note aggiuntive</Label>
                   <Textarea
-                    placeholder="Note speciali, caratteristiche della spillatura, abbinamenti consigliati..."
+                    placeholder="Note speciali, caratteristiche della spillatura..."
                     value={formData.description}
                     onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                     rows={3}
                     data-testid="textarea-tap-description"
                   />
-                  <p className="text-xs text-gray-500 mt-1">Aggiungi dettagli sulla birra alla spina che possano interessare i clienti</p>
                 </div>
 
-                <div className="flex justify-end space-x-2 pt-4">
+                <div className="flex justify-end space-x-3 pt-6 border-t">
                   <Button
                     variant="outline"
                     onClick={() => {
@@ -364,7 +349,7 @@ export function TapListManager({ pubId, tapList }: TapListManagerProps) {
                     onClick={handleSubmit}
                     disabled={addTapMutation.isPending || updateTapMutation.isPending}
                   >
-                    {editingItem ? "Aggiorna" : "Aggiungi"}
+                    {editingItem ? "Salva" : "Aggiungi"}
                   </Button>
                 </div>
               </div>
@@ -391,27 +376,23 @@ export function TapListManager({ pubId, tapList }: TapListManagerProps) {
               >
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
-                    <div className="flex items-center gap-2 mb-2">
-                      {item.tapNumber && (
-                        <Badge variant="outline" className="text-xs">
-                          Spina {item.tapNumber}
-                        </Badge>
-                      )}
-                      {!item.isVisible && (
-                        <Badge variant="secondary" className="text-xs">
-                          <EyeOff className="w-3 h-3 mr-1" />
-                          Nascosta
-                        </Badge>
-                      )}
-                    </div>
+                    {(!item.isVisible || item.tapNumber) && (
+                      <div className="flex items-center gap-2 mb-2">
+                        {item.tapNumber && (
+                          <Badge variant="outline" className="text-xs">
+                            Spina {item.tapNumber}
+                          </Badge>
+                        )}
+                        {!item.isVisible && (
+                          <Badge variant="secondary" className="text-xs">
+                            <EyeOff className="w-3 h-3 mr-1" />
+                            Nascosta
+                          </Badge>
+                        )}
+                      </div>
+                    )}
                     
-                    <div 
-                      className="flex items-center gap-3 mb-3 cursor-pointer hover:bg-gray-50 p-2 rounded-lg -m-2"
-                      onClick={() => {
-                        startEdit(item);
-                        setIsAddDialogOpen(true);
-                      }}
-                    >
+                    <div className="flex items-center gap-3 mb-4">
                       {item.beer.logoUrl && (
                         <img
                           src={item.beer.logoUrl}
@@ -420,47 +401,45 @@ export function TapListManager({ pubId, tapList }: TapListManagerProps) {
                         />
                       )}
                       <div className="flex-1">
-                        <h3 className="font-semibold text-base">{item.beer.name}</h3>
+                        <h3 className="font-semibold text-base text-gray-900">{item.beer.name}</h3>
                         <p className="text-gray-600 text-sm">{item.beer.brewery.name}</p>
                         <p className="text-xs text-gray-500">
                           {item.beer.style} • {item.beer.abv}% ABV
                         </p>
                       </div>
-                      <div className="text-right text-xs text-gray-400">
-                        Tocca per prezzi
+                    </div>
+
+                    <div className="grid grid-cols-3 gap-3 mb-4">
+                      <div className="text-center">
+                        <div className="text-xs text-gray-500 mb-1">Piccola</div>
+                        <div className="font-semibold text-gray-900">
+                          {item.priceSmall ? `€${item.priceSmall}` : '-'}
+                        </div>
+                      </div>
+                      <div className="text-center">
+                        <div className="text-xs text-gray-500 mb-1">Media</div>
+                        <div className="font-semibold text-gray-900">
+                          {item.priceMedium ? `€${item.priceMedium}` : '-'}
+                        </div>
+                      </div>
+                      <div className="text-center">
+                        <div className="text-xs text-gray-500 mb-1">Grande</div>
+                        <div className="font-semibold text-gray-900">
+                          {item.priceLarge ? `€${item.priceLarge}` : '-'}
+                        </div>
                       </div>
                     </div>
 
-                    <div className="flex flex-wrap gap-3 text-xs mb-3">
-                      {item.priceSmall && (
-                        <span className="bg-green-100 text-green-800 px-2 py-1 rounded-full">
-                          €{item.priceSmall} - Piccola
-                        </span>
-                      )}
-                      {item.priceMedium && (
-                        <span className="bg-blue-100 text-blue-800 px-2 py-1 rounded-full">
-                          €{item.priceMedium} - Media
-                        </span>
-                      )}
-                      {item.priceLarge && (
-                        <span className="bg-orange-100 text-orange-800 px-2 py-1 rounded-full">
-                          €{item.priceLarge} - Grande
-                        </span>
-                      )}
-                    </div>
-
                     {item.description && (
-                      <div className="bg-orange-50 border-l-4 border-orange-200 p-2 rounded">
-                        <p className="text-sm text-gray-700 italic">
-                          Note del pub: {item.description}
-                        </p>
+                      <div className="bg-gray-50 p-3 rounded-lg">
+                        <p className="text-sm text-gray-700 italic">{item.description}</p>
                       </div>
                     )}
                   </div>
 
-                  <div className="flex items-center gap-2 ml-4">
+                  <div className="flex items-center gap-2">
                     <Button
-                      variant="outline"
+                      variant="ghost"
                       size="sm"
                       onClick={() => {
                         toggleVisibilityMutation.mutate({
@@ -468,27 +447,30 @@ export function TapListManager({ pubId, tapList }: TapListManagerProps) {
                           isVisible: !item.isVisible
                         });
                       }}
+                      className="h-8 w-8 p-0"
                     >
                       {item.isVisible ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                     </Button>
                     <Button
-                      variant="outline"
+                      variant="ghost"
                       size="sm"
                       onClick={() => {
                         startEdit(item);
                         setIsAddDialogOpen(true);
                       }}
+                      className="h-8 w-8 p-0"
                     >
                       <Edit className="w-4 h-4" />
                     </Button>
                     <Button
-                      variant="outline"
+                      variant="ghost"
                       size="sm"
                       onClick={() => {
                         if (confirm('Sei sicuro di voler rimuovere questa birra dalla tap list?')) {
                           deleteTapMutation.mutate(item.id);
                         }
                       }}
+                      className="h-8 w-8 p-0 text-red-500 hover:text-red-700 hover:bg-red-50"
                     >
                       <Trash2 className="w-4 h-4" />
                     </Button>

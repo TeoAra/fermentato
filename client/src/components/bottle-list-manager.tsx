@@ -236,33 +236,33 @@ export function BottleListManager({ pubId, bottleList }: BottleListManagerProps)
                 </DialogDescription>
               </DialogHeader>
 
-              <div className="space-y-4">
+              <div className="space-y-6">
                 {/* Ricerca Birra */}
                 {!editingItem && (
-                  <div className="space-y-2">
-                    <Label>Cerca Birra</Label>
+                  <div className="space-y-3">
+                    <Label className="text-sm font-medium">Seleziona Birra</Label>
                     <div className="relative">
                       <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
                       <Input
-                        placeholder="Cerca birra per nome o birrificio..."
+                        placeholder="Cerca per nome o birrificio..."
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
                         className="pl-10"
                       />
                     </div>
                     {searchResults?.beers && searchResults.beers.length > 0 && (
-                      <div className="max-h-40 overflow-y-auto border rounded-md">
+                      <div className="max-h-48 overflow-y-auto border rounded-lg bg-white">
                         {searchResults.beers.map((beer: any) => (
                           <div
                             key={beer?.id || Math.random()}
-                            className="p-3 hover:bg-gray-50 cursor-pointer border-b last:border-b-0"
+                            className="p-3 hover:bg-gray-50 cursor-pointer border-b last:border-b-0 transition-colors"
                             onClick={() => {
                               setFormData({ ...formData, beerId: beer?.id?.toString() || "" });
                               setSearchTerm(`${beer?.name || "Birra sconosciuta"} - ${beer?.brewery?.name || "Birrificio sconosciuto"}`);
                             }}
                           >
-                            <div className="font-medium">{beer?.name || "Birra sconosciuta"}</div>
-                            <div className="text-sm text-gray-500">
+                            <div className="font-medium text-gray-900">{beer?.name || "Birra sconosciuta"}</div>
+                            <div className="text-sm text-gray-600">
                               {beer?.brewery?.name || "Birrificio sconosciuto"} • {beer?.style || "Stile sconosciuto"} • {beer?.abv || "0"}% ABV
                             </div>
                           </div>
@@ -274,42 +274,43 @@ export function BottleListManager({ pubId, bottleList }: BottleListManagerProps)
 
                 {/* Birra Selezionata (per editing) */}
                 {editingItem && (
-                  <div className="p-3 bg-gray-50 rounded-md">
-                    <div className="font-medium">{editingItem.beer?.name || "Birra sconosciuta"}</div>
-                    <div className="text-sm text-gray-500">
+                  <div className="p-4 bg-gray-50 rounded-lg border">
+                    <div className="font-semibold text-gray-900">{editingItem.beer?.name || "Birra sconosciuta"}</div>
+                    <div className="text-sm text-gray-600 mt-1">
                       {editingItem.beer?.brewery?.name || "Birrificio sconosciuto"} • {editingItem.beer?.style || "Stile sconosciuto"} • {editingItem.beer?.abv || "0"}% ABV
                     </div>
                   </div>
                 )}
 
-                {/* Prezzo e Quantità */}
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                {/* Prezzo e Dettagli */}
+                <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <Label className="text-sm font-medium">Prezzo (€) <span className="text-red-500">*</span></Label>
+                    <Label className="text-sm font-medium">Prezzo (€) *</Label>
                     <Input
                       type="number"
                       step="0.10"
                       min="0"
-                      placeholder="es. 5.50"
+                      placeholder="5.50"
                       value={formData.price}
                       onChange={(e) => setFormData({ ...formData, price: e.target.value })}
                       data-testid="input-price"
                       required
                     />
-                    <p className="text-xs text-gray-500 mt-1">Prezzo di vendita al pubblico</p>
                   </div>
                   <div>
-                    <Label className="text-sm font-medium">Quantità <span className="text-gray-500 font-normal">(opzionale)</span></Label>
+                    <Label className="text-sm font-medium">Quantità</Label>
                     <Input
                       type="number"
                       min="0"
-                      placeholder="0 (lascia vuoto se non gestisci l'inventario)"
+                      placeholder="Disponibili"
                       value={formData.quantity}
                       onChange={(e) => setFormData({ ...formData, quantity: e.target.value })}
                       data-testid="input-quantity"
                     />
-                    <p className="text-xs text-gray-500 mt-1">Indica quante bottiglie hai in cantina. Lascia vuoto se non gestisci l'inventario.</p>
                   </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
                   <div>
                     <Label className="text-sm font-medium">Formato</Label>
                     <select
@@ -318,53 +319,46 @@ export function BottleListManager({ pubId, bottleList }: BottleListManagerProps)
                       onChange={(e) => setFormData({ ...formData, size: e.target.value })}
                       data-testid="select-size"
                     >
-                      <option value="33cl">33cl (bottiglia standard)</option>
+                      <option value="33cl">33cl</option>
                       <option value="50cl">50cl</option>
                       <option value="66cl">66cl</option>
-                      <option value="75cl">75cl (bottiglia grande)</option>
+                      <option value="75cl">75cl</option>
                     </select>
                   </div>
-                </div>
-
-                {/* Annata e Visibilità */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
-                    <Label className="text-sm font-medium">Annata <span className="text-gray-500 font-normal">(opzionale)</span></Label>
+                    <Label className="text-sm font-medium">Annata</Label>
                     <Input
-                      placeholder="es. 2023"
+                      placeholder="2023"
                       value={formData.vintage}
                       onChange={(e) => setFormData({ ...formData, vintage: e.target.value })}
                       data-testid="input-vintage"
                     />
-                    <p className="text-xs text-gray-500 mt-1">Solo per birre d'annata o limitate</p>
-                  </div>
-                  <div className="flex flex-col justify-center">
-                    <div className="flex items-center space-x-2">
-                      <Switch
-                        id="visible"
-                        checked={formData.isVisible}
-                        onCheckedChange={(checked) => setFormData({ ...formData, isVisible: checked })}
-                        data-testid="switch-visible"
-                      />
-                      <Label htmlFor="visible" className="text-sm font-medium">Visibile al pubblico</Label>
-                    </div>
-                    <p className="text-xs text-gray-500 mt-1">I clienti potranno vedere questa birra</p>
                   </div>
                 </div>
 
+                {/* Visibilità e Descrizione */}
+                <div className="flex items-center space-x-3">
+                  <Switch
+                    id="visible"
+                    checked={formData.isVisible}
+                    onCheckedChange={(checked) => setFormData({ ...formData, isVisible: checked })}
+                    data-testid="switch-visible"
+                  />
+                  <Label htmlFor="visible" className="text-sm font-medium">Visibile al pubblico</Label>
+                </div>
+
                 <div>
-                  <Label className="text-sm font-medium">Descrizione <span className="text-gray-500 font-normal">(opzionale)</span></Label>
+                  <Label className="text-sm font-medium">Note aggiuntive</Label>
                   <Textarea
-                    placeholder="Note speciali sulla birra, caratteristiche particolari, abbinamenti consigliati..."
+                    placeholder="Caratteristiche speciali, note di degustazione..."
                     value={formData.description}
                     onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                     rows={3}
                     data-testid="textarea-description"
                   />
-                  <p className="text-xs text-gray-500 mt-1">Aggiungi dettagli che possano interessare i clienti</p>
                 </div>
 
-                <div className="flex justify-end space-x-2 pt-4">
+                <div className="flex justify-end space-x-3 pt-6 border-t">
                   <Button
                     variant="outline"
                     onClick={() => {
@@ -379,7 +373,7 @@ export function BottleListManager({ pubId, bottleList }: BottleListManagerProps)
                     onClick={handleSubmit}
                     disabled={addBottleMutation.isPending || updateBottleMutation.isPending}
                   >
-                    {editingItem ? "Aggiorna" : "Aggiungi"}
+                    {editingItem ? "Salva" : "Aggiungi"}
                   </Button>
                 </div>
               </div>
@@ -430,30 +424,23 @@ export function BottleListManager({ pubId, bottleList }: BottleListManagerProps)
                 >
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-2">
-                        <Badge variant="outline" className="text-xs">
-                          {safeItem.size || "33cl"}
-                        </Badge>
-                        {safeItem.vintage && (
-                          <Badge variant="outline" className="text-xs">
-                            {safeItem.vintage}
-                          </Badge>
-                        )}
-                        {!safeItem.isVisible && (
-                          <Badge variant="secondary" className="text-xs">
-                            <EyeOff className="w-3 h-3 mr-1" />
-                            Nascosta
-                          </Badge>
-                        )}
-                      </div>
+                      {(!safeItem.isVisible || safeItem.vintage) && (
+                        <div className="flex items-center gap-2 mb-2">
+                          {safeItem.vintage && (
+                            <Badge variant="outline" className="text-xs">
+                              {safeItem.vintage}
+                            </Badge>
+                          )}
+                          {!safeItem.isVisible && (
+                            <Badge variant="secondary" className="text-xs">
+                              <EyeOff className="w-3 h-3 mr-1" />
+                              Nascosta
+                            </Badge>
+                          )}
+                        </div>
+                      )}
                       
-                      <div 
-                        className="flex items-center gap-3 mb-3 cursor-pointer hover:bg-gray-50 p-2 rounded-lg -m-2"
-                        onClick={() => {
-                          startEdit(item);
-                          setIsAddDialogOpen(true);
-                        }}
-                      >
+                      <div className="flex items-center gap-3 mb-4">
                         <ImageWithFallback
                           src={safeBeer.logoUrl}
                           alt={safeBeer.name}
@@ -463,39 +450,30 @@ export function BottleListManager({ pubId, bottleList }: BottleListManagerProps)
                           iconSize="md"
                         />
                         <div className="flex-1">
-                          <h3 className="font-semibold text-base">{safeBeer.name}</h3>
+                          <h3 className="font-semibold text-base text-gray-900">{safeBeer.name}</h3>
                           <p className="text-gray-600 text-sm">{safeBeer.brewery.name}</p>
                           <p className="text-xs text-gray-500">
-                            {safeBeer.style} • {safeBeer.abv}% ABV
+                            {safeBeer.style} • {safeBeer.abv}% ABV • {safeItem.size || "33cl"}
                           </p>
                         </div>
-                        <div className="text-right text-xs text-gray-400">
-                          Tocca per prezzi
+                        <div className="text-right">
+                          <div className="text-lg font-semibold text-gray-900">€{safeItem.price || "0.00"}</div>
+                          {safeItem.quantity > 0 && (
+                            <div className="text-xs text-gray-500">{safeItem.quantity} disponibili</div>
+                          )}
                         </div>
                       </div>
 
                       {safeItem.description && (
-                        <p className="text-sm text-gray-600 mb-3">{safeItem.description}</p>
+                        <div className="bg-gray-50 p-3 rounded-lg">
+                          <p className="text-sm text-gray-700 italic">{safeItem.description}</p>
+                        </div>
                       )}
-
-                      <div className="flex flex-wrap gap-2 text-xs">
-                        <span className="bg-green-100 text-green-800 px-2 py-1 rounded-full font-medium">
-                          €{safeItem.price || "0.00"}
-                        </span>
-                        <span className="bg-gray-100 text-gray-800 px-2 py-1 rounded-full">
-                          Qty: {safeItem.quantity || 0}
-                        </span>
-                        {safeItem.size && (
-                          <span className="bg-blue-100 text-blue-800 px-2 py-1 rounded-full">
-                            {safeItem.size}
-                          </span>
-                        )}
-                      </div>
                     </div>
 
-                    <div className="flex items-center gap-2 ml-4">
+                    <div className="flex items-center gap-2">
                       <Button
-                        variant="outline"
+                        variant="ghost"
                         size="sm"
                         onClick={() => {
                           toggleVisibilityMutation.mutate({
@@ -503,27 +481,30 @@ export function BottleListManager({ pubId, bottleList }: BottleListManagerProps)
                             isVisible: !safeItem.isVisible
                           });
                         }}
+                        className="h-8 w-8 p-0"
                       >
                         {safeItem.isVisible ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                       </Button>
                       <Button
-                        variant="outline"
+                        variant="ghost"
                         size="sm"
                         onClick={() => {
                           startEdit(item);
                           setIsAddDialogOpen(true);
                         }}
+                        className="h-8 w-8 p-0"
                       >
                         <Edit className="w-4 h-4" />
                       </Button>
                       <Button
-                        variant="outline"
+                        variant="ghost"
                         size="sm"
                         onClick={() => {
                           if (confirm('Sei sicuro di voler rimuovere questa birra dalla cantina?')) {
                             deleteBottleMutation.mutate(item.id);
                           }
                         }}
+                        className="h-8 w-8 p-0 text-red-500 hover:text-red-700 hover:bg-red-50"
                       >
                         <Trash2 className="w-4 h-4" />
                       </Button>
