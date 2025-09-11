@@ -344,12 +344,12 @@ export default function PubDetail() {
                       Condividi
                     </Button>
                     {isOwner && (
-                      <Button asChild className="bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700">
-                        <Link href="/dashboard">
+                      <Link href="/dashboard">
+                        <Button className="bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700">
                           <Settings className="w-4 h-4 mr-2" />
                           Gestisci
-                        </Link>
-                      </Button>
+                        </Button>
+                      </Link>
                     )}
                   </div>
                 </div>
@@ -437,11 +437,17 @@ export default function PubDetail() {
                       {Array.isArray(tapList) ? tapList.filter((t: any) => t.isVisible).length : 0} attive
                     </Badge>
                   </div>
-                  <TapList 
-                    tapList={tapList || []} 
-                    isLoading={tapLoading}
-                    showOwnerControls={false}
-                  />
+                  {tapLoading ? (
+                    <div className="space-y-4">
+                      {[...Array(3)].map((_, i) => (
+                        <div key={i} className="skeleton rounded-xl h-24"></div>
+                      ))}
+                    </div>
+                  ) : (
+                    <TapList 
+                      tapList={Array.isArray(tapList) ? tapList : []} 
+                    />
+                  )}
                 </TabsContent>
 
                 {/* Bottles Tab */}

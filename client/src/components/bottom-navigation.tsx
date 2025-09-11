@@ -11,17 +11,7 @@ export function BottomNavigation() {
   const [isVisible, setIsVisible] = useState(true);
   const [lastScrollY, setLastScrollY] = useState(0);
 
-  // Hide bottom navigation when user is pub owner in dashboard
-  const isPubOwnerInDashboard = isAuthenticated && 
-    (user as any)?.userType === 'pub_owner' && 
-    (location.startsWith("/smart-pub-dashboard") || location.startsWith("/dashboard"));
-
-  // Don't render bottom navigation at all if pub owner is in dashboard
-  if (isPubOwnerInDashboard) {
-    return null;
-  }
-
-  // Smart hide/show on scroll for better UX
+  // Smart hide/show on scroll for better UX - MOVED BEFORE CONDITIONAL LOGIC
   useEffect(() => {
     const handleScroll = () => {
       const currentScrollY = window.scrollY;
@@ -40,6 +30,16 @@ export function BottomNavigation() {
     window.addEventListener('scroll', handleScroll, { passive: true });
     return () => window.removeEventListener('scroll', handleScroll);
   }, [lastScrollY]);
+
+  // Hide bottom navigation when user is pub owner in dashboard
+  const isPubOwnerInDashboard = isAuthenticated && 
+    (user as any)?.userType === 'pub_owner' && 
+    (location.startsWith("/smart-pub-dashboard") || location.startsWith("/dashboard"));
+
+  // Don't render bottom navigation at all if pub owner is in dashboard
+  if (isPubOwnerInDashboard) {
+    return null;
+  }
 
   const navItems = [
     {
@@ -102,9 +102,9 @@ export function BottomNavigation() {
                         <Icon className={`h-5 w-5 transition-all duration-300 ${
                           isActive ? 'scale-110' : 'group-hover:scale-105'
                         }`} />
-                        {item.badge > 0 && (
+                        {item.badge && item.badge > 0 && (
                           <div className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center min-w-[20px] shadow-lg animate-pulse">
-                            {item.badge > 99 ? '99+' : item.badge}
+                            {item.badge && item.badge > 99 ? '99+' : item.badge}
                           </div>
                         )}
                       </div>
@@ -131,9 +131,9 @@ export function BottomNavigation() {
                           <Icon className={`h-5 w-5 transition-all duration-300 ${
                             isActive ? 'scale-110' : 'group-hover:scale-105'
                           }`} />
-                          {item.badge > 0 && (
+                          {item.badge && item.badge > 0 && (
                             <div className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center min-w-[20px] shadow-lg animate-pulse">
-                              {item.badge > 99 ? '99+' : item.badge}
+                              {item.badge && item.badge > 99 ? '99+' : item.badge}
                             </div>
                           )}
                         </div>
@@ -195,9 +195,9 @@ export function BottomNavigation() {
                     >
                       <div className="relative">
                         <Icon className="h-5 w-5" />
-                        {item.badge > 0 && (
+                        {item.badge && item.badge > 0 && (
                           <div className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center min-w-[20px] shadow-lg">
-                            {item.badge > 99 ? '99+' : item.badge}
+                            {item.badge && item.badge > 99 ? '99+' : item.badge}
                           </div>
                         )}
                       </div>
@@ -215,9 +215,9 @@ export function BottomNavigation() {
                       >
                         <div className="relative">
                           <Icon className="h-5 w-5" />
-                          {item.badge > 0 && (
+                          {item.badge && item.badge > 0 && (
                             <div className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center min-w-[20px] shadow-lg">
-                              {item.badge > 99 ? '99+' : item.badge}
+                              {item.badge && item.badge > 99 ? '99+' : item.badge}
                             </div>
                           )}
                         </div>
