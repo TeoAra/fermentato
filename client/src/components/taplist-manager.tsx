@@ -90,7 +90,7 @@ export function TapListManager({ pubId, tapList }: TapListManagerProps) {
       resetForm();
     },
     onError: () => {
-      toast({ title: "Errore", description: "Impossibile aggiungere la birra", variant: "destructive" });
+      toast({ title: "Errore di connessione", description: "Non è stato possibile aggiungere la birra. Riprova.", variant: "destructive" });
     },
   });
 
@@ -106,7 +106,7 @@ export function TapListManager({ pubId, tapList }: TapListManagerProps) {
       resetForm();
     },
     onError: () => {
-      toast({ title: "Errore", description: "Impossibile aggiornare la birra", variant: "destructive" });
+      toast({ title: "Errore di connessione", description: "Non è stato possibile aggiornare la birra. Riprova.", variant: "destructive" });
     },
   });
 
@@ -120,7 +120,7 @@ export function TapListManager({ pubId, tapList }: TapListManagerProps) {
       queryClient.invalidateQueries({ queryKey: ["/api/pubs", pubId, "taplist"] });
     },
     onError: () => {
-      toast({ title: "Errore", description: "Impossibile rimuovere la birra", variant: "destructive" });
+      toast({ title: "Errore di connessione", description: "Non è stato possibile rimuovere la birra. Riprova.", variant: "destructive" });
     },
   });
 
@@ -133,7 +133,7 @@ export function TapListManager({ pubId, tapList }: TapListManagerProps) {
       queryClient.invalidateQueries({ queryKey: ["/api/pubs", pubId, "taplist"] });
     },
     onError: () => {
-      toast({ title: "Errore", description: "Impossibile aggiornare la visibilità", variant: "destructive" });
+      toast({ title: "Errore di connessione", description: "Non è stato possibile aggiornare la visibilità. Riprova.", variant: "destructive" });
     },
   });
 
@@ -165,7 +165,7 @@ export function TapListManager({ pubId, tapList }: TapListManagerProps) {
 
   const handleSubmit = () => {
     if (!formData.beerId) {
-      toast({ title: "Errore", description: "Seleziona una birra", variant: "destructive" });
+      toast({ title: "Seleziona una birra", description: "È necessario selezionare una birra per continuare", variant: "destructive" });
       return;
     }
 
@@ -212,16 +212,18 @@ export function TapListManager({ pubId, tapList }: TapListManagerProps) {
                 {/* Ricerca Birra */}
                 {!editingItem && (
                   <div className="space-y-2">
-                    <Label>Cerca Birra</Label>
+                    <Label className="text-sm font-medium">Cerca Birra <span className="text-red-500">*</span></Label>
                     <div className="relative">
                       <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
                       <Input
-                        placeholder="Cerca birra per nome o birrificio..."
+                        placeholder="Digita il nome della birra o del birrificio..."
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
                         className="pl-10"
+                        data-testid="input-beer-search"
                       />
                     </div>
+                    <p className="text-xs text-gray-500">Cerca nel nostro database di birre italiane e internazionali</p>
                     {searchResults?.beers && searchResults.beers.length > 0 && (
                       <div className="max-h-40 overflow-y-auto border rounded-md">
                         {searchResults.beers.map((beer: any) => (
@@ -256,82 +258,95 @@ export function TapListManager({ pubId, tapList }: TapListManagerProps) {
 
                 {/* Sistema Prezzi per Misure */}
                 <div className="space-y-3">
-                  <Label className="text-sm font-medium">Prezzi per Misura</Label>
-                  <div className="grid grid-cols-3 gap-3">
+                  <Label className="text-sm font-medium">Prezzi per Misura <span className="text-gray-500 font-normal">(opzionale)</span></Label>
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                     <div className="space-y-1">
-                      <Label className="text-xs text-gray-600">Piccola (0.20L)</Label>
+                      <Label className="text-xs text-gray-600 font-medium">Piccola (0.20L)</Label>
                       <Input
                         type="number"
-                        step="0.01"
+                        step="0.10"
                         min="0"
                         placeholder="4.50"
                         value={formData.priceSmall}
                         onChange={(e) => setFormData({ ...formData, priceSmall: e.target.value })}
                         className="text-center"
+                        data-testid="input-price-small"
                       />
                       <span className="text-xs text-gray-500 block text-center">€</span>
                     </div>
                     <div className="space-y-1">
-                      <Label className="text-xs text-gray-600">Media (0.40L)</Label>
+                      <Label className="text-xs text-gray-600 font-medium">Media (0.40L)</Label>
                       <Input
                         type="number"
-                        step="0.01"
+                        step="0.10"
                         min="0"
                         placeholder="7.50"
                         value={formData.priceMedium}
                         onChange={(e) => setFormData({ ...formData, priceMedium: e.target.value })}
                         className="text-center"
+                        data-testid="input-price-medium"
                       />
                       <span className="text-xs text-gray-500 block text-center">€</span>
                     </div>
                     <div className="space-y-1">
-                      <Label className="text-xs text-gray-600">Grande (0.50L)</Label>
+                      <Label className="text-xs text-gray-600 font-medium">Grande (0.50L)</Label>
                       <Input
                         type="number"
-                        step="0.01"
+                        step="0.10"
                         min="0"
                         placeholder="9.00"
                         value={formData.priceLarge}
                         onChange={(e) => setFormData({ ...formData, priceLarge: e.target.value })}
                         className="text-center"
+                        data-testid="input-price-large"
                       />
                       <span className="text-xs text-gray-500 block text-center">€</span>
                     </div>
                   </div>
                   <p className="text-xs text-gray-500 italic">
-                    Ogni pub può impostare i propri prezzi per le diverse misure. Lascia vuoti i prezzi non utilizzati.
+                    Imposta i prezzi solo per le misure che offri. Puoi sempre modificarli in seguito.
                   </p>
                 </div>
 
                 {/* Numero Spina e Descrizione */}
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
-                    <Label>Numero Spina</Label>
+                    <Label className="text-sm font-medium">Numero Spina <span className="text-gray-500 font-normal">(opzionale)</span></Label>
                     <Input
                       type="number"
-                      placeholder="1"
+                      min="1"
+                      max="50"
+                      placeholder="es. 1, 2, 3..."
                       value={formData.tapNumber}
                       onChange={(e) => setFormData({ ...formData, tapNumber: e.target.value })}
+                      data-testid="input-tap-number"
                     />
+                    <p className="text-xs text-gray-500 mt-1">Numero identificativo della spina (se utilizzato)</p>
                   </div>
-                  <div className="flex items-center space-x-2">
-                    <Switch
-                      id="visible"
-                      checked={formData.isVisible}
-                      onCheckedChange={(checked) => setFormData({ ...formData, isVisible: checked })}
-                    />
-                    <Label htmlFor="visible">Visibile al pubblico</Label>
+                  <div className="flex flex-col justify-center">
+                    <div className="flex items-center space-x-2">
+                      <Switch
+                        id="visible"
+                        checked={formData.isVisible}
+                        onCheckedChange={(checked) => setFormData({ ...formData, isVisible: checked })}
+                        data-testid="switch-tap-visible"
+                      />
+                      <Label htmlFor="visible" className="text-sm font-medium">Visibile al pubblico</Label>
+                    </div>
+                    <p className="text-xs text-gray-500 mt-1">I clienti potranno vedere questa birra nella tap list</p>
                   </div>
                 </div>
 
                 <div>
-                  <Label>Descrizione (opzionale)</Label>
+                  <Label className="text-sm font-medium">Descrizione <span className="text-gray-500 font-normal">(opzionale)</span></Label>
                   <Textarea
-                    placeholder="Note sulla birra, caratteristiche particolari..."
+                    placeholder="Note speciali, caratteristiche della spillatura, abbinamenti consigliati..."
                     value={formData.description}
                     onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                     rows={3}
+                    data-testid="textarea-tap-description"
                   />
+                  <p className="text-xs text-gray-500 mt-1">Aggiungi dettagli sulla birra alla spina che possano interessare i clienti</p>
                 </div>
 
                 <div className="flex justify-end space-x-2 pt-4">

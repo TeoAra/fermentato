@@ -162,27 +162,38 @@ export function BottleListManager({ pubId, bottleList }: BottleListManagerProps)
 
   const handleSubmit = () => {
     if (!formData.beerId) {
-      toast({ title: "Errore", description: "Seleziona una birra", variant: "destructive" });
+      toast({ title: "Seleziona una birra", description: "È necessario selezionare una birra per continuare", variant: "destructive" });
       return;
     }
 
-    if (!formData.price || !formData.quantity) {
-      toast({ title: "Errore", description: "Inserisci prezzo e quantità", variant: "destructive" });
+    if (!formData.price) {
+      toast({ title: "Prezzo mancante", description: "Inserisci il prezzo della birra", variant: "destructive" });
+      return;
+    }
+
+    // Validate price
+    const priceNum = parseFloat(formData.price);
+    if (isNaN(priceNum) || priceNum <= 0) {
+      toast({ title: "Prezzo non valido", description: "Il prezzo deve essere un numero maggiore di zero", variant: "destructive" });
       return;
     }
 
     // Additional validation for numeric values
     const beerIdNum = parseInt(formData.beerId);
-    const quantityNum = parseInt(formData.quantity);
     
     if (isNaN(beerIdNum) || beerIdNum <= 0) {
-      toast({ title: "Errore", description: "ID birra non valido", variant: "destructive" });
+      toast({ title: "Errore di sistema", description: "Si è verificato un problema. Riprova a selezionare la birra", variant: "destructive" });
       return;
     }
     
-    if (isNaN(quantityNum) || quantityNum <= 0) {
-      toast({ title: "Errore", description: "La quantità deve essere un numero positivo", variant: "destructive" });
-      return;
+    // Quantity is optional - default to 0 if empty or invalid
+    let quantityNum = 0;
+    if (formData.quantity && formData.quantity.trim() !== "") {
+      quantityNum = parseInt(formData.quantity);
+      if (isNaN(quantityNum) || quantityNum < 0) {
+        toast({ title: "Quantità non valida", description: "Inserisci un numero valido per la quantità (o lascia vuoto)", variant: "destructive" });
+        return;
+      }
     }
 
     const submitData = {
@@ -271,69 +282,85 @@ export function BottleListManager({ pubId, bottleList }: BottleListManagerProps)
                 )}
 
                 {/* Prezzo e Quantità */}
-                <div className="grid grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                   <div>
-                    <Label>Prezzo (€)</Label>
+                    <Label className="text-sm font-medium">Prezzo (€) <span className="text-red-500">*</span></Label>
                     <Input
                       type="number"
                       step="0.10"
-                      placeholder="5.50"
+                      min="0"
+                      placeholder="es. 5.50"
                       value={formData.price}
                       onChange={(e) => setFormData({ ...formData, price: e.target.value })}
+                      data-testid="input-price"
+                      required
                     />
+                    <p className="text-xs text-gray-500 mt-1">Prezzo di vendita al pubblico</p>
                   </div>
                   <div>
-                    <Label>Quantità</Label>
+                    <Label className="text-sm font-medium">Quantità <span className="text-gray-500 font-normal">(opzionale)</span></Label>
                     <Input
                       type="number"
-                      placeholder="24"
+                      min="0"
+                      placeholder="0 (lascia vuoto se non gestisci l'inventario)"
                       value={formData.quantity}
                       onChange={(e) => setFormData({ ...formData, quantity: e.target.value })}
+                      data-testid="input-quantity"
                     />
+                    <p className="text-xs text-gray-500 mt-1">Indica quante bottiglie hai in cantina. Lascia vuoto se non gestisci l'inventario.</p>
                   </div>
                   <div>
-                    <Label>Formato</Label>
+                    <Label className="text-sm font-medium">Formato</Label>
                     <select
-                      className="w-full p-2 border rounded-md"
+                      className="w-full p-2 border rounded-md focus:ring-2 focus:ring-primary focus:border-primary"
                       value={formData.size}
                       onChange={(e) => setFormData({ ...formData, size: e.target.value })}
+                      data-testid="select-size"
                     >
-                      <option value="33cl">33cl</option>
+                      <option value="33cl">33cl (bottiglia standard)</option>
                       <option value="50cl">50cl</option>
                       <option value="66cl">66cl</option>
-                      <option value="75cl">75cl</option>
+                      <option value="75cl">75cl (bottiglia grande)</option>
                     </select>
                   </div>
                 </div>
 
                 {/* Annata e Visibilità */}
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
-                    <Label>Annata (opzionale)</Label>
+                    <Label className="text-sm font-medium">Annata <span className="text-gray-500 font-normal">(opzionale)</span></Label>
                     <Input
-                      placeholder="2023"
+                      placeholder="es. 2023"
                       value={formData.vintage}
                       onChange={(e) => setFormData({ ...formData, vintage: e.target.value })}
+                      data-testid="input-vintage"
                     />
+                    <p className="text-xs text-gray-500 mt-1">Solo per birre d'annata o limitate</p>
                   </div>
-                  <div className="flex items-center space-x-2">
-                    <Switch
-                      id="visible"
-                      checked={formData.isVisible}
-                      onCheckedChange={(checked) => setFormData({ ...formData, isVisible: checked })}
-                    />
-                    <Label htmlFor="visible">Visibile al pubblico</Label>
+                  <div className="flex flex-col justify-center">
+                    <div className="flex items-center space-x-2">
+                      <Switch
+                        id="visible"
+                        checked={formData.isVisible}
+                        onCheckedChange={(checked) => setFormData({ ...formData, isVisible: checked })}
+                        data-testid="switch-visible"
+                      />
+                      <Label htmlFor="visible" className="text-sm font-medium">Visibile al pubblico</Label>
+                    </div>
+                    <p className="text-xs text-gray-500 mt-1">I clienti potranno vedere questa birra</p>
                   </div>
                 </div>
 
                 <div>
-                  <Label>Descrizione (opzionale)</Label>
+                  <Label className="text-sm font-medium">Descrizione <span className="text-gray-500 font-normal">(opzionale)</span></Label>
                   <Textarea
-                    placeholder="Note sulla birra, caratteristiche particolari..."
+                    placeholder="Note speciali sulla birra, caratteristiche particolari, abbinamenti consigliati..."
                     value={formData.description}
                     onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                     rows={3}
+                    data-testid="textarea-description"
                   />
+                  <p className="text-xs text-gray-500 mt-1">Aggiungi dettagli che possano interessare i clienti</p>
                 </div>
 
                 <div className="flex justify-end space-x-2 pt-4">
