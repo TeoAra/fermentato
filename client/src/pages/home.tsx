@@ -32,9 +32,9 @@ function BrewerySquareCard({ brewery }: { brewery: any }) {
   const favoriteMutation = useMutation({
     mutationFn: async ({ action }: { action: 'add' | 'remove' }) => {
       if (action === 'add') {
-        return apiRequest('/api/favorites', 'POST', { itemType: 'brewery', itemId: brewery.id });
+        return apiRequest('/api/favorites', { method: 'POST' }, { itemType: 'brewery', itemId: brewery.id });
       } else {
-        return apiRequest(`/api/favorites/brewery/${brewery.id}`, 'DELETE');
+        return apiRequest(`/api/favorites/brewery/${brewery.id}`, { method: 'DELETE' });
       }
     },
     onSuccess: () => {
@@ -152,15 +152,15 @@ export default function Home() {
     <div className="min-h-screen bg-gray-50">
       
       {/* Welcome Hero */}
-      <section className="beer-gradient text-white py-12">
+      <section className="beer-gradient text-white py-16 lg:py-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-3xl md:text-4xl font-bold mb-2">
-                Ciao {(user as any)?.nickname || (user as any)?.firstName || 'Birraio'}! 🍺
+              <h1 className="text-3xl md:text-4xl font-bold mb-6">
+                Scopri le Migliori Birre d'Italia 🍺
               </h1>
-              <p className="text-xl text-orange-100">
-                Scopri nuove birre e gestisci i tuoi preferiti
+              <p className="text-xl text-orange-100 mb-8 lg:mb-0">
+                Trova pub, birrifici e la perfetta birra artigianale per te
               </p>
             </div>
             
@@ -187,11 +187,11 @@ export default function Home() {
         </div>
       </section>
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 lg:py-16">
         {/* Quick Actions */}
-        <section className="mb-12">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div className="bg-white rounded-xl shadow-md p-6 text-center">
+        <section className="mb-16 lg:mb-20">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <div className="bg-white rounded-xl shadow-md p-8 text-center">
               <MapPin className="mx-auto text-primary mb-4" size={48} />
               <h3 className="text-xl font-semibold mb-2">Trova Pub Vicini</h3>
               <p className="text-gray-600 mb-4">Scopri i migliori pub nella tua zona</p>
@@ -221,9 +221,9 @@ export default function Home() {
         </section>
 
         {/* I Tuoi Pub (solo per pub owner) */}
-        {(user as any)?.userType === 'pub_owner' && (
-          <section className="mb-12">
-            <div className="flex items-center justify-between mb-6">
+        {(user as any)?.userType === 'pub_owner' ? (
+          <section className="mb-16 lg:mb-20">
+            <div className="flex items-center justify-between mb-8">
               <h2 className="text-3xl font-bold text-secondary">I Tuoi Pub</h2>
               <Link href="/pub-registration">
                 <Button className="bg-primary text-white hover:bg-primary/90">
@@ -237,7 +237,7 @@ export default function Home() {
                 <div className="bg-white rounded-xl shadow-md h-80 w-full max-w-md"></div>
               </div>
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                 {Array.isArray(myPubs) ? myPubs.map((pub: any) => (
                   <PubCard 
                     key={pub.id} 
@@ -255,12 +255,12 @@ export default function Home() {
               </div>
             )}
           </section>
-        )}
+        ) : null}
 
         {/* Pub in Evidenza (solo per clienti) */}
-        {(user as any)?.userType !== 'pub_owner' && (
-          <section className="mb-12">
-            <div className="flex items-center justify-between mb-6">
+        {(user as any)?.userType !== 'pub_owner' ? (
+          <section className="mb-16 lg:mb-20">
+            <div className="flex items-center justify-between mb-8">
               <h2 className="text-3xl font-bold text-secondary">Pub Consigliati</h2>
               <a href="#" className="text-primary hover:text-orange-600 font-semibold">
                 Vedi tutti
@@ -284,15 +284,15 @@ export default function Home() {
               </div>
             )}
           </section>
-        )}
+        ) : null}
 
         {/* I Tuoi Preferiti */}
-        {user && favorites && Array.isArray(favorites) && favorites.length > 0 && (
-          <section className="mb-12">
-            <h2 className="text-3xl font-bold text-secondary mb-8 text-center">
+        {user && favorites && Array.isArray(favorites) && favorites.length > 0 ? (
+          <section className="mb-16 lg:mb-20">
+            <h2 className="text-3xl font-bold text-secondary mb-12 text-center">
               I Tuoi Preferiti ❤️
             </h2>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
               {/* Pub Preferiti */}
               {favorites.filter(fav => fav.itemType === 'pub').length > 0 && (
                 <Card>
@@ -372,11 +372,11 @@ export default function Home() {
               )}
             </div>
           </section>
-        )}
+        ) : null}
 
         {/* Birrifici in Evidenza */}
-        <section className="mb-12">
-          <div className="flex items-center justify-between mb-6">
+        <section className="mb-16 lg:mb-20">
+          <div className="flex items-center justify-between mb-8">
             <h2 className="text-3xl font-bold text-secondary">Birrifici Artigianali</h2>
             <Link href="/explore/breweries" className="text-primary hover:text-orange-600 font-semibold">
               Esplora tutti
@@ -384,13 +384,13 @@ export default function Home() {
           </div>
 
           {breweriesLoading ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
               {[...Array(4)].map((_, i) => (
                 <div key={i} className="bg-white rounded-lg shadow-md h-48 animate-pulse" />
               ))}
             </div>
           ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
               {Array.isArray(breweries) ? breweries.slice(0, 4).map((brewery: any) => (
                 <BrewerySquareCard key={brewery.id} brewery={brewery} />
               )) : null}
@@ -399,12 +399,12 @@ export default function Home() {
         </section>
 
         {/* Statistiche Platform */}
-        <section className="mb-12 bg-white rounded-xl shadow-md p-8">
-          <h2 className="text-3xl font-bold text-center text-secondary mb-8">
+        <section className="mb-16 lg:mb-20 bg-white rounded-xl shadow-md p-10 lg:p-12">
+          <h2 className="text-3xl font-bold text-center text-secondary mb-12">
             La Community Fermenta.to
           </h2>
           
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-10 lg:gap-12">
             <div className="text-center">
               <div className="text-4xl font-bold text-primary mb-2">29,753</div>
               <div className="text-gray-600">Birre nel Catalogo</div>

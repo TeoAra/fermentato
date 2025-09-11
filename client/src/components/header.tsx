@@ -172,14 +172,11 @@ export default function Header() {
             <div className="col-span-3 flex items-center justify-end gap-3">
               {isAuthenticated ? (
                 <>
-                  {typedUser && (
+                  {typedUser && location !== "/" && (
                     <div className="flex items-center gap-2">
                       <span className="text-sm text-gray-700 dark:text-gray-300">
                         Ciao, {typedUser.firstName || typedUser.email}
                       </span>
-                      {typedUser.userType === 'pub_owner' && (
-                        <Badge variant="secondary">Proprietario Pub</Badge>
-                      )}
                     </div>
                   )}
                   <Button
