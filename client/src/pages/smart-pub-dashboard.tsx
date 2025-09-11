@@ -659,23 +659,120 @@ export default function SmartPubDashboard() {
     </div>
   );
 
-  // Menu Section
+  // Menu Section - Enhanced with better layout integration
   const renderMenu = () => (
-    <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Menu Management</h2>
-          <p className="text-gray-600 dark:text-gray-400">Gestisci categorie e prodotti del menu</p>
+    <motion.div 
+      className="space-y-8"
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.6 }}
+    >
+      {/* Section Header with improved styling */}
+      <motion.div 
+        className="text-center lg:text-left"
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5, delay: 0.1 }}
+      >
+        <div className="inline-flex items-center justify-center lg:justify-start w-full">
+          <motion.div
+            className="p-3 bg-gradient-to-r from-orange-500 to-red-500 rounded-2xl shadow-lg mr-4"
+            whileHover={{ scale: 1.1, rotate: 5 }}
+            transition={{ duration: 0.3 }}
+          >
+            <Utensils className="h-8 w-8 text-white" />
+          </motion.div>
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
+              Gestione Menu
+            </h1>
+            <p className="text-lg text-gray-600 dark:text-gray-400">
+              Organizza categorie e prodotti del tuo menu con facilità
+            </p>
+          </div>
         </div>
-      </div>
+      </motion.div>
+
+      {/* Menu Stats Cards */}
+      <motion.div 
+        className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8"
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5, delay: 0.2 }}
+      >
+        <motion.div
+          className="bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-950 dark:to-indigo-950 rounded-2xl p-6 border border-blue-200 dark:border-blue-800"
+          whileHover={{ scale: 1.02, y: -2 }}
+          transition={{ duration: 0.2 }}
+        >
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-blue-600 dark:text-blue-400 mb-1">
+                Categorie Totali
+              </p>
+              <p className="text-2xl font-bold text-blue-900 dark:text-blue-100">
+                {typedMenuData.length}
+              </p>
+            </div>
+            <div className="p-3 bg-blue-100 dark:bg-blue-900 rounded-xl">
+              <Utensils className="h-6 w-6 text-blue-600" />
+            </div>
+          </div>
+        </motion.div>
+
+        <motion.div
+          className="bg-gradient-to-br from-green-50 to-emerald-50 dark:from-green-950 dark:to-emerald-950 rounded-2xl p-6 border border-green-200 dark:border-green-800"
+          whileHover={{ scale: 1.02, y: -2 }}
+          transition={{ duration: 0.2 }}
+        >
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-green-600 dark:text-green-400 mb-1">
+                Categorie Visibili
+              </p>
+              <p className="text-2xl font-bold text-green-900 dark:text-green-100">
+                {typedMenuData.filter(cat => cat.isVisible).length}
+              </p>
+            </div>
+            <div className="p-3 bg-green-100 dark:bg-green-900 rounded-xl">
+              <Eye className="h-6 w-6 text-green-600" />
+            </div>
+          </div>
+        </motion.div>
+
+        <motion.div
+          className="bg-gradient-to-br from-orange-50 to-red-50 dark:from-orange-950 dark:to-red-950 rounded-2xl p-6 border border-orange-200 dark:border-orange-800"
+          whileHover={{ scale: 1.02, y: -2 }}
+          transition={{ duration: 0.2 }}
+        >
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-orange-600 dark:text-orange-400 mb-1">
+                Prodotti Totali
+              </p>
+              <p className="text-2xl font-bold text-orange-900 dark:text-orange-100">
+                {typedMenuData.reduce((total, category) => total + (category.items?.length || 0), 0)}
+              </p>
+            </div>
+            <div className="p-3 bg-orange-100 dark:bg-orange-900 rounded-xl">
+              <Package className="h-6 w-6 text-orange-600" />
+            </div>
+          </div>
+        </motion.div>
+      </motion.div>
       
-      <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-800 p-6">
+      {/* MenuCategoryManager Component - No wrapper card needed */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5, delay: 0.3 }}
+      >
         <MenuCategoryManager 
           pubId={currentPub?.id || 0}
           categories={typedMenuData}
         />
-      </div>
-    </div>
+      </motion.div>
+    </motion.div>
   );
 
   // Analytics Section

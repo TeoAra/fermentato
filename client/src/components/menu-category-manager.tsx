@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -7,7 +8,24 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
-import { Edit3, Trash2, Plus, Save, Eye, EyeOff, Utensils } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { 
+  Edit3, 
+  Trash2, 
+  Plus, 
+  Save, 
+  Eye, 
+  EyeOff, 
+  Utensils,
+  Coffee,
+  Pizza,
+  IceCream,
+  Wine,
+  Sandwich,
+  ChefHat,
+  Salad,
+  X
+} from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 
@@ -16,219 +34,480 @@ interface MenuCategoryManagerProps {
   categories: any[];
 }
 
+// Helper function to get category icon based on name
+const getCategoryIcon = (categoryName: string) => {
+  const name = categoryName.toLowerCase();
+  if (name.includes('antipasti') || name.includes('antipasto')) return Salad;
+  if (name.includes('primi') || name.includes('pasta') || name.includes('risotto')) return Utensils;
+  if (name.includes('secondi') || name.includes('carne') || name.includes('pesce')) return ChefHat;
+  if (name.includes('pizza')) return Pizza;
+  if (name.includes('dolci') || name.includes('dolce') || name.includes('dessert')) return IceCream;
+  if (name.includes('bevande') || name.includes('bibite')) return Coffee;
+  if (name.includes('vini') || name.includes('vino') || name.includes('cocktail')) return Wine;
+  if (name.includes('panini') || name.includes('sandwich')) return Sandwich;
+  return Utensils; // Default icon
+};
+
 export default function MenuCategoryManager({ pubId, categories }: MenuCategoryManagerProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const [editingCategory, setEditingCategory] = useState<number | string | null>(null);
-  const [editData, setEditData] = useState<any>({});
+  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [editingCategory, setEditingCategory] = useState<any>(null);
+  const [formData, setFormData] = useState<any>({
+    name: '',
+    description: '',
+    isVisible: true
+  });
+
+  // Reset form
+  const resetForm = () => {
+    setFormData({
+      name: '',
+      description: '',
+      isVisible: true
+    });
+  };
 
   // Category mutations
   const createCategoryMutation = useMutation({
     mutationFn: async (data: any) => {
-      return apiRequest(`/api/pubs/${pubId}/menu/categories`, 'POST', data);
+      return apiRequest(`/api/pubs/${pubId}/menu/categories`, { method: 'POST' }, data);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/pubs", pubId, "menu"] });
-      setEditingCategory(null);
-      setEditData({});
-      toast({ title: "Categoria creata", description: "Nuova categoria aggiunta al menu" });
+      setIsCreateDialogOpen(false);
+      resetForm();
+      toast({ 
+        title: "✅ Categoria creata", 
+        description: "Nuova categoria aggiunta al menu con successo" 
+      });
     },
+    onError: () => {
+      toast({ 
+        title: "❌ Errore", 
+        description: "Impossibile creare la categoria", 
+        variant: "destructive" 
+      });
+    }
   });
 
   const updateCategoryMutation = useMutation({
     mutationFn: async ({ id, data }: { id: number; data: any }) => {
-      return apiRequest(`/api/pubs/${pubId}/menu/categories/${id}`, 'PATCH', data);
+      return apiRequest(`/api/pubs/${pubId}/menu/categories/${id}`, { method: 'PATCH' }, data);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/pubs", pubId, "menu"] });
+      setIsEditDialogOpen(false);
       setEditingCategory(null);
-      setEditData({});
-      toast({ title: "Categoria aggiornata", description: "Le modifiche sono state salvate" });
+      resetForm();
+      toast({ 
+        title: "✅ Categoria aggiornata", 
+        description: "Le modifiche sono state salvate con successo" 
+      });
     },
+    onError: () => {
+      toast({ 
+        title: "❌ Errore", 
+        description: "Impossibile aggiornare la categoria", 
+        variant: "destructive" 
+      });
+    }
   });
 
   const deleteCategoryMutation = useMutation({
     mutationFn: async (id: number) => {
-      return apiRequest(`/api/pubs/${pubId}/menu/categories/${id}`, 'DELETE');
+      return apiRequest(`/api/pubs/${pubId}/menu/categories/${id}`, { method: 'DELETE' });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/pubs", pubId, "menu"] });
-      toast({ title: "Categoria eliminata", description: "La categoria è stata rimossa dal menu" });
+      toast({ 
+        title: "🗑️ Categoria eliminata", 
+        description: "La categoria è stata rimossa dal menu" 
+      });
     },
+    onError: () => {
+      toast({ 
+        title: "❌ Errore", 
+        description: "Impossibile eliminare la categoria", 
+        variant: "destructive" 
+      });
+    }
   });
 
   const toggleVisibilityMutation = useMutation({
     mutationFn: async ({ id, isVisible }: { id: number; isVisible: boolean }) => {
-      return apiRequest(`/api/pubs/${pubId}/menu/categories/${id}`, 'PATCH', { isVisible });
+      return apiRequest(`/api/pubs/${pubId}/menu/categories/${id}`, { method: 'PATCH' }, { isVisible });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/pubs", pubId, "menu"] });
     },
+    onError: () => {
+      toast({ 
+        title: "❌ Errore", 
+        description: "Impossibile aggiornare la visibilità", 
+        variant: "destructive" 
+      });
+    }
   });
 
-  return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center justify-between">
-          <div className="flex items-center">
-            <Utensils className="mr-2" />
-            Categorie Menu ({categories.length})
-          </div>
-          <Button onClick={() => setEditingCategory('new')}>
-            <Plus className="w-4 h-4 mr-2" />
-            Nuova Categoria
-          </Button>
-        </CardTitle>
-      </CardHeader>
-      <CardContent>
-        <div className="space-y-4">
-          {/* New category form */}
-          {editingCategory === 'new' && (
-            <div className="p-4 border-2 border-dashed border-primary/20 rounded-lg">
-              <div className="space-y-3">
-                <div>
-                  <Label>Nome Categoria</Label>
-                  <Input 
-                    placeholder="Es. Antipasti, Primi Piatti, Dolci..."
-                    value={editData.name || ''}
-                    onChange={(e) => setEditData({ ...editData, name: e.target.value })}
-                  />
-                </div>
-                <div>
-                  <Label>Descrizione</Label>
-                  <Textarea
-                    placeholder="Descrizione della categoria..."
-                    value={editData.description || ''}
-                    onChange={(e) => setEditData({ ...editData, description: e.target.value })}
-                    rows={2}
-                  />
-                </div>
-                <div className="flex items-center space-x-2">
-                  <Switch
-                    id="isVisible"
-                    checked={editData.isVisible !== false}
-                    onCheckedChange={(checked) => setEditData({ ...editData, isVisible: checked })}
-                  />
-                  <Label htmlFor="isVisible">Visibile nel menu pubblico</Label>
-                </div>
-                <div className="flex space-x-2">
-                  <Button 
-                    size="sm" 
-                    onClick={() => createCategoryMutation.mutate(editData)}
-                    disabled={!editData.name}
-                  >
-                    <Save className="w-4 h-4 mr-1" />
-                    Crea Categoria
-                  </Button>
-                  <Button size="sm" variant="outline" onClick={() => setEditingCategory(null)}>
-                    Annulla
-                  </Button>
-                </div>
-              </div>
-            </div>
-          )}
+  // Handle edit category
+  const handleEditCategory = (category: any) => {
+    setEditingCategory(category);
+    setFormData({
+      name: category.name,
+      description: category.description || '',
+      isVisible: category.isVisible
+    });
+    setIsEditDialogOpen(true);
+  };
 
-          {/* Existing categories */}
-          {categories.map((category: any) => (
-            <div key={category.id} className="flex items-center justify-between p-4 border rounded-lg">
-              <div className="flex-1">
-                {editingCategory === category.id ? (
-                  <div className="space-y-3">
-                    <Input 
-                      placeholder="Nome categoria"
-                      value={editData.name || category.name}
-                      onChange={(e) => setEditData({ ...editData, name: e.target.value })}
-                    />
-                    <Textarea
-                      placeholder="Descrizione categoria"
-                      value={editData.description || category.description}
-                      onChange={(e) => setEditData({ ...editData, description: e.target.value })}
-                      rows={2}
-                    />
-                    <div className="flex items-center space-x-2">
-                      <Switch
-                        id={`visible-${category.id}`}
-                        checked={editData.isVisible !== undefined ? editData.isVisible : category.isVisible}
-                        onCheckedChange={(checked) => setEditData({ ...editData, isVisible: checked })}
-                      />
-                      <Label htmlFor={`visible-${category.id}`}>Visibile nel menu pubblico</Label>
+  // Handle form submission
+  const handleCreateSubmit = () => {
+    if (!formData.name.trim()) {
+      toast({ 
+        title: "⚠️ Campo richiesto", 
+        description: "Il nome della categoria è obbligatorio", 
+        variant: "destructive" 
+      });
+      return;
+    }
+    createCategoryMutation.mutate(formData);
+  };
+
+  const handleEditSubmit = () => {
+    if (!formData.name.trim()) {
+      toast({ 
+        title: "⚠️ Campo richiesto", 
+        description: "Il nome della categoria è obbligatorio", 
+        variant: "destructive" 
+      });
+      return;
+    }
+    updateCategoryMutation.mutate({ id: editingCategory.id, data: formData });
+  };
+
+  // Handle delete with confirmation
+  const handleDeleteCategory = (category: any) => {
+    if (confirm(`Sei sicuro di voler eliminare la categoria "${category.name}"? Questa azione non può essere annullata.`)) {
+      deleteCategoryMutation.mutate(category.id);
+    }
+  };
+
+  // Category Form Component
+  const CategoryForm = ({ isEdit = false }: { isEdit?: boolean }) => (
+    <div className="space-y-6">
+      <div className="space-y-4">
+        <div>
+          <Label htmlFor="category-name" className="text-sm font-medium text-gray-700 dark:text-gray-300">
+            Nome Categoria
+          </Label>
+          <Input 
+            id="category-name"
+            placeholder="Es. Antipasti, Primi Piatti, Dolci..."
+            value={formData.name}
+            onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+            className="mt-1"
+            data-testid={isEdit ? "input-edit-category-name" : "input-create-category-name"}
+          />
+        </div>
+        
+        <div>
+          <Label htmlFor="category-description" className="text-sm font-medium text-gray-700 dark:text-gray-300">
+            Descrizione (opzionale)
+          </Label>
+          <Textarea
+            id="category-description"
+            placeholder="Breve descrizione della categoria..."
+            value={formData.description}
+            onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+            rows={3}
+            className="mt-1"
+            data-testid={isEdit ? "textarea-edit-category-description" : "textarea-create-category-description"}
+          />
+        </div>
+        
+        <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
+          <div>
+            <Label htmlFor="category-visible" className="text-sm font-medium text-gray-700 dark:text-gray-300">
+              Visibile nel menu pubblico
+            </Label>
+            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+              I clienti potranno vedere questa categoria
+            </p>
+          </div>
+          <Switch
+            id="category-visible"
+            checked={formData.isVisible}
+            onCheckedChange={(checked) => setFormData({ ...formData, isVisible: checked })}
+            data-testid={isEdit ? "switch-edit-category-visible" : "switch-create-category-visible"}
+          />
+        </div>
+      </div>
+      
+      <div className="flex justify-end space-x-3 pt-4 border-t border-gray-200 dark:border-gray-700">
+        <Button 
+          variant="outline" 
+          onClick={() => {
+            if (isEdit) {
+              setIsEditDialogOpen(false);
+              setEditingCategory(null);
+            } else {
+              setIsCreateDialogOpen(false);
+            }
+            resetForm();
+          }}
+          data-testid={isEdit ? "button-cancel-edit" : "button-cancel-create"}
+        >
+          Annulla
+        </Button>
+        <Button 
+          onClick={isEdit ? handleEditSubmit : handleCreateSubmit}
+          disabled={!formData.name.trim() || (isEdit ? updateCategoryMutation.isPending : createCategoryMutation.isPending)}
+          className="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700"
+          data-testid={isEdit ? "button-save-edit" : "button-save-create"}
+        >
+          {(isEdit ? updateCategoryMutation.isPending : createCategoryMutation.isPending) ? (
+            <>
+              <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
+              Salvando...
+            </>
+          ) : (
+            <>
+              <Save className="h-4 w-4 mr-2" />
+              {isEdit ? "Aggiorna Categoria" : "Crea Categoria"}
+            </>
+          )}
+        </Button>
+      </div>
+    </div>
+  );
+
+  return (
+    <div className="space-y-6">
+      {/* Header */}
+      <motion.div 
+        className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4"
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
+      >
+        <div>
+          <h2 className="text-2xl font-bold text-gray-900 dark:text-white flex items-center">
+            <motion.div
+              className="p-2 bg-gradient-to-r from-orange-500 to-red-500 rounded-xl mr-3"
+              whileHover={{ scale: 1.1, rotate: 5 }}
+              transition={{ duration: 0.2 }}
+            >
+              <Utensils className="h-6 w-6 text-white" />
+            </motion.div>
+            Categorie Menu
+          </h2>
+          <p className="text-gray-600 dark:text-gray-400 mt-1">
+            Gestisci le categorie del tuo menu ({categories.length} {categories.length === 1 ? 'categoria' : 'categorie'})
+          </p>
+        </div>
+        
+        <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
+          <DialogTrigger asChild>
+            <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+              <Button 
+                className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 shadow-lg"
+                data-testid="button-add-category"
+              >
+                <Plus className="h-4 w-4 mr-2" />
+                Nuova Categoria
+              </Button>
+            </motion.div>
+          </DialogTrigger>
+          <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle className="flex items-center text-xl">
+                <div className="p-2 bg-gradient-to-r from-blue-500 to-indigo-500 rounded-lg mr-3">
+                  <Plus className="h-5 w-5 text-white" />
+                </div>
+                Crea Nuova Categoria
+              </DialogTitle>
+            </DialogHeader>
+            <CategoryForm />
+          </DialogContent>
+        </Dialog>
+      </motion.div>
+
+      {/* Categories Grid */}
+      <AnimatePresence>
+        {categories.length === 0 ? (
+          <motion.div 
+            className="text-center py-16"
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.5 }}
+          >
+            <motion.div
+              className="w-20 h-20 bg-gradient-to-r from-gray-200 to-gray-300 dark:from-gray-700 dark:to-gray-600 rounded-full flex items-center justify-center mx-auto mb-6"
+              animate={{ 
+                rotate: [0, 10, -10, 0],
+                scale: [1, 1.1, 1]
+              }}
+              transition={{ 
+                duration: 3,
+                repeat: Infinity,
+                repeatType: "reverse"
+              }}
+            >
+              <Utensils className="h-10 w-10 text-gray-400 dark:text-gray-500" />
+            </motion.div>
+            <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
+              Nessuna categoria menu
+            </h3>
+            <p className="text-gray-600 dark:text-gray-400 mb-6 max-w-md mx-auto">
+              Inizia creando le categorie per organizzare il tuo menu. Potrai poi aggiungere i prodotti a ciascuna categoria.
+            </p>
+            <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
+              <DialogTrigger asChild>
+                <Button className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700">
+                  <Plus className="h-4 w-4 mr-2" />
+                  Crea Prima Categoria
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="sm:max-w-md">
+                <DialogHeader>
+                  <DialogTitle className="flex items-center text-xl">
+                    <div className="p-2 bg-gradient-to-r from-blue-500 to-indigo-500 rounded-lg mr-3">
+                      <Plus className="h-5 w-5 text-white" />
                     </div>
-                    <div className="flex space-x-2">
-                      <Button 
-                        size="sm" 
-                        onClick={() => updateCategoryMutation.mutate({ id: category.id, data: editData })}
-                      >
-                        <Save className="w-4 h-4 mr-1" />
-                        Salva
-                      </Button>
-                      <Button size="sm" variant="outline" onClick={() => setEditingCategory(null)}>
-                        Annulla
-                      </Button>
-                    </div>
-                  </div>
-                ) : (
-                  <>
-                    <div className="flex items-center space-x-3">
-                      <div>
-                        <h4 className="font-semibold">{category.name}</h4>
-                        {category.description && (
-                          <p className="text-sm text-gray-600">{category.description}</p>
-                        )}
-                        <div className="flex items-center space-x-2 mt-2">
-                          <Badge variant={category.isVisible ? "default" : "secondary"}>
-                            {category.isVisible ? "Visibile" : "Nascosta"}
+                    Crea Prima Categoria
+                  </DialogTitle>
+                </DialogHeader>
+                <CategoryForm />
+              </DialogContent>
+            </Dialog>
+          </motion.div>
+        ) : (
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {categories.map((category: any, index: number) => {
+              const IconComponent = getCategoryIcon(category.name);
+              return (
+                <motion.div
+                  key={category.id}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.4, delay: index * 0.1 }}
+                  whileHover={{ y: -5, scale: 1.02 }}
+                  className="group"
+                >
+                  <Card className="h-full border-0 shadow-lg bg-white/60 dark:bg-gray-900/60 backdrop-blur-sm hover:shadow-xl transition-all duration-300">
+                    <CardContent className="p-6">
+                      <div className="flex items-start justify-between mb-4">
+                        <div className="flex items-center space-x-4 flex-1">
+                          <motion.div 
+                            className="p-3 bg-gradient-to-br from-orange-500 to-red-500 rounded-xl shadow-lg"
+                            whileHover={{ scale: 1.1, rotate: 5 }}
+                            transition={{ duration: 0.2 }}
+                          >
+                            <IconComponent className="h-6 w-6 text-white" />
+                          </motion.div>
+                          <div className="flex-1 min-w-0">
+                            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-1 truncate">
+                              {category.name}
+                            </h3>
+                            {category.description && (
+                              <p className="text-sm text-gray-600 dark:text-gray-400 line-clamp-2">
+                                {category.description}
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center space-x-2">
+                          <Badge 
+                            variant={category.isVisible ? "default" : "secondary"}
+                            className={`${category.isVisible 
+                              ? 'bg-green-100 text-green-800 border-green-200 dark:bg-green-900 dark:text-green-200' 
+                              : 'bg-gray-100 text-gray-800 border-gray-200 dark:bg-gray-800 dark:text-gray-200'
+                            }`}
+                          >
+                            {category.isVisible ? (
+                              <>
+                                <Eye className="h-3 w-3 mr-1" />
+                                Visibile
+                              </>
+                            ) : (
+                              <>
+                                <EyeOff className="h-3 w-3 mr-1" />
+                                Nascosta
+                              </>
+                            )}
                           </Badge>
-                          <Badge variant="outline">
+                          <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-900 dark:text-blue-200">
                             {category.items?.length || 0} prodotti
                           </Badge>
                         </div>
-                      </div>
-                    </div>
-                  </>
-                )}
-              </div>
-              <div className="flex space-x-2">
-                <Button 
-                  size="sm" 
-                  variant="outline" 
-                  onClick={() => toggleVisibilityMutation.mutate({ id: category.id, isVisible: !category.isVisible })}
-                >
-                  {category.isVisible ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                </Button>
-                <Button 
-                  size="sm" 
-                  variant="outline" 
-                  onClick={() => { 
-                    setEditingCategory(category.id); 
-                    setEditData({ 
-                      name: category.name, 
-                      description: category.description,
-                      isVisible: category.isVisible
-                    }); 
-                  }}
-                >
-                  <Edit3 className="w-4 h-4" />
-                </Button>
-                <Button 
-                  size="sm" 
-                  variant="outline" 
-                  onClick={() => deleteCategoryMutation.mutate(category.id)}
-                >
-                  <Trash2 className="w-4 h-4" />
-                </Button>
-              </div>
-            </div>
-          ))}
 
-          {categories.length === 0 && (
-            <div className="text-center py-8 text-gray-500">
-              <Utensils className="mx-auto mb-4" size={48} />
-              <p>Nessuna categoria menu</p>
-              <p className="text-sm">Crea le prime categorie per organizzare il tuo menu</p>
-            </div>
-          )}
-        </div>
-      </CardContent>
-    </Card>
+                        <div className="flex items-center space-x-1">
+                          <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}>
+                            <Button 
+                              size="sm" 
+                              variant="ghost" 
+                              onClick={() => toggleVisibilityMutation.mutate({ 
+                                id: category.id, 
+                                isVisible: !category.isVisible 
+                              })}
+                              className="text-gray-600 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900"
+                              data-testid={`button-toggle-visibility-${category.id}`}
+                            >
+                              {category.isVisible ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                            </Button>
+                          </motion.div>
+                          <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}>
+                            <Button 
+                              size="sm" 
+                              variant="ghost" 
+                              onClick={() => handleEditCategory(category)}
+                              className="text-gray-600 hover:text-orange-600 hover:bg-orange-50 dark:hover:bg-orange-900"
+                              data-testid={`button-edit-category-${category.id}`}
+                            >
+                              <Edit3 className="h-4 w-4" />
+                            </Button>
+                          </motion.div>
+                          <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}>
+                            <Button 
+                              size="sm" 
+                              variant="ghost" 
+                              onClick={() => handleDeleteCategory(category)}
+                              className="text-gray-600 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900"
+                              data-testid={`button-delete-category-${category.id}`}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </motion.div>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </motion.div>
+              );
+            })}
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* Edit Category Dialog */}
+      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center text-xl">
+              <div className="p-2 bg-gradient-to-r from-orange-500 to-red-500 rounded-lg mr-3">
+                <Edit3 className="h-5 w-5 text-white" />
+              </div>
+              Modifica Categoria
+            </DialogTitle>
+          </DialogHeader>
+          <CategoryForm isEdit />
+        </DialogContent>
+      </Dialog>
+    </div>
   );
 }
