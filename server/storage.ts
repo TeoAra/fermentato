@@ -84,8 +84,12 @@ export interface IStorage {
   // Bottle list operations
   getBottleList(pubId: number): Promise<BottleList[]>;
   addToBottleList(item: InsertBottleList): Promise<BottleList>;
+  addBeerToBottles(item: InsertBottleList): Promise<BottleList>;
   updateBottleListItem(id: number, updates: Partial<InsertBottleList>): Promise<BottleList>;
+  updateBottleItem(id: number, updates: Partial<InsertBottleList>): Promise<BottleList>;
   removeFromBottleList(id: number): Promise<void>;
+  removeBottleItem(id: number): Promise<void>;
+  removeBeerFromBottles(id: number): Promise<void>;
 
   // Menu operations
   getMenuCategories(pubId: number): Promise<MenuCategory[]>;
