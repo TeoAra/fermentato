@@ -65,6 +65,7 @@ import FlexiblePriceManager from "@/components/flexible-price-manager";
 import MenuCategoryManager from "@/components/menu-category-manager";
 import { TapListManager } from "@/components/taplist-manager";
 import { BottleListManager } from "@/components/bottle-list-manager";
+import { PubOwnerTopBar } from "@/components/pub-owner-top-bar";
 
 type DashboardSection = 'overview' | 'taplist' | 'bottles' | 'menu' | 'analytics' | 'settings' | 'profile';
 
@@ -916,16 +917,19 @@ export default function SmartPubDashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-indigo-50 dark:from-gray-950 dark:via-blue-950 dark:to-indigo-950 pb-20">
-      {renderMobileHeader()}
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-indigo-50 dark:from-gray-950 dark:via-blue-950 dark:to-indigo-950">
+      <PubOwnerTopBar 
+        currentSection={currentSection}
+        setCurrentSection={setCurrentSection}
+        sections={sections as any}
+        currentPub={currentPub}
+        user={user}
+      />
       
-      <div className="flex">
-        {renderSidebar()}
-        
-        {/* Main Content */}
-        <div className="flex-1 lg:ml-64">
-          <div className="p-4 sm:p-6 md:p-8">
-            <div className="max-w-7xl mx-auto">
+      {/* Main Content */}
+      <div className="flex-1">
+        <div className="p-4 sm:p-6 md:p-8">
+          <div className="max-w-7xl mx-auto">
               {currentSection === 'overview' && renderOverview()}
               
               {currentSection === 'taplist' && renderTaplist()}
@@ -953,34 +957,7 @@ export default function SmartPubDashboard() {
                   </div>
                 </div>
               )}
-            </div>
           </div>
-        </div>
-      </div>
-
-      {/* Removed conflicting mobile navigation - now using global BottomNavigation only */}
-      {/* Section tabs for mobile and tablet - horizontal scroll */}
-      <div className="lg:hidden bg-white dark:bg-gray-900 border-t border-b px-4 py-2 sticky top-16 z-30">
-        <div className="flex space-x-2 overflow-x-auto scrollbar-hide pb-1">
-          {sections.map((section) => {
-            const Icon = section.icon;
-            const isActive = currentSection === section.id;
-            return (
-              <button
-                key={section.id}
-                onClick={() => setCurrentSection(section.id as DashboardSection)}
-                className={`flex items-center space-x-2 px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all duration-200 ${
-                  isActive
-                    ? 'bg-primary text-white shadow-sm'
-                    : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800'
-                }`}
-                data-testid={`section-tab-${section.id}`}
-              >
-                <Icon className="w-4 h-4" />
-                <span>{section.name}</span>
-              </button>
-            );
-          })}
         </div>
       </div>
     </div>

@@ -399,27 +399,30 @@ export default function PubDetail() {
             {/* Modern Tabs */}
             <div className="glass-card rounded-2xl p-6 mb-8">
               <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-                <TabsList className="grid w-full grid-cols-3 mb-6 bg-gray-100 dark:bg-gray-800 rounded-xl p-1">
+                <TabsList className="grid w-full grid-cols-3 mb-6 bg-white dark:bg-gray-900 rounded-2xl p-2 shadow-lg border border-gray-200 dark:border-gray-700">
                   <TabsTrigger 
                     value="taplist" 
-                    className="rounded-lg transition-all duration-200 data-[state=active]:bg-gradient-to-r data-[state=active]:from-amber-500 data-[state=active]:to-orange-600 data-[state=active]:text-white"
+                    data-testid="tab-taplist"
+                    className="rounded-xl transition-all duration-300 font-semibold text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 data-[state=active]:bg-gradient-to-r data-[state=active]:from-amber-500 data-[state=active]:to-orange-600 data-[state=active]:text-white data-[state=active]:shadow-lg data-[state=active]:shadow-amber-500/20 data-[state=active]:scale-105"
                   >
-                    <Wine className="mr-2" size={16} />
-                    Spine
+                    <Wine className="mr-2" size={18} />
+                    <span className="hidden sm:inline">Birre alla</span> Spine
                   </TabsTrigger>
                   <TabsTrigger 
                     value="bottles" 
-                    className="rounded-lg transition-all duration-200 data-[state=active]:bg-gradient-to-r data-[state=active]:from-emerald-500 data-[state=active]:to-green-600 data-[state=active]:text-white"
+                    data-testid="tab-bottles"
+                    className="rounded-xl transition-all duration-300 font-semibold text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 data-[state=active]:bg-gradient-to-r data-[state=active]:from-emerald-500 data-[state=active]:to-green-600 data-[state=active]:text-white data-[state=active]:shadow-lg data-[state=active]:shadow-emerald-500/20 data-[state=active]:scale-105"
                   >
-                    <Sparkles className="mr-2" size={16} />
+                    <Sparkles className="mr-2" size={18} />
                     Cantina
                   </TabsTrigger>
                   <TabsTrigger 
                     value="menu" 
-                    className="rounded-lg transition-all duration-200 data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-500 data-[state=active]:to-indigo-600 data-[state=active]:text-white"
+                    data-testid="tab-menu"
+                    className="rounded-xl transition-all duration-300 font-semibold text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-500 data-[state=active]:to-indigo-600 data-[state=active]:text-white data-[state=active]:shadow-lg data-[state=active]:shadow-blue-500/20 data-[state=active]:scale-105"
                   >
-                    <span className="mr-2">🍽️</span>
-                    Menu
+                    <span className="mr-2 text-lg">🍽️</span>
+                    Menù
                   </TabsTrigger>
                 </TabsList>
 

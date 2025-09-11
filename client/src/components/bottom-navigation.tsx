@@ -7,9 +7,19 @@ import SearchDialog from "./search-dialog";
 export function BottomNavigation() {
   const [location] = useLocation();
   const [isSearchOpen, setIsSearchOpen] = useState(false);
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, user } = useAuth();
   const [isVisible, setIsVisible] = useState(true);
   const [lastScrollY, setLastScrollY] = useState(0);
+
+  // Hide bottom navigation when user is pub owner in dashboard
+  const isPubOwnerInDashboard = isAuthenticated && 
+    (user as any)?.userType === 'pub_owner' && 
+    (location.startsWith("/smart-pub-dashboard") || location.startsWith("/dashboard"));
+
+  // Don't render bottom navigation at all if pub owner is in dashboard
+  if (isPubOwnerInDashboard) {
+    return null;
+  }
 
   // Smart hide/show on scroll for better UX
   useEffect(() => {

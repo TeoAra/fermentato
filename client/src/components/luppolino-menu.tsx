@@ -1,7 +1,7 @@
-import { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { ChevronDown, ChevronUp } from "lucide-react";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import { ChefHat, Clock } from "lucide-react";
 
 interface LuppolinoMenuProps {
   menu: Array<{
@@ -40,26 +40,19 @@ const allergenEmojis: Record<string, string> = {
 };
 
 export default function LuppolinoMenu({ menu }: LuppolinoMenuProps) {
-  const [expandedCategories, setExpandedCategories] = useState<Set<number>>(new Set());
-
   if (!menu || menu.length === 0) {
     return (
-      <div className="text-center py-12">
-        <h2 className="text-2xl font-bold mb-4">🍽️ MENU</h2>
-        <p className="text-gray-500">Menu non ancora disponibile</p>
+      <div className="text-center py-16">
+        <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-blue-500 to-indigo-600 mx-auto flex items-center justify-center mb-6">
+          <ChefHat className="w-8 h-8 text-white" />
+        </div>
+        <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">Menu in Preparazione</h3>
+        <p className="text-gray-600 dark:text-gray-400 max-w-sm mx-auto">
+          Il nostro team sta preparando un menu delizioso per te. Torna presto per scoprire le nostre specialità!
+        </p>
       </div>
     );
   }
-
-  const toggleCategory = (categoryId: number) => {
-    const newExpanded = new Set(expandedCategories);
-    if (newExpanded.has(categoryId)) {
-      newExpanded.delete(categoryId);
-    } else {
-      newExpanded.add(categoryId);
-    }
-    setExpandedCategories(newExpanded);
-  };
 
   const formatAllergens = (allergens: string[] | null) => {
     if (!allergens || allergens.length === 0) return null;
@@ -72,148 +65,136 @@ export default function LuppolinoMenu({ menu }: LuppolinoMenuProps) {
   };
 
   return (
-    <div className="max-w-4xl mx-auto px-4 py-8">
-      {/* Header principale */}
-      <div className="text-center mb-12">
-        <h1 className="text-4xl md:text-5xl font-bold mb-2">🍽️ MENU</h1>
-        <div className="w-24 h-1 bg-orange-500 mx-auto"></div>
-      </div>
-
-      {/* Categorie menu */}
-      <div className="space-y-12">
+    <div className="space-y-6">
+      <Accordion type="multiple" className="space-y-4">
         {menu.map((category) => {
-          const isExpanded = expandedCategories.has(category.id);
           const hasItems = category.items && category.items.length > 0;
 
           return (
-            <div key={category.id} className="space-y-6">
-              {/* Header categoria */}
-              <div className="border-b-2 border-gray-200 pb-4">
-                <div 
-                  className="flex items-center justify-between cursor-pointer"
-                  onClick={() => toggleCategory(category.id)}
-                >
-                  <div>
-                    <h2 className="text-2xl md:text-3xl font-bold text-gray-800">
+            <AccordionItem 
+              key={category.id} 
+              value={`category-${category.id}`}
+              className="glass-card rounded-2xl border border-gray-200 dark:border-gray-700 overflow-hidden"
+              data-testid={`menu-category-${category.id}`}
+            >
+              <AccordionTrigger className="px-6 py-4 hover:no-underline hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
+                <div className="flex items-center justify-between w-full">
+                  <div className="text-left">
+                    <h3 className="text-xl md:text-2xl font-bold text-gray-900 dark:text-white mb-1">
                       {category.name}
-                    </h2>
+                    </h3>
                     {category.description && (
-                      <p className="text-gray-600 mt-2 italic">{category.description}</p>
+                      <p className="text-sm text-gray-600 dark:text-gray-400 italic font-normal">
+                        {category.description}
+                      </p>
                     )}
                   </div>
                   
                   {hasItems && (
-                    <div className="flex items-center space-x-2">
-                      <span className="text-sm text-gray-500">
+                    <div className="flex items-center space-x-3 mr-6">
+                      <Badge variant="outline" className="bg-blue-50 dark:bg-blue-950 text-blue-800 dark:text-blue-200 border-blue-200 dark:border-blue-800">
                         {category.items.length} {category.items.length === 1 ? 'piatto' : 'piatti'}
-                      </span>
-                      {isExpanded ? (
-                        <ChevronUp className="w-6 h-6 text-gray-500" />
-                      ) : (
-                        <ChevronDown className="w-6 h-6 text-gray-500" />
-                      )}
+                      </Badge>
                     </div>
                   )}
                 </div>
-              </div>
+              </AccordionTrigger>
 
-              {/* Items categoria */}
-              {hasItems && isExpanded && (
-                <div className="grid gap-6">
-                  {category.items.map((item) => {
-                    const formattedAllergens = formatAllergens(item.allergens);
-                    
-                    return (
-                      <Card key={item.id} className="p-6 hover:shadow-lg transition-shadow border-l-4 border-l-orange-500">
-                        <div className="flex flex-col md:flex-row gap-4">
-                          {/* Immagine (se disponibile) */}
-                          {item.imageUrl && (
-                            <div className="flex-shrink-0">
-                              <img 
-                                src={item.imageUrl} 
-                                alt={item.name}
-                                className="w-24 h-24 md:w-32 md:h-32 object-cover rounded-lg border-2 border-gray-200"
-                              />
-                            </div>
-                          )}
-                          
-                          {/* Contenuto */}
-                          <div className="flex-1 space-y-3">
-                            {/* Nome e prezzo */}
-                            <div className="flex justify-between items-start">
-                              <h3 className="text-xl md:text-2xl font-bold text-gray-800">
-                                {item.name}
-                              </h3>
-                              <div className="text-right">
-                                <span className="text-xl md:text-2xl font-bold text-orange-600">
-                                  €{typeof item.price === 'string' ? parseFloat(item.price).toFixed(2) : item.price}
-                                </span>
-                                {!item.isAvailable && (
-                                  <Badge variant="destructive" className="ml-2">
-                                    Non Disponibile
-                                  </Badge>
-                                )}
+              <AccordionContent className="px-6 pb-6">
+                {hasItems ? (
+                  <div className="grid gap-4 pt-4">
+                    {category.items.map((item) => {
+                      const formattedAllergens = formatAllergens(item.allergens);
+                      
+                      return (
+                        <Card 
+                          key={item.id} 
+                          className="p-6 hover:shadow-lg transition-all duration-300 border-l-4 border-l-blue-500 bg-white dark:bg-gray-800"
+                          data-testid={`menu-item-${item.id}`}
+                        >
+                          <div className="flex flex-col md:flex-row gap-4">
+                            {/* Immagine (se disponibile) */}
+                            {item.imageUrl && (
+                              <div className="flex-shrink-0">
+                                <img 
+                                  src={item.imageUrl} 
+                                  alt={item.name}
+                                  className="w-20 h-20 md:w-24 md:h-24 object-cover rounded-xl border-2 border-gray-200 dark:border-gray-700"
+                                />
                               </div>
-                            </div>
-                            
-                            {/* Descrizione */}
-                            {item.description && (
-                              <p className="text-gray-700 leading-relaxed">
-                                {item.description}
-                              </p>
                             )}
                             
-                            {/* Allergeni */}
-                            {formattedAllergens && formattedAllergens.length > 0 && (
-                              <div className="flex flex-wrap gap-2 pt-2 border-t border-gray-100">
-                                {formattedAllergens.map(({ emoji, label }, index) => (
-                                  <span 
-                                    key={index} 
-                                    className="inline-flex items-center gap-1 text-sm text-gray-600"
-                                    title={label}
-                                  >
-                                    <span className="text-lg">{emoji}</span>
-                                    <span className="hidden sm:inline">{label}</span>
+                            {/* Contenuto */}
+                            <div className="flex-1 space-y-3">
+                              {/* Nome e prezzo */}
+                              <div className="flex justify-between items-start">
+                                <h4 className="text-lg md:text-xl font-bold text-gray-900 dark:text-white">
+                                  {item.name}
+                                </h4>
+                                <div className="text-right">
+                                  <span className="text-lg md:text-xl font-bold text-blue-600 dark:text-blue-400">
+                                    €{typeof item.price === 'string' ? parseFloat(item.price).toFixed(2) : item.price}
                                   </span>
-                                ))}
+                                  {!item.isAvailable && (
+                                    <Badge variant="destructive" className="ml-2">
+                                      <Clock className="w-3 h-3 mr-1" />
+                                      Non Disponibile
+                                    </Badge>
+                                  )}
+                                </div>
                               </div>
-                            )}
+                              
+                              {/* Descrizione */}
+                              {item.description && (
+                                <p className="text-gray-600 dark:text-gray-400 leading-relaxed text-sm md:text-base">
+                                  {item.description}
+                                </p>
+                              )}
+                              
+                              {/* Allergeni */}
+                              {formattedAllergens && formattedAllergens.length > 0 && (
+                                <div className="flex flex-wrap gap-2 pt-3 border-t border-gray-100 dark:border-gray-700">
+                                  <span className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mr-2">
+                                    Allergeni:
+                                  </span>
+                                  {formattedAllergens.map(({ emoji, label }, index) => (
+                                    <span 
+                                      key={index} 
+                                      className="inline-flex items-center gap-1 px-2 py-1 bg-yellow-50 dark:bg-yellow-950 text-yellow-800 dark:text-yellow-200 rounded-full text-xs font-medium border border-yellow-200 dark:border-yellow-800"
+                                      title={label}
+                                    >
+                                      <span className="text-sm">{emoji}</span>
+                                      <span className="hidden sm:inline">{label}</span>
+                                    </span>
+                                  ))}
+                                </div>
+                              )}
+                            </div>
                           </div>
-                        </div>
-                      </Card>
-                    );
-                  })}
-                </div>
-              )}
-
-              {/* Messaggio se categoria vuota */}
-              {!hasItems && (
-                <div className="text-center py-8 text-gray-500 italic">
-                  Categoria in allestimento
-                </div>
-              )}
-
-              {/* Indicatore per aprire categoria */}
-              {hasItems && !isExpanded && (
-                <div className="text-center pt-4">
-                  <button
-                    onClick={() => toggleCategory(category.id)}
-                    className="text-orange-600 hover:text-orange-700 font-medium inline-flex items-center gap-2"
-                  >
-                    Clicca per vedere il menu
-                    <ChevronDown className="w-4 h-4" />
-                  </button>
-                </div>
-              )}
-            </div>
+                        </Card>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  <div className="text-center py-8">
+                    <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-gray-400 to-gray-500 mx-auto flex items-center justify-center mb-4">
+                      <ChefHat className="w-6 h-6 text-white" />
+                    </div>
+                    <p className="text-gray-500 dark:text-gray-400 italic">
+                      Categoria in allestimento
+                    </p>
+                  </div>
+                )}
+              </AccordionContent>
+            </AccordionItem>
           );
         })}
-      </div>
+      </Accordion>
 
-      {/* Footer */}
-      <div className="text-center mt-16 pt-8 border-t border-gray-200">
-        <p className="text-gray-500 text-sm">
-          Menu aggiornato regolarmente • Informazioni allergeni disponibili su richiesta
+      {/* Footer informativo */}
+      <div className="text-center mt-8 pt-6 border-t border-gray-200 dark:border-gray-700">
+        <p className="text-xs text-gray-500 dark:text-gray-400">
+          Menu aggiornato regolarmente • Informazioni dettagliate sugli allergeni disponibili su richiesta
         </p>
       </div>
     </div>
