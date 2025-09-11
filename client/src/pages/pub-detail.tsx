@@ -330,7 +330,8 @@ export default function PubDetail() {
                     <Button 
                       variant="outline" 
                       size="sm" 
-                      className="btn-glass text-white border-white/30 hover:bg-white/10"
+                      className="backdrop-blur-md bg-white/20 border-white/40 text-white hover:bg-white/30 hover:border-white/60 transition-all duration-300 font-medium shadow-lg"
+                      data-testid="button-save"
                     >
                       <Heart className="h-4 w-4 mr-2" />
                       Salva
@@ -338,14 +339,18 @@ export default function PubDetail() {
                     <Button 
                       variant="outline" 
                       size="sm" 
-                      className="btn-glass text-white border-white/30 hover:bg-white/10"
+                      className="backdrop-blur-md bg-white/20 border-white/40 text-white hover:bg-white/30 hover:border-white/60 transition-all duration-300 font-medium shadow-lg"
+                      data-testid="button-share"
                     >
                       <Share2 className="h-4 w-4 mr-2" />
                       Condividi
                     </Button>
                     {isOwner && (
                       <Link href="/dashboard">
-                        <Button className="bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700">
+                        <Button 
+                          className="bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 shadow-lg"
+                          data-testid="button-manage"
+                        >
                           <Settings className="w-4 h-4 mr-2" />
                           Gestisci
                         </Button>
