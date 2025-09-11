@@ -257,35 +257,128 @@ export default function PubDetail() {
     },
   });
 
-  // Share functionality with Web Share API fallback
+  // Enhanced share functionality with better mobile support
   const handleShare = async () => {
+    const pubName = (pub as any)?.name || 'Pub';
+    const currentUrl = window.location.href;
+    
     const shareData = {
-      title: `${(pub as any)?.name} - Fermenta`,
-      text: `Scopri ${(pub as any)?.name} su Fermenta`,
-      url: window.location.href,
+      title: `${pubName} - Fermenta`,
+      text: `Scopri ${pubName} su Fermenta - Birre alla spina, cantina e menu`,
+      url: currentUrl,
     };
 
     try {
-      if (navigator.share && navigator.canShare && navigator.canShare(shareData)) {
-        await navigator.share(shareData);
+      // Check for Web Share API support (preferred on mobile)
+      if (navigator.share && typeof navigator.share === 'function') {
+        // Check if the data can be shared
+        let canShare = true;
+        try {
+          if (navigator.canShare && typeof navigator.canShare === 'function') {
+            canShare = navigator.canShare(shareData);
+          }
+        } catch (canShareError) {
+          // Some browsers have navigator.share but not navigator.canShare
+          canShare = true;
+        }
+
+        if (canShare) {
+          await navigator.share(shareData);
+          // Only show success toast if share wasn't cancelled
+          toast({
+            title: "Condiviso con successo! 🎉",
+            description: "Il link del pub è stato condiviso",
+          });
+          return;
+        }
+      }
+
+      // Fallback to clipboard copy with enhanced error handling
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        await navigator.clipboard.writeText(currentUrl);
         toast({
-          title: "Condiviso con successo",
-          description: "Il link del pub è stato condiviso",
+          title: "Link copiato! 📋",
+          description: "Il link è stato copiato negli appunti. Incollalo dove vuoi condividerlo!",
         });
       } else {
-        // Fallback to clipboard
-        await navigator.clipboard.writeText(window.location.href);
-        toast({
-          title: "Link copiato",
-          description: "Il link del pub è stato copiato negli appunti",
-        });
+        // Fallback for older browsers/environments without clipboard API
+        try {
+          // Create a temporary textarea to copy text
+          const textArea = document.createElement('textarea');
+          textArea.value = currentUrl;
+          textArea.style.position = 'fixed';
+          textArea.style.left = '-999999px';
+          textArea.style.top = '-999999px';
+          document.body.appendChild(textArea);
+          textArea.focus();
+          textArea.select();
+          
+          const successful = document.execCommand('copy');
+          document.body.removeChild(textArea);
+          
+          if (successful) {
+            toast({
+              title: "Link copiato! 📋",
+              description: "Il link è stato copiato negli appunti",
+            });
+          } else {
+            throw new Error('Copy command failed');
+          }
+        } catch (fallbackError) {
+          // Final fallback - show the URL to copy manually
+          toast({
+            title: "Copia questo link:",
+            description: currentUrl,
+            action: (
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={() => {
+                  if (navigator.clipboard?.writeText) {
+                    navigator.clipboard.writeText(currentUrl);
+                  }
+                }}
+              >
+                Copia
+              </Button>
+            ),
+          });
+        }
       }
-    } catch (error) {
-      if (error.name !== 'AbortError') {
-        // AbortError occurs when user cancels the share dialog, don't show error for that
+    } catch (error: any) {
+      // Handle different types of errors
+      if (error.name === 'AbortError') {
+        // User cancelled the share - don't show an error
+        return;
+      }
+      
+      if (error.name === 'NotAllowedError') {
         toast({
-          title: "Errore",
-          description: "Impossibile condividere il link",
+          title: "Autorizzazione necessaria",
+          description: "Consenti l'accesso per condividere il link",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Generic error handling
+      console.warn('Share failed:', error);
+      
+      // Try clipboard as final fallback
+      try {
+        if (navigator.clipboard?.writeText) {
+          await navigator.clipboard.writeText(currentUrl);
+          toast({
+            title: "Link copiato come alternativa 📋",
+            description: "La condivisione non è disponibile, ma il link è stato copiato negli appunti",
+          });
+        } else {
+          throw new Error('Clipboard not available');
+        }
+      } catch (clipboardError) {
+        toast({
+          title: "Condivisione non disponibile",
+          description: "Copia manualmente questo link: " + currentUrl,
           variant: "destructive",
         });
       }
@@ -384,8 +477,8 @@ export default function PubDetail() {
           <div className="absolute inset-0 flex items-end">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full pb-12">
               <div className="glass-card rounded-2xl p-8 backdrop-blur-md bg-white/10 border border-white/20">
-                <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
-                  <div className="flex items-center space-x-6">
+                <div className="flex flex-col md:flex-row items-center md:items-center justify-between gap-6">
+                  <div className="flex items-center space-x-6 w-full md:w-auto justify-center md:justify-start">
                     {(pub as any)?.logoUrl && (
                       <Avatar className="h-20 w-20 ring-4 ring-white/30">
                         <AvatarImage src={(pub as any).logoUrl} alt={`${(pub as any).name} - Logo`} />
@@ -394,12 +487,12 @@ export default function PubDetail() {
                         </AvatarFallback>
                       </Avatar>
                     )}
-                    <div>
+                    <div className="text-center md:text-left">
                       <h1 className="text-display-xl text-white mb-3 font-bold">
                         {(pub as any)?.name}
                       </h1>
                       <div className="flex flex-col space-y-2">
-                        <div className="flex items-center space-x-4">
+                        <div className="flex items-center justify-center md:justify-start space-x-4">
                           <Badge 
                             className={`${
                               isOpen 
@@ -426,10 +519,10 @@ export default function PubDetail() {
                           )}
                         </div>
                         
-                        <div className="flex items-center space-x-4 text-white/80">
+                        <div className="flex flex-col sm:flex-row items-center justify-center md:justify-start space-y-2 sm:space-y-0 sm:space-x-4 text-white/80">
                           <div className="flex items-center">
                             <MapPin className="h-4 w-4 mr-2" />
-                            <span className="text-sm">{(pub as any)?.address}, {(pub as any)?.city}</span>
+                            <span className="text-sm text-center">{(pub as any)?.address}, {(pub as any)?.city}</span>
                           </div>
                           <div className="flex items-center">
                             <Heart className="h-4 w-4 mr-2 text-red-400" />
@@ -440,38 +533,39 @@ export default function PubDetail() {
                     </div>
                   </div>
                   
-                  <div className="flex items-center space-x-3">
+                  {/* Centered action buttons on mobile, right-aligned on desktop */}
+                  <div className="flex items-center justify-center md:justify-end space-x-2 sm:space-x-3 w-full md:w-auto">
                     <Button 
                       variant="outline" 
                       size="sm" 
                       onClick={handleSave}
                       disabled={toggleFavoriteMutation.isPending}
-                      className={`backdrop-blur-md border-white/40 text-white hover:bg-white/30 hover:border-white/60 transition-all duration-300 font-medium shadow-lg ${
+                      className={`backdrop-blur-md border-white/40 text-white hover:bg-white/30 hover:border-white/60 transition-all duration-300 font-medium shadow-lg min-h-[44px] min-w-[44px] ${
                         isFavorite ? 'bg-red-500/30 border-red-300/50' : 'bg-white/20'
                       }`}
                       data-testid="button-save"
                     >
-                      <Heart className={`h-4 w-4 mr-2 ${isFavorite ? 'fill-current' : ''}`} />
-                      {isFavorite ? 'Salvato' : 'Salva'}
+                      <Heart className={`h-4 w-4 sm:mr-2 ${isFavorite ? 'fill-current' : ''}`} />
+                      <span className="hidden sm:inline">{isFavorite ? 'Salvato' : 'Salva'}</span>
                     </Button>
                     <Button 
                       variant="outline" 
                       size="sm" 
                       onClick={handleShare}
-                      className="backdrop-blur-md bg-white/20 border-white/40 text-white hover:bg-white/30 hover:border-white/60 transition-all duration-300 font-medium shadow-lg"
+                      className="backdrop-blur-md bg-white/20 border-white/40 text-white hover:bg-white/30 hover:border-white/60 transition-all duration-300 font-medium shadow-lg min-h-[44px] min-w-[44px]"
                       data-testid="button-share"
                     >
-                      <Share2 className="h-4 w-4 mr-2" />
-                      Condividi
+                      <Share2 className="h-4 w-4 sm:mr-2" />
+                      <span className="hidden sm:inline">Condividi</span>
                     </Button>
                     {isOwner && (
                       <Link href="/dashboard">
                         <Button 
-                          className="bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 shadow-lg"
+                          className="bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 shadow-lg min-h-[44px] min-w-[44px]"
                           data-testid="button-manage"
                         >
-                          <Settings className="w-4 h-4 mr-2" />
-                          Gestisci
+                          <Settings className="w-4 h-4 sm:mr-2" />
+                          <span className="hidden sm:inline">Gestisci</span>
                         </Button>
                       </Link>
                     )}
