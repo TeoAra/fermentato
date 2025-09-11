@@ -637,24 +637,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Remove beer from tap (pub owner only)
-  app.delete("/api/taplist/:id", isAuthenticated, async (req: any, res) => {
-    try {
-      const userId = req.user.claims.sub;
-      const tapId = parseInt(req.params.id);
-      await storage.removeBeerFromTap(tapId);
-      res.status(204).send();
-    } catch (error) {
-      console.error("Error removing beer from tap:", error);
-      res.status(500).json({ message: "Failed to remove beer from tap" });
-    }
-  });
+  // Remove beer from tap (pub owner only) - REMOVED DUPLICATE ROUTE
+  // This functionality is handled by DELETE /api/pubs/:pubId/taplist/:id
 
   // Add beer to bottle list (pub owner only)
-  app.post("/api/pubs/:id/bottles", isAuthenticated, async (req: any, res) => {
+  app.post("/api/pubs/:pubId/bottles", isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
-      const pubId = parseInt(req.params.id);
+      const pubId = parseInt(req.params.pubId);
       
       // Check if user owns the pub
       const existingPub = await storage.getPub(pubId);
@@ -674,33 +664,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Update bottle item (only pub owner)
-  app.patch("/api/bottles/:id", isAuthenticated, async (req: any, res) => {
-    try {
-      const bottleId = parseInt(req.params.id);
-      const bottleData = insertBottleListSchema.partial().parse(req.body);
-      const updatedBottle = await storage.updateBottleItem(bottleId, bottleData);
-      res.json(updatedBottle);
-    } catch (error) {
-      if (error instanceof z.ZodError) {
-        return res.status(400).json({ message: "Validation error", errors: error.errors });
-      }
-      console.error("Error updating bottle item:", error);
-      res.status(500).json({ message: "Failed to update bottle item" });
-    }
-  });
-
-  // Remove beer from bottle list (only pub owner)
-  app.delete("/api/bottles/:id", isAuthenticated, async (req: any, res) => {
-    try {
-      const bottleId = parseInt(req.params.id);
-      await storage.removeBeerFromBottles(bottleId);
-      res.status(204).send();
-    } catch (error) {
-      console.error("Error removing beer from bottle list:", error);
-      res.status(500).json({ message: "Failed to remove beer from bottle list" });
-    }
-  });
+  // Update bottle item (only pub owner) - REMOVED DUPLICATE ROUTE
+  // This functionality is handled by PATCH /api/pubs/:pubId/bottles/:id
+  
+  // Remove beer from bottle list (only pub owner) - REMOVED DUPLICATE ROUTE
+  // This functionality is handled by DELETE /api/pubs/:pubId/bottles/:id
 
   // Update bottle list item (pub owner only)
   app.patch('/api/pubs/:pubId/bottles/:id', isAuthenticated, async (req, res) => {

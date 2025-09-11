@@ -124,7 +124,7 @@ export function BottleListManager({ pubId, bottleList }: BottleListManagerProps)
   // Toggle visibility mutation
   const toggleVisibilityMutation = useMutation({
     mutationFn: async ({ id, isVisible }: { id: number; isVisible: boolean }) => {
-      return apiRequest(`/api/pubs/${pubId}/bottles/${id}`, "PATCH", { isVisible });
+      return apiRequest(`/api/pubs/${pubId}/bottles/${id}`, { method: "PATCH" }, { isVisible });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/pubs", pubId, "bottles"] });

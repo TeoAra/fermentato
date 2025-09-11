@@ -127,7 +127,7 @@ export function TapListManager({ pubId, tapList }: TapListManagerProps) {
   // Toggle visibility mutation
   const toggleVisibilityMutation = useMutation({
     mutationFn: async ({ id, isVisible }: { id: number; isVisible: boolean }) => {
-      return apiRequest(`/api/pubs/${pubId}/taplist/${id}`, "PATCH", { isVisible });
+      return apiRequest(`/api/pubs/${pubId}/taplist/${id}`, { method: "PATCH" }, { isVisible });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/pubs", pubId, "taplist"] });

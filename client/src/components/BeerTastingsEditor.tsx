@@ -22,7 +22,7 @@ export default function BeerTastingsEditor({ beerTastings }: BeerTastingsEditorP
   // Update tasting mutation
   const updateTastingMutation = useMutation({
     mutationFn: async ({ tastingId, notes, rating }: { tastingId: number, notes: string, rating: number }) => {
-      return apiRequest(`/api/user/beer-tastings/${tastingId}`, "PATCH", { personalNotes: notes, rating });
+      return apiRequest(`/api/user/beer-tastings/${tastingId}`, { method: "PATCH" }, { personalNotes: notes, rating });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/user/beer-tastings"] });

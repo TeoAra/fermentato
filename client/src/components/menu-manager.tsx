@@ -111,7 +111,7 @@ export function MenuManager({ pubId, menu }: MenuManagerProps) {
 
   const updateCategoryMutation = useMutation({
     mutationFn: async (data: any) => {
-      return apiRequest(`/api/pubs/${pubId}/menu-categories/${editingCategory?.id}`, "PATCH", data);
+      return apiRequest(`/api/pubs/${pubId}/menu-categories/${editingCategory?.id}`, { method: "PATCH" }, data);
     },
     onSuccess: () => {
       toast({ title: "Categoria aggiornata!" });
@@ -139,7 +139,7 @@ export function MenuManager({ pubId, menu }: MenuManagerProps) {
 
   const toggleCategoryVisibilityMutation = useMutation({
     mutationFn: async ({ id, isVisible }: { id: number; isVisible: boolean }) => {
-      return apiRequest(`/api/pubs/${pubId}/menu-categories/${id}`, "PATCH", { isVisible });
+      return apiRequest(`/api/pubs/${pubId}/menu-categories/${id}`, { method: "PATCH" }, { isVisible });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/pubs", pubId, "menu"] });
@@ -167,7 +167,7 @@ export function MenuManager({ pubId, menu }: MenuManagerProps) {
 
   const updateItemMutation = useMutation({
     mutationFn: async (data: any) => {
-      return apiRequest(`/api/pubs/${pubId}/menu-items/${editingItem?.id}`, "PATCH", data);
+      return apiRequest(`/api/pubs/${pubId}/menu-items/${editingItem?.id}`, { method: "PATCH" }, data);
     },
     onSuccess: () => {
       toast({ title: "Prodotto aggiornato!" });
@@ -195,7 +195,7 @@ export function MenuManager({ pubId, menu }: MenuManagerProps) {
 
   const toggleItemVisibilityMutation = useMutation({
     mutationFn: async ({ id, isVisible }: { id: number; isVisible: boolean }) => {
-      return apiRequest(`/api/pubs/${pubId}/menu-items/${id}`, "PATCH", { isVisible });
+      return apiRequest(`/api/pubs/${pubId}/menu-items/${id}`, { method: "PATCH" }, { isVisible });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/pubs", pubId, "menu"] });
@@ -207,7 +207,7 @@ export function MenuManager({ pubId, menu }: MenuManagerProps) {
 
   const toggleItemAvailabilityMutation = useMutation({
     mutationFn: async ({ id, isAvailable }: { id: number; isAvailable: boolean }) => {
-      return apiRequest(`/api/pubs/${pubId}/menu-items/${id}`, "PATCH", { isAvailable });
+      return apiRequest(`/api/pubs/${pubId}/menu-items/${id}`, { method: "PATCH" }, { isAvailable });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/pubs", pubId, "menu"] });
