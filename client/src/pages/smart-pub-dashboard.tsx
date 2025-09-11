@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { AllergenSelector, AllergenDisplay } from "@/components/allergen-selector";
 import { PriceFormatManager } from "@/components/price-format-manager";
@@ -53,7 +54,8 @@ import {
   Star,
   Zap,
   Target,
-  Crown
+  Crown,
+  Wine
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { formatDistanceToNow } from "date-fns";
@@ -61,8 +63,10 @@ import { it } from "date-fns/locale";
 import { useMemo } from "react";
 import FlexiblePriceManager from "@/components/flexible-price-manager";
 import MenuCategoryManager from "@/components/menu-category-manager";
+import { TapListManager } from "@/components/taplist-manager";
+import { BottleListManager } from "@/components/bottle-list-manager";
 
-type DashboardSection = 'overview' | 'taplist' | 'menu' | 'analytics' | 'settings' | 'profile';
+type DashboardSection = 'overview' | 'taplist' | 'bottles' | 'menu' | 'analytics' | 'settings' | 'profile';
 
 export default function SmartPubDashboard() {
   const { user, isAuthenticated } = useAuth();
@@ -169,8 +173,6 @@ export default function SmartPubDashboard() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/pubs", currentPub?.id, "taplist"] });
       queryClient.invalidateQueries({ queryKey: ["/api/pubs", currentPub?.id] });
-      queryClient.refetchQueries({ queryKey: ["/api/pubs", currentPub?.id, "taplist"] });
-      queryClient.refetchQueries({ queryKey: ["/api/pubs", currentPub?.id] });
       setEditingItem(null);
       toast({ title: "Birra aggiornata", description: "Le modifiche sono state salvate" });
     },
@@ -184,14 +186,10 @@ export default function SmartPubDashboard() {
     },
     onSuccess: async (result) => {
       console.log('Mutation success:', result);
-      // Aggiornamento istantaneo forzato
-      await Promise.all([
-        queryClient.invalidateQueries({ queryKey: ["/api/pubs", currentPub?.id, "taplist"] }),
-        queryClient.invalidateQueries({ queryKey: ["/api/pubs", currentPub?.id] }),
-        queryClient.invalidateQueries({ queryKey: ["/api/my-pubs"] }),
-        queryClient.refetchQueries({ queryKey: ["/api/pubs", currentPub?.id, "taplist"] }),
-        queryClient.refetchQueries({ queryKey: ["/api/pubs", currentPub?.id] })
-      ]);
+      // Optimized cache invalidation
+      queryClient.invalidateQueries({ queryKey: ["/api/pubs", currentPub?.id, "taplist"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/pubs", currentPub?.id] });
+      queryClient.invalidateQueries({ queryKey: ["/api/my-pubs"] });
       toast({ title: "Birra aggiunta", description: "Nuova birra aggiunta alla tap list" });
       setShowBeerSearch(false);
       setSearchQuery('');
@@ -210,14 +208,10 @@ export default function SmartPubDashboard() {
     },
     onSuccess: async (data) => {
       console.log('Remove success:', data);
-      // Forza il refresh completo e immediato
-      await Promise.all([
-        queryClient.invalidateQueries({ queryKey: ["/api/pubs", currentPub?.id, "taplist"] }),
-        queryClient.invalidateQueries({ queryKey: ["/api/pubs", currentPub?.id] }),
-        queryClient.invalidateQueries({ queryKey: ["/api/my-pubs"] }),
-        queryClient.refetchQueries({ queryKey: ["/api/pubs", currentPub?.id, "taplist"] }),
-        queryClient.refetchQueries({ queryKey: ["/api/pubs", currentPub?.id] })
-      ]);
+      // Optimized cache invalidation
+      queryClient.invalidateQueries({ queryKey: ["/api/pubs", currentPub?.id, "taplist"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/pubs", currentPub?.id] });
+      queryClient.invalidateQueries({ queryKey: ["/api/my-pubs"] });
       toast({ title: "Birra eliminata", description: "Birra rimossa dalla taplist" });
     },
     onError: (error) => {
@@ -230,6 +224,7 @@ export default function SmartPubDashboard() {
   const sections = [
     { id: 'overview', name: 'Dashboard', icon: Home, gradient: 'from-blue-500 to-purple-600' },
     { id: 'taplist', name: 'Taplist', icon: Beer, gradient: 'from-amber-500 to-orange-600' },
+    { id: 'bottles', name: 'Cantina', icon: Wine, gradient: 'from-purple-500 to-violet-600' },
     { id: 'menu', name: 'Menu', icon: Utensils, gradient: 'from-green-500 to-emerald-600' },
     { id: 'analytics', name: 'Analytics', icon: BarChart3, gradient: 'from-indigo-500 to-blue-600' },
     { id: 'settings', name: 'Impostazioni', icon: Settings, gradient: 'from-gray-500 to-slate-600' },
@@ -557,15 +552,258 @@ export default function SmartPubDashboard() {
     </motion.div>
   );
 
-  // Modern Mobile Header
+  // Taplist Section
+  const renderTaplist = () => (
+    <div className="space-y-6">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+          <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Taplist Management</h2>
+          <p className="text-gray-600 dark:text-gray-400">Gestisci le birre alla spina del tuo pub</p>
+        </div>
+      </div>
+      
+      <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-800">
+        <TapListManager 
+          pubId={currentPub?.id || 0} 
+          tapList={typedTapList} 
+        />
+      </div>
+    </div>
+  );
+
+  // Menu Section
+  const renderMenu = () => (
+    <div className="space-y-6">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+          <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Menu Management</h2>
+          <p className="text-gray-600 dark:text-gray-400">Gestisci categorie e prodotti del menu</p>
+        </div>
+      </div>
+      
+      <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-800 p-6">
+        <MenuCategoryManager 
+          pubId={currentPub?.id || 0}
+          categories={typedMenuData}
+        />
+      </div>
+    </div>
+  );
+
+  // Analytics Section
+  const renderAnalytics = () => (
+    <div className="space-y-6">
+      <div>
+        <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Analytics</h2>
+        <p className="text-gray-600 dark:text-gray-400">Statistiche e performance del tuo pub</p>
+      </div>
+      
+      {/* KPI Grid */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <Card className="p-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm text-gray-600 dark:text-gray-400">Visualizzazioni</p>
+              <p className="text-2xl font-bold">1,247</p>
+            </div>
+            <div className="p-2 bg-blue-100 dark:bg-blue-900 rounded-lg">
+              <Eye className="h-6 w-6 text-blue-600" />
+            </div>
+          </div>
+        </Card>
+        
+        <Card className="p-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm text-gray-600 dark:text-gray-400">Click Taplist</p>
+              <p className="text-2xl font-bold">342</p>
+            </div>
+            <div className="p-2 bg-amber-100 dark:bg-amber-900 rounded-lg">
+              <Beer className="h-6 w-6 text-amber-600" />
+            </div>
+          </div>
+        </Card>
+        
+        <Card className="p-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm text-gray-600 dark:text-gray-400">Menu Views</p>
+              <p className="text-2xl font-bold">189</p>
+            </div>
+            <div className="p-2 bg-green-100 dark:bg-green-900 rounded-lg">
+              <Utensils className="h-6 w-6 text-green-600" />
+            </div>
+          </div>
+        </Card>
+        
+        <Card className="p-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm text-gray-600 dark:text-gray-400">Favorites</p>
+              <p className="text-2xl font-bold">67</p>
+            </div>
+            <div className="p-2 bg-red-100 dark:bg-red-900 rounded-lg">
+              <Star className="h-6 w-6 text-red-600" />
+            </div>
+          </div>
+        </Card>
+      </div>
+      
+      <Card className="p-6">
+        <h3 className="text-lg font-semibold mb-4">Birre Più Richieste</h3>
+        <div className="space-y-3">
+          {typedTapList.slice(0, 5).map((beer: any, index: number) => (
+            <div key={beer.id} className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
+              <div className="flex items-center space-x-3">
+                <div className="w-6 h-6 bg-primary text-white rounded-full flex items-center justify-center text-xs font-bold">
+                  {index + 1}
+                </div>
+                <div>
+                  <p className="font-medium">{beer.beer?.name || 'Nome non disponibile'}</p>
+                  <p className="text-sm text-gray-500">{beer.beer?.brewery?.name || 'Birrificio'}</p>
+                </div>
+              </div>
+              <div className="text-right">
+                <p className="font-semibold">{Math.floor(Math.random() * 50) + 20} views</p>
+                <p className="text-sm text-gray-500">questa settimana</p>
+              </div>
+            </div>
+          ))}
+        </div>
+      </Card>
+    </div>
+  );
+
+  // Settings Section  
+  const renderSettings = () => (
+    <div className="space-y-6">
+      <div>
+        <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Impostazioni</h2>
+        <p className="text-gray-600 dark:text-gray-400">Configurazioni del pub</p>
+      </div>
+      
+      <div className="grid gap-6">
+        <Card className="p-6">
+          <h3 className="text-lg font-semibold mb-4">Informazioni Pub</h3>
+          <div className="grid gap-4">
+            <div>
+              <Label>Nome Pub</Label>
+              <Input defaultValue={currentPub?.name} data-testid="input-pub-name" />
+            </div>
+            <div>
+              <Label>Indirizzo</Label>
+              <Input defaultValue={currentPub?.address} data-testid="input-pub-address" />
+            </div>
+            <div>
+              <Label>Descrizione</Label>
+              <Textarea defaultValue={currentPub?.description || ''} data-testid="textarea-pub-description" />
+            </div>
+          </div>
+          <div className="flex justify-end mt-4">
+            <Button data-testid="button-save-pub-info">
+              <Save className="h-4 w-4 mr-2" />
+              Salva Modifiche
+            </Button>
+          </div>
+        </Card>
+        
+        <Card className="p-6">
+          <h3 className="text-lg font-semibold mb-4">Visibilità</h3>
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="font-medium">Pub Visibile</p>
+                <p className="text-sm text-gray-500">Il pub appare nei risultati di ricerca</p>
+              </div>
+              <Switch defaultChecked data-testid="switch-pub-visible" />
+            </div>
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="font-medium">Taplist Pubblica</p>
+                <p className="text-sm text-gray-500">Gli utenti possono vedere la taplist</p>
+              </div>
+              <Switch defaultChecked data-testid="switch-taplist-visible" />
+            </div>
+          </div>
+        </Card>
+      </div>
+    </div>
+  );
+
+  // Bottles Section
+  const renderBottles = () => (
+    <div className="space-y-6">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+          <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Cantina Management</h2>
+          <p className="text-gray-600 dark:text-gray-400">Gestisci le birre in bottiglia della cantina</p>
+        </div>
+      </div>
+      
+      <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-800">
+        <BottleListManager 
+          pubId={currentPub?.id || 0} 
+          bottleList={typedBottleList} 
+        />
+      </div>
+    </div>
+  );
+
+  // Profile Section
+  const renderProfile = () => (
+    <div className="space-y-6">
+      <div>
+        <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Profilo</h2>
+        <p className="text-gray-600 dark:text-gray-400">Gestisci il tuo account</p>
+      </div>
+      
+      <Card className="p-6">
+        <div className="flex items-center space-x-6 mb-6">
+          <div className="w-20 h-20 bg-gradient-to-br from-primary to-orange-600 rounded-full flex items-center justify-center text-white text-2xl font-bold">
+            {(user as any)?.firstName?.[0] || 'U'}{(user as any)?.lastName?.[0] || 'S'}
+          </div>
+          <div>
+            <h3 className="text-xl font-semibold">{(user as any)?.firstName || 'Nome'} {(user as any)?.lastName || 'Cognome'}</h3>
+            <p className="text-gray-600">{(user as any)?.email || 'email@example.com'}</p>
+            <Badge variant="secondary" className="mt-2">Pub Owner</Badge>
+          </div>
+        </div>
+        
+        <div className="grid gap-4">
+          <div>
+            <Label>Nome</Label>
+            <Input defaultValue={(user as any)?.firstName || ''} data-testid="input-first-name" />
+          </div>
+          <div>
+            <Label>Cognome</Label>
+            <Input defaultValue={(user as any)?.lastName || ''} data-testid="input-last-name" />
+          </div>
+          <div>
+            <Label>Email</Label>
+            <Input defaultValue={(user as any)?.email || ''} type="email" data-testid="input-email" />
+          </div>
+        </div>
+        
+        <div className="flex justify-end mt-6">
+          <Button data-testid="button-save-profile">
+            <Save className="h-4 w-4 mr-2" />
+            Aggiorna Profilo
+          </Button>
+        </div>
+      </Card>
+    </div>
+  );
+
+  // Mobile Header - Now without conflicts
   const renderMobileHeader = () => (
-    <div className="md:hidden glass-card border-b p-4 flex items-center gap-3 sticky top-0 z-50">
+    <div className="lg:hidden bg-white dark:bg-gray-900 border-b p-4 flex items-center gap-3 sticky top-0 z-40">
       {currentSection !== 'overview' && (
         <Button
           variant="ghost"
           size="sm"
           onClick={() => setCurrentSection('overview')}
           className="text-primary hover:text-primary/80"
+          data-testid="button-back-overview"
         >
           <ArrowLeft className="h-4 w-4" />
         </Button>
@@ -585,10 +823,10 @@ export default function SmartPubDashboard() {
     </div>
   );
 
-  // Modern Sidebar
+  // Modern Sidebar  
   const renderSidebar = () => (
-    <div className="hidden md:flex md:w-64 md:flex-col md:fixed md:inset-y-0">
-      <div className="glass-card flex-1 flex flex-col min-h-0 border-r">
+    <div className="hidden lg:flex lg:w-64 lg:flex-col lg:fixed lg:inset-y-0">
+      <div className="bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-800 flex-1 flex flex-col min-h-0">
         <div className="flex items-center h-16 flex-shrink-0 px-6 border-b">
           <div className="flex items-center">
             <div className="p-2 rounded-xl bg-gradient-to-br from-amber-500 to-orange-600">
@@ -628,11 +866,11 @@ export default function SmartPubDashboard() {
           <div className="p-4 border-t">
             <div className="flex items-center space-x-3 p-3 rounded-xl bg-gray-50 dark:bg-gray-800">
               <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white font-semibold">
-                {user?.firstName?.[0] || 'U'}
+                {(user as any)?.firstName?.[0] || 'U'}
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
-                  {user?.firstName} {user?.lastName}
+                  {(user as any)?.firstName || 'Nome'} {(user as any)?.lastName || 'Cognome'}
                 </p>
                 <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
                   {currentPub?.name}
@@ -678,20 +916,27 @@ export default function SmartPubDashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-indigo-50 dark:from-gray-950 dark:via-blue-950 dark:to-indigo-950">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-indigo-50 dark:from-gray-950 dark:via-blue-950 dark:to-indigo-950 pb-20">
       {renderMobileHeader()}
       
       <div className="flex">
         {renderSidebar()}
         
         {/* Main Content */}
-        <div className="flex-1 md:ml-64">
-          <div className="p-6 md:p-8">
+        <div className="flex-1 lg:ml-64">
+          <div className="p-4 sm:p-6 md:p-8">
             <div className="max-w-7xl mx-auto">
               {currentSection === 'overview' && renderOverview()}
               
-              {/* Placeholder for other sections - will be implemented */}
-              {currentSection !== 'overview' && (
+              {currentSection === 'taplist' && renderTaplist()}
+              {currentSection === 'bottles' && renderBottles()}
+              {currentSection === 'menu' && renderMenu()}
+              {currentSection === 'analytics' && renderAnalytics()}
+              {currentSection === 'settings' && renderSettings()}
+              {currentSection === 'profile' && renderProfile()}
+              
+              {/* Fallback for unimplemented sections */}
+              {!['overview', 'taplist', 'bottles', 'menu', 'analytics', 'settings', 'profile'].includes(currentSection) && (
                 <div className="text-center py-16">
                   <div className="space-y-4">
                     <div className={`w-16 h-16 rounded-2xl bg-gradient-to-br ${sections.find(s => s.id === currentSection)?.gradient} mx-auto flex items-center justify-center`}>
@@ -703,7 +948,7 @@ export default function SmartPubDashboard() {
                       {sections.find(s => s.id === currentSection)?.name}
                     </h2>
                     <p className="text-gray-600 dark:text-gray-400">
-                      Sezione in fase di sviluppo con il nuovo design system.
+                      Sezione in fase di sviluppo.
                     </p>
                   </div>
                 </div>
@@ -713,25 +958,26 @@ export default function SmartPubDashboard() {
         </div>
       </div>
 
-      {/* Mobile Bottom Navigation */}
-      <div className="md:hidden fixed bottom-0 left-0 right-0 glass-card border-t safe-area-pb">
-        <div className="grid grid-cols-3 gap-1 p-2">
-          {sections.slice(0, 3).map((section) => {
+      {/* Removed conflicting mobile navigation - now using global BottomNavigation only */}
+      {/* Section tabs for mobile and tablet - horizontal scroll */}
+      <div className="lg:hidden bg-white dark:bg-gray-900 border-t border-b px-4 py-2 sticky top-16 z-30">
+        <div className="flex space-x-2 overflow-x-auto scrollbar-hide pb-1">
+          {sections.map((section) => {
             const Icon = section.icon;
             const isActive = currentSection === section.id;
             return (
               <button
                 key={section.id}
                 onClick={() => setCurrentSection(section.id as DashboardSection)}
-                className={`flex flex-col items-center py-3 px-2 text-xs rounded-xl transition-all duration-200 ${
+                className={`flex items-center space-x-2 px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all duration-200 ${
                   isActive
-                    ? `bg-gradient-to-t ${section.gradient} text-white shadow-lg scale-105`
+                    ? 'bg-primary text-white shadow-sm'
                     : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800'
                 }`}
-                data-testid={`mobile-nav-${section.id}`}
+                data-testid={`section-tab-${section.id}`}
               >
-                <Icon className={`w-5 h-5 mb-1 transition-transform ${isActive ? 'scale-110' : ''}`} />
-                <span className="truncate font-medium">{section.name}</span>
+                <Icon className="w-4 h-4" />
+                <span>{section.name}</span>
               </button>
             );
           })}
