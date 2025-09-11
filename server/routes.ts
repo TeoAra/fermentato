@@ -717,6 +717,66 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Update menu category (only pub owner)
+  app.patch("/api/pubs/:pubId/menu-categories/:id", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const pubId = parseInt(req.params.pubId);
+      const categoryId = parseInt(req.params.id);
+      
+      // Check if user owns the pub
+      const existingPub = await storage.getPub(pubId);
+      if (!existingPub || existingPub.ownerId !== userId) {
+        return res.status(403).json({ message: "Not authorized to modify this pub's menu" });
+      }
+
+      // Verify the category belongs to this pub
+      const categories = await storage.getMenuCategories(pubId);
+      const categoryExists = categories.some(cat => cat.id === categoryId);
+      if (!categoryExists) {
+        return res.status(403).json({ message: "This menu category does not belong to your pub" });
+      }
+
+      const updates = insertMenuCategorySchema.omit({ pubId: true, id: true }).partial().parse(req.body);
+      const updatedCategory = await storage.updateMenuCategory(categoryId, updates);
+      res.json(updatedCategory);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: "Validation error", errors: error.errors });
+      }
+      console.error("Error updating menu category:", error);
+      res.status(500).json({ message: "Failed to update menu category" });
+    }
+  });
+
+  // Delete menu category (only pub owner)
+  app.delete("/api/pubs/:pubId/menu-categories/:id", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const pubId = parseInt(req.params.pubId);
+      const categoryId = parseInt(req.params.id);
+      
+      // Check if user owns the pub
+      const existingPub = await storage.getPub(pubId);
+      if (!existingPub || existingPub.ownerId !== userId) {
+        return res.status(403).json({ message: "Not authorized to modify this pub's menu" });
+      }
+
+      // Verify the category belongs to this pub
+      const categories = await storage.getMenuCategories(pubId);
+      const categoryExists = categories.some(cat => cat.id === categoryId);
+      if (!categoryExists) {
+        return res.status(403).json({ message: "This menu category does not belong to your pub" });
+      }
+
+      await storage.deleteMenuCategory(categoryId);
+      res.status(204).send();
+    } catch (error) {
+      console.error("Error deleting menu category:", error);
+      res.status(500).json({ message: "Failed to delete menu category" });
+    }
+  });
+
   // Get menu items for a category (public)
   app.get("/api/pubs/:pubId/menu/categories/:categoryId/items", async (req, res) => {
     try {
@@ -729,7 +789,38 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Create menu item (only pub owner)
+  // Create menu item (only pub owner) - Updated to match frontend expectations and add pub ownership validation
+  app.post("/api/pubs/:id/menu-items", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const pubId = parseInt(req.params.id);
+      
+      // Check if user owns the pub
+      const existingPub = await storage.getPub(pubId);
+      if (!existingPub || existingPub.ownerId !== userId) {
+        return res.status(403).json({ message: "Not authorized to modify this pub's menu" });
+      }
+
+      // Validate that the category belongs to the pub
+      const categories = await storage.getMenuCategories(pubId);
+      const categoryExists = categories.some(cat => cat.id === req.body.categoryId);
+      if (!categoryExists) {
+        return res.status(400).json({ message: "Category does not belong to this pub" });
+      }
+
+      const itemData = insertMenuItemSchema.omit({ id: true, createdAt: true, updatedAt: true }).parse({ ...req.body, categoryId: req.body.categoryId });
+      const item = await storage.createMenuItem(itemData);
+      res.status(201).json(item);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: "Validation error", errors: error.errors });
+      }
+      console.error("Error creating menu item:", error);
+      res.status(500).json({ message: "Failed to create menu item" });
+    }
+  });
+
+  // Legacy endpoint - keep for backward compatibility
   app.post("/api/menu-items", isAuthenticated, async (req: any, res) => {
     try {
       const itemData = insertMenuItemSchema.parse(req.body);
@@ -741,6 +832,78 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       console.error("Error creating menu item:", error);
       res.status(500).json({ message: "Failed to create menu item" });
+    }
+  });
+
+  // Update menu item (only pub owner)
+  app.patch("/api/pubs/:pubId/menu-items/:id", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const pubId = parseInt(req.params.pubId);
+      const itemId = parseInt(req.params.id);
+      
+      // Check if user owns the pub
+      const existingPub = await storage.getPub(pubId);
+      if (!existingPub || existingPub.ownerId !== userId) {
+        return res.status(403).json({ message: "Not authorized to modify this pub's menu" });
+      }
+
+      // Get the item to verify it belongs to this pub through its category
+      const item = await storage.getMenuItem(itemId);
+      if (!item) {
+        return res.status(404).json({ message: "Menu item not found" });
+      }
+
+      // Verify the item's category belongs to this pub
+      const categories = await storage.getMenuCategories(pubId);
+      const categoryExists = categories.some(cat => cat.id === item.categoryId);
+      if (!categoryExists) {
+        return res.status(403).json({ message: "This menu item does not belong to your pub" });
+      }
+
+      const updates = insertMenuItemSchema.omit({ id: true, categoryId: true, createdAt: true, updatedAt: true }).partial().parse(req.body);
+      const updatedItem = await storage.updateMenuItem(itemId, updates);
+      res.json(updatedItem);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: "Validation error", errors: error.errors });
+      }
+      console.error("Error updating menu item:", error);
+      res.status(500).json({ message: "Failed to update menu item" });
+    }
+  });
+
+  // Delete menu item (only pub owner)
+  app.delete("/api/pubs/:pubId/menu-items/:id", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const pubId = parseInt(req.params.pubId);
+      const itemId = parseInt(req.params.id);
+      
+      // Check if user owns the pub
+      const existingPub = await storage.getPub(pubId);
+      if (!existingPub || existingPub.ownerId !== userId) {
+        return res.status(403).json({ message: "Not authorized to modify this pub's menu" });
+      }
+
+      // Get the item to verify it belongs to this pub through its category
+      const item = await storage.getMenuItem(itemId);
+      if (!item) {
+        return res.status(404).json({ message: "Menu item not found" });
+      }
+
+      // Verify the item's category belongs to this pub
+      const categories = await storage.getMenuCategories(pubId);
+      const categoryExists = categories.some(cat => cat.id === item.categoryId);
+      if (!categoryExists) {
+        return res.status(403).json({ message: "This menu item does not belong to your pub" });
+      }
+
+      await storage.deleteMenuItem(itemId);
+      res.status(204).send();
+    } catch (error) {
+      console.error("Error deleting menu item:", error);
+      res.status(500).json({ message: "Failed to delete menu item" });
     }
   });
 

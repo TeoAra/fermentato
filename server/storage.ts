@@ -103,6 +103,7 @@ export interface IStorage {
   updateMenuCategory(id: number, updates: Partial<InsertMenuCategory>): Promise<MenuCategory>;
   deleteMenuCategory(id: number): Promise<void>;
   getMenuItems(categoryId: number): Promise<MenuItem[]>;
+  getMenuItem(id: number): Promise<MenuItem | null>;
   createMenuItem(item: InsertMenuItem): Promise<MenuItem>;
   updateMenuItem(id: number, updates: Partial<InsertMenuItem>): Promise<MenuItem>;
   deleteMenuItem(id: number): Promise<void>;
@@ -617,6 +618,15 @@ export class DatabaseStorage implements IStorage {
       .from(menuItems)
       .where(eq(menuItems.categoryId, categoryId))
       .orderBy(asc(menuItems.orderIndex));
+  }
+
+  async getMenuItem(id: number): Promise<MenuItem | null> {
+    const [item] = await db
+      .select()
+      .from(menuItems)
+      .where(eq(menuItems.id, id))
+      .limit(1);
+    return item || null;
   }
 
   async createMenuItem(itemData: InsertMenuItem): Promise<MenuItem> {
@@ -1421,6 +1431,13 @@ class StorageWrapper implements IStorage {
     return this.dbCall(
       () => this.databaseStorage.getMenuItems(categoryId),
       async () => { return []; }
+    );
+  }
+
+  async getMenuItem(id: number): Promise<MenuItem | null> {
+    return this.dbCall(
+      () => this.databaseStorage.getMenuItem(id),
+      async () => { return null; }
     );
   }
 

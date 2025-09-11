@@ -50,11 +50,13 @@ export class MemoryStorage {
       name: "Birrificio Demo",
       description: "Birrificio di esempio per testing",
       location: "Milano, Italia",
+      region: "Lombardia",
       logoUrl: null,
-      founded: 2020,
-      website: "https://demo.brewery.com",
-      createdAt: new Date(),
-      updatedAt: new Date()
+      websiteUrl: "https://demo.brewery.com",
+      latitude: null,
+      longitude: null,
+      rating: "0",
+      createdAt: new Date()
     };
     this.breweries.set(1, demoBrewery);
 
@@ -64,12 +66,15 @@ export class MemoryStorage {
       name: "Demo IPA",
       breweryId: 1,
       style: "IPA",
-      abv: 6.5,
+      abv: "6.5",
       ibu: 45,
       description: "Una IPA demo per testing",
       imageUrl: null,
-      createdAt: new Date(),
-      updatedAt: new Date()
+      logoUrl: null,
+      bottleImageUrl: null,
+      color: null,
+      isBottled: null,
+      createdAt: new Date()
     };
     
     const demoBeer2: Beer = {
@@ -77,12 +82,15 @@ export class MemoryStorage {
       name: "Demo Lager",
       breweryId: 1,
       style: "Lager",
-      abv: 4.8,
+      abv: "4.8",
       ibu: 25,
       description: "Una Lager demo per testing",
       imageUrl: null,
-      createdAt: new Date(),
-      updatedAt: new Date()
+      logoUrl: null,
+      bottleImageUrl: null,
+      color: null,
+      isBottled: null,
+      createdAt: new Date()
     };
     
     this.beers.set(1, demoBeer1);
@@ -102,9 +110,17 @@ export class MemoryStorage {
       ...existingUser,
       ...user,
       nickname: user.nickname || `user${Date.now()}`,
-      nicknameLastChanged: existingUser?.nicknameLastChanged || new Date(),
+      lastNicknameUpdate: existingUser?.lastNicknameUpdate || new Date(),
       bio: user.bio || null,
-      location: user.location || null,
+      email: user.email || null,
+      firstName: user.firstName || null,
+      lastName: user.lastName || null,
+      profileImageUrl: user.profileImageUrl || null,
+      favoriteStyles: user.favoriteStyles || null,
+      userType: user.userType || existingUser?.userType || "customer",
+      emailLastUpdated: user.emailLastUpdated || null,
+      passwordLastUpdated: user.passwordLastUpdated || null,
+      joinedAt: user.joinedAt || null,
       createdAt: existingUser?.createdAt || new Date(),
       updatedAt: new Date()
     };
@@ -134,6 +150,26 @@ export class MemoryStorage {
     const newPub: Pub = {
       ...pub,
       id,
+      email: pub.email || null,
+      postalCode: pub.postalCode || null,
+      latitude: pub.latitude || null,
+      longitude: pub.longitude || null,
+      phone: pub.phone || null,
+      websiteUrl: pub.websiteUrl || null,
+      description: pub.description || null,
+      imageUrl: pub.imageUrl || null,
+      logoUrl: pub.logoUrl || null,
+      coverImageUrl: pub.coverImageUrl || null,
+      rating: pub.rating || "0",
+      isActive: pub.isActive ?? true,
+      openingHours: pub.openingHours || null,
+      facebookUrl: pub.facebookUrl || null,
+      instagramUrl: pub.instagramUrl || null,
+      twitterUrl: pub.twitterUrl || null,
+      tiktokUrl: pub.tiktokUrl || null,
+      ownerId: pub.ownerId || null,
+      vatNumber: pub.vatNumber || null,
+      businessName: pub.businessName || null,
       createdAt: new Date(),
       updatedAt: new Date()
     };
@@ -181,8 +217,13 @@ export class MemoryStorage {
     const newBrewery: Brewery = {
       ...brewery,
       id,
-      createdAt: new Date(),
-      updatedAt: new Date()
+      description: brewery.description || null,
+      logoUrl: brewery.logoUrl || null,
+      websiteUrl: brewery.websiteUrl || null,
+      latitude: brewery.latitude || null,
+      longitude: brewery.longitude || null,
+      rating: brewery.rating || "0",
+      createdAt: new Date()
     };
     this.breweries.set(id, newBrewery);
     return newBrewery;
@@ -191,7 +232,7 @@ export class MemoryStorage {
   async updateBrewery(id: number, updates: Partial<InsertBrewery>): Promise<Brewery> {
     const brewery = this.breweries.get(id);
     if (!brewery) throw new Error('Brewery not found');
-    const updatedBrewery = { ...brewery, ...updates, updatedAt: new Date() };
+    const updatedBrewery = { ...brewery, ...updates };
     this.breweries.set(id, updatedBrewery);
     return updatedBrewery;
   }
@@ -223,8 +264,15 @@ export class MemoryStorage {
     const newBeer: Beer = {
       ...beer,
       id,
-      createdAt: new Date(),
-      updatedAt: new Date()
+      abv: beer.abv || null,
+      ibu: beer.ibu || null,
+      description: beer.description || null,
+      logoUrl: beer.logoUrl || null,
+      imageUrl: beer.imageUrl || null,
+      bottleImageUrl: beer.bottleImageUrl || null,
+      color: beer.color || null,
+      isBottled: beer.isBottled || null,
+      createdAt: new Date()
     };
     this.beers.set(id, newBeer);
     return newBeer;
@@ -233,7 +281,7 @@ export class MemoryStorage {
   async updateBeer(id: number, updates: Partial<InsertBeer>): Promise<Beer> {
     const beer = this.beers.get(id);
     if (!beer) throw new Error('Beer not found');
-    const updatedBeer = { ...beer, ...updates, updatedAt: new Date() };
+    const updatedBeer = { ...beer, ...updates };
     this.beers.set(id, updatedBeer);
     return updatedBeer;
   }
@@ -265,7 +313,15 @@ export class MemoryStorage {
     const newItem: TapList = {
       ...item,
       id,
-      createdAt: new Date(),
+      description: item.description || null,
+      isActive: item.isActive ?? null,
+      isVisible: item.isVisible ?? null,
+      prices: item.prices || null,
+      priceSmall: item.priceSmall || null,
+      priceMedium: item.priceMedium || null,
+      priceLarge: item.priceLarge || null,
+      tapNumber: item.tapNumber || null,
+      addedAt: new Date(),
       updatedAt: new Date()
     };
     this.tapLists.set(id, newItem);
@@ -281,7 +337,14 @@ export class MemoryStorage {
     const newItem: BottleList = {
       ...item,
       id,
-      createdAt: new Date(),
+      description: item.description || null,
+      isActive: item.isActive ?? null,
+      isVisible: item.isVisible ?? null,
+      prices: item.prices || null,
+      priceBottle: item.priceBottle || null,
+      bottleSize: item.bottleSize || "0.33L",
+      quantity: item.quantity || null,
+      addedAt: new Date(),
       updatedAt: new Date()
     };
     this.bottleLists.set(id, newItem);
@@ -312,6 +375,119 @@ export class MemoryStorage {
 
   async removeFromBottleList(id: number): Promise<void> {
     this.bottleLists.delete(id);
+  }
+
+  // Menu category operations
+  async getMenuCategories(pubId: number): Promise<MenuCategory[]> {
+    return Array.from(this.menuCategories.values()).filter(category => category.pubId === pubId);
+  }
+
+  async getMenuByPub(pubId: number): Promise<any[]> {
+    const categories = await this.getMenuCategories(pubId);
+    const categoriesWithItems = await Promise.all(
+      categories.map(async (category) => {
+        const items = await this.getMenuItems(category.id);
+        return { ...category, items };
+      })
+    );
+    return categoriesWithItems;
+  }
+
+  async createMenuCategory(category: InsertMenuCategory): Promise<MenuCategory> {
+    const id = this.idCounters.menuCategory++;
+    const newCategory: MenuCategory = {
+      ...category,
+      id,
+      description: category.description || null,
+      isVisible: category.isVisible ?? null,
+      orderIndex: category.orderIndex ?? null,
+      createdAt: new Date()
+    };
+    this.menuCategories.set(id, newCategory);
+    return newCategory;
+  }
+
+  async updateMenuCategory(id: number, updates: Partial<InsertMenuCategory>): Promise<MenuCategory> {
+    const category = this.menuCategories.get(id);
+    if (!category) throw new Error('Menu category not found');
+    const updatedCategory = { ...category, ...updates };
+    this.menuCategories.set(id, updatedCategory);
+    return updatedCategory;
+  }
+
+  async deleteMenuCategory(id: number): Promise<void> {
+    // Also delete all menu items in this category
+    const itemsToDelete = Array.from(this.menuItems.values()).filter(item => item.categoryId === id);
+    itemsToDelete.forEach(item => this.menuItems.delete(item.id));
+    
+    this.menuCategories.delete(id);
+  }
+
+  // Menu item operations
+  async getMenuItems(categoryId: number): Promise<MenuItem[]> {
+    return Array.from(this.menuItems.values()).filter(item => item.categoryId === categoryId);
+  }
+
+  async getMenuItem(id: number): Promise<MenuItem | null> {
+    const item = this.menuItems.get(id);
+    return item || null;
+  }
+
+  async createMenuItem(item: InsertMenuItem): Promise<MenuItem> {
+    const id = this.idCounters.menuItem++;
+    const newItem: MenuItem = {
+      ...item,
+      id,
+      description: item.description || null,
+      imageUrl: item.imageUrl || null,
+      isVisible: item.isVisible ?? null,
+      isAvailable: item.isAvailable ?? null,
+      allergens: item.allergens || null,
+      orderIndex: item.orderIndex ?? null,
+      createdAt: new Date(),
+      updatedAt: new Date()
+    };
+    this.menuItems.set(id, newItem);
+    return newItem;
+  }
+
+  async updateMenuItem(id: number, updates: Partial<InsertMenuItem>): Promise<MenuItem> {
+    const item = this.menuItems.get(id);
+    if (!item) throw new Error('Menu item not found');
+    const updatedItem = { ...item, ...updates, updatedAt: new Date() };
+    this.menuItems.set(id, updatedItem);
+    return updatedItem;
+  }
+
+  async deleteMenuItem(id: number): Promise<void> {
+    this.menuItems.delete(id);
+  }
+
+  // Additional required methods for compatibility
+  async updateUserType(userId: string, userType: string): Promise<User> {
+    const user = this.users.get(userId);
+    if (!user) throw new Error('User not found');
+    const updatedUser = { ...user, userType, updatedAt: new Date() };
+    this.users.set(userId, updatedUser);
+    return updatedUser;
+  }
+
+  async getBeerWithBrewery(id: number): Promise<any> {
+    const beer = this.beers.get(id);
+    if (!beer) return null;
+    
+    const brewery = this.breweries.get(beer.breweryId);
+    return { ...beer, brewery };
+  }
+
+  async getBeerAvailability(beerId: number): Promise<any> {
+    const onTap = Array.from(this.tapLists.values()).filter(item => item.beerId === beerId && item.isActive);
+    const inBottles = Array.from(this.bottleLists.values()).filter(item => item.beerId === beerId && item.isActive);
+    
+    return {
+      onTap: onTap.map(item => ({ ...item, pub: this.pubs.get(item.pubId) })),
+      inBottles: inBottles.map(item => ({ ...item, pub: this.pubs.get(item.pubId) }))
+    };
   }
 }
 
