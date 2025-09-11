@@ -38,6 +38,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useAuth } from "@/hooks/useAuth";
+import OpeningHoursDialog from "@/components/OpeningHoursDialog";
 
 // Funzione per controllare se un pub è aperto ora
 function isOpenNow(openingHours: any) {
@@ -185,6 +186,7 @@ export default function PubDetail() {
   const { id } = useParams();
   const { user, isAuthenticated } = useAuth();
   const [activeTab, setActiveTab] = useState("taplist");
+  const [showOpeningHours, setShowOpeningHours] = useState(false);
   
   const { data: pub, isLoading: pubLoading } = useQuery({
     queryKey: ["/api/pubs", id],
@@ -257,6 +259,24 @@ export default function PubDetail() {
   }
 
   const isOpen = isOpenNow((pub as any)?.openingHours);
+
+  // Quick Actions Handlers
+  const handleShowOpeningHours = () => {
+    setShowOpeningHours(true);
+  };
+
+  const handleGetDirections = () => {
+    if (pub) {
+      const address = encodeURIComponent(`${(pub as any)?.address}, ${(pub as any)?.city}, Italia`);
+      window.open(`https://maps.google.com/maps?q=${address}`, '_blank');
+    }
+  };
+
+  const handleCallNow = () => {
+    if ((pub as any)?.phone) {
+      window.location.href = `tel:${(pub as any).phone}`;
+    }
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-indigo-50 dark:from-gray-950 dark:via-blue-950 dark:to-indigo-950">
@@ -653,17 +673,39 @@ export default function PubDetail() {
                 </CardTitle>
               </CardHeader>
               <CardContent className="p-4 space-y-3">
-                <Button className="w-full bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700" size="sm">
+                <Button 
+                  className="w-full bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 transition-all duration-300" 
+                  size="sm"
+                  onClick={handleShowOpeningHours}
+                  data-testid="button-show-hours"
+                >
                   <Eye className="h-4 w-4 mr-2" />
                   Vedi Orari Completi
                 </Button>
-                <Button variant="outline" className="w-full" size="sm">
+                <Button 
+                  variant="outline" 
+                  className="w-full hover:bg-blue-50 dark:hover:bg-blue-900 transition-all duration-300" 
+                  size="sm"
+                  onClick={handleGetDirections}
+                  data-testid="button-get-directions"
+                >
                   <Navigation className="h-4 w-4 mr-2" />
                   Come Arrivare
                 </Button>
-                <Button variant="outline" className="w-full" size="sm">
+                <Button 
+                  variant="outline" 
+                  className={`w-full transition-all duration-300 ${
+                    (pub as any)?.phone 
+                      ? 'hover:bg-green-50 dark:hover:bg-green-900 cursor-pointer' 
+                      : 'opacity-50 cursor-not-allowed'
+                  }`}
+                  size="sm"
+                  onClick={handleCallNow}
+                  disabled={!(pub as any)?.phone}
+                  data-testid="button-call-now"
+                >
                   <Phone className="h-4 w-4 mr-2" />
-                  Chiama Ora
+                  {(pub as any)?.phone ? 'Chiama Ora' : 'Numero Non Disponibile'}
                 </Button>
               </CardContent>
             </Card>
@@ -672,6 +714,14 @@ export default function PubDetail() {
       </main>
 
       <Footer />
+      
+      {/* Opening Hours Dialog */}
+      <OpeningHoursDialog 
+        open={showOpeningHours}
+        onOpenChange={setShowOpeningHours}
+        pubName={(pub as any)?.name || ''}
+        openingHours={(pub as any)?.openingHours}
+      />
     </div>
   );
 }
