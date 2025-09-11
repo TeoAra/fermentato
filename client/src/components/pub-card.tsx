@@ -7,6 +7,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
+import ImageWithFallback from "@/components/image-with-fallback";
 
 // Funzione per controllare se un pub è aperto ora
 function isOpenNow(openingHours: any) {
@@ -129,10 +130,13 @@ export default function PubCard({ pub }: PubCardProps) {
     <Link href={`/pub/${pub.id}`}>
       <Card className="overflow-hidden hover:shadow-lg transition-shadow cursor-pointer">
         <div className="relative">
-          <img
-            src={pub.coverImageUrl || "https://images.unsplash.com/photo-1514933651103-005eec06c04b?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=240"}
+          <ImageWithFallback
+            src={pub.coverImageUrl}
             alt={`${pub.name} - Copertina`}
+            imageType="pub"
+            containerClassName="w-full h-48"
             className="w-full h-48 object-cover"
+            iconSize="xl"
           />
           {!pub.isActive && (
             <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center">

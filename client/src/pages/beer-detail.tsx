@@ -26,6 +26,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import BeerTastingForm from "@/components/BeerTastingForm";
+import ImageWithFallback from "@/components/image-with-fallback";
 
 interface Beer {
   id: number;
@@ -106,7 +107,7 @@ export default function BeerDetail() {
   );
 
   // Check if user has already tasted this beer
-  const { data: userTastings = [] } = useQuery({
+  const { data: userTastings = [] } = useQuery<any[]>({
     queryKey: ["/api/user/beer-tastings"],
     enabled: isAuthenticated,
   });
@@ -118,9 +119,9 @@ export default function BeerDetail() {
   const favoriteMutation = useMutation({
     mutationFn: async ({ itemType, itemId, action }: { itemType: string, itemId: number, action: 'add' | 'remove' }) => {
       if (action === 'add') {
-        return apiRequest('/api/favorites', 'POST', { itemType, itemId });
+        return apiRequest('/api/favorites', { method: 'POST' }, { itemType, itemId });
       } else {
-        return apiRequest(`/api/favorites/${itemType}/${itemId}`, 'DELETE');
+        return apiRequest(`/api/favorites/${itemType}/${itemId}`, { method: 'DELETE' });
       }
     },
     onSuccess: () => {
@@ -224,10 +225,13 @@ export default function BeerDetail() {
           <div className="max-w-7xl mx-auto">
             <div className="flex items-end space-x-6">
               <div className="w-32 h-40 bg-white rounded-lg shadow-lg overflow-hidden">
-                <img
-                  src={beer.bottleImageUrl || beer.imageUrl || "https://images.unsplash.com/photo-1608270586620-248524c67de9?ixlib=rb-4.0.3&auto=format&fit=crop&w=200&h=300"}
+                <ImageWithFallback
+                  src={beer.bottleImageUrl || beer.imageUrl}
                   alt={beer.name}
+                  imageType="beer"
+                  containerClassName="w-32 h-40 bg-white rounded-lg shadow-lg overflow-hidden"
                   className="w-full h-full object-cover"
+                  iconSize="xl"
                 />
               </div>
               

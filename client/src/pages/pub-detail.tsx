@@ -39,6 +39,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import OpeningHoursDialog from "@/components/OpeningHoursDialog";
+import ImageWithFallback from "@/components/image-with-fallback";
 
 // Funzione per controllare se un pub è aperto ora
 function isOpenNow(openingHours: any) {
@@ -80,10 +81,13 @@ const ModernBeerCard = ({ beer, prices, className = "" }: {
       {/* Left side: Beer image and details */}
       <div className="flex items-start space-x-4 flex-1 min-w-0">
         <div className="relative flex-shrink-0">
-          <img
-            src={beer?.imageUrl || "https://images.unsplash.com/photo-1608667508764-33cf0db3f6a9?ixlib=rb-4.0.3&auto=format&fit=crop&w=100&h=100"}
-            alt={beer?.name}
+          <ImageWithFallback
+            src={beer?.imageUrl}
+            alt={beer?.name || 'Beer'}
+            imageType="beer"
+            containerClassName="w-16 h-16 rounded-xl group-hover:scale-105 transition-transform duration-300"
             className="w-16 h-16 object-cover rounded-xl group-hover:scale-105 transition-transform duration-300"
+            iconSize="lg"
           />
         </div>
         

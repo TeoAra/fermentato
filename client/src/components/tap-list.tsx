@@ -2,6 +2,7 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Link } from "wouter";
 import { Wine } from "lucide-react";
+import ImageWithFallback from "@/components/image-with-fallback";
 
 interface TapListProps {
   tapList: Array<{
@@ -62,13 +63,14 @@ export default function TapList({ tapList }: TapListProps) {
               )}
               
               <div className="flex items-center gap-3 mb-3">
-                {(tap.beer.imageUrl || tap.beer.brewery.logoUrl) && (
-                  <img
-                    src={tap.beer.imageUrl || tap.beer.brewery.logoUrl || "https://images.unsplash.com/photo-1608270586620-248524c67de9?ixlib=rb-4.0.3&auto=format&fit=crop&w=100&h=100"}
-                    alt={tap.beer.name}
-                    className="w-12 h-12 rounded-lg object-cover flex-shrink-0"
-                  />
-                )}
+                <ImageWithFallback
+                  src={tap.beer.imageUrl || tap.beer.brewery.logoUrl}
+                  alt={tap.beer.name}
+                  imageType="beer"
+                  containerClassName="w-12 h-12 rounded-lg flex-shrink-0"
+                  className="w-12 h-12 rounded-lg object-cover flex-shrink-0"
+                  iconSize="md"
+                />
                 <div className="flex-1 min-w-0">
                   <Link href={`/beer/${tap.beer.id}`}>
                     <h3 className="font-semibold text-base break-words hover:text-primary cursor-pointer transition-colors">

@@ -11,6 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
+import ImageWithFallback from "@/components/image-with-fallback";
 
 // Square Card Components
 function BrewerySquareCard({ brewery }: { brewery: any }) {
@@ -82,10 +83,13 @@ function BrewerySquareCard({ brewery }: { brewery: any }) {
           )}
 
           <div className="relative w-full h-24 mb-3 rounded-lg overflow-hidden bg-gray-100">
-            <img
-              src={brewery.logoUrl || "https://images.unsplash.com/photo-1571613316887-6f8d5cbf7ef7?ixlib=rb-4.0.3&auto=format&fit=crop&w=200&h=150"}
+            <ImageWithFallback
+              src={brewery.logoUrl}
               alt={`Logo ${brewery.name}`}
+              imageType="brewery"
+              containerClassName="w-full h-24 rounded-lg overflow-hidden bg-gray-100"
               className="w-full h-full object-cover group-hover:scale-105 transition-transform"
+              iconSize="lg"
             />
           </div>
           

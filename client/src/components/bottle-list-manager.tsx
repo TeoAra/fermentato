@@ -19,6 +19,7 @@ import {
   EyeOff,
   Search
 } from "lucide-react";
+import ImageWithFallback from "@/components/image-with-fallback";
 
 interface BottleItem {
   id: number;
@@ -453,16 +454,14 @@ export function BottleListManager({ pubId, bottleList }: BottleListManagerProps)
                           setIsAddDialogOpen(true);
                         }}
                       >
-                        {safeBeer.logoUrl && (
-                          <img
-                            src={safeBeer.logoUrl}
-                            alt={safeBeer.name}
-                            className="w-12 h-12 rounded-lg object-cover"
-                            onError={(e) => {
-                              e.currentTarget.style.display = 'none';
-                            }}
-                          />
-                        )}
+                        <ImageWithFallback
+                          src={safeBeer.logoUrl}
+                          alt={safeBeer.name}
+                          imageType="beer"
+                          containerClassName="w-12 h-12 rounded-lg"
+                          className="w-12 h-12 rounded-lg object-cover"
+                          iconSize="md"
+                        />
                         <div className="flex-1">
                           <h3 className="font-semibold text-base">{safeBeer.name}</h3>
                           <p className="text-gray-600 text-sm">{safeBeer.brewery.name}</p>

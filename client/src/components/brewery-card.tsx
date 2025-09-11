@@ -7,6 +7,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
+import ImageWithFallback from "@/components/image-with-fallback";
 
 interface BreweryCardProps {
   brewery: {
@@ -39,9 +40,9 @@ export default function BreweryCard({ brewery, beerCount = 0 }: BreweryCardProps
   const favoriteMutation = useMutation({
     mutationFn: async ({ action }: { action: 'add' | 'remove' }) => {
       if (action === 'add') {
-        return apiRequest('/api/favorites', 'POST', { itemType: 'brewery', itemId: brewery.id });
+        return apiRequest('/api/favorites', { method: 'POST' }, { itemType: 'brewery', itemId: brewery.id });
       } else {
-        return apiRequest(`/api/favorites/brewery/${brewery.id}`, 'DELETE');
+        return apiRequest(`/api/favorites/brewery/${brewery.id}`, { method: 'DELETE' });
       }
     },
     onSuccess: () => {
@@ -87,10 +88,13 @@ export default function BreweryCard({ brewery, beerCount = 0 }: BreweryCardProps
             
             {/* Brewery Logo */}
             <div className="relative flex-shrink-0">
-              <img
-                src={brewery.logoUrl || "https://images.unsplash.com/photo-1571613316887-6f8d5cbf7ef7?ixlib=rb-4.0.3&auto=format&fit=crop&w=100&h=100"}
+              <ImageWithFallback
+                src={brewery.logoUrl}
                 alt={`Logo ${brewery.name}`}
+                imageType="brewery"
+                containerClassName="w-16 h-16 sm:w-20 sm:h-20 rounded-lg shadow-sm group-hover:shadow-md transition-shadow"
                 className="w-16 h-16 sm:w-20 sm:h-20 rounded-lg object-cover shadow-sm group-hover:shadow-md transition-shadow"
+                iconSize="lg"
               />
             </div>
             
