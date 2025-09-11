@@ -11,7 +11,8 @@ import {
   Settings as SettingsIcon,
   Crown,
   Sparkles,
-  Store
+  Store,
+  Home
 } from "lucide-react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
@@ -83,16 +84,22 @@ export function PubOwnerTopBar({
                 </div>
               </motion.div>
 
-              {/* Crown Badge for Premium */}
+              {/* Home Navigation Button */}
               <motion.div
                 initial={{ scale: 0, rotate: -180 }}
                 animate={{ scale: 1, rotate: 0 }}
                 transition={{ delay: 0.3, duration: 0.5 }}
               >
-                <Badge className="bg-gradient-to-r from-yellow-500 to-orange-600 text-white border-0 hidden md:flex items-center gap-1">
-                  <Crown className="h-3 w-3" />
-                  Owner
-                </Badge>
+                <Button 
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => window.location.href = '/'}
+                  className="bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white border-0 hidden md:flex items-center gap-1 transition-all duration-300"
+                  data-testid="nav-home"
+                >
+                  <Home className="h-3 w-3" />
+                  Home
+                </Button>
               </motion.div>
             </div>
 
@@ -241,6 +248,29 @@ export function PubOwnerTopBar({
                     </div>
                     
                     <nav className="space-y-2">
+                      {/* Home Navigation for Mobile */}
+                      <motion.button
+                        onClick={() => {
+                          window.location.href = '/';
+                          setMobileMenuOpen(false);
+                        }}
+                        className="w-full flex items-center space-x-3 px-4 py-3 rounded-xl text-left transition-all duration-300 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 border-b border-gray-200 dark:border-gray-700 mb-2"
+                        data-testid="mobile-nav-home"
+                        initial={{ opacity: 0, x: 20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ duration: 0.3 }}
+                        whileHover={{ scale: 1.02, x: 5 }}
+                        whileTap={{ scale: 0.98 }}
+                      >
+                        <div className="p-2 rounded-lg bg-gradient-to-br from-blue-500 to-indigo-600 bg-opacity-10">
+                          <Home className="h-5 w-5" />
+                        </div>
+                        <div>
+                          <span className="font-medium">Torna alla Home</span>
+                          <p className="text-xs opacity-75">Esci dal pannello gestionale</p>
+                        </div>
+                      </motion.button>
+
                       {sections.map((section, index) => {
                         const Icon = section.icon;
                         const isActive = currentSection === section.id;
