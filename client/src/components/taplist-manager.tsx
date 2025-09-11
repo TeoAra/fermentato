@@ -81,7 +81,7 @@ export function TapListManager({ pubId, tapList }: TapListManagerProps) {
   // Add tap item mutation
   const addTapMutation = useMutation({
     mutationFn: async (data: any) => {
-      return apiRequest(`/api/pubs/${pubId}/taplist`, "POST", data);
+      return apiRequest(`/api/pubs/${pubId}/taplist`, { method: "POST" }, data);
     },
     onSuccess: () => {
       toast({ title: "Birra aggiunta alla tap list!" });
@@ -97,7 +97,7 @@ export function TapListManager({ pubId, tapList }: TapListManagerProps) {
   // Update tap item mutation
   const updateTapMutation = useMutation({
     mutationFn: async (data: any) => {
-      return apiRequest(`/api/pubs/${pubId}/taplist/${editingItem?.id}`, "PATCH", data);
+      return apiRequest(`/api/pubs/${pubId}/taplist/${editingItem?.id}`, { method: "PATCH" }, data);
     },
     onSuccess: () => {
       toast({ title: "Birra aggiornata!" });
@@ -113,7 +113,7 @@ export function TapListManager({ pubId, tapList }: TapListManagerProps) {
   // Delete tap item mutation
   const deleteTapMutation = useMutation({
     mutationFn: async (id: number) => {
-      return apiRequest(`/api/pubs/${pubId}/taplist/${id}`, "DELETE");
+      return apiRequest(`/api/pubs/${pubId}/taplist/${id}`, { method: "DELETE" });
     },
     onSuccess: () => {
       toast({ title: "Birra rimossa dalla tap list!" });

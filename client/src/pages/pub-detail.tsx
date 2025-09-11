@@ -1,6 +1,6 @@
 import React from "react";
 import { useParams, Link } from "wouter";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { 
   Star, 
@@ -38,6 +38,8 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useAuth } from "@/hooks/useAuth";
+import { useToast } from "@/hooks/use-toast";
+import { apiRequest } from "@/lib/queryClient";
 import OpeningHoursDialog from "@/components/OpeningHoursDialog";
 
 // Funzione per controllare se un pub è aperto ora
@@ -185,6 +187,8 @@ const PubStatsCard = ({
 export default function PubDetail() {
   const { id } = useParams();
   const { user, isAuthenticated } = useAuth();
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState("taplist");
   const [showOpeningHours, setShowOpeningHours] = useState(false);
   
@@ -215,6 +219,95 @@ export default function PubDetail() {
     queryKey: ["/api/favorites", "pub", id, "count"],
     enabled: !!id,
   });
+
+  // Check if current pub is in user's favorites
+  const { data: isFavoriteData } = useQuery({
+    queryKey: ["/api/favorites", "pub", id, "check"],
+    enabled: !!id && isAuthenticated,
+  });
+
+  const isFavorite = isFavoriteData?.isFavorite || false;
+
+  // Toggle favorite mutation
+  const toggleFavoriteMutation = useMutation({
+    mutationFn: async () => {
+      if (isFavorite) {
+        return apiRequest(`/api/favorites/pub/${id}`, { method: "DELETE" });
+      } else {
+        return apiRequest("/api/favorites", { method: "POST" }, { 
+          itemType: "pub", 
+          itemId: parseInt(id as string) 
+        });
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/favorites"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/favorites", "pub", id, "check"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/favorites", "pub", id, "count"] });
+      
+      toast({
+        title: isFavorite ? "Rimosso dai preferiti" : "Aggiunto ai preferiti",
+        description: isFavorite 
+          ? "Il pub è stato rimosso dai tuoi preferiti" 
+          : "Il pub è stato aggiunto ai tuoi preferiti",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Errore",
+        description: "Impossibile aggiornare i preferiti",
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Share functionality with Web Share API fallback
+  const handleShare = async () => {
+    const shareData = {
+      title: `${(pub as any)?.name} - Fermenta`,
+      text: `Scopri ${(pub as any)?.name} su Fermenta`,
+      url: window.location.href,
+    };
+
+    try {
+      if (navigator.share && navigator.canShare && navigator.canShare(shareData)) {
+        await navigator.share(shareData);
+        toast({
+          title: "Condiviso con successo",
+          description: "Il link del pub è stato condiviso",
+        });
+      } else {
+        // Fallback to clipboard
+        await navigator.clipboard.writeText(window.location.href);
+        toast({
+          title: "Link copiato",
+          description: "Il link del pub è stato copiato negli appunti",
+        });
+      }
+    } catch (error) {
+      if (error.name !== 'AbortError') {
+        // AbortError occurs when user cancels the share dialog, don't show error for that
+        toast({
+          title: "Errore",
+          description: "Impossibile condividere il link",
+          variant: "destructive",
+        });
+      }
+    }
+  };
+
+  // Handle save/favorite functionality
+  const handleSave = () => {
+    if (!isAuthenticated) {
+      toast({
+        title: "Login richiesto",
+        description: "Effettua il login per gestire i preferiti",
+        variant: "destructive",
+      });
+      return;
+    }
+    toggleFavoriteMutation.mutate();
+  };
 
   if (pubLoading) {
     return (
@@ -355,15 +448,20 @@ export default function PubDetail() {
                     <Button 
                       variant="outline" 
                       size="sm" 
-                      className="backdrop-blur-md bg-white/20 border-white/40 text-white hover:bg-white/30 hover:border-white/60 transition-all duration-300 font-medium shadow-lg"
+                      onClick={handleSave}
+                      disabled={toggleFavoriteMutation.isPending}
+                      className={`backdrop-blur-md border-white/40 text-white hover:bg-white/30 hover:border-white/60 transition-all duration-300 font-medium shadow-lg ${
+                        isFavorite ? 'bg-red-500/30 border-red-300/50' : 'bg-white/20'
+                      }`}
                       data-testid="button-save"
                     >
-                      <Heart className="h-4 w-4 mr-2" />
-                      Salva
+                      <Heart className={`h-4 w-4 mr-2 ${isFavorite ? 'fill-current' : ''}`} />
+                      {isFavorite ? 'Salvato' : 'Salva'}
                     </Button>
                     <Button 
                       variant="outline" 
                       size="sm" 
+                      onClick={handleShare}
                       className="backdrop-blur-md bg-white/20 border-white/40 text-white hover:bg-white/30 hover:border-white/60 transition-all duration-300 font-medium shadow-lg"
                       data-testid="button-share"
                     >

@@ -78,7 +78,7 @@ export function BottleListManager({ pubId, bottleList }: BottleListManagerProps)
   // Add bottle item mutation
   const addBottleMutation = useMutation({
     mutationFn: async (data: any) => {
-      return apiRequest(`/api/pubs/${pubId}/bottles`, "POST", data);
+      return apiRequest(`/api/pubs/${pubId}/bottles`, { method: "POST" }, data);
     },
     onSuccess: () => {
       toast({ title: "Birra aggiunta alla cantina!" });
@@ -94,7 +94,7 @@ export function BottleListManager({ pubId, bottleList }: BottleListManagerProps)
   // Update bottle item mutation
   const updateBottleMutation = useMutation({
     mutationFn: async (data: any) => {
-      return apiRequest(`/api/pubs/${pubId}/bottles/${editingItem?.id}`, "PATCH", data);
+      return apiRequest(`/api/pubs/${pubId}/bottles/${editingItem?.id}`, { method: "PATCH" }, data);
     },
     onSuccess: () => {
       toast({ title: "Birra aggiornata!" });
@@ -110,7 +110,7 @@ export function BottleListManager({ pubId, bottleList }: BottleListManagerProps)
   // Delete bottle item mutation
   const deleteBottleMutation = useMutation({
     mutationFn: async (id: number) => {
-      return apiRequest(`/api/pubs/${pubId}/bottles/${id}`, "DELETE");
+      return apiRequest(`/api/pubs/${pubId}/bottles/${id}`, { method: "DELETE" });
     },
     onSuccess: () => {
       toast({ title: "Birra rimossa dalla cantina!" });

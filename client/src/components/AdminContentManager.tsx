@@ -61,7 +61,7 @@ export default function AdminContentManager({ type }: AdminContentManagerProps) 
       if (type === 'beers') endpoint = '/api/admin/beers';
       else if (type === 'breweries') endpoint = '/api/admin/breweries';
       else if (type === 'pubs') endpoint = '/api/admin/pubs';
-      return await apiRequest(endpoint, "POST", itemData);
+      return await apiRequest(endpoint, { method: "POST" }, itemData);
     },
     onSuccess: () => {
       toast({
@@ -89,7 +89,7 @@ export default function AdminContentManager({ type }: AdminContentManagerProps) 
       if (type === 'beers') endpoint = `/api/admin/beers/${id}`;
       else if (type === 'breweries') endpoint = `/api/admin/breweries/${id}`;
       else if (type === 'pubs') endpoint = `/api/pubs/${id}`;
-      return await apiRequest(endpoint, "PATCH", data);
+      return await apiRequest(endpoint, { method: "PATCH" }, data);
     },
     onSuccess: () => {
       toast({

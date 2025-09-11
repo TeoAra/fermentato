@@ -8,17 +8,55 @@ async function throwIfResNotOk(res: Response) {
 }
 
 export async function apiRequest(
-  url: string,
-  method: string,
-  data?: unknown | undefined,
+  path: string,
+  options?: RequestInit,
+  jsonBody?: unknown,
 ): Promise<any> {
-  const isFormData = data instanceof FormData;
+  // Runtime validation for robust error handling
+  if (options?.method && typeof options.method !== 'string') {
+    console.warn('apiRequest: method should be string, got:', typeof options.method, options.method);
+    // Prevent fetch error by removing invalid method
+    const { method, ...cleanOptions } = options;
+    options = { ...cleanOptions, method: 'GET' };
+  }
+
+  // Validate method is uppercase if provided
+  const method = options?.method ? options.method.toUpperCase() : 'GET';
   
-  const res = await fetch(url, {
+  // Handle different body types
+  let body: BodyInit | undefined;
+  let headers: HeadersInit = { ...options?.headers };
+  
+  if (jsonBody !== undefined) {
+    // JSON body provided as separate parameter
+    if (jsonBody instanceof FormData) {
+      body = jsonBody;
+      // Don't set Content-Type for FormData (browser sets it with boundary)
+    } else {
+      body = JSON.stringify(jsonBody);
+      headers = { ...headers, 'Content-Type': 'application/json' };
+    }
+  } else if (options?.body) {
+    // Body provided in options
+    if (options.body instanceof FormData) {
+      body = options.body;
+    } else if (typeof options.body === 'string') {
+      body = options.body;
+      if (!headers['Content-Type'] && !headers['content-type']) {
+        headers = { ...headers, 'Content-Type': 'application/json' };
+      }
+    } else {
+      body = JSON.stringify(options.body);
+      headers = { ...headers, 'Content-Type': 'application/json' };
+    }
+  }
+
+  const res = await fetch(path, {
+    ...options,
     method,
-    headers: isFormData ? {} : data ? { "Content-Type": "application/json" } : {},
-    body: isFormData ? data : data ? JSON.stringify(data) : undefined,
-    credentials: "include",
+    headers,
+    body,
+    credentials: 'include',
   });
 
   await throwIfResNotOk(res);

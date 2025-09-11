@@ -33,7 +33,7 @@ export default function BeerTastingsEditor({ beerTastings }: BeerTastingsEditorP
       if (pubId !== undefined) {
         updateData.pubId = pubId;
       }
-      return apiRequest(`/api/user/beer-tastings/${tastingId}`, "PATCH", updateData);
+      return apiRequest(`/api/user/beer-tastings/${tastingId}`, { method: "PATCH" }, updateData);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/user/beer-tastings"] });

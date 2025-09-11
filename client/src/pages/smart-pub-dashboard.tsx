@@ -157,7 +157,7 @@ export default function SmartPubDashboard() {
       // Fetch products for all categories in parallel
       const promises = menuData.map(async (category) => {
         try {
-          const products = await apiRequest(`/api/pubs/${currentPub.id}/menu/categories/${category.id}/items`, 'GET');
+          const products = await apiRequest(`/api/pubs/${currentPub.id}/menu/categories/${category.id}/items`, { method: 'GET' });
           return { categoryId: category.id, products: Array.isArray(products) ? products : [] };
         } catch (error) {
           console.warn(`Failed to fetch products for category ${category.id}:`, error);
@@ -201,7 +201,7 @@ export default function SmartPubDashboard() {
   // Mutations for managing pub data
   const updateTapItemMutation = useMutation({
     mutationFn: async ({ id, data }: { id: number; data: any }) => {
-      return apiRequest(`/api/pubs/${currentPub?.id}/taplist/${id}`, 'PATCH', data);
+      return apiRequest(`/api/pubs/${currentPub?.id}/taplist/${id}`, { method: 'PATCH' }, data);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/pubs", currentPub?.id, "taplist"] });
@@ -215,7 +215,7 @@ export default function SmartPubDashboard() {
     mutationFn: async (data: any) => {
       console.log('Mutation called with data:', data);
       console.log('Current pub ID:', currentPub?.id);
-      return apiRequest(`/api/pubs/${currentPub?.id}/taplist`, 'POST', data);
+      return apiRequest(`/api/pubs/${currentPub?.id}/taplist`, { method: 'POST' }, data);
     },
     onSuccess: async (result) => {
       console.log('Mutation success:', result);
@@ -237,7 +237,7 @@ export default function SmartPubDashboard() {
   const removeTapItemMutation = useMutation({
     mutationFn: async (id: number) => {
       console.log('Removing tap item:', id);
-      return apiRequest(`/api/pubs/${currentPub?.id}/taplist/${id}`, 'DELETE');
+      return apiRequest(`/api/pubs/${currentPub?.id}/taplist/${id}`, { method: 'DELETE' });
     },
     onSuccess: async (data) => {
       console.log('Remove success:', data);
@@ -257,7 +257,7 @@ export default function SmartPubDashboard() {
   const updatePubMutation = useMutation({
     mutationFn: async (data: any) => {
       console.log('Updating pub with data:', data);
-      return apiRequest(`/api/pubs/${currentPub?.id}`, 'PATCH', data);
+      return apiRequest(`/api/pubs/${currentPub?.id}`, { method: 'PATCH' }, data);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/my-pubs"] });
