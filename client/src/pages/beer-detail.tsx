@@ -282,18 +282,17 @@ export default function BeerDetail() {
                       iconSize="lg"
                     />
                     <div className="text-center md:text-left">
-                      <h1 className="text-2xl sm:text-3xl md:text-4xl text-white mb-4 font-bold leading-tight">
+                      <h1 className="text-2xl sm:text-3xl md:text-4xl text-white mb-2 font-bold leading-tight">
                         {beer?.name}
                       </h1>
+                      {beer?.brewery && (
+                        <Link href={`/brewery/${beer.brewery.id}`}>
+                          <p className="text-white/80 text-base sm:text-lg mb-4 hover:text-emerald-300 transition-colors cursor-pointer font-medium">
+                            {beer.brewery.name}
+                          </p>
+                        </Link>
+                      )}
                       <div className="flex flex-col sm:flex-row items-center justify-center md:justify-start space-y-3 sm:space-y-0 sm:space-x-4">
-                        {beer?.brewery && (
-                          <Link href={`/brewery/${beer.brewery.id}`}>
-                            <div className="flex items-center text-white/90 backdrop-blur-sm bg-white/10 rounded-lg px-4 py-2 hover:bg-white/20 transition-colors cursor-pointer">
-                              <Factory className="h-4 w-4 mr-2" />
-                              <span className="text-sm font-medium">{beer.brewery.name}</span>
-                            </div>
-                          </Link>
-                        )}
                         <Badge className="bg-gradient-to-r from-blue-500/20 to-indigo-500/20 text-blue-100 border-blue-300/30 backdrop-blur-sm px-3 py-2">
                           <Sparkles className="h-4 w-4 mr-2" />
                           {beer?.style}
