@@ -964,23 +964,23 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getBeerWithBrewery(id: number): Promise<any> {
-    const [result] = await db
-      .select({
-        id: beers.id,
-        name: beers.name,
-        style: beers.style,
-        abv: beers.abv,
-        ibu: beers.ibu,
-        description: beers.description,
-        imageUrl: beers.imageUrl,
-        breweryId: beers.breweryId,
-        breweryName: breweries.name,
-        breweryCountry: breweries.country,
-      })
-      .from(beers)
-      .leftJoin(breweries, eq(beers.breweryId, breweries.id))
-      .where(eq(beers.id, id));
-    return result;
+    const beer = await this.getBeer(id);
+    
+    if (!beer) return undefined;
+    
+    if (!beer.breweryId) {
+      return {
+        ...beer,
+        brewery: null
+      };
+    }
+    
+    const brewery = await this.getBrewery(beer.breweryId);
+    
+    return {
+      ...beer,
+      brewery: brewery || null
+    };
   }
 
   async getBeerAvailability(beerId: number): Promise<any> {

@@ -117,7 +117,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/beers/:id", async (req, res) => {
     try {
       const beerId = parseInt(req.params.id);
-      const beer = await storage.getBeer(beerId);
+      const beer = await storage.getBeerWithBrewery(beerId);
       if (!beer) {
         return res.status(404).json({ message: "Beer not found" });
       }
@@ -317,20 +317,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ message: "Failed to fetch beers" });
     }
   });
-
-  app.get('/api/beers/:id', async (req, res) => {
-    try {
-      const beer = await storage.getBeerWithBrewery(parseInt(req.params.id));
-      if (!beer) {
-        return res.status(404).json({ message: "Beer not found" });
-      }
-      res.json(beer);
-    } catch (error) {
-      console.error("Error fetching beer:", error);
-      res.status(500).json({ message: "Failed to fetch beer" });
-    }
-  });
-
 
   // Search endpoints
   app.get("/api/search", async (req, res) => {
