@@ -734,6 +734,69 @@ export default function MenuCategoryManager({ pubId, categories }: MenuCategoryM
         </DialogContent>
       </Dialog>
 
+      {/* Edit Product Dialog */}
+      <Dialog open={isEditProductOpen} onOpenChange={(open) => {
+        setIsEditProductOpen(open);
+        if (!open) {
+          setEditingProduct(null);
+        }
+      }}>
+        <DialogContent className="sm:max-w-md" onOpenAutoFocus={(e) => e.preventDefault()}>
+          <DialogHeader>
+            <DialogTitle>Modifica Prodotto</DialogTitle>
+          </DialogHeader>
+          {editingProduct && (
+            <div className="space-y-4">
+              <div>
+                <Label>Nome Prodotto</Label>
+                <Input
+                  placeholder="Nome del piatto..."
+                  defaultValue={editingProduct.name}
+                  onChange={(e) => setEditingProduct({ ...editingProduct, name: e.target.value })}
+                />
+              </div>
+              <div>
+                <Label>Prezzo (€)</Label>
+                <Input
+                  type="number"
+                  step="0.10"
+                  placeholder="12.50"
+                  defaultValue={editingProduct.price}
+                  onChange={(e) => setEditingProduct({ ...editingProduct, price: e.target.value })}
+                />
+              </div>
+              <div>
+                <Label>Descrizione</Label>
+                <Textarea
+                  placeholder="Descrizione del piatto..."
+                  defaultValue={editingProduct.description || ''}
+                  onChange={(e) => setEditingProduct({ ...editingProduct, description: e.target.value })}
+                  rows={3}
+                />
+              </div>
+              <AllergenSelector
+                selectedAllergens={editingProduct.allergens || []}
+                onAllergensChange={(allergens) => setEditingProduct({ ...editingProduct, allergens })}
+              />
+              <div className="flex justify-end space-x-2">
+                <Button variant="outline" onClick={() => setIsEditProductOpen(false)}>Annulla</Button>
+                <Button onClick={() => {
+                  updateProductMutation.mutate({
+                    id: editingProduct.id,
+                    data: {
+                      name: editingProduct.name,
+                      price: editingProduct.price,
+                      description: editingProduct.description,
+                      allergens: editingProduct.allergens
+                    }
+                  });
+                }}>Salva</Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
       {/* Add Item Dialog */}
       <Dialog open={isAddItemOpen} onOpenChange={(open) => {
         setIsAddItemOpen(open);
