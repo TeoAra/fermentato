@@ -162,7 +162,7 @@ export default function MenuCategoryManager({ pubId, categories }: MenuCategoryM
   // Item mutations
   const addItemMutation = useMutation({
     mutationFn: async (data: any) => {
-      return apiRequest(`/api/pubs/${pubId}/menu-items`, "POST", data);
+      return apiRequest(`/api/pubs/${pubId}/menu-items`, { method: 'POST' }, data);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/pubs", pubId, "menu"] });

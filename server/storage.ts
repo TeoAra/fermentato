@@ -611,6 +611,9 @@ export class DatabaseStorage implements IStorage {
   }
 
   async deleteMenuCategory(id: number): Promise<void> {
+    // First delete all menu items in this category
+    await db.delete(menuItems).where(eq(menuItems.categoryId, id));
+    // Then delete the category itself
     await db.delete(menuCategories).where(eq(menuCategories.id, id));
   }
 
