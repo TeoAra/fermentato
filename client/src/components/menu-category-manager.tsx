@@ -86,7 +86,7 @@ export default function MenuCategoryManager({ pubId, categories }: MenuCategoryM
   // Category mutations
   const createCategoryMutation = useMutation({
     mutationFn: async (data: any) => {
-      return apiRequest(`/api/pubs/${pubId}/menu/categories`, { method: 'POST' }, { ...data, pubId });
+      return apiRequest(`/api/pubs/${pubId}/menu/categories`, { method: 'POST' }, data);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/pubs", pubId, "menu"] });
@@ -210,8 +210,7 @@ export default function MenuCategoryManager({ pubId, categories }: MenuCategoryM
     createCategoryMutation.mutate({
       name: name.trim(),
       description: description.trim(),
-      isVisible: visibilityRef.current,
-      pubId: pubId
+      isVisible: visibilityRef.current
     });
   };
 

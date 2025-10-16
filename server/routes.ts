@@ -1628,7 +1628,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(403).json({ message: "Not authorized to manage this pub" });
       }
 
-      const category = await storage.createMenuCategory(pubId, req.body);
+      const category = await storage.createMenuCategory({ ...req.body, pubId });
       res.json(category);
     } catch (error) {
       console.error("Error creating menu category:", error);
