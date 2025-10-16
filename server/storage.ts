@@ -84,17 +84,30 @@ function mapTapDbRowToDto(row: any): any {
 }
 
 function mapBottleDbRowToDto(row: any): any {
+  const priceBottle = safeParseDecimal(row.price_bottle || row.priceBottle);
+  const bottleSize = row.bottle_size || row.bottleSize;
+  
+  // Build prices array from priceBottle and bottleSize if prices is empty
+  let prices = row.prices || [];
+  if ((!prices || prices.length === 0) && priceBottle && bottleSize) {
+    prices = [{
+      size: bottleSize,
+      price: priceBottle,
+      format: "Bottiglia"
+    }];
+  }
+  
   return {
     id: row.id,
     pubId: row.pub_id || row.pubId,
     beerId: row.beer_id || row.beerId,
     isActive: row.is_active !== undefined ? row.is_active : row.isActive,
     isVisible: row.is_visible !== undefined ? row.is_visible : row.isVisible,
-    prices: row.prices,
-    priceBottle: safeParseDecimal(row.price_bottle || row.priceBottle),
-    price: safeParseDecimal(row.price_bottle || row.priceBottle), // Alternative field name
-    bottleSize: row.bottle_size || row.bottleSize,
-    size: row.bottle_size || row.bottleSize, // Alternative field name
+    prices: prices,
+    priceBottle: priceBottle,
+    price: priceBottle, // Alternative field name
+    bottleSize: bottleSize,
+    size: bottleSize, // Alternative field name
     vintage: row.vintage,
     quantity: row.quantity,
     description: row.description,
