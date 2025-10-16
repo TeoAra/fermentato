@@ -69,7 +69,7 @@ export default function TapList({ tapList }: TapListProps) {
                     </h3>
                   </Link>
                   <Link href={`/brewery/${tap.beer.brewery.id}`}>
-                    <p className="text-gray-600 dark:text-gray-400 text-sm break-words hover:text-primary cursor-pointer transition-colors">
+                    <p className="text-xs text-gray-500 dark:text-gray-400 break-words hover:text-emerald-600 dark:hover:text-emerald-400 cursor-pointer transition-colors">
                       {tap.beer.brewery.name}
                     </p>
                   </Link>

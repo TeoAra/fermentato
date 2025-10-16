@@ -98,11 +98,13 @@ const ModernBeerCard = ({ beer, prices, className = "" }: {
             </h4>
           </Link>
           
-          <Link href={`/brewery/${beer?.brewery?.id}`}>
-            <p className="text-sm text-gray-600 dark:text-gray-400 mb-3 break-words hover:text-primary cursor-pointer transition-colors font-medium">
-              {beer?.brewery?.name || beer?.breweryName || 'Birrificio non disponibile'}
-            </p>
-          </Link>
+          {beer?.brewery?.id && (
+            <Link href={`/brewery/${beer.brewery.id}`}>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mb-3 break-words hover:text-emerald-600 dark:hover:text-emerald-400 cursor-pointer transition-colors">
+                {beer.brewery.name || beer?.breweryName || 'Birrificio'}
+              </p>
+            </Link>
+          )}
           
           {/* Modern Badges */}
           <div className="flex flex-wrap items-center gap-2 mb-3">
