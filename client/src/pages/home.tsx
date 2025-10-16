@@ -153,39 +153,50 @@ export default function Home() {
   });
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-amber-50 to-orange-50 dark:from-gray-950 dark:via-amber-950 dark:to-orange-950">
       
-      {/* Welcome Hero */}
-      <section className="beer-gradient text-white py-16 lg:py-20">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-3xl md:text-4xl font-bold mb-6">
-                Scopri le Migliori Birre d'Italia 🍺
-              </h1>
-              <p className="text-xl text-orange-100 mb-8 lg:mb-0">
-                Trova pub, birrifici e la perfetta birra artigianale per te
-              </p>
-            </div>
-            
-            <div className="flex gap-3">
-              {(user as any)?.userType === 'pub_owner' && (
-                <Link href="/dashboard">
-                  <Button className="bg-white text-primary hover:bg-gray-100">
-                    <Beer className="mr-2" />
-                    Dashboard Pub
-                  </Button>
-                </Link>
-              )}
+      {/* Welcome Hero with Glassmorphism */}
+      <section className="relative overflow-hidden">
+        <div className="absolute inset-0">
+          <img
+            src="https://images.unsplash.com/photo-1436076863939-06870fe779c2?w=1920&h=400&fit=crop"
+            alt="Beer background"
+            className="w-full h-full object-cover"
+          />
+          <div className="absolute inset-0 bg-gradient-to-r from-amber-600/90 via-orange-600/90 to-red-600/90"></div>
+        </div>
+        
+        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 lg:py-20">
+          <div className="glass-card rounded-2xl p-8 backdrop-blur-md bg-white/10 border border-white/20">
+            <div className="flex flex-col lg:flex-row items-center justify-between gap-6">
+              <div className="text-center lg:text-left">
+                <h1 className="text-3xl md:text-4xl font-bold mb-4 text-white">
+                  Scopri le Migliori Birre d'Italia 🍺
+                </h1>
+                <p className="text-xl text-orange-100">
+                  Trova pub, birrifici e la perfetta birra artigianale per te
+                </p>
+              </div>
               
-              {(user as any)?.userType === 'admin' && (
-                <Link href="/admin">
-                  <Button className="bg-yellow-500 text-white hover:bg-yellow-600">
-                    <TrendingUp className="mr-2" />
-                    Admin Panel
-                  </Button>
-                </Link>
-              )}
+              <div className="flex gap-3">
+                {(user as any)?.userType === 'pub_owner' && (
+                  <Link href="/dashboard">
+                    <Button className="bg-white text-amber-600 hover:bg-gray-100 shadow-lg">
+                      <Beer className="mr-2" />
+                      Dashboard Pub
+                    </Button>
+                  </Link>
+                )}
+                
+                {(user as any)?.userType === 'admin' && (
+                  <Link href="/admin">
+                    <Button className="bg-yellow-500 text-white hover:bg-yellow-600 shadow-lg">
+                      <TrendingUp className="mr-2" />
+                      Admin Panel
+                    </Button>
+                  </Link>
+                )}
+              </div>
             </div>
           </div>
         </div>
@@ -194,33 +205,36 @@ export default function Home() {
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 lg:py-16">
         {/* Quick Actions */}
         <section className="mb-16 lg:mb-20">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            <div className="bg-white rounded-xl shadow-md p-8 text-center">
-              <MapPin className="mx-auto text-primary mb-4" size={48} />
-              <h3 className="text-xl font-semibold mb-2">Trova Pub Vicini</h3>
-              <p className="text-gray-600 mb-4">Scopri i migliori pub nella tua zona</p>
-              <Button variant="outline" className="w-full">
-                Cerca Pub
-              </Button>
-            </div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <Link href="/explore/pubs">
+              <div className="glass-card border-0 rounded-xl p-8 text-center group hover:scale-105 transition-all duration-300 cursor-pointer">
+                <div className="p-4 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl inline-flex mb-4 group-hover:scale-110 transition-transform">
+                  <MapPin className="h-8 w-8 text-white" />
+                </div>
+                <h3 className="text-xl font-semibold mb-2 text-gray-900 dark:text-white">Trova Pub Vicini</h3>
+                <p className="text-gray-600 dark:text-gray-400 mb-4">Scopri i migliori pub nella tua zona</p>
+              </div>
+            </Link>
             
-            <div className="bg-white rounded-xl shadow-md p-6 text-center">
-              <Beer className="mx-auto text-primary mb-4" size={48} />
-              <h3 className="text-xl font-semibold mb-2">Esplora Birrifici</h3>
-              <p className="text-gray-600 mb-4">Conosci i birrifici artigianali italiani</p>
-              <Button variant="outline" className="w-full">
-                Sfoglia Birrifici
-              </Button>
-            </div>
+            <Link href="/explore/breweries">
+              <div className="glass-card border-0 rounded-xl p-8 text-center group hover:scale-105 transition-all duration-300 cursor-pointer">
+                <div className="p-4 bg-gradient-to-br from-amber-500 to-orange-600 rounded-xl inline-flex mb-4 group-hover:scale-110 transition-transform">
+                  <Beer className="h-8 w-8 text-white" />
+                </div>
+                <h3 className="text-xl font-semibold mb-2 text-gray-900 dark:text-white">Esplora Birrifici</h3>
+                <p className="text-gray-600 dark:text-gray-400 mb-4">Conosci i birrifici artigianali italiani</p>
+              </div>
+            </Link>
             
-            <div className="bg-white rounded-xl shadow-md p-6 text-center">
-              <Heart className="mx-auto text-primary mb-4" size={48} />
-              <h3 className="text-xl font-semibold mb-2">I Tuoi Preferiti</h3>
-              <p className="text-gray-600 mb-4">Gestisci le tue birre e pub preferiti</p>
-              <Button variant="outline" className="w-full">
-                Vedi Preferiti ({Array.isArray(favorites) ? favorites.length : 0})
-              </Button>
-            </div>
+            <Link href="/dashboard?tab=favorites">
+              <div className="glass-card border-0 rounded-xl p-8 text-center group hover:scale-105 transition-all duration-300 cursor-pointer">
+                <div className="p-4 bg-gradient-to-br from-red-500 to-pink-600 rounded-xl inline-flex mb-4 group-hover:scale-110 transition-transform">
+                  <Heart className="h-8 w-8 text-white" />
+                </div>
+                <h3 className="text-xl font-semibold mb-2 text-gray-900 dark:text-white">I Tuoi Preferiti</h3>
+                <p className="text-gray-600 dark:text-gray-400 mb-4">Gestisci le tue birre e pub preferiti ({Array.isArray(favorites) ? favorites.length : 0})</p>
+              </div>
+            </Link>
           </div>
         </section>
 
@@ -228,7 +242,12 @@ export default function Home() {
         {(user as any)?.userType === 'pub_owner' ? (
           <section className="mb-16 lg:mb-20">
             <div className="flex items-center justify-between mb-8">
-              <h2 className="text-3xl font-bold text-secondary">I Tuoi Pub</h2>
+              <h2 className="text-3xl font-bold text-gray-900 dark:text-white flex items-center">
+                <div className="p-2 bg-gradient-to-r from-blue-500 to-indigo-600 rounded-xl mr-3">
+                  <Store className="h-6 w-6 text-white" />
+                </div>
+                I Tuoi Pub
+              </h2>
               <Link href="/pub-registration">
                 <Button className="bg-primary text-white hover:bg-primary/90">
                   + Aggiungi Pub
@@ -265,10 +284,17 @@ export default function Home() {
         {(user as any)?.userType !== 'pub_owner' ? (
           <section className="mb-16 lg:mb-20">
             <div className="flex items-center justify-between mb-8">
-              <h2 className="text-3xl font-bold text-secondary">Pub Consigliati</h2>
-              <a href="#" className="text-primary hover:text-orange-600 font-semibold">
-                Vedi tutti
-              </a>
+              <h2 className="text-3xl font-bold text-gray-900 dark:text-white flex items-center">
+                <div className="p-2 bg-gradient-to-r from-blue-500 to-indigo-600 rounded-xl mr-3">
+                  <Store className="h-6 w-6 text-white" />
+                </div>
+                Pub Consigliati
+              </h2>
+              <Link href="/explore/pubs">
+                <Button variant="ghost" className="text-amber-600 hover:text-amber-700 dark:text-amber-400 font-semibold">
+                  Vedi tutti →
+                </Button>
+              </Link>
             </div>
 
             {pubsLoading ? (
@@ -381,9 +407,16 @@ export default function Home() {
         {/* Birrifici in Evidenza */}
         <section className="mb-16 lg:mb-20">
           <div className="flex items-center justify-between mb-8">
-            <h2 className="text-3xl font-bold text-secondary">Birrifici Artigianali</h2>
-            <Link href="/explore/breweries" className="text-primary hover:text-orange-600 font-semibold">
-              Esplora tutti
+            <h2 className="text-3xl font-bold text-gray-900 dark:text-white flex items-center">
+              <div className="p-2 bg-gradient-to-r from-amber-500 to-orange-600 rounded-xl mr-3">
+                <Beer className="h-6 w-6 text-white" />
+              </div>
+              Birrifici Artigianali
+            </h2>
+            <Link href="/explore/breweries">
+              <Button variant="ghost" className="text-amber-600 hover:text-amber-700 dark:text-amber-400 font-semibold">
+                Esplora tutti →
+              </Button>
             </Link>
           </div>
 
@@ -403,25 +436,25 @@ export default function Home() {
         </section>
 
         {/* Statistiche Platform */}
-        <section className="mb-16 lg:mb-20 bg-white rounded-xl shadow-md p-10 lg:p-12">
-          <h2 className="text-3xl font-bold text-center text-secondary mb-12">
+        <section className="mb-16 lg:mb-20 glass-card border-0 rounded-2xl p-10 lg:p-12">
+          <h2 className="text-3xl font-bold text-center text-gray-900 dark:text-white mb-12">
             La Community Fermenta.to
           </h2>
           
           <div className="grid grid-cols-1 md:grid-cols-3 gap-10 lg:gap-12">
             <div className="text-center">
-              <div className="text-4xl font-bold text-primary mb-2">29,753</div>
-              <div className="text-gray-600">Birre nel Catalogo</div>
+              <div className="text-4xl font-bold bg-gradient-to-r from-amber-500 to-orange-600 bg-clip-text text-transparent mb-2">29,753</div>
+              <div className="text-gray-600 dark:text-gray-400">Birre nel Catalogo</div>
             </div>
             
             <div className="text-center">
-              <div className="text-4xl font-bold text-primary mb-2">2,968</div>
-              <div className="text-gray-600">Birrifici Mondiali</div>
+              <div className="text-4xl font-bold bg-gradient-to-r from-blue-500 to-indigo-600 bg-clip-text text-transparent mb-2">2,968</div>
+              <div className="text-gray-600 dark:text-gray-400">Birrifici Mondiali</div>
             </div>
             
             <div className="text-center">
-              <div className="text-4xl font-bold text-primary mb-2">293</div>
-              <div className="text-gray-600">Stili Diversi</div>
+              <div className="text-4xl font-bold bg-gradient-to-r from-green-500 to-emerald-600 bg-clip-text text-transparent mb-2">293</div>
+              <div className="text-gray-600 dark:text-gray-400">Stili Diversi</div>
             </div>
           </div>
         </section>
