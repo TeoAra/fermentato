@@ -10,6 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
+import { PriceFormatManager } from "@/components/price-format-manager";
 import { 
   Beer, 
   Plus, 
@@ -17,8 +18,15 @@ import {
   Trash2, 
   Eye, 
   EyeOff,
-  Search
+  Search,
+  DollarSign
 } from "lucide-react";
+
+interface PriceItem {
+  size: string;
+  price: string;
+  format?: string;
+}
 
 interface TapItem {
   id: number;
@@ -33,6 +41,7 @@ interface TapItem {
       name: string;
     };
   };
+  prices?: PriceItem[];
   priceSmall?: string;
   priceMedium?: string;
   priceLarge?: string;
@@ -50,11 +59,11 @@ export function TapListManager({ pubId, tapList }: TapListManagerProps) {
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<TapItem | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
+  const [showPriceManager, setShowPriceManager] = useState(false);
+  const [tempPrices, setTempPrices] = useState<PriceItem[]>([]);
   const [formData, setFormData] = useState({
     beerId: "",
-    priceSmall: "",
-    priceMedium: "",
-    priceLarge: "",
+    prices: [] as PriceItem[],
     tapNumber: "",
     description: "",
     isVisible: true,
@@ -137,12 +146,24 @@ export function TapListManager({ pubId, tapList }: TapListManagerProps) {
     },
   });
 
+  // Update prices mutation
+  const updatePricesMutation = useMutation({
+    mutationFn: async ({ itemId, prices }: { itemId: number; prices: PriceItem[] }) => {
+      return apiRequest(`/api/pubs/${pubId}/taplist/${itemId}/prices`, { method: "POST" }, { prices });
+    },
+    onSuccess: () => {
+      toast({ title: "Prezzi aggiornati!" });
+      queryClient.invalidateQueries({ queryKey: ["/api/pubs", pubId, "taplist"] });
+    },
+    onError: () => {
+      toast({ title: "Errore", description: "Non è stato possibile aggiornare i prezzi", variant: "destructive" });
+    },
+  });
+
   const resetForm = () => {
     setFormData({
       beerId: "",
-      priceSmall: "",
-      priceMedium: "",
-      priceLarge: "",
+      prices: [],
       tapNumber: "",
       description: "",
       isVisible: true,
@@ -152,11 +173,21 @@ export function TapListManager({ pubId, tapList }: TapListManagerProps) {
 
   const startEdit = (item: TapItem) => {
     setEditingItem(item);
+    
+    // Convert prices to the expected format
+    let prices: PriceItem[] = [];
+    if (item.prices && item.prices.length > 0) {
+      prices = item.prices;
+    } else if (item.priceSmall || item.priceMedium || item.priceLarge) {
+      // Fallback for legacy format
+      if (item.priceSmall) prices.push({ size: '20cl', price: item.priceSmall });
+      if (item.priceMedium) prices.push({ size: '40cl', price: item.priceMedium });
+      if (item.priceLarge) prices.push({ size: '50cl', price: item.priceLarge });
+    }
+    
     setFormData({
       beerId: item.beer.id.toString(),
-      priceSmall: item.priceSmall || "",
-      priceMedium: item.priceMedium || "",
-      priceLarge: item.priceLarge || "",
+      prices: prices,
       tapNumber: item.tapNumber?.toString() || "",
       description: item.description || "",
       isVisible: item.isVisible,
@@ -171,18 +202,29 @@ export function TapListManager({ pubId, tapList }: TapListManagerProps) {
 
     const submitData = {
       beerId: parseInt(formData.beerId),
-      priceSmall: formData.priceSmall || null,
-      priceMedium: formData.priceMedium || null,
-      priceLarge: formData.priceLarge || null,
       tapNumber: formData.tapNumber ? parseInt(formData.tapNumber) : null,
       description: formData.description || null,
       isVisible: formData.isVisible,
     };
 
     if (editingItem) {
-      updateTapMutation.mutate(submitData);
+      // For editing, update the main data first, then update prices on success
+      updateTapMutation.mutate(submitData, {
+        onSuccess: () => {
+          if (formData.prices.length > 0) {
+            updatePricesMutation.mutate({ itemId: editingItem.id, prices: formData.prices });
+          }
+        }
+      });
     } else {
-      addTapMutation.mutate(submitData);
+      // For new items, we need to add the item first, then update prices
+      addTapMutation.mutate(submitData, {
+        onSuccess: (newItem: any) => {
+          if (formData.prices.length > 0) {
+            updatePricesMutation.mutate({ itemId: newItem.id, prices: formData.prices });
+          }
+        }
+      });
     }
   };
 
@@ -255,47 +297,37 @@ export function TapListManager({ pubId, tapList }: TapListManagerProps) {
                   </div>
                 )}
 
-                {/* Prezzi per Misura */}
-                <div className="space-y-4">
-                  <Label className="text-sm font-medium">Prezzi</Label>
-                  <div className="grid grid-cols-3 gap-3">
-                    <div>
-                      <Label className="text-xs text-gray-600">Piccola</Label>
-                      <Input
-                        type="number"
-                        step="0.10"
-                        min="0"
-                        placeholder="4.50"
-                        value={formData.priceSmall}
-                        onChange={(e) => setFormData({ ...formData, priceSmall: e.target.value })}
-                        data-testid="input-price-small"
-                      />
+                {/* Gestione Prezzi */}
+                <div className="space-y-3">
+                  <Label className="text-sm font-medium">Prezzi e Formati</Label>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="w-full justify-start"
+                    onClick={() => {
+                      setTempPrices(formData.prices.length > 0 ? formData.prices : [
+                        { size: '20cl', price: '4.50' },
+                        { size: '40cl', price: '7.50' }
+                      ]);
+                      setShowPriceManager(true);
+                    }}
+                    data-testid="button-manage-prices"
+                  >
+                    <DollarSign className="w-4 h-4 mr-2" />
+                    {formData.prices.length > 0 
+                      ? `${formData.prices.length} formato${formData.prices.length > 1 ? 'i' : ''} configurato${formData.prices.length > 1 ? 'i' : ''}`
+                      : 'Configura prezzi e formati'
+                    }
+                  </Button>
+                  {formData.prices.length > 0 && (
+                    <div className="flex flex-wrap gap-2 mt-2">
+                      {formData.prices.map((p, idx) => (
+                        <Badge key={idx} variant="secondary" className="text-xs">
+                          {p.size}: €{p.price}
+                        </Badge>
+                      ))}
                     </div>
-                    <div>
-                      <Label className="text-xs text-gray-600">Media</Label>
-                      <Input
-                        type="number"
-                        step="0.10"
-                        min="0"
-                        placeholder="7.50"
-                        value={formData.priceMedium}
-                        onChange={(e) => setFormData({ ...formData, priceMedium: e.target.value })}
-                        data-testid="input-price-medium"
-                      />
-                    </div>
-                    <div>
-                      <Label className="text-xs text-gray-600">Grande</Label>
-                      <Input
-                        type="number"
-                        step="0.10"
-                        min="0"
-                        placeholder="9.00"
-                        value={formData.priceLarge}
-                        onChange={(e) => setFormData({ ...formData, priceLarge: e.target.value })}
-                        data-testid="input-price-large"
-                      />
-                    </div>
-                  </div>
+                  )}
                 </div>
 
                 {/* Dettagli Aggiuntivi */}
@@ -355,6 +387,24 @@ export function TapListManager({ pubId, tapList }: TapListManagerProps) {
               </div>
             </DialogContent>
           </Dialog>
+          
+          {/* Price Manager Dialog */}
+          {showPriceManager && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+              <div className="max-w-4xl w-full mx-4">
+                <PriceFormatManager
+                  type="tap"
+                  initialPrices={tempPrices}
+                  onSave={(prices) => {
+                    setFormData({ ...formData, prices });
+                    setShowPriceManager(false);
+                  }}
+                  onCancel={() => setShowPriceManager(false)}
+                  beerName={editingItem?.beer.name}
+                />
+              </div>
+            </div>
+          )}
         </CardTitle>
         <CardDescription>
           Gestisci le birre disponibili alla spina
@@ -409,26 +459,67 @@ export function TapListManager({ pubId, tapList }: TapListManagerProps) {
                       </div>
                     </div>
 
-                    <div className="grid grid-cols-3 gap-3 mb-4">
-                      <div className="text-center">
-                        <div className="text-xs text-gray-500 mb-1">Piccola</div>
-                        <div className="font-semibold text-gray-900">
-                          {item.priceSmall ? `€${item.priceSmall}` : '-'}
+                    {/* Prezzi */}
+                    {item.prices && item.prices.length > 0 ? (
+                      <div className="flex flex-wrap gap-2 mb-4">
+                        {item.prices.map((price, idx) => (
+                          <Badge key={idx} variant="outline" className="text-sm">
+                            {price.size}: €{price.price}
+                          </Badge>
+                        ))}
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => {
+                            startEdit(item);
+                            setTempPrices(item.prices || []);
+                            setShowPriceManager(true);
+                          }}
+                          className="h-7 px-2 text-xs"
+                        >
+                          <DollarSign className="w-3 h-3 mr-1" />
+                          Modifica
+                        </Button>
+                      </div>
+                    ) : (item.priceSmall || item.priceMedium || item.priceLarge) ? (
+                      <div className="grid grid-cols-3 gap-3 mb-4">
+                        <div className="text-center">
+                          <div className="text-xs text-gray-500 mb-1">Piccola</div>
+                          <div className="font-semibold text-gray-900">
+                            {item.priceSmall ? `€${item.priceSmall}` : '-'}
+                          </div>
+                        </div>
+                        <div className="text-center">
+                          <div className="text-xs text-gray-500 mb-1">Media</div>
+                          <div className="font-semibold text-gray-900">
+                            {item.priceMedium ? `€${item.priceMedium}` : '-'}
+                          </div>
+                        </div>
+                        <div className="text-center">
+                          <div className="text-xs text-gray-500 mb-1">Grande</div>
+                          <div className="font-semibold text-gray-900">
+                            {item.priceLarge ? `€${item.priceLarge}` : '-'}
+                          </div>
                         </div>
                       </div>
-                      <div className="text-center">
-                        <div className="text-xs text-gray-500 mb-1">Media</div>
-                        <div className="font-semibold text-gray-900">
-                          {item.priceMedium ? `€${item.priceMedium}` : '-'}
-                        </div>
-                      </div>
-                      <div className="text-center">
-                        <div className="text-xs text-gray-500 mb-1">Grande</div>
-                        <div className="font-semibold text-gray-900">
-                          {item.priceLarge ? `€${item.priceLarge}` : '-'}
-                        </div>
-                      </div>
-                    </div>
+                    ) : (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          startEdit(item);
+                          setTempPrices([
+                            { size: '20cl', price: '4.50' },
+                            { size: '40cl', price: '7.50' }
+                          ]);
+                          setShowPriceManager(true);
+                        }}
+                        className="mb-4"
+                      >
+                        <DollarSign className="w-4 h-4 mr-2" />
+                        Configura prezzi
+                      </Button>
+                    )}
 
                     {item.description && (
                       <div className="bg-gray-50 p-3 rounded-lg">

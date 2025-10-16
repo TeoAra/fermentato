@@ -4,6 +4,12 @@ import { Link } from "wouter";
 import { Wine } from "lucide-react";
 import ImageWithFallback from "@/components/image-with-fallback";
 
+interface PriceItem {
+  size: string;
+  price: string;
+  format?: string;
+}
+
 interface TapListProps {
   tapList: Array<{
     id: number;
@@ -20,7 +26,7 @@ interface TapListProps {
         logoUrl: string | null;
       };
     };
-    prices?: Record<string, number>;
+    prices?: PriceItem[];
     priceSmall: string | null;
     priceMedium: string | null;
     priceLarge: string | null;
@@ -92,23 +98,34 @@ export default function TapList({ tapList }: TapListProps) {
             {/* Right side: Prices */}
             <div className="flex-shrink-0 min-w-[120px]">
               <div className="space-y-2">
-                {tap.priceSmall && parseFloat(tap.priceSmall) > 0 && (
-                  <div className="text-right">
-                    <div className="text-xs text-gray-500 dark:text-gray-400">Piccola</div>
-                    <div className="font-semibold text-gray-900 dark:text-white">€{parseFloat(tap.priceSmall).toFixed(2)}</div>
-                  </div>
-                )}
-                {tap.priceMedium && parseFloat(tap.priceMedium) > 0 && (
-                  <div className="text-right">
-                    <div className="text-xs text-gray-500 dark:text-gray-400">Media</div>
-                    <div className="font-semibold text-gray-900 dark:text-white">€{parseFloat(tap.priceMedium).toFixed(2)}</div>
-                  </div>
-                )}
-                {tap.priceLarge && parseFloat(tap.priceLarge) > 0 && (
-                  <div className="text-right">
-                    <div className="text-xs text-gray-500 dark:text-gray-400">Grande</div>
-                    <div className="font-semibold text-gray-900 dark:text-white">€{parseFloat(tap.priceLarge).toFixed(2)}</div>
-                  </div>
+                {tap.prices && tap.prices.length > 0 ? (
+                  tap.prices.map((priceItem, index) => (
+                    <div key={index} className="text-right">
+                      <div className="text-xs text-gray-500 dark:text-gray-400">{priceItem.size}</div>
+                      <div className="font-semibold text-gray-900 dark:text-white">€{parseFloat(priceItem.price).toFixed(2)}</div>
+                    </div>
+                  ))
+                ) : (
+                  <>
+                    {tap.priceSmall && parseFloat(tap.priceSmall) > 0 && (
+                      <div className="text-right">
+                        <div className="text-xs text-gray-500 dark:text-gray-400">Piccola</div>
+                        <div className="font-semibold text-gray-900 dark:text-white">€{parseFloat(tap.priceSmall).toFixed(2)}</div>
+                      </div>
+                    )}
+                    {tap.priceMedium && parseFloat(tap.priceMedium) > 0 && (
+                      <div className="text-right">
+                        <div className="text-xs text-gray-500 dark:text-gray-400">Media</div>
+                        <div className="font-semibold text-gray-900 dark:text-white">€{parseFloat(tap.priceMedium).toFixed(2)}</div>
+                      </div>
+                    )}
+                    {tap.priceLarge && parseFloat(tap.priceLarge) > 0 && (
+                      <div className="text-right">
+                        <div className="text-xs text-gray-500 dark:text-gray-400">Grande</div>
+                        <div className="font-semibold text-gray-900 dark:text-white">€{parseFloat(tap.priceLarge).toFixed(2)}</div>
+                      </div>
+                    )}
+                  </>
                 )}
               </div>
             </div>

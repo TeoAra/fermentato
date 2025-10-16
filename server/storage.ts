@@ -51,16 +51,41 @@ function safeParseDecimal(value: any): number | undefined {
 }
 
 function mapTapDbRowToDto(row: any): any {
+  const priceSmall = safeParseDecimal(row.price_small || row.priceSmall);
+  const priceMedium = safeParseDecimal(row.price_medium || row.priceMedium);
+  const priceLarge = safeParseDecimal(row.price_large || row.priceLarge);
+  
+  // Convert prices from object to array format
+  let prices: any[] = [];
+  if (row.prices && typeof row.prices === 'object') {
+    // If prices is an object (Record<string, number>), convert to array
+    if (Array.isArray(row.prices)) {
+      prices = row.prices;
+    } else {
+      prices = Object.entries(row.prices).map(([size, price]) => ({
+        size,
+        price: String(price)
+      }));
+    }
+  }
+  
+  // If no prices array exists but legacy fields exist, build from legacy fields
+  if (prices.length === 0 && (priceSmall || priceMedium || priceLarge)) {
+    if (priceSmall) prices.push({ size: '20cl', price: priceSmall });
+    if (priceMedium) prices.push({ size: '40cl', price: priceMedium });
+    if (priceLarge) prices.push({ size: '50cl', price: priceLarge });
+  }
+  
   return {
     id: row.id,
     pubId: row.pub_id || row.pubId,
     beerId: row.beer_id || row.beerId,
     isActive: row.is_active !== undefined ? row.is_active : row.isActive,
     isVisible: row.is_visible !== undefined ? row.is_visible : row.isVisible,
-    prices: row.prices,
-    priceSmall: safeParseDecimal(row.price_small || row.priceSmall),
-    priceMedium: safeParseDecimal(row.price_medium || row.priceMedium),
-    priceLarge: safeParseDecimal(row.price_large || row.priceLarge),
+    prices: prices,
+    priceSmall: priceSmall,
+    priceMedium: priceMedium,
+    priceLarge: priceLarge,
     description: row.description,
     tapNumber: row.tap_number || row.tapNumber,
     addedAt: row.added_at || row.addedAt,
