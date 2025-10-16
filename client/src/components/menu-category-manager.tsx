@@ -334,7 +334,10 @@ export default function MenuCategoryManager({ pubId, categories }: MenuCategoryM
         </div>
         
         <div className="flex gap-2">
-          <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
+          <Dialog open={isCreateDialogOpen} onOpenChange={(open) => {
+            setIsCreateDialogOpen(open);
+            if (!open) resetForm();
+          }}>
             <DialogTrigger asChild>
               <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
                 <Button 
@@ -346,7 +349,7 @@ export default function MenuCategoryManager({ pubId, categories }: MenuCategoryM
                 </Button>
               </motion.div>
             </DialogTrigger>
-          <DialogContent className="sm:max-w-md">
+          <DialogContent className="sm:max-w-md" onOpenAutoFocus={(e) => e.preventDefault()}>
             <DialogHeader>
               <DialogTitle className="flex items-center text-xl">
                 <div className="p-2 bg-gradient-to-r from-blue-500 to-indigo-500 rounded-lg mr-3">
@@ -399,14 +402,17 @@ export default function MenuCategoryManager({ pubId, categories }: MenuCategoryM
             <p className="text-gray-600 dark:text-gray-400 mb-6 max-w-md mx-auto">
               Inizia creando le categorie per organizzare il tuo menu. Potrai poi aggiungere i prodotti a ciascuna categoria.
             </p>
-            <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
+            <Dialog open={isCreateDialogOpen} onOpenChange={(open) => {
+              setIsCreateDialogOpen(open);
+              if (!open) resetForm();
+            }}>
               <DialogTrigger asChild>
                 <Button className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700">
                   <Plus className="h-4 w-4 mr-2" />
                   Crea Prima Categoria
                 </Button>
               </DialogTrigger>
-              <DialogContent className="sm:max-w-md">
+              <DialogContent className="sm:max-w-md" onOpenAutoFocus={(e) => e.preventDefault()}>
                 <DialogHeader>
                   <DialogTitle className="flex items-center text-xl">
                     <div className="p-2 bg-gradient-to-r from-blue-500 to-indigo-500 rounded-lg mr-3">
@@ -531,8 +537,14 @@ export default function MenuCategoryManager({ pubId, categories }: MenuCategoryM
       </AnimatePresence>
 
       {/* Edit Category Dialog */}
-      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-        <DialogContent className="sm:max-w-md">
+      <Dialog open={isEditDialogOpen} onOpenChange={(open) => {
+        setIsEditDialogOpen(open);
+        if (!open) {
+          setEditingCategory(null);
+          resetForm();
+        }
+      }}>
+        <DialogContent className="sm:max-w-md" onOpenAutoFocus={(e) => e.preventDefault()}>
           <DialogHeader>
             <DialogTitle className="flex items-center text-xl">
               <div className="p-2 bg-gradient-to-r from-orange-500 to-red-500 rounded-lg mr-3">
@@ -546,8 +558,14 @@ export default function MenuCategoryManager({ pubId, categories }: MenuCategoryM
       </Dialog>
 
       {/* Add Item Dialog */}
-      <Dialog open={isAddItemOpen} onOpenChange={setIsAddItemOpen}>
-        <DialogContent className="sm:max-w-md">
+      <Dialog open={isAddItemOpen} onOpenChange={(open) => {
+        setIsAddItemOpen(open);
+        if (!open) {
+          setSelectedCategoryId(null);
+          setItemForm({ name: '', description: '', price: '', isVisible: true });
+        }
+      }}>
+        <DialogContent className="sm:max-w-md" onOpenAutoFocus={(e) => e.preventDefault()}>
           <DialogHeader>
             <DialogTitle>Aggiungi Prodotto</DialogTitle>
           </DialogHeader>
