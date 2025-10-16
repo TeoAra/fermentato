@@ -198,6 +198,15 @@ export default function SmartPubDashboard() {
     return allCategoryProducts || {};
   }, [allCategoryProducts]);
 
+  // Merge products into categories
+  const categoriesWithItems = useMemo(() => {
+    if (!Array.isArray(menuData)) return [];
+    return menuData.map(category => ({
+      ...category,
+      items: categoryProductsMap[category.id] || []
+    }));
+  }, [menuData, categoryProductsMap]);
+
   // Fetch all beers for search
   const { data: allBeers = [], isLoading: beersLoading } = useQuery({
     queryKey: ["/api/beers"],
@@ -769,7 +778,7 @@ export default function SmartPubDashboard() {
       >
         <MenuCategoryManager 
           pubId={currentPub?.id || 0}
-          categories={typedMenuData}
+          categories={categoriesWithItems}
         />
       </motion.div>
     </motion.div>
