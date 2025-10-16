@@ -49,12 +49,12 @@ export default function TapList({ tapList }: TapListProps) {
   return (
     <div className="space-y-4">      
       {tapList.map((tap) => (
-        <div key={tap.id} className="border rounded-lg p-4 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors group">
+        <Card key={tap.id} className="p-6 hover:shadow-lg transition-all duration-300 border-l-4 border-l-amber-500 bg-white dark:bg-gray-800">
           <div className="flex items-start justify-between space-x-4">
             {/* Left side: Beer details */}
             <div className="flex-1 min-w-0">
               {/* Tap number badge */}
-              {tap.tapNumber && (
+              {tap.tapNumber && tap.tapNumber > 0 && (
                 <div className="flex items-center gap-2 mb-3">
                   <Badge variant="outline" className="text-xs font-medium">
                     Spina {tap.tapNumber}
@@ -122,7 +122,7 @@ export default function TapList({ tapList }: TapListProps) {
               </div>
             </div>
           </div>
-        </div>
+        </Card>
       ))}
     </div>
   );
