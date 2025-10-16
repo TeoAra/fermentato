@@ -2,6 +2,7 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { ChefHat, Clock } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
 
 interface LuppolinoMenuProps {
   menu: Array<{
@@ -20,26 +21,12 @@ interface LuppolinoMenuProps {
   }>;
 }
 
-// Mapping allergeni con emoji come nel sito originale
-const allergenEmojis: Record<string, string> = {
-  glutine: "🥖",
-  latte: "🥛", 
-  lattosio: "🥛",
-  uova: "🍳",
-  soia: "🌱",
-  sedano: "🥬",
-  senape: "🌿",
-  "frutta a guscio": "🌰",
-  sesamo: "🌸",
-  solfiti: "🍷",
-  pesce: "🐟",
-  crostacei: "🦐",
-  molluschi: "🦪",
-  arachidi: "🥜",
-  lupini: "🫘"
-};
-
 export default function LuppolinoMenu({ menu }: LuppolinoMenuProps) {
+  // Carica la lista degli allergeni dal backend
+  const { data: allergens = [] } = useQuery({
+    queryKey: ['/api/allergens'],
+  });
+
   if (!menu || menu.length === 0) {
     return (
       <div className="text-center py-16">
@@ -54,14 +41,22 @@ export default function LuppolinoMenu({ menu }: LuppolinoMenuProps) {
     );
   }
 
-  const formatAllergens = (allergens: string[] | null) => {
-    if (!allergens || allergens.length === 0) return null;
+  const formatAllergens = (allergenIds: string[] | null) => {
+    if (!allergenIds || allergenIds.length === 0 || !Array.isArray(allergens)) return null;
     
-    return allergens.map(allergen => {
-      const emoji = allergenEmojis[allergen.toLowerCase()] || "⚠️";
-      const label = allergen.charAt(0).toUpperCase() + allergen.slice(1);
-      return { emoji, label };
-    });
+    // Crea una mappa per accesso rapido agli allergeni per ID
+    const allergenMap = allergens.reduce((acc: any, allergen: any) => {
+      acc[allergen.id.toString()] = allergen;
+      return acc;
+    }, {});
+    
+    return allergenIds
+      .map(id => allergenMap[id])
+      .filter(Boolean)
+      .map((allergen: any) => ({
+        emoji: allergen.emoji || "⚠️",
+        label: allergen.name
+      }));
   };
 
   return (

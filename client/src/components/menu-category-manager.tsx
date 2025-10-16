@@ -9,6 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { AllergenSelector } from "@/components/allergen-selector";
 import { 
   Edit3, 
   Trash2, 
@@ -74,7 +75,8 @@ export default function MenuCategoryManager({ pubId, categories }: MenuCategoryM
     name: '',
     description: '',
     price: '',
-    isVisible: true
+    isVisible: true,
+    allergens: []
   });
 
   // Reset form
@@ -222,7 +224,7 @@ export default function MenuCategoryManager({ pubId, categories }: MenuCategoryM
       queryClient.invalidateQueries({ queryKey: ["/api/pubs", pubId, "menu"] });
       setIsAddItemOpen(false);
       setSelectedCategoryId(null);
-      setItemForm({ name: '', description: '', price: '', isVisible: true });
+      setItemForm({ name: '', description: '', price: '', isVisible: true, allergens: [] });
       toast({ title: "✅ Prodotto aggiunto!" });
     },
     onError: () => {
@@ -737,7 +739,7 @@ export default function MenuCategoryManager({ pubId, categories }: MenuCategoryM
         setIsAddItemOpen(open);
         if (!open) {
           setSelectedCategoryId(null);
-          setItemForm({ name: '', description: '', price: '', isVisible: true });
+          setItemForm({ name: '', description: '', price: '', isVisible: true, allergens: [] });
         }
       }}>
         <DialogContent className="sm:max-w-md" onOpenAutoFocus={(e) => e.preventDefault()}>
@@ -785,6 +787,10 @@ export default function MenuCategoryManager({ pubId, categories }: MenuCategoryM
                 rows={3}
               />
             </div>
+            <AllergenSelector
+              selectedAllergens={itemForm.allergens}
+              onAllergensChange={(allergens) => setItemForm({ ...itemForm, allergens })}
+            />
             <div className="flex justify-end space-x-2">
               <Button variant="outline" onClick={() => setIsAddItemOpen(false)}>Annulla</Button>
               <Button onClick={() => {
