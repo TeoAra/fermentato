@@ -1019,7 +1019,7 @@ export default function SmartPubDashboard() {
         )}
       </div>
 
-      <div className="grid gap-6">
+      <div className="grid grid-cols-1 gap-6">
         {/* Cover Image Section */}
         <Card className="p-6">
           <h3 className="text-lg font-semibold mb-4 flex items-center">
@@ -1475,7 +1475,7 @@ export default function SmartPubDashboard() {
           </div>
         </div>
         
-        <div className="grid gap-4">
+        <div className="grid grid-cols-1 gap-4">
           <div>
             <Label>Nome</Label>
             <Input defaultValue={(user as any)?.firstName || ''} data-testid="input-first-name" />
