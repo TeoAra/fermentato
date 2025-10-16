@@ -520,37 +520,7 @@ export class DatabaseStorage implements IStorage {
         ORDER BY bl.id ASC
       `);
       
-      return result.rows.map((row: any) => ({
-        id: row.id,
-        pubId: row.pub_id,
-        beerId: row.beer_id,
-        isActive: row.is_active,
-        isVisible: row.is_visible,
-        // Map legacy fields to expected component field names
-        price: row.price_bottle, // Component expects 'price', not 'priceBottle'
-        size: row.bottle_size,   // Component expects 'size', not 'bottleSize' 
-        // Keep legacy fields for backward compatibility
-        priceBottle: row.price_bottle,
-        bottleSize: row.bottle_size,
-        prices: row.prices,
-        quantity: row.quantity,
-        description: row.description,
-        addedAt: row.added_at,
-        updatedAt: row.updated_at,
-        beer: {
-          id: row.beer_id,
-          name: row.beer_name,
-          style: row.beer_style,
-          abv: row.beer_abv,
-          imageUrl: row.beer_image_url,
-          logoUrl: row.beer_logo_url, // Add beer logo for component
-          brewery: {
-            id: row.brewery_id,
-            name: row.brewery_name,
-            logoUrl: row.brewery_logo_url,
-          }
-        }
-      }));
+      return result.rows.map((row: any) => mapBottleDbRowToDto(row));
     } catch (error) {
       console.error('Error in getBottleList:', error);
       return [];
