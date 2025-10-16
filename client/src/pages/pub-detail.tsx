@@ -640,8 +640,7 @@ export default function PubDetail() {
           {/* Main Content */}
           <div className="lg:col-span-3">
             {/* Modern Tabs */}
-            <div className="glass-card rounded-2xl p-2 sm:p-3 md:p-6 mb-4 md:mb-8 overflow-hidden">
-              <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+            <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full mb-4 md:mb-8">
                 <TabsList className="grid w-full grid-cols-3 mb-3 md:mb-6 bg-white dark:bg-gray-900 rounded-lg sm:rounded-xl md:rounded-2xl p-0.5 sm:p-1 md:p-2 shadow-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
                   <TabsTrigger 
                     value="taplist" 
@@ -759,7 +758,6 @@ export default function PubDetail() {
                   )}
                 </TabsContent>
               </Tabs>
-            </div>
           </div>
 
           {/* Sidebar */}
