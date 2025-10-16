@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
@@ -56,6 +56,12 @@ export default function MenuCategoryManager({ pubId, categories }: MenuCategoryM
   const [editingCategory, setEditingCategory] = useState<any>(null);
   const [isAddItemOpen, setIsAddItemOpen] = useState(false);
   const [selectedCategoryId, setSelectedCategoryId] = useState<number | null>(null);
+  
+  // Use refs for form inputs to avoid re-renders
+  const nameRef = useRef<HTMLInputElement>(null);
+  const descriptionRef = useRef<HTMLTextAreaElement>(null);
+  const visibilityRef = useRef<boolean>(true);
+  
   const [formData, setFormData] = useState<any>({
     name: '',
     description: '',
@@ -189,7 +195,10 @@ export default function MenuCategoryManager({ pubId, categories }: MenuCategoryM
 
   // Handle form submission
   const handleCreateSubmit = () => {
-    if (!formData.name.trim()) {
+    const name = nameRef.current?.value || '';
+    const description = descriptionRef.current?.value || '';
+    
+    if (!name.trim()) {
       toast({ 
         title: "⚠️ Campo richiesto", 
         description: "Il nome della categoria è obbligatorio", 
@@ -197,7 +206,13 @@ export default function MenuCategoryManager({ pubId, categories }: MenuCategoryM
       });
       return;
     }
-    createCategoryMutation.mutate(formData);
+    
+    createCategoryMutation.mutate({
+      name: name.trim(),
+      description: description.trim(),
+      isVisible: visibilityRef.current,
+      pubId: pubId
+    });
   };
 
   const handleEditSubmit = () => {
@@ -228,10 +243,10 @@ export default function MenuCategoryManager({ pubId, categories }: MenuCategoryM
             Nome Categoria
           </Label>
           <Input 
+            ref={isEdit ? undefined : nameRef}
             id="category-name"
             placeholder="Es. Antipasti, Primi Piatti, Dolci..."
-            value={formData.name}
-            onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+            defaultValue={isEdit ? formData.name : ''}
             className="mt-1"
             data-testid={isEdit ? "input-edit-category-name" : "input-create-category-name"}
           />
@@ -242,10 +257,10 @@ export default function MenuCategoryManager({ pubId, categories }: MenuCategoryM
             Descrizione (opzionale)
           </Label>
           <Textarea
+            ref={isEdit ? undefined : descriptionRef}
             id="category-description"
             placeholder="Breve descrizione della categoria..."
-            value={formData.description}
-            onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+            defaultValue={isEdit ? formData.description : ''}
             rows={3}
             className="mt-1"
             data-testid={isEdit ? "textarea-edit-category-description" : "textarea-create-category-description"}
@@ -263,8 +278,8 @@ export default function MenuCategoryManager({ pubId, categories }: MenuCategoryM
           </div>
           <Switch
             id="category-visible"
-            checked={formData.isVisible}
-            onCheckedChange={(checked) => setFormData({ ...formData, isVisible: checked })}
+            defaultChecked={isEdit ? formData.isVisible : true}
+            onCheckedChange={(checked) => { visibilityRef.current = checked; }}
             data-testid={isEdit ? "switch-edit-category-visible" : "switch-create-category-visible"}
           />
         </div>
@@ -288,7 +303,7 @@ export default function MenuCategoryManager({ pubId, categories }: MenuCategoryM
         </Button>
         <Button 
           onClick={isEdit ? handleEditSubmit : handleCreateSubmit}
-          disabled={!formData.name.trim() || (isEdit ? updateCategoryMutation.isPending : createCategoryMutation.isPending)}
+          disabled={isEdit ? updateCategoryMutation.isPending : createCategoryMutation.isPending}
           className="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700"
           data-testid={isEdit ? "button-save-edit" : "button-save-create"}
         >
