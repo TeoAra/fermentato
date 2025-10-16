@@ -54,9 +54,17 @@ export default function MenuCategoryManager({ pubId, categories }: MenuCategoryM
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [editingCategory, setEditingCategory] = useState<any>(null);
+  const [isAddItemOpen, setIsAddItemOpen] = useState(false);
+  const [selectedCategoryId, setSelectedCategoryId] = useState<number | null>(null);
   const [formData, setFormData] = useState<any>({
     name: '',
     description: '',
+    isVisible: true
+  });
+  const [itemForm, setItemForm] = useState<any>({
+    name: '',
+    description: '',
+    price: '',
     isVisible: true
   });
 
@@ -148,6 +156,23 @@ export default function MenuCategoryManager({ pubId, categories }: MenuCategoryM
         description: "Impossibile aggiornare la visibilità", 
         variant: "destructive" 
       });
+    }
+  });
+
+  // Item mutations
+  const addItemMutation = useMutation({
+    mutationFn: async (data: any) => {
+      return apiRequest(`/api/pubs/${pubId}/menu-items`, "POST", data);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/pubs", pubId, "menu"] });
+      setIsAddItemOpen(false);
+      setSelectedCategoryId(null);
+      setItemForm({ name: '', description: '', price: '', isVisible: true });
+      toast({ title: "✅ Prodotto aggiunto!" });
+    },
+    onError: () => {
+      toast({ title: "❌ Errore", description: "Impossibile aggiungere il prodotto", variant: "destructive" });
     }
   });
 
@@ -308,18 +333,19 @@ export default function MenuCategoryManager({ pubId, categories }: MenuCategoryM
           </p>
         </div>
         
-        <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
-          <DialogTrigger asChild>
-            <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-              <Button 
-                className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 shadow-lg"
-                data-testid="button-add-category"
-              >
-                <Plus className="h-4 w-4 mr-2" />
-                Nuova Categoria
-              </Button>
-            </motion.div>
-          </DialogTrigger>
+        <div className="flex gap-2">
+          <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
+            <DialogTrigger asChild>
+              <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                <Button 
+                  className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 shadow-lg"
+                  data-testid="button-add-category"
+                >
+                  <Plus className="h-4 w-4 mr-2" />
+                  Nuova Categoria
+                </Button>
+              </motion.div>
+            </DialogTrigger>
           <DialogContent className="sm:max-w-md">
             <DialogHeader>
               <DialogTitle className="flex items-center text-xl">
@@ -332,6 +358,16 @@ export default function MenuCategoryManager({ pubId, categories }: MenuCategoryM
             <CategoryForm />
           </DialogContent>
         </Dialog>
+        <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+          <Button 
+            onClick={() => setIsAddItemOpen(true)}
+            className="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 shadow-lg"
+          >
+            <Plus className="h-4 w-4 mr-2" />
+            Prodotto
+          </Button>
+        </motion.div>
+      </div>
       </motion.div>
 
       {/* Categories Grid */}
@@ -506,6 +542,67 @@ export default function MenuCategoryManager({ pubId, categories }: MenuCategoryM
             </DialogTitle>
           </DialogHeader>
           <CategoryForm isEdit />
+        </DialogContent>
+      </Dialog>
+
+      {/* Add Item Dialog */}
+      <Dialog open={isAddItemOpen} onOpenChange={setIsAddItemOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Aggiungi Prodotto</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label>Categoria</Label>
+              <select
+                className="w-full p-2 border rounded-md"
+                value={selectedCategoryId || ""}
+                onChange={(e) => setSelectedCategoryId(parseInt(e.target.value))}
+              >
+                <option value="">Seleziona categoria...</option>
+                {categories.map((cat) => (
+                  <option key={cat.id} value={cat.id}>{cat.name}</option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <Label>Nome Prodotto</Label>
+              <Input
+                placeholder="Nome del piatto..."
+                value={itemForm.name}
+                onChange={(e) => setItemForm({ ...itemForm, name: e.target.value })}
+              />
+            </div>
+            <div>
+              <Label>Prezzo (€)</Label>
+              <Input
+                type="number"
+                step="0.10"
+                placeholder="12.50"
+                value={itemForm.price}
+                onChange={(e) => setItemForm({ ...itemForm, price: e.target.value })}
+              />
+            </div>
+            <div>
+              <Label>Descrizione</Label>
+              <Textarea
+                placeholder="Descrizione del piatto..."
+                value={itemForm.description}
+                onChange={(e) => setItemForm({ ...itemForm, description: e.target.value })}
+                rows={3}
+              />
+            </div>
+            <div className="flex justify-end space-x-2">
+              <Button variant="outline" onClick={() => setIsAddItemOpen(false)}>Annulla</Button>
+              <Button onClick={() => {
+                if (!selectedCategoryId) {
+                  toast({ title: "Seleziona una categoria", variant: "destructive" });
+                  return;
+                }
+                addItemMutation.mutate({ ...itemForm, categoryId: selectedCategoryId });
+              }}>Aggiungi</Button>
+            </div>
+          </div>
         </DialogContent>
       </Dialog>
     </div>
