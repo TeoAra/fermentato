@@ -56,6 +56,9 @@ export default function MenuCategoryManager({ pubId, categories }: MenuCategoryM
   const [editingCategory, setEditingCategory] = useState<any>(null);
   const [isAddItemOpen, setIsAddItemOpen] = useState(false);
   const [selectedCategoryId, setSelectedCategoryId] = useState<number | null>(null);
+  const [expandedCategories, setExpandedCategories] = useState<Set<number>>(new Set());
+  const [editingProduct, setEditingProduct] = useState<any>(null);
+  const [isEditProductOpen, setIsEditProductOpen] = useState(false);
   
   // Use refs for form inputs to avoid re-renders
   const nameRef = useRef<HTMLInputElement>(null);
@@ -155,6 +158,7 @@ export default function MenuCategoryManager({ pubId, categories }: MenuCategoryM
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/pubs", pubId, "menu"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/pubs", pubId, "menu", "all-products"] });
     },
     onError: () => {
       toast({ 
@@ -162,6 +166,50 @@ export default function MenuCategoryManager({ pubId, categories }: MenuCategoryM
         description: "Impossibile aggiornare la visibilità", 
         variant: "destructive" 
       });
+    }
+  });
+
+  // Product mutations
+  const updateProductMutation = useMutation({
+    mutationFn: async ({ id, data }: { id: number; data: any }) => {
+      return apiRequest(`/api/pubs/${pubId}/menu-items/${id}`, { method: 'PATCH' }, data);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/pubs", pubId, "menu"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/pubs", pubId, "menu", "all-products"] });
+      setIsEditProductOpen(false);
+      setEditingProduct(null);
+      toast({ title: "✅ Prodotto aggiornato" });
+    },
+    onError: () => {
+      toast({ title: "❌ Errore", description: "Impossibile aggiornare il prodotto", variant: "destructive" });
+    }
+  });
+
+  const deleteProductMutation = useMutation({
+    mutationFn: async (id: number) => {
+      return apiRequest(`/api/pubs/${pubId}/menu-items/${id}`, { method: 'DELETE' });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/pubs", pubId, "menu"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/pubs", pubId, "menu", "all-products"] });
+      toast({ title: "🗑️ Prodotto eliminato" });
+    },
+    onError: () => {
+      toast({ title: "❌ Errore", description: "Impossibile eliminare il prodotto", variant: "destructive" });
+    }
+  });
+
+  const toggleProductVisibilityMutation = useMutation({
+    mutationFn: async ({ id, isVisible }: { id: number; isVisible: boolean }) => {
+      return apiRequest(`/api/pubs/${pubId}/menu-items/${id}`, { method: 'PATCH' }, { isVisible });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/pubs", pubId, "menu"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/pubs", pubId, "menu", "all-products"] });
+    },
+    onError: () => {
+      toast({ title: "❌ Errore", description: "Impossibile aggiornare la visibilità", variant: "destructive" });
     }
   });
 
@@ -231,6 +279,24 @@ export default function MenuCategoryManager({ pubId, categories }: MenuCategoryM
     if (confirm(`Sei sicuro di voler eliminare la categoria "${category.name}"? Questa azione non può essere annullata.`)) {
       deleteCategoryMutation.mutate(category.id);
     }
+  };
+
+  const handleDeleteProduct = (product: any) => {
+    if (confirm(`Sei sicuro di voler eliminare "${product.name}"?`)) {
+      deleteProductMutation.mutate(product.id);
+    }
+  };
+
+  const toggleCategory = (categoryId: number) => {
+    setExpandedCategories(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(categoryId)) {
+        newSet.delete(categoryId);
+      } else {
+        newSet.add(categoryId);
+      }
+      return newSet;
+    });
   };
 
   // Category Form Component
@@ -476,7 +542,7 @@ export default function MenuCategoryManager({ pubId, categories }: MenuCategoryM
                         </div>
                       </div>
 
-                      <div className="flex items-center justify-between">
+                      <div className="flex items-center justify-between mb-3">
                         <div className="flex items-center space-x-2">
                           <Badge 
                             variant={category.isVisible ? "default" : "secondary"}
@@ -497,9 +563,21 @@ export default function MenuCategoryManager({ pubId, categories }: MenuCategoryM
                               </>
                             )}
                           </Badge>
-                          <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-900 dark:text-blue-200">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => toggleCategory(category.id)}
+                            className="bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-900 dark:text-blue-200 hover:bg-blue-100"
+                          >
                             {category.items?.length || 0} prodotti
-                          </Badge>
+                            <motion.div
+                              animate={{ rotate: expandedCategories.has(category.id) ? 180 : 0 }}
+                              transition={{ duration: 0.2 }}
+                              className="ml-2"
+                            >
+                              ▼
+                            </motion.div>
+                          </Button>
                         </div>
 
                         <div className="flex items-center space-x-1">
@@ -541,6 +619,89 @@ export default function MenuCategoryManager({ pubId, categories }: MenuCategoryM
                           </motion.div>
                         </div>
                       </div>
+
+                      {/* Products List (Expandable) */}
+                      <AnimatePresence>
+                        {expandedCategories.has(category.id) && (
+                          <motion.div
+                            initial={{ height: 0, opacity: 0 }}
+                            animate={{ height: "auto", opacity: 1 }}
+                            exit={{ height: 0, opacity: 0 }}
+                            transition={{ duration: 0.3 }}
+                            className="overflow-hidden"
+                          >
+                            <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+                              {category.items && category.items.length > 0 ? (
+                                <div className="space-y-2">
+                                  {category.items.map((product: any) => (
+                                    <div
+                                      key={product.id}
+                                      className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                                    >
+                                      <div className="flex-1">
+                                        <div className="flex items-center gap-2">
+                                          <h4 className="font-medium text-gray-900 dark:text-white">{product.name}</h4>
+                                          {!product.isVisible && (
+                                            <Badge variant="secondary" className="text-xs">
+                                              <EyeOff className="h-3 w-3 mr-1" />
+                                              Nascosto
+                                            </Badge>
+                                          )}
+                                        </div>
+                                        {product.description && (
+                                          <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">{product.description}</p>
+                                        )}
+                                        {product.price && (
+                                          <p className="text-sm font-semibold text-green-600 dark:text-green-400 mt-1">€{product.price}</p>
+                                        )}
+                                      </div>
+                                      <div className="flex items-center space-x-1 ml-4">
+                                        <Button
+                                          size="sm"
+                                          variant="ghost"
+                                          onClick={() => toggleProductVisibilityMutation.mutate({ 
+                                            id: product.id, 
+                                            isVisible: !product.isVisible 
+                                          })}
+                                          className="text-gray-600 hover:text-blue-600 hover:bg-blue-50"
+                                          data-testid={`button-toggle-product-visibility-${product.id}`}
+                                        >
+                                          {product.isVisible ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                                        </Button>
+                                        <Button
+                                          size="sm"
+                                          variant="ghost"
+                                          onClick={() => {
+                                            setEditingProduct(product);
+                                            setIsEditProductOpen(true);
+                                          }}
+                                          className="text-gray-600 hover:text-orange-600 hover:bg-orange-50"
+                                          data-testid={`button-edit-product-${product.id}`}
+                                        >
+                                          <Edit3 className="h-4 w-4" />
+                                        </Button>
+                                        <Button
+                                          size="sm"
+                                          variant="ghost"
+                                          onClick={() => handleDeleteProduct(product)}
+                                          className="text-gray-600 hover:text-red-600 hover:bg-red-50"
+                                          data-testid={`button-delete-product-${product.id}`}
+                                        >
+                                          <Trash2 className="h-4 w-4" />
+                                        </Button>
+                                      </div>
+                                    </div>
+                                  ))}
+                                </div>
+                              ) : (
+                                <p className="text-center text-gray-500 dark:text-gray-400 py-4">
+                                  Nessun prodotto in questa categoria
+                                </p>
+                              )}
+                            </div>
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
                     </CardContent>
                   </Card>
                 </motion.div>
