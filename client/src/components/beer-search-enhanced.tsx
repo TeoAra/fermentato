@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -91,9 +92,19 @@ export default function BeerSearchEnhanced({
                       )}
                       <div>
                         <p className="font-medium text-sm">{beer.name}</p>
-                        <p className="text-xs text-gray-600">
-                          {typeof beer.brewery === 'string' ? beer.brewery : beer.brewery?.name} • {beer.style}
-                        </p>
+                        <div className="flex items-center text-xs text-gray-600 gap-1">
+                          {beer.brewery?.id || beer.breweryId ? (
+                            <Link href={`/brewery/${beer.brewery?.id || beer.breweryId}`}>
+                              <span className="hover:text-primary hover:underline cursor-pointer">
+                                {typeof beer.brewery === 'string' ? beer.brewery : beer.brewery?.name || 'Birrificio'}
+                              </span>
+                            </Link>
+                          ) : (
+                            <span>{typeof beer.brewery === 'string' ? beer.brewery : beer.brewery?.name || 'Birrificio'}</span>
+                          )}
+                          <span>•</span>
+                          <span>{beer.style}</span>
+                        </div>
                         <div className="flex items-center space-x-2 mt-1">
                           {beer.abv && (
                             <Badge variant="outline" className="text-xs">
