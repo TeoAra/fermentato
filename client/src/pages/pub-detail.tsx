@@ -1,7 +1,7 @@
 import React from "react";
 import { useParams, Link } from "wouter";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { 
   Star, 
   Clock, 
@@ -207,10 +207,46 @@ export default function PubDetail() {
     enabled: !!id,
   });
 
-  const { data: menu, isLoading: menuLoading } = useQuery({
+  const { data: menuData = [], isLoading: menuLoading } = useQuery({
     queryKey: ["/api/pubs", id, "menu"],
     enabled: !!id,
   });
+
+  // Fetch all products for all categories
+  const { data: allCategoryProducts } = useQuery({
+    queryKey: ["/api/pubs", id, "menu", "all-products", menuData?.map((c: any) => c.id).join(',')],
+    queryFn: async () => {
+      if (!id || !Array.isArray(menuData) || menuData.length === 0) return {};
+      
+      const productMap: Record<number, any[]> = {};
+      
+      const promises = menuData.map(async (category: any) => {
+        try {
+          const products = await apiRequest(`/api/pubs/${id}/menu/categories/${category.id}/items`, { method: 'GET' });
+          return { categoryId: category.id, products: Array.isArray(products) ? products : [] };
+        } catch (error) {
+          return { categoryId: category.id, products: [] };
+        }
+      });
+      
+      const results = await Promise.all(promises);
+      results.forEach(({ categoryId, products }) => {
+        productMap[categoryId] = products;
+      });
+      
+      return productMap;
+    },
+    enabled: !!id && Array.isArray(menuData) && menuData.length > 0,
+  });
+
+  // Merge products into categories
+  const menu = useMemo(() => {
+    if (!Array.isArray(menuData)) return [];
+    return menuData.map((category: any) => ({
+      ...category,
+      items: allCategoryProducts?.[category.id] || []
+    }));
+  }, [menuData, allCategoryProducts]);
 
   const { data: bottles, isLoading: bottlesLoading } = useQuery({
     queryKey: ["/api/pubs", id, "bottles"],
