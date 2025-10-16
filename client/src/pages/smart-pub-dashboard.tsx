@@ -166,7 +166,7 @@ export default function SmartPubDashboard() {
 
   // Fetch all products for all categories in a single query
   const { data: allCategoryProducts, isLoading: productsLoading } = useQuery({
-    queryKey: ["/api/pubs", currentPub?.id, "menu", "all-products"],
+    queryKey: ["/api/pubs", currentPub?.id, "menu", "all-products", menuData?.map((c: any) => c.id).join(',')],
     queryFn: async () => {
       if (!currentPub?.id || !Array.isArray(menuData) || menuData.length === 0) return {};
       
