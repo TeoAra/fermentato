@@ -76,7 +76,7 @@ const ModernBeerCard = ({ beer, prices, className = "" }: {
   prices?: any[];
   className?: string;
 }) => (
-  <div className={`glass-card rounded-2xl p-6 hover:scale-102 transition-all duration-300 group ${className}`}>
+  <Card className={`p-6 hover:shadow-lg transition-all duration-300 border-l-4 border-l-emerald-500 bg-white dark:bg-gray-800 ${className}`}>
     <div className="flex items-start justify-between space-x-4">
       {/* Left side: Beer image and details */}
       <div className="flex items-start space-x-4 flex-1 min-w-0">
@@ -153,7 +153,7 @@ const ModernBeerCard = ({ beer, prices, className = "" }: {
         </div>
       )}
     </div>
-  </div>
+  </Card>
 );
 
 // Modern Stats Card Component  

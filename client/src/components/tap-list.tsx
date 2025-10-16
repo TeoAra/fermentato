@@ -53,15 +53,6 @@ export default function TapList({ tapList }: TapListProps) {
           <div className="flex items-start justify-between space-x-4">
             {/* Left side: Beer details */}
             <div className="flex-1 min-w-0">
-              {/* Tap number badge */}
-              {tap.tapNumber && tap.tapNumber > 0 && (
-                <div className="flex items-center gap-2 mb-3">
-                  <Badge variant="outline" className="text-xs font-medium">
-                    Spina {tap.tapNumber}
-                  </Badge>
-                </div>
-              )}
-              
               <div className="flex items-center gap-3 mb-4">
                 <ImageWithFallback
                   src={tap.beer.imageUrl || tap.beer.brewery.logoUrl}
