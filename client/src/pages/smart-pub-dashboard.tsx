@@ -62,7 +62,7 @@ import { formatDistanceToNow } from "date-fns";
 import { it } from "date-fns/locale";
 import { useMemo } from "react";
 import FlexiblePriceManager from "@/components/flexible-price-manager";
-import MenuCategoryManager from "@/components/menu-category-manager";
+import { MenuManager } from "@/components/menu-manager";
 import { TapListManager } from "@/components/taplist-manager";
 import { BottleListManager } from "@/components/bottle-list-manager";
 import { PubOwnerTopBar } from "@/components/pub-owner-top-bar";
@@ -767,9 +767,9 @@ export default function SmartPubDashboard() {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5, delay: 0.3 }}
       >
-        <MenuCategoryManager 
+        <MenuManager 
           pubId={currentPub?.id || 0}
-          categories={typedMenuData}
+          menu={typedMenuData}
         />
       </motion.div>
     </motion.div>
