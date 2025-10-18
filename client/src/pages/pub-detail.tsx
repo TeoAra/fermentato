@@ -78,76 +78,57 @@ const ModernBeerCard = ({ beer, prices, className = "" }: {
 }) => (
   <Card className={`p-6 hover:shadow-lg transition-all duration-300 border-l-4 border-l-emerald-500 bg-white dark:bg-gray-800 ${className}`}>
     <div className="flex items-start justify-between space-x-4">
-      {/* Left side: Beer image and details */}
-      <div className="flex items-start space-x-4 flex-1 min-w-0">
-        <div className="relative flex-shrink-0">
+      {/* Left side: Beer details */}
+      <div className="flex-1 min-w-0">
+        <div className="flex items-center gap-3 mb-4">
           <ImageWithFallback
-            src={beer?.imageUrl}
+            src={beer?.imageUrl || beer?.brewery?.logoUrl}
             alt={beer?.name || 'Beer'}
             imageType="beer"
-            containerClassName="w-16 h-16 rounded-xl group-hover:scale-105 transition-transform duration-300"
-            className="w-16 h-16 object-cover rounded-xl group-hover:scale-105 transition-transform duration-300"
-            iconSize="lg"
+            containerClassName="w-12 h-12 rounded-lg flex-shrink-0"
+            className="w-12 h-12 rounded-lg object-cover flex-shrink-0"
+            iconSize="md"
           />
-        </div>
-        
-        <div className="flex-1 min-w-0">
-          <Link href={`/beer/${beer?.id}`}>
-            <h4 className="font-bold text-gray-900 dark:text-white mb-1 break-words hover:text-primary cursor-pointer transition-colors text-lg group-hover:text-transparent group-hover:bg-gradient-to-r group-hover:from-amber-500 group-hover:to-orange-600 group-hover:bg-clip-text">
-              {beer?.name || 'Nome non disponibile'}
-            </h4>
-          </Link>
-          
-          {beer?.brewery?.id && (
-            <Link href={`/brewery/${beer.brewery.id}`}>
-              <p className="text-xs text-gray-500 dark:text-gray-400 mb-3 break-words hover:text-emerald-600 dark:hover:text-emerald-400 cursor-pointer transition-colors">
-                {beer.brewery.name || beer?.breweryName || 'Birrificio'}
-              </p>
+          <div className="flex-1 min-w-0">
+            <Link href={`/beer/${beer?.id}`}>
+              <h3 className="font-semibold text-lg break-words hover:text-primary cursor-pointer transition-colors text-gray-900 dark:text-white">
+                {beer?.name || 'Nome non disponibile'}
+              </h3>
             </Link>
-          )}
-          
-          {/* Modern Badges */}
-          <div className="flex flex-wrap items-center gap-2 mb-3">
-            {beer?.style && (
-              <Badge variant="outline" className="text-xs bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-950 dark:to-indigo-950 border-blue-200 text-blue-800 dark:text-blue-200">
-                <Sparkles className="h-3 w-3 mr-1" />
-                {beer.style}
-              </Badge>
+            {beer?.brewery?.id && (
+              <Link href={`/brewery/${beer.brewery.id}`}>
+                <p className="text-xs text-gray-500 dark:text-gray-400 break-words hover:text-emerald-600 dark:hover:text-emerald-400 cursor-pointer transition-colors">
+                  {beer.brewery.name || beer?.breweryName || 'Birrificio'}
+                </p>
+              </Link>
             )}
-            {beer?.abv && (
-              <Badge variant="outline" className="text-xs bg-gradient-to-r from-orange-50 to-red-50 dark:from-orange-950 dark:to-red-950 border-orange-200 text-orange-800 dark:text-orange-200">
-                <Target className="h-3 w-3 mr-1" />
-                {beer.abv}% ABV
-              </Badge>
-            )}
+            <p className="text-xs text-gray-500 dark:text-gray-500 mt-1">
+              {beer?.style || 'N/D'} • {beer?.abv || '0'}% ABV
+            </p>
           </div>
-          
-          {/* Description */}
-          {beer?.description && (
-            <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
-              <p className="text-sm text-gray-600 dark:text-gray-400 line-clamp-3">
-                {beer.description}
-              </p>
-            </div>
-          )}
         </div>
+
+        {/* Description if available */}
+        {beer?.description && (
+          <div className="mt-4 pt-3 border-t border-gray-200/50 dark:border-gray-700/50">
+            <div className="bg-gray-50 dark:bg-gray-800/50 p-3 rounded-lg">
+              <p className="text-sm text-gray-700 dark:text-gray-300 italic leading-relaxed">{beer.description}</p>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Right side: Prices */}
       {prices && prices.length > 0 && (
-        <div className="flex-shrink-0 text-right space-y-2 min-w-[120px]">
-          <h5 className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-3">Prezzi</h5>
+        <div className="flex-shrink-0 min-w-[120px]">
           <div className="space-y-2">
             {prices.map((price: any, index: number) => (
-              <div key={index} className="bg-gray-50 dark:bg-gray-800 rounded-lg px-3 py-2 text-right">
-                <div className="text-xs text-gray-600 dark:text-gray-400 font-medium">
+              <div key={index} className="text-right">
+                <div className="text-xs text-gray-500 dark:text-gray-400">
                   {typeof price === 'object' ? (price as any).size : price}
-                  {typeof price === 'object' && (price as any).format && (
-                    <span className="ml-1">({(price as any).format})</span>
-                  )}
                 </div>
-                <div className="font-bold text-primary text-base mt-1">
-                  €{typeof price === 'object' ? (price as any).price : price}
+                <div className="font-semibold text-gray-900 dark:text-white">
+                  €{typeof price === 'object' ? parseFloat((price as any).price).toFixed(2) : parseFloat(price).toFixed(2)}
                 </div>
               </div>
             ))}
