@@ -514,8 +514,8 @@ export default function BreweryDetail() {
         )}
       </main>
 
-      {/* Admin Edit Dialog */}
-      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+      {/* Admin Edit Dialog - modal={false} allows Google Maps dropdown to receive clicks */}
+      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen} modal={false}>
         <DialogContent 
           className="max-w-2xl max-h-[90vh] overflow-y-auto"
           onPointerDownOutside={(e) => {
