@@ -1543,7 +1543,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return acc;
       }, {});
 
-      const updatedItem = await storage.updateTapItem(itemId, { prices: priceObject });
+      const updatedItem = await storage.updateTapListItem(itemId, { prices: priceObject });
       res.json(updatedItem);
     } catch (error) {
       console.error("Error updating tap item prices:", error);
