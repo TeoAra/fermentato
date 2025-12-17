@@ -300,3 +300,53 @@
   background: linear-gradient(180deg, #8B4513 0%, #D2691E 50%, #8B4513 100%);
   border-radius: 8px 8px 50% 50%;
 }
+
+/* Google Maps Autocomplete dropdown - ensure it appears above dialogs */
+.pac-container {
+  z-index: 10000 !important;
+  background-color: var(--background);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  box-shadow: var(--elevation-3);
+  font-family: inherit;
+}
+
+.pac-item {
+  padding: 8px 12px;
+  cursor: pointer;
+  border-top: 1px solid var(--border);
+}
+
+.pac-item:first-child {
+  border-top: none;
+}
+
+.pac-item:hover {
+  background-color: var(--muted);
+}
+
+.pac-item-query {
+  font-weight: 600;
+  color: var(--foreground);
+}
+
+.pac-matched {
+  font-weight: 700;
+}
+
+.dark .pac-container {
+  background-color: hsl(240, 10%, 8%);
+  border-color: hsl(240, 3.7%, 20%);
+}
+
+.dark .pac-item {
+  border-color: hsl(240, 3.7%, 20%);
+}
+
+.dark .pac-item:hover {
+  background-color: hsl(240, 3.7%, 15%);
+}
+
+.dark .pac-item-query {
+  color: hsl(0, 0%, 98%);
+}
