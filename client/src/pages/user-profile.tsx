@@ -38,6 +38,7 @@ import UserFavoritesSection from "@/components/UserFavoritesSection";
 import BeerTastingsEditor from "@/components/BeerTastingsEditorNew";
 import { PubAutocomplete } from "@/components/PubAutocomplete";
 import { StyleMultiSelect } from "@/components/StyleMultiSelect";
+import { RoleSwitcher } from "@/components/role-switcher";
 
 export default function UserProfile() {
   const { user, isAuthenticated, isLoading } = useAuth();
@@ -496,6 +497,16 @@ export default function UserProfile() {
               </CardHeader>
               {showAccountSettings && (
                 <CardContent className="space-y-4">
+                  {/* Role Switcher */}
+                  <div>
+                    <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 block">
+                      Ruolo Attivo
+                    </label>
+                    <RoleSwitcher />
+                  </div>
+
+                  <Separator />
+
                   <div>
                     <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
                       Nome

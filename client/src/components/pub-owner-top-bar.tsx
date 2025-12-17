@@ -13,10 +13,12 @@ import {
   Sparkles,
   Store,
   Home,
-  User
+  User,
+  RefreshCw
 } from "lucide-react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger, DropdownMenuLabel } from "@/components/ui/dropdown-menu";
+import { RoleSwitcher } from "@/components/role-switcher";
 
 type DashboardSection = 'overview' | 'taplist' | 'bottles' | 'menu' | 'analytics' | 'settings' | 'profile';
 
@@ -241,6 +243,14 @@ export function PubOwnerTopBar({
                     <p className="text-xs text-gray-500 dark:text-gray-400">
                       {(user as any)?.email}
                     </p>
+                  </div>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuLabel className="text-xs text-gray-500 dark:text-gray-400 flex items-center gap-2">
+                    <RefreshCw className="h-3 w-3" />
+                    Cambia Ruolo
+                  </DropdownMenuLabel>
+                  <div className="px-2 py-1">
+                    <RoleSwitcher compact />
                   </div>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem 
