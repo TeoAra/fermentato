@@ -17,7 +17,10 @@ import {
   Store,
   Sparkles,
   Target,
-  Factory
+  Factory,
+  Pencil,
+  Save,
+  X
 } from "lucide-react";
 import Footer from "@/components/footer";
 import { Card, CardContent } from "@/components/ui/card";
@@ -25,6 +28,10 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
@@ -103,11 +110,73 @@ export default function BeerDetail() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [showTastingForm, setShowTastingForm] = useState(false);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [editForm, setEditForm] = useState({
+    name: '',
+    style: '',
+    abv: '',
+    ibu: '',
+    description: '',
+    color: '',
+    logoUrl: '',
+    imageUrl: '',
+    bottleImageUrl: '',
+  });
+  
+  const isAdmin = user?.userType === 'admin';
   
   const { data: beer, isLoading: beerLoading } = useQuery<Beer>({
     queryKey: ["/api/beers", id],
     enabled: !!id,
   });
+  
+  const updateBeerMutation = useMutation({
+    mutationFn: async (updates: Record<string, any>) => {
+      return apiRequest(`/api/admin/beers/${id}`, { method: 'PATCH' }, updates);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/beers", id] });
+      setIsEditDialogOpen(false);
+      toast({ title: "Birra aggiornata con successo" });
+    },
+    onError: () => {
+      toast({ title: "Errore nell'aggiornamento", variant: "destructive" });
+    },
+  });
+  
+  const openEditDialog = () => {
+    if (beer) {
+      setEditForm({
+        name: beer.name || '',
+        style: beer.style || '',
+        abv: beer.abv || '',
+        ibu: beer.ibu?.toString() || '',
+        description: beer.description || '',
+        color: beer.color || '',
+        logoUrl: beer.logoUrl || '',
+        imageUrl: beer.imageUrl || '',
+        bottleImageUrl: beer.bottleImageUrl || '',
+      });
+      setIsEditDialogOpen(true);
+    }
+  };
+  
+  const handleSaveEdit = () => {
+    const updates: Record<string, any> = {
+      name: editForm.name,
+      style: editForm.style,
+      abv: editForm.abv,
+      description: editForm.description || null,
+      color: editForm.color || null,
+      logoUrl: editForm.logoUrl || null,
+      imageUrl: editForm.imageUrl || null,
+      bottleImageUrl: editForm.bottleImageUrl || null,
+    };
+    if (editForm.ibu) {
+      updates.ibu = parseInt(editForm.ibu);
+    }
+    updateBeerMutation.mutate(updates);
+  };
 
   const { data: availability, isLoading: availabilityLoading } = useQuery<BeerAvailability>({
     queryKey: ["/api/beers", id, "availability"],
@@ -303,6 +372,18 @@ export default function BeerDetail() {
                   
                   {/* Action buttons */}
                   <div className="flex items-center justify-center md:justify-end space-x-2 sm:space-x-3 w-full md:w-auto">
+                    {isAdmin && (
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        onClick={openEditDialog}
+                        className="backdrop-blur-md bg-amber-500/30 border-amber-300/50 text-white hover:bg-amber-500/50 hover:border-amber-300/70 transition-all duration-300 font-medium shadow-lg min-h-[44px] min-w-[44px]"
+                        data-testid="button-admin-edit-beer"
+                      >
+                        <Pencil className="h-4 w-4 sm:mr-2" />
+                        <span className="hidden sm:inline">Modifica</span>
+                      </Button>
+                    )}
                     <Button 
                       variant="outline" 
                       size="sm" 
@@ -533,6 +614,124 @@ export default function BeerDetail() {
           </CardContent>
         </Card>
       </main>
+
+      {/* Admin Edit Dialog */}
+      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Pencil className="h-5 w-5" />
+              Modifica Birra
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="edit-name">Nome</Label>
+                <Input
+                  id="edit-name"
+                  value={editForm.name}
+                  onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
+                  placeholder="Nome della birra"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="edit-style">Stile</Label>
+                <Input
+                  id="edit-style"
+                  value={editForm.style}
+                  onChange={(e) => setEditForm({ ...editForm, style: e.target.value })}
+                  placeholder="Es. IPA, Lager, Stout..."
+                />
+              </div>
+            </div>
+            <div className="grid grid-cols-3 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="edit-abv">ABV (%)</Label>
+                <Input
+                  id="edit-abv"
+                  value={editForm.abv}
+                  onChange={(e) => setEditForm({ ...editForm, abv: e.target.value })}
+                  placeholder="5.5"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="edit-ibu">IBU</Label>
+                <Input
+                  id="edit-ibu"
+                  type="number"
+                  value={editForm.ibu}
+                  onChange={(e) => setEditForm({ ...editForm, ibu: e.target.value })}
+                  placeholder="40"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="edit-color">Colore</Label>
+                <Input
+                  id="edit-color"
+                  value={editForm.color}
+                  onChange={(e) => setEditForm({ ...editForm, color: e.target.value })}
+                  placeholder="Ambrato, Scuro..."
+                />
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="edit-description">Descrizione</Label>
+              <Textarea
+                id="edit-description"
+                value={editForm.description}
+                onChange={(e) => setEditForm({ ...editForm, description: e.target.value })}
+                placeholder="Descrizione della birra..."
+                rows={4}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="edit-imageUrl">URL Immagine</Label>
+              <Input
+                id="edit-imageUrl"
+                value={editForm.imageUrl}
+                onChange={(e) => setEditForm({ ...editForm, imageUrl: e.target.value })}
+                placeholder="https://..."
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="edit-logoUrl">URL Logo</Label>
+              <Input
+                id="edit-logoUrl"
+                value={editForm.logoUrl}
+                onChange={(e) => setEditForm({ ...editForm, logoUrl: e.target.value })}
+                placeholder="https://..."
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="edit-bottleImageUrl">URL Immagine Bottiglia</Label>
+              <Input
+                id="edit-bottleImageUrl"
+                value={editForm.bottleImageUrl}
+                onChange={(e) => setEditForm({ ...editForm, bottleImageUrl: e.target.value })}
+                placeholder="https://..."
+              />
+            </div>
+            <div className="flex justify-end gap-3 pt-4">
+              <Button
+                variant="outline"
+                onClick={() => setIsEditDialogOpen(false)}
+              >
+                <X className="h-4 w-4 mr-2" />
+                Annulla
+              </Button>
+              <Button
+                onClick={handleSaveEdit}
+                disabled={updateBeerMutation.isPending}
+                className="bg-gradient-to-r from-amber-500 to-orange-600 text-white"
+              >
+                <Save className="h-4 w-4 mr-2" />
+                {updateBeerMutation.isPending ? 'Salvataggio...' : 'Salva'}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       <Footer />
     </div>
