@@ -626,7 +626,7 @@ export default function PubDetail() {
           <div className="lg:col-span-3">
             {/* Modern Tabs */}
             <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full mb-4 md:mb-8">
-                <TabsList className="grid w-full grid-cols-3 mb-3 md:mb-6 bg-white dark:bg-gray-900 rounded-lg sm:rounded-xl md:rounded-2xl p-0.5 sm:p-1 md:p-2 shadow-lg border border-gray-200 dark:border-gray-700 overflow-x-auto">
+                <TabsList className="grid w-full grid-cols-3 mb-3 md:mb-6 bg-white dark:bg-gray-900 rounded-lg sm:rounded-xl md:rounded-2xl p-0.5 sm:p-1 md:p-2 shadow-lg border border-gray-200 dark:border-gray-700">
                   <TabsTrigger 
                     value="taplist" 
                     data-testid="tab-taplist"

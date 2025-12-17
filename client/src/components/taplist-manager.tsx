@@ -408,21 +408,27 @@ export function TapListManager({ pubId, tapList }: TapListManagerProps) {
                     <div className="space-y-2">
                       {formData.prices.map((p, idx) => (
                         <div key={idx} className="flex items-center gap-2 p-2 border rounded-lg bg-gray-50 dark:bg-gray-800">
-                          <select
+                          <Input
+                            type="text"
+                            list="tap-size-options"
                             value={p.size}
                             onChange={(e) => {
                               const newPrices = [...formData.prices];
                               newPrices[idx] = { ...newPrices[idx], size: e.target.value };
                               setFormData({ ...formData, prices: newPrices });
                             }}
-                            className="flex-1 h-9 px-3 rounded-md border border-input bg-background text-sm"
-                          >
-                            <option value="20cl">20cl (Piccola)</option>
-                            <option value="30cl">30cl (Media)</option>
-                            <option value="40cl">40cl (Media)</option>
-                            <option value="50cl">50cl (Grande)</option>
-                            <option value="60cl">60cl (Maxi)</option>
-                          </select>
+                            className="flex-1 h-9"
+                            placeholder="20cl, 40cl, Pinta..."
+                          />
+                          <datalist id="tap-size-options">
+                            <option value="20cl" />
+                            <option value="30cl" />
+                            <option value="40cl" />
+                            <option value="50cl" />
+                            <option value="60cl" />
+                            <option value="Pinta" />
+                            <option value="Taster" />
+                          </datalist>
                           <div className="flex items-center gap-1">
                             <span className="text-sm text-gray-500">€</span>
                             <Input
