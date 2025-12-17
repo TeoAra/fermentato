@@ -8,13 +8,15 @@ interface AddressAutocompleteProps {
   onChange: (address: string, city?: string, region?: string, postalCode?: string) => void;
   placeholder?: string;
   className?: string;
+  searchType?: 'address' | 'cities' | 'regions';
 }
 
 export default function AddressAutocomplete({ 
   value, 
   onChange, 
   placeholder = "Inserisci l'indirizzo...",
-  className 
+  className,
+  searchType = 'address'
 }: AddressAutocompleteProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const autocompleteRef = useRef<google.maps.places.Autocomplete | null>(null);
@@ -37,9 +39,15 @@ export default function AddressAutocomplete({
 
         await loader.load();
 
-        // Configure autocomplete to prioritize Italian addresses
+        // Configure autocomplete types based on searchType
+        const typesMap = {
+          'address': ['address'],
+          'cities': ['(cities)'],
+          'regions': ['(regions)']
+        };
+        
         const autocomplete = new google.maps.places.Autocomplete(inputRef.current, {
-          types: ['address'],
+          types: typesMap[searchType],
           componentRestrictions: { country: 'IT' },
           fields: ['address_components', 'formatted_address', 'geometry']
         });

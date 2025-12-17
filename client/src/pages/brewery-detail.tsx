@@ -545,7 +545,8 @@ export default function BreweryDetail() {
                       region: region || editForm.region
                     });
                   }}
-                  placeholder="Cerca località..."
+                  placeholder="Cerca città..."
+                  searchType="cities"
                 />
               </div>
             </div>
