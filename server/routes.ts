@@ -2027,6 +2027,48 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Update beer (admin only)
+  app.patch("/api/admin/beers/:id", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const user = await storage.getUser(userId);
+      
+      if (user?.userType !== 'admin') {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+
+      const beerId = parseInt(req.params.id);
+      const updates = req.body;
+      
+      const updatedBeer = await storage.updateBeer(beerId, updates);
+      res.json(updatedBeer);
+    } catch (error) {
+      console.error("Error updating beer:", error);
+      res.status(500).json({ message: "Failed to update beer" });
+    }
+  });
+
+  // Update brewery (admin only)
+  app.patch("/api/admin/breweries/:id", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const user = await storage.getUser(userId);
+      
+      if (user?.userType !== 'admin') {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+
+      const breweryId = parseInt(req.params.id);
+      const updates = req.body;
+      
+      const updatedBrewery = await storage.updateBrewery(breweryId, updates);
+      res.json(updatedBrewery);
+    } catch (error) {
+      console.error("Error updating brewery:", error);
+      res.status(500).json({ message: "Failed to update brewery" });
+    }
+  });
+
   // Get all allergens
   app.get("/api/allergens", async (req, res) => {
     try {
