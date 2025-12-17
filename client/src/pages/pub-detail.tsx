@@ -182,8 +182,10 @@ export default function PubDetail() {
     enabled: !!id,
   });
 
-  // Check if the current user is the owner of this pub (after pub data is loaded)
+  // Check if the current user is the owner of this pub or an admin
   const isOwner = isAuthenticated && user && pub && (user as any).id === (pub as any).ownerId;
+  const isAdmin = isAuthenticated && user && ((user as any).active_role === 'admin' || (user as any).roles?.includes('admin'));
+  const canManage = isOwner || isAdmin;
 
   const { data: tapList, isLoading: tapLoading } = useQuery({
     queryKey: ["/api/pubs", id, "taplist"],
@@ -566,8 +568,8 @@ export default function PubDetail() {
                       <Share2 className="h-4 w-4 sm:mr-2" />
                       <span className="hidden sm:inline">Condividi</span>
                     </Button>
-                    {isOwner && (
-                      <Link href="/dashboard">
+                    {canManage && (
+                      <Link href={isAdmin && !isOwner ? `/admin/edit-pub/${id}` : "/dashboard"}>
                         <Button 
                           className="bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 shadow-lg min-h-[44px] min-w-[44px]"
                           data-testid="button-manage"

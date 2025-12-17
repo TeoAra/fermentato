@@ -80,9 +80,9 @@ function Router() {
           <Route path="/beer/:id" component={BeerDetail} />
           <Route path="/explore/pubs" component={ExplorePubs} />
           <Route path="/explore/breweries" component={ExploreBreweries} />
-          {/* Dashboard routes based on user type */}
+          {/* Dashboard routes based on user type or active role */}
           <Route path="/dashboard" component={
-            typedUser?.userType === 'pub_owner' ? SmartPubDashboard : 
+            (typedUser?.userType === 'pub_owner' || typedUser?.active_role === 'pub_owner') ? SmartPubDashboard : 
             UserProfile
           } />
           <Route path="/admin" component={AdminDashboardNew} />
