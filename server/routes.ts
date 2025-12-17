@@ -1794,6 +1794,44 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
 
 
+  // Get user's available roles
+  app.get("/api/auth/roles", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const rolesData = await storage.getUserRoles(userId);
+      res.json(rolesData);
+    } catch (error) {
+      console.error("Error fetching user roles:", error);
+      res.status(500).json({ message: "Failed to fetch user roles" });
+    }
+  });
+
+  // Switch user's active role
+  app.post("/api/auth/switch-role", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { role } = req.body;
+      
+      if (!role) {
+        return res.status(400).json({ message: "Role is required" });
+      }
+      
+      const validRoles = ["customer", "pub_owner", "admin"];
+      if (!validRoles.includes(role)) {
+        return res.status(400).json({ message: "Invalid role" });
+      }
+      
+      const updatedUser = await storage.switchUserRole(userId, role);
+      res.json(updatedUser);
+    } catch (error: any) {
+      console.error("Error switching user role:", error);
+      if (error.message === "User does not have permission for this role") {
+        return res.status(403).json({ message: error.message });
+      }
+      res.status(500).json({ message: "Failed to switch role" });
+    }
+  });
+
   // Update nickname (with 15-day limit)
   app.patch("/api/auth/user/nickname", isAuthenticated, async (req: any, res) => {
     try {
