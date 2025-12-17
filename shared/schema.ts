@@ -36,7 +36,9 @@ export const users = pgTable("users", {
   nickname: varchar("nickname").unique(),
   bio: text("bio"),
   favoriteStyles: varchar("favorite_styles").array(),
-  userType: varchar("user_type").notNull().default("customer"), // 'customer', 'pub_owner', or 'admin'
+  userType: varchar("user_type").notNull().default("customer"), // 'customer', 'pub_owner', or 'admin' - legacy field
+  roles: varchar("roles").array(), // Available roles for this user: ['customer'], ['customer', 'pub_owner'], or ['customer', 'pub_owner', 'admin']
+  activeRole: varchar("active_role"), // Currently active role for UI/navigation
   lastNicknameUpdate: timestamp("last_nickname_update").defaultNow(),
   emailLastUpdated: timestamp("email_last_updated"),
   passwordLastUpdated: timestamp("password_last_updated"),
