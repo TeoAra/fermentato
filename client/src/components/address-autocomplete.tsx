@@ -8,7 +8,7 @@ interface AddressAutocompleteProps {
   onChange: (address: string, city?: string, region?: string, postalCode?: string) => void;
   placeholder?: string;
   className?: string;
-  searchType?: 'address' | 'cities' | 'regions';
+  searchType?: 'address' | 'cities' | 'regions' | 'all';
 }
 
 export default function AddressAutocomplete({ 
@@ -39,18 +39,23 @@ export default function AddressAutocomplete({
 
         await loader.load();
 
-        // Configure autocomplete types based on searchType
-        const typesMap = {
-          'address': ['address'],
-          'cities': ['(cities)'],
-          'regions': ['(regions)']
+        // Configure autocomplete - 'all' type allows searching everything
+        const autocompleteOptions: google.maps.places.AutocompleteOptions = {
+          componentRestrictions: { country: 'IT' },
+          fields: ['address_components', 'formatted_address', 'geometry', 'name']
         };
         
-        const autocomplete = new google.maps.places.Autocomplete(inputRef.current, {
-          types: typesMap[searchType],
-          componentRestrictions: { country: 'IT' },
-          fields: ['address_components', 'formatted_address', 'geometry']
-        });
+        // Only add types restriction if not 'all'
+        if (searchType !== 'all') {
+          const typesMap: Record<string, string[]> = {
+            'address': ['address'],
+            'cities': ['(cities)'],
+            'regions': ['(regions)']
+          };
+          autocompleteOptions.types = typesMap[searchType];
+        }
+        
+        const autocomplete = new google.maps.places.Autocomplete(inputRef.current, autocompleteOptions);
 
         autocompleteRef.current = autocomplete;
 
