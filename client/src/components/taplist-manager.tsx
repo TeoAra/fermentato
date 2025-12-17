@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -19,8 +19,18 @@ import {
   Eye, 
   EyeOff,
   Search,
-  DollarSign
+  DollarSign,
+  Loader2
 } from "lucide-react";
+
+function useDebounce<T>(value: T, delay: number): T {
+  const [debouncedValue, setDebouncedValue] = useState<T>(value);
+  useEffect(() => {
+    const handler = setTimeout(() => setDebouncedValue(value), delay);
+    return () => clearTimeout(handler);
+  }, [value, delay]);
+  return debouncedValue;
+}
 
 interface PriceItem {
   size: string;
@@ -71,20 +81,24 @@ export function TapListManager({ pubId, tapList }: TapListManagerProps) {
 
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  
+  // Debounce search term for better performance
+  const debouncedSearchTerm = useDebounce(searchTerm, 300);
 
   // Search beers for adding to tap
-  const { data: searchResults } = useQuery({
-    queryKey: ["/api/search", searchTerm],
+  const { data: searchResults, isLoading: isSearching } = useQuery({
+    queryKey: ["/api/search", debouncedSearchTerm],
     queryFn: async () => {
-      if (searchTerm.length < 2) return null;
-      const response = await fetch(`/api/search?q=${encodeURIComponent(searchTerm)}`, {
+      if (debouncedSearchTerm.length < 2) return null;
+      const response = await fetch(`/api/search?q=${encodeURIComponent(debouncedSearchTerm)}`, {
         credentials: "include",
       });
       if (!response.ok) throw new Error('Search failed');
       const data = await response.json();
       return data;
     },
-    enabled: searchTerm.length >= 2,
+    enabled: debouncedSearchTerm.length >= 2,
+    staleTime: 1000 * 60 * 5, // Cache for 5 minutes
   });
 
   // Add tap item mutation
@@ -256,7 +270,11 @@ export function TapListManager({ pubId, tapList }: TapListManagerProps) {
                   <div className="space-y-3">
                     <Label className="text-sm font-medium">Seleziona Birra</Label>
                     <div className="relative">
-                      <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                      {isSearching ? (
+                        <Loader2 className="absolute left-3 top-3 h-4 w-4 text-gray-400 animate-spin" />
+                      ) : (
+                        <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                      )}
                       <Input
                         placeholder="Cerca per nome o birrificio..."
                         value={searchTerm}
