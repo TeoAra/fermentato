@@ -310,7 +310,7 @@ export function TapListManager({ pubId, tapList }: TapListManagerProps) {
                   <div className="p-4 bg-gray-50 rounded-lg border">
                     <div className="font-semibold text-gray-900">{editingItem.beer.name}</div>
                     <div className="text-sm text-gray-600 mt-1">
-                      {editingItem.beer.brewery.name} • {editingItem.beer.style} • {editingItem.beer.abv}% ABV
+                      {editingItem.beer.brewery?.name || 'Birrificio sconosciuto'} • {editingItem.beer.style} • {editingItem.beer.abv}% ABV
                     </div>
                   </div>
                 )}
@@ -470,7 +470,7 @@ export function TapListManager({ pubId, tapList }: TapListManagerProps) {
                       )}
                       <div className="flex-1">
                         <h3 className="font-semibold text-base text-gray-900">{item.beer.name}</h3>
-                        <p className="text-gray-600 text-sm">{item.beer.brewery.name}</p>
+                        <p className="text-gray-600 text-sm">{item.beer.brewery?.name || 'Birrificio sconosciuto'}</p>
                         <p className="text-xs text-gray-500">
                           {item.beer.style} • {item.beer.abv}% ABV
                         </p>
