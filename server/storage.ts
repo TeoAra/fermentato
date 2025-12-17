@@ -161,6 +161,8 @@ export interface IStorage {
   upsertUser(user: UpsertUser): Promise<User>;
   updateUser(id: string, updates: Partial<UpsertUser>): Promise<User>;
   updateUserType(userId: string, userType: string): Promise<User>;
+  getUserRoles(userId: string): Promise<{ roles: string[]; activeRole: string }>;
+  switchUserRole(userId: string, newRole: string): Promise<User>;
 
   // Pub operations
   getPubs(): Promise<Pub[]>;
@@ -284,6 +286,30 @@ export class DatabaseStorage implements IStorage {
     const [user] = await db
       .update(users)
       .set({ userType, updatedAt: new Date() })
+      .where(eq(users.id, userId))
+      .returning();
+    return user;
+  }
+
+  async getUserRoles(userId: string): Promise<{ roles: string[]; activeRole: string }> {
+    const user = await this.getUser(userId);
+    if (!user) {
+      throw new Error("User not found");
+    }
+    return {
+      roles: user.roles || ["customer"],
+      activeRole: user.activeRole || user.userType || "customer",
+    };
+  }
+
+  async switchUserRole(userId: string, newRole: string): Promise<User> {
+    const { roles } = await this.getUserRoles(userId);
+    if (!roles.includes(newRole)) {
+      throw new Error("User does not have permission for this role");
+    }
+    const [user] = await db
+      .update(users)
+      .set({ activeRole: newRole, userType: newRole, updatedAt: new Date() })
       .where(eq(users.id, userId))
       .returning();
     return user;
@@ -1614,6 +1640,20 @@ class StorageWrapper implements IStorage {
   async updateUserType(userId: string, userType: string): Promise<User> {
     return this.dbCall(
       () => this.databaseStorage.updateUserType(userId, userType),
+      async () => { throw new Error('Not implemented in memory storage'); }
+    );
+  }
+
+  async getUserRoles(userId: string): Promise<{ roles: string[]; activeRole: string }> {
+    return this.dbCall(
+      () => this.databaseStorage.getUserRoles(userId),
+      async () => { return { roles: ['customer'], activeRole: 'customer' }; }
+    );
+  }
+
+  async switchUserRole(userId: string, newRole: string): Promise<User> {
+    return this.dbCall(
+      () => this.databaseStorage.switchUserRole(userId, newRole),
       async () => { throw new Error('Not implemented in memory storage'); }
     );
   }
