@@ -63,7 +63,7 @@ export default function AddressAutocomplete({
         autocomplete.addListener('place_changed', () => {
           const place = autocomplete.getPlace();
           
-          if (!place.address_components) {
+          if (!place.address_components && !place.name) {
             return;
           }
 
@@ -72,22 +72,35 @@ export default function AddressAutocomplete({
           let postalCode = '';
           
           // Extract address components
-          place.address_components.forEach((component) => {
-            const types = component.types;
-            
-            if (types.includes('locality')) {
-              city = component.long_name;
-            } else if (types.includes('administrative_area_level_2') && !city) {
-              city = component.long_name;
-            } else if (types.includes('administrative_area_level_1')) {
-              region = component.long_name;
-            } else if (types.includes('postal_code')) {
-              postalCode = component.long_name;
-            }
-          });
+          if (place.address_components) {
+            place.address_components.forEach((component) => {
+              const types = component.types;
+              
+              if (types.includes('locality')) {
+                city = component.long_name;
+              } else if (types.includes('administrative_area_level_1')) {
+                region = component.long_name;
+              } else if (types.includes('postal_code')) {
+                postalCode = component.long_name;
+              }
+            });
+          }
 
-          const address = place.formatted_address || value;
-          onChange(address, city, region, postalCode);
+          // Use place name for establishments, or formatted address for addresses
+          // For 'all' type, prefer place name if available (for businesses/POIs)
+          const placeName = place.name || '';
+          const formattedAddress = place.formatted_address || value;
+          
+          // If it's a business/POI, use the name + city format
+          // Otherwise use the formatted address
+          let finalAddress = formattedAddress;
+          if (placeName && searchType === 'all' && city) {
+            finalAddress = `${placeName}, ${city}`;
+          } else if (placeName && searchType === 'all') {
+            finalAddress = placeName;
+          }
+          
+          onChange(finalAddress, city, region, postalCode);
         });
 
       } catch (err) {

@@ -555,7 +555,7 @@ export default function BreweryDetail() {
                   onChange={(address, city, region) => {
                     setEditForm({ 
                       ...editForm, 
-                      location: city || address,
+                      location: address,
                       region: region || editForm.region
                     });
                   }}
