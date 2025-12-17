@@ -25,7 +25,7 @@ export async function apiRequest(
   
   // Handle different body types
   let body: BodyInit | undefined;
-  let headers: HeadersInit = { ...options?.headers };
+  let headers: Record<string, string> = { ...(options?.headers as Record<string, string>) };
   
   if (jsonBody !== undefined) {
     // JSON body provided as separate parameter

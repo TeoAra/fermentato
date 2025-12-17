@@ -741,7 +741,7 @@ export class DatabaseStorage implements IStorage {
   async updatePubSize(id: number, updates: Partial<InsertPubSize>): Promise<PubSize> {
     const [size] = await db
       .update(pubSizes)
-      .set({ ...updates, updatedAt: new Date() })
+      .set(updates)
       .where(eq(pubSizes.id, id))
       .returning();
     return size;
@@ -951,32 +951,6 @@ export class DatabaseStorage implements IStorage {
     await db.delete(userBeerTastings).where(eq(userBeerTastings.id, id));
   }
 
-  // Search methods
-  async searchPubs(query: string): Promise<Pub[]> {
-    const allPubs = await this.getPubs();
-    return allPubs.filter(pub => 
-      pub.name.toLowerCase().includes(query.toLowerCase()) ||
-      pub.address?.toLowerCase().includes(query.toLowerCase()) ||
-      pub.city?.toLowerCase().includes(query.toLowerCase())
-    );
-  }
-
-  async searchBreweries(query: string): Promise<Brewery[]> {
-    const allBreweries = await this.getBreweries();
-    return allBreweries.filter(brewery => 
-      brewery.name.toLowerCase().includes(query.toLowerCase()) ||
-      brewery.location?.toLowerCase().includes(query.toLowerCase())
-    );
-  }
-
-  async searchBeers(query: string): Promise<Beer[]> {
-    const allBeers = await this.getBeers();
-    return allBeers.filter(beer => 
-      beer.name.toLowerCase().includes(query.toLowerCase()) ||
-      beer.style?.toLowerCase().includes(query.toLowerCase())
-    );
-  }
-
   // Additional admin and utility methods
   async getUserCount(): Promise<number> {
     const result = await db.select({ count: sql<number>`count(*)` }).from(users);
@@ -1012,15 +986,6 @@ export class DatabaseStorage implements IStorage {
 
   async getAllBeers(): Promise<Beer[]> {
     return await db.select().from(beers).orderBy(asc(beers.name));
-  }
-
-  async updateUserType(userId: string, userType: string): Promise<User> {
-    const [user] = await db
-      .update(users)
-      .set({ userType, updatedAt: new Date() })
-      .where(eq(users.id, userId))
-      .returning();
-    return user;
   }
 
   async deleteUser(id: string): Promise<void> {
@@ -1178,9 +1143,9 @@ class StorageWrapper implements IStorage {
 
     try {
       return await dbOperation();
-    } catch (error) {
+    } catch (error: any) {
       if (await this.isDBDisabled(error)) {
-        console.warn('Database disabled, switching to memory storage:', error.message);
+        console.warn('Database disabled, switching to memory storage:', error?.message || error);
         this.useMemoryFallback = true;
         return memoryOperation();
       }
@@ -1306,7 +1271,7 @@ class StorageWrapper implements IStorage {
   async getRandomBreweries(limit?: number): Promise<Brewery[]> {
     return this.dbCall(
       () => this.databaseStorage.getRandomBreweries(limit),
-      () => memoryStorageInstance.getRandomBreweries(limit)
+      () => memoryStorageInstance.getRandomBreweries()
     );
   }
 

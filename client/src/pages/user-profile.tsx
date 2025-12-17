@@ -85,7 +85,7 @@ export default function UserProfile() {
   }, [isAuthenticated, isLoading, toast]);
 
   // Data fetching
-  const { data: beerTastings = [] } = useQuery({
+  const { data: beerTastings = [] } = useQuery<any[]>({
     queryKey: ["/api/user/beer-tastings"],
     enabled: isAuthenticated,
   });
@@ -95,7 +95,7 @@ export default function UserProfile() {
     enabled: isAuthenticated,
   });
 
-  const { data: beerStyles = [] } = useQuery({
+  const { data: beerStyles = [] } = useQuery<any[]>({
     queryKey: ["/api/beers/styles"],
     enabled: isAuthenticated,
   });
@@ -126,7 +126,7 @@ export default function UserProfile() {
   // Mutations
   const updateProfileMutation = useMutation({
     mutationFn: async (profileData: any) => {
-      return apiRequest("/api/user/profile", "PATCH", profileData);
+      return apiRequest("/api/user/profile", { method: "PATCH" }, profileData);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
@@ -147,7 +147,7 @@ export default function UserProfile() {
 
   const nicknameUpdateMutation = useMutation({
     mutationFn: async (newNickname: string) => {
-      return apiRequest("/api/user/nickname", "PATCH", { nickname: newNickname });
+      return apiRequest("/api/user/nickname", { method: "PATCH" }, { nickname: newNickname });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
@@ -257,7 +257,7 @@ export default function UserProfile() {
                         const formData = new FormData();
                         formData.append('image', file);
                         
-                        const response = await apiRequest('/api/user/upload-profile-image', 'POST', formData);
+                        const response = await apiRequest('/api/user/upload-profile-image', { method: 'POST' }, formData);
                         
                         if (response.imageUrl) {
                           // Update user profile with new image
@@ -295,7 +295,7 @@ export default function UserProfile() {
                   </Badge>
                   <Badge variant="outline" className="text-xs">
                     <Calendar className="w-3 h-3 mr-1" />
-                    Iscritto il {new Date(typedUser.createdAt).toLocaleDateString('it-IT')}
+                    Iscritto il {typedUser.createdAt ? new Date(typedUser.createdAt).toLocaleDateString('it-IT') : 'N/A'}
                   </Badge>
                 </div>
 
@@ -603,7 +603,7 @@ export default function UserProfile() {
         </div>
 
         {/* User Favorites Section */}
-        <UserFavoritesSection enrichedFavorites={enrichedFavorites} />
+        <UserFavoritesSection favorites={enrichedFavorites} />
       </div>
     </div>
   );
