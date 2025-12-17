@@ -12,13 +12,20 @@ import {
   Award,
   Sparkles,
   Factory,
-  Target
+  Target,
+  Pencil,
+  Save,
+  X
 } from "lucide-react";
 import Footer from "@/components/footer";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
@@ -67,11 +74,65 @@ export default function BreweryDetail() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [showAllBeers, setShowAllBeers] = useState(false);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [editForm, setEditForm] = useState({
+    name: '',
+    location: '',
+    region: '',
+    description: '',
+    logoUrl: '',
+    coverImageUrl: '',
+    websiteUrl: '',
+  });
+  
+  const isAdmin = user?.userType === 'admin';
   
   const { data: brewery, isLoading: breweryLoading } = useQuery<Brewery>({
     queryKey: ["/api/breweries", id],
     enabled: !!id,
   });
+  
+  const updateBreweryMutation = useMutation({
+    mutationFn: async (updates: Record<string, any>) => {
+      return apiRequest(`/api/admin/breweries/${id}`, { method: 'PATCH' }, updates);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/breweries", id] });
+      setIsEditDialogOpen(false);
+      toast({ title: "Birrificio aggiornato con successo" });
+    },
+    onError: () => {
+      toast({ title: "Errore nell'aggiornamento", variant: "destructive" });
+    },
+  });
+  
+  const openEditDialog = () => {
+    if (brewery) {
+      setEditForm({
+        name: brewery.name || '',
+        location: brewery.location || '',
+        region: brewery.region || '',
+        description: brewery.description || '',
+        logoUrl: brewery.logoUrl || '',
+        coverImageUrl: brewery.coverImageUrl || '',
+        websiteUrl: brewery.websiteUrl || '',
+      });
+      setIsEditDialogOpen(true);
+    }
+  };
+  
+  const handleSaveEdit = () => {
+    const updates: Record<string, any> = {
+      name: editForm.name,
+      location: editForm.location,
+      region: editForm.region || null,
+      description: editForm.description || null,
+      logoUrl: editForm.logoUrl || null,
+      coverImageUrl: editForm.coverImageUrl || null,
+      websiteUrl: editForm.websiteUrl || null,
+    };
+    updateBreweryMutation.mutate(updates);
+  };
 
   const { data: beers = [], isLoading: beersLoading } = useQuery<Beer[]>({
     queryKey: ["/api/breweries", id, "beers"],
@@ -249,6 +310,18 @@ export default function BreweryDetail() {
                   
                   {/* Action buttons */}
                   <div className="flex items-center justify-center md:justify-end space-x-2 sm:space-x-3 w-full md:w-auto">
+                    {isAdmin && (
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        onClick={openEditDialog}
+                        className="backdrop-blur-md bg-amber-500/30 border-amber-300/50 text-white hover:bg-amber-500/50 hover:border-amber-300/70 transition-all duration-300 font-medium shadow-lg min-h-[44px] min-w-[44px]"
+                        data-testid="button-admin-edit-brewery"
+                      >
+                        <Pencil className="h-4 w-4 sm:mr-2" />
+                        <span className="hidden sm:inline">Modifica</span>
+                      </Button>
+                    )}
                     <Button 
                       variant="outline" 
                       size="sm" 
@@ -432,6 +505,103 @@ export default function BreweryDetail() {
           </div>
         )}
       </main>
+
+      {/* Admin Edit Dialog */}
+      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Pencil className="h-5 w-5" />
+              Modifica Birrificio
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="edit-name">Nome</Label>
+                <Input
+                  id="edit-name"
+                  value={editForm.name}
+                  onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
+                  placeholder="Nome del birrificio"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="edit-location">Località</Label>
+                <Input
+                  id="edit-location"
+                  value={editForm.location}
+                  onChange={(e) => setEditForm({ ...editForm, location: e.target.value })}
+                  placeholder="Es. Milano, Roma..."
+                />
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="edit-region">Regione</Label>
+              <Input
+                id="edit-region"
+                value={editForm.region}
+                onChange={(e) => setEditForm({ ...editForm, region: e.target.value })}
+                placeholder="Es. Lombardia, Lazio..."
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="edit-description">Descrizione</Label>
+              <Textarea
+                id="edit-description"
+                value={editForm.description}
+                onChange={(e) => setEditForm({ ...editForm, description: e.target.value })}
+                placeholder="Descrizione del birrificio..."
+                rows={4}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="edit-websiteUrl">Sito Web</Label>
+              <Input
+                id="edit-websiteUrl"
+                value={editForm.websiteUrl}
+                onChange={(e) => setEditForm({ ...editForm, websiteUrl: e.target.value })}
+                placeholder="https://..."
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="edit-logoUrl">URL Logo</Label>
+              <Input
+                id="edit-logoUrl"
+                value={editForm.logoUrl}
+                onChange={(e) => setEditForm({ ...editForm, logoUrl: e.target.value })}
+                placeholder="https://..."
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="edit-coverImageUrl">URL Immagine di Copertina</Label>
+              <Input
+                id="edit-coverImageUrl"
+                value={editForm.coverImageUrl}
+                onChange={(e) => setEditForm({ ...editForm, coverImageUrl: e.target.value })}
+                placeholder="https://..."
+              />
+            </div>
+            <div className="flex justify-end gap-3 pt-4">
+              <Button
+                variant="outline"
+                onClick={() => setIsEditDialogOpen(false)}
+              >
+                <X className="h-4 w-4 mr-2" />
+                Annulla
+              </Button>
+              <Button
+                onClick={handleSaveEdit}
+                disabled={updateBreweryMutation.isPending}
+                className="bg-gradient-to-r from-amber-500 to-orange-600 text-white"
+              >
+                <Save className="h-4 w-4 mr-2" />
+                {updateBreweryMutation.isPending ? 'Salvataggio...' : 'Salva'}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       <Footer />
     </div>
