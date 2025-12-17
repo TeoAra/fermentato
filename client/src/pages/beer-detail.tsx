@@ -37,6 +37,7 @@ import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import BeerTastingForm from "@/components/BeerTastingForm";
 import ImageWithFallback from "@/components/image-with-fallback";
+import { ImageUpload } from "@/components/image-upload";
 
 interface Beer {
   id: number;
@@ -425,13 +426,13 @@ export default function BeerDetail() {
             gradient="from-amber-500 to-orange-600"
           />
           <BeerStatsCard 
-            icon={Sparkles}
-            label="IBU"
-            value={beer?.ibu || 'N/D'}
+            icon={Droplets}
+            label="Colore"
+            value={beer?.color || 'N/D'}
             gradient="from-blue-500 to-indigo-600"
           />
           <BeerStatsCard 
-            icon={Droplets}
+            icon={Sparkles}
             label="Stile"
             value={beer?.style || 'N/D'}
             gradient="from-purple-500 to-pink-600"
@@ -685,31 +686,26 @@ export default function BeerDetail() {
                 rows={4}
               />
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="edit-imageUrl">URL Immagine</Label>
-              <Input
-                id="edit-imageUrl"
-                value={editForm.imageUrl}
-                onChange={(e) => setEditForm({ ...editForm, imageUrl: e.target.value })}
-                placeholder="https://..."
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <ImageUpload
+                label="Immagine Birra"
+                description="Immagine principale della birra"
+                currentImageUrl={editForm.imageUrl || undefined}
+                onImageChange={(url) => setEditForm({ ...editForm, imageUrl: url || '' })}
+                folder="beer-images"
+                aspectRatio="square"
+                maxSize={5}
+                recommendedDimensions="400x400px"
               />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="edit-logoUrl">URL Logo</Label>
-              <Input
-                id="edit-logoUrl"
-                value={editForm.logoUrl}
-                onChange={(e) => setEditForm({ ...editForm, logoUrl: e.target.value })}
-                placeholder="https://..."
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="edit-bottleImageUrl">URL Immagine Bottiglia</Label>
-              <Input
-                id="edit-bottleImageUrl"
-                value={editForm.bottleImageUrl}
-                onChange={(e) => setEditForm({ ...editForm, bottleImageUrl: e.target.value })}
-                placeholder="https://..."
+              <ImageUpload
+                label="Immagine Bottiglia"
+                description="Foto della bottiglia"
+                currentImageUrl={editForm.bottleImageUrl || undefined}
+                onImageChange={(url) => setEditForm({ ...editForm, bottleImageUrl: url || '' })}
+                folder="beer-bottles"
+                aspectRatio="portrait"
+                maxSize={5}
+                recommendedDimensions="300x450px"
               />
             </div>
             <div className="flex justify-end gap-3 pt-4">
