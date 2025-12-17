@@ -32,6 +32,7 @@ import { apiRequest } from "@/lib/queryClient";
 import { useState } from "react";
 import ImageWithFallback from "@/components/image-with-fallback";
 import { ImageUpload } from "@/components/image-upload";
+import AddressAutocomplete from "@/components/address-autocomplete";
 
 interface Brewery {
   id: number;
@@ -535,11 +536,16 @@ export default function BreweryDetail() {
               </div>
               <div className="space-y-2">
                 <Label htmlFor="edit-location">Località</Label>
-                <Input
-                  id="edit-location"
+                <AddressAutocomplete
                   value={editForm.location}
-                  onChange={(e) => setEditForm({ ...editForm, location: e.target.value })}
-                  placeholder="Es. Milano, Roma..."
+                  onChange={(address, city, region) => {
+                    setEditForm({ 
+                      ...editForm, 
+                      location: city || address,
+                      region: region || editForm.region
+                    });
+                  }}
+                  placeholder="Cerca località..."
                 />
               </div>
             </div>
