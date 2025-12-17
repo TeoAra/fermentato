@@ -23,35 +23,41 @@ export default function Header() {
     (user as any)?.userType === 'pub_owner' && 
     (location.startsWith("/smart-pub-dashboard") || location.startsWith("/dashboard"));
 
-  // Desktop navigation items with essential auth functionality restored
-  const navItems = [
+  // Desktop navigation items - filter based on authentication status
+  const allNavItems = [
     {
       icon: Home,
       label: "Home",
       href: "/",
-      isActive: location === "/"
+      isActive: location === "/",
+      requiresAuth: false
     },
     {
       icon: MapPin,
       label: "Attività",
       href: "/activity",
-      isActive: location.startsWith("/activity")
+      isActive: location.startsWith("/activity"),
+      requiresAuth: true
     },
     {
       icon: Bell,
       label: "Notifiche",
       href: "/notifications", 
       isActive: location.startsWith("/notifications"),
-      badge: isAuthenticated ? 3 : 0
+      badge: 3,
+      requiresAuth: true
     },
-    // Essential auth entry point - single conditional item for clean UI
     {
       icon: User,
       label: isAuthenticated ? "Dashboard" : "Accedi",
       href: isAuthenticated ? "/dashboard" : "/api/login",
-      isActive: isAuthenticated && location.startsWith("/dashboard")
+      isActive: isAuthenticated && location.startsWith("/dashboard"),
+      requiresAuth: false
     }
   ];
+
+  // Filter items: show all for authenticated users, only non-auth-required for guests
+  const navItems = allNavItems.filter(item => isAuthenticated || !item.requiresAuth);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();

@@ -39,33 +39,41 @@ export function BottomNavigation() {
   // On mobile, completely hide navigation for pub owners in dashboard
   // On desktop, we'll handle this more granularly per section
 
-  const navItems = [
+  // Navigation items - filter based on authentication status
+  const allNavItems = [
     {
       icon: Home,
       label: "Home",
       href: "/",
-      isActive: location === "/"
+      isActive: location === "/",
+      requiresAuth: false
     },
     {
       icon: MapPin,
       label: "Attività",
       href: "/activity",
-      isActive: location.startsWith("/activity")
+      isActive: location.startsWith("/activity"),
+      requiresAuth: true
     },
     {
       icon: Bell,
       label: "Notifiche",
       href: "/notifications", 
       isActive: location.startsWith("/notification"),
-      badge: isAuthenticated ? 3 : 0
+      badge: 3,
+      requiresAuth: true
     },
     {
       icon: User,
       label: isAuthenticated ? "Dashboard" : "Accedi",
       href: isAuthenticated ? "/dashboard" : "/api/login",
-      isActive: location.startsWith("/dashboard")
+      isActive: location.startsWith("/dashboard"),
+      requiresAuth: false
     }
   ];
+
+  // Filter items: show all for authenticated users, only non-auth-required for guests
+  const navItems = allNavItems.filter(item => isAuthenticated || !item.requiresAuth);
 
   return (
     <>
