@@ -265,84 +265,195 @@ export function TapListManager({ pubId, tapList }: TapListManagerProps) {
               </DialogHeader>
 
               <div className="space-y-6">
-                {/* Ricerca Birra */}
+                {/* Ricerca Birra o Birra Selezionata */}
                 {!editingItem && (
                   <div className="space-y-3">
                     <Label className="text-sm font-medium">Seleziona Birra</Label>
-                    <div className="relative">
-                      {isSearching ? (
-                        <Loader2 className="absolute left-3 top-3 h-4 w-4 text-gray-400 animate-spin" />
-                      ) : (
-                        <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-                      )}
-                      <Input
-                        placeholder="Cerca per nome o birrificio..."
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                        className="pl-10"
-                        data-testid="input-beer-search"
-                      />
-                    </div>
-                    {searchResults?.beers && searchResults.beers.length > 0 && (
-                      <div className="max-h-48 overflow-y-auto border rounded-lg bg-white">
-                        {searchResults.beers.map((beer: any) => (
-                          <div
-                            key={beer.id}
-                            className="p-3 hover:bg-gray-50 cursor-pointer border-b last:border-b-0 transition-colors"
-                            onClick={() => {
-                              setFormData({ ...formData, beerId: beer.id.toString() });
-                              setSearchTerm(`${beer.name} - ${beer.brewery?.name || 'Birrificio sconosciuto'}`);
-                            }}
-                          >
-                            <div className="font-medium text-gray-900">{beer.name}</div>
-                            <div className="text-sm text-gray-600">
-                              {beer.brewery?.name || 'Birrificio sconosciuto'} • {beer.style} • {beer.abv}% ABV
+                    
+                    {/* Mostra birra selezionata */}
+                    {formData.beerId && searchResults?.beers?.find((b: any) => b.id.toString() === formData.beerId) ? (
+                      <div className="p-4 bg-amber-50 border border-amber-200 rounded-lg">
+                        {(() => {
+                          const selectedBeer = searchResults.beers.find((b: any) => b.id.toString() === formData.beerId);
+                          return (
+                            <div className="flex items-center justify-between">
+                              <div>
+                                <div className="font-semibold text-gray-900">{selectedBeer?.name}</div>
+                                <div className="text-sm text-gray-600 mt-1">
+                                  {selectedBeer?.brewery?.name || 'Birrificio sconosciuto'} • {selectedBeer?.style} • {selectedBeer?.abv}% ABV
+                                </div>
+                              </div>
+                              <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                onClick={() => {
+                                  setFormData({ ...formData, beerId: '' });
+                                  setSearchTerm('');
+                                }}
+                              >
+                                Cambia
+                              </Button>
                             </div>
-                          </div>
-                        ))}
+                          );
+                        })()}
                       </div>
+                    ) : (
+                      <>
+                        <div className="relative">
+                          {isSearching ? (
+                            <Loader2 className="absolute left-3 top-3 h-4 w-4 text-gray-400 animate-spin" />
+                          ) : (
+                            <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                          )}
+                          <Input
+                            placeholder="Cerca per nome o birrificio..."
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                            className="pl-10"
+                            data-testid="input-beer-search"
+                          />
+                        </div>
+                        {searchResults?.beers && searchResults.beers.length > 0 && !formData.beerId && (
+                          <div className="max-h-48 overflow-y-auto border rounded-lg bg-white dark:bg-gray-900">
+                            {searchResults.beers.map((beer: any) => (
+                              <div
+                                key={beer.id}
+                                className="p-3 hover:bg-gray-50 dark:hover:bg-gray-800 cursor-pointer border-b last:border-b-0 transition-colors"
+                                onClick={() => {
+                                  setFormData({ ...formData, beerId: beer.id.toString() });
+                                }}
+                              >
+                                <div className="font-medium text-gray-900 dark:text-white">{beer.name}</div>
+                                <div className="text-sm text-gray-600 dark:text-gray-400">
+                                  {beer.brewery?.name || 'Birrificio sconosciuto'} • {beer.style} • {beer.abv}% ABV
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                        {debouncedSearchTerm.length >= 2 && searchResults?.beers?.length === 0 && !isSearching && (
+                          <div className="p-4 border border-dashed rounded-lg text-center text-gray-500">
+                            <p className="mb-2">Nessuna birra trovata per "{debouncedSearchTerm}"</p>
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="sm"
+                              onClick={() => {
+                                window.open('/admin/dashboard?tab=beers&action=create', '_blank');
+                              }}
+                            >
+                              <Plus className="w-4 h-4 mr-1" />
+                              Crea nuova birra
+                            </Button>
+                          </div>
+                        )}
+                      </>
                     )}
                   </div>
                 )}
 
                 {/* Birra Selezionata (per editing) */}
                 {editingItem && (
-                  <div className="p-4 bg-gray-50 rounded-lg border">
-                    <div className="font-semibold text-gray-900">{editingItem.beer.name}</div>
-                    <div className="text-sm text-gray-600 mt-1">
+                  <div className="p-4 bg-gray-50 dark:bg-gray-800 rounded-lg border">
+                    <div className="font-semibold text-gray-900 dark:text-white">{editingItem.beer.name}</div>
+                    <div className="text-sm text-gray-600 dark:text-gray-400 mt-1">
                       {editingItem.beer.brewery?.name || 'Birrificio sconosciuto'} • {editingItem.beer.style} • {editingItem.beer.abv}% ABV
                     </div>
                   </div>
                 )}
 
-                {/* Gestione Prezzi */}
+                {/* Gestione Prezzi Inline */}
                 <div className="space-y-3">
-                  <Label className="text-sm font-medium">Prezzi e Formati</Label>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    className="w-full justify-start"
-                    onClick={() => {
-                      setTempPrices(formData.prices.length > 0 ? formData.prices : [
-                        { size: '20cl', price: '4.50' },
-                        { size: '40cl', price: '7.50' }
-                      ]);
-                      setShowPriceManager(true);
-                    }}
-                    data-testid="button-manage-prices"
-                  >
-                    <DollarSign className="w-4 h-4 mr-2" />
-                    {formData.prices.length > 0 
-                      ? `${formData.prices.length} formato${formData.prices.length > 1 ? 'i' : ''} configurato${formData.prices.length > 1 ? 'i' : ''}`
-                      : 'Configura prezzi e formati'
-                    }
-                  </Button>
-                  {formData.prices.length > 0 && (
-                    <div className="flex flex-wrap gap-2 mt-2">
+                  <div className="flex items-center justify-between">
+                    <Label className="text-sm font-medium">Prezzi e Formati</Label>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        setFormData({
+                          ...formData,
+                          prices: [...formData.prices, { size: '30cl', price: '6.00' }]
+                        });
+                      }}
+                    >
+                      <Plus className="w-3 h-3 mr-1" />
+                      Aggiungi formato
+                    </Button>
+                  </div>
+                  
+                  {formData.prices.length === 0 ? (
+                    <div className="p-4 border border-dashed rounded-lg text-center text-gray-500">
+                      <p className="mb-2">Nessun prezzo configurato</p>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          setFormData({
+                            ...formData,
+                            prices: [
+                              { size: '20cl', price: '4.50' },
+                              { size: '40cl', price: '7.50' }
+                            ]
+                          });
+                        }}
+                      >
+                        <DollarSign className="w-3 h-3 mr-1" />
+                        Aggiungi prezzi predefiniti
+                      </Button>
+                    </div>
+                  ) : (
+                    <div className="space-y-2">
                       {formData.prices.map((p, idx) => (
-                        <Badge key={idx} variant="secondary" className="text-xs">
-                          {p.size}: €{p.price}
-                        </Badge>
+                        <div key={idx} className="flex items-center gap-2 p-2 border rounded-lg bg-gray-50 dark:bg-gray-800">
+                          <select
+                            value={p.size}
+                            onChange={(e) => {
+                              const newPrices = [...formData.prices];
+                              newPrices[idx] = { ...newPrices[idx], size: e.target.value };
+                              setFormData({ ...formData, prices: newPrices });
+                            }}
+                            className="flex-1 h-9 px-3 rounded-md border border-input bg-background text-sm"
+                          >
+                            <option value="20cl">20cl (Piccola)</option>
+                            <option value="30cl">30cl (Media)</option>
+                            <option value="40cl">40cl (Media)</option>
+                            <option value="50cl">50cl (Grande)</option>
+                            <option value="60cl">60cl (Maxi)</option>
+                          </select>
+                          <div className="flex items-center gap-1">
+                            <span className="text-sm text-gray-500">€</span>
+                            <Input
+                              type="number"
+                              step="0.10"
+                              min="0"
+                              value={p.price}
+                              onChange={(e) => {
+                                const newPrices = [...formData.prices];
+                                newPrices[idx] = { ...newPrices[idx], price: e.target.value };
+                                setFormData({ ...formData, prices: newPrices });
+                              }}
+                              className="w-20 h-9"
+                              placeholder="0.00"
+                            />
+                          </div>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => {
+                              setFormData({
+                                ...formData,
+                                prices: formData.prices.filter((_, i) => i !== idx)
+                              });
+                            }}
+                            className="text-red-500 hover:text-red-700"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        </div>
                       ))}
                     </div>
                   )}

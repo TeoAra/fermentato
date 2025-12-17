@@ -251,56 +251,104 @@ export function BottleListManager({ pubId, bottleList }: BottleListManagerProps)
               </DialogHeader>
 
               <div className="space-y-6">
-                {/* Ricerca Birra */}
+                {/* Ricerca Birra o Birra Selezionata */}
                 {!editingItem && (
                   <div className="space-y-3">
                     <Label className="text-sm font-medium">Seleziona Birra</Label>
-                    <div className="relative">
-                      {isSearching ? (
-                        <Loader2 className="absolute left-3 top-3 h-4 w-4 text-gray-400 animate-spin" />
-                      ) : (
-                        <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-                      )}
-                      <Input
-                        placeholder="Cerca per nome o birrificio..."
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                        className="pl-10"
-                      />
-                    </div>
-                    {searchResults?.beers && searchResults.beers.length > 0 && (
-                      <div className="max-h-48 overflow-y-auto border rounded-lg bg-white">
-                        {searchResults.beers.map((beer: any) => (
-                          <div
-                            key={beer?.id || Math.random()}
-                            className="p-3 hover:bg-gray-50 cursor-pointer border-b last:border-b-0 transition-colors"
-                            onClick={() => {
-                              setFormData({ ...formData, beerId: beer?.id?.toString() || "" });
-                              setSearchTerm(`${beer?.name || "Birra sconosciuta"} - ${beer?.brewery?.name || "Birrificio sconosciuto"}`);
-                            }}
-                          >
-                            <div className="font-medium text-gray-900">{beer?.name || "Birra sconosciuta"}</div>
-                            <div className="text-sm text-gray-600">
-                              {beer?.brewery?.name || "Birrificio sconosciuto"} • {beer?.style || "Stile sconosciuto"} • {beer?.abv || "0"}% ABV
+                    
+                    {/* Mostra birra selezionata */}
+                    {formData.beerId && searchResults?.beers?.find((b: any) => b?.id?.toString() === formData.beerId) ? (
+                      <div className="p-4 bg-amber-50 border border-amber-200 rounded-lg">
+                        {(() => {
+                          const selectedBeer = searchResults.beers.find((b: any) => b?.id?.toString() === formData.beerId);
+                          return (
+                            <div className="flex items-center justify-between">
+                              <div>
+                                <div className="font-semibold text-gray-900">{selectedBeer?.name}</div>
+                                <div className="text-sm text-gray-600 mt-1">
+                                  {selectedBeer?.brewery?.name || 'Birrificio sconosciuto'} • {selectedBeer?.style} • {selectedBeer?.abv}% ABV
+                                </div>
+                              </div>
+                              <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                onClick={() => {
+                                  setFormData({ ...formData, beerId: '' });
+                                  setSearchTerm('');
+                                }}
+                              >
+                                Cambia
+                              </Button>
                             </div>
-                          </div>
-                        ))}
+                          );
+                        })()}
                       </div>
+                    ) : (
+                      <>
+                        <div className="relative">
+                          {isSearching ? (
+                            <Loader2 className="absolute left-3 top-3 h-4 w-4 text-gray-400 animate-spin" />
+                          ) : (
+                            <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                          )}
+                          <Input
+                            placeholder="Cerca per nome o birrificio..."
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                            className="pl-10"
+                          />
+                        </div>
+                        {searchResults?.beers && searchResults.beers.length > 0 && !formData.beerId && (
+                          <div className="max-h-48 overflow-y-auto border rounded-lg bg-white dark:bg-gray-900">
+                            {searchResults.beers.map((beer: any) => (
+                              <div
+                                key={beer?.id || Math.random()}
+                                className="p-3 hover:bg-gray-50 dark:hover:bg-gray-800 cursor-pointer border-b last:border-b-0 transition-colors"
+                                onClick={() => {
+                                  setFormData({ ...formData, beerId: beer?.id?.toString() || "" });
+                                }}
+                              >
+                                <div className="font-medium text-gray-900 dark:text-white">{beer?.name || "Birra sconosciuta"}</div>
+                                <div className="text-sm text-gray-600 dark:text-gray-400">
+                                  {beer?.brewery?.name || "Birrificio sconosciuto"} • {beer?.style || "Stile sconosciuto"} • {beer?.abv || "0"}% ABV
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                        {debouncedSearchTerm.length >= 2 && searchResults?.beers?.length === 0 && !isSearching && (
+                          <div className="p-4 border border-dashed rounded-lg text-center text-gray-500">
+                            <p className="mb-2">Nessuna birra trovata per "{debouncedSearchTerm}"</p>
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="sm"
+                              onClick={() => {
+                                window.open('/admin/dashboard?tab=beers&action=create', '_blank');
+                              }}
+                            >
+                              <Plus className="w-4 h-4 mr-1" />
+                              Crea nuova birra
+                            </Button>
+                          </div>
+                        )}
+                      </>
                     )}
                   </div>
                 )}
 
                 {/* Birra Selezionata (per editing) */}
                 {editingItem && (
-                  <div className="p-4 bg-gray-50 rounded-lg border">
-                    <div className="font-semibold text-gray-900">{editingItem.beer?.name || "Birra sconosciuta"}</div>
-                    <div className="text-sm text-gray-600 mt-1">
+                  <div className="p-4 bg-gray-50 dark:bg-gray-800 rounded-lg border">
+                    <div className="font-semibold text-gray-900 dark:text-white">{editingItem.beer?.name || "Birra sconosciuta"}</div>
+                    <div className="text-sm text-gray-600 dark:text-gray-400 mt-1">
                       {editingItem.beer?.brewery?.name || "Birrificio sconosciuto"} • {editingItem.beer?.style || "Stile sconosciuto"} • {editingItem.beer?.abv || "0"}% ABV
                     </div>
                   </div>
                 )}
 
-                {/* Prezzo e Dettagli */}
+                {/* Prezzo e Formato Inline */}
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <Label className="text-sm font-medium">Prezzo (€) *</Label>
@@ -316,6 +364,30 @@ export function BottleListManager({ pubId, bottleList }: BottleListManagerProps)
                     />
                   </div>
                   <div>
+                    <Label className="text-sm font-medium">Formato *</Label>
+                    <Input
+                      type="text"
+                      placeholder="es. 33cl, 50cl, 75cl..."
+                      value={formData.size}
+                      onChange={(e) => setFormData({ ...formData, size: e.target.value })}
+                      data-testid="input-size"
+                      list="bottle-sizes"
+                    />
+                    <datalist id="bottle-sizes">
+                      <option value="25cl" />
+                      <option value="33cl" />
+                      <option value="35cl" />
+                      <option value="50cl" />
+                      <option value="66cl" />
+                      <option value="75cl" />
+                      <option value="1L" />
+                      <option value="1.5L" />
+                    </datalist>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
                     <Label className="text-sm font-medium">Quantità</Label>
                     <Input
                       type="number"
@@ -325,23 +397,6 @@ export function BottleListManager({ pubId, bottleList }: BottleListManagerProps)
                       onChange={(e) => setFormData({ ...formData, quantity: e.target.value })}
                       data-testid="input-quantity"
                     />
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <Label className="text-sm font-medium">Formato</Label>
-                    <select
-                      className="w-full p-2 border rounded-md focus:ring-2 focus:ring-primary focus:border-primary"
-                      value={formData.size}
-                      onChange={(e) => setFormData({ ...formData, size: e.target.value })}
-                      data-testid="select-size"
-                    >
-                      <option value="33cl">33cl</option>
-                      <option value="50cl">50cl</option>
-                      <option value="66cl">66cl</option>
-                      <option value="75cl">75cl</option>
-                    </select>
                   </div>
                   <div>
                     <Label className="text-sm font-medium">Annata</Label>
