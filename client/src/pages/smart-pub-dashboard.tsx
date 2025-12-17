@@ -68,7 +68,7 @@ import { BottleListManager } from "@/components/bottle-list-manager";
 import { PubOwnerTopBar } from "@/components/pub-owner-top-bar";
 import { ImageUpload } from "@/components/image-upload";
 
-type DashboardSection = 'overview' | 'taplist' | 'bottles' | 'menu' | 'hours' | 'analytics' | 'settings' | 'profile';
+type DashboardSection = 'overview' | 'taplist' | 'bottles' | 'menu' | 'analytics' | 'settings' | 'profile';
 
 interface SmartPubDashboardProps {
   adminPubId?: number;
@@ -328,7 +328,6 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
     { id: 'taplist', name: 'Taplist', icon: Beer, gradient: 'from-amber-500 to-orange-600' },
     { id: 'bottles', name: 'Cantina', icon: Wine, gradient: 'from-purple-500 to-violet-600' },
     { id: 'menu', name: 'Menu', icon: Utensils, gradient: 'from-green-500 to-emerald-600' },
-    { id: 'hours', name: 'Orari', icon: Clock, gradient: 'from-orange-500 to-red-600' },
     { id: 'analytics', name: 'Analytics', icon: BarChart3, gradient: 'from-indigo-500 to-blue-600' },
     { id: 'settings', name: 'Impostazioni', icon: Settings, gradient: 'from-gray-500 to-slate-600' },
     { id: 'profile', name: 'Profilo', icon: Users, gradient: 'from-rose-500 to-pink-600' },
@@ -1652,7 +1651,6 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
               {currentSection === 'taplist' && renderTaplist()}
               {currentSection === 'bottles' && renderBottles()}
               {currentSection === 'menu' && renderMenu()}
-              {currentSection === 'hours' && renderHours()}
               {currentSection === 'analytics' && renderAnalytics()}
               {currentSection === 'settings' && renderSettings()}
               {currentSection === 'profile' && renderProfile()}

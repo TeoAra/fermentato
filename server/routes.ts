@@ -512,15 +512,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Update pub (owner only)
+  // Update pub (owner or admin)
   app.patch("/api/pubs/:id", isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
       const pubId = parseInt(req.params.id);
       
-      // Check if user owns the pub
-      const existingPub = await storage.getPub(pubId);
-      if (!existingPub || existingPub.ownerId !== userId) {
+      // Check if user owns the pub or is admin
+      const canEdit = await isAdminOrPubOwner(userId, pubId);
+      if (!canEdit) {
         return res.status(403).json({ message: "Not authorized to update this pub" });
       }
 
@@ -543,15 +543,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Add beer to tap (pub owner only)
+  // Add beer to tap (pub owner or admin)
   app.post("/api/pubs/:id/taplist", isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
       const pubId = parseInt(req.params.id);
       
-      // Check if user owns the pub
-      const existingPub = await storage.getPub(pubId);
-      if (!existingPub || existingPub.ownerId !== userId) {
+      // Check if user owns the pub or is admin
+      const canEdit = await isAdminOrPubOwner(userId, pubId);
+      if (!canEdit) {
         return res.status(403).json({ message: "Not authorized to modify this pub's tap list" });
       }
 
@@ -1296,6 +1296,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   };
 
+  // Helper function to check if user is admin or pub owner
+  const isAdminOrPubOwner = async (userId: string, pubId: number): Promise<boolean> => {
+    try {
+      const user = await storage.getUser(userId);
+      if (!user) return false;
+      
+      // Check if user is admin
+      if (user.userType === 'admin' || user.active_role === 'admin' || (user.roles && user.roles.includes('admin'))) {
+        return true;
+      }
+      
+      // Check if user owns the pub
+      const pubs = await storage.getPubsByOwner(userId);
+      return pubs.some(pub => pub.id === pubId);
+    } catch (error) {
+      console.error("Error checking admin/owner status:", error);
+      return false;
+    }
+  };
+
   // Admin routes
   app.get('/api/admin/stats', isAuthenticated, isAdmin, async (req: any, res) => {
     try {
@@ -1492,16 +1512,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Flexible pricing system endpoints
+  // Flexible pricing system endpoints (owner or admin)
   app.post("/api/pubs/:id/taplist/:itemId/prices", isAuthenticated, async (req, res) => {
     try {
       const userId = (req.user as any)?.claims?.sub;
       if (!userId) return res.status(401).json({ message: "Unauthorized" });
 
       const pubId = parseInt(req.params.id);
-      const pubs = await storage.getPubsByOwner(userId);
-      const pub = pubs.length > 0 ? pubs[0] : null;
-      if (!pub || pub.id !== pubId) {
+      const canEdit = await isAdminOrPubOwner(userId, pubId);
+      if (!canEdit) {
         return res.status(403).json({ message: "Not authorized to manage this pub" });
       }
 
@@ -1522,26 +1541,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Beer replacement endpoints
+  // Beer replacement endpoints (owner or admin)
   app.patch("/api/pubs/:id/taplist/:itemId/replace", isAuthenticated, async (req, res) => {
     try {
       const userId = (req.user as any)?.claims?.sub;
       if (!userId) return res.status(401).json({ message: "Unauthorized" });
 
       const pubId = parseInt(req.params.id);
-      const pubs = await storage.getPubsByOwner(userId);
-      const pub = pubs.length > 0 ? pubs[0] : null;
-      if (!pub || pub.id !== pubId) {
+      const canEdit = await isAdminOrPubOwner(userId, pubId);
+      if (!canEdit) {
         return res.status(403).json({ message: "Not authorized to manage this pub" });
       }
 
       const itemId = parseInt(req.params.itemId);
       const { newBeerId } = req.body;
       
-      console.log('Replacing beer:', { itemId, newBeerId });
-      
       const updatedItem = await storage.updateTapListItem(itemId, { beerId: newBeerId });
-      console.log('Beer replacement result:', updatedItem);
       res.json(updatedItem);
     } catch (error) {
       console.error("Error replacing beer:", error);
@@ -1549,16 +1564,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Same for bottles
+  // Same for bottles (owner or admin)
   app.post("/api/pubs/:id/bottles/:itemId/prices", isAuthenticated, async (req, res) => {
     try {
       const userId = (req.user as any)?.claims?.sub;
       if (!userId) return res.status(401).json({ message: "Unauthorized" });
 
       const pubId = parseInt(req.params.id);
-      const pubs = await storage.getPubsByOwner(userId);
-      const pub = pubs.length > 0 ? pubs[0] : null;
-      if (!pub || pub.id !== pubId) {
+      const canEdit = await isAdminOrPubOwner(userId, pubId);
+      if (!canEdit) {
         return res.status(403).json({ message: "Not authorized to manage this pub" });
       }
 
@@ -1584,9 +1598,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!userId) return res.status(401).json({ message: "Unauthorized" });
 
       const pubId = parseInt(req.params.id);
-      const pubs = await storage.getPubsByOwner(userId);
-      const pub = pubs.length > 0 ? pubs[0] : null;
-      if (!pub || pub.id !== pubId) {
+      const canEdit = await isAdminOrPubOwner(userId, pubId);
+      if (!canEdit) {
         return res.status(403).json({ message: "Not authorized to manage this pub" });
       }
 
@@ -1601,16 +1614,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Menu categories CRUD endpoints
+  // Menu categories CRUD endpoints (owner or admin)
   app.post("/api/pubs/:id/menu/categories", isAuthenticated, async (req, res) => {
     try {
       const userId = (req.user as any)?.claims?.sub;
       if (!userId) return res.status(401).json({ message: "Unauthorized" });
 
       const pubId = parseInt(req.params.id);
-      const pubs = await storage.getPubsByOwner(userId);
-      const pub = pubs.length > 0 ? pubs[0] : null;
-      if (!pub || pub.id !== pubId) {
+      const canEdit = await isAdminOrPubOwner(userId, pubId);
+      if (!canEdit) {
         return res.status(403).json({ message: "Not authorized to manage this pub" });
       }
 
@@ -1628,16 +1640,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!userId) return res.status(401).json({ message: "Unauthorized" });
 
       const pubId = parseInt(req.params.id);
-      const pubs = await storage.getPubsByOwner(userId);
-      const pub = pubs.length > 0 ? pubs[0] : null;
-      if (!pub || pub.id !== pubId) {
+      const canEdit = await isAdminOrPubOwner(userId, pubId);
+      if (!canEdit) {
         return res.status(403).json({ message: "Not authorized to manage this pub" });
       }
 
       const categoryId = parseInt(req.params.categoryId);
-      console.log("UPDATE CATEGORY - Received req.body:", JSON.stringify(req.body, null, 2));
-      console.log("UPDATE CATEGORY - req.body keys:", Object.keys(req.body));
-      console.log("UPDATE CATEGORY - req.body values:", Object.values(req.body));
       const category = await storage.updateMenuCategory(categoryId, req.body);
       res.json(category);
     } catch (error) {
@@ -1652,9 +1660,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!userId) return res.status(401).json({ message: "Unauthorized" });
 
       const pubId = parseInt(req.params.id);
-      const pubs = await storage.getPubsByOwner(userId);
-      const pub = pubs.length > 0 ? pubs[0] : null;
-      if (!pub || pub.id !== pubId) {
+      const canEdit = await isAdminOrPubOwner(userId, pubId);
+      if (!canEdit) {
         return res.status(403).json({ message: "Not authorized to manage this pub" });
       }
 
@@ -1667,16 +1674,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Menu items CRUD endpoints
+  // Menu items CRUD endpoints (owner or admin)
   app.post("/api/pubs/:id/menu/categories/:categoryId/items", isAuthenticated, async (req, res) => {
     try {
       const userId = (req.user as any)?.claims?.sub;
       if (!userId) return res.status(401).json({ message: "Unauthorized" });
 
       const pubId = parseInt(req.params.id);
-      const pubs = await storage.getPubsByOwner(userId);
-      const pub = pubs.length > 0 ? pubs[0] : null;
-      if (!pub || pub.id !== pubId) {
+      const canEdit = await isAdminOrPubOwner(userId, pubId);
+      if (!canEdit) {
         return res.status(403).json({ message: "Not authorized to manage this pub" });
       }
 
@@ -1695,9 +1701,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!userId) return res.status(401).json({ message: "Unauthorized" });
 
       const pubId = parseInt(req.params.id);
-      const pubs = await storage.getPubsByOwner(userId);
-      const pub = pubs.length > 0 ? pubs[0] : null;
-      if (!pub || pub.id !== pubId) {
+      const canEdit = await isAdminOrPubOwner(userId, pubId);
+      if (!canEdit) {
         return res.status(403).json({ message: "Not authorized to manage this pub" });
       }
 
@@ -1716,9 +1721,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!userId) return res.status(401).json({ message: "Unauthorized" });
 
       const pubId = parseInt(req.params.id);
-      const pubs = await storage.getPubsByOwner(userId);
-      const pub = pubs.length > 0 ? pubs[0] : null;
-      if (!pub || pub.id !== pubId) {
+      const canEdit = await isAdminOrPubOwner(userId, pubId);
+      if (!canEdit) {
         return res.status(403).json({ message: "Not authorized to manage this pub" });
       }
 
