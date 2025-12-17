@@ -921,52 +921,50 @@ export default function SmartPubDashboard() {
             const isClosed = dayHours?.isClosed;
             
             return (
-              <div key={day.key} className="flex items-center justify-between p-4 border border-gray-200 dark:border-gray-700 rounded-xl bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
-                <div className="flex items-center space-x-4">
-                  <div className="w-20">
-                    <Label className="font-medium text-gray-900 dark:text-white">{day.label}</Label>
-                  </div>
-                  <div className="flex items-center space-x-3">
-                    <Input
-                      type="time"
-                      value={dayHours?.open || "12:00"}
-                      onChange={(e) => {
-                        const newHours = {
-                          ...settingsData.openingHours,
-                          [day.key]: {
-                            ...dayHours,
-                            open: e.target.value,
-                            isClosed: false,
-                          },
-                        };
-                        updateSettingsField('openingHours', newHours);
-                      }}
-                      disabled={isClosed}
-                      className="w-32"
-                      data-testid={`input-${day.key}-open`}
-                    />
-                    <span className="text-gray-500 dark:text-gray-400">-</span>
-                    <Input
-                      type="time"
-                      value={dayHours?.close || "23:00"}
-                      onChange={(e) => {
-                        const newHours = {
-                          ...settingsData.openingHours,
-                          [day.key]: {
-                            ...dayHours,
-                            close: e.target.value,
-                            isClosed: false,
-                          },
-                        };
-                        updateSettingsField('openingHours', newHours);
-                      }}
-                      disabled={isClosed}
-                      className="w-32"
-                      data-testid={`input-${day.key}-close`}
-                    />
-                  </div>
+              <div key={day.key} className="grid grid-cols-12 gap-2 items-center p-3 border border-gray-200 dark:border-gray-700 rounded-lg bg-gray-50 dark:bg-gray-800">
+                <div className="col-span-3 sm:col-span-2">
+                  <Label className="font-medium text-sm text-gray-900 dark:text-white">{day.label}</Label>
                 </div>
-                <div className="flex items-center space-x-2">
+                <div className="col-span-6 sm:col-span-7 flex items-center gap-1">
+                  <Input
+                    type="time"
+                    value={dayHours?.open || "12:00"}
+                    onChange={(e) => {
+                      const newHours = {
+                        ...settingsData.openingHours,
+                        [day.key]: {
+                          ...dayHours,
+                          open: e.target.value,
+                          isClosed: false,
+                        },
+                      };
+                      updateSettingsField('openingHours', newHours);
+                    }}
+                    disabled={isClosed}
+                    className="w-full min-w-0 text-sm px-2"
+                    data-testid={`input-${day.key}-open`}
+                  />
+                  <span className="text-gray-400 text-xs">-</span>
+                  <Input
+                    type="time"
+                    value={dayHours?.close || "23:00"}
+                    onChange={(e) => {
+                      const newHours = {
+                        ...settingsData.openingHours,
+                        [day.key]: {
+                          ...dayHours,
+                          close: e.target.value,
+                          isClosed: false,
+                        },
+                      };
+                      updateSettingsField('openingHours', newHours);
+                    }}
+                    disabled={isClosed}
+                    className="w-full min-w-0 text-sm px-2"
+                    data-testid={`input-${day.key}-close`}
+                  />
+                </div>
+                <div className="col-span-3 flex items-center justify-end gap-1">
                   <Switch
                     checked={isClosed || false}
                     onCheckedChange={(checked) => {
@@ -981,7 +979,7 @@ export default function SmartPubDashboard() {
                     }}
                     data-testid={`switch-${day.key}-closed`}
                   />
-                  <Label className="text-sm text-gray-600 dark:text-gray-400">Chiuso</Label>
+                  <Label className="text-xs text-gray-500 hidden sm:inline">Chiuso</Label>
                 </div>
               </div>
             );
@@ -1220,52 +1218,50 @@ export default function SmartPubDashboard() {
               const isClosed = dayHours?.isClosed;
               
               return (
-                <div key={day.key} className="flex items-center justify-between p-4 border border-gray-200 dark:border-gray-700 rounded-xl bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
-                  <div className="flex items-center space-x-4">
-                    <div className="w-20">
-                      <Label className="font-medium text-gray-900 dark:text-white">{day.label}</Label>
-                    </div>
-                    <div className="flex items-center space-x-3">
-                      <Input
-                        type="time"
-                        value={dayHours?.open || "12:00"}
-                        onChange={(e) => {
-                          const newHours = {
-                            ...settingsData.openingHours,
-                            [day.key]: {
-                              ...dayHours,
-                              open: e.target.value,
-                              isClosed: false,
-                            },
-                          };
-                          updateSettingsField('openingHours', newHours);
-                        }}
-                        disabled={isClosed}
-                        className="w-32"
-                        data-testid={`input-${day.key}-open`}
-                      />
-                      <span className="text-gray-500 dark:text-gray-400">-</span>
-                      <Input
-                        type="time"
-                        value={dayHours?.close || "23:00"}
-                        onChange={(e) => {
-                          const newHours = {
-                            ...settingsData.openingHours,
-                            [day.key]: {
-                              ...dayHours,
-                              close: e.target.value,
-                              isClosed: false,
-                            },
-                          };
-                          updateSettingsField('openingHours', newHours);
-                        }}
-                        disabled={isClosed}
-                        className="w-32"
-                        data-testid={`input-${day.key}-close`}
-                      />
-                    </div>
+                <div key={day.key} className="grid grid-cols-12 gap-2 items-center p-3 border border-gray-200 dark:border-gray-700 rounded-lg bg-gray-50 dark:bg-gray-800">
+                  <div className="col-span-3 sm:col-span-2">
+                    <Label className="font-medium text-sm text-gray-900 dark:text-white">{day.label}</Label>
                   </div>
-                  <div className="flex items-center space-x-2">
+                  <div className="col-span-6 sm:col-span-7 flex items-center gap-1">
+                    <Input
+                      type="time"
+                      value={dayHours?.open || "12:00"}
+                      onChange={(e) => {
+                        const newHours = {
+                          ...settingsData.openingHours,
+                          [day.key]: {
+                            ...dayHours,
+                            open: e.target.value,
+                            isClosed: false,
+                          },
+                        };
+                        updateSettingsField('openingHours', newHours);
+                      }}
+                      disabled={isClosed}
+                      className="w-full min-w-0 text-sm px-2"
+                      data-testid={`input-${day.key}-open`}
+                    />
+                    <span className="text-gray-400 text-xs">-</span>
+                    <Input
+                      type="time"
+                      value={dayHours?.close || "23:00"}
+                      onChange={(e) => {
+                        const newHours = {
+                          ...settingsData.openingHours,
+                          [day.key]: {
+                            ...dayHours,
+                            close: e.target.value,
+                            isClosed: false,
+                          },
+                        };
+                        updateSettingsField('openingHours', newHours);
+                      }}
+                      disabled={isClosed}
+                      className="w-full min-w-0 text-sm px-2"
+                      data-testid={`input-${day.key}-close`}
+                    />
+                  </div>
+                  <div className="col-span-3 flex items-center justify-end gap-1">
                     <Switch
                       checked={isClosed || false}
                       onCheckedChange={(checked) => {
@@ -1280,7 +1276,7 @@ export default function SmartPubDashboard() {
                       }}
                       data-testid={`switch-${day.key}-closed`}
                     />
-                    <Label className="text-sm text-gray-600 dark:text-gray-400">Chiuso</Label>
+                    <Label className="text-xs text-gray-500 hidden sm:inline">Chiuso</Label>
                   </div>
                 </div>
               );
