@@ -31,6 +31,7 @@ import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { useState } from "react";
 import ImageWithFallback from "@/components/image-with-fallback";
+import { ImageUpload } from "@/components/image-upload";
 
 interface Brewery {
   id: number;
@@ -355,25 +356,31 @@ export default function BreweryDetail() {
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Quick Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
           <BreweryStatsCard 
             icon={Beer}
             label="Birre"
             value={beers.length}
             gradient="from-amber-500 to-orange-600"
           />
-          <BreweryStatsCard 
-            icon={MapPin}
-            label="Località"
-            value={brewery?.location || 'N/D'}
-            gradient="from-blue-500 to-indigo-600"
-          />
-          <BreweryStatsCard 
-            icon={Factory}
-            label="Regione"
-            value={brewery?.region || 'N/D'}
-            gradient="from-green-500 to-emerald-600"
-          />
+          <a 
+            href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(brewery?.name + ' ' + brewery?.location)}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="block"
+          >
+            <div className="glass-card rounded-xl p-4 hover:scale-105 transition-all duration-300 group cursor-pointer">
+              <div className="flex items-center space-x-3">
+                <div className="p-3 rounded-lg bg-gradient-to-br from-blue-500 to-indigo-600 group-hover:scale-110 transition-transform duration-300">
+                  <MapPin className="h-5 w-5 text-white" />
+                </div>
+                <div>
+                  <p className="text-2xl font-bold text-gray-900 dark:text-white">{brewery?.location || 'N/D'}</p>
+                  <p className="text-sm text-gray-600 dark:text-gray-400 font-medium group-hover:text-blue-600 dark:group-hover:text-blue-400">Cerca su Maps</p>
+                </div>
+              </div>
+            </div>
+          </a>
         </div>
 
         {/* Description */}
@@ -537,15 +544,6 @@ export default function BreweryDetail() {
               </div>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="edit-region">Regione</Label>
-              <Input
-                id="edit-region"
-                value={editForm.region}
-                onChange={(e) => setEditForm({ ...editForm, region: e.target.value })}
-                placeholder="Es. Lombardia, Lazio..."
-              />
-            </div>
-            <div className="space-y-2">
               <Label htmlFor="edit-description">Descrizione</Label>
               <Textarea
                 id="edit-description"
@@ -555,31 +553,26 @@ export default function BreweryDetail() {
                 rows={4}
               />
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="edit-websiteUrl">Sito Web</Label>
-              <Input
-                id="edit-websiteUrl"
-                value={editForm.websiteUrl}
-                onChange={(e) => setEditForm({ ...editForm, websiteUrl: e.target.value })}
-                placeholder="https://..."
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <ImageUpload
+                label="Logo Birrificio"
+                description="Logo del birrificio"
+                currentImageUrl={editForm.logoUrl || undefined}
+                onImageChange={(url) => setEditForm({ ...editForm, logoUrl: url || '' })}
+                folder="brewery-logos"
+                aspectRatio="square"
+                maxSize={5}
+                recommendedDimensions="300x300px"
               />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="edit-logoUrl">URL Logo</Label>
-              <Input
-                id="edit-logoUrl"
-                value={editForm.logoUrl}
-                onChange={(e) => setEditForm({ ...editForm, logoUrl: e.target.value })}
-                placeholder="https://..."
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="edit-coverImageUrl">URL Immagine di Copertina</Label>
-              <Input
-                id="edit-coverImageUrl"
-                value={editForm.coverImageUrl}
-                onChange={(e) => setEditForm({ ...editForm, coverImageUrl: e.target.value })}
-                placeholder="https://..."
+              <ImageUpload
+                label="Immagine di Copertina"
+                description="Immagine principale del birrificio"
+                currentImageUrl={editForm.coverImageUrl || undefined}
+                onImageChange={(url) => setEditForm({ ...editForm, coverImageUrl: url || '' })}
+                folder="brewery-covers"
+                aspectRatio="landscape"
+                maxSize={5}
+                recommendedDimensions="1200x600px"
               />
             </div>
             <div className="flex justify-end gap-3 pt-4">
