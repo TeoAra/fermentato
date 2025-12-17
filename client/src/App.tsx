@@ -38,6 +38,7 @@ import AdminDashboardNew from "@/pages/admin-dashboard-new";
 import AdminAnalytics from "@/pages/admin-analytics";
 import AdminContent from "@/pages/admin-content";
 import AdminModeration from "@/pages/admin-moderation";
+import AdminEditPub from "@/pages/admin-edit-pub";
 import ExplorePubs from "@/pages/explore-pubs";
 import ExploreBreweries from "@/pages/explore-breweries";
 import DemoLoginPage from "@/pages/demo-login-page";
@@ -89,6 +90,7 @@ function Router() {
           <Route path="/admin/content" component={AdminContent} />
           <Route path="/admin/moderation" component={AdminModeration} />
           <Route path="/admin/users" component={AdminDashboard} />
+          <Route path="/admin/edit-pub/:id" component={AdminEditPub} />
           <Route path="/pub-registration" component={PubRegistration} />
           <Route path="/notifications" component={Notifications} />
           <Route path="/activity" component={Activity} />

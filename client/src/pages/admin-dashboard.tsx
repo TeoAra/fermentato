@@ -34,6 +34,8 @@ import {
 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { it } from "date-fns/locale";
+import { RoleSwitcher } from "@/components/role-switcher";
+import { Link } from "wouter";
 
 export default function AdminDashboard() {
   const { toast } = useToast();
@@ -165,15 +167,27 @@ export default function AdminDashboard() {
       <div className="bg-gradient-to-r from-red-600 to-orange-600 rounded-xl p-6 mb-8 text-white relative overflow-hidden">
         <div className="absolute inset-0 bg-black/20"></div>
         <div className="relative z-10">
-          <div className="flex items-center gap-4">
-            <div className="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center backdrop-blur-sm">
-              <Crown className="w-8 h-8" />
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <div className="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center backdrop-blur-sm">
+                <Crown className="w-8 h-8" />
+              </div>
+              <div>
+                <h1 className="text-3xl font-bold mb-2">Dashboard Amministrativa</h1>
+                <p className="text-white/90">
+                  Benvenuto {user?.firstName || "Amministratore"} - Controllo completo del sistema Fermenta.to
+                </p>
+              </div>
             </div>
-            <div>
-              <h1 className="text-3xl font-bold mb-2">Dashboard Amministrativa</h1>
-              <p className="text-white/90">
-                Benvenuto {user?.firstName || "Amministratore"} - Controllo completo del sistema Fermenta.to
-              </p>
+            <div className="flex items-center gap-3">
+              <div className="bg-white/20 backdrop-blur-sm rounded-lg p-2">
+                <RoleSwitcher />
+              </div>
+              <Link href="/">
+                <Button variant="outline" className="bg-white/20 border-white/30 text-white hover:bg-white/30">
+                  Torna alla Home
+                </Button>
+              </Link>
             </div>
           </div>
         </div>
@@ -513,6 +527,52 @@ export default function AdminDashboard() {
                           >
                             <Edit3 className="w-4 h-4" />
                           </Button>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            </TabsContent>
+
+            <TabsContent value="pubs" className="space-y-4">
+              <div className="flex justify-between items-center">
+                <h4 className="text-lg font-semibold">Gestione Pub</h4>
+                <Button size="sm">Nuovo Pub</Button>
+              </div>
+
+              <div className="grid gap-4">
+                {allPubs.slice(0, 10).map((pub: any) => (
+                  <Card key={pub.id}>
+                    <CardContent className="p-4">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-4">
+                          <div className="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center">
+                            <Store className="w-6 h-6 text-orange-600" />
+                          </div>
+                          <div className="flex-1">
+                            <h5 className="font-semibold">{pub.name}</h5>
+                            <p className="text-sm text-gray-600">
+                              {pub.address}, {pub.city}
+                            </p>
+                            <p className="text-xs text-gray-500 mt-1">
+                              Owner ID: {pub.ownerId || 'Non assegnato'}
+                            </p>
+                          </div>
+                        </div>
+                        <div className="flex gap-2">
+                          <Link href={`/pub/${pub.id}`}>
+                            <Button size="sm" variant="outline">
+                              <Eye className="w-4 h-4 mr-1" />
+                              Visualizza
+                            </Button>
+                          </Link>
+                          <Link href={`/admin/edit-pub/${pub.id}`}>
+                            <Button size="sm" variant="default">
+                              <Edit3 className="w-4 h-4 mr-1" />
+                              Modifica
+                            </Button>
+                          </Link>
                         </div>
                       </div>
                     </CardContent>

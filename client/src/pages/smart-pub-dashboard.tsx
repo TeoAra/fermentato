@@ -70,8 +70,13 @@ import { ImageUpload } from "@/components/image-upload";
 
 type DashboardSection = 'overview' | 'taplist' | 'bottles' | 'menu' | 'hours' | 'analytics' | 'settings' | 'profile';
 
-export default function SmartPubDashboard() {
+interface SmartPubDashboardProps {
+  adminPubId?: number;
+}
+
+export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps = {}) {
   const { user, isAuthenticated } = useAuth();
+  const isAdminMode = !!adminPubId;
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -111,13 +116,14 @@ export default function SmartPubDashboard() {
   const [settingsData, setSettingsData] = useState<any>({});
   const [settingsChanged, setSettingsChanged] = useState(false);
 
-  // Fetch pub data
+  // Fetch pub data - either from admin mode or owner mode
   const { data: userPubs, isLoading: pubsLoading } = useQuery({
-    queryKey: ["/api/my-pubs"],
-    enabled: isAuthenticated && (user as any)?.userType === 'pub_owner',
+    queryKey: isAdminMode ? ["/api/pubs", adminPubId] : ["/api/my-pubs"],
+    enabled: isAuthenticated && (isAdminMode || (user as any)?.userType === 'pub_owner'),
   });
 
-  const currentPub = Array.isArray(userPubs) ? userPubs[0] : null;
+  // In admin mode, userPubs is a single pub object; in owner mode it's an array
+  const currentPub = isAdminMode ? userPubs : (Array.isArray(userPubs) ? userPubs[0] : null);
 
   // Initialize settings data when currentPub changes
   useEffect(() => {
