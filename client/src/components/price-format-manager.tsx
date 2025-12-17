@@ -108,44 +108,36 @@ export function PriceFormatManager({
               <div className="flex-1 grid grid-cols-3 gap-2">
                 <div>
                   <Label className="text-xs">Misura</Label>
-                  <Select
+                  <Input
+                    type="text"
+                    placeholder={type === 'tap' ? '20cl, 40cl...' : '33cl, 75cl...'}
                     value={priceItem.size}
-                    onValueChange={(value) => updatePrice(index, 'size', value)}
-                  >
-                    <SelectTrigger className="h-8">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {(type === 'tap' ? TAP_SIZES : BOTTLE_SIZES).map((size) => (
-                        <SelectItem key={size.value} value={size.value}>
-                          {size.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                    onChange={(e) => updatePrice(index, 'size', e.target.value)}
+                    className="h-8"
+                    list={type === 'tap' ? 'tap-sizes' : 'bottle-sizes'}
+                  />
+                  <datalist id="tap-sizes">
+                    {TAP_SIZES.map(s => <option key={s.value} value={s.value} />)}
+                  </datalist>
+                  <datalist id="bottle-sizes">
+                    {BOTTLE_SIZES.map(s => <option key={s.value} value={s.value} />)}
+                  </datalist>
                 </div>
                 
                 {type === 'bottles' && (
                   <div>
                     <Label className="text-xs">Formato</Label>
-                    <Select
-                      value={priceItem.format || 'bottiglia'}
-                      onValueChange={(value) => updatePrice(index, 'format', value)}
-                    >
-                      <SelectTrigger className="h-8">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {BOTTLE_FORMATS.map((format) => (
-                          <SelectItem key={format.value} value={format.value}>
-                            <span className="flex items-center space-x-1">
-                              <span>{format.icon}</span>
-                              <span>{format.label}</span>
-                            </span>
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                    <Input
+                      type="text"
+                      placeholder="bottiglia, lattina..."
+                      value={priceItem.format || ''}
+                      onChange={(e) => updatePrice(index, 'format', e.target.value)}
+                      className="h-8"
+                      list="bottle-formats"
+                    />
+                    <datalist id="bottle-formats">
+                      {BOTTLE_FORMATS.map(f => <option key={f.value} value={f.value} />)}
+                    </datalist>
                   </div>
                 )}
 

@@ -443,12 +443,40 @@ export class DatabaseStorage implements IStorage {
     return await db.select().from(beers).where(eq(beers.breweryId, breweryId));
   }
 
-  async searchBeers(query: string): Promise<Beer[]> {
-    return await db
-      .select()
+  async searchBeers(query: string): Promise<any[]> {
+    const results = await db
+      .select({
+        id: beers.id,
+        name: beers.name,
+        style: beers.style,
+        abv: beers.abv,
+        ibu: beers.ibu,
+        description: beers.description,
+        imageUrl: beers.imageUrl,
+        breweryId: beers.breweryId,
+        breweryName: breweries.name,
+        breweryLogoUrl: breweries.logoUrl,
+      })
       .from(beers)
+      .leftJoin(breweries, eq(beers.breweryId, breweries.id))
       .where(ilike(beers.name, `%${query}%`))
       .orderBy(asc(beers.name));
+    
+    return results.map(row => ({
+      id: row.id,
+      name: row.name,
+      style: row.style,
+      abv: row.abv,
+      ibu: row.ibu,
+      description: row.description,
+      imageUrl: row.imageUrl,
+      breweryId: row.breweryId,
+      brewery: {
+        id: row.breweryId,
+        name: row.breweryName,
+        logoUrl: row.breweryLogoUrl
+      }
+    }));
   }
 
   // Tap list operations

@@ -569,7 +569,7 @@ export default function PubDetail() {
                       <span className="hidden sm:inline">Condividi</span>
                     </Button>
                     {canManage && (
-                      <Link href={isAdmin && !isOwner ? `/admin/edit-pub/${id}` : "/dashboard"}>
+                      <Link href={isAdmin ? `/admin/edit-pub/${id}` : "/dashboard"}>
                         <Button 
                           className="bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 shadow-lg min-h-[44px] min-w-[44px]"
                           data-testid="button-manage"
@@ -626,7 +626,7 @@ export default function PubDetail() {
           <div className="lg:col-span-3">
             {/* Modern Tabs */}
             <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full mb-4 md:mb-8">
-                <TabsList className="grid w-full grid-cols-3 mb-3 md:mb-6 bg-white dark:bg-gray-900 rounded-lg sm:rounded-xl md:rounded-2xl p-0.5 sm:p-1 md:p-2 shadow-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
+                <TabsList className="grid w-full grid-cols-3 mb-3 md:mb-6 bg-white dark:bg-gray-900 rounded-lg sm:rounded-xl md:rounded-2xl p-0.5 sm:p-1 md:p-2 shadow-lg border border-gray-200 dark:border-gray-700 overflow-x-auto">
                   <TabsTrigger 
                     value="taplist" 
                     data-testid="tab-taplist"

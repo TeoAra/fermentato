@@ -213,9 +213,9 @@ export default function UserProfile() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-amber-50 to-orange-100 dark:from-gray-900 dark:to-gray-800 flex items-center justify-center">
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-950 flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-amber-600 mx-auto"></div>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-emerald-600 mx-auto"></div>
           <p className="mt-4 text-gray-600 dark:text-gray-300">Caricamento profilo...</p>
         </div>
       </div>
@@ -227,8 +227,8 @@ export default function UserProfile() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-amber-50 to-orange-100 dark:from-gray-900 dark:to-gray-800">
-      <div className="container mx-auto px-4 py-8">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-950">
+      <div className="container mx-auto px-4 py-8 pt-4 lg:pt-8">
         {/* Header with Avatar and Basic Info */}
         <Card className="mb-6">
           <CardContent className="pt-6">
