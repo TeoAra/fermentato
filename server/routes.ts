@@ -587,15 +587,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Remove beer from tap (pub owner only) - REMOVED DUPLICATE ROUTE
   // This functionality is handled by DELETE /api/pubs/:pubId/taplist/:id
 
-  // Add beer to bottle list (pub owner only)
+  // Add beer to bottle list (pub owner or admin)
   app.post("/api/pubs/:pubId/bottles", isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
       const pubId = parseInt(req.params.pubId);
       
-      // Check if user owns the pub
+      // Check if user is admin or owns the pub
+      const user = await storage.getUser(userId);
       const existingPub = await storage.getPub(pubId);
-      if (!existingPub || existingPub.ownerId !== userId) {
+      const isAdmin = user && (user.userType === 'admin' || user.activeRole === 'admin');
+      if (!existingPub || (!isAdmin && existingPub.ownerId !== userId)) {
         return res.status(403).json({ message: "Not authorized to modify this pub's bottle list" });
       }
 
@@ -626,15 +628,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Remove beer from bottle list (only pub owner) - REMOVED DUPLICATE ROUTE
   // This functionality is handled by DELETE /api/pubs/:pubId/bottles/:id
 
-  // Update bottle list item (pub owner only)
-  app.patch('/api/pubs/:pubId/bottles/:id', isAuthenticated, async (req, res) => {
+  // Update bottle list item (pub owner or admin)
+  app.patch('/api/pubs/:pubId/bottles/:id', isAuthenticated, async (req: any, res) => {
     try {
       const { pubId, id } = req.params;
-      const userId = req.user.claims.sub;
+      const userId = req.user?.claims?.sub;
       
-      // Check if user owns the pub
+      // Check if user is admin or owns the pub
+      const user = await storage.getUser(userId);
       const existingPub = await storage.getPub(parseInt(pubId));
-      if (!existingPub || existingPub.ownerId !== userId) {
+      const isAdmin = user && (user.userType === 'admin' || user.activeRole === 'admin');
+      if (!existingPub || (!isAdmin && existingPub.ownerId !== userId)) {
         return res.status(403).json({ message: "Not authorized to modify this pub's bottle list" });
       }
       
@@ -775,15 +779,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Create menu item (only pub owner) - Updated to match frontend expectations and add pub ownership validation
+  // Create menu item (pub owner or admin) - Updated to match frontend expectations and add pub ownership validation
   app.post("/api/pubs/:id/menu-items", isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
       const pubId = parseInt(req.params.id);
       
-      // Check if user owns the pub
+      // Check if user is admin or owns the pub
+      const user = await storage.getUser(userId);
       const existingPub = await storage.getPub(pubId);
-      if (!existingPub || existingPub.ownerId !== userId) {
+      const isAdmin = user && (user.userType === 'admin' || user.activeRole === 'admin');
+      if (!existingPub || (!isAdmin && existingPub.ownerId !== userId)) {
         return res.status(403).json({ message: "Not authorized to modify this pub's menu" });
       }
 
@@ -821,16 +827,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Update menu item (only pub owner)
+  // Update menu item (pub owner or admin)
   app.patch("/api/pubs/:pubId/menu-items/:id", isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
       const pubId = parseInt(req.params.pubId);
       const itemId = parseInt(req.params.id);
       
-      // Check if user owns the pub
+      // Check if user is admin or owns the pub
+      const user = await storage.getUser(userId);
       const existingPub = await storage.getPub(pubId);
-      if (!existingPub || existingPub.ownerId !== userId) {
+      const isAdmin = user && (user.userType === 'admin' || user.activeRole === 'admin');
+      if (!existingPub || (!isAdmin && existingPub.ownerId !== userId)) {
         return res.status(403).json({ message: "Not authorized to modify this pub's menu" });
       }
 
@@ -866,9 +874,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const pubId = parseInt(req.params.pubId);
       const itemId = parseInt(req.params.id);
       
-      // Check if user owns the pub
+      // Check if user is admin or owns the pub
+      const user = await storage.getUser(userId);
       const existingPub = await storage.getPub(pubId);
-      if (!existingPub || existingPub.ownerId !== userId) {
+      const isAdmin = user && (user.userType === 'admin' || user.activeRole === 'admin');
+      if (!existingPub || (!isAdmin && existingPub.ownerId !== userId)) {
         return res.status(403).json({ message: "Not authorized to modify this pub's menu" });
       }
 
