@@ -7,7 +7,7 @@ import { nanoid } from "nanoid";
 import type { Express, RequestHandler } from "express";
 import connectPg from "connect-pg-simple";
 import { db } from "./db";
-import { users, oauthAccounts } from "@shared/schema";
+import { users, oauthAccounts, publicanRequests } from "@shared/schema";
 import { eq, and } from "drizzle-orm";
 import type { User } from "@shared/schema";
 
@@ -190,7 +190,10 @@ export async function setupAuth(app: Express) {
   // Register with email/password
   app.post('/api/auth/register', async (req, res) => {
     try {
-      const { email, password, firstName, lastName } = req.body;
+      const { 
+        email, password, firstName, lastName,
+        isPublican, pubName, pubAddress, pubCity, pubRegion, vatNumber, phone, description
+      } = req.body;
       
       if (!email || !password) {
         return res.status(400).json({ message: 'Email e password sono obbligatori' });
@@ -198,6 +201,21 @@ export async function setupAuth(app: Express) {
       
       if (password.length < 8) {
         return res.status(400).json({ message: 'La password deve essere di almeno 8 caratteri' });
+      }
+      
+      // Validate publican fields if registering as publican
+      if (isPublican) {
+        const trimmedPubName = typeof pubName === 'string' ? pubName.trim() : '';
+        const trimmedPubAddress = typeof pubAddress === 'string' ? pubAddress.trim() : '';
+        const trimmedPubCity = typeof pubCity === 'string' ? pubCity.trim() : '';
+        
+        if (!trimmedPubName || !trimmedPubAddress || !trimmedPubCity) {
+          return res.status(400).json({ message: 'Nome locale, indirizzo e città sono obbligatori per i gestori' });
+        }
+        
+        if (trimmedPubName.length > 100 || trimmedPubAddress.length > 200 || trimmedPubCity.length > 100) {
+          return res.status(400).json({ message: 'Dati del locale troppo lunghi' });
+        }
       }
       
       const normalizedEmail = email.toLowerCase().trim();
@@ -208,13 +226,13 @@ export async function setupAuth(app: Express) {
         return res.status(400).json({ message: 'Email già registrata' });
       }
       
-      const hashedPassword = await hashPassword(password);
+      const hashedPwd = await hashPassword(password);
       const userId = nanoid();
       
       const [newUser] = await db.insert(users).values({
         id: userId,
         email: normalizedEmail,
-        hashedPassword,
+        hashedPassword: hashedPwd,
         firstName: firstName || null,
         lastName: lastName || null,
         userType: 'customer',
@@ -222,6 +240,32 @@ export async function setupAuth(app: Express) {
         activeRole: 'customer',
         isEmailVerified: false,
       }).returning();
+      
+      // If registering as publican, create a pending request
+      if (isPublican) {
+        const trimmedPubName = typeof pubName === 'string' ? pubName.trim() : '';
+        const trimmedPubAddress = typeof pubAddress === 'string' ? pubAddress.trim() : '';
+        const trimmedPubCity = typeof pubCity === 'string' ? pubCity.trim() : '';
+        const trimmedPubRegion = typeof pubRegion === 'string' ? pubRegion.trim() : null;
+        const trimmedVatNumber = typeof vatNumber === 'string' ? vatNumber.trim() : null;
+        const trimmedPhone = typeof phone === 'string' ? phone.trim() : null;
+        const trimmedDescription = typeof description === 'string' ? description.trim() : null;
+        
+        await db.insert(publicanRequests).values({
+          userId: userId,
+          pubName: trimmedPubName,
+          pubAddress: trimmedPubAddress,
+          pubCity: trimmedPubCity,
+          pubRegion: trimmedPubRegion || null,
+          vatNumber: trimmedVatNumber || null,
+          phone: trimmedPhone || null,
+          email: normalizedEmail,
+          description: trimmedDescription || null,
+          status: 'pending',
+        });
+        
+        console.log(`New publican request created for user ${userId} - Pub: ${trimmedPubName}`);
+      }
       
       // Auto-login after registration
       req.login(newUser, (err) => {
@@ -231,7 +275,11 @@ export async function setupAuth(app: Express) {
         }
         
         const { hashedPassword: _, ...userWithoutPassword } = newUser;
-        res.json({ user: userWithoutPassword, message: 'Registrazione completata' });
+        res.json({ 
+          user: userWithoutPassword, 
+          message: isPublican ? 'Richiesta publican inviata' : 'Registrazione completata',
+          publicanRequest: isPublican ? true : false
+        });
       });
     } catch (error) {
       console.error('Registration error:', error);

@@ -7,13 +7,14 @@ import { z } from "zod";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription } from "@/components/ui/form";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Switch } from "@/components/ui/switch";
+import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { queryClient, apiRequest } from "@/lib/queryClient";
-import { Beer, Eye, EyeOff, Mail, Lock, User, Store } from "lucide-react";
+import { Beer, Eye, EyeOff, Mail, Lock, User, Store, MapPin, Phone, Building2 } from "lucide-react";
 import { SiGoogle } from "react-icons/si";
-import { Link } from "wouter";
 
 const loginSchema = z.object({
   email: z.string().email("Email non valida"),
@@ -26,9 +27,41 @@ const registerSchema = z.object({
   confirmPassword: z.string(),
   firstName: z.string().optional(),
   lastName: z.string().optional(),
+  isPublican: z.boolean().default(false),
+  pubName: z.string().optional(),
+  pubAddress: z.string().optional(),
+  pubCity: z.string().optional(),
+  pubRegion: z.string().optional(),
+  vatNumber: z.string().optional(),
+  phone: z.string().optional(),
+  description: z.string().optional(),
 }).refine((data) => data.password === data.confirmPassword, {
   message: "Le password non corrispondono",
   path: ["confirmPassword"],
+}).refine((data) => {
+  if (data.isPublican) {
+    return data.pubName && data.pubName.length > 0;
+  }
+  return true;
+}, {
+  message: "Nome del locale richiesto",
+  path: ["pubName"],
+}).refine((data) => {
+  if (data.isPublican) {
+    return data.pubAddress && data.pubAddress.length > 0;
+  }
+  return true;
+}, {
+  message: "Indirizzo richiesto",
+  path: ["pubAddress"],
+}).refine((data) => {
+  if (data.isPublican) {
+    return data.pubCity && data.pubCity.length > 0;
+  }
+  return true;
+}, {
+  message: "Città richiesta",
+  path: ["pubCity"],
 });
 
 type LoginForm = z.infer<typeof loginSchema>;
@@ -47,8 +80,24 @@ export default function AuthPage() {
 
   const registerForm = useForm<RegisterForm>({
     resolver: zodResolver(registerSchema),
-    defaultValues: { email: "", password: "", confirmPassword: "", firstName: "", lastName: "" },
+    defaultValues: { 
+      email: "", 
+      password: "", 
+      confirmPassword: "", 
+      firstName: "", 
+      lastName: "",
+      isPublican: false,
+      pubName: "",
+      pubAddress: "",
+      pubCity: "",
+      pubRegion: "",
+      vatNumber: "",
+      phone: "",
+      description: "",
+    },
   });
+
+  const isPublican = registerForm.watch("isPublican");
 
   const loginMutation = useMutation({
     mutationFn: async (data: LoginForm) => {
@@ -73,9 +122,16 @@ export default function AuthPage() {
       const { confirmPassword, ...registerData } = data;
       return await apiRequest("/api/auth/register", { method: "POST" }, registerData);
     },
-    onSuccess: () => {
+    onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
-      toast({ title: "Registrazione completata!", description: "Benvenuto su Fermenta.to" });
+      if (variables.isPublican) {
+        toast({ 
+          title: "Richiesta inviata!", 
+          description: "La tua richiesta di registrazione come publican è stata inviata. Riceverai una notifica quando sarà approvata." 
+        });
+      } else {
+        toast({ title: "Registrazione completata!", description: "Benvenuto su Fermenta.to" });
+      }
       setLocation("/");
     },
     onError: (error: any) => {
@@ -324,13 +380,203 @@ export default function AuthPage() {
                     )}
                   />
 
+                  {/* Publican Toggle */}
+                  <div className="p-4 bg-amber-50 dark:bg-amber-900/20 rounded-lg border border-amber-200 dark:border-amber-800">
+                    <FormField
+                      control={registerForm.control}
+                      name="isPublican"
+                      render={({ field }) => (
+                        <FormItem className="flex flex-row items-center justify-between">
+                          <div className="flex items-center gap-3">
+                            <div className="p-2 bg-amber-100 dark:bg-amber-800/30 rounded-full">
+                              <Store className="w-5 h-5 text-amber-600" />
+                            </div>
+                            <div>
+                              <FormLabel className="font-medium text-amber-900 dark:text-amber-100">
+                                Sono un gestore di pub
+                              </FormLabel>
+                              <FormDescription className="text-xs text-amber-700 dark:text-amber-300">
+                                Registra il tuo locale su Fermenta.to
+                              </FormDescription>
+                            </div>
+                          </div>
+                          <FormControl>
+                            <Switch
+                              checked={field.value}
+                              onCheckedChange={field.onChange}
+                              data-testid="switch-is-publican"
+                            />
+                          </FormControl>
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+
+                  {/* Pub Details - shown when isPublican is true */}
+                  {isPublican && (
+                    <div className="space-y-4 p-4 bg-gray-50 dark:bg-gray-800/50 rounded-lg border border-gray-200 dark:border-gray-700">
+                      <h3 className="font-medium text-gray-900 dark:text-gray-100 flex items-center gap-2">
+                        <Building2 className="w-4 h-4" />
+                        Dati del Locale
+                      </h3>
+                      
+                      <FormField
+                        control={registerForm.control}
+                        name="pubName"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Nome del Locale *</FormLabel>
+                            <FormControl>
+                              <div className="relative">
+                                <Store className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                                <Input 
+                                  {...field} 
+                                  placeholder="Es. Birrificio Roma" 
+                                  className="pl-10"
+                                  data-testid="input-pub-name"
+                                />
+                              </div>
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      <FormField
+                        control={registerForm.control}
+                        name="pubAddress"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Indirizzo *</FormLabel>
+                            <FormControl>
+                              <div className="relative">
+                                <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                                <Input 
+                                  {...field} 
+                                  placeholder="Via Roma, 1" 
+                                  className="pl-10"
+                                  data-testid="input-pub-address"
+                                />
+                              </div>
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      <div className="grid grid-cols-2 gap-3">
+                        <FormField
+                          control={registerForm.control}
+                          name="pubCity"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Città *</FormLabel>
+                              <FormControl>
+                                <Input 
+                                  {...field} 
+                                  placeholder="Roma" 
+                                  data-testid="input-pub-city"
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+
+                        <FormField
+                          control={registerForm.control}
+                          name="pubRegion"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Regione</FormLabel>
+                              <FormControl>
+                                <Input 
+                                  {...field} 
+                                  placeholder="Lazio" 
+                                  data-testid="input-pub-region"
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-3">
+                        <FormField
+                          control={registerForm.control}
+                          name="vatNumber"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>P.IVA</FormLabel>
+                              <FormControl>
+                                <Input 
+                                  {...field} 
+                                  placeholder="IT12345678901" 
+                                  data-testid="input-vat-number"
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+
+                        <FormField
+                          control={registerForm.control}
+                          name="phone"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Telefono</FormLabel>
+                              <FormControl>
+                                <div className="relative">
+                                  <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                                  <Input 
+                                    {...field} 
+                                    placeholder="+39 06 1234567" 
+                                    className="pl-10"
+                                    data-testid="input-phone"
+                                  />
+                                </div>
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      </div>
+
+                      <FormField
+                        control={registerForm.control}
+                        name="description"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Descrizione</FormLabel>
+                            <FormControl>
+                              <Textarea 
+                                {...field} 
+                                placeholder="Racconta del tuo locale..." 
+                                className="resize-none"
+                                rows={3}
+                                data-testid="input-description"
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      <p className="text-xs text-gray-500 dark:text-gray-400">
+                        * Dopo la registrazione, la tua richiesta sarà verificata dal nostro team. Riceverai una notifica quando il tuo locale sarà approvato.
+                      </p>
+                    </div>
+                  )}
+
                   <Button 
                     type="submit" 
                     className="w-full bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700"
                     disabled={registerMutation.isPending}
                     data-testid="button-register"
                   >
-                    {registerMutation.isPending ? "Registrazione..." : "Crea Account"}
+                    {registerMutation.isPending ? "Registrazione..." : isPublican ? "Invia Richiesta" : "Crea Account"}
                   </Button>
                 </form>
               </Form>
@@ -354,32 +600,11 @@ export default function AuthPage() {
                 <SiGoogle className="w-4 h-4 mr-2" />
                 Registrati con Google
               </Button>
-
-              <div className="mt-6 p-4 bg-amber-50 dark:bg-amber-900/20 rounded-lg border border-amber-200 dark:border-amber-800">
-                <div className="flex items-center gap-3">
-                  <div className="p-2 bg-amber-100 dark:bg-amber-800/30 rounded-full">
-                    <Store className="w-5 h-5 text-amber-600" />
-                  </div>
-                  <div className="flex-1">
-                    <h3 className="font-medium text-amber-900 dark:text-amber-100">Hai un locale?</h3>
-                    <p className="text-sm text-amber-700 dark:text-amber-300">Registra il tuo pub su Fermenta.to</p>
-                  </div>
-                </div>
-                <Link href="/become-publican">
-                  <Button 
-                    variant="outline" 
-                    className="w-full mt-3 border-amber-300 text-amber-700 hover:bg-amber-100 dark:border-amber-700 dark:text-amber-300 dark:hover:bg-amber-900/30"
-                    data-testid="button-become-publican"
-                  >
-                    Diventa Publican
-                  </Button>
-                </Link>
-              </div>
             </TabsContent>
           </Tabs>
 
           <p className="text-xs text-center text-gray-500 mt-6">
-            Continuando, accetti i nostri <a href="/terms" className="underline">Termini di Servizio</a> e la <a href="/privacy" className="underline">Privacy Policy</a>
+            Continuando, accetti i nostri <a href="/tos" className="underline">Termini di Servizio</a> e la <a href="/privacy" className="underline">Privacy Policy</a>
           </p>
         </CardContent>
       </Card>

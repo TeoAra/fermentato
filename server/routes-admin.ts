@@ -1,8 +1,8 @@
 import { eq, count, desc, asc, sql, or, ilike } from "drizzle-orm";
 import { db } from "./db";
-import { beers, breweries, users, pubs } from "@shared/schema";
+import { beers, breweries, users, pubs, publicanRequests } from "@shared/schema";
 import type { Express } from "express";
-import { isAuthenticated } from "./auth";
+import { isAuthenticated, isAdmin } from "./auth";
 
 export function registerAdminRoutes(app: Express) {
   // User management endpoints
@@ -559,6 +559,168 @@ export function registerAdminRoutes(app: Express) {
     } catch (error) {
       console.error("Error dismissing report:", error);
       res.status(500).json({ message: "Failed to dismiss report" });
+    }
+  });
+
+  // ========================================
+  // Publican Requests Management
+  // ========================================
+
+  // Get all publican requests (admin only)
+  app.get("/api/admin/publican-requests", isAuthenticated, isAdmin, async (req, res) => {
+    try {
+      const requests = await db
+        .select({
+          id: publicanRequests.id,
+          userId: publicanRequests.userId,
+          pubName: publicanRequests.pubName,
+          pubAddress: publicanRequests.pubAddress,
+          pubCity: publicanRequests.pubCity,
+          pubRegion: publicanRequests.pubRegion,
+          vatNumber: publicanRequests.vatNumber,
+          phone: publicanRequests.phone,
+          email: publicanRequests.email,
+          description: publicanRequests.description,
+          status: publicanRequests.status,
+          adminNotes: publicanRequests.adminNotes,
+          createdAt: publicanRequests.createdAt,
+          reviewedAt: publicanRequests.reviewedAt,
+          reviewedBy: publicanRequests.reviewedBy,
+          userFirstName: users.firstName,
+          userLastName: users.lastName,
+          userEmail: users.email,
+        })
+        .from(publicanRequests)
+        .leftJoin(users, eq(publicanRequests.userId, users.id))
+        .orderBy(desc(publicanRequests.createdAt));
+
+      res.json(requests);
+    } catch (error) {
+      console.error("Error fetching publican requests:", error);
+      res.status(500).json({ message: "Errore nel recupero delle richieste" });
+    }
+  });
+
+  // Get pending publican requests count (for admin notifications)
+  app.get("/api/admin/publican-requests/pending-count", isAuthenticated, isAdmin, async (req, res) => {
+    try {
+      const result = await db
+        .select({ count: count() })
+        .from(publicanRequests)
+        .where(eq(publicanRequests.status, 'pending'));
+
+      res.json({ count: result[0]?.count || 0 });
+    } catch (error) {
+      console.error("Error fetching pending count:", error);
+      res.status(500).json({ message: "Errore" });
+    }
+  });
+
+  // Approve publican request
+  app.post("/api/admin/publican-requests/:id/approve", isAuthenticated, isAdmin, async (req, res) => {
+    try {
+      const requestId = parseInt(req.params.id);
+      const adminId = (req.user as any)?.id;
+      const { adminNotes } = req.body;
+
+      // Get the request
+      const [request] = await db
+        .select()
+        .from(publicanRequests)
+        .where(eq(publicanRequests.id, requestId));
+
+      if (!request) {
+        return res.status(404).json({ message: "Richiesta non trovata" });
+      }
+
+      if (request.status !== 'pending') {
+        return res.status(400).json({ message: "Richiesta già processata" });
+      }
+
+      // Create the pub with safe defaults for optional fields
+      const [newPub] = await db.insert(pubs).values({
+        name: request.pubName,
+        address: request.pubAddress,
+        city: request.pubCity,
+        region: request.pubRegion || request.pubCity || 'Italia',
+        vatNumber: request.vatNumber || null,
+        phone: request.phone || null,
+        email: request.email || null,
+        description: request.description || null,
+        ownerId: request.userId,
+        isActive: true,
+      }).returning();
+
+      // Update user to pub_owner role
+      const [user] = await db.select().from(users).where(eq(users.id, request.userId));
+      if (user) {
+        const currentRoles = user.roles || ['customer'];
+        if (!currentRoles.includes('pub_owner')) {
+          await db.update(users)
+            .set({ 
+              roles: [...currentRoles, 'pub_owner'],
+              userType: 'pub_owner',
+            })
+            .where(eq(users.id, request.userId));
+        }
+      }
+
+      // Update the request status
+      await db.update(publicanRequests)
+        .set({
+          status: 'approved',
+          adminNotes: adminNotes || null,
+          reviewedAt: new Date(),
+          reviewedBy: adminId,
+        })
+        .where(eq(publicanRequests.id, requestId));
+
+      res.json({ 
+        message: "Richiesta approvata con successo", 
+        pubId: newPub.id,
+        userId: request.userId 
+      });
+    } catch (error) {
+      console.error("Error approving publican request:", error);
+      res.status(500).json({ message: "Errore durante l'approvazione" });
+    }
+  });
+
+  // Reject publican request
+  app.post("/api/admin/publican-requests/:id/reject", isAuthenticated, isAdmin, async (req, res) => {
+    try {
+      const requestId = parseInt(req.params.id);
+      const adminId = (req.user as any)?.id;
+      const { adminNotes } = req.body;
+
+      // Get the request
+      const [request] = await db
+        .select()
+        .from(publicanRequests)
+        .where(eq(publicanRequests.id, requestId));
+
+      if (!request) {
+        return res.status(404).json({ message: "Richiesta non trovata" });
+      }
+
+      if (request.status !== 'pending') {
+        return res.status(400).json({ message: "Richiesta già processata" });
+      }
+
+      // Update the request status
+      await db.update(publicanRequests)
+        .set({
+          status: 'rejected',
+          adminNotes: adminNotes || 'Richiesta rifiutata',
+          reviewedAt: new Date(),
+          reviewedBy: adminId,
+        })
+        .where(eq(publicanRequests.id, requestId));
+
+      res.json({ message: "Richiesta rifiutata" });
+    } catch (error) {
+      console.error("Error rejecting publican request:", error);
+      res.status(500).json({ message: "Errore durante il rifiuto" });
     }
   });
 }

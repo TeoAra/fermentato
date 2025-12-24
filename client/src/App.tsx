@@ -35,6 +35,7 @@ import UserDashboard from "@/pages/user-dashboard";
 import UserProfile from "@/pages/user-profile-new";
 import AdminDashboard from "@/pages/admin-dashboard";
 import AdminDashboardNew from "@/pages/admin-dashboard-new";
+import AdminPublicanRequests from "@/pages/admin-publican-requests";
 import AdminAnalytics from "@/pages/admin-analytics";
 import AdminContent from "@/pages/admin-content";
 import AdminModeration from "@/pages/admin-moderation";
@@ -94,6 +95,7 @@ function Router() {
           <Route path="/admin/analytics" component={AdminAnalytics} />
           <Route path="/admin/content" component={AdminContent} />
           <Route path="/admin/moderation" component={AdminModeration} />
+          <Route path="/admin/publican-requests" component={AdminPublicanRequests} />
           <Route path="/admin/users" component={AdminDashboard} />
           <Route path="/admin/edit-pub/:id" component={AdminEditPub} />
           <Route path="/pub-registration" component={PubRegistration} />

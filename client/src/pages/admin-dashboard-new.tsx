@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
+import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -18,12 +19,19 @@ import {
   Filter,
   RefreshCw,
   ChevronRight,
-  ExternalLink
+  ExternalLink,
+  FileText
 } from "lucide-react";
 import { Link } from "wouter";
 
 export default function AdminDashboardNew() {
   const { user, isAuthenticated, isLoading } = useAuth();
+  
+  const { data: pendingCount } = useQuery<{ count: number }>({
+    queryKey: ["/api/admin/publican-requests/pending-count"],
+    enabled: isAuthenticated && (user as any)?.userType === 'admin',
+  });
+
   const [notifications] = useState([
     {
       id: 1,
@@ -180,6 +188,30 @@ export default function AdminDashboardNew() {
                   </p>
                 </div>
                 <ChevronRight className="w-5 h-5 text-gray-400 group-hover:text-purple-500 transition-colors" />
+              </div>
+            </CardContent>
+          </Card>
+        </Link>
+
+        <Link href="/admin/publican-requests">
+          <Card className="hover:shadow-lg transition-all duration-300 cursor-pointer border-l-4 border-l-amber-500 group relative">
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <div className="flex items-center gap-3 mb-2">
+                    <FileText className="w-8 h-8 text-amber-500" />
+                    <h3 className="text-lg font-semibold">Richieste Publican</h3>
+                    {pendingCount && pendingCount.count > 0 && (
+                      <Badge className="bg-red-500 text-white animate-pulse">
+                        {pendingCount.count}
+                      </Badge>
+                    )}
+                  </div>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">
+                    Nuove registrazioni locali
+                  </p>
+                </div>
+                <ChevronRight className="w-5 h-5 text-gray-400 group-hover:text-amber-500 transition-colors" />
               </div>
             </CardContent>
           </Card>
