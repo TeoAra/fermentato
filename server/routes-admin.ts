@@ -2,7 +2,7 @@ import { eq, count, desc, asc, sql, or, ilike } from "drizzle-orm";
 import { db } from "./db";
 import { beers, breweries, users, pubs } from "@shared/schema";
 import type { Express } from "express";
-import { isAuthenticated } from "./replitAuth";
+import { isAuthenticated } from "./auth";
 
 export function registerAdminRoutes(app: Express) {
   // User management endpoints
@@ -55,7 +55,7 @@ export function registerAdminRoutes(app: Express) {
   // Admin user management actions
   app.patch("/api/admin/users/:id/suspend", isAuthenticated, async (req: any, res) => {
     try {
-      if (req.user?.claims?.sub !== "45321347") {
+      if ((req.user as any)?.id !== "45321347") {
         return res.status(403).json({ message: "Forbidden" });
       }
 
@@ -70,7 +70,7 @@ export function registerAdminRoutes(app: Express) {
 
   app.patch("/api/admin/users/:id/activate", isAuthenticated, async (req: any, res) => {
     try {
-      if (req.user?.claims?.sub !== "45321347") {
+      if ((req.user as any)?.id !== "45321347") {
         return res.status(403).json({ message: "Forbidden" });
       }
 
@@ -83,12 +83,12 @@ export function registerAdminRoutes(app: Express) {
 
   app.delete("/api/admin/users/:id", isAuthenticated, async (req: any, res) => {
     try {
-      if (req.user?.claims?.sub !== "45321347") {
+      if ((req.user as any)?.id !== "45321347") {
         return res.status(403).json({ message: "Forbidden" });
       }
 
       const userId = req.params.id;
-      if (userId === req.user.claims.sub) {
+      if (userId === (req.user as any)?.id) {
         return res.status(400).json({ message: "Cannot delete yourself" });
       }
       
@@ -102,7 +102,7 @@ export function registerAdminRoutes(app: Express) {
   // Admin pub management actions
   app.patch("/api/admin/pubs/:id/verify", isAuthenticated, async (req: any, res) => {
     try {
-      if (req.user?.claims?.sub !== "45321347") {
+      if ((req.user as any)?.id !== "45321347") {
         return res.status(403).json({ message: "Forbidden" });
       }
 
@@ -115,7 +115,7 @@ export function registerAdminRoutes(app: Express) {
 
   app.patch("/api/admin/pubs/:id/suspend", isAuthenticated, async (req: any, res) => {
     try {
-      if (req.user?.claims?.sub !== "45321347") {
+      if ((req.user as any)?.id !== "45321347") {
         return res.status(403).json({ message: "Forbidden" });
       }
 
@@ -128,7 +128,7 @@ export function registerAdminRoutes(app: Express) {
   // Admin analytics endpoints
   app.get("/api/admin/analytics/growth", isAuthenticated, async (req: any, res) => {
     try {
-      if (req.user?.claims?.sub !== "45321347") {
+      if ((req.user as any)?.id !== "45321347") {
         return res.status(403).json({ message: "Forbidden" });
       }
 
@@ -148,7 +148,7 @@ export function registerAdminRoutes(app: Express) {
 
   app.get("/api/admin/analytics/popular-beers", isAuthenticated, async (req: any, res) => {
     try {
-      if (req.user?.claims?.sub !== "45321347") {
+      if ((req.user as any)?.id !== "45321347") {
         return res.status(403).json({ message: "Forbidden" });
       }
 
@@ -178,7 +178,7 @@ export function registerAdminRoutes(app: Express) {
   // Admin-only data endpoints
   app.get("/api/admin/beers", isAuthenticated, async (req: any, res) => {
     try {
-      if (req.user?.claims?.sub !== "45321347") {
+      if ((req.user as any)?.id !== "45321347") {
         return res.status(403).json({ message: "Forbidden" });
       }
 
@@ -218,7 +218,7 @@ export function registerAdminRoutes(app: Express) {
 
   app.get("/api/admin/breweries", isAuthenticated, async (req: any, res) => {
     try {
-      if (req.user?.claims?.sub !== "45321347") {
+      if ((req.user as any)?.id !== "45321347") {
         return res.status(403).json({ message: "Forbidden" });
       }
 
@@ -252,7 +252,7 @@ export function registerAdminRoutes(app: Express) {
   // Add missing brewery search endpoint
   app.get("/api/admin/breweries/search", isAuthenticated, async (req: any, res) => {
     try {
-      if (req.user?.claims?.sub !== "45321347") {
+      if ((req.user as any)?.id !== "45321347") {
         return res.status(403).json({ message: "Forbidden" });
       }
 
@@ -283,7 +283,7 @@ export function registerAdminRoutes(app: Express) {
 
   app.get("/api/admin/pubs", isAuthenticated, async (req: any, res) => {
     try {
-      if (req.user?.claims?.sub !== "45321347") {
+      if ((req.user as any)?.id !== "45321347") {
         return res.status(403).json({ message: "Forbidden" });
       }
 
@@ -316,7 +316,7 @@ export function registerAdminRoutes(app: Express) {
 
   app.get("/api/admin/users", isAuthenticated, async (req: any, res) => {
     try {
-      if (req.user?.claims?.sub !== "45321347") {
+      if ((req.user as any)?.id !== "45321347") {
         return res.status(403).json({ message: "Forbidden" });
       }
 
@@ -356,7 +356,7 @@ export function registerAdminRoutes(app: Express) {
   // Beer and brewery update endpoints
   app.patch("/api/admin/beers/:id", isAuthenticated, async (req: any, res) => {
     try {
-      if (req.user?.claims?.sub !== "45321347") {
+      if ((req.user as any)?.id !== "45321347") {
         return res.status(403).json({ message: "Forbidden" });
       }
 
@@ -387,7 +387,7 @@ export function registerAdminRoutes(app: Express) {
 
   app.patch("/api/admin/breweries/:id", isAuthenticated, async (req: any, res) => {
     try {
-      if (req.user?.claims?.sub !== "45321347") {
+      if ((req.user as any)?.id !== "45321347") {
         return res.status(403).json({ message: "Forbidden" });
       }
 
@@ -419,7 +419,7 @@ export function registerAdminRoutes(app: Express) {
   // Review moderation endpoints (mock for now since reviews table doesn't exist)
   app.get("/api/admin/reviews/all", isAuthenticated, async (req: any, res) => {
     try {
-      if (req.user?.claims?.sub !== "45321347") {
+      if ((req.user as any)?.id !== "45321347") {
         return res.status(403).json({ message: "Forbidden" });
       }
 
@@ -462,7 +462,7 @@ export function registerAdminRoutes(app: Express) {
 
   app.post("/api/admin/reviews/:id/approve", isAuthenticated, async (req: any, res) => {
     try {
-      if (req.user?.claims?.sub !== "45321347") {
+      if ((req.user as any)?.id !== "45321347") {
         return res.status(403).json({ message: "Forbidden" });
       }
 
@@ -478,7 +478,7 @@ export function registerAdminRoutes(app: Express) {
 
   app.post("/api/admin/reviews/:id/reject", isAuthenticated, async (req: any, res) => {
     try {
-      if (req.user?.claims?.sub !== "45321347") {
+      if ((req.user as any)?.id !== "45321347") {
         return res.status(403).json({ message: "Forbidden" });
       }
 
@@ -495,7 +495,7 @@ export function registerAdminRoutes(app: Express) {
   // Reports endpoints (mock for now since we don't have reports table)
   app.get("/api/admin/reports", isAuthenticated, async (req: any, res) => {
     try {
-      if (req.user?.claims?.sub !== "45321347") {
+      if ((req.user as any)?.id !== "45321347") {
         return res.status(403).json({ message: "Forbidden" });
       }
 
@@ -532,7 +532,7 @@ export function registerAdminRoutes(app: Express) {
 
   app.post("/api/admin/reports/:id/resolve", isAuthenticated, async (req: any, res) => {
     try {
-      if (req.user?.claims?.sub !== "45321347") {
+      if ((req.user as any)?.id !== "45321347") {
         return res.status(403).json({ message: "Forbidden" });
       }
 
@@ -548,7 +548,7 @@ export function registerAdminRoutes(app: Express) {
 
   app.post("/api/admin/reports/:id/dismiss", isAuthenticated, async (req: any, res) => {
     try {
-      if (req.user?.claims?.sub !== "45321347") {
+      if ((req.user as any)?.id !== "45321347") {
         return res.status(403).json({ message: "Forbidden" });
       }
 

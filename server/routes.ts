@@ -1,8 +1,7 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { setupAuth, isAuthenticated } from "./replitAuth";
-import { setupJWTAuth, authenticateJWT, memoryStorage } from "./jwtAuth";
+import { setupAuth, isAuthenticated } from "./auth";
 import { registerAdminRoutes } from "./routes-admin";
 import { sql, eq } from "drizzle-orm";
 import { upload, uploadImage, cloudinary } from "./cloudinary";
@@ -13,48 +12,16 @@ import { insertPubSchema, insertTapListSchema, insertBottleListSchema, insertMen
 import { z } from "zod";
 
 export async function registerRoutes(app: Express): Promise<Server> {
-  // Setup alternative JWT auth (for when database is disabled)
-  setupJWTAuth(app);
-  
-  // Try to setup traditional auth, but continue if it fails
+  // Setup authentication (email/password + Google OAuth)
   try {
     await setupAuth(app);
-  } catch (error) {
-    console.warn("Database authentication unavailable, using JWT fallback:", error.message);
+    console.log("Authentication system initialized successfully");
+  } catch (error: any) {
+    console.error("Failed to initialize authentication:", error.message);
   }
 
   // Register admin routes
   registerAdminRoutes(app);
-
-  // Auth routes - with fallback system
-  app.get('/api/auth/user', async (req: any, res) => {
-    try {
-      // First try JWT authentication
-      const authHeader = req.headers.authorization;
-      if (authHeader && authHeader.startsWith('Bearer ')) {
-        const token = authHeader.split(' ')[1];
-        const decoded = require('./jwtAuth').verifyToken(token);
-        if (decoded) {
-          const user = await storage.getUser(decoded.userId);
-          if (user) {
-            return res.json(user);
-          }
-        }
-      }
-      
-      // Fallback to traditional auth if available
-      if (req.isAuthenticated && req.isAuthenticated()) {
-        const userId = req.user.claims.sub;
-        const user = await storage.getUser(userId);
-        return res.json(user);
-      }
-      
-      res.status(401).json({ message: "Unauthorized" });
-    } catch (error) {
-      console.error("Error fetching user:", error);
-      res.status(401).json({ message: "Unauthorized" });
-    }
-  });
 
   // Public routes - no authentication required
   
@@ -207,8 +174,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Check if user is the pub owner (authenticated endpoint)
       let isOwner = false;
       try {
-        if (req.user?.claims?.sub) {
-          const userId = req.user.claims.sub;
+        if ((req.user as any)?.id) {
+          const userId = (req.user as any).id;
           const userPubs = await storage.getPubsByOwner(userId);
           isOwner = userPubs.some(pub => pub.id === pubId);
         }
@@ -379,7 +346,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Admin route for global beer scraping
   app.post("/api/admin/scrape-beers", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = (req.user as any).id;
       const user = await storage.getUser(userId);
       
       if (!user) {
@@ -414,7 +381,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Admin route for unifying duplicate breweries
   app.post("/api/admin/unify-breweries", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = (req.user as any).id;
       const user = await storage.getUser(userId);
       
       if (!user) {
@@ -442,7 +409,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Register a new pub (one per user)
   app.post("/api/pubs", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = (req.user as any).id;
       
       // Check if user already has a pub
       const existingPubs = await storage.getPubsByOwner(userId);
@@ -469,7 +436,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Get pubs owned by current user  
   app.get("/api/my-pubs", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = (req.user as any).id;
       const pubs = await storage.getPubsByOwner(userId);
       res.json(pubs);
     } catch (error) {
@@ -515,7 +482,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Update pub (owner or admin)
   app.patch("/api/pubs/:id", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = (req.user as any).id;
       const pubId = parseInt(req.params.id);
       
       // Check if user owns the pub or is admin
@@ -546,7 +513,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Add beer to tap (pub owner or admin)
   app.post("/api/pubs/:id/taplist", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = (req.user as any).id;
       const pubId = parseInt(req.params.id);
       
       // Check if user owns the pub or is admin
@@ -570,7 +537,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Update tap item (pub owner only)
   app.patch("/api/taplist/:id", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = (req.user as any).id;
       const tapId = parseInt(req.params.id);
       const tapData = insertTapListSchema.partial().parse(req.body);
       const updatedTap = await storage.updateTapListItem(tapId, tapData);
@@ -590,7 +557,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Add beer to bottle list (pub owner or admin)
   app.post("/api/pubs/:pubId/bottles", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = (req.user as any).id;
       const pubId = parseInt(req.params.pubId);
       
       // Check if user is admin or owns the pub
@@ -632,7 +599,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.patch('/api/pubs/:pubId/bottles/:id', isAuthenticated, async (req: any, res) => {
     try {
       const { pubId, id } = req.params;
-      const userId = req.user?.claims?.sub;
+      const userId = (req.user as any)?.id;
       
       // Check if user is admin or owns the pub
       const user = await storage.getUser(userId);
@@ -686,7 +653,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Create menu category (only pub owner)
   app.post("/api/pubs/:id/menu-categories", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = (req.user as any).id;
       const pubId = parseInt(req.params.id);
       
       // Check if user owns the pub
@@ -710,7 +677,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Update menu category (only pub owner)
   app.patch("/api/pubs/:pubId/menu-categories/:id", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = (req.user as any).id;
       const pubId = parseInt(req.params.pubId);
       const categoryId = parseInt(req.params.id);
       
@@ -742,7 +709,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Delete menu category (only pub owner)
   app.delete("/api/pubs/:pubId/menu-categories/:id", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = (req.user as any).id;
       const pubId = parseInt(req.params.pubId);
       const categoryId = parseInt(req.params.id);
       
@@ -782,7 +749,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Create menu item (pub owner or admin) - Updated to match frontend expectations and add pub ownership validation
   app.post("/api/pubs/:id/menu-items", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = (req.user as any).id;
       const pubId = parseInt(req.params.id);
       
       // Check if user is admin or owns the pub
@@ -830,7 +797,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Update menu item (pub owner or admin)
   app.patch("/api/pubs/:pubId/menu-items/:id", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = (req.user as any).id;
       const pubId = parseInt(req.params.pubId);
       const itemId = parseInt(req.params.id);
       
@@ -870,7 +837,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Delete menu item (only pub owner)
   app.delete("/api/pubs/:pubId/menu-items/:id", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = (req.user as any).id;
       const pubId = parseInt(req.params.pubId);
       const itemId = parseInt(req.params.id);
       
@@ -906,7 +873,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Update user profile
   app.patch('/api/user/profile', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = (req.user as any).id;
       const updates = req.body;
       
       const updatedUser = await storage.updateUser(userId, updates);
@@ -920,7 +887,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Update user nickname
   app.patch('/api/user/nickname', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = (req.user as any).id;
       const { nickname } = req.body;
 
       if (!nickname || nickname.trim().length < 2) {
@@ -960,7 +927,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Universal Favorites routes
   app.get("/api/favorites", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = (req.user as any).id;
       const favorites = await storage.getUserFavorites(userId);
       res.json(favorites);
     } catch (error) {
@@ -971,7 +938,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get("/api/favorites/:itemType", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = (req.user as any).id;
       const itemType = req.params.itemType as 'pub' | 'brewery' | 'beer';
       if (!['pub', 'brewery', 'beer'].includes(itemType)) {
         return res.status(400).json({ message: "Invalid item type" });
@@ -986,7 +953,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/favorites", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = (req.user as any).id;
       const { itemType, itemId } = req.body;
       
       if (!['pub', 'brewery', 'beer'].includes(itemType)) {
@@ -1003,7 +970,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.delete("/api/favorites/:itemType/:itemId", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = (req.user as any).id;
       const itemType = req.params.itemType as 'pub' | 'brewery' | 'beer';
       const itemId = parseInt(req.params.itemId);
       
@@ -1022,7 +989,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Delete favorite by ID (used by UserFavoritesSection)
   app.delete("/api/favorites/:id", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = (req.user as any).id;
       const favoriteId = parseInt(req.params.id);
       
       await storage.removeFavoriteById(userId, favoriteId);
@@ -1036,7 +1003,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Delete favorite by ID (used by UserFavoritesSection)
   app.delete("/api/favorites/:id", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = (req.user as any).id;
       const favoriteId = parseInt(req.params.id);
       
       await storage.removeFavoriteById(userId, favoriteId);
@@ -1073,7 +1040,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get("/api/favorites/:itemType/:itemId/check", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = (req.user as any).id;
       const itemType = req.params.itemType as 'pub' | 'brewery' | 'beer';
       const itemId = parseInt(req.params.itemId);
       
@@ -1110,7 +1077,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // User profile and activities routes
   app.patch('/api/user/profile', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = (req.user as any).id;
       const updates = req.body;
       const user = await storage.updateUser(userId, updates);
       res.json(user);
@@ -1123,7 +1090,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Update nickname with 15-day restriction
   app.patch('/api/user/nickname', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = (req.user as any).id;
       const { nickname } = req.body;
       
       if (!nickname || nickname.trim().length === 0) {
@@ -1168,7 +1135,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Change user password
   app.patch("/api/user/password", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user?.claims?.sub;
+      const userId = (req.user as any)?.id;
       if (!userId) {
         return res.status(401).json({ message: "User not authenticated" });
       }
@@ -1236,7 +1203,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const imageUrl = await uploadImage(
         req.file.buffer,
         'profile-images',
-        `user-${req.user.claims.sub}-${Date.now()}`
+        `user-${(req.user as any).id}-${Date.now()}`
       );
 
       res.json({ imageUrl });
@@ -1248,7 +1215,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get('/api/user-activities', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = (req.user as any).id;
       const limit = parseInt(req.query.limit as string) || 20;
       const activities = await storage.getUserActivities(userId, limit);
       res.json(activities);
@@ -1261,7 +1228,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Get user beer tastings
   app.get('/api/user/beer-tastings', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = (req.user as any).id;
       const tastings = await storage.getUserBeerTastings(userId);
       res.json(tastings);
     } catch (error) {
@@ -1273,7 +1240,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Update beer tasting
   app.patch('/api/user/beer-tastings/:id', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = (req.user as any).id;
       const tastingId = parseInt(req.params.id);
       const { personalNotes, rating } = req.body;
 
@@ -1290,7 +1257,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Admin-only middleware
   const isAdmin = async (req: any, res: any, next: any) => {
-    const userId = req.user?.claims?.sub;
+    const userId = (req.user as any)?.id;
     if (!userId) {
       return res.status(403).json({ message: "Admin access required" });
     }
@@ -1432,7 +1399,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Rating routes
   app.post("/api/ratings", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = (req.user as any).id;
       const { pubId, rating } = req.body;
       const ratingRecord = await storage.addRating({ userId, pubId, rating });
       res.status(201).json(ratingRecord);
@@ -1748,7 +1715,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // User beer tastings endpoints
   app.get("/api/user/beer-tastings", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = (req.user as any).id;
       const tastings = await storage.getUserBeerTastings(userId);
       res.json(tastings);
     } catch (error) {
@@ -1759,7 +1726,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/user/beer-tastings", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = (req.user as any).id;
       const tastingData = { ...req.body, userId };
       const tasting = await storage.addBeerTasting(tastingData);
       res.status(201).json(tasting);
@@ -1771,7 +1738,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.patch("/api/user/beer-tastings/:id", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = (req.user as any).id;
       const tastingId = parseInt(req.params.id);
       const updated = await storage.updateBeerTasting(tastingId, userId, req.body);
       res.json(updated);
@@ -1783,7 +1750,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.delete("/api/user/beer-tastings/:beerId", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = (req.user as any).id;
       const beerId = parseInt(req.params.beerId);
       await storage.removeBeerTasting(userId, beerId);
       res.status(200).json({ success: true });
@@ -1796,7 +1763,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // User profile update endpoint
   app.patch("/api/user/profile", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = (req.user as any).id;
       const profileData = req.body;
       const updatedUser = await storage.updateUserProfile(userId, profileData);
       res.json(updatedUser);
@@ -1811,7 +1778,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Get user's available roles
   app.get("/api/auth/roles", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = (req.user as any).id;
       const rolesData = await storage.getUserRoles(userId);
       res.json(rolesData);
     } catch (error) {
@@ -1823,7 +1790,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Switch user's active role
   app.post("/api/auth/switch-role", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = (req.user as any).id;
       const { role } = req.body;
       
       if (!role) {
@@ -1849,7 +1816,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Update nickname (with 15-day limit)
   app.patch("/api/auth/user/nickname", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = (req.user as any).id;
       const { nickname } = req.body;
       
       const user = await storage.getUser(userId);
@@ -1876,7 +1843,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Get user's tasting for specific beer
   app.get("/api/beers/:beerId/user-tasting", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = (req.user as any).id;
       const beerId = parseInt(req.params.beerId);
       const tasting = await storage.getUserBeerTasting(userId, beerId);
       res.json(tasting);
@@ -1889,7 +1856,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Update user email
   app.patch("/api/user/email", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = (req.user as any).id;
       const { email } = req.body;
 
       // Validate email
@@ -1931,7 +1898,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Delete user account
   app.delete("/api/user/delete", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = (req.user as any).id;
       
       await storage.deleteUser(userId);
       
@@ -1948,7 +1915,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Search beers for admin (global search)
   app.get("/api/admin/beers/search", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = (req.user as any).id;
       const user = await storage.getUser(userId);
       
       if (user?.userType !== 'admin') {
@@ -1971,7 +1938,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Search breweries for admin (global search)
   app.get("/api/admin/breweries/search", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = (req.user as any).id;
       const user = await storage.getUser(userId);
       
       if (user?.userType !== 'admin') {
@@ -1994,7 +1961,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Create new beer (admin)
   app.post("/api/admin/beers", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = (req.user as any).id;
       const user = await storage.getUser(userId);
       
       if (user?.userType !== 'admin') {
@@ -2012,7 +1979,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Create new brewery (admin)
   app.post("/api/admin/breweries", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = (req.user as any).id;
       const user = await storage.getUser(userId);
       
       if (user?.userType !== 'admin') {
@@ -2030,7 +1997,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Update beer (admin only)
   app.patch("/api/admin/beers/:id", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = (req.user as any).id;
       const user = await storage.getUser(userId);
       
       if (user?.userType !== 'admin') {
@@ -2051,7 +2018,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Update brewery (admin only)
   app.patch("/api/admin/breweries/:id", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = (req.user as any).id;
       const user = await storage.getUser(userId);
       
       if (user?.userType !== 'admin') {

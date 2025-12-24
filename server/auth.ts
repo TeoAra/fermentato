@@ -23,8 +23,13 @@ export function getSession() {
     tableName: "sessions",
   });
   
+  const sessionSecret = process.env.SESSION_SECRET;
+  if (!sessionSecret) {
+    throw new Error("SESSION_SECRET environment variable is required");
+  }
+  
   return session({
-    secret: process.env.SESSION_SECRET || 'fermenta-to-session-secret-change-in-production',
+    secret: sessionSecret,
     store: sessionStore,
     resave: false,
     saveUninitialized: false,
