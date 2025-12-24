@@ -56,10 +56,10 @@ export default function Footer() {
                 <a href="#" className="hover:text-primary">Chi Siamo</a>
               </li>
               <li>
-                <a href="#" className="hover:text-primary">Privacy Policy</a>
+                <Link href="/privacy" className="hover:text-primary">Privacy Policy</Link>
               </li>
               <li>
-                <a href="#" className="hover:text-primary">Termini di Servizio</a>
+                <Link href="/tos" className="hover:text-primary">Termini di Servizio</Link>
               </li>
               <li>
                 <a href="#" className="hover:text-primary">Contatti</a>
