@@ -107,7 +107,8 @@ export function MobileHeader({ onMenuToggle, isMenuOpen }: MobileHeaderProps) {
                     className="w-full justify-start px-3 py-2 text-sm font-medium text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/20"
                     onClick={() => {
                       onMenuToggle();
-                      window.location.href = '/api/auth/logout';
+                      fetch('/api/auth/logout', { method: 'POST', credentials: 'include' })
+                        .then(() => window.location.href = '/');
                     }}
                     data-testid="logout-button-mobile"
                   >

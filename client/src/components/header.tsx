@@ -201,11 +201,16 @@ export default function Header() {
                       </Link>
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />
-                    <DropdownMenuItem asChild>
-                      <a href="/api/auth/logout" className="flex items-center gap-2 cursor-pointer text-red-600" data-testid="logout-button">
-                        <LogOut className="h-4 w-4" />
-                        Esci
-                      </a>
+                    <DropdownMenuItem 
+                      className="flex items-center gap-2 cursor-pointer text-red-600"
+                      data-testid="logout-button"
+                      onClick={() => {
+                        fetch('/api/auth/logout', { method: 'POST', credentials: 'include' })
+                          .then(() => window.location.href = '/');
+                      }}
+                    >
+                      <LogOut className="h-4 w-4" />
+                      Esci
                     </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
