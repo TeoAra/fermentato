@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { useLocation } from "wouter";
 import { useMutation } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
@@ -13,8 +13,9 @@ import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { queryClient, apiRequest } from "@/lib/queryClient";
-import { Beer, Eye, EyeOff, Mail, Lock, User, Store, MapPin, Phone, Building2 } from "lucide-react";
+import { Beer, Eye, EyeOff, Mail, Lock, User, Store, Phone, Building2 } from "lucide-react";
 import { SiGoogle } from "react-icons/si";
+import { AddressAutocomplete } from "@/components/AddressAutocomplete";
 
 const loginSchema = z.object({
   email: z.string().email("Email non valida"),
@@ -52,16 +53,8 @@ const registerSchema = z.object({
   }
   return true;
 }, {
-  message: "Indirizzo richiesto",
+  message: "Seleziona un indirizzo dai suggerimenti",
   path: ["pubAddress"],
-}).refine((data) => {
-  if (data.isPublican) {
-    return data.pubCity && data.pubCity.length > 0;
-  }
-  return true;
-}, {
-  message: "Città richiesta",
-  path: ["pubCity"],
 });
 
 type LoginForm = z.infer<typeof loginSchema>;
@@ -98,6 +91,17 @@ export default function AuthPage() {
   });
 
   const isPublican = registerForm.watch("isPublican");
+
+  const handleAddressSelect = useCallback((details: {
+    formattedAddress: string;
+    city: string;
+    region: string;
+    placeId: string;
+  }) => {
+    registerForm.setValue("pubAddress", details.formattedAddress);
+    registerForm.setValue("pubCity", details.city);
+    registerForm.setValue("pubRegion", details.region);
+  }, [registerForm]);
 
   const loginMutation = useMutation({
     mutationFn: async (data: LoginForm) => {
@@ -447,60 +451,21 @@ export default function AuthPage() {
                         name="pubAddress"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Indirizzo *</FormLabel>
+                            <FormLabel>Indirizzo del Locale *</FormLabel>
                             <FormControl>
-                              <div className="relative">
-                                <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                                <Input 
-                                  {...field} 
-                                  placeholder="Via Roma, 1" 
-                                  className="pl-10"
-                                  data-testid="input-pub-address"
-                                />
-                              </div>
+                              <AddressAutocomplete
+                                value={field.value}
+                                onAddressSelect={handleAddressSelect}
+                                placeholder="Cerca il tuo locale o indirizzo..."
+                              />
                             </FormControl>
+                            <FormDescription className="text-xs">
+                              Cerca il nome del locale o l'indirizzo. Città e regione verranno compilati automaticamente.
+                            </FormDescription>
                             <FormMessage />
                           </FormItem>
                         )}
                       />
-
-                      <div className="grid grid-cols-2 gap-3">
-                        <FormField
-                          control={registerForm.control}
-                          name="pubCity"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Città *</FormLabel>
-                              <FormControl>
-                                <Input 
-                                  {...field} 
-                                  placeholder="Roma" 
-                                  data-testid="input-pub-city"
-                                />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-
-                        <FormField
-                          control={registerForm.control}
-                          name="pubRegion"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Regione</FormLabel>
-                              <FormControl>
-                                <Input 
-                                  {...field} 
-                                  placeholder="Lazio" 
-                                  data-testid="input-pub-region"
-                                />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                      </div>
 
                       <div className="grid grid-cols-2 gap-3">
                         <FormField
