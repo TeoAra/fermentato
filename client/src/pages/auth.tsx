@@ -11,8 +11,9 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { queryClient, apiRequest } from "@/lib/queryClient";
-import { Beer, Eye, EyeOff, Mail, Lock, User } from "lucide-react";
+import { Beer, Eye, EyeOff, Mail, Lock, User, Store } from "lucide-react";
 import { SiGoogle } from "react-icons/si";
+import { Link } from "wouter";
 
 const loginSchema = z.object({
   email: z.string().email("Email non valida"),
@@ -353,6 +354,27 @@ export default function AuthPage() {
                 <SiGoogle className="w-4 h-4 mr-2" />
                 Registrati con Google
               </Button>
+
+              <div className="mt-6 p-4 bg-amber-50 dark:bg-amber-900/20 rounded-lg border border-amber-200 dark:border-amber-800">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-amber-100 dark:bg-amber-800/30 rounded-full">
+                    <Store className="w-5 h-5 text-amber-600" />
+                  </div>
+                  <div className="flex-1">
+                    <h3 className="font-medium text-amber-900 dark:text-amber-100">Hai un locale?</h3>
+                    <p className="text-sm text-amber-700 dark:text-amber-300">Registra il tuo pub su Fermenta.to</p>
+                  </div>
+                </div>
+                <Link href="/become-publican">
+                  <Button 
+                    variant="outline" 
+                    className="w-full mt-3 border-amber-300 text-amber-700 hover:bg-amber-100 dark:border-amber-700 dark:text-amber-300 dark:hover:bg-amber-900/30"
+                    data-testid="button-become-publican"
+                  >
+                    Diventa Publican
+                  </Button>
+                </Link>
+              </div>
             </TabsContent>
           </Tabs>
 
