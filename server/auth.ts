@@ -85,7 +85,17 @@ export async function setupAuth(app: Express) {
 
   // Google OAuth Strategy (only if credentials are available)
   if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
-    const callbackURL = process.env.GOOGLE_CALLBACK_URL || 'https://fermenta.to/api/auth/google/callback';
+    // Dynamic callback URL based on environment
+    let callbackURL = process.env.GOOGLE_CALLBACK_URL;
+    if (!callbackURL) {
+      const domain = process.env.REPLIT_DEV_DOMAIN || process.env.REPLIT_DOMAINS?.split(',')[0];
+      if (domain) {
+        callbackURL = `https://${domain}/api/auth/google/callback`;
+      } else {
+        callbackURL = 'https://fermenta.to/api/auth/google/callback';
+      }
+    }
+    console.log('Google OAuth callback URL:', callbackURL);
     
     passport.use(new GoogleStrategy(
       {
@@ -305,6 +315,66 @@ export async function setupAuth(app: Express) {
       }
       res.redirect('/');
     });
+  });
+
+  // Request upgrade to pub_owner role
+  app.post('/api/auth/become-publican', isAuthenticated, async (req, res) => {
+    try {
+      const user = req.user as User;
+      const { pubName, address, city, vatNumber, phone } = req.body;
+
+      if (!pubName || !address || !city) {
+        return res.status(400).json({ 
+          message: 'Nome locale, indirizzo e città sono obbligatori' 
+        });
+      }
+
+      // Check if user already has pub_owner role
+      if (user.roles?.includes('pub_owner')) {
+        return res.status(400).json({ 
+          message: 'Hai già il ruolo di publican' 
+        });
+      }
+
+      // Add pub_owner role to user
+      const newRoles = [...(user.roles || ['customer']), 'pub_owner'];
+      
+      await db.update(users)
+        .set({ 
+          roles: newRoles,
+          userType: 'pub_owner'
+        })
+        .where(eq(users.id, user.id));
+
+      // Create the pub with the provided info
+      const { storage } = await import('./storage');
+      await storage.createPub({
+        name: pubName,
+        address,
+        city,
+        region: city, // Default region to city, can be updated later
+        vatNumber: vatNumber || null,
+        phone: phone || null,
+        ownerId: user.id,
+        isActive: false, // Pending verification
+      });
+
+      // Update session with new roles
+      const [updatedUser] = await db.select().from(users).where(eq(users.id, user.id));
+      req.login(updatedUser, (err) => {
+        if (err) {
+          console.error('Session update error:', err);
+        }
+      });
+
+      res.json({ 
+        message: 'Congratulazioni! Ora sei un publican. Il tuo locale è in attesa di verifica.',
+        roles: newRoles
+      });
+    } catch (error) {
+      console.error('Become publican error:', error);
+      res.status(500).json({ message: 'Errore durante la richiesta' });
+    }
   });
 }
 

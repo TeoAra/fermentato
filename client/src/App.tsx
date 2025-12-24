@@ -43,6 +43,7 @@ import ExplorePubs from "@/pages/explore-pubs";
 import ExploreBreweries from "@/pages/explore-breweries";
 import DemoLoginPage from "@/pages/demo-login-page";
 import AuthPage from "@/pages/auth";
+import BecomePublican from "@/pages/become-publican";
 import { MobileHeader } from "@/components/mobile-header";
 import { BottomNavigation } from "@/components/bottom-navigation";
 import type { User } from "@shared/schema";
@@ -94,6 +95,7 @@ function Router() {
           <Route path="/admin/users" component={AdminDashboard} />
           <Route path="/admin/edit-pub/:id" component={AdminEditPub} />
           <Route path="/pub-registration" component={PubRegistration} />
+          <Route path="/become-publican" component={BecomePublican} />
           <Route path="/notifications" component={Notifications} />
           <Route path="/activity" component={Activity} />
           <Route component={NotFound} />
