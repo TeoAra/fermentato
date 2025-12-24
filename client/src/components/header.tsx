@@ -3,11 +3,13 @@ import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { Beer, Search, Bell, MapPin, Home, User } from "lucide-react";
+import { Beer, Search, Bell, MapPin, Home, User, LogOut } from "lucide-react";
 import type { User as UserType } from "@shared/schema";
 import { useState, useRef, useEffect } from "react";
 import SearchResults from "@/components/search-results";
 import SearchDialog from "@/components/search-dialog";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 
 export default function Header() {
   const { user, isAuthenticated } = useAuth();
@@ -150,9 +152,9 @@ export default function Header() {
               </nav>
             </div>
 
-            {/* Search Bar - Centered */}
-            <div className="col-span-3" ref={searchRef}>
-              <form onSubmit={handleSearch} className="relative">
+            {/* Search Bar */}
+            <div className="col-span-4" ref={searchRef}>
+              <form onSubmit={handleSearch} className="relative max-w-sm ml-auto">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
                 <Input
                   type="search"
@@ -175,9 +177,43 @@ export default function Header() {
               </form>
             </div>
 
-            {/* User Section - Removed to eliminate redundancy with dashboard */}
-            <div className="col-span-3 flex items-center justify-end gap-3">
-              {/* User section removed - functionality available in dashboard */}
+            {/* User Section */}
+            <div className="col-span-2 flex items-center justify-end gap-2">
+              {isAuthenticated && typedUser ? (
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" className="flex items-center gap-2 px-2" data-testid="user-menu-button">
+                      <Avatar className="h-8 w-8">
+                        <AvatarFallback className="bg-orange-100 text-orange-600 text-sm">
+                          {typedUser.firstName?.[0] || typedUser.email?.[0]?.toUpperCase() || 'U'}
+                        </AvatarFallback>
+                      </Avatar>
+                      <span className="hidden xl:inline text-sm font-medium text-gray-700 dark:text-gray-300 max-w-[100px] truncate">
+                        {typedUser.firstName || typedUser.email?.split('@')[0]}
+                      </span>
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-48">
+                    <DropdownMenuItem asChild>
+                      <Link href="/dashboard" className="flex items-center gap-2 cursor-pointer">
+                        <User className="h-4 w-4" />
+                        Dashboard
+                      </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem asChild>
+                      <a href="/api/auth/logout" className="flex items-center gap-2 cursor-pointer text-red-600" data-testid="logout-button">
+                        <LogOut className="h-4 w-4" />
+                        Esci
+                      </a>
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              ) : (
+                <Button asChild variant="default" size="sm" className="bg-orange-600 hover:bg-orange-700">
+                  <a href="/auth" data-testid="login-button">Accedi</a>
+                </Button>
+              )}
             </div>
           </div>
         </div>
