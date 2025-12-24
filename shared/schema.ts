@@ -26,10 +26,11 @@ export const sessions = pgTable(
   (table) => [index("IDX_session_expire").on(table.expire)],
 );
 
-// User storage table (mandatory for Replit Auth)
+// User storage table
 export const users = pgTable("users", {
   id: varchar("id").primaryKey().notNull(),
   email: varchar("email").unique(),
+  hashedPassword: varchar("hashed_password"), // For email/password auth
   firstName: varchar("first_name"),
   lastName: varchar("last_name"),
   profileImageUrl: varchar("profile_image_url"),
@@ -39,6 +40,9 @@ export const users = pgTable("users", {
   userType: varchar("user_type").notNull().default("customer"), // 'customer', 'pub_owner', or 'admin' - legacy field
   roles: varchar("roles").array(), // Available roles for this user: ['customer'], ['customer', 'pub_owner'], or ['customer', 'pub_owner', 'admin']
   activeRole: varchar("active_role"), // Currently active role for UI/navigation
+  isEmailVerified: boolean("is_email_verified").default(false),
+  passwordResetToken: varchar("password_reset_token"),
+  passwordResetExpires: timestamp("password_reset_expires"),
   lastNicknameUpdate: timestamp("last_nickname_update").defaultNow(),
   emailLastUpdated: timestamp("email_last_updated"),
   passwordLastUpdated: timestamp("password_last_updated"),
@@ -46,6 +50,21 @@ export const users = pgTable("users", {
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
+
+// OAuth accounts for social login (Google, Facebook, etc.)
+export const oauthAccounts = pgTable("oauth_accounts", {
+  id: serial("id").primaryKey(),
+  userId: varchar("user_id").references(() => users.id, { onDelete: "cascade" }).notNull(),
+  provider: varchar("provider").notNull(), // 'google', 'facebook', etc.
+  providerUserId: varchar("provider_user_id").notNull(),
+  accessToken: text("access_token"),
+  refreshToken: text("refresh_token"),
+  expiresAt: timestamp("expires_at"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+}, (table) => [
+  unique().on(table.provider, table.providerUserId)
+]);
 
 // Breweries table
 export const breweries = pgTable("breweries", {
@@ -373,6 +392,9 @@ export type Rating = typeof ratings.$inferSelect;
 
 export type InsertUserBeerTasting = typeof userBeerTastings.$inferInsert;
 export type UserBeerTasting = typeof userBeerTastings.$inferSelect;
+
+export type InsertOAuthAccount = typeof oauthAccounts.$inferInsert;
+export type OAuthAccount = typeof oauthAccounts.$inferSelect;
 
 // DTO Types for API responses (camelCase with proper numeric types)
 export interface TapListItemDTO {
