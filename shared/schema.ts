@@ -265,6 +265,25 @@ export const ratings = pgTable("ratings", {
   unique("unique_user_pub_rating").on(table.userId, table.pubId),
 ]);
 
+// Publican registration requests - pending approval
+export const publicanRequests = pgTable("publican_requests", {
+  id: serial("id").primaryKey(),
+  userId: varchar("user_id").references(() => users.id, { onDelete: "cascade" }).notNull(),
+  pubName: varchar("pub_name").notNull(),
+  pubAddress: varchar("pub_address").notNull(),
+  pubCity: varchar("pub_city").notNull(),
+  pubRegion: varchar("pub_region"),
+  vatNumber: varchar("vat_number"),
+  phone: varchar("phone"),
+  email: varchar("email"),
+  description: text("description"),
+  status: varchar("status").notNull().default("pending"), // 'pending', 'approved', 'rejected'
+  adminNotes: text("admin_notes"), // Notes from admin on approval/rejection
+  createdAt: timestamp("created_at").defaultNow(),
+  reviewedAt: timestamp("reviewed_at"),
+  reviewedBy: varchar("reviewed_by").references(() => users.id),
+});
+
 // Relations
 export const breweriesRelations = relations(breweries, ({ many }) => ({
   beers: many(beers),
@@ -528,9 +547,20 @@ export const insertPubSizeSchema = createInsertSchema(pubSizes).omit({
   createdAt: true,
 });
 
+export const insertPublicanRequestSchema = createInsertSchema(publicanRequests).omit({
+  id: true,
+  createdAt: true,
+  reviewedAt: true,
+  reviewedBy: true,
+  status: true,
+  adminNotes: true,
+});
+
 // Types
 export type PubSize = typeof pubSizes.$inferSelect;
 export type InsertPubSize = z.infer<typeof insertPubSizeSchema>;
+export type PublicanRequest = typeof publicanRequests.$inferSelect;
+export type InsertPublicanRequest = z.infer<typeof insertPublicanRequestSchema>;
 
 // Custom schemas for forms
 export const pubRegistrationSchema = insertPubSchema.extend({
