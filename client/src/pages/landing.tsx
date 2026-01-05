@@ -3,12 +3,34 @@ import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Beer, MapPin, Star, Users, Heart, Store, Sparkles, Factory } from "lucide-react";
+import { Beer, MapPin, Users, Heart, Store, Sparkles, Factory, Clock } from "lucide-react";
 import Footer from "@/components/footer";
 import ImageWithFallback from "@/components/image-with-fallback";
 
 // Square Card Components
+function isOpenNow(openingHours: any) {
+  if (!openingHours) return false;
+  const now = new Date();
+  const currentDay = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'][now.getDay()];
+  const currentTime = now.getHours() * 60 + now.getMinutes();
+  const todayHours = openingHours[currentDay];
+  if (!todayHours || todayHours.isClosed) return false;
+  if (todayHours.open && todayHours.close) {
+    const [openHour, openMin] = todayHours.open.split(':').map(Number);
+    const [closeHour, closeMin] = todayHours.close.split(':').map(Number);
+    const openTime = openHour * 60 + openMin;
+    const closeTime = closeHour * 60 + closeMin;
+    if (closeTime < openTime) {
+      return currentTime >= openTime || currentTime <= closeTime;
+    } else {
+      return currentTime >= openTime && currentTime <= closeTime;
+    }
+  }
+  return true;
+}
+
 function PubSquareCard({ pub }: { pub: any }) {
+  const open = isOpenNow(pub.openingHours);
   return (
     <Link href={`/pub/${pub.id}`}>
       <Card className="glass-card border-0 overflow-hidden hover:scale-105 transition-all duration-300 cursor-pointer group h-48">
@@ -32,18 +54,10 @@ function PubSquareCard({ pub }: { pub: any }) {
               <span className="line-clamp-1">{pub.address}</span>
             </div>
             <div className="flex flex-wrap gap-1 mt-auto">
-              <Badge variant="outline" className="text-xs px-2 py-0.5 h-auto bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-950 dark:to-indigo-950 border-blue-200 text-blue-800 dark:text-blue-200">
-                <Store className="w-3 h-3 mr-1" />
-                Pub
+              <Badge variant={open ? "default" : "secondary"} className={`text-xs px-2 py-0.5 h-auto ${open ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300' : 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300'}`}>
+                <Clock className="w-3 h-3 mr-1" />
+                {open ? 'Aperto' : 'Chiuso'}
               </Badge>
-              {pub.rating && (
-                <div className="flex items-center gap-1">
-                  <Star className="w-3 h-3 text-yellow-400 fill-current" />
-                  <span className="text-xs text-gray-600 dark:text-gray-400 font-medium">
-                    {Number(pub.rating).toFixed(1)}
-                  </span>
-                </div>
-              )}
             </div>
           </div>
         </CardContent>
@@ -82,14 +96,6 @@ function BrewerySquareCard({ brewery }: { brewery: any }) {
                 <Beer className="w-3 h-3 mr-1" />
                 {brewery.beerCount || 0} birre
               </Badge>
-              {brewery.rating && (
-                <div className="flex items-center gap-1">
-                  <Star className="w-3 h-3 text-yellow-400 fill-current" />
-                  <span className="text-xs text-gray-600 dark:text-gray-400 font-medium">
-                    {Number(brewery.rating).toFixed(1)}
-                  </span>
-                </div>
-              )}
             </div>
           </div>
         </CardContent>
