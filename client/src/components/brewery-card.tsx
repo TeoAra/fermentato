@@ -1,7 +1,7 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Star, MapPin, Beer, Heart } from "lucide-react";
+import { MapPin, Beer, Heart } from "lucide-react";
 import { Link } from "wouter";
 import { useAuth } from "@/hooks/useAuth";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -117,14 +117,6 @@ export default function BreweryCard({ brewery, beerCount = 0 }: BreweryCardProps
                   <Beer className="w-3 h-3 mr-1" />
                   {beerCount} birre
                 </Badge>
-                
-                {/* Rating Badge */}
-                <div className="flex items-center gap-1">
-                  <Star className="w-3 h-3 text-yellow-400 fill-current" />
-                  <span className="text-xs text-gray-600 font-medium">
-                    {typeof brewery.rating === 'string' || typeof brewery.rating === 'number' ? Number(brewery.rating).toFixed(1) : "N/A"}
-                  </span>
-                </div>
               </div>
             </div>
             

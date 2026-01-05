@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { Link } from "wouter";
-import { MapPin, Beer, Star, ArrowLeft, Heart } from "lucide-react";
+import { MapPin, Beer, ArrowLeft, Heart } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -114,15 +114,6 @@ function BrewerySquareCard({ brewery }: { brewery: any }) {
                 <Beer className="w-3 h-3 mr-1" />
                 {brewery.beerCount || 0} birre
               </Badge>
-              
-              {brewery.rating && (
-                <div className="flex items-center gap-1">
-                  <Star className="w-3 h-3 text-yellow-400 fill-current" />
-                  <span className="text-xs text-gray-600 font-medium">
-                    {Number(brewery.rating).toFixed(1)}
-                  </span>
-                </div>
-              )}
             </div>
           </div>
         </CardContent>

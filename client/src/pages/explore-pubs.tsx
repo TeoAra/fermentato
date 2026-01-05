@@ -1,11 +1,37 @@
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { Link } from "wouter";
-import { MapPin, Store, Star, ArrowLeft } from "lucide-react";
+import { MapPin, Store, ArrowLeft, Clock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+
+function isOpenNow(openingHours: any) {
+  if (!openingHours) return false;
+  
+  const now = new Date();
+  const currentDay = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'][now.getDay()];
+  const currentTime = now.getHours() * 60 + now.getMinutes();
+  
+  const todayHours = openingHours[currentDay];
+  if (!todayHours || todayHours.isClosed) return false;
+  
+  if (todayHours.open && todayHours.close) {
+    const [openHour, openMin] = todayHours.open.split(':').map(Number);
+    const [closeHour, closeMin] = todayHours.close.split(':').map(Number);
+    const openTime = openHour * 60 + openMin;
+    const closeTime = closeHour * 60 + closeMin;
+    
+    if (closeTime < openTime) {
+      return currentTime >= openTime || currentTime <= closeTime;
+    } else {
+      return currentTime >= openTime && currentTime <= closeTime;
+    }
+  }
+  
+  return true;
+}
 
 const statiItaliani = [
   "Abruzzo", "Basilicata", "Calabria", "Campania", "Emilia-Romagna",
@@ -46,14 +72,10 @@ function PubSquareCard({ pub }: { pub: any }) {
                 Pub
               </Badge>
               
-              {pub.rating && (
-                <div className="flex items-center gap-1">
-                  <Star className="w-3 h-3 text-yellow-400 fill-current" />
-                  <span className="text-xs text-gray-600 font-medium">
-                    {Number(pub.rating).toFixed(1)}
-                  </span>
-                </div>
-              )}
+              <Badge variant={isOpenNow(pub.openingHours) ? "default" : "secondary"} className={`text-xs px-2 py-0.5 h-auto ${isOpenNow(pub.openingHours) ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+                <Clock className="w-3 h-3 mr-1" />
+                {isOpenNow(pub.openingHours) ? 'Aperto' : 'Chiuso'}
+              </Badge>
             </div>
           </div>
         </CardContent>
