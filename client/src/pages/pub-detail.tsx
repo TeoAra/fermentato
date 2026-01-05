@@ -593,7 +593,7 @@ export default function PubDetail() {
           <PubStatsCard 
             icon={Wine}
             label="Taplist"
-            value={Array.isArray(tapList) ? tapList.filter((t: any) => t.isVisible).length : 0}
+            value={Array.isArray(tapList) ? tapList.filter((t: any) => t.isActive).length : 0}
             gradient="from-amber-500 to-orange-600"
             description="Alla spina"
           />
@@ -661,7 +661,7 @@ export default function PubDetail() {
                       Taplist
                     </h3>
                     <Badge variant="outline" className="bg-amber-50 dark:bg-amber-950 text-amber-800 dark:text-amber-200">
-                      {Array.isArray(tapList) ? tapList.filter((t: any) => t.isVisible).length : 0} attive
+                      {Array.isArray(tapList) ? tapList.filter((t: any) => t.isActive).length : 0} attive
                     </Badge>
                   </div>
                   {tapLoading ? (
