@@ -41,33 +41,54 @@ import { apiRequest } from "@/lib/queryClient";
 import OpeningHoursDialog from "@/components/OpeningHoursDialog";
 import ImageWithFallback from "@/components/image-with-fallback";
 
-// Funzione per controllare se un pub è aperto ora
-function isOpenNow(openingHours: any) {
-  if (!openingHours) return false;
+type OpenStatus = 'open' | 'closing_soon' | 'opening_soon' | 'closed';
+
+function getOpenStatus(openingHours: any): { status: OpenStatus; borderColor: string; bgColor: string } {
+  if (!openingHours) return { status: 'closed', borderColor: 'ring-gray-400', bgColor: 'bg-gray-400' };
   
   const now = new Date();
   const currentDay = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'][now.getDay()];
   const currentTime = now.getHours() * 60 + now.getMinutes();
   
   const todayHours = openingHours[currentDay];
-  if (!todayHours || todayHours.isClosed) return false;
+  if (!todayHours || todayHours.isClosed) {
+    return { status: 'closed', borderColor: 'ring-red-500', bgColor: 'bg-red-500' };
+  }
   
-  // Se ha orari, controlla se è nell'intervallo
   if (todayHours.open && todayHours.close) {
     const [openHour, openMin] = todayHours.open.split(':').map(Number);
     const [closeHour, closeMin] = todayHours.close.split(':').map(Number);
     const openTime = openHour * 60 + openMin;
     const closeTime = closeHour * 60 + closeMin;
     
-    if (closeTime < openTime) {
-      // Orario attraversa la mezzanotte
-      return currentTime >= openTime || currentTime <= closeTime;
+    const isOpen = closeTime < openTime 
+      ? (currentTime >= openTime || currentTime <= closeTime)
+      : (currentTime >= openTime && currentTime <= closeTime);
+    
+    if (isOpen) {
+      const minutesToClose = closeTime < openTime 
+        ? (currentTime >= openTime ? (24 * 60 - currentTime + closeTime) : (closeTime - currentTime))
+        : (closeTime - currentTime);
+      
+      if (minutesToClose <= 30) {
+        return { status: 'closing_soon', borderColor: 'ring-orange-500', bgColor: 'bg-orange-500' };
+      }
+      return { status: 'open', borderColor: 'ring-green-500', bgColor: 'bg-green-500' };
     } else {
-      return currentTime >= openTime && currentTime <= closeTime;
+      const minutesToOpen = openTime - currentTime;
+      if (minutesToOpen > 0 && minutesToOpen <= 60) {
+        return { status: 'opening_soon', borderColor: 'ring-blue-500', bgColor: 'bg-blue-500' };
+      }
+      return { status: 'closed', borderColor: 'ring-red-500', bgColor: 'bg-red-500' };
     }
   }
   
-  return true; // Se non ha orari specifici ma non è chiuso, considera aperto
+  return { status: 'open', borderColor: 'ring-green-500', bgColor: 'bg-green-500' };
+}
+
+function isOpenNow(openingHours: any) {
+  const status = getOpenStatus(openingHours);
+  return status.status === 'open' || status.status === 'closing_soon';
 }
 
 // Modern Beer Card Component
@@ -468,6 +489,7 @@ export default function PubDetail() {
   }
 
   const isOpen = isOpenNow((pub as any)?.openingHours);
+  const openStatus = getOpenStatus((pub as any)?.openingHours);
 
   // Quick Actions Handlers
   const handleShowOpeningHours = () => {
@@ -494,51 +516,60 @@ export default function PubDetail() {
               <div className="glass-card rounded-2xl p-8 backdrop-blur-md bg-white/10 border border-white/20">
                 <div className="flex flex-col md:flex-row items-center md:items-center justify-between gap-8">
                   <div className="flex flex-col md:flex-row items-center space-y-4 md:space-y-0 md:space-x-6 w-full md:w-auto justify-center md:justify-start">
-                    {(pub as any)?.logoUrl && (
-                      <Avatar className="h-20 w-20 ring-4 ring-white/30 flex-shrink-0">
-                        <AvatarImage src={(pub as any).logoUrl} alt={`${(pub as any).name} - Logo`} />
+                    {/* Logo con bordo colorato per stato apertura */}
+                    <div className="relative flex-shrink-0">
+                      <Avatar className={`h-20 w-20 ring-4 ${openStatus.borderColor} flex-shrink-0`}>
+                        <AvatarImage src={(pub as any)?.logoUrl} alt={`${(pub as any)?.name} - Logo`} />
                         <AvatarFallback className="bg-gradient-to-br from-amber-500 to-orange-600 text-white text-2xl">
                           {(pub as any)?.name?.[0] || 'P'}
                         </AvatarFallback>
                       </Avatar>
-                    )}
+                      {/* Indicatore stato piccolo */}
+                      <div className={`absolute -bottom-1 -right-1 w-5 h-5 ${openStatus.bgColor} rounded-full border-2 border-white shadow-lg`} title={
+                        openStatus.status === 'open' ? 'Aperto' :
+                        openStatus.status === 'closing_soon' ? 'Sta per chiudere' :
+                        openStatus.status === 'opening_soon' ? 'Sta per aprire' : 'Chiuso'
+                      }></div>
+                    </div>
                     <div className="text-center md:text-left">
-                      <h1 className="text-2xl sm:text-3xl md:text-4xl text-white mb-4 font-bold leading-tight">
-                        {(pub as any)?.name}
-                      </h1>
-                      <div className="flex flex-col sm:flex-row items-center justify-center md:justify-start space-y-3 sm:space-y-0 sm:space-x-4">
-                        <div className="flex items-center justify-center space-x-3">
-                          <Badge 
-                            className={`${
-                              isOpen 
-                                ? 'bg-green-500/20 text-green-100 border-green-300/30' 
-                                : 'bg-red-500/20 text-red-100 border-red-300/30'
-                            } backdrop-blur-sm px-3 py-2`}
-                          >
-                            {isOpen ? (
-                              <>
-                                <CheckCircle className="h-4 w-4 mr-2" />
-                                Aperto ora
-                              </>
-                            ) : (
-                              <>
-                                <Clock className="h-4 w-4 mr-2" />
-                                Chiuso
-                              </>
-                            )}
-                          </Badge>
-                          {!(pub as any)?.isActive && (
-                            <Badge className="bg-orange-500/20 text-orange-100 border-orange-300/30 backdrop-blur-sm px-3 py-2">
-                              Temporaneamente Chiuso
-                            </Badge>
-                          )}
+                      {/* Nome + preferiti in linea su desktop */}
+                      <div className="flex flex-col md:flex-row md:items-center md:gap-4 mb-2">
+                        <h1 className="text-2xl sm:text-3xl md:text-4xl text-white font-bold leading-tight">
+                          {(pub as any)?.name}
+                        </h1>
+                        {/* Preferiti inline su desktop */}
+                        <div className="hidden md:flex items-center bg-red-500/20 backdrop-blur-sm border border-red-300/30 rounded-full px-3 py-1">
+                          <Heart className="h-4 w-4 mr-1.5 text-red-400 fill-current" />
+                          <span className="text-sm font-bold text-red-100">{favoritesCountData?.count || 0}</span>
                         </div>
-                        
-                        <div className="flex items-center justify-center bg-red-500/20 backdrop-blur-sm border border-red-300/30 rounded-lg px-4 py-2.5 min-w-[5rem]">
+                      </div>
+                      {/* Mobile: Preferiti sotto il nome */}
+                      <div className="flex md:hidden items-center justify-center mt-2 mb-3">
+                        <div className="flex items-center bg-red-500/20 backdrop-blur-sm border border-red-300/30 rounded-lg px-4 py-2">
                           <Heart className="h-4 w-4 mr-2 text-red-400 fill-current" />
                           <span className="text-sm font-bold text-red-100">{favoritesCountData?.count || 0}</span>
-                          <span className="text-xs text-red-200 ml-1 hidden sm:inline">preferiti</span>
+                          <span className="text-xs text-red-200 ml-1">preferiti</span>
                         </div>
+                      </div>
+                      {/* Badge stato solo su mobile */}
+                      <div className="flex md:hidden items-center justify-center space-x-3">
+                        <Badge 
+                          className={`${
+                            isOpen 
+                              ? 'bg-green-500/20 text-green-100 border-green-300/30' 
+                              : 'bg-red-500/20 text-red-100 border-red-300/30'
+                          } backdrop-blur-sm px-3 py-2`}
+                        >
+                          {openStatus.status === 'open' && <><CheckCircle className="h-4 w-4 mr-2" />Aperto</>}
+                          {openStatus.status === 'closing_soon' && <><Clock className="h-4 w-4 mr-2" />Sta chiudendo</>}
+                          {openStatus.status === 'opening_soon' && <><Clock className="h-4 w-4 mr-2" />Sta aprendo</>}
+                          {openStatus.status === 'closed' && <><XCircle className="h-4 w-4 mr-2" />Chiuso</>}
+                        </Badge>
+                        {!(pub as any)?.isActive && (
+                          <Badge className="bg-orange-500/20 text-orange-100 border-orange-300/30 backdrop-blur-sm px-3 py-2">
+                            Temporaneamente Chiuso
+                          </Badge>
+                        )}
                       </div>
                     </div>
                   </div>
