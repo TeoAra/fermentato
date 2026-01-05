@@ -1,19 +1,137 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { MapPin, Calendar, Users, Filter, Loader2 } from "lucide-react";
+import { MapPin, Calendar, Users, Filter, Loader2, Navigation, Clock, AlertCircle } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-// import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Link } from "wouter";
+
+type OpenStatus = 'open' | 'closing_soon' | 'opening_soon' | 'closed';
+
+function getOpenStatus(openingHours: any): { status: OpenStatus; label: string; color: string } {
+  if (!openingHours) return { status: 'closed', label: 'Orari non disponibili', color: 'text-gray-500' };
+  
+  const now = new Date();
+  const currentDay = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'][now.getDay()];
+  const currentTime = now.getHours() * 60 + now.getMinutes();
+  
+  const todayHours = openingHours[currentDay];
+  if (!todayHours || todayHours.isClosed) {
+    return { status: 'closed', label: 'Chiuso oggi', color: 'text-red-600 bg-red-50 dark:bg-red-900/20' };
+  }
+  
+  if (todayHours.open && todayHours.close) {
+    const [openHour, openMin] = todayHours.open.split(':').map(Number);
+    const [closeHour, closeMin] = todayHours.close.split(':').map(Number);
+    const openTime = openHour * 60 + openMin;
+    const closeTime = closeHour * 60 + closeMin;
+    
+    const isOpen = closeTime < openTime 
+      ? (currentTime >= openTime || currentTime <= closeTime)
+      : (currentTime >= openTime && currentTime <= closeTime);
+    
+    if (isOpen) {
+      const minutesToClose = closeTime < openTime 
+        ? (currentTime >= openTime ? (24 * 60 - currentTime + closeTime) : (closeTime - currentTime))
+        : (closeTime - currentTime);
+      
+      if (minutesToClose <= 30) {
+        return { status: 'closing_soon', label: `Chiude tra ${minutesToClose} min`, color: 'text-orange-600 bg-orange-50 dark:bg-orange-900/20' };
+      }
+      return { status: 'open', label: 'Aperto', color: 'text-green-600 bg-green-50 dark:bg-green-900/20' };
+    } else {
+      const minutesToOpen = openTime - currentTime;
+      if (minutesToOpen > 0 && minutesToOpen <= 60) {
+        return { status: 'opening_soon', label: `Apre tra ${minutesToOpen} min`, color: 'text-blue-600 bg-blue-50 dark:bg-blue-900/20' };
+      }
+      return { status: 'closed', label: 'Chiuso', color: 'text-red-600 bg-red-50 dark:bg-red-900/20' };
+    }
+  }
+  
+  return { status: 'open', label: 'Aperto', color: 'text-green-600 bg-green-50 dark:bg-green-900/20' };
+}
+
+function calculateDistance(lat1: number, lon1: number, lat2: number, lon2: number): number {
+  const R = 6371;
+  const dLat = (lat2 - lat1) * Math.PI / 180;
+  const dLon = (lon2 - lon1) * Math.PI / 180;
+  const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+    Math.sin(dLon / 2) * Math.sin(dLon / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return R * c;
+}
 
 export default function Activity() {
   const [activeTab, setActiveTab] = useState("nearby");
+  const [radius, setRadius] = useState("10");
+  const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
+  const [locationError, setLocationError] = useState<string | null>(null);
+  const [requestingLocation, setRequestingLocation] = useState(false);
 
-  // Mock data per ora - in futuro dal backend
-  const { data: nearbyPubs, isLoading: loadingPubs } = useQuery({
+  const requestLocation = () => {
+    if (!navigator.geolocation) {
+      setLocationError("La geolocalizzazione non è supportata dal tuo browser");
+      return;
+    }
+
+    setRequestingLocation(true);
+    setLocationError(null);
+
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        setUserLocation({
+          lat: position.coords.latitude,
+          lng: position.coords.longitude
+        });
+        setRequestingLocation(false);
+      },
+      (error) => {
+        setRequestingLocation(false);
+        switch (error.code) {
+          case error.PERMISSION_DENIED:
+            setLocationError("Permesso negato. Abilita la geolocalizzazione nelle impostazioni del browser.");
+            break;
+          case error.POSITION_UNAVAILABLE:
+            setLocationError("Posizione non disponibile");
+            break;
+          case error.TIMEOUT:
+            setLocationError("Timeout nella richiesta di posizione");
+            break;
+          default:
+            setLocationError("Errore nella geolocalizzazione");
+        }
+      },
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 300000 }
+    );
+  };
+
+  useEffect(() => {
+    requestLocation();
+  }, []);
+
+  const { data: allPubs, isLoading: loadingPubs } = useQuery({
     queryKey: ["/api/pubs"],
-    select: (data: any) => Array.isArray(data) ? data.slice(0, 6) : [] // Solo i primi 6 per "zona"
   });
+
+  const nearbyPubs = userLocation && Array.isArray(allPubs)
+    ? allPubs
+        .map((pub: any) => {
+          if (pub.latitude && pub.longitude) {
+            const distance = calculateDistance(
+              userLocation.lat,
+              userLocation.lng,
+              parseFloat(pub.latitude),
+              parseFloat(pub.longitude)
+            );
+            return { ...pub, distance };
+          }
+          return { ...pub, distance: 9999 };
+        })
+        .filter((pub: any) => pub.distance <= parseFloat(radius))
+        .sort((a: any, b: any) => a.distance - b.distance)
+    : Array.isArray(allPubs) ? allPubs.slice(0, 6) : [];
 
   const events = [
     {
@@ -76,11 +194,58 @@ export default function Activity() {
     <div className="container mx-auto px-4 py-8 max-w-4xl">
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Attività in Zona</h1>
-        <Button variant="outline" size="sm">
-          <Filter className="h-4 w-4 mr-2" />
-          Filtri
-        </Button>
+        <div className="flex items-center gap-2">
+          <Select value={radius} onValueChange={setRadius}>
+            <SelectTrigger className="w-24" data-testid="select-radius">
+              <SelectValue placeholder="Raggio" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="1">1 km</SelectItem>
+              <SelectItem value="5">5 km</SelectItem>
+              <SelectItem value="10">10 km</SelectItem>
+              <SelectItem value="25">25 km</SelectItem>
+              <SelectItem value="50">50 km</SelectItem>
+            </SelectContent>
+          </Select>
+          <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={requestLocation}
+            disabled={requestingLocation}
+            data-testid="button-refresh-location"
+          >
+            {requestingLocation ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <Navigation className="h-4 w-4" />
+            )}
+          </Button>
+        </div>
       </div>
+
+      {locationError && (
+        <div className="mb-4 p-4 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg flex items-start gap-3">
+          <AlertCircle className="h-5 w-5 text-yellow-600 flex-shrink-0 mt-0.5" />
+          <div>
+            <p className="text-sm text-yellow-800 dark:text-yellow-200">{locationError}</p>
+            <Button 
+              variant="link" 
+              size="sm" 
+              className="p-0 h-auto text-yellow-700 dark:text-yellow-300"
+              onClick={requestLocation}
+            >
+              Riprova
+            </Button>
+          </div>
+        </div>
+      )}
+
+      {userLocation && (
+        <div className="mb-4 text-sm text-gray-500 dark:text-gray-400 flex items-center gap-2">
+          <MapPin className="h-4 w-4" />
+          <span>Posizione rilevata - Mostrando pub entro {radius} km</span>
+        </div>
+      )}
 
       <div className="space-y-6">
         <div className="flex bg-gray-100 dark:bg-gray-800 rounded-lg p-1">
@@ -91,6 +256,7 @@ export default function Activity() {
                 ? "bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm" 
                 : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
             }`}
+            data-testid="tab-nearby"
           >
             Locali Vicini
           </button>
@@ -101,6 +267,7 @@ export default function Activity() {
                 ? "bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm" 
                 : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
             }`}
+            data-testid="tab-events"
           >
             Eventi
           </button>
@@ -111,49 +278,69 @@ export default function Activity() {
                 ? "bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm" 
                 : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
             }`}
+            data-testid="tab-activity"
           >
             Attività
           </button>
         </div>
 
-        {/* Locali Vicini */}
         {activeTab === "nearby" && (
           <div>
             {loadingPubs ? (
               <div className="flex items-center justify-center py-8">
                 <Loader2 className="h-8 w-8 animate-spin text-orange-600" />
               </div>
+            ) : nearbyPubs.length === 0 ? (
+              <div className="text-center py-12">
+                <MapPin className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">Nessun pub trovato</h3>
+                <p className="text-gray-500 dark:text-gray-400 mb-4">
+                  Nessun pub trovato entro {radius} km dalla tua posizione.
+                </p>
+                <Button variant="outline" onClick={() => setRadius("50")}>
+                  Espandi a 50 km
+                </Button>
+              </div>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {nearbyPubs?.map((pub: any) => (
-                  <Card key={pub.id} className="hover:shadow-md transition-shadow cursor-pointer">
-                    <CardContent className="p-4">
-                      <div className="flex items-start gap-3">
-                        <div className="w-12 h-12 bg-orange-100 dark:bg-orange-900/20 rounded-lg flex items-center justify-center">
-                          <MapPin className="h-6 w-6 text-orange-600" />
-                        </div>
-                        <div className="flex-1">
-                          <h3 className="font-semibold text-sm mb-1">{pub.name}</h3>
-                          <p className="text-xs text-gray-500 mb-2">{pub.address}</p>
-                          <div className="flex items-center gap-2">
-                            <Badge variant="secondary" className="text-xs">
-                              {Math.floor(Math.random() * 5) + 1} km
-                            </Badge>
-                            <Badge variant="outline" className="text-xs">
-                              Aperto
-                            </Badge>
+                {nearbyPubs.map((pub: any) => {
+                  const openStatus = getOpenStatus(pub.openingHours);
+                  return (
+                    <Link key={pub.id} href={`/pub/${pub.id}`}>
+                      <Card className="hover:shadow-lg hover:scale-[1.02] transition-all duration-200 cursor-pointer h-full">
+                        <CardContent className="p-4">
+                          <div className="flex items-start gap-3">
+                            <div className="w-12 h-12 bg-orange-100 dark:bg-orange-900/20 rounded-lg flex items-center justify-center flex-shrink-0">
+                              <MapPin className="h-6 w-6 text-orange-600" />
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <h3 className="font-semibold text-sm mb-1 truncate">{pub.name}</h3>
+                              <p className="text-xs text-gray-500 mb-2 line-clamp-1">{pub.address}</p>
+                              <div className="flex items-center gap-2 flex-wrap">
+                                {userLocation && pub.distance !== 9999 && (
+                                  <Badge variant="secondary" className="text-xs">
+                                    {pub.distance < 1 
+                                      ? `${Math.round(pub.distance * 1000)} m` 
+                                      : `${pub.distance.toFixed(1)} km`}
+                                  </Badge>
+                                )}
+                                <Badge className={`text-xs ${openStatus.color}`}>
+                                  <Clock className="h-3 w-3 mr-1" />
+                                  {openStatus.label}
+                                </Badge>
+                              </div>
+                            </div>
                           </div>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
+                        </CardContent>
+                      </Card>
+                    </Link>
+                  );
+                })}
               </div>
             )}
           </div>
         )}
 
-        {/* Eventi */}
         {activeTab === "events" && (
           <div className="space-y-4">
             {events.map((event) => (
@@ -196,7 +383,6 @@ export default function Activity() {
           </div>
         )}
 
-        {/* Attività Recente */}
         {activeTab === "activity" && (
           <div className="space-y-3">
             {recentActivity.map((activity) => (

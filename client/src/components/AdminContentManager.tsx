@@ -11,7 +11,8 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Search, Plus, Edit, Trash2, BeerIcon, Building2, MapPin, Upload } from "lucide-react";
+import { Search, Plus, Edit, Trash2, BeerIcon, Building2, MapPin, Upload, ExternalLink } from "lucide-react";
+import { Link } from "wouter";
 
 interface AdminContentManagerProps {
   type: 'beers' | 'breweries' | 'pubs';
@@ -588,13 +589,21 @@ export default function AdminContentManager({ type }: AdminContentManagerProps) 
                     <p className="text-sm text-gray-600">{item.address}</p>
                   )}
                 </div>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setEditingItem(item)}
-                >
-                  <Edit className="w-4 h-4" />
-                </Button>
+                <div className="flex gap-2">
+                  <Link href={type === 'beers' ? `/beer/${item.id}?edit=true` : type === 'breweries' ? `/brewery/${item.id}?edit=true` : `/pub/${item.id}?edit=true`}>
+                    <Button variant="outline" size="sm">
+                      <ExternalLink className="w-4 h-4 mr-1" />
+                      Apri
+                    </Button>
+                  </Link>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setEditingItem(item)}
+                  >
+                    <Edit className="w-4 h-4" />
+                  </Button>
+                </div>
               </div>
             ))}
           </div>

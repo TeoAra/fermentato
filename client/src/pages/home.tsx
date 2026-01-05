@@ -1,7 +1,7 @@
 import { useAuth } from "@/hooks/useAuth";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Link } from "wouter";
-import { Beer, MapPin, Heart, Store, TrendingUp, Star } from "lucide-react";
+import { Beer, MapPin, Heart, Store, TrendingUp } from "lucide-react";
 import Footer from "@/components/footer";
 import PubCard from "@/components/pub-card";
 import BreweryCard from "@/components/brewery-card";
@@ -110,15 +110,6 @@ function BrewerySquareCard({ brewery }: { brewery: any }) {
                 <Beer className="w-3 h-3 mr-1" />
                 {brewery.beerCount || 0} birre
               </Badge>
-              
-              {brewery.rating && (
-                <div className="flex items-center gap-1">
-                  <Star className="w-3 h-3 text-yellow-400 fill-current" />
-                  <span className="text-xs text-gray-600 font-medium">
-                    {typeof brewery.rating === 'number' ? brewery.rating.toFixed(1) : '0.0'}
-                  </span>
-                </div>
-              )}
             </div>
           </div>
         </CardContent>

@@ -1,7 +1,7 @@
 import { useAuth } from "@/hooks/useAuth";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useToast } from "@/hooks/use-toast";
-import { Bell, MapPin, Beer, Calendar, Settings } from "lucide-react";
+import { Bell, MapPin, Beer, Calendar, Settings, AlertCircle, CheckCircle2 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -10,6 +10,54 @@ import { Switch } from "@/components/ui/switch";
 export default function Notifications() {
   const { toast } = useToast();
   const { isAuthenticated, isLoading } = useAuth();
+  const [notificationPermission, setNotificationPermission] = useState<NotificationPermission | 'unsupported'>('default');
+
+  useEffect(() => {
+    if ('Notification' in window) {
+      setNotificationPermission(Notification.permission);
+    } else {
+      setNotificationPermission('unsupported');
+    }
+  }, []);
+
+  const requestNotificationPermission = async () => {
+    if (!('Notification' in window)) {
+      toast({
+        title: "Non supportato",
+        description: "Il tuo browser non supporta le notifiche push",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      const permission = await Notification.requestPermission();
+      setNotificationPermission(permission);
+      
+      if (permission === 'granted') {
+        toast({
+          title: "Notifiche attivate!",
+          description: "Riceverai notifiche per nuove birre, eventi e altro",
+        });
+        new Notification("Fermenta.to", {
+          body: "Le notifiche sono state attivate con successo!",
+          icon: "/favicon.ico"
+        });
+      } else if (permission === 'denied') {
+        toast({
+          title: "Notifiche bloccate",
+          description: "Puoi abilitarle dalle impostazioni del browser",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      toast({
+        title: "Errore",
+        description: "Impossibile richiedere il permesso per le notifiche",
+        variant: "destructive",
+      });
+    }
+  };
 
   // Redirect to login if not authenticated
   useEffect(() => {
@@ -83,6 +131,46 @@ export default function Notifications() {
         </Button>
       </div>
 
+      {/* Push Notification Permission */}
+      {notificationPermission !== 'granted' && notificationPermission !== 'unsupported' && (
+        <Card className="mb-6 border-orange-200 dark:border-orange-800 bg-orange-50 dark:bg-orange-900/10">
+          <CardContent className="p-4">
+            <div className="flex items-start gap-3">
+              <AlertCircle className="h-5 w-5 text-orange-600 flex-shrink-0 mt-0.5" />
+              <div className="flex-1">
+                <h3 className="font-medium text-gray-900 dark:text-white mb-1">
+                  Abilita le notifiche push
+                </h3>
+                <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">
+                  Ricevi notifiche in tempo reale quando i tuoi pub preferiti aggiungono nuove birre o creano eventi.
+                </p>
+                <Button 
+                  onClick={requestNotificationPermission}
+                  className="bg-orange-600 hover:bg-orange-700"
+                  data-testid="button-enable-notifications"
+                >
+                  <Bell className="h-4 w-4 mr-2" />
+                  Attiva notifiche
+                </Button>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {notificationPermission === 'granted' && (
+        <Card className="mb-6 border-green-200 dark:border-green-800 bg-green-50 dark:bg-green-900/10">
+          <CardContent className="p-4">
+            <div className="flex items-center gap-3">
+              <CheckCircle2 className="h-5 w-5 text-green-600" />
+              <p className="text-sm text-green-800 dark:text-green-200">
+                Notifiche push attive! Riceverai aggiornamenti in tempo reale.
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Notification Settings */}
       <Card className="mb-6">
         <CardHeader>
@@ -94,7 +182,7 @@ export default function Notifications() {
               <div className="text-sm font-medium">Nuove birre in spina</div>
               <div className="text-xs text-gray-500">Notifiche quando i tuoi locali preferiti aggiungono nuove birre</div>
             </div>
-            <Switch defaultChecked />
+            <Switch defaultChecked disabled={notificationPermission !== 'granted'} />
           </div>
           
           <div className="flex items-center justify-between">
@@ -102,7 +190,7 @@ export default function Notifications() {
               <div className="text-sm font-medium">Eventi in zona</div>
               <div className="text-xs text-gray-500">Degustazioni, festival e eventi birrai nella tua zona</div>
             </div>
-            <Switch defaultChecked />
+            <Switch defaultChecked disabled={notificationPermission !== 'granted'} />
           </div>
           
           <div className="flex items-center justify-between">
@@ -110,8 +198,14 @@ export default function Notifications() {
               <div className="text-sm font-medium">Nuovi locali</div>
               <div className="text-xs text-gray-500">Quando aprono nuovi pub nella tua zona</div>
             </div>
-            <Switch />
+            <Switch disabled={notificationPermission !== 'granted'} />
           </div>
+
+          {notificationPermission !== 'granted' && notificationPermission !== 'unsupported' && (
+            <p className="text-xs text-gray-500 italic">
+              Attiva le notifiche push per gestire queste preferenze
+            </p>
+          )}
         </CardContent>
       </Card>
 

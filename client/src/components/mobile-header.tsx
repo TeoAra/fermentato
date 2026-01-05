@@ -54,9 +54,9 @@ export function MobileHeader({ onMenuToggle, isMenuOpen }: MobileHeaderProps) {
                 </div>
               </Link>
               
-              <Link href="/pubs" onClick={onMenuToggle}>
+              <Link href="/explore/pubs" onClick={onMenuToggle}>
                 <div className={`block px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
-                  location.startsWith("/pub") 
+                  location.startsWith("/explore/pub") || location.startsWith("/pub")
                     ? "bg-orange-50 dark:bg-orange-900/20 text-orange-600 dark:text-orange-400" 
                     : "text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800"
                 }`}>
@@ -127,7 +127,7 @@ export function MobileHeader({ onMenuToggle, isMenuOpen }: MobileHeaderProps) {
                     className="w-full justify-start px-3 py-2 text-sm font-medium text-orange-600 hover:text-orange-700 hover:bg-orange-50 dark:hover:bg-orange-900/20"
                     onClick={() => {
                       onMenuToggle();
-                      window.location.href = '/api/login';
+                      window.location.href = '/auth';
                     }}
                   >
                     <LogIn className="w-4 h-4 mr-2" />

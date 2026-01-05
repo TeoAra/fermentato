@@ -52,7 +52,7 @@ export default function Header() {
     {
       icon: User,
       label: isAuthenticated ? "Dashboard" : "Accedi",
-      href: isAuthenticated ? "/dashboard" : "/api/login",
+      href: isAuthenticated ? "/dashboard" : "/auth",
       isActive: isAuthenticated && location.startsWith("/dashboard"),
       requiresAuth: false
     }

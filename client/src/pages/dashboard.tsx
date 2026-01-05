@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
+import { Link, useLocation } from "wouter";
 import { 
   User, 
   Store, 
@@ -30,7 +31,12 @@ export default function Dashboard() {
   const { toast } = useToast();
   const { user, isAuthenticated, isLoading } = useAuth();
   const queryClient = useQueryClient();
-  const [activeTab, setActiveTab] = useState("overview");
+  const [location] = useLocation();
+  
+  // Read tab from URL query params
+  const urlParams = new URLSearchParams(window.location.search);
+  const initialTab = urlParams.get('tab') || "overview";
+  const [activeTab, setActiveTab] = useState(initialTab);
 
   // Redirect pub owners to pub dashboard
   useEffect(() => {
@@ -426,35 +432,161 @@ export default function Dashboard() {
             </div>
 
             {/* Favorites */}
-            {activeTab === "favorites" && (
-              <div className="space-y-4">
-                <h3 className="text-lg font-semibold">I Tuoi Locali Preferiti</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {userFavorites?.map((pub: any) => (
-                    <Card key={pub.id} className="hover:shadow-md transition-shadow cursor-pointer">
-                      <CardContent className="p-4">
-                        <div className="flex items-start gap-3">
-                          <div className="w-12 h-12 bg-orange-100 dark:bg-orange-900/20 rounded-lg flex items-center justify-center">
-                            <Store className="h-6 w-6 text-orange-600" />
-                          </div>
-                          <div className="flex-1">
-                            <h4 className="font-semibold mb-1">{pub.name}</h4>
-                            <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">{pub.address}</p>
-                            <Badge variant="outline" className="text-xs">
-                              6 nuove birre
-                            </Badge>
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  )) || (
-                    <p className="text-gray-500 dark:text-gray-400">
-                      Non hai ancora locali preferiti. Inizia a esplorare!
-                    </p>
-                  )}
+            {activeTab === "favorites" && (() => {
+              const favoritesArray = Array.isArray(userFavorites) ? userFavorites : [];
+              const pubFavorites = favoritesArray.filter((fav: any) => fav.itemType === 'pub');
+              const breweryFavorites = favoritesArray.filter((fav: any) => fav.itemType === 'brewery');
+              const beerFavorites = favoritesArray.filter((fav: any) => fav.itemType === 'beer');
+              const styleFavorites = favoritesArray.filter((fav: any) => fav.itemType === 'style');
+              
+              return (
+              <div className="space-y-8">
+                {/* Pub Preferiti */}
+                <div>
+                  <div className="flex items-center gap-2 mb-4">
+                    <div className="p-2 bg-blue-100 dark:bg-blue-900/20 rounded-lg">
+                      <Store className="h-5 w-5 text-blue-600" />
+                    </div>
+                    <h3 className="text-lg font-semibold">Pub Preferiti</h3>
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {pubFavorites.length > 0 ? (
+                      pubFavorites.map((fav: any) => (
+                        <Link key={fav.id} href={`/pub/${fav.itemId}`}>
+                          <Card className="hover:shadow-lg hover:scale-[1.02] transition-all duration-200 cursor-pointer border-l-4 border-l-blue-500">
+                            <CardContent className="p-4">
+                              <div className="flex items-start gap-3">
+                                <div className="w-12 h-12 bg-blue-100 dark:bg-blue-900/20 rounded-lg flex items-center justify-center flex-shrink-0">
+                                  <Store className="h-6 w-6 text-blue-600" />
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                  <h4 className="font-semibold mb-1 truncate">{fav.itemName || `Pub #${fav.itemId}`}</h4>
+                                  <p className="text-sm text-gray-600 dark:text-gray-400 line-clamp-2">{fav.itemDetails || 'Clicca per vedere i dettagli'}</p>
+                                </div>
+                              </div>
+                            </CardContent>
+                          </Card>
+                        </Link>
+                      ))
+                    ) : (
+                      <p className="text-gray-500 dark:text-gray-400 col-span-full">Nessun pub nei preferiti</p>
+                    )}
+                  </div>
                 </div>
+
+                {/* Birrifici Preferiti */}
+                <div>
+                  <div className="flex items-center gap-2 mb-4">
+                    <div className="p-2 bg-amber-100 dark:bg-amber-900/20 rounded-lg">
+                      <Beer className="h-5 w-5 text-amber-600" />
+                    </div>
+                    <h3 className="text-lg font-semibold">Birrifici Preferiti</h3>
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {breweryFavorites.length > 0 ? (
+                      breweryFavorites.map((fav: any) => (
+                        <Link key={fav.id} href={`/brewery/${fav.itemId}`}>
+                          <Card className="hover:shadow-lg hover:scale-[1.02] transition-all duration-200 cursor-pointer border-l-4 border-l-amber-500">
+                            <CardContent className="p-4">
+                              <div className="flex items-start gap-3">
+                                <div className="w-12 h-12 bg-amber-100 dark:bg-amber-900/20 rounded-lg flex items-center justify-center flex-shrink-0">
+                                  <Beer className="h-6 w-6 text-amber-600" />
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                  <h4 className="font-semibold mb-1 truncate">{fav.itemName || `Birrificio #${fav.itemId}`}</h4>
+                                  <p className="text-sm text-gray-600 dark:text-gray-400 line-clamp-2">{fav.itemDetails || 'Clicca per vedere le birre'}</p>
+                                </div>
+                              </div>
+                            </CardContent>
+                          </Card>
+                        </Link>
+                      ))
+                    ) : (
+                      <p className="text-gray-500 dark:text-gray-400 col-span-full">Nessun birrificio nei preferiti</p>
+                    )}
+                  </div>
+                </div>
+
+                {/* Birre Preferite */}
+                <div>
+                  <div className="flex items-center gap-2 mb-4">
+                    <div className="p-2 bg-green-100 dark:bg-green-900/20 rounded-lg">
+                      <Beer className="h-5 w-5 text-green-600" />
+                    </div>
+                    <h3 className="text-lg font-semibold">Birre Preferite</h3>
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {beerFavorites.length > 0 ? (
+                      beerFavorites.map((fav: any) => (
+                        <Link key={fav.id} href={`/beer/${fav.itemId}`}>
+                          <Card className="hover:shadow-lg hover:scale-[1.02] transition-all duration-200 cursor-pointer border-l-4 border-l-green-500">
+                            <CardContent className="p-4">
+                              <div className="flex items-start gap-3">
+                                <div className="w-12 h-12 bg-green-100 dark:bg-green-900/20 rounded-lg flex items-center justify-center flex-shrink-0">
+                                  <Beer className="h-6 w-6 text-green-600" />
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                  <h4 className="font-semibold mb-1 truncate">{fav.itemName || `Birra #${fav.itemId}`}</h4>
+                                  <p className="text-sm text-gray-600 dark:text-gray-400 line-clamp-2">{fav.itemDetails || 'Clicca per i dettagli'}</p>
+                                </div>
+                              </div>
+                            </CardContent>
+                          </Card>
+                        </Link>
+                      ))
+                    ) : (
+                      <p className="text-gray-500 dark:text-gray-400 col-span-full">Nessuna birra nei preferiti</p>
+                    )}
+                  </div>
+                </div>
+
+                {/* Stili Preferiti */}
+                <div>
+                  <div className="flex items-center gap-2 mb-4">
+                    <div className="p-2 bg-purple-100 dark:bg-purple-900/20 rounded-lg">
+                      <Star className="h-5 w-5 text-purple-600" />
+                    </div>
+                    <h3 className="text-lg font-semibold">Stili Preferiti</h3>
+                  </div>
+                  <div className="flex flex-wrap gap-3">
+                    {styleFavorites.length > 0 ? (
+                      styleFavorites.map((fav: any) => (
+                        <Link key={fav.id} href={`/explore/beers?style=${encodeURIComponent(fav.itemName || fav.styleSlug)}`}>
+                          <Badge 
+                            variant="secondary" 
+                            className="px-4 py-2 text-sm hover:bg-purple-100 dark:hover:bg-purple-900/30 hover:scale-105 transition-all duration-200 cursor-pointer bg-gradient-to-r from-purple-50 to-violet-50 dark:from-purple-900/20 dark:to-violet-900/20 border border-purple-200 dark:border-purple-800"
+                          >
+                            {fav.itemName || fav.styleSlug}
+                          </Badge>
+                        </Link>
+                      ))
+                    ) : (
+                      <p className="text-gray-500 dark:text-gray-400">Nessuno stile preferito. Esplora le birre per aggiungere i tuoi stili preferiti!</p>
+                    )}
+                  </div>
+                </div>
+
+                {/* Empty State */}
+                {favoritesArray.length === 0 && (
+                  <div className="text-center py-12">
+                    <div className="w-16 h-16 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center mx-auto mb-4">
+                      <Heart className="h-8 w-8 text-gray-400" />
+                    </div>
+                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">Nessun preferito ancora</h3>
+                    <p className="text-gray-500 dark:text-gray-400 mb-4">Inizia a esplorare pub, birrifici e birre per aggiungere i tuoi preferiti!</p>
+                    <div className="flex gap-3 justify-center">
+                      <Link href="/explore/pubs">
+                        <Button variant="outline">Esplora Pub</Button>
+                      </Link>
+                      <Link href="/explore/breweries">
+                        <Button variant="outline">Esplora Birrifici</Button>
+                      </Link>
+                    </div>
+                  </div>
+                )}
               </div>
-            )}
+              );
+            })()}
           </div>
         </div>
       )}
