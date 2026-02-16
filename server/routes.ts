@@ -6,7 +6,7 @@ import { registerAdminRoutes } from "./routes-admin";
 import { sql, eq } from "drizzle-orm";
 import { upload, uploadImage, cloudinary } from "./cloudinary";
 import { db } from "./db";
-import { breweries, beers, pubs, users, tapList } from "@shared/schema";
+import { breweries, beers, pubs, users, tapList, notifications } from "@shared/schema";
 
 import { insertPubSchema, insertTapListSchema, insertBottleListSchema, insertMenuCategorySchema, insertMenuItemSchema, pubRegistrationSchema } from "@shared/schema";
 import { z } from "zod";
@@ -1541,6 +1541,42 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error fetching global stats:", error);
       res.status(500).json({ message: "Failed to fetch global statistics" });
+    }
+  });
+
+  app.get('/api/recent-tap-changes', async (req, res) => {
+    try {
+      const limit = Math.min(parseInt(req.query.limit as string) || 50, 100);
+      const results = await db
+        .selectDistinctOn([notifications.pubId, notifications.beerId], {
+          id: notifications.id,
+          type: notifications.type,
+          title: notifications.title,
+          message: notifications.message,
+          pubId: notifications.pubId,
+          beerId: notifications.beerId,
+          createdAt: notifications.createdAt,
+          pubName: pubs.name,
+          pubCity: pubs.city,
+          pubLatitude: pubs.latitude,
+          pubLongitude: pubs.longitude,
+        })
+        .from(notifications)
+        .innerJoin(pubs, eq(notifications.pubId, pubs.id))
+        .where(
+          sql`${notifications.type} IN ('new_beer', 'beer_removed', 'tap_change') AND ${notifications.createdAt} > NOW() - INTERVAL '30 days'`
+        )
+        .orderBy(notifications.pubId, notifications.beerId, sql`${notifications.createdAt} DESC`)
+        .limit(limit);
+
+      const sorted = results.sort((a, b) => 
+        new Date(b.createdAt!).getTime() - new Date(a.createdAt!).getTime()
+      );
+
+      res.json(sorted);
+    } catch (error) {
+      console.error("Error fetching recent tap changes:", error);
+      res.status(500).json({ message: "Failed to fetch recent tap changes" });
     }
   });
 

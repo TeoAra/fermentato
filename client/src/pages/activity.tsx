@@ -1,11 +1,13 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { MapPin, Calendar, Users, Filter, Loader2, Navigation, Clock, AlertCircle } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { MapPin, Loader2, Navigation, Clock, AlertCircle, Beer, Trash2, X } from "lucide-react";
+import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Link } from "wouter";
+import { formatDistanceToNow } from "date-fns";
+import { it } from "date-fns/locale";
 
 type OpenStatus = 'open' | 'closing_soon' | 'opening_soon' | 'closed';
 
@@ -63,12 +65,32 @@ function calculateDistance(lat1: number, lon1: number, lat2: number, lon2: numbe
   return R * c;
 }
 
+interface TapChange {
+  id: number;
+  type: string;
+  title: string;
+  message: string;
+  pubId: number;
+  beerId: number | null;
+  createdAt: string;
+  pubName: string;
+  pubCity: string;
+  pubLatitude: string | null;
+  pubLongitude: string | null;
+}
+
 export default function Activity() {
   const [activeTab, setActiveTab] = useState("nearby");
   const [radius, setRadius] = useState("10");
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
   const [locationError, setLocationError] = useState<string | null>(null);
   const [requestingLocation, setRequestingLocation] = useState(false);
+  const [dismissedIds, setDismissedIds] = useState<Set<number>>(() => {
+    try {
+      const stored = localStorage.getItem('dismissedTapChanges');
+      return stored ? new Set(JSON.parse(stored)) : new Set();
+    } catch { return new Set(); }
+  });
 
   const requestLocation = () => {
     if (!navigator.geolocation) {
@@ -115,6 +137,10 @@ export default function Activity() {
     queryKey: ["/api/pubs"],
   });
 
+  const { data: tapChanges = [], isLoading: loadingTapChanges } = useQuery<TapChange[]>({
+    queryKey: ["/api/recent-tap-changes"],
+  });
+
   const nearbyPubs = userLocation && Array.isArray(allPubs)
     ? allPubs
         .map((pub: any) => {
@@ -133,66 +159,54 @@ export default function Activity() {
         .sort((a: any, b: any) => a.distance - b.distance)
     : Array.isArray(allPubs) ? allPubs.slice(0, 6) : [];
 
-  const events = [
-    {
-      id: 1,
-      title: "Degustazione Birre Belghe",
-      pub: "Malto & Luppolo",
-      date: "Sabato 25 Gennaio",
-      time: "20:00",
-      attendees: 15,
-      maxAttendees: 25,
-      type: "tasting"
-    },
-    {
-      id: 2,
-      title: "Live Music & Craft Beer",
-      pub: "Birra & Baccalà",
-      date: "Venerdì 24 Gennaio",
-      time: "21:30",
-      attendees: 8,
-      maxAttendees: 30,
-      type: "music"
-    },
-    {
-      id: 3,
-      title: "Torneo Beer Pong",
-      pub: "Il Luppoleto",
-      date: "Domenica 26 Gennaio",
-      time: "19:00",
-      attendees: 12,
-      maxAttendees: 16,
-      type: "game"
-    }
-  ];
+  const nearbyTapChanges = useMemo(() => {
+    const filtered = tapChanges.filter(tc => !dismissedIds.has(tc.id));
+    
+    if (!userLocation) return filtered;
+    
+    return filtered
+      .map(tc => {
+        if (tc.pubLatitude && tc.pubLongitude) {
+          const distance = calculateDistance(
+            userLocation.lat,
+            userLocation.lng,
+            parseFloat(tc.pubLatitude),
+            parseFloat(tc.pubLongitude)
+          );
+          return { ...tc, distance };
+        }
+        return { ...tc, distance: 9999 };
+      })
+      .filter(tc => tc.distance <= parseFloat(radius))
+      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+  }, [tapChanges, userLocation, radius, dismissedIds]);
 
-  const recentActivity = [
-    {
-      id: 1,
-      type: "new_beer",
-      pub: "Malto & Luppolo",
-      beer: "Hoppy Lager",
-      time: "30 min fa"
-    },
-    {
-      id: 2,
-      type: "event_created",
-      pub: "Birra & Baccalà",
-      event: "Serata Weiss",
-      time: "2 ore fa"
-    },
-    {
-      id: 3,
-      type: "new_pub",
-      pub: "Craft Corner",
-      location: "Via Roma, 15",
-      time: "1 giorno fa"
-    }
-  ];
+  const dismissChange = (id: number) => {
+    setDismissedIds(prev => {
+      const next = new Set(prev);
+      next.add(id);
+      localStorage.setItem('dismissedTapChanges', JSON.stringify(Array.from(next)));
+      return next;
+    });
+  };
+
+  const clearAllDismissed = () => {
+    setDismissedIds(new Set());
+    localStorage.removeItem('dismissedTapChanges');
+  };
+
+  const dismissAll = () => {
+    const allIds = nearbyTapChanges.map(tc => tc.id);
+    setDismissedIds(prev => {
+      const next = new Set(Array.from(prev).concat(allIds));
+      localStorage.setItem('dismissedTapChanges', JSON.stringify(Array.from(next)));
+      return next;
+    });
+  };
 
   return (
-    <div className="container mx-auto px-4 py-8 max-w-4xl">
-      <div className="flex items-center justify-between mb-6">
+    <div className="container mx-auto px-4 py-6 max-w-4xl pb-24">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6">
         <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Attività in Zona</h1>
         <div className="flex items-center gap-2">
           <Select value={radius} onValueChange={setRadius}>
@@ -243,7 +257,7 @@ export default function Activity() {
       {userLocation && (
         <div className="mb-4 text-sm text-gray-500 dark:text-gray-400 flex items-center gap-2">
           <MapPin className="h-4 w-4" />
-          <span>Posizione rilevata - Mostrando pub entro {radius} km</span>
+          <span>Posizione rilevata - Mostrando risultati entro {radius} km</span>
         </div>
       )}
 
@@ -261,26 +275,18 @@ export default function Activity() {
             Locali Vicini
           </button>
           <button 
-            onClick={() => setActiveTab("events")}
+            onClick={() => setActiveTab("tapchanges")}
             className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors ${
-              activeTab === "events" 
+              activeTab === "tapchanges" 
                 ? "bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm" 
                 : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
             }`}
-            data-testid="tab-events"
+            data-testid="tab-tapchanges"
           >
-            Eventi
-          </button>
-          <button 
-            onClick={() => setActiveTab("activity")}
-            className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors ${
-              activeTab === "activity" 
-                ? "bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm" 
-                : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
-            }`}
-            data-testid="tab-activity"
-          >
-            Attività
+            Birre in Zona
+            {nearbyTapChanges.length > 0 && (
+              <Badge className="ml-2 bg-orange-600 text-white text-xs px-1.5 py-0">{nearbyTapChanges.length}</Badge>
+            )}
           </button>
         </div>
 
@@ -346,79 +352,101 @@ export default function Activity() {
           </div>
         )}
 
-        {activeTab === "events" && (
-          <div className="space-y-4">
-            {events.map((event) => (
-              <Card key={event.id} className="hover:shadow-md transition-shadow">
-                <CardContent className="p-4">
-                  <div className="flex items-start gap-3">
-                    <div className="w-12 h-12 bg-blue-100 dark:bg-blue-900/20 rounded-lg flex items-center justify-center">
-                      <Calendar className="h-6 w-6 text-blue-600" />
-                    </div>
-                    <div className="flex-1">
-                      <div className="flex items-center justify-between mb-2">
-                        <h3 className="font-semibold">{event.title}</h3>
-                        <Badge className={
-                          event.type === "tasting" ? "bg-orange-100 text-orange-800" :
-                          event.type === "music" ? "bg-purple-100 text-purple-800" :
-                          "bg-green-100 text-green-800"
-                        }>
-                          {event.type === "tasting" ? "Degustazione" :
-                           event.type === "music" ? "Musica" : "Gioco"}
-                        </Badge>
-                      </div>
-                      <p className="text-sm text-gray-600 dark:text-gray-300 mb-2">
-                        <MapPin className="h-4 w-4 inline mr-1" />
-                        {event.pub}
-                      </p>
-                      <div className="flex items-center justify-between text-sm">
-                        <span className="text-gray-500">
-                          {event.date} • {event.time}
-                        </span>
-                        <div className="flex items-center gap-1 text-gray-500">
-                          <Users className="h-4 w-4" />
-                          <span>{event.attendees}/{event.maxAttendees}</span>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        )}
+        {activeTab === "tapchanges" && (
+          <div>
+            {nearbyTapChanges.length > 0 && (
+              <div className="flex items-center justify-end gap-2 mb-3">
+                {dismissedIds.size > 0 && (
+                  <Button variant="ghost" size="sm" onClick={clearAllDismissed} className="text-xs text-gray-500">
+                    Ripristina nascoste
+                  </Button>
+                )}
+                <Button variant="outline" size="sm" onClick={dismissAll} className="text-xs">
+                  <Trash2 className="h-3 w-3 mr-1" />
+                  Nascondi tutte
+                </Button>
+              </div>
+            )}
 
-        {activeTab === "activity" && (
-          <div className="space-y-3">
-            {recentActivity.map((activity) => (
-              <Card key={activity.id} className="hover:shadow-sm transition-shadow">
-                <CardContent className="p-4">
-                  <div className="flex items-center gap-3">
-                    <div className="w-2 h-2 bg-orange-600 rounded-full"></div>
-                    <div className="flex-1">
-                      {activity.type === "new_beer" && (
-                        <p className="text-sm">
-                          <span className="font-medium">{activity.pub}</span> ha aggiunto 
-                          <span className="font-medium text-orange-600"> {activity.beer}</span> in spina
-                        </p>
-                      )}
-                      {activity.type === "event_created" && (
-                        <p className="text-sm">
-                          <span className="font-medium">{activity.pub}</span> ha creato l'evento 
-                          <span className="font-medium text-blue-600"> {activity.event}</span>
-                        </p>
-                      )}
-                      {activity.type === "new_pub" && (
-                        <p className="text-sm">
-                          Nuovo locale: <span className="font-medium">{activity.pub}</span> in {activity.location}
-                        </p>
-                      )}
-                      <span className="text-xs text-gray-500">{activity.time}</span>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
+            {loadingTapChanges ? (
+              <div className="flex items-center justify-center py-8">
+                <Loader2 className="h-8 w-8 animate-spin text-orange-600" />
+              </div>
+            ) : nearbyTapChanges.length === 0 ? (
+              <div className="text-center py-12">
+                <Beer className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+                  Nessuna novità
+                </h3>
+                <p className="text-gray-500 dark:text-gray-400 mb-4">
+                  {dismissedIds.size > 0
+                    ? "Hai nascosto tutte le notifiche. Puoi ripristinarle."
+                    : `Nessuna birra aggiunta o rimossa entro ${radius} km negli ultimi 30 giorni.`}
+                </p>
+                {dismissedIds.size > 0 ? (
+                  <Button variant="outline" onClick={clearAllDismissed}>
+                    Ripristina nascoste
+                  </Button>
+                ) : (
+                  <Button variant="outline" onClick={() => setRadius("50")}>
+                    Espandi a 50 km
+                  </Button>
+                )}
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {nearbyTapChanges.map((tc) => (
+                  <Card key={tc.id} className="hover:shadow-sm transition-shadow group">
+                    <CardContent className="p-4">
+                      <div className="flex items-start gap-3">
+                        <div className={`w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 ${
+                          tc.type === 'beer_removed' 
+                            ? 'bg-red-100 dark:bg-red-900/20' 
+                            : 'bg-orange-100 dark:bg-orange-900/20'
+                        }`}>
+                          <Beer className={`h-5 w-5 ${
+                            tc.type === 'beer_removed' ? 'text-red-600' : 'text-orange-600'
+                          }`} />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium text-gray-900 dark:text-white">
+                            {tc.message}
+                          </p>
+                          <div className="flex items-center gap-2 mt-1 flex-wrap">
+                            <Link href={`/pub/${tc.pubId}`}>
+                              <span className="text-xs text-orange-600 hover:underline font-medium cursor-pointer">
+                                {tc.pubName}
+                              </span>
+                            </Link>
+                            {tc.pubCity && (
+                              <span className="text-xs text-gray-400">• {tc.pubCity}</span>
+                            )}
+                            {'distance' in tc && (tc as any).distance !== 9999 && (
+                              <span className="text-xs font-medium text-blue-600 dark:text-blue-400">
+                                {(tc as any).distance < 1 
+                                  ? `${Math.round((tc as any).distance * 1000)}m` 
+                                  : `${(tc as any).distance.toFixed(1)}km`}
+                              </span>
+                            )}
+                          </div>
+                          <span className="text-xs text-gray-400 mt-1 block">
+                            {formatDistanceToNow(new Date(tc.createdAt), { addSuffix: true, locale: it })}
+                          </span>
+                        </div>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="flex-shrink-0 h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity text-gray-400 hover:text-red-500"
+                          onClick={() => dismissChange(tc.id)}
+                        >
+                          <X className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            )}
           </div>
         )}
       </div>
