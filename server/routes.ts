@@ -1297,7 +1297,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!user) return false;
       
       // Check if user is admin
-      if (user.userType === 'admin' || user.active_role === 'admin' || (user.roles && user.roles.includes('admin'))) {
+      if (user.userType === 'admin' || user.activeRole === 'admin' || (user.roles && user.roles.includes('admin'))) {
         return true;
       }
       
