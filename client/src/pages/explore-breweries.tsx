@@ -15,8 +15,99 @@ const paesiMondiali = [
   "Italia", "Germania", "Stati Uniti", "Belgio", "Regno Unito", "Francia", 
   "Spagna", "Olanda", "Repubblica Ceca", "Canada", "Australia", "Giappone",
   "Messico", "Brasile", "Danimarca", "Svezia", "Norvegia", "Finlandia",
-  "Austria", "Svizzera", "Irlanda", "Polonia", "Altri"
+  "Austria", "Svizzera", "Irlanda", "Polonia", "Portogallo", "Nuova Zelanda",
+  "Israele", "India", "Altri"
 ];
+
+const countryNameMap: Record<string, string> = {
+  "Italy": "Italia", "Italia": "Italia",
+  "Germany": "Germania", "Germania": "Germania", "Deutschland": "Germania",
+  "United States": "Stati Uniti", "USA": "Stati Uniti", "US": "Stati Uniti", "Stati Uniti": "Stati Uniti",
+  "Belgium": "Belgio", "Belgio": "Belgio", "Belgique": "Belgio", "België": "Belgio",
+  "United Kingdom": "Regno Unito", "UK": "Regno Unito", "Regno Unito": "Regno Unito",
+  "France": "Francia", "Francia": "Francia",
+  "Spain": "Spagna", "Spagna": "Spagna", "España": "Spagna",
+  "Netherlands": "Olanda", "Olanda": "Olanda", "Holland": "Olanda", "Paesi Bassi": "Olanda",
+  "Czech Republic": "Repubblica Ceca", "Czechia": "Repubblica Ceca", "Repubblica Ceca": "Repubblica Ceca",
+  "Canada": "Canada",
+  "Australia": "Australia",
+  "Japan": "Giappone", "Giappone": "Giappone",
+  "Mexico": "Messico", "Messico": "Messico", "México": "Messico",
+  "Brazil": "Brasile", "Brasile": "Brasile", "Brasil": "Brasile",
+  "Denmark": "Danimarca", "Danimarca": "Danimarca", "Danmark": "Danimarca",
+  "Sweden": "Svezia", "Svezia": "Svezia", "Sverige": "Svezia",
+  "Norway": "Norvegia", "Norvegia": "Norvegia", "Norge": "Norvegia",
+  "Finland": "Finlandia", "Finlandia": "Finlandia", "Suomi": "Finlandia",
+  "Austria": "Austria", "Österreich": "Austria",
+  "Switzerland": "Svizzera", "Svizzera": "Svizzera", "Schweiz": "Svizzera", "Suisse": "Svizzera",
+  "Ireland": "Irlanda", "Irlanda": "Irlanda",
+  "Poland": "Polonia", "Polonia": "Polonia", "Polska": "Polonia",
+  "Portugal": "Portogallo", "Portogallo": "Portogallo",
+  "New Zealand": "Nuova Zelanda", "Nuova Zelanda": "Nuova Zelanda",
+  "Israel": "Israele", "Israele": "Israele",
+  "India": "India",
+};
+
+const regionToCountry: Record<string, string> = {
+  "Abruzzo": "Italia", "Basilicata": "Italia", "Calabria": "Italia", "Campania": "Italia",
+  "Emilia-Romagna": "Italia", "Friuli-Venezia Giulia": "Italia", "Lazio": "Italia",
+  "Liguria": "Italia", "Lombardia": "Italia", "Molise": "Italia", "Piemonte": "Italia",
+  "Puglia": "Italia", "Sardegna": "Italia", "Sicilia": "Italia", "Toscana": "Italia",
+  "Trentino-Alto Adige": "Italia", "Umbria": "Italia", "Valle d'Aosta": "Italia", "Veneto": "Italia",
+  "Italia": "Italia",
+  "AN": "Italia", "AP": "Italia", "FM": "Italia", "FO": "Italia", "IM": "Italia",
+  "MB": "Italia", "MC": "Italia", "NL": "Italia", "PU": "Italia", "SA": "Italia",
+  "SP": "Italia", "SV": "Italia",
+  "Bavaria": "Germania", "Nord": "Germania",
+  "England": "Regno Unito", "UK": "Regno Unito",
+  "Alsace": "Francia",
+  "East Flanders": "Belgio", "West Flanders": "Belgio", "Hainaut": "Belgio",
+  "Brussels": "Belgio", "Région wallonne": "Belgio",
+  "Gelderland": "Olanda", "North Holland": "Olanda",
+  "Madrid": "Spagna",
+  "Lisbon": "Portogallo", "Porto": "Portogallo",
+  "Plzen": "Repubblica Ceca", "Krusovice": "Repubblica Ceca",
+  "Arizona": "Stati Uniti", "California": "Stati Uniti", "Colorado": "Stati Uniti",
+  "Idaho": "Stati Uniti", "Indiana": "Stati Uniti", "Massachusetts": "Stati Uniti",
+  "Michigan": "Stati Uniti", "Minnesota": "Stati Uniti", "Nevada": "Stati Uniti",
+  "New York": "Stati Uniti", "North Carolina": "Stati Uniti", "Ohio": "Stati Uniti",
+  "Oklahoma": "Stati Uniti", "Oregon": "Stati Uniti", "South Carolina": "Stati Uniti",
+  "Texas": "Stati Uniti", "Washington": "Stati Uniti", "Wisconsin": "Stati Uniti", "WA": "Stati Uniti",
+  "Ontario": "Canada", "Quebec": "Canada", "Nova Scotia": "Canada",
+  "Baja California": "Messico", "Sinaloa": "Messico",
+  "Rio de Janeiro": "Brasile",
+  "NSW": "Australia", "Queensland": "Australia", "Victoria": "Australia",
+  "Auckland": "Nuova Zelanda", "Otago": "Nuova Zelanda", "Wellington": "Nuova Zelanda",
+  "Tokyo": "Giappone", "Ibaraki": "Giappone", "Okinawa": "Giappone",
+  "Saitama": "Giappone", "Shizuoka": "Giappone",
+  "Cork": "Irlanda", "Kilkenny": "Irlanda",
+  "Estero": "Altri",
+};
+
+function detectCountry(brewery: any): string {
+  const loc = brewery.location || "";
+  const parts = loc.split(",").map((p: string) => p.trim());
+  if (parts.length >= 2) {
+    const lastPart = parts[parts.length - 1];
+    const mapped = countryNameMap[lastPart];
+    if (mapped) return mapped;
+  }
+
+  const region = brewery.region || "";
+  if (region && regionToCountry[region]) {
+    return regionToCountry[region];
+  }
+
+  if (region && countryNameMap[region]) {
+    return countryNameMap[region];
+  }
+
+  for (const [key, value] of Object.entries(countryNameMap)) {
+    if (loc.toLowerCase().includes(key.toLowerCase())) return value;
+  }
+
+  return "Altri";
+}
 
 function BrewerySquareCard({ brewery }: { brewery: any }) {
   const { isAuthenticated } = useAuth();
@@ -138,22 +229,8 @@ export default function ExploreBreweries() {
     );
   };
 
-  // Group breweries by country
   const breweriesByCountry = Array.isArray(allBreweries) ? allBreweries.reduce((acc: any, brewery: any) => {
-    let country = brewery.country || brewery.region;
-    
-    // Map common country variations
-    if (country?.includes('Italy') || country?.includes('Italia')) country = 'Italia';
-    else if (country?.includes('Germany') || country?.includes('Germania')) country = 'Germania';
-    else if (country?.includes('United States') || country?.includes('USA') || country?.includes('US')) country = 'Stati Uniti';
-    else if (country?.includes('United Kingdom') || country?.includes('UK')) country = 'Regno Unito';
-    else if (country?.includes('Belgium') || country?.includes('Belgio')) country = 'Belgio';
-    else if (country?.includes('France') || country?.includes('Francia')) country = 'Francia';
-    else if (country?.includes('Spain') || country?.includes('Spagna')) country = 'Spagna';
-    else if (country?.includes('Netherlands') || country?.includes('Olanda')) country = 'Olanda';
-    else if (country?.includes('Czech') || country?.includes('Ceca')) country = 'Repubblica Ceca';
-    else if (!country || !paesiMondiali.includes(country)) country = 'Altri';
-    
+    const country = detectCountry(brewery);
     if (!acc[country]) acc[country] = [];
     acc[country].push(brewery);
     return acc;
