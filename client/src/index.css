@@ -304,6 +304,7 @@
 /* Google Maps Autocomplete dropdown - ensure it appears above dialogs */
 .pac-container {
   z-index: 10000 !important;
+  pointer-events: auto !important;
   background-color: var(--background);
   border: 1px solid var(--border);
   border-radius: 8px;
