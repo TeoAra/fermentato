@@ -210,26 +210,26 @@ export function TapListManager({ pubId, tapList }: TapListManagerProps) {
     enabled: creatingBeer && debouncedBrewerySearch.length >= 2,
   });
 
-  const uploadFileToCloudinary = async (file: File, folder: string): Promise<string | null> => {
-    try {
-      const fd = new FormData();
-      fd.append("image", file);
-      fd.append("folder", folder);
-      const res = await fetch("/api/upload/image", { method: "POST", credentials: "include", body: fd });
-      if (!res.ok) throw new Error("Upload failed");
-      const data = await res.json();
-      return data.url;
-    } catch {
-      return null;
+  const uploadFileToCloudinary = async (file: File, folder: string): Promise<string> => {
+    const fd = new FormData();
+    fd.append("image", file);
+    fd.append("folder", folder);
+    const res = await fetch("/api/upload/image", { method: "POST", credentials: "include", body: fd });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({ message: "Upload fallito" }));
+      throw new Error(err.message || "Upload immagine fallito");
     }
+    const data = await res.json();
+    if (!data.url) throw new Error("URL immagine non ricevuto dal server");
+    return data.url;
   };
 
   const createBreweryMutation = useMutation({
     mutationFn: async (data: { name: string; location: string; region: string; description: string }) => {
       setUploadingBreweryImages(true);
       try {
-        let logoUrl: string | null = null;
-        let coverImageUrl: string | null = null;
+        let logoUrl: string | undefined = undefined;
+        let coverImageUrl: string | undefined = undefined;
         if (breweryLogoFile) logoUrl = await uploadFileToCloudinary(breweryLogoFile, "brewery-logos");
         if (breweryCoverFile) coverImageUrl = await uploadFileToCloudinary(breweryCoverFile, "brewery-covers");
         const region = data.region || data.location;
@@ -249,8 +249,8 @@ export function TapListManager({ pubId, tapList }: TapListManagerProps) {
       setBreweryCoverFile(null);
       setBreweryCoverPreview("");
     },
-    onError: () => {
-      toast({ title: "Errore", description: "Non è stato possibile creare il birrificio", variant: "destructive" });
+    onError: (error: Error) => {
+      toast({ title: "Errore", description: error.message || "Non è stato possibile creare il birrificio", variant: "destructive" });
     },
   });
 
@@ -258,8 +258,7 @@ export function TapListManager({ pubId, tapList }: TapListManagerProps) {
     mutationFn: async (data: { name: string; breweryId: string; style: string; abv?: string; ibu?: string; description?: string; imageUrl?: string }) => {
       let imageUrl = data.imageUrl;
       if (beerImageFile) {
-        const uploaded = await uploadBeerImage();
-        if (uploaded) imageUrl = uploaded;
+        imageUrl = await uploadBeerImage();
       }
       return apiRequest("/api/owner/beers", { method: "POST" }, { ...data, imageUrl });
     },
@@ -273,8 +272,8 @@ export function TapListManager({ pubId, tapList }: TapListManagerProps) {
       setStyleDropdownOpen(false);
       queryClient.invalidateQueries({ queryKey: ["/api/search"] });
     },
-    onError: () => {
-      toast({ title: "Errore", description: "Non è stato possibile creare la birra", variant: "destructive" });
+    onError: (error: Error) => {
+      toast({ title: "Errore", description: error.message || "Non è stato possibile creare la birra", variant: "destructive" });
     },
   });
 
@@ -329,20 +328,21 @@ export function TapListManager({ pubId, tapList }: TapListManagerProps) {
     }
   };
 
-  const uploadBeerImage = async (): Promise<string | null> => {
-    if (!beerImageFile) return null;
+  const uploadBeerImage = async (): Promise<string> => {
+    if (!beerImageFile) throw new Error("Nessun file selezionato");
     setUploadingBeerImage(true);
     try {
       const formData = new FormData();
       formData.append("image", beerImageFile);
       formData.append("folder", "beer-images");
       const res = await fetch("/api/upload/image", { method: "POST", credentials: "include", body: formData });
-      if (!res.ok) throw new Error("Upload failed");
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({ message: "Upload fallito" }));
+        throw new Error(err.message || "Upload fallito");
+      }
       const data = await res.json();
+      if (!data.url) throw new Error("URL immagine non ricevuto dal server");
       return data.url;
-    } catch {
-      toast({ title: "Errore upload immagine", variant: "destructive" });
-      return null;
     } finally {
       setUploadingBeerImage(false);
     }

@@ -1471,6 +1471,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Image upload routes
   app.post('/api/upload/image', isAuthenticated, upload.single('image'), async (req, res) => {
     try {
+      if (!process.env.CLOUDINARY_CLOUD_NAME || !process.env.CLOUDINARY_API_KEY || !process.env.CLOUDINARY_API_SECRET) {
+        return res.status(503).json({ message: 'Servizio immagini non configurato. Contatta l\'amministratore.' });
+      }
+
       if (!req.file) {
         return res.status(400).json({ message: 'Nessun file fornito' });
       }
