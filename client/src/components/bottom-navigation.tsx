@@ -2,6 +2,7 @@ import { Search, User, Bell, MapPin, Home, Sparkles } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import { useState, useEffect } from "react";
 import { useAuth } from "@/hooks/useAuth";
+import { useQuery } from "@tanstack/react-query";
 import SearchDialog from "./search-dialog";
 
 export function BottomNavigation() {
@@ -10,6 +11,12 @@ export function BottomNavigation() {
   const { isAuthenticated, user } = useAuth();
   const [isVisible, setIsVisible] = useState(true);
   const [lastScrollY, setLastScrollY] = useState(0);
+
+  const { data: unreadData } = useQuery<{ count: number }>({
+    queryKey: ['/api/notifications/unread-count'],
+    enabled: isAuthenticated,
+    refetchInterval: 30000,
+  });
 
   // Smart hide/show on scroll for better UX - MOVED BEFORE CONDITIONAL LOGIC
   useEffect(() => {
@@ -60,7 +67,7 @@ export function BottomNavigation() {
       label: "Notifiche",
       href: "/notifications", 
       isActive: location.startsWith("/notification"),
-      badge: 3,
+      badge: unreadData?.count || 0,
       requiresAuth: true
     },
     {

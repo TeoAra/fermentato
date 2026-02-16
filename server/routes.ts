@@ -469,8 +469,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { pubId, id } = req.params;
       
       console.log('DELETE taplist item:', { pubId, id });
-      
+
+      const tapItems = await storage.getTapListByPubForOwner(parseInt(pubId));
+      const removedItem = tapItems.find((t: any) => t.id === parseInt(id));
+
       await storage.removeFromTapList(parseInt(id));
+
+      if (removedItem) {
+        const beer = await storage.getBeer(removedItem.beerId);
+        if (beer) {
+          notifyTapListChange(parseInt(pubId), 'beer_removed', beer.name, beer.id);
+        }
+      }
+
       console.log('Deleted taplist item:', id);
       res.status(200).json({ success: true });
     } catch (error) {
@@ -524,6 +535,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const tapData = insertTapListSchema.parse({ ...req.body, pubId });
       const tapItem = await storage.addToTapList(tapData);
+
+      const beer = await storage.getBeer(tapData.beerId);
+      if (beer) {
+        notifyTapListChange(pubId, 'new_beer', beer.name, beer.id);
+      }
+
       res.status(201).json(tapItem);
     } catch (error) {
       if (error instanceof z.ZodError) {
@@ -1293,6 +1310,44 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   };
 
+  const notifyTapListChange = async (pubId: number, type: 'new_beer' | 'beer_removed' | 'tap_change', beerName: string, beerId?: number) => {
+    try {
+      const pub = await storage.getPub(pubId);
+      if (!pub) return;
+
+      const userIds = await storage.getUsersWhoFavoritedPub(pubId);
+      if (userIds.length === 0) return;
+
+      const titleMap = {
+        new_beer: `Nuova birra alla spina!`,
+        beer_removed: `Birra rimossa dalla spina`,
+        tap_change: `Aggiornamento spine`,
+      };
+      const messageMap = {
+        new_beer: `${pub.name} ha aggiunto "${beerName}" alle spine.`,
+        beer_removed: `${pub.name} ha rimosso "${beerName}" dalle spine.`,
+        tap_change: `${pub.name} ha aggiornato le spine.`,
+      };
+
+      for (const userId of userIds) {
+        const prefs = await storage.getNotificationPreferences(userId);
+        if (prefs && !prefs.tapChanges) continue;
+
+        await storage.createNotification({
+          userId,
+          type,
+          title: titleMap[type],
+          message: messageMap[type],
+          pubId,
+          beerId: beerId ?? null,
+          isRead: false,
+        });
+      }
+    } catch (error) {
+      console.error("Error sending tap change notifications:", error);
+    }
+  };
+
   // Admin routes
   app.get('/api/admin/stats', isAuthenticated, isAdmin, async (req: any, res) => {
     try {
@@ -2044,6 +2099,91 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error fetching allergens:", error);
       res.status(500).json({ message: "Failed to fetch allergens" });
+    }
+  });
+
+  // ==================== NOTIFICATIONS ====================
+
+  app.get("/api/notifications", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = (req.user as any).id;
+      const notifs = await storage.getNotifications(userId);
+      res.json(notifs);
+    } catch (error) {
+      console.error("Error fetching notifications:", error);
+      res.status(500).json({ message: "Failed to fetch notifications" });
+    }
+  });
+
+  app.get("/api/notifications/unread-count", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = (req.user as any).id;
+      const count = await storage.getUnreadNotificationCount(userId);
+      res.json({ count });
+    } catch (error) {
+      console.error("Error fetching unread count:", error);
+      res.status(500).json({ message: "Failed to fetch unread count" });
+    }
+  });
+
+  app.patch("/api/notifications/:id/read", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = (req.user as any).id;
+      const id = parseInt(req.params.id);
+      await storage.markNotificationRead(id, userId);
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error marking notification read:", error);
+      res.status(500).json({ message: "Failed to mark notification as read" });
+    }
+  });
+
+  app.post("/api/notifications/mark-all-read", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = (req.user as any).id;
+      await storage.markAllNotificationsRead(userId);
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error marking all notifications read:", error);
+      res.status(500).json({ message: "Failed to mark all as read" });
+    }
+  });
+
+  app.delete("/api/notifications/:id", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = (req.user as any).id;
+      const id = parseInt(req.params.id);
+      await storage.deleteNotification(id, userId);
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error deleting notification:", error);
+      res.status(500).json({ message: "Failed to delete notification" });
+    }
+  });
+
+  // Notification preferences
+  app.get("/api/notification-preferences", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = (req.user as any).id;
+      let prefs = await storage.getNotificationPreferences(userId);
+      if (!prefs) {
+        prefs = await storage.upsertNotificationPreferences(userId, {});
+      }
+      res.json(prefs);
+    } catch (error) {
+      console.error("Error fetching notification preferences:", error);
+      res.status(500).json({ message: "Failed to fetch preferences" });
+    }
+  });
+
+  app.patch("/api/notification-preferences", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = (req.user as any).id;
+      const prefs = await storage.upsertNotificationPreferences(userId, req.body);
+      res.json(prefs);
+    } catch (error) {
+      console.error("Error updating notification preferences:", error);
+      res.status(500).json({ message: "Failed to update preferences" });
     }
   });
 

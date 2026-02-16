@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Beer, Search, Bell, MapPin, Home, User, LogOut } from "lucide-react";
 import type { User as UserType } from "@shared/schema";
 import { useState, useRef, useEffect } from "react";
+import { useQuery } from "@tanstack/react-query";
 import SearchResults from "@/components/search-results";
 import SearchDialog from "@/components/search-dialog";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
@@ -19,6 +20,12 @@ export default function Header() {
   const [showResults, setShowResults] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const searchRef = useRef<HTMLDivElement>(null);
+
+  const { data: unreadData } = useQuery<{ count: number }>({
+    queryKey: ['/api/notifications/unread-count'],
+    enabled: isAuthenticated,
+    refetchInterval: 30000,
+  });
 
   // Hide header for pub owners in dashboard
   const isPubOwnerInDashboard = isAuthenticated && 
@@ -46,7 +53,7 @@ export default function Header() {
       label: "Notifiche",
       href: "/notifications", 
       isActive: location.startsWith("/notifications"),
-      badge: 3,
+      badge: unreadData?.count || 0,
       requiresAuth: true
     },
     {

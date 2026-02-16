@@ -12,6 +12,8 @@ import {
   favorites,
   userActivities,
   userBeerTastings,
+  notifications,
+  notificationPreferences,
   type User,
   type UpsertUser,
   type Pub,
@@ -38,6 +40,10 @@ import {
   type InsertUserBeerTasting,
   type PubSize,
   type InsertPubSize,
+  type Notification,
+  type InsertNotification,
+  type NotificationPreference,
+  type InsertNotificationPreference,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, desc, like, inArray, sql, or, asc, ilike } from "drizzle-orm";
@@ -249,6 +255,21 @@ export interface IStorage {
   addBeerTasting(tasting: InsertUserBeerTasting): Promise<UserBeerTasting>;
   updateBeerTasting(id: number, updates: Partial<InsertUserBeerTasting>): Promise<UserBeerTasting>;
   deleteBeerTasting(id: number): Promise<void>;
+
+  // Notification operations
+  getNotifications(userId: string): Promise<Notification[]>;
+  getUnreadNotificationCount(userId: string): Promise<number>;
+  createNotification(notification: InsertNotification): Promise<Notification>;
+  markNotificationRead(id: number, userId: string): Promise<void>;
+  markAllNotificationsRead(userId: string): Promise<void>;
+  deleteNotification(id: number, userId: string): Promise<void>;
+
+  // Notification preferences
+  getNotificationPreferences(userId: string): Promise<NotificationPreference | null>;
+  upsertNotificationPreferences(userId: string, prefs: Partial<InsertNotificationPreference>): Promise<NotificationPreference>;
+
+  // Helper: get users who favorited a pub (for sending notifications)
+  getUsersWhoFavoritedPub(pubId: number): Promise<string[]>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -1144,6 +1165,67 @@ export class DatabaseStorage implements IStorage {
       );
     return tasting;
   }
+
+  async getNotifications(userId: string): Promise<Notification[]> {
+    return db.select().from(notifications)
+      .where(eq(notifications.userId, userId))
+      .orderBy(desc(notifications.createdAt));
+  }
+
+  async getUnreadNotificationCount(userId: string): Promise<number> {
+    const result = await db.select({ count: sql<number>`count(*)::int` })
+      .from(notifications)
+      .where(and(eq(notifications.userId, userId), eq(notifications.isRead, false)));
+    return result[0]?.count ?? 0;
+  }
+
+  async createNotification(notification: InsertNotification): Promise<Notification> {
+    const [created] = await db.insert(notifications).values(notification).returning();
+    return created;
+  }
+
+  async markNotificationRead(id: number, userId: string): Promise<void> {
+    await db.update(notifications).set({ isRead: true })
+      .where(and(eq(notifications.id, id), eq(notifications.userId, userId)));
+  }
+
+  async markAllNotificationsRead(userId: string): Promise<void> {
+    await db.update(notifications).set({ isRead: true })
+      .where(eq(notifications.userId, userId));
+  }
+
+  async deleteNotification(id: number, userId: string): Promise<void> {
+    await db.delete(notifications)
+      .where(and(eq(notifications.id, id), eq(notifications.userId, userId)));
+  }
+
+  async getNotificationPreferences(userId: string): Promise<NotificationPreference | null> {
+    const [prefs] = await db.select().from(notificationPreferences)
+      .where(eq(notificationPreferences.userId, userId));
+    return prefs ?? null;
+  }
+
+  async upsertNotificationPreferences(userId: string, prefs: Partial<InsertNotificationPreference>): Promise<NotificationPreference> {
+    const existing = await this.getNotificationPreferences(userId);
+    if (existing) {
+      const [updated] = await db.update(notificationPreferences)
+        .set({ ...prefs, updatedAt: new Date() })
+        .where(eq(notificationPreferences.userId, userId))
+        .returning();
+      return updated;
+    }
+    const [created] = await db.insert(notificationPreferences)
+      .values({ userId, tapChanges: true, events: true, newPubs: false, ...prefs })
+      .returning();
+    return created;
+  }
+
+  async getUsersWhoFavoritedPub(pubId: number): Promise<string[]> {
+    const rows = await db.select({ userId: favorites.userId })
+      .from(favorites)
+      .where(and(eq(favorites.itemType, 'pub'), eq(favorites.itemId, pubId)));
+    return rows.map(r => r.userId);
+  }
 }
 
 // Storage wrapper with fallback to in-memory when database is disabled
@@ -1683,6 +1765,69 @@ class StorageWrapper implements IStorage {
     return this.dbCall(
       () => this.databaseStorage.getFavoritesByType(userId, itemType),
       async () => { return []; }
+    );
+  }
+
+  async getNotifications(userId: string): Promise<Notification[]> {
+    return this.dbCall(
+      () => this.databaseStorage.getNotifications(userId),
+      async () => []
+    );
+  }
+
+  async getUnreadNotificationCount(userId: string): Promise<number> {
+    return this.dbCall(
+      () => this.databaseStorage.getUnreadNotificationCount(userId),
+      async () => 0
+    );
+  }
+
+  async createNotification(notification: InsertNotification): Promise<Notification> {
+    return this.dbCall(
+      () => this.databaseStorage.createNotification(notification),
+      async () => { throw new Error('Not implemented in memory storage'); }
+    );
+  }
+
+  async markNotificationRead(id: number, userId: string): Promise<void> {
+    return this.dbCall(
+      () => this.databaseStorage.markNotificationRead(id, userId),
+      async () => {}
+    );
+  }
+
+  async markAllNotificationsRead(userId: string): Promise<void> {
+    return this.dbCall(
+      () => this.databaseStorage.markAllNotificationsRead(userId),
+      async () => {}
+    );
+  }
+
+  async deleteNotification(id: number, userId: string): Promise<void> {
+    return this.dbCall(
+      () => this.databaseStorage.deleteNotification(id, userId),
+      async () => {}
+    );
+  }
+
+  async getNotificationPreferences(userId: string): Promise<NotificationPreference | null> {
+    return this.dbCall(
+      () => this.databaseStorage.getNotificationPreferences(userId),
+      async () => null
+    );
+  }
+
+  async upsertNotificationPreferences(userId: string, prefs: Partial<InsertNotificationPreference>): Promise<NotificationPreference> {
+    return this.dbCall(
+      () => this.databaseStorage.upsertNotificationPreferences(userId, prefs),
+      async () => { throw new Error('Not implemented in memory storage'); }
+    );
+  }
+
+  async getUsersWhoFavoritedPub(pubId: number): Promise<string[]> {
+    return this.dbCall(
+      () => this.databaseStorage.getUsersWhoFavoritedPub(pubId),
+      async () => []
     );
   }
 }
