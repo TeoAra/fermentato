@@ -2078,17 +2078,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(403).json({ message: "Pub owner access required" });
       }
 
-      const { name, location, region } = req.body;
-      if (!name || !location || !region) {
-        return res.status(400).json({ message: "Nome, località e regione sono obbligatori" });
+      const { name, location } = req.body;
+      if (!name || !location) {
+        return res.status(400).json({ message: "Nome e località sono obbligatori" });
       }
 
       const brewery = await storage.createBrewery({
         name: name.trim(),
         location: location.trim(),
-        region: region.trim(),
+        region: req.body.region?.trim() || "",
         description: req.body.description?.trim() || null,
         websiteUrl: req.body.websiteUrl?.trim() || null,
+        logoUrl: req.body.logoUrl?.trim() || null,
+        coverImageUrl: req.body.coverImageUrl?.trim() || null,
       });
       res.json(brewery);
     } catch (error) {

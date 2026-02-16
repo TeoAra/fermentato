@@ -11,6 +11,7 @@ import { Switch } from "@/components/ui/switch";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import { PriceFormatManager } from "@/components/price-format-manager";
+import { AddressAutocomplete } from "@/components/AddressAutocomplete";
 import { 
   Beer, 
   Plus, 
@@ -107,7 +108,15 @@ export function TapListManager({ pubId, tapList }: TapListManagerProps) {
     name: "",
     location: "",
     region: "",
+    description: "",
+    logoUrl: "",
+    coverImageUrl: "",
   });
+  const [breweryLogoFile, setBreweryLogoFile] = useState<File | null>(null);
+  const [breweryLogoPreview, setBreweryLogoPreview] = useState("");
+  const [breweryCoverFile, setBreweryCoverFile] = useState<File | null>(null);
+  const [breweryCoverPreview, setBreweryCoverPreview] = useState("");
+  const [uploadingBreweryImages, setUploadingBreweryImages] = useState(false);
 
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -201,16 +210,44 @@ export function TapListManager({ pubId, tapList }: TapListManagerProps) {
     enabled: creatingBeer && debouncedBrewerySearch.length >= 2,
   });
 
+  const uploadFileToCloudinary = async (file: File, folder: string): Promise<string | null> => {
+    try {
+      const fd = new FormData();
+      fd.append("image", file);
+      fd.append("folder", folder);
+      const res = await fetch("/api/upload/image", { method: "POST", credentials: "include", body: fd });
+      if (!res.ok) throw new Error("Upload failed");
+      const data = await res.json();
+      return data.url;
+    } catch {
+      return null;
+    }
+  };
+
   const createBreweryMutation = useMutation({
-    mutationFn: async (data: { name: string; location: string; region: string }) => {
-      return apiRequest("/api/owner/breweries", { method: "POST" }, data);
+    mutationFn: async (data: { name: string; location: string; region: string; description: string }) => {
+      setUploadingBreweryImages(true);
+      try {
+        let logoUrl: string | null = null;
+        let coverImageUrl: string | null = null;
+        if (breweryLogoFile) logoUrl = await uploadFileToCloudinary(breweryLogoFile, "brewery-logos");
+        if (breweryCoverFile) coverImageUrl = await uploadFileToCloudinary(breweryCoverFile, "brewery-covers");
+        const region = data.region || data.location;
+        return apiRequest("/api/owner/breweries", { method: "POST" }, { ...data, region, logoUrl, coverImageUrl });
+      } finally {
+        setUploadingBreweryImages(false);
+      }
     },
     onSuccess: (brewery: any) => {
       toast({ title: "Birrificio creato!" });
       setNewBeerData(prev => ({ ...prev, breweryId: brewery.id.toString(), breweryName: brewery.name }));
       setCreatingBrewery(false);
       setBrewerySearchTerm("");
-      setNewBreweryData({ name: "", location: "", region: "" });
+      setNewBreweryData({ name: "", location: "", region: "", description: "", logoUrl: "", coverImageUrl: "" });
+      setBreweryLogoFile(null);
+      setBreweryLogoPreview("");
+      setBreweryCoverFile(null);
+      setBreweryCoverPreview("");
     },
     onError: () => {
       toast({ title: "Errore", description: "Non è stato possibile creare il birrificio", variant: "destructive" });
@@ -324,7 +361,11 @@ export function TapListManager({ pubId, tapList }: TapListManagerProps) {
     setCreatingBrewery(false);
     setBrewerySearchTerm("");
     setNewBeerData({ name: "", style: "", abv: "", ibu: "", description: "", breweryId: "", breweryName: "", imageUrl: "" });
-    setNewBreweryData({ name: "", location: "", region: "" });
+    setNewBreweryData({ name: "", location: "", region: "", description: "", logoUrl: "", coverImageUrl: "" });
+    setBreweryLogoFile(null);
+    setBreweryLogoPreview("");
+    setBreweryCoverFile(null);
+    setBreweryCoverPreview("");
     setStyleSearchTerm("");
     setStyleDropdownOpen(false);
     setBeerImageFile(null);
@@ -400,7 +441,7 @@ export function TapListManager({ pubId, tapList }: TapListManagerProps) {
                 Aggiungi Birra
               </Button>
             </DialogTrigger>
-            <DialogContent className="max-w-2xl">
+            <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
               <DialogHeader>
                 <DialogTitle>
                   {editingItem ? "Modifica Birra" : "Aggiungi Birra alla Tap List"}
@@ -703,47 +744,90 @@ export function TapListManager({ pubId, tapList }: TapListManagerProps) {
                           />
                         </div>
 
+                        <div>
+                          <Label className="text-xs">Località *</Label>
+                          <AddressAutocomplete
+                            value={newBreweryData.location}
+                            onAddressSelect={(details) => {
+                              setNewBreweryData({
+                                ...newBreweryData,
+                                location: details.city || details.formattedAddress,
+                                region: details.region,
+                              });
+                            }}
+                            placeholder="Cerca località..."
+                            className="[&_input]:h-9 [&_input]:text-sm"
+                          />
+                        </div>
+
+                        <div>
+                          <Label className="text-xs">Descrizione</Label>
+                          <Textarea
+                            value={newBreweryData.description}
+                            onChange={(e) => setNewBreweryData({ ...newBreweryData, description: e.target.value })}
+                            placeholder="Breve descrizione del birrificio..."
+                            className="min-h-[50px] text-sm"
+                          />
+                        </div>
+
                         <div className="grid grid-cols-2 gap-3">
                           <div>
-                            <Label className="text-xs">Località *</Label>
-                            <Input
-                              value={newBreweryData.location}
-                              onChange={(e) => setNewBreweryData({ ...newBreweryData, location: e.target.value })}
-                              placeholder="Es: Padova"
-                              className="h-9"
-                            />
+                            <Label className="text-xs">Logo</Label>
+                            {breweryLogoPreview ? (
+                              <div className="relative w-16 h-16 mt-1">
+                                <img src={breweryLogoPreview} alt="Logo" className="w-16 h-16 object-cover rounded-lg border" />
+                                <button
+                                  type="button"
+                                  onClick={() => { setBreweryLogoFile(null); setBreweryLogoPreview(""); }}
+                                  className="absolute -top-1.5 -right-1.5 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center"
+                                >
+                                  <X className="h-3 w-3" />
+                                </button>
+                              </div>
+                            ) : (
+                              <label className="flex items-center gap-2 mt-1 px-3 py-2 border border-dashed rounded-lg cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
+                                <ImagePlus className="h-4 w-4 text-gray-400" />
+                                <span className="text-xs text-gray-500">Carica logo</span>
+                                <input type="file" accept="image/*" className="hidden" onChange={(e) => {
+                                  const f = e.target.files?.[0];
+                                  if (f) {
+                                    setBreweryLogoFile(f);
+                                    const r = new FileReader();
+                                    r.onload = (ev) => setBreweryLogoPreview(ev.target?.result as string);
+                                    r.readAsDataURL(f);
+                                  }
+                                }} />
+                              </label>
+                            )}
                           </div>
                           <div>
-                            <Label className="text-xs">Regione *</Label>
-                            <Input
-                              value={newBreweryData.region}
-                              onChange={(e) => setNewBreweryData({ ...newBreweryData, region: e.target.value })}
-                              placeholder="Es: Veneto"
-                              className="h-9"
-                              list="region-options"
-                            />
-                            <datalist id="region-options">
-                              <option value="Abruzzo" />
-                              <option value="Basilicata" />
-                              <option value="Calabria" />
-                              <option value="Campania" />
-                              <option value="Emilia-Romagna" />
-                              <option value="Friuli-Venezia Giulia" />
-                              <option value="Lazio" />
-                              <option value="Liguria" />
-                              <option value="Lombardia" />
-                              <option value="Marche" />
-                              <option value="Molise" />
-                              <option value="Piemonte" />
-                              <option value="Puglia" />
-                              <option value="Sardegna" />
-                              <option value="Sicilia" />
-                              <option value="Toscana" />
-                              <option value="Trentino-Alto Adige" />
-                              <option value="Umbria" />
-                              <option value="Valle d'Aosta" />
-                              <option value="Veneto" />
-                            </datalist>
+                            <Label className="text-xs">Copertina</Label>
+                            {breweryCoverPreview ? (
+                              <div className="relative w-full h-16 mt-1">
+                                <img src={breweryCoverPreview} alt="Cover" className="w-full h-16 object-cover rounded-lg border" />
+                                <button
+                                  type="button"
+                                  onClick={() => { setBreweryCoverFile(null); setBreweryCoverPreview(""); }}
+                                  className="absolute -top-1.5 -right-1.5 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center"
+                                >
+                                  <X className="h-3 w-3" />
+                                </button>
+                              </div>
+                            ) : (
+                              <label className="flex items-center gap-2 mt-1 px-3 py-2 border border-dashed rounded-lg cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
+                                <ImagePlus className="h-4 w-4 text-gray-400" />
+                                <span className="text-xs text-gray-500">Carica copertina</span>
+                                <input type="file" accept="image/*" className="hidden" onChange={(e) => {
+                                  const f = e.target.files?.[0];
+                                  if (f) {
+                                    setBreweryCoverFile(f);
+                                    const r = new FileReader();
+                                    r.onload = (ev) => setBreweryCoverPreview(ev.target?.result as string);
+                                    r.readAsDataURL(f);
+                                  }
+                                }} />
+                              </label>
+                            )}
                           </div>
                         </div>
 
@@ -753,11 +837,11 @@ export function TapListManager({ pubId, tapList }: TapListManagerProps) {
                           </Button>
                           <Button
                             size="sm"
-                            disabled={!newBreweryData.name || !newBreweryData.location || !newBreweryData.region || createBreweryMutation.isPending}
+                            disabled={!newBreweryData.name || !newBreweryData.location || createBreweryMutation.isPending || uploadingBreweryImages}
                             onClick={() => createBreweryMutation.mutate(newBreweryData)}
                           >
-                            {createBreweryMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : <Factory className="h-4 w-4 mr-1" />}
-                            Crea birrificio
+                            {(createBreweryMutation.isPending || uploadingBreweryImages) ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : <Factory className="h-4 w-4 mr-1" />}
+                            {uploadingBreweryImages ? "Caricamento..." : "Crea birrificio"}
                           </Button>
                         </div>
                       </div>
