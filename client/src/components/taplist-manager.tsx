@@ -275,6 +275,17 @@ export function TapListManager({ pubId, tapList }: TapListManagerProps) {
       setStyleSearchTerm("");
       setStyleDropdownOpen(false);
       queryClient.invalidateQueries({ queryKey: ["/api/search"] });
+      if (editingItem && isChangingBeer) {
+        setSelectedNewBeer({
+          id: beer.id,
+          name: beer.name,
+          style: beer.style || '',
+          abv: beer.abv || '',
+          breweryName: beer.brewery?.name || newBeerData.breweryName || 'Birrificio',
+        });
+        setIsChangingBeer(false);
+        setSearchTerm('');
+      }
     },
     onError: (error: Error) => {
       toast({ title: "Errore", description: error.message || "Non è stato possibile creare la birra", variant: "destructive" });
@@ -553,307 +564,310 @@ export function TapListManager({ pubId, tapList }: TapListManagerProps) {
                       </>
                     )}
 
-                    {creatingBeer && !creatingBrewery && (
-                      <div className="border rounded-lg p-4 bg-amber-50/50 dark:bg-amber-900/10 space-y-4">
-                        <div className="flex items-center gap-2 mb-2">
-                          <Button variant="ghost" size="sm" className="h-7 w-7 p-0" onClick={() => setCreatingBeer(false)}>
-                            <ArrowLeft className="h-4 w-4" />
+                  </div>
+                )}
+
+                {/* Form creazione birra - condiviso tra aggiunta e modifica */}
+                {creatingBeer && !creatingBrewery && (
+                  <div className="border rounded-lg p-4 bg-amber-50/50 dark:bg-amber-900/10 space-y-4">
+                    <div className="flex items-center gap-2 mb-2">
+                      <Button variant="ghost" size="sm" className="h-7 w-7 p-0" onClick={() => setCreatingBeer(false)}>
+                        <ArrowLeft className="h-4 w-4" />
+                      </Button>
+                      <h4 className="font-semibold text-sm">Crea nuova birra</h4>
+                    </div>
+
+                    <div>
+                      <Label className="text-xs">Nome birra *</Label>
+                      <Input
+                        value={newBeerData.name}
+                        onChange={(e) => setNewBeerData({ ...newBeerData, name: e.target.value })}
+                        placeholder="Es: IPA del Birrificio"
+                        className="h-9"
+                      />
+                    </div>
+
+                    <div>
+                      <Label className="text-xs">Birrificio *</Label>
+                      {newBeerData.breweryId ? (
+                        <div className="flex items-center justify-between p-2 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg">
+                          <div className="flex items-center gap-2">
+                            <Factory className="h-4 w-4 text-green-600" />
+                            <span className="text-sm font-medium">{newBeerData.breweryName}</span>
+                          </div>
+                          <Button variant="ghost" size="sm" className="h-7 text-xs" onClick={() => setNewBeerData({ ...newBeerData, breweryId: "", breweryName: "" })}>
+                            Cambia
                           </Button>
-                          <h4 className="font-semibold text-sm">Crea nuova birra</h4>
                         </div>
-
-                        <div>
-                          <Label className="text-xs">Nome birra *</Label>
-                          <Input
-                            value={newBeerData.name}
-                            onChange={(e) => setNewBeerData({ ...newBeerData, name: e.target.value })}
-                            placeholder="Es: IPA del Birrificio"
-                            className="h-9"
-                          />
-                        </div>
-
-                        <div>
-                          <Label className="text-xs">Birrificio *</Label>
-                          {newBeerData.breweryId ? (
-                            <div className="flex items-center justify-between p-2 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg">
-                              <div className="flex items-center gap-2">
-                                <Factory className="h-4 w-4 text-green-600" />
-                                <span className="text-sm font-medium">{newBeerData.breweryName}</span>
-                              </div>
-                              <Button variant="ghost" size="sm" className="h-7 text-xs" onClick={() => setNewBeerData({ ...newBeerData, breweryId: "", breweryName: "" })}>
-                                Cambia
-                              </Button>
-                            </div>
-                          ) : (
-                            <div className="space-y-2">
-                              <div className="relative">
-                                <Search className="absolute left-2.5 top-2.5 h-3.5 w-3.5 text-gray-400" />
-                                <Input
-                                  value={brewerySearchTerm}
-                                  onChange={(e) => setBrewerySearchTerm(e.target.value)}
-                                  placeholder="Cerca birrificio..."
-                                  className="h-9 pl-8 text-sm"
-                                />
-                              </div>
-                              {Array.isArray(breweryResults) && breweryResults.length > 0 && (
-                                <div className="max-h-32 overflow-y-auto border rounded-lg bg-white dark:bg-gray-900">
-                                  {breweryResults.map((b: any) => (
-                                    <div
-                                      key={b.id}
-                                      className="p-2 hover:bg-gray-50 dark:hover:bg-gray-800 cursor-pointer border-b last:border-b-0 text-sm"
-                                      onClick={() => {
-                                        setNewBeerData({ ...newBeerData, breweryId: b.id.toString(), breweryName: b.name });
-                                        setBrewerySearchTerm("");
-                                      }}
-                                    >
-                                      <span className="font-medium">{b.name}</span>
-                                      <span className="text-gray-500 ml-1">• {b.location}</span>
-                                    </div>
-                                  ))}
-                                </div>
-                              )}
-                              {debouncedBrewerySearch.length >= 2 && Array.isArray(breweryResults) && breweryResults.length === 0 && (
-                                <Button
-                                  type="button"
-                                  variant="outline"
-                                  size="sm"
-                                  className="w-full text-xs"
+                      ) : (
+                        <div className="space-y-2">
+                          <div className="relative">
+                            <Search className="absolute left-2.5 top-2.5 h-3.5 w-3.5 text-gray-400" />
+                            <Input
+                              value={brewerySearchTerm}
+                              onChange={(e) => setBrewerySearchTerm(e.target.value)}
+                              placeholder="Cerca birrificio..."
+                              className="h-9 pl-8 text-sm"
+                            />
+                          </div>
+                          {Array.isArray(breweryResults) && breweryResults.length > 0 && (
+                            <div className="max-h-32 overflow-y-auto border rounded-lg bg-white dark:bg-gray-900">
+                              {breweryResults.map((b: any) => (
+                                <div
+                                  key={b.id}
+                                  className="p-2 hover:bg-gray-50 dark:hover:bg-gray-800 cursor-pointer border-b last:border-b-0 text-sm"
                                   onClick={() => {
-                                    setCreatingBrewery(true);
-                                    setNewBreweryData(prev => ({ ...prev, name: brewerySearchTerm }));
+                                    setNewBeerData({ ...newBeerData, breweryId: b.id.toString(), breweryName: b.name });
+                                    setBrewerySearchTerm("");
                                   }}
                                 >
-                                  <Plus className="w-3 h-3 mr-1" />
-                                  Crea "{brewerySearchTerm}"
-                                </Button>
-                              )}
+                                  <span className="font-medium">{b.name}</span>
+                                  <span className="text-gray-500 ml-1">• {b.location}</span>
+                                </div>
+                              ))}
                             </div>
                           )}
-                        </div>
-
-                        <div className="grid grid-cols-2 gap-3">
-                          <div className="relative">
-                            <Label className="text-xs">Stile *</Label>
-                            <Input
-                              value={styleDropdownOpen ? styleSearchTerm : newBeerData.style}
-                              onChange={(e) => {
-                                setStyleSearchTerm(e.target.value);
-                                setNewBeerData({ ...newBeerData, style: e.target.value });
-                                setStyleDropdownOpen(true);
+                          {debouncedBrewerySearch.length >= 2 && Array.isArray(breweryResults) && breweryResults.length === 0 && (
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="sm"
+                              className="w-full text-xs"
+                              onClick={() => {
+                                setCreatingBrewery(true);
+                                setNewBreweryData(prev => ({ ...prev, name: brewerySearchTerm }));
                               }}
-                              onFocus={() => {
-                                setStyleSearchTerm(newBeerData.style);
-                                setStyleDropdownOpen(true);
-                              }}
-                              onBlur={() => setTimeout(() => setStyleDropdownOpen(false), 200)}
-                              placeholder="Cerca stile..."
-                              className="h-9"
-                              autoComplete="off"
-                            />
-                            {styleDropdownOpen && filteredStyles.length > 0 && (
-                              <div className="absolute z-50 w-full mt-1 max-h-40 overflow-y-auto border rounded-lg bg-white dark:bg-gray-900 shadow-lg">
-                                {filteredStyles.slice(0, 15).map((style) => (
-                                  <div
-                                    key={style}
-                                    className="px-3 py-1.5 text-sm hover:bg-amber-50 dark:hover:bg-amber-900/20 cursor-pointer"
-                                    onMouseDown={(e) => {
-                                      e.preventDefault();
-                                      setNewBeerData({ ...newBeerData, style });
-                                      setStyleSearchTerm(style);
-                                      setStyleDropdownOpen(false);
-                                    }}
-                                  >
-                                    {style}
-                                  </div>
-                                ))}
-                              </div>
-                            )}
-                          </div>
-                          <div>
-                            <Label className="text-xs">ABV %</Label>
-                            <Input
-                              type="number"
-                              step="0.1"
-                              min="0"
-                              max="30"
-                              value={newBeerData.abv}
-                              onChange={(e) => setNewBeerData({ ...newBeerData, abv: e.target.value })}
-                              placeholder="5.5"
-                              className="h-9"
-                            />
-                          </div>
+                            >
+                              <Plus className="w-3 h-3 mr-1" />
+                              Crea "{brewerySearchTerm}"
+                            </Button>
+                          )}
                         </div>
+                      )}
+                    </div>
 
-                        <div>
-                          <Label className="text-xs">Descrizione</Label>
-                          <Textarea
-                            value={newBeerData.description}
-                            onChange={(e) => setNewBeerData({ ...newBeerData, description: e.target.value })}
-                            placeholder="Note sulla birra, aromi, sapore..."
-                            className="min-h-[60px] text-sm"
-                          />
-                        </div>
-
-                        <div>
-                          <Label className="text-xs">Immagine birra</Label>
-                          {beerImagePreview ? (
-                            <div className="relative w-20 h-20 mt-1">
-                              <img src={beerImagePreview} alt="Anteprima" className="w-20 h-20 object-cover rounded-lg border" />
-                              <button
-                                type="button"
-                                onClick={() => { setBeerImageFile(null); setBeerImagePreview(""); }}
-                                className="absolute -top-1.5 -right-1.5 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs"
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="relative">
+                        <Label className="text-xs">Stile *</Label>
+                        <Input
+                          value={styleDropdownOpen ? styleSearchTerm : newBeerData.style}
+                          onChange={(e) => {
+                            setStyleSearchTerm(e.target.value);
+                            setNewBeerData({ ...newBeerData, style: e.target.value });
+                            setStyleDropdownOpen(true);
+                          }}
+                          onFocus={() => {
+                            setStyleSearchTerm(newBeerData.style);
+                            setStyleDropdownOpen(true);
+                          }}
+                          onBlur={() => setTimeout(() => setStyleDropdownOpen(false), 200)}
+                          placeholder="Cerca stile..."
+                          className="h-9"
+                          autoComplete="off"
+                        />
+                        {styleDropdownOpen && filteredStyles.length > 0 && (
+                          <div className="absolute z-50 w-full mt-1 max-h-40 overflow-y-auto border rounded-lg bg-white dark:bg-gray-900 shadow-lg">
+                            {filteredStyles.slice(0, 15).map((style) => (
+                              <div
+                                key={style}
+                                className="px-3 py-1.5 text-sm hover:bg-amber-50 dark:hover:bg-amber-900/20 cursor-pointer"
+                                onMouseDown={(e) => {
+                                  e.preventDefault();
+                                  setNewBeerData({ ...newBeerData, style });
+                                  setStyleSearchTerm(style);
+                                  setStyleDropdownOpen(false);
+                                }}
                               >
-                                <X className="h-3 w-3" />
-                              </button>
-                            </div>
-                          ) : (
-                            <label className="flex items-center gap-2 mt-1 px-3 py-2 border border-dashed rounded-lg cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
-                              <ImagePlus className="h-4 w-4 text-gray-400" />
-                              <span className="text-xs text-gray-500">Carica immagine</span>
-                              <input type="file" accept="image/*" className="hidden" onChange={handleBeerImageChange} />
-                            </label>
-                          )}
-                        </div>
-
-                        <div className="flex justify-end gap-2 pt-2">
-                          <Button variant="outline" size="sm" onClick={() => setCreatingBeer(false)}>
-                            Annulla
-                          </Button>
-                          <Button
-                            size="sm"
-                            disabled={!newBeerData.name || !newBeerData.breweryId || !newBeerData.style || createBeerMutation.isPending || uploadingBeerImage}
-                            onClick={() => createBeerMutation.mutate(newBeerData)}
-                          >
-                            {(createBeerMutation.isPending || uploadingBeerImage) ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : <Plus className="h-4 w-4 mr-1" />}
-                            {uploadingBeerImage ? "Caricamento immagine..." : "Crea birra"}
-                          </Button>
-                        </div>
-                      </div>
-                    )}
-
-                    {creatingBrewery && (
-                      <div className="border rounded-lg p-4 bg-blue-50/50 dark:bg-blue-900/10 space-y-3">
-                        <div className="flex items-center gap-2 mb-1">
-                          <Button variant="ghost" size="sm" className="h-7 w-7 p-0" onClick={() => setCreatingBrewery(false)}>
-                            <ArrowLeft className="h-4 w-4" />
-                          </Button>
-                          <h4 className="font-semibold text-sm">Crea nuovo birrificio</h4>
-                        </div>
-
-                        <div>
-                          <Label className="text-xs">Nome birrificio *</Label>
-                          <Input
-                            value={newBreweryData.name}
-                            onChange={(e) => setNewBreweryData({ ...newBreweryData, name: e.target.value })}
-                            placeholder="Es: Birrificio Artigianale XYZ"
-                            className="h-9"
-                          />
-                        </div>
-
-                        <div>
-                          <Label className="text-xs">Località *</Label>
-                          <AddressAutocomplete
-                            value={newBreweryData.location}
-                            onAddressSelect={(details) => {
-                              setNewBreweryData({
-                                ...newBreweryData,
-                                location: details.formattedAddress || details.city,
-                                region: details.region,
-                              });
-                            }}
-                            placeholder="Cerca località..."
-                            className="[&_input]:h-9 [&_input]:text-sm"
-                            countryRestriction={null}
-                          />
-                        </div>
-
-                        <div>
-                          <Label className="text-xs">Descrizione</Label>
-                          <Textarea
-                            value={newBreweryData.description}
-                            onChange={(e) => setNewBreweryData({ ...newBreweryData, description: e.target.value })}
-                            placeholder="Breve descrizione del birrificio..."
-                            className="min-h-[50px] text-sm"
-                          />
-                        </div>
-
-                        <div className="grid grid-cols-2 gap-3">
-                          <div>
-                            <Label className="text-xs">Logo</Label>
-                            {breweryLogoPreview ? (
-                              <div className="relative w-16 h-16 mt-1">
-                                <img src={breweryLogoPreview} alt="Logo" className="w-16 h-16 object-cover rounded-lg border" />
-                                <button
-                                  type="button"
-                                  onClick={() => { setBreweryLogoFile(null); setBreweryLogoPreview(""); }}
-                                  className="absolute -top-1.5 -right-1.5 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center"
-                                >
-                                  <X className="h-3 w-3" />
-                                </button>
+                                {style}
                               </div>
-                            ) : (
-                              <label className="flex items-center gap-2 mt-1 px-3 py-2 border border-dashed rounded-lg cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
-                                <ImagePlus className="h-4 w-4 text-gray-400" />
-                                <span className="text-xs text-gray-500">Carica logo</span>
-                                <input type="file" accept="image/*" className="hidden" onChange={(e) => {
-                                  const f = e.target.files?.[0];
-                                  if (f) {
-                                    setBreweryLogoFile(f);
-                                    const r = new FileReader();
-                                    r.onload = (ev) => setBreweryLogoPreview(ev.target?.result as string);
-                                    r.readAsDataURL(f);
-                                  }
-                                }} />
-                              </label>
-                            )}
+                            ))}
                           </div>
-                          <div>
-                            <Label className="text-xs">Copertina</Label>
-                            {breweryCoverPreview ? (
-                              <div className="relative w-full h-16 mt-1">
-                                <img src={breweryCoverPreview} alt="Cover" className="w-full h-16 object-cover rounded-lg border" />
-                                <button
-                                  type="button"
-                                  onClick={() => { setBreweryCoverFile(null); setBreweryCoverPreview(""); }}
-                                  className="absolute -top-1.5 -right-1.5 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center"
-                                >
-                                  <X className="h-3 w-3" />
-                                </button>
-                              </div>
-                            ) : (
-                              <label className="flex items-center gap-2 mt-1 px-3 py-2 border border-dashed rounded-lg cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
-                                <ImagePlus className="h-4 w-4 text-gray-400" />
-                                <span className="text-xs text-gray-500">Carica copertina</span>
-                                <input type="file" accept="image/*" className="hidden" onChange={(e) => {
-                                  const f = e.target.files?.[0];
-                                  if (f) {
-                                    setBreweryCoverFile(f);
-                                    const r = new FileReader();
-                                    r.onload = (ev) => setBreweryCoverPreview(ev.target?.result as string);
-                                    r.readAsDataURL(f);
-                                  }
-                                }} />
-                              </label>
-                            )}
-                          </div>
-                        </div>
-
-                        <div className="flex justify-end gap-2 pt-1">
-                          <Button variant="outline" size="sm" onClick={() => setCreatingBrewery(false)}>
-                            Annulla
-                          </Button>
-                          <Button
-                            size="sm"
-                            disabled={!newBreweryData.name || !newBreweryData.location || createBreweryMutation.isPending || uploadingBreweryImages}
-                            onClick={() => createBreweryMutation.mutate(newBreweryData)}
-                          >
-                            {(createBreweryMutation.isPending || uploadingBreweryImages) ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : <Factory className="h-4 w-4 mr-1" />}
-                            {uploadingBreweryImages ? "Caricamento..." : "Crea birrificio"}
-                          </Button>
-                        </div>
+                        )}
                       </div>
-                    )}
+                      <div>
+                        <Label className="text-xs">ABV %</Label>
+                        <Input
+                          type="number"
+                          step="0.1"
+                          min="0"
+                          max="30"
+                          value={newBeerData.abv}
+                          onChange={(e) => setNewBeerData({ ...newBeerData, abv: e.target.value })}
+                          placeholder="5.5"
+                          className="h-9"
+                        />
+                      </div>
+                    </div>
+
+                    <div>
+                      <Label className="text-xs">Descrizione</Label>
+                      <Textarea
+                        value={newBeerData.description}
+                        onChange={(e) => setNewBeerData({ ...newBeerData, description: e.target.value })}
+                        placeholder="Note sulla birra, aromi, sapore..."
+                        className="min-h-[60px] text-sm"
+                      />
+                    </div>
+
+                    <div>
+                      <Label className="text-xs">Immagine birra</Label>
+                      {beerImagePreview ? (
+                        <div className="relative w-20 h-20 mt-1">
+                          <img src={beerImagePreview} alt="Anteprima" className="w-20 h-20 object-cover rounded-lg border" />
+                          <button
+                            type="button"
+                            onClick={() => { setBeerImageFile(null); setBeerImagePreview(""); }}
+                            className="absolute -top-1.5 -right-1.5 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs"
+                          >
+                            <X className="h-3 w-3" />
+                          </button>
+                        </div>
+                      ) : (
+                        <label className="flex items-center gap-2 mt-1 px-3 py-2 border border-dashed rounded-lg cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
+                          <ImagePlus className="h-4 w-4 text-gray-400" />
+                          <span className="text-xs text-gray-500">Carica immagine</span>
+                          <input type="file" accept="image/*" className="hidden" onChange={handleBeerImageChange} />
+                        </label>
+                      )}
+                    </div>
+
+                    <div className="flex justify-end gap-2 pt-2">
+                      <Button variant="outline" size="sm" onClick={() => setCreatingBeer(false)}>
+                        Annulla
+                      </Button>
+                      <Button
+                        size="sm"
+                        disabled={!newBeerData.name || !newBeerData.breweryId || !newBeerData.style || createBeerMutation.isPending || uploadingBeerImage}
+                        onClick={() => createBeerMutation.mutate(newBeerData)}
+                      >
+                        {(createBeerMutation.isPending || uploadingBeerImage) ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : <Plus className="h-4 w-4 mr-1" />}
+                        {uploadingBeerImage ? "Caricamento immagine..." : "Crea birra"}
+                      </Button>
+                    </div>
+                  </div>
+                )}
+
+                {/* Form creazione birrificio - condiviso tra aggiunta e modifica */}
+                {creatingBrewery && (
+                  <div className="border rounded-lg p-4 bg-blue-50/50 dark:bg-blue-900/10 space-y-3">
+                    <div className="flex items-center gap-2 mb-1">
+                      <Button variant="ghost" size="sm" className="h-7 w-7 p-0" onClick={() => setCreatingBrewery(false)}>
+                        <ArrowLeft className="h-4 w-4" />
+                      </Button>
+                      <h4 className="font-semibold text-sm">Crea nuovo birrificio</h4>
+                    </div>
+
+                    <div>
+                      <Label className="text-xs">Nome birrificio *</Label>
+                      <Input
+                        value={newBreweryData.name}
+                        onChange={(e) => setNewBreweryData({ ...newBreweryData, name: e.target.value })}
+                        placeholder="Es: Birrificio Artigianale XYZ"
+                        className="h-9"
+                      />
+                    </div>
+
+                    <div>
+                      <Label className="text-xs">Località *</Label>
+                      <AddressAutocomplete
+                        value={newBreweryData.location}
+                        onAddressSelect={(details) => {
+                          setNewBreweryData({
+                            ...newBreweryData,
+                            location: details.formattedAddress || details.city,
+                            region: details.region,
+                          });
+                        }}
+                        placeholder="Cerca località..."
+                        className="[&_input]:h-9 [&_input]:text-sm"
+                        countryRestriction={null}
+                      />
+                    </div>
+
+                    <div>
+                      <Label className="text-xs">Descrizione</Label>
+                      <Textarea
+                        value={newBreweryData.description}
+                        onChange={(e) => setNewBreweryData({ ...newBreweryData, description: e.target.value })}
+                        placeholder="Breve descrizione del birrificio..."
+                        className="min-h-[50px] text-sm"
+                      />
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <Label className="text-xs">Logo</Label>
+                        {breweryLogoPreview ? (
+                          <div className="relative w-16 h-16 mt-1">
+                            <img src={breweryLogoPreview} alt="Logo" className="w-16 h-16 object-cover rounded-lg border" />
+                            <button
+                              type="button"
+                              onClick={() => { setBreweryLogoFile(null); setBreweryLogoPreview(""); }}
+                              className="absolute -top-1.5 -right-1.5 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center"
+                            >
+                              <X className="h-3 w-3" />
+                            </button>
+                          </div>
+                        ) : (
+                          <label className="flex items-center gap-2 mt-1 px-3 py-2 border border-dashed rounded-lg cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
+                            <ImagePlus className="h-4 w-4 text-gray-400" />
+                            <span className="text-xs text-gray-500">Carica logo</span>
+                            <input type="file" accept="image/*" className="hidden" onChange={(e) => {
+                              const f = e.target.files?.[0];
+                              if (f) {
+                                setBreweryLogoFile(f);
+                                const r = new FileReader();
+                                r.onload = (ev) => setBreweryLogoPreview(ev.target?.result as string);
+                                r.readAsDataURL(f);
+                              }
+                            }} />
+                          </label>
+                        )}
+                      </div>
+                      <div>
+                        <Label className="text-xs">Copertina</Label>
+                        {breweryCoverPreview ? (
+                          <div className="relative w-full h-16 mt-1">
+                            <img src={breweryCoverPreview} alt="Cover" className="w-full h-16 object-cover rounded-lg border" />
+                            <button
+                              type="button"
+                              onClick={() => { setBreweryCoverFile(null); setBreweryCoverPreview(""); }}
+                              className="absolute -top-1.5 -right-1.5 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center"
+                            >
+                              <X className="h-3 w-3" />
+                            </button>
+                          </div>
+                        ) : (
+                          <label className="flex items-center gap-2 mt-1 px-3 py-2 border border-dashed rounded-lg cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
+                            <ImagePlus className="h-4 w-4 text-gray-400" />
+                            <span className="text-xs text-gray-500">Carica copertina</span>
+                            <input type="file" accept="image/*" className="hidden" onChange={(e) => {
+                              const f = e.target.files?.[0];
+                              if (f) {
+                                setBreweryCoverFile(f);
+                                const r = new FileReader();
+                                r.onload = (ev) => setBreweryCoverPreview(ev.target?.result as string);
+                                r.readAsDataURL(f);
+                              }
+                            }} />
+                          </label>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="flex justify-end gap-2 pt-1">
+                      <Button variant="outline" size="sm" onClick={() => setCreatingBrewery(false)}>
+                        Annulla
+                      </Button>
+                      <Button
+                        size="sm"
+                        disabled={!newBreweryData.name || !newBreweryData.location || createBreweryMutation.isPending || uploadingBreweryImages}
+                        onClick={() => createBreweryMutation.mutate(newBreweryData)}
+                      >
+                        {(createBreweryMutation.isPending || uploadingBreweryImages) ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : <Factory className="h-4 w-4 mr-1" />}
+                        {uploadingBreweryImages ? "Caricamento..." : "Crea birrificio"}
+                      </Button>
+                    </div>
                   </div>
                 )}
 
@@ -924,7 +938,7 @@ export function TapListManager({ pubId, tapList }: TapListManagerProps) {
                 )}
 
                 {/* Ricerca birra per cambio in editing */}
-                {editingItem && isChangingBeer && (
+                {editingItem && isChangingBeer && !creatingBeer && (
                   <div className="space-y-3">
                     <Label className="text-sm font-medium">Cerca nuova birra</Label>
                     <div className="relative">
@@ -952,42 +966,66 @@ export function TapListManager({ pubId, tapList }: TapListManagerProps) {
                     >
                       Annulla cambio
                     </Button>
-                    {debouncedSearchTerm.length >= 2 && !isSearching && searchResults?.beers && searchResults.beers.length > 0 && (
-                      <div className="max-h-48 overflow-y-auto border rounded-lg bg-white dark:bg-gray-900">
-                        {searchResults.beers.map((beer: any) => (
-                          <div
-                            key={beer.id}
-                            className={`p-3 hover:bg-gray-50 dark:hover:bg-gray-800 cursor-pointer border-b last:border-b-0 transition-colors ${beer.id === editingItem.beer.id ? 'bg-amber-50 dark:bg-amber-900/20' : ''}`}
+                    {debouncedSearchTerm.length >= 2 && !isSearching && (
+                      <>
+                        {searchResults?.beers && searchResults.beers.length > 0 && (
+                          <div className="max-h-48 overflow-y-auto border rounded-lg bg-white dark:bg-gray-900">
+                            {searchResults.beers.map((beer: any) => (
+                              <div
+                                key={beer.id}
+                                className={`p-3 hover:bg-gray-50 dark:hover:bg-gray-800 cursor-pointer border-b last:border-b-0 transition-colors ${beer.id === editingItem.beer.id ? 'bg-amber-50 dark:bg-amber-900/20' : ''}`}
+                                onClick={() => {
+                                  if (beer.id === editingItem.beer.id) {
+                                    setSelectedNewBeer(null);
+                                    setFormData({ ...formData, beerId: editingItem.beer.id.toString() });
+                                  } else {
+                                    setSelectedNewBeer({
+                                      id: beer.id,
+                                      name: beer.name,
+                                      style: beer.style,
+                                      abv: beer.abv,
+                                      breweryName: beer.brewery?.name || 'Birrificio sconosciuto',
+                                    });
+                                    setFormData({ ...formData, beerId: beer.id.toString() });
+                                  }
+                                  setIsChangingBeer(false);
+                                  setSearchTerm('');
+                                }}
+                              >
+                                <div className="font-medium text-gray-900 dark:text-white">
+                                  {beer.name}
+                                  {beer.id === editingItem.beer.id && (
+                                    <span className="text-xs text-amber-600 dark:text-amber-400 ml-2">(attuale)</span>
+                                  )}
+                                </div>
+                                <div className="text-sm text-gray-600 dark:text-gray-400">
+                                  {beer.brewery?.name || 'Birrificio sconosciuto'} • {beer.style} • {beer.abv}% ABV
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                        <div className="p-3 border border-dashed rounded-lg text-center text-gray-500">
+                          {searchResults?.beers?.length === 0 && (
+                            <p className="mb-2 text-sm">Nessuna birra trovata per "{debouncedSearchTerm}"</p>
+                          )}
+                          {searchResults?.beers && searchResults.beers.length > 0 && (
+                            <p className="mb-2 text-sm">Non trovi quella che cerchi?</p>
+                          )}
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
                             onClick={() => {
-                              if (beer.id === editingItem.beer.id) {
-                                setSelectedNewBeer(null);
-                                setFormData({ ...formData, beerId: editingItem.beer.id.toString() });
-                              } else {
-                                setSelectedNewBeer({
-                                  id: beer.id,
-                                  name: beer.name,
-                                  style: beer.style,
-                                  abv: beer.abv,
-                                  breweryName: beer.brewery?.name || 'Birrificio sconosciuto',
-                                });
-                                setFormData({ ...formData, beerId: beer.id.toString() });
-                              }
-                              setIsChangingBeer(false);
-                              setSearchTerm('');
+                              setCreatingBeer(true);
+                              setNewBeerData(prev => ({ ...prev, name: debouncedSearchTerm }));
                             }}
                           >
-                            <div className="font-medium text-gray-900 dark:text-white">
-                              {beer.name}
-                              {beer.id === editingItem.beer.id && (
-                                <span className="text-xs text-amber-600 dark:text-amber-400 ml-2">(attuale)</span>
-                              )}
-                            </div>
-                            <div className="text-sm text-gray-600 dark:text-gray-400">
-                              {beer.brewery?.name || 'Birrificio sconosciuto'} • {beer.style} • {beer.abv}% ABV
-                            </div>
-                          </div>
-                        ))}
-                      </div>
+                            <Plus className="w-4 h-4 mr-1" />
+                            Crea nuova birra
+                          </Button>
+                        </div>
+                      </>
                     )}
                   </div>
                 )}

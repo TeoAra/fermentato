@@ -453,9 +453,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const data = req.body;
       
       console.log('PATCH taplist item:', { pubId, id, data });
+
+      const existingItems = await storage.getTapListByPubForOwner(parseInt(pubId));
+      const existingItem = existingItems.find((t: any) => t.id === parseInt(id));
+      const oldBeerId = existingItem?.beerId;
       
       const item = await storage.updateTapListItem(parseInt(id), data);
       console.log('Updated taplist item:', item);
+
+      if (data.beerId && oldBeerId && data.beerId !== oldBeerId) {
+        const newBeer = await storage.getBeer(data.beerId);
+        if (newBeer) {
+          notifyTapListChange(parseInt(pubId), 'tap_change', newBeer.name, newBeer.id);
+        }
+      }
+
       res.json(item);
     } catch (error) {
       console.error('Error updating tap list item:', error);
@@ -1303,7 +1315,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   };
 
-  const notifyTapListChange = async (pubId: number, type: 'new_beer' | 'beer_removed' | 'tap_change', beerName: string, beerId?: number) => {
+  const notifyTapListChange = async (pubId: number, type: 'new_beer' | 'tap_change', beerName: string, beerId?: number) => {
     try {
       const pub = await storage.getPub(pubId);
       if (!pub) return;
@@ -1313,13 +1325,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const titleMap = {
         new_beer: `Nuova birra alla spina!`,
-        beer_removed: `Birra rimossa dalla spina`,
-        tap_change: `Aggiornamento spine`,
+        tap_change: `Cambio alla spina!`,
       };
       const messageMap = {
         new_beer: `${pub.name} ha aggiunto "${beerName}" alle spine.`,
-        beer_removed: `${pub.name} ha rimosso "${beerName}" dalle spine.`,
-        tap_change: `${pub.name} ha aggiornato le spine.`,
+        tap_change: `${pub.name} ha messo "${beerName}" alla spina.`,
       };
 
       for (const userId of userIds) {
