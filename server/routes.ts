@@ -2049,6 +2049,82 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.get("/api/owner/breweries/search", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = (req.user as any).id;
+      const user = await storage.getUser(userId);
+      if (!user || (!user.roles?.includes('pub_owner') && !user.roles?.includes('admin'))) {
+        return res.status(403).json({ message: "Pub owner access required" });
+      }
+
+      const { q: query = '' } = req.query;
+      const allBreweries = await storage.getBreweries();
+      const filtered = allBreweries.filter(b =>
+        b.name.toLowerCase().includes(query.toString().toLowerCase()) ||
+        b.location?.toLowerCase().includes(query.toString().toLowerCase())
+      ).slice(0, 20);
+      res.json(filtered);
+    } catch (error) {
+      console.error("Error searching breweries (owner):", error);
+      res.status(500).json({ message: "Failed to search breweries" });
+    }
+  });
+
+  app.post("/api/owner/breweries", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = (req.user as any).id;
+      const user = await storage.getUser(userId);
+      if (!user || (!user.roles?.includes('pub_owner') && !user.roles?.includes('admin'))) {
+        return res.status(403).json({ message: "Pub owner access required" });
+      }
+
+      const { name, location, region } = req.body;
+      if (!name || !location || !region) {
+        return res.status(400).json({ message: "Nome, località e regione sono obbligatori" });
+      }
+
+      const brewery = await storage.createBrewery({
+        name: name.trim(),
+        location: location.trim(),
+        region: region.trim(),
+        description: req.body.description?.trim() || null,
+        websiteUrl: req.body.websiteUrl?.trim() || null,
+      });
+      res.json(brewery);
+    } catch (error) {
+      console.error("Error creating brewery (owner):", error);
+      res.status(500).json({ message: "Failed to create brewery" });
+    }
+  });
+
+  app.post("/api/owner/beers", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = (req.user as any).id;
+      const user = await storage.getUser(userId);
+      if (!user || (!user.roles?.includes('pub_owner') && !user.roles?.includes('admin'))) {
+        return res.status(403).json({ message: "Pub owner access required" });
+      }
+
+      const { name, breweryId, style, abv } = req.body;
+      if (!name || !breweryId || !style) {
+        return res.status(400).json({ message: "Nome, birrificio e stile sono obbligatori" });
+      }
+
+      const beer = await storage.createBeer({
+        name: name.trim(),
+        breweryId: parseInt(breweryId),
+        style: style.trim(),
+        abv: abv ? String(abv) : null,
+        ibu: req.body.ibu ? parseInt(req.body.ibu) : null,
+        description: req.body.description?.trim() || null,
+      });
+      res.json(beer);
+    } catch (error) {
+      console.error("Error creating beer (owner):", error);
+      res.status(500).json({ message: "Failed to create beer" });
+    }
+  });
+
   // Create new beer (admin)
   app.post("/api/admin/beers", isAuthenticated, async (req: any, res) => {
     try {

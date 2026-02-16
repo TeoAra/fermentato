@@ -20,7 +20,10 @@ import {
   EyeOff,
   Search,
   DollarSign,
-  Loader2
+  Loader2,
+  ArrowLeft,
+  Factory,
+  ChevronRight
 } from "lucide-react";
 
 function useDebounce<T>(value: T, delay: number): T {
@@ -77,6 +80,25 @@ export function TapListManager({ pubId, tapList }: TapListManagerProps) {
     tapNumber: "",
     description: "",
     isVisible: true,
+  });
+
+  const [creatingBeer, setCreatingBeer] = useState(false);
+  const [creatingBrewery, setCreatingBrewery] = useState(false);
+  const [brewerySearchTerm, setBrewerySearchTerm] = useState("");
+  const debouncedBrewerySearch = useDebounce(brewerySearchTerm, 300);
+  const [newBeerData, setNewBeerData] = useState({
+    name: "",
+    style: "",
+    abv: "",
+    ibu: "",
+    description: "",
+    breweryId: "",
+    breweryName: "",
+  });
+  const [newBreweryData, setNewBreweryData] = useState({
+    name: "",
+    location: "",
+    region: "",
   });
 
   const { toast } = useToast();
@@ -160,6 +182,48 @@ export function TapListManager({ pubId, tapList }: TapListManagerProps) {
     },
   });
 
+  const { data: breweryResults } = useQuery({
+    queryKey: ["/api/owner/breweries/search", debouncedBrewerySearch],
+    queryFn: async () => {
+      if (debouncedBrewerySearch.length < 2) return [];
+      const res = await fetch(`/api/owner/breweries/search?q=${encodeURIComponent(debouncedBrewerySearch)}`, { credentials: "include" });
+      if (!res.ok) return [];
+      return res.json();
+    },
+    enabled: creatingBeer && debouncedBrewerySearch.length >= 2,
+  });
+
+  const createBreweryMutation = useMutation({
+    mutationFn: async (data: { name: string; location: string; region: string }) => {
+      return apiRequest("/api/owner/breweries", { method: "POST" }, data);
+    },
+    onSuccess: (brewery: any) => {
+      toast({ title: "Birrificio creato!" });
+      setNewBeerData(prev => ({ ...prev, breweryId: brewery.id.toString(), breweryName: brewery.name }));
+      setCreatingBrewery(false);
+      setBrewerySearchTerm("");
+      setNewBreweryData({ name: "", location: "", region: "" });
+    },
+    onError: () => {
+      toast({ title: "Errore", description: "Non è stato possibile creare il birrificio", variant: "destructive" });
+    },
+  });
+
+  const createBeerMutation = useMutation({
+    mutationFn: async (data: { name: string; breweryId: string; style: string; abv?: string; ibu?: string; description?: string }) => {
+      return apiRequest("/api/owner/beers", { method: "POST" }, data);
+    },
+    onSuccess: (beer: any) => {
+      toast({ title: "Birra creata!" });
+      setFormData(prev => ({ ...prev, beerId: beer.id.toString() }));
+      setCreatingBeer(false);
+      queryClient.invalidateQueries({ queryKey: ["/api/search"] });
+    },
+    onError: () => {
+      toast({ title: "Errore", description: "Non è stato possibile creare la birra", variant: "destructive" });
+    },
+  });
+
   // Update prices mutation
   const updatePricesMutation = useMutation({
     mutationFn: async ({ itemId, prices }: { itemId: number; prices: PriceItem[] }) => {
@@ -183,6 +247,11 @@ export function TapListManager({ pubId, tapList }: TapListManagerProps) {
       isVisible: true,
     });
     setSearchTerm("");
+    setCreatingBeer(false);
+    setCreatingBrewery(false);
+    setBrewerySearchTerm("");
+    setNewBeerData({ name: "", style: "", abv: "", ibu: "", description: "", breweryId: "", breweryName: "" });
+    setNewBreweryData({ name: "", location: "", region: "" });
   };
 
   const startEdit = (item: TapItem) => {
@@ -332,7 +401,7 @@ export function TapListManager({ pubId, tapList }: TapListManagerProps) {
                             ))}
                           </div>
                         )}
-                        {debouncedSearchTerm.length >= 2 && searchResults?.beers?.length === 0 && !isSearching && (
+                        {debouncedSearchTerm.length >= 2 && searchResults?.beers?.length === 0 && !isSearching && !creatingBeer && (
                           <div className="p-4 border border-dashed rounded-lg text-center text-gray-500">
                             <p className="mb-2">Nessuna birra trovata per "{debouncedSearchTerm}"</p>
                             <Button
@@ -340,7 +409,8 @@ export function TapListManager({ pubId, tapList }: TapListManagerProps) {
                               variant="outline"
                               size="sm"
                               onClick={() => {
-                                window.open('/admin/dashboard?tab=beers&action=create', '_blank');
+                                setCreatingBeer(true);
+                                setNewBeerData(prev => ({ ...prev, name: debouncedSearchTerm }));
                               }}
                             >
                               <Plus className="w-4 h-4 mr-1" />
@@ -349,6 +419,234 @@ export function TapListManager({ pubId, tapList }: TapListManagerProps) {
                           </div>
                         )}
                       </>
+                    )}
+
+                    {creatingBeer && !creatingBrewery && (
+                      <div className="border rounded-lg p-4 bg-amber-50/50 dark:bg-amber-900/10 space-y-4">
+                        <div className="flex items-center gap-2 mb-2">
+                          <Button variant="ghost" size="sm" className="h-7 w-7 p-0" onClick={() => setCreatingBeer(false)}>
+                            <ArrowLeft className="h-4 w-4" />
+                          </Button>
+                          <h4 className="font-semibold text-sm">Crea nuova birra</h4>
+                        </div>
+
+                        <div>
+                          <Label className="text-xs">Nome birra *</Label>
+                          <Input
+                            value={newBeerData.name}
+                            onChange={(e) => setNewBeerData({ ...newBeerData, name: e.target.value })}
+                            placeholder="Es: IPA del Birrificio"
+                            className="h-9"
+                          />
+                        </div>
+
+                        <div>
+                          <Label className="text-xs">Birrificio *</Label>
+                          {newBeerData.breweryId ? (
+                            <div className="flex items-center justify-between p-2 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg">
+                              <div className="flex items-center gap-2">
+                                <Factory className="h-4 w-4 text-green-600" />
+                                <span className="text-sm font-medium">{newBeerData.breweryName}</span>
+                              </div>
+                              <Button variant="ghost" size="sm" className="h-7 text-xs" onClick={() => setNewBeerData({ ...newBeerData, breweryId: "", breweryName: "" })}>
+                                Cambia
+                              </Button>
+                            </div>
+                          ) : (
+                            <div className="space-y-2">
+                              <div className="relative">
+                                <Search className="absolute left-2.5 top-2.5 h-3.5 w-3.5 text-gray-400" />
+                                <Input
+                                  value={brewerySearchTerm}
+                                  onChange={(e) => setBrewerySearchTerm(e.target.value)}
+                                  placeholder="Cerca birrificio..."
+                                  className="h-9 pl-8 text-sm"
+                                />
+                              </div>
+                              {Array.isArray(breweryResults) && breweryResults.length > 0 && (
+                                <div className="max-h-32 overflow-y-auto border rounded-lg bg-white dark:bg-gray-900">
+                                  {breweryResults.map((b: any) => (
+                                    <div
+                                      key={b.id}
+                                      className="p-2 hover:bg-gray-50 dark:hover:bg-gray-800 cursor-pointer border-b last:border-b-0 text-sm"
+                                      onClick={() => {
+                                        setNewBeerData({ ...newBeerData, breweryId: b.id.toString(), breweryName: b.name });
+                                        setBrewerySearchTerm("");
+                                      }}
+                                    >
+                                      <span className="font-medium">{b.name}</span>
+                                      <span className="text-gray-500 ml-1">• {b.location}</span>
+                                    </div>
+                                  ))}
+                                </div>
+                              )}
+                              {debouncedBrewerySearch.length >= 2 && Array.isArray(breweryResults) && breweryResults.length === 0 && (
+                                <Button
+                                  type="button"
+                                  variant="outline"
+                                  size="sm"
+                                  className="w-full text-xs"
+                                  onClick={() => {
+                                    setCreatingBrewery(true);
+                                    setNewBreweryData(prev => ({ ...prev, name: brewerySearchTerm }));
+                                  }}
+                                >
+                                  <Plus className="w-3 h-3 mr-1" />
+                                  Crea "{brewerySearchTerm}"
+                                </Button>
+                              )}
+                            </div>
+                          )}
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-3">
+                          <div>
+                            <Label className="text-xs">Stile *</Label>
+                            <Input
+                              value={newBeerData.style}
+                              onChange={(e) => setNewBeerData({ ...newBeerData, style: e.target.value })}
+                              placeholder="IPA, Lager, Stout..."
+                              className="h-9"
+                              list="beer-style-options"
+                            />
+                            <datalist id="beer-style-options">
+                              <option value="IPA" />
+                              <option value="APA" />
+                              <option value="Lager" />
+                              <option value="Pilsner" />
+                              <option value="Weiss" />
+                              <option value="Stout" />
+                              <option value="Porter" />
+                              <option value="Saison" />
+                              <option value="Belgian Ale" />
+                              <option value="Blanche" />
+                              <option value="Amber Ale" />
+                              <option value="Pale Ale" />
+                              <option value="Red Ale" />
+                              <option value="Golden Ale" />
+                              <option value="Bitter" />
+                              <option value="Barley Wine" />
+                              <option value="Sour" />
+                              <option value="Gose" />
+                              <option value="NEIPA" />
+                              <option value="Double IPA" />
+                              <option value="Imperial Stout" />
+                              <option value="Bock" />
+                              <option value="Dubbel" />
+                              <option value="Tripel" />
+                              <option value="Quadrupel" />
+                              <option value="Kölsch" />
+                              <option value="Rauchbier" />
+                            </datalist>
+                          </div>
+                          <div>
+                            <Label className="text-xs">ABV %</Label>
+                            <Input
+                              type="number"
+                              step="0.1"
+                              min="0"
+                              max="30"
+                              value={newBeerData.abv}
+                              onChange={(e) => setNewBeerData({ ...newBeerData, abv: e.target.value })}
+                              placeholder="5.5"
+                              className="h-9"
+                            />
+                          </div>
+                        </div>
+
+                        <div className="flex justify-end gap-2 pt-2">
+                          <Button variant="outline" size="sm" onClick={() => setCreatingBeer(false)}>
+                            Annulla
+                          </Button>
+                          <Button
+                            size="sm"
+                            disabled={!newBeerData.name || !newBeerData.breweryId || !newBeerData.style || createBeerMutation.isPending}
+                            onClick={() => createBeerMutation.mutate(newBeerData)}
+                          >
+                            {createBeerMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : <Plus className="h-4 w-4 mr-1" />}
+                            Crea birra
+                          </Button>
+                        </div>
+                      </div>
+                    )}
+
+                    {creatingBrewery && (
+                      <div className="border rounded-lg p-4 bg-blue-50/50 dark:bg-blue-900/10 space-y-3">
+                        <div className="flex items-center gap-2 mb-1">
+                          <Button variant="ghost" size="sm" className="h-7 w-7 p-0" onClick={() => setCreatingBrewery(false)}>
+                            <ArrowLeft className="h-4 w-4" />
+                          </Button>
+                          <h4 className="font-semibold text-sm">Crea nuovo birrificio</h4>
+                        </div>
+
+                        <div>
+                          <Label className="text-xs">Nome birrificio *</Label>
+                          <Input
+                            value={newBreweryData.name}
+                            onChange={(e) => setNewBreweryData({ ...newBreweryData, name: e.target.value })}
+                            placeholder="Es: Birrificio Artigianale XYZ"
+                            className="h-9"
+                          />
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-3">
+                          <div>
+                            <Label className="text-xs">Località *</Label>
+                            <Input
+                              value={newBreweryData.location}
+                              onChange={(e) => setNewBreweryData({ ...newBreweryData, location: e.target.value })}
+                              placeholder="Es: Padova"
+                              className="h-9"
+                            />
+                          </div>
+                          <div>
+                            <Label className="text-xs">Regione *</Label>
+                            <Input
+                              value={newBreweryData.region}
+                              onChange={(e) => setNewBreweryData({ ...newBreweryData, region: e.target.value })}
+                              placeholder="Es: Veneto"
+                              className="h-9"
+                              list="region-options"
+                            />
+                            <datalist id="region-options">
+                              <option value="Abruzzo" />
+                              <option value="Basilicata" />
+                              <option value="Calabria" />
+                              <option value="Campania" />
+                              <option value="Emilia-Romagna" />
+                              <option value="Friuli-Venezia Giulia" />
+                              <option value="Lazio" />
+                              <option value="Liguria" />
+                              <option value="Lombardia" />
+                              <option value="Marche" />
+                              <option value="Molise" />
+                              <option value="Piemonte" />
+                              <option value="Puglia" />
+                              <option value="Sardegna" />
+                              <option value="Sicilia" />
+                              <option value="Toscana" />
+                              <option value="Trentino-Alto Adige" />
+                              <option value="Umbria" />
+                              <option value="Valle d'Aosta" />
+                              <option value="Veneto" />
+                            </datalist>
+                          </div>
+                        </div>
+
+                        <div className="flex justify-end gap-2 pt-1">
+                          <Button variant="outline" size="sm" onClick={() => setCreatingBrewery(false)}>
+                            Annulla
+                          </Button>
+                          <Button
+                            size="sm"
+                            disabled={!newBreweryData.name || !newBreweryData.location || !newBreweryData.region || createBreweryMutation.isPending}
+                            onClick={() => createBreweryMutation.mutate(newBreweryData)}
+                          >
+                            {createBreweryMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : <Factory className="h-4 w-4 mr-1" />}
+                            Crea birrificio
+                          </Button>
+                        </div>
+                      </div>
                     )}
                   </div>
                 )}
