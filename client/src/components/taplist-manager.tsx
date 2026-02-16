@@ -74,6 +74,8 @@ interface TapListManagerProps {
 export function TapListManager({ pubId, tapList }: TapListManagerProps) {
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<TapItem | null>(null);
+  const [isChangingBeer, setIsChangingBeer] = useState(false);
+  const [selectedNewBeer, setSelectedNewBeer] = useState<{ id: number; name: string; style: string; abv: string; breweryName: string } | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [showPriceManager, setShowPriceManager] = useState(false);
   const [tempPrices, setTempPrices] = useState<PriceItem[]>([]);
@@ -165,6 +167,8 @@ export function TapListManager({ pubId, tapList }: TapListManagerProps) {
       toast({ title: "Birra aggiornata!" });
       queryClient.invalidateQueries({ queryKey: ["/api/pubs", pubId, "taplist"] });
       setEditingItem(null);
+      setIsChangingBeer(false);
+      setSelectedNewBeer(null);
       resetForm();
     },
     onError: () => {
@@ -374,6 +378,9 @@ export function TapListManager({ pubId, tapList }: TapListManagerProps) {
 
   const startEdit = (item: TapItem) => {
     setEditingItem(item);
+    setIsChangingBeer(false);
+    setSelectedNewBeer(null);
+    setSearchTerm('');
     
     // Convert prices to the expected format
     let prices: PriceItem[] = [];
@@ -851,12 +858,137 @@ export function TapListManager({ pubId, tapList }: TapListManagerProps) {
                 )}
 
                 {/* Birra Selezionata (per editing) */}
-                {editingItem && (
-                  <div className="p-4 bg-gray-50 dark:bg-gray-800 rounded-lg border">
-                    <div className="font-semibold text-gray-900 dark:text-white">{editingItem.beer.name}</div>
-                    <div className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-                      {editingItem.beer.brewery?.name || 'Birrificio sconosciuto'} • {editingItem.beer.style} • {editingItem.beer.abv}% ABV
+                {editingItem && !isChangingBeer && (
+                  <div className="space-y-3">
+                    <Label className="text-sm font-medium">Birra selezionata</Label>
+                    {selectedNewBeer ? (
+                      <div className="p-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <div className="font-semibold text-gray-900 dark:text-white">{selectedNewBeer.name}</div>
+                            <div className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                              {selectedNewBeer.breweryName} • {selectedNewBeer.style} • {selectedNewBeer.abv}% ABV
+                            </div>
+                            <div className="text-xs text-green-600 dark:text-green-400 mt-1">Nuova birra selezionata</div>
+                          </div>
+                          <div className="flex gap-2">
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="sm"
+                              onClick={() => {
+                                setIsChangingBeer(true);
+                                setSearchTerm('');
+                              }}
+                            >
+                              Cambia
+                            </Button>
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => {
+                                setSelectedNewBeer(null);
+                                setFormData({ ...formData, beerId: editingItem.beer.id.toString() });
+                              }}
+                            >
+                              Ripristina
+                            </Button>
+                          </div>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="p-4 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <div className="font-semibold text-gray-900 dark:text-white">{editingItem.beer.name}</div>
+                            <div className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                              {editingItem.beer.brewery?.name || 'Birrificio sconosciuto'} • {editingItem.beer.style} • {editingItem.beer.abv}% ABV
+                            </div>
+                          </div>
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            onClick={() => {
+                              setIsChangingBeer(true);
+                              setSearchTerm('');
+                            }}
+                          >
+                            Cambia
+                          </Button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* Ricerca birra per cambio in editing */}
+                {editingItem && isChangingBeer && (
+                  <div className="space-y-3">
+                    <Label className="text-sm font-medium">Cerca nuova birra</Label>
+                    <div className="relative">
+                      {isSearching ? (
+                        <Loader2 className="absolute left-3 top-3 h-4 w-4 text-gray-400 animate-spin" />
+                      ) : (
+                        <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                      )}
+                      <Input
+                        placeholder="Cerca per nome o birrificio..."
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        className="pl-10"
+                        autoFocus
+                      />
                     </div>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => {
+                        setIsChangingBeer(false);
+                        setSearchTerm('');
+                      }}
+                    >
+                      Annulla cambio
+                    </Button>
+                    {debouncedSearchTerm.length >= 2 && !isSearching && searchResults?.beers && searchResults.beers.length > 0 && (
+                      <div className="max-h-48 overflow-y-auto border rounded-lg bg-white dark:bg-gray-900">
+                        {searchResults.beers.map((beer: any) => (
+                          <div
+                            key={beer.id}
+                            className={`p-3 hover:bg-gray-50 dark:hover:bg-gray-800 cursor-pointer border-b last:border-b-0 transition-colors ${beer.id === editingItem.beer.id ? 'bg-amber-50 dark:bg-amber-900/20' : ''}`}
+                            onClick={() => {
+                              if (beer.id === editingItem.beer.id) {
+                                setSelectedNewBeer(null);
+                                setFormData({ ...formData, beerId: editingItem.beer.id.toString() });
+                              } else {
+                                setSelectedNewBeer({
+                                  id: beer.id,
+                                  name: beer.name,
+                                  style: beer.style,
+                                  abv: beer.abv,
+                                  breweryName: beer.brewery?.name || 'Birrificio sconosciuto',
+                                });
+                                setFormData({ ...formData, beerId: beer.id.toString() });
+                              }
+                              setIsChangingBeer(false);
+                              setSearchTerm('');
+                            }}
+                          >
+                            <div className="font-medium text-gray-900 dark:text-white">
+                              {beer.name}
+                              {beer.id === editingItem.beer.id && (
+                                <span className="text-xs text-amber-600 dark:text-amber-400 ml-2">(attuale)</span>
+                              )}
+                            </div>
+                            <div className="text-sm text-gray-600 dark:text-gray-400">
+                              {beer.brewery?.name || 'Birrificio sconosciuto'} • {beer.style} • {beer.abv}% ABV
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 )}
 
@@ -1004,6 +1136,8 @@ export function TapListManager({ pubId, tapList }: TapListManagerProps) {
                     onClick={() => {
                       setIsAddDialogOpen(false);
                       setEditingItem(null);
+                      setIsChangingBeer(false);
+                      setSelectedNewBeer(null);
                       resetForm();
                     }}
                   >
