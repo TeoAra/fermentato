@@ -19,9 +19,10 @@ interface BreweryCardProps {
     logoUrl?: string | null;
   };
   beerCount?: number;
+  distance?: number | null;
 }
 
-export default function BreweryCard({ brewery, beerCount = 0 }: BreweryCardProps) {
+export default function BreweryCard({ brewery, beerCount = 0, distance }: BreweryCardProps) {
   const { isAuthenticated } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -107,8 +108,16 @@ export default function BreweryCard({ brewery, beerCount = 0 }: BreweryCardProps
               <div className="flex items-center gap-1 text-sm text-gray-600 mb-2">
                 <MapPin className="w-3 h-3 flex-shrink-0" />
                 <span className="truncate">
-                  {typeof brewery.location === 'string' ? brewery.location : brewery.location?.name || 'Località'}, {typeof brewery.region === 'string' ? brewery.region : brewery.region?.name || 'Regione'}
+                  {distance != null
+                    ? (typeof brewery.location === 'string' ? brewery.location : brewery.location?.name || 'Località')
+                    : `${typeof brewery.location === 'string' ? brewery.location : brewery.location?.name || 'Località'}, ${typeof brewery.region === 'string' ? brewery.region : brewery.region?.name || 'Regione'}`
+                  }
                 </span>
+                {distance != null && (
+                  <span className="ml-1 text-xs font-medium text-blue-600 dark:text-blue-400 whitespace-nowrap">
+                    {distance < 1 ? `${Math.round(distance * 1000)}m` : `${distance.toFixed(1)}km`}
+                  </span>
+                )}
               </div>
               
               {/* Tags Row */}

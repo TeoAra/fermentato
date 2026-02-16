@@ -50,9 +50,10 @@ interface PubCardProps {
     isActive: boolean;
     openingHours?: any;
   };
+  distance?: number | null;
 }
 
-export default function PubCard({ pub }: PubCardProps) {
+export default function PubCard({ pub, distance }: PubCardProps) {
   const { user, isAuthenticated } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -170,8 +171,15 @@ export default function PubCard({ pub }: PubCardProps) {
           </div>
           
           <p className="text-gray-600 mb-3 flex items-center">
-            <MapPin className="w-4 h-4 mr-1" />
-            {pub.address}, {pub.city}
+            <MapPin className="w-4 h-4 mr-1 flex-shrink-0" />
+            <span className="truncate">
+              {distance != null ? pub.city : `${pub.address}, ${pub.city}`}
+            </span>
+            {distance != null && (
+              <span className="ml-2 text-sm font-medium text-blue-600 dark:text-blue-400 whitespace-nowrap">
+                {distance < 1 ? `${Math.round(distance * 1000)}m` : `${distance.toFixed(1)}km`}
+              </span>
+            )}
           </p>
           
           <div className="flex items-center justify-between text-sm">
