@@ -72,9 +72,9 @@ export function BottomNavigation() {
     },
     {
       icon: User,
-      label: isAuthenticated ? "Dashboard" : "Accedi",
-      href: isAuthenticated ? "/dashboard" : "/api/login",
-      isActive: location.startsWith("/dashboard"),
+      label: isAuthenticated ? "Dashboard" : "Accedi / Registrati",
+      href: isAuthenticated ? "/dashboard" : "/login",
+      isActive: isAuthenticated ? location.startsWith("/dashboard") : location === "/login",
       requiresAuth: false
     }
   ];
