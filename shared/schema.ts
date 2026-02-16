@@ -567,7 +567,7 @@ export type InsertPublicanRequest = z.infer<typeof insertPublicanRequestSchema>;
 export const notifications = pgTable("notifications", {
   id: serial("id").primaryKey(),
   userId: varchar("user_id").references(() => users.id).notNull(),
-  type: varchar("type").notNull(), // 'tap_change', 'new_beer', 'beer_removed', 'event', 'new_pub'
+  type: varchar("type").notNull(), // 'tap_change', 'new_beer', 'new_pub_request', 'event', 'new_pub'
   title: varchar("title").notNull(),
   message: text("message").notNull(),
   pubId: integer("pub_id").references(() => pubs.id),
