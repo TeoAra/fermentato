@@ -1034,7 +1034,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Reorder menu categories 
   app.patch("/api/pubs/:id/menu/categories/:categoryId/reorder", isAuthenticated, async (req, res) => {
     try {
-      const userId = (req.user as any)?.claims?.sub;
+      const userId = (req.user as any)?.id;
       if (!userId) return res.status(401).json({ message: "Unauthorized" });
 
       const pubId = parseInt(req.params.id);
@@ -1547,7 +1547,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Flexible pricing system endpoints (owner or admin)
   app.post("/api/pubs/:id/taplist/:itemId/prices", isAuthenticated, async (req, res) => {
     try {
-      const userId = (req.user as any)?.claims?.sub;
+      const userId = (req.user as any)?.id;
       if (!userId) return res.status(401).json({ message: "Unauthorized" });
 
       const pubId = parseInt(req.params.id);
@@ -1576,7 +1576,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Beer replacement endpoints (owner or admin)
   app.patch("/api/pubs/:id/taplist/:itemId/replace", isAuthenticated, async (req, res) => {
     try {
-      const userId = (req.user as any)?.claims?.sub;
+      const userId = (req.user as any)?.id;
       if (!userId) return res.status(401).json({ message: "Unauthorized" });
 
       const pubId = parseInt(req.params.id);
@@ -1599,7 +1599,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Same for bottles (owner or admin)
   app.post("/api/pubs/:id/bottles/:itemId/prices", isAuthenticated, async (req, res) => {
     try {
-      const userId = (req.user as any)?.claims?.sub;
+      const userId = (req.user as any)?.id;
       if (!userId) return res.status(401).json({ message: "Unauthorized" });
 
       const pubId = parseInt(req.params.id);
@@ -1626,7 +1626,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.patch("/api/pubs/:id/bottles/:itemId/replace", isAuthenticated, async (req, res) => {
     try {
-      const userId = (req.user as any)?.claims?.sub;
+      const userId = (req.user as any)?.id;
       if (!userId) return res.status(401).json({ message: "Unauthorized" });
 
       const pubId = parseInt(req.params.id);
@@ -1649,7 +1649,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Menu categories CRUD endpoints (owner or admin)
   app.post("/api/pubs/:id/menu/categories", isAuthenticated, async (req, res) => {
     try {
-      const userId = (req.user as any)?.claims?.sub;
+      const userId = (req.user as any)?.id;
       if (!userId) return res.status(401).json({ message: "Unauthorized" });
 
       const pubId = parseInt(req.params.id);
@@ -1668,7 +1668,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.patch("/api/pubs/:id/menu/categories/:categoryId", isAuthenticated, async (req, res) => {
     try {
-      const userId = (req.user as any)?.claims?.sub;
+      const userId = (req.user as any)?.id;
       if (!userId) return res.status(401).json({ message: "Unauthorized" });
 
       const pubId = parseInt(req.params.id);
@@ -1688,7 +1688,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.delete("/api/pubs/:id/menu/categories/:categoryId", isAuthenticated, async (req, res) => {
     try {
-      const userId = (req.user as any)?.claims?.sub;
+      const userId = (req.user as any)?.id;
       if (!userId) return res.status(401).json({ message: "Unauthorized" });
 
       const pubId = parseInt(req.params.id);
@@ -1709,7 +1709,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Menu items CRUD endpoints (owner or admin)
   app.post("/api/pubs/:id/menu/categories/:categoryId/items", isAuthenticated, async (req, res) => {
     try {
-      const userId = (req.user as any)?.claims?.sub;
+      const userId = (req.user as any)?.id;
       if (!userId) return res.status(401).json({ message: "Unauthorized" });
 
       const pubId = parseInt(req.params.id);
@@ -1729,7 +1729,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.patch("/api/pubs/:id/menu/items/:itemId", isAuthenticated, async (req, res) => {
     try {
-      const userId = (req.user as any)?.claims?.sub;
+      const userId = (req.user as any)?.id;
       if (!userId) return res.status(401).json({ message: "Unauthorized" });
 
       const pubId = parseInt(req.params.id);
@@ -1749,7 +1749,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.delete("/api/pubs/:id/menu/items/:itemId", isAuthenticated, async (req, res) => {
     try {
-      const userId = (req.user as any)?.claims?.sub;
+      const userId = (req.user as any)?.id;
       if (!userId) return res.status(401).json({ message: "Unauthorized" });
 
       const pubId = parseInt(req.params.id);

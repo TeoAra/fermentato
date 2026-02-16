@@ -91,7 +91,7 @@ export default function Notifications() {
   });
 
   const markReadMutation = useMutation({
-    mutationFn: (id: number) => apiRequest('PATCH', `/api/notifications/${id}/read`),
+    mutationFn: (id: number) => apiRequest(`/api/notifications/${id}/read`, { method: 'PATCH' }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/notifications'] });
       queryClient.invalidateQueries({ queryKey: ['/api/notifications/unread-count'] });
@@ -99,7 +99,7 @@ export default function Notifications() {
   });
 
   const markAllReadMutation = useMutation({
-    mutationFn: () => apiRequest('POST', '/api/notifications/mark-all-read'),
+    mutationFn: () => apiRequest('/api/notifications/mark-all-read', { method: 'POST' }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/notifications'] });
       queryClient.invalidateQueries({ queryKey: ['/api/notifications/unread-count'] });
@@ -107,7 +107,7 @@ export default function Notifications() {
   });
 
   const deleteNotificationMutation = useMutation({
-    mutationFn: (id: number) => apiRequest('DELETE', `/api/notifications/${id}`),
+    mutationFn: (id: number) => apiRequest(`/api/notifications/${id}`, { method: 'DELETE' }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/notifications'] });
       queryClient.invalidateQueries({ queryKey: ['/api/notifications/unread-count'] });
@@ -116,7 +116,7 @@ export default function Notifications() {
 
   const updatePrefsMutation = useMutation({
     mutationFn: (prefs: Partial<NotificationPreference>) => 
-      apiRequest('PATCH', '/api/notification-preferences', prefs),
+      apiRequest('/api/notification-preferences', { method: 'PATCH' }, prefs),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/notification-preferences'] });
     },
@@ -171,33 +171,37 @@ export default function Notifications() {
   const unreadCount = notificationsList.filter(n => !n.isRead).length;
 
   return (
-    <div className="container mx-auto px-4 py-8 max-w-2xl">
-      <div className="flex items-center justify-between mb-6">
+    <div className="container mx-auto px-4 py-6 max-w-2xl pb-24">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6">
         <div className="flex items-center gap-3">
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Notifiche</h1>
           {unreadCount > 0 && (
             <Badge className="bg-orange-600 text-white">{unreadCount}</Badge>
           )}
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-shrink-0">
           {unreadCount > 0 && (
             <Button
               variant="outline"
               size="sm"
               onClick={() => markAllReadMutation.mutate()}
               disabled={markAllReadMutation.isPending}
+              className="whitespace-nowrap"
             >
-              <CheckCheck className="h-4 w-4 mr-2" />
-              Segna tutto letto
+              <CheckCheck className="h-4 w-4 mr-1 sm:mr-2" />
+              <span className="hidden sm:inline">Segna tutto letto</span>
+              <span className="sm:hidden">Letti</span>
             </Button>
           )}
           <Button 
             variant="outline" 
             size="sm"
             onClick={() => setShowSettings(!showSettings)}
+            className="whitespace-nowrap"
           >
-            <Settings className="h-4 w-4 mr-2" />
-            Impostazioni
+            <Settings className="h-4 w-4 mr-1 sm:mr-2" />
+            <span className="hidden sm:inline">Impostazioni</span>
+            <span className="sm:hidden">Imp.</span>
           </Button>
         </div>
       </div>
