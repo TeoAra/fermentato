@@ -2117,6 +2117,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         abv: abv ? String(abv) : null,
         ibu: req.body.ibu ? parseInt(req.body.ibu) : null,
         description: req.body.description?.trim() || null,
+        imageUrl: req.body.imageUrl?.trim() || null,
       });
       res.json(beer);
     } catch (error) {

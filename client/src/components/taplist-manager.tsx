@@ -23,7 +23,9 @@ import {
   Loader2,
   ArrowLeft,
   Factory,
-  ChevronRight
+  ChevronRight,
+  ImagePlus,
+  X
 } from "lucide-react";
 
 function useDebounce<T>(value: T, delay: number): T {
@@ -86,6 +88,11 @@ export function TapListManager({ pubId, tapList }: TapListManagerProps) {
   const [creatingBrewery, setCreatingBrewery] = useState(false);
   const [brewerySearchTerm, setBrewerySearchTerm] = useState("");
   const debouncedBrewerySearch = useDebounce(brewerySearchTerm, 300);
+  const [styleSearchTerm, setStyleSearchTerm] = useState("");
+  const [styleDropdownOpen, setStyleDropdownOpen] = useState(false);
+  const [beerImageFile, setBeerImageFile] = useState<File | null>(null);
+  const [beerImagePreview, setBeerImagePreview] = useState<string>("");
+  const [uploadingBeerImage, setUploadingBeerImage] = useState(false);
   const [newBeerData, setNewBeerData] = useState({
     name: "",
     style: "",
@@ -94,6 +101,7 @@ export function TapListManager({ pubId, tapList }: TapListManagerProps) {
     description: "",
     breweryId: "",
     breweryName: "",
+    imageUrl: "",
   });
   const [newBreweryData, setNewBreweryData] = useState({
     name: "",
@@ -210,13 +218,22 @@ export function TapListManager({ pubId, tapList }: TapListManagerProps) {
   });
 
   const createBeerMutation = useMutation({
-    mutationFn: async (data: { name: string; breweryId: string; style: string; abv?: string; ibu?: string; description?: string }) => {
-      return apiRequest("/api/owner/beers", { method: "POST" }, data);
+    mutationFn: async (data: { name: string; breweryId: string; style: string; abv?: string; ibu?: string; description?: string; imageUrl?: string }) => {
+      let imageUrl = data.imageUrl;
+      if (beerImageFile) {
+        const uploaded = await uploadBeerImage();
+        if (uploaded) imageUrl = uploaded;
+      }
+      return apiRequest("/api/owner/beers", { method: "POST" }, { ...data, imageUrl });
     },
     onSuccess: (beer: any) => {
       toast({ title: "Birra creata!" });
       setFormData(prev => ({ ...prev, beerId: beer.id.toString() }));
       setCreatingBeer(false);
+      setBeerImageFile(null);
+      setBeerImagePreview("");
+      setStyleSearchTerm("");
+      setStyleDropdownOpen(false);
       queryClient.invalidateQueries({ queryKey: ["/api/search"] });
     },
     onError: () => {
@@ -238,6 +255,62 @@ export function TapListManager({ pubId, tapList }: TapListManagerProps) {
     },
   });
 
+  const BEER_STYLES = [
+    "IPA", "APA", "NEIPA", "Double IPA", "Triple IPA", "Session IPA", "West Coast IPA",
+    "Lager", "Pilsner", "Helles", "Märzen", "Bock", "Doppelbock", "Dunkel",
+    "Weiss", "Hefeweizen", "Weizenbock", "Kristallweizen",
+    "Stout", "Imperial Stout", "Milk Stout", "Oatmeal Stout", "Dry Stout",
+    "Porter", "Baltic Porter", "Robust Porter",
+    "Saison", "Farmhouse Ale", "Grisette",
+    "Belgian Ale", "Blanche", "Witbier", "Dubbel", "Tripel", "Quadrupel", "Belgian Strong",
+    "Pale Ale", "Amber Ale", "Red Ale", "Golden Ale", "Blonde Ale", "Cream Ale",
+    "Bitter", "ESB", "Mild",
+    "Barley Wine", "English Barley Wine",
+    "Sour", "Gose", "Berliner Weisse", "Lambic", "Gueuze", "Flanders Red", "Kriek",
+    "Kölsch", "Altbier",
+    "Rauchbier", "Schwarzbier",
+    "Scottish Ale", "Scotch Ale",
+    "Brown Ale", "English Brown Ale",
+    "Wheat Beer", "American Wheat",
+    "Fruit Beer", "Spiced Beer", "Honey Beer",
+    "Smoked Beer", "Pumpkin Ale",
+    "Italian Grape Ale", "Italian Pilsner",
+  ];
+
+  const filteredStyles = useMemo(() => {
+    if (!styleSearchTerm) return BEER_STYLES;
+    return BEER_STYLES.filter(s => s.toLowerCase().includes(styleSearchTerm.toLowerCase()));
+  }, [styleSearchTerm]);
+
+  const handleBeerImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setBeerImageFile(file);
+      const reader = new FileReader();
+      reader.onload = (ev) => setBeerImagePreview(ev.target?.result as string);
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const uploadBeerImage = async (): Promise<string | null> => {
+    if (!beerImageFile) return null;
+    setUploadingBeerImage(true);
+    try {
+      const formData = new FormData();
+      formData.append("image", beerImageFile);
+      formData.append("folder", "beer-images");
+      const res = await fetch("/api/upload/image", { method: "POST", credentials: "include", body: formData });
+      if (!res.ok) throw new Error("Upload failed");
+      const data = await res.json();
+      return data.url;
+    } catch {
+      toast({ title: "Errore upload immagine", variant: "destructive" });
+      return null;
+    } finally {
+      setUploadingBeerImage(false);
+    }
+  };
+
   const resetForm = () => {
     setFormData({
       beerId: "",
@@ -250,8 +323,12 @@ export function TapListManager({ pubId, tapList }: TapListManagerProps) {
     setCreatingBeer(false);
     setCreatingBrewery(false);
     setBrewerySearchTerm("");
-    setNewBeerData({ name: "", style: "", abv: "", ibu: "", description: "", breweryId: "", breweryName: "" });
+    setNewBeerData({ name: "", style: "", abv: "", ibu: "", description: "", breweryId: "", breweryName: "", imageUrl: "" });
     setNewBreweryData({ name: "", location: "", region: "" });
+    setStyleSearchTerm("");
+    setStyleDropdownOpen(false);
+    setBeerImageFile(null);
+    setBeerImagePreview("");
   };
 
   const startEdit = (item: TapItem) => {
@@ -383,40 +460,47 @@ export function TapListManager({ pubId, tapList }: TapListManagerProps) {
                             data-testid="input-beer-search"
                           />
                         </div>
-                        {searchResults?.beers && searchResults.beers.length > 0 && !formData.beerId && (
-                          <div className="max-h-48 overflow-y-auto border rounded-lg bg-white dark:bg-gray-900">
-                            {searchResults.beers.map((beer: any) => (
-                              <div
-                                key={beer.id}
-                                className="p-3 hover:bg-gray-50 dark:hover:bg-gray-800 cursor-pointer border-b last:border-b-0 transition-colors"
+                        {debouncedSearchTerm.length >= 2 && !isSearching && !formData.beerId && !creatingBeer && (
+                          <>
+                            {searchResults?.beers && searchResults.beers.length > 0 && (
+                              <div className="max-h-48 overflow-y-auto border rounded-lg bg-white dark:bg-gray-900">
+                                {searchResults.beers.map((beer: any) => (
+                                  <div
+                                    key={beer.id}
+                                    className="p-3 hover:bg-gray-50 dark:hover:bg-gray-800 cursor-pointer border-b last:border-b-0 transition-colors"
+                                    onClick={() => {
+                                      setFormData({ ...formData, beerId: beer.id.toString() });
+                                    }}
+                                  >
+                                    <div className="font-medium text-gray-900 dark:text-white">{beer.name}</div>
+                                    <div className="text-sm text-gray-600 dark:text-gray-400">
+                                      {beer.brewery?.name || 'Birrificio sconosciuto'} • {beer.style} • {beer.abv}% ABV
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+                            <div className="p-3 border border-dashed rounded-lg text-center text-gray-500">
+                              {searchResults?.beers?.length === 0 && (
+                                <p className="mb-2 text-sm">Nessuna birra trovata per "{debouncedSearchTerm}"</p>
+                              )}
+                              {searchResults?.beers && searchResults.beers.length > 0 && (
+                                <p className="mb-2 text-sm">Non trovi quella che cerchi?</p>
+                              )}
+                              <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
                                 onClick={() => {
-                                  setFormData({ ...formData, beerId: beer.id.toString() });
+                                  setCreatingBeer(true);
+                                  setNewBeerData(prev => ({ ...prev, name: debouncedSearchTerm }));
                                 }}
                               >
-                                <div className="font-medium text-gray-900 dark:text-white">{beer.name}</div>
-                                <div className="text-sm text-gray-600 dark:text-gray-400">
-                                  {beer.brewery?.name || 'Birrificio sconosciuto'} • {beer.style} • {beer.abv}% ABV
-                                </div>
-                              </div>
-                            ))}
-                          </div>
-                        )}
-                        {debouncedSearchTerm.length >= 2 && searchResults?.beers?.length === 0 && !isSearching && !creatingBeer && (
-                          <div className="p-4 border border-dashed rounded-lg text-center text-gray-500">
-                            <p className="mb-2">Nessuna birra trovata per "{debouncedSearchTerm}"</p>
-                            <Button
-                              type="button"
-                              variant="outline"
-                              size="sm"
-                              onClick={() => {
-                                setCreatingBeer(true);
-                                setNewBeerData(prev => ({ ...prev, name: debouncedSearchTerm }));
-                              }}
-                            >
-                              <Plus className="w-4 h-4 mr-1" />
-                              Crea nuova birra
-                            </Button>
-                          </div>
+                                <Plus className="w-4 h-4 mr-1" />
+                                Crea nuova birra
+                              </Button>
+                            </div>
+                          </>
                         )}
                       </>
                     )}
@@ -500,44 +584,42 @@ export function TapListManager({ pubId, tapList }: TapListManagerProps) {
                         </div>
 
                         <div className="grid grid-cols-2 gap-3">
-                          <div>
+                          <div className="relative">
                             <Label className="text-xs">Stile *</Label>
                             <Input
-                              value={newBeerData.style}
-                              onChange={(e) => setNewBeerData({ ...newBeerData, style: e.target.value })}
-                              placeholder="IPA, Lager, Stout..."
+                              value={styleDropdownOpen ? styleSearchTerm : newBeerData.style}
+                              onChange={(e) => {
+                                setStyleSearchTerm(e.target.value);
+                                setNewBeerData({ ...newBeerData, style: e.target.value });
+                                setStyleDropdownOpen(true);
+                              }}
+                              onFocus={() => {
+                                setStyleSearchTerm(newBeerData.style);
+                                setStyleDropdownOpen(true);
+                              }}
+                              onBlur={() => setTimeout(() => setStyleDropdownOpen(false), 200)}
+                              placeholder="Cerca stile..."
                               className="h-9"
-                              list="beer-style-options"
+                              autoComplete="off"
                             />
-                            <datalist id="beer-style-options">
-                              <option value="IPA" />
-                              <option value="APA" />
-                              <option value="Lager" />
-                              <option value="Pilsner" />
-                              <option value="Weiss" />
-                              <option value="Stout" />
-                              <option value="Porter" />
-                              <option value="Saison" />
-                              <option value="Belgian Ale" />
-                              <option value="Blanche" />
-                              <option value="Amber Ale" />
-                              <option value="Pale Ale" />
-                              <option value="Red Ale" />
-                              <option value="Golden Ale" />
-                              <option value="Bitter" />
-                              <option value="Barley Wine" />
-                              <option value="Sour" />
-                              <option value="Gose" />
-                              <option value="NEIPA" />
-                              <option value="Double IPA" />
-                              <option value="Imperial Stout" />
-                              <option value="Bock" />
-                              <option value="Dubbel" />
-                              <option value="Tripel" />
-                              <option value="Quadrupel" />
-                              <option value="Kölsch" />
-                              <option value="Rauchbier" />
-                            </datalist>
+                            {styleDropdownOpen && filteredStyles.length > 0 && (
+                              <div className="absolute z-50 w-full mt-1 max-h-40 overflow-y-auto border rounded-lg bg-white dark:bg-gray-900 shadow-lg">
+                                {filteredStyles.slice(0, 15).map((style) => (
+                                  <div
+                                    key={style}
+                                    className="px-3 py-1.5 text-sm hover:bg-amber-50 dark:hover:bg-amber-900/20 cursor-pointer"
+                                    onMouseDown={(e) => {
+                                      e.preventDefault();
+                                      setNewBeerData({ ...newBeerData, style });
+                                      setStyleSearchTerm(style);
+                                      setStyleDropdownOpen(false);
+                                    }}
+                                  >
+                                    {style}
+                                  </div>
+                                ))}
+                              </div>
+                            )}
                           </div>
                           <div>
                             <Label className="text-xs">ABV %</Label>
@@ -554,17 +636,49 @@ export function TapListManager({ pubId, tapList }: TapListManagerProps) {
                           </div>
                         </div>
 
+                        <div>
+                          <Label className="text-xs">Descrizione</Label>
+                          <Textarea
+                            value={newBeerData.description}
+                            onChange={(e) => setNewBeerData({ ...newBeerData, description: e.target.value })}
+                            placeholder="Note sulla birra, aromi, sapore..."
+                            className="min-h-[60px] text-sm"
+                          />
+                        </div>
+
+                        <div>
+                          <Label className="text-xs">Immagine birra</Label>
+                          {beerImagePreview ? (
+                            <div className="relative w-20 h-20 mt-1">
+                              <img src={beerImagePreview} alt="Anteprima" className="w-20 h-20 object-cover rounded-lg border" />
+                              <button
+                                type="button"
+                                onClick={() => { setBeerImageFile(null); setBeerImagePreview(""); }}
+                                className="absolute -top-1.5 -right-1.5 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs"
+                              >
+                                <X className="h-3 w-3" />
+                              </button>
+                            </div>
+                          ) : (
+                            <label className="flex items-center gap-2 mt-1 px-3 py-2 border border-dashed rounded-lg cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
+                              <ImagePlus className="h-4 w-4 text-gray-400" />
+                              <span className="text-xs text-gray-500">Carica immagine</span>
+                              <input type="file" accept="image/*" className="hidden" onChange={handleBeerImageChange} />
+                            </label>
+                          )}
+                        </div>
+
                         <div className="flex justify-end gap-2 pt-2">
                           <Button variant="outline" size="sm" onClick={() => setCreatingBeer(false)}>
                             Annulla
                           </Button>
                           <Button
                             size="sm"
-                            disabled={!newBeerData.name || !newBeerData.breweryId || !newBeerData.style || createBeerMutation.isPending}
+                            disabled={!newBeerData.name || !newBeerData.breweryId || !newBeerData.style || createBeerMutation.isPending || uploadingBeerImage}
                             onClick={() => createBeerMutation.mutate(newBeerData)}
                           >
-                            {createBeerMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : <Plus className="h-4 w-4 mr-1" />}
-                            Crea birra
+                            {(createBeerMutation.isPending || uploadingBeerImage) ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : <Plus className="h-4 w-4 mr-1" />}
+                            {uploadingBeerImage ? "Caricamento immagine..." : "Crea birra"}
                           </Button>
                         </div>
                       </div>
