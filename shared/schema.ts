@@ -562,6 +562,42 @@ export type InsertPubSize = z.infer<typeof insertPubSizeSchema>;
 export type PublicanRequest = typeof publicanRequests.$inferSelect;
 export type InsertPublicanRequest = z.infer<typeof insertPublicanRequestSchema>;
 
+// Notifications
+export const notifications = pgTable("notifications", {
+  id: serial("id").primaryKey(),
+  userId: varchar("user_id").references(() => users.id).notNull(),
+  type: varchar("type").notNull(), // 'tap_change', 'new_beer', 'beer_removed', 'event', 'new_pub'
+  title: varchar("title").notNull(),
+  message: text("message").notNull(),
+  pubId: integer("pub_id").references(() => pubs.id),
+  beerId: integer("beer_id").references(() => beers.id),
+  isRead: boolean("is_read").default(false),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const notificationPreferences = pgTable("notification_preferences", {
+  id: serial("id").primaryKey(),
+  userId: varchar("user_id").references(() => users.id).notNull().unique(),
+  tapChanges: boolean("tap_changes").default(true),
+  events: boolean("events").default(true),
+  newPubs: boolean("new_pubs").default(false),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export const insertNotificationSchema = createInsertSchema(notifications).omit({
+  id: true,
+  createdAt: true,
+});
+export const insertNotificationPreferencesSchema = createInsertSchema(notificationPreferences).omit({
+  id: true,
+  updatedAt: true,
+});
+
+export type Notification = typeof notifications.$inferSelect;
+export type InsertNotification = z.infer<typeof insertNotificationSchema>;
+export type NotificationPreference = typeof notificationPreferences.$inferSelect;
+export type InsertNotificationPreference = z.infer<typeof insertNotificationPreferencesSchema>;
+
 // Custom schemas for forms
 export const pubRegistrationSchema = insertPubSchema.extend({
   vatNumber: z.string().min(11, "P.IVA deve essere di almeno 11 caratteri"),
