@@ -58,10 +58,10 @@ export default function Header() {
     },
     {
       icon: User,
-      label: isAuthenticated ? "Dashboard" : "Accedi",
-      href: isAuthenticated ? "/dashboard" : "/auth",
-      isActive: isAuthenticated && location.startsWith("/dashboard"),
-      requiresAuth: false
+      label: "Dashboard",
+      href: "/dashboard",
+      isActive: location.startsWith("/dashboard"),
+      requiresAuth: true
     }
   ];
 
@@ -223,7 +223,7 @@ export default function Header() {
                 </DropdownMenu>
               ) : (
                 <Button asChild variant="default" size="sm" className="bg-orange-600 hover:bg-orange-700">
-                  <a href="/auth" data-testid="login-button">Accedi</a>
+                  <Link href="/login" data-testid="login-button">Accedi / Registrati</Link>
                 </Button>
               )}
             </div>
