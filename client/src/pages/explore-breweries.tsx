@@ -229,12 +229,14 @@ export default function ExploreBreweries() {
     );
   };
 
-  const breweriesByCountry = Array.isArray(allBreweries) ? allBreweries.reduce((acc: any, brewery: any) => {
-    const country = detectCountry(brewery);
-    if (!acc[country]) acc[country] = [];
-    acc[country].push(brewery);
-    return acc;
-  }, {}) : {};
+  const breweriesByCountry = Array.isArray(allBreweries) ? allBreweries
+    .filter((brewery: any) => (brewery.beerCount || 0) > 0)
+    .reduce((acc: any, brewery: any) => {
+      const country = detectCountry(brewery);
+      if (!acc[country]) acc[country] = [];
+      acc[country].push(brewery);
+      return acc;
+    }, {}) : {};
 
   return (
     <div className="min-h-screen bg-gray-50">
