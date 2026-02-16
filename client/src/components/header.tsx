@@ -53,7 +53,7 @@ export default function Header() {
       label: "Notifiche",
       href: "/notifications", 
       isActive: location.startsWith("/notifications"),
-      badge: unreadData?.count || 0,
+      badge: (unreadData?.count && unreadData.count > 0) ? unreadData.count : undefined,
       requiresAuth: true
     },
     {

@@ -67,7 +67,7 @@ export function BottomNavigation() {
       label: "Notifiche",
       href: "/notifications", 
       isActive: location.startsWith("/notification"),
-      badge: unreadData?.count || 0,
+      badge: (unreadData?.count && unreadData.count > 0) ? unreadData.count : undefined,
       requiresAuth: true
     },
     {
