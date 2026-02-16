@@ -315,15 +315,20 @@ export default function Activity() {
                             </div>
                             <div className="flex-1 min-w-0">
                               <h3 className="font-semibold text-sm mb-1 truncate">{pub.name}</h3>
-                              <p className="text-xs text-gray-500 mb-2 line-clamp-1">{pub.address}</p>
-                              <div className="flex items-center gap-2 flex-wrap">
+                              <p className="text-xs text-gray-500 mb-2 flex items-center gap-1">
+                                <MapPin className="w-3 h-3 flex-shrink-0" />
+                                <span className="line-clamp-1">
+                                  {userLocation && pub.distance !== 9999 ? pub.city || pub.address?.split(',').pop()?.trim() : pub.address}
+                                </span>
                                 {userLocation && pub.distance !== 9999 && (
-                                  <Badge variant="secondary" className="text-xs">
+                                  <span className="font-medium text-blue-600 dark:text-blue-400 whitespace-nowrap">
                                     {pub.distance < 1 
-                                      ? `${Math.round(pub.distance * 1000)} m` 
-                                      : `${pub.distance.toFixed(1)} km`}
-                                  </Badge>
+                                      ? `${Math.round(pub.distance * 1000)}m` 
+                                      : `${pub.distance.toFixed(1)}km`}
+                                  </span>
                                 )}
+                              </p>
+                              <div className="flex items-center gap-2 flex-wrap">
                                 <Badge className={`text-xs ${openStatus.color}`}>
                                   <Clock className="h-3 w-3 mr-1" />
                                   {openStatus.label}
