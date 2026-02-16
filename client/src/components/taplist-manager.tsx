@@ -751,7 +751,7 @@ export function TapListManager({ pubId, tapList }: TapListManagerProps) {
                             onAddressSelect={(details) => {
                               setNewBreweryData({
                                 ...newBreweryData,
-                                location: details.city || details.formattedAddress,
+                                location: details.formattedAddress || details.city,
                                 region: details.region,
                               });
                             }}
