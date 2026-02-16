@@ -20,6 +20,7 @@ import { AddressAutocomplete } from "@/components/AddressAutocomplete";
 const loginSchema = z.object({
   email: z.string().email("Email non valida"),
   password: z.string().min(1, "Password richiesta"),
+  rememberMe: z.boolean().default(false),
 });
 
 const registerSchema = z.object({
@@ -68,7 +69,7 @@ export default function AuthPage() {
 
   const loginForm = useForm<LoginForm>({
     resolver: zodResolver(loginSchema),
-    defaultValues: { email: "", password: "" },
+    defaultValues: { email: "", password: "", rememberMe: false },
   });
 
   const registerForm = useForm<RegisterForm>({
@@ -227,6 +228,26 @@ export default function AuthPage() {
                           </div>
                         </FormControl>
                         <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={loginForm.control}
+                    name="rememberMe"
+                    render={({ field }) => (
+                      <FormItem className="flex flex-row items-center space-x-2 space-y-0">
+                        <FormControl>
+                          <input
+                            type="checkbox"
+                            checked={field.value}
+                            onChange={field.onChange}
+                            className="h-4 w-4 rounded border-gray-300 text-amber-600 focus:ring-amber-500 cursor-pointer accent-amber-600"
+                          />
+                        </FormControl>
+                        <FormLabel className="text-sm font-normal text-gray-600 dark:text-gray-400 cursor-pointer">
+                          Ricordami
+                        </FormLabel>
                       </FormItem>
                     )}
                   />

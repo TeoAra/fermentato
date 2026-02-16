@@ -302,6 +302,12 @@ export async function setupAuth(app: Express) {
           return res.status(500).json({ message: 'Errore durante il login' });
         }
         
+        if (req.body.rememberMe) {
+          req.session.cookie.maxAge = 30 * 24 * 60 * 60 * 1000; // 30 giorni
+        } else {
+          req.session.cookie.maxAge = 24 * 60 * 60 * 1000; // 1 giorno
+        }
+
         const { hashedPassword: _, ...userWithoutPassword } = user;
         res.json({ user: userWithoutPassword });
       });
