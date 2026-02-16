@@ -17,6 +17,7 @@ interface AddressAutocompleteProps {
   placeholder?: string;
   disabled?: boolean;
   className?: string;
+  countryRestriction?: string | null;
 }
 
 export function AddressAutocomplete({
@@ -25,6 +26,7 @@ export function AddressAutocomplete({
   placeholder = "Cerca indirizzo...",
   disabled = false,
   className = "",
+  countryRestriction = "it",
 }: AddressAutocompleteProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -62,7 +64,7 @@ export function AddressAutocomplete({
           inputRef.current,
           {
             types: ["establishment", "geocode"],
-            componentRestrictions: { country: "it" },
+            ...(countryRestriction ? { componentRestrictions: { country: countryRestriction } } : {}),
             fields: ["formatted_address", "address_components", "place_id", "name"],
           }
         );

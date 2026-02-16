@@ -757,6 +757,7 @@ export function TapListManager({ pubId, tapList }: TapListManagerProps) {
                             }}
                             placeholder="Cerca località..."
                             className="[&_input]:h-9 [&_input]:text-sm"
+                            countryRestriction={null}
                           />
                         </div>
 
