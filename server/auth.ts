@@ -10,6 +10,7 @@ import { db } from "./db";
 import { users, oauthAccounts, publicanRequests } from "@shared/schema";
 import { eq, and } from "drizzle-orm";
 import type { User } from "@shared/schema";
+import { storage } from "./storage";
 
 const SALT_ROUNDS = 12;
 
@@ -265,6 +266,23 @@ export async function setupAuth(app: Express) {
         });
         
         console.log(`New publican request created for user ${userId} - Pub: ${trimmedPubName}`);
+
+        try {
+          const adminIds = await storage.getAdminUserIds();
+          for (const adminId of adminIds) {
+            await storage.createNotification({
+              userId: adminId,
+              type: 'new_pub_request',
+              title: 'Nuova richiesta pub',
+              message: `${normalizedEmail} ha richiesto di registrare "${trimmedPubName}" (${trimmedPubCity}).`,
+              pubId: null,
+              beerId: null,
+              isRead: false,
+            });
+          }
+        } catch (notifError) {
+          console.error('Error sending admin notification:', notifError);
+        }
       }
       
       // Auto-login after registration

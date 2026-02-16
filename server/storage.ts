@@ -270,6 +270,9 @@ export interface IStorage {
 
   // Helper: get users who favorited a pub (for sending notifications)
   getUsersWhoFavoritedPub(pubId: number): Promise<string[]>;
+
+  // Helper: get admin user IDs
+  getAdminUserIds(): Promise<string[]>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -1226,6 +1229,18 @@ export class DatabaseStorage implements IStorage {
       .where(and(eq(favorites.itemType, 'pub'), eq(favorites.itemId, pubId)));
     return rows.map(r => r.userId);
   }
+
+  async getAdminUserIds(): Promise<string[]> {
+    const rows = await db.select({ id: users.id })
+      .from(users)
+      .where(
+        or(
+          eq(users.userType, 'admin'),
+          eq(users.activeRole, 'admin')
+        )
+      );
+    return rows.map(r => r.id);
+  }
 }
 
 // Storage wrapper with fallback to in-memory when database is disabled
@@ -1827,6 +1842,13 @@ class StorageWrapper implements IStorage {
   async getUsersWhoFavoritedPub(pubId: number): Promise<string[]> {
     return this.dbCall(
       () => this.databaseStorage.getUsersWhoFavoritedPub(pubId),
+      async () => []
+    );
+  }
+
+  async getAdminUserIds(): Promise<string[]> {
+    return this.dbCall(
+      () => this.databaseStorage.getAdminUserIds(),
       async () => []
     );
   }

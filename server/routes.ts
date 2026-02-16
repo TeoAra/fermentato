@@ -475,13 +475,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       await storage.removeFromTapList(parseInt(id));
 
-      if (removedItem) {
-        const beer = await storage.getBeer(removedItem.beerId);
-        if (beer) {
-          notifyTapListChange(parseInt(pubId), 'beer_removed', beer.name, beer.id);
-        }
-      }
-
       console.log('Deleted taplist item:', id);
       res.status(200).json({ success: true });
     } catch (error) {
@@ -1564,7 +1557,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         .from(notifications)
         .innerJoin(pubs, eq(notifications.pubId, pubs.id))
         .where(
-          sql`${notifications.type} IN ('new_beer', 'beer_removed', 'tap_change') AND ${notifications.createdAt} > NOW() - INTERVAL '30 days'`
+          sql`${notifications.type} IN ('new_beer', 'tap_change') AND ${notifications.createdAt} > NOW() - INTERVAL '30 days'`
         )
         .orderBy(notifications.pubId, notifications.beerId, sql`${notifications.createdAt} DESC`)
         .limit(limit);
@@ -1625,6 +1618,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { newBeerId } = req.body;
       
       const updatedItem = await storage.updateTapListItem(itemId, { beerId: newBeerId });
+
+      const newBeer = await storage.getBeer(newBeerId);
+      if (newBeer) {
+        notifyTapListChange(pubId, 'tap_change', newBeer.name, newBeer.id);
+      }
+
       res.json(updatedItem);
     } catch (error) {
       console.error("Error replacing beer:", error);
