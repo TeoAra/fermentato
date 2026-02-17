@@ -27,8 +27,9 @@ Preferred communication style: Simple, everyday language.
 ### Database Architecture
 - **ORM**: Drizzle ORM with schema-first approach.
 - **Database**: PostgreSQL (flexible, configured for Neon serverless).
-- **Migrations**: Drizzle Kit.
+- **Migrations**: Drizzle Kit with SQL migration files (not db:push).
 - **Connection**: Connection pooling with @neondatabase/serverless.
+- **Migration Workflow**: Schema changes generate SQL files in `migrations/` folder. These are applied incrementally, preserving existing data.
 
 ### Key Components
 
@@ -54,3 +55,28 @@ Preferred communication style: Simple, everyday language.
 - **Styling**: Tailwind CSS.
 - **Forms**: React Hook Form with Zod validation.
 - **Date Handling**: date-fns library.
+
+## Deployment & Data Sync
+
+### Database Migration Workflow (Safe Deployments)
+1. **Schema changes**: Edit `shared/schema.ts` as needed
+2. **Generate migration**: Run `npx drizzle-kit generate` — creates SQL file in `migrations/`
+3. **Apply locally**: Run `npx tsx server/migrate.ts` — applies only new migrations
+4. **Deploy to VPS**: Run `scripts/deploy-vps.sh` — builds, migrates (data-safe), restarts
+
+### VPS First-Time Setup
+- Run `npx tsx scripts/vps-init-migrations.ts` to mark existing schema as already applied
+- This is done automatically by `scripts/deploy-vps.sh`
+
+### Data Synchronization (VPS ↔ Replit)
+- **Export from any DB**: `DATABASE_URL=<url> npx tsx scripts/export-data.ts` — saves JSON to `data-export/`
+- **Import to any DB**: `DATABASE_URL=<url> npx tsx scripts/import-data.ts data-export/<file>.json` — upserts data (merge, not overwrite)
+- Import uses ON CONFLICT DO UPDATE (upsert) so existing records are updated, new ones inserted
+- Import order respects foreign key dependencies
+- Sequence IDs are automatically reset after import
+
+### Important Notes
+- NEVER use `drizzle-kit push` in production — use migrations instead
+- `data-export/` folder is gitignored (data files stay local)
+- Migrations folder IS committed to git and deployed with code
+- The VPS deployment script handles everything: deps, build, migrations, restart
