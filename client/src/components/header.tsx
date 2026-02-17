@@ -23,10 +23,11 @@ export default function Header() {
   const searchRef = useRef<HTMLDivElement>(null);
 
   const isAdmin = typedUser?.userType === 'admin';
+  const hasMultipleRoles = typedUser?.roles && typedUser.roles.length > 1;
 
   const { data: rolesData } = useQuery<{ roles: string[]; activeRole: string }>({
     queryKey: ["/api/auth/roles"],
-    enabled: isAuthenticated && isAdmin,
+    enabled: isAuthenticated && (isAdmin || !!hasMultipleRoles),
   });
 
   const switchRoleMutation = useMutation({
@@ -242,7 +243,7 @@ export default function Header() {
                         Dashboard
                       </Link>
                     </DropdownMenuItem>
-                    {isAdmin && rolesData && rolesData.roles.length > 1 && (
+                    {(isAdmin || hasMultipleRoles) && rolesData && rolesData.roles.length > 1 && (
                       <>
                         <DropdownMenuSeparator />
                         <DropdownMenuLabel className="text-xs text-gray-500 font-normal">

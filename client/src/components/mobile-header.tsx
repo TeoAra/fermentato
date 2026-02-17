@@ -1,16 +1,53 @@
-import { Menu, X, LogOut, LogIn, User, Settings } from "lucide-react";
+import { Menu, X, LogOut, LogIn, User, Settings, Store, Beer, Shield, ChevronRight } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
+import { useQuery, useMutation } from "@tanstack/react-query";
+import { apiRequest, queryClient } from "@/lib/queryClient";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import type { User as UserType } from "@shared/schema";
 
 interface MobileHeaderProps {
   onMenuToggle: () => void;
   isMenuOpen: boolean;
 }
 
+const roleLabels: Record<string, string> = {
+  customer: "Utente",
+  pub_owner: "Pub Owner",
+  brewery_owner: "Brewery Owner",
+  admin: "Amministratore",
+};
+const roleIcons: Record<string, any> = {
+  customer: User,
+  pub_owner: Store,
+  brewery_owner: Beer,
+  admin: Shield,
+};
+
 export function MobileHeader({ onMenuToggle, isMenuOpen }: MobileHeaderProps) {
   const [location] = useLocation();
   const { isAuthenticated, user } = useAuth();
+  const typedUser = user as UserType | undefined;
+  const isAdmin = typedUser?.userType === 'admin';
+  const hasMultipleRoles = typedUser?.roles && typedUser.roles.length > 1;
+
+  const { data: rolesData } = useQuery<{ roles: string[]; activeRole: string }>({
+    queryKey: ["/api/auth/roles"],
+    enabled: isAuthenticated && (isAdmin || !!hasMultipleRoles),
+  });
+
+  const switchRoleMutation = useMutation({
+    mutationFn: async (role: string) => {
+      return apiRequest("/api/auth/switch-role", { method: "POST" }, { role });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/auth/roles"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
+      onMenuToggle();
+      window.location.reload();
+    },
+  });
 
   return (
     <>
@@ -28,7 +65,18 @@ export function MobileHeader({ onMenuToggle, isMenuOpen }: MobileHeaderProps) {
 
           {/* Actions */}
           <div className="flex items-center space-x-2">
-            {/* Ricerca rimossa dal mobile header per evitare ridondanza con bottom nav */}
+            {isAuthenticated && typedUser && (
+              <Link href="/dashboard">
+                <Avatar className="h-7 w-7">
+                  {typedUser.profileImageUrl && (
+                    <AvatarImage src={typedUser.profileImageUrl} alt={typedUser.nickname || 'Profilo'} />
+                  )}
+                  <AvatarFallback className="bg-orange-100 text-orange-600 text-xs">
+                    {typedUser.nickname?.[0]?.toUpperCase() || typedUser.firstName?.[0] || 'U'}
+                  </AvatarFallback>
+                </Avatar>
+              </Link>
+            )}
             
             <button
               onClick={onMenuToggle}
@@ -98,6 +146,32 @@ export function MobileHeader({ onMenuToggle, isMenuOpen }: MobileHeaderProps) {
                         Admin Panel
                       </div>
                     </Link>
+                  )}
+
+                  {(isAdmin || hasMultipleRoles) && rolesData && rolesData.roles.length > 1 && (
+                    <>
+                      <div className="border-t border-gray-200 dark:border-gray-700 my-2"></div>
+                      <div className="px-3 py-1 text-xs text-gray-500 font-normal">
+                        Ruolo attivo: {roleLabels[rolesData.activeRole] || rolesData.activeRole}
+                      </div>
+                      {rolesData.roles
+                        .filter(role => role !== rolesData.activeRole)
+                        .map(role => {
+                          const Icon = roleIcons[role] || User;
+                          return (
+                            <Button
+                              key={role}
+                              variant="ghost"
+                              className="w-full justify-start px-3 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800"
+                              onClick={() => switchRoleMutation.mutate(role)}
+                              disabled={switchRoleMutation.isPending}
+                            >
+                              <Icon className="w-4 h-4 mr-2" />
+                              Passa a {roleLabels[role] || role}
+                            </Button>
+                          );
+                        })}
+                    </>
                   )}
 
                   <div className="border-t border-gray-200 dark:border-gray-700 my-2"></div>
