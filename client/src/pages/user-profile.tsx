@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { 
@@ -33,6 +33,7 @@ import {
 } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Link } from "wouter";
+import { ImageUpload } from "@/components/image-upload";
 import type { User as UserType } from "@shared/schema";
 import UserFavoritesSection from "@/components/UserFavoritesSection";
 import BeerTastingsEditor from "@/components/BeerTastingsEditorNew";
@@ -67,7 +68,6 @@ export default function UserProfile() {
   });
 
   const [tempNickname, setTempNickname] = useState(typedUser?.nickname || "");
-  const [profileImageFile, setProfileImageFile] = useState<File | null>(null);
 
   // Handle redirects for unauthenticated users
   useEffect(() => {
@@ -233,63 +233,22 @@ export default function UserProfile() {
         <Card className="mb-6">
           <CardContent className="pt-6">
             <div className="flex flex-col md:flex-row items-center gap-6">
-              {/* Profile Image - Clickable */}
-              <div className="relative">
-                <Avatar className="w-24 h-24 cursor-pointer" onClick={() => document.getElementById('profile-image-input')?.click()}>
-                  <AvatarImage src={typedUser.profileImageUrl || ""} />
-                  <AvatarFallback className="bg-amber-600 text-white text-2xl">
-                    {typedUser.nickname?.[0]?.toUpperCase() || typedUser.email?.[0]?.toUpperCase() || 'U'}
-                  </AvatarFallback>
-                </Avatar>
-                <div className="absolute bottom-0 right-0 bg-amber-600 rounded-full p-1">
-                  <Upload className="w-3 h-3 text-white" />
-                </div>
-                <input
-                  id="profile-image-input"
-                  type="file"
-                  accept="image/*"
-                  className="hidden"
-                  onChange={async (e) => {
-                    const file = e.target.files?.[0];
-                    if (file) {
-                      setProfileImageFile(file);
+              {/* Profile Image Upload */}
+              <div className="w-32">
+                <ImageUpload
+                  label=""
+                  currentImageUrl={typedUser.profileImageUrl || undefined}
+                  onImageChange={async (url) => {
+                    if (url) {
                       try {
-                        const formData = new FormData();
-                        formData.append('image', file);
-                        formData.append('folder', 'profile-images');
-                        
-                        const res = await fetch('/api/upload/image', {
-                          method: 'POST',
-                          body: formData,
-                          credentials: 'include',
-                        });
-                        
-                        if (!res.ok) {
-                          const err = await res.json().catch(() => ({ message: "Upload fallito" }));
-                          throw new Error(err.message || 'Upload fallito');
-                        }
-                        
-                        const data = await res.json();
-                        
-                        if (data.url) {
-                          await updateProfileMutation.mutateAsync({ profileImageUrl: data.url });
-                          toast({
-                            title: "Immagine caricata",
-                            description: "L'immagine del profilo è stata aggiornata con successo",
-                            variant: "default",
-                          });
-                        } else {
-                          throw new Error('Upload fallito');
-                        }
-                      } catch (error: any) {
-                        toast({
-                          title: "Errore",
-                          description: error.message || "Impossibile caricare l'immagine",
-                          variant: "destructive",
-                        });
-                      }
+                        await updateProfileMutation.mutateAsync({ profileImageUrl: url });
+                      } catch (e) {}
                     }
                   }}
+                  folder="profile-images"
+                  aspectRatio="square"
+                  maxSize={5}
+                  showFileInfo={false}
                 />
               </div>
 
