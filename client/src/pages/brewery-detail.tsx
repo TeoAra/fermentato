@@ -87,7 +87,7 @@ export default function BreweryDetail() {
     websiteUrl: '',
   });
   
-  const isAdmin = user?.userType === 'admin';
+  const isAdmin = (user as any)?.activeRole === 'admin' || (!((user as any)?.activeRole) && user?.userType === 'admin');
   
   const { data: brewery, isLoading: breweryLoading } = useQuery<Brewery>({
     queryKey: ["/api/breweries", id],

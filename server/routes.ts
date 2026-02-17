@@ -582,8 +582,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Check if user is admin or owns the pub
       const user = await storage.getUser(userId);
       const existingPub = await storage.getPub(pubId);
-      const isAdmin = user && (user.userType === 'admin' || user.activeRole === 'admin');
-      if (!existingPub || (!isAdmin && existingPub.ownerId !== userId)) {
+      const effectiveRole = user?.activeRole || user?.userType;
+      const isAdminRole = effectiveRole === 'admin';
+      if (!existingPub || (!isAdminRole && existingPub.ownerId !== userId)) {
         return res.status(403).json({ message: "Not authorized to modify this pub's bottle list" });
       }
 
@@ -623,8 +624,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Check if user is admin or owns the pub
       const user = await storage.getUser(userId);
       const existingPub = await storage.getPub(parseInt(pubId));
-      const isAdmin = user && (user.userType === 'admin' || user.activeRole === 'admin');
-      if (!existingPub || (!isAdmin && existingPub.ownerId !== userId)) {
+      const effectiveRole = user?.activeRole || user?.userType;
+      const isAdminRole = effectiveRole === 'admin';
+      if (!existingPub || (!isAdminRole && existingPub.ownerId !== userId)) {
         return res.status(403).json({ message: "Not authorized to modify this pub's bottle list" });
       }
       
@@ -774,8 +776,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Check if user is admin or owns the pub
       const user = await storage.getUser(userId);
       const existingPub = await storage.getPub(pubId);
-      const isAdmin = user && (user.userType === 'admin' || user.activeRole === 'admin');
-      if (!existingPub || (!isAdmin && existingPub.ownerId !== userId)) {
+      const effectiveRole = user?.activeRole || user?.userType;
+      const isAdminRole = effectiveRole === 'admin';
+      if (!existingPub || (!isAdminRole && existingPub.ownerId !== userId)) {
         return res.status(403).json({ message: "Not authorized to modify this pub's menu" });
       }
 
@@ -823,8 +826,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Check if user is admin or owns the pub
       const user = await storage.getUser(userId);
       const existingPub = await storage.getPub(pubId);
-      const isAdmin = user && (user.userType === 'admin' || user.activeRole === 'admin');
-      if (!existingPub || (!isAdmin && existingPub.ownerId !== userId)) {
+      const effectiveRole = user?.activeRole || user?.userType;
+      const isAdminRole = effectiveRole === 'admin';
+      if (!existingPub || (!isAdminRole && existingPub.ownerId !== userId)) {
         return res.status(403).json({ message: "Not authorized to modify this pub's menu" });
       }
 
@@ -863,8 +867,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Check if user is admin or owns the pub
       const user = await storage.getUser(userId);
       const existingPub = await storage.getPub(pubId);
-      const isAdmin = user && (user.userType === 'admin' || user.activeRole === 'admin');
-      if (!existingPub || (!isAdmin && existingPub.ownerId !== userId)) {
+      const effectiveRole = user?.activeRole || user?.userType;
+      const isAdminRole = effectiveRole === 'admin';
+      if (!existingPub || (!isAdminRole && existingPub.ownerId !== userId)) {
         return res.status(403).json({ message: "Not authorized to modify this pub's menu" });
       }
 
@@ -1283,7 +1288,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     
     try {
       const user = await storage.getUser(userId);
-      if (!user || user.userType !== 'admin') {
+      const effectiveRole = user?.activeRole || user?.userType;
+      if (!user || effectiveRole !== 'admin') {
         return res.status(403).json({ message: "Admin access required" });
       }
       next();
@@ -1298,8 +1304,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const user = await storage.getUser(userId);
       if (!user) return false;
       
-      // Check if user is admin
-      if (user.userType === 'admin' || user.activeRole === 'admin' || (user.roles && user.roles.includes('admin'))) {
+      const effectiveRole = user.activeRole || user.userType;
+      
+      // Check if user is currently acting as admin
+      if (effectiveRole === 'admin') {
         return true;
       }
       
@@ -2083,7 +2091,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userId = (req.user as any).id;
       const user = await storage.getUser(userId);
       
-      if (user?.userType !== 'admin') {
+      const effectiveRole = user?.activeRole || user?.userType;
+      if (effectiveRole !== 'admin') {
         return res.status(403).json({ message: "Admin access required" });
       }
 
@@ -2106,7 +2115,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userId = (req.user as any).id;
       const user = await storage.getUser(userId);
       
-      if (user?.userType !== 'admin') {
+      const effectiveRole = user?.activeRole || user?.userType;
+      if (effectiveRole !== 'admin') {
         return res.status(403).json({ message: "Admin access required" });
       }
 
@@ -2208,7 +2218,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userId = (req.user as any).id;
       const user = await storage.getUser(userId);
       
-      if (user?.userType !== 'admin') {
+      const effectiveRole = user?.activeRole || user?.userType;
+      if (effectiveRole !== 'admin') {
         return res.status(403).json({ message: "Admin access required" });
       }
 
@@ -2226,7 +2237,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userId = (req.user as any).id;
       const user = await storage.getUser(userId);
       
-      if (user?.userType !== 'admin') {
+      const effectiveRole = user?.activeRole || user?.userType;
+      if (effectiveRole !== 'admin') {
         return res.status(403).json({ message: "Admin access required" });
       }
 
@@ -2244,7 +2256,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userId = (req.user as any).id;
       const user = await storage.getUser(userId);
       
-      if (user?.userType !== 'admin') {
+      const effectiveRole = user?.activeRole || user?.userType;
+      if (effectiveRole !== 'admin') {
         return res.status(403).json({ message: "Admin access required" });
       }
 
@@ -2265,7 +2278,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userId = (req.user as any).id;
       const user = await storage.getUser(userId);
       
-      if (user?.userType !== 'admin') {
+      const effectiveRole = user?.activeRole || user?.userType;
+      if (effectiveRole !== 'admin') {
         return res.status(403).json({ message: "Admin access required" });
       }
 

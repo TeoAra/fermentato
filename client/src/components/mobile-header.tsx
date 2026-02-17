@@ -87,7 +87,7 @@ export function MobileHeader({ onMenuToggle, isMenuOpen }: MobileHeaderProps) {
                     </div>
                   </Link>
 
-                  {(user as any)?.userType === 'admin' && (
+                  {((user as any)?.activeRole === 'admin' || (!((user as any)?.activeRole) && (user as any)?.userType === 'admin')) && (
                     <Link href="/admin" onClick={onMenuToggle}>
                       <div className={`block px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
                         location.startsWith("/admin") 

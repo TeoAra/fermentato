@@ -257,10 +257,20 @@ export default function UserProfile() {
                         const formData = new FormData();
                         formData.append('image', file);
                         
-                        const response = await apiRequest('/api/user/upload-profile-image', { method: 'POST' }, formData);
+                        const uploadRes = await fetch('/api/user/upload-profile-image', {
+                          method: 'POST',
+                          body: formData,
+                          credentials: 'include',
+                        });
+                        
+                        if (!uploadRes.ok) {
+                          const errorData = await uploadRes.json().catch(() => ({}));
+                          throw new Error(errorData.message || 'Upload failed');
+                        }
+                        
+                        const response = await uploadRes.json();
                         
                         if (response.imageUrl) {
-                          // Update user profile with new image
                           await updateProfileMutation.mutateAsync({ profileImageUrl: response.imageUrl });
                           toast({
                             title: "Immagine caricata",
@@ -270,10 +280,10 @@ export default function UserProfile() {
                         } else {
                           throw new Error('Upload failed');
                         }
-                      } catch (error) {
+                      } catch (error: any) {
                         toast({
                           title: "Errore",
-                          description: "Impossibile caricare l'immagine",
+                          description: error.message || "Impossibile caricare l'immagine",
                           variant: "destructive",
                         });
                       }

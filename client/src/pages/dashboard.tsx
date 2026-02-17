@@ -10,6 +10,7 @@ import {
   Beer, 
   MapPin, 
   Heart, 
+  HeartOff,
   Calendar, 
   Settings, 
   Plus, 
@@ -73,6 +74,19 @@ export default function Dashboard() {
   });
 
   const isPubOwner = user?.userType === "pub_owner" || (userPubs && userPubs.length > 0);
+
+  const removeFavoriteMutation = useMutation({
+    mutationFn: async ({ itemType, itemId }: { itemType: string; itemId: number }) => {
+      return apiRequest(`/api/favorites/${itemType}/${itemId}`, { method: 'DELETE' });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/favorites"] });
+      toast({ title: "Rimosso dai preferiti" });
+    },
+    onError: () => {
+      toast({ title: "Errore", description: "Impossibile rimuovere dai preferiti", variant: "destructive" });
+    },
+  });
 
   if (isLoading) {
     return (
@@ -437,7 +451,6 @@ export default function Dashboard() {
               const pubFavorites = favoritesArray.filter((fav: any) => fav.itemType === 'pub');
               const breweryFavorites = favoritesArray.filter((fav: any) => fav.itemType === 'brewery');
               const beerFavorites = favoritesArray.filter((fav: any) => fav.itemType === 'beer');
-              const styleFavorites = favoritesArray.filter((fav: any) => fav.itemType === 'style');
               
               return (
               <div className="space-y-8">
@@ -452,21 +465,31 @@ export default function Dashboard() {
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                     {pubFavorites.length > 0 ? (
                       pubFavorites.map((fav: any) => (
-                        <Link key={fav.id} href={`/pub/${fav.itemId}`}>
-                          <Card className="hover:shadow-lg hover:scale-[1.02] transition-all duration-200 cursor-pointer border-l-4 border-l-blue-500">
-                            <CardContent className="p-4">
-                              <div className="flex items-start gap-3">
+                        <Card key={fav.id} className="hover:shadow-lg transition-all duration-200 border-l-4 border-l-blue-500">
+                          <CardContent className="p-4">
+                            <div className="flex items-start gap-3">
+                              <Link href={`/pub/${fav.itemId}`} className="flex items-start gap-3 flex-1 min-w-0 cursor-pointer">
                                 <div className="w-12 h-12 bg-blue-100 dark:bg-blue-900/20 rounded-lg flex items-center justify-center flex-shrink-0">
                                   <Store className="h-6 w-6 text-blue-600" />
                                 </div>
                                 <div className="flex-1 min-w-0">
-                                  <h4 className="font-semibold mb-1 truncate">{fav.itemName || `Pub #${fav.itemId}`}</h4>
+                                  <h4 className="font-semibold mb-1 truncate hover:text-blue-600 transition-colors">{fav.itemName || `Pub #${fav.itemId}`}</h4>
                                   <p className="text-sm text-gray-600 dark:text-gray-400 line-clamp-2">{fav.itemDetails || 'Clicca per vedere i dettagli'}</p>
                                 </div>
-                              </div>
-                            </CardContent>
-                          </Card>
-                        </Link>
+                              </Link>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="flex-shrink-0 text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20"
+                                onClick={() => removeFavoriteMutation.mutate({ itemType: 'pub', itemId: fav.itemId })}
+                                disabled={removeFavoriteMutation.isPending}
+                                title="Non seguire più"
+                              >
+                                <HeartOff className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          </CardContent>
+                        </Card>
                       ))
                     ) : (
                       <p className="text-gray-500 dark:text-gray-400 col-span-full">Nessun pub nei preferiti</p>
@@ -485,21 +508,31 @@ export default function Dashboard() {
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                     {breweryFavorites.length > 0 ? (
                       breweryFavorites.map((fav: any) => (
-                        <Link key={fav.id} href={`/brewery/${fav.itemId}`}>
-                          <Card className="hover:shadow-lg hover:scale-[1.02] transition-all duration-200 cursor-pointer border-l-4 border-l-amber-500">
-                            <CardContent className="p-4">
-                              <div className="flex items-start gap-3">
+                        <Card key={fav.id} className="hover:shadow-lg transition-all duration-200 border-l-4 border-l-amber-500">
+                          <CardContent className="p-4">
+                            <div className="flex items-start gap-3">
+                              <Link href={`/brewery/${fav.itemId}`} className="flex items-start gap-3 flex-1 min-w-0 cursor-pointer">
                                 <div className="w-12 h-12 bg-amber-100 dark:bg-amber-900/20 rounded-lg flex items-center justify-center flex-shrink-0">
                                   <Beer className="h-6 w-6 text-amber-600" />
                                 </div>
                                 <div className="flex-1 min-w-0">
-                                  <h4 className="font-semibold mb-1 truncate">{fav.itemName || `Birrificio #${fav.itemId}`}</h4>
+                                  <h4 className="font-semibold mb-1 truncate hover:text-amber-600 transition-colors">{fav.itemName || `Birrificio #${fav.itemId}`}</h4>
                                   <p className="text-sm text-gray-600 dark:text-gray-400 line-clamp-2">{fav.itemDetails || 'Clicca per vedere le birre'}</p>
                                 </div>
-                              </div>
-                            </CardContent>
-                          </Card>
-                        </Link>
+                              </Link>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="flex-shrink-0 text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20"
+                                onClick={() => removeFavoriteMutation.mutate({ itemType: 'brewery', itemId: fav.itemId })}
+                                disabled={removeFavoriteMutation.isPending}
+                                title="Non seguire più"
+                              >
+                                <HeartOff className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          </CardContent>
+                        </Card>
                       ))
                     ) : (
                       <p className="text-gray-500 dark:text-gray-400 col-span-full">Nessun birrificio nei preferiti</p>
@@ -518,50 +551,34 @@ export default function Dashboard() {
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                     {beerFavorites.length > 0 ? (
                       beerFavorites.map((fav: any) => (
-                        <Link key={fav.id} href={`/beer/${fav.itemId}`}>
-                          <Card className="hover:shadow-lg hover:scale-[1.02] transition-all duration-200 cursor-pointer border-l-4 border-l-green-500">
-                            <CardContent className="p-4">
-                              <div className="flex items-start gap-3">
+                        <Card key={fav.id} className="hover:shadow-lg transition-all duration-200 border-l-4 border-l-green-500">
+                          <CardContent className="p-4">
+                            <div className="flex items-start gap-3">
+                              <Link href={`/beer/${fav.itemId}`} className="flex items-start gap-3 flex-1 min-w-0 cursor-pointer">
                                 <div className="w-12 h-12 bg-green-100 dark:bg-green-900/20 rounded-lg flex items-center justify-center flex-shrink-0">
                                   <Beer className="h-6 w-6 text-green-600" />
                                 </div>
                                 <div className="flex-1 min-w-0">
-                                  <h4 className="font-semibold mb-1 truncate">{fav.itemName || `Birra #${fav.itemId}`}</h4>
+                                  <h4 className="font-semibold mb-1 truncate hover:text-green-600 transition-colors">{fav.itemName || `Birra #${fav.itemId}`}</h4>
                                   <p className="text-sm text-gray-600 dark:text-gray-400 line-clamp-2">{fav.itemDetails || 'Clicca per i dettagli'}</p>
                                 </div>
-                              </div>
-                            </CardContent>
-                          </Card>
-                        </Link>
+                              </Link>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="flex-shrink-0 text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20"
+                                onClick={() => removeFavoriteMutation.mutate({ itemType: 'beer', itemId: fav.itemId })}
+                                disabled={removeFavoriteMutation.isPending}
+                                title="Non seguire più"
+                              >
+                                <HeartOff className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          </CardContent>
+                        </Card>
                       ))
                     ) : (
                       <p className="text-gray-500 dark:text-gray-400 col-span-full">Nessuna birra nei preferiti</p>
-                    )}
-                  </div>
-                </div>
-
-                {/* Stili Preferiti */}
-                <div>
-                  <div className="flex items-center gap-2 mb-4">
-                    <div className="p-2 bg-purple-100 dark:bg-purple-900/20 rounded-lg">
-                      <Star className="h-5 w-5 text-purple-600" />
-                    </div>
-                    <h3 className="text-lg font-semibold">Stili Preferiti</h3>
-                  </div>
-                  <div className="flex flex-wrap gap-3">
-                    {styleFavorites.length > 0 ? (
-                      styleFavorites.map((fav: any) => (
-                        <Link key={fav.id} href={`/explore/beers?style=${encodeURIComponent(fav.itemName || fav.styleSlug)}`}>
-                          <Badge 
-                            variant="secondary" 
-                            className="px-4 py-2 text-sm hover:bg-purple-100 dark:hover:bg-purple-900/30 hover:scale-105 transition-all duration-200 cursor-pointer bg-gradient-to-r from-purple-50 to-violet-50 dark:from-purple-900/20 dark:to-violet-900/20 border border-purple-200 dark:border-purple-800"
-                          >
-                            {fav.itemName || fav.styleSlug}
-                          </Badge>
-                        </Link>
-                      ))
-                    ) : (
-                      <p className="text-gray-500 dark:text-gray-400">Nessuno stile preferito. Esplora le birre per aggiungere i tuoi stili preferiti!</p>
                     )}
                   </div>
                 </div>

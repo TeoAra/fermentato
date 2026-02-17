@@ -205,7 +205,7 @@ export default function PubDetail() {
 
   // Check if the current user is the owner of this pub or an admin
   const isOwner = isAuthenticated && user && pub && (user as any).id === (pub as any).ownerId;
-  const isAdmin = isAuthenticated && user && ((user as any).active_role === 'admin' || (user as any).roles?.includes('admin'));
+  const isAdmin = isAuthenticated && user && ((user as any).activeRole === 'admin' || (!((user as any).activeRole) && (user as any).userType === 'admin'));
   const canManage = isOwner || isAdmin;
 
   const { data: tapList, isLoading: tapLoading } = useQuery({

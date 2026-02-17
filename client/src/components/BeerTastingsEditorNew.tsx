@@ -200,9 +200,9 @@ export default function BeerTastingsEditor({ beerTastings }: BeerTastingsEditorP
                           {tasting.beer?.name || 'Birra sconosciuta'}
                         </h4>
                       </Link>
-                      <Link href={`/brewery/${tasting.beer?.breweryId || tasting.brewery?.id}`}>
+                      <Link href={`/brewery/${tasting.beer?.brewery?.id || tasting.beer?.breweryId}`}>
                         <p className="text-sm text-gray-600 dark:text-gray-400 hover:text-amber-600 cursor-pointer transition-colors truncate">
-                          {tasting.brewery?.name || 'Birrificio sconosciuto'}
+                          {tasting.beer?.brewery?.name || 'Birrificio sconosciuto'}
                         </p>
                       </Link>
                       {(tasting.createdAt || tasting.tastedAt) && (
@@ -303,8 +303,8 @@ export default function BeerTastingsEditor({ beerTastings }: BeerTastingsEditorP
                     <Link href={`/beer/${editingTasting.beerId || editingTasting.beer?.id}`}>
                       <h4 className="font-medium hover:text-amber-600 cursor-pointer">{editingTasting.beer?.name}</h4>
                     </Link>
-                    <Link href={`/brewery/${editingTasting.beer?.breweryId || editingTasting.brewery?.id}`}>
-                      <p className="text-sm text-gray-600 hover:text-amber-600 cursor-pointer">{editingTasting.brewery?.name}</p>
+                    <Link href={`/brewery/${editingTasting.beer?.brewery?.id || editingTasting.beer?.breweryId}`}>
+                      <p className="text-sm text-gray-600 hover:text-amber-600 cursor-pointer">{editingTasting.beer?.brewery?.name || 'Birrificio sconosciuto'}</p>
                     </Link>
                   </div>
                 </div>

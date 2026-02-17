@@ -124,7 +124,7 @@ export default function BeerDetail() {
     bottleImageUrl: '',
   });
   
-  const isAdmin = user?.userType === 'admin';
+  const isAdmin = (user as any)?.activeRole === 'admin' || (!((user as any)?.activeRole) && user?.userType === 'admin');
   
   const { data: beer, isLoading: beerLoading } = useQuery<Beer>({
     queryKey: ["/api/beers", id],
@@ -504,9 +504,9 @@ export default function BeerDetail() {
                       {existingTasting.rating}/5
                     </span>
                   </div>
-                  {existingTasting.notes && (
+                  {(existingTasting.personalNotes || existingTasting.notes) && (
                     <p className="text-gray-700 dark:text-gray-300 italic">
-                      "{existingTasting.notes}"
+                      "{existingTasting.personalNotes || existingTasting.notes}"
                     </p>
                   )}
                   <p className="text-sm text-gray-500 dark:text-gray-400">

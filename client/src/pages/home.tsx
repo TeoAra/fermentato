@@ -251,7 +251,7 @@ export default function Home() {
                   </Link>
                 )}
                 
-                {(user as any)?.userType === 'admin' && (
+                {((user as any)?.activeRole === 'admin' || (!((user as any)?.activeRole) && (user as any)?.userType === 'admin')) && (
                   <Link href="/admin">
                     <Button className="bg-yellow-500 text-white hover:bg-yellow-600 shadow-lg">
                       <TrendingUp className="mr-2" />
