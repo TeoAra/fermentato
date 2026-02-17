@@ -22,6 +22,7 @@ export default function BeerTastingsEditor({ beerTastings }: BeerTastingsEditorP
   const [editingTasting, setEditingTasting] = useState<any>(null);
   const [editNotes, setEditNotes] = useState("");
   const [editRating, setEditRating] = useState(5);
+  const [editFormat, setEditFormat] = useState("");
   const [selectedPubId, setSelectedPubId] = useState<number | undefined>();
 
   const [currentPage, setCurrentPage] = useState(1);
@@ -31,13 +32,14 @@ export default function BeerTastingsEditor({ beerTastings }: BeerTastingsEditorP
   const [showFilters, setShowFilters] = useState(false);
 
   const updateTastingMutation = useMutation({
-    mutationFn: async ({ tastingId, notes, rating, pubId }: { 
+    mutationFn: async ({ tastingId, notes, rating, pubId, format }: { 
       tastingId: number, 
       notes: string, 
       rating: number,
-      pubId?: number 
+      pubId?: number,
+      format?: string
     }) => {
-      const updateData: any = { personalNotes: notes, rating };
+      const updateData: any = { personalNotes: notes, rating, format: format || null };
       if (pubId !== undefined) {
         updateData.pubId = pubId;
       }
@@ -58,6 +60,7 @@ export default function BeerTastingsEditor({ beerTastings }: BeerTastingsEditorP
     setEditingTasting(tasting);
     setEditNotes(tasting.personalNotes || "");
     setEditRating(tasting.rating || 5);
+    setEditFormat(tasting.format || "");
     setSelectedPubId(tasting.pubId);
   };
 
@@ -67,7 +70,8 @@ export default function BeerTastingsEditor({ beerTastings }: BeerTastingsEditorP
         tastingId: editingTasting.id,
         notes: editNotes,
         rating: editRating,
-        pubId: selectedPubId
+        pubId: selectedPubId,
+        format: editFormat
       });
     }
   };
@@ -205,20 +209,17 @@ export default function BeerTastingsEditor({ beerTastings }: BeerTastingsEditorP
                           {tasting.beer?.brewery?.name || 'Birrificio sconosciuto'}
                         </p>
                       </Link>
-                      {(tasting.createdAt || tasting.tastedAt) && (
-                        <p className="text-xs text-gray-400 mt-0.5 flex items-center gap-1">
-                          <Calendar className="w-3 h-3" />
-                          {formatDate(tasting.createdAt || tasting.tastedAt)}
-                        </p>
-                      )}
                       {tasting.personalNotes && (
                         <p className="text-xs text-gray-700 dark:text-gray-300 italic mt-1 bg-gray-50 dark:bg-gray-800 px-2 py-1 rounded line-clamp-2">
                           "{tasting.personalNotes}"
                         </p>
                       )}
-                      {tasting.pubName && (
-                        <p className="text-xs text-amber-600 dark:text-amber-400 mt-1">
-                          Provata da: {tasting.pubName}
+                      {(tasting.createdAt || tasting.tastedAt) && (
+                        <p className="text-xs text-gray-400 mt-0.5 flex items-center gap-1">
+                          <Calendar className="w-3 h-3" />
+                          Degustata il {formatDate(tasting.createdAt || tasting.tastedAt)}
+                          {tasting.format ? ` in ${tasting.format}` : ''}
+                          {tasting.pubName ? ` presso ${tasting.pubName}` : ''}
                         </p>
                       )}
                     </div>
@@ -336,6 +337,15 @@ export default function BeerTastingsEditor({ beerTastings }: BeerTastingsEditorP
                     value={selectedPubId}
                     onSelect={setSelectedPubId}
                     placeholder="Cerca e seleziona un pub..."
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium mb-2">Come l'hai bevuta?</label>
+                  <Input
+                    value={editFormat}
+                    onChange={(e) => setEditFormat(e.target.value)}
+                    placeholder="Es. alla spina, bottiglia, lattina..."
                   />
                 </div>
 

@@ -1,0 +1,1 @@
+ALTER TABLE "user_beer_tastings" ADD COLUMN "format" varchar(100);

@@ -15,6 +15,13 @@
       "when": 1771339816568,
       "tag": "0001_worthless_alex_power",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1771343124425,
+      "tag": "0002_organic_ezekiel_stane",
+      "breakpoints": true
     }
   ]
 }

@@ -250,6 +250,7 @@ export const userBeerTastings = pgTable("user_beer_tastings", {
   beerId: integer("beer_id").references(() => beers.id).notNull(),
   rating: integer("rating"), // 1-5 stelle (opzionale)
   personalNotes: text("personal_notes"), // Note personali dell'utente
+  format: varchar("format", { length: 100 }), // Come l'ha bevuta (es. alla spina, bottiglia, etc.)
   tastedAt: timestamp("tasted_at").defaultNow(),
   pubId: integer("pub_id").references(() => pubs.id), // Dove l'ha assaggiata (opzionale)
   createdAt: timestamp("created_at").defaultNow(),

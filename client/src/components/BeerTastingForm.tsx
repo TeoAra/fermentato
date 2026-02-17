@@ -1,15 +1,14 @@
 import { useState } from "react";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Badge } from "@/components/ui/badge";
-import { Star, MapPin, Calendar, FileText, CheckCircle, Plus } from "lucide-react";
+import { Star, CheckCircle, Plus } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
+import { PubAutocomplete } from "./PubAutocomplete";
 
 interface BeerTastingFormProps {
   beerId: number;
@@ -25,17 +24,11 @@ export default function BeerTastingForm({ beerId, beerName, existingTasting, onS
   const queryClient = useQueryClient();
   const isEditMode = !!existingTasting && !!onCancel;
   const [showForm, setShowForm] = useState(isEditMode);
+  const [selectedPubId, setSelectedPubId] = useState<number | undefined>(existingTasting?.pubId || undefined);
   const [formData, setFormData] = useState({
-    pubId: existingTasting?.pubId?.toString() || "",
-    format: existingTasting?.format || "spina",
+    format: existingTasting?.format || "",
     rating: existingTasting?.rating || 5,
     personalNotes: existingTasting?.personalNotes || existingTasting?.notes || "",
-  });
-
-  // Fetch pubs for selection
-  const { data: pubs = [] } = useQuery<any[]>({
-    queryKey: ["/api/pubs/all"],
-    enabled: showForm || isEditMode,
   });
 
   const addTastingMutation = useMutation({
@@ -55,7 +48,7 @@ export default function BeerTastingForm({ beerId, beerName, existingTasting, onS
       if (onSuccess) onSuccess();
       toast({
         title: isEditMode ? "Degustazione aggiornata!" : "Tasting aggiunto!",
-        description: isEditMode ? "Le modifiche sono state salvate" : `Hai registrato il tuo assaggio`,
+        description: isEditMode ? "Le modifiche sono state salvate" : "Hai registrato il tuo assaggio",
       });
     },
     onError: () => {
@@ -69,15 +62,10 @@ export default function BeerTastingForm({ beerId, beerName, existingTasting, onS
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formData.pubId) {
-      toast({
-        title: "Errore",
-        description: "Seleziona un pub",
-        variant: "destructive",
-      });
-      return;
-    }
-    addTastingMutation.mutate(formData);
+    addTastingMutation.mutate({
+      ...formData,
+      pubId: selectedPubId || null,
+    });
   };
 
   if (!isAuthenticated) {
@@ -120,43 +108,24 @@ export default function BeerTastingForm({ beerId, beerName, existingTasting, onS
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
                 <label className="block text-sm font-medium mb-2">
-                  Dove l'hai bevuta? *
+                  Dove l'hai bevuta?
                 </label>
-                <Select
-                  value={formData.pubId}
-                  onValueChange={(value) => setFormData({ ...formData, pubId: value })}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Seleziona un pub..." />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {pubs.map((pub: any) => (
-                      <SelectItem key={pub.id} value={pub.id.toString()}>
-                        {pub.name} - {pub.city}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <PubAutocomplete
+                  value={selectedPubId}
+                  onSelect={setSelectedPubId}
+                  placeholder="Cerca e seleziona un pub..."
+                />
               </div>
 
               <div>
                 <label className="block text-sm font-medium mb-2">
                   Come l'hai bevuta?
                 </label>
-                <Select
+                <Input
                   value={formData.format}
-                  onValueChange={(value) => setFormData({ ...formData, format: value })}
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="spina">Alla spina</SelectItem>
-                    <SelectItem value="bottiglia">Bottiglia</SelectItem>
-                    <SelectItem value="lattina">Lattina</SelectItem>
-                    <SelectItem value="boccale">Boccale</SelectItem>
-                  </SelectContent>
-                </Select>
+                  onChange={(e) => setFormData({ ...formData, format: e.target.value })}
+                  placeholder="Es. alla spina, bottiglia, lattina..."
+                />
               </div>
 
               <div>

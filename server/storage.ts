@@ -256,7 +256,7 @@ export interface IStorage {
   // Beer tastings operations
   getUserBeerTastings(userId: string): Promise<UserBeerTasting[]>;
   addBeerTasting(tasting: InsertUserBeerTasting): Promise<UserBeerTasting>;
-  updateBeerTasting(id: number, updates: Partial<InsertUserBeerTasting>): Promise<UserBeerTasting>;
+  updateBeerTasting(id: number, updates: Partial<InsertUserBeerTasting>, userId?: string): Promise<UserBeerTasting>;
   deleteBeerTasting(id: number): Promise<void>;
 
   // Notification operations
@@ -954,6 +954,7 @@ export class DatabaseStorage implements IStorage {
         beerId: userBeerTastings.beerId,
         rating: userBeerTastings.rating,
         personalNotes: userBeerTastings.personalNotes,
+        format: userBeerTastings.format,
         tastedAt: userBeerTastings.tastedAt,
         createdAt: userBeerTastings.createdAt,
         updatedAt: userBeerTastings.updatedAt,
@@ -964,23 +965,27 @@ export class DatabaseStorage implements IStorage {
         beerImageUrl: beers.imageUrl,
         breweryId: breweries.id,
         breweryName: breweries.name,
+        pubName: pubs.name,
       })
       .from(userBeerTastings)
       .innerJoin(beers, eq(userBeerTastings.beerId, beers.id))
       .leftJoin(breweries, eq(beers.breweryId, breweries.id))
+      .leftJoin(pubs, eq(userBeerTastings.pubId, pubs.id))
       .where(eq(userBeerTastings.userId, userId))
       .orderBy(desc(userBeerTastings.tastedAt));
 
-    return results.map(row => ({
+    return results.map((row: any) => ({
       id: row.id,
       userId: row.userId,
       beerId: row.beerId,
       rating: row.rating,
       personalNotes: row.personalNotes,
+      format: row.format,
       tastedAt: row.tastedAt,
       createdAt: row.createdAt,
       updatedAt: row.updatedAt,
       pubId: row.pubId,
+      pubName: row.pubName,
       beer: {
         id: row.beerId,
         name: row.beerName,
@@ -1012,12 +1017,19 @@ export class DatabaseStorage implements IStorage {
     return tasting;
   }
 
-  async updateBeerTasting(id: number, updates: Partial<InsertUserBeerTasting>): Promise<UserBeerTasting> {
+  async updateBeerTasting(id: number, updates: Partial<InsertUserBeerTasting>, userId?: string): Promise<UserBeerTasting> {
+    const conditions = [eq(userBeerTastings.id, id)];
+    if (userId) {
+      conditions.push(eq(userBeerTastings.userId, userId));
+    }
     const [tasting] = await db
       .update(userBeerTastings)
       .set({ ...updates, updatedAt: new Date() })
-      .where(eq(userBeerTastings.id, id))
+      .where(and(...conditions))
       .returning();
+    if (!tasting) {
+      throw new Error("Tasting not found or unauthorized");
+    }
     return tasting;
   }
 
@@ -1768,9 +1780,9 @@ class StorageWrapper implements IStorage {
     );
   }
 
-  async updateBeerTasting(id: number, updates: Partial<InsertUserBeerTasting>): Promise<UserBeerTasting> {
+  async updateBeerTasting(id: number, updates: Partial<InsertUserBeerTasting>, userId?: string): Promise<UserBeerTasting> {
     return this.dbCall(
-      () => this.databaseStorage.updateBeerTasting(id, updates),
+      () => this.databaseStorage.updateBeerTasting(id, updates, userId),
       async () => { throw new Error('Not implemented in memory storage'); }
     );
   }

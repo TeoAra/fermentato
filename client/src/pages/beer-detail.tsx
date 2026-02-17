@@ -511,6 +511,8 @@ export default function BeerDetail() {
                   )}
                   <p className="text-sm text-gray-500 dark:text-gray-400">
                     Degustata il {new Date(existingTasting.tastedAt).toLocaleDateString('it-IT')}
+                    {existingTasting.format ? ` in ${existingTasting.format}` : ''}
+                    {existingTasting.pubName ? ` presso ${existingTasting.pubName}` : ''}
                   </p>
                 </div>
               )}

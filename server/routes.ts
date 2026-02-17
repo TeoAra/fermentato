@@ -1253,12 +1253,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const userId = (req.user as any).id;
       const tastingId = parseInt(req.params.id);
-      const { personalNotes, rating } = req.body;
+      const { personalNotes, rating, pubId, format } = req.body;
 
-      const updatedTasting = await storage.updateBeerTasting(tastingId, userId, { 
-        personalNotes, 
-        rating 
-      });
+      const updateData: any = {};
+      if (personalNotes !== undefined) updateData.personalNotes = personalNotes;
+      if (rating !== undefined) updateData.rating = rating;
+      if (pubId !== undefined) updateData.pubId = pubId;
+      if (format !== undefined) updateData.format = format;
+
+      const updatedTasting = await storage.updateBeerTasting(tastingId, updateData, userId);
       res.json(updatedTasting);
     } catch (error) {
       console.error("Error updating beer tasting:", error);
@@ -1893,18 +1896,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error adding beer tasting:", error);
       res.status(500).json({ message: "Failed to add beer tasting" });
-    }
-  });
-
-  app.patch("/api/user/beer-tastings/:id", isAuthenticated, async (req: any, res) => {
-    try {
-      const userId = (req.user as any).id;
-      const tastingId = parseInt(req.params.id);
-      const updated = await storage.updateBeerTasting(tastingId, userId, req.body);
-      res.json(updated);
-    } catch (error) {
-      console.error("Error updating beer tasting:", error);
-      res.status(500).json({ message: "Failed to update beer tasting" });
     }
   });
 
