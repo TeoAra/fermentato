@@ -1,0 +1,105 @@
+ pm2 logs fermenta --lines 50
+[TAILING] Tailing last 50 lines for [fermenta] process (change the value with --lines option)
+/root/.pm2/logs/fermenta-error.log last 50 lines:
+1|fermenta | 2026-02-17T12:36:01:     _errorEmitted: true,
+1|fermenta | 2026-02-17T12:36:01:     _extensions: {},
+1|fermenta | 2026-02-17T12:36:01:     _paused: false,
+1|fermenta | 2026-02-17T12:36:01:     _protocol: '',
+1|fermenta | 2026-02-17T12:36:01:     _readyState: 3,
+1|fermenta | 2026-02-17T12:36:01:     _receiver: null,
+1|fermenta | 2026-02-17T12:36:01:     _sender: null,
+1|fermenta | 2026-02-17T12:36:01:     _socket: null,
+1|fermenta | 2026-02-17T12:36:01:     _bufferedAmount: 0,
+1|fermenta | 2026-02-17T12:36:01:     _isServer: false,
+1|fermenta | 2026-02-17T12:36:01:     _redirects: 0,
+1|fermenta | 2026-02-17T12:36:01:     _autoPong: true,
+1|fermenta | 2026-02-17T12:36:01:     _url: 'wss://127.0.0.1/v2',
+1|fermenta | 2026-02-17T12:36:01:     _req: null,
+1|fermenta | 2026-02-17T12:36:01:     [Symbol(shapeMode)]: false,
+1|fermenta | 2026-02-17T12:36:01:     [Symbol(kCapture)]: false
+1|fermenta | 2026-02-17T12:36:01:   },
+1|fermenta | 2026-02-17T12:36:01:   [Symbol(kType)]: 'error',
+1|fermenta | 2026-02-17T12:36:01:   [Symbol(kError)]: Error [ERR_TLS_CERT_ALTNAME_INVALID]: Hostname/IP does not match certificate's altnames: IP: 127.0.0.1 is not in the cert's list:
+1|fermenta | 2026-02-17T12:36:01:       at Object.checkServerIdentity (node:tls:316:12)
+1|fermenta | 2026-02-17T12:36:01:       at TLSSocket.onConnectSecure (node:_tls_wrap:1687:27)
+1|fermenta | 2026-02-17T12:36:01:       at TLSSocket.emit (node:events:524:28)
+1|fermenta | 2026-02-17T12:36:01:       at TLSSocket._finishInit (node:_tls_wrap:1076:8)
+1|fermenta | 2026-02-17T12:36:01:       at ssl.onhandshakedone (node:_tls_wrap:862:12) {
+1|fermenta | 2026-02-17T12:36:01:     code: 'ERR_TLS_CERT_ALTNAME_INVALID',
+1|fermenta | 2026-02-17T12:36:01:     reason: "IP: 127.0.0.1 is not in the cert's list: ",
+1|fermenta | 2026-02-17T12:36:01:     host: '127.0.0.1',
+1|fermenta | 2026-02-17T12:36:01:     cert: {
+1|fermenta | 2026-02-17T12:36:01:       subject: [Object: null prototype],
+1|fermenta | 2026-02-17T12:36:01:       issuer: [Object: null prototype],
+1|fermenta | 2026-02-17T12:36:01:       subjectaltname: 'DNS:fermenta.to',
+1|fermenta | 2026-02-17T12:36:01:       infoAccess: [Object: null prototype],
+1|fermenta | 2026-02-17T12:36:01:       ca: false,
+1|fermenta | 2026-02-17T12:36:01:       modulus: 'AFB76C07BF1130F1425F87D47CD2DC25DCE94D995C7E8BE2E4D51CF756CDCB043D7A5333349F13289EDC16DFC06FF2192389711AD38ED71DFFBE1FE93749D294F19127AF80C38F2D42A7DF4BD0BFCFFF5E69734ECA5AA927FC93D23D93E947785AD2FE195BCB88F7EEAEF462D854F2D907400BADF84F1AF8865D42902538CCA34A113A240B2C15D75B6C0EBE2E00723BEE8FA4745B6B7EE83B338D966A0A6735C953EC6BE2BF658365A0696356FE3A5DF1BF84E26184623A4EFB46D07636F9B443A1C7352C7FD304E035E44CE0C5C9EFD75C9B2824DB69270FA1322F4DADBEA3126BC4A2E6A535B9AB7C7DFD06712F98A7BA7AC45B7ADB389E2FA054137E3A07',
+1|fermenta | 2026-02-17T12:36:01:       bits: 2048,
+1|fermenta | 2026-02-17T12:36:01:       exponent: '0x10001',
+1|fermenta | 2026-02-17T12:36:01:       pubkey: <Buffer 30 82 01 22 30 0d 06 09 2a 86 48 86 f7 0d 01 01 01 05 00 03 82 01 0f 00 30 82 01 0a 02 82 01 01 00 af b7 6c 07 bf 11 30 f1 42 5f 87 d4 7c d2 dc 25 dc ... 244 more bytes>,
+1|fermenta | 2026-02-17T12:36:01:       valid_from: 'Dec 24 10:00:38 2025 GMT',
+1|fermenta | 2026-02-17T12:36:01:       valid_to: 'Mar 24 10:00:37 2026 GMT',
+1|fermenta | 2026-02-17T12:36:01:       fingerprint: 'E1:62:52:AE:02:B7:88:D1:43:48:5E:52:24:6C:6D:0E:2F:2A:E1:07',
+1|fermenta | 2026-02-17T12:36:01:       fingerprint256: 'DD:FD:5D:91:0D:CE:0B:C2:6C:EF:FC:73:9B:08:F1:41:35:A8:23:47:60:D3:BF:D1:B3:87:1B:DA:88:7E:27:55',
+1|fermenta | 2026-02-17T12:36:01:       fingerprint512: '91:A7:35:DA:35:9E:2F:14:E6:A3:23:CA:48:E6:77:BC:BF:12:72:0A:DA:5B:01:B1:7D:A5:39:BB:3C:54:3D:61:93:E9:A1:6D:7C:19:1D:F9:49:60:02:C8:11:5D:7E:59:9C:17:38:58:0B:EA:DF:9F:1B:D4:0D:27:6A:21:D4:DA',
+1|fermenta | 2026-02-17T12:36:01:       ext_key_usage: [Array],
+1|fermenta | 2026-02-17T12:36:01:       serialNumber: '06A6EF6B4BA1F3339D265E58039E32389658',
+1|fermenta | 2026-02-17T12:36:01:       raw: <Buffer 30 82 04 fa 30 82 03 e2 a0 03 02 01 02 02 12 06 a6 ef 6b 4b a1 f3 33 9d 26 5e 58 03 9e 32 38 96 58 30 0d 06 09 2a 86 48 86 f7 0d 01 01 0b 05 00 30 33 ... 1228 more bytes>,
+1|fermenta | 2026-02-17T12:36:01:       issuerCertificate: [Object]
+1|fermenta | 2026-02-17T12:36:01:     }
+1|fermenta | 2026-02-17T12:36:01:   },
+1|fermenta | 2026-02-17T12:36:01:   [Symbol(kMessage)]: "Hostname/IP does not match certificate's altnames: IP: 127.0.0.1 is not in the cert's list: "
+1|fermenta | 2026-02-17T12:36:01: }
+
+/root/.pm2/logs/fermenta-out.log last 50 lines:
+1|fermenta | 2026-02-17T12:24:30: 12:24:30 PM [express] GET /api/breweries/search 500 in 19ms :: {"message":"Failed to search breweries…
+1|fermenta | 2026-02-17T12:24:31: 12:24:31 PM [express] GET /api/breweries/search 500 in 13ms :: {"message":"Failed to search breweries…
+1|fermenta | 2026-02-17T12:24:31: 12:24:31 PM [express] GET /api/breweries/search 500 in 18ms :: {"message":"Failed to search breweries…
+1|fermenta | 2026-02-17T12:24:33: 12:24:33 PM [express] GET /api/pubs 500 in 19ms :: {"message":"Failed to fetch pubs"}
+1|fermenta | 2026-02-17T12:24:33: 12:24:33 PM [express] GET /api/breweries 500 in 23ms :: {"message":"Failed to fetch breweries"}
+1|fermenta | 2026-02-17T12:24:35: 12:24:35 PM [express] GET /api/pubs/all 500 in 18ms :: {"message":"Failed to fetch all pubs"}
+1|fermenta | 2026-02-17T12:24:37: 12:24:37 PM [express] GET /api/pubs 500 in 16ms :: {"message":"Failed to fetch pubs"}
+1|fermenta | 2026-02-17T12:24:37: 12:24:37 PM [express] GET /api/breweries 500 in 20ms :: {"message":"Failed to fetch breweries"}
+1|fermenta | 2026-02-17T12:27:09: 12:27:09 PM [express] POST /api/auth/login 500 in 13ms :: {"message":"Errore durante il login"}
+1|fermenta | 2026-02-17T12:27:21: 12:27:21 PM [express] GET /api/pubs 500 in 17ms :: {"message":"Failed to fetch pubs"}
+1|fermenta | 2026-02-17T12:27:21: 12:27:21 PM [express] GET /api/breweries 500 in 20ms :: {"message":"Failed to fetch breweries"}
+1|fermenta | 2026-02-17T12:31:14: 12:31:14 PM [express] GET /api/auth/user 401 in 2ms :: {"message":"Non autenticato"}
+1|fermenta | 2026-02-17T12:31:14: 12:31:14 PM [express] GET /api/breweries 500 in 35ms :: {"message":"Failed to fetch breweries"}
+1|fermenta | 2026-02-17T12:31:14: 12:31:14 PM [express] GET /api/pubs 500 in 28ms :: {"message":"Failed to fetch pubs"}
+1|fermenta | 2026-02-17T12:31:55: Authentication system initialized successfully
+1|fermenta | 2026-02-17T12:31:55: 12:31:55 PM [express] serving on port 5000
+1|fermenta | 2026-02-17T12:31:55: 12:31:55 PM [express] GET /api/auth/user 401 in 4ms :: {"message":"Non autenticato"}
+1|fermenta | 2026-02-17T12:31:55: 12:31:55 PM [express] GET /api/pubs 500 in 101ms :: {"message":"Failed to fetch pubs"}
+1|fermenta | 2026-02-17T12:31:55: 12:31:55 PM [express] GET /api/breweries 500 in 32ms :: {"message":"Failed to fetch breweries"}
+1|fermenta | 2026-02-17T12:31:57: 12:31:57 PM [express] GET /api/auth/user 401 in 2ms :: {"message":"Non autenticato"}
+1|fermenta | 2026-02-17T12:31:57: 12:31:57 PM [express] GET /api/breweries 500 in 31ms :: {"message":"Failed to fetch breweries"}
+1|fermenta | 2026-02-17T12:31:57: 12:31:57 PM [express] GET /api/pubs 500 in 32ms :: {"message":"Failed to fetch pubs"}
+1|fermenta | 2026-02-17T12:32:01: 12:32:01 PM [express] GET /api/pubs/all 500 in 55ms :: {"message":"Failed to fetch all pubs"}
+1|fermenta | 2026-02-17T12:32:04: 12:32:04 PM [express] GET /api/pubs 500 in 21ms :: {"message":"Failed to fetch pubs"}
+1|fermenta | 2026-02-17T12:32:04: 12:32:04 PM [express] GET /api/breweries 500 in 23ms :: {"message":"Failed to fetch breweries"}
+1|fermenta | 2026-02-17T12:32:08: 12:32:08 PM [express] GET /api/auth/user 401 in 3ms :: {"message":"Non autenticato"}
+1|fermenta | 2026-02-17T12:32:08: 12:32:08 PM [express] GET /api/pubs 500 in 30ms :: {"message":"Failed to fetch pubs"}
+1|fermenta | 2026-02-17T12:32:08: 12:32:08 PM [express] GET /api/breweries 500 in 25ms :: {"message":"Failed to fetch breweries"}
+1|fermenta | 2026-02-17T12:32:12: 12:32:12 PM [express] POST /api/auth/login 500 in 22ms :: {"message":"Errore durante il login"}
+1|fermenta | 2026-02-17T12:32:22: 12:32:22 PM [express] GET /api/auth/user 401 in 2ms :: {"message":"Non autenticato"}
+1|fermenta | 2026-02-17T12:32:23: 12:32:23 PM [express] GET /api/pubs 500 in 13ms :: {"message":"Failed to fetch pubs"}
+1|fermenta | 2026-02-17T12:32:23: 12:32:23 PM [express] GET /api/breweries 500 in 16ms :: {"message":"Failed to fetch breweries"}
+1|fermenta | 2026-02-17T12:33:07: 12:33:07 PM [express] GET /api/pubs 500 in 18ms :: {"message":"Failed to fetch pubs"}
+1|fermenta | 2026-02-17T12:33:07: 12:33:07 PM [express] GET /api/breweries 500 in 21ms :: {"message":"Failed to fetch breweries"}
+1|fermenta | 2026-02-17T12:34:35: 12:34:35 PM [express] GET /api/auth/user 401 in 1ms :: {"message":"Non autenticato"}
+1|fermenta | 2026-02-17T12:34:35: 12:34:35 PM [express] GET /api/breweries 500 in 18ms :: {"message":"Failed to fetch breweries"}
+1|fermenta | 2026-02-17T12:34:35: 12:34:35 PM [express] GET /api/pubs 500 in 22ms :: {"message":"Failed to fetch pubs"}
+1|fermenta | 2026-02-17T12:35:06: 12:35:06 PM [express] GET /api/auth/user 401 in 2ms :: {"message":"Non autenticato"}
+1|fermenta | 2026-02-17T12:35:06: 12:35:06 PM [express] GET /api/pubs 500 in 24ms :: {"message":"Failed to fetch pubs"}
+1|fermenta | 2026-02-17T12:35:06: 12:35:06 PM [express] GET /api/breweries 500 in 35ms :: {"message":"Failed to fetch breweries"}
+1|fermenta | 2026-02-17T12:35:47: 12:35:47 PM [express] GET /api/login 302 in 8ms
+1|fermenta | 2026-02-17T12:35:47: 12:35:47 PM [express] GET /api/auth/user 401 in 2ms :: {"message":"Non autenticato"}
+1|fermenta | 2026-02-17T12:35:50: 12:35:50 PM [express] POST /api/auth/login 500 in 13ms :: {"message":"Errore durante il login"}
+1|fermenta | 2026-02-17T12:35:52: 12:35:52 PM [express] GET /api/auth/user 401 in 1ms :: {"message":"Non autenticato"}
+1|fermenta | 2026-02-17T12:35:54: 12:35:54 PM [express] GET /api/pubs 500 in 20ms :: {"message":"Failed to fetch pubs"}
+1|fermenta | 2026-02-17T12:35:54: 12:35:54 PM [express] GET /api/breweries 500 in 20ms :: {"message":"Failed to fetch breweries"}
+1|fermenta | 2026-02-17T12:35:58: 12:35:58 PM [express] GET /api/search 500 in 24ms :: {"message":"Failed to perform search"}
+1|fermenta | 2026-02-17T12:35:59: 12:35:59 PM [express] GET /api/search 500 in 20ms :: {"message":"Failed to perform search"}
+1|fermenta | 2026-02-17T12:36:00: 12:36:00 PM [express] GET /api/search 500 in 42ms :: {"message":"Failed to perform search"}
+1|fermenta | 2026-02-17T12:36:01: 12:36:01 PM [express] GET /api/search 500 in 31ms :: {"message":"Failed to perform search"}
