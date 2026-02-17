@@ -12,7 +12,6 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Switch } from "@/components/ui/switch";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Badge } from "@/components/ui/badge";
@@ -33,7 +32,7 @@ const beerFormSchema = z.object({
   ibu: z.coerce.number().int().min(0).optional().nullable(),
   description: z.string().optional().nullable(),
   color: z.string().optional().nullable(),
-  isBottled: z.boolean().default(false),
+  imageUrl: z.string().optional().nullable(),
 });
 
 type BeerFormValues = z.infer<typeof beerFormSchema>;
@@ -159,7 +158,7 @@ export default function BreweryDashboard() {
   const form = useForm<BeerFormValues>({
     resolver: zodResolver(beerFormSchema),
     defaultValues: {
-      name: "", style: "", abv: null, ibu: null, description: "", color: "", isBottled: false,
+      name: "", style: "", abv: null, ibu: null, description: "", color: "", imageUrl: "",
     },
   });
 
@@ -232,7 +231,7 @@ export default function BreweryDashboard() {
 
   const openCreateDialog = () => {
     setEditingBeer(null);
-    form.reset({ name: "", style: "", abv: null, ibu: null, description: "", color: "", isBottled: false });
+    form.reset({ name: "", style: "", abv: null, ibu: null, description: "", color: "", imageUrl: "" });
     setDialogOpen(true);
   };
 
@@ -242,7 +241,7 @@ export default function BreweryDashboard() {
       name: beer.name, style: beer.style,
       abv: beer.abv ? parseFloat(beer.abv) : null,
       ibu: beer.ibu ?? null, description: beer.description ?? "",
-      color: beer.color ?? "", isBottled: beer.isBottled ?? false,
+      color: beer.color ?? "", imageUrl: beer.imageUrl ?? "",
     });
     setDialogOpen(true);
   };
@@ -832,20 +831,19 @@ export default function BreweryDashboard() {
                   </FormItem>
                 )}
               />
-              <FormField
-                control={form.control}
-                name="isBottled"
-                render={({ field }) => (
-                  <FormItem className="flex items-center justify-between rounded-lg border p-3">
-                    <div>
-                      <FormLabel>Disponibile in bottiglia</FormLabel>
-                    </div>
-                    <FormControl>
-                      <Switch checked={field.value} onCheckedChange={field.onChange} />
-                    </FormControl>
-                  </FormItem>
-                )}
-              />
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Immagine Birra</label>
+                <ImageUpload
+                  label="Immagine Birra"
+                  description="Immagine principale della birra"
+                  currentImageUrl={form.watch("imageUrl") || undefined}
+                  onImageChange={(url) => form.setValue("imageUrl", url || "")}
+                  folder="beer-images"
+                  aspectRatio="square"
+                  maxSize={5}
+                  recommendedDimensions="400x400px"
+                />
+              </div>
               <div className="flex gap-3 pt-2">
                 <Button
                   type="submit"
