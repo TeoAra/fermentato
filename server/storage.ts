@@ -273,6 +273,8 @@ export interface IStorage {
 
   // Helper: get users who favorited a pub (for sending notifications)
   getUsersWhoFavoritedPub(pubId: number): Promise<string[]>;
+  getUsersWhoFavoritedBeer(beerId: number): Promise<string[]>;
+  getUsersWhoFavoritedBrewery(breweryId: number): Promise<string[]>;
 
   // Helper: get admin user IDs
   getAdminUserIds(): Promise<string[]>;
@@ -1239,6 +1241,20 @@ export class DatabaseStorage implements IStorage {
     return rows.map(r => r.userId);
   }
 
+  async getUsersWhoFavoritedBeer(beerId: number): Promise<string[]> {
+    const rows = await db.select({ userId: favorites.userId })
+      .from(favorites)
+      .where(and(eq(favorites.itemType, 'beer'), eq(favorites.itemId, beerId)));
+    return rows.map(r => r.userId);
+  }
+
+  async getUsersWhoFavoritedBrewery(breweryId: number): Promise<string[]> {
+    const rows = await db.select({ userId: favorites.userId })
+      .from(favorites)
+      .where(and(eq(favorites.itemType, 'brewery'), eq(favorites.itemId, breweryId)));
+    return rows.map(r => r.userId);
+  }
+
   async getAdminUserIds(): Promise<string[]> {
     const rows = await db.select({ id: users.id })
       .from(users)
@@ -1870,6 +1886,20 @@ class StorageWrapper implements IStorage {
   async getUsersWhoFavoritedPub(pubId: number): Promise<string[]> {
     return this.dbCall(
       () => this.databaseStorage.getUsersWhoFavoritedPub(pubId),
+      async () => []
+    );
+  }
+
+  async getUsersWhoFavoritedBeer(beerId: number): Promise<string[]> {
+    return this.dbCall(
+      () => this.databaseStorage.getUsersWhoFavoritedBeer(beerId),
+      async () => []
+    );
+  }
+
+  async getUsersWhoFavoritedBrewery(breweryId: number): Promise<string[]> {
+    return this.dbCall(
+      () => this.databaseStorage.getUsersWhoFavoritedBrewery(breweryId),
       async () => []
     );
   }

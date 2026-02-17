@@ -1,13 +1,16 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Star, Edit3, Beer } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Star, Edit3, Beer, Calendar, ChevronLeft, ChevronRight, Filter, X } from "lucide-react";
 import { PubAutocomplete } from "./PubAutocomplete";
+import { Link } from "wouter";
 
 interface BeerTastingsEditorProps {
   beerTastings: any[];
@@ -21,7 +24,12 @@ export default function BeerTastingsEditor({ beerTastings }: BeerTastingsEditorP
   const [editRating, setEditRating] = useState(5);
   const [selectedPubId, setSelectedPubId] = useState<number | undefined>();
 
-  // Update tasting mutation
+  const [currentPage, setCurrentPage] = useState(1);
+  const [perPage, setPerPage] = useState(5);
+  const [dateFrom, setDateFrom] = useState("");
+  const [dateTo, setDateTo] = useState("");
+  const [showFilters, setShowFilters] = useState(false);
+
   const updateTastingMutation = useMutation({
     mutationFn: async ({ tastingId, notes, rating, pubId }: { 
       tastingId: number, 
@@ -39,17 +47,10 @@ export default function BeerTastingsEditor({ beerTastings }: BeerTastingsEditorP
       queryClient.invalidateQueries({ queryKey: ["/api/user/beer-tastings"] });
       setEditingTasting(null);
       setSelectedPubId(undefined);
-      toast({
-        title: "Successo",
-        description: "Degustazione aggiornata con successo",
-      });
+      toast({ title: "Successo", description: "Degustazione aggiornata" });
     },
     onError: () => {
-      toast({
-        title: "Errore",
-        description: "Errore durante l'aggiornamento",
-        variant: "destructive",
-      });
+      toast({ title: "Errore", description: "Errore durante l'aggiornamento", variant: "destructive" });
     },
   });
 
@@ -71,42 +72,158 @@ export default function BeerTastingsEditor({ beerTastings }: BeerTastingsEditorP
     }
   };
 
+  const filteredTastings = useMemo(() => {
+    if (!beerTastings) return [];
+    let filtered = [...beerTastings];
+    
+    if (dateFrom) {
+      const from = new Date(dateFrom);
+      filtered = filtered.filter(t => new Date(t.createdAt || t.tastedAt || 0) >= from);
+    }
+    if (dateTo) {
+      const to = new Date(dateTo);
+      to.setHours(23, 59, 59);
+      filtered = filtered.filter(t => new Date(t.createdAt || t.tastedAt || 0) <= to);
+    }
+    
+    filtered.sort((a, b) => {
+      const dateA = new Date(a.createdAt || a.tastedAt || 0).getTime();
+      const dateB = new Date(b.createdAt || b.tastedAt || 0).getTime();
+      return dateB - dateA;
+    });
+    
+    return filtered;
+  }, [beerTastings, dateFrom, dateTo]);
+
+  const totalPages = Math.max(1, Math.ceil(filteredTastings.length / perPage));
+  const safePage = Math.min(currentPage, totalPages);
+  const paginatedTastings = filteredTastings.slice((safePage - 1) * perPage, safePage * perPage);
+
+  const clearFilters = () => {
+    setDateFrom("");
+    setDateTo("");
+    setCurrentPage(1);
+  };
+
+  const hasActiveFilters = dateFrom || dateTo;
+
+  const formatDate = (dateStr: string) => {
+    if (!dateStr) return '';
+    try {
+      return new Date(dateStr).toLocaleDateString('it-IT', {
+        day: 'numeric', month: 'short', year: 'numeric'
+      });
+    } catch { return ''; }
+  };
+
   return (
     <>
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Beer className="w-5 h-5" />
-            Birre Assaggiate ({beerTastings?.length || 0})
-          </CardTitle>
+          <div className="flex items-center justify-between">
+            <CardTitle className="flex items-center gap-2">
+              <Beer className="w-5 h-5" />
+              Birre Assaggiate ({beerTastings?.length || 0})
+            </CardTitle>
+            <div className="flex items-center gap-2">
+              <Button
+                variant={showFilters ? "default" : "outline"}
+                size="sm"
+                onClick={() => setShowFilters(!showFilters)}
+                className={showFilters ? "bg-amber-500 hover:bg-amber-600" : ""}
+              >
+                <Filter className="w-4 h-4 mr-1" />
+                Filtri
+                {hasActiveFilters && (
+                  <span className="ml-1 bg-white text-amber-600 rounded-full w-4 h-4 text-xs flex items-center justify-center">!</span>
+                )}
+              </Button>
+              <Select value={String(perPage)} onValueChange={(v) => { setPerPage(Number(v)); setCurrentPage(1); }}>
+                <SelectTrigger className="w-20 h-8 text-xs">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="5">5</SelectItem>
+                  <SelectItem value="10">10</SelectItem>
+                  <SelectItem value="15">15</SelectItem>
+                  <SelectItem value="25">25</SelectItem>
+                  <SelectItem value="50">50</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          {showFilters && (
+            <div className="flex flex-wrap items-end gap-3 mt-3 pt-3 border-t">
+              <div className="flex-1 min-w-[140px]">
+                <label className="text-xs font-medium text-gray-500 mb-1 block">Dal</label>
+                <Input
+                  type="date"
+                  value={dateFrom}
+                  onChange={(e) => { setDateFrom(e.target.value); setCurrentPage(1); }}
+                  className="h-8 text-sm"
+                />
+              </div>
+              <div className="flex-1 min-w-[140px]">
+                <label className="text-xs font-medium text-gray-500 mb-1 block">Al</label>
+                <Input
+                  type="date"
+                  value={dateTo}
+                  onChange={(e) => { setDateTo(e.target.value); setCurrentPage(1); }}
+                  className="h-8 text-sm"
+                />
+              </div>
+              {hasActiveFilters && (
+                <Button variant="ghost" size="sm" onClick={clearFilters} className="h-8">
+                  <X className="w-3 h-3 mr-1" /> Reset
+                </Button>
+              )}
+            </div>
+          )}
         </CardHeader>
         <CardContent>
-          {beerTastings && beerTastings.length > 0 ? (
+          {paginatedTastings.length > 0 ? (
             <div className="space-y-3">
-              {beerTastings?.slice(0, 10).map((tasting: any) => (
-                <div key={tasting.id} className="flex items-center justify-between p-3 border rounded-lg">
-                  <div className="flex items-center gap-3">
-                    <img
-                      src={tasting.beer?.imageUrl || '/default-beer.jpg'}
-                      alt={tasting.beer?.name || 'Birra'}
-                      className="w-10 h-10 rounded object-cover"
-                    />
-                    <div>
-                      <h4 className="font-medium">{tasting.beer?.name || 'Birra sconosciuta'}</h4>
-                      <p className="text-sm text-gray-600">{tasting.brewery?.name || 'Birrificio sconosciuto'}</p>
+              {paginatedTastings.map((tasting: any) => (
+                <div key={tasting.id} className="flex items-center justify-between p-3 border rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
+                  <div className="flex items-center gap-3 flex-1 min-w-0">
+                    <Link href={`/beer/${tasting.beerId || tasting.beer?.id}`}>
+                      <img
+                        src={tasting.beer?.imageUrl || '/default-beer.jpg'}
+                        alt={tasting.beer?.name || 'Birra'}
+                        className="w-10 h-10 rounded object-cover cursor-pointer hover:ring-2 hover:ring-amber-400 transition-all"
+                      />
+                    </Link>
+                    <div className="flex-1 min-w-0">
+                      <Link href={`/beer/${tasting.beerId || tasting.beer?.id}`}>
+                        <h4 className="font-medium hover:text-amber-600 cursor-pointer transition-colors truncate">
+                          {tasting.beer?.name || 'Birra sconosciuta'}
+                        </h4>
+                      </Link>
+                      <Link href={`/brewery/${tasting.beer?.breweryId || tasting.brewery?.id}`}>
+                        <p className="text-sm text-gray-600 dark:text-gray-400 hover:text-amber-600 cursor-pointer transition-colors truncate">
+                          {tasting.brewery?.name || 'Birrificio sconosciuto'}
+                        </p>
+                      </Link>
+                      {(tasting.createdAt || tasting.tastedAt) && (
+                        <p className="text-xs text-gray-400 mt-0.5 flex items-center gap-1">
+                          <Calendar className="w-3 h-3" />
+                          {formatDate(tasting.createdAt || tasting.tastedAt)}
+                        </p>
+                      )}
                       {tasting.personalNotes && (
-                        <p className="text-xs text-gray-700 dark:text-gray-300 italic mt-1 bg-gray-50 dark:bg-gray-800 px-2 py-1 rounded">
+                        <p className="text-xs text-gray-700 dark:text-gray-300 italic mt-1 bg-gray-50 dark:bg-gray-800 px-2 py-1 rounded line-clamp-2">
                           "{tasting.personalNotes}"
                         </p>
                       )}
                       {tasting.pubName && (
                         <p className="text-xs text-amber-600 dark:text-amber-400 mt-1">
-                          📍 Provata da: {tasting.pubName}
+                          Provata da: {tasting.pubName}
                         </p>
                       )}
                     </div>
                   </div>
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 flex-shrink-0 ml-2">
                     <div className="flex items-center">
                       {[1, 2, 3, 4, 5].map((star) => (
                         <Star
@@ -129,16 +246,40 @@ export default function BeerTastingsEditor({ beerTastings }: BeerTastingsEditorP
                   </div>
                 </div>
               ))}
-              {beerTastings && beerTastings.length > 10 && (
-                <p className="text-center text-sm text-gray-500 mt-4">
-                  ... e altre {beerTastings?.length ? beerTastings.length - 10 : 0} birre
-                </p>
-              )}
             </div>
           ) : (
             <p className="text-gray-500 dark:text-gray-400 text-center py-4">
-              Nessuna birra ancora assaggiata. Inizia a esplorare!
+              {hasActiveFilters ? 'Nessuna birra trovata con questi filtri.' : 'Nessuna birra ancora assaggiata. Inizia a esplorare!'}
             </p>
+          )}
+
+          {filteredTastings.length > perPage && (
+            <div className="flex items-center justify-between mt-4 pt-4 border-t">
+              <p className="text-sm text-gray-500">
+                {((safePage - 1) * perPage) + 1}-{Math.min(safePage * perPage, filteredTastings.length)} di {filteredTastings.length}
+              </p>
+              <div className="flex items-center gap-1">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  disabled={safePage <= 1}
+                  onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                >
+                  <ChevronLeft className="w-4 h-4" />
+                </Button>
+                <span className="text-sm px-3 font-medium">
+                  {safePage} / {totalPages}
+                </span>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  disabled={safePage >= totalPages}
+                  onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                >
+                  <ChevronRight className="w-4 h-4" />
+                </Button>
+              </div>
+            </div>
           )}
         </CardContent>
       </Card>
@@ -159,12 +300,15 @@ export default function BeerTastingsEditor({ beerTastings }: BeerTastingsEditorP
                     className="w-12 h-12 rounded object-cover"
                   />
                   <div>
-                    <h4 className="font-medium">{editingTasting.beer?.name}</h4>
-                    <p className="text-sm text-gray-600">{editingTasting.brewery?.name}</p>
+                    <Link href={`/beer/${editingTasting.beerId || editingTasting.beer?.id}`}>
+                      <h4 className="font-medium hover:text-amber-600 cursor-pointer">{editingTasting.beer?.name}</h4>
+                    </Link>
+                    <Link href={`/brewery/${editingTasting.beer?.breweryId || editingTasting.brewery?.id}`}>
+                      <p className="text-sm text-gray-600 hover:text-amber-600 cursor-pointer">{editingTasting.brewery?.name}</p>
+                    </Link>
                   </div>
                 </div>
 
-                {/* Rating */}
                 <div>
                   <label className="block text-sm font-medium mb-2">Valutazione</label>
                   <div className="flex gap-1">
@@ -186,7 +330,6 @@ export default function BeerTastingsEditor({ beerTastings }: BeerTastingsEditorP
                   </div>
                 </div>
 
-                {/* Dove l'hai bevuta - Con Autocompletamento */}
                 <div>
                   <label className="block text-sm font-medium mb-2">Dove l'hai bevuta?</label>
                   <PubAutocomplete
@@ -196,7 +339,6 @@ export default function BeerTastingsEditor({ beerTastings }: BeerTastingsEditorP
                   />
                 </div>
 
-                {/* Personal Notes */}
                 <div>
                   <label className="block text-sm font-medium mb-2">Note personali</label>
                   <Textarea

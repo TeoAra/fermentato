@@ -3,13 +3,14 @@ import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { Beer, Search, Bell, MapPin, Home, User, LogOut } from "lucide-react";
+import { Beer, Search, Bell, MapPin, Home, User, LogOut, Shield, Store } from "lucide-react";
 import type { User as UserType } from "@shared/schema";
 import { useState, useRef, useEffect } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation } from "@tanstack/react-query";
+import { apiRequest, queryClient } from "@/lib/queryClient";
 import SearchResults from "@/components/search-results";
 import SearchDialog from "@/components/search-dialog";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger, DropdownMenuLabel, DropdownMenuSub, DropdownMenuSubTrigger, DropdownMenuSubContent } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 
 export default function Header() {
@@ -20,6 +21,37 @@ export default function Header() {
   const [showResults, setShowResults] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const searchRef = useRef<HTMLDivElement>(null);
+
+  const isAdmin = typedUser?.userType === 'admin';
+
+  const { data: rolesData } = useQuery<{ roles: string[]; activeRole: string }>({
+    queryKey: ["/api/auth/roles"],
+    enabled: isAuthenticated && isAdmin,
+  });
+
+  const switchRoleMutation = useMutation({
+    mutationFn: async (role: string) => {
+      return apiRequest("/api/auth/switch-role", { method: "POST" }, { role });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/auth/roles"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
+      window.location.reload();
+    },
+  });
+
+  const roleLabels: Record<string, string> = {
+    customer: "Utente",
+    pub_owner: "Pub Owner",
+    brewery_owner: "Brewery Owner",
+    admin: "Amministratore",
+  };
+  const roleIcons: Record<string, any> = {
+    customer: User,
+    pub_owner: Store,
+    brewery_owner: Beer,
+    admin: Shield,
+  };
 
   const { data: unreadData } = useQuery<{ count: number }>({
     queryKey: ['/api/notifications/unread-count'],
@@ -200,13 +232,37 @@ export default function Header() {
                       </span>
                     </Button>
                   </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end" className="w-48">
+                  <DropdownMenuContent align="end" className="w-56">
                     <DropdownMenuItem asChild>
                       <Link href="/dashboard" className="flex items-center gap-2 cursor-pointer">
                         <User className="h-4 w-4" />
                         Dashboard
                       </Link>
                     </DropdownMenuItem>
+                    {isAdmin && rolesData && rolesData.roles.length > 1 && (
+                      <>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuLabel className="text-xs text-gray-500 font-normal">
+                          Ruolo attivo: {roleLabels[rolesData.activeRole] || rolesData.activeRole}
+                        </DropdownMenuLabel>
+                        {rolesData.roles
+                          .filter(role => role !== rolesData.activeRole)
+                          .map(role => {
+                            const Icon = roleIcons[role] || User;
+                            return (
+                              <DropdownMenuItem
+                                key={role}
+                                className="flex items-center gap-2 cursor-pointer"
+                                onClick={() => switchRoleMutation.mutate(role)}
+                                disabled={switchRoleMutation.isPending}
+                              >
+                                <Icon className="h-4 w-4" />
+                                Passa a {roleLabels[role] || role}
+                              </DropdownMenuItem>
+                            );
+                          })}
+                      </>
+                    )}
                     <DropdownMenuSeparator />
                     <DropdownMenuItem 
                       className="flex items-center gap-2 cursor-pointer text-red-600"

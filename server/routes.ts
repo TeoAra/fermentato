@@ -1317,9 +1317,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const pub = await storage.getPub(pubId);
       if (!pub) return;
 
-      const userIds = await storage.getUsersWhoFavoritedPub(pubId);
-      if (userIds.length === 0) return;
-
       const titleMap = {
         new_beer: `Nuova birra alla spina!`,
         tap_change: `Cambio alla spina!`,
@@ -1329,7 +1326,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         tap_change: `${pub.name} ha messo "${beerName}" alla spina.`,
       };
 
-      for (const userId of userIds) {
+      const pubFavUserIds = await storage.getUsersWhoFavoritedPub(pubId);
+      for (const userId of pubFavUserIds) {
         const prefs = await storage.getNotificationPreferences(userId);
         if (prefs && !prefs.tapChanges) continue;
 
@@ -1348,6 +1346,66 @@ export async function registerRoutes(app: Express): Promise<Server> {
           body: messageMap[type],
           url: `/pubs/${pubId}`,
         });
+      }
+
+      if (beerId) {
+        const notifiedSet = new Set(pubFavUserIds);
+
+        const beerFavUserIds = await storage.getUsersWhoFavoritedBeer(beerId);
+        for (const userId of beerFavUserIds) {
+          if (notifiedSet.has(userId)) continue;
+          notifiedSet.add(userId);
+
+          const prefs = await storage.getNotificationPreferences(userId);
+          if (prefs && !prefs.tapChanges) continue;
+
+          await storage.createNotification({
+            userId,
+            type: 'new_beer',
+            title: `La tua birra preferita disponibile!`,
+            message: `"${beerName}" è ora alla spina da ${pub.name}.`,
+            pubId,
+            beerId,
+            isRead: false,
+          });
+
+          sendPushToUser(userId, {
+            title: `La tua birra preferita disponibile!`,
+            body: `"${beerName}" è ora alla spina da ${pub.name}.`,
+            url: `/pubs/${pubId}`,
+          });
+        }
+
+        const beer = await storage.getBeer(beerId);
+        if (beer?.breweryId) {
+          const breweryFavUserIds = await storage.getUsersWhoFavoritedBrewery(beer.breweryId);
+          const brewery = await storage.getBrewery(beer.breweryId);
+          const breweryName = brewery?.name || 'il tuo birrificio preferito';
+
+          for (const userId of breweryFavUserIds) {
+            if (notifiedSet.has(userId)) continue;
+            notifiedSet.add(userId);
+
+            const prefs = await storage.getNotificationPreferences(userId);
+            if (prefs && !prefs.tapChanges) continue;
+
+            await storage.createNotification({
+              userId,
+              type: 'new_beer',
+              title: `Novità dal tuo birrificio preferito!`,
+              message: `${pub.name} ha "${beerName}" di ${breweryName} alla spina.`,
+              pubId,
+              beerId,
+              isRead: false,
+            });
+
+            sendPushToUser(userId, {
+              title: `Novità dal tuo birrificio preferito!`,
+              body: `${pub.name} ha "${beerName}" di ${breweryName} alla spina.`,
+              url: `/pubs/${pubId}`,
+            });
+          }
+        }
       }
     } catch (error) {
       console.error("Error sending tap change notifications:", error);
