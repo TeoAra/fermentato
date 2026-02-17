@@ -412,8 +412,8 @@ export default function SearchDialog({ isOpen, onClose }: SearchDialogProps) {
                               <div className="font-medium text-sm text-gray-900 dark:text-white truncate group-hover:text-orange-600 dark:group-hover:text-orange-400 transition-colors">
                                 {beer.name}
                               </div>
-                              {beer.breweryName && (
-                                <div className="text-xs text-gray-600 dark:text-gray-300 truncate">{beer.breweryName}</div>
+                              {(beer.brewery?.name || beer.breweryName) && (
+                                <div className="text-xs text-gray-600 dark:text-gray-300 truncate">{beer.brewery?.name || beer.breweryName}</div>
                               )}
                               <div className="text-xs text-gray-500 dark:text-gray-400 truncate">
                                 {beer.style && beer.abv ? `${beer.style} • ${beer.abv}%` : beer.style || `${beer.abv}%` || 'Dettagli non disponibili'}
