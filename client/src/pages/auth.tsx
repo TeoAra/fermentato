@@ -43,6 +43,7 @@ const registerSchema = z.object({
   breweryName: z.string().optional(),
   breweryLocation: z.string().optional(),
   breweryRegion: z.string().optional(),
+  breweryCountry: z.string().optional(),
   breweryVatNumber: z.string().optional(),
   breweryPhone: z.string().optional(),
   breweryDescription: z.string().optional(),
@@ -111,6 +112,7 @@ export default function AuthPage() {
       breweryName: "",
       breweryLocation: "",
       breweryRegion: "",
+      breweryCountry: "",
       breweryVatNumber: "",
       breweryPhone: "",
       breweryDescription: "",
@@ -133,11 +135,24 @@ export default function AuthPage() {
     formattedAddress: string;
     city: string;
     region: string;
+    country: string;
     placeId: string;
   }) => {
     registerForm.setValue("pubAddress", details.formattedAddress);
     registerForm.setValue("pubCity", details.city);
     registerForm.setValue("pubRegion", details.region);
+  }, [registerForm]);
+
+  const handleBreweryAddressSelect = useCallback((details: {
+    formattedAddress: string;
+    city: string;
+    region: string;
+    country: string;
+    placeId: string;
+  }) => {
+    registerForm.setValue("breweryLocation", details.formattedAddress);
+    registerForm.setValue("breweryRegion", details.region);
+    registerForm.setValue("breweryCountry", details.country);
   }, [registerForm]);
 
   const loginMutation = useMutation({
@@ -773,32 +788,26 @@ export default function AuthPage() {
                             )}
                           />
 
-                          <div className="grid grid-cols-2 gap-3">
-                            <FormField
-                              control={registerForm.control}
-                              name="breweryLocation"
-                              render={({ field }) => (
-                                <FormItem>
-                                  <FormLabel>Località</FormLabel>
-                                  <FormControl>
-                                    <Input {...field} placeholder="Es. Lurago Marinone" />
-                                  </FormControl>
-                                </FormItem>
-                              )}
-                            />
-                            <FormField
-                              control={registerForm.control}
-                              name="breweryRegion"
-                              render={({ field }) => (
-                                <FormItem>
-                                  <FormLabel>Regione</FormLabel>
-                                  <FormControl>
-                                    <Input {...field} placeholder="Es. Lombardia" />
-                                  </FormControl>
-                                </FormItem>
-                              )}
-                            />
-                          </div>
+                          <FormField
+                            control={registerForm.control}
+                            name="breweryLocation"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Sede del Birrificio</FormLabel>
+                                <FormControl>
+                                  <AddressAutocomplete
+                                    value={field.value}
+                                    onAddressSelect={handleBreweryAddressSelect}
+                                    placeholder="Cerca la sede del birrificio..."
+                                    countryRestriction={null}
+                                  />
+                                </FormControl>
+                                <FormDescription className="text-xs">
+                                  Regione e nazione verranno compilati automaticamente.
+                                </FormDescription>
+                              </FormItem>
+                            )}
+                          />
                         </div>
                       )}
 

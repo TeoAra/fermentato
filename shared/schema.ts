@@ -73,6 +73,7 @@ export const breweries = pgTable("breweries", {
   name: varchar("name").notNull(),
   location: varchar("location").notNull(),
   region: varchar("region").notNull(),
+  country: varchar("country").default("Italia"),
   description: text("description"),
   logoUrl: varchar("logo_url"),
   coverImageUrl: varchar("cover_image_url"),

@@ -8,6 +8,7 @@ interface AddressDetails {
   formattedAddress: string;
   city: string;
   region: string;
+  country: string;
   placeId: string;
 }
 
@@ -75,6 +76,7 @@ export function AddressAutocomplete({
 
           let city = "";
           let region = "";
+          let country = "";
 
           for (const component of place.address_components) {
             if (component.types.includes("locality")) {
@@ -86,6 +88,9 @@ export function AddressAutocomplete({
             if (!city && component.types.includes("administrative_area_level_3")) {
               city = component.long_name;
             }
+            if (component.types.includes("country")) {
+              country = component.long_name;
+            }
           }
 
           const formattedAddress = place.formatted_address || "";
@@ -95,6 +100,7 @@ export function AddressAutocomplete({
             formattedAddress,
             city: city || "",
             region: region || "",
+            country: country || "",
             placeId: place.place_id || "",
           });
         });
