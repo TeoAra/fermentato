@@ -44,6 +44,9 @@ import {
   type InsertNotification,
   type NotificationPreference,
   type InsertNotificationPreference,
+  pushSubscriptions,
+  type PushSubscription,
+  type InsertPushSubscription,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, desc, like, inArray, sql, or, asc, ilike } from "drizzle-orm";
@@ -273,6 +276,12 @@ export interface IStorage {
 
   // Helper: get admin user IDs
   getAdminUserIds(): Promise<string[]>;
+
+  // Push subscription operations
+  createPushSubscription(sub: InsertPushSubscription): Promise<PushSubscription>;
+  getPushSubscriptionsByUser(userId: string): Promise<PushSubscription[]>;
+  deletePushSubscription(endpoint: string): Promise<void>;
+  deletePushSubscriptionsByUser(userId: string): Promise<void>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -1241,6 +1250,25 @@ export class DatabaseStorage implements IStorage {
       );
     return rows.map(r => r.id);
   }
+
+  // Push subscription operations
+  async createPushSubscription(sub: InsertPushSubscription): Promise<PushSubscription> {
+    await db.delete(pushSubscriptions).where(eq(pushSubscriptions.endpoint, sub.endpoint));
+    const [result] = await db.insert(pushSubscriptions).values(sub).returning();
+    return result;
+  }
+
+  async getPushSubscriptionsByUser(userId: string): Promise<PushSubscription[]> {
+    return db.select().from(pushSubscriptions).where(eq(pushSubscriptions.userId, userId));
+  }
+
+  async deletePushSubscription(endpoint: string): Promise<void> {
+    await db.delete(pushSubscriptions).where(eq(pushSubscriptions.endpoint, endpoint));
+  }
+
+  async deletePushSubscriptionsByUser(userId: string): Promise<void> {
+    await db.delete(pushSubscriptions).where(eq(pushSubscriptions.userId, userId));
+  }
 }
 
 // Storage wrapper with fallback to in-memory when database is disabled
@@ -1850,6 +1878,34 @@ class StorageWrapper implements IStorage {
     return this.dbCall(
       () => this.databaseStorage.getAdminUserIds(),
       async () => []
+    );
+  }
+
+  async createPushSubscription(sub: InsertPushSubscription): Promise<PushSubscription> {
+    return this.dbCall(
+      () => this.databaseStorage.createPushSubscription(sub),
+      async () => { throw new Error('Not implemented in memory storage'); }
+    );
+  }
+
+  async getPushSubscriptionsByUser(userId: string): Promise<PushSubscription[]> {
+    return this.dbCall(
+      () => this.databaseStorage.getPushSubscriptionsByUser(userId),
+      async () => []
+    );
+  }
+
+  async deletePushSubscription(endpoint: string): Promise<void> {
+    return this.dbCall(
+      () => this.databaseStorage.deletePushSubscription(endpoint),
+      async () => {}
+    );
+  }
+
+  async deletePushSubscriptionsByUser(userId: string): Promise<void> {
+    return this.dbCall(
+      () => this.databaseStorage.deletePushSubscriptionsByUser(userId),
+      async () => {}
     );
   }
 }

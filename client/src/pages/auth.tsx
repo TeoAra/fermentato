@@ -1,6 +1,6 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { useLocation } from "wouter";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -13,9 +13,10 @@ import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { queryClient, apiRequest } from "@/lib/queryClient";
-import { Beer, Eye, EyeOff, Mail, Lock, User, Store, Phone, Building2 } from "lucide-react";
+import { Beer, Eye, EyeOff, Mail, Lock, User, Store, Phone, Building2, Factory, Plus, Search } from "lucide-react";
 import { SiGoogle } from "react-icons/si";
 import { AddressAutocomplete } from "@/components/AddressAutocomplete";
+import type { Brewery } from "@shared/schema";
 
 const loginSchema = z.object({
   email: z.string().email("Email non valida"),
@@ -37,6 +38,13 @@ const registerSchema = z.object({
   vatNumber: z.string().optional(),
   phone: z.string().optional(),
   description: z.string().optional(),
+  isBrewery: z.boolean().default(false),
+  breweryId: z.number().optional(),
+  breweryName: z.string().optional(),
+  breweryLocation: z.string().optional(),
+  breweryRegion: z.string().optional(),
+  breweryDescription: z.string().optional(),
+  breweryWebsite: z.string().optional(),
 }).refine((data) => data.password === data.confirmPassword, {
   message: "Le password non corrispondono",
   path: ["confirmPassword"],
@@ -56,6 +64,14 @@ const registerSchema = z.object({
 }, {
   message: "Seleziona un indirizzo dai suggerimenti",
   path: ["pubAddress"],
+}).refine((data) => {
+  if (data.isBrewery && !data.breweryId) {
+    return data.breweryName && data.breweryName.length > 0;
+  }
+  return true;
+}, {
+  message: "Seleziona un birrificio esistente o inserisci il nome per crearne uno nuovo",
+  path: ["breweryName"],
 });
 
 type LoginForm = z.infer<typeof loginSchema>;
@@ -88,10 +104,26 @@ export default function AuthPage() {
       vatNumber: "",
       phone: "",
       description: "",
+      isBrewery: false,
+      breweryId: undefined,
+      breweryName: "",
+      breweryLocation: "",
+      breweryRegion: "",
+      breweryDescription: "",
+      breweryWebsite: "",
     },
   });
 
   const isPublican = registerForm.watch("isPublican");
+  const isBrewery = registerForm.watch("isBrewery");
+  const [brewerySearch, setBrewerySearch] = useState("");
+  const [selectedBrewery, setSelectedBrewery] = useState<Brewery | null>(null);
+  const [creatingNewBrewery, setCreatingNewBrewery] = useState(false);
+
+  const { data: searchedBreweries } = useQuery<Brewery[]>({
+    queryKey: [`/api/breweries/search?q=${encodeURIComponent(brewerySearch)}`],
+    enabled: isBrewery && brewerySearch.length >= 2 && !selectedBrewery && !creatingNewBrewery,
+  });
 
   const handleAddressSelect = useCallback((details: {
     formattedAddress: string;
@@ -134,6 +166,8 @@ export default function AuthPage() {
           title: "Richiesta inviata!", 
           description: "La tua richiesta di registrazione come publican è stata inviata. Riceverai una notifica quando sarà approvata." 
         });
+      } else if (variables.isBrewery) {
+        toast({ title: "Benvenuto birrificio!", description: "Il tuo account birrificio è stato creato. Ora puoi gestire le tue birre." });
       } else {
         toast({ title: "Registrazione completata!", description: "Benvenuto su Fermenta.to" });
       }
@@ -556,13 +590,232 @@ export default function AuthPage() {
                     </div>
                   )}
 
+                  {/* Brewery Toggle */}
+                  <div className="p-4 bg-orange-50 dark:bg-orange-900/20 rounded-lg border border-orange-200 dark:border-orange-800">
+                    <FormField
+                      control={registerForm.control}
+                      name="isBrewery"
+                      render={({ field }) => (
+                        <FormItem className="flex flex-row items-center justify-between">
+                          <div className="flex items-center gap-3">
+                            <div className="p-2 bg-orange-100 dark:bg-orange-800/30 rounded-full">
+                              <Factory className="w-5 h-5 text-orange-600" />
+                            </div>
+                            <div>
+                              <FormLabel className="font-medium text-orange-900 dark:text-orange-100">
+                                Sono un birrificio
+                              </FormLabel>
+                              <FormDescription className="text-xs text-orange-700 dark:text-orange-300">
+                                Gestisci il tuo birrificio e le tue birre
+                              </FormDescription>
+                            </div>
+                          </div>
+                          <FormControl>
+                            <Switch
+                              checked={field.value}
+                              onCheckedChange={(checked) => {
+                                field.onChange(checked);
+                                if (!checked) {
+                                  setSelectedBrewery(null);
+                                  setCreatingNewBrewery(false);
+                                  setBrewerySearch("");
+                                  registerForm.setValue("breweryId", undefined);
+                                  registerForm.setValue("breweryName", "");
+                                }
+                              }}
+                            />
+                          </FormControl>
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+
+                  {/* Brewery Details */}
+                  {isBrewery && (
+                    <div className="space-y-4 p-4 bg-gray-50 dark:bg-gray-800/50 rounded-lg border border-gray-200 dark:border-gray-700">
+                      <h3 className="font-medium text-gray-900 dark:text-gray-100 flex items-center gap-2">
+                        <Factory className="w-4 h-4" />
+                        Dati del Birrificio
+                      </h3>
+
+                      {!selectedBrewery && !creatingNewBrewery && (
+                        <>
+                          <div>
+                            <FormLabel className="text-sm">Cerca il tuo birrificio</FormLabel>
+                            <div className="relative mt-1">
+                              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                              <Input
+                                value={brewerySearch}
+                                onChange={(e) => setBrewerySearch(e.target.value)}
+                                placeholder="Nome del birrificio..."
+                                className="pl-10"
+                              />
+                            </div>
+                          </div>
+
+                          {searchedBreweries && searchedBreweries.length > 0 && (
+                            <div className="max-h-40 overflow-y-auto space-y-1 border rounded-lg p-2">
+                              {searchedBreweries.map((b) => (
+                                <button
+                                  key={b.id}
+                                  type="button"
+                                  onClick={() => {
+                                    setSelectedBrewery(b);
+                                    registerForm.setValue("breweryId", b.id);
+                                    registerForm.setValue("breweryName", b.name);
+                                    setBrewerySearch("");
+                                  }}
+                                  className="w-full text-left p-2 rounded hover:bg-amber-50 dark:hover:bg-amber-900/20 transition-colors"
+                                >
+                                  <div className="font-medium text-sm text-gray-900 dark:text-white">{b.name}</div>
+                                  <div className="text-xs text-gray-500">{b.location} {b.region ? `• ${b.region}` : ''}</div>
+                                </button>
+                              ))}
+                            </div>
+                          )}
+
+                          {brewerySearch.length >= 2 && searchedBreweries && searchedBreweries.length === 0 && (
+                            <p className="text-sm text-gray-500 text-center py-2">Nessun birrificio trovato per "{brewerySearch}"</p>
+                          )}
+
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            className="w-full"
+                            onClick={() => {
+                              setCreatingNewBrewery(true);
+                              if (brewerySearch) {
+                                registerForm.setValue("breweryName", brewerySearch);
+                              }
+                            }}
+                          >
+                            <Plus className="w-4 h-4 mr-1" />
+                            Crea nuovo birrificio
+                          </Button>
+                        </>
+                      )}
+
+                      {selectedBrewery && (
+                        <div className="p-3 bg-amber-50 dark:bg-amber-900/20 rounded-lg border border-amber-200 dark:border-amber-800">
+                          <div className="flex items-center justify-between">
+                            <div>
+                              <p className="font-medium text-amber-900 dark:text-amber-100">{selectedBrewery.name}</p>
+                              <p className="text-xs text-amber-700 dark:text-amber-300">{selectedBrewery.location}</p>
+                            </div>
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => {
+                                setSelectedBrewery(null);
+                                registerForm.setValue("breweryId", undefined);
+                                registerForm.setValue("breweryName", "");
+                              }}
+                              className="text-xs"
+                            >
+                              Cambia
+                            </Button>
+                          </div>
+                        </div>
+                      )}
+
+                      {creatingNewBrewery && (
+                        <div className="space-y-3">
+                          <div className="flex items-center justify-between">
+                            <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Nuovo birrificio</p>
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => {
+                                setCreatingNewBrewery(false);
+                                registerForm.setValue("breweryName", "");
+                              }}
+                              className="text-xs"
+                            >
+                              Annulla
+                            </Button>
+                          </div>
+
+                          <FormField
+                            control={registerForm.control}
+                            name="breweryName"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Nome Birrificio *</FormLabel>
+                                <FormControl>
+                                  <Input {...field} placeholder="Es. Birrificio Italiano" />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+
+                          <div className="grid grid-cols-2 gap-3">
+                            <FormField
+                              control={registerForm.control}
+                              name="breweryLocation"
+                              render={({ field }) => (
+                                <FormItem>
+                                  <FormLabel>Località</FormLabel>
+                                  <FormControl>
+                                    <Input {...field} placeholder="Es. Lurago Marinone" />
+                                  </FormControl>
+                                </FormItem>
+                              )}
+                            />
+                            <FormField
+                              control={registerForm.control}
+                              name="breweryRegion"
+                              render={({ field }) => (
+                                <FormItem>
+                                  <FormLabel>Regione</FormLabel>
+                                  <FormControl>
+                                    <Input {...field} placeholder="Es. Lombardia" />
+                                  </FormControl>
+                                </FormItem>
+                              )}
+                            />
+                          </div>
+
+                          <FormField
+                            control={registerForm.control}
+                            name="breweryWebsite"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Sito Web</FormLabel>
+                                <FormControl>
+                                  <Input {...field} placeholder="https://www.birrificio.it" />
+                                </FormControl>
+                              </FormItem>
+                            )}
+                          />
+
+                          <FormField
+                            control={registerForm.control}
+                            name="breweryDescription"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Descrizione</FormLabel>
+                                <FormControl>
+                                  <Textarea {...field} placeholder="Racconta del tuo birrificio..." className="resize-none" rows={2} />
+                                </FormControl>
+                              </FormItem>
+                            )}
+                          />
+                        </div>
+                      )}
+                    </div>
+                  )}
+
                   <Button 
                     type="submit" 
                     className="w-full bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700"
                     disabled={registerMutation.isPending}
                     data-testid="button-register"
                   >
-                    {registerMutation.isPending ? "Registrazione..." : isPublican ? "Invia Richiesta" : "Crea Account"}
+                    {registerMutation.isPending ? "Registrazione..." : isPublican ? "Invia Richiesta" : isBrewery ? "Registra Birrificio" : "Crea Account"}
                   </Button>
                 </form>
               </Form>

@@ -6,10 +6,43 @@ import { registerAdminRoutes } from "./routes-admin";
 import { sql, eq } from "drizzle-orm";
 import { upload, uploadImage, cloudinary } from "./cloudinary";
 import { db } from "./db";
-import { breweries, beers, pubs, users, tapList, notifications } from "@shared/schema";
+import { breweries, beers, pubs, users, tapList, notifications, pushSubscriptions } from "@shared/schema";
 
 import { insertPubSchema, insertTapListSchema, insertBottleListSchema, insertMenuCategorySchema, insertMenuItemSchema, pubRegistrationSchema } from "@shared/schema";
 import { z } from "zod";
+import webpush from "web-push";
+
+const VAPID_PUBLIC_KEY = process.env.VAPID_PUBLIC_KEY || '';
+const VAPID_PRIVATE_KEY = process.env.VAPID_PRIVATE_KEY || '';
+const VAPID_SUBJECT = process.env.VAPID_SUBJECT || 'mailto:info@fermenta.to';
+
+if (VAPID_PUBLIC_KEY && VAPID_PRIVATE_KEY) {
+  webpush.setVapidDetails(VAPID_SUBJECT, VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY);
+  console.log('Web Push configured with VAPID keys');
+} else {
+  console.warn('VAPID keys not set - push notifications disabled');
+}
+
+async function sendPushToUser(userId: string, payload: { title: string; body: string; url?: string }) {
+  if (!VAPID_PUBLIC_KEY || !VAPID_PRIVATE_KEY) return;
+  try {
+    const subs = await storage.getPushSubscriptionsByUser(userId);
+    for (const sub of subs) {
+      try {
+        await webpush.sendNotification(
+          { endpoint: sub.endpoint, keys: { p256dh: sub.p256dh, auth: sub.auth } },
+          JSON.stringify(payload)
+        );
+      } catch (err: any) {
+        if (err.statusCode === 410 || err.statusCode === 404) {
+          await storage.deletePushSubscription(sub.endpoint);
+        }
+      }
+    }
+  } catch (e) {
+    console.error('Error sending push to user:', e);
+  }
+}
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Setup authentication (email/password + Google OAuth)
@@ -244,6 +277,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error fetching breweries:", error);
       res.status(500).json({ message: "Failed to fetch breweries" });
+    }
+  });
+
+  // Search breweries (public, for registration)
+  app.get("/api/breweries/search", async (req, res) => {
+    try {
+      const query = req.query.q as string || req.query.query as string || '';
+      if (query.length < 2) return res.json([]);
+      const results = await storage.searchBreweries(query);
+      res.json(results.slice(0, 10));
+    } catch (error) {
+      console.error("Error searching breweries:", error);
+      res.status(500).json({ message: "Failed to search breweries" });
     }
   });
 
@@ -1345,6 +1391,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
           beerId: beerId ?? null,
           isRead: false,
         });
+
+        sendPushToUser(userId, {
+          title: titleMap[type],
+          body: messageMap[type],
+          url: `/pubs/${pubId}`,
+        });
       }
     } catch (error) {
       console.error("Error sending tap change notifications:", error);
@@ -2312,6 +2364,133 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error updating notification preferences:", error);
       res.status(500).json({ message: "Failed to update preferences" });
+    }
+  });
+
+  // Brewery owner routes
+  app.get("/api/brewery/my", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = (req.user as any).id;
+      const user = await storage.getUser(userId);
+      if (!user?.breweryId) {
+        return res.status(404).json({ message: "Nessun birrificio associato" });
+      }
+      const brewery = await storage.getBrewery(user.breweryId);
+      if (!brewery) {
+        return res.status(404).json({ message: "Birrificio non trovato" });
+      }
+      const beerList = await storage.getBeersByBrewery(brewery.id);
+      res.json({ brewery, beers: beerList });
+    } catch (error) {
+      console.error("Error fetching my brewery:", error);
+      res.status(500).json({ message: "Failed to fetch brewery" });
+    }
+  });
+
+  app.post("/api/brewery/beers", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = (req.user as any).id;
+      const user = await storage.getUser(userId);
+      if (!user?.breweryId) {
+        return res.status(403).json({ message: "Non sei associato a nessun birrificio" });
+      }
+      const beerData = { ...req.body, breweryId: user.breweryId };
+      const beer = await storage.createBeer(beerData);
+      res.status(201).json(beer);
+    } catch (error) {
+      console.error("Error creating beer:", error);
+      res.status(500).json({ message: "Failed to create beer" });
+    }
+  });
+
+  app.patch("/api/brewery/beers/:id", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = (req.user as any).id;
+      const user = await storage.getUser(userId);
+      if (!user?.breweryId) {
+        return res.status(403).json({ message: "Non sei associato a nessun birrificio" });
+      }
+      const beerId = parseInt(req.params.id);
+      const beer = await storage.getBeer(beerId);
+      if (!beer || beer.breweryId !== user.breweryId) {
+        return res.status(403).json({ message: "Non puoi modificare questa birra" });
+      }
+      const updated = await storage.updateBeer(beerId, req.body);
+      res.json(updated);
+    } catch (error) {
+      console.error("Error updating beer:", error);
+      res.status(500).json({ message: "Failed to update beer" });
+    }
+  });
+
+  app.delete("/api/brewery/beers/:id", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = (req.user as any).id;
+      const user = await storage.getUser(userId);
+      if (!user?.breweryId) {
+        return res.status(403).json({ message: "Non sei associato a nessun birrificio" });
+      }
+      const beerId = parseInt(req.params.id);
+      const beer = await storage.getBeer(beerId);
+      if (!beer || beer.breweryId !== user.breweryId) {
+        return res.status(403).json({ message: "Non puoi eliminare questa birra" });
+      }
+      await storage.deleteBeer(beerId);
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error deleting beer:", error);
+      res.status(500).json({ message: "Failed to delete beer" });
+    }
+  });
+
+  app.patch("/api/brewery/profile", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = (req.user as any).id;
+      const user = await storage.getUser(userId);
+      if (!user?.breweryId) {
+        return res.status(403).json({ message: "Non sei associato a nessun birrificio" });
+      }
+      const updated = await storage.updateBrewery(user.breweryId, req.body);
+      res.json(updated);
+    } catch (error) {
+      console.error("Error updating brewery:", error);
+      res.status(500).json({ message: "Failed to update brewery" });
+    }
+  });
+
+  // Push notification routes
+  app.get("/api/push/vapid-key", (req, res) => {
+    res.json({ publicKey: VAPID_PUBLIC_KEY });
+  });
+
+  app.post("/api/push/subscribe", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = (req.user as any).id;
+      const { endpoint, p256dh, auth } = req.body;
+      if (!endpoint || !p256dh || !auth) {
+        return res.status(400).json({ message: "Missing subscription data" });
+      }
+      await storage.createPushSubscription({ userId, endpoint, p256dh, auth });
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error subscribing to push:", error);
+      res.status(500).json({ message: "Failed to subscribe" });
+    }
+  });
+
+  app.post("/api/push/unsubscribe", isAuthenticated, async (req: any, res) => {
+    try {
+      const { endpoint } = req.body;
+      if (endpoint) {
+        await storage.deletePushSubscription(endpoint);
+      } else {
+        const userId = (req.user as any).id;
+        await storage.deletePushSubscriptionsByUser(userId);
+      }
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error unsubscribing from push:", error);
+      res.status(500).json({ message: "Failed to unsubscribe" });
     }
   });
 

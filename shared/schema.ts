@@ -37,9 +37,10 @@ export const users = pgTable("users", {
   nickname: varchar("nickname").unique(),
   bio: text("bio"),
   favoriteStyles: varchar("favorite_styles").array(),
-  userType: varchar("user_type").notNull().default("customer"), // 'customer', 'pub_owner', or 'admin' - legacy field
-  roles: varchar("roles").array(), // Available roles for this user: ['customer'], ['customer', 'pub_owner'], or ['customer', 'pub_owner', 'admin']
+  userType: varchar("user_type").notNull().default("customer"), // 'customer', 'pub_owner', 'brewery_owner', or 'admin' - legacy field
+  roles: varchar("roles").array(), // Available roles: ['customer'], ['customer', 'pub_owner'], ['customer', 'brewery_owner'], etc.
   activeRole: varchar("active_role"), // Currently active role for UI/navigation
+  breweryId: integer("brewery_id").references(() => breweries.id), // For brewery owners
   isEmailVerified: boolean("is_email_verified").default(false),
   passwordResetToken: varchar("password_reset_token"),
   passwordResetExpires: timestamp("password_reset_expires"),
@@ -598,6 +599,23 @@ export type Notification = typeof notifications.$inferSelect;
 export type InsertNotification = z.infer<typeof insertNotificationSchema>;
 export type NotificationPreference = typeof notificationPreferences.$inferSelect;
 export type InsertNotificationPreference = z.infer<typeof insertNotificationPreferencesSchema>;
+
+// Push notification subscriptions (Web Push API)
+export const pushSubscriptions = pgTable("push_subscriptions", {
+  id: serial("id").primaryKey(),
+  userId: varchar("user_id").references(() => users.id, { onDelete: "cascade" }).notNull(),
+  endpoint: text("endpoint").notNull(),
+  p256dh: text("p256dh").notNull(),
+  auth: text("auth").notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const insertPushSubscriptionSchema = createInsertSchema(pushSubscriptions).omit({
+  id: true,
+  createdAt: true,
+});
+export type PushSubscription = typeof pushSubscriptions.$inferSelect;
+export type InsertPushSubscription = z.infer<typeof insertPushSubscriptionSchema>;
 
 // Custom schemas for forms
 export const pubRegistrationSchema = insertPubSchema.extend({

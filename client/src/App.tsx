@@ -8,6 +8,7 @@ import { useState, useEffect } from "react";
 import { initGA } from "./lib/analytics";
 import { useAnalytics } from "./hooks/use-analytics";
 import Header from "@/components/header";
+import { PwaInstallPrompt, PushNotificationPrompt } from "@/components/pwa-prompt";
 
 // Component to scroll to top on route change
 function ScrollToTop() {
@@ -45,6 +46,7 @@ import ExploreBreweries from "@/pages/explore-breweries";
 import DemoLoginPage from "@/pages/demo-login-page";
 import AuthPage from "@/pages/auth";
 import BecomePublican from "@/pages/become-publican";
+import BreweryDashboard from "@/pages/brewery-dashboard";
 import TermsOfService from "@/pages/tos";
 import PrivacyPolicy from "@/pages/privacy";
 import { MobileHeader } from "@/components/mobile-header";
@@ -88,7 +90,8 @@ function Router() {
           <Route path="/explore/breweries" component={ExploreBreweries} />
           {/* Dashboard routes based on user type or active role */}
           <Route path="/dashboard" component={
-            (typedUser?.userType === 'pub_owner' || typedUser?.active_role === 'pub_owner') ? SmartPubDashboard : 
+            (typedUser?.userType === 'pub_owner' || typedUser?.activeRole === 'pub_owner') ? SmartPubDashboard : 
+            (typedUser?.userType === 'brewery_owner' || typedUser?.activeRole === 'brewery_owner') ? BreweryDashboard :
             UserProfile
           } />
           <Route path="/admin" component={AdminDashboardNew} />
@@ -100,6 +103,7 @@ function Router() {
           <Route path="/admin/edit-pub/:id" component={AdminEditPub} />
           <Route path="/pub-registration" component={PubRegistration} />
           <Route path="/become-publican" component={BecomePublican} />
+          <Route path="/brewery-dashboard" component={BreweryDashboard} />
           <Route path="/tos" component={TermsOfService} />
           <Route path="/terms" component={TermsOfService} />
           <Route path="/privacy" component={PrivacyPolicy} />
@@ -131,6 +135,8 @@ function App() {
       <TooltipProvider>
         <Toaster />
         <Router />
+        <PwaInstallPrompt />
+        <PushNotificationPrompt />
       </TooltipProvider>
     </QueryClientProvider>
   );

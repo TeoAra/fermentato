@@ -7,7 +7,7 @@ import { nanoid } from "nanoid";
 import type { Express, RequestHandler } from "express";
 import connectPg from "connect-pg-simple";
 import { db } from "./db";
-import { users, oauthAccounts, publicanRequests } from "@shared/schema";
+import { users, oauthAccounts, publicanRequests, breweries } from "@shared/schema";
 import { eq, and } from "drizzle-orm";
 import type { User } from "@shared/schema";
 import { storage } from "./storage";
@@ -193,7 +193,8 @@ export async function setupAuth(app: Express) {
     try {
       const { 
         email, password, firstName, lastName,
-        isPublican, pubName, pubAddress, pubCity, pubRegion, vatNumber, phone, description
+        isPublican, pubName, pubAddress, pubCity, pubRegion, vatNumber, phone, description,
+        isBrewery, breweryId: existingBreweryId, breweryName, breweryLocation, breweryRegion, breweryDescription, breweryWebsite
       } = req.body;
       
       if (!email || !password) {
@@ -218,6 +219,14 @@ export async function setupAuth(app: Express) {
           return res.status(400).json({ message: 'Dati del locale troppo lunghi' });
         }
       }
+
+      // Validate brewery fields if registering as brewery
+      if (isBrewery && !existingBreweryId) {
+        const trimmedBreweryName = typeof breweryName === 'string' ? breweryName.trim() : '';
+        if (!trimmedBreweryName) {
+          return res.status(400).json({ message: 'Nome del birrificio è obbligatorio' });
+        }
+      }
       
       const normalizedEmail = email.toLowerCase().trim();
       
@@ -229,6 +238,27 @@ export async function setupAuth(app: Express) {
       
       const hashedPwd = await hashPassword(password);
       const userId = nanoid();
+
+      // Determine roles
+      const userRoles: string[] = ['customer'];
+      if (isBrewery) userRoles.push('brewery_owner');
+      
+      // Handle brewery creation/association
+      let assignedBreweryId: number | null = null;
+      if (isBrewery) {
+        if (existingBreweryId) {
+          assignedBreweryId = parseInt(existingBreweryId);
+        } else if (breweryName) {
+          const [newBrewery] = await db.insert(breweries).values({
+            name: breweryName.trim(),
+            location: (breweryLocation || '').trim() || 'Italia',
+            region: (breweryRegion || '').trim() || 'N/A',
+            description: breweryDescription ? breweryDescription.trim() : null,
+            websiteUrl: breweryWebsite ? breweryWebsite.trim() : null,
+          }).returning();
+          assignedBreweryId = newBrewery.id;
+        }
+      }
       
       const [newUser] = await db.insert(users).values({
         id: userId,
@@ -236,9 +266,10 @@ export async function setupAuth(app: Express) {
         hashedPassword: hashedPwd,
         firstName: firstName || null,
         lastName: lastName || null,
-        userType: 'customer',
-        roles: ['customer'],
-        activeRole: 'customer',
+        userType: isBrewery ? 'brewery_owner' : 'customer',
+        roles: userRoles,
+        activeRole: isBrewery ? 'brewery_owner' : 'customer',
+        breweryId: assignedBreweryId,
         isEmailVerified: false,
       }).returning();
       
@@ -295,8 +326,9 @@ export async function setupAuth(app: Express) {
         const { hashedPassword: _, ...userWithoutPassword } = newUser;
         res.json({ 
           user: userWithoutPassword, 
-          message: isPublican ? 'Richiesta publican inviata' : 'Registrazione completata',
-          publicanRequest: isPublican ? true : false
+          message: isPublican ? 'Richiesta publican inviata' : isBrewery ? 'Registrazione birrificio completata' : 'Registrazione completata',
+          publicanRequest: isPublican ? true : false,
+          breweryRegistration: isBrewery ? true : false
         });
       });
     } catch (error) {
