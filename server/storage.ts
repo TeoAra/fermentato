@@ -344,7 +344,7 @@ export class DatabaseStorage implements IStorage {
     }
     const [user] = await db
       .update(users)
-      .set({ activeRole: newRole, userType: newRole, updatedAt: new Date() })
+      .set({ activeRole: newRole, updatedAt: new Date() })
       .where(eq(users.id, userId))
       .returning();
     return user;

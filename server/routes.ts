@@ -1962,7 +1962,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Role is required" });
       }
       
-      const validRoles = ["customer", "pub_owner", "admin"];
+      const validRoles = ["customer", "pub_owner", "brewery_owner", "admin"];
       if (!validRoles.includes(role)) {
         return res.status(400).json({ message: "Invalid role" });
       }
