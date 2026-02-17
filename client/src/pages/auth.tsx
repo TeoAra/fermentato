@@ -43,6 +43,8 @@ const registerSchema = z.object({
   breweryName: z.string().optional(),
   breweryLocation: z.string().optional(),
   breweryRegion: z.string().optional(),
+  breweryVatNumber: z.string().optional(),
+  breweryPhone: z.string().optional(),
   breweryDescription: z.string().optional(),
   breweryWebsite: z.string().optional(),
 }).refine((data) => data.password === data.confirmPassword, {
@@ -109,6 +111,8 @@ export default function AuthPage() {
       breweryName: "",
       breweryLocation: "",
       breweryRegion: "",
+      breweryVatNumber: "",
+      breweryPhone: "",
       breweryDescription: "",
       breweryWebsite: "",
     },
@@ -778,6 +782,36 @@ export default function AuthPage() {
                                   <FormLabel>Regione</FormLabel>
                                   <FormControl>
                                     <Input {...field} placeholder="Es. Lombardia" />
+                                  </FormControl>
+                                </FormItem>
+                              )}
+                            />
+                          </div>
+
+                          <div className="grid grid-cols-2 gap-3">
+                            <FormField
+                              control={registerForm.control}
+                              name="breweryVatNumber"
+                              render={({ field }) => (
+                                <FormItem>
+                                  <FormLabel>P.IVA</FormLabel>
+                                  <FormControl>
+                                    <Input {...field} placeholder="IT12345678901" />
+                                  </FormControl>
+                                </FormItem>
+                              )}
+                            />
+                            <FormField
+                              control={registerForm.control}
+                              name="breweryPhone"
+                              render={({ field }) => (
+                                <FormItem>
+                                  <FormLabel>Telefono</FormLabel>
+                                  <FormControl>
+                                    <div className="relative">
+                                      <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                                      <Input {...field} placeholder="+39 06 1234567" className="pl-10" />
+                                    </div>
                                   </FormControl>
                                 </FormItem>
                               )}

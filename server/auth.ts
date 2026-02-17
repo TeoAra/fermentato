@@ -194,7 +194,7 @@ export async function setupAuth(app: Express) {
       const { 
         email, password, firstName, lastName,
         isPublican, pubName, pubAddress, pubCity, pubRegion, vatNumber, phone, description,
-        isBrewery, breweryId: existingBreweryId, breweryName, breweryLocation, breweryRegion, breweryDescription, breweryWebsite
+        isBrewery, breweryId: existingBreweryId, breweryName, breweryLocation, breweryRegion, breweryVatNumber, breweryPhone, breweryDescription, breweryWebsite
       } = req.body;
       
       if (!email || !password) {
@@ -255,6 +255,8 @@ export async function setupAuth(app: Express) {
             region: (breweryRegion || '').trim() || 'N/A',
             description: breweryDescription ? breweryDescription.trim() : null,
             websiteUrl: breweryWebsite ? breweryWebsite.trim() : null,
+            vatNumber: breweryVatNumber ? breweryVatNumber.trim() : null,
+            phone: breweryPhone ? breweryPhone.trim() : null,
           }).returning();
           assignedBreweryId = newBrewery.id;
         }

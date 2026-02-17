@@ -140,6 +140,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Search breweries (public, for registration)
+  app.get("/api/breweries/search", async (req, res) => {
+    try {
+      const query = req.query.q as string || req.query.query as string || '';
+      if (query.length < 2) return res.json([]);
+      const results = await storage.searchBreweries(query);
+      res.json(results.slice(0, 10));
+    } catch (error) {
+      console.error("Error searching breweries:", error);
+      res.status(500).json({ message: "Failed to search breweries" });
+    }
+  });
+
   // Get brewery details by ID
   app.get("/api/breweries/:id", async (req, res) => {
     try {
@@ -280,45 +293,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Search breweries (public, for registration)
-  app.get("/api/breweries/search", async (req, res) => {
-    try {
-      const query = req.query.q as string || req.query.query as string || '';
-      if (query.length < 2) return res.json([]);
-      const results = await storage.searchBreweries(query);
-      res.json(results.slice(0, 10));
-    } catch (error) {
-      console.error("Error searching breweries:", error);
-      res.status(500).json({ message: "Failed to search breweries" });
-    }
-  });
-
-  // Get brewery by ID
-  app.get("/api/breweries/:id", async (req, res) => {
-    try {
-      const id = parseInt(req.params.id);
-      const brewery = await storage.getBrewery(id);
-      if (!brewery) {
-        return res.status(404).json({ message: "Brewery not found" });
-      }
-      res.json(brewery);
-    } catch (error) {
-      console.error("Error fetching brewery:", error);
-      res.status(500).json({ message: "Failed to fetch brewery" });
-    }
-  });
-
-  // Get beers by brewery
-  app.get("/api/breweries/:id/beers", async (req, res) => {
-    try {
-      const breweryId = parseInt(req.params.id);
-      const beers = await storage.getBeersByBrewery(breweryId);
-      res.json(beers);
-    } catch (error) {
-      console.error("Error fetching beers:", error);
-      res.status(500).json({ message: "Failed to fetch beers" });
-    }
-  });
 
   // Beer routes
   app.get('/api/beers', async (req, res) => {

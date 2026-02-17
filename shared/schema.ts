@@ -77,6 +77,8 @@ export const breweries = pgTable("breweries", {
   logoUrl: varchar("logo_url"),
   coverImageUrl: varchar("cover_image_url"),
   websiteUrl: varchar("website_url"),
+  vatNumber: varchar("vat_number"),
+  phone: varchar("phone"),
   latitude: decimal("latitude", { precision: 10, scale: 8 }),
   longitude: decimal("longitude", { precision: 11, scale: 8 }),
   rating: decimal("rating", { precision: 2, scale: 1 }).default("0"),
