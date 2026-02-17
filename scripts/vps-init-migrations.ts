@@ -1,10 +1,6 @@
-import { Pool } from '@neondatabase/serverless';
-import ws from 'ws';
-import { neonConfig } from '@neondatabase/serverless';
+import pg from 'pg';
 import * as crypto from 'crypto';
 import * as fs from 'fs';
-
-neonConfig.webSocketConstructor = ws;
 
 async function initMigrations() {
   const databaseUrl = process.env.DATABASE_URL;
@@ -12,7 +8,7 @@ async function initMigrations() {
     throw new Error('DATABASE_URL environment variable is required');
   }
 
-  const pool = new Pool({ connectionString: databaseUrl });
+  const pool = new pg.Pool({ connectionString: databaseUrl });
 
   console.log('Initializing migration tracking for existing database...');
 

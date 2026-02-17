@@ -1,13 +1,6 @@
-import { drizzle } from 'drizzle-orm/neon-serverless';
-import { Pool } from '@neondatabase/serverless';
-import ws from 'ws';
-import { neonConfig } from '@neondatabase/serverless';
-import * as schema from '../shared/schema';
-import { sql } from 'drizzle-orm';
+import pg from 'pg';
 import * as fs from 'fs';
 import * as path from 'path';
-
-neonConfig.webSocketConstructor = ws;
 
 const TABLES_TO_EXPORT = [
   'users',
@@ -38,8 +31,7 @@ async function exportData() {
     throw new Error('DATABASE_URL environment variable is required');
   }
 
-  const pool = new Pool({ connectionString: databaseUrl });
-  const db = drizzle({ client: pool, schema });
+  const pool = new pg.Pool({ connectionString: databaseUrl });
 
   const exportDir = path.join(process.cwd(), 'data-export');
   if (!fs.existsSync(exportDir)) {
@@ -50,7 +42,7 @@ async function exportData() {
 
   for (const tableName of TABLES_TO_EXPORT) {
     try {
-      const result = await db.execute(sql.raw(`SELECT * FROM "${tableName}" ORDER BY id`));
+      const result = await pool.query(`SELECT * FROM "${tableName}" ORDER BY id`);
       exportData[tableName] = result.rows || [];
       console.log(`Exported ${exportData[tableName].length} rows from ${tableName}`);
     } catch (err: any) {

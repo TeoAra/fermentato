@@ -1,0 +1,70 @@
+3. Initializing migration tracking (safe - skips if already done)...
+npm warn config init.module Use `--init-module` instead.
+Initializing migration tracking for existing database...
+Init failed: ErrorEvent {
+  [Symbol(kTarget)]: WebSocket {
+    _events: [Object: null prototype] {
+      error: [Function],
+      message: [Function],
+      close: [Function],
+      open: [Function]
+    },
+    _eventsCount: 4,
+    _maxListeners: undefined,
+    _binaryType: 'arraybuffer',
+    _closeCode: 1006,
+    _closeFrameReceived: false,
+    _closeFrameSent: false,
+    _closeMessage: <Buffer >,
+    _closeTimer: null,
+    _errorEmitted: true,
+    _extensions: {},
+    _paused: false,
+    _protocol: '',
+    _readyState: 3,
+    _receiver: null,
+    _sender: null,
+    _socket: null,
+    _bufferedAmount: 0,
+    _isServer: false,
+    _redirects: 0,
+    _autoPong: true,
+    _url: 'wss://127.0.0.1/v2',
+    _req: null,
+    [Symbol(shapeMode)]: false,
+    [Symbol(kCapture)]: false
+  },
+  [Symbol(kType)]: 'error',
+  [Symbol(kError)]: Error [ERR_TLS_CERT_ALTNAME_INVALID]: Hostname/IP does not match certificate's altnames: IP: 127.0.0.1 is not in the cert's list:
+      at Object.checkServerIdentity (node:tls:316:12)
+      at TLSSocket.onConnectSecure (node:_tls_wrap:1687:27)
+      at TLSSocket.emit (node:events:524:28)
+      at TLSSocket._finishInit (node:_tls_wrap:1076:8)
+      at ssl.onhandshakedone (node:_tls_wrap:862:12) {
+    code: 'ERR_TLS_CERT_ALTNAME_INVALID',
+    reason: "IP: 127.0.0.1 is not in the cert's list: ",
+    host: '127.0.0.1',
+    cert: {
+      subject: [Object: null prototype],
+      issuer: [Object: null prototype],
+      subjectaltname: 'DNS:fermenta.to',
+      infoAccess: [Object: null prototype],
+      ca: false,
+      modulus: 'AFB76C07BF1130F1425F87D47CD2DC25DCE94D995C7E8BE2E4D51CF756CDCB043D7A5333349F13289EDC16DFC06FF2192389711AD38ED71DFFBE1FE93749D294F19127AF80C38F2D42A7DF4BD0BFCFFF5E69734ECA5AA927FC93D23D93E947785AD2FE195BCB88F7EEAEF462D854F2D907400BADF84F1AF8865D42902538CCA34A113A240B2C15D75B6C0EBE2E00723BEE8FA4745B6B7EE83B338D966A0A6735C953EC6BE2BF658365A0696356FE3A5DF1BF84E26184623A4EFB46D07636F9B443A1C7352C7FD304E035E44CE0C5C9EFD75C9B2824DB69270FA1322F4DADBEA3126BC4A2E6A535B9AB7C7DFD06712F98A7BA7AC45B7ADB389E2FA054137E3A07',
+      bits: 2048,
+      exponent: '0x10001',
+      pubkey: <Buffer 30 82 01 22 30 0d 06 09 2a 86 48 86 f7 0d 01 01 01 05 00 03 82 01 0f 00 30 82 01 0a 02 82 01 01 00 af b7 6c 07 bf 11 30 f1 42 5f 87 d4 7c d2 dc 25 dc ... 244 more bytes>,
+      valid_from: 'Dec 24 10:00:38 2025 GMT',
+      valid_to: 'Mar 24 10:00:37 2026 GMT',
+      fingerprint: 'E1:62:52:AE:02:B7:88:D1:43:48:5E:52:24:6C:6D:0E:2F:2A:E1:07',
+      fingerprint256: 'DD:FD:5D:91:0D:CE:0B:C2:6C:EF:FC:73:9B:08:F1:41:35:A8:23:47:60:D3:BF:D1:B3:87:1B:DA:88:7E:27:55',
+      fingerprint512: '91:A7:35:DA:35:9E:2F:14:E6:A3:23:CA:48:E6:77:BC:BF:12:72:0A:DA:5B:01:B1:7D:A5:39:BB:3C:54:3D:61:93:E9:A1:6D:7C:19:1D:F9:49:60:02:C8:11:5D:7E:59:9C:17:38:58:0B:EA:DF:9F:1B:D4:0D:27:6A:21:D4:DA',
+      ext_key_usage: [Array],
+      serialNumber: '06A6EF6B4BA1F3339D265E58039E32389658',
+      raw: <Buffer 30 82 04 fa 30 82 03 e2 a0 03 02 01 02 02 12 06 a6 ef 6b 4b a1 f3 33 9d 26 5e 58 03 9e 32 38 96 58 30 0d 06 09 2a 86 48 86 f7 0d 01 01 0b 05 00 30 33 ... 1228 more bytes>,
+      issuerCertificate: [Object]
+    }
+  },
+  [Symbol(kMessage)]: "Hostname/IP does not match certificate's altnames: IP: 127.0.0.1 is not in the cert's list: "
+}
+root@luppolino:/www/nodeapps/fermenta#

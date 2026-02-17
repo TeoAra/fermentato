@@ -1,10 +1,6 @@
-import { Pool } from '@neondatabase/serverless';
-import ws from 'ws';
-import { neonConfig } from '@neondatabase/serverless';
+import pg from 'pg';
 import * as fs from 'fs';
 import * as path from 'path';
-
-neonConfig.webSocketConstructor = ws;
 
 const TABLE_PRIMARY_KEYS: Record<string, string> = {
   allergens: 'id',
@@ -52,16 +48,6 @@ const IMPORT_ORDER = [
   'user_beer_tastings',
 ];
 
-function formatParamValue(val: any, paramIndex: number): { placeholder: string; value: any } {
-  if (val === null || val === undefined) {
-    return { placeholder: `$${paramIndex}`, value: null };
-  }
-  if (Array.isArray(val)) {
-    return { placeholder: `$${paramIndex}`, value: val };
-  }
-  return { placeholder: `$${paramIndex}`, value: val };
-}
-
 async function importData() {
   const exportFile = process.argv[2];
   if (!exportFile) {
@@ -88,7 +74,7 @@ async function importData() {
     throw new Error('DATABASE_URL environment variable is required');
   }
 
-  const pool = new Pool({ connectionString: databaseUrl });
+  const pool = new pg.Pool({ connectionString: databaseUrl });
 
   const data: Record<string, any[]> = JSON.parse(fs.readFileSync(exportFile, 'utf-8'));
 
@@ -115,17 +101,8 @@ async function importData() {
       for (const row of rows) {
         const cols = Object.keys(row);
         const colNames = cols.map(c => `"${c}"`).join(', ');
-
-        const values: any[] = [];
-        const placeholders: string[] = [];
-        let paramIdx = 1;
-
-        for (const col of cols) {
-          const { placeholder, value } = formatParamValue(row[col], paramIdx);
-          placeholders.push(placeholder);
-          values.push(value);
-          paramIdx++;
-        }
+        const placeholders = cols.map((_, i) => `$${i + 1}`).join(', ');
+        const values = cols.map(c => row[c]);
 
         const updateCols = cols.filter(c => c !== primaryKey);
         const updateSet = updateCols.length > 0
@@ -133,8 +110,8 @@ async function importData() {
           : null;
 
         const query = updateSet
-          ? `INSERT INTO "${tableName}" (${colNames}) VALUES (${placeholders.join(', ')}) ON CONFLICT ("${primaryKey}") DO UPDATE SET ${updateSet}`
-          : `INSERT INTO "${tableName}" (${colNames}) VALUES (${placeholders.join(', ')}) ON CONFLICT ("${primaryKey}") DO NOTHING`;
+          ? `INSERT INTO "${tableName}" (${colNames}) VALUES (${placeholders}) ON CONFLICT ("${primaryKey}") DO UPDATE SET ${updateSet}`
+          : `INSERT INTO "${tableName}" (${colNames}) VALUES (${placeholders}) ON CONFLICT ("${primaryKey}") DO NOTHING`;
 
         await client.query(query, values);
         imported++;
