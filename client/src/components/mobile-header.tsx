@@ -30,11 +30,10 @@ export function MobileHeader({ onMenuToggle, isMenuOpen }: MobileHeaderProps) {
   const { isAuthenticated, user } = useAuth();
   const typedUser = user as UserType | undefined;
   const isAdmin = typedUser?.userType === 'admin';
-  const hasMultipleRoles = typedUser?.roles && typedUser.roles.length > 1;
 
   const { data: rolesData } = useQuery<{ roles: string[]; activeRole: string }>({
     queryKey: ["/api/auth/roles"],
-    enabled: isAuthenticated && (isAdmin || !!hasMultipleRoles),
+    enabled: isAuthenticated && isAdmin,
   });
 
   const switchRoleMutation = useMutation({
@@ -148,7 +147,7 @@ export function MobileHeader({ onMenuToggle, isMenuOpen }: MobileHeaderProps) {
                     </Link>
                   )}
 
-                  {(isAdmin || hasMultipleRoles) && rolesData && rolesData.roles.length > 1 && (
+                  {isAdmin && rolesData && rolesData.roles.length > 1 && (
                     <>
                       <div className="border-t border-gray-200 dark:border-gray-700 my-2"></div>
                       <div className="px-3 py-1 text-xs text-gray-500 font-normal">
