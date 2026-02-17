@@ -48,3 +48,8 @@ fi
 echo ""
 echo "=== Deployment complete! ==="
 echo "Note: Only schema changes were applied. Your existing data is safe."
+echo ""
+echo "To sync data between Replit and VPS, run from Replit:"
+echo "  npx tsx scripts/sync-data.ts pull   # VPS → Replit"
+echo "  npx tsx scripts/sync-data.ts push   # Replit → VPS"
+echo "  npx tsx scripts/sync-data.ts both   # Bidirezionale"

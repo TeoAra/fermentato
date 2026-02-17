@@ -80,3 +80,16 @@ Preferred communication style: Simple, everyday language.
 - `data-export/` folder is gitignored (data files stay local)
 - Migrations folder IS committed to git and deployed with code
 - The VPS deployment script handles everything: deps, build, migrations, restart
+
+### Data Synchronization (VPS ↔ Replit via SSH Tunnel)
+- **Script**: `scripts/sync-data.ts` — bidirectional sync via SSH tunnel (no exposed DB port)
+- **SSH Key**: `~/.ssh/id_replit_sync` (ed25519) — public key must be in VPS `~/.ssh/authorized_keys`
+- **VPS Details**: root@45.134.39.247, app at `/www/nodeapps/fermenta/`, DB: fermenta@localhost:5432
+- **Usage**:
+  - `npx tsx scripts/sync-data.ts pull` — VPS → Replit
+  - `npx tsx scripts/sync-data.ts push` — Replit → VPS
+  - `npx tsx scripts/sync-data.ts both` — Bidirectional (pull first, then push)
+- Sync uses upsert (ON CONFLICT DO UPDATE) so no data is lost
+- Handles circular FK deps: users→breweries by importing users without brewery_id first, then updating after breweries are imported
+- Batch inserts (100 rows/batch) for performance (~60s for 30K+ records)
+- JSON/JSONB columns auto-detected and properly cast

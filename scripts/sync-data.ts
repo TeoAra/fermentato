@@ -92,20 +92,41 @@ async function getTableData(pool: pg.Pool, tableName: string, label: string, nul
   }
 }
 
-async function upsertBatch(client: pg.PoolClient, tableName: string, batch: any[], onlyUpdateCols?: string[]): Promise<void> {
+async function getColumnTypes(client: pg.PoolClient, tableName: string): Promise<Record<string, string>> {
+  const result = await client.query(
+    `SELECT column_name, data_type FROM information_schema.columns WHERE table_name = $1`,
+    [tableName]
+  );
+  const types: Record<string, string> = {};
+  result.rows.forEach((r: any) => { types[r.column_name] = r.data_type; });
+  return types;
+}
+
+async function upsertBatch(client: pg.PoolClient, tableName: string, batch: any[], onlyUpdateCols?: string[], colTypes?: Record<string, string>): Promise<void> {
   if (batch.length === 0) return;
 
   const cols = Object.keys(batch[0]);
   const colNames = cols.map(c => `"${c}"`).join(', ');
+  const jsonCols = new Set(cols.filter(c => colTypes && (colTypes[c] === 'jsonb' || colTypes[c] === 'json')));
 
   let paramIdx = 1;
   const allValues: any[] = [];
   const rowPlaceholders: string[] = [];
 
   for (const row of batch) {
-    const placeholders = cols.map(() => `$${paramIdx++}`);
+    const placeholders = cols.map(c => {
+      const idx = paramIdx++;
+      return jsonCols.has(c) ? `$${idx}::jsonb` : `$${idx}`;
+    });
     rowPlaceholders.push(`(${placeholders.join(', ')})`);
-    cols.forEach(c => allValues.push(row[c]));
+    cols.forEach(c => {
+      const val = row[c];
+      if (jsonCols.has(c) && val !== null && typeof val === 'object') {
+        allValues.push(JSON.stringify(val));
+      } else {
+        allValues.push(val);
+      }
+    });
   }
 
   const updateCols = onlyUpdateCols || cols.filter(c => c !== 'id');
@@ -127,11 +148,12 @@ async function upsertRows(pool: pg.Pool, tableName: string, rows: any[], label: 
   let imported = 0;
 
   try {
+    const colTypes = await getColumnTypes(client, tableName);
     await client.query('BEGIN');
 
     for (let i = 0; i < rows.length; i += BATCH_SIZE) {
       const batch = rows.slice(i, i + BATCH_SIZE);
-      await upsertBatch(client, tableName, batch, onlyUpdateCols);
+      await upsertBatch(client, tableName, batch, onlyUpdateCols, colTypes);
       imported += batch.length;
 
       if (rows.length > BATCH_SIZE) {
