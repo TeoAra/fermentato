@@ -561,6 +561,7 @@ export default function BreweryDetail() {
                   }}
                   placeholder="Cerca via, luogo, attività..."
                   searchType="all"
+                  countryRestriction={null}
                 />
               </div>
             </div>

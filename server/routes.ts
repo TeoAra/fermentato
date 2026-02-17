@@ -6,7 +6,7 @@ import { registerAdminRoutes } from "./routes-admin";
 import { sql, eq } from "drizzle-orm";
 import { upload, uploadImage, cloudinary } from "./cloudinary";
 import { db } from "./db";
-import { breweries, beers, pubs, users, tapList, notifications, pushSubscriptions } from "@shared/schema";
+import { breweries, beers, pubs, users, tapList, notifications, pushSubscriptions, breweryRequests } from "@shared/schema";
 
 import { insertPubSchema, insertTapListSchema, insertBottleListSchema, insertMenuCategorySchema, insertMenuItemSchema, pubRegistrationSchema } from "@shared/schema";
 import { z } from "zod";
@@ -2318,6 +2318,35 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Brewery request status
+  app.get("/api/brewery/request-status", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = (req.user as any).id;
+      const [request] = await db
+        .select()
+        .from(breweryRequests)
+        .where(eq(breweryRequests.userId, userId))
+        .orderBy(sql`created_at DESC`)
+        .limit(1);
+
+      if (!request) {
+        return res.json({ hasRequest: false });
+      }
+
+      res.json({
+        hasRequest: true,
+        status: request.status,
+        breweryName: request.breweryName,
+        adminNotes: request.adminNotes,
+        createdAt: request.createdAt,
+        reviewedAt: request.reviewedAt,
+      });
+    } catch (error) {
+      console.error("Error fetching brewery request status:", error);
+      res.status(500).json({ message: "Failed to fetch request status" });
+    }
+  });
+
   // Brewery owner routes
   app.get("/api/brewery/my", isAuthenticated, async (req: any, res) => {
     try {
@@ -2406,6 +2435,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error updating brewery:", error);
       res.status(500).json({ message: "Failed to update brewery" });
+    }
+  });
+
+  // Brewery image upload
+  app.post("/api/brewery/upload-image", isAuthenticated, upload.single('image'), async (req: any, res) => {
+    try {
+      const userId = (req.user as any).id;
+      const user = await storage.getUser(userId);
+      if (!user?.breweryId) {
+        return res.status(403).json({ message: "Non sei associato a nessun birrificio" });
+      }
+      if (!req.file) {
+        return res.status(400).json({ message: "Nessuna immagine caricata" });
+      }
+      const imageType = req.body.type || 'logo';
+      const folder = imageType === 'cover' ? 'brewery-covers' : 'brewery-logos';
+      const result = await uploadImage(req.file.buffer, folder);
+      const updateData = imageType === 'cover'
+        ? { coverImageUrl: result.secure_url }
+        : { logoUrl: result.secure_url };
+      const updated = await storage.updateBrewery(user.breweryId, updateData);
+      res.json({ url: result.secure_url, brewery: updated });
+    } catch (error) {
+      console.error("Error uploading brewery image:", error);
+      res.status(500).json({ message: "Failed to upload image" });
     }
   });
 

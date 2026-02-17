@@ -9,6 +9,7 @@ interface AddressAutocompleteProps {
   placeholder?: string;
   className?: string;
   searchType?: 'address' | 'cities' | 'regions' | 'all';
+  countryRestriction?: string | null;
 }
 
 export default function AddressAutocomplete({ 
@@ -16,7 +17,8 @@ export default function AddressAutocomplete({
   onChange, 
   placeholder = "Inserisci l'indirizzo...",
   className,
-  searchType = 'address'
+  searchType = 'address',
+  countryRestriction = 'IT'
 }: AddressAutocompleteProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const autocompleteRef = useRef<google.maps.places.Autocomplete | null>(null);
@@ -41,7 +43,7 @@ export default function AddressAutocomplete({
 
         // Configure autocomplete - 'all' type allows searching everything
         const autocompleteOptions: google.maps.places.AutocompleteOptions = {
-          componentRestrictions: { country: 'IT' },
+          ...(countryRestriction ? { componentRestrictions: { country: countryRestriction } } : {}),
           fields: ['address_components', 'formatted_address', 'geometry', 'name']
         };
         
