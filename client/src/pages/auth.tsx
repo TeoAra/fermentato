@@ -439,36 +439,81 @@ export default function AuthPage() {
                     )}
                   />
 
-                  {/* Publican Toggle */}
-                  <div className="p-4 bg-amber-50 dark:bg-amber-900/20 rounded-lg border border-amber-200 dark:border-amber-800">
-                    <FormField
-                      control={registerForm.control}
-                      name="isPublican"
-                      render={({ field }) => (
-                        <FormItem className="flex flex-row items-center justify-between">
-                          <div className="flex items-center gap-3">
-                            <div className="p-2 bg-amber-100 dark:bg-amber-800/30 rounded-full">
-                              <Store className="w-5 h-5 text-amber-600" />
+                  {/* Role Selection Toggles */}
+                  <div className="space-y-3">
+                    <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Che tipo di account vuoi creare?</p>
+                    
+                    {/* Publican Toggle */}
+                    <div className="p-4 bg-amber-50 dark:bg-amber-900/20 rounded-lg border border-amber-200 dark:border-amber-800">
+                      <FormField
+                        control={registerForm.control}
+                        name="isPublican"
+                        render={({ field }) => (
+                          <FormItem className="flex flex-row items-center justify-between">
+                            <div className="flex items-center gap-3">
+                              <div className="p-2 bg-amber-100 dark:bg-amber-800/30 rounded-full">
+                                <Store className="w-5 h-5 text-amber-600" />
+                              </div>
+                              <div>
+                                <FormLabel className="font-medium text-amber-900 dark:text-amber-100">
+                                  Sono un gestore di pub
+                                </FormLabel>
+                                <FormDescription className="text-xs text-amber-700 dark:text-amber-300">
+                                  Registra il tuo locale su Fermenta.to
+                                </FormDescription>
+                              </div>
                             </div>
-                            <div>
-                              <FormLabel className="font-medium text-amber-900 dark:text-amber-100">
-                                Sono un gestore di pub
-                              </FormLabel>
-                              <FormDescription className="text-xs text-amber-700 dark:text-amber-300">
-                                Registra il tuo locale su Fermenta.to
-                              </FormDescription>
+                            <FormControl>
+                              <Switch
+                                checked={field.value}
+                                onCheckedChange={field.onChange}
+                                data-testid="switch-is-publican"
+                              />
+                            </FormControl>
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+
+                    {/* Brewery Toggle */}
+                    <div className="p-4 bg-orange-50 dark:bg-orange-900/20 rounded-lg border border-orange-200 dark:border-orange-800">
+                      <FormField
+                        control={registerForm.control}
+                        name="isBrewery"
+                        render={({ field }) => (
+                          <FormItem className="flex flex-row items-center justify-between">
+                            <div className="flex items-center gap-3">
+                              <div className="p-2 bg-orange-100 dark:bg-orange-800/30 rounded-full">
+                                <Factory className="w-5 h-5 text-orange-600" />
+                              </div>
+                              <div>
+                                <FormLabel className="font-medium text-orange-900 dark:text-orange-100">
+                                  Sono un birrificio
+                                </FormLabel>
+                                <FormDescription className="text-xs text-orange-700 dark:text-orange-300">
+                                  Gestisci il tuo birrificio e le tue birre
+                                </FormDescription>
+                              </div>
                             </div>
-                          </div>
-                          <FormControl>
-                            <Switch
-                              checked={field.value}
-                              onCheckedChange={field.onChange}
-                              data-testid="switch-is-publican"
-                            />
-                          </FormControl>
-                        </FormItem>
-                      )}
-                    />
+                            <FormControl>
+                              <Switch
+                                checked={field.value}
+                                onCheckedChange={(checked) => {
+                                  field.onChange(checked);
+                                  if (!checked) {
+                                    setSelectedBrewery(null);
+                                    setCreatingNewBrewery(false);
+                                    setBrewerySearch("");
+                                    registerForm.setValue("breweryId", undefined);
+                                    registerForm.setValue("breweryName", "");
+                                  }
+                                }}
+                              />
+                            </FormControl>
+                          </FormItem>
+                        )}
+                      />
+                    </div>
                   </div>
 
                   {/* Pub Details - shown when isPublican is true */}
@@ -589,46 +634,6 @@ export default function AuthPage() {
                       </p>
                     </div>
                   )}
-
-                  {/* Brewery Toggle */}
-                  <div className="p-4 bg-orange-50 dark:bg-orange-900/20 rounded-lg border border-orange-200 dark:border-orange-800">
-                    <FormField
-                      control={registerForm.control}
-                      name="isBrewery"
-                      render={({ field }) => (
-                        <FormItem className="flex flex-row items-center justify-between">
-                          <div className="flex items-center gap-3">
-                            <div className="p-2 bg-orange-100 dark:bg-orange-800/30 rounded-full">
-                              <Factory className="w-5 h-5 text-orange-600" />
-                            </div>
-                            <div>
-                              <FormLabel className="font-medium text-orange-900 dark:text-orange-100">
-                                Sono un birrificio
-                              </FormLabel>
-                              <FormDescription className="text-xs text-orange-700 dark:text-orange-300">
-                                Gestisci il tuo birrificio e le tue birre
-                              </FormDescription>
-                            </div>
-                          </div>
-                          <FormControl>
-                            <Switch
-                              checked={field.value}
-                              onCheckedChange={(checked) => {
-                                field.onChange(checked);
-                                if (!checked) {
-                                  setSelectedBrewery(null);
-                                  setCreatingNewBrewery(false);
-                                  setBrewerySearch("");
-                                  registerForm.setValue("breweryId", undefined);
-                                  registerForm.setValue("breweryName", "");
-                                }
-                              }}
-                            />
-                          </FormControl>
-                        </FormItem>
-                      )}
-                    />
-                  </div>
 
                   {/* Brewery Details */}
                   {isBrewery && (
