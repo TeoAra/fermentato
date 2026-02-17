@@ -7,10 +7,11 @@ import { nanoid } from "nanoid";
 import type { Express, RequestHandler } from "express";
 import connectPg from "connect-pg-simple";
 import { db } from "./db";
-import { users, oauthAccounts, publicanRequests, breweries } from "@shared/schema";
+import { users, oauthAccounts, publicanRequests, breweries, breweryRequests } from "@shared/schema";
 import { eq, and } from "drizzle-orm";
 import type { User } from "@shared/schema";
 import { storage } from "./storage";
+import { sendPushToAdmins } from "./push-utils";
 
 const SALT_ROUNDS = 12;
 
@@ -239,29 +240,8 @@ export async function setupAuth(app: Express) {
       const hashedPwd = await hashPassword(password);
       const userId = nanoid();
 
-      // Determine roles
+      // Determine roles - brewery_owner is NOT assigned at registration, only after approval
       const userRoles: string[] = ['customer'];
-      if (isBrewery) userRoles.push('brewery_owner');
-      
-      // Handle brewery creation/association
-      let assignedBreweryId: number | null = null;
-      if (isBrewery) {
-        if (existingBreweryId) {
-          assignedBreweryId = parseInt(existingBreweryId);
-        } else if (breweryName) {
-          const [newBrewery] = await db.insert(breweries).values({
-            name: breweryName.trim(),
-            location: (breweryLocation || '').trim() || 'Italia',
-            region: (breweryRegion || '').trim() || 'N/A',
-            country: (breweryCountry || '').trim() || 'Italia',
-            description: breweryDescription ? breweryDescription.trim() : null,
-            websiteUrl: breweryWebsite ? breweryWebsite.trim() : null,
-            vatNumber: breweryVatNumber ? breweryVatNumber.trim() : null,
-            phone: breweryPhone ? breweryPhone.trim() : null,
-          }).returning();
-          assignedBreweryId = newBrewery.id;
-        }
-      }
       
       const [newUser] = await db.insert(users).values({
         id: userId,
@@ -269,10 +249,10 @@ export async function setupAuth(app: Express) {
         hashedPassword: hashedPwd,
         firstName: firstName || null,
         lastName: lastName || null,
-        userType: isBrewery ? 'brewery_owner' : 'customer',
+        userType: 'customer',
         roles: userRoles,
-        activeRole: isBrewery ? 'brewery_owner' : 'customer',
-        breweryId: assignedBreweryId,
+        activeRole: 'customer',
+        breweryId: null,
         isEmailVerified: false,
       }).returning();
       
@@ -314,8 +294,64 @@ export async function setupAuth(app: Express) {
               isRead: false,
             });
           }
+          await sendPushToAdmins({
+            title: 'Nuova richiesta pub',
+            body: `${normalizedEmail} ha richiesto di registrare "${trimmedPubName}" (${trimmedPubCity}).`,
+            url: '/admin',
+          });
         } catch (notifError) {
           console.error('Error sending admin notification:', notifError);
+        }
+      }
+
+      // If registering as brewery, create a pending brewery request
+      if (isBrewery) {
+        const trimmedBreweryName = typeof breweryName === 'string' ? breweryName.trim() : '';
+        const trimmedBreweryLocation = typeof breweryLocation === 'string' ? breweryLocation.trim() : '';
+        const trimmedBreweryRegion = typeof breweryRegion === 'string' ? breweryRegion.trim() : null;
+        const trimmedBreweryCountry = typeof breweryCountry === 'string' ? breweryCountry.trim() : null;
+        const trimmedBreweryVat = typeof breweryVatNumber === 'string' ? breweryVatNumber.trim() : null;
+        const trimmedBreweryPhone = typeof breweryPhone === 'string' ? breweryPhone.trim() : null;
+        const trimmedBreweryWebsite = typeof breweryWebsite === 'string' ? breweryWebsite.trim() : null;
+        const trimmedBreweryDesc = typeof breweryDescription === 'string' ? breweryDescription.trim() : null;
+
+        await db.insert(breweryRequests).values({
+          userId: userId,
+          breweryName: trimmedBreweryName || 'Birrificio',
+          breweryLocation: trimmedBreweryLocation || 'N/A',
+          breweryRegion: trimmedBreweryRegion || null,
+          breweryCountry: trimmedBreweryCountry || null,
+          vatNumber: trimmedBreweryVat || null,
+          phone: trimmedBreweryPhone || null,
+          email: normalizedEmail,
+          websiteUrl: trimmedBreweryWebsite || null,
+          description: trimmedBreweryDesc || null,
+          existingBreweryId: existingBreweryId ? parseInt(existingBreweryId) : null,
+          status: 'pending',
+        });
+
+        console.log(`New brewery request created for user ${userId} - Brewery: ${trimmedBreweryName || 'existing #' + existingBreweryId}`);
+
+        try {
+          const adminIds = await storage.getAdminUserIds();
+          for (const adminId of adminIds) {
+            await storage.createNotification({
+              userId: adminId,
+              type: 'new_brewery_request',
+              title: 'Nuova richiesta birrificio',
+              message: `${normalizedEmail} ha richiesto di registrare il birrificio "${trimmedBreweryName || 'esistente'}"${trimmedBreweryLocation ? ` (${trimmedBreweryLocation})` : ''}.`,
+              pubId: null,
+              beerId: null,
+              isRead: false,
+            });
+          }
+          await sendPushToAdmins({
+            title: 'Nuova richiesta birrificio',
+            body: `${normalizedEmail} ha richiesto di registrare il birrificio "${trimmedBreweryName || 'esistente'}".`,
+            url: '/admin',
+          });
+        } catch (notifError) {
+          console.error('Error sending admin brewery notification:', notifError);
         }
       }
       
@@ -329,9 +365,9 @@ export async function setupAuth(app: Express) {
         const { hashedPassword: _, ...userWithoutPassword } = newUser;
         res.json({ 
           user: userWithoutPassword, 
-          message: isPublican ? 'Richiesta publican inviata' : isBrewery ? 'Registrazione birrificio completata' : 'Registrazione completata',
+          message: isPublican ? 'Richiesta pub inviata, in attesa di approvazione' : isBrewery ? 'Richiesta birrificio inviata, in attesa di approvazione' : 'Registrazione completata',
           publicanRequest: isPublican ? true : false,
-          breweryRegistration: isBrewery ? true : false
+          breweryRequest: isBrewery ? true : false
         });
       });
     } catch (error) {

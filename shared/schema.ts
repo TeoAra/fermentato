@@ -289,6 +289,27 @@ export const publicanRequests = pgTable("publican_requests", {
   reviewedBy: varchar("reviewed_by").references(() => users.id),
 });
 
+// Brewery registration requests - pending approval
+export const breweryRequests = pgTable("brewery_requests", {
+  id: serial("id").primaryKey(),
+  userId: varchar("user_id").references(() => users.id, { onDelete: "cascade" }).notNull(),
+  breweryName: varchar("brewery_name").notNull(),
+  breweryLocation: varchar("brewery_location").notNull(),
+  breweryRegion: varchar("brewery_region"),
+  breweryCountry: varchar("brewery_country"),
+  vatNumber: varchar("vat_number"),
+  phone: varchar("phone"),
+  email: varchar("email"),
+  websiteUrl: varchar("website_url"),
+  description: text("description"),
+  existingBreweryId: integer("existing_brewery_id").references(() => breweries.id),
+  status: varchar("status").notNull().default("pending"),
+  adminNotes: text("admin_notes"),
+  createdAt: timestamp("created_at").defaultNow(),
+  reviewedAt: timestamp("reviewed_at"),
+  reviewedBy: varchar("reviewed_by").references(() => users.id),
+});
+
 // Relations
 export const breweriesRelations = relations(breweries, ({ many }) => ({
   beers: many(beers),
@@ -561,11 +582,22 @@ export const insertPublicanRequestSchema = createInsertSchema(publicanRequests).
   adminNotes: true,
 });
 
+export const insertBreweryRequestSchema = createInsertSchema(breweryRequests).omit({
+  id: true,
+  createdAt: true,
+  reviewedAt: true,
+  reviewedBy: true,
+  status: true,
+  adminNotes: true,
+});
+
 // Types
 export type PubSize = typeof pubSizes.$inferSelect;
 export type InsertPubSize = z.infer<typeof insertPubSizeSchema>;
 export type PublicanRequest = typeof publicanRequests.$inferSelect;
 export type InsertPublicanRequest = z.infer<typeof insertPublicanRequestSchema>;
+export type BreweryRequest = typeof breweryRequests.$inferSelect;
+export type InsertBreweryRequest = z.infer<typeof insertBreweryRequestSchema>;
 
 // Notifications
 export const notifications = pgTable("notifications", {

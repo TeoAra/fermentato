@@ -11,37 +11,14 @@ import { breweries, beers, pubs, users, tapList, notifications, pushSubscription
 import { insertPubSchema, insertTapListSchema, insertBottleListSchema, insertMenuCategorySchema, insertMenuItemSchema, pubRegistrationSchema } from "@shared/schema";
 import { z } from "zod";
 import webpush from "web-push";
+import { initVapid, sendPushToUser, sendPushToAdmins } from "./push-utils";
 
 const VAPID_PUBLIC_KEY = process.env.VAPID_PUBLIC_KEY || '';
-const VAPID_PRIVATE_KEY = process.env.VAPID_PRIVATE_KEY || '';
-const VAPID_SUBJECT = process.env.VAPID_SUBJECT || 'mailto:info@fermenta.to';
 
-if (VAPID_PUBLIC_KEY && VAPID_PRIVATE_KEY) {
-  webpush.setVapidDetails(VAPID_SUBJECT, VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY);
+if (initVapid()) {
   console.log('Web Push configured with VAPID keys');
 } else {
   console.warn('VAPID keys not set - push notifications disabled');
-}
-
-async function sendPushToUser(userId: string, payload: { title: string; body: string; url?: string }) {
-  if (!VAPID_PUBLIC_KEY || !VAPID_PRIVATE_KEY) return;
-  try {
-    const subs = await storage.getPushSubscriptionsByUser(userId);
-    for (const sub of subs) {
-      try {
-        await webpush.sendNotification(
-          { endpoint: sub.endpoint, keys: { p256dh: sub.p256dh, auth: sub.auth } },
-          JSON.stringify(payload)
-        );
-      } catch (err: any) {
-        if (err.statusCode === 410 || err.statusCode === 404) {
-          await storage.deletePushSubscription(sub.endpoint);
-        }
-      }
-    }
-  } catch (e) {
-    console.error('Error sending push to user:', e);
-  }
 }
 
 export async function registerRoutes(app: Express): Promise<Server> {

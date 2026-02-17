@@ -32,6 +32,11 @@ export default function AdminDashboardNew() {
     enabled: isAuthenticated && (user as any)?.userType === 'admin',
   });
 
+  const { data: breweryPendingCount } = useQuery<{ count: number }>({
+    queryKey: ["/api/admin/brewery-requests/pending-count"],
+    enabled: isAuthenticated && (user as any)?.userType === 'admin',
+  });
+
   const [notifications] = useState([
     {
       id: 1,
@@ -200,15 +205,20 @@ export default function AdminDashboardNew() {
                 <div>
                   <div className="flex items-center gap-3 mb-2">
                     <FileText className="w-8 h-8 text-amber-500" />
-                    <h3 className="text-lg font-semibold">Richieste Publican</h3>
+                    <h3 className="text-lg font-semibold">Richieste Registrazione</h3>
                     {pendingCount && pendingCount.count > 0 && (
                       <Badge className="bg-red-500 text-white animate-pulse">
-                        {pendingCount.count}
+                        {pendingCount.count} pub
+                      </Badge>
+                    )}
+                    {breweryPendingCount && breweryPendingCount.count > 0 && (
+                      <Badge className="bg-orange-500 text-white animate-pulse">
+                        {breweryPendingCount.count} birrifici
                       </Badge>
                     )}
                   </div>
                   <p className="text-sm text-gray-600 dark:text-gray-400">
-                    Nuove registrazioni locali
+                    Nuove registrazioni locali e birrifici
                   </p>
                 </div>
                 <ChevronRight className="w-5 h-5 text-gray-400 group-hover:text-amber-500 transition-colors" />

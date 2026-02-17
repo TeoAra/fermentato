@@ -1,8 +1,10 @@
 import { eq, count, desc, asc, sql, or, ilike } from "drizzle-orm";
 import { db } from "./db";
-import { beers, breweries, users, pubs, publicanRequests } from "@shared/schema";
+import { beers, breweries, users, pubs, publicanRequests, breweryRequests } from "@shared/schema";
 import type { Express } from "express";
 import { isAuthenticated, isAdmin } from "./auth";
+import { sendPushToUser } from "./push-utils";
+import { storage } from "./storage";
 
 export function registerAdminRoutes(app: Express) {
   // User management endpoints
@@ -720,6 +722,201 @@ export function registerAdminRoutes(app: Express) {
       res.json({ message: "Richiesta rifiutata" });
     } catch (error) {
       console.error("Error rejecting publican request:", error);
+      res.status(500).json({ message: "Errore durante il rifiuto" });
+    }
+  });
+
+  // ===== BREWERY REQUESTS =====
+
+  app.get("/api/admin/brewery-requests", isAuthenticated, isAdmin, async (req, res) => {
+    try {
+      const requests = await db
+        .select({
+          id: breweryRequests.id,
+          userId: breweryRequests.userId,
+          breweryName: breweryRequests.breweryName,
+          breweryLocation: breweryRequests.breweryLocation,
+          breweryRegion: breweryRequests.breweryRegion,
+          breweryCountry: breweryRequests.breweryCountry,
+          vatNumber: breweryRequests.vatNumber,
+          phone: breweryRequests.phone,
+          email: breweryRequests.email,
+          websiteUrl: breweryRequests.websiteUrl,
+          description: breweryRequests.description,
+          existingBreweryId: breweryRequests.existingBreweryId,
+          status: breweryRequests.status,
+          adminNotes: breweryRequests.adminNotes,
+          createdAt: breweryRequests.createdAt,
+          reviewedAt: breweryRequests.reviewedAt,
+          reviewedBy: breweryRequests.reviewedBy,
+          userFirstName: users.firstName,
+          userLastName: users.lastName,
+          userEmail: users.email,
+        })
+        .from(breweryRequests)
+        .leftJoin(users, eq(breweryRequests.userId, users.id))
+        .orderBy(desc(breweryRequests.createdAt));
+
+      res.json(requests);
+    } catch (error) {
+      console.error("Error fetching brewery requests:", error);
+      res.status(500).json({ message: "Errore nel recupero delle richieste birrificio" });
+    }
+  });
+
+  app.get("/api/admin/brewery-requests/pending-count", isAuthenticated, isAdmin, async (req, res) => {
+    try {
+      const result = await db
+        .select({ count: count() })
+        .from(breweryRequests)
+        .where(eq(breweryRequests.status, 'pending'));
+
+      res.json({ count: result[0]?.count || 0 });
+    } catch (error) {
+      console.error("Error fetching brewery pending count:", error);
+      res.status(500).json({ message: "Errore" });
+    }
+  });
+
+  app.post("/api/admin/brewery-requests/:id/approve", isAuthenticated, isAdmin, async (req, res) => {
+    try {
+      const requestId = parseInt(req.params.id);
+      const adminId = (req.user as any)?.id;
+      const { adminNotes } = req.body;
+
+      const [request] = await db
+        .select()
+        .from(breweryRequests)
+        .where(eq(breweryRequests.id, requestId));
+
+      if (!request) {
+        return res.status(404).json({ message: "Richiesta non trovata" });
+      }
+
+      if (request.status !== 'pending') {
+        return res.status(400).json({ message: "Richiesta già processata" });
+      }
+
+      let assignedBreweryId: number;
+
+      if (request.existingBreweryId) {
+        assignedBreweryId = request.existingBreweryId;
+      } else {
+        const [newBrewery] = await db.insert(breweries).values({
+          name: request.breweryName,
+          location: request.breweryLocation,
+          region: request.breweryRegion || 'N/A',
+          country: request.breweryCountry || 'Italia',
+          description: request.description || null,
+          websiteUrl: request.websiteUrl || null,
+          vatNumber: request.vatNumber || null,
+          phone: request.phone || null,
+        }).returning();
+        assignedBreweryId = newBrewery.id;
+      }
+
+      const [user] = await db.select().from(users).where(eq(users.id, request.userId));
+      if (user) {
+        const currentRoles = user.roles || ['customer'];
+        if (!currentRoles.includes('brewery_owner')) {
+          await db.update(users)
+            .set({
+              roles: [...currentRoles, 'brewery_owner'],
+              userType: 'brewery_owner',
+              breweryId: assignedBreweryId,
+            })
+            .where(eq(users.id, request.userId));
+        }
+      }
+
+      await db.update(breweryRequests)
+        .set({
+          status: 'approved',
+          adminNotes: adminNotes || null,
+          reviewedAt: new Date(),
+          reviewedBy: adminId,
+        })
+        .where(eq(breweryRequests.id, requestId));
+
+      try {
+        await storage.createNotification({
+          userId: request.userId,
+          type: 'brewery_request_approved',
+          title: 'Richiesta birrificio approvata',
+          message: `La tua richiesta per il birrificio "${request.breweryName}" è stata approvata!`,
+          pubId: null,
+          beerId: null,
+          isRead: false,
+        });
+        await sendPushToUser(request.userId, {
+          title: 'Richiesta birrificio approvata!',
+          body: `Il tuo birrificio "${request.breweryName}" è stato approvato. Puoi iniziare a gestirlo!`,
+          url: '/brewery-dashboard',
+        });
+      } catch (notifErr) {
+        console.error('Error sending approval notification:', notifErr);
+      }
+
+      res.json({
+        message: "Richiesta birrificio approvata con successo",
+        breweryId: assignedBreweryId,
+        userId: request.userId,
+      });
+    } catch (error) {
+      console.error("Error approving brewery request:", error);
+      res.status(500).json({ message: "Errore durante l'approvazione" });
+    }
+  });
+
+  app.post("/api/admin/brewery-requests/:id/reject", isAuthenticated, isAdmin, async (req, res) => {
+    try {
+      const requestId = parseInt(req.params.id);
+      const adminId = (req.user as any)?.id;
+      const { adminNotes } = req.body;
+
+      const [request] = await db
+        .select()
+        .from(breweryRequests)
+        .where(eq(breweryRequests.id, requestId));
+
+      if (!request) {
+        return res.status(404).json({ message: "Richiesta non trovata" });
+      }
+
+      if (request.status !== 'pending') {
+        return res.status(400).json({ message: "Richiesta già processata" });
+      }
+
+      await db.update(breweryRequests)
+        .set({
+          status: 'rejected',
+          adminNotes: adminNotes || 'Richiesta rifiutata',
+          reviewedAt: new Date(),
+          reviewedBy: adminId,
+        })
+        .where(eq(breweryRequests.id, requestId));
+
+      try {
+        await storage.createNotification({
+          userId: request.userId,
+          type: 'brewery_request_rejected',
+          title: 'Richiesta birrificio rifiutata',
+          message: `La tua richiesta per il birrificio "${request.breweryName}" è stata rifiutata.${adminNotes ? ' Motivo: ' + adminNotes : ''}`,
+          pubId: null,
+          beerId: null,
+          isRead: false,
+        });
+        await sendPushToUser(request.userId, {
+          title: 'Richiesta birrificio rifiutata',
+          body: `La tua richiesta per "${request.breweryName}" è stata rifiutata.`,
+        });
+      } catch (notifErr) {
+        console.error('Error sending rejection notification:', notifErr);
+      }
+
+      res.json({ message: "Richiesta rifiutata" });
+    } catch (error) {
+      console.error("Error rejecting brewery request:", error);
       res.status(500).json({ message: "Errore durante il rifiuto" });
     }
   });
