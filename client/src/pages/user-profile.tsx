@@ -38,7 +38,6 @@ import type { User as UserType } from "@shared/schema";
 import UserFavoritesSection from "@/components/UserFavoritesSection";
 import BeerTastingsEditor from "@/components/BeerTastingsEditorNew";
 import { PubAutocomplete } from "@/components/PubAutocomplete";
-import { StyleMultiSelect } from "@/components/StyleMultiSelect";
 import { RoleSwitcher } from "@/components/role-switcher";
 
 export default function UserProfile() {
@@ -48,18 +47,10 @@ export default function UserProfile() {
   const queryClient = useQueryClient();
   
   // State management
-  const [isEditing, setIsEditing] = useState(false);
   const [showAccountSettings, setShowAccountSettings] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [isEditingNickname, setIsEditingNickname] = useState(false);
   const [newNickname, setNewNickname] = useState(typedUser?.nickname || "");
-  
-  const [editedProfile, setEditedProfile] = useState({
-    nickname: typedUser?.nickname || "",
-    bio: typedUser?.bio || "",
-    favoriteStyles: typedUser?.favoriteStyles || [],
-    profileImageUrl: typedUser?.profileImageUrl || "",
-  });
   
   const [accountSettings, setAccountSettings] = useState({
     firstName: typedUser?.firstName || "",
@@ -95,10 +86,6 @@ export default function UserProfile() {
     enabled: isAuthenticated,
   });
 
-  const { data: beerStyles = [] } = useQuery<any[]>({
-    queryKey: ["/api/beers/styles"],
-    enabled: isAuthenticated,
-  });
 
   // Process enriched favorites with item names  
   const enrichedFavorites = Array.isArray(favorites) ? favorites.map((fav: any) => ({
@@ -130,7 +117,6 @@ export default function UserProfile() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
-      setIsEditing(false);
       toast({
         title: "Profilo aggiornato",
         description: "Le modifiche sono state salvate con successo",
@@ -191,10 +177,6 @@ export default function UserProfile() {
   });
 
   // Event handlers
-  const handleSaveProfile = () => {
-    updateProfileMutation.mutate(editedProfile);
-  };
-
   const handleNicknameSave = () => {
     if (!canUpdateNickname()) {
       toast({
@@ -234,9 +216,10 @@ export default function UserProfile() {
           <CardContent className="pt-6">
             <div className="flex flex-col md:flex-row items-center gap-6">
               {/* Profile Image Upload */}
-              <div className="w-32">
+              <div className="w-28 md:w-36 flex-shrink-0">
                 <ImageUpload
                   label=""
+                  description=""
                   currentImageUrl={typedUser.profileImageUrl || undefined}
                   onImageChange={async (url) => {
                     if (url) {
@@ -249,6 +232,7 @@ export default function UserProfile() {
                   aspectRatio="square"
                   maxSize={5}
                   showFileInfo={false}
+                  recommendedDimensions="200x200"
                 />
               </div>
 
@@ -294,122 +278,10 @@ export default function UserProfile() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Left Column - Public Profile */}
           <div className="lg:col-span-2 space-y-6">
-            {/* Favorite Styles */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center justify-between">
-                  <span>Stili Preferiti</span>
-                  {!isEditing && (
-                    <Button size="sm" variant="outline" onClick={() => setIsEditing(true)}>
-                      <Edit3 className="w-4 h-4" />
-                    </Button>
-                  )}
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                {isEditing ? (
-                  <div className="space-y-4">
-                    <div className="max-h-48 overflow-y-auto border rounded-lg p-3 bg-gray-50 dark:bg-gray-800">
-                      <div className="grid grid-cols-2 gap-2">
-                        {beerStyles.map((styleObj: any) => {
-                          const isSelected = editedProfile.favoriteStyles.includes(styleObj.style);
-                          return (
-                            <button
-                              key={styleObj.style}
-                              type="button"
-                              onClick={() => {
-                                const currentStyles = editedProfile.favoriteStyles;
-                                if (isSelected) {
-                                  setEditedProfile({
-                                    ...editedProfile,
-                                    favoriteStyles: currentStyles.filter(s => s !== styleObj.style)
-                                  });
-                                } else if (currentStyles.length < 5) {
-                                  setEditedProfile({
-                                    ...editedProfile,
-                                    favoriteStyles: [...currentStyles, styleObj.style]
-                                  });
-                                }
-                              }}
-                              className={`p-2 rounded-lg text-xs font-medium transition-all border-2 ${
-                                isSelected
-                                  ? 'border-amber-400 shadow-md transform scale-105'
-                                  : 'border-gray-200 dark:border-gray-600 hover:border-gray-300'
-                              }`}
-                              style={{
-                                backgroundColor: isSelected ? styleObj.color : 'transparent',
-                                color: isSelected ? '#fff' : 'inherit',
-                                textShadow: isSelected ? '0 1px 2px rgba(0,0,0,0.5)' : 'none'
-                              }}
-                              disabled={!isSelected && editedProfile.favoriteStyles.length >= 5}
-                            >
-                              {styleObj.style}
-                            </button>
-                          );
-                        })}
-                      </div>
-                      <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
-                        Selezionati: {editedProfile.favoriteStyles.length}/5
-                      </p>
-                    </div>
-                    
-                    <div className="flex gap-2">
-                      <Button onClick={handleSaveProfile} disabled={updateProfileMutation.isPending}>
-                        <Save className="w-4 h-4 mr-2" />
-                        {updateProfileMutation.isPending ? "Salvando..." : "Salva"}
-                      </Button>
-                      <Button
-                        variant="outline"
-                        onClick={() => {
-                          setIsEditing(false);
-                          setEditedProfile({
-                            nickname: typedUser?.nickname || "",
-                            bio: typedUser?.bio || "",
-                            favoriteStyles: typedUser?.favoriteStyles || [],
-                            profileImageUrl: typedUser?.profileImageUrl || "",
-                          });
-                        }}
-                      >
-                        <X className="w-4 h-4 mr-2" />
-                        Annulla
-                      </Button>
-                    </div>
-                  </div>
-                ) : (
-                  <div>
-                    {typedUser.favoriteStyles && typedUser.favoriteStyles.length > 0 ? (
-                      <div className="flex flex-wrap gap-2">
-                        {typedUser.favoriteStyles.map((style: string) => {
-                          const styleObj = beerStyles.find((s: any) => s.style === style);
-                          return (
-                            <span
-                              key={style}
-                              className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium text-white shadow-sm"
-                              style={{
-                                backgroundColor: styleObj?.color || '#D68910',
-                                textShadow: '0 1px 2px rgba(0,0,0,0.5)'
-                              }}
-                            >
-                              <Beer className="w-3 h-3 mr-1" />
-                              {style}
-                            </span>
-                          );
-                        })}
-                      </div>
-                    ) : (
-                      <p className="text-gray-500 dark:text-gray-400 text-sm">
-                        Nessuno stile selezionato
-                      </p>
-                    )}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-
             {/* Beer Tastings with Editor */}
             <BeerTastingsEditor beerTastings={beerTastings} />
 
-            {/* Favorites Summary */}
+            {/* Favorites Section - with links and remove buttons */}
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
@@ -418,33 +290,7 @@ export default function UserProfile() {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                {enrichedFavorites && enrichedFavorites.length > 0 ? (
-                  <div className="space-y-2">
-                    {enrichedFavorites.slice(0, 5).map((fav: any) => (
-                      <div key={fav.id} className="flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                          <Badge variant="outline" className="capitalize">
-                            {fav.itemType === 'brewery' ? 'Birrificio' : 
-                             fav.itemType === 'pub' ? 'Pub' : 'Birra'}
-                          </Badge>
-                          <span className="text-sm">{fav.itemName || `${fav.itemType} #${fav.itemId}`}</span>
-                        </div>
-                        <span className="text-xs text-gray-500">
-                          {new Date(fav.createdAt).toLocaleDateString('it-IT')}
-                        </span>
-                      </div>
-                    ))}
-                    {enrichedFavorites.length > 5 && (
-                      <p className="text-sm text-gray-500 text-center">
-                        e altri {enrichedFavorites.length - 5} preferiti...
-                      </p>
-                    )}
-                  </div>
-                ) : (
-                  <p className="text-gray-500 dark:text-gray-400 text-center py-4">
-                    Nessun preferito ancora
-                  </p>
-                )}
+                <UserFavoritesSection favorites={enrichedFavorites || []} />
               </CardContent>
             </Card>
           </div>
@@ -571,9 +417,6 @@ export default function UserProfile() {
             </Card>
           </div>
         </div>
-
-        {/* User Favorites Section */}
-        <UserFavoritesSection favorites={enrichedFavorites} />
       </div>
     </div>
   );

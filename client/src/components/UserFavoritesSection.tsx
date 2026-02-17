@@ -1,7 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Heart, Beer, Store, Building, X } from "lucide-react";
+import { Heart, Beer, Store, Building, HeartOff } from "lucide-react";
 import { Link } from "wouter";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
@@ -16,20 +16,20 @@ export default function UserFavoritesSection({ favorites }: UserFavoritesSection
   const queryClient = useQueryClient();
 
   const removeFavoriteMutation = useMutation({
-    mutationFn: async (favoriteId: number) => {
-      return apiRequest(`/api/favorites/${favoriteId}`, 'DELETE');
+    mutationFn: async ({ itemType, itemId }: { itemType: string; itemId: number }) => {
+      return apiRequest(`/api/favorites/${itemType}/${itemId}`, { method: 'DELETE' });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/favorites"] });
       toast({
-        title: "Rimosso dai Favoriti",
-        description: "L'elemento è stato rimosso dai tuoi favoriti",
+        title: "Rimosso dai preferiti",
+        description: "L'elemento è stato rimosso dai tuoi preferiti",
       });
     },
     onError: () => {
       toast({
         title: "Errore",
-        description: "Impossibile rimuovere dai favoriti",
+        description: "Impossibile rimuovere dai preferiti",
         variant: "destructive",
       });
     },
@@ -50,10 +50,10 @@ export default function UserFavoritesSection({ favorites }: UserFavoritesSection
 
   const getCategoryColor = (type: string) => {
     switch (type) {
-      case 'beer': return 'text-amber-600 bg-amber-50 border-amber-200';
-      case 'brewery': return 'text-green-600 bg-green-50 border-green-200';
-      case 'pub': return 'text-blue-600 bg-blue-50 border-blue-200';
-      default: return 'text-gray-600 bg-gray-50 border-gray-200';
+      case 'beer': return { border: 'border-l-green-500', icon: 'text-green-600 bg-green-100 dark:bg-green-900/20', hover: 'hover:text-green-600' };
+      case 'brewery': return { border: 'border-l-amber-500', icon: 'text-amber-600 bg-amber-100 dark:bg-amber-900/20', hover: 'hover:text-amber-600' };
+      case 'pub': return { border: 'border-l-blue-500', icon: 'text-blue-600 bg-blue-100 dark:bg-blue-900/20', hover: 'hover:text-blue-600' };
+      default: return { border: 'border-l-gray-500', icon: 'text-gray-600 bg-gray-100 dark:bg-gray-900/20', hover: 'hover:text-gray-600' };
     }
   };
 
@@ -68,85 +68,82 @@ export default function UserFavoritesSection({ favorites }: UserFavoritesSection
 
   const getCategoryTitle = (type: string) => {
     switch (type) {
-      case 'beer': return 'Birre';
-      case 'brewery': return 'Birrifici';
-      case 'pub': return 'Pub';
+      case 'beer': return 'Birre Preferite';
+      case 'brewery': return 'Birrifici Preferiti';
+      case 'pub': return 'Pub Preferiti';
       default: return 'Altri';
     }
   };
 
   if (!favorites || favorites.length === 0) {
     return (
-      <Card>
-        <CardContent className="text-center py-8">
-          <Heart className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-          <p className="text-gray-500">Non hai ancora aggiunto nessun preferito</p>
-          <p className="text-sm text-gray-400 mt-1">
-            Inizia esplorando birre, birrifici e pub per creare la tua collezione
-          </p>
-        </CardContent>
-      </Card>
+      <div className="text-center py-12">
+        <div className="w-16 h-16 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center mx-auto mb-4">
+          <Heart className="h-8 w-8 text-gray-400" />
+        </div>
+        <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">Nessun preferito ancora</h3>
+        <p className="text-gray-500 dark:text-gray-400 mb-4">Inizia a esplorare pub, birrifici e birre per aggiungere i tuoi preferiti!</p>
+        <div className="flex gap-3 justify-center">
+          <Link href="/">
+            <Button variant="outline">Esplora</Button>
+          </Link>
+        </div>
+      </div>
     );
   }
 
-  const categories = ['beer', 'brewery', 'pub'];
+  const categories = ['pub', 'brewery', 'beer'];
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       {categories.map(category => {
         const items = getCategoryItems(category);
         if (items.length === 0) return null;
+        const colors = getCategoryColor(category);
 
         return (
-          <Card key={category} className={`border-2 ${getCategoryColor(category)}`}>
-            <CardHeader className="pb-3">
-              <CardTitle className="flex items-center gap-2 text-lg">
+          <div key={category}>
+            <div className="flex items-center gap-2 mb-4">
+              <div className={`p-2 rounded-lg ${colors.icon}`}>
                 {getCategoryIcon(category)}
-                {getCategoryTitle(category)}
-                <Badge variant="secondary" className="ml-auto">
-                  {items.length}
-                </Badge>
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                {items.map((favorite: any) => (
-                  <div
-                    key={favorite.id}
-                    className="flex items-center justify-between p-3 bg-white border border-gray-200 rounded-lg hover:shadow-sm transition-shadow"
-                  >
-                    <Link href={getRedirectUrl(favorite)} className="flex-1">
-                      <div className="flex items-center gap-3">
-                        <div className={`p-2 rounded-full ${getCategoryColor(category)}`}>
+              </div>
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white">{getCategoryTitle(category)}</h3>
+              <Badge variant="secondary" className="ml-auto">{items.length}</Badge>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {items.map((favorite: any) => (
+                <Card key={favorite.id} className={`hover:shadow-lg transition-all duration-200 border-l-4 ${colors.border}`}>
+                  <CardContent className="p-4">
+                    <div className="flex items-start gap-3">
+                      <Link href={getRedirectUrl(favorite)} className="flex items-start gap-3 flex-1 min-w-0 cursor-pointer">
+                        <div className={`w-12 h-12 rounded-lg flex items-center justify-center flex-shrink-0 ${colors.icon}`}>
                           {getCategoryIcon(category)}
                         </div>
-                        <div className="min-w-0 flex-1">
-                          <div className="font-medium text-sm truncate">
+                        <div className="flex-1 min-w-0">
+                          <h4 className={`font-semibold mb-1 truncate transition-colors ${colors.hover}`}>
                             {favorite.itemName || `${getCategoryTitle(category)} #${favorite.itemId}`}
-                          </div>
-                          <div className="text-xs text-gray-500">
+                          </h4>
+                          <p className="text-xs text-gray-500 dark:text-gray-400">
                             Aggiunto il {new Date(favorite.createdAt).toLocaleDateString('it-IT')}
-                          </div>
+                          </p>
                         </div>
-                      </div>
-                    </Link>
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      onClick={(e) => {
-                        e.preventDefault();
-                        removeFavoriteMutation.mutate(favorite.id);
-                      }}
-                      disabled={removeFavoriteMutation.isPending}
-                      className="text-red-500 hover:text-red-700 hover:bg-red-50 ml-2"
-                    >
-                      <X className="w-4 h-4" />
-                    </Button>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
+                      </Link>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="flex-shrink-0 text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20"
+                        onClick={() => removeFavoriteMutation.mutate({ itemType: favorite.itemType, itemId: favorite.itemId })}
+                        disabled={removeFavoriteMutation.isPending}
+                        title="Non seguire più"
+                      >
+                        <HeartOff className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </div>
         );
       })}
     </div>

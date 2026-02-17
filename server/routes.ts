@@ -1010,21 +1010,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Delete favorite by ID (used by UserFavoritesSection)
-  app.delete("/api/favorites/:id", isAuthenticated, async (req: any, res) => {
-    try {
-      const userId = (req.user as any).id;
-      const favoriteId = parseInt(req.params.id);
-      
-      await storage.removeFavoriteById(userId, favoriteId);
-      res.status(204).send();
-    } catch (error) {
-      console.error("Error removing favorite by ID:", error);
-      res.status(500).json({ message: "Failed to remove favorite" });
-    }
-  });
-
-  // Delete favorite by ID (used by UserFavoritesSection)
+  // Delete favorite by ID
   app.delete("/api/favorites/:id", isAuthenticated, async (req: any, res) => {
     try {
       const userId = (req.user as any).id;
