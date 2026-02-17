@@ -114,7 +114,7 @@ export default function SearchDialog({ isOpen, onClose }: SearchDialogProps) {
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
-      <DialogContent className="max-w-2xl max-h-[90vh] p-0 gap-0 overflow-hidden bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl border-white/20 dark:border-gray-800/50">
+      <DialogContent className="max-w-2xl max-h-[85vh] p-0 gap-0 flex flex-col bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl border-white/20 dark:border-gray-800/50">
         <DialogHeader className="p-6 pb-4">
           <DialogTitle className="sr-only">Ricerca avanzata</DialogTitle>
           
@@ -151,7 +151,7 @@ export default function SearchDialog({ isOpen, onClose }: SearchDialogProps) {
           </div>
         </DialogHeader>
 
-        <div className="flex-1 overflow-auto scrollbar-hide">
+        <div className="flex-1 overflow-y-auto min-h-0" style={{ WebkitOverflowScrolling: 'touch' }}>
           {debouncedSearch.length < 2 ? (
             <div className="p-6 space-y-6">
               {/* Recent Searches */}

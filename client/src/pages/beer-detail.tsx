@@ -92,14 +92,14 @@ interface BeerAvailability {
 
 // Stats Card Component
 const BeerStatsCard = ({ icon: Icon, value, label, gradient }: any) => (
-  <div className="glass-card rounded-xl p-4 hover:scale-105 transition-all duration-300 group">
-    <div className="flex items-center space-x-3">
-      <div className={`p-3 rounded-lg bg-gradient-to-br ${gradient} group-hover:scale-110 transition-transform duration-300`}>
-        <Icon className="h-5 w-5 text-white" />
+  <div className="glass-card rounded-xl p-3 sm:p-4 group flex-shrink-0">
+    <div className="flex items-center gap-2 sm:gap-3">
+      <div className={`p-2 sm:p-2.5 rounded-lg bg-gradient-to-br ${gradient} flex-shrink-0`}>
+        <Icon className="h-4 w-4 sm:h-5 sm:w-5 text-white" />
       </div>
-      <div>
-        <p className="text-2xl font-bold text-gray-900 dark:text-white">{value}</p>
-        <p className="text-sm text-gray-600 dark:text-gray-400 font-medium">{label}</p>
+      <div className="min-w-0">
+        <p className="text-sm sm:text-base font-bold text-gray-900 dark:text-white truncate">{value}</p>
+        <p className="text-xs text-gray-500 dark:text-gray-400">{label}</p>
       </div>
     </div>
   </div>
@@ -418,7 +418,7 @@ export default function BeerDetail() {
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Quick Stats */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+        <div className="flex gap-3 mb-8 overflow-x-auto pb-2 -mx-4 px-4 sm:mx-0 sm:px-0 sm:grid sm:grid-cols-4 sm:overflow-visible" style={{ WebkitOverflowScrolling: 'touch' }}>
           <BeerStatsCard 
             icon={Target}
             label="ABV"
