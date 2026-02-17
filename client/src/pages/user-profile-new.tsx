@@ -11,11 +11,6 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import {
-  Avatar,
-  AvatarFallback,
-  AvatarImage,
-} from "@/components/ui/avatar";
-import {
   Badge,
 } from "@/components/ui/badge";
 import {
@@ -31,18 +26,15 @@ import {
   User,
   Heart,
   Calendar,
-  Upload,
   Edit3,
   Save,
   X,
   Settings,
-  Beer,
 } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import type { User as UserType } from "@shared/schema";
 import UserFavoritesSection from "@/components/UserFavoritesSection";
 import BeerTastingsEditor from "@/components/BeerTastingsEditorNew";
-import { StyleMultiSelect } from "@/components/StyleMultiSelect";
 import { ImageUpload } from "@/components/image-upload";
 
 export default function UserProfile() {
@@ -51,7 +43,6 @@ export default function UserProfile() {
   const queryClient = useQueryClient();
   
   const [isEditing, setIsEditing] = useState(false);
-  const [profileImageFile, setProfileImageFile] = useState<File | null>(null);
   const [isEditingNickname, setIsEditingNickname] = useState(false);
   const [tempNickname, setTempNickname] = useState("");
   const [isEditingEmail, setIsEditingEmail] = useState(false);
@@ -87,7 +78,7 @@ export default function UserProfile() {
   }, [isAuthenticated, isLoading, toast]);
 
   // Beer Tastings Query
-  const { data: beerTastings = [] } = useQuery({
+  const { data: beerTastings = [] } = useQuery<any[]>({
     queryKey: ["/api/user/beer-tastings"],
     enabled: isAuthenticated,
   });
@@ -101,7 +92,7 @@ export default function UserProfile() {
   // Password change mutation
   const passwordChangeMutation = useMutation({
     mutationFn: async (data: { currentPassword: string; newPassword: string }) => {
-      return apiRequest("/api/user/password", "PATCH", data);
+      return apiRequest("/api/user/password", { method: "PATCH" }, data);
     },
     onSuccess: (response) => {
       toast({
@@ -141,7 +132,7 @@ export default function UserProfile() {
   // Update profile mutation
   const updateProfileMutation = useMutation({
     mutationFn: async (updates: Partial<UserType>) => {
-      return apiRequest("/api/user/profile", "PATCH", updates);
+      return apiRequest("/api/user/profile", { method: "PATCH" }, updates);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
@@ -172,7 +163,7 @@ export default function UserProfile() {
   // Nickname update mutation
   const nicknameUpdateMutation = useMutation({
     mutationFn: async (nickname: string) => {
-      return apiRequest("/api/user/nickname", "PATCH", { nickname });
+      return apiRequest("/api/user/nickname", { method: "PATCH" }, { nickname });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
@@ -209,16 +200,16 @@ export default function UserProfile() {
   };
 
   const canUpdateNickname = () => {
-    if (!typedUser?.nicknameLastUpdated) return true;
-    const lastUpdate = new Date(typedUser.nicknameLastUpdated);
+    if (!(typedUser as any)?.nicknameLastUpdated) return true;
+    const lastUpdate = new Date((typedUser as any).nicknameLastUpdated);
     const now = new Date();
     const diffInDays = Math.ceil((now.getTime() - lastUpdate.getTime()) / (1000 * 3600 * 24));
     return diffInDays >= 15;
   };
 
   const getDaysUntilNicknameUpdate = () => {
-    if (!typedUser?.nicknameLastUpdated) return 0;
-    const lastUpdate = new Date(typedUser.nicknameLastUpdated);
+    if (!(typedUser as any)?.nicknameLastUpdated) return 0;
+    const lastUpdate = new Date((typedUser as any).nicknameLastUpdated);
     const now = new Date();
     const diffInDays = Math.ceil((now.getTime() - lastUpdate.getTime()) / (1000 * 3600 * 24));
     return Math.max(0, 15 - diffInDays);
@@ -246,49 +237,22 @@ export default function UserProfile() {
         <Card>
           <CardContent className="pt-6">
             <div className="flex flex-col md:flex-row items-center gap-6">
-              <div className="relative">
-                <Avatar className="w-24 h-24 cursor-pointer" onClick={() => document.getElementById('profile-image-input')?.click()}>
-                  <AvatarImage src={typedUser.profileImageUrl || ""} />
-                  <AvatarFallback className="bg-amber-600 text-white text-2xl">
-                    {typedUser.nickname?.[0]?.toUpperCase() || typedUser.email?.[0]?.toUpperCase() || 'U'}
-                  </AvatarFallback>
-                </Avatar>
-                <div className="absolute bottom-0 right-0 bg-amber-600 rounded-full p-1">
-                  <Upload className="w-3 h-3 text-white" />
-                </div>
-                <input
-                  id="profile-image-input"
-                  type="file"
-                  accept="image/*"
-                  className="hidden"
-                  onChange={async (e) => {
-                    const file = e.target.files?.[0];
-                    if (file) {
-                      setProfileImageFile(file);
+              <div className="w-28 md:w-36 flex-shrink-0">
+                <ImageUpload
+                  label=""
+                  description=""
+                  currentImageUrl={typedUser.profileImageUrl || undefined}
+                  onImageChange={async (url) => {
+                    if (url) {
                       try {
-                        const formData = new FormData();
-                        formData.append('image', file);
-                        
-                        const response = await apiRequest('/api/user/upload-profile-image', 'POST', formData);
-                        
-                        if (response.imageUrl) {
-                          await updateProfileMutation.mutateAsync({ profileImageUrl: response.imageUrl });
-                          toast({
-                            title: "Immagine caricata",
-                            description: "L'immagine del profilo è stata aggiornata con successo",
-                          });
-                        } else {
-                          throw new Error('Upload failed');
-                        }
-                      } catch (error) {
-                        toast({
-                          title: "Errore",
-                          description: "Impossibile caricare l'immagine",
-                          variant: "destructive",
-                        });
-                      }
+                        await updateProfileMutation.mutateAsync({ profileImageUrl: url });
+                      } catch (e) {}
                     }
                   }}
+                  folder="profile-images"
+                  aspectRatio="square"
+                  maxSize={5}
+                  showFileInfo={false}
                 />
               </div>
 
@@ -304,7 +268,7 @@ export default function UserProfile() {
                   </Badge>
                   <Badge variant="outline" className="text-xs">
                     <Calendar className="w-3 h-3 mr-1" />
-                    Iscritto il {new Date(typedUser.createdAt).toLocaleDateString('it-IT')}
+                    Iscritto il {typedUser.createdAt ? new Date(typedUser.createdAt).toLocaleDateString('it-IT') : 'N/A'}
                   </Badge>
                 </div>
               </div>
@@ -352,15 +316,6 @@ export default function UserProfile() {
                       />
                     </div>
                     
-                    <div>
-                      <label className="block text-sm font-medium mb-2">Stili Preferiti</label>
-                      <StyleMultiSelect
-                        value={editedProfile.favoriteStyles}
-                        onValueChange={(styles) => setEditedProfile({ ...editedProfile, favoriteStyles: styles })}
-                        maxSelections={5}
-                      />
-                    </div>
-                    
                     <div className="flex gap-2">
                       <Button onClick={handleSaveProfile} disabled={updateProfileMutation.isPending}>
                         <Save className="w-4 h-4 mr-2" />
@@ -391,24 +346,6 @@ export default function UserProfile() {
                         {typedUser.bio || "Nessuna biografia disponibile"}
                       </p>
                     </div>
-                    
-                    <div>
-                      <h4 className="font-medium mb-2">Stili Preferiti</h4>
-                      {typedUser.favoriteStyles && typedUser.favoriteStyles.length > 0 ? (
-                        <div className="flex flex-wrap gap-2">
-                          {typedUser.favoriteStyles.map((style: string) => (
-                            <Badge key={style} variant="secondary" className="flex items-center gap-1">
-                              <Beer className="w-3 h-3" />
-                              {style}
-                            </Badge>
-                          ))}
-                        </div>
-                      ) : (
-                        <p className="text-gray-500 dark:text-gray-400">
-                          Nessuno stile selezionato
-                        </p>
-                      )}
-                    </div>
                   </div>
                 )}
               </CardContent>
@@ -423,32 +360,11 @@ export default function UserProfile() {
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <Heart className="w-5 h-5" />
-                  I Tuoi Preferiti ({enrichedFavorites?.length || 0})
+                  I Tuoi Preferiti ({Array.isArray(enrichedFavorites) ? enrichedFavorites.length : 0})
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                {enrichedFavorites && enrichedFavorites.length > 0 ? (
-                  <div className="space-y-3">
-                    {enrichedFavorites.map((fav: any) => (
-                      <div key={fav.id} className="flex items-center justify-between p-3 border rounded-lg">
-                        <div className="flex items-center gap-2">
-                          <Badge variant="outline" className="capitalize text-xs">
-                            {fav.itemType === 'brewery' ? 'Birrificio' : 
-                             fav.itemType === 'pub' ? 'Pub' : 'Birra'}
-                          </Badge>
-                          <span className="font-medium">{fav.itemName || `${fav.itemType} #${fav.itemId}`}</span>
-                        </div>
-                        <span className="text-xs text-gray-500">
-                          {new Date(fav.createdAt).toLocaleDateString('it-IT')}
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <p className="text-gray-500 dark:text-gray-400 text-center py-8">
-                    Non hai ancora aggiunto nessun preferito. Inizia a esplorare birre, pub e birrifici!
-                  </p>
-                )}
+                <UserFavoritesSection favorites={Array.isArray(enrichedFavorites) ? enrichedFavorites : []} />
               </CardContent>
             </Card>
           </TabsContent>
@@ -595,7 +511,7 @@ export default function UserProfile() {
                           variant="destructive"
                           onClick={async () => {
                             try {
-                              await apiRequest('/api/user/delete', 'DELETE');
+                              await apiRequest('/api/user/delete', { method: 'DELETE' });
                               toast({
                                 title: "Account eliminato",
                                 description: "Il tuo account è stato eliminato con successo",
