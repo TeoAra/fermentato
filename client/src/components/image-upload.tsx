@@ -95,8 +95,12 @@ export function ImageUpload({
         setUploadProgress(100);
 
         if (!response.ok) {
-          const error = await response.json();
-          throw new Error(error.message || 'Upload fallito');
+          const contentType = response.headers.get('content-type');
+          if (contentType && contentType.includes('application/json')) {
+            const error = await response.json();
+            throw new Error(error.message || 'Upload fallito');
+          }
+          throw new Error(response.status === 401 ? 'Sessione scaduta. Ricarica la pagina e riprova.' : `Upload fallito (errore ${response.status})`);
         }
 
         const result = await response.json();
