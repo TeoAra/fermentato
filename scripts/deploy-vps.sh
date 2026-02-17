@@ -6,6 +6,22 @@ echo ""
 
 cd "$(dirname "$0")/.."
 
+if [ -z "$DATABASE_URL" ]; then
+  if [ -f .env ]; then
+    export $(grep -v '^#' .env | grep DATABASE_URL | xargs)
+  fi
+fi
+
+if [ -z "$DATABASE_URL" ]; then
+  echo "ERROR: DATABASE_URL not found."
+  echo "Create a .env file with: DATABASE_URL=postgresql://user:password@localhost:5432/dbname"
+  echo "Or run: DATABASE_URL=your_url bash scripts/deploy-vps.sh"
+  exit 1
+fi
+
+echo "Database configured."
+echo ""
+
 echo "1. Installing dependencies..."
 npm ci --production=false
 
