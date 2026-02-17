@@ -699,6 +699,9 @@ export default function AuthPage() {
                                     setSelectedBrewery(b);
                                     registerForm.setValue("breweryId", b.id);
                                     registerForm.setValue("breweryName", b.name);
+                                    registerForm.setValue("breweryLocation", b.location || "");
+                                    registerForm.setValue("breweryRegion", b.region || "");
+                                    registerForm.setValue("breweryCountry", (b as any).country || "");
                                     setBrewerySearch("");
                                   }}
                                   className="w-full text-left p-2 rounded hover:bg-amber-50 dark:hover:bg-amber-900/20 transition-colors"
@@ -733,26 +736,51 @@ export default function AuthPage() {
                       )}
 
                       {selectedBrewery && (
-                        <div className="p-3 bg-amber-50 dark:bg-amber-900/20 rounded-lg border border-amber-200 dark:border-amber-800">
-                          <div className="flex items-center justify-between">
-                            <div>
-                              <p className="font-medium text-amber-900 dark:text-amber-100">{selectedBrewery.name}</p>
-                              <p className="text-xs text-amber-700 dark:text-amber-300">{selectedBrewery.location}</p>
+                        <div className="space-y-3">
+                          <div className="p-3 bg-amber-50 dark:bg-amber-900/20 rounded-lg border border-amber-200 dark:border-amber-800">
+                            <div className="flex items-center justify-between">
+                              <div>
+                                <p className="font-medium text-amber-900 dark:text-amber-100">{selectedBrewery.name}</p>
+                              </div>
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => {
+                                  setSelectedBrewery(null);
+                                  registerForm.setValue("breweryId", undefined);
+                                  registerForm.setValue("breweryName", "");
+                                  registerForm.setValue("breweryLocation", "");
+                                  registerForm.setValue("breweryRegion", "");
+                                  registerForm.setValue("breweryCountry", "");
+                                }}
+                                className="text-xs"
+                              >
+                                Cambia
+                              </Button>
                             </div>
-                            <Button
-                              type="button"
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => {
-                                setSelectedBrewery(null);
-                                registerForm.setValue("breweryId", undefined);
-                                registerForm.setValue("breweryName", "");
-                              }}
-                              className="text-xs"
-                            >
-                              Cambia
-                            </Button>
                           </div>
+
+                          <FormField
+                            control={registerForm.control}
+                            name="breweryLocation"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Sede del Birrificio</FormLabel>
+                                <FormControl>
+                                  <AddressAutocomplete
+                                    value={field.value}
+                                    onAddressSelect={handleBreweryAddressSelect}
+                                    placeholder="Cerca la sede del birrificio..."
+                                    countryRestriction={null}
+                                  />
+                                </FormControl>
+                                <FormDescription className="text-xs">
+                                  Regione e nazione verranno compilati automaticamente.
+                                </FormDescription>
+                              </FormItem>
+                            )}
+                          />
                         </div>
                       )}
 
