@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { X, Download, Bell, Share, MoreVertical, Smartphone } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
@@ -25,6 +25,118 @@ function getDeviceType(): 'ios' | 'android' | 'desktop' {
   if (/iPad|iPhone|iPod/.test(ua)) return 'ios';
   if (/Android/.test(ua)) return 'android';
   return 'desktop';
+}
+
+export async function subscribeToPush(): Promise<boolean> {
+  try {
+    if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
+      console.warn('Push notifications not supported');
+      return false;
+    }
+
+    const permission = await Notification.requestPermission();
+    if (permission !== 'granted') {
+      console.warn('Notification permission denied');
+      return false;
+    }
+
+    const reg = await navigator.serviceWorker.ready;
+
+    const vapidRes = await fetch('/api/push/vapid-key');
+    const { publicKey } = await vapidRes.json();
+    if (!publicKey) {
+      console.error('No VAPID public key from server');
+      return false;
+    }
+
+    let subscription = await reg.pushManager.getSubscription();
+
+    if (!subscription) {
+      subscription = await reg.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: urlBase64ToUint8Array(publicKey),
+      });
+    }
+
+    const subJson = subscription.toJSON();
+    if (!subJson.endpoint || !subJson.keys?.p256dh || !subJson.keys?.auth) {
+      console.error('Invalid push subscription data');
+      return false;
+    }
+
+    await apiRequest('/api/push/subscribe', { method: 'POST' }, {
+      endpoint: subJson.endpoint,
+      p256dh: subJson.keys.p256dh,
+      auth: subJson.keys.auth,
+    });
+
+    console.log('Push subscription saved successfully');
+    return true;
+  } catch (e) {
+    console.error('Push subscription failed:', e);
+    return false;
+  }
+}
+
+export async function unsubscribeFromPush(): Promise<boolean> {
+  try {
+    if (!('serviceWorker' in navigator)) return false;
+    const reg = await navigator.serviceWorker.ready;
+    const subscription = await reg.pushManager.getSubscription();
+    if (subscription) {
+      const endpoint = subscription.endpoint;
+      await subscription.unsubscribe();
+      await apiRequest('/api/push/unsubscribe', { method: 'POST' }, { endpoint });
+    }
+    return true;
+  } catch (e) {
+    console.error('Push unsubscribe failed:', e);
+    return false;
+  }
+}
+
+export function getPushPermissionStatus(): 'granted' | 'denied' | 'default' | 'unsupported' {
+  if (!('Notification' in window)) return 'unsupported';
+  return Notification.permission;
+}
+
+export function AutoPushSubscriber() {
+  const { isAuthenticated } = useAuth();
+
+  useEffect(() => {
+    if (!isAuthenticated) return;
+    if (!('Notification' in window) || !('serviceWorker' in navigator)) return;
+    if (Notification.permission !== 'granted') return;
+
+    const alreadySynced = sessionStorage.getItem('push-synced');
+    if (alreadySynced) return;
+
+    sessionStorage.setItem('push-synced', '1');
+
+    (async () => {
+      try {
+        const reg = await navigator.serviceWorker.ready;
+        const existing = await reg.pushManager.getSubscription();
+        if (existing) {
+          const subJson = existing.toJSON();
+          if (subJson.endpoint && subJson.keys?.p256dh && subJson.keys?.auth) {
+            await apiRequest('/api/push/subscribe', { method: 'POST' }, {
+              endpoint: subJson.endpoint,
+              p256dh: subJson.keys.p256dh,
+              auth: subJson.keys.auth,
+            });
+            console.log('Push subscription auto-synced to server');
+          }
+        } else {
+          await subscribeToPush();
+        }
+      } catch (e) {
+        console.error('Auto push sync failed:', e);
+      }
+    })();
+  }, [isAuthenticated]);
+
+  return null;
 }
 
 export function PwaInstallPrompt() {
@@ -153,28 +265,7 @@ export function PushNotificationPrompt() {
   }, [isAuthenticated]);
 
   const handleEnable = async () => {
-    try {
-      const permission = await Notification.requestPermission();
-      if (permission === 'granted') {
-        const reg = await navigator.serviceWorker.ready;
-        const vapidRes = await fetch('/api/push/vapid-key');
-        const { publicKey } = await vapidRes.json();
-        
-        const subscription = await reg.pushManager.subscribe({
-          userVisibleOnly: true,
-          applicationServerKey: urlBase64ToUint8Array(publicKey),
-        });
-        
-        const subJson = subscription.toJSON();
-        await apiRequest('/api/push/subscribe', { method: 'POST' }, {
-          endpoint: subJson.endpoint,
-          p256dh: subJson.keys?.p256dh,
-          auth: subJson.keys?.auth,
-        });
-      }
-    } catch (e) {
-      console.error('Push subscription failed:', e);
-    }
+    await subscribeToPush();
     setShow(false);
   };
 

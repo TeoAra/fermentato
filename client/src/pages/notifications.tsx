@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { queryClient, apiRequest } from "@/lib/queryClient";
-import { Bell, Beer, Calendar, MapPin, Settings, AlertCircle, CheckCircle2, Trash2, CheckCheck } from "lucide-react";
+import { Bell, Beer, Calendar, MapPin, Settings, AlertCircle, CheckCircle2, Trash2, CheckCheck, Send, Loader2 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -12,6 +12,7 @@ import { formatDistanceToNow } from "date-fns";
 import { it } from "date-fns/locale";
 import { useLocation } from "wouter";
 import type { Notification, NotificationPreference } from "@shared/schema";
+import { subscribeToPush, unsubscribeFromPush } from "@/components/pwa-prompt";
 
 export default function Notifications() {
   const { toast } = useToast();
@@ -28,6 +29,14 @@ export default function Notifications() {
     }
   }, []);
 
+  const { data: pushStatus, refetch: refetchPushStatus } = useQuery<{ subscribed: boolean; subscriptionCount: number }>({
+    queryKey: ['/api/push/status'],
+    enabled: isAuthenticated,
+  });
+
+  const [isSubscribing, setIsSubscribing] = useState(false);
+  const [isSendingTest, setIsSendingTest] = useState(false);
+
   const requestNotificationPermission = async () => {
     if (!('Notification' in window)) {
       toast({
@@ -38,18 +47,17 @@ export default function Notifications() {
       return;
     }
 
+    setIsSubscribing(true);
     try {
-      const permission = await Notification.requestPermission();
+      const success = await subscribeToPush();
+      const permission = Notification.permission;
       setNotificationPermission(permission);
       
-      if (permission === 'granted') {
+      if (success) {
+        refetchPushStatus();
         toast({
-          title: "Notifiche attivate!",
-          description: "Riceverai notifiche per nuove birre, eventi e altro",
-        });
-        new Notification("Fermenta.to", {
-          body: "Le notifiche sono state attivate con successo!",
-          icon: "/favicon.ico"
+          title: "Notifiche push attivate!",
+          description: "Riceverai notifiche sul dispositivo quando ci sono novita' nei tuoi preferiti.",
         });
       } else if (permission === 'denied') {
         toast({
@@ -61,9 +69,50 @@ export default function Notifications() {
     } catch (error) {
       toast({
         title: "Errore",
-        description: "Impossibile richiedere il permesso per le notifiche",
+        description: "Impossibile attivare le notifiche push",
         variant: "destructive",
       });
+    } finally {
+      setIsSubscribing(false);
+    }
+  };
+
+  const handleTestPush = async () => {
+    setIsSendingTest(true);
+    try {
+      const res = await apiRequest('/api/push/test', { method: 'POST' });
+      toast({
+        title: "Notifica di test inviata!",
+        description: "Dovresti riceverla sul dispositivo entro pochi secondi.",
+      });
+    } catch (error: any) {
+      toast({
+        title: "Errore",
+        description: error?.message || "Impossibile inviare la notifica di test",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSendingTest(false);
+    }
+  };
+
+  const handleUnsubscribePush = async () => {
+    setIsSubscribing(true);
+    try {
+      await unsubscribeFromPush();
+      refetchPushStatus();
+      toast({
+        title: "Notifiche push disattivate",
+        description: "Non riceverai piu' notifiche push su questo dispositivo.",
+      });
+    } catch (error) {
+      toast({
+        title: "Errore",
+        description: "Impossibile disattivare le notifiche push",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSubscribing(false);
     }
   };
 
@@ -213,18 +262,23 @@ export default function Notifications() {
               <AlertCircle className="h-5 w-5 text-orange-600 flex-shrink-0 mt-0.5" />
               <div className="flex-1">
                 <h3 className="font-medium text-gray-900 dark:text-white mb-1">
-                  Abilita le notifiche push
+                  {notificationPermission === 'denied' ? 'Notifiche bloccate' : 'Attiva le notifiche push'}
                 </h3>
                 <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">
-                  Ricevi notifiche in tempo reale quando i tuoi pub preferiti aggiungono nuove birre o creano eventi.
+                  {notificationPermission === 'denied'
+                    ? "Le notifiche sono state bloccate. Per riattivarle, vai nelle impostazioni del browser e consenti le notifiche per questo sito."
+                    : "Ricevi notifiche sul dispositivo quando i tuoi pub preferiti aggiungono nuove birre alla spina."}
                 </p>
-                <Button 
-                  onClick={requestNotificationPermission}
-                  className="bg-orange-600 hover:bg-orange-700"
-                >
-                  <Bell className="h-4 w-4 mr-2" />
-                  Attiva notifiche
-                </Button>
+                {notificationPermission !== 'denied' && (
+                  <Button 
+                    onClick={requestNotificationPermission}
+                    disabled={isSubscribing}
+                    className="bg-orange-600 hover:bg-orange-700"
+                  >
+                    {isSubscribing ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Bell className="h-4 w-4 mr-2" />}
+                    Attiva notifiche push
+                  </Button>
+                )}
               </div>
             </div>
           </CardContent>
@@ -234,11 +288,58 @@ export default function Notifications() {
       {notificationPermission === 'granted' && (
         <Card className="mb-6 border-green-200 dark:border-green-800 bg-green-50 dark:bg-green-900/10">
           <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <CheckCircle2 className="h-5 w-5 text-green-600" />
-              <p className="text-sm text-green-800 dark:text-green-200">
-                Notifiche push attive! Riceverai aggiornamenti in tempo reale.
-              </p>
+            <div className="flex items-start gap-3">
+              <CheckCircle2 className="h-5 w-5 text-green-600 flex-shrink-0 mt-0.5" />
+              <div className="flex-1">
+                <p className="text-sm font-medium text-green-800 dark:text-green-200 mb-1">
+                  Notifiche push {pushStatus?.subscribed ? 'attive' : 'abilitate ma non registrate'}
+                </p>
+                {pushStatus?.subscribed ? (
+                  <p className="text-xs text-green-700 dark:text-green-300 mb-3">
+                    Questo dispositivo ricevera' notifiche quando i tuoi pub preferiti aggiornano le spine.
+                  </p>
+                ) : (
+                  <p className="text-xs text-orange-700 dark:text-orange-300 mb-3">
+                    Hai dato il permesso ma la registrazione push non e' completa. Clicca "Registra" per completare.
+                  </p>
+                )}
+                <div className="flex flex-wrap gap-2">
+                  {!pushStatus?.subscribed && (
+                    <Button
+                      size="sm"
+                      onClick={requestNotificationPermission}
+                      disabled={isSubscribing}
+                      className="bg-green-600 hover:bg-green-700"
+                    >
+                      {isSubscribing ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : <Bell className="h-4 w-4 mr-1" />}
+                      Registra
+                    </Button>
+                  )}
+                  {pushStatus?.subscribed && (
+                    <>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={handleTestPush}
+                        disabled={isSendingTest}
+                        className="border-green-300 text-green-800 hover:bg-green-100 dark:border-green-700 dark:text-green-200 dark:hover:bg-green-900/30"
+                      >
+                        {isSendingTest ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : <Send className="h-4 w-4 mr-1" />}
+                        Invia notifica di test
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={handleUnsubscribePush}
+                        disabled={isSubscribing}
+                        className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                      >
+                        Disattiva push
+                      </Button>
+                    </>
+                  )}
+                </div>
+              </div>
             </div>
           </CardContent>
         </Card>

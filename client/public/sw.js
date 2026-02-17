@@ -1,4 +1,4 @@
-const CACHE_NAME = 'fermentato-v1';
+const CACHE_NAME = 'fermentato-v2';
 const STATIC_ASSETS = [
   '/',
   '/manifest.json',
@@ -33,14 +33,21 @@ self.addEventListener('fetch', (event) => {
 self.addEventListener('push', (event) => {
   let data = { title: 'Fermenta.to', body: 'Nuova notifica', url: '/' };
   try {
-    data = event.data.json();
-  } catch (e) {}
+    if (event.data) {
+      data = { ...data, ...event.data.json() };
+    }
+  } catch (e) {
+    console.error('Error parsing push data:', e);
+  }
 
   const options = {
-    body: data.body || data.message,
-    icon: '/icons/icon-192.png',
-    badge: '/icons/icon-192.png',
-    vibrate: [100, 50, 100],
+    body: data.body || data.message || 'Nuova notifica',
+    icon: '/icons/icon-192.svg',
+    badge: '/icons/icon-192.svg',
+    vibrate: [200, 100, 200],
+    tag: data.tag || 'fermenta-notification',
+    renotify: true,
+    requireInteraction: false,
     data: { url: data.url || '/' },
     actions: data.actions || [],
   };
@@ -51,15 +58,35 @@ self.addEventListener('push', (event) => {
 self.addEventListener('notificationclick', (event) => {
   event.notification.close();
   const url = event.notification.data?.url || '/';
+  const fullUrl = new URL(url, self.location.origin).href;
+
   event.waitUntil(
     self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clients) => {
       for (const client of clients) {
-        if (client.url.includes(self.location.origin) && 'focus' in client) {
-          client.navigate(url);
+        if (client.url.startsWith(self.location.origin) && 'focus' in client) {
+          client.navigate(fullUrl);
           return client.focus();
         }
       }
-      return self.clients.openWindow(url);
+      return self.clients.openWindow(fullUrl);
     })
+  );
+});
+
+self.addEventListener('pushsubscriptionchange', (event) => {
+  event.waitUntil(
+    self.registration.pushManager.subscribe(event.oldSubscription.options)
+      .then((subscription) => {
+        const subJson = subscription.toJSON();
+        return fetch('/api/push/subscribe', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            endpoint: subJson.endpoint,
+            p256dh: subJson.keys?.p256dh,
+            auth: subJson.keys?.auth,
+          }),
+        });
+      })
   );
 });

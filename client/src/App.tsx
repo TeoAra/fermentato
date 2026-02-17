@@ -8,7 +8,7 @@ import { useState, useEffect } from "react";
 import { initGA } from "./lib/analytics";
 import { useAnalytics } from "./hooks/use-analytics";
 import Header from "@/components/header";
-import { PwaInstallPrompt, PushNotificationPrompt } from "@/components/pwa-prompt";
+import { PwaInstallPrompt, PushNotificationPrompt, AutoPushSubscriber } from "@/components/pwa-prompt";
 
 // Component to scroll to top on route change
 function ScrollToTop() {
@@ -135,6 +135,7 @@ function App() {
       <TooltipProvider>
         <Toaster />
         <Router />
+        <AutoPushSubscriber />
         <PwaInstallPrompt />
         <PushNotificationPrompt />
       </TooltipProvider>

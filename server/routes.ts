@@ -2519,6 +2519,35 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.post("/api/push/test", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = (req.user as any).id;
+      const subs = await storage.getPushSubscriptionsByUser(userId);
+      if (subs.length === 0) {
+        return res.status(404).json({ message: "Nessuna sottoscrizione push trovata. Attiva prima le notifiche." });
+      }
+      await sendPushToUser(userId, {
+        title: "Fermenta.to - Test",
+        body: "Le notifiche push funzionano correttamente! Riceverai avvisi quando i tuoi pub preferiti aggiornano le spine.",
+        url: "/dashboard",
+      });
+      res.json({ success: true, subscriptions: subs.length });
+    } catch (error) {
+      console.error("Error sending test push:", error);
+      res.status(500).json({ message: "Errore nell'invio della notifica di test" });
+    }
+  });
+
+  app.get("/api/push/status", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = (req.user as any).id;
+      const subs = await storage.getPushSubscriptionsByUser(userId);
+      res.json({ subscribed: subs.length > 0, subscriptionCount: subs.length });
+    } catch (error) {
+      res.status(500).json({ message: "Errore nel controllo stato push" });
+    }
+  });
+
   app.post("/api/push/unsubscribe", isAuthenticated, async (req: any, res) => {
     try {
       const { endpoint } = req.body;
