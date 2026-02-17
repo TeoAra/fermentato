@@ -55,7 +55,7 @@ export default function SearchResults({ query, onClose }: SearchResultsProps) {
     <Card className="absolute top-full left-0 right-0 mt-1 z-50 max-h-96 overflow-y-auto">
       <CardContent className="p-4 space-y-4">
         {/* Pub Results */}
-        {results.pubs && results.pubs.slice(0, 5).map((pub) => (
+        {results.pubs && results.pubs.slice(0, 8).map((pub) => (
           <Link key={`pub-${pub.id}`} href={`/pub/${pub.id}`}>
             <div
               className="flex items-center gap-3 p-2 hover:bg-gray-50 dark:hover:bg-gray-800 rounded-lg cursor-pointer"
@@ -72,7 +72,7 @@ export default function SearchResults({ query, onClose }: SearchResultsProps) {
         ))}
 
         {/* Brewery Results */}
-        {results.breweries && results.breweries.slice(0, 3).map((brewery) => (
+        {results.breweries && results.breweries.slice(0, 5).map((brewery) => (
           <Link key={`brewery-${brewery.id}`} href={`/brewery/${brewery.id}`}>
             <div
               className="flex items-center gap-3 p-2 hover:bg-gray-50 dark:hover:bg-gray-800 rounded-lg cursor-pointer"
@@ -89,7 +89,7 @@ export default function SearchResults({ query, onClose }: SearchResultsProps) {
         ))}
 
         {/* Beer Results */}
-        {results.beers && results.beers.slice(0, 3).map((beer) => (
+        {results.beers && results.beers.slice(0, 5).map((beer) => (
           <Link key={`beer-${beer.id}`} href={`/beer/${beer.id}`}>
             <div
               className="flex items-center gap-3 p-2 hover:bg-gray-50 dark:hover:bg-gray-800 rounded-lg cursor-pointer"

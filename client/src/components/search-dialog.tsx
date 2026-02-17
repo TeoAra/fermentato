@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Search, X, MapPin, Building, Beer, Clock, TrendingUp, ArrowRight, Sparkles, Loader2 } from "lucide-react";
+import { Search, X, MapPin, Building, Beer, Clock, TrendingUp, ArrowRight, Sparkles, Loader2, ChevronDown, ChevronUp } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -16,7 +16,13 @@ export default function SearchDialog({ isOpen, onClose }: SearchDialogProps) {
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [recentSearches, setRecentSearches] = useState<string[]>([]);
   const [selectedIndex, setSelectedIndex] = useState(-1);
+  const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({});
   const inputRef = useRef<HTMLInputElement>(null);
+
+  const INITIAL_SHOW = 5;
+  const toggleSection = (section: string) => {
+    setExpandedSections(prev => ({ ...prev, [section]: !prev[section] }));
+  };
 
   // Load recent searches from localStorage
   useEffect(() => {
@@ -42,6 +48,7 @@ export default function SearchDialog({ isOpen, onClose }: SearchDialogProps) {
       setSearchTerm("");
       setDebouncedSearch("");
       setSelectedIndex(-1);
+      setExpandedSections({});
     } else {
       // Focus input when dialog opens
       setTimeout(() => inputRef.current?.focus(), 100);
@@ -72,10 +79,13 @@ export default function SearchDialog({ isOpen, onClose }: SearchDialogProps) {
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (!searchResults) return;
     
+    const pubsShown = expandedSections.pubs ? searchResults.pubs?.length || 0 : Math.min(searchResults.pubs?.length || 0, INITIAL_SHOW);
+    const breweriesShown = expandedSections.breweries ? searchResults.breweries?.length || 0 : Math.min(searchResults.breweries?.length || 0, INITIAL_SHOW);
+    const beersShown = expandedSections.beers ? searchResults.beers?.length || 0 : Math.min(searchResults.beers?.length || 0, INITIAL_SHOW);
     const allResults = [
-      ...(searchResults.pubs?.slice(0, 3) || []).map((item: any) => ({ ...item, type: 'pub' })),
-      ...(searchResults.breweries?.slice(0, 3) || []).map((item: any) => ({ ...item, type: 'brewery' })),
-      ...(searchResults.beers?.slice(0, 3) || []).map((item: any) => ({ ...item, type: 'beer' }))
+      ...(searchResults.pubs?.slice(0, pubsShown) || []).map((item: any) => ({ ...item, type: 'pub' })),
+      ...(searchResults.breweries?.slice(0, breweriesShown) || []).map((item: any) => ({ ...item, type: 'brewery' })),
+      ...(searchResults.beers?.slice(0, beersShown) || []).map((item: any) => ({ ...item, type: 'beer' }))
     ];
 
     if (e.key === 'ArrowDown') {
@@ -247,144 +257,185 @@ export default function SearchDialog({ isOpen, onClose }: SearchDialogProps) {
               </div>
 
               {/* Pub Results */}
-              {searchResults.pubs?.length > 0 && (
-                <div className="space-y-3">
-                  <div className="flex items-center gap-2">
-                    <MapPin className="h-4 w-4 text-orange-600" />
-                    <h3 className="font-semibold text-gray-900 dark:text-white">Pub</h3>
-                    <Badge variant="outline" className="text-xs">{searchResults.pubs.length}</Badge>
-                  </div>
-                  <div className="space-y-2">
-                    {searchResults.pubs.slice(0, 3).map((pub: any, index: number) => (
-                      <div
-                        key={`pub-${pub.id}`}
-                        className={`group cursor-pointer p-4 rounded-2xl border transition-all duration-200 ${
-                          selectedIndex === index
-                            ? 'bg-orange-50 dark:bg-orange-900/10 border-orange-200 dark:border-orange-700'
-                            : 'bg-white/50 dark:bg-gray-800/30 border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800/50 hover:border-gray-300 dark:hover:border-gray-600'
-                        }`}
-                        onClick={() => handleResultClick('pub', pub.id)}
-                        data-testid={`result-pub-${pub.id}`}
-                      >
-                        <div className="flex items-center gap-4">
-                          <div className="flex-shrink-0">
-                            <div className="h-12 w-12 bg-gradient-to-br from-orange-400 to-orange-600 rounded-xl flex items-center justify-center shadow-sm">
-                              <MapPin className="h-6 w-6 text-white" />
+              {searchResults.pubs?.length > 0 && (() => {
+                const isExpanded = expandedSections.pubs;
+                const visiblePubs = isExpanded ? searchResults.pubs : searchResults.pubs.slice(0, INITIAL_SHOW);
+                const hasMore = searchResults.pubs.length > INITIAL_SHOW;
+                let baseIndex = 0;
+                return (
+                  <div className="space-y-3">
+                    <div className="flex items-center gap-2">
+                      <MapPin className="h-4 w-4 text-orange-600" />
+                      <h3 className="font-semibold text-gray-900 dark:text-white">Pub</h3>
+                      <Badge variant="outline" className="text-xs">{searchResults.pubs.length}</Badge>
+                    </div>
+                    <div className="space-y-2">
+                      {visiblePubs.map((pub: any, index: number) => (
+                        <div
+                          key={`pub-${pub.id}`}
+                          className={`group cursor-pointer p-3 rounded-xl border transition-all duration-200 ${
+                            selectedIndex === baseIndex + index
+                              ? 'bg-orange-50 dark:bg-orange-900/10 border-orange-200 dark:border-orange-700'
+                              : 'bg-white/50 dark:bg-gray-800/30 border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800/50 hover:border-gray-300 dark:hover:border-gray-600'
+                          }`}
+                          onClick={() => handleResultClick('pub', pub.id)}
+                        >
+                          <div className="flex items-center gap-3">
+                            <div className="h-10 w-10 bg-gradient-to-br from-orange-400 to-orange-600 rounded-lg flex items-center justify-center flex-shrink-0">
+                              <MapPin className="h-5 w-5 text-white" />
                             </div>
+                            <div className="flex-1 min-w-0">
+                              <div className="font-medium text-sm text-gray-900 dark:text-white truncate group-hover:text-orange-600 dark:group-hover:text-orange-400 transition-colors">
+                                {pub.name}
+                              </div>
+                              <div className="text-xs text-gray-500 dark:text-gray-400 truncate">
+                                {pub.city && pub.address ? `${pub.city} • ${pub.address}` : pub.city || pub.address || 'Indirizzo non disponibile'}
+                              </div>
+                            </div>
+                            <ArrowRight className="h-4 w-4 text-gray-300 group-hover:text-orange-500 flex-shrink-0 opacity-0 group-hover:opacity-100 transition-all duration-200" />
                           </div>
-                          <div className="flex-1 min-w-0">
-                            <div className="font-semibold text-gray-900 dark:text-white truncate group-hover:text-orange-600 dark:group-hover:text-orange-400 transition-colors">
-                              {pub.name}
-                            </div>
-                            <div className="text-sm text-gray-500 dark:text-gray-400 truncate">
-                              {pub.city && pub.address ? `${pub.city} • ${pub.address}` : pub.city || pub.address || 'Indirizzo non disponibile'}
-                            </div>
-                          </div>
-                          <ArrowRight className="h-5 w-5 text-gray-300 group-hover:text-orange-500 opacity-0 group-hover:opacity-100 transform translate-x-1 group-hover:translate-x-0 transition-all duration-200" />
                         </div>
-                      </div>
-                    ))}
+                      ))}
+                    </div>
+                    {hasMore && (
+                      <button
+                        onClick={() => toggleSection('pubs')}
+                        className="flex items-center gap-2 w-full justify-center py-2 text-sm font-medium text-orange-600 hover:text-orange-700 dark:text-orange-400 dark:hover:text-orange-300 transition-colors rounded-lg hover:bg-orange-50 dark:hover:bg-orange-900/10"
+                      >
+                        {isExpanded ? (
+                          <>Mostra meno <ChevronUp className="h-4 w-4" /></>
+                        ) : (
+                          <>Mostra tutti ({searchResults.pubs.length}) <ChevronDown className="h-4 w-4" /></>
+                        )}
+                      </button>
+                    )}
                   </div>
-                </div>
-              )}
+                );
+              })()}
 
               {searchResults.pubs?.length > 0 && (searchResults.breweries?.length > 0 || searchResults.beers?.length > 0) && (
                 <Separator className="bg-gray-200 dark:bg-gray-700" />
               )}
 
               {/* Brewery Results */}
-              {searchResults.breweries?.length > 0 && (
-                <div className="space-y-3">
-                  <div className="flex items-center gap-2">
-                    <Building className="h-4 w-4 text-orange-600" />
-                    <h3 className="font-semibold text-gray-900 dark:text-white">Birrifici</h3>
-                    <Badge variant="outline" className="text-xs">{searchResults.breweries.length}</Badge>
-                  </div>
-                  <div className="space-y-2">
-                    {searchResults.breweries.slice(0, 3).map((brewery: any, index: number) => {
-                      const resultIndex = (searchResults.pubs?.length || 0) + index;
-                      return (
+              {searchResults.breweries?.length > 0 && (() => {
+                const isExpanded = expandedSections.breweries;
+                const visibleBreweries = isExpanded ? searchResults.breweries : searchResults.breweries.slice(0, INITIAL_SHOW);
+                const hasMore = searchResults.breweries.length > INITIAL_SHOW;
+                const baseIndex = Math.min(searchResults.pubs?.length || 0, expandedSections.pubs ? searchResults.pubs?.length || 0 : INITIAL_SHOW);
+                return (
+                  <div className="space-y-3">
+                    <div className="flex items-center gap-2">
+                      <Building className="h-4 w-4 text-orange-600" />
+                      <h3 className="font-semibold text-gray-900 dark:text-white">Birrifici</h3>
+                      <Badge variant="outline" className="text-xs">{searchResults.breweries.length}</Badge>
+                    </div>
+                    <div className="space-y-2">
+                      {visibleBreweries.map((brewery: any, index: number) => (
                         <div
                           key={`brewery-${brewery.id}`}
-                          className={`group cursor-pointer p-4 rounded-2xl border transition-all duration-200 ${
-                            selectedIndex === resultIndex
+                          className={`group cursor-pointer p-3 rounded-xl border transition-all duration-200 ${
+                            selectedIndex === baseIndex + index
                               ? 'bg-orange-50 dark:bg-orange-900/10 border-orange-200 dark:border-orange-700'
                               : 'bg-white/50 dark:bg-gray-800/30 border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800/50 hover:border-gray-300 dark:hover:border-gray-600'
                           }`}
                           onClick={() => handleResultClick('brewery', brewery.id)}
-                          data-testid={`result-brewery-${brewery.id}`}
                         >
-                          <div className="flex items-center gap-4">
-                            <div className="flex-shrink-0">
-                              <div className="h-12 w-12 bg-gradient-to-br from-amber-400 to-amber-600 rounded-xl flex items-center justify-center shadow-sm">
-                                <Building className="h-6 w-6 text-white" />
-                              </div>
+                          <div className="flex items-center gap-3">
+                            <div className="h-10 w-10 bg-gradient-to-br from-amber-400 to-amber-600 rounded-lg flex items-center justify-center flex-shrink-0">
+                              <Building className="h-5 w-5 text-white" />
                             </div>
                             <div className="flex-1 min-w-0">
-                              <div className="font-semibold text-gray-900 dark:text-white truncate group-hover:text-orange-600 dark:group-hover:text-orange-400 transition-colors">
+                              <div className="font-medium text-sm text-gray-900 dark:text-white truncate group-hover:text-orange-600 dark:group-hover:text-orange-400 transition-colors">
                                 {brewery.name}
                               </div>
-                              <div className="text-sm text-gray-500 dark:text-gray-400 truncate">
+                              <div className="text-xs text-gray-500 dark:text-gray-400 truncate">
                                 {brewery.location && brewery.region ? `${brewery.location} • ${brewery.region}` : brewery.location || brewery.region || 'Posizione non disponibile'}
                               </div>
                             </div>
-                            <ArrowRight className="h-5 w-5 text-gray-300 group-hover:text-orange-500 opacity-0 group-hover:opacity-100 transform translate-x-1 group-hover:translate-x-0 transition-all duration-200" />
+                            <ArrowRight className="h-4 w-4 text-gray-300 group-hover:text-orange-500 flex-shrink-0 opacity-0 group-hover:opacity-100 transition-all duration-200" />
                           </div>
                         </div>
-                      );
-                    })}
+                      ))}
+                    </div>
+                    {hasMore && (
+                      <button
+                        onClick={() => toggleSection('breweries')}
+                        className="flex items-center gap-2 w-full justify-center py-2 text-sm font-medium text-orange-600 hover:text-orange-700 dark:text-orange-400 dark:hover:text-orange-300 transition-colors rounded-lg hover:bg-orange-50 dark:hover:bg-orange-900/10"
+                      >
+                        {isExpanded ? (
+                          <>Mostra meno <ChevronUp className="h-4 w-4" /></>
+                        ) : (
+                          <>Mostra tutti ({searchResults.breweries.length}) <ChevronDown className="h-4 w-4" /></>
+                        )}
+                      </button>
+                    )}
                   </div>
-                </div>
-              )}
+                );
+              })()}
 
               {searchResults.breweries?.length > 0 && searchResults.beers?.length > 0 && (
                 <Separator className="bg-gray-200 dark:bg-gray-700" />
               )}
 
               {/* Beer Results */}
-              {searchResults.beers?.length > 0 && (
-                <div className="space-y-3">
-                  <div className="flex items-center gap-2">
-                    <Beer className="h-4 w-4 text-orange-600" />
-                    <h3 className="font-semibold text-gray-900 dark:text-white">Birre</h3>
-                    <Badge variant="outline" className="text-xs">{searchResults.beers.length}</Badge>
-                  </div>
-                  <div className="space-y-2">
-                    {searchResults.beers.slice(0, 3).map((beer: any, index: number) => {
-                      const resultIndex = (searchResults.pubs?.length || 0) + (searchResults.breweries?.length || 0) + index;
-                      return (
+              {searchResults.beers?.length > 0 && (() => {
+                const isExpanded = expandedSections.beers;
+                const visibleBeers = isExpanded ? searchResults.beers : searchResults.beers.slice(0, INITIAL_SHOW);
+                const hasMore = searchResults.beers.length > INITIAL_SHOW;
+                const pubsShownCount = Math.min(searchResults.pubs?.length || 0, expandedSections.pubs ? searchResults.pubs?.length || 0 : INITIAL_SHOW);
+                const breweriesShownCount = Math.min(searchResults.breweries?.length || 0, expandedSections.breweries ? searchResults.breweries?.length || 0 : INITIAL_SHOW);
+                const baseIndex = pubsShownCount + breweriesShownCount;
+                return (
+                  <div className="space-y-3">
+                    <div className="flex items-center gap-2">
+                      <Beer className="h-4 w-4 text-orange-600" />
+                      <h3 className="font-semibold text-gray-900 dark:text-white">Birre</h3>
+                      <Badge variant="outline" className="text-xs">{searchResults.beers.length}</Badge>
+                    </div>
+                    <div className="space-y-2">
+                      {visibleBeers.map((beer: any, index: number) => (
                         <div
                           key={`beer-${beer.id}`}
-                          className={`group cursor-pointer p-4 rounded-2xl border transition-all duration-200 ${
-                            selectedIndex === resultIndex
+                          className={`group cursor-pointer p-3 rounded-xl border transition-all duration-200 ${
+                            selectedIndex === baseIndex + index
                               ? 'bg-orange-50 dark:bg-orange-900/10 border-orange-200 dark:border-orange-700'
                               : 'bg-white/50 dark:bg-gray-800/30 border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800/50 hover:border-gray-300 dark:hover:border-gray-600'
                           }`}
                           onClick={() => handleResultClick('beer', beer.id)}
-                          data-testid={`result-beer-${beer.id}`}
                         >
-                          <div className="flex items-center gap-4">
-                            <div className="flex-shrink-0">
-                              <div className="h-12 w-12 bg-gradient-to-br from-yellow-400 to-yellow-600 rounded-xl flex items-center justify-center shadow-sm">
-                                <Beer className="h-6 w-6 text-white" />
-                              </div>
+                          <div className="flex items-center gap-3">
+                            <div className="h-10 w-10 bg-gradient-to-br from-yellow-400 to-yellow-600 rounded-lg flex items-center justify-center flex-shrink-0">
+                              <Beer className="h-5 w-5 text-white" />
                             </div>
                             <div className="flex-1 min-w-0">
-                              <div className="font-semibold text-gray-900 dark:text-white truncate group-hover:text-orange-600 dark:group-hover:text-orange-400 transition-colors">
+                              <div className="font-medium text-sm text-gray-900 dark:text-white truncate group-hover:text-orange-600 dark:group-hover:text-orange-400 transition-colors">
                                 {beer.name}
                               </div>
-                              <div className="text-sm text-gray-500 dark:text-gray-400 truncate">
+                              <div className="text-xs text-gray-500 dark:text-gray-400 truncate">
                                 {beer.style && beer.abv ? `${beer.style} • ${beer.abv}%` : beer.style || `${beer.abv}%` || 'Dettagli non disponibili'}
                               </div>
                             </div>
-                            <ArrowRight className="h-5 w-5 text-gray-300 group-hover:text-orange-500 opacity-0 group-hover:opacity-100 transform translate-x-1 group-hover:translate-x-0 transition-all duration-200" />
+                            <ArrowRight className="h-4 w-4 text-gray-300 group-hover:text-orange-500 flex-shrink-0 opacity-0 group-hover:opacity-100 transition-all duration-200" />
                           </div>
                         </div>
-                      );
-                    })}
+                      ))}
+                    </div>
+                    {hasMore && (
+                      <button
+                        onClick={() => toggleSection('beers')}
+                        className="flex items-center gap-2 w-full justify-center py-2 text-sm font-medium text-orange-600 hover:text-orange-700 dark:text-orange-400 dark:hover:text-orange-300 transition-colors rounded-lg hover:bg-orange-50 dark:hover:bg-orange-900/10"
+                      >
+                        {isExpanded ? (
+                          <>Mostra meno <ChevronUp className="h-4 w-4" /></>
+                        ) : (
+                          <>Mostra tutti ({searchResults.beers.length}) <ChevronDown className="h-4 w-4" /></>
+                        )}
+                      </button>
+                    )}
                   </div>
-                </div>
-              )}
+                );
+              })()}
 
               {/* No Results */}
               {(!searchResults.pubs?.length && !searchResults.breweries?.length && !searchResults.beers?.length) && (
