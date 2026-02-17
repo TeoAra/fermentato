@@ -470,7 +470,17 @@ export default function AuthPage() {
                             <FormControl>
                               <Switch
                                 checked={field.value}
-                                onCheckedChange={field.onChange}
+                                onCheckedChange={(checked) => {
+                                  field.onChange(checked);
+                                  if (checked) {
+                                    registerForm.setValue("isBrewery", false);
+                                    setSelectedBrewery(null);
+                                    setCreatingNewBrewery(false);
+                                    setBrewerySearch("");
+                                    registerForm.setValue("breweryId", undefined);
+                                    registerForm.setValue("breweryName", "");
+                                  }
+                                }}
                                 data-testid="switch-is-publican"
                               />
                             </FormControl>
@@ -504,7 +514,9 @@ export default function AuthPage() {
                                 checked={field.value}
                                 onCheckedChange={(checked) => {
                                   field.onChange(checked);
-                                  if (!checked) {
+                                  if (checked) {
+                                    registerForm.setValue("isPublican", false);
+                                  } else {
                                     setSelectedBrewery(null);
                                     setCreatingNewBrewery(false);
                                     setBrewerySearch("");
@@ -787,6 +799,12 @@ export default function AuthPage() {
                               )}
                             />
                           </div>
+                        </div>
+                      )}
+
+                      {(selectedBrewery || creatingNewBrewery) && (
+                        <div className="space-y-3 pt-2 border-t border-gray-200 dark:border-gray-700">
+                          <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Dati aziendali</p>
 
                           <div className="grid grid-cols-2 gap-3">
                             <FormField
