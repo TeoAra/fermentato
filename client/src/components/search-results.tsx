@@ -98,8 +98,11 @@ export default function SearchResults({ query, onClose }: SearchResultsProps) {
               <Beer className="h-4 w-4 text-orange-600 flex-shrink-0" />
               <div className="flex-1 min-w-0">
                 <div className="font-medium text-sm truncate">{beer.name}</div>
+                {(beer.brewery?.name || beer.breweryName) && (
+                  <div className="text-xs text-gray-600 dark:text-gray-300 truncate">{beer.brewery?.name || beer.breweryName}</div>
+                )}
                 <div className="text-xs text-gray-500 truncate">
-                  {beer.brewery?.name} • {beer.style} • {beer.abv}%
+                  {beer.style} • {beer.abv}%
                 </div>
               </div>
               <Badge variant="outline" className="text-xs">Birra</Badge>
