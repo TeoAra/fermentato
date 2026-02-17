@@ -116,9 +116,17 @@ export default function UserFavoritesSection({ favorites }: UserFavoritesSection
                   <CardContent className="p-4">
                     <div className="flex items-start gap-3">
                       <Link href={getRedirectUrl(favorite)} className="flex items-start gap-3 flex-1 min-w-0 cursor-pointer">
-                        <div className={`w-12 h-12 rounded-lg flex items-center justify-center flex-shrink-0 ${colors.icon}`}>
-                          {getCategoryIcon(category)}
-                        </div>
+                        {favorite.itemImageUrl ? (
+                          <img 
+                            src={favorite.itemImageUrl} 
+                            alt={favorite.itemName || ''} 
+                            className="w-12 h-12 rounded-lg object-cover flex-shrink-0"
+                          />
+                        ) : (
+                          <div className={`w-12 h-12 rounded-lg flex items-center justify-center flex-shrink-0 ${colors.icon}`}>
+                            {getCategoryIcon(category)}
+                          </div>
+                        )}
                         <div className="flex-1 min-w-0">
                           <h4 className={`font-semibold mb-1 truncate transition-colors ${colors.hover}`}>
                             {favorite.itemName || `${getCategoryTitle(category)} #${favorite.itemId}`}

@@ -828,21 +828,32 @@ export class DatabaseStorage implements IStorage {
     
     for (const favorite of userFavorites) {
       let itemName = `${favorite.itemType} #${favorite.itemId}`;
+      let itemImageUrl: string | null = null;
       
       if (favorite.itemType === 'pub') {
-        const [pub] = await db.select({ name: pubs.name }).from(pubs).where(eq(pubs.id, favorite.itemId));
-        if (pub) itemName = pub.name;
+        const [pub] = await db.select({ name: pubs.name, logoUrl: pubs.logoUrl }).from(pubs).where(eq(pubs.id, favorite.itemId));
+        if (pub) {
+          itemName = pub.name;
+          itemImageUrl = pub.logoUrl;
+        }
       } else if (favorite.itemType === 'brewery') {
-        const [brewery] = await db.select({ name: breweries.name }).from(breweries).where(eq(breweries.id, favorite.itemId));
-        if (brewery) itemName = brewery.name;
+        const [brewery] = await db.select({ name: breweries.name, logoUrl: breweries.logoUrl }).from(breweries).where(eq(breweries.id, favorite.itemId));
+        if (brewery) {
+          itemName = brewery.name;
+          itemImageUrl = brewery.logoUrl;
+        }
       } else if (favorite.itemType === 'beer') {
-        const [beer] = await db.select({ name: beers.name }).from(beers).where(eq(beers.id, favorite.itemId));
-        if (beer) itemName = beer.name;
+        const [beer] = await db.select({ name: beers.name, imageUrl: beers.imageUrl, logoUrl: beers.logoUrl }).from(beers).where(eq(beers.id, favorite.itemId));
+        if (beer) {
+          itemName = beer.name;
+          itemImageUrl = beer.imageUrl || beer.logoUrl;
+        }
       }
       
       enrichedFavorites.push({
         ...favorite,
-        itemName
+        itemName,
+        itemImageUrl
       });
     }
     

@@ -13,31 +13,37 @@ import { useAuth } from "@/hooks/useAuth";
 
 interface BeerTastingFormProps {
   beerId: number;
-  beerName: string;
+  beerName?: string;
   existingTasting?: any;
+  onSuccess?: () => void;
+  onCancel?: () => void;
 }
 
-export default function BeerTastingForm({ beerId, beerName, existingTasting }: BeerTastingFormProps) {
+export default function BeerTastingForm({ beerId, beerName, existingTasting, onSuccess, onCancel }: BeerTastingFormProps) {
   const { user, isAuthenticated } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const [showForm, setShowForm] = useState(false);
+  const isEditMode = !!existingTasting && !!onCancel;
+  const [showForm, setShowForm] = useState(isEditMode);
   const [formData, setFormData] = useState({
-    pubId: existingTasting?.pubId || "",
+    pubId: existingTasting?.pubId?.toString() || "",
     format: existingTasting?.format || "spina",
     rating: existingTasting?.rating || 5,
-    personalNotes: existingTasting?.personalNotes || "",
+    personalNotes: existingTasting?.personalNotes || existingTasting?.notes || "",
   });
 
   // Fetch pubs for selection
-  const { data: pubs = [] } = useQuery({
+  const { data: pubs = [] } = useQuery<any[]>({
     queryKey: ["/api/pubs/all"],
-    enabled: showForm,
+    enabled: showForm || isEditMode,
   });
 
   const addTastingMutation = useMutation({
     mutationFn: async (tastingData: any) => {
-      return await apiRequest("/api/user/beer-tastings", "POST", {
+      if (isEditMode && existingTasting?.id) {
+        return await apiRequest(`/api/user/beer-tastings/${existingTasting.id}`, { method: "PATCH" }, tastingData);
+      }
+      return await apiRequest("/api/user/beer-tastings", { method: "POST" }, {
         beerId,
         ...tastingData,
       });
@@ -46,9 +52,10 @@ export default function BeerTastingForm({ beerId, beerName, existingTasting }: B
       queryClient.invalidateQueries({ queryKey: ["/api/user/beer-tastings"] });
       queryClient.invalidateQueries({ queryKey: [`/api/beers/${beerId}/user-tasting`] });
       setShowForm(false);
+      if (onSuccess) onSuccess();
       toast({
-        title: "Tasting aggiunto!",
-        description: `Hai registrato il tuo assaggio di ${beerName}`,
+        title: isEditMode ? "Degustazione aggiornata!" : "Tasting aggiunto!",
+        description: isEditMode ? "Le modifiche sono state salvate" : `Hai registrato il tuo assaggio`,
       });
     },
     onError: () => {
@@ -82,7 +89,7 @@ export default function BeerTastingForm({ beerId, beerName, existingTasting }: B
     );
   }
 
-  if (existingTasting) {
+  if (existingTasting && !isEditMode) {
     return (
       <Button variant="outline" className="w-full border-green-200 bg-green-50 dark:bg-green-900/20 text-green-700" disabled>
         <CheckCircle className="w-4 h-4 mr-2" />
@@ -107,7 +114,7 @@ export default function BeerTastingForm({ beerId, beerName, existingTasting }: B
       {showForm && (
         <Card className="mt-2">
           <CardHeader>
-            <CardTitle className="text-lg">Aggiungi il tuo assaggio</CardTitle>
+            <CardTitle className="text-lg">{isEditMode ? "Modifica degustazione" : "Aggiungi il tuo assaggio"}</CardTitle>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-4">
@@ -199,7 +206,7 @@ export default function BeerTastingForm({ beerId, beerName, existingTasting }: B
                 <Button
                   type="button"
                   variant="outline"
-                  onClick={() => setShowForm(false)}
+                  onClick={() => { setShowForm(false); if (onCancel) onCancel(); }}
                 >
                   Annulla
                 </Button>
