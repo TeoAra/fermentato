@@ -27,41 +27,62 @@ function getDeviceType(): 'ios' | 'android' | 'desktop' {
   return 'desktop';
 }
 
-export async function subscribeToPush(): Promise<boolean> {
+export async function subscribeToPush(): Promise<{ success: boolean; error?: string }> {
   try {
-    if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
-      console.warn('Push notifications not supported');
-      return false;
+    if (!('serviceWorker' in navigator)) {
+      return { success: false, error: 'Il tuo browser non supporta i Service Worker. Prova ad installare l\'app dalla schermata home.' };
+    }
+    if (!('PushManager' in window)) {
+      return { success: false, error: 'Il tuo browser non supporta le notifiche push. Prova con Chrome o Firefox.' };
+    }
+    if (!('Notification' in window)) {
+      return { success: false, error: 'Le notifiche non sono supportate su questo dispositivo.' };
     }
 
     const permission = await Notification.requestPermission();
+    if (permission === 'denied') {
+      return { success: false, error: 'Le notifiche sono state bloccate. Vai nelle impostazioni del browser per abilitarle.' };
+    }
     if (permission !== 'granted') {
-      console.warn('Notification permission denied');
-      return false;
+      return { success: false, error: 'Permesso per le notifiche non concesso.' };
     }
 
-    const reg = await navigator.serviceWorker.ready;
+    let reg: ServiceWorkerRegistration;
+    try {
+      reg = await Promise.race([
+        navigator.serviceWorker.ready,
+        new Promise<never>((_, reject) => setTimeout(() => reject(new Error('timeout')), 10000))
+      ]);
+    } catch {
+      return { success: false, error: 'Service Worker non pronto. Prova a ricaricare la pagina.' };
+    }
 
     const vapidRes = await fetch('/api/push/vapid-key');
+    if (!vapidRes.ok) {
+      return { success: false, error: `Errore nel recupero della chiave VAPID (${vapidRes.status}).` };
+    }
     const { publicKey } = await vapidRes.json();
     if (!publicKey) {
-      console.error('No VAPID public key from server');
-      return false;
+      return { success: false, error: 'Chiave VAPID non configurata sul server.' };
     }
 
     let subscription = await reg.pushManager.getSubscription();
 
-    if (!subscription) {
-      subscription = await reg.pushManager.subscribe({
-        userVisibleOnly: true,
-        applicationServerKey: urlBase64ToUint8Array(publicKey),
-      });
+    if (subscription) {
+      try {
+        await subscription.unsubscribe();
+      } catch {}
+      subscription = null;
     }
+
+    subscription = await reg.pushManager.subscribe({
+      userVisibleOnly: true,
+      applicationServerKey: urlBase64ToUint8Array(publicKey),
+    });
 
     const subJson = subscription.toJSON();
     if (!subJson.endpoint || !subJson.keys?.p256dh || !subJson.keys?.auth) {
-      console.error('Invalid push subscription data');
-      return false;
+      return { success: false, error: 'Dati di sottoscrizione push non validi.' };
     }
 
     await apiRequest('/api/push/subscribe', { method: 'POST' }, {
@@ -71,10 +92,10 @@ export async function subscribeToPush(): Promise<boolean> {
     });
 
     console.log('Push subscription saved successfully');
-    return true;
-  } catch (e) {
+    return { success: true };
+  } catch (e: any) {
     console.error('Push subscription failed:', e);
-    return false;
+    return { success: false, error: e?.message || 'Errore sconosciuto durante la registrazione push.' };
   }
 }
 

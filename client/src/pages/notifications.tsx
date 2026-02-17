@@ -49,27 +49,27 @@ export default function Notifications() {
 
     setIsSubscribing(true);
     try {
-      const success = await subscribeToPush();
+      const result = await subscribeToPush();
       const permission = Notification.permission;
       setNotificationPermission(permission);
       
-      if (success) {
+      if (result.success) {
         refetchPushStatus();
         toast({
           title: "Notifiche push attivate!",
           description: "Riceverai notifiche sul dispositivo quando ci sono novita' nei tuoi preferiti.",
         });
-      } else if (permission === 'denied') {
+      } else {
         toast({
-          title: "Notifiche bloccate",
-          description: "Puoi abilitarle dalle impostazioni del browser",
+          title: "Registrazione push fallita",
+          description: result.error || "Errore sconosciuto. Prova a ricaricare la pagina.",
           variant: "destructive",
         });
       }
-    } catch (error) {
+    } catch (error: any) {
       toast({
         title: "Errore",
-        description: "Impossibile attivare le notifiche push",
+        description: error?.message || "Impossibile attivare le notifiche push",
         variant: "destructive",
       });
     } finally {
