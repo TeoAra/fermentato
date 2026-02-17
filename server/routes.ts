@@ -894,12 +894,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Update user profile
+  // Update user profile (consolidated)
   app.patch('/api/user/profile', isAuthenticated, async (req: any, res) => {
     try {
       const userId = (req.user as any).id;
-      const updates = req.body;
-      
+      const updates = { ...req.body };
+
+      if (updates.profileImageUrl !== undefined && updates.lastProfileImageUpdate) {
+        const currentUser = await storage.getUser(userId);
+        if (currentUser?.lastProfileImageUpdate) {
+          const lastUpdate = new Date(currentUser.lastProfileImageUpdate);
+          const now = new Date();
+          const daysDiff = (now.getTime() - lastUpdate.getTime()) / (1000 * 3600 * 24);
+          if (daysDiff < 15) {
+            return res.status(400).json({
+              message: `Puoi cambiare l'immagine del profilo solo ogni 15 giorni. Riprova tra ${Math.ceil(15 - daysDiff)} giorni.`
+            });
+          }
+        }
+      }
+
       const updatedUser = await storage.updateUser(userId, updates);
       res.json(updatedUser);
     } catch (error) {
@@ -1081,19 +1095,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error fetching favorites count:", error);
       res.status(500).json({ message: "Failed to fetch favorites count" });
-    }
-  });
-
-  // User profile and activities routes
-  app.patch('/api/user/profile', isAuthenticated, async (req: any, res) => {
-    try {
-      const userId = (req.user as any).id;
-      const updates = req.body;
-      const user = await storage.updateUser(userId, updates);
-      res.json(user);
-    } catch (error) {
-      console.error("Error updating user profile:", error);
-      res.status(500).json({ message: "Failed to update profile" });
     }
   });
 
@@ -1918,20 +1919,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ message: "Failed to remove beer tasting" });
     }
   });
-
-  // User profile update endpoint
-  app.patch("/api/user/profile", isAuthenticated, async (req: any, res) => {
-    try {
-      const userId = (req.user as any).id;
-      const profileData = req.body;
-      const updatedUser = await storage.updateUserProfile(userId, profileData);
-      res.json(updatedUser);
-    } catch (error) {
-      console.error("Error updating user profile:", error);
-      res.status(500).json({ message: "Failed to update user profile" });
-    }
-  });
-
 
 
   // Get user's available roles

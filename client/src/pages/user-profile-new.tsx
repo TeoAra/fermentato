@@ -49,7 +49,6 @@ export default function UserProfile() {
   const [tempEmail, setTempEmail] = useState("");
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   
-  // Password change state
   const [passwordData, setPasswordData] = useState({
     currentPassword: "",
     newPassword: "",
@@ -63,7 +62,6 @@ export default function UserProfile() {
     profileImageUrl: "",
   });
 
-  // Redirect if not authenticated
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
       toast({
@@ -77,19 +75,16 @@ export default function UserProfile() {
     }
   }, [isAuthenticated, isLoading, toast]);
 
-  // Beer Tastings Query
   const { data: beerTastings = [] } = useQuery<any[]>({
     queryKey: ["/api/user/beer-tastings"],
     enabled: isAuthenticated,
   });
 
-  // Favorites Query
   const { data: enrichedFavorites = [] } = useQuery({
     queryKey: ["/api/favorites"],
     enabled: isAuthenticated,
   });
 
-  // Password change mutation
   const passwordChangeMutation = useMutation({
     mutationFn: async (data: { currentPassword: string; newPassword: string }) => {
       return apiRequest("/api/user/password", { method: "PATCH" }, data);
@@ -129,7 +124,6 @@ export default function UserProfile() {
     }
   }, [typedUser]);
 
-  // Update profile mutation
   const updateProfileMutation = useMutation({
     mutationFn: async (updates: Partial<UserType>) => {
       return apiRequest("/api/user/profile", { method: "PATCH" }, updates);
@@ -160,7 +154,6 @@ export default function UserProfile() {
     },
   });
 
-  // Nickname update mutation
   const nicknameUpdateMutation = useMutation({
     mutationFn: async (nickname: string) => {
       return apiRequest("/api/user/nickname", { method: "PATCH" }, { nickname });
@@ -215,12 +208,28 @@ export default function UserProfile() {
     return Math.max(0, 15 - diffInDays);
   };
 
+  const canUpdateProfileImage = () => {
+    if (!(typedUser as any)?.lastProfileImageUpdate) return true;
+    const lastUpdate = new Date((typedUser as any).lastProfileImageUpdate);
+    const now = new Date();
+    const diffInDays = Math.ceil((now.getTime() - lastUpdate.getTime()) / (1000 * 3600 * 24));
+    return diffInDays >= 15;
+  };
+
+  const getDaysUntilProfileImageUpdate = () => {
+    if (!(typedUser as any)?.lastProfileImageUpdate) return 0;
+    const lastUpdate = new Date((typedUser as any).lastProfileImageUpdate);
+    const now = new Date();
+    const diffInDays = Math.ceil((now.getTime() - lastUpdate.getTime()) / (1000 * 3600 * 24));
+    return Math.max(0, 15 - diffInDays);
+  };
+
   if (isLoading) {
     return (
       <div className="container mx-auto px-4 py-8">
         <div className="animate-pulse">
-          <div className="h-8 bg-gray-300 rounded mb-4"></div>
-          <div className="h-64 bg-gray-300 rounded"></div>
+          <div className="h-8 bg-orange-200/50 rounded-xl mb-4"></div>
+          <div className="h-64 bg-orange-100/50 rounded-xl"></div>
         </div>
       </div>
     );
@@ -234,10 +243,11 @@ export default function UserProfile() {
     <div className="container mx-auto px-4 py-8 max-w-4xl">
       <div className="space-y-6">
         {/* Header Card */}
-        <Card>
-          <CardContent className="pt-6">
+        <Card className="border-0 shadow-xl bg-gradient-to-br from-orange-500 to-orange-600 text-white overflow-hidden relative">
+          <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHZpZXdCb3g9IjAgMCA0MCA0MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48Y2lyY2xlIGN4PSIyMCIgY3k9IjIwIiByPSIxIiBmaWxsPSJyZ2JhKDI1NSwyNTUsMjU1LDAuMSkiLz48L3N2Zz4=')] opacity-30" />
+          <CardContent className="pt-8 pb-8 relative z-10">
             <div className="flex flex-col md:flex-row items-center gap-6">
-              <div className="w-28 md:w-36 flex-shrink-0">
+              <div className="w-32 h-32 md:w-36 md:h-36 flex-shrink-0 rounded-full overflow-hidden ring-4 ring-white/30 shadow-2xl">
                 <ImageUpload
                   label=""
                   description=""
@@ -245,7 +255,7 @@ export default function UserProfile() {
                   onImageChange={async (url) => {
                     if (url) {
                       try {
-                        await updateProfileMutation.mutateAsync({ profileImageUrl: url });
+                        await updateProfileMutation.mutateAsync({ profileImageUrl: url, lastProfileImageUpdate: new Date() } as any);
                       } catch (e) {}
                     }
                   }}
@@ -253,24 +263,32 @@ export default function UserProfile() {
                   aspectRatio="square"
                   maxSize={5}
                   showFileInfo={false}
+                  disabled={!canUpdateProfileImage()}
+                  hideStateIcon={true}
                 />
               </div>
 
               <div className="flex-1 text-center md:text-left">
-                <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
+                <h1 className="text-2xl md:text-3xl font-bold text-white mb-3">
                   {typedUser.nickname || "Utente senza nome"}
                 </h1>
 
-                <div className="flex items-center justify-center md:justify-start gap-2 mb-2">
-                  <Badge variant={typedUser.userType === 'admin' ? 'default' : 'secondary'}>
+                <div className="flex items-center justify-center md:justify-start gap-2 mb-3">
+                  <Badge className="bg-white/20 text-white border-white/30 backdrop-blur-sm hover:bg-white/30">
                     {typedUser.userType === 'admin' ? 'Amministratore' : 
                      typedUser.userType === 'pub_owner' ? 'Proprietario Pub' : 'Cliente'}
                   </Badge>
-                  <Badge variant="outline" className="text-xs">
+                  <Badge className="bg-white/20 text-white border-white/30 backdrop-blur-sm text-xs hover:bg-white/30">
                     <Calendar className="w-3 h-3 mr-1" />
                     Iscritto il {typedUser.createdAt ? new Date(typedUser.createdAt).toLocaleDateString('it-IT') : 'N/A'}
                   </Badge>
                 </div>
+
+                {!canUpdateProfileImage() && (
+                  <p className="text-xs text-white/70 mt-1">
+                    Potrai cambiare l'immagine profilo tra {getDaysUntilProfileImageUpdate()} giorni
+                  </p>
+                )}
               </div>
             </div>
           </CardContent>
@@ -278,25 +296,27 @@ export default function UserProfile() {
 
         {/* Main Content */}
         <Tabs defaultValue="overview" className="w-full">
-          <TabsList className="grid w-full grid-cols-3">
-            <TabsTrigger value="overview">Panoramica</TabsTrigger>
-            <TabsTrigger value="favorites">Preferiti</TabsTrigger>
-            <TabsTrigger value="settings">Impostazioni</TabsTrigger>
+          <TabsList className="grid w-full grid-cols-3 bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl border border-orange-100 dark:border-gray-700 rounded-xl p-1 shadow-lg">
+            <TabsTrigger value="overview" className="rounded-lg data-[state=active]:bg-gradient-to-r data-[state=active]:from-orange-500 data-[state=active]:to-orange-600 data-[state=active]:text-white data-[state=active]:shadow-lg transition-all duration-300">Panoramica</TabsTrigger>
+            <TabsTrigger value="favorites" className="rounded-lg data-[state=active]:bg-gradient-to-r data-[state=active]:from-orange-500 data-[state=active]:to-orange-600 data-[state=active]:text-white data-[state=active]:shadow-lg transition-all duration-300">Preferiti</TabsTrigger>
+            <TabsTrigger value="settings" className="rounded-lg data-[state=active]:bg-gradient-to-r data-[state=active]:from-orange-500 data-[state=active]:to-orange-600 data-[state=active]:text-white data-[state=active]:shadow-lg transition-all duration-300">Impostazioni</TabsTrigger>
           </TabsList>
 
           <TabsContent value="overview" className="space-y-6">
-            {/* Profile Info Card */}
-            <Card>
+            <Card className="border-0 shadow-lg bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl border-orange-100/50">
               <CardHeader>
                 <CardTitle className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <User className="w-5 h-5" />
+                  <div className="flex items-center gap-2 text-gray-900 dark:text-white">
+                    <div className="p-2 bg-orange-100 dark:bg-orange-900/30 rounded-lg">
+                      <User className="w-5 h-5 text-orange-600" />
+                    </div>
                     Informazioni Profilo
                   </div>
                   <Button
                     size="sm"
                     variant="outline"
                     onClick={() => setIsEditing(!isEditing)}
+                    className="border-orange-200 hover:bg-orange-50 hover:text-orange-700 dark:border-orange-800 dark:hover:bg-orange-900/30"
                   >
                     <Edit3 className="w-4 h-4 mr-2" />
                     {isEditing ? "Annulla" : "Modifica"}
@@ -307,17 +327,18 @@ export default function UserProfile() {
                 {isEditing ? (
                   <div className="space-y-4">
                     <div>
-                      <label className="block text-sm font-medium mb-2">Bio</label>
+                      <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">Bio</label>
                       <Textarea
                         value={editedProfile.bio}
                         onChange={(e) => setEditedProfile({ ...editedProfile, bio: e.target.value })}
                         placeholder="Racconta qualcosa di te..."
                         rows={3}
+                        className="border-orange-200 focus:border-orange-400 focus:ring-orange-400/20"
                       />
                     </div>
                     
                     <div className="flex gap-2">
-                      <Button onClick={handleSaveProfile} disabled={updateProfileMutation.isPending}>
+                      <Button onClick={handleSaveProfile} disabled={updateProfileMutation.isPending} className="bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white shadow-lg">
                         <Save className="w-4 h-4 mr-2" />
                         {updateProfileMutation.isPending ? "Salvando..." : "Salva"}
                       </Button>
@@ -332,6 +353,7 @@ export default function UserProfile() {
                             profileImageUrl: typedUser?.profileImageUrl || "",
                           });
                         }}
+                        className="border-orange-200 hover:bg-orange-50 dark:border-orange-800"
                       >
                         <X className="w-4 h-4 mr-2" />
                         Annulla
@@ -341,7 +363,7 @@ export default function UserProfile() {
                 ) : (
                   <div className="space-y-4">
                     <div>
-                      <h4 className="font-medium mb-2">Bio</h4>
+                      <h4 className="font-medium mb-2 text-gray-800 dark:text-gray-200">Bio</h4>
                       <p className="text-gray-600 dark:text-gray-300">
                         {typedUser.bio || "Nessuna biografia disponibile"}
                       </p>
@@ -351,15 +373,16 @@ export default function UserProfile() {
               </CardContent>
             </Card>
 
-            {/* Beer Tastings */}
             <BeerTastingsEditor beerTastings={beerTastings} />
           </TabsContent>
 
           <TabsContent value="favorites">
-            <Card>
+            <Card className="border-0 shadow-lg bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl">
               <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Heart className="w-5 h-5" />
+                <CardTitle className="flex items-center gap-2 text-gray-900 dark:text-white">
+                  <div className="p-2 bg-orange-100 dark:bg-orange-900/30 rounded-lg">
+                    <Heart className="w-5 h-5 text-orange-600" />
+                  </div>
                   I Tuoi Preferiti ({Array.isArray(enrichedFavorites) ? enrichedFavorites.length : 0})
                 </CardTitle>
               </CardHeader>
@@ -370,29 +393,31 @@ export default function UserProfile() {
           </TabsContent>
 
           <TabsContent value="settings" className="space-y-6">
-            {/* Account Settings */}
-            <Card>
+            <Card className="border-0 shadow-lg bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl">
               <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Settings className="w-5 h-5" />
+                <CardTitle className="flex items-center gap-2 text-gray-900 dark:text-white">
+                  <div className="p-2 bg-orange-100 dark:bg-orange-900/30 rounded-lg">
+                    <Settings className="w-5 h-5 text-orange-600" />
+                  </div>
                   Impostazioni Account
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-6">
                 <div>
-                  <label className="block text-sm font-medium mb-2">Nome Utente (Nickname)</label>
+                  <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">Nome Utente (Nickname)</label>
                   {isEditingNickname ? (
                     <div className="flex items-center gap-2">
                       <Input
                         value={tempNickname}
                         onChange={(e) => setTempNickname(e.target.value)}
-                        className="flex-1"
+                        className="flex-1 border-orange-200 focus:border-orange-400 focus:ring-orange-400/20"
                         placeholder="Inserisci nickname"
                       />
                       <Button
                         size="sm"
                         onClick={handleNicknameSave}
                         disabled={nicknameUpdateMutation.isPending || !canUpdateNickname()}
+                        className="bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white"
                       >
                         <Save className="w-4 h-4" />
                       </Button>
@@ -403,6 +428,7 @@ export default function UserProfile() {
                           setIsEditingNickname(false);
                           setTempNickname(typedUser.nickname || "");
                         }}
+                        className="border-orange-200 hover:bg-orange-50 dark:border-orange-800"
                       >
                         <X className="w-4 h-4" />
                       </Button>
@@ -420,6 +446,7 @@ export default function UserProfile() {
                         onClick={() => setIsEditingNickname(true)}
                         disabled={!canUpdateNickname()}
                         title={!canUpdateNickname() ? `Disponibile tra ${getDaysUntilNicknameUpdate()} giorni` : "Modifica nickname"}
+                        className="border-orange-200 hover:bg-orange-50 hover:text-orange-700 dark:border-orange-800 dark:hover:bg-orange-900/30"
                       >
                         <Edit3 className="w-4 h-4" />
                       </Button>
@@ -434,22 +461,22 @@ export default function UserProfile() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium mb-2">Email</label>
+                  <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">Email</label>
                   {isEditingEmail ? (
                     <div className="flex items-center gap-2">
                       <Input
                         type="email"
                         value={tempEmail}
                         onChange={(e) => setTempEmail(e.target.value)}
-                        className="flex-1"
+                        className="flex-1 border-orange-200 focus:border-orange-400 focus:ring-orange-400/20"
                         placeholder="Inserisci email"
                       />
                       <Button
                         size="sm"
                         onClick={() => {
-                          // Handle email save logic here
                           setIsEditingEmail(false);
                         }}
+                        className="bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white"
                       >
                         <Save className="w-4 h-4" />
                       </Button>
@@ -460,6 +487,7 @@ export default function UserProfile() {
                           setIsEditingEmail(false);
                           setTempEmail(typedUser.email || "");
                         }}
+                        className="border-orange-200 hover:bg-orange-50 dark:border-orange-800"
                       >
                         <X className="w-4 h-4" />
                       </Button>
@@ -475,6 +503,7 @@ export default function UserProfile() {
                         size="sm"
                         variant="outline"
                         onClick={() => setIsEditingEmail(true)}
+                        className="border-orange-200 hover:bg-orange-50 hover:text-orange-700 dark:border-orange-800 dark:hover:bg-orange-900/30"
                       >
                         <Edit3 className="w-4 h-4" />
                       </Button>
@@ -485,13 +514,12 @@ export default function UserProfile() {
                   </p>
                 </div>
 
-                {/* Password Change Section */}
-                <div className="border-t pt-4">
-                  <h3 className="text-sm font-medium mb-4">Sicurezza</h3>
+                <div className="border-t border-orange-100 dark:border-gray-700 pt-4">
+                  <h3 className="text-sm font-medium mb-4 text-gray-700 dark:text-gray-300">Sicurezza</h3>
                   <PasswordChangeForm />
                 </div>
 
-                <div className="border-t pt-4">
+                <div className="border-t border-orange-100 dark:border-gray-700 pt-4">
                   <h3 className="text-sm font-medium mb-4 text-red-600">Zona Pericolo</h3>
                   {!showDeleteConfirm ? (
                     <Button
@@ -503,7 +531,7 @@ export default function UserProfile() {
                     </Button>
                   ) : (
                     <div className="space-y-3">
-                      <p className="text-sm text-gray-600">
+                      <p className="text-sm text-gray-600 dark:text-gray-400">
                         Sei sicuro? Questa azione non può essere annullata e tutti i tuoi dati verranno eliminati permanentemente.
                       </p>
                       <div className="flex gap-2">
@@ -548,7 +576,6 @@ export default function UserProfile() {
     </div>
   );
 
-  // Password Change Form Component
   function PasswordChangeForm() {
     const handlePasswordSubmit = (e: React.FormEvent) => {
       e.preventDefault();
@@ -589,41 +616,44 @@ export default function UserProfile() {
     return (
       <form onSubmit={handlePasswordSubmit} className="space-y-4">
         <div>
-          <label className="block text-sm font-medium mb-2">Password Attuale</label>
+          <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">Password Attuale</label>
           <Input
             type="password"
             value={passwordData.currentPassword}
             onChange={(e) => setPasswordData(prev => ({ ...prev, currentPassword: e.target.value }))}
             placeholder="Inserisci password attuale"
             required
+            className="border-orange-200 focus:border-orange-400 focus:ring-orange-400/20"
           />
         </div>
         
         <div>
-          <label className="block text-sm font-medium mb-2">Nuova Password</label>
+          <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">Nuova Password</label>
           <Input
             type="password"
             value={passwordData.newPassword}
             onChange={(e) => setPasswordData(prev => ({ ...prev, newPassword: e.target.value }))}
             placeholder="Inserisci nuova password (min. 6 caratteri)"
             required
+            className="border-orange-200 focus:border-orange-400 focus:ring-orange-400/20"
           />
         </div>
         
         <div>
-          <label className="block text-sm font-medium mb-2">Conferma Nuova Password</label>
+          <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">Conferma Nuova Password</label>
           <Input
             type="password"
             value={passwordData.confirmPassword}
             onChange={(e) => setPasswordData(prev => ({ ...prev, confirmPassword: e.target.value }))}
             placeholder="Conferma nuova password"
             required
+            className="border-orange-200 focus:border-orange-400 focus:ring-orange-400/20"
           />
         </div>
         
         <Button 
           type="submit" 
-          className="w-full"
+          className="w-full bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white shadow-lg"
           disabled={passwordChangeMutation.isPending}
         >
           {passwordChangeMutation.isPending ? "Aggiornamento..." : "Cambia Password"}

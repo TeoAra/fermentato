@@ -1,0 +1,1 @@
+ALTER TABLE "users" ADD COLUMN "last_profile_image_update" timestamp;

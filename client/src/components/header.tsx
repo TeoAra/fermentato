@@ -11,7 +11,7 @@ import { apiRequest, queryClient } from "@/lib/queryClient";
 import SearchResults from "@/components/search-results";
 import SearchDialog from "@/components/search-dialog";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger, DropdownMenuLabel, DropdownMenuSub, DropdownMenuSubTrigger, DropdownMenuSubContent } from "@/components/ui/dropdown-menu";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 export default function Header() {
   const { user, isAuthenticated } = useAuth();
@@ -223,8 +223,11 @@ export default function Header() {
                   <DropdownMenuTrigger asChild>
                     <Button variant="ghost" className="flex items-center gap-2 px-2" data-testid="user-menu-button">
                       <Avatar className="h-8 w-8">
+                        {typedUser.profileImageUrl && (
+                          <AvatarImage src={typedUser.profileImageUrl} alt={typedUser.nickname || 'Profilo'} />
+                        )}
                         <AvatarFallback className="bg-orange-100 text-orange-600 text-sm">
-                          {typedUser.firstName?.[0] || typedUser.email?.[0]?.toUpperCase() || 'U'}
+                          {typedUser.nickname?.[0]?.toUpperCase() || typedUser.firstName?.[0] || typedUser.email?.[0]?.toUpperCase() || 'U'}
                         </AvatarFallback>
                       </Avatar>
                       <span className="hidden xl:inline text-sm font-medium text-gray-700 dark:text-gray-300 max-w-[100px] truncate">

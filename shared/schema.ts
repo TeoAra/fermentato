@@ -45,6 +45,7 @@ export const users = pgTable("users", {
   passwordResetToken: varchar("password_reset_token"),
   passwordResetExpires: timestamp("password_reset_expires"),
   lastNicknameUpdate: timestamp("last_nickname_update").defaultNow(),
+  lastProfileImageUpdate: timestamp("last_profile_image_update"),
   emailLastUpdated: timestamp("email_last_updated"),
   passwordLastUpdated: timestamp("password_last_updated"),
   joinedAt: timestamp("joined_at").defaultNow(),

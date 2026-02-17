@@ -15,13 +15,14 @@ interface ImageUploadProps {
   description?: string;
   currentImageUrl?: string;
   onImageChange: (url: string | null) => void;
-  folder: string; // cloudinary folder (e.g., "pub-logos", "pub-covers")
+  folder: string;
   aspectRatio?: "square" | "landscape" | "portrait";
-  maxSize?: number; // in MB
+  maxSize?: number;
   recommendedDimensions?: string;
   acceptedFormats?: string[];
   showFileInfo?: boolean;
   disabled?: boolean;
+  hideStateIcon?: boolean;
 }
 
 export function ImageUpload({
@@ -36,6 +37,7 @@ export function ImageUpload({
   acceptedFormats = ['JPG', 'PNG', 'WebP'],
   showFileInfo = true,
   disabled = false,
+  hideStateIcon = false,
 }: ImageUploadProps) {
   const [isDragging, setIsDragging] = useState(false);
   const [preview, setPreview] = useState<string | null>(currentImageUrl || null);
@@ -315,7 +317,7 @@ export function ImageUpload({
             </p>
           )}
         </div>
-        {getStateIcon()}
+        {!hideStateIcon && getStateIcon()}
       </div>
 
       <AnimatePresence mode="wait">
