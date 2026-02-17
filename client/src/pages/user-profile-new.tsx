@@ -247,7 +247,7 @@ export default function UserProfile() {
           <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHZpZXdCb3g9IjAgMCA0MCA0MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48Y2lyY2xlIGN4PSIyMCIgY3k9IjIwIiByPSIxIiBmaWxsPSJyZ2JhKDI1NSwyNTUsMjU1LDAuMSkiLz48L3N2Zz4=')] opacity-30" />
           <CardContent className="pt-8 pb-8 relative z-10">
             <div className="flex flex-col md:flex-row items-center gap-6">
-              <div className="w-32 h-32 md:w-36 md:h-36 flex-shrink-0 rounded-full overflow-hidden ring-4 ring-white/30 shadow-2xl">
+              <div className="w-32 h-32 md:w-36 md:h-36 flex-shrink-0 rounded-full overflow-hidden ring-4 ring-white/30 shadow-2xl [&>div]:!space-y-0 [&>div>div:first-child]:hidden [&_div.relative]:!rounded-full [&_div.aspect-square]:!max-w-none [&_div.aspect-square]:!border-0 [&_div.aspect-square]:!shadow-none [&_div.aspect-square]:!rounded-none">
                 <ImageUpload
                   label=""
                   description=""
