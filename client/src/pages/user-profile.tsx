@@ -256,29 +256,30 @@ export default function UserProfile() {
                       try {
                         const formData = new FormData();
                         formData.append('image', file);
+                        formData.append('folder', 'profile-images');
                         
-                        const uploadRes = await fetch('/api/user/upload-profile-image', {
+                        const res = await fetch('/api/upload/image', {
                           method: 'POST',
                           body: formData,
                           credentials: 'include',
                         });
                         
-                        if (!uploadRes.ok) {
-                          const errorData = await uploadRes.json().catch(() => ({}));
-                          throw new Error(errorData.message || 'Upload failed');
+                        if (!res.ok) {
+                          const err = await res.json().catch(() => ({ message: "Upload fallito" }));
+                          throw new Error(err.message || 'Upload fallito');
                         }
                         
-                        const response = await uploadRes.json();
+                        const data = await res.json();
                         
-                        if (response.imageUrl) {
-                          await updateProfileMutation.mutateAsync({ profileImageUrl: response.imageUrl });
+                        if (data.url) {
+                          await updateProfileMutation.mutateAsync({ profileImageUrl: data.url });
                           toast({
                             title: "Immagine caricata",
                             description: "L'immagine del profilo è stata aggiornata con successo",
                             variant: "default",
                           });
                         } else {
-                          throw new Error('Upload failed');
+                          throw new Error('Upload fallito');
                         }
                       } catch (error: any) {
                         toast({
