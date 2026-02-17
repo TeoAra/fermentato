@@ -7,18 +7,24 @@ import type { Beer } from "@shared/schema";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Link } from "wouter";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { Beer as BeerIcon, Plus, Pencil, Trash2, Factory, MapPin, Loader2, ImageIcon, Globe, Phone, FileText, Camera, Clock, AlertTriangle } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { ImageUpload } from "@/components/image-upload";
 import { AddressAutocomplete } from "@/components/AddressAutocomplete";
+import ImageWithFallback from "@/components/image-with-fallback";
+import {
+  Beer as BeerIcon, Plus, Pencil, Trash2, Factory, MapPin, Loader2,
+  Globe, Phone, FileText, Camera, Clock, AlertTriangle, Building,
+  Target, Sparkles, Save, X, Share2, ExternalLink
+} from "lucide-react";
 
 const beerFormSchema = z.object({
   name: z.string().min(1, "Il nome è obbligatorio"),
@@ -104,220 +110,35 @@ function RejectedOverlay({ breweryName, adminNotes }: { breweryName: string; adm
   );
 }
 
-function BreweryProfileEditor({ brewery, onUpdate }: { brewery: any; onUpdate: () => void }) {
-  const { toast } = useToast();
-  const [isEditing, setIsEditing] = useState(false);
-
-  const profileForm = useForm({
-    defaultValues: {
-      name: brewery.name || "",
-      description: brewery.description || "",
-      location: brewery.location || "",
-      region: brewery.region || "",
-      country: brewery.country || "",
-      websiteUrl: brewery.websiteUrl || "",
-      phone: brewery.phone || "",
-      vatNumber: brewery.vatNumber || "",
-      latitude: brewery.latitude || "",
-      longitude: brewery.longitude || "",
-    },
-  });
-
-  const updateProfileMutation = useMutation({
-    mutationFn: (values: any) =>
-      apiRequest("/api/brewery/profile", { method: "PATCH" }, values),
-    onSuccess: () => {
-      toast({ title: "Successo", description: "Profilo birrificio aggiornato" });
-      queryClient.invalidateQueries({ queryKey: ["/api/brewery/my"] });
-      setIsEditing(false);
-      onUpdate();
-    },
-    onError: () => {
-      toast({ title: "Errore", description: "Impossibile aggiornare il profilo", variant: "destructive" });
-    },
-  });
-
-  const handleImageUpload = useCallback(async (url: string | null, type: 'logo' | 'cover') => {
-    if (url) {
-      try {
-        const updateData = type === 'cover' ? { coverImageUrl: url } : { logoUrl: url };
-        await apiRequest("/api/brewery/profile", { method: "PATCH" }, updateData);
-        queryClient.invalidateQueries({ queryKey: ["/api/brewery/my"] });
-        toast({ title: "Successo", description: `${type === 'cover' ? 'Copertina' : 'Logo'} aggiornato` });
-      } catch {
-        toast({ title: "Errore", description: "Impossibile salvare l'immagine", variant: "destructive" });
-      }
-    }
-  }, [toast]);
-
-  const onProfileSubmit = (values: any) => {
-    updateProfileMutation.mutate(values);
-  };
-
-  return (
-    <div className="space-y-6">
-      <div className="relative rounded-xl overflow-hidden">
-        {brewery.coverImageUrl ? (
-          <img src={brewery.coverImageUrl} alt="Cover" className="w-full h-48 sm:h-64 object-cover" />
-        ) : (
-          <div className="w-full h-48 sm:h-64 bg-gradient-to-r from-amber-200 to-orange-300 dark:from-amber-900 dark:to-orange-900 flex items-center justify-center">
-            <Camera className="w-12 h-12 text-white/60" />
-          </div>
-        )}
-        <div className="absolute bottom-4 left-4 flex items-end gap-4">
-          {brewery.logoUrl ? (
-            <img src={brewery.logoUrl} alt="Logo" className="w-20 h-20 rounded-xl border-4 border-white shadow-lg object-cover" />
-          ) : (
-            <div className="w-20 h-20 rounded-xl border-4 border-white shadow-lg bg-white flex items-center justify-center">
-              <Factory className="w-8 h-8 text-gray-400" />
-            </div>
-          )}
-          <div className="bg-black/50 backdrop-blur-sm rounded-lg px-3 py-1.5">
-            <h2 className="text-white font-bold text-lg">{brewery.name}</h2>
-            {brewery.location && (
-              <p className="text-white/80 text-sm flex items-center gap-1">
-                <MapPin className="w-3 h-3" /> {brewery.location}
-              </p>
-            )}
-          </div>
-        </div>
+const BreweryStatsCard = ({ icon: Icon, value, label, gradient, onClick }: any) => (
+  <div
+    className={`glass-card rounded-xl p-4 hover:scale-105 transition-all duration-300 group ${onClick ? 'cursor-pointer' : ''}`}
+    onClick={onClick}
+  >
+    <div className="flex items-center space-x-3">
+      <div className={`p-3 rounded-lg bg-gradient-to-br ${gradient} group-hover:scale-110 transition-transform duration-300`}>
+        <Icon className="h-5 w-5 text-white" />
       </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <ImageUpload
-          label="Logo Birrificio"
-          description="Immagine quadrata consigliata"
-          currentImageUrl={brewery.logoUrl}
-          onImageChange={(url) => handleImageUpload(url, 'logo')}
-          folder="brewery-logos"
-          aspectRatio="square"
-          recommendedDimensions="400x400px"
-        />
-        <ImageUpload
-          label="Immagine di Copertina"
-          description="Formato orizzontale consigliato"
-          currentImageUrl={brewery.coverImageUrl}
-          onImageChange={(url) => handleImageUpload(url, 'cover')}
-          folder="brewery-covers"
-          aspectRatio="landscape"
-          recommendedDimensions="1200x400px"
-        />
+      <div>
+        <p className="text-2xl font-bold text-gray-900 dark:text-white">{value}</p>
+        <p className="text-sm text-gray-600 dark:text-gray-400 font-medium">{label}</p>
       </div>
-
-      {!isEditing ? (
-        <Card className="backdrop-blur-lg bg-white/80 dark:bg-gray-800/80 border-orange-200/50">
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <CardTitle className="text-lg">Informazioni Birrificio</CardTitle>
-              <Button variant="outline" size="sm" onClick={() => setIsEditing(true)}>
-                <Pencil className="w-4 h-4 mr-2" /> Modifica
-              </Button>
-            </div>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            {brewery.description && (
-              <div>
-                <p className="text-xs font-medium text-gray-500 mb-1">Descrizione</p>
-                <p className="text-sm text-gray-700 dark:text-gray-300">{brewery.description}</p>
-              </div>
-            )}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              {brewery.location && (
-                <div className="flex items-center gap-2 text-sm">
-                  <MapPin className="w-4 h-4 text-gray-400" />
-                  <span>{brewery.location}{brewery.region ? `, ${brewery.region}` : ""}{brewery.country ? ` (${brewery.country})` : ""}</span>
-                </div>
-              )}
-              {brewery.websiteUrl && (
-                <div className="flex items-center gap-2 text-sm">
-                  <Globe className="w-4 h-4 text-gray-400" />
-                  <a href={brewery.websiteUrl} target="_blank" rel="noopener noreferrer" className="text-amber-600 hover:underline truncate">{brewery.websiteUrl}</a>
-                </div>
-              )}
-              {brewery.phone && (
-                <div className="flex items-center gap-2 text-sm">
-                  <Phone className="w-4 h-4 text-gray-400" />
-                  <span>{brewery.phone}</span>
-                </div>
-              )}
-              {brewery.vatNumber && (
-                <div className="flex items-center gap-2 text-sm">
-                  <FileText className="w-4 h-4 text-gray-400" />
-                  <span>P.IVA: {brewery.vatNumber}</span>
-                </div>
-              )}
-            </div>
-          </CardContent>
-        </Card>
-      ) : (
-        <Card className="backdrop-blur-lg bg-white/80 dark:bg-gray-800/80 border-amber-300">
-          <CardHeader>
-            <CardTitle className="text-lg">Modifica Profilo</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <form onSubmit={profileForm.handleSubmit(onProfileSubmit)} className="space-y-4">
-              <div>
-                <label className="text-sm font-medium">Nome Birrificio</label>
-                <Input {...profileForm.register("name")} />
-              </div>
-              <div>
-                <label className="text-sm font-medium">Descrizione</label>
-                <Textarea {...profileForm.register("description")} rows={4} placeholder="Racconta la storia del tuo birrificio..." />
-              </div>
-              <div>
-                <label className="text-sm font-medium">Posizione</label>
-                <AddressAutocomplete
-                  value={profileForm.watch("location")}
-                  countryRestriction={null}
-                  placeholder="Cerca indirizzo birrificio..."
-                  onAddressSelect={(details) => {
-                    profileForm.setValue("location", details.formattedAddress);
-                    profileForm.setValue("region", details.region);
-                    profileForm.setValue("country", details.country);
-                  }}
-                />
-              </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label className="text-sm font-medium">Sito Web</label>
-                  <Input {...profileForm.register("websiteUrl")} placeholder="https://..." />
-                </div>
-                <div>
-                  <label className="text-sm font-medium">Telefono</label>
-                  <Input {...profileForm.register("phone")} placeholder="+39..." />
-                </div>
-              </div>
-              <div>
-                <label className="text-sm font-medium">Partita IVA</label>
-                <Input {...profileForm.register("vatNumber")} placeholder="IT..." />
-              </div>
-              <div className="flex gap-3 pt-2">
-                <Button
-                  type="submit"
-                  className="bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700"
-                  disabled={updateProfileMutation.isPending}
-                >
-                  {updateProfileMutation.isPending && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-                  Salva Modifiche
-                </Button>
-                <Button type="button" variant="outline" onClick={() => setIsEditing(false)}>
-                  Annulla
-                </Button>
-              </div>
-            </form>
-          </CardContent>
-        </Card>
-      )}
     </div>
-  );
-}
+  </div>
+);
 
 export default function BreweryDashboard() {
   const { toast } = useToast();
   const { user, isLoading: authLoading } = useAuth();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingBeer, setEditingBeer] = useState<Beer | null>(null);
-  const [activeTab, setActiveTab] = useState("profile");
+  const [showAllBeers, setShowAllBeers] = useState(false);
+  const [isEditingProfile, setIsEditingProfile] = useState(false);
+  const [isEditingImages, setIsEditingImages] = useState(false);
+  const [editForm, setEditForm] = useState({
+    name: '', description: '', location: '', region: '', country: '',
+    websiteUrl: '', phone: '', vatNumber: '', latitude: '', longitude: '',
+  });
 
   const { data: requestStatus, isLoading: requestLoading } = useQuery<{
     hasRequest: boolean;
@@ -338,15 +159,35 @@ export default function BreweryDashboard() {
   const form = useForm<BeerFormValues>({
     resolver: zodResolver(beerFormSchema),
     defaultValues: {
-      name: "",
-      style: "",
-      abv: null,
-      ibu: null,
-      description: "",
-      color: "",
-      isBottled: false,
+      name: "", style: "", abv: null, ibu: null, description: "", color: "", isBottled: false,
     },
   });
+
+  const updateProfileMutation = useMutation({
+    mutationFn: (values: any) =>
+      apiRequest("/api/brewery/profile", { method: "PATCH" }, values),
+    onSuccess: () => {
+      toast({ title: "Successo", description: "Profilo birrificio aggiornato" });
+      queryClient.invalidateQueries({ queryKey: ["/api/brewery/my"] });
+      setIsEditingProfile(false);
+    },
+    onError: () => {
+      toast({ title: "Errore", description: "Impossibile aggiornare il profilo", variant: "destructive" });
+    },
+  });
+
+  const handleImageUpload = useCallback(async (url: string | null, type: 'logo' | 'cover') => {
+    if (url) {
+      try {
+        const updateData = type === 'cover' ? { coverImageUrl: url } : { logoUrl: url };
+        await apiRequest("/api/brewery/profile", { method: "PATCH" }, updateData);
+        queryClient.invalidateQueries({ queryKey: ["/api/brewery/my"] });
+        toast({ title: "Successo", description: `${type === 'cover' ? 'Copertina' : 'Logo'} aggiornato` });
+      } catch {
+        toast({ title: "Errore", description: "Impossibile salvare l'immagine", variant: "destructive" });
+      }
+    }
+  }, [toast]);
 
   const createBeerMutation = useMutation({
     mutationFn: (values: BeerFormValues) =>
@@ -366,7 +207,7 @@ export default function BreweryDashboard() {
     mutationFn: ({ id, values }: { id: number; values: BeerFormValues }) =>
       apiRequest(`/api/brewery/beers/${id}`, { method: "PATCH" }, values),
     onSuccess: () => {
-      toast({ title: "Successo", description: "Birra aggiornata con successo" });
+      toast({ title: "Successo", description: "Birra aggiornata" });
       queryClient.invalidateQueries({ queryKey: ["/api/brewery/my"] });
       setDialogOpen(false);
       setEditingBeer(null);
@@ -381,7 +222,7 @@ export default function BreweryDashboard() {
     mutationFn: (id: number) =>
       apiRequest(`/api/brewery/beers/${id}`, { method: "DELETE" }),
     onSuccess: () => {
-      toast({ title: "Successo", description: "Birra eliminata con successo" });
+      toast({ title: "Successo", description: "Birra eliminata" });
       queryClient.invalidateQueries({ queryKey: ["/api/brewery/my"] });
     },
     onError: () => {
@@ -391,33 +232,22 @@ export default function BreweryDashboard() {
 
   const openCreateDialog = () => {
     setEditingBeer(null);
-    form.reset({
-      name: "",
-      style: "",
-      abv: null,
-      ibu: null,
-      description: "",
-      color: "",
-      isBottled: false,
-    });
+    form.reset({ name: "", style: "", abv: null, ibu: null, description: "", color: "", isBottled: false });
     setDialogOpen(true);
   };
 
-  const openEditDialog = (beer: Beer) => {
+  const openEditBeerDialog = (beer: Beer) => {
     setEditingBeer(beer);
     form.reset({
-      name: beer.name,
-      style: beer.style,
+      name: beer.name, style: beer.style,
       abv: beer.abv ? parseFloat(beer.abv) : null,
-      ibu: beer.ibu ?? null,
-      description: beer.description ?? "",
-      color: beer.color ?? "",
-      isBottled: beer.isBottled ?? false,
+      ibu: beer.ibu ?? null, description: beer.description ?? "",
+      color: beer.color ?? "", isBottled: beer.isBottled ?? false,
     });
     setDialogOpen(true);
   };
 
-  const onSubmit = (values: BeerFormValues) => {
+  const onBeerSubmit = (values: BeerFormValues) => {
     if (editingBeer) {
       updateBeerMutation.mutate({ id: editingBeer.id, values });
     } else {
@@ -425,13 +255,27 @@ export default function BreweryDashboard() {
     }
   };
 
+  const openProfileEdit = () => {
+    if (brewery) {
+      setEditForm({
+        name: brewery.name || '', description: brewery.description || '',
+        location: brewery.location || '', region: brewery.region || '',
+        country: brewery.country || '', websiteUrl: brewery.websiteUrl || '',
+        phone: brewery.phone || '', vatNumber: brewery.vatNumber || '',
+        latitude: brewery.latitude || '', longitude: brewery.longitude || '',
+      });
+      setIsEditingProfile(true);
+    }
+  };
+
+  const handleSaveProfile = () => {
+    updateProfileMutation.mutate(editForm);
+  };
+
   if (authLoading || requestLoading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="text-center">
-          <Loader2 className="animate-spin h-12 w-12 text-orange-600 mx-auto mb-4" />
-          <p className="text-gray-600 dark:text-gray-300">Caricamento...</p>
-        </div>
+        <Loader2 className="animate-spin h-12 w-12 text-orange-600" />
       </div>
     );
   }
@@ -447,10 +291,7 @@ export default function BreweryDashboard() {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="text-center">
-          <Loader2 className="animate-spin h-12 w-12 text-orange-600 mx-auto mb-4" />
-          <p className="text-gray-600 dark:text-gray-300">Caricamento dashboard birrificio...</p>
-        </div>
+        <Loader2 className="animate-spin h-12 w-12 text-orange-600" />
       </div>
     );
   }
@@ -474,260 +315,554 @@ export default function BreweryDashboard() {
     );
   }
 
+  const displayedBeers = showAllBeers ? beers : beers.slice(0, 6);
+
   return (
-    <div className="container mx-auto px-2 sm:px-4 py-4 sm:py-8">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6 gap-4">
-        <div>
-          <h1 className="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-amber-600 to-orange-600 bg-clip-text text-transparent">
-            Dashboard Birrificio
-          </h1>
-          <p className="text-gray-600 dark:text-gray-300 mt-1 text-sm sm:text-base">
-            Gestisci il tuo birrificio e le tue birre
-          </p>
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-amber-50 to-orange-50 dark:from-gray-950 dark:via-amber-950 dark:to-orange-950">
+
+      {/* Hero Section - same as public page */}
+      <div className="relative">
+        <div className="relative h-96 md:h-[500px] overflow-hidden">
+          <img
+            src={brewery.coverImageUrl || "https://images.unsplash.com/photo-1532634922-8fe0b757fb13?w=1200&h=600&fit=crop"}
+            alt={`${brewery.name} - Copertina`}
+            className="w-full h-full object-cover"
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-black/10"></div>
+
+          {/* Edit cover button */}
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setIsEditingImages(true)}
+            className="absolute top-4 right-4 backdrop-blur-md bg-white/20 border-white/40 text-white hover:bg-white/30 z-10"
+          >
+            <Camera className="h-4 w-4 mr-2" />
+            Modifica Immagini
+          </Button>
+
+          {/* Hero Content */}
+          <div className="absolute inset-0 flex items-end">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full pb-12">
+              <div className="glass-card rounded-2xl p-8 backdrop-blur-md bg-white/10 border border-white/20">
+                <div className="flex flex-col md:flex-row items-center md:items-center justify-between gap-8">
+                  <div className="flex flex-col md:flex-row items-center space-y-4 md:space-y-0 md:space-x-6 w-full md:w-auto justify-center md:justify-start">
+                    {brewery.logoUrl ? (
+                      <Avatar className="h-20 w-20 ring-4 ring-white/30 flex-shrink-0">
+                        <AvatarImage src={brewery.logoUrl} alt={`${brewery.name} - Logo`} />
+                        <AvatarFallback className="bg-gradient-to-br from-amber-500 to-orange-600 text-white text-2xl">
+                          {brewery.name?.[0] || 'B'}
+                        </AvatarFallback>
+                      </Avatar>
+                    ) : (
+                      <div className="h-20 w-20 rounded-full ring-4 ring-white/30 bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center flex-shrink-0">
+                        <Factory className="h-10 w-10 text-white" />
+                      </div>
+                    )}
+                    <div className="text-center md:text-left">
+                      <h1 className="text-2xl sm:text-3xl md:text-4xl text-white mb-4 font-bold leading-tight">
+                        {brewery.name}
+                      </h1>
+                      <div className="flex flex-col sm:flex-row items-center justify-center md:justify-start space-y-3 sm:space-y-0 sm:space-x-4">
+                        {brewery.location && (
+                          <div className="flex items-center text-white/90 backdrop-blur-sm bg-white/10 rounded-lg px-4 py-2">
+                            <MapPin className="h-4 w-4 mr-2" />
+                            <span className="text-sm font-medium">{brewery.location} {brewery.region && `(${brewery.region})`}</span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Owner action buttons */}
+                  <div className="flex items-center justify-center md:justify-end space-x-2 sm:space-x-3 w-full md:w-auto">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={openProfileEdit}
+                      className="backdrop-blur-md bg-amber-500/30 border-amber-300/50 text-white hover:bg-amber-500/50 hover:border-amber-300/70 transition-all duration-300 font-medium shadow-lg min-h-[44px]"
+                    >
+                      <Pencil className="h-4 w-4 sm:mr-2" />
+                      <span className="hidden sm:inline">Modifica Profilo</span>
+                    </Button>
+                    <Link href={`/brewery/${brewery.id}`}>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="backdrop-blur-md bg-white/20 border-white/40 text-white hover:bg-white/30 hover:border-white/60 transition-all duration-300 font-medium shadow-lg min-h-[44px]"
+                      >
+                        <ExternalLink className="h-4 w-4 sm:mr-2" />
+                        <span className="hidden sm:inline">Vedi Pagina Pubblica</span>
+                      </Button>
+                    </Link>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-        <TabsList className="grid w-full grid-cols-2 max-w-md">
-          <TabsTrigger value="profile" className="flex items-center gap-2">
-            <Factory className="w-4 h-4" /> Profilo
-          </TabsTrigger>
-          <TabsTrigger value="beers" className="flex items-center gap-2">
-            <BeerIcon className="w-4 h-4" /> Birre ({beers.length})
-          </TabsTrigger>
-        </TabsList>
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Quick Stats */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
+          <BreweryStatsCard
+            icon={BeerIcon}
+            label="Birre"
+            value={beers.length}
+            gradient="from-amber-500 to-orange-600"
+          />
+          <a
+            href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(brewery.name + ' ' + brewery.location)}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="block"
+          >
+            <BreweryStatsCard
+              icon={MapPin}
+              label="Cerca su Maps"
+              value={brewery.location || 'N/D'}
+              gradient="from-blue-500 to-indigo-600"
+            />
+          </a>
+        </div>
 
-        <TabsContent value="profile">
-          <BreweryProfileEditor brewery={brewery} onUpdate={() => queryClient.invalidateQueries({ queryKey: ["/api/brewery/my"] })} />
-        </TabsContent>
+        {/* Description */}
+        {brewery.description && (
+          <Card className="glass-card border-0 mb-8">
+            <CardContent className="p-6">
+              <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4 flex items-center">
+                <div className="p-2 bg-gradient-to-r from-amber-500 to-orange-600 rounded-lg mr-3">
+                  <Building className="h-5 w-5 text-white" />
+                </div>
+                Il Birrificio
+              </h2>
+              <p className="text-gray-700 dark:text-gray-300 leading-relaxed whitespace-pre-line">
+                {brewery.description}
+              </p>
+            </CardContent>
+          </Card>
+        )}
 
-        <TabsContent value="beers">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg sm:text-xl font-semibold flex items-center gap-2">
-              <BeerIcon className="w-5 h-5 text-amber-600" />
-              Le Tue Birre
+        {/* Info section with contact details */}
+        {(brewery.websiteUrl || brewery.phone || brewery.vatNumber) && (
+          <Card className="glass-card border-0 mb-8">
+            <CardContent className="p-6">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                {brewery.websiteUrl && (
+                  <a href={brewery.websiteUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-sm text-amber-600 hover:underline">
+                    <Globe className="w-4 h-4 text-gray-400 flex-shrink-0" />
+                    <span className="truncate">{brewery.websiteUrl}</span>
+                  </a>
+                )}
+                {brewery.phone && (
+                  <div className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
+                    <Phone className="w-4 h-4 text-gray-400 flex-shrink-0" />
+                    <span>{brewery.phone}</span>
+                  </div>
+                )}
+                {brewery.vatNumber && (
+                  <div className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
+                    <FileText className="w-4 h-4 text-gray-400 flex-shrink-0" />
+                    <span>P.IVA: {brewery.vatNumber}</span>
+                  </div>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Beers Section - same layout as public page, with edit buttons */}
+        <div className="glass-card border-0 rounded-2xl p-6 mb-8">
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-2xl font-bold text-gray-900 dark:text-white flex items-center">
+              <div className="p-2 bg-gradient-to-r from-amber-500 to-orange-600 rounded-xl mr-3">
+                <BeerIcon className="h-6 w-6 text-white" />
+              </div>
+              Birre ({beers.length})
             </h2>
-            <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-              <DialogTrigger asChild>
-                <Button
-                  onClick={openCreateDialog}
-                  className="bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700"
-                >
-                  <Plus className="w-4 h-4 mr-2" />
-                  Aggiungi Birra
-                </Button>
-              </DialogTrigger>
-              <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
-                <DialogHeader>
-                  <DialogTitle>
-                    {editingBeer ? "Modifica Birra" : "Nuova Birra"}
-                  </DialogTitle>
-                </DialogHeader>
-                <Form {...form}>
-                  <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-                    <FormField
-                      control={form.control}
-                      name="name"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Nome *</FormLabel>
-                          <FormControl>
-                            <Input placeholder="Nome della birra" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={form.control}
-                      name="style"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Stile *</FormLabel>
-                          <FormControl>
-                            <Input placeholder="Es. IPA, Lager, Stout..." {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <div className="grid grid-cols-2 gap-4">
-                      <FormField
-                        control={form.control}
-                        name="abv"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>ABV (%)</FormLabel>
-                            <FormControl>
-                              <Input
-                                type="number"
-                                step="0.1"
-                                placeholder="5.5"
-                                {...field}
-                                value={field.value ?? ""}
-                                onChange={(e) => field.onChange(e.target.value === "" ? null : parseFloat(e.target.value))}
-                              />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                      <FormField
-                        control={form.control}
-                        name="ibu"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>IBU</FormLabel>
-                            <FormControl>
-                              <Input
-                                type="number"
-                                placeholder="40"
-                                {...field}
-                                value={field.value ?? ""}
-                                onChange={(e) => field.onChange(e.target.value === "" ? null : parseInt(e.target.value))}
-                              />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                    </div>
-                    <FormField
-                      control={form.control}
-                      name="color"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Colore</FormLabel>
-                          <FormControl>
-                            <Input placeholder="Es. Dorato, Ambrato, Scuro..." {...field} value={field.value ?? ""} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={form.control}
-                      name="description"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Descrizione</FormLabel>
-                          <FormControl>
-                            <Textarea
-                              placeholder="Descrivi la tua birra..."
-                              rows={3}
-                              {...field}
-                              value={field.value ?? ""}
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={form.control}
-                      name="isBottled"
-                      render={({ field }) => (
-                        <FormItem className="flex items-center justify-between rounded-lg border p-3">
-                          <FormLabel className="text-sm font-medium">Disponibile in bottiglia</FormLabel>
-                          <FormControl>
-                            <Switch checked={field.value} onCheckedChange={field.onChange} />
-                          </FormControl>
-                        </FormItem>
-                      )}
-                    />
-                    <Button
-                      type="submit"
-                      className="w-full bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700"
-                      disabled={createBeerMutation.isPending || updateBeerMutation.isPending}
-                    >
-                      {(createBeerMutation.isPending || updateBeerMutation.isPending) && (
-                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                      )}
-                      {editingBeer ? "Salva Modifiche" : "Aggiungi Birra"}
-                    </Button>
-                  </form>
-                </Form>
-              </DialogContent>
-            </Dialog>
+            <Button
+              onClick={openCreateDialog}
+              className="bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700"
+            >
+              <Plus className="w-4 h-4 mr-2" />
+              Aggiungi Birra
+            </Button>
           </div>
 
           {beers.length === 0 ? (
-            <Card className="backdrop-blur-lg bg-white/80 dark:bg-gray-800/80 border-orange-200/50">
-              <CardContent className="pt-6 text-center py-12">
-                <BeerIcon className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-                <h3 className="text-lg font-semibold mb-2">Nessuna birra</h3>
-                <p className="text-gray-600 dark:text-gray-300">
-                  Non hai ancora aggiunto nessuna birra. Inizia aggiungendo la tua prima birra!
-                </p>
-              </CardContent>
-            </Card>
+            <div className="text-center py-16">
+              <div className="w-20 h-20 bg-gradient-to-r from-gray-200 to-gray-300 dark:from-gray-700 dark:to-gray-600 rounded-full flex items-center justify-center mx-auto mb-6">
+                <BeerIcon className="h-10 w-10 text-gray-400 dark:text-gray-500" />
+              </div>
+              <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
+                Nessuna birra ancora
+              </h3>
+              <p className="text-gray-600 dark:text-gray-400 mb-4">
+                Aggiungi la prima birra al tuo catalogo!
+              </p>
+              <Button onClick={openCreateDialog} className="bg-gradient-to-r from-amber-500 to-orange-600">
+                <Plus className="w-4 h-4 mr-2" /> Aggiungi la prima birra
+              </Button>
+            </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {beers.map((beer) => (
-                <Card
-                  key={beer.id}
-                  className="backdrop-blur-lg bg-white/80 dark:bg-gray-800/80 border-orange-200/50 shadow-md hover:shadow-lg transition-shadow"
-                >
-                  <CardHeader className="pb-2">
-                    <div className="flex items-start justify-between">
-                      <div className="flex-1 min-w-0">
-                        <CardTitle className="text-lg truncate">{beer.name}</CardTitle>
-                        <CardDescription className="mt-1">{beer.style}</CardDescription>
+            <>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {displayedBeers.map((beer: Beer) => (
+                  <Card key={beer.id} className="glass-card border-0 h-full hover:scale-[1.02] transition-all duration-300 group relative">
+                    <CardContent className="p-6">
+                      <div className="flex items-start space-x-4 mb-4">
+                        <ImageWithFallback
+                          src={beer?.imageUrl}
+                          alt={beer?.name}
+                          imageType="beer"
+                          containerClassName="w-16 h-16 rounded-xl"
+                          className="w-16 h-16 object-cover rounded-xl"
+                          iconSize="lg"
+                        />
+                        <div className="flex-1 min-w-0">
+                          <h3 className="font-bold text-gray-900 dark:text-white mb-1">
+                            {beer.name}
+                          </h3>
+                          <p className="text-sm text-gray-600 dark:text-gray-400">
+                            {beer.style}
+                          </p>
+                        </div>
                       </div>
-                      <div className="flex gap-1 ml-2">
+
+                      <div className="flex flex-wrap items-center gap-2">
+                        {beer.abv && (
+                          <Badge variant="outline" className="bg-gradient-to-r from-orange-50 to-red-50 dark:from-orange-950 dark:to-red-950 border-orange-200 text-orange-800 dark:text-orange-200">
+                            <Target className="h-3 w-3 mr-1" />
+                            {beer.abv}% ABV
+                          </Badge>
+                        )}
+                        {beer.ibu && (
+                          <Badge variant="outline" className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-950 dark:to-indigo-950 border-blue-200 text-blue-800 dark:text-blue-200">
+                            <Sparkles className="h-3 w-3 mr-1" />
+                            {beer.ibu} IBU
+                          </Badge>
+                        )}
+                        {beer.isBottled && (
+                          <Badge variant="outline" className="bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-950 dark:to-emerald-950 border-green-200 text-green-800 dark:text-green-200">
+                            In bottiglia
+                          </Badge>
+                        )}
+                      </div>
+
+                      {beer.description && (
+                        <p className="mt-4 text-sm text-gray-600 dark:text-gray-400 line-clamp-3">
+                          {beer.description}
+                        </p>
+                      )}
+
+                      {/* Edit/Delete buttons */}
+                      <div className="flex items-center gap-2 mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
                         <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-8 w-8"
-                          onClick={() => openEditDialog(beer)}
+                          variant="outline"
+                          size="sm"
+                          onClick={() => openEditBeerDialog(beer)}
+                          className="flex-1"
                         >
-                          <Pencil className="w-4 h-4" />
+                          <Pencil className="w-3 h-3 mr-2" />
+                          Modifica
                         </Button>
                         <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-8 w-8 text-red-500 hover:text-red-700 hover:bg-red-50"
-                          onClick={() => deleteBeerMutation.mutate(beer.id)}
+                          variant="outline"
+                          size="sm"
+                          onClick={() => {
+                            if (confirm(`Eliminare "${beer.name}"?`)) {
+                              deleteBeerMutation.mutate(beer.id);
+                            }
+                          }}
+                          className="text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-950"
                           disabled={deleteBeerMutation.isPending}
                         >
-                          <Trash2 className="w-4 h-4" />
+                          <Trash2 className="w-3 h-3" />
                         </Button>
                       </div>
-                    </div>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="flex flex-wrap gap-2 mb-3">
-                      {beer.abv && (
-                        <Badge variant="secondary" className="bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300">
-                          ABV {beer.abv}%
-                        </Badge>
-                      )}
-                      {beer.ibu && (
-                        <Badge variant="secondary" className="bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-300">
-                          IBU {beer.ibu}
-                        </Badge>
-                      )}
-                      {beer.color && (
-                        <Badge variant="outline">{beer.color}</Badge>
-                      )}
-                      {beer.isBottled && (
-                        <Badge className="bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300">
-                          Bottiglia
-                        </Badge>
-                      )}
-                    </div>
-                    {beer.description && (
-                      <p className="text-sm text-gray-600 dark:text-gray-300 line-clamp-3">
-                        {beer.description}
-                      </p>
-                    )}
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+
+              {beers.length > 6 && (
+                <div className="text-center mt-6">
+                  <Button
+                    variant="outline"
+                    onClick={() => setShowAllBeers(!showAllBeers)}
+                    className="bg-white/60 dark:bg-gray-800/60"
+                  >
+                    {showAllBeers ? 'Mostra meno' : `Mostra tutte (${beers.length})`}
+                  </Button>
+                </div>
+              )}
+            </>
           )}
-        </TabsContent>
-      </Tabs>
+        </div>
+
+        {/* Website Link */}
+        {brewery.websiteUrl && (
+          <div className="glass-card border-0 rounded-xl p-6 text-center">
+            <a
+              href={brewery.websiteUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center justify-center px-6 py-3 bg-gradient-to-r from-amber-500 to-orange-600 text-white rounded-lg hover:from-amber-600 hover:to-orange-700 transition-all duration-300 font-medium"
+            >
+              <Globe className="h-5 w-5 mr-2" />
+              Visita il sito web
+            </a>
+          </div>
+        )}
+      </main>
+
+      {/* Profile Edit Dialog */}
+      <Dialog open={isEditingProfile} onOpenChange={setIsEditingProfile} modal={false}>
+        <DialogContent
+          className="max-w-2xl max-h-[90vh] overflow-y-auto"
+          onPointerDownOutside={(e) => {
+            const target = e.target as HTMLElement;
+            if (target.closest('.pac-container')) e.preventDefault();
+          }}
+          onInteractOutside={(e) => {
+            const target = e.target as HTMLElement;
+            if (target.closest('.pac-container')) e.preventDefault();
+          }}
+        >
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Pencil className="h-5 w-5" />
+              Modifica Profilo Birrificio
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Nome Birrificio</label>
+                <Input
+                  value={editForm.name}
+                  onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Posizione</label>
+                <AddressAutocomplete
+                  value={editForm.location}
+                  countryRestriction={null}
+                  placeholder="Cerca indirizzo..."
+                  onAddressSelect={(details) => {
+                    setEditForm({
+                      ...editForm,
+                      location: details.formattedAddress,
+                      region: details.region,
+                      country: details.country,
+                    });
+                  }}
+                />
+              </div>
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Descrizione</label>
+              <Textarea
+                value={editForm.description}
+                onChange={(e) => setEditForm({ ...editForm, description: e.target.value })}
+                rows={4}
+                placeholder="Racconta la storia del tuo birrificio..."
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Sito Web</label>
+                <Input
+                  value={editForm.websiteUrl}
+                  onChange={(e) => setEditForm({ ...editForm, websiteUrl: e.target.value })}
+                  placeholder="https://..."
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Telefono</label>
+                <Input
+                  value={editForm.phone}
+                  onChange={(e) => setEditForm({ ...editForm, phone: e.target.value })}
+                  placeholder="+39..."
+                />
+              </div>
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Partita IVA</label>
+              <Input
+                value={editForm.vatNumber}
+                onChange={(e) => setEditForm({ ...editForm, vatNumber: e.target.value })}
+                placeholder="IT..."
+              />
+            </div>
+            <div className="flex gap-3 pt-2">
+              <Button
+                onClick={handleSaveProfile}
+                className="bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700"
+                disabled={updateProfileMutation.isPending}
+              >
+                {updateProfileMutation.isPending && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+                <Save className="w-4 h-4 mr-2" />
+                Salva Modifiche
+              </Button>
+              <Button variant="outline" onClick={() => setIsEditingProfile(false)}>
+                <X className="w-4 h-4 mr-2" />
+                Annulla
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Image Edit Dialog */}
+      <Dialog open={isEditingImages} onOpenChange={setIsEditingImages}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Camera className="h-5 w-5" />
+              Modifica Immagini
+            </DialogTitle>
+          </DialogHeader>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 py-4">
+            <ImageUpload
+              label="Logo Birrificio"
+              description="Immagine quadrata consigliata"
+              currentImageUrl={brewery?.logoUrl}
+              onImageChange={(url) => handleImageUpload(url, 'logo')}
+              folder="brewery-logos"
+              aspectRatio="square"
+              recommendedDimensions="400x400px"
+            />
+            <ImageUpload
+              label="Immagine di Copertina"
+              description="Formato orizzontale consigliato"
+              currentImageUrl={brewery?.coverImageUrl}
+              onImageChange={(url) => handleImageUpload(url, 'cover')}
+              folder="brewery-covers"
+              aspectRatio="landscape"
+              recommendedDimensions="1200x400px"
+            />
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Beer Create/Edit Dialog */}
+      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+        <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>
+              {editingBeer ? "Modifica Birra" : "Nuova Birra"}
+            </DialogTitle>
+          </DialogHeader>
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(onBeerSubmit)} className="space-y-4">
+              <FormField
+                control={form.control}
+                name="name"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Nome *</FormLabel>
+                    <FormControl><Input placeholder="Nome della birra" {...field} /></FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="style"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Stile *</FormLabel>
+                    <FormControl><Input placeholder="Es. IPA, Lager, Stout..." {...field} /></FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <div className="grid grid-cols-2 gap-4">
+                <FormField
+                  control={form.control}
+                  name="abv"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>ABV (%)</FormLabel>
+                      <FormControl>
+                        <Input type="number" step="0.1" placeholder="5.0"
+                          {...field} value={field.value ?? ""} onChange={(e) => field.onChange(e.target.value === "" ? null : parseFloat(e.target.value))} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="ibu"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>IBU</FormLabel>
+                      <FormControl>
+                        <Input type="number" placeholder="40"
+                          {...field} value={field.value ?? ""} onChange={(e) => field.onChange(e.target.value === "" ? null : parseInt(e.target.value))} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+              <FormField
+                control={form.control}
+                name="color"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Colore</FormLabel>
+                    <FormControl><Input placeholder="Es. Dorata, Ambrata, Scura..." {...field} value={field.value ?? ""} /></FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="description"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Descrizione</FormLabel>
+                    <FormControl><Textarea placeholder="Descrivi la birra..." rows={3} {...field} value={field.value ?? ""} /></FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="isBottled"
+                render={({ field }) => (
+                  <FormItem className="flex items-center justify-between rounded-lg border p-3">
+                    <div>
+                      <FormLabel>Disponibile in bottiglia</FormLabel>
+                    </div>
+                    <FormControl>
+                      <Switch checked={field.value} onCheckedChange={field.onChange} />
+                    </FormControl>
+                  </FormItem>
+                )}
+              />
+              <div className="flex gap-3 pt-2">
+                <Button
+                  type="submit"
+                  className="flex-1 bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700"
+                  disabled={createBeerMutation.isPending || updateBeerMutation.isPending}
+                >
+                  {(createBeerMutation.isPending || updateBeerMutation.isPending) && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+                  {editingBeer ? "Salva Modifiche" : "Aggiungi Birra"}
+                </Button>
+                <Button type="button" variant="outline" onClick={() => setDialogOpen(false)}>
+                  Annulla
+                </Button>
+              </div>
+            </form>
+          </Form>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
