@@ -18,6 +18,7 @@
     }
     #loading h1 { font-size: 64px; margin-bottom: 16px; }
     #loading p { font-size: 24px; color: #9CA3AF; }
+    #error { font-size: 18px; color: #EF4444; margin-top: 16px; display: none; }
     #taplist-frame {
       width: 100%;
       height: 100%;
@@ -28,55 +29,92 @@
 </head>
 <body>
   <div id="loading">
-    <h1>🍺 Fermenta.to</h1>
-    <p>In attesa della taplist...</p>
+    <h1>&#127866; Fermenta.to</h1>
+    <p id="status">Avvio receiver...</p>
+    <p id="error"></p>
   </div>
-  <iframe id="taplist-frame" sandbox="allow-scripts allow-same-origin allow-popups"></iframe>
+  <iframe id="taplist-frame"></iframe>
 
-  <script src="//www.gstatic.com/cast/sdk/libs/caf_receiver/v3/cast_receiver_framework.js"></script>
+  <script src="https://www.gstatic.com/cast/sdk/libs/caf_receiver/v3/cast_receiver_framework.js"></script>
   <script>
-    const NAMESPACE = 'urn:x-cast:fermenta.to';
+    var NAMESPACE = 'urn:x-cast:fermenta.to';
+    var statusEl = document.getElementById('status');
+    var errorEl = document.getElementById('error');
 
-    const context = cast.framework.CastReceiverContext.getInstance();
-    const options = new cast.framework.CastReceiverOptions();
-    options.disableIdleTimeout = true;
+    try {
+      var context = cast.framework.CastReceiverContext.getInstance();
 
-    context.addCustomMessageListener(NAMESPACE, function(event) {
-      console.log('Received message:', event.data);
-      const data = event.data;
-      if (data && data.url) {
-        loadTaplist(data.url);
-      }
-    });
+      context.setLoggerLevel(cast.framework.LoggerLevel.DEBUG);
 
-    function loadTaplist(url) {
-      var frame = document.getElementById('taplist-frame');
-      var loading = document.getElementById('loading');
-      frame.src = url;
-      frame.style.display = 'block';
-      loading.style.display = 'none';
-      frame.onload = function() {
-        console.log('Taplist loaded:', url);
-      };
-    }
+      context.addCustomMessageListener(NAMESPACE, function(event) {
+        console.log('Received message:', JSON.stringify(event.data));
+        statusEl.textContent = 'Messaggio ricevuto, caricamento...';
+        if (event.data && event.data.url) {
+          loadTaplist(event.data.url);
+        }
+      });
 
-    context.addEventListener(cast.framework.system.EventType.SENDER_CONNECTED, function(event) {
-      console.log('Sender connected:', event.senderId);
-    });
-
-    context.addEventListener(cast.framework.system.EventType.SENDER_DISCONNECTED, function(event) {
-      console.log('Sender disconnected:', event.senderId);
-      if (context.getSenders().length === 0) {
+      function loadTaplist(url) {
         var frame = document.getElementById('taplist-frame');
         var loading = document.getElementById('loading');
-        frame.style.display = 'none';
-        loading.style.display = 'flex';
-        loading.querySelector('p').textContent = 'Connetti dall\'app per mostrare la taplist';
+        frame.src = url;
+        frame.style.display = 'block';
+        loading.style.display = 'none';
+        frame.onerror = function() {
+          console.error('Failed to load taplist URL:', url);
+          loading.style.display = 'flex';
+          frame.style.display = 'none';
+          statusEl.textContent = 'Errore caricamento taplist';
+          errorEl.textContent = url;
+          errorEl.style.display = 'block';
+        };
+        frame.onload = function() {
+          console.log('Taplist loaded successfully:', url);
+        };
       }
-    });
 
-    context.start(options);
-    console.log('Cast Receiver started');
+      context.addEventListener(cast.framework.system.EventType.READY, function() {
+        console.log('Receiver READY');
+        statusEl.textContent = 'In attesa della taplist...';
+      });
+
+      context.addEventListener(cast.framework.system.EventType.SENDER_CONNECTED, function(event) {
+        console.log('Sender connected:', event.senderId);
+        statusEl.textContent = 'Connesso! In attesa dei dati...';
+      });
+
+      context.addEventListener(cast.framework.system.EventType.SENDER_DISCONNECTED, function(event) {
+        console.log('Sender disconnected:', event.senderId);
+        if (context.getSenders().length === 0) {
+          var frame = document.getElementById('taplist-frame');
+          var loading = document.getElementById('loading');
+          frame.style.display = 'none';
+          frame.src = '';
+          loading.style.display = 'flex';
+          statusEl.textContent = 'Disconnesso. Connetti dall\'app per mostrare la taplist';
+        }
+      });
+
+      context.addEventListener(cast.framework.system.EventType.ERROR, function(event) {
+        console.error('Receiver error:', JSON.stringify(event));
+        errorEl.textContent = 'Errore: ' + JSON.stringify(event.detailedErrorCode || event);
+        errorEl.style.display = 'block';
+      });
+
+      var options = new cast.framework.CastReceiverOptions();
+      options.disableIdleTimeout = true;
+      options.customNamespaces = {};
+      options.customNamespaces[NAMESPACE] = cast.framework.system.MessageType.JSON;
+
+      context.start(options);
+      console.log('Cast Receiver started successfully');
+      statusEl.textContent = 'Receiver avviato. In attesa della connessione...';
+    } catch (e) {
+      console.error('Receiver init error:', e);
+      statusEl.textContent = 'Errore inizializzazione';
+      errorEl.textContent = e.message || String(e);
+      errorEl.style.display = 'block';
+    }
   </script>
 </body>
 </html>
