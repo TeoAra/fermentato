@@ -518,22 +518,28 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
               <Button
                 className="w-full gap-2 bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 py-5 text-base"
                 onClick={async () => {
-                  const tvUrl = `${window.location.origin}/tv/${currentPub?.id}`;
-                  if ('PresentationRequest' in window) {
-                    try {
-                      const request = new (window as any).PresentationRequest([tvUrl]);
-                      const connection = await request.start();
-                      toast({ title: "Taplist trasmessa sulla TV!", description: "La taplist è visibile sulla TV" });
-                      connection.onclose = () => {
-                        toast({ title: "Trasmissione terminata" });
-                      };
-                      return;
-                    } catch (err: any) {
-                      if (err?.name === 'AbortError') return;
-                      toast({ title: "Nessun dispositivo trovato", description: "Assicurati che la TV sia sulla stessa rete Wi-Fi", variant: "destructive" });
-                    }
-                  } else {
-                    toast({ title: "Non supportato", description: "Apri questa pagina in Chrome per trasmettere" });
+                  const w = window as any;
+                  if (!w.__castAvailable || !w.cast || !w.chrome?.cast) {
+                    toast({ title: "Cast non disponibile", description: "Apri questa pagina in Chrome", variant: "destructive" });
+                    return;
+                  }
+                  try {
+                    const ctx = w.cast.framework.CastContext.getInstance();
+                    await ctx.requestSession();
+                    const session = ctx.getCurrentSession();
+                    if (!session) return;
+                    toast({ title: "Connesso alla TV!", description: "Invio taplist in corso..." });
+                    const imgUrl = `${window.location.origin}/api/pubs/${currentPub?.id}/taplist-image`;
+                    const mediaInfo = new w.chrome.cast.media.MediaInfo(imgUrl, 'image/svg+xml');
+                    mediaInfo.metadata = new w.chrome.cast.media.PhotoMediaMetadata();
+                    mediaInfo.metadata.title = `Taplist - ${currentPub?.name}`;
+                    const loadRequest = new w.chrome.cast.media.LoadRequest(mediaInfo);
+                    await session.loadMedia(loadRequest);
+                    toast({ title: "Taplist sulla TV!", description: "La taplist è visibile sulla TV" });
+                  } catch (err: any) {
+                    if (err?.code === 'cancel' || err?.name === 'AbortError') return;
+                    console.error('Cast error:', err);
+                    toast({ title: "Errore trasmissione", description: "Prova ad aprire la taplist nel browser della TV", variant: "destructive" });
                   }
                 }}
               >

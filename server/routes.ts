@@ -218,6 +218,65 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.get("/api/pubs/:id/taplist-image", async (req, res) => {
+    try {
+      const pubId = parseInt(req.params.id);
+      if (isNaN(pubId)) return res.status(400).json({ message: "Invalid pub ID" });
+
+      const pub = await storage.getPub(pubId);
+      if (!pub) return res.status(404).json({ message: "Pub not found" });
+
+      const tapList = await storage.getTapList(pubId);
+      const activeTaps = tapList.filter((t: any) => t.isActive);
+
+      const W = 1920;
+      const H = 1080;
+      const rowH = 80;
+      const headerH = 140;
+      const cols = activeTaps.length > 10 ? 2 : 1;
+      const colW = cols === 2 ? W / 2 : W;
+      const perCol = Math.ceil(activeTaps.length / cols);
+
+      let rows = '';
+      activeTaps.forEach((tap: any, i: number) => {
+        const col = Math.floor(i / perCol);
+        const row = i % perCol;
+        const x = col * colW + 40;
+        const y = headerH + 20 + row * rowH;
+
+        const beerName = (tap.beer?.name || tap.customBeerName || tap.beerName || 'Birra').replace(/&/g, '&amp;').replace(/</g, '&lt;');
+        const brewery = (tap.beer?.brewery?.name || tap.breweryName || '').replace(/&/g, '&amp;').replace(/</g, '&lt;');
+        const style = (tap.beer?.style || tap.beerStyle || '').replace(/&/g, '&amp;').replace(/</g, '&lt;');
+        const abv = (tap.beer?.abv || tap.beerAbv) ? `${tap.beer?.abv || tap.beerAbv}%` : '';
+        const priceInfo = Array.isArray(tap.prices) && tap.prices.length > 0 ? tap.prices.map((p: any) => `${p.size} €${p.price}`).join(' · ') : (tap.price ? `€${tap.price}` : '');
+
+        const bg = i % 2 === 0 ? 'rgba(255,255,255,0.05)' : 'rgba(255,255,255,0.1)';
+        rows += `<rect x="${x - 20}" y="${y}" width="${colW - 40}" height="${rowH - 4}" rx="8" fill="${bg}"/>`;
+        rows += `<text x="${x}" y="${y + 30}" fill="#F59E0B" font-size="28" font-weight="bold" font-family="sans-serif">${beerName}</text>`;
+        rows += `<text x="${x}" y="${y + 56}" fill="#9CA3AF" font-size="18" font-family="sans-serif">${brewery}${style ? ' · ' + style : ''}</text>`;
+        if (abv) rows += `<text x="${x + colW - 200}" y="${y + 30}" fill="#D1D5DB" font-size="22" font-family="sans-serif" text-anchor="end">${abv}</text>`;
+        if (priceInfo) rows += `<text x="${x + colW - 100}" y="${y + 56}" fill="#10B981" font-size="18" font-family="sans-serif" text-anchor="end">${priceInfo}</text>`;
+      });
+
+      const pubName = (pub.name || 'Pub').replace(/&/g, '&amp;').replace(/</g, '&lt;');
+      const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}">
+        <rect width="${W}" height="${H}" fill="#111827"/>
+        <text x="${W/2}" y="60" fill="#F59E0B" font-size="48" font-weight="bold" font-family="sans-serif" text-anchor="middle">🍺 ${pubName}</text>
+        <text x="${W/2}" y="100" fill="#6B7280" font-size="24" font-family="sans-serif" text-anchor="middle">TAPLIST · ${activeTaps.length} birre alla spina</text>
+        <line x1="40" y1="120" x2="${W-40}" y2="120" stroke="#374151" stroke-width="2"/>
+        ${rows}
+        <text x="${W/2}" y="${H-20}" fill="#4B5563" font-size="16" font-family="sans-serif" text-anchor="middle">fermenta.to/tv/${pubId}</text>
+      </svg>`;
+
+      res.setHeader('Content-Type', 'image/svg+xml');
+      res.setHeader('Cache-Control', 'no-cache, no-store');
+      res.send(svg);
+    } catch (error) {
+      console.error("Error generating taplist image:", error);
+      res.status(500).json({ message: "Failed to generate taplist image" });
+    }
+  });
+
   // Get menu for a pub
   app.get("/api/pubs/:id/menu", async (req, res) => {
     try {
