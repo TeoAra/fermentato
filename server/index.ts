@@ -7,7 +7,9 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
 app.use((req, res, next) => {
-  res.setHeader('Permissions-Policy', 'presentation=(self), display-capture=(self)');
+  if (!req.path.includes('cast-receiver')) {
+    res.setHeader('Permissions-Policy', 'presentation=(self), display-capture=(self)');
+  }
   next();
 });
 
