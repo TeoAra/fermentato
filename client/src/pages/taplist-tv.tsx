@@ -81,53 +81,53 @@ export default function TaplistTV() {
         .tap-img-wrap { border-radius: 50%; overflow: hidden; display: flex; align-items: center; justify-content: center; }
         .tap-content { display: flex; flex-direction: column; justify-content: center; flex: 1; min-width: 0; }
 
-        .scale-large .tap-card { padding: clamp(10px, 2vh, 28px); gap: clamp(12px, 2vh, 28px); }
-        .scale-large .tap-img-col { width: clamp(120px, 18vh, 280px); }
-        .scale-large .tap-img-wrap { width: clamp(100px, 16vh, 250px); height: clamp(100px, 16vh, 250px); }
-        .scale-large .tap-name { font-size: clamp(1.6rem, 4.5vh, 3.5rem); }
-        .scale-large .tap-brewery { font-size: clamp(1.1rem, 3vh, 2.2rem); }
-        .scale-large .tap-badge { font-size: clamp(0.9rem, 2.2vh, 1.6rem); padding: clamp(4px, 0.8vh, 10px) clamp(10px, 2vh, 24px); }
-        .scale-large .tap-price-size { font-size: clamp(0.85rem, 2vh, 1.5rem); }
-        .scale-large .tap-price-val { font-size: clamp(1.3rem, 3.5vh, 2.8rem); }
-        .scale-large .tap-num { width: clamp(40px, 5vh, 70px); height: clamp(40px, 5vh, 70px); font-size: clamp(1.1rem, 2.5vh, 2rem); }
-        .scale-large .tap-badges-row { gap: clamp(6px, 1.2vh, 16px); margin-top: clamp(4px, 1vh, 12px); }
-        .scale-large .tap-prices-row { gap: clamp(8px, 2vh, 24px); margin-top: clamp(6px, 1.5vh, 16px); }
+        .scale-large .tap-card { padding: clamp(16px, 3vh, 40px); gap: clamp(16px, 3vh, 36px); }
+        .scale-large .tap-img-col { width: clamp(160px, 28vh, 400px); }
+        .scale-large .tap-img-wrap { width: clamp(130px, 24vh, 360px); height: clamp(130px, 24vh, 360px); }
+        .scale-large .tap-name { font-size: clamp(2rem, 6vh, 5rem); }
+        .scale-large .tap-brewery { font-size: clamp(1.4rem, 4vh, 3rem); }
+        .scale-large .tap-badge { font-size: clamp(1.1rem, 3vh, 2.2rem); padding: clamp(6px, 1vh, 14px) clamp(14px, 2.5vh, 32px); }
+        .scale-large .tap-price-size { font-size: clamp(1rem, 2.5vh, 2rem); }
+        .scale-large .tap-price-val { font-size: clamp(1.6rem, 5vh, 4rem); }
+        .scale-large .tap-num { width: clamp(46px, 6vh, 80px); height: clamp(46px, 6vh, 80px); font-size: clamp(1.3rem, 3vh, 2.4rem); }
+        .scale-large .tap-badges-row { gap: clamp(8px, 1.5vh, 20px); margin-top: clamp(6px, 1.5vh, 16px); }
+        .scale-large .tap-prices-row { gap: clamp(12px, 3vh, 32px); margin-top: clamp(8px, 2vh, 20px); }
 
-        .scale-medium .tap-card { padding: clamp(8px, 1.5vh, 20px); gap: clamp(10px, 1.5vh, 20px); }
-        .scale-medium .tap-img-col { width: clamp(100px, 14vh, 200px); }
-        .scale-medium .tap-img-wrap { width: clamp(80px, 12vh, 180px); height: clamp(80px, 12vh, 180px); }
-        .scale-medium .tap-name { font-size: clamp(1.3rem, 3.5vh, 2.6rem); }
-        .scale-medium .tap-brewery { font-size: clamp(0.95rem, 2.2vh, 1.7rem); }
-        .scale-medium .tap-badge { font-size: clamp(0.8rem, 1.6vh, 1.3rem); padding: clamp(3px, 0.6vh, 8px) clamp(8px, 1.5vh, 18px); }
-        .scale-medium .tap-price-size { font-size: clamp(0.75rem, 1.5vh, 1.2rem); }
-        .scale-medium .tap-price-val { font-size: clamp(1.1rem, 2.8vh, 2.2rem); }
-        .scale-medium .tap-num { width: clamp(34px, 4vh, 56px); height: clamp(34px, 4vh, 56px); font-size: clamp(0.95rem, 2vh, 1.6rem); }
-        .scale-medium .tap-badges-row { gap: clamp(5px, 1vh, 12px); margin-top: clamp(3px, 0.8vh, 10px); }
-        .scale-medium .tap-prices-row { gap: clamp(6px, 1.5vh, 18px); margin-top: clamp(4px, 1vh, 12px); }
+        .scale-medium .tap-card { padding: clamp(10px, 2vh, 28px); gap: clamp(12px, 2vh, 28px); }
+        .scale-medium .tap-img-col { width: clamp(120px, 20vh, 300px); }
+        .scale-medium .tap-img-wrap { width: clamp(100px, 17vh, 260px); height: clamp(100px, 17vh, 260px); }
+        .scale-medium .tap-name { font-size: clamp(1.6rem, 4.5vh, 3.6rem); }
+        .scale-medium .tap-brewery { font-size: clamp(1.1rem, 3vh, 2.4rem); }
+        .scale-medium .tap-badge { font-size: clamp(0.9rem, 2.2vh, 1.6rem); padding: clamp(4px, 0.8vh, 10px) clamp(10px, 2vh, 22px); }
+        .scale-medium .tap-price-size { font-size: clamp(0.85rem, 2vh, 1.5rem); }
+        .scale-medium .tap-price-val { font-size: clamp(1.3rem, 3.8vh, 3rem); }
+        .scale-medium .tap-num { width: clamp(38px, 5vh, 64px); height: clamp(38px, 5vh, 64px); font-size: clamp(1.1rem, 2.5vh, 1.8rem); }
+        .scale-medium .tap-badges-row { gap: clamp(6px, 1.2vh, 16px); margin-top: clamp(4px, 1vh, 12px); }
+        .scale-medium .tap-prices-row { gap: clamp(8px, 2vh, 24px); margin-top: clamp(6px, 1.5vh, 16px); }
 
-        .scale-normal .tap-card { padding: clamp(6px, 1.2vh, 16px); gap: clamp(8px, 1.2vh, 16px); }
-        .scale-normal .tap-img-col { width: clamp(80px, 10vh, 150px); }
-        .scale-normal .tap-img-wrap { width: clamp(64px, 8.5vh, 130px); height: clamp(64px, 8.5vh, 130px); }
-        .scale-normal .tap-name { font-size: clamp(1.1rem, 2.5vh, 2rem); }
-        .scale-normal .tap-brewery { font-size: clamp(0.85rem, 1.7vh, 1.3rem); }
-        .scale-normal .tap-badge { font-size: clamp(0.72rem, 1.3vh, 1rem); padding: clamp(2px, 0.4vh, 6px) clamp(7px, 1.2vh, 14px); }
-        .scale-normal .tap-price-size { font-size: clamp(0.65rem, 1.2vh, 1rem); }
-        .scale-normal .tap-price-val { font-size: clamp(0.95rem, 2vh, 1.6rem); }
-        .scale-normal .tap-num { width: clamp(28px, 3.2vh, 44px); height: clamp(28px, 3.2vh, 44px); font-size: clamp(0.85rem, 1.5vh, 1.2rem); }
-        .scale-normal .tap-badges-row { gap: clamp(4px, 0.8vh, 10px); margin-top: clamp(2px, 0.6vh, 8px); }
-        .scale-normal .tap-prices-row { gap: clamp(5px, 1.2vh, 14px); margin-top: clamp(3px, 0.8vh, 10px); }
+        .scale-normal .tap-card { padding: clamp(8px, 1.5vh, 20px); gap: clamp(10px, 1.5vh, 20px); }
+        .scale-normal .tap-img-col { width: clamp(96px, 14vh, 200px); }
+        .scale-normal .tap-img-wrap { width: clamp(78px, 12vh, 170px); height: clamp(78px, 12vh, 170px); }
+        .scale-normal .tap-name { font-size: clamp(1.3rem, 3.2vh, 2.6rem); }
+        .scale-normal .tap-brewery { font-size: clamp(0.95rem, 2.2vh, 1.7rem); }
+        .scale-normal .tap-badge { font-size: clamp(0.8rem, 1.7vh, 1.3rem); padding: clamp(3px, 0.5vh, 8px) clamp(8px, 1.5vh, 18px); }
+        .scale-normal .tap-price-size { font-size: clamp(0.75rem, 1.5vh, 1.2rem); }
+        .scale-normal .tap-price-val { font-size: clamp(1.1rem, 2.8vh, 2.2rem); }
+        .scale-normal .tap-num { width: clamp(30px, 4vh, 50px); height: clamp(30px, 4vh, 50px); font-size: clamp(0.9rem, 1.8vh, 1.4rem); }
+        .scale-normal .tap-badges-row { gap: clamp(5px, 1vh, 12px); margin-top: clamp(3px, 0.8vh, 10px); }
+        .scale-normal .tap-prices-row { gap: clamp(6px, 1.5vh, 18px); margin-top: clamp(4px, 1vh, 12px); }
 
-        .scale-compact .tap-card { padding: clamp(5px, 1vh, 12px); gap: clamp(6px, 1vh, 12px); }
-        .scale-compact .tap-img-col { width: clamp(66px, 8vh, 120px); }
-        .scale-compact .tap-img-wrap { width: clamp(52px, 6.5vh, 100px); height: clamp(52px, 6.5vh, 100px); }
-        .scale-compact .tap-name { font-size: clamp(0.95rem, 2vh, 1.5rem); }
-        .scale-compact .tap-brewery { font-size: clamp(0.78rem, 1.4vh, 1.1rem); }
-        .scale-compact .tap-badge { font-size: clamp(0.65rem, 1vh, 0.85rem); padding: clamp(2px, 0.3vh, 5px) clamp(6px, 1vh, 12px); }
-        .scale-compact .tap-price-size { font-size: clamp(0.6rem, 1vh, 0.85rem); }
-        .scale-compact .tap-price-val { font-size: clamp(0.85rem, 1.6vh, 1.3rem); }
-        .scale-compact .tap-num { width: clamp(24px, 2.8vh, 36px); height: clamp(24px, 2.8vh, 36px); font-size: clamp(0.75rem, 1.2vh, 1rem); }
-        .scale-compact .tap-badges-row { gap: clamp(3px, 0.6vh, 8px); margin-top: clamp(2px, 0.4vh, 6px); }
-        .scale-compact .tap-prices-row { gap: clamp(4px, 1vh, 12px); margin-top: clamp(2px, 0.6vh, 8px); }
+        .scale-compact .tap-card { padding: clamp(6px, 1.2vh, 16px); gap: clamp(8px, 1.2vh, 16px); }
+        .scale-compact .tap-img-col { width: clamp(78px, 11vh, 160px); }
+        .scale-compact .tap-img-wrap { width: clamp(62px, 9vh, 136px); height: clamp(62px, 9vh, 136px); }
+        .scale-compact .tap-name { font-size: clamp(1.1rem, 2.5vh, 2rem); }
+        .scale-compact .tap-brewery { font-size: clamp(0.85rem, 1.8vh, 1.3rem); }
+        .scale-compact .tap-badge { font-size: clamp(0.72rem, 1.3vh, 1rem); padding: clamp(2px, 0.4vh, 6px) clamp(7px, 1.2vh, 14px); }
+        .scale-compact .tap-price-size { font-size: clamp(0.7rem, 1.2vh, 1rem); }
+        .scale-compact .tap-price-val { font-size: clamp(0.95rem, 2.2vh, 1.7rem); }
+        .scale-compact .tap-num { width: clamp(26px, 3.2vh, 42px); height: clamp(26px, 3.2vh, 42px); font-size: clamp(0.8rem, 1.4vh, 1.1rem); }
+        .scale-compact .tap-badges-row { gap: clamp(4px, 0.8vh, 10px); margin-top: clamp(2px, 0.6vh, 8px); }
+        .scale-compact .tap-prices-row { gap: clamp(5px, 1.2vh, 14px); margin-top: clamp(3px, 0.8vh, 10px); }
       `}</style>
 
       <div className="flex items-center justify-between px-6 py-3 flex-shrink-0 border-b border-gray-800/50">
