@@ -532,8 +532,13 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
 
                     if (w.__castCustomReceiver) {
                       const taplistUrl = `${window.location.origin}/tv/${currentPub?.id}`;
-                      session.sendMessage('urn:x-cast:fermenta.to', { url: taplistUrl });
-                      toast({ title: "Taplist LIVE sulla TV!", description: "La taplist si aggiorna in tempo reale" });
+                      try {
+                        await session.sendMessage('urn:x-cast:fermenta.to', { url: taplistUrl });
+                        toast({ title: "Taplist LIVE sulla TV!", description: "La taplist si aggiorna in tempo reale" });
+                      } catch (msgErr: any) {
+                        console.error('Custom receiver message error:', msgErr);
+                        toast({ title: "Receiver non pronto", description: "L'app Cast potrebbe non essere ancora pubblicata. Assicurati che il Chromecast sia autorizzato nella Cast Developer Console.", variant: "destructive" });
+                      }
                     } else {
                       const imgUrl = `${window.location.origin}/api/pubs/${currentPub?.id}/taplist-image`;
                       const mediaInfo = new w.chrome.cast.media.MediaInfo(imgUrl, 'image/svg+xml');
@@ -545,8 +550,9 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
                     }
                   } catch (err: any) {
                     if (err?.code === 'cancel' || err?.name === 'AbortError') return;
-                    console.error('Cast error:', err);
-                    toast({ title: "Errore trasmissione", description: "Prova ad aprire la taplist nel browser della TV", variant: "destructive" });
+                    const errMsg = err?.message || err?.description || JSON.stringify(err);
+                    console.error('Cast error:', err, 'code:', err?.code, 'message:', errMsg);
+                    toast({ title: "Errore trasmissione", description: errMsg || "Prova ad aprire la taplist nel browser della TV", variant: "destructive" });
                   }
                 }}
               >
