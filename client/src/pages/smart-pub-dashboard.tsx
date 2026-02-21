@@ -71,7 +71,6 @@ import { EventsManager } from "@/components/events-manager";
 import { PubQRCode } from "@/components/pub-qr-code";
 import { MenuPdfDownload } from "@/components/menu-pdf-download";
 import { Cast, Share2, Link as LinkIcon } from "lucide-react";
-import { QRCodeSVG } from "qrcode.react";
 
 type DashboardSection = 'overview' | 'taplist' | 'bottles' | 'menu' | 'events' | 'analytics' | 'settings' | 'profile';
 
@@ -516,23 +515,33 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
                 <LinkIcon className="h-4 w-4 shrink-0 text-gray-400" />
               </div>
 
-              <div className="flex justify-center">
-                <div className="bg-white p-3 rounded-lg inline-block">
-                  <QRCodeSVG
-                    value={`${window.location.origin}/tv/${currentPub?.id}`}
-                    size={160}
-                    level="M"
-                    includeMargin={false}
-                  />
-                </div>
-              </div>
-              <p className="text-xs text-center text-gray-500 dark:text-gray-400">
-                Inquadra il QR code con il telefono per aprire la taplist
-              </p>
+              <Button
+                className="w-full gap-2 bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 py-5 text-base"
+                onClick={async () => {
+                  const tvUrl = `${window.location.origin}/tv/${currentPub?.id}`;
+                  if ('PresentationRequest' in window) {
+                    try {
+                      const request = new (window as any).PresentationRequest([tvUrl]);
+                      const connection = await request.start();
+                      toast({ title: "Connesso!", description: "Taplist trasmessa su " + (connection?.id || "schermo") });
+                      return;
+                    } catch (err: any) {
+                      if (err?.name === 'AbortError') return;
+                      toast({ title: "Trasmissione non disponibile", description: "Apri il link nel browser della TV", variant: "destructive" });
+                    }
+                  } else {
+                    toast({ title: "Non supportato", description: "Il tuo browser non supporta la trasmissione. Usa Chrome su PC oppure apri il link sulla TV.", variant: "destructive" });
+                  }
+                }}
+              >
+                <Cast className="h-5 w-5" />
+                Trasmetti su schermo
+              </Button>
 
               <div className="flex gap-2">
                 <Button
-                  className="flex-1 gap-2 bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700"
+                  variant="outline"
+                  className="flex-1 gap-2"
                   onClick={() => window.open(`/tv/${currentPub?.id}`, '_blank')}
                 >
                   <Eye className="h-4 w-4" />
@@ -549,6 +558,21 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
                   <LinkIcon className="h-4 w-4" />
                   Copia Link
                 </Button>
+              </div>
+
+              <div className="border-t pt-3">
+                <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">Oppure digita questo indirizzo nel browser della Smart TV:</p>
+                <div
+                  className="bg-gray-100 dark:bg-gray-800 rounded-lg p-2 flex items-center justify-center cursor-pointer hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+                  onClick={() => {
+                    navigator.clipboard.writeText(`${window.location.origin}/tv/${currentPub?.id}`);
+                    toast({ title: "Link copiato!" });
+                  }}
+                >
+                  <code className="text-xs font-mono font-bold text-amber-600 dark:text-amber-400">
+                    {window.location.host}/tv/{currentPub?.id}
+                  </code>
+                </div>
               </div>
             </div>
           </DialogContent>
