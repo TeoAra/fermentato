@@ -504,25 +504,12 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
 
               <Button
                 className="w-full gap-2 bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700"
-                onClick={async () => {
-                  const tvUrl = `${window.location.origin}/tv/${currentPub?.id}`;
-                  if ('PresentationRequest' in window) {
-                    try {
-                      const request = new (window as any).PresentationRequest([tvUrl]);
-                      await request.start();
-                      toast({ title: "Connesso!", description: "Taplist trasmessa sullo schermo" });
-                      return;
-                    } catch (err: any) {
-                      if (err?.name === 'AbortError') return;
-                      console.warn('Cast error:', err?.name, err?.message);
-                    }
-                  }
-                  navigator.clipboard.writeText(tvUrl);
-                  toast({ title: "Trasmissione non supportata in questo browser", description: "Link copiato! Aprilo in Chrome e usa ⋮ → Trasmetti" });
+                onClick={() => {
+                  window.location.href = `/tv/${currentPub?.id}`;
                 }}
               >
                 <Cast className="h-4 w-4" />
-                Trasmetti su Schermo
+                Apri Taplist TV a Schermo Intero
               </Button>
 
               <div className="flex gap-2">
@@ -532,7 +519,7 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
                   onClick={() => window.open(`/tv/${currentPub?.id}`, '_blank')}
                 >
                   <Eye className="h-4 w-4" />
-                  Apri Taplist TV
+                  Apri in nuova scheda
                 </Button>
                 <Button
                   variant="outline"
@@ -559,13 +546,25 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
                 </Button>
               </div>
 
-              <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-3 space-y-2">
-                <p className="text-xs font-medium text-gray-700 dark:text-gray-300">Se la trasmissione non parte:</p>
-                <ol className="text-xs text-gray-500 dark:text-gray-400 space-y-1 list-decimal list-inside">
-                  <li>Apri il link in <strong>Chrome</strong> (non browser in-app)</li>
-                  <li>Tocca menu (⋮) → <strong>Trasmetti</strong></li>
-                  <li>Oppure: Impostazioni → Connessione dispositivo → Screencast</li>
-                </ol>
+              <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg p-3 space-y-3">
+                <p className="text-xs font-semibold text-amber-800 dark:text-amber-200">Come trasmettere sulla TV:</p>
+                <div className="space-y-2">
+                  <div className="flex items-start gap-2">
+                    <span className="text-xs font-bold text-amber-700 dark:text-amber-300 mt-0.5">1.</span>
+                    <p className="text-xs text-amber-700 dark:text-amber-300">Attiva lo <strong>Screencast</strong> dal pannello rapido del telefono (scorri dall'alto verso il basso e tocca l'icona Screencast/Trasmetti)</p>
+                  </div>
+                  <div className="flex items-start gap-2">
+                    <span className="text-xs font-bold text-amber-700 dark:text-amber-300 mt-0.5">2.</span>
+                    <p className="text-xs text-amber-700 dark:text-amber-300">Seleziona la tua TV dalla lista</p>
+                  </div>
+                  <div className="flex items-start gap-2">
+                    <span className="text-xs font-bold text-amber-700 dark:text-amber-300 mt-0.5">3.</span>
+                    <p className="text-xs text-amber-700 dark:text-amber-300">Torna qui e premi <strong>"Apri Taplist TV a Schermo Intero"</strong></p>
+                  </div>
+                </div>
+                <p className="text-xs text-amber-600 dark:text-amber-400 italic border-t border-amber-200 dark:border-amber-700 pt-2">
+                  La TV mostrerà la taplist mentre puoi continuare a usare l'app normalmente
+                </p>
               </div>
             </div>
           </DialogContent>
