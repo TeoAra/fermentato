@@ -519,71 +519,37 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
                 className="w-full gap-2 bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 py-5 text-base"
                 onClick={async () => {
                   const tvUrl = `${window.location.origin}/tv/${currentPub?.id}`;
-                  const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
-                  if (!isMobile && 'PresentationRequest' in window) {
+                  const w = window as any;
+                  if (w.__castAvailable && w.cast && w.chrome?.cast) {
                     try {
-                      const request = new (window as any).PresentationRequest([tvUrl]);
-                      await request.start();
-                      toast({ title: "Connesso!", description: "Taplist trasmessa sulla TV" });
-                      return;
+                      const ctx = w.cast.framework.CastContext.getInstance();
+                      await ctx.requestSession();
+                      const session = ctx.getCurrentSession();
+                      if (session) {
+                        const mediaInfo = new w.chrome.cast.media.MediaInfo(tvUrl, 'text/html');
+                        mediaInfo.metadata = new w.chrome.cast.media.GenericMediaMetadata();
+                        mediaInfo.metadata.title = `Taplist - ${currentPub?.name}`;
+                        const request = new w.chrome.cast.media.LoadRequest(mediaInfo);
+                        try {
+                          await session.loadMedia(request);
+                          toast({ title: "Taplist inviata alla TV!" });
+                        } catch {
+                          toast({ title: "Connesso alla TV!", description: "Apri la Taplist TV nel browser per mostrarla" });
+                        }
+                        return;
+                      }
                     } catch (err: any) {
-                      if (err?.name === 'AbortError') return;
+                      if (err?.code === 'cancel') return;
+                      toast({ title: "Cast non disponibile", description: "Usa i pulsanti sotto per aprire la taplist", variant: "destructive" });
                     }
+                  } else {
+                    toast({ title: "Google Cast non disponibile", description: "Apri questa pagina in Chrome per usare Cast, oppure usa i pulsanti sotto" });
                   }
-                  if (isMobile && navigator.share) {
-                    try {
-                      await navigator.share({
-                        title: `Taplist - ${currentPub?.name}`,
-                        url: tvUrl,
-                      });
-                      return;
-                    } catch (err: any) {
-                      if (err?.name === 'AbortError') return;
-                    }
-                  }
-                  navigator.clipboard.writeText(tvUrl);
-                  toast({ title: "Link copiato!", description: "Incollalo nel browser della TV" });
                 }}
               >
                 <Cast className="h-5 w-5" />
-                Trasmetti su TV
+                Trasmetti su Chromecast
               </Button>
-              {/Android|iPhone|iPad|iPod/i.test(navigator.userAgent) && (
-                <div className="flex gap-2">
-                  <Button
-                    variant="outline"
-                    className="flex-1 gap-2 border-blue-300 text-blue-700 dark:border-blue-700 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20"
-                    onClick={() => {
-                      navigator.clipboard.writeText(`${window.location.origin}/tv/${currentPub?.id}`);
-                      toast({ title: "Link copiato!", description: "Apri il browser della TV e incolla il link" });
-                      const a = document.createElement('a');
-                      a.href = 'intent:#Intent;action=android.intent.action.MAIN;category=android.intent.category.LAUNCHER;package=com.google.android.apps.tv.launchpad;S.browser_fallback_url=' + encodeURIComponent('https://play.google.com/store/apps/details?id=com.google.android.apps.tv.launchpad') + ';end';
-                      document.body.appendChild(a);
-                      a.click();
-                      document.body.removeChild(a);
-                    }}
-                  >
-                    <Tv className="h-4 w-4" />
-                    Google TV
-                  </Button>
-                  <Button
-                    variant="outline"
-                    className="flex-1 gap-2 border-green-300 text-green-700 dark:border-green-700 dark:text-green-400 hover:bg-green-50 dark:hover:bg-green-900/20"
-                    onClick={() => {
-                      navigator.clipboard.writeText(`${window.location.origin}/tv/${currentPub?.id}`);
-                      toast({ title: "Link copiato!", description: "Usa Google Home per trasmettere lo schermo sulla TV" });
-                      const a = document.createElement('a');
-                      a.href = 'intent:#Intent;action=android.intent.action.MAIN;category=android.intent.category.LAUNCHER;package=com.google.android.apps.chromecast.app;S.browser_fallback_url=' + encodeURIComponent('https://play.google.com/store/apps/details?id=com.google.android.apps.chromecast.app') + ';end';
-                      document.body.appendChild(a);
-                      a.click();
-                      document.body.removeChild(a);
-                    }}
-                  >
-                    <Cast className="h-4 w-4" />
-                    Google Home
-                  </Button>
-                </div>
-              )}
 
               <div className="flex gap-2">
                 <Button

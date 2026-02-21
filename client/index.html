@@ -16,6 +16,20 @@
   <body>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
+    <script type="text/javascript" src="https://www.gstatic.com/cv/js/sender/v1/cast_sender.js?loadCastFramework=1"></script>
+    <script type="text/javascript">
+      window['__onGCastApiAvailable'] = function(isAvailable) {
+        if (isAvailable) {
+          var ctx = cast.framework.CastContext.getInstance();
+          ctx.setOptions({
+            receiverApplicationId: chrome.cast.media.DEFAULT_MEDIA_RECEIVER_APP_ID,
+            autoJoinPolicy: chrome.cast.AutoJoinPolicy.ORIGIN_SCOPED
+          });
+          window.__castAvailable = true;
+          window.dispatchEvent(new Event('castAvailable'));
+        }
+      };
+    </script>
     <script type="text/javascript" src="https://replit.com/public/js/replit-dev-banner.js"></script>
   </body>
 </html>
