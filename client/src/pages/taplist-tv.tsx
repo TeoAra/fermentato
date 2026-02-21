@@ -76,27 +76,58 @@ export default function TaplistTV() {
         body { overflow: hidden; cursor: none; margin: 0; padding: 0; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
         .tap-card-anim { animation: fadeIn 0.4s ease-out both; }
-        .tap-card { height: 100%; display: flex; align-items: stretch; }
+        .tap-card { height: 100%; display: flex; align-items: stretch; overflow: hidden; }
         .tap-img-col { display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
         .tap-img-wrap { border-radius: 50%; overflow: hidden; display: flex; align-items: center; justify-content: center; }
         .tap-content { display: flex; flex-direction: column; justify-content: center; flex: 1; min-width: 0; }
 
-        .scale-large { --s: 1; }
-        .scale-medium { --s: 0.72; }
-        .scale-normal { --s: 0.52; }
-        .scale-compact { --s: 0.4; }
+        .scale-large .tap-card { padding: 3vh 2vw; gap: 3vh; }
+        .scale-large .tap-img-col { width: 28vh; }
+        .scale-large .tap-img-wrap { width: 24vh; height: 24vh; }
+        .scale-large .tap-name { font-size: 6vh; }
+        .scale-large .tap-brewery { font-size: 4vh; }
+        .scale-large .tap-badge { font-size: 2.8vh; padding: 1vh 2.2vh; }
+        .scale-large .tap-price-size { font-size: 2.5vh; }
+        .scale-large .tap-price-val { font-size: 5vh; }
+        .scale-large .tap-num { width: 6vh; height: 6vh; font-size: 3vh; }
+        .scale-large .tap-badges-row { gap: 1.5vh; margin-top: 1.2vh; }
+        .scale-large .tap-prices-row { gap: 3vh; margin-top: 1.5vh; }
 
-        .tap-card { padding: calc(3vh * var(--s)); gap: calc(3vh * var(--s)); }
-        .tap-img-col { width: calc(28vh * var(--s)); }
-        .tap-img-wrap { width: calc(24vh * var(--s)); height: calc(24vh * var(--s)); }
-        .tap-name { font-size: calc(6vh * var(--s)); }
-        .tap-brewery { font-size: calc(4vh * var(--s)); }
-        .tap-badge { font-size: calc(2.8vh * var(--s)); padding: calc(1vh * var(--s)) calc(2.2vh * var(--s)); }
-        .tap-price-size { font-size: calc(2.5vh * var(--s)); }
-        .tap-price-val { font-size: calc(5vh * var(--s)); }
-        .tap-num { width: calc(6vh * var(--s)); height: calc(6vh * var(--s)); font-size: calc(3vh * var(--s)); }
-        .tap-badges-row { gap: calc(1.5vh * var(--s)); margin-top: calc(1.2vh * var(--s)); }
-        .tap-prices-row { gap: calc(3vh * var(--s)); margin-top: calc(1.5vh * var(--s)); }
+        .scale-medium .tap-card { padding: 2.2vh 1.5vw; gap: 2.2vh; }
+        .scale-medium .tap-img-col { width: 20vh; }
+        .scale-medium .tap-img-wrap { width: 17vh; height: 17vh; }
+        .scale-medium .tap-name { font-size: 4.3vh; }
+        .scale-medium .tap-brewery { font-size: 2.9vh; }
+        .scale-medium .tap-badge { font-size: 2vh; padding: 0.7vh 1.6vh; }
+        .scale-medium .tap-price-size { font-size: 1.8vh; }
+        .scale-medium .tap-price-val { font-size: 3.6vh; }
+        .scale-medium .tap-num { width: 4.3vh; height: 4.3vh; font-size: 2.2vh; }
+        .scale-medium .tap-badges-row { gap: 1.1vh; margin-top: 0.9vh; }
+        .scale-medium .tap-prices-row { gap: 2.2vh; margin-top: 1.1vh; }
+
+        .scale-normal .tap-card { padding: 1.6vh 1.2vw; gap: 1.6vh; }
+        .scale-normal .tap-img-col { width: 14.5vh; }
+        .scale-normal .tap-img-wrap { width: 12.5vh; height: 12.5vh; }
+        .scale-normal .tap-name { font-size: 3.1vh; }
+        .scale-normal .tap-brewery { font-size: 2.1vh; }
+        .scale-normal .tap-badge { font-size: 1.5vh; padding: 0.5vh 1.2vh; }
+        .scale-normal .tap-price-size { font-size: 1.3vh; }
+        .scale-normal .tap-price-val { font-size: 2.6vh; }
+        .scale-normal .tap-num { width: 3.1vh; height: 3.1vh; font-size: 1.6vh; }
+        .scale-normal .tap-badges-row { gap: 0.8vh; margin-top: 0.6vh; }
+        .scale-normal .tap-prices-row { gap: 1.6vh; margin-top: 0.8vh; }
+
+        .scale-compact .tap-card { padding: 1.2vh 1vw; gap: 1.2vh; }
+        .scale-compact .tap-img-col { width: 11vh; }
+        .scale-compact .tap-img-wrap { width: 9.5vh; height: 9.5vh; }
+        .scale-compact .tap-name { font-size: 2.4vh; }
+        .scale-compact .tap-brewery { font-size: 1.6vh; }
+        .scale-compact .tap-badge { font-size: 1.1vh; padding: 0.4vh 0.9vh; }
+        .scale-compact .tap-price-size { font-size: 1vh; }
+        .scale-compact .tap-price-val { font-size: 2vh; }
+        .scale-compact .tap-num { width: 2.5vh; height: 2.5vh; font-size: 1.2vh; }
+        .scale-compact .tap-badges-row { gap: 0.6vh; margin-top: 0.5vh; }
+        .scale-compact .tap-prices-row { gap: 1.2vh; margin-top: 0.6vh; }
 
         .tv-header { padding: 1.2vh 2vw; }
         .tv-header-logo { width: 5vh; height: 5vh; }
