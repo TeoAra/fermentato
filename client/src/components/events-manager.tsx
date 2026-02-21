@@ -24,14 +24,12 @@ import {
   CalendarDays,
   PartyPopper,
   Share2,
-  Link as LinkIcon,
   Music,
   Trophy,
   GlassWater,
   Sparkles,
   Tag,
 } from "lucide-react";
-import { SiFacebook, SiX, SiWhatsapp, SiTelegram } from "react-icons/si";
 
 export const EVENT_CATEGORIES: Record<string, { label: string; color: string; bg: string; darkBg: string; icon: any }> = {
   degustazione: { label: "Degustazione", color: "#8B5CF6", bg: "bg-violet-100 text-violet-800", darkBg: "dark:bg-violet-900 dark:text-violet-200", icon: GlassWater },
@@ -70,28 +68,6 @@ function getShareUrl(pubId: number, eventId: number) {
   return `${window.location.origin}/pub/${pubId}?event=${eventId}`;
 }
 
-function shareEvent(platform: string, event: any, pubId: number) {
-  const url = getShareUrl(pubId, event.id);
-  const text = `${event.title} - ${format(new Date(event.eventDate), "d MMMM yyyy 'alle' HH:mm", { locale: it })}`;
-
-  switch (platform) {
-    case "facebook":
-      window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`, "_blank");
-      break;
-    case "twitter":
-      window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}`, "_blank");
-      break;
-    case "whatsapp":
-      window.open(`https://wa.me/?text=${encodeURIComponent(text + "\n" + url)}`, "_blank");
-      break;
-    case "telegram":
-      window.open(`https://t.me/share/url?url=${encodeURIComponent(url)}&text=${encodeURIComponent(text)}`, "_blank");
-      break;
-    case "copy":
-      navigator.clipboard.writeText(url);
-      break;
-  }
-}
 
 export function EventCategoryBadge({ category }: { category?: string | null }) {
   const cat = EVENT_CATEGORIES[category || "altro"] || EVENT_CATEGORIES.altro;
@@ -109,24 +85,29 @@ export function EventShareButtons({ event, pubId, size = "sm" }: { event: any; p
   const iconSize = size === "sm" ? "h-3.5 w-3.5" : "h-4 w-4";
   const btnSize = size === "sm" ? "h-7 w-7" : "h-8 w-8";
 
+  const handleShare = async () => {
+    const url = getShareUrl(pubId, event.id);
+    const text = `${event.title} - ${format(new Date(event.eventDate), "d MMMM yyyy 'alle' HH:mm", { locale: it })}`;
+
+    if (navigator.share && typeof navigator.share === 'function') {
+      try {
+        await navigator.share({ title: event.title, text, url });
+      } catch (err: any) {
+        if (err?.name !== 'AbortError') {
+          navigator.clipboard.writeText(url);
+          toast({ title: "Link copiato!" });
+        }
+      }
+    } else {
+      navigator.clipboard.writeText(url);
+      toast({ title: "Link copiato!" });
+    }
+  };
+
   return (
-    <div className="flex items-center gap-1">
-      <Button variant="ghost" size="icon" className={`${btnSize} text-green-600 hover:bg-green-50 dark:hover:bg-green-950`} onClick={() => shareEvent("whatsapp", event, pubId)} title="WhatsApp">
-        <SiWhatsapp className={iconSize} />
-      </Button>
-      <Button variant="ghost" size="icon" className={`${btnSize} text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-950`} onClick={() => shareEvent("telegram", event, pubId)} title="Telegram">
-        <SiTelegram className={iconSize} />
-      </Button>
-      <Button variant="ghost" size="icon" className={`${btnSize} text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-950`} onClick={() => shareEvent("facebook", event, pubId)} title="Facebook">
-        <SiFacebook className={iconSize} />
-      </Button>
-      <Button variant="ghost" size="icon" className={`${btnSize} text-gray-900 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-800`} onClick={() => shareEvent("twitter", event, pubId)} title="X (Twitter)">
-        <SiX className={iconSize} />
-      </Button>
-      <Button variant="ghost" size="icon" className={`${btnSize} text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800`} onClick={() => { shareEvent("copy", event, pubId); toast({ title: "Link copiato!" }); }} title="Copia link">
-        <LinkIcon className={iconSize} />
-      </Button>
-    </div>
+    <Button variant="ghost" size="icon" className={`${btnSize} text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800`} onClick={handleShare} title="Condividi">
+      <Share2 className={iconSize} />
+    </Button>
   );
 }
 
