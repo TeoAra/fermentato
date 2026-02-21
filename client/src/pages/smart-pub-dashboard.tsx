@@ -70,7 +70,7 @@ import { ImageUpload } from "@/components/image-upload";
 import { EventsManager } from "@/components/events-manager";
 import { PubQRCode } from "@/components/pub-qr-code";
 import { MenuPdfDownload } from "@/components/menu-pdf-download";
-import { Cast, Share2, Link as LinkIcon } from "lucide-react";
+import { Cast, Share2, Link as LinkIcon, Tv } from "lucide-react";
 
 type DashboardSection = 'overview' | 'taplist' | 'bottles' | 'menu' | 'events' | 'analytics' | 'settings' | 'profile';
 
@@ -548,12 +548,24 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
                 <Cast className="h-5 w-5" />
                 Trasmetti su TV
               </Button>
-              <p className="text-xs text-center text-gray-500 dark:text-gray-400 -mt-2">
-                {/Android|iPhone|iPad|iPod/i.test(navigator.userAgent)
-                  ? "Condividi il link con la tua TV tramite un'app"
-                  : "Cerca schermi e dispositivi Chromecast collegati"
-                }
-              </p>
+              {/Android|iPhone|iPad|iPod/i.test(navigator.userAgent) && (
+                <Button
+                  variant="outline"
+                  className="w-full gap-2 border-blue-300 text-blue-700 dark:border-blue-700 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20"
+                  onClick={() => {
+                    navigator.clipboard.writeText(`${window.location.origin}/tv/${currentPub?.id}`);
+                    toast({ title: "Link copiato!", description: "Apri Google TV e incolla il link nel browser della TV" });
+                    const a = document.createElement('a');
+                    a.href = 'intent:#Intent;action=android.intent.action.MAIN;category=android.intent.category.LAUNCHER;package=com.google.android.apps.tv.launchpad;S.browser_fallback_url=' + encodeURIComponent('https://play.google.com/store/apps/details?id=com.google.android.apps.tv.launchpad') + ';end';
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                  }}
+                >
+                  <Tv className="h-4 w-4" />
+                  Apri Google TV
+                </Button>
+              )}
 
               <div className="flex gap-2">
                 <Button
