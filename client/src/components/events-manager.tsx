@@ -31,7 +31,7 @@ import {
   Sparkles,
   Tag,
 } from "lucide-react";
-import { SiFacebook, SiX, SiWhatsapp } from "react-icons/si";
+import { SiFacebook, SiX, SiWhatsapp, SiTelegram } from "react-icons/si";
 
 export const EVENT_CATEGORIES: Record<string, { label: string; color: string; bg: string; darkBg: string; icon: any }> = {
   degustazione: { label: "Degustazione", color: "#8B5CF6", bg: "bg-violet-100 text-violet-800", darkBg: "dark:bg-violet-900 dark:text-violet-200", icon: GlassWater },
@@ -84,6 +84,9 @@ function shareEvent(platform: string, event: any, pubId: number) {
     case "whatsapp":
       window.open(`https://wa.me/?text=${encodeURIComponent(text + "\n" + url)}`, "_blank");
       break;
+    case "telegram":
+      window.open(`https://t.me/share/url?url=${encodeURIComponent(url)}&text=${encodeURIComponent(text)}`, "_blank");
+      break;
     case "copy":
       navigator.clipboard.writeText(url);
       break;
@@ -108,14 +111,17 @@ export function EventShareButtons({ event, pubId, size = "sm" }: { event: any; p
 
   return (
     <div className="flex items-center gap-1">
+      <Button variant="ghost" size="icon" className={`${btnSize} text-green-600 hover:bg-green-50 dark:hover:bg-green-950`} onClick={() => shareEvent("whatsapp", event, pubId)} title="WhatsApp">
+        <SiWhatsapp className={iconSize} />
+      </Button>
+      <Button variant="ghost" size="icon" className={`${btnSize} text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-950`} onClick={() => shareEvent("telegram", event, pubId)} title="Telegram">
+        <SiTelegram className={iconSize} />
+      </Button>
       <Button variant="ghost" size="icon" className={`${btnSize} text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-950`} onClick={() => shareEvent("facebook", event, pubId)} title="Facebook">
         <SiFacebook className={iconSize} />
       </Button>
       <Button variant="ghost" size="icon" className={`${btnSize} text-gray-900 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-800`} onClick={() => shareEvent("twitter", event, pubId)} title="X (Twitter)">
         <SiX className={iconSize} />
-      </Button>
-      <Button variant="ghost" size="icon" className={`${btnSize} text-green-600 hover:bg-green-50 dark:hover:bg-green-950`} onClick={() => shareEvent("whatsapp", event, pubId)} title="WhatsApp">
-        <SiWhatsapp className={iconSize} />
       </Button>
       <Button variant="ghost" size="icon" className={`${btnSize} text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800`} onClick={() => { shareEvent("copy", event, pubId); toast({ title: "Link copiato!" }); }} title="Copia link">
         <LinkIcon className={iconSize} />
