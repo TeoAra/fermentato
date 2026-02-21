@@ -464,42 +464,6 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
         </div>
       </motion.div>
 
-      {/* Compact KPI Grid */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        <ModernKPICard
-          title="Alla Spina"
-          value={typedTapList.length}
-          icon={Beer}
-          gradient="from-amber-500 to-orange-600"
-          description="Birre attive"
-          delay={0.1}
-        />
-        <ModernKPICard
-          title="Bottiglie"
-          value={typedBottleList.length}
-          icon={Package}
-          gradient="from-emerald-500 to-green-600"
-          description="In cantina"
-          delay={0.2}
-        />
-        <ModernKPICard
-          title="Menu"
-          value={typedMenuData.length}
-          icon={Utensils}
-          gradient="from-blue-500 to-indigo-600"
-          description="Categorie"
-          delay={0.3}
-        />
-        <ModernKPICard
-          title="Eventi"
-          value={typedEvents.length}
-          icon={Calendar}
-          gradient="from-purple-500 to-pink-600"
-          description="In programma"
-          delay={0.4}
-        />
-      </div>
-
       {/* Sharing & Tools */}
       <motion.div
         className="grid grid-cols-2 md:grid-cols-4 gap-4"
@@ -535,102 +499,6 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
         </Button>
       </motion.div>
 
-      {/* Smart Analytics Cards */}
-      <motion.div 
-        className="grid grid-cols-1 lg:grid-cols-3 gap-6"
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.6, delay: 0.5 }}
-      >
-        {/* Beers on Tap */}
-        <motion.div 
-          className="lg:col-span-2"
-          initial={{ opacity: 0, x: -20 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ duration: 0.6, delay: 0.6 }}
-        >
-          <Card className="modern-card rounded-2xl overflow-hidden">
-            <CardHeader className="bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-950 dark:to-orange-950 border-b">
-              <CardTitle className="flex items-center justify-between">
-                <div className="flex items-center">
-                  <Crown className="mr-3 h-5 w-5 text-amber-600" />
-                  <span className="text-display-lg">Birre alla Spina</span>
-                </div>
-                <Badge variant="secondary" className="bg-amber-100 dark:bg-amber-900 text-amber-800 dark:text-amber-200">
-                  {typedTapList.length} attive
-                </Badge>
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="p-4">
-              <div className="space-y-3">
-                {typedTapList.length === 0 ? (
-                  <p className="text-sm text-gray-500 text-center py-4">Nessuna birra alla spina ancora</p>
-                ) : (
-                  typedTapList.slice(0, 5).map((beer: any, index: number) => (
-                    <div 
-                      key={beer.id} 
-                      className="flex items-center justify-between p-3 rounded-xl bg-gray-50 dark:bg-gray-800"
-                    >
-                      <div className="flex items-center space-x-3">
-                        <div className="flex items-center justify-center w-7 h-7 rounded-full bg-gradient-to-br from-amber-500 to-orange-600 text-white font-bold text-xs">
-                          {index + 1}
-                        </div>
-                        <div>
-                          <h4 className="font-semibold text-sm text-gray-900 dark:text-white">
-                            {beer.beer?.name || 'Nome non disponibile'}
-                          </h4>
-                          <p className="text-xs text-gray-500 dark:text-gray-400">
-                            {beer.beer?.brewery?.name || beer.beer?.breweryName || 'Birrificio'}
-                          </p>
-                        </div>
-                      </div>
-                      <div className="text-right">
-                        <span className="text-xs font-medium text-gray-600 dark:text-gray-400">
-                          {beer.beer?.abv ? `${beer.beer.abv}%` : ''}
-                        </span>
-                      </div>
-                    </div>
-                  ))
-                )}
-              </div>
-            </CardContent>
-          </Card>
-        </motion.div>
-
-        {/* Recent Activity */}
-        <div className="space-y-6">
-          <Card className="modern-card rounded-2xl overflow-hidden">
-            <CardHeader className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-950 dark:to-indigo-950">
-              <CardTitle className="flex items-center">
-                <Activity className="mr-3 h-5 w-5 text-blue-600" />
-                <span className="text-lg">Riepilogo</span>
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="p-4">
-              <div className="space-y-3">
-                <div className="flex items-center space-x-3 p-3 rounded-lg bg-amber-50 dark:bg-amber-950">
-                  <Beer className="w-4 h-4 text-amber-600" />
-                  <p className="text-sm text-amber-800 dark:text-amber-200">{typedTapList.length} birre alla spina</p>
-                </div>
-                <div className="flex items-center space-x-3 p-3 rounded-lg bg-green-50 dark:bg-green-950">
-                  <Package className="w-4 h-4 text-green-600" />
-                  <p className="text-sm text-green-800 dark:text-green-200">{typedBottleList.length} birre in bottiglia</p>
-                </div>
-                <div className="flex items-center space-x-3 p-3 rounded-lg bg-blue-50 dark:bg-blue-950">
-                  <Utensils className="w-4 h-4 text-blue-600" />
-                  <p className="text-sm text-blue-800 dark:text-blue-200">{typedMenuData.length} categorie menu</p>
-                </div>
-                {typedEvents.length > 0 && (
-                  <div className="flex items-center space-x-3 p-3 rounded-lg bg-purple-50 dark:bg-purple-950">
-                    <Calendar className="w-4 h-4 text-purple-600" />
-                    <p className="text-sm text-purple-800 dark:text-purple-200">{typedEvents.length} eventi in programma</p>
-                  </div>
-                )}
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      </motion.div>
     </motion.div>
   );
 
@@ -770,32 +638,30 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
   );
 
   // Analytics Section
+  const { data: favoritesCount = 0 } = useQuery({
+    queryKey: ["/api/favorites/pub", currentPub?.id, "count"],
+    queryFn: () => apiRequest(`/api/favorites/pub/${currentPub?.id}/count`),
+    enabled: !!currentPub?.id,
+    select: (data: any) => data?.count ?? data ?? 0,
+  });
+
+  const totalMenuItems = useMemo(() => {
+    return Object.values(categoryProductsMap).reduce((sum: number, items: any) => sum + (Array.isArray(items) ? items.length : 0), 0);
+  }, [categoryProductsMap]);
+
   const renderAnalytics = () => (
     <div className="space-y-6">
       <div>
         <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Analytics</h2>
-        <p className="text-gray-600 dark:text-gray-400">Statistiche e performance del tuo pub</p>
+        <p className="text-gray-600 dark:text-gray-400">Statistiche reali del tuo pub</p>
       </div>
       
-      {/* KPI Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <Card className="p-4">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-600 dark:text-gray-400">Visualizzazioni</p>
-              <p className="text-2xl font-bold">1,247</p>
-            </div>
-            <div className="p-2 bg-blue-100 dark:bg-blue-900 rounded-lg">
-              <Eye className="h-6 w-6 text-blue-600" />
-            </div>
-          </div>
-        </Card>
-        
-        <Card className="p-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-gray-600 dark:text-gray-400">Click Taplist</p>
-              <p className="text-2xl font-bold">342</p>
+              <p className="text-sm text-gray-600 dark:text-gray-400">Birre alla Spina</p>
+              <p className="text-2xl font-bold">{typedTapList.length}</p>
             </div>
             <div className="p-2 bg-amber-100 dark:bg-amber-900 rounded-lg">
               <Beer className="h-6 w-6 text-amber-600" />
@@ -806,11 +672,11 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
         <Card className="p-4">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-600 dark:text-gray-400">Menu Views</p>
-              <p className="text-2xl font-bold">189</p>
+              <p className="text-sm text-gray-600 dark:text-gray-400">Bottiglie</p>
+              <p className="text-2xl font-bold">{typedBottleList.length}</p>
             </div>
             <div className="p-2 bg-green-100 dark:bg-green-900 rounded-lg">
-              <Utensils className="h-6 w-6 text-green-600" />
+              <Package className="h-6 w-6 text-green-600" />
             </div>
           </div>
         </Card>
@@ -818,8 +684,20 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
         <Card className="p-4">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-600 dark:text-gray-400">Favorites</p>
-              <p className="text-2xl font-bold">67</p>
+              <p className="text-sm text-gray-600 dark:text-gray-400">Prodotti Menu</p>
+              <p className="text-2xl font-bold">{totalMenuItems}</p>
+            </div>
+            <div className="p-2 bg-blue-100 dark:bg-blue-900 rounded-lg">
+              <Utensils className="h-6 w-6 text-blue-600" />
+            </div>
+          </div>
+        </Card>
+        
+        <Card className="p-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm text-gray-600 dark:text-gray-400">Preferiti</p>
+              <p className="text-2xl font-bold">{favoritesCount}</p>
             </div>
             <div className="p-2 bg-red-100 dark:bg-red-900 rounded-lg">
               <Star className="h-6 w-6 text-red-600" />
@@ -827,29 +705,94 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
           </div>
         </Card>
       </div>
-      
-      <Card className="p-6">
-        <h3 className="text-lg font-semibold mb-4">Birre Più Richieste</h3>
-        <div className="space-y-3">
-          {typedTapList.slice(0, 5).map((beer: any, index: number) => (
-            <div key={beer.id} className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
-              <div className="flex items-center space-x-3">
-                <div className="w-6 h-6 bg-primary text-white rounded-full flex items-center justify-center text-xs font-bold">
-                  {index + 1}
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <Card className="p-6">
+          <h3 className="text-lg font-semibold mb-4 flex items-center">
+            <Beer className="mr-2 h-5 w-5 text-amber-600" />
+            Birre alla Spina
+          </h3>
+          <div className="space-y-3">
+            {typedTapList.length === 0 ? (
+              <p className="text-sm text-gray-500 text-center py-4">Nessuna birra alla spina</p>
+            ) : (
+              typedTapList.map((beer: any, index: number) => (
+                <div key={beer.id} className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                  <div className="flex items-center space-x-3">
+                    <div className="w-6 h-6 bg-amber-500 text-white rounded-full flex items-center justify-center text-xs font-bold">
+                      {beer.tapNumber || index + 1}
+                    </div>
+                    <div>
+                      <p className="font-medium text-sm">{beer.beer?.name || 'N/D'}</p>
+                      <p className="text-xs text-gray-500">{beer.beer?.brewery?.name || beer.beer?.breweryName || ''}</p>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <span className="text-xs font-medium text-gray-600 dark:text-gray-400">
+                      {beer.beer?.abv ? `${beer.beer.abv}%` : ''}
+                    </span>
+                  </div>
                 </div>
+              ))
+            )}
+          </div>
+        </Card>
+
+        <Card className="p-6">
+          <h3 className="text-lg font-semibold mb-4 flex items-center">
+            <Package className="mr-2 h-5 w-5 text-green-600" />
+            Bottiglie in Cantina
+          </h3>
+          <div className="space-y-3">
+            {typedBottleList.length === 0 ? (
+              <p className="text-sm text-gray-500 text-center py-4">Nessuna bottiglia</p>
+            ) : (
+              typedBottleList.slice(0, 10).map((bottle: any, index: number) => (
+                <div key={bottle.id} className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                  <div className="flex items-center space-x-3">
+                    <div className="w-6 h-6 bg-green-500 text-white rounded-full flex items-center justify-center text-xs font-bold">
+                      {index + 1}
+                    </div>
+                    <div>
+                      <p className="font-medium text-sm">{bottle.beer?.name || 'N/D'}</p>
+                      <p className="text-xs text-gray-500">{bottle.beer?.brewery?.name || bottle.beer?.breweryName || ''}</p>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <span className="text-xs font-medium text-gray-600 dark:text-gray-400">
+                      {bottle.beer?.abv ? `${bottle.beer.abv}%` : ''}
+                    </span>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+        </Card>
+      </div>
+
+      {typedEvents.length > 0 && (
+        <Card className="p-6">
+          <h3 className="text-lg font-semibold mb-4 flex items-center">
+            <Calendar className="mr-2 h-5 w-5 text-purple-600" />
+            Prossimi Eventi ({typedEvents.length})
+          </h3>
+          <div className="space-y-3">
+            {typedEvents.slice(0, 5).map((event: any) => (
+              <div key={event.id} className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
                 <div>
-                  <p className="font-medium">{beer.beer?.name || 'Nome non disponibile'}</p>
-                  <p className="text-sm text-gray-500">{beer.beer?.brewery?.name || 'Birrificio'}</p>
+                  <p className="font-medium text-sm">{event.title}</p>
+                  <p className="text-xs text-gray-500">
+                    {new Date(event.eventDate).toLocaleDateString('it-IT', { weekday: 'short', day: 'numeric', month: 'short' })}
+                  </p>
                 </div>
+                {event.category && (
+                  <Badge variant="secondary" className="text-xs">{event.category}</Badge>
+                )}
               </div>
-              <div className="text-right">
-                <p className="font-semibold">{Math.floor(Math.random() * 50) + 20} views</p>
-                <p className="text-sm text-gray-500">questa settimana</p>
-              </div>
-            </div>
-          ))}
-        </div>
-      </Card>
+            ))}
+          </div>
+        </Card>
+      )}
     </div>
   );
 
