@@ -549,22 +549,40 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
                 Trasmetti su TV
               </Button>
               {/Android|iPhone|iPad|iPod/i.test(navigator.userAgent) && (
-                <Button
-                  variant="outline"
-                  className="w-full gap-2 border-blue-300 text-blue-700 dark:border-blue-700 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20"
-                  onClick={() => {
-                    navigator.clipboard.writeText(`${window.location.origin}/tv/${currentPub?.id}`);
-                    toast({ title: "Link copiato!", description: "Apri Google TV e incolla il link nel browser della TV" });
-                    const a = document.createElement('a');
-                    a.href = 'intent:#Intent;action=android.intent.action.MAIN;category=android.intent.category.LAUNCHER;package=com.google.android.apps.tv.launchpad;S.browser_fallback_url=' + encodeURIComponent('https://play.google.com/store/apps/details?id=com.google.android.apps.tv.launchpad') + ';end';
-                    document.body.appendChild(a);
-                    a.click();
-                    document.body.removeChild(a);
-                  }}
-                >
-                  <Tv className="h-4 w-4" />
-                  Apri Google TV
-                </Button>
+                <div className="flex gap-2">
+                  <Button
+                    variant="outline"
+                    className="flex-1 gap-2 border-blue-300 text-blue-700 dark:border-blue-700 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20"
+                    onClick={() => {
+                      navigator.clipboard.writeText(`${window.location.origin}/tv/${currentPub?.id}`);
+                      toast({ title: "Link copiato!", description: "Apri il browser della TV e incolla il link" });
+                      const a = document.createElement('a');
+                      a.href = 'intent:#Intent;action=android.intent.action.MAIN;category=android.intent.category.LAUNCHER;package=com.google.android.apps.tv.launchpad;S.browser_fallback_url=' + encodeURIComponent('https://play.google.com/store/apps/details?id=com.google.android.apps.tv.launchpad') + ';end';
+                      document.body.appendChild(a);
+                      a.click();
+                      document.body.removeChild(a);
+                    }}
+                  >
+                    <Tv className="h-4 w-4" />
+                    Google TV
+                  </Button>
+                  <Button
+                    variant="outline"
+                    className="flex-1 gap-2 border-green-300 text-green-700 dark:border-green-700 dark:text-green-400 hover:bg-green-50 dark:hover:bg-green-900/20"
+                    onClick={() => {
+                      navigator.clipboard.writeText(`${window.location.origin}/tv/${currentPub?.id}`);
+                      toast({ title: "Link copiato!", description: "Usa Google Home per trasmettere lo schermo sulla TV" });
+                      const a = document.createElement('a');
+                      a.href = 'intent:#Intent;action=android.intent.action.MAIN;category=android.intent.category.LAUNCHER;package=com.google.android.apps.chromecast.app;S.browser_fallback_url=' + encodeURIComponent('https://play.google.com/store/apps/details?id=com.google.android.apps.chromecast.app') + ';end';
+                      document.body.appendChild(a);
+                      a.click();
+                      document.body.removeChild(a);
+                    }}
+                  >
+                    <Cast className="h-4 w-4" />
+                    Google Home
+                  </Button>
+                </div>
               )}
 
               <div className="flex gap-2">
