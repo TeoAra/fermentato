@@ -43,6 +43,7 @@ import OpeningHoursDialog from "@/components/OpeningHoursDialog";
 import ImageWithFallback from "@/components/image-with-fallback";
 import { PubQRCode } from "@/components/pub-qr-code";
 import { MenuPdfDownload } from "@/components/menu-pdf-download";
+import { EventCategoryBadge, EventShareButtons } from "@/components/events-manager";
 import { format, isFuture } from "date-fns";
 import { it as itLocale } from "date-fns/locale";
 
@@ -809,23 +810,35 @@ export default function PubDetail() {
                     {Array.isArray(pubEvents) && pubEvents.filter((e: any) => isFuture(new Date(e.eventDate))).map((event: any) => (
                       <Card key={event.id} className="overflow-hidden">
                         {event.imageUrl && (
-                          <div className="h-40 bg-cover bg-center" style={{ backgroundImage: `url(${event.imageUrl})` }} />
+                          <div className="h-40 bg-cover bg-center relative" style={{ backgroundImage: `url(${event.imageUrl})` }}>
+                            <div className="absolute top-2 left-2">
+                              <EventCategoryBadge category={event.category} />
+                            </div>
+                          </div>
                         )}
                         <CardContent className="p-5">
-                          <h4 className="text-lg font-bold text-gray-900 dark:text-white mb-2">{event.title}</h4>
-                          <div className="flex items-center text-sm text-pink-600 dark:text-pink-400 gap-2 mb-2">
-                            <Calendar className="h-4 w-4" />
-                            <span>{format(new Date(event.eventDate), "EEEE d MMMM yyyy 'alle' HH:mm", { locale: itLocale })}</span>
-                          </div>
-                          {event.endDate && (
-                            <div className="flex items-center text-xs text-gray-500 gap-2 mb-3">
-                              <Clock className="h-3.5 w-3.5" />
-                              <span>fino alle {format(new Date(event.endDate), "HH:mm", { locale: itLocale })}</span>
+                          <div className="flex items-start justify-between gap-2">
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-2 mb-2 flex-wrap">
+                                {!event.imageUrl && <EventCategoryBadge category={event.category} />}
+                                <h4 className="text-lg font-bold text-gray-900 dark:text-white">{event.title}</h4>
+                              </div>
+                              <div className="flex items-center text-sm text-pink-600 dark:text-pink-400 gap-2 mb-2">
+                                <Calendar className="h-4 w-4" />
+                                <span>{format(new Date(event.eventDate), "EEEE d MMMM yyyy 'alle' HH:mm", { locale: itLocale })}</span>
+                              </div>
+                              {event.endDate && (
+                                <div className="flex items-center text-xs text-gray-500 gap-2 mb-3">
+                                  <Clock className="h-3.5 w-3.5" />
+                                  <span>fino alle {format(new Date(event.endDate), "HH:mm", { locale: itLocale })}</span>
+                                </div>
+                              )}
+                              {event.description && (
+                                <p className="text-gray-600 dark:text-gray-400 text-sm mb-3">{event.description}</p>
+                              )}
+                              <EventShareButtons event={event} pubId={(pub as any).id} />
                             </div>
-                          )}
-                          {event.description && (
-                            <p className="text-gray-600 dark:text-gray-400 text-sm">{event.description}</p>
-                          )}
+                          </div>
                         </CardContent>
                       </Card>
                     ))}

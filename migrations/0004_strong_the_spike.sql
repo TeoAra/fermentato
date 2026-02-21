@@ -1,0 +1,1 @@
+ALTER TABLE "pub_events" ADD COLUMN "category" varchar(50) DEFAULT 'altro';
