@@ -504,16 +504,38 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
 
               <Button
                 className="w-full gap-2 bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700"
-                onClick={() => {
+                onClick={async () => {
+                  const tvUrl = `${window.location.origin}/tv/${currentPub?.id}`;
+                  if ('PresentationRequest' in window) {
+                    try {
+                      const request = new (window as any).PresentationRequest([tvUrl]);
+                      await request.start();
+                      toast({ title: "Connesso!", description: "Taplist trasmessa sullo schermo" });
+                      return;
+                    } catch (err: any) {
+                      if (err?.name === 'AbortError') return;
+                      console.warn('Presentation API error:', err?.name, err?.message);
+                    }
+                  }
                   window.open(`/tv/${currentPub?.id}`, '_blank');
                   toast({ title: "Pagina TV aperta", description: "Usa il menu del browser (⋮) → Trasmetti per inviare alla TV" });
                 }}
               >
                 <Cast className="h-4 w-4" />
-                Apri Taplist TV e Trasmetti
+                Trasmetti su Schermo
               </Button>
 
               <div className="flex gap-2">
+                <Button
+                  variant="outline"
+                  className="flex-1 gap-2"
+                  onClick={() => {
+                    window.open(`/tv/${currentPub?.id}`, '_blank');
+                  }}
+                >
+                  <Eye className="h-4 w-4" />
+                  Apri in nuova scheda
+                </Button>
                 <Button
                   variant="outline"
                   className="flex-1 gap-2"
@@ -535,28 +557,16 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
                   }}
                 >
                   <Share2 className="h-4 w-4" />
-                  Condividi Link TV
-                </Button>
-                <Button
-                  variant="outline"
-                  className="flex-1 gap-2"
-                  onClick={() => {
-                    navigator.clipboard.writeText(`${window.location.origin}/tv/${currentPub?.id}`);
-                    toast({ title: "Link copiato!", description: "Incolla sul browser della TV" });
-                  }}
-                >
-                  <LinkIcon className="h-4 w-4" />
-                  Copia Link
+                  Condividi Link
                 </Button>
               </div>
 
               <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-3 space-y-2">
-                <p className="text-xs font-medium text-gray-700 dark:text-gray-300">Come trasmettere su TV:</p>
+                <p className="text-xs font-medium text-gray-700 dark:text-gray-300">Se la trasmissione diretta non funziona:</p>
                 <ol className="text-xs text-gray-500 dark:text-gray-400 space-y-1 list-decimal list-inside">
-                  <li>Premi "Apri Taplist TV e Trasmetti" qui sopra</li>
-                  <li>Nella pagina aperta, tocca il menu del browser (⋮)</li>
+                  <li>Premi "Apri in nuova scheda"</li>
+                  <li>Tocca il menu del browser (⋮)</li>
                   <li>Seleziona "Trasmetti" e scegli la tua TV</li>
-                  <li>Oppure usa "Condividi Link TV" per aprirlo direttamente sul browser della TV</li>
                 </ol>
               </div>
             </div>
