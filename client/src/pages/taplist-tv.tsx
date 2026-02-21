@@ -1,7 +1,37 @@
 import { useParams } from "wouter";
 import { useQuery } from "@tanstack/react-query";
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo, useRef, useCallback } from "react";
 import { Beer, Droplets } from "lucide-react";
+
+function FitText({ text, className, style }: { text: string; className?: string; style?: React.CSSProperties }) {
+  const ref = useRef<HTMLDivElement>(null);
+
+  const fit = useCallback(() => {
+    const el = ref.current;
+    if (!el) return;
+    el.style.fontSize = '';
+    const computed = window.getComputedStyle(el);
+    let size = parseFloat(computed.fontSize);
+    const minSize = 8;
+    while (el.scrollWidth > el.clientWidth + 1 && size > minSize) {
+      size -= 0.5;
+      el.style.fontSize = size + 'px';
+    }
+  }, []);
+
+  useEffect(() => {
+    fit();
+    const ro = new ResizeObserver(fit);
+    if (ref.current) ro.observe(ref.current);
+    return () => ro.disconnect();
+  }, [text, fit]);
+
+  return (
+    <div ref={ref} className={className} style={{ ...style, whiteSpace: 'nowrap', overflow: 'hidden' }}>
+      {text}
+    </div>
+  );
+}
 
 const ITEMS_PER_PAGE = 12;
 const PAGE_INTERVAL = 45000;
@@ -256,16 +286,20 @@ function TapCard({ tap, index, delay }: { tap: any; index: number; delay: number
       </div>
 
       <div className="tap-content" style={{ paddingRight: '3vw' }}>
-        <h3 className="tap-name font-bold text-white leading-tight truncate">
-          {beer.name || "Birra"}
-        </h3>
+        <FitText
+          text={beer.name || "Birra"}
+          className="tap-name font-bold text-white leading-tight"
+        />
         {brewery && (
-          <p className="tap-brewery text-amber-400/80 font-medium truncate">{brewery}</p>
+          <FitText
+            text={brewery}
+            className="tap-brewery text-amber-400/80 font-medium"
+          />
         )}
 
         <div className="tap-badges-row flex items-center flex-wrap">
           {beer.style && (
-            <span className="tap-badge rounded-full bg-gray-700/60 text-gray-300 border border-gray-600/30 truncate max-w-[40vw]">
+            <span className="tap-badge rounded-full bg-gray-700/60 text-gray-300 border border-gray-600/30 whitespace-nowrap">
               {beer.style}
             </span>
           )}
