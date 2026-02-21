@@ -76,41 +76,58 @@ export default function TaplistTV() {
         body { overflow: hidden; cursor: none; margin: 0; padding: 0; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
         .tap-card-anim { animation: fadeIn 0.4s ease-out both; }
-        .tap-img-col { display: flex; align-items: center; justify-content: center; padding: 6px; flex-shrink: 0; }
+        .tap-card { height: 100%; display: flex; align-items: stretch; }
+        .tap-img-col { display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
         .tap-img-wrap { border-radius: 50%; overflow: hidden; display: flex; align-items: center; justify-content: center; }
-        .tap-card { height: 100%; }
-        .scale-large .tap-img-col { width: clamp(100px, 12vh, 180px); }
-        .scale-large .tap-img-wrap { width: clamp(80px, 10vh, 160px); height: clamp(80px, 10vh, 160px); }
-        .scale-large .tap-name { font-size: clamp(1.4rem, 2.5vh, 2.2rem); }
-        .scale-large .tap-brewery { font-size: clamp(1rem, 1.8vh, 1.4rem); }
-        .scale-large .tap-badge { font-size: clamp(0.85rem, 1.4vh, 1.1rem); padding: 4px 12px; }
-        .scale-large .tap-price-size { font-size: clamp(0.75rem, 1.2vh, 1rem); }
-        .scale-large .tap-price-val { font-size: clamp(1.1rem, 2vh, 1.6rem); }
-        .scale-large .tap-num { width: clamp(34px, 4vh, 50px); height: clamp(34px, 4vh, 50px); font-size: clamp(1rem, 1.6vh, 1.3rem); }
-        .scale-medium .tap-img-col { width: clamp(90px, 10vh, 150px); }
-        .scale-medium .tap-img-wrap { width: clamp(72px, 8vh, 130px); height: clamp(72px, 8vh, 130px); }
-        .scale-medium .tap-name { font-size: clamp(1.2rem, 2.2vh, 1.8rem); }
-        .scale-medium .tap-brewery { font-size: clamp(0.85rem, 1.5vh, 1.2rem); }
-        .scale-medium .tap-badge { font-size: clamp(0.75rem, 1.2vh, 1rem); padding: 3px 10px; }
-        .scale-medium .tap-price-size { font-size: clamp(0.7rem, 1vh, 0.9rem); }
-        .scale-medium .tap-price-val { font-size: clamp(1rem, 1.7vh, 1.3rem); }
-        .scale-medium .tap-num { width: clamp(30px, 3.5vh, 44px); height: clamp(30px, 3.5vh, 44px); font-size: clamp(0.9rem, 1.4vh, 1.1rem); }
-        .scale-normal .tap-img-col { width: clamp(76px, 8vh, 120px); }
-        .scale-normal .tap-img-wrap { width: clamp(60px, 6.5vh, 100px); height: clamp(60px, 6.5vh, 100px); }
-        .scale-normal .tap-name { font-size: clamp(1rem, 1.8vh, 1.4rem); }
-        .scale-normal .tap-brewery { font-size: clamp(0.78rem, 1.3vh, 1rem); }
-        .scale-normal .tap-badge { font-size: clamp(0.7rem, 1vh, 0.85rem); padding: 3px 9px; }
-        .scale-normal .tap-price-size { font-size: clamp(0.6rem, 0.9vh, 0.8rem); }
-        .scale-normal .tap-price-val { font-size: clamp(0.85rem, 1.4vh, 1.1rem); }
-        .scale-normal .tap-num { width: clamp(26px, 3vh, 38px); height: clamp(26px, 3vh, 38px); font-size: clamp(0.8rem, 1.2vh, 1rem); }
-        .scale-compact .tap-img-col { width: clamp(64px, 7vh, 100px); }
-        .scale-compact .tap-img-wrap { width: clamp(50px, 5.5vh, 84px); height: clamp(50px, 5.5vh, 84px); }
-        .scale-compact .tap-name { font-size: clamp(0.95rem, 1.5vh, 1.2rem); }
-        .scale-compact .tap-brewery { font-size: clamp(0.75rem, 1.1vh, 0.9rem); }
-        .scale-compact .tap-badge { font-size: clamp(0.65rem, 0.9vh, 0.8rem); padding: 2px 8px; }
-        .scale-compact .tap-price-size { font-size: clamp(0.6rem, 0.8vh, 0.75rem); }
-        .scale-compact .tap-price-val { font-size: clamp(0.8rem, 1.2vh, 1rem); }
-        .scale-compact .tap-num { width: clamp(24px, 2.8vh, 34px); height: clamp(24px, 2.8vh, 34px); font-size: clamp(0.75rem, 1vh, 0.9rem); }
+        .tap-content { display: flex; flex-direction: column; justify-content: center; flex: 1; min-width: 0; }
+
+        .scale-large .tap-card { padding: clamp(10px, 2vh, 28px); gap: clamp(12px, 2vh, 28px); }
+        .scale-large .tap-img-col { width: clamp(120px, 18vh, 280px); }
+        .scale-large .tap-img-wrap { width: clamp(100px, 16vh, 250px); height: clamp(100px, 16vh, 250px); }
+        .scale-large .tap-name { font-size: clamp(1.6rem, 4.5vh, 3.5rem); }
+        .scale-large .tap-brewery { font-size: clamp(1.1rem, 3vh, 2.2rem); }
+        .scale-large .tap-badge { font-size: clamp(0.9rem, 2.2vh, 1.6rem); padding: clamp(4px, 0.8vh, 10px) clamp(10px, 2vh, 24px); }
+        .scale-large .tap-price-size { font-size: clamp(0.85rem, 2vh, 1.5rem); }
+        .scale-large .tap-price-val { font-size: clamp(1.3rem, 3.5vh, 2.8rem); }
+        .scale-large .tap-num { width: clamp(40px, 5vh, 70px); height: clamp(40px, 5vh, 70px); font-size: clamp(1.1rem, 2.5vh, 2rem); }
+        .scale-large .tap-badges-row { gap: clamp(6px, 1.2vh, 16px); margin-top: clamp(4px, 1vh, 12px); }
+        .scale-large .tap-prices-row { gap: clamp(8px, 2vh, 24px); margin-top: clamp(6px, 1.5vh, 16px); }
+
+        .scale-medium .tap-card { padding: clamp(8px, 1.5vh, 20px); gap: clamp(10px, 1.5vh, 20px); }
+        .scale-medium .tap-img-col { width: clamp(100px, 14vh, 200px); }
+        .scale-medium .tap-img-wrap { width: clamp(80px, 12vh, 180px); height: clamp(80px, 12vh, 180px); }
+        .scale-medium .tap-name { font-size: clamp(1.3rem, 3.5vh, 2.6rem); }
+        .scale-medium .tap-brewery { font-size: clamp(0.95rem, 2.2vh, 1.7rem); }
+        .scale-medium .tap-badge { font-size: clamp(0.8rem, 1.6vh, 1.3rem); padding: clamp(3px, 0.6vh, 8px) clamp(8px, 1.5vh, 18px); }
+        .scale-medium .tap-price-size { font-size: clamp(0.75rem, 1.5vh, 1.2rem); }
+        .scale-medium .tap-price-val { font-size: clamp(1.1rem, 2.8vh, 2.2rem); }
+        .scale-medium .tap-num { width: clamp(34px, 4vh, 56px); height: clamp(34px, 4vh, 56px); font-size: clamp(0.95rem, 2vh, 1.6rem); }
+        .scale-medium .tap-badges-row { gap: clamp(5px, 1vh, 12px); margin-top: clamp(3px, 0.8vh, 10px); }
+        .scale-medium .tap-prices-row { gap: clamp(6px, 1.5vh, 18px); margin-top: clamp(4px, 1vh, 12px); }
+
+        .scale-normal .tap-card { padding: clamp(6px, 1.2vh, 16px); gap: clamp(8px, 1.2vh, 16px); }
+        .scale-normal .tap-img-col { width: clamp(80px, 10vh, 150px); }
+        .scale-normal .tap-img-wrap { width: clamp(64px, 8.5vh, 130px); height: clamp(64px, 8.5vh, 130px); }
+        .scale-normal .tap-name { font-size: clamp(1.1rem, 2.5vh, 2rem); }
+        .scale-normal .tap-brewery { font-size: clamp(0.85rem, 1.7vh, 1.3rem); }
+        .scale-normal .tap-badge { font-size: clamp(0.72rem, 1.3vh, 1rem); padding: clamp(2px, 0.4vh, 6px) clamp(7px, 1.2vh, 14px); }
+        .scale-normal .tap-price-size { font-size: clamp(0.65rem, 1.2vh, 1rem); }
+        .scale-normal .tap-price-val { font-size: clamp(0.95rem, 2vh, 1.6rem); }
+        .scale-normal .tap-num { width: clamp(28px, 3.2vh, 44px); height: clamp(28px, 3.2vh, 44px); font-size: clamp(0.85rem, 1.5vh, 1.2rem); }
+        .scale-normal .tap-badges-row { gap: clamp(4px, 0.8vh, 10px); margin-top: clamp(2px, 0.6vh, 8px); }
+        .scale-normal .tap-prices-row { gap: clamp(5px, 1.2vh, 14px); margin-top: clamp(3px, 0.8vh, 10px); }
+
+        .scale-compact .tap-card { padding: clamp(5px, 1vh, 12px); gap: clamp(6px, 1vh, 12px); }
+        .scale-compact .tap-img-col { width: clamp(66px, 8vh, 120px); }
+        .scale-compact .tap-img-wrap { width: clamp(52px, 6.5vh, 100px); height: clamp(52px, 6.5vh, 100px); }
+        .scale-compact .tap-name { font-size: clamp(0.95rem, 2vh, 1.5rem); }
+        .scale-compact .tap-brewery { font-size: clamp(0.78rem, 1.4vh, 1.1rem); }
+        .scale-compact .tap-badge { font-size: clamp(0.65rem, 1vh, 0.85rem); padding: clamp(2px, 0.3vh, 5px) clamp(6px, 1vh, 12px); }
+        .scale-compact .tap-price-size { font-size: clamp(0.6rem, 1vh, 0.85rem); }
+        .scale-compact .tap-price-val { font-size: clamp(0.85rem, 1.6vh, 1.3rem); }
+        .scale-compact .tap-num { width: clamp(24px, 2.8vh, 36px); height: clamp(24px, 2.8vh, 36px); font-size: clamp(0.75rem, 1.2vh, 1rem); }
+        .scale-compact .tap-badges-row { gap: clamp(3px, 0.6vh, 8px); margin-top: clamp(2px, 0.4vh, 6px); }
+        .scale-compact .tap-prices-row { gap: clamp(4px, 1vh, 12px); margin-top: clamp(2px, 0.6vh, 8px); }
       `}</style>
 
       <div className="flex items-center justify-between px-6 py-3 flex-shrink-0 border-b border-gray-800/50">
@@ -198,14 +215,14 @@ function TapCard({ tap, index, delay }: { tap: any; index: number; delay: number
 
   return (
     <div
-      className="tap-card tap-card-anim relative bg-gray-800/60 backdrop-blur-sm rounded-2xl border border-gray-700/40 flex items-stretch overflow-hidden min-h-0"
+      className="tap-card tap-card-anim relative bg-gray-800/60 backdrop-blur-sm rounded-2xl border border-gray-700/40 overflow-hidden min-h-0"
       style={{ animationDelay: `${delay}s` }}
     >
       <div className="tap-num absolute top-2 right-2 rounded-full bg-amber-500/20 border border-amber-500/30 flex items-center justify-center z-10">
         <span className="text-amber-400 font-bold">{tap.tapNumber || index + 1}</span>
       </div>
 
-      <div className="tap-img-col flex-shrink-0">
+      <div className="tap-img-col">
         <div className="tap-img-wrap bg-gray-700/50 border-2 border-amber-500/25">
           {imageUrl ? (
             <img
@@ -229,7 +246,7 @@ function TapCard({ tap, index, delay }: { tap: any; index: number; delay: number
         </div>
       </div>
 
-      <div className="flex-1 min-w-0 pr-10 py-3 flex flex-col justify-center">
+      <div className="tap-content" style={{ paddingRight: 'clamp(30px, 5vw, 60px)' }}>
         <h3 className="tap-name font-bold text-white leading-tight truncate">
           {beer.name || "Birra"}
         </h3>
@@ -237,9 +254,9 @@ function TapCard({ tap, index, delay }: { tap: any; index: number; delay: number
           <p className="tap-brewery text-amber-400/80 font-medium truncate">{brewery}</p>
         )}
 
-        <div className="flex items-center gap-2 mt-1 flex-wrap">
+        <div className="tap-badges-row flex items-center flex-wrap">
           {beer.style && (
-            <span className="tap-badge rounded-full bg-gray-700/60 text-gray-300 border border-gray-600/30 truncate max-w-[180px]">
+            <span className="tap-badge rounded-full bg-gray-700/60 text-gray-300 border border-gray-600/30 truncate max-w-[40vw]">
               {beer.style}
             </span>
           )}
@@ -251,7 +268,7 @@ function TapCard({ tap, index, delay }: { tap: any; index: number; delay: number
         </div>
 
         {prices.length > 0 && (
-          <div className="flex items-center gap-3 mt-1.5">
+          <div className="tap-prices-row flex items-center">
             {prices.map((p: any, i: number) => (
               <div key={i} className="flex items-baseline gap-1">
                 {p.size && <span className="tap-price-size text-gray-400 uppercase">{p.size}</span>}
