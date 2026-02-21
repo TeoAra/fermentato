@@ -15,7 +15,6 @@ import {
   Home,
   User,
   RefreshCw,
-  MoreHorizontal,
   Beer,
   Wine,
   Utensils,
@@ -289,83 +288,28 @@ export function PubOwnerTopBar({
         </div>
       </motion.div>
 
-      {/* Mobile Bottom Navigation Bar */}
-      <div className="lg:hidden fixed bottom-0 left-0 right-0 z-50 bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl border-t border-gray-200 dark:border-gray-800 safe-area-bottom">
-        <nav className="flex items-center justify-around px-1 py-1">
-          {sections.slice(0, 4).map((section) => {
+      {/* Mobile Section Navigation - Second Top Bar */}
+      <div className="lg:hidden bg-white/90 dark:bg-gray-900/90 backdrop-blur-xl border-b border-gray-200/50 dark:border-gray-800/50">
+        <nav className="flex items-center overflow-x-auto scrollbar-hide px-2 py-1.5 gap-1">
+          {sections.map((section) => {
             const Icon = section.icon;
             const isActive = currentSection === section.id;
             return (
               <button
                 key={section.id}
                 onClick={() => setCurrentSection(section.id)}
-                className={`flex flex-col items-center justify-center py-2 px-3 rounded-xl min-w-0 flex-1 transition-all duration-200 ${
+                className={`flex items-center gap-1.5 py-1.5 px-3 rounded-full whitespace-nowrap text-xs font-medium transition-all duration-200 flex-shrink-0 ${
                   isActive
-                    ? 'text-orange-600 dark:text-orange-400'
-                    : 'text-gray-500 dark:text-gray-400'
+                    ? `bg-gradient-to-r ${section.gradient} text-white shadow-sm`
+                    : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800'
                 }`}
-                data-testid={`bottom-nav-${section.id}`}
+                data-testid={`mobile-nav-${section.id}`}
               >
-                <div className={`relative p-1.5 rounded-lg transition-all duration-200 ${
-                  isActive ? 'bg-orange-100 dark:bg-orange-900/30' : ''
-                }`}>
-                  <Icon className="h-5 w-5" />
-                  {isActive && (
-                    <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-1 h-1 bg-orange-500 rounded-full" />
-                  )}
-                </div>
-                <span className={`text-[10px] mt-0.5 font-medium truncate max-w-full ${
-                  isActive ? 'text-orange-600 dark:text-orange-400' : ''
-                }`}>
-                  {section.name}
-                </span>
+                <Icon className="h-3.5 w-3.5" />
+                <span>{section.name}</span>
               </button>
             );
           })}
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <button
-                className={`flex flex-col items-center justify-center py-2 px-3 rounded-xl min-w-0 flex-1 transition-all duration-200 ${
-                  ['analytics', 'settings', 'profile'].includes(currentSection)
-                    ? 'text-orange-600 dark:text-orange-400'
-                    : 'text-gray-500 dark:text-gray-400'
-                }`}
-                data-testid="bottom-nav-more"
-              >
-                <div className={`relative p-1.5 rounded-lg transition-all duration-200 ${
-                  ['analytics', 'settings', 'profile'].includes(currentSection) ? 'bg-orange-100 dark:bg-orange-900/30' : ''
-                }`}>
-                  <MoreHorizontal className="h-5 w-5" />
-                </div>
-                <span className="text-[10px] mt-0.5 font-medium">Altro</span>
-              </button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent side="top" align="end" className="w-52 mb-2">
-              {sections.slice(4).map((section) => {
-                const Icon = section.icon;
-                const isActive = currentSection === section.id;
-                return (
-                  <DropdownMenuItem
-                    key={section.id}
-                    onClick={() => setCurrentSection(section.id)}
-                    className={`cursor-pointer ${isActive ? 'bg-orange-50 dark:bg-orange-900/20 text-orange-600 dark:text-orange-400' : ''}`}
-                    data-testid={`bottom-nav-more-${section.id}`}
-                  >
-                    <Icon className="mr-2 h-4 w-4" />
-                    <span>{section.name}</span>
-                  </DropdownMenuItem>
-                );
-              })}
-              <DropdownMenuSeparator />
-              <DropdownMenuItem
-                onClick={() => window.location.href = '/'}
-                className="cursor-pointer"
-              >
-                <Home className="mr-2 h-4 w-4" />
-                <span>Torna alla Home</span>
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
         </nav>
       </div>
     </div>

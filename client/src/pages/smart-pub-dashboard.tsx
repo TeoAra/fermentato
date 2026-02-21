@@ -1684,7 +1684,7 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
       
       {/* Main Content */}
       <div className="flex-1">
-        <div className="p-4 sm:p-6 md:p-8 pb-24 lg:pb-8">
+        <div className="p-4 sm:p-6 md:p-8">
           <div className="max-w-7xl mx-auto">
               {currentSection === 'overview' && renderOverview()}
               

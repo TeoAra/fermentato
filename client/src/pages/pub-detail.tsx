@@ -943,21 +943,25 @@ export default function PubDetail() {
                   <Eye className="h-4 w-4 mr-2" />
                   Vedi Orari Completi
                 </Button>
-                <PubQRCode pubId={(pub as any)?.id} pubName={(pub as any)?.name || ""} />
-                <MenuPdfDownload 
-                  pubName={(pub as any)?.name || ""} 
-                  tapList={Array.isArray(tapList) ? tapList : []} 
-                  bottleList={Array.isArray(bottles) ? bottles : []} 
-                  menuCategories={Array.isArray(menu) ? menu : []} 
-                />
-                <Button
-                  variant="outline"
-                  className="gap-2 w-full"
-                  onClick={() => window.open(`/tv/${(pub as any)?.id}`, '_blank')}
-                >
-                  <Monitor className="h-4 w-4" />
-                  Taplist TV Mode
-                </Button>
+                {canManage && (
+                  <>
+                    <PubQRCode pubId={(pub as any)?.id} pubName={(pub as any)?.name || ""} />
+                    <MenuPdfDownload 
+                      pubName={(pub as any)?.name || ""} 
+                      tapList={Array.isArray(tapList) ? tapList : []} 
+                      bottleList={Array.isArray(bottles) ? bottles : []} 
+                      menuCategories={Array.isArray(menu) ? menu : []} 
+                    />
+                    <Button
+                      variant="outline"
+                      className="gap-2 w-full"
+                      onClick={() => window.open(`/tv/${(pub as any)?.id}`, '_blank')}
+                    >
+                      <Monitor className="h-4 w-4" />
+                      Taplist TV Mode
+                    </Button>
+                  </>
+                )}
               </CardContent>
             </Card>
           </div>
