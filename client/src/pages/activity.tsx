@@ -1,13 +1,15 @@
 import { useState, useEffect, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { MapPin, Loader2, Navigation, Clock, AlertCircle, Beer, Trash2, X } from "lucide-react";
+import { MapPin, Loader2, Navigation, Clock, AlertCircle, Beer, Trash2, X, Calendar, CalendarDays } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Link } from "wouter";
-import { formatDistanceToNow } from "date-fns";
+import { formatDistanceToNow, format } from "date-fns";
 import { it } from "date-fns/locale";
+import { EventCategoryBadge, EventShareButtons } from "@/components/events-manager";
 
 type OpenStatus = 'open' | 'closing_soon' | 'opening_soon' | 'closed';
 
@@ -79,12 +81,17 @@ interface TapChange {
   pubLongitude: string | null;
 }
 
+function formatDistance(distance: number): string {
+  if (distance < 1) return `${Math.round(distance * 1000)}m`;
+  return `${distance.toFixed(1)}km`;
+}
+
 export default function Activity() {
-  const [activeTab, setActiveTab] = useState("nearby");
   const [radius, setRadius] = useState("10");
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
   const [locationError, setLocationError] = useState<string | null>(null);
   const [requestingLocation, setRequestingLocation] = useState(false);
+  const [selectedEvent, setSelectedEvent] = useState<any>(null);
   const [dismissedIds, setDismissedIds] = useState<Set<number>>(() => {
     try {
       const stored = localStorage.getItem('dismissedTapChanges');
@@ -141,6 +148,10 @@ export default function Activity() {
     queryKey: ["/api/recent-tap-changes"],
   });
 
+  const { data: upcomingEvents = [], isLoading: loadingEvents } = useQuery<any[]>({
+    queryKey: ["/api/events/upcoming"],
+  });
+
   const nearbyPubs = userLocation && Array.isArray(allPubs)
     ? allPubs
         .map((pub: any) => {
@@ -158,6 +169,28 @@ export default function Activity() {
         .filter((pub: any) => pub.distance <= parseFloat(radius))
         .sort((a: any, b: any) => a.distance - b.distance)
     : Array.isArray(allPubs) ? allPubs.slice(0, 6) : [];
+
+  const nearbyEvents = useMemo(() => {
+    if (!Array.isArray(upcomingEvents)) return [];
+    
+    if (!userLocation) return upcomingEvents.slice(0, 10);
+    
+    return upcomingEvents
+      .map((ev: any) => {
+        if (ev.pub?.latitude && ev.pub?.longitude) {
+          const distance = calculateDistance(
+            userLocation.lat,
+            userLocation.lng,
+            parseFloat(ev.pub.latitude),
+            parseFloat(ev.pub.longitude)
+          );
+          return { ...ev, distance };
+        }
+        return { ...ev, distance: 9999 };
+      })
+      .filter((ev: any) => ev.distance <= parseFloat(radius))
+      .sort((a: any, b: any) => new Date(a.eventDate).getTime() - new Date(b.eventDate).getTime());
+  }, [upcomingEvents, userLocation, radius]);
 
   const nearbyTapChanges = useMemo(() => {
     const filtered = tapChanges.filter(tc => !dismissedIds.has(tc.id));
@@ -261,195 +294,282 @@ export default function Activity() {
         </div>
       )}
 
-      <div className="space-y-6">
-        <div className="flex bg-gray-100 dark:bg-gray-800 rounded-lg p-1">
-          <button 
-            onClick={() => setActiveTab("nearby")}
-            className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors ${
-              activeTab === "nearby" 
-                ? "bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm" 
-                : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
-            }`}
-            data-testid="tab-nearby"
-          >
+      <div className="space-y-8">
+        {/* SECTION 1: Locali Vicini */}
+        <section>
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+            <MapPin className="h-5 w-5 text-orange-600" />
             Locali Vicini
-          </button>
-          <button 
-            onClick={() => setActiveTab("tapchanges")}
-            className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors ${
-              activeTab === "tapchanges" 
-                ? "bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm" 
-                : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
-            }`}
-            data-testid="tab-tapchanges"
-          >
+          </h2>
+          {loadingPubs ? (
+            <div className="flex items-center justify-center py-8">
+              <Loader2 className="h-8 w-8 animate-spin text-orange-600" />
+            </div>
+          ) : nearbyPubs.length === 0 ? (
+            <div className="text-center py-8 bg-gray-50 dark:bg-gray-800/50 rounded-xl">
+              <MapPin className="h-10 w-10 text-gray-400 mx-auto mb-3" />
+              <p className="text-sm text-gray-500 dark:text-gray-400">Nessun pub trovato entro {radius} km</p>
+              <Button variant="link" size="sm" onClick={() => setRadius("50")}>Espandi a 50 km</Button>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {nearbyPubs.map((pub: any) => {
+                const openStatus = getOpenStatus(pub.openingHours);
+                return (
+                  <Link key={pub.id} href={`/pub/${pub.id}`}>
+                    <Card className="hover:shadow-lg hover:scale-[1.02] transition-all duration-200 cursor-pointer h-full">
+                      <CardContent className="p-4">
+                        <div className="flex items-start gap-3">
+                          <div className="w-12 h-12 bg-orange-100 dark:bg-orange-900/20 rounded-lg flex items-center justify-center flex-shrink-0">
+                            <MapPin className="h-6 w-6 text-orange-600" />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <h3 className="font-semibold text-sm mb-1 truncate">{pub.name}</h3>
+                            <p className="text-xs text-gray-500 mb-2 flex items-center gap-1">
+                              <MapPin className="w-3 h-3 flex-shrink-0" />
+                              <span className="line-clamp-1">
+                                {userLocation && pub.distance !== 9999 ? pub.city || pub.address?.split(',').pop()?.trim() : pub.address}
+                              </span>
+                              {userLocation && pub.distance !== 9999 && (
+                                <span className="font-medium text-blue-600 dark:text-blue-400 whitespace-nowrap">
+                                  {formatDistance(pub.distance)}
+                                </span>
+                              )}
+                            </p>
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <Badge className={`text-xs ${openStatus.color}`}>
+                                <Clock className="h-3 w-3 mr-1" />
+                                {openStatus.label}
+                              </Badge>
+                            </div>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </Link>
+                );
+              })}
+            </div>
+          )}
+        </section>
+
+        {/* SECTION 2: Eventi in Zona */}
+        <section>
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+            <CalendarDays className="h-5 w-5 text-pink-600" />
+            Eventi in Zona
+            {nearbyEvents.length > 0 && (
+              <Badge className="ml-1 bg-pink-600 text-white text-xs px-1.5 py-0">{nearbyEvents.length}</Badge>
+            )}
+          </h2>
+          {loadingEvents ? (
+            <div className="flex items-center justify-center py-8">
+              <Loader2 className="h-8 w-8 animate-spin text-pink-600" />
+            </div>
+          ) : nearbyEvents.length === 0 ? (
+            <div className="text-center py-8 bg-gray-50 dark:bg-gray-800/50 rounded-xl">
+              <CalendarDays className="h-10 w-10 text-gray-400 mx-auto mb-3" />
+              <p className="text-sm text-gray-500 dark:text-gray-400">Nessun evento in programma entro {radius} km</p>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {nearbyEvents.map((ev: any) => (
+                <Card 
+                  key={ev.id} 
+                  className="hover:shadow-md transition-shadow cursor-pointer"
+                  onClick={() => setSelectedEvent(ev)}
+                >
+                  <CardContent className="p-4">
+                    <div className="flex items-start gap-3">
+                      {ev.imageUrl ? (
+                        <img src={ev.imageUrl} alt={ev.title} className="w-14 h-14 rounded-lg object-cover flex-shrink-0" />
+                      ) : (
+                        <div className="w-14 h-14 bg-pink-100 dark:bg-pink-900/20 rounded-lg flex items-center justify-center flex-shrink-0">
+                          <CalendarDays className="h-6 w-6 text-pink-600" />
+                        </div>
+                      )}
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 flex-wrap mb-1">
+                          <EventCategoryBadge category={ev.category} />
+                          <h3 className="font-semibold text-sm truncate">{ev.title}</h3>
+                        </div>
+                        <div className="flex items-center text-xs text-pink-600 dark:text-pink-400 gap-1 mb-1">
+                          <Calendar className="h-3 w-3" />
+                          <span>{format(new Date(ev.eventDate), "EEE d MMM 'alle' HH:mm", { locale: it })}</span>
+                        </div>
+                        <div className="flex items-center gap-2 text-xs text-gray-500 flex-wrap">
+                          <Link href={`/pub/${ev.pubId}`} onClick={(e: any) => e.stopPropagation()}>
+                            <span className="text-orange-600 hover:underline font-medium cursor-pointer">{ev.pub?.name}</span>
+                          </Link>
+                          {ev.pub?.city && <span>• {ev.pub.city}</span>}
+                          {ev.distance !== undefined && ev.distance !== 9999 && (
+                            <span className="font-medium text-blue-600 dark:text-blue-400">{formatDistance(ev.distance)}</span>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          )}
+        </section>
+
+        {/* SECTION 3: Birre in Zona */}
+        <section>
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+            <Beer className="h-5 w-5 text-amber-600" />
             Birre in Zona
             {nearbyTapChanges.length > 0 && (
-              <Badge className="ml-2 bg-orange-600 text-white text-xs px-1.5 py-0">{nearbyTapChanges.length}</Badge>
+              <Badge className="ml-1 bg-orange-600 text-white text-xs px-1.5 py-0">{nearbyTapChanges.length}</Badge>
             )}
-          </button>
-        </div>
+          </h2>
 
-        {activeTab === "nearby" && (
-          <div>
-            {loadingPubs ? (
-              <div className="flex items-center justify-center py-8">
-                <Loader2 className="h-8 w-8 animate-spin text-orange-600" />
-              </div>
-            ) : nearbyPubs.length === 0 ? (
-              <div className="text-center py-12">
-                <MapPin className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">Nessun pub trovato</h3>
-                <p className="text-gray-500 dark:text-gray-400 mb-4">
-                  Nessun pub trovato entro {radius} km dalla tua posizione.
-                </p>
-                <Button variant="outline" onClick={() => setRadius("50")}>
-                  Espandi a 50 km
+          {nearbyTapChanges.length > 0 && (
+            <div className="flex items-center justify-end gap-2 mb-3">
+              {dismissedIds.size > 0 && (
+                <Button variant="ghost" size="sm" onClick={clearAllDismissed} className="text-xs text-gray-500">
+                  Ripristina nascoste
                 </Button>
-              </div>
-            ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {nearbyPubs.map((pub: any) => {
-                  const openStatus = getOpenStatus(pub.openingHours);
-                  return (
-                    <Link key={pub.id} href={`/pub/${pub.id}`}>
-                      <Card className="hover:shadow-lg hover:scale-[1.02] transition-all duration-200 cursor-pointer h-full">
-                        <CardContent className="p-4">
-                          <div className="flex items-start gap-3">
-                            <div className="w-12 h-12 bg-orange-100 dark:bg-orange-900/20 rounded-lg flex items-center justify-center flex-shrink-0">
-                              <MapPin className="h-6 w-6 text-orange-600" />
-                            </div>
-                            <div className="flex-1 min-w-0">
-                              <h3 className="font-semibold text-sm mb-1 truncate">{pub.name}</h3>
-                              <p className="text-xs text-gray-500 mb-2 flex items-center gap-1">
-                                <MapPin className="w-3 h-3 flex-shrink-0" />
-                                <span className="line-clamp-1">
-                                  {userLocation && pub.distance !== 9999 ? pub.city || pub.address?.split(',').pop()?.trim() : pub.address}
-                                </span>
-                                {userLocation && pub.distance !== 9999 && (
-                                  <span className="font-medium text-blue-600 dark:text-blue-400 whitespace-nowrap">
-                                    {pub.distance < 1 
-                                      ? `${Math.round(pub.distance * 1000)}m` 
-                                      : `${pub.distance.toFixed(1)}km`}
-                                  </span>
-                                )}
-                              </p>
-                              <div className="flex items-center gap-2 flex-wrap">
-                                <Badge className={`text-xs ${openStatus.color}`}>
-                                  <Clock className="h-3 w-3 mr-1" />
-                                  {openStatus.label}
-                                </Badge>
-                              </div>
-                            </div>
-                          </div>
-                        </CardContent>
-                      </Card>
-                    </Link>
-                  );
-                })}
-              </div>
-            )}
-          </div>
-        )}
+              )}
+              <Button variant="outline" size="sm" onClick={dismissAll} className="text-xs">
+                <Trash2 className="h-3 w-3 mr-1" />
+                Nascondi tutte
+              </Button>
+            </div>
+          )}
 
-        {activeTab === "tapchanges" && (
-          <div>
-            {nearbyTapChanges.length > 0 && (
-              <div className="flex items-center justify-end gap-2 mb-3">
-                {dismissedIds.size > 0 && (
-                  <Button variant="ghost" size="sm" onClick={clearAllDismissed} className="text-xs text-gray-500">
-                    Ripristina nascoste
-                  </Button>
-                )}
-                <Button variant="outline" size="sm" onClick={dismissAll} className="text-xs">
-                  <Trash2 className="h-3 w-3 mr-1" />
-                  Nascondi tutte
-                </Button>
-              </div>
-            )}
-
-            {loadingTapChanges ? (
-              <div className="flex items-center justify-center py-8">
-                <Loader2 className="h-8 w-8 animate-spin text-orange-600" />
-              </div>
-            ) : nearbyTapChanges.length === 0 ? (
-              <div className="text-center py-12">
-                <Beer className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
-                  Nessuna novità
-                </h3>
-                <p className="text-gray-500 dark:text-gray-400 mb-4">
-                  {dismissedIds.size > 0
-                    ? "Hai nascosto tutte le notifiche. Puoi ripristinarle."
-                    : `Nessuna birra aggiunta o rimossa entro ${radius} km negli ultimi 30 giorni.`}
-                </p>
-                {dismissedIds.size > 0 ? (
-                  <Button variant="outline" onClick={clearAllDismissed}>
-                    Ripristina nascoste
-                  </Button>
-                ) : (
-                  <Button variant="outline" onClick={() => setRadius("50")}>
-                    Espandi a 50 km
-                  </Button>
-                )}
-              </div>
-            ) : (
-              <div className="space-y-3">
-                {nearbyTapChanges.map((tc) => (
-                  <Card key={tc.id} className="hover:shadow-sm transition-shadow group">
-                    <CardContent className="p-4">
-                      <div className="flex items-start gap-3">
-                        <div className={`w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 ${
-                          tc.type === 'beer_removed' 
-                            ? 'bg-red-100 dark:bg-red-900/20' 
-                            : 'bg-orange-100 dark:bg-orange-900/20'
-                        }`}>
-                          <Beer className={`h-5 w-5 ${
-                            tc.type === 'beer_removed' ? 'text-red-600' : 'text-orange-600'
-                          }`} />
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium text-gray-900 dark:text-white">
-                            {tc.message}
-                          </p>
-                          <div className="flex items-center gap-2 mt-1 flex-wrap">
-                            <Link href={`/pub/${tc.pubId}`}>
-                              <span className="text-xs text-orange-600 hover:underline font-medium cursor-pointer">
-                                {tc.pubName}
-                              </span>
-                            </Link>
-                            {tc.pubCity && (
-                              <span className="text-xs text-gray-400">• {tc.pubCity}</span>
-                            )}
-                            {'distance' in tc && (tc as any).distance !== 9999 && (
-                              <span className="text-xs font-medium text-blue-600 dark:text-blue-400">
-                                {(tc as any).distance < 1 
-                                  ? `${Math.round((tc as any).distance * 1000)}m` 
-                                  : `${(tc as any).distance.toFixed(1)}km`}
-                              </span>
-                            )}
-                          </div>
-                          <span className="text-xs text-gray-400 mt-1 block">
-                            {formatDistanceToNow(new Date(tc.createdAt), { addSuffix: true, locale: it })}
-                          </span>
-                        </div>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="flex-shrink-0 h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity text-gray-400 hover:text-red-500"
-                          onClick={() => dismissChange(tc.id)}
-                        >
-                          <X className="h-4 w-4" />
-                        </Button>
+          {loadingTapChanges ? (
+            <div className="flex items-center justify-center py-8">
+              <Loader2 className="h-8 w-8 animate-spin text-orange-600" />
+            </div>
+          ) : nearbyTapChanges.length === 0 ? (
+            <div className="text-center py-8 bg-gray-50 dark:bg-gray-800/50 rounded-xl">
+              <Beer className="h-10 w-10 text-gray-400 mx-auto mb-3" />
+              <p className="text-sm text-gray-500 dark:text-gray-400">
+                {dismissedIds.size > 0
+                  ? "Hai nascosto tutte le notifiche."
+                  : `Nessuna birra aggiunta o rimossa entro ${radius} km negli ultimi 30 giorni.`}
+              </p>
+              {dismissedIds.size > 0 ? (
+                <Button variant="link" size="sm" onClick={clearAllDismissed}>Ripristina nascoste</Button>
+              ) : (
+                <Button variant="link" size="sm" onClick={() => setRadius("50")}>Espandi a 50 km</Button>
+              )}
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {nearbyTapChanges.map((tc) => (
+                <Card key={tc.id} className="hover:shadow-sm transition-shadow group">
+                  <CardContent className="p-4">
+                    <div className="flex items-start gap-3">
+                      <div className={`w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 ${
+                        tc.type === 'beer_removed' 
+                          ? 'bg-red-100 dark:bg-red-900/20' 
+                          : 'bg-orange-100 dark:bg-orange-900/20'
+                      }`}>
+                        <Beer className={`h-5 w-5 ${
+                          tc.type === 'beer_removed' ? 'text-red-600' : 'text-orange-600'
+                        }`} />
                       </div>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-            )}
-          </div>
-        )}
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-gray-900 dark:text-white">
+                          {tc.message}
+                        </p>
+                        <div className="flex items-center gap-2 mt-1 flex-wrap">
+                          <Link href={`/pub/${tc.pubId}`}>
+                            <span className="text-xs text-orange-600 hover:underline font-medium cursor-pointer">
+                              {tc.pubName}
+                            </span>
+                          </Link>
+                          {tc.pubCity && (
+                            <span className="text-xs text-gray-400">• {tc.pubCity}</span>
+                          )}
+                          {'distance' in tc && (tc as any).distance !== 9999 && (
+                            <span className="text-xs font-medium text-blue-600 dark:text-blue-400">
+                              {formatDistance((tc as any).distance)}
+                            </span>
+                          )}
+                        </div>
+                        <span className="text-xs text-gray-400 mt-1 block">
+                          {formatDistanceToNow(new Date(tc.createdAt), { addSuffix: true, locale: it })}
+                        </span>
+                      </div>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="flex-shrink-0 h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity text-gray-400 hover:text-red-500"
+                        onClick={() => dismissChange(tc.id)}
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          )}
+        </section>
       </div>
+
+      {/* Event Detail Popup */}
+      <Dialog open={!!selectedEvent} onOpenChange={(open) => { if (!open) setSelectedEvent(null); }}>
+        <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto p-0">
+          {selectedEvent && (
+            <>
+              {selectedEvent.imageUrl && (
+                <div className="relative h-48 sm:h-56">
+                  <img 
+                    src={selectedEvent.imageUrl} 
+                    alt={selectedEvent.title}
+                    className="w-full h-full object-cover"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+                  <div className="absolute top-3 left-3">
+                    <EventCategoryBadge category={selectedEvent.category} />
+                  </div>
+                </div>
+              )}
+              <div className="p-6 space-y-4">
+                <DialogHeader>
+                  <div className="flex items-center gap-2 flex-wrap">
+                    {!selectedEvent.imageUrl && <EventCategoryBadge category={selectedEvent.category} />}
+                    <DialogTitle className="text-xl">{selectedEvent.title}</DialogTitle>
+                  </div>
+                </DialogHeader>
+                <div className="flex items-center text-sm text-pink-600 dark:text-pink-400 gap-2">
+                  <Calendar className="h-4 w-4" />
+                  <span>{format(new Date(selectedEvent.eventDate), "EEEE d MMMM yyyy 'alle' HH:mm", { locale: it })}</span>
+                </div>
+                {selectedEvent.endDate && (
+                  <div className="flex items-center text-sm text-gray-500 gap-2">
+                    <Clock className="h-4 w-4" />
+                    <span>fino alle {format(new Date(selectedEvent.endDate), "HH:mm", { locale: it })}</span>
+                  </div>
+                )}
+                {selectedEvent.description && (
+                  <p className="text-gray-700 dark:text-gray-300 whitespace-pre-wrap">{selectedEvent.description}</p>
+                )}
+                <div className="flex items-center gap-2 pt-2">
+                  <MapPin className="h-4 w-4 text-orange-600 flex-shrink-0" />
+                  <Link href={`/pub/${selectedEvent.pubId}`} onClick={() => setSelectedEvent(null)}>
+                    <span className="text-sm text-orange-600 hover:underline font-semibold cursor-pointer">
+                      {selectedEvent.pub?.name}
+                    </span>
+                  </Link>
+                  {selectedEvent.pub?.city && (
+                    <span className="text-sm text-gray-500">• {selectedEvent.pub.city}</span>
+                  )}
+                </div>
+                <div className="pt-3 border-t flex items-center justify-between">
+                  <p className="text-xs text-gray-500">Condividi questo evento</p>
+                  <EventShareButtons event={selectedEvent} pubId={selectedEvent.pubId} size="default" />
+                </div>
+              </div>
+            </>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

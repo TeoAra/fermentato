@@ -513,11 +513,26 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
                       toast({ title: "Connesso!", description: "Taplist trasmessa sullo schermo" });
                     } catch (err: any) {
                       if (err?.name !== 'AbortError') {
-                        toast({ title: "Non disponibile", description: "Apri il link sul dispositivo collegato al TV", variant: "destructive" });
+                        try {
+                          await navigator.clipboard.writeText(tvUrl);
+                          toast({ title: "Link copiato!", description: "Incolla il link sul browser del dispositivo TV" });
+                        } catch {
+                          toast({ title: "Link TV", description: tvUrl });
+                        }
+                      }
+                    }
+                  } else if (navigator.share) {
+                    try {
+                      await navigator.share({ title: `Taplist TV - ${currentPub?.name}`, text: "Apri questo link sul dispositivo TV", url: tvUrl });
+                    } catch (err: any) {
+                      if (err?.name !== 'AbortError') {
+                        navigator.clipboard.writeText(tvUrl);
+                        toast({ title: "Link copiato!", description: "Incolla il link sul browser del dispositivo TV" });
                       }
                     }
                   } else {
-                    toast({ title: "Non supportato", description: "Usa Chrome su desktop per trasmettere, oppure apri il link sul dispositivo TV", variant: "destructive" });
+                    navigator.clipboard.writeText(tvUrl);
+                    toast({ title: "Link copiato!", description: "Incolla il link sul browser del dispositivo TV" });
                   }
                 }}
               >

@@ -1356,6 +1356,7 @@ export class DatabaseStorage implements IStorage {
       pubId: pubEvents.pubId,
       title: pubEvents.title,
       description: pubEvents.description,
+      category: pubEvents.category,
       eventDate: pubEvents.eventDate,
       endDate: pubEvents.endDate,
       imageUrl: pubEvents.imageUrl,
@@ -1364,6 +1365,8 @@ export class DatabaseStorage implements IStorage {
       updatedAt: pubEvents.updatedAt,
       pubName: pubs.name,
       pubCity: pubs.city,
+      pubLatitude: pubs.latitude,
+      pubLongitude: pubs.longitude,
     })
       .from(pubEvents)
       .innerJoin(pubs, eq(pubEvents.pubId, pubs.id))
@@ -1379,6 +1382,7 @@ export class DatabaseStorage implements IStorage {
       pubId: row.pubId,
       title: row.title,
       description: row.description,
+      category: row.category,
       eventDate: row.eventDate,
       endDate: row.endDate,
       imageUrl: row.imageUrl,
@@ -1388,6 +1392,8 @@ export class DatabaseStorage implements IStorage {
       pub: {
         name: row.pubName,
         city: row.pubCity,
+        latitude: row.pubLatitude,
+        longitude: row.pubLongitude,
       },
     }));
   }
