@@ -70,7 +70,7 @@ import { ImageUpload } from "@/components/image-upload";
 import { EventsManager } from "@/components/events-manager";
 import { PubQRCode } from "@/components/pub-qr-code";
 import { MenuPdfDownload } from "@/components/menu-pdf-download";
-import { Monitor } from "lucide-react";
+import { Cast } from "lucide-react";
 
 type DashboardSection = 'overview' | 'taplist' | 'bottles' | 'menu' | 'events' | 'analytics' | 'settings' | 'profile';
 
@@ -479,15 +479,81 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
           menuCategories={typedMenuData}
           compact
         />
-        <Button
-          variant="outline"
-          size="sm"
-          className="gap-2"
-          onClick={() => window.open(`/tv/${currentPub?.id}`, '_blank')}
-        >
-          <Monitor className="h-4 w-4" />
-          TV Mode
-        </Button>
+        <Dialog>
+          <DialogTrigger asChild>
+            <Button
+              variant="outline"
+              size="sm"
+              className="gap-2"
+            >
+              <Cast className="h-4 w-4" />
+              TV Mode
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <Cast className="h-5 w-5" />
+                Trasmetti Taplist su TV
+              </DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4">
+              <p className="text-sm text-gray-600 dark:text-gray-400">
+                Mostra la tua taplist su un TV o monitor collegato alla stessa rete Wi-Fi.
+              </p>
+
+              <Button
+                className="w-full gap-2 bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700"
+                onClick={async () => {
+                  const tvUrl = `${window.location.origin}/tv/${currentPub?.id}`;
+                  if ('PresentationRequest' in window) {
+                    try {
+                      const request = new (window as any).PresentationRequest([tvUrl]);
+                      await request.start();
+                      toast({ title: "Connesso!", description: "Taplist trasmessa sullo schermo" });
+                    } catch (err: any) {
+                      if (err?.name !== 'AbortError') {
+                        toast({ title: "Non disponibile", description: "Apri il link sul dispositivo collegato al TV", variant: "destructive" });
+                      }
+                    }
+                  } else {
+                    toast({ title: "Non supportato", description: "Usa Chrome su desktop per trasmettere, oppure apri il link sul dispositivo TV", variant: "destructive" });
+                  }
+                }}
+              >
+                <Cast className="h-4 w-4" />
+                Trasmetti su Chromecast / Display Wireless
+              </Button>
+
+              <div className="relative">
+                <div className="absolute inset-0 flex items-center">
+                  <span className="w-full border-t" />
+                </div>
+                <div className="relative flex justify-center text-xs uppercase">
+                  <span className="bg-background px-2 text-muted-foreground">oppure</span>
+                </div>
+              </div>
+
+              <Button
+                variant="outline"
+                className="w-full gap-2"
+                onClick={() => window.open(`/tv/${currentPub?.id}`, '_blank')}
+              >
+                <Eye className="h-4 w-4" />
+                Apri in nuova finestra
+              </Button>
+
+              <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-3 space-y-2">
+                <p className="text-xs font-medium text-gray-700 dark:text-gray-300">Come trasmettere:</p>
+                <ol className="text-xs text-gray-500 dark:text-gray-400 space-y-1 list-decimal list-inside">
+                  <li>Assicurati che TV/Chromecast sia sulla stessa rete Wi-Fi</li>
+                  <li>Premi "Trasmetti" qui sopra (Chrome desktop)</li>
+                  <li>In alternativa, apri in nuova finestra e usa il menu del browser per trasmettere</li>
+                </ol>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
         <Button
           variant="outline"
           size="sm"

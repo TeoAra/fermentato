@@ -76,38 +76,41 @@ export default function TaplistTV() {
         body { overflow: hidden; cursor: none; margin: 0; padding: 0; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
         .tap-card-anim { animation: fadeIn 0.4s ease-out both; }
-        .scale-large .tap-card { font-size: 1.4rem; }
-        .scale-large .tap-name { font-size: 1.6rem; }
-        .scale-large .tap-brewery { font-size: 1.1rem; }
-        .scale-large .tap-badge { font-size: 0.95rem; padding: 4px 12px; }
-        .scale-large .tap-price-size { font-size: 0.8rem; }
-        .scale-large .tap-price-val { font-size: 1.2rem; }
-        .scale-large .tap-img { width: 72px; height: 72px; }
-        .scale-large .tap-num { width: 36px; height: 36px; font-size: 1rem; }
-        .scale-medium .tap-card { font-size: 1.15rem; }
-        .scale-medium .tap-name { font-size: 1.35rem; }
-        .scale-medium .tap-brewery { font-size: 0.95rem; }
-        .scale-medium .tap-badge { font-size: 0.85rem; padding: 3px 10px; }
-        .scale-medium .tap-price-size { font-size: 0.75rem; }
-        .scale-medium .tap-price-val { font-size: 1.05rem; }
-        .scale-medium .tap-img { width: 64px; height: 64px; }
-        .scale-medium .tap-num { width: 32px; height: 32px; font-size: 0.9rem; }
-        .scale-normal .tap-card { font-size: 1rem; }
-        .scale-normal .tap-name { font-size: 1.15rem; }
-        .scale-normal .tap-brewery { font-size: 0.85rem; }
-        .scale-normal .tap-badge { font-size: 0.75rem; padding: 3px 9px; }
-        .scale-normal .tap-price-size { font-size: 0.65rem; }
-        .scale-normal .tap-price-val { font-size: 0.95rem; }
-        .scale-normal .tap-img { width: 56px; height: 56px; }
-        .scale-normal .tap-num { width: 28px; height: 28px; font-size: 0.8rem; }
-        .scale-compact .tap-card { font-size: 1rem; }
-        .scale-compact .tap-name { font-size: clamp(1rem, 1.5vw, 1.15rem); }
-        .scale-compact .tap-brewery { font-size: clamp(0.8rem, 1.2vw, 0.9rem); }
-        .scale-compact .tap-badge { font-size: clamp(0.7rem, 1vw, 0.8rem); padding: 2px 8px; }
-        .scale-compact .tap-price-size { font-size: clamp(0.65rem, 0.9vw, 0.75rem); }
-        .scale-compact .tap-price-val { font-size: clamp(0.85rem, 1.2vw, 1rem); }
-        .scale-compact .tap-img { width: 52px; height: 52px; }
-        .scale-compact .tap-num { width: 28px; height: 28px; font-size: 0.8rem; }
+        .tap-img-col { display: flex; align-items: center; justify-content: center; padding: 6px; flex-shrink: 0; }
+        .tap-img-wrap { border-radius: 50%; overflow: hidden; display: flex; align-items: center; justify-content: center; }
+        .tap-card { height: 100%; }
+        .scale-large .tap-img-col { width: clamp(100px, 12vh, 180px); }
+        .scale-large .tap-img-wrap { width: clamp(80px, 10vh, 160px); height: clamp(80px, 10vh, 160px); }
+        .scale-large .tap-name { font-size: clamp(1.4rem, 2.5vh, 2.2rem); }
+        .scale-large .tap-brewery { font-size: clamp(1rem, 1.8vh, 1.4rem); }
+        .scale-large .tap-badge { font-size: clamp(0.85rem, 1.4vh, 1.1rem); padding: 4px 12px; }
+        .scale-large .tap-price-size { font-size: clamp(0.75rem, 1.2vh, 1rem); }
+        .scale-large .tap-price-val { font-size: clamp(1.1rem, 2vh, 1.6rem); }
+        .scale-large .tap-num { width: clamp(34px, 4vh, 50px); height: clamp(34px, 4vh, 50px); font-size: clamp(1rem, 1.6vh, 1.3rem); }
+        .scale-medium .tap-img-col { width: clamp(90px, 10vh, 150px); }
+        .scale-medium .tap-img-wrap { width: clamp(72px, 8vh, 130px); height: clamp(72px, 8vh, 130px); }
+        .scale-medium .tap-name { font-size: clamp(1.2rem, 2.2vh, 1.8rem); }
+        .scale-medium .tap-brewery { font-size: clamp(0.85rem, 1.5vh, 1.2rem); }
+        .scale-medium .tap-badge { font-size: clamp(0.75rem, 1.2vh, 1rem); padding: 3px 10px; }
+        .scale-medium .tap-price-size { font-size: clamp(0.7rem, 1vh, 0.9rem); }
+        .scale-medium .tap-price-val { font-size: clamp(1rem, 1.7vh, 1.3rem); }
+        .scale-medium .tap-num { width: clamp(30px, 3.5vh, 44px); height: clamp(30px, 3.5vh, 44px); font-size: clamp(0.9rem, 1.4vh, 1.1rem); }
+        .scale-normal .tap-img-col { width: clamp(76px, 8vh, 120px); }
+        .scale-normal .tap-img-wrap { width: clamp(60px, 6.5vh, 100px); height: clamp(60px, 6.5vh, 100px); }
+        .scale-normal .tap-name { font-size: clamp(1rem, 1.8vh, 1.4rem); }
+        .scale-normal .tap-brewery { font-size: clamp(0.78rem, 1.3vh, 1rem); }
+        .scale-normal .tap-badge { font-size: clamp(0.7rem, 1vh, 0.85rem); padding: 3px 9px; }
+        .scale-normal .tap-price-size { font-size: clamp(0.6rem, 0.9vh, 0.8rem); }
+        .scale-normal .tap-price-val { font-size: clamp(0.85rem, 1.4vh, 1.1rem); }
+        .scale-normal .tap-num { width: clamp(26px, 3vh, 38px); height: clamp(26px, 3vh, 38px); font-size: clamp(0.8rem, 1.2vh, 1rem); }
+        .scale-compact .tap-img-col { width: clamp(64px, 7vh, 100px); }
+        .scale-compact .tap-img-wrap { width: clamp(50px, 5.5vh, 84px); height: clamp(50px, 5.5vh, 84px); }
+        .scale-compact .tap-name { font-size: clamp(0.95rem, 1.5vh, 1.2rem); }
+        .scale-compact .tap-brewery { font-size: clamp(0.75rem, 1.1vh, 0.9rem); }
+        .scale-compact .tap-badge { font-size: clamp(0.65rem, 0.9vh, 0.8rem); padding: 2px 8px; }
+        .scale-compact .tap-price-size { font-size: clamp(0.6rem, 0.8vh, 0.75rem); }
+        .scale-compact .tap-price-val { font-size: clamp(0.8rem, 1.2vh, 1rem); }
+        .scale-compact .tap-num { width: clamp(24px, 2.8vh, 34px); height: clamp(24px, 2.8vh, 34px); font-size: clamp(0.75rem, 1vh, 0.9rem); }
       `}</style>
 
       <div className="flex items-center justify-between px-6 py-3 flex-shrink-0 border-b border-gray-800/50">
@@ -195,31 +198,38 @@ function TapCard({ tap, index, delay }: { tap: any; index: number; delay: number
 
   return (
     <div
-      className="tap-card tap-card-anim relative bg-gray-800/60 backdrop-blur-sm rounded-2xl border border-gray-700/40 flex items-center gap-4 px-4 py-3 overflow-hidden min-h-0"
+      className="tap-card tap-card-anim relative bg-gray-800/60 backdrop-blur-sm rounded-2xl border border-gray-700/40 flex items-stretch overflow-hidden min-h-0"
       style={{ animationDelay: `${delay}s` }}
     >
       <div className="tap-num absolute top-2 right-2 rounded-full bg-amber-500/20 border border-amber-500/30 flex items-center justify-center z-10">
         <span className="text-amber-400 font-bold">{tap.tapNumber || index + 1}</span>
       </div>
 
-      <div className="tap-img rounded-full flex-shrink-0 bg-gray-700/50 border-2 border-amber-500/20 overflow-hidden flex items-center justify-center">
-        {imageUrl ? (
-          <img
-            src={imageUrl}
-            alt={beer.name || ""}
-            className="w-full h-full object-cover rounded-full"
-            onError={(e) => {
-              const el = e.target as HTMLImageElement;
-              el.style.display = 'none';
-              el.parentElement!.classList.add('fallback-icon');
-            }}
-          />
-        ) : (
-          <Beer className="w-1/2 h-1/2 text-amber-500/50" />
-        )}
+      <div className="tap-img-col flex-shrink-0">
+        <div className="tap-img-wrap bg-gray-700/50 border-2 border-amber-500/25">
+          {imageUrl ? (
+            <img
+              src={imageUrl}
+              alt={beer.name || ""}
+              className="w-full h-full object-cover rounded-full"
+              onError={(e) => {
+                const el = e.target as HTMLImageElement;
+                el.style.display = 'none';
+                if (el.parentElement) {
+                  const icon = document.createElement('div');
+                  icon.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="width:50%;height:50%;color:rgba(245,158,11,0.4)"><path d="m7.5 10.5 1.5-1.5"/><path d="M12 2a10 10 0 0 0-6.3 17.7c-.5-.8-.7-1.7-.7-2.7a5 5 0 0 1 5-5c2.5 0 4.2 1.5 5 3.5"/><path d="M17 15v7"/><path d="M21 15v7"/><path d="M17 22h4"/><path d="M17 15h4"/><path d="M9 9a5 5 0 0 1 5-5"/></svg>';
+                  icon.style.cssText = 'display:flex;align-items:center;justify-content:center;width:100%;height:100%';
+                  el.parentElement.appendChild(icon);
+                }
+              }}
+            />
+          ) : (
+            <Beer className="w-1/2 h-1/2 text-amber-500/40" />
+          )}
+        </div>
       </div>
 
-      <div className="flex-1 min-w-0 pr-8">
+      <div className="flex-1 min-w-0 pr-10 py-3 flex flex-col justify-center">
         <h3 className="tap-name font-bold text-white leading-tight truncate">
           {beer.name || "Birra"}
         </h3>
@@ -229,7 +239,7 @@ function TapCard({ tap, index, delay }: { tap: any; index: number; delay: number
 
         <div className="flex items-center gap-2 mt-1 flex-wrap">
           {beer.style && (
-            <span className="tap-badge rounded-full bg-gray-700/60 text-gray-300 border border-gray-600/30 truncate max-w-[160px]">
+            <span className="tap-badge rounded-full bg-gray-700/60 text-gray-300 border border-gray-600/30 truncate max-w-[180px]">
               {beer.style}
             </span>
           )}
