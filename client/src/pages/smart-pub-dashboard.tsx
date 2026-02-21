@@ -523,36 +523,68 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
                     toast({ title: "Cast non disponibile", description: "Apri questa pagina in Chrome", variant: "destructive" });
                     return;
                   }
-                  try {
+
+                  const castWithCustomReceiver = async () => {
                     const ctx = w.cast.framework.CastContext.getInstance();
+                    const configRes = await fetch('/api/cast-config');
+                    const config = await configRes.json();
+                    if (config.appId) {
+                      ctx.setOptions({
+                        receiverApplicationId: config.appId,
+                        autoJoinPolicy: w.chrome.cast.AutoJoinPolicy.ORIGIN_SCOPED
+                      });
+                      await ctx.requestSession();
+                      const session = ctx.getCurrentSession();
+                      if (!session) throw new Error('no_session');
+                      const taplistUrl = `${window.location.origin}/tv/${currentPub?.id}`;
+                      await session.sendMessage('urn:x-cast:fermenta.to', { url: taplistUrl });
+                      return 'live';
+                    }
+                    return null;
+                  };
+
+                  const castWithDefaultReceiver = async () => {
+                    const ctx = w.cast.framework.CastContext.getInstance();
+                    ctx.setOptions({
+                      receiverApplicationId: w.chrome.cast.media.DEFAULT_MEDIA_RECEIVER_APP_ID,
+                      autoJoinPolicy: w.chrome.cast.AutoJoinPolicy.ORIGIN_SCOPED
+                    });
                     await ctx.requestSession();
                     const session = ctx.getCurrentSession();
-                    if (!session) return;
-                    toast({ title: "Connesso alla TV!", description: "Invio taplist in corso..." });
+                    if (!session) throw new Error('no_session');
+                    const imgUrl = `${window.location.origin}/api/pubs/${currentPub?.id}/taplist-image`;
+                    const mediaInfo = new w.chrome.cast.media.MediaInfo(imgUrl, 'image/svg+xml');
+                    mediaInfo.metadata = new w.chrome.cast.media.PhotoMediaMetadata();
+                    mediaInfo.metadata.title = `Taplist - ${currentPub?.name}`;
+                    const loadRequest = new w.chrome.cast.media.LoadRequest(mediaInfo);
+                    await session.loadMedia(loadRequest);
+                    return 'static';
+                  };
 
-                    if (w.__castCustomReceiver) {
-                      const taplistUrl = `${window.location.origin}/tv/${currentPub?.id}`;
-                      try {
-                        await session.sendMessage('urn:x-cast:fermenta.to', { url: taplistUrl });
-                        toast({ title: "Taplist LIVE sulla TV!", description: "La taplist si aggiorna in tempo reale" });
-                      } catch (msgErr: any) {
-                        console.error('Custom receiver message error:', msgErr);
-                        toast({ title: "Receiver non pronto", description: "L'app Cast potrebbe non essere ancora pubblicata. Assicurati che il Chromecast sia autorizzato nella Cast Developer Console.", variant: "destructive" });
-                      }
+                  try {
+                    toast({ title: "Connessione alla TV...", description: "Seleziona il dispositivo" });
+                    let mode = await castWithCustomReceiver();
+                    if (mode === 'live') {
+                      toast({ title: "Taplist LIVE sulla TV!", description: "Si aggiorna in tempo reale quando modifichi la taplist" });
                     } else {
-                      const imgUrl = `${window.location.origin}/api/pubs/${currentPub?.id}/taplist-image`;
-                      const mediaInfo = new w.chrome.cast.media.MediaInfo(imgUrl, 'image/svg+xml');
-                      mediaInfo.metadata = new w.chrome.cast.media.PhotoMediaMetadata();
-                      mediaInfo.metadata.title = `Taplist - ${currentPub?.name}`;
-                      const loadRequest = new w.chrome.cast.media.LoadRequest(mediaInfo);
-                      await session.loadMedia(loadRequest);
-                      toast({ title: "Taplist sulla TV!", description: "Immagine statica - per aggiornamenti live configura CAST_APP_ID" });
+                      const result = await castWithDefaultReceiver();
+                      if (result === 'static') {
+                        toast({ title: "Taplist sulla TV!", description: "Immagine della taplist inviata alla TV" });
+                      }
                     }
                   } catch (err: any) {
-                    if (err?.code === 'cancel' || err?.name === 'AbortError') return;
-                    const errMsg = err?.message || err?.description || JSON.stringify(err);
-                    console.error('Cast error:', err, 'code:', err?.code, 'message:', errMsg);
-                    toast({ title: "Errore trasmissione", description: errMsg || "Prova ad aprire la taplist nel browser della TV", variant: "destructive" });
+                    if (err?.code === 'cancel' || err?.message === 'cancel') return;
+                    console.error('Cast custom receiver failed, trying fallback:', err);
+                    try {
+                      const result = await castWithDefaultReceiver();
+                      if (result === 'static') {
+                        toast({ title: "Taplist sulla TV!", description: "Inviata come immagine (il receiver live non è ancora disponibile)" });
+                      }
+                    } catch (fallbackErr: any) {
+                      if (fallbackErr?.code === 'cancel' || fallbackErr?.message === 'cancel') return;
+                      console.error('Cast fallback also failed:', fallbackErr);
+                      toast({ title: "Errore trasmissione", description: "Non è stato possibile connettersi alla TV. Prova ad aprire la taplist nel browser della TV.", variant: "destructive" });
+                    }
                   }
                 }}
               >
