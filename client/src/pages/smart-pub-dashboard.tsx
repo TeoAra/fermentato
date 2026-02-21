@@ -519,36 +519,26 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
                 className="w-full gap-2 bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 py-5 text-base"
                 onClick={async () => {
                   const tvUrl = `${window.location.origin}/tv/${currentPub?.id}`;
-                  const w = window as any;
-                  if (w.__castAvailable && w.cast && w.chrome?.cast) {
+                  if ('PresentationRequest' in window) {
                     try {
-                      const ctx = w.cast.framework.CastContext.getInstance();
-                      await ctx.requestSession();
-                      const session = ctx.getCurrentSession();
-                      if (session) {
-                        const mediaInfo = new w.chrome.cast.media.MediaInfo(tvUrl, 'text/html');
-                        mediaInfo.metadata = new w.chrome.cast.media.GenericMediaMetadata();
-                        mediaInfo.metadata.title = `Taplist - ${currentPub?.name}`;
-                        const request = new w.chrome.cast.media.LoadRequest(mediaInfo);
-                        try {
-                          await session.loadMedia(request);
-                          toast({ title: "Taplist inviata alla TV!" });
-                        } catch {
-                          toast({ title: "Connesso alla TV!", description: "Apri la Taplist TV nel browser per mostrarla" });
-                        }
-                        return;
-                      }
+                      const request = new (window as any).PresentationRequest([tvUrl]);
+                      const connection = await request.start();
+                      toast({ title: "Taplist trasmessa sulla TV!", description: "La taplist è visibile sulla TV" });
+                      connection.onclose = () => {
+                        toast({ title: "Trasmissione terminata" });
+                      };
+                      return;
                     } catch (err: any) {
-                      if (err?.code === 'cancel') return;
-                      toast({ title: "Cast non disponibile", description: "Usa i pulsanti sotto per aprire la taplist", variant: "destructive" });
+                      if (err?.name === 'AbortError') return;
+                      toast({ title: "Nessun dispositivo trovato", description: "Assicurati che la TV sia sulla stessa rete Wi-Fi", variant: "destructive" });
                     }
                   } else {
-                    toast({ title: "Google Cast non disponibile", description: "Apri questa pagina in Chrome per usare Cast, oppure usa i pulsanti sotto" });
+                    toast({ title: "Non supportato", description: "Apri questa pagina in Chrome per trasmettere" });
                   }
                 }}
               >
                 <Cast className="h-5 w-5" />
-                Trasmetti su Chromecast
+                Trasmetti Taplist su TV
               </Button>
 
               <div className="flex gap-2">
