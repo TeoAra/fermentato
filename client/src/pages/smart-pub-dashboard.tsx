@@ -70,7 +70,7 @@ import { ImageUpload } from "@/components/image-upload";
 import { EventsManager } from "@/components/events-manager";
 import { PubQRCode } from "@/components/pub-qr-code";
 import { MenuPdfDownload } from "@/components/menu-pdf-download";
-import { Cast } from "lucide-react";
+import { Cast, Share2, Link as LinkIcon } from "lucide-react";
 
 type DashboardSection = 'overview' | 'taplist' | 'bottles' | 'menu' | 'events' | 'analytics' | 'settings' | 'profile';
 
@@ -504,48 +504,59 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
 
               <Button
                 className="w-full gap-2 bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700"
-                onClick={async () => {
-                  const tvUrl = `${window.location.origin}/tv/${currentPub?.id}`;
-                  try {
-                    const request = new (window as any).PresentationRequest([tvUrl]);
-                    await request.start();
-                    toast({ title: "Connesso!", description: "Taplist trasmessa sullo schermo" });
-                  } catch (err: any) {
-                    if (err?.name === 'AbortError') return;
-                    console.warn('Cast error:', err?.name, err?.message);
-                    navigator.clipboard.writeText(tvUrl);
-                    toast({ title: "Link TV copiato", description: "Trasmissione non disponibile su questo browser. Apri il link direttamente sul dispositivo TV." });
-                  }
+                onClick={() => {
+                  window.open(`/tv/${currentPub?.id}`, '_blank');
+                  toast({ title: "Pagina TV aperta", description: "Usa il menu del browser (⋮) → Trasmetti per inviare alla TV" });
                 }}
               >
                 <Cast className="h-4 w-4" />
-                Trasmetti su Chromecast / Display Wireless
+                Apri Taplist TV e Trasmetti
               </Button>
 
-              <div className="relative">
-                <div className="absolute inset-0 flex items-center">
-                  <span className="w-full border-t" />
-                </div>
-                <div className="relative flex justify-center text-xs uppercase">
-                  <span className="bg-background px-2 text-muted-foreground">oppure</span>
-                </div>
+              <div className="flex gap-2">
+                <Button
+                  variant="outline"
+                  className="flex-1 gap-2"
+                  onClick={async () => {
+                    const tvUrl = `${window.location.origin}/tv/${currentPub?.id}`;
+                    if (navigator.share) {
+                      try {
+                        await navigator.share({ title: `Taplist TV - ${currentPub?.name}`, text: "Apri questo link sul browser della TV", url: tvUrl });
+                      } catch (err: any) {
+                        if (err?.name !== 'AbortError') {
+                          navigator.clipboard.writeText(tvUrl);
+                          toast({ title: "Link copiato!" });
+                        }
+                      }
+                    } else {
+                      navigator.clipboard.writeText(tvUrl);
+                      toast({ title: "Link copiato!" });
+                    }
+                  }}
+                >
+                  <Share2 className="h-4 w-4" />
+                  Condividi Link TV
+                </Button>
+                <Button
+                  variant="outline"
+                  className="flex-1 gap-2"
+                  onClick={() => {
+                    navigator.clipboard.writeText(`${window.location.origin}/tv/${currentPub?.id}`);
+                    toast({ title: "Link copiato!", description: "Incolla sul browser della TV" });
+                  }}
+                >
+                  <LinkIcon className="h-4 w-4" />
+                  Copia Link
+                </Button>
               </div>
 
-              <Button
-                variant="outline"
-                className="w-full gap-2"
-                onClick={() => window.open(`/tv/${currentPub?.id}`, '_blank')}
-              >
-                <Eye className="h-4 w-4" />
-                Apri in nuova finestra
-              </Button>
-
               <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-3 space-y-2">
-                <p className="text-xs font-medium text-gray-700 dark:text-gray-300">Come trasmettere:</p>
+                <p className="text-xs font-medium text-gray-700 dark:text-gray-300">Come trasmettere su TV:</p>
                 <ol className="text-xs text-gray-500 dark:text-gray-400 space-y-1 list-decimal list-inside">
-                  <li>Assicurati che TV/Chromecast sia sulla stessa rete Wi-Fi</li>
-                  <li>Premi "Trasmetti" qui sopra (Chrome desktop)</li>
-                  <li>In alternativa, apri in nuova finestra e usa il menu del browser per trasmettere</li>
+                  <li>Premi "Apri Taplist TV e Trasmetti" qui sopra</li>
+                  <li>Nella pagina aperta, tocca il menu del browser (⋮)</li>
+                  <li>Seleziona "Trasmetti" e scegli la tua TV</li>
+                  <li>Oppure usa "Condividi Link TV" per aprirlo direttamente sul browser della TV</li>
                 </ol>
               </div>
             </div>
