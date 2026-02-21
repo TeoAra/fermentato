@@ -5,25 +5,40 @@ import { Beer, Droplets } from "lucide-react";
 
 function FitText({ text, className, style }: { text: string; className?: string; style?: React.CSSProperties }) {
   const ref = useRef<HTMLDivElement>(null);
+  const fitting = useRef(false);
+  const timer = useRef<ReturnType<typeof setTimeout>>();
 
   const fit = useCallback(() => {
+    if (fitting.current) return;
     const el = ref.current;
     if (!el) return;
+    fitting.current = true;
     el.style.fontSize = '';
-    const computed = window.getComputedStyle(el);
-    let size = parseFloat(computed.fontSize);
-    const minSize = 8;
-    while (el.scrollWidth > el.clientWidth + 1 && size > minSize) {
-      size -= 0.5;
-      el.style.fontSize = size + 'px';
-    }
+    requestAnimationFrame(() => {
+      if (!el) { fitting.current = false; return; }
+      const computed = window.getComputedStyle(el);
+      let size = parseFloat(computed.fontSize);
+      const minSize = 6;
+      let iterations = 0;
+      while (el.scrollWidth > el.clientWidth + 1 && size > minSize && iterations < 50) {
+        size -= 0.5;
+        el.style.fontSize = size + 'px';
+        iterations++;
+      }
+      fitting.current = false;
+    });
   }, []);
 
   useEffect(() => {
     fit();
-    const ro = new ResizeObserver(fit);
-    if (ref.current) ro.observe(ref.current);
-    return () => ro.disconnect();
+    const parent = ref.current?.parentElement;
+    if (!parent) return;
+    const ro = new ResizeObserver(() => {
+      clearTimeout(timer.current);
+      timer.current = setTimeout(fit, 100);
+    });
+    ro.observe(parent);
+    return () => { ro.disconnect(); clearTimeout(timer.current); };
   }, [text, fit]);
 
   return (
