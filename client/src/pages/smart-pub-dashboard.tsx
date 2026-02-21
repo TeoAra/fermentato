@@ -519,40 +519,40 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
                 className="w-full gap-2 bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 py-5 text-base"
                 onClick={async () => {
                   const tvUrl = `${window.location.origin}/tv/${currentPub?.id}`;
-                  if (navigator.share) {
-                    try {
-                      await navigator.share({
-                        title: `Taplist TV - ${currentPub?.name}`,
-                        text: `Apri la taplist di ${currentPub?.name} sulla TV`,
-                        url: tvUrl,
-                      });
-                    } catch (err: any) {
-                      if (err?.name !== 'AbortError') {
-                        navigator.clipboard.writeText(tvUrl);
-                        toast({ title: "Link copiato!" });
-                      }
-                    }
-                  } else if ('PresentationRequest' in window) {
+                  const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+                  if (!isMobile && 'PresentationRequest' in window) {
                     try {
                       const request = new (window as any).PresentationRequest([tvUrl]);
                       await request.start();
+                      toast({ title: "Connesso!", description: "Taplist trasmessa sulla TV" });
                       return;
                     } catch (err: any) {
                       if (err?.name === 'AbortError') return;
-                      navigator.clipboard.writeText(tvUrl);
-                      toast({ title: "Link copiato!" });
                     }
-                  } else {
-                    navigator.clipboard.writeText(tvUrl);
-                    toast({ title: "Link copiato!", description: "Incollalo nel browser della TV" });
                   }
+                  if (isMobile && navigator.share) {
+                    try {
+                      await navigator.share({
+                        title: `Taplist - ${currentPub?.name}`,
+                        url: tvUrl,
+                      });
+                      return;
+                    } catch (err: any) {
+                      if (err?.name === 'AbortError') return;
+                    }
+                  }
+                  navigator.clipboard.writeText(tvUrl);
+                  toast({ title: "Link copiato!", description: "Incollalo nel browser della TV" });
                 }}
               >
                 <Cast className="h-5 w-5" />
-                Invia a TV / Condividi
+                Trasmetti su TV
               </Button>
               <p className="text-xs text-center text-gray-500 dark:text-gray-400 -mt-2">
-                Scegli Google TV, Chromecast o un'altra app dalla lista
+                {/Android|iPhone|iPad|iPod/i.test(navigator.userAgent)
+                  ? "Condividi il link con la tua TV tramite un'app"
+                  : "Cerca schermi e dispositivi Chromecast collegati"
+                }
               </p>
 
               <div className="flex gap-2">
