@@ -6,12 +6,12 @@ import { registerAdminRoutes } from "./routes-admin";
 import { sql, eq } from "drizzle-orm";
 import { upload, uploadImage, cloudinary } from "./cloudinary";
 import { db } from "./db";
-import { breweries, beers, pubs, users, tapList, notifications, pushSubscriptions, breweryRequests } from "@shared/schema";
+import { breweries, beers, pubs, users, tapList, notifications, pushSubscriptions, breweryRequests, pubEvents } from "@shared/schema";
 
-import { insertPubSchema, insertTapListSchema, insertBottleListSchema, insertMenuCategorySchema, insertMenuItemSchema, pubRegistrationSchema } from "@shared/schema";
+import { insertPubSchema, insertTapListSchema, insertBottleListSchema, insertMenuCategorySchema, insertMenuItemSchema, pubRegistrationSchema, insertPubEventSchema } from "@shared/schema";
 import { z } from "zod";
 import webpush from "web-push";
-import { initVapid, sendPushToUser, sendPushToAdmins } from "./push-utils";
+import { initVapid, sendPushToUser, sendPushToUserImmediate, sendPushToAdmins } from "./push-utils";
 
 const VAPID_PUBLIC_KEY = process.env.VAPID_PUBLIC_KEY || '';
 
@@ -1343,6 +1343,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           title: titleMap[type],
           body: messageMap[type],
           url: `/pubs/${pubId}`,
+          type: 'tap_change',
         });
       }
 
@@ -1371,6 +1372,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             title: `La tua birra preferita disponibile!`,
             body: `"${beerName}" è ora alla spina da ${pub.name}.`,
             url: `/pubs/${pubId}`,
+            type: 'new_beer',
           });
         }
 
@@ -1401,6 +1403,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
               title: `Novità dal tuo birrificio preferito!`,
               body: `${pub.name} ha "${beerName}" di ${breweryName} alla spina.`,
               url: `/pubs/${pubId}`,
+              type: 'new_beer',
             });
           }
         }
@@ -2526,10 +2529,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (subs.length === 0) {
         return res.status(404).json({ message: "Nessuna sottoscrizione push trovata. Attiva prima le notifiche." });
       }
-      await sendPushToUser(userId, {
+      await sendPushToUserImmediate(userId, {
         title: "Fermenta.to - Test",
         body: "Le notifiche push funzionano correttamente! Riceverai avvisi quando i tuoi pub preferiti aggiornano le spine.",
         url: "/dashboard",
+        type: "test",
       });
       res.json({ success: true, subscriptions: subs.length });
     } catch (error) {
@@ -2561,6 +2565,149 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error unsubscribing from push:", error);
       res.status(500).json({ message: "Failed to unsubscribe" });
+    }
+  });
+
+  // ==================== Pub Events Routes ====================
+
+  // GET upcoming events across all pubs (public)
+  app.get("/api/events/upcoming", async (req, res) => {
+    try {
+      const limit = req.query.limit ? parseInt(req.query.limit as string) : 20;
+      const events = await storage.getUpcomingEvents(limit);
+      res.json(events);
+    } catch (error) {
+      console.error("Error fetching upcoming events:", error);
+      res.status(500).json({ message: "Failed to fetch upcoming events" });
+    }
+  });
+
+  // GET published events for a pub (public)
+  app.get("/api/pubs/:pubId/events", async (req, res) => {
+    try {
+      const pubId = parseInt(req.params.pubId);
+      if (isNaN(pubId)) {
+        return res.status(400).json({ message: "Invalid pub ID" });
+      }
+      const events = await storage.getPubEvents(pubId);
+      const publishedEvents = events.filter(e => e.isPublished);
+      res.json(publishedEvents);
+    } catch (error) {
+      console.error("Error fetching pub events:", error);
+      res.status(500).json({ message: "Failed to fetch pub events" });
+    }
+  });
+
+  // POST create event for a pub (authenticated pub owner or admin)
+  app.post("/api/pubs/:pubId/events", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = (req.user as any).id;
+      const pubId = parseInt(req.params.pubId);
+      if (isNaN(pubId)) {
+        return res.status(400).json({ message: "Invalid pub ID" });
+      }
+
+      const canEdit = await isAdminOrPubOwner(userId, pubId);
+      if (!canEdit) {
+        return res.status(403).json({ message: "Not authorized to create events for this pub" });
+      }
+
+      const pub = await storage.getPub(pubId);
+      if (!pub) {
+        return res.status(404).json({ message: "Pub not found" });
+      }
+
+      const eventData = insertPubEventSchema.parse({ ...req.body, pubId });
+      const event = await storage.createPubEvent(eventData);
+
+      // Send push notifications to users who favorited this pub
+      try {
+        const pubFavUserIds = await storage.getUsersWhoFavoritedPub(pubId);
+        for (const favUserId of pubFavUserIds) {
+          const prefs = await storage.getNotificationPreferences(favUserId);
+          if (prefs && !prefs.events) continue;
+          await storage.createNotification({
+            userId: favUserId, type: 'event', title: `Nuovo evento da ${pub.name}!`,
+            message: `"${event.title}" - Non perderlo!`,
+            pubId, beerId: null, isRead: false,
+          });
+          sendPushToUser(favUserId, {
+            title: `Nuovo evento da ${pub.name}!`,
+            body: `"${event.title}" - Non perderlo!`,
+            url: `/pubs/${pubId}`, type: 'event',
+          });
+        }
+      } catch (notifError) {
+        console.error("Error sending event notifications:", notifError);
+      }
+
+      res.status(201).json(event);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: "Validation error", errors: error.errors });
+      }
+      console.error("Error creating pub event:", error);
+      res.status(500).json({ message: "Failed to create event" });
+    }
+  });
+
+  // PATCH update event for a pub (authenticated pub owner or admin)
+  app.patch("/api/pubs/:pubId/events/:eventId", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = (req.user as any).id;
+      const pubId = parseInt(req.params.pubId);
+      const eventId = parseInt(req.params.eventId);
+      if (isNaN(pubId) || isNaN(eventId)) {
+        return res.status(400).json({ message: "Invalid pub or event ID" });
+      }
+
+      const canEdit = await isAdminOrPubOwner(userId, pubId);
+      if (!canEdit) {
+        return res.status(403).json({ message: "Not authorized to update events for this pub" });
+      }
+
+      const existingEvent = await storage.getPubEvent(eventId);
+      if (!existingEvent || existingEvent.pubId !== pubId) {
+        return res.status(404).json({ message: "Event not found" });
+      }
+
+      const updateData = insertPubEventSchema.partial().parse(req.body);
+      const updated = await storage.updatePubEvent(eventId, updateData);
+      res.json(updated);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: "Validation error", errors: error.errors });
+      }
+      console.error("Error updating pub event:", error);
+      res.status(500).json({ message: "Failed to update event" });
+    }
+  });
+
+  // DELETE event for a pub (authenticated pub owner or admin)
+  app.delete("/api/pubs/:pubId/events/:eventId", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = (req.user as any).id;
+      const pubId = parseInt(req.params.pubId);
+      const eventId = parseInt(req.params.eventId);
+      if (isNaN(pubId) || isNaN(eventId)) {
+        return res.status(400).json({ message: "Invalid pub or event ID" });
+      }
+
+      const canEdit = await isAdminOrPubOwner(userId, pubId);
+      if (!canEdit) {
+        return res.status(403).json({ message: "Not authorized to delete events for this pub" });
+      }
+
+      const existingEvent = await storage.getPubEvent(eventId);
+      if (!existingEvent || existingEvent.pubId !== pubId) {
+        return res.status(404).json({ message: "Event not found" });
+      }
+
+      await storage.deletePubEvent(eventId);
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error deleting pub event:", error);
+      res.status(500).json({ message: "Failed to delete event" });
     }
   });
 

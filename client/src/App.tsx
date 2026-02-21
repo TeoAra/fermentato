@@ -49,6 +49,7 @@ import BecomePublican from "@/pages/become-publican";
 import BreweryDashboard from "@/pages/brewery-dashboard";
 import TermsOfService from "@/pages/tos";
 import PrivacyPolicy from "@/pages/privacy";
+import TaplistTV from "@/pages/taplist-tv";
 import { MobileHeader } from "@/components/mobile-header";
 import { BottomNavigation } from "@/components/bottom-navigation";
 import type { User } from "@shared/schema";
@@ -129,6 +130,18 @@ function App() {
       initGA();
     }
   }, []);
+
+  const [location] = useLocation();
+
+  if (location.startsWith("/tv/")) {
+    return (
+      <QueryClientProvider client={queryClient}>
+        <Switch>
+          <Route path="/tv/:id" component={TaplistTV} />
+        </Switch>
+      </QueryClientProvider>
+    );
+  }
 
   return (
     <QueryClientProvider client={queryClient}>

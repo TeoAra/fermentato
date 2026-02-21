@@ -26,6 +26,7 @@ import {
   Sparkles,
   TrendingUp,
   Target,
+  Monitor,
 } from "lucide-react";
 import Footer from "@/components/footer";
 import TapList from "@/components/tap-list";
@@ -40,6 +41,10 @@ import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import OpeningHoursDialog from "@/components/OpeningHoursDialog";
 import ImageWithFallback from "@/components/image-with-fallback";
+import { PubQRCode } from "@/components/pub-qr-code";
+import { MenuPdfDownload } from "@/components/menu-pdf-download";
+import { format, isFuture } from "date-fns";
+import { it as itLocale } from "date-fns/locale";
 
 type OpenStatus = 'open' | 'closing_soon' | 'opening_soon' | 'closed';
 
@@ -256,6 +261,11 @@ export default function PubDetail() {
 
   const { data: bottles, isLoading: bottlesLoading } = useQuery({
     queryKey: ["/api/pubs", id, "bottles"],
+    enabled: !!id,
+  });
+
+  const { data: pubEvents = [] } = useQuery({
+    queryKey: [`/api/pubs/${id}/events`],
     enabled: !!id,
   });
 
@@ -682,6 +692,16 @@ export default function PubDetail() {
                     <span className="mr-0.5 sm:mr-1 md:mr-2 text-xs sm:text-sm md:text-lg flex-shrink-0">🍽️</span>
                     <span className="truncate">Menù</span>
                   </TabsTrigger>
+                  {Array.isArray(pubEvents) && pubEvents.length > 0 && (
+                    <TabsTrigger 
+                      value="events" 
+                      data-testid="tab-events"
+                      className="rounded-md sm:rounded-lg md:rounded-xl transition-all duration-300 text-xs sm:text-xs md:text-sm font-medium md:font-semibold text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 data-[state=active]:bg-gradient-to-r data-[state=active]:from-pink-500 data-[state=active]:to-rose-600 data-[state=active]:text-white data-[state=active]:shadow-lg data-[state=active]:shadow-pink-500/20 data-[state=active]:scale-105 py-1.5 sm:py-2 md:py-3 px-1 sm:px-2 md:px-3 min-w-0 flex items-center justify-center"
+                    >
+                      <Calendar className="mr-0.5 sm:mr-1 md:mr-2 flex-shrink-0" size={12} />
+                      <span className="truncate">Eventi</span>
+                    </TabsTrigger>
+                  )}
                 </TabsList>
 
                 {/* Taplist Tab */}
@@ -772,6 +792,44 @@ export default function PubDetail() {
                       menu={Array.isArray(menu) ? menu.filter((category: any) => category.isVisible !== false) : []} 
                     />
                   )}
+                </TabsContent>
+
+                {/* Events Tab */}
+                <TabsContent value="events" className="space-y-6">
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-display-lg text-gray-900 dark:text-white flex items-center">
+                      <Calendar className="mr-3 h-6 w-6 text-pink-600" />
+                      Eventi
+                    </h3>
+                    <Badge variant="outline" className="bg-pink-50 dark:bg-pink-950 text-pink-800 dark:text-pink-200">
+                      {Array.isArray(pubEvents) ? pubEvents.filter((e: any) => isFuture(new Date(e.eventDate))).length : 0} in programma
+                    </Badge>
+                  </div>
+                  <div className="space-y-4">
+                    {Array.isArray(pubEvents) && pubEvents.filter((e: any) => isFuture(new Date(e.eventDate))).map((event: any) => (
+                      <Card key={event.id} className="overflow-hidden">
+                        {event.imageUrl && (
+                          <div className="h-40 bg-cover bg-center" style={{ backgroundImage: `url(${event.imageUrl})` }} />
+                        )}
+                        <CardContent className="p-5">
+                          <h4 className="text-lg font-bold text-gray-900 dark:text-white mb-2">{event.title}</h4>
+                          <div className="flex items-center text-sm text-pink-600 dark:text-pink-400 gap-2 mb-2">
+                            <Calendar className="h-4 w-4" />
+                            <span>{format(new Date(event.eventDate), "EEEE d MMMM yyyy 'alle' HH:mm", { locale: itLocale })}</span>
+                          </div>
+                          {event.endDate && (
+                            <div className="flex items-center text-xs text-gray-500 gap-2 mb-3">
+                              <Clock className="h-3.5 w-3.5" />
+                              <span>fino alle {format(new Date(event.endDate), "HH:mm", { locale: itLocale })}</span>
+                            </div>
+                          )}
+                          {event.description && (
+                            <p className="text-gray-600 dark:text-gray-400 text-sm">{event.description}</p>
+                          )}
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
                 </TabsContent>
               </Tabs>
           </div>
@@ -884,6 +942,21 @@ export default function PubDetail() {
                 >
                   <Eye className="h-4 w-4 mr-2" />
                   Vedi Orari Completi
+                </Button>
+                <PubQRCode pubId={(pub as any)?.id} pubName={(pub as any)?.name || ""} />
+                <MenuPdfDownload 
+                  pubName={(pub as any)?.name || ""} 
+                  tapList={Array.isArray(tapList) ? tapList : []} 
+                  bottleList={Array.isArray(bottles) ? bottles : []} 
+                  menuCategories={Array.isArray(menu) ? menu : []} 
+                />
+                <Button
+                  variant="outline"
+                  className="gap-2 w-full"
+                  onClick={() => window.open(`/tv/${(pub as any)?.id}`, '_blank')}
+                >
+                  <Monitor className="h-4 w-4" />
+                  Taplist TV Mode
                 </Button>
               </CardContent>
             </Card>

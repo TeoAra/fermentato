@@ -47,6 +47,9 @@ import {
   pushSubscriptions,
   type PushSubscription,
   type InsertPushSubscription,
+  pubEvents,
+  type PubEvent,
+  type InsertPubEvent,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, desc, like, inArray, sql, or, asc, ilike } from "drizzle-orm";
@@ -284,6 +287,14 @@ export interface IStorage {
   getPushSubscriptionsByUser(userId: string): Promise<PushSubscription[]>;
   deletePushSubscription(endpoint: string): Promise<void>;
   deletePushSubscriptionsByUser(userId: string): Promise<void>;
+
+  // Pub Events operations
+  getPubEvents(pubId: number): Promise<PubEvent[]>;
+  getPubEvent(id: number): Promise<PubEvent | undefined>;
+  createPubEvent(event: InsertPubEvent): Promise<PubEvent>;
+  updatePubEvent(id: number, updates: Partial<InsertPubEvent>): Promise<PubEvent>;
+  deletePubEvent(id: number): Promise<void>;
+  getUpcomingEvents(limit?: number): Promise<any[]>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -1308,6 +1319,78 @@ export class DatabaseStorage implements IStorage {
   async deletePushSubscriptionsByUser(userId: string): Promise<void> {
     await db.delete(pushSubscriptions).where(eq(pushSubscriptions.userId, userId));
   }
+
+  // Pub Events operations
+  async getPubEvents(pubId: number): Promise<PubEvent[]> {
+    return db.select().from(pubEvents)
+      .where(eq(pubEvents.pubId, pubId))
+      .orderBy(desc(pubEvents.eventDate));
+  }
+
+  async getPubEvent(id: number): Promise<PubEvent | undefined> {
+    const [event] = await db.select().from(pubEvents).where(eq(pubEvents.id, id));
+    return event;
+  }
+
+  async createPubEvent(event: InsertPubEvent): Promise<PubEvent> {
+    const [created] = await db.insert(pubEvents).values(event).returning();
+    return created;
+  }
+
+  async updatePubEvent(id: number, updates: Partial<InsertPubEvent>): Promise<PubEvent> {
+    const [updated] = await db.update(pubEvents)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(eq(pubEvents.id, id))
+      .returning();
+    return updated;
+  }
+
+  async deletePubEvent(id: number): Promise<void> {
+    await db.delete(pubEvents).where(eq(pubEvents.id, id));
+  }
+
+  async getUpcomingEvents(limit: number = 20): Promise<any[]> {
+    const now = new Date();
+    const results = await db.select({
+      id: pubEvents.id,
+      pubId: pubEvents.pubId,
+      title: pubEvents.title,
+      description: pubEvents.description,
+      eventDate: pubEvents.eventDate,
+      endDate: pubEvents.endDate,
+      imageUrl: pubEvents.imageUrl,
+      isPublished: pubEvents.isPublished,
+      createdAt: pubEvents.createdAt,
+      updatedAt: pubEvents.updatedAt,
+      pubName: pubs.name,
+      pubCity: pubs.city,
+    })
+      .from(pubEvents)
+      .innerJoin(pubs, eq(pubEvents.pubId, pubs.id))
+      .where(and(
+        eq(pubEvents.isPublished, true),
+        sql`${pubEvents.eventDate} >= ${now}`
+      ))
+      .orderBy(asc(pubEvents.eventDate))
+      .limit(limit);
+
+    return results.map(row => ({
+      id: row.id,
+      pubId: row.pubId,
+      title: row.title,
+      description: row.description,
+      eventDate: row.eventDate,
+      endDate: row.endDate,
+      imageUrl: row.imageUrl,
+      isPublished: row.isPublished,
+      createdAt: row.createdAt,
+      updatedAt: row.updatedAt,
+      pub: {
+        name: row.pubName,
+        city: row.pubCity,
+      },
+    }));
+  }
 }
 
 // Storage wrapper with fallback to in-memory when database is disabled
@@ -1959,6 +2042,49 @@ class StorageWrapper implements IStorage {
     return this.dbCall(
       () => this.databaseStorage.deletePushSubscriptionsByUser(userId),
       async () => {}
+    );
+  }
+
+  // Pub Events operations
+  async getPubEvents(pubId: number): Promise<PubEvent[]> {
+    return this.dbCall(
+      () => this.databaseStorage.getPubEvents(pubId),
+      async () => []
+    );
+  }
+
+  async getPubEvent(id: number): Promise<PubEvent | undefined> {
+    return this.dbCall(
+      () => this.databaseStorage.getPubEvent(id),
+      async () => undefined
+    );
+  }
+
+  async createPubEvent(event: InsertPubEvent): Promise<PubEvent> {
+    return this.dbCall(
+      () => this.databaseStorage.createPubEvent(event),
+      async () => { throw new Error('Not implemented in memory storage'); }
+    );
+  }
+
+  async updatePubEvent(id: number, updates: Partial<InsertPubEvent>): Promise<PubEvent> {
+    return this.dbCall(
+      () => this.databaseStorage.updatePubEvent(id, updates),
+      async () => { throw new Error('Not implemented in memory storage'); }
+    );
+  }
+
+  async deletePubEvent(id: number): Promise<void> {
+    return this.dbCall(
+      () => this.databaseStorage.deletePubEvent(id),
+      async () => {}
+    );
+  }
+
+  async getUpcomingEvents(limit?: number): Promise<any[]> {
+    return this.dbCall(
+      () => this.databaseStorage.getUpcomingEvents(limit),
+      async () => []
     );
   }
 }

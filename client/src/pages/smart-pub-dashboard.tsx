@@ -67,8 +67,12 @@ import { TapListManager } from "@/components/taplist-manager";
 import { BottleListManager } from "@/components/bottle-list-manager";
 import { PubOwnerTopBar } from "@/components/pub-owner-top-bar";
 import { ImageUpload } from "@/components/image-upload";
+import { EventsManager } from "@/components/events-manager";
+import { PubQRCode } from "@/components/pub-qr-code";
+import { MenuPdfDownload } from "@/components/menu-pdf-download";
+import { Monitor } from "lucide-react";
 
-type DashboardSection = 'overview' | 'taplist' | 'bottles' | 'menu' | 'analytics' | 'settings' | 'profile';
+type DashboardSection = 'overview' | 'taplist' | 'bottles' | 'menu' | 'events' | 'analytics' | 'settings' | 'profile';
 
 interface SmartPubDashboardProps {
   adminPubId?: number;
@@ -328,6 +332,7 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
     { id: 'taplist', name: 'Taplist', icon: Beer, gradient: 'from-amber-500 to-orange-600' },
     { id: 'bottles', name: 'Cantina', icon: Wine, gradient: 'from-purple-500 to-violet-600' },
     { id: 'menu', name: 'Menu', icon: Utensils, gradient: 'from-green-500 to-emerald-600' },
+    { id: 'events', name: 'Eventi', icon: Calendar, gradient: 'from-pink-500 to-rose-600' },
     { id: 'analytics', name: 'Analytics', icon: BarChart3, gradient: 'from-indigo-500 to-blue-600' },
     { id: 'settings', name: 'Impostazioni', icon: Settings, gradient: 'from-gray-500 to-slate-600' },
     { id: 'profile', name: 'Profilo', icon: Users, gradient: 'from-rose-500 to-pink-600' },
@@ -520,6 +525,41 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
           delay={0.4}
         />
       </div>
+
+      {/* Sharing & Tools */}
+      <motion.div
+        className="grid grid-cols-2 md:grid-cols-4 gap-4"
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.6, delay: 0.45 }}
+      >
+        <PubQRCode pubId={currentPub?.id} pubName={currentPub?.name || ""} compact />
+        <MenuPdfDownload
+          pubName={currentPub?.name || ""}
+          tapList={typedTapList}
+          bottleList={typedBottleList}
+          menuCategories={typedMenuData}
+          compact
+        />
+        <Button
+          variant="outline"
+          size="sm"
+          className="gap-2"
+          onClick={() => window.open(`/tv/${currentPub?.id}`, '_blank')}
+        >
+          <Monitor className="h-4 w-4" />
+          TV Mode
+        </Button>
+        <Button
+          variant="outline"
+          size="sm"
+          className="gap-2"
+          onClick={() => window.open(`/pub/${currentPub?.id}`, '_blank')}
+        >
+          <Eye className="h-4 w-4" />
+          Pagina Pub
+        </Button>
+      </motion.div>
 
       {/* Smart Analytics Cards */}
       <motion.div 
@@ -1644,19 +1684,22 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
       
       {/* Main Content */}
       <div className="flex-1">
-        <div className="p-4 sm:p-6 md:p-8">
+        <div className="p-4 sm:p-6 md:p-8 pb-24 lg:pb-8">
           <div className="max-w-7xl mx-auto">
               {currentSection === 'overview' && renderOverview()}
               
               {currentSection === 'taplist' && renderTaplist()}
               {currentSection === 'bottles' && renderBottles()}
               {currentSection === 'menu' && renderMenu()}
+              {currentSection === 'events' && (
+                <EventsManager pubId={currentPub?.id || 0} pubName={currentPub?.name} />
+              )}
               {currentSection === 'analytics' && renderAnalytics()}
               {currentSection === 'settings' && renderSettings()}
               {currentSection === 'profile' && renderProfile()}
               
               {/* Fallback for unimplemented sections */}
-              {!['overview', 'taplist', 'bottles', 'menu', 'hours', 'analytics', 'settings', 'profile'].includes(currentSection) && (
+              {!['overview', 'taplist', 'bottles', 'menu', 'events', 'hours', 'analytics', 'settings', 'profile'].includes(currentSection) && (
                 <div className="text-center py-16">
                   <div className="space-y-4">
                     <div className={`w-16 h-16 rounded-2xl bg-gradient-to-br ${sections.find(s => s.id === currentSection)?.gradient} mx-auto flex items-center justify-center`}>

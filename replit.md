@@ -44,6 +44,14 @@ Preferred communication style: Simple, everyday language.
 - **Pub Management Flow**: Pub registration, dashboard for tap list/menu management, real-time updates reflected on public-facing pages.
 - **Data Fetching Strategy**: React Query for caching and optimistic updates, with error boundaries and loading states.
 
+### Recent Features (Feb 2026)
+- **Events System**: pubEvents table, full CRUD for pub owners, public display in pub detail, push notifications to favorites
+- **QR Codes**: Per-pub QR code generation with download/share (qrcode.react)
+- **PDF Menu Download**: Generate downloadable PDF with taplist, bottles, and food menu (jsPDF)
+- **TV Taplist Mode**: Full-screen taplist display at `/tv/:id` for TVs/monitors, auto-refreshing
+- **Push Notifications Optimization**: Throttling, batching, TTL/urgency settings, notification tags
+- **Mobile Dashboard UX**: Sticky bottom nav, thumb-friendly sections
+
 ## External Dependencies
 
 - **Database**: Neon PostgreSQL (serverless).

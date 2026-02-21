@@ -654,6 +654,28 @@ export const insertPushSubscriptionSchema = createInsertSchema(pushSubscriptions
 export type PushSubscription = typeof pushSubscriptions.$inferSelect;
 export type InsertPushSubscription = z.infer<typeof insertPushSubscriptionSchema>;
 
+// Pub Events
+export const pubEvents = pgTable("pub_events", {
+  id: serial("id").primaryKey(),
+  pubId: integer("pub_id").references(() => pubs.id, { onDelete: "cascade" }).notNull(),
+  title: varchar("title", { length: 255 }).notNull(),
+  description: text("description"),
+  eventDate: timestamp("event_date").notNull(),
+  endDate: timestamp("end_date"),
+  imageUrl: text("image_url"),
+  isPublished: boolean("is_published").default(true),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export const insertPubEventSchema = createInsertSchema(pubEvents).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+export type PubEvent = typeof pubEvents.$inferSelect;
+export type InsertPubEvent = z.infer<typeof insertPubEventSchema>;
+
 // Custom schemas for forms
 export const pubRegistrationSchema = insertPubSchema.extend({
   vatNumber: z.string().min(11, "P.IVA deve essere di almeno 11 caratteri"),

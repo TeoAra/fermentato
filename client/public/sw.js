@@ -40,16 +40,17 @@ self.addEventListener('push', (event) => {
     console.error('Error parsing push data:', e);
   }
 
+  const tag = data.tag || `fermenta-${data.type || 'general'}`;
+
   const options = {
     body: data.body || data.message || 'Nuova notifica',
     icon: '/icons/icon-192.svg',
     badge: '/icons/icon-192.svg',
-    vibrate: [200, 100, 200],
-    tag: data.tag || 'fermenta-notification',
-    renotify: true,
+    tag: tag,
+    renotify: false,
     requireInteraction: false,
+    silent: !!data.silent,
     data: { url: data.url || '/' },
-    actions: data.actions || [],
   };
 
   event.waitUntil(self.registration.showNotification(data.title, options));
