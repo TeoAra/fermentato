@@ -71,6 +71,7 @@ import { EventsManager } from "@/components/events-manager";
 import { PubQRCode } from "@/components/pub-qr-code";
 import { MenuPdfDownload } from "@/components/menu-pdf-download";
 import { Cast, Share2, Link as LinkIcon } from "lucide-react";
+import { QRCodeSVG } from "qrcode.react";
 
 type DashboardSection = 'overview' | 'taplist' | 'bottles' | 'menu' | 'events' | 'analytics' | 'settings' | 'profile';
 
@@ -494,49 +495,61 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
             <DialogHeader>
               <DialogTitle className="flex items-center gap-2">
                 <Cast className="h-5 w-5" />
-                Trasmetti Taplist su TV
+                Taplist su TV
               </DialogTitle>
             </DialogHeader>
             <div className="space-y-4">
               <p className="text-sm text-gray-600 dark:text-gray-400">
-                Mostra la tua taplist su un TV o monitor collegato alla stessa rete Wi-Fi.
+                Apri questo indirizzo nel browser della tua Smart TV:
               </p>
 
-              <Button
-                className="w-full gap-2 bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700"
-                onClick={async () => {
-                  const tvUrl = `${window.location.origin}/tv/${currentPub?.id}`;
-                  if (navigator.share) {
-                    try {
-                      await navigator.share({
-                        title: `Taplist TV - ${currentPub?.name}`,
-                        text: `Apri la taplist di ${currentPub?.name} sulla TV`,
-                        url: tvUrl,
-                      });
-                    } catch (err: any) {
-                      if (err?.name !== 'AbortError') {
-                        navigator.clipboard.writeText(tvUrl);
-                        toast({ title: "Link copiato!" });
-                      }
-                    }
-                  } else {
-                    navigator.clipboard.writeText(tvUrl);
-                    toast({ title: "Link copiato!", description: "Incollalo nel browser della TV o condividilo" });
-                  }
+              <div
+                className="bg-gray-100 dark:bg-gray-800 rounded-lg p-3 flex items-center justify-between gap-2 cursor-pointer hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+                onClick={() => {
+                  navigator.clipboard.writeText(`${window.location.origin}/tv/${currentPub?.id}`);
+                  toast({ title: "Link copiato!" });
                 }}
               >
-                <Share2 className="h-5 w-5" />
-                Condividi / Trasmetti Taplist
-              </Button>
+                <code className="text-sm font-mono font-bold text-amber-600 dark:text-amber-400 break-all">
+                  {window.location.origin}/tv/{currentPub?.id}
+                </code>
+                <LinkIcon className="h-4 w-4 shrink-0 text-gray-400" />
+              </div>
 
-              <Button
-                variant="outline"
-                className="w-full gap-2"
-                onClick={() => window.open(`/tv/${currentPub?.id}`, '_blank')}
-              >
-                <Eye className="h-4 w-4" />
-                Apri Taplist TV nel browser
-              </Button>
+              <div className="flex justify-center">
+                <div className="bg-white p-3 rounded-lg inline-block">
+                  <QRCodeSVG
+                    value={`${window.location.origin}/tv/${currentPub?.id}`}
+                    size={160}
+                    level="M"
+                    includeMargin={false}
+                  />
+                </div>
+              </div>
+              <p className="text-xs text-center text-gray-500 dark:text-gray-400">
+                Inquadra il QR code con il telefono per aprire la taplist
+              </p>
+
+              <div className="flex gap-2">
+                <Button
+                  className="flex-1 gap-2 bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700"
+                  onClick={() => window.open(`/tv/${currentPub?.id}`, '_blank')}
+                >
+                  <Eye className="h-4 w-4" />
+                  Apri Taplist TV
+                </Button>
+                <Button
+                  variant="outline"
+                  className="flex-1 gap-2"
+                  onClick={() => {
+                    navigator.clipboard.writeText(`${window.location.origin}/tv/${currentPub?.id}`);
+                    toast({ title: "Link copiato!" });
+                  }}
+                >
+                  <LinkIcon className="h-4 w-4" />
+                  Copia Link
+                </Button>
+              </div>
             </div>
           </DialogContent>
         </Dialog>
