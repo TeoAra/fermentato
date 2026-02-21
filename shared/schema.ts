@@ -660,6 +660,7 @@ export const pubEvents = pgTable("pub_events", {
   pubId: integer("pub_id").references(() => pubs.id, { onDelete: "cascade" }).notNull(),
   title: varchar("title", { length: 255 }).notNull(),
   description: text("description"),
+  category: varchar("category", { length: 50 }).default("altro"),
   eventDate: timestamp("event_date").notNull(),
   endDate: timestamp("end_date"),
   imageUrl: text("image_url"),
