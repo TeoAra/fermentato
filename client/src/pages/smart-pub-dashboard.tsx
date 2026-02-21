@@ -504,30 +504,44 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
 
               <Button
                 className="w-full gap-2 bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700"
-                onClick={() => {
+                onClick={async () => {
+                  const tvUrl = `${window.location.origin}/tv/${currentPub?.id}`;
+                  if ('PresentationRequest' in window) {
+                    try {
+                      const request = new (window as any).PresentationRequest([tvUrl]);
+                      await request.start();
+                      toast({ title: "Connesso!", description: "Taplist trasmessa sulla TV" });
+                      return;
+                    } catch (err: any) {
+                      if (err?.name === 'AbortError') return;
+                    }
+                  }
                   const isAndroid = /Android/i.test(navigator.userAgent);
                   if (isAndroid) {
-                    const intentUrl = 'intent:#Intent;action=android.settings.CAST_SETTINGS;end';
-                    window.location.href = intentUrl;
-                  } else {
-                    toast({ title: "Apri Screencast", description: "Vai in Impostazioni → Connessione dispositivo → Screencast" });
+                    const a = document.createElement('a');
+                    a.href = 'intent:#Intent;action=android.settings.WIFI_DISPLAY_SETTINGS;S.browser_fallback_url=' + encodeURIComponent(tvUrl) + ';end';
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    return;
                   }
+                  window.open(tvUrl, '_blank');
+                  toast({ title: "Taplist TV aperta", description: "Usa il menu del browser → Trasmetti per inviarla alla TV" });
                 }}
               >
-                <Cast className="h-4 w-4" />
-                Connetti a TV / Screencast
-              </Button>
-
-              <Button
-                variant="outline"
-                className="w-full gap-2"
-                onClick={() => window.open(`/tv/${currentPub?.id}`, '_blank')}
-              >
-                <Eye className="h-4 w-4" />
-                Apri Taplist TV
+                <Cast className="h-5 w-5" />
+                Trasmetti Taplist su TV
               </Button>
 
               <div className="flex gap-2">
+                <Button
+                  variant="outline"
+                  className="flex-1 gap-2"
+                  onClick={() => window.open(`/tv/${currentPub?.id}`, '_blank')}
+                >
+                  <Eye className="h-4 w-4" />
+                  Apri Taplist TV
+                </Button>
                 <Button
                   variant="outline"
                   className="flex-1 gap-2"
@@ -551,25 +565,13 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
                   <Share2 className="h-4 w-4" />
                   Condividi Link
                 </Button>
-                <Button
-                  variant="outline"
-                  className="flex-1 gap-2"
-                  onClick={() => {
-                    navigator.clipboard.writeText(`${window.location.origin}/tv/${currentPub?.id}`);
-                    toast({ title: "Link copiato!" });
-                  }}
-                >
-                  <LinkIcon className="h-4 w-4" />
-                  Copia Link
-                </Button>
               </div>
 
               <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-3 space-y-2">
-                <p className="text-xs font-medium text-gray-700 dark:text-gray-300">Passi:</p>
+                <p className="text-xs font-medium text-gray-700 dark:text-gray-300">Se il pulsante non apre la trasmissione:</p>
                 <ol className="text-xs text-gray-500 dark:text-gray-400 space-y-1 list-decimal list-inside">
-                  <li>Premi <strong>"Connetti a TV"</strong> e scegli la tua TV</li>
-                  <li>Torna qui e premi <strong>"Apri Taplist TV"</strong></li>
-                  <li>La taplist resterà sulla TV anche se usi il telefono</li>
+                  <li>Apri il menu del browser (⋮) e tocca <strong>"Trasmetti"</strong></li>
+                  <li>Oppure scorri le notifiche e attiva <strong>Screencast</strong></li>
                 </ol>
               </div>
             </div>
