@@ -4,23 +4,14 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { 
-  Menu as MenuIcon, 
-  X, 
   ChevronDown,
   LogOut,
   Settings as SettingsIcon,
-  Crown,
-  Sparkles,
   Store,
   Home,
   User,
   RefreshCw,
-  Beer,
-  Wine,
-  Utensils,
-  BarChart3
 } from "lucide-react";
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger, DropdownMenuLabel } from "@/components/ui/dropdown-menu";
 import { RoleSwitcher } from "@/components/role-switcher";
 
@@ -48,56 +39,60 @@ export function PubOwnerTopBar({
   user,
   onLogout 
 }: PubOwnerTopBarProps) {
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-
-  const currentSectionData = sections.find(s => s.id === currentSection);
-
   return (
     <div className="sticky top-0 z-50 w-full">
-      {/* Main Top Bar */}
       <motion.div 
         className="glass-card border-b border-white/20 dark:border-gray-800/50 backdrop-blur-xl bg-white/80 dark:bg-gray-900/80"
         initial={{ y: -100, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         transition={{ duration: 0.5, ease: "easeOut" }}
       >
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16">
+        <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
+          <div className="flex items-center h-14 lg:h-16 gap-2 lg:gap-4">
             
-            {/* Left Section - Logo + Pub Info */}
-            <div className="flex items-center space-x-4">
+            {/* Left - Logo (compact on mobile) */}
+            <div className="flex items-center flex-shrink-0">
               <motion.div 
-                className="flex items-center space-x-3"
+                className="flex items-center space-x-2 lg:space-x-3 cursor-pointer"
                 whileHover={{ scale: 1.05 }}
                 transition={{ duration: 0.2 }}
+                onClick={() => setCurrentSection('overview')}
               >
                 {currentPub?.logoUrl ? (
-                  <Avatar className="h-10 w-10 ring-2 ring-orange-500/20">
+                  <Avatar className="h-8 w-8 lg:h-10 lg:w-10 ring-2 ring-orange-500/20">
                     <AvatarImage src={currentPub.logoUrl} alt={currentPub.name} />
-                    <AvatarFallback className="bg-gradient-to-br from-orange-500 to-red-600 text-white font-bold">
+                    <AvatarFallback className="bg-gradient-to-br from-orange-500 to-red-600 text-white font-bold text-xs lg:text-sm">
                       {currentPub.name?.[0] || 'P'}
                     </AvatarFallback>
                   </Avatar>
                 ) : (
-                  <div className="h-10 w-10 rounded-full bg-gradient-to-br from-orange-500 to-red-600 flex items-center justify-center">
-                    <Store className="h-5 w-5 text-white" />
+                  <div className="h-8 w-8 lg:h-10 lg:w-10 rounded-full bg-gradient-to-br from-orange-500 to-red-600 flex items-center justify-center">
+                    <Store className="h-4 w-4 lg:h-5 lg:w-5 text-white" />
                   </div>
                 )}
                 <div className="hidden sm:block">
-                  <h1 className="text-lg font-bold text-gray-900 dark:text-white">
+                  <h1 className="text-sm lg:text-lg font-bold text-gray-900 dark:text-white leading-tight">
                     {currentPub?.name || 'Dashboard'}
                   </h1>
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                       <button 
-                        className="flex items-center space-x-1 text-xs text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 transition-colors duration-200 cursor-pointer group"
+                        className="flex items-center space-x-1 text-[10px] lg:text-xs text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 transition-colors duration-200 cursor-pointer group"
                         data-testid="pannello-gestionale-dropdown"
                       >
                         <span>Pannello Gestionale</span>
-                        <ChevronDown className="h-3 w-3 transition-transform duration-200 group-hover:rotate-180" />
+                        <ChevronDown className="h-2.5 w-2.5 lg:h-3 lg:w-3 transition-transform duration-200 group-hover:rotate-180" />
                       </button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="start" className="w-48 glass-card border-white/20">
+                      <DropdownMenuItem 
+                        onClick={() => window.location.href = '/'}
+                        className="cursor-pointer"
+                      >
+                        <Home className="mr-2 h-4 w-4" />
+                        <span>Torna alla Home</span>
+                      </DropdownMenuItem>
+                      <DropdownMenuSeparator />
                       <DropdownMenuItem 
                         onClick={() => setCurrentSection('settings')}
                         className="cursor-pointer"
@@ -120,7 +115,6 @@ export function PubOwnerTopBar({
                           if (onLogout) {
                             onLogout();
                           } else {
-                            // Fallback logout logic
                             window.location.href = '/';
                           }
                         }}
@@ -134,106 +128,89 @@ export function PubOwnerTopBar({
                   </DropdownMenu>
                 </div>
               </motion.div>
-
-              {/* Home Navigation Button */}
-              <motion.div
-                initial={{ scale: 0, rotate: -180 }}
-                animate={{ scale: 1, rotate: 0 }}
-                transition={{ delay: 0.3, duration: 0.5 }}
-              >
-                <Button 
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => window.location.href = '/'}
-                  className="bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white border-0 hidden md:flex items-center gap-1 transition-all duration-300"
-                  data-testid="nav-home"
-                >
-                  <Home className="h-3 w-3" />
-                  Home
-                </Button>
-              </motion.div>
             </div>
 
-            {/* Center - Desktop Navigation */}
-            <div className="hidden lg:flex items-center space-x-1">
-              <nav className="flex items-center space-x-1 bg-gray-100/50 dark:bg-gray-800/50 rounded-2xl p-1">
-                {sections.map((section, index) => {
+            {/* Center - Navigation (scrollable on mobile, pill style on desktop) */}
+            <div className="flex-1 min-w-0 overflow-hidden">
+              {/* Mobile: scrollable compact pills */}
+              <nav className="lg:hidden flex items-center overflow-x-auto scrollbar-hide gap-1 py-0.5">
+                {sections.map((section) => {
                   const Icon = section.icon;
                   const isActive = currentSection === section.id;
-                  
                   return (
-                    <motion.button
+                    <button
                       key={section.id}
                       onClick={() => setCurrentSection(section.id)}
-                      className={`relative flex items-center space-x-2 px-4 py-2 rounded-xl text-sm font-medium transition-all duration-300 ${
+                      className={`flex items-center gap-1 py-1.5 px-2.5 rounded-full whitespace-nowrap text-[11px] font-medium transition-all duration-200 flex-shrink-0 ${
                         isActive
-                          ? 'text-white shadow-lg'
-                          : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-white/50 dark:hover:bg-gray-700/50'
+                          ? `bg-gradient-to-r ${section.gradient} text-white shadow-sm`
+                          : 'text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800'
                       }`}
-                      data-testid={`nav-${section.id}`}
-                      whileHover={{ scale: 1.05 }}
-                      whileTap={{ scale: 0.95 }}
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ duration: 0.3, delay: index * 0.1 }}
+                      data-testid={`mobile-nav-${section.id}`}
                     >
-                      {isActive && (
-                        <motion.div
-                          className={`absolute inset-0 bg-gradient-to-r ${section.gradient} rounded-xl`}
-                          layoutId="activeTab"
-                          initial={{ opacity: 0, scale: 0.8 }}
-                          animate={{ opacity: 1, scale: 1 }}
-                          transition={{ duration: 0.4, ease: "easeOut" }}
-                        />
-                      )}
-                      
-                      <div className="relative z-10 flex items-center space-x-2">
-                        <motion.div
-                          whileHover={{ rotate: 360 }}
-                          transition={{ duration: 0.6 }}
-                        >
-                          <Icon className="h-4 w-4" />
-                        </motion.div>
-                        <span className="hidden xl:block">{section.name}</span>
-                      </div>
-                    </motion.button>
+                      <Icon className="h-3 w-3" />
+                      <span>{section.name}</span>
+                    </button>
                   );
                 })}
               </nav>
+
+              {/* Desktop: centered pill navigation */}
+              <div className="hidden lg:flex items-center justify-center">
+                <nav className="flex items-center space-x-1 bg-gray-100/50 dark:bg-gray-800/50 rounded-2xl p-1">
+                  {sections.map((section, index) => {
+                    const Icon = section.icon;
+                    const isActive = currentSection === section.id;
+                    
+                    return (
+                      <motion.button
+                        key={section.id}
+                        onClick={() => setCurrentSection(section.id)}
+                        className={`relative flex items-center space-x-2 px-4 py-2 rounded-xl text-sm font-medium transition-all duration-300 ${
+                          isActive
+                            ? 'text-white shadow-lg'
+                            : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-white/50 dark:hover:bg-gray-700/50'
+                        }`}
+                        data-testid={`nav-${section.id}`}
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.3, delay: index * 0.1 }}
+                      >
+                        {isActive && (
+                          <motion.div
+                            className={`absolute inset-0 bg-gradient-to-r ${section.gradient} rounded-xl`}
+                            layoutId="activeTab"
+                            initial={{ opacity: 0, scale: 0.8 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            transition={{ duration: 0.4, ease: "easeOut" }}
+                          />
+                        )}
+                        
+                        <div className="relative z-10 flex items-center space-x-2">
+                          <Icon className="h-4 w-4" />
+                          <span className="hidden xl:block">{section.name}</span>
+                        </div>
+                      </motion.button>
+                    );
+                  })}
+                </nav>
+              </div>
             </div>
 
-            {/* Right Section - User Menu */}
-            <div className="flex items-center space-x-3">
-              {/* Current Section Indicator - Mobile */}
-              <div className="lg:hidden flex items-center space-x-2">
-                {currentSectionData && (
-                  <motion.div 
-                    className="flex items-center space-x-2"
-                    initial={{ opacity: 0, x: 20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    key={currentSection}
-                  >
-                    <div className={`p-2 rounded-lg bg-gradient-to-br ${currentSectionData.gradient}`}>
-                      <currentSectionData.icon className="h-4 w-4 text-white" />
-                    </div>
-                    <span className="text-sm font-medium text-gray-900 dark:text-white hidden sm:block">
-                      {currentSectionData.name}
-                    </span>
-                  </motion.div>
-                )}
-              </div>
-
-              {/* User Dropdown */}
+            {/* Right - User Menu */}
+            <div className="flex items-center flex-shrink-0">
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button 
                     variant="ghost" 
-                    className="relative h-10 w-10 rounded-full ring-2 ring-orange-500/20 hover:ring-orange-500/40 transition-all duration-300"
+                    className="relative h-8 w-8 lg:h-10 lg:w-10 rounded-full ring-2 ring-orange-500/20 hover:ring-orange-500/40 transition-all duration-300 p-0"
                     data-testid="user-menu-trigger"
                   >
-                    <Avatar className="h-9 w-9">
+                    <Avatar className="h-7 w-7 lg:h-9 lg:w-9">
                       <AvatarImage src={(user as any)?.profilePicture} alt="User" />
-                      <AvatarFallback className="bg-gradient-to-br from-blue-500 to-purple-600 text-white">
+                      <AvatarFallback className="bg-gradient-to-br from-blue-500 to-purple-600 text-white text-xs">
                         {(user as any)?.displayName?.[0] || (user as any)?.email?.[0] || 'U'}
                       </AvatarFallback>
                     </Avatar>
@@ -249,6 +226,13 @@ export function PubOwnerTopBar({
                     </p>
                   </div>
                   <DropdownMenuSeparator />
+                  <DropdownMenuItem
+                    onClick={() => window.location.href = '/'}
+                    className="cursor-pointer sm:hidden"
+                  >
+                    <Home className="mr-2 h-4 w-4" />
+                    <span>Torna alla Home</span>
+                  </DropdownMenuItem>
                   <DropdownMenuLabel className="text-xs text-gray-500 dark:text-gray-400 flex items-center gap-2">
                     <RefreshCw className="h-3 w-3" />
                     Cambia Ruolo
@@ -262,7 +246,7 @@ export function PubOwnerTopBar({
                     className="cursor-pointer"
                     data-testid="menu-profile"
                   >
-                    <SettingsIcon className="mr-2 h-4 w-4" />
+                    <User className="mr-2 h-4 w-4" />
                     <span>Profilo</span>
                   </DropdownMenuItem>
                   <DropdownMenuItem 
@@ -282,36 +266,10 @@ export function PubOwnerTopBar({
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
-
             </div>
           </div>
         </div>
       </motion.div>
-
-      {/* Mobile Section Navigation - Second Top Bar */}
-      <div className="lg:hidden bg-white/90 dark:bg-gray-900/90 backdrop-blur-xl border-b border-gray-200/50 dark:border-gray-800/50">
-        <nav className="flex items-center overflow-x-auto scrollbar-hide px-2 py-1.5 gap-1">
-          {sections.map((section) => {
-            const Icon = section.icon;
-            const isActive = currentSection === section.id;
-            return (
-              <button
-                key={section.id}
-                onClick={() => setCurrentSection(section.id)}
-                className={`flex items-center gap-1.5 py-1.5 px-3 rounded-full whitespace-nowrap text-xs font-medium transition-all duration-200 flex-shrink-0 ${
-                  isActive
-                    ? `bg-gradient-to-r ${section.gradient} text-white shadow-sm`
-                    : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800'
-                }`}
-                data-testid={`mobile-nav-${section.id}`}
-              >
-                <Icon className="h-3.5 w-3.5" />
-                <span>{section.name}</span>
-              </button>
-            );
-          })}
-        </nav>
-      </div>
     </div>
   );
 }
