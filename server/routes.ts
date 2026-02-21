@@ -2617,7 +2617,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Pub not found" });
       }
 
-      const eventData = insertPubEventSchema.parse({ ...req.body, pubId });
+      const body = { ...req.body, pubId };
+      if (body.eventDate && typeof body.eventDate === 'string') body.eventDate = new Date(body.eventDate);
+      if (body.endDate && typeof body.endDate === 'string') body.endDate = new Date(body.endDate);
+      const eventData = insertPubEventSchema.parse(body);
       const event = await storage.createPubEvent(eventData);
 
       // Send push notifications to users who favorited this pub
@@ -2671,7 +2674,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Event not found" });
       }
 
-      const updateData = insertPubEventSchema.partial().parse(req.body);
+      const updateBody = { ...req.body };
+      if (updateBody.eventDate && typeof updateBody.eventDate === 'string') updateBody.eventDate = new Date(updateBody.eventDate);
+      if (updateBody.endDate && typeof updateBody.endDate === 'string') updateBody.endDate = new Date(updateBody.endDate);
+      const updateData = insertPubEventSchema.partial().parse(updateBody);
       const updated = await storage.updatePubEvent(eventId, updateData);
       res.json(updated);
     } catch (error) {
