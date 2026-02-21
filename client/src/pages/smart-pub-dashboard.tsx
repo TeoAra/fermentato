@@ -506,74 +506,37 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
                 className="w-full gap-2 bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700"
                 onClick={async () => {
                   const tvUrl = `${window.location.origin}/tv/${currentPub?.id}`;
-                  if ('PresentationRequest' in window) {
+                  if (navigator.share) {
                     try {
-                      const request = new (window as any).PresentationRequest([tvUrl]);
-                      await request.start();
-                      toast({ title: "Connesso!", description: "Taplist trasmessa sulla TV" });
-                      return;
+                      await navigator.share({
+                        title: `Taplist TV - ${currentPub?.name}`,
+                        text: `Apri la taplist di ${currentPub?.name} sulla TV`,
+                        url: tvUrl,
+                      });
                     } catch (err: any) {
-                      if (err?.name === 'AbortError') return;
+                      if (err?.name !== 'AbortError') {
+                        navigator.clipboard.writeText(tvUrl);
+                        toast({ title: "Link copiato!" });
+                      }
                     }
+                  } else {
+                    navigator.clipboard.writeText(tvUrl);
+                    toast({ title: "Link copiato!", description: "Incollalo nel browser della TV o condividilo" });
                   }
-                  const isAndroid = /Android/i.test(navigator.userAgent);
-                  if (isAndroid) {
-                    const a = document.createElement('a');
-                    a.href = 'intent:#Intent;action=android.settings.WIFI_DISPLAY_SETTINGS;S.browser_fallback_url=' + encodeURIComponent(tvUrl) + ';end';
-                    document.body.appendChild(a);
-                    a.click();
-                    document.body.removeChild(a);
-                    return;
-                  }
-                  window.open(tvUrl, '_blank');
-                  toast({ title: "Taplist TV aperta", description: "Usa il menu del browser → Trasmetti per inviarla alla TV" });
                 }}
               >
-                <Cast className="h-5 w-5" />
-                Trasmetti Taplist su TV
+                <Share2 className="h-5 w-5" />
+                Condividi / Trasmetti Taplist
               </Button>
 
-              <div className="flex gap-2">
-                <Button
-                  variant="outline"
-                  className="flex-1 gap-2"
-                  onClick={() => window.open(`/tv/${currentPub?.id}`, '_blank')}
-                >
-                  <Eye className="h-4 w-4" />
-                  Apri Taplist TV
-                </Button>
-                <Button
-                  variant="outline"
-                  className="flex-1 gap-2"
-                  onClick={async () => {
-                    const tvUrl = `${window.location.origin}/tv/${currentPub?.id}`;
-                    if (navigator.share) {
-                      try {
-                        await navigator.share({ title: `Taplist TV - ${currentPub?.name}`, url: tvUrl });
-                      } catch (err: any) {
-                        if (err?.name !== 'AbortError') {
-                          navigator.clipboard.writeText(tvUrl);
-                          toast({ title: "Link copiato!" });
-                        }
-                      }
-                    } else {
-                      navigator.clipboard.writeText(tvUrl);
-                      toast({ title: "Link copiato!" });
-                    }
-                  }}
-                >
-                  <Share2 className="h-4 w-4" />
-                  Condividi Link
-                </Button>
-              </div>
-
-              <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-3 space-y-2">
-                <p className="text-xs font-medium text-gray-700 dark:text-gray-300">Se il pulsante non apre la trasmissione:</p>
-                <ol className="text-xs text-gray-500 dark:text-gray-400 space-y-1 list-decimal list-inside">
-                  <li>Apri il menu del browser (⋮) e tocca <strong>"Trasmetti"</strong></li>
-                  <li>Oppure scorri le notifiche e attiva <strong>Screencast</strong></li>
-                </ol>
-              </div>
+              <Button
+                variant="outline"
+                className="w-full gap-2"
+                onClick={() => window.open(`/tv/${currentPub?.id}`, '_blank')}
+              >
+                <Eye className="h-4 w-4" />
+                Apri Taplist TV nel browser
+              </Button>
             </div>
           </DialogContent>
         </Dialog>
