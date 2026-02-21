@@ -506,28 +506,15 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
                 className="w-full gap-2 bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700"
                 onClick={async () => {
                   const tvUrl = `${window.location.origin}/tv/${currentPub?.id}`;
-                  if ('PresentationRequest' in window) {
-                    try {
-                      const request = new (window as any).PresentationRequest([tvUrl]);
-                      const availability = await request.getAvailability().catch(() => null);
-                      if (availability && !availability.value) {
-                        toast({ title: "Nessun display trovato", description: "Assicurati che TV/Chromecast sia acceso e sulla stessa rete Wi-Fi, poi riprova" });
-                        return;
-                      }
-                      const connection = await request.start();
-                      toast({ title: "Connesso!", description: "Taplist trasmessa sullo schermo" });
-                    } catch (err: any) {
-                      if (err?.name === 'AbortError') return;
-                      if (err?.name === 'NotFoundError') {
-                        toast({ title: "Nessun display trovato", description: "Assicurati che TV/Chromecast sia acceso e sulla stessa rete Wi-Fi" });
-                      } else {
-                        console.warn('Presentation API error:', err?.name, err?.message);
-                        toast({ title: "Trasmissione non riuscita", description: err?.message || "Errore nella connessione al display" });
-                      }
-                    }
-                  } else {
+                  try {
+                    const request = new (window as any).PresentationRequest([tvUrl]);
+                    await request.start();
+                    toast({ title: "Connesso!", description: "Taplist trasmessa sullo schermo" });
+                  } catch (err: any) {
+                    if (err?.name === 'AbortError') return;
+                    console.warn('Cast error:', err?.name, err?.message);
                     navigator.clipboard.writeText(tvUrl);
-                    toast({ title: "Link TV copiato!", description: "Il tuo browser non supporta la trasmissione diretta. Incolla il link sul browser del dispositivo TV" });
+                    toast({ title: "Link TV copiato", description: "Trasmissione non disponibile su questo browser. Apri il link direttamente sul dispositivo TV." });
                   }
                 }}
               >
