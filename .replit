@@ -52,3 +52,4 @@ integrations = ["javascript_log_in_with_replit:1.0.0", "javascript_websocket:1.0
 VAPID_PUBLIC_KEY = "BK5oGR63Vp13UnA_Kc1kIFgudLYY0gWAeukgZCUWS6PTqDlujb1GpvDBpNpaUBSiWy59-tdEPi0dfcN3jSHjHTA"
 VAPID_PRIVATE_KEY = "diNGWUujc64qyT8vx1PAmy9m14FnVKFu4jy_DmI56kk"
 VAPID_SUBJECT = "mailto:info@fermenta.to"
+CAST_APP_ID = "6666EC62"
