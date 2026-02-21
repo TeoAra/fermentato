@@ -529,13 +529,20 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
                     const session = ctx.getCurrentSession();
                     if (!session) return;
                     toast({ title: "Connesso alla TV!", description: "Invio taplist in corso..." });
-                    const imgUrl = `${window.location.origin}/api/pubs/${currentPub?.id}/taplist-image`;
-                    const mediaInfo = new w.chrome.cast.media.MediaInfo(imgUrl, 'image/svg+xml');
-                    mediaInfo.metadata = new w.chrome.cast.media.PhotoMediaMetadata();
-                    mediaInfo.metadata.title = `Taplist - ${currentPub?.name}`;
-                    const loadRequest = new w.chrome.cast.media.LoadRequest(mediaInfo);
-                    await session.loadMedia(loadRequest);
-                    toast({ title: "Taplist sulla TV!", description: "La taplist è visibile sulla TV" });
+
+                    if (w.__castCustomReceiver) {
+                      const taplistUrl = `${window.location.origin}/tv/${currentPub?.id}`;
+                      session.sendMessage('urn:x-cast:fermenta.to', { url: taplistUrl });
+                      toast({ title: "Taplist LIVE sulla TV!", description: "La taplist si aggiorna in tempo reale" });
+                    } else {
+                      const imgUrl = `${window.location.origin}/api/pubs/${currentPub?.id}/taplist-image`;
+                      const mediaInfo = new w.chrome.cast.media.MediaInfo(imgUrl, 'image/svg+xml');
+                      mediaInfo.metadata = new w.chrome.cast.media.PhotoMediaMetadata();
+                      mediaInfo.metadata.title = `Taplist - ${currentPub?.name}`;
+                      const loadRequest = new w.chrome.cast.media.LoadRequest(mediaInfo);
+                      await session.loadMedia(loadRequest);
+                      toast({ title: "Taplist sulla TV!", description: "Immagine statica - per aggiornamenti live configura CAST_APP_ID" });
+                    }
                   } catch (err: any) {
                     if (err?.code === 'cancel' || err?.name === 'AbortError') return;
                     console.error('Cast error:', err);

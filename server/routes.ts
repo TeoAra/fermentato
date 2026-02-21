@@ -218,6 +218,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.get("/api/cast-config", (_req, res) => {
+    const appId = process.env.CAST_APP_ID || '';
+    res.json({ appId: appId || null });
+  });
+
   app.get("/api/pubs/:id/taplist-image", async (req, res) => {
     try {
       const pubId = parseInt(req.params.id);
