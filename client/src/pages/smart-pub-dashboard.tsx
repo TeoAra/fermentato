@@ -230,10 +230,17 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
     beer.brewery?.name?.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
+  const { data: pubEventsData = [] } = useQuery({
+    queryKey: ["/api/pubs", currentPub?.id, "events"],
+    queryFn: () => apiRequest(`/api/pubs/${currentPub?.id}/events`),
+    enabled: !!currentPub?.id,
+  });
+
   // Type assertions for data
   const typedTapList = Array.isArray(tapList) ? tapList : [];
   const typedBottleList = Array.isArray(bottleList) ? bottleList : [];
   const typedMenuData = Array.isArray(menuData) ? menuData : [];
+  const typedEvents = Array.isArray(pubEventsData) ? (pubEventsData as any[]).filter((e: any) => e.isPublished && new Date(e.eventDate) > new Date()) : [];
 
   // Mutations for managing pub data
   const updateTapItemMutation = useMutation({
@@ -359,11 +366,11 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
     delay?: number;
   }) => (
     <motion.div 
-      className="glass-card rounded-2xl p-6 group relative overflow-hidden"
+      className="glass-card rounded-xl p-4 group relative overflow-hidden"
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5, delay }}
-      whileHover={{ scale: 1.05, y: -5 }}
+      whileHover={{ scale: 1.03, y: -2 }}
       whileTap={{ scale: 0.98 }}
     >
       {/* Background Gradient */}
@@ -376,19 +383,10 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
       
       {/* Content */}
       <div className="relative z-10">
-        <div className="flex items-center justify-between mb-4">
-          <motion.div 
-            className={`p-3 rounded-xl bg-gradient-to-br ${gradient} bg-opacity-10`}
-            whileHover={{ scale: 1.1, rotate: 5, backgroundColor: 'rgba(255,255,255,0.2)' }}
-            transition={{ duration: 0.3 }}
-          >
-            <motion.div
-              whileHover={{ rotate: 360 }}
-              transition={{ duration: 0.6 }}
-            >
-              <Icon className={`h-6 w-6 bg-gradient-to-br ${gradient} bg-clip-text text-transparent`} />
-            </motion.div>
-          </motion.div>
+        <div className="flex items-center justify-between mb-2">
+          <div className={`p-2 rounded-lg bg-gradient-to-br ${gradient} bg-opacity-10`}>
+            <Icon className={`h-5 w-5 bg-gradient-to-br ${gradient} bg-clip-text text-transparent`} />
+          </div>
           {trend && trendValue && (
             <div className={`flex items-center text-sm ${trend === 'up' ? 'text-green-600' : 'text-red-600'}`}>
               {trend === 'up' ? <ArrowUp className="h-4 w-4" /> : <ArrowDown className="h-4 w-4" />}
@@ -397,23 +395,11 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
           )}
         </div>
         
-        <div className="space-y-2">
-          <motion.h3 
-            className="text-2xl font-bold text-gray-900 dark:text-white"
-            initial={{ scale: 0.8 }}
-            animate={{ scale: 1 }}
-            transition={{ duration: 0.3, delay: delay + 0.2 }}
-          >
-            <motion.span
-              key={value}
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.3 }}
-            >
-              {value}
-            </motion.span>
-          </motion.h3>
-          <p className="text-sm font-medium text-gray-600 dark:text-gray-400">
+        <div className="space-y-1">
+          <h3 className="text-xl font-bold text-gray-900 dark:text-white">
+            {value}
+          </h3>
+          <p className="text-xs font-medium text-gray-600 dark:text-gray-400">
             {title}
           </p>
           <AnimatePresence>
@@ -470,58 +456,46 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
                 {currentPub?.address}
               </div>
             </div>
-            <div className="flex items-center space-x-3">
-              <Badge variant="secondary" className="bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200 px-3 py-1">
-                <div className="w-2 h-2 bg-green-500 rounded-full mr-2"></div>
-                Attivo
-              </Badge>
-              <Button variant="outline" size="sm" className="btn-glass">
-                <Settings className="h-4 w-4 mr-2" />
-                Impostazioni
-              </Button>
-            </div>
+            <Badge variant="secondary" className="bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200 px-3 py-1">
+              <div className="w-2 h-2 bg-green-500 rounded-full mr-2"></div>
+              Attivo
+            </Badge>
           </div>
         </div>
       </motion.div>
 
-      {/* Modern KPI Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      {/* Compact KPI Grid */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         <ModernKPICard
-          title="Birre alla Spina"
+          title="Alla Spina"
           value={typedTapList.length}
           icon={Beer}
           gradient="from-amber-500 to-orange-600"
-          trend="up"
-          trendValue="+2"
-          description="Birre attive sul sistema"
+          description="Birre attive"
           delay={0.1}
         />
         <ModernKPICard
-          title="Birre in Bottiglia"
+          title="Bottiglie"
           value={typedBottleList.length}
           icon={Package}
           gradient="from-emerald-500 to-green-600"
-          trend="up"
-          trendValue="+5"
-          description="Selezione bottiglie"
+          description="In cantina"
           delay={0.2}
         />
         <ModernKPICard
-          title="Categorie Menu"
+          title="Menu"
           value={typedMenuData.length}
           icon={Utensils}
           gradient="from-blue-500 to-indigo-600"
-          description="Menu categorie attive"
+          description="Categorie"
           delay={0.3}
         />
         <ModernKPICard
-          title="Visualizzazioni Oggi"
-          value="247"
-          icon={Eye}
+          title="Eventi"
+          value={typedEvents.length}
+          icon={Calendar}
           gradient="from-purple-500 to-pink-600"
-          trend="up"
-          trendValue="+12%"
-          description="Visite pagina pub"
+          description="In programma"
           delay={0.4}
         />
       </div>
@@ -568,124 +542,90 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6, delay: 0.5 }}
       >
-        {/* Popular Beers */}
+        {/* Beers on Tap */}
         <motion.div 
           className="lg:col-span-2"
           initial={{ opacity: 0, x: -20 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ duration: 0.6, delay: 0.6 }}
         >
-          <motion.div
-            className="modern-card rounded-2xl overflow-hidden"
-            whileHover={{ y: -5 }}
-            transition={{ duration: 0.3 }}
-          >
+          <Card className="modern-card rounded-2xl overflow-hidden">
             <CardHeader className="bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-950 dark:to-orange-950 border-b">
               <CardTitle className="flex items-center justify-between">
                 <div className="flex items-center">
                   <Crown className="mr-3 h-5 w-5 text-amber-600" />
-                  <span className="text-display-lg">Birre Più Popolari</span>
+                  <span className="text-display-lg">Birre alla Spina</span>
                 </div>
                 <Badge variant="secondary" className="bg-amber-100 dark:bg-amber-900 text-amber-800 dark:text-amber-200">
-                  Top 5
+                  {typedTapList.length} attive
                 </Badge>
               </CardTitle>
             </CardHeader>
-            <CardContent className="p-6">
-              <div className="space-y-4">
-                {typedTapList.slice(0, 5).map((beer: any, index: number) => (
-                  <motion.div 
-                    key={beer.id} 
-                    className="flex items-center justify-between p-4 rounded-xl bg-gray-50 dark:bg-gray-800"
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ duration: 0.4, delay: 0.7 + (index * 0.1) }}
-                    whileHover={{ scale: 1.02, backgroundColor: 'rgb(243 244 246)' }}
-                    whileTap={{ scale: 0.98 }}
-                  >
-                    <div className="flex items-center space-x-4">
-                      <div className="flex items-center justify-center w-8 h-8 rounded-full bg-gradient-to-br from-amber-500 to-orange-600 text-white font-bold text-sm">
-                        {index + 1}
+            <CardContent className="p-4">
+              <div className="space-y-3">
+                {typedTapList.length === 0 ? (
+                  <p className="text-sm text-gray-500 text-center py-4">Nessuna birra alla spina ancora</p>
+                ) : (
+                  typedTapList.slice(0, 5).map((beer: any, index: number) => (
+                    <div 
+                      key={beer.id} 
+                      className="flex items-center justify-between p-3 rounded-xl bg-gray-50 dark:bg-gray-800"
+                    >
+                      <div className="flex items-center space-x-3">
+                        <div className="flex items-center justify-center w-7 h-7 rounded-full bg-gradient-to-br from-amber-500 to-orange-600 text-white font-bold text-xs">
+                          {index + 1}
+                        </div>
+                        <div>
+                          <h4 className="font-semibold text-sm text-gray-900 dark:text-white">
+                            {beer.beer?.name || 'Nome non disponibile'}
+                          </h4>
+                          <p className="text-xs text-gray-500 dark:text-gray-400">
+                            {beer.beer?.brewery?.name || beer.beer?.breweryName || 'Birrificio'}
+                          </p>
+                        </div>
                       </div>
-                      <div>
-                        <h4 className="font-semibold text-gray-900 dark:text-white">
-                          {beer.beer?.name || 'Nome non disponibile'}
-                        </h4>
-                        <p className="text-sm text-gray-500 dark:text-gray-400">
-                          {beer.beer?.brewery?.name || beer.beer?.breweryName || 'Birrificio'}
-                        </p>
+                      <div className="text-right">
+                        <span className="text-xs font-medium text-gray-600 dark:text-gray-400">
+                          {beer.beer?.abv ? `${beer.beer.abv}%` : ''}
+                        </span>
                       </div>
                     </div>
-                    <div className="text-right">
-                      <div className="flex items-center space-x-2">
-                        <Star className="h-4 w-4 text-yellow-500" />
-                        <span className="font-semibold text-gray-900 dark:text-white">4.{index + 6}</span>
-                      </div>
-                      <p className="text-xs text-gray-500 dark:text-gray-400">
-                        {Math.floor(Math.random() * 50) + 20} recensioni
-                      </p>
-                    </div>
-                  </motion.div>
-                ))}
+                  ))
+                )}
               </div>
             </CardContent>
-          </motion.div>
+          </Card>
         </motion.div>
 
-        {/* Quick Stats */}
+        {/* Recent Activity */}
         <div className="space-y-6">
           <Card className="modern-card rounded-2xl overflow-hidden">
             <CardHeader className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-950 dark:to-indigo-950">
               <CardTitle className="flex items-center">
                 <Activity className="mr-3 h-5 w-5 text-blue-600" />
-                <span className="text-lg">Attività Recente</span>
+                <span className="text-lg">Riepilogo</span>
               </CardTitle>
             </CardHeader>
-            <CardContent className="p-6">
-              <div className="space-y-4">
+            <CardContent className="p-4">
+              <div className="space-y-3">
+                <div className="flex items-center space-x-3 p-3 rounded-lg bg-amber-50 dark:bg-amber-950">
+                  <Beer className="w-4 h-4 text-amber-600" />
+                  <p className="text-sm text-amber-800 dark:text-amber-200">{typedTapList.length} birre alla spina</p>
+                </div>
                 <div className="flex items-center space-x-3 p-3 rounded-lg bg-green-50 dark:bg-green-950">
-                  <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                  <p className="text-sm text-green-800 dark:text-green-200">Nuova birra aggiunta</p>
+                  <Package className="w-4 h-4 text-green-600" />
+                  <p className="text-sm text-green-800 dark:text-green-200">{typedBottleList.length} birre in bottiglia</p>
                 </div>
                 <div className="flex items-center space-x-3 p-3 rounded-lg bg-blue-50 dark:bg-blue-950">
-                  <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-                  <p className="text-sm text-blue-800 dark:text-blue-200">Menu aggiornato</p>
+                  <Utensils className="w-4 h-4 text-blue-600" />
+                  <p className="text-sm text-blue-800 dark:text-blue-200">{typedMenuData.length} categorie menu</p>
                 </div>
-                <div className="flex items-center space-x-3 p-3 rounded-lg bg-orange-50 dark:bg-orange-950">
-                  <div className="w-2 h-2 bg-orange-500 rounded-full"></div>
-                  <p className="text-sm text-orange-800 dark:text-orange-200">15 nuove recensioni</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="modern-card rounded-2xl overflow-hidden">
-            <CardHeader className="bg-gradient-to-r from-purple-50 to-pink-50 dark:from-purple-950 dark:to-pink-950">
-              <CardTitle className="flex items-center">
-                <Target className="mr-3 h-5 w-5 text-purple-600" />
-                <span className="text-lg">Obiettivi</span>
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="p-6">
-              <div className="space-y-4">
-                <div>
-                  <div className="flex justify-between text-sm mb-2">
-                    <span className="text-gray-600 dark:text-gray-400">Recensioni Mese</span>
-                    <span className="font-semibold">67/100</span>
+                {typedEvents.length > 0 && (
+                  <div className="flex items-center space-x-3 p-3 rounded-lg bg-purple-50 dark:bg-purple-950">
+                    <Calendar className="w-4 h-4 text-purple-600" />
+                    <p className="text-sm text-purple-800 dark:text-purple-200">{typedEvents.length} eventi in programma</p>
                   </div>
-                  <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
-                    <div className="bg-gradient-to-r from-purple-500 to-pink-500 h-2 rounded-full" style={{ width: '67%' }}></div>
-                  </div>
-                </div>
-                <div>
-                  <div className="flex justify-between text-sm mb-2">
-                    <span className="text-gray-600 dark:text-gray-400">Nuove Birre</span>
-                    <span className="font-semibold">8/12</span>
-                  </div>
-                  <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
-                    <div className="bg-gradient-to-r from-amber-500 to-orange-500 h-2 rounded-full" style={{ width: '67%' }}></div>
-                  </div>
-                </div>
+                )}
               </div>
             </CardContent>
           </Card>

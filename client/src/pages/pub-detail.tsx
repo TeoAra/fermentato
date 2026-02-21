@@ -44,6 +44,7 @@ import ImageWithFallback from "@/components/image-with-fallback";
 import { PubQRCode } from "@/components/pub-qr-code";
 import { MenuPdfDownload } from "@/components/menu-pdf-download";
 import { EventCategoryBadge, EventShareButtons } from "@/components/events-manager";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { format, isFuture } from "date-fns";
 import { it as itLocale } from "date-fns/locale";
 
@@ -203,6 +204,7 @@ export default function PubDetail() {
   const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState("taplist");
   const [showOpeningHours, setShowOpeningHours] = useState(false);
+  const [selectedEvent, setSelectedEvent] = useState<any>(null);
   
   const { data: pub, isLoading: pubLoading } = useQuery({
     queryKey: ["/api/pubs", id],
@@ -630,37 +632,39 @@ export default function PubDetail() {
       </div>
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Quick Stats */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-          <PubStatsCard 
-            icon={Wine}
-            label="Taplist"
-            value={Array.isArray(tapList) ? tapList.filter((t: any) => t.isActive).length : 0}
-            gradient="from-amber-500 to-orange-600"
-            description="Alla spina"
-          />
-          <PubStatsCard 
-            icon={Wine}
-            label="Birre in Bottiglia"
-            value={Array.isArray(bottles) ? bottles.length : 0}
-            gradient="from-emerald-500 to-green-600"
-            description="Selezione cantina"
-          />
-          <PubStatsCard 
-            icon={Users}
-            label="Menu Categorie"
-            value={Array.isArray(menu) ? menu.length : 0}
-            gradient="from-blue-500 to-indigo-600"
-            description="Piatti disponibili"
-          />
-          <PubStatsCard 
-            icon={Heart}
-            label="Preferiti"
-            value={favoritesCountData?.count || 0}
-            gradient="from-red-500 to-pink-600"
-            description="Utenti che lo adorano"
-          />
-        </div>
+        {/* Next Event Banner */}
+        {(() => {
+          const upcomingEvents = Array.isArray(pubEvents) 
+            ? pubEvents.filter((e: any) => e.isPublished && isFuture(new Date(e.eventDate))).sort((a: any, b: any) => new Date(a.eventDate).getTime() - new Date(b.eventDate).getTime())
+            : [];
+          const nextEvent = upcomingEvents[0];
+          if (!nextEvent) return null;
+          return (
+            <div 
+              className="mb-8 rounded-2xl overflow-hidden cursor-pointer shadow-lg hover:shadow-xl transition-all duration-300 group relative"
+              onClick={() => setSelectedEvent(nextEvent)}
+            >
+              <div className="relative h-48 sm:h-56">
+                <img 
+                  src={nextEvent.imageUrl || "https://images.unsplash.com/photo-1514933651103-005eec06c04b?auto=format&fit=crop&w=1200&h=400"} 
+                  alt={nextEvent.title}
+                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
+                <div className="absolute top-3 left-3">
+                  <EventCategoryBadge category={nextEvent.category} />
+                </div>
+                <div className="absolute bottom-0 left-0 right-0 p-5">
+                  <h3 className="text-xl sm:text-2xl font-bold text-white mb-1">{nextEvent.title}</h3>
+                  <div className="flex items-center text-sm text-white/90 gap-2">
+                    <Calendar className="h-4 w-4" />
+                    <span>{format(new Date(nextEvent.eventDate), "EEEE d MMMM yyyy 'alle' HH:mm", { locale: itLocale })}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          );
+        })()}
 
         {/* Main Content Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
@@ -938,51 +942,70 @@ export default function PubDetail() {
               </CardContent>
             </Card>
 
-            {/* Quick Actions */}
-            <Card className="modern-card rounded-2xl overflow-hidden">
-              <CardHeader className="bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-900 dark:to-orange-900">
-                <CardTitle className="text-lg flex items-center">
-                  <TrendingUp className="mr-3 h-5 w-5 text-amber-600" />
-                  Azioni Veloci
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="p-4 space-y-3">
-                <Button 
-                  className="w-full bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 transition-all duration-300" 
-                  size="sm"
-                  onClick={handleShowOpeningHours}
-                  data-testid="button-show-hours"
-                >
-                  <Eye className="h-4 w-4 mr-2" />
-                  Vedi Orari Completi
-                </Button>
-                {canManage && (
-                  <>
-                    <PubQRCode pubId={(pub as any)?.id} pubName={(pub as any)?.name || ""} />
-                    <MenuPdfDownload 
-                      pubName={(pub as any)?.name || ""} 
-                      tapList={Array.isArray(tapList) ? tapList : []} 
-                      bottleList={Array.isArray(bottles) ? bottles : []} 
-                      menuCategories={Array.isArray(menu) ? menu : []} 
-                    />
-                    <Button
-                      variant="outline"
-                      className="gap-2 w-full"
-                      onClick={() => window.open(`/tv/${(pub as any)?.id}`, '_blank')}
-                    >
-                      <Monitor className="h-4 w-4" />
-                      Taplist TV Mode
-                    </Button>
-                  </>
-                )}
-              </CardContent>
-            </Card>
+            {/* Opening Hours Button */}
+            <Button 
+              className="w-full bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 transition-all duration-300 rounded-xl shadow-lg" 
+              size="lg"
+              onClick={handleShowOpeningHours}
+              data-testid="button-show-hours"
+            >
+              <Clock className="h-5 w-5 mr-2" />
+              Vedi Orari Completi
+            </Button>
           </div>
         </div>
       </main>
 
       <Footer />
       
+      {/* Event Detail Dialog */}
+      <Dialog open={!!selectedEvent} onOpenChange={(open) => { if (!open) setSelectedEvent(null); }}>
+        <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto p-0">
+          {selectedEvent && (
+            <>
+              {selectedEvent.imageUrl && (
+                <div className="relative h-48 sm:h-56">
+                  <img 
+                    src={selectedEvent.imageUrl} 
+                    alt={selectedEvent.title}
+                    className="w-full h-full object-cover"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+                  <div className="absolute top-3 left-3">
+                    <EventCategoryBadge category={selectedEvent.category} />
+                  </div>
+                </div>
+              )}
+              <div className="p-6 space-y-4">
+                <DialogHeader>
+                  <div className="flex items-center gap-2 flex-wrap">
+                    {!selectedEvent.imageUrl && <EventCategoryBadge category={selectedEvent.category} />}
+                    <DialogTitle className="text-xl">{selectedEvent.title}</DialogTitle>
+                  </div>
+                </DialogHeader>
+                <div className="flex items-center text-sm text-pink-600 dark:text-pink-400 gap-2">
+                  <Calendar className="h-4 w-4" />
+                  <span>{format(new Date(selectedEvent.eventDate), "EEEE d MMMM yyyy 'alle' HH:mm", { locale: itLocale })}</span>
+                </div>
+                {selectedEvent.endDate && (
+                  <div className="flex items-center text-sm text-gray-500 gap-2">
+                    <Clock className="h-4 w-4" />
+                    <span>fino alle {format(new Date(selectedEvent.endDate), "HH:mm", { locale: itLocale })}</span>
+                  </div>
+                )}
+                {selectedEvent.description && (
+                  <p className="text-gray-700 dark:text-gray-300 whitespace-pre-wrap">{selectedEvent.description}</p>
+                )}
+                <div className="pt-3 border-t">
+                  <p className="text-xs text-gray-500 mb-2">Condividi questo evento</p>
+                  <EventShareButtons event={selectedEvent} pubId={(pub as any).id} size="default" />
+                </div>
+              </div>
+            </>
+          )}
+        </DialogContent>
+      </Dialog>
+
       {/* Opening Hours Dialog */}
       <OpeningHoursDialog 
         open={showOpeningHours}
