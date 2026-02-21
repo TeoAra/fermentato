@@ -81,65 +81,65 @@ export default function TaplistTV() {
         .tap-img-wrap { border-radius: 50%; overflow: hidden; display: flex; align-items: center; justify-content: center; }
         .tap-content { display: flex; flex-direction: column; justify-content: center; flex: 1; min-width: 0; }
 
-        .scale-large .tap-card { padding: 3vh 2vw; gap: 3vh; }
-        .scale-large .tap-img-col { width: 28vh; }
-        .scale-large .tap-img-wrap { width: 24vh; height: 24vh; }
-        .scale-large .tap-name { font-size: 6vh; }
-        .scale-large .tap-brewery { font-size: 4vh; }
-        .scale-large .tap-badge { font-size: 2.8vh; padding: 1vh 2.2vh; }
-        .scale-large .tap-price-size { font-size: 2.5vh; }
-        .scale-large .tap-price-val { font-size: 5vh; }
-        .scale-large .tap-num { width: 6vh; height: 6vh; font-size: 3vh; }
-        .scale-large .tap-badges-row { gap: 1.5vh; margin-top: 1.2vh; }
-        .scale-large .tap-prices-row { gap: 3vh; margin-top: 1.5vh; }
+        .scale-large .tap-card { padding: 2.5vmin 2vw; gap: 2vmin; }
+        .scale-large .tap-img-col { width: 22vmin; }
+        .scale-large .tap-img-wrap { width: 19vmin; height: 19vmin; }
+        .scale-large .tap-name { font-size: 5vmin; }
+        .scale-large .tap-brewery { font-size: 3.2vmin; }
+        .scale-large .tap-badge { font-size: 2.2vmin; padding: 0.8vmin 1.8vmin; }
+        .scale-large .tap-price-size { font-size: 2vmin; }
+        .scale-large .tap-price-val { font-size: 4vmin; }
+        .scale-large .tap-num { width: 5vmin; height: 5vmin; font-size: 2.5vmin; }
+        .scale-large .tap-badges-row { gap: 1.2vmin; margin-top: 1vmin; }
+        .scale-large .tap-prices-row { gap: 2.5vmin; margin-top: 1.2vmin; }
 
-        .scale-medium .tap-card { padding: 2.2vh 1.5vw; gap: 2.2vh; }
-        .scale-medium .tap-img-col { width: 20vh; }
-        .scale-medium .tap-img-wrap { width: 17vh; height: 17vh; }
-        .scale-medium .tap-name { font-size: 4.3vh; }
-        .scale-medium .tap-brewery { font-size: 2.9vh; }
-        .scale-medium .tap-badge { font-size: 2vh; padding: 0.7vh 1.6vh; }
-        .scale-medium .tap-price-size { font-size: 1.8vh; }
-        .scale-medium .tap-price-val { font-size: 3.6vh; }
-        .scale-medium .tap-num { width: 4.3vh; height: 4.3vh; font-size: 2.2vh; }
-        .scale-medium .tap-badges-row { gap: 1.1vh; margin-top: 0.9vh; }
-        .scale-medium .tap-prices-row { gap: 2.2vh; margin-top: 1.1vh; }
+        .scale-medium .tap-card { padding: 1.8vmin 1.5vw; gap: 1.5vmin; }
+        .scale-medium .tap-img-col { width: 16vmin; }
+        .scale-medium .tap-img-wrap { width: 13.5vmin; height: 13.5vmin; }
+        .scale-medium .tap-name { font-size: 3.5vmin; }
+        .scale-medium .tap-brewery { font-size: 2.3vmin; }
+        .scale-medium .tap-badge { font-size: 1.6vmin; padding: 0.5vmin 1.3vmin; }
+        .scale-medium .tap-price-size { font-size: 1.4vmin; }
+        .scale-medium .tap-price-val { font-size: 2.8vmin; }
+        .scale-medium .tap-num { width: 3.5vmin; height: 3.5vmin; font-size: 1.8vmin; }
+        .scale-medium .tap-badges-row { gap: 0.9vmin; margin-top: 0.7vmin; }
+        .scale-medium .tap-prices-row { gap: 1.8vmin; margin-top: 0.9vmin; }
 
-        .scale-normal .tap-card { padding: 1.6vh 1.2vw; gap: 1.6vh; }
-        .scale-normal .tap-img-col { width: 14.5vh; }
-        .scale-normal .tap-img-wrap { width: 12.5vh; height: 12.5vh; }
-        .scale-normal .tap-name { font-size: 3.1vh; }
-        .scale-normal .tap-brewery { font-size: 2.1vh; }
-        .scale-normal .tap-badge { font-size: 1.5vh; padding: 0.5vh 1.2vh; }
-        .scale-normal .tap-price-size { font-size: 1.3vh; }
-        .scale-normal .tap-price-val { font-size: 2.6vh; }
-        .scale-normal .tap-num { width: 3.1vh; height: 3.1vh; font-size: 1.6vh; }
-        .scale-normal .tap-badges-row { gap: 0.8vh; margin-top: 0.6vh; }
-        .scale-normal .tap-prices-row { gap: 1.6vh; margin-top: 0.8vh; }
+        .scale-normal .tap-card { padding: 1.3vmin 1.2vw; gap: 1.2vmin; }
+        .scale-normal .tap-img-col { width: 12vmin; }
+        .scale-normal .tap-img-wrap { width: 10vmin; height: 10vmin; }
+        .scale-normal .tap-name { font-size: 2.6vmin; }
+        .scale-normal .tap-brewery { font-size: 1.7vmin; }
+        .scale-normal .tap-badge { font-size: 1.2vmin; padding: 0.4vmin 1vmin; }
+        .scale-normal .tap-price-size { font-size: 1.1vmin; }
+        .scale-normal .tap-price-val { font-size: 2.1vmin; }
+        .scale-normal .tap-num { width: 2.7vmin; height: 2.7vmin; font-size: 1.3vmin; }
+        .scale-normal .tap-badges-row { gap: 0.7vmin; margin-top: 0.5vmin; }
+        .scale-normal .tap-prices-row { gap: 1.3vmin; margin-top: 0.7vmin; }
 
-        .scale-compact .tap-card { padding: 1.2vh 1vw; gap: 1.2vh; }
-        .scale-compact .tap-img-col { width: 11vh; }
-        .scale-compact .tap-img-wrap { width: 9.5vh; height: 9.5vh; }
-        .scale-compact .tap-name { font-size: 2.4vh; }
-        .scale-compact .tap-brewery { font-size: 1.6vh; }
-        .scale-compact .tap-badge { font-size: 1.1vh; padding: 0.4vh 0.9vh; }
-        .scale-compact .tap-price-size { font-size: 1vh; }
-        .scale-compact .tap-price-val { font-size: 2vh; }
-        .scale-compact .tap-num { width: 2.5vh; height: 2.5vh; font-size: 1.2vh; }
-        .scale-compact .tap-badges-row { gap: 0.6vh; margin-top: 0.5vh; }
-        .scale-compact .tap-prices-row { gap: 1.2vh; margin-top: 0.6vh; }
+        .scale-compact .tap-card { padding: 1vmin 1vw; gap: 1vmin; }
+        .scale-compact .tap-img-col { width: 9.5vmin; }
+        .scale-compact .tap-img-wrap { width: 8vmin; height: 8vmin; }
+        .scale-compact .tap-name { font-size: 2vmin; }
+        .scale-compact .tap-brewery { font-size: 1.3vmin; }
+        .scale-compact .tap-badge { font-size: 0.95vmin; padding: 0.3vmin 0.8vmin; }
+        .scale-compact .tap-price-size { font-size: 0.85vmin; }
+        .scale-compact .tap-price-val { font-size: 1.7vmin; }
+        .scale-compact .tap-num { width: 2.2vmin; height: 2.2vmin; font-size: 1.1vmin; }
+        .scale-compact .tap-badges-row { gap: 0.5vmin; margin-top: 0.4vmin; }
+        .scale-compact .tap-prices-row { gap: 1vmin; margin-top: 0.5vmin; }
 
-        .tv-header { padding: 1.2vh 2vw; }
-        .tv-header-logo { width: 5vh; height: 5vh; }
-        .tv-header-title { font-size: 3.5vh; }
-        .tv-header-sub { font-size: 1.5vh; }
-        .tv-header-time { font-size: 3.5vh; }
-        .tv-header-date { font-size: 1.5vh; }
-        .tv-header-dot { width: 1vh; height: 1vh; }
+        .tv-header { padding: 1vmin 2vw; }
+        .tv-header-logo { width: 4.5vmin; height: 4.5vmin; }
+        .tv-header-title { font-size: 3.2vmin; }
+        .tv-header-sub { font-size: 1.3vmin; }
+        .tv-header-time { font-size: 3.2vmin; }
+        .tv-header-date { font-size: 1.3vmin; }
+        .tv-header-dot { width: 0.9vmin; height: 0.9vmin; }
       `}</style>
 
       <div className="tv-header flex items-center justify-between flex-shrink-0 border-b border-gray-800/50">
-        <div className="flex items-center" style={{ gap: '1.5vh' }}>
+        <div className="flex items-center" style={{ gap: '1.5vmin' }}>
           {(pub as any)?.logoUrl ? (
             <img src={(pub as any).logoUrl} alt="" className="tv-header-logo rounded-2xl object-cover border-2 border-amber-500/30" />
           ) : (
@@ -156,7 +156,7 @@ export default function TaplistTV() {
             </p>
           </div>
         </div>
-        <div className="flex items-center" style={{ gap: '2vw' }}>
+        <div className="flex items-center" style={{ gap: '2vmin' }}>
           {totalPages > 1 && (
             <div className="flex items-center" style={{ gap: '0.6vh' }}>
               {Array.from({ length: totalPages }).map((_, i) => (
@@ -209,8 +209,8 @@ export default function TaplistTV() {
         </div>
       )}
 
-      <div className="text-center flex-shrink-0" style={{ padding: '0.3vh 0' }}>
-        <span className="text-gray-700" style={{ fontSize: '1vh' }}>fermenta.to</span>
+      <div className="text-center flex-shrink-0" style={{ padding: '0.3vmin 0' }}>
+        <span className="text-gray-700" style={{ fontSize: '0.9vmin' }}>fermenta.to</span>
       </div>
     </div>
   );
