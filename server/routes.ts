@@ -234,44 +234,133 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const tapList = await storage.getTapList(pubId);
       const activeTaps = tapList.filter((t: any) => t.isActive);
 
+      const esc = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
       const W = 1920;
       const H = 1080;
-      const rowH = 80;
-      const headerH = 140;
-      const cols = activeTaps.length > 10 ? 2 : 1;
-      const colW = cols === 2 ? W / 2 : W;
-      const perCol = Math.ceil(activeTaps.length / cols);
+      const headerH = 80;
+      const footerH = 30;
+      const padding = 24;
+      const gridGap = 16;
+      const contentH = H - headerH - footerH - padding * 2;
+      const contentW = W - padding * 2;
 
-      let rows = '';
-      activeTaps.forEach((tap: any, i: number) => {
-        const col = Math.floor(i / perCol);
-        const row = i % perCol;
-        const x = col * colW + 40;
-        const y = headerH + 20 + row * rowH;
+      const count = activeTaps.length;
+      let cols: number, rows: number;
+      if (count <= 2) { cols = 2; rows = 1; }
+      else if (count <= 4) { cols = 2; rows = 2; }
+      else if (count <= 6) { cols = 2; rows = 3; }
+      else if (count <= 9) { cols = 3; rows = 3; }
+      else { cols = 3; rows = 4; }
 
-        const beerName = (tap.beer?.name || tap.customBeerName || tap.beerName || 'Birra').replace(/&/g, '&amp;').replace(/</g, '&lt;');
-        const brewery = (tap.beer?.brewery?.name || tap.breweryName || '').replace(/&/g, '&amp;').replace(/</g, '&lt;');
-        const style = (tap.beer?.style || tap.beerStyle || '').replace(/&/g, '&amp;').replace(/</g, '&lt;');
+      const cardW = (contentW - (cols - 1) * gridGap) / cols;
+      const cardH = (contentH - (rows - 1) * gridGap) / rows;
+
+      const pubName = esc(pub.name || 'Pub');
+      const now = new Date();
+      const timeStr = now.toLocaleTimeString("it-IT", { hour: "2-digit", minute: "2-digit", timeZone: "Europe/Rome" });
+      const dateStr = now.toLocaleDateString("it-IT", { weekday: "long", day: "numeric", month: "long", timeZone: "Europe/Rome" });
+
+      let cards = '';
+      activeTaps.slice(0, cols * rows).forEach((tap: any, i: number) => {
+        const col = i % cols;
+        const row = Math.floor(i / cols);
+        const cx = padding + col * (cardW + gridGap);
+        const cy = headerH + padding + row * (cardH + gridGap);
+
+        const beerName = esc(tap.beer?.name || tap.customBeerName || tap.beerName || 'Birra');
+        const brewery = esc(tap.beer?.brewery?.name || tap.breweryName || '');
+        const style = esc(tap.beer?.style || tap.beerStyle || '');
         const abv = (tap.beer?.abv || tap.beerAbv) ? `${tap.beer?.abv || tap.beerAbv}%` : '';
-        const priceInfo = Array.isArray(tap.prices) && tap.prices.length > 0 ? tap.prices.map((p: any) => `${p.size} €${p.price}`).join(' · ') : (tap.price ? `€${tap.price}` : '');
+        const tapNum = tap.tapNumber || i + 1;
+        const prices = Array.isArray(tap.prices) ? tap.prices : [];
 
-        const bg = i % 2 === 0 ? 'rgba(255,255,255,0.05)' : 'rgba(255,255,255,0.1)';
-        rows += `<rect x="${x - 20}" y="${y}" width="${colW - 40}" height="${rowH - 4}" rx="8" fill="${bg}"/>`;
-        rows += `<text x="${x}" y="${y + 30}" fill="#F59E0B" font-size="28" font-weight="bold" font-family="sans-serif">${beerName}</text>`;
-        rows += `<text x="${x}" y="${y + 56}" fill="#9CA3AF" font-size="18" font-family="sans-serif">${brewery}${style ? ' · ' + style : ''}</text>`;
-        if (abv) rows += `<text x="${x + colW - 200}" y="${y + 30}" fill="#D1D5DB" font-size="22" font-family="sans-serif" text-anchor="end">${abv}</text>`;
-        if (priceInfo) rows += `<text x="${x + colW - 100}" y="${y + 56}" fill="#10B981" font-size="18" font-family="sans-serif" text-anchor="end">${priceInfo}</text>`;
+        const nameSize = count <= 4 ? 32 : count <= 6 ? 26 : 22;
+        const brewSize = count <= 4 ? 20 : count <= 6 ? 17 : 14;
+        const badgeSize = count <= 4 ? 16 : count <= 6 ? 13 : 11;
+        const priceSize = count <= 4 ? 28 : count <= 6 ? 22 : 18;
+        const priceLabelSize = count <= 4 ? 13 : count <= 6 ? 11 : 9;
+        const circleR = count <= 4 ? 50 : count <= 6 ? 38 : 30;
+
+        cards += `<rect x="${cx}" y="${cy}" width="${cardW}" height="${cardH}" rx="16" fill="rgba(31,41,55,0.7)" stroke="rgba(75,85,99,0.4)" stroke-width="1"/>`;
+
+        cards += `<circle cx="${cx + 20 + circleR}" cy="${cy + cardH/2}" r="${circleR}" fill="rgba(55,65,81,0.6)" stroke="rgba(245,158,11,0.25)" stroke-width="2"/>`;
+        cards += `<text x="${cx + 20 + circleR}" y="${cy + cardH/2 + 6}" fill="rgba(245,158,11,0.5)" font-size="${circleR * 0.7}" font-family="sans-serif" text-anchor="middle" font-weight="bold">🍺</text>`;
+
+        const numR = count <= 4 ? 18 : count <= 6 ? 15 : 12;
+        cards += `<circle cx="${cx + cardW - 20}" cy="${cy + 20}" r="${numR}" fill="rgba(245,158,11,0.15)" stroke="rgba(245,158,11,0.3)" stroke-width="1"/>`;
+        cards += `<text x="${cx + cardW - 20}" y="${cy + 20 + numR * 0.35}" fill="#F59E0B" font-size="${numR}" font-family="sans-serif" text-anchor="middle" font-weight="bold">${tapNum}</text>`;
+
+        const textX = cx + 20 + circleR * 2 + 16;
+        const textMaxW = cardW - (20 + circleR * 2 + 16) - 30;
+        let textY = cy + cardH * 0.28;
+
+        cards += `<text x="${textX}" y="${textY}" fill="white" font-size="${nameSize}" font-weight="bold" font-family="sans-serif"><tspan textLength="${Math.min(beerName.length * nameSize * 0.55, textMaxW)}" lengthAdjust="spacingAndGlyphs">${beerName}</tspan></text>`;
+        textY += nameSize + 4;
+
+        if (brewery) {
+          cards += `<text x="${textX}" y="${textY}" fill="rgba(245,158,11,0.8)" font-size="${brewSize}" font-family="sans-serif" font-weight="500">${brewery}</text>`;
+          textY += brewSize + 8;
+        }
+
+        let badgeX = textX;
+        if (style) {
+          const stylePadX = 12;
+          const styleW = style.length * badgeSize * 0.55 + stylePadX * 2;
+          cards += `<rect x="${badgeX}" y="${textY - badgeSize + 2}" width="${styleW}" height="${badgeSize + 8}" rx="${(badgeSize + 8) / 2}" fill="rgba(55,65,81,0.7)" stroke="rgba(75,85,99,0.4)" stroke-width="1"/>`;
+          cards += `<text x="${badgeX + stylePadX}" y="${textY + 4}" fill="#D1D5DB" font-size="${badgeSize}" font-family="sans-serif">${style}</text>`;
+          badgeX += styleW + 8;
+        }
+        if (abv) {
+          const abvPadX = 10;
+          const abvW = abv.length * badgeSize * 0.6 + abvPadX * 2;
+          cards += `<rect x="${badgeX}" y="${textY - badgeSize + 2}" width="${abvW}" height="${badgeSize + 8}" rx="${(badgeSize + 8) / 2}" fill="rgba(245,158,11,0.12)" stroke="rgba(245,158,11,0.25)" stroke-width="1"/>`;
+          cards += `<text x="${badgeX + abvPadX}" y="${textY + 4}" fill="#F59E0B" font-size="${badgeSize}" font-family="sans-serif" font-weight="bold">${abv}</text>`;
+        }
+
+        if (prices.length > 0) {
+          textY += badgeSize + 18;
+          let priceX = textX;
+          prices.forEach((p: any) => {
+            const size = esc(p.size || '');
+            const price = `€${parseFloat(p.price || "0").toFixed(1)}`;
+            if (size) {
+              cards += `<text x="${priceX}" y="${textY - 8}" fill="#9CA3AF" font-size="${priceLabelSize}" font-family="sans-serif" text-transform="uppercase">${size}</text>`;
+            }
+            cards += `<text x="${priceX}" y="${textY + priceSize * 0.6}" fill="white" font-size="${priceSize}" font-family="sans-serif" font-weight="bold">${price}</text>`;
+            priceX += priceSize * 3.5;
+          });
+        }
       });
 
-      const pubName = (pub.name || 'Pub').replace(/&/g, '&amp;').replace(/</g, '&lt;');
       const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}">
-        <rect width="${W}" height="${H}" fill="#111827"/>
-        <text x="${W/2}" y="60" fill="#F59E0B" font-size="48" font-weight="bold" font-family="sans-serif" text-anchor="middle">🍺 ${pubName}</text>
-        <text x="${W/2}" y="100" fill="#6B7280" font-size="24" font-family="sans-serif" text-anchor="middle">TAPLIST · ${activeTaps.length} birre alla spina</text>
-        <line x1="40" y1="120" x2="${W-40}" y2="120" stroke="#374151" stroke-width="2"/>
-        ${rows}
-        <text x="${W/2}" y="${H-20}" fill="#4B5563" font-size="16" font-family="sans-serif" text-anchor="middle">fermenta.to/tv/${pubId}</text>
-      </svg>`;
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#030712"/>
+      <stop offset="50%" stop-color="#111827"/>
+      <stop offset="100%" stop-color="#000000"/>
+    </linearGradient>
+    <linearGradient id="title" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#F59E0B"/>
+      <stop offset="100%" stop-color="#F97316"/>
+    </linearGradient>
+  </defs>
+  <rect width="${W}" height="${H}" fill="url(#bg)"/>
+  <rect x="0" y="0" width="${W}" height="${headerH}" fill="none"/>
+  <line x1="0" y1="${headerH}" x2="${W}" y2="${headerH}" stroke="rgba(31,41,55,0.5)" stroke-width="1"/>
+
+  <circle cx="${padding + 28}" cy="${headerH / 2}" r="24" fill="url(#title)"/>
+  <text x="${padding + 28}" y="${headerH / 2 + 7}" fill="white" font-size="22" font-family="sans-serif" text-anchor="middle" font-weight="bold">🍺</text>
+
+  <text x="${padding + 64}" y="${headerH / 2 - 6}" fill="url(#title)" font-size="32" font-weight="bold" font-family="sans-serif">${pubName}</text>
+  <text x="${padding + 64}" y="${headerH / 2 + 18}" fill="#6B7280" font-size="14" font-family="sans-serif">${activeTaps.length} birre alla spina</text>
+
+  <text x="${W - padding}" y="${headerH / 2 - 4}" fill="#D1D5DB" font-size="32" font-weight="bold" font-family="sans-serif" text-anchor="end">${timeStr}</text>
+  <text x="${W - padding}" y="${headerH / 2 + 18}" fill="#6B7280" font-size="14" font-family="sans-serif" text-anchor="end">${dateStr}</text>
+
+  ${cards}
+
+  <text x="${W / 2}" y="${H - 8}" fill="rgba(75,85,99,0.6)" font-size="12" font-family="sans-serif" text-anchor="middle">fermenta.to</text>
+</svg>`;
 
       res.setHeader('Content-Type', 'image/svg+xml');
       res.setHeader('Cache-Control', 'no-cache, no-store');
