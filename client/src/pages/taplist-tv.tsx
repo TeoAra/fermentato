@@ -81,80 +81,57 @@ export default function TaplistTV() {
         .tap-img-wrap { border-radius: 50%; overflow: hidden; display: flex; align-items: center; justify-content: center; }
         .tap-content { display: flex; flex-direction: column; justify-content: center; flex: 1; min-width: 0; }
 
-        .scale-large .tap-card { padding: clamp(16px, 3vh, 40px); gap: clamp(16px, 3vh, 36px); }
-        .scale-large .tap-img-col { width: clamp(160px, 28vh, 400px); }
-        .scale-large .tap-img-wrap { width: clamp(130px, 24vh, 360px); height: clamp(130px, 24vh, 360px); }
-        .scale-large .tap-name { font-size: clamp(2rem, 6vh, 5rem); }
-        .scale-large .tap-brewery { font-size: clamp(1.4rem, 4vh, 3rem); }
-        .scale-large .tap-badge { font-size: clamp(1.1rem, 3vh, 2.2rem); padding: clamp(6px, 1vh, 14px) clamp(14px, 2.5vh, 32px); }
-        .scale-large .tap-price-size { font-size: clamp(1rem, 2.5vh, 2rem); }
-        .scale-large .tap-price-val { font-size: clamp(1.6rem, 5vh, 4rem); }
-        .scale-large .tap-num { width: clamp(46px, 6vh, 80px); height: clamp(46px, 6vh, 80px); font-size: clamp(1.3rem, 3vh, 2.4rem); }
-        .scale-large .tap-badges-row { gap: clamp(8px, 1.5vh, 20px); margin-top: clamp(6px, 1.5vh, 16px); }
-        .scale-large .tap-prices-row { gap: clamp(12px, 3vh, 32px); margin-top: clamp(8px, 2vh, 20px); }
+        .scale-large { --s: 1; }
+        .scale-medium { --s: 0.72; }
+        .scale-normal { --s: 0.52; }
+        .scale-compact { --s: 0.4; }
 
-        .scale-medium .tap-card { padding: clamp(10px, 2vh, 28px); gap: clamp(12px, 2vh, 28px); }
-        .scale-medium .tap-img-col { width: clamp(120px, 20vh, 300px); }
-        .scale-medium .tap-img-wrap { width: clamp(100px, 17vh, 260px); height: clamp(100px, 17vh, 260px); }
-        .scale-medium .tap-name { font-size: clamp(1.6rem, 4.5vh, 3.6rem); }
-        .scale-medium .tap-brewery { font-size: clamp(1.1rem, 3vh, 2.4rem); }
-        .scale-medium .tap-badge { font-size: clamp(0.9rem, 2.2vh, 1.6rem); padding: clamp(4px, 0.8vh, 10px) clamp(10px, 2vh, 22px); }
-        .scale-medium .tap-price-size { font-size: clamp(0.85rem, 2vh, 1.5rem); }
-        .scale-medium .tap-price-val { font-size: clamp(1.3rem, 3.8vh, 3rem); }
-        .scale-medium .tap-num { width: clamp(38px, 5vh, 64px); height: clamp(38px, 5vh, 64px); font-size: clamp(1.1rem, 2.5vh, 1.8rem); }
-        .scale-medium .tap-badges-row { gap: clamp(6px, 1.2vh, 16px); margin-top: clamp(4px, 1vh, 12px); }
-        .scale-medium .tap-prices-row { gap: clamp(8px, 2vh, 24px); margin-top: clamp(6px, 1.5vh, 16px); }
+        .tap-card { padding: calc(3vh * var(--s)); gap: calc(3vh * var(--s)); }
+        .tap-img-col { width: calc(28vh * var(--s)); }
+        .tap-img-wrap { width: calc(24vh * var(--s)); height: calc(24vh * var(--s)); }
+        .tap-name { font-size: calc(6vh * var(--s)); }
+        .tap-brewery { font-size: calc(4vh * var(--s)); }
+        .tap-badge { font-size: calc(2.8vh * var(--s)); padding: calc(1vh * var(--s)) calc(2.2vh * var(--s)); }
+        .tap-price-size { font-size: calc(2.5vh * var(--s)); }
+        .tap-price-val { font-size: calc(5vh * var(--s)); }
+        .tap-num { width: calc(6vh * var(--s)); height: calc(6vh * var(--s)); font-size: calc(3vh * var(--s)); }
+        .tap-badges-row { gap: calc(1.5vh * var(--s)); margin-top: calc(1.2vh * var(--s)); }
+        .tap-prices-row { gap: calc(3vh * var(--s)); margin-top: calc(1.5vh * var(--s)); }
 
-        .scale-normal .tap-card { padding: clamp(8px, 1.5vh, 20px); gap: clamp(10px, 1.5vh, 20px); }
-        .scale-normal .tap-img-col { width: clamp(96px, 14vh, 200px); }
-        .scale-normal .tap-img-wrap { width: clamp(78px, 12vh, 170px); height: clamp(78px, 12vh, 170px); }
-        .scale-normal .tap-name { font-size: clamp(1.3rem, 3.2vh, 2.6rem); }
-        .scale-normal .tap-brewery { font-size: clamp(0.95rem, 2.2vh, 1.7rem); }
-        .scale-normal .tap-badge { font-size: clamp(0.8rem, 1.7vh, 1.3rem); padding: clamp(3px, 0.5vh, 8px) clamp(8px, 1.5vh, 18px); }
-        .scale-normal .tap-price-size { font-size: clamp(0.75rem, 1.5vh, 1.2rem); }
-        .scale-normal .tap-price-val { font-size: clamp(1.1rem, 2.8vh, 2.2rem); }
-        .scale-normal .tap-num { width: clamp(30px, 4vh, 50px); height: clamp(30px, 4vh, 50px); font-size: clamp(0.9rem, 1.8vh, 1.4rem); }
-        .scale-normal .tap-badges-row { gap: clamp(5px, 1vh, 12px); margin-top: clamp(3px, 0.8vh, 10px); }
-        .scale-normal .tap-prices-row { gap: clamp(6px, 1.5vh, 18px); margin-top: clamp(4px, 1vh, 12px); }
-
-        .scale-compact .tap-card { padding: clamp(6px, 1.2vh, 16px); gap: clamp(8px, 1.2vh, 16px); }
-        .scale-compact .tap-img-col { width: clamp(78px, 11vh, 160px); }
-        .scale-compact .tap-img-wrap { width: clamp(62px, 9vh, 136px); height: clamp(62px, 9vh, 136px); }
-        .scale-compact .tap-name { font-size: clamp(1.1rem, 2.5vh, 2rem); }
-        .scale-compact .tap-brewery { font-size: clamp(0.85rem, 1.8vh, 1.3rem); }
-        .scale-compact .tap-badge { font-size: clamp(0.72rem, 1.3vh, 1rem); padding: clamp(2px, 0.4vh, 6px) clamp(7px, 1.2vh, 14px); }
-        .scale-compact .tap-price-size { font-size: clamp(0.7rem, 1.2vh, 1rem); }
-        .scale-compact .tap-price-val { font-size: clamp(0.95rem, 2.2vh, 1.7rem); }
-        .scale-compact .tap-num { width: clamp(26px, 3.2vh, 42px); height: clamp(26px, 3.2vh, 42px); font-size: clamp(0.8rem, 1.4vh, 1.1rem); }
-        .scale-compact .tap-badges-row { gap: clamp(4px, 0.8vh, 10px); margin-top: clamp(2px, 0.6vh, 8px); }
-        .scale-compact .tap-prices-row { gap: clamp(5px, 1.2vh, 14px); margin-top: clamp(3px, 0.8vh, 10px); }
+        .tv-header { padding: 1.2vh 2vw; }
+        .tv-header-logo { width: 5vh; height: 5vh; }
+        .tv-header-title { font-size: 3.5vh; }
+        .tv-header-sub { font-size: 1.5vh; }
+        .tv-header-time { font-size: 3.5vh; }
+        .tv-header-date { font-size: 1.5vh; }
+        .tv-header-dot { width: 1vh; height: 1vh; }
       `}</style>
 
-      <div className="flex items-center justify-between px-6 py-3 flex-shrink-0 border-b border-gray-800/50">
-        <div className="flex items-center gap-4">
+      <div className="tv-header flex items-center justify-between flex-shrink-0 border-b border-gray-800/50">
+        <div className="flex items-center" style={{ gap: '1.5vh' }}>
           {(pub as any)?.logoUrl ? (
-            <img src={(pub as any).logoUrl} alt="" className="w-14 h-14 rounded-2xl object-cover border-2 border-amber-500/30" />
+            <img src={(pub as any).logoUrl} alt="" className="tv-header-logo rounded-2xl object-cover border-2 border-amber-500/30" />
           ) : (
-            <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center">
-              <Beer className="w-8 h-8 text-white" />
+            <div className="tv-header-logo rounded-2xl bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center">
+              <Beer style={{ width: '60%', height: '60%' }} className="text-white" />
             </div>
           )}
           <div>
-            <h1 className="text-3xl font-bold bg-gradient-to-r from-amber-400 to-orange-500 bg-clip-text text-transparent leading-tight">
+            <h1 className="tv-header-title font-bold bg-gradient-to-r from-amber-400 to-orange-500 bg-clip-text text-transparent leading-tight">
               {(pub as any)?.name || "Taplist"}
             </h1>
-            <p className="text-gray-500 text-sm">
+            <p className="tv-header-sub text-gray-500">
               {activeTaps.length} birre alla spina
             </p>
           </div>
         </div>
-        <div className="flex items-center gap-6">
+        <div className="flex items-center" style={{ gap: '2vw' }}>
           {totalPages > 1 && (
-            <div className="flex items-center gap-2">
+            <div className="flex items-center" style={{ gap: '0.6vh' }}>
               {Array.from({ length: totalPages }).map((_, i) => (
                 <div
                   key={i}
-                  className={`w-2.5 h-2.5 rounded-full transition-all duration-500 ${
+                  className={`tv-header-dot rounded-full transition-all duration-500 ${
                     i === currentPage ? 'bg-amber-400 scale-125' : 'bg-gray-600'
                   }`}
                 />
@@ -162,10 +139,10 @@ export default function TaplistTV() {
             </div>
           )}
           <div className="text-right">
-            <div className="text-3xl font-bold text-gray-300 tabular-nums">
+            <div className="tv-header-time font-bold text-gray-300 tabular-nums">
               {currentTime.toLocaleTimeString("it-IT", { hour: "2-digit", minute: "2-digit" })}
             </div>
-            <div className="text-sm text-gray-500">
+            <div className="tv-header-date text-gray-500">
               {currentTime.toLocaleDateString("it-IT", { weekday: "long", day: "numeric", month: "long" })}
             </div>
           </div>
@@ -180,12 +157,13 @@ export default function TaplistTV() {
           </div>
         </div>
       ) : (
-        <div className={`flex-1 p-4 overflow-hidden ${scaleClass}`}>
+        <div className={`flex-1 overflow-hidden ${scaleClass}`} style={{ padding: '1vh 1.2vw' }}>
           <div
-            className="grid gap-3 h-full"
+            className="grid h-full"
             style={{
               gridTemplateColumns: `repeat(${layout.cols}, 1fr)`,
               gridTemplateRows: `repeat(${layout.rows}, 1fr)`,
+              gap: '1vh 0.8vw',
             }}
           >
             {pageTaps.map((tap: any, index: number) => (
@@ -200,8 +178,8 @@ export default function TaplistTV() {
         </div>
       )}
 
-      <div className="text-center py-1 flex-shrink-0">
-        <span className="text-[10px] text-gray-700">fermenta.to</span>
+      <div className="text-center flex-shrink-0" style={{ padding: '0.3vh 0' }}>
+        <span className="text-gray-700" style={{ fontSize: '1vh' }}>fermenta.to</span>
       </div>
     </div>
   );
@@ -246,7 +224,7 @@ function TapCard({ tap, index, delay }: { tap: any; index: number; delay: number
         </div>
       </div>
 
-      <div className="tap-content" style={{ paddingRight: 'clamp(30px, 5vw, 60px)' }}>
+      <div className="tap-content" style={{ paddingRight: '3vw' }}>
         <h3 className="tap-name font-bold text-white leading-tight truncate">
           {beer.name || "Birra"}
         </h3>
