@@ -502,95 +502,71 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
                 Mostra la tua taplist su un TV o monitor collegato alla stessa rete Wi-Fi.
               </p>
 
-              {(() => {
-                const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
-                const tvUrl = `${window.location.origin}/tv/${currentPub?.id}`;
-                
-                if (isMobile) {
-                  return (
-                    <>
-                      <Button
-                        className="w-full gap-2 bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700"
-                        onClick={async () => {
-                          if (navigator.share) {
-                            try {
-                              await navigator.share({ title: `Taplist TV - ${currentPub?.name}`, text: "Apri in Chrome e usa ⋮ → Trasmetti", url: tvUrl });
-                            } catch (err: any) {
-                              if (err?.name !== 'AbortError') {
-                                navigator.clipboard.writeText(tvUrl);
-                                toast({ title: "Link copiato!" });
-                              }
-                            }
-                          } else {
-                            navigator.clipboard.writeText(tvUrl);
-                            toast({ title: "Link copiato!" });
-                          }
-                        }}
-                      >
-                        <Share2 className="h-4 w-4" />
-                        Condividi Link Taplist TV
-                      </Button>
+              <Button
+                className="w-full gap-2 bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700"
+                onClick={async () => {
+                  const tvUrl = `${window.location.origin}/tv/${currentPub?.id}`;
+                  if ('PresentationRequest' in window) {
+                    try {
+                      const request = new (window as any).PresentationRequest([tvUrl]);
+                      await request.start();
+                      toast({ title: "Connesso!", description: "Taplist trasmessa sullo schermo" });
+                      return;
+                    } catch (err: any) {
+                      if (err?.name === 'AbortError') return;
+                      console.warn('Cast error:', err?.name, err?.message);
+                    }
+                  }
+                  navigator.clipboard.writeText(tvUrl);
+                  toast({ title: "Trasmissione non supportata in questo browser", description: "Link copiato! Aprilo in Chrome e usa ⋮ → Trasmetti" });
+                }}
+              >
+                <Cast className="h-4 w-4" />
+                Trasmetti su Schermo
+              </Button>
 
-                      <Button
-                        variant="outline"
-                        className="w-full gap-2"
-                        onClick={() => {
+              <div className="flex gap-2">
+                <Button
+                  variant="outline"
+                  className="flex-1 gap-2"
+                  onClick={() => window.open(`/tv/${currentPub?.id}`, '_blank')}
+                >
+                  <Eye className="h-4 w-4" />
+                  Apri Taplist TV
+                </Button>
+                <Button
+                  variant="outline"
+                  className="flex-1 gap-2"
+                  onClick={async () => {
+                    const tvUrl = `${window.location.origin}/tv/${currentPub?.id}`;
+                    if (navigator.share) {
+                      try {
+                        await navigator.share({ title: `Taplist TV - ${currentPub?.name}`, url: tvUrl });
+                      } catch (err: any) {
+                        if (err?.name !== 'AbortError') {
                           navigator.clipboard.writeText(tvUrl);
-                          toast({ title: "Link copiato!", description: "Incollalo in Chrome per trasmettere, o nel browser della Smart TV" });
-                        }}
-                      >
-                        <LinkIcon className="h-4 w-4" />
-                        Copia Link TV
-                      </Button>
-
-                      <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg p-3 space-y-2">
-                        <p className="text-xs font-semibold text-amber-800 dark:text-amber-200">Come trasmettere da telefono:</p>
-                        <ol className="text-xs text-amber-700 dark:text-amber-300 space-y-1.5 list-decimal list-inside">
-                          <li>Copia il link qui sopra</li>
-                          <li>Apri <strong>Chrome</strong> (non il browser in-app)</li>
-                          <li>Incolla il link nella barra degli indirizzi</li>
-                          <li>Tocca il menu (⋮) → <strong>Trasmetti</strong></li>
-                          <li>Scegli la tua TV dalla lista</li>
-                        </ol>
-                        <p className="text-xs text-amber-600 dark:text-amber-400 mt-2 italic">
-                          In alternativa: Impostazioni → Connessione dispositivo → Screencast
-                        </p>
-                      </div>
-                    </>
-                  );
-                }
-
-                return (
-                  <>
-                    <Button
-                      className="w-full gap-2 bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700"
-                      onClick={async () => {
-                        try {
-                          const request = new (window as any).PresentationRequest([tvUrl]);
-                          await request.start();
-                          toast({ title: "Connesso!", description: "Taplist trasmessa sullo schermo" });
-                        } catch (err: any) {
-                          if (err?.name === 'AbortError') return;
-                          window.open(`/tv/${currentPub?.id}`, '_blank');
-                          toast({ title: "Pagina TV aperta", description: "Usa il menu del browser (⋮) → Trasmetti" });
+                          toast({ title: "Link copiato!" });
                         }
-                      }}
-                    >
-                      <Cast className="h-4 w-4" />
-                      Trasmetti su Schermo
-                    </Button>
+                      }
+                    } else {
+                      navigator.clipboard.writeText(tvUrl);
+                      toast({ title: "Link copiato!" });
+                    }
+                  }}
+                >
+                  <Share2 className="h-4 w-4" />
+                  Condividi Link
+                </Button>
+              </div>
 
-                    <Button
-                      variant="outline"
-                      className="w-full gap-2"
-                      onClick={() => window.open(`/tv/${currentPub?.id}`, '_blank')}
-                    >
-                      <Eye className="h-4 w-4" />
-                      Apri in nuova finestra
-                    </Button>
-                  </>
-                );
-              })()}
+              <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-3 space-y-2">
+                <p className="text-xs font-medium text-gray-700 dark:text-gray-300">Se la trasmissione non parte:</p>
+                <ol className="text-xs text-gray-500 dark:text-gray-400 space-y-1 list-decimal list-inside">
+                  <li>Apri il link in <strong>Chrome</strong> (non browser in-app)</li>
+                  <li>Tocca menu (⋮) → <strong>Trasmetti</strong></li>
+                  <li>Oppure: Impostazioni → Connessione dispositivo → Screencast</li>
+                </ol>
+              </div>
             </div>
           </DialogContent>
         </Dialog>
