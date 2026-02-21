@@ -519,24 +519,41 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
                 className="w-full gap-2 bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 py-5 text-base"
                 onClick={async () => {
                   const tvUrl = `${window.location.origin}/tv/${currentPub?.id}`;
-                  if ('PresentationRequest' in window) {
+                  if (navigator.share) {
+                    try {
+                      await navigator.share({
+                        title: `Taplist TV - ${currentPub?.name}`,
+                        text: `Apri la taplist di ${currentPub?.name} sulla TV`,
+                        url: tvUrl,
+                      });
+                    } catch (err: any) {
+                      if (err?.name !== 'AbortError') {
+                        navigator.clipboard.writeText(tvUrl);
+                        toast({ title: "Link copiato!" });
+                      }
+                    }
+                  } else if ('PresentationRequest' in window) {
                     try {
                       const request = new (window as any).PresentationRequest([tvUrl]);
-                      const connection = await request.start();
-                      toast({ title: "Connesso!", description: "Taplist trasmessa su " + (connection?.id || "schermo") });
+                      await request.start();
                       return;
                     } catch (err: any) {
                       if (err?.name === 'AbortError') return;
-                      toast({ title: "Trasmissione non disponibile", description: "Apri il link nel browser della TV", variant: "destructive" });
+                      navigator.clipboard.writeText(tvUrl);
+                      toast({ title: "Link copiato!" });
                     }
                   } else {
-                    toast({ title: "Non supportato", description: "Il tuo browser non supporta la trasmissione. Usa Chrome su PC oppure apri il link sulla TV.", variant: "destructive" });
+                    navigator.clipboard.writeText(tvUrl);
+                    toast({ title: "Link copiato!", description: "Incollalo nel browser della TV" });
                   }
                 }}
               >
                 <Cast className="h-5 w-5" />
-                Trasmetti su schermo
+                Invia a TV / Condividi
               </Button>
+              <p className="text-xs text-center text-gray-500 dark:text-gray-400 -mt-2">
+                Scegli Google TV, Chromecast o un'altra app dalla lista
+              </p>
 
               <div className="flex gap-2">
                 <Button
@@ -561,7 +578,7 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
               </div>
 
               <div className="border-t pt-3">
-                <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">Oppure digita questo indirizzo nel browser della Smart TV:</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">Oppure digita nel browser della Smart TV:</p>
                 <div
                   className="bg-gray-100 dark:bg-gray-800 rounded-lg p-2 flex items-center justify-center cursor-pointer hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
                   onClick={() => {
