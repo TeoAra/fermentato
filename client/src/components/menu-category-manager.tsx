@@ -64,11 +64,13 @@ export default function MenuCategoryManager({ pubId, categories }: MenuCategoryM
   // Use refs for form inputs to avoid re-renders
   const nameRef = useRef<HTMLInputElement>(null);
   const descriptionRef = useRef<HTMLTextAreaElement>(null);
+  const infoBoxRef = useRef<HTMLTextAreaElement>(null);
   const visibilityRef = useRef<boolean>(true);
   
   const [formData, setFormData] = useState<any>({
     name: '',
     description: '',
+    infoBox: '',
     isVisible: true
   });
   const [itemForm, setItemForm] = useState<any>({
@@ -84,6 +86,7 @@ export default function MenuCategoryManager({ pubId, categories }: MenuCategoryM
     setFormData({
       name: '',
       description: '',
+      infoBox: '',
       isVisible: true
     });
   };
@@ -238,6 +241,7 @@ export default function MenuCategoryManager({ pubId, categories }: MenuCategoryM
     setFormData({
       name: category.name,
       description: category.description || '',
+      infoBox: category.infoBox || '',
       isVisible: category.isVisible
     });
     setIsEditDialogOpen(true);
@@ -247,6 +251,7 @@ export default function MenuCategoryManager({ pubId, categories }: MenuCategoryM
   const handleCreateSubmit = () => {
     const name = nameRef.current?.value || '';
     const description = descriptionRef.current?.value || '';
+    const infoBox = infoBoxRef.current?.value || '';
     
     if (!name.trim()) {
       toast({ 
@@ -260,6 +265,7 @@ export default function MenuCategoryManager({ pubId, categories }: MenuCategoryM
     createCategoryMutation.mutate({
       name: name.trim(),
       description: description.trim(),
+      infoBox: infoBox.trim() || null,
       isVisible: visibilityRef.current
     });
   };
@@ -331,6 +337,25 @@ export default function MenuCategoryManager({ pubId, categories }: MenuCategoryM
             rows={3}
             className="mt-1"
             data-testid={isEdit ? "textarea-edit-category-description" : "textarea-create-category-description"}
+          />
+        </div>
+
+        <div>
+          <Label htmlFor="category-infobox" className="text-sm font-medium text-gray-700 dark:text-gray-300">
+            Info Box (opzionale)
+          </Label>
+          <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5 mb-1">
+            Nota informativa evidenziata nel PDF del menu (es. "Tutti i nostri piatti sono preparati con ingredienti freschi")
+          </p>
+          <Textarea
+            ref={isEdit ? undefined : infoBoxRef}
+            id="category-infobox"
+            placeholder="Es. Tutti i nostri piatti sono preparati con ingredienti locali e di stagione..."
+            defaultValue={isEdit ? formData.infoBox : ''}
+            value={isEdit ? formData.infoBox : undefined}
+            onChange={isEdit ? (e) => setFormData({ ...formData, infoBox: e.target.value }) : undefined}
+            rows={2}
+            className="mt-1"
           />
         </div>
         
@@ -539,6 +564,11 @@ export default function MenuCategoryManager({ pubId, categories }: MenuCategoryM
                               <p className="text-sm text-gray-600 dark:text-gray-400 line-clamp-2">
                                 {category.description}
                               </p>
+                            )}
+                            {category.infoBox && (
+                              <div className="mt-1 px-2 py-1 bg-amber-50 dark:bg-amber-900/30 border border-amber-200 dark:border-amber-700 rounded text-xs text-amber-800 dark:text-amber-200 line-clamp-1">
+                                {category.infoBox}
+                              </div>
                             )}
                           </div>
                         </div>
