@@ -33,43 +33,53 @@ interface HomepageMapProps {
 const PUB_COLOR = "#3B82F6";
 const BREWERY_COLOR = "#F59E0B";
 
-function createMarkerSvg(color: string, logoUrl?: string | null): string {
-  const markerSize = 40;
-  const pinPath = `M20,2 C11.16,2 4,9.16 4,18 C4,29 20,40 20,40 C20,40 36,29 36,18 C36,9.16 28.84,2 20,2 Z`;
+function createMarkerElement(color: string, logoUrl?: string | null): HTMLElement {
+  const container = document.createElement("div");
+  container.style.position = "relative";
+  container.style.width = "44px";
+  container.style.height = "52px";
+  container.style.cursor = "pointer";
+
+  const pin = document.createElement("div");
+  pin.style.cssText = `
+    width: 44px; height: 44px; background: ${color}; border-radius: 50% 50% 50% 0;
+    transform: rotate(-45deg); border: 3px solid white;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.3); position: absolute; top: 0; left: 0;
+  `;
+  container.appendChild(pin);
+
+  const inner = document.createElement("div");
+  inner.style.cssText = `
+    width: 32px; height: 32px; border-radius: 50%; background: white;
+    position: absolute; top: 3px; left: 6px; overflow: hidden;
+    display: flex; align-items: center; justify-content: center;
+  `;
 
   if (logoUrl) {
-    return `
-      <svg xmlns="http://www.w3.org/2000/svg" width="${markerSize}" height="${markerSize + 5}" viewBox="0 0 40 45">
-        <defs>
-          <clipPath id="circle-clip">
-            <circle cx="20" cy="17" r="10"/>
-          </clipPath>
-          <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
-            <feDropShadow dx="0" dy="1" stdDeviation="2" flood-opacity="0.3"/>
-          </filter>
-        </defs>
-        <path d="${pinPath}" fill="${color}" stroke="white" stroke-width="2" filter="url(#shadow)"/>
-        <circle cx="20" cy="17" r="11" fill="white"/>
-        <image href="${logoUrl}" x="10" y="7" width="20" height="20" clip-path="url(#circle-clip)" preserveAspectRatio="xMidYMid slice"/>
-      </svg>
-    `;
+    const img = document.createElement("img");
+    img.src = logoUrl;
+    img.style.cssText = "width: 100%; height: 100%; object-fit: cover;";
+    img.onerror = () => {
+      img.remove();
+      inner.textContent = color === PUB_COLOR ? "🍻" : "🍺";
+      inner.style.fontSize = "16px";
+    };
+    inner.appendChild(img);
+  } else {
+    inner.textContent = color === PUB_COLOR ? "🍻" : "🍺";
+    inner.style.fontSize = "16px";
   }
 
-  const icon = color === PUB_COLOR
-    ? `<rect x="14" y="12" width="12" height="10" rx="1" fill="white" opacity="0.9"/><rect x="15" y="13" width="10" height="8" rx="0.5" fill="${color}" opacity="0.3"/><line x1="17" y1="15" x2="17" y2="19" stroke="white" stroke-width="1.5"/><line x1="20" y1="14" x2="20" y2="20" stroke="white" stroke-width="1.5"/><line x1="23" y1="15" x2="23" y2="19" stroke="white" stroke-width="1.5"/>`
-    : `<circle cx="20" cy="17" r="7" fill="white" opacity="0.9"/><text x="20" y="21" text-anchor="middle" font-size="12" fill="${color}">🍺</text>`;
+  container.appendChild(inner);
 
-  return `
-    <svg xmlns="http://www.w3.org/2000/svg" width="${markerSize}" height="${markerSize + 5}" viewBox="0 0 40 45">
-      <defs>
-        <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
-          <feDropShadow dx="0" dy="1" stdDeviation="2" flood-opacity="0.3"/>
-        </filter>
-      </defs>
-      <path d="${pinPath}" fill="${color}" stroke="white" stroke-width="2" filter="url(#shadow)"/>
-      ${icon}
-    </svg>
+  const tip = document.createElement("div");
+  tip.style.cssText = `
+    width: 0; height: 0; border-left: 6px solid transparent; border-right: 6px solid transparent;
+    border-top: 8px solid ${color}; position: absolute; bottom: 0; left: 16px;
   `;
+  container.appendChild(tip);
+
+  return container;
 }
 
 export default function HomepageMap({ pubs, breweries, userLocation, isLoading }: HomepageMapProps) {
@@ -155,16 +165,13 @@ export default function HomepageMap({ pubs, breweries, userLocation, isLoading }
       const lng = parseFloat(pub.longitude!);
       const position = { lat, lng };
 
-      const svgString = createMarkerSvg(PUB_COLOR, pub.logoUrl);
-      const parser = new DOMParser();
-      const svgDoc = parser.parseFromString(svgString, "image/svg+xml");
-      const svgElement = svgDoc.documentElement;
+      const markerEl = createMarkerElement(PUB_COLOR, pub.logoUrl);
 
       const marker = new google.maps.marker.AdvancedMarkerElement({
         map,
         position,
         title: pub.name,
-        content: svgElement,
+        content: markerEl,
       });
 
       marker.addListener("click", () => {
@@ -198,16 +205,13 @@ export default function HomepageMap({ pubs, breweries, userLocation, isLoading }
       const lng = parseFloat(brewery.longitude!);
       const position = { lat, lng };
 
-      const svgString = createMarkerSvg(BREWERY_COLOR, brewery.logoUrl);
-      const parser = new DOMParser();
-      const svgDoc = parser.parseFromString(svgString, "image/svg+xml");
-      const svgElement = svgDoc.documentElement;
+      const markerEl = createMarkerElement(BREWERY_COLOR, brewery.logoUrl);
 
       const marker = new google.maps.marker.AdvancedMarkerElement({
         map,
         position,
         title: brewery.name,
-        content: svgElement,
+        content: markerEl,
       });
 
       marker.addListener("click", () => {
@@ -253,26 +257,26 @@ export default function HomepageMap({ pubs, breweries, userLocation, isLoading }
   return (
     <section className="mb-16 lg:mb-20">
       <div className="glass-card border-0 rounded-2xl overflow-hidden shadow-xl">
-        <div className="bg-gradient-to-r from-gray-900 via-gray-800 to-gray-900 px-6 py-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+        <div className="bg-gradient-to-r from-amber-600 via-orange-500 to-amber-600 px-6 py-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
           <div className="flex items-center gap-3">
-            <div className="p-2 bg-gradient-to-br from-amber-400 to-orange-500 rounded-lg">
+            <div className="p-2 bg-white/20 rounded-lg backdrop-blur-sm">
               <MapPin className="h-5 w-5 text-white" />
             </div>
             <div>
               <h2 className="text-xl font-bold text-white">Esplora sulla Mappa</h2>
-              <p className="text-xs text-gray-400">
+              <p className="text-xs text-amber-100">
                 {pubCount + breweryCount > 0 ? `${pubCount} pub e ${breweryCount} birrifici geolocalizzati` : "Caricamento..."}
               </p>
             </div>
           </div>
           <div className="flex items-center gap-4 text-sm">
-            <div className="flex items-center gap-2 bg-white/10 rounded-full px-3 py-1.5">
-              <div className="w-2.5 h-2.5 rounded-full ring-2 ring-blue-300" style={{ background: PUB_COLOR }} />
-              <span className="text-gray-200 text-xs font-medium">Pub</span>
+            <div className="flex items-center gap-2 bg-white/20 rounded-full px-3 py-1.5 backdrop-blur-sm">
+              <div className="w-2.5 h-2.5 rounded-full ring-2 ring-white/50" style={{ background: PUB_COLOR }} />
+              <span className="text-white text-xs font-medium">Pub</span>
             </div>
-            <div className="flex items-center gap-2 bg-white/10 rounded-full px-3 py-1.5">
-              <div className="w-2.5 h-2.5 rounded-full ring-2 ring-amber-300" style={{ background: BREWERY_COLOR }} />
-              <span className="text-gray-200 text-xs font-medium">Birrifici</span>
+            <div className="flex items-center gap-2 bg-white/20 rounded-full px-3 py-1.5 backdrop-blur-sm">
+              <div className="w-2.5 h-2.5 rounded-full ring-2 ring-white/50" style={{ background: BREWERY_COLOR }} />
+              <span className="text-white text-xs font-medium">Birrifici</span>
             </div>
           </div>
         </div>
