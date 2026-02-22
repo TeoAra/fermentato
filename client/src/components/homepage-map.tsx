@@ -247,37 +247,47 @@ export default function HomepageMap({ pubs, breweries, userLocation, isLoading }
 
   if (mapError) return null;
 
+  const pubCount = pubs.filter(p => p.latitude && p.longitude).length;
+  const breweryCount = breweries.filter(b => b.latitude && b.longitude).length;
+
   return (
     <section className="mb-16 lg:mb-20">
-      <div className="flex items-center justify-between mb-6">
-        <h2 className="text-3xl font-bold text-gray-900 dark:text-white flex items-center">
-          <div className="p-2 bg-gradient-to-r from-green-500 to-emerald-600 rounded-xl mr-3">
-            <MapPin className="h-6 w-6 text-white" />
-          </div>
-          Mappa
-        </h2>
-        <div className="flex items-center gap-4 text-sm">
-          <div className="flex items-center gap-1.5">
-            <div className="w-3 h-3 rounded-full" style={{ background: PUB_COLOR }} />
-            <span className="text-gray-600 dark:text-gray-400">Pub</span>
-          </div>
-          <div className="flex items-center gap-1.5">
-            <div className="w-3 h-3 rounded-full" style={{ background: BREWERY_COLOR }} />
-            <span className="text-gray-600 dark:text-gray-400">Birrifici</span>
-          </div>
-        </div>
-      </div>
-
-      <div className="relative rounded-2xl overflow-hidden shadow-lg border border-gray-200 dark:border-gray-700">
-        {(isLoading || !mapLoaded) && !mapError && (
-          <div className="absolute inset-0 z-10 flex items-center justify-center bg-gray-100 dark:bg-gray-800">
-            <div className="flex flex-col items-center gap-3">
-              <Loader2 className="w-8 h-8 animate-spin text-amber-500" />
-              <span className="text-sm text-gray-500 dark:text-gray-400">Caricamento mappa...</span>
+      <div className="glass-card border-0 rounded-2xl overflow-hidden shadow-xl">
+        <div className="bg-gradient-to-r from-gray-900 via-gray-800 to-gray-900 px-6 py-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+          <div className="flex items-center gap-3">
+            <div className="p-2 bg-gradient-to-br from-amber-400 to-orange-500 rounded-lg">
+              <MapPin className="h-5 w-5 text-white" />
+            </div>
+            <div>
+              <h2 className="text-xl font-bold text-white">Esplora sulla Mappa</h2>
+              <p className="text-xs text-gray-400">
+                {pubCount + breweryCount > 0 ? `${pubCount} pub e ${breweryCount} birrifici geolocalizzati` : "Caricamento..."}
+              </p>
             </div>
           </div>
-        )}
-        <div ref={mapRef} className="w-full h-[400px] md:h-[500px]" />
+          <div className="flex items-center gap-4 text-sm">
+            <div className="flex items-center gap-2 bg-white/10 rounded-full px-3 py-1.5">
+              <div className="w-2.5 h-2.5 rounded-full ring-2 ring-blue-300" style={{ background: PUB_COLOR }} />
+              <span className="text-gray-200 text-xs font-medium">Pub</span>
+            </div>
+            <div className="flex items-center gap-2 bg-white/10 rounded-full px-3 py-1.5">
+              <div className="w-2.5 h-2.5 rounded-full ring-2 ring-amber-300" style={{ background: BREWERY_COLOR }} />
+              <span className="text-gray-200 text-xs font-medium">Birrifici</span>
+            </div>
+          </div>
+        </div>
+
+        <div className="relative">
+          {(isLoading || !mapLoaded) && !mapError && (
+            <div className="absolute inset-0 z-10 flex items-center justify-center bg-gray-100 dark:bg-gray-800">
+              <div className="flex flex-col items-center gap-3">
+                <Loader2 className="w-8 h-8 animate-spin text-amber-500" />
+                <span className="text-sm text-gray-500 dark:text-gray-400">Caricamento mappa...</span>
+              </div>
+            </div>
+          )}
+          <div ref={mapRef} className="w-full h-[400px] md:h-[500px]" />
+        </div>
       </div>
     </section>
   );

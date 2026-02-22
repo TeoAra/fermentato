@@ -1,19 +1,12 @@
 import { useAuth } from "@/hooks/useAuth";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { Link } from "wouter";
 import { useState, useEffect, useMemo } from "react";
 import { Beer, MapPin, Heart, Store, TrendingUp, Navigation } from "lucide-react";
 import Footer from "@/components/footer";
 import PubCard from "@/components/pub-card";
-import BreweryCard from "@/components/brewery-card";
 import HomepageMap from "@/components/homepage-map";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
-import { useToast } from "@/hooks/use-toast";
-import { apiRequest } from "@/lib/queryClient";
-import ImageWithFallback from "@/components/image-with-fallback";
 
 function haversineDistance(lat1: number, lon1: number, lat2: number, lon2: number): number {
   const R = 6371;
@@ -26,116 +19,8 @@ function haversineDistance(lat1: number, lon1: number, lat2: number, lon2: numbe
   return R * c;
 }
 
-// Square Card Components
-function BrewerySquareCard({ brewery }: { brewery: any }) {
-  const { isAuthenticated } = useAuth();
-  const { toast } = useToast();
-  const queryClient = useQueryClient();
-
-  // Check if brewery is favorited
-  const { data: favorites = [] } = useQuery({
-    queryKey: ["/api/favorites"],
-    enabled: isAuthenticated,
-  });
-
-  const isBreweryFavorited = Array.isArray(favorites) && favorites.some((fav: any) => 
-    fav.itemType === 'brewery' && fav.itemId === brewery.id
-  );
-
-  // Favorite mutation
-  const favoriteMutation = useMutation({
-    mutationFn: async ({ action }: { action: 'add' | 'remove' }) => {
-      if (action === 'add') {
-        return apiRequest('/api/favorites', { method: 'POST' }, { itemType: 'brewery', itemId: brewery.id });
-      } else {
-        return apiRequest(`/api/favorites/brewery/${brewery.id}`, { method: 'DELETE' });
-      }
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/favorites"] });
-      toast({
-        title: "Successo",
-        description: isBreweryFavorited ? "Rimosso dai favoriti" : "Aggiunto ai favoriti",
-      });
-    },
-  });
-
-  const handleFavoriteToggle = (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    
-    if (!isAuthenticated) {
-      toast({
-        title: "Accesso richiesto",
-        description: "Effettua l'accesso per aggiungere ai favoriti",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    favoriteMutation.mutate({
-      action: isBreweryFavorited ? 'remove' : 'add'
-    });
-  };
-
-  return (
-    <Link href={`/brewery/${brewery.id}`}>
-      <Card className="overflow-hidden hover:shadow-lg transition-all duration-200 cursor-pointer group h-48 relative">
-        <CardContent className="p-4 h-full flex flex-col">
-          {/* Favorite Button */}
-          {isAuthenticated && (
-            <Button
-              variant="ghost"
-              size="sm"
-              className={`absolute top-2 right-2 h-8 w-8 p-0 z-10 ${isBreweryFavorited ? 'text-red-600 hover:text-red-700' : 'text-gray-400 hover:text-red-600'}`}
-              onClick={handleFavoriteToggle}
-              disabled={favoriteMutation.isPending}
-            >
-              <Heart className={`w-4 h-4 ${isBreweryFavorited ? 'fill-current' : ''}`} />
-            </Button>
-          )}
-
-          <div className="relative w-full h-24 mb-3 rounded-lg overflow-hidden bg-gray-100">
-            <ImageWithFallback
-              src={brewery.logoUrl}
-              alt={`Logo ${brewery.name}`}
-              imageType="brewery"
-              containerClassName="w-full h-24 rounded-lg overflow-hidden bg-gray-100"
-              className="w-full h-full object-cover group-hover:scale-105 transition-transform"
-              iconSize="lg"
-            />
-          </div>
-          
-          <div className="flex-1 flex flex-col">
-            <h3 className="font-semibold text-sm mb-1 line-clamp-1 group-hover:text-primary transition-colors">
-              {brewery.name}
-            </h3>
-            
-            <div className="flex items-center gap-1 text-xs text-gray-600 mb-2">
-              <MapPin className="w-3 h-3 flex-shrink-0" />
-              <span className="line-clamp-1">
-                {brewery.location}, {brewery.region || brewery.country}
-              </span>
-            </div>
-            
-            <div className="flex flex-wrap gap-1 mt-auto">
-              <Badge variant="outline" className="text-xs px-2 py-0.5 h-auto">
-                <Beer className="w-3 h-3 mr-1" />
-                {brewery.beerCount || 0} birre
-              </Badge>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-    </Link>
-  );
-}
-
 export default function Home() {
   const { user, isAuthenticated } = useAuth();
-  const { toast } = useToast();
-  const queryClient = useQueryClient();
-
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
   const [locationStatus, setLocationStatus] = useState<'idle' | 'requesting' | 'granted' | 'denied'>('idle');
 
@@ -206,19 +91,6 @@ export default function Home() {
       .slice(0, 3);
   }, [pubs, userLocation]);
 
-  const sortedBreweries = useMemo(() => {
-    if (!Array.isArray(breweries)) return [];
-    if (!userLocation) return breweries.slice(0, 4);
-    return [...breweries]
-      .map((brewery: any) => ({
-        ...brewery,
-        _distance: brewery.latitude && brewery.longitude
-          ? haversineDistance(userLocation.lat, userLocation.lng, parseFloat(brewery.latitude), parseFloat(brewery.longitude))
-          : Infinity,
-      }))
-      .sort((a, b) => a._distance - b._distance)
-      .slice(0, 4);
-  }, [breweries, userLocation]);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-amber-50 to-orange-50 dark:from-gray-950 dark:via-amber-950 dark:to-orange-950">
@@ -390,125 +262,53 @@ export default function Home() {
         {/* I Tuoi Preferiti */}
         {user && favorites && Array.isArray(favorites) && favorites.length > 0 ? (
           <section className="mb-16 lg:mb-20">
-            <h2 className="text-3xl font-bold text-secondary mb-12 text-center">
-              I Tuoi Preferiti ❤️
-            </h2>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-              {/* Pub Preferiti */}
-              {favorites.filter(fav => fav.itemType === 'pub').length > 0 && (
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="flex items-center">
-                      <Link href="/dashboard?tab=favorites" className="flex items-center hover:text-primary transition-colors">
-                        <Store className="w-5 h-5 mr-2" />
-                        Pub ({favorites.filter(fav => fav.itemType === 'pub').length})
-                      </Link>
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-3">
-                      {favorites.filter(fav => fav.itemType === 'pub').slice(0, 3).map((favorite: any) => (
-                        <Link key={favorite.id} href={`/pub/${favorite.itemId}`}>
-                          <div className="p-3 border rounded-lg hover:bg-gray-50 transition-colors">
-                            <div className="font-medium">{favorite.itemName || `Pub #${favorite.itemId}`}</div>
-                            <div className="text-sm text-gray-600">Clicca per vedere</div>
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-2xl font-bold text-gray-900 dark:text-white flex items-center">
+                <div className="p-2 bg-gradient-to-br from-red-500 to-pink-600 rounded-xl mr-3">
+                  <Heart className="h-5 w-5 text-white" />
+                </div>
+                I Tuoi Preferiti
+              </h2>
+              <Link href="/dashboard?tab=favorites">
+                <Button variant="ghost" className="text-amber-600 hover:text-amber-700 dark:text-amber-400 font-semibold text-sm">
+                  Vedi tutti →
+                </Button>
+              </Link>
+            </div>
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
+              {favorites.slice(0, 12).map((favorite: any) => {
+                const href = favorite.itemType === 'pub' ? `/pub/${favorite.itemId}` 
+                  : favorite.itemType === 'brewery' ? `/brewery/${favorite.itemId}` 
+                  : `/beer/${favorite.itemId}`;
+                const typeLabel = favorite.itemType === 'pub' ? 'Pub' : favorite.itemType === 'brewery' ? 'Birrificio' : 'Birra';
+                const typeColor = favorite.itemType === 'pub' ? 'bg-blue-500' : favorite.itemType === 'brewery' ? 'bg-amber-500' : 'bg-green-500';
+                const TypeIcon = favorite.itemType === 'pub' ? Store : Beer;
+                
+                return (
+                  <Link key={favorite.id} href={href}>
+                    <div className="group relative glass-card border-0 rounded-xl p-3 hover:shadow-lg hover:scale-[1.03] transition-all duration-200 cursor-pointer h-full">
+                      <div className={`absolute top-2 right-2 ${typeColor} rounded-full p-1`}>
+                        <TypeIcon className="w-3 h-3 text-white" />
+                      </div>
+                      <div className="flex flex-col items-center text-center gap-2">
+                        {favorite.itemImageUrl ? (
+                          <img src={favorite.itemImageUrl} alt={favorite.itemName} className="w-12 h-12 rounded-full object-cover ring-2 ring-gray-100 dark:ring-gray-700" />
+                        ) : (
+                          <div className={`w-12 h-12 rounded-full ${typeColor} flex items-center justify-center`}>
+                            <TypeIcon className="w-5 h-5 text-white" />
                           </div>
-                        </Link>
-                      ))}
+                        )}
+                        <span className="text-xs font-medium text-gray-800 dark:text-gray-200 line-clamp-2 leading-tight">
+                          {favorite.itemName || `#${favorite.itemId}`}
+                        </span>
+                      </div>
                     </div>
-                  </CardContent>
-                </Card>
-              )}
-
-              {/* Birrifici Preferiti */}
-              {favorites.filter(fav => fav.itemType === 'brewery').length > 0 && (
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="flex items-center">
-                      <Link href="/dashboard?tab=favorites" className="flex items-center hover:text-primary transition-colors">
-                        <Beer className="w-5 h-5 mr-2" />
-                        Birrifici ({favorites.filter(fav => fav.itemType === 'brewery').length})
-                      </Link>
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-3">
-                      {favorites.filter(fav => fav.itemType === 'brewery').slice(0, 3).map((favorite: any) => (
-                        <Link key={favorite.id} href={`/brewery/${favorite.itemId}`}>
-                          <div className="p-3 border rounded-lg hover:bg-gray-50 transition-colors">
-                            <div className="font-medium">{favorite.itemName || `Birrificio #${favorite.itemId}`}</div>
-                            <div className="text-sm text-gray-600">Clicca per vedere</div>
-                          </div>
-                        </Link>
-                      ))}
-                    </div>
-                  </CardContent>
-                </Card>
-              )}
-
-              {/* Birre Preferite */}
-              {favorites.filter(fav => fav.itemType === 'beer').length > 0 && (
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="flex items-center">
-                      <Link href="/dashboard?tab=favorites" className="flex items-center hover:text-primary transition-colors">
-                        <Beer className="w-5 h-5 mr-2" />
-                        Birre ({favorites.filter(fav => fav.itemType === 'beer').length})
-                      </Link>
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-3">
-                      {favorites.filter(fav => fav.itemType === 'beer').slice(0, 3).map((favorite: any) => (
-                        <Link key={favorite.id} href={`/beer/${favorite.itemId}`}>
-                          <div className="p-3 border rounded-lg hover:bg-gray-50 transition-colors">
-                            <div className="font-medium">{favorite.itemName || `Birra #${favorite.itemId}`}</div>
-                            <div className="text-sm text-gray-600">Clicca per vedere</div>
-                          </div>
-                        </Link>
-                      ))}
-                    </div>
-                  </CardContent>
-                </Card>
-              )}
+                  </Link>
+                );
+              })}
             </div>
           </section>
         ) : null}
-
-        {/* Birrifici in Evidenza */}
-        <section className="mb-16 lg:mb-20">
-          <div className="flex items-center justify-between mb-8">
-            <h2 className="text-3xl font-bold text-gray-900 dark:text-white flex items-center">
-              <div className="p-2 bg-gradient-to-r from-amber-500 to-orange-600 rounded-xl mr-3">
-                <Beer className="h-6 w-6 text-white" />
-              </div>
-              {userLocation ? 'Birrifici Vicini' : 'Birrifici Artigianali'}
-            </h2>
-            <Link href="/explore/breweries">
-              <Button variant="ghost" className="text-amber-600 hover:text-amber-700 dark:text-amber-400 font-semibold">
-                Esplora tutti →
-              </Button>
-            </Link>
-          </div>
-
-          {breweriesLoading ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-              {[...Array(4)].map((_, i) => (
-                <div key={i} className="bg-white rounded-lg shadow-md h-48 animate-pulse" />
-              ))}
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-              {sortedBreweries.map((brewery: any) => (
-                <BreweryCard 
-                  key={brewery.id} 
-                  brewery={brewery}
-                  distance={userLocation && brewery._distance !== Infinity ? brewery._distance : undefined}
-                />
-              ))}
-            </div>
-          )}
-        </section>
 
         {/* Statistiche Platform */}
         <section className="mb-16 lg:mb-20 glass-card border-0 rounded-2xl p-10 lg:p-12">
