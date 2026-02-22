@@ -6,6 +6,7 @@ import { Beer, MapPin, Heart, Store, TrendingUp, Navigation } from "lucide-react
 import Footer from "@/components/footer";
 import PubCard from "@/components/pub-card";
 import BreweryCard from "@/components/brewery-card";
+import HomepageMap from "@/components/homepage-map";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -176,6 +177,10 @@ export default function Home() {
     queryFn: () => fetch("/api/breweries?random=true&limit=8").then(res => res.json()),
   });
 
+  const { data: allBreweries } = useQuery({
+    queryKey: ["/api/breweries/all"],
+  });
+
   const { data: favorites } = useQuery({
     queryKey: ["/api/favorites"],
     enabled: !!user,
@@ -330,6 +335,13 @@ export default function Home() {
             </Link>
           </div>
         </section>
+
+        <HomepageMap
+          pubs={Array.isArray(pubs) ? pubs : []}
+          breweries={Array.isArray(allBreweries) ? allBreweries : (Array.isArray(breweries) ? breweries : [])}
+          userLocation={userLocation}
+          isLoading={pubsLoading || breweriesLoading}
+        />
 
         {/* I Tuoi Pub (solo per pub owner) */}
         {(user as any)?.userType === 'pub_owner' ? (
