@@ -70,7 +70,89 @@ import { ImageUpload } from "@/components/image-upload";
 import { EventsManager } from "@/components/events-manager";
 import { PubQRCode } from "@/components/pub-qr-code";
 import { MenuPdfDownload } from "@/components/menu-pdf-download";
-import { Cast, Share2, Link as LinkIcon, Tv } from "lucide-react";
+import { Cast, Share2, Link as LinkIcon, Tv, Info } from "lucide-react";
+
+function PubMenuInfoBox({ pubId, currentValue }: { pubId: number; currentValue: string }) {
+  const [text, setText] = useState(currentValue);
+  const [isEditing, setIsEditing] = useState(false);
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+  
+  useEffect(() => { setText(currentValue); }, [currentValue]);
+
+  const saveMutation = useMutation({
+    mutationFn: async (value: string) => {
+      return apiRequest(`/api/pubs/${pubId}`, { method: 'PATCH' }, { menuInfoBox: value || null });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/my-pubs"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/pubs", pubId] });
+      setIsEditing(false);
+      toast({ title: "Info box salvata" });
+    },
+    onError: () => {
+      toast({ title: "Errore", description: "Impossibile salvare", variant: "destructive" });
+    }
+  });
+
+  if (!isEditing && !currentValue) {
+    return (
+      <Button
+        variant="outline"
+        onClick={() => setIsEditing(true)}
+        className="w-full border-dashed border-amber-300 text-amber-700 hover:bg-amber-50 dark:text-amber-300 dark:hover:bg-amber-900/30"
+      >
+        <Info className="h-4 w-4 mr-2" />
+        Aggiungi Info Box generale (prima di tutto il menu)
+      </Button>
+    );
+  }
+
+  return (
+    <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700 rounded-xl p-4">
+      <div className="flex items-center justify-between mb-2">
+        <div className="flex items-center gap-2">
+          <Info className="h-4 w-4 text-amber-600" />
+          <span className="text-sm font-medium text-amber-800 dark:text-amber-200">Info Box Generale Menu</span>
+        </div>
+        <div className="flex gap-1">
+          {isEditing ? (
+            <>
+              <Button size="sm" variant="ghost" onClick={() => { setText(currentValue); setIsEditing(false); }}>
+                <X className="h-3.5 w-3.5" />
+              </Button>
+              <Button size="sm" className="bg-amber-600 hover:bg-amber-700 text-white" disabled={saveMutation.isPending}
+                onClick={() => saveMutation.mutate(text)}>
+                <Save className="h-3.5 w-3.5 mr-1" />{saveMutation.isPending ? '...' : 'Salva'}
+              </Button>
+            </>
+          ) : (
+            <>
+              <Button size="sm" variant="ghost" onClick={() => setIsEditing(true)}>
+                <Edit3 className="h-3.5 w-3.5" />
+              </Button>
+              <Button size="sm" variant="ghost" className="text-red-500 hover:text-red-700"
+                onClick={() => { if (confirm('Rimuovere la info box generale?')) saveMutation.mutate(''); }}>
+                <Trash2 className="h-3.5 w-3.5" />
+              </Button>
+            </>
+          )}
+        </div>
+      </div>
+      {isEditing ? (
+        <Textarea
+          value={text}
+          onChange={(e) => setText(e.target.value)}
+          placeholder="Nota informativa che apparirà prima di tutto il menu nel PDF..."
+          rows={3}
+          className="bg-white dark:bg-gray-800"
+        />
+      ) : (
+        <p className="text-sm text-amber-900 dark:text-amber-100 italic">{currentValue}</p>
+      )}
+    </div>
+  );
+}
 
 type DashboardSection = 'overview' | 'taplist' | 'bottles' | 'menu' | 'events' | 'analytics' | 'settings' | 'profile';
 
@@ -476,7 +558,8 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
           pubName={currentPub?.name || ""}
           tapList={typedTapList}
           bottleList={typedBottleList}
-          menuCategories={typedMenuData}
+          menuCategories={categoriesWithItems}
+          menuInfoBox={currentPub?.menuInfoBox}
           compact
         />
         <Dialog>
@@ -720,7 +803,7 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
                 Prodotti Totali
               </p>
               <p className="text-2xl font-bold text-orange-900 dark:text-orange-100">
-                {typedMenuData.reduce((total, category) => total + (category.items?.length || 0), 0)}
+                {categoriesWithItems.reduce((total: number, category: any) => total + (category.items || []).filter((i: any) => !i.isInfoBox).length, 0)}
               </p>
             </div>
             <div className="p-3 bg-orange-100 dark:bg-orange-900 rounded-xl">
@@ -730,6 +813,15 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
         </motion.div>
       </motion.div>
       
+      {/* Pub-level Menu Info Box */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5, delay: 0.25 }}
+      >
+        <PubMenuInfoBox pubId={currentPub?.id || 0} currentValue={currentPub?.menuInfoBox || ''} />
+      </motion.div>
+
       {/* MenuCategoryManager Component - No wrapper card needed */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}

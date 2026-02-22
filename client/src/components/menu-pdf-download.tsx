@@ -10,6 +10,7 @@ interface MenuPdfDownloadProps {
   tapList?: any[];
   bottleList?: any[];
   menuCategories?: any[];
+  menuInfoBox?: string | null;
   compact?: boolean;
 }
 
@@ -22,7 +23,7 @@ const BLACK = [0, 0, 0] as const;
 const INFO_BG = [245, 245, 220] as const;
 const INFO_BORDER = [200, 180, 100] as const;
 
-export function MenuPdfDownload({ pubName, tapList = [], bottleList = [], menuCategories = [], compact }: MenuPdfDownloadProps) {
+export function MenuPdfDownload({ pubName, tapList = [], bottleList = [], menuCategories = [], menuInfoBox, compact }: MenuPdfDownloadProps) {
   const [generating, setGenerating] = useState(false);
   const { toast } = useToast();
 
@@ -93,11 +94,15 @@ export function MenuPdfDownload({ pubName, tapList = [], bottleList = [], menuCa
       }
 
       const visibleCategories = menuCategories.filter((c: any) => c.isVisible !== false);
-      if (visibleCategories.length > 0) {
+      if (visibleCategories.length > 0 || menuInfoBox) {
         checkPageBreak(15);
         doc.setDrawColor(200, 200, 200);
         doc.line(margin, y, pageWidth - margin, y);
         y += 8;
+
+        if (menuInfoBox) {
+          y = renderInfoBox(doc, menuInfoBox, margin, contentWidth, y, checkPageBreak);
+        }
 
         for (const category of visibleCategories) {
           y = renderFoodCategory(doc, category, margin, contentWidth, pageWidth, y, checkPageBreak, allergensMap);
@@ -294,6 +299,13 @@ function renderFoodCategory(
 
   const visibleItems = (category.items || []).filter((i: any) => i.isVisible !== false);
   for (const item of visibleItems) {
+    if (item.isInfoBox) {
+      const infoText = item.description || item.name;
+      if (infoText) {
+        y = renderInfoBox(doc, infoText, margin, contentWidth, y, checkPageBreak);
+      }
+      continue;
+    }
     const hasDescription = !!item.description;
     const hasAllergens = item.allergens && Array.isArray(item.allergens) && item.allergens.length > 0;
     const neededHeight = 8 + (hasDescription ? 8 : 0) + (hasAllergens ? 5 : 0);

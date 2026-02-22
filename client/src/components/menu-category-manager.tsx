@@ -25,7 +25,8 @@ import {
   Sandwich,
   ChefHat,
   Salad,
-  X
+  X,
+  Info
 } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
@@ -56,6 +57,9 @@ export default function MenuCategoryManager({ pubId, categories }: MenuCategoryM
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [editingCategory, setEditingCategory] = useState<any>(null);
   const [isAddItemOpen, setIsAddItemOpen] = useState(false);
+  const [isAddInfoBoxOpen, setIsAddInfoBoxOpen] = useState(false);
+  const [infoBoxCategoryId, setInfoBoxCategoryId] = useState<number | null>(null);
+  const [infoBoxText, setInfoBoxText] = useState('');
   const [selectedCategoryId, setSelectedCategoryId] = useState<number | null>(null);
   const [expandedCategories, setExpandedCategories] = useState<Set<number>>(new Set());
   const [editingProduct, setEditingProduct] = useState<any>(null);
@@ -232,6 +236,23 @@ export default function MenuCategoryManager({ pubId, categories }: MenuCategoryM
     },
     onError: () => {
       toast({ title: "❌ Errore", description: "Impossibile aggiungere il prodotto", variant: "destructive" });
+    }
+  });
+
+  const addInfoBoxMutation = useMutation({
+    mutationFn: async (data: any) => {
+      return apiRequest(`/api/pubs/${pubId}/menu-items`, { method: 'POST' }, data);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/pubs", pubId, "menu"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/pubs", pubId, "menu", "all-products"] });
+      setIsAddInfoBoxOpen(false);
+      setInfoBoxCategoryId(null);
+      setInfoBoxText('');
+      toast({ title: "Info box aggiunta!" });
+    },
+    onError: () => {
+      toast({ title: "Errore", description: "Impossibile aggiungere la info box", variant: "destructive" });
     }
   });
 
@@ -601,7 +622,7 @@ export default function MenuCategoryManager({ pubId, categories }: MenuCategoryM
                             onClick={() => toggleCategory(category.id)}
                             className="bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-900 dark:text-blue-200 hover:bg-blue-100"
                           >
-                            {category.items?.length || 0} prodotti
+                            {(category.items || []).filter((i: any) => !i.isInfoBox).length} prodotti
                             <motion.div
                               animate={{ rotate: expandedCategories.has(category.id) ? 180 : 0 }}
                               transition={{ duration: 0.2 }}
@@ -666,6 +687,57 @@ export default function MenuCategoryManager({ pubId, categories }: MenuCategoryM
                               {category.items && category.items.length > 0 ? (
                                 <div className="space-y-2">
                                   {category.items.map((product: any) => (
+                                    product.isInfoBox ? (
+                                      <div
+                                        key={product.id}
+                                        className="flex items-center justify-between p-3 bg-amber-50 dark:bg-amber-900/30 border border-amber-200 dark:border-amber-700 rounded-lg"
+                                      >
+                                        <div className="flex-1 flex items-start gap-2">
+                                          <Info className="h-4 w-4 text-amber-600 mt-0.5 flex-shrink-0" />
+                                          <div>
+                                            <div className="flex items-center gap-2">
+                                              <Badge className="bg-amber-100 text-amber-800 border-amber-300 text-xs">Info Box</Badge>
+                                              {!product.isVisible && (
+                                                <Badge variant="secondary" className="text-xs">
+                                                  <EyeOff className="h-3 w-3 mr-1" />
+                                                  Nascosto
+                                                </Badge>
+                                              )}
+                                            </div>
+                                            <p className="text-sm text-amber-900 dark:text-amber-100 mt-1 italic">{product.description || product.name}</p>
+                                          </div>
+                                        </div>
+                                        <div className="flex items-center space-x-1 ml-4">
+                                          <Button
+                                            size="sm"
+                                            variant="ghost"
+                                            onClick={() => toggleProductVisibilityMutation.mutate({ id: product.id, isVisible: !product.isVisible })}
+                                            className="text-gray-600 hover:text-blue-600 hover:bg-blue-50"
+                                          >
+                                            {product.isVisible ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                                          </Button>
+                                          <Button
+                                            size="sm"
+                                            variant="ghost"
+                                            onClick={() => {
+                                              setEditingProduct(product);
+                                              setIsEditProductOpen(true);
+                                            }}
+                                            className="text-gray-600 hover:text-orange-600 hover:bg-orange-50"
+                                          >
+                                            <Edit3 className="h-4 w-4" />
+                                          </Button>
+                                          <Button
+                                            size="sm"
+                                            variant="ghost"
+                                            onClick={() => handleDeleteProduct(product)}
+                                            className="text-gray-600 hover:text-red-600 hover:bg-red-50"
+                                          >
+                                            <Trash2 className="h-4 w-4" />
+                                          </Button>
+                                        </div>
+                                      </div>
+                                    ) : (
                                     <div
                                       key={product.id}
                                       className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
@@ -723,6 +795,7 @@ export default function MenuCategoryManager({ pubId, categories }: MenuCategoryM
                                         </Button>
                                       </div>
                                     </div>
+                                    )
                                   ))}
                                 </div>
                               ) : (
@@ -730,6 +803,32 @@ export default function MenuCategoryManager({ pubId, categories }: MenuCategoryM
                                   Nessun prodotto in questa categoria
                                 </p>
                               )}
+                              <div className="flex gap-2 mt-3">
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => {
+                                    setSelectedCategoryId(category.id);
+                                    setIsAddItemOpen(true);
+                                  }}
+                                  className="text-green-600 border-green-200 hover:bg-green-50"
+                                >
+                                  <Plus className="h-3.5 w-3.5 mr-1" />
+                                  Prodotto
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => {
+                                    setInfoBoxCategoryId(category.id);
+                                    setIsAddInfoBoxOpen(true);
+                                  }}
+                                  className="text-amber-600 border-amber-200 hover:bg-amber-50"
+                                >
+                                  <Info className="h-3.5 w-3.5 mr-1" />
+                                  Info Box
+                                </Button>
+                              </div>
                             </div>
                           </motion.div>
                         )}
@@ -893,6 +992,60 @@ export default function MenuCategoryManager({ pubId, categories }: MenuCategoryM
                 }
                 addItemMutation.mutate({ ...itemForm, categoryId: selectedCategoryId });
               }}>Aggiungi</Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Add Info Box Dialog */}
+      <Dialog open={isAddInfoBoxOpen} onOpenChange={(open) => {
+        setIsAddInfoBoxOpen(open);
+        if (!open) {
+          setInfoBoxCategoryId(null);
+          setInfoBoxText('');
+        }
+      }}>
+        <DialogContent className="sm:max-w-md" onOpenAutoFocus={(e) => e.preventDefault()}>
+          <DialogHeader>
+            <DialogTitle className="flex items-center text-xl">
+              <div className="p-2 bg-gradient-to-r from-amber-500 to-orange-500 rounded-lg mr-3">
+                <Info className="h-5 w-5 text-white" />
+              </div>
+              Aggiungi Info Box
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <p className="text-sm text-gray-600 dark:text-gray-400">
+              L'info box apparirà come nota evidenziata nella categoria del menu e nel PDF scaricabile.
+            </p>
+            <div>
+              <Label>Testo Info Box</Label>
+              <Textarea
+                placeholder="Es. Tutti i nostri piatti sono preparati con ingredienti freschi e locali..."
+                value={infoBoxText}
+                onChange={(e) => setInfoBoxText(e.target.value)}
+                rows={4}
+              />
+            </div>
+            <div className="flex justify-end space-x-2">
+              <Button variant="outline" onClick={() => setIsAddInfoBoxOpen(false)}>Annulla</Button>
+              <Button 
+                className="bg-amber-600 hover:bg-amber-700"
+                disabled={!infoBoxText.trim() || addInfoBoxMutation.isPending}
+                onClick={() => {
+                  if (!infoBoxCategoryId || !infoBoxText.trim()) return;
+                  addInfoBoxMutation.mutate({
+                    categoryId: infoBoxCategoryId,
+                    name: 'Info',
+                    description: infoBoxText.trim(),
+                    price: '0',
+                    isInfoBox: true,
+                    isVisible: true
+                  });
+                }}
+              >
+                {addInfoBoxMutation.isPending ? 'Salvando...' : 'Aggiungi Info Box'}
+              </Button>
             </div>
           </div>
         </DialogContent>
