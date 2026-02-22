@@ -465,12 +465,9 @@ export function BottleListManager({ pubId, bottleList }: BottleListManagerProps)
             <p className="text-sm">Clicca "Aggiungi Birra" per iniziare.</p>
           </div>
         ) : (
-          <div className="space-y-4">
+          <div className="space-y-3">
             {bottleList.map((item) => {
-              // Guard against undefined item or missing required fields
-              if (!item || !item.id) {
-                return null;
-              }
+              if (!item || !item.id) return null;
               
               const safeItem = {
                 ...item,
@@ -493,58 +490,41 @@ export function BottleListManager({ pubId, bottleList }: BottleListManagerProps)
               return (
                 <div
                   key={item.id}
-                  className={`border rounded-lg p-4 ${!safeItem.isVisible ? 'opacity-60 bg-gray-50' : ''}`}
+                  className={`border rounded-lg p-4 transition-colors ${!safeItem.isVisible ? 'opacity-60 bg-gray-50 dark:bg-gray-800/50' : 'bg-white dark:bg-gray-900'}`}
                 >
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1">
-                      {(!safeItem.isVisible || safeItem.vintage) && (
-                        <div className="flex items-center gap-2 mb-2">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="flex items-center gap-3 flex-1 min-w-0">
+                      <ImageWithFallback
+                        src={safeBeer.logoUrl}
+                        alt={safeBeer.name}
+                        imageType="beer"
+                        containerClassName="w-12 h-12 rounded-lg flex-shrink-0"
+                        className="w-12 h-12 rounded-lg object-cover"
+                        iconSize="md"
+                      />
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <h3 className="font-semibold text-base text-gray-900 dark:text-white truncate">{safeBeer.name}</h3>
                           {safeItem.vintage && (
-                            <Badge variant="outline" className="text-xs">
+                            <Badge variant="outline" className="text-xs flex-shrink-0 border-purple-300 text-purple-700 dark:text-purple-400">
                               {safeItem.vintage}
                             </Badge>
                           )}
                           {!safeItem.isVisible && (
-                            <Badge variant="secondary" className="text-xs">
+                            <Badge variant="secondary" className="text-xs flex-shrink-0">
                               <EyeOff className="w-3 h-3 mr-1" />
                               Nascosta
                             </Badge>
                           )}
                         </div>
-                      )}
-                      
-                      <div className="flex items-center gap-3 mb-4">
-                        <ImageWithFallback
-                          src={safeBeer.logoUrl}
-                          alt={safeBeer.name}
-                          imageType="beer"
-                          containerClassName="w-12 h-12 rounded-lg"
-                          className="w-12 h-12 rounded-lg object-cover"
-                          iconSize="md"
-                        />
-                        <div className="flex-1">
-                          <h3 className="font-semibold text-base text-gray-900">{safeBeer.name}</h3>
-                          <p className="text-gray-600 text-sm">{safeBeer.brewery.name}</p>
-                          <p className="text-xs text-gray-500">
-                            {safeBeer.style} • {safeBeer.abv}% ABV • {safeItem.size || "33cl"}
-                          </p>
-                        </div>
-                        <div className="text-right">
-                          <div className="text-lg font-semibold text-gray-900">€{safeItem.price || "0.00"}</div>
-                          {safeItem.quantity > 0 && (
-                            <div className="text-xs text-gray-500">{safeItem.quantity} disponibili</div>
-                          )}
-                        </div>
+                        <p className="text-sm text-gray-600 dark:text-gray-400">{safeBeer.brewery.name}</p>
+                        <p className="text-xs text-gray-500 dark:text-gray-500">
+                          {safeBeer.style} • {safeBeer.abv}% ABV • {safeItem.size || "33cl"}
+                        </p>
                       </div>
-
-                      {safeItem.description && (
-                        <div className="bg-gray-50 p-3 rounded-lg">
-                          <p className="text-sm text-gray-700 italic">{safeItem.description}</p>
-                        </div>
-                      )}
                     </div>
 
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-1 flex-shrink-0">
                       <Button
                         variant="ghost"
                         size="sm"
@@ -554,7 +534,7 @@ export function BottleListManager({ pubId, bottleList }: BottleListManagerProps)
                             isVisible: !safeItem.isVisible
                           });
                         }}
-                        className="h-8 w-8 p-0"
+                        className="h-8 w-8 p-0 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
                       >
                         {safeItem.isVisible ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                       </Button>
@@ -565,7 +545,7 @@ export function BottleListManager({ pubId, bottleList }: BottleListManagerProps)
                           startEdit(item);
                           setIsAddDialogOpen(true);
                         }}
-                        className="h-8 w-8 p-0"
+                        className="h-8 w-8 p-0 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
                       >
                         <Edit className="w-4 h-4" />
                       </Button>
@@ -577,12 +557,29 @@ export function BottleListManager({ pubId, bottleList }: BottleListManagerProps)
                             deleteBottleMutation.mutate(item.id);
                           }
                         }}
-                        className="h-8 w-8 p-0 text-red-500 hover:text-red-700 hover:bg-red-50"
+                        className="h-8 w-8 p-0 text-red-500 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-950"
                       >
                         <Trash2 className="w-4 h-4" />
                       </Button>
                     </div>
                   </div>
+
+                  <div className="flex flex-wrap items-center gap-2 mt-3 ml-[60px]">
+                    <Badge variant="outline" className="text-xs font-medium bg-purple-50 dark:bg-purple-950/30 border-purple-200 dark:border-purple-800 text-purple-800 dark:text-purple-300">
+                      €{safeItem.price} • {safeItem.size || "33cl"}
+                    </Badge>
+                    {safeItem.quantity > 0 && (
+                      <Badge variant="outline" className="text-xs font-medium bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400">
+                        {safeItem.quantity} disponibili
+                      </Badge>
+                    )}
+                  </div>
+
+                  {safeItem.description && (
+                    <div className="mt-3 ml-[60px]">
+                      <p className="text-sm text-gray-600 dark:text-gray-400 italic">{safeItem.description}</p>
+                    </div>
+                  )}
                 </div>
               );
             }).filter(Boolean)}

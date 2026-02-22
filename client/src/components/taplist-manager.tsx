@@ -12,6 +12,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { useToast } from "@/hooks/use-toast";
 import { PriceFormatManager } from "@/components/price-format-manager";
 import { AddressAutocomplete } from "@/components/AddressAutocomplete";
+import ImageWithFallback from "@/components/image-with-fallback";
 import { 
   Beer, 
   Plus, 
@@ -1222,117 +1223,45 @@ export function TapListManager({ pubId, tapList }: TapListManagerProps) {
             <p className="text-sm">Clicca "Aggiungi Birra" per iniziare.</p>
           </div>
         ) : (
-          <div className="space-y-4">
+          <div className="space-y-3">
             {tapList.map((item) => (
               <div
                 key={item.id}
-                className={`border rounded-lg p-4 ${!item.isVisible ? 'opacity-60 bg-gray-50' : ''}`}
+                className={`border rounded-lg p-4 transition-colors ${!item.isVisible ? 'opacity-60 bg-gray-50 dark:bg-gray-800/50' : 'bg-white dark:bg-gray-900'}`}
               >
-                <div className="flex items-start justify-between">
-                  <div className="flex-1">
-                    {(!item.isVisible || item.tapNumber) && (
-                      <div className="flex items-center gap-2 mb-2">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex items-center gap-3 flex-1 min-w-0">
+                    <ImageWithFallback
+                      src={item.beer.logoUrl}
+                      alt={item.beer.name}
+                      imageType="beer"
+                      containerClassName="w-12 h-12 rounded-lg flex-shrink-0"
+                      className="w-12 h-12 rounded-lg object-cover"
+                      iconSize="md"
+                    />
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <h3 className="font-semibold text-base text-gray-900 dark:text-white truncate">{item.beer.name}</h3>
                         {item.tapNumber && (
-                          <Badge variant="outline" className="text-xs">
+                          <Badge variant="outline" className="text-xs flex-shrink-0 border-amber-300 text-amber-700 dark:text-amber-400">
                             Spina {item.tapNumber}
                           </Badge>
                         )}
                         {!item.isVisible && (
-                          <Badge variant="secondary" className="text-xs">
+                          <Badge variant="secondary" className="text-xs flex-shrink-0">
                             <EyeOff className="w-3 h-3 mr-1" />
                             Nascosta
                           </Badge>
                         )}
                       </div>
-                    )}
-                    
-                    <div className="flex items-center gap-3 mb-4">
-                      {item.beer.logoUrl && (
-                        <img
-                          src={item.beer.logoUrl}
-                          alt={item.beer.name}
-                          className="w-12 h-12 rounded-lg object-cover"
-                        />
-                      )}
-                      <div className="flex-1">
-                        <h3 className="font-semibold text-base text-gray-900">{item.beer.name}</h3>
-                        <p className="text-gray-600 text-sm">{item.beer.brewery?.name || 'Birrificio sconosciuto'}</p>
-                        <p className="text-xs text-gray-500">
-                          {item.beer.style} • {item.beer.abv}% ABV
-                        </p>
-                      </div>
+                      <p className="text-sm text-gray-600 dark:text-gray-400">{item.beer.brewery?.name || 'Birrificio sconosciuto'}</p>
+                      <p className="text-xs text-gray-500 dark:text-gray-500">
+                        {item.beer.style} • {item.beer.abv}% ABV
+                      </p>
                     </div>
-
-                    {/* Prezzi */}
-                    {item.prices && item.prices.length > 0 ? (
-                      <div className="flex flex-wrap gap-2 mb-4">
-                        {item.prices.map((price, idx) => (
-                          <Badge key={idx} variant="outline" className="text-sm">
-                            {price.size}: €{price.price}
-                          </Badge>
-                        ))}
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => {
-                            startEdit(item);
-                            setTempPrices(item.prices || []);
-                            setShowPriceManager(true);
-                          }}
-                          className="h-7 px-2 text-xs"
-                        >
-                          <DollarSign className="w-3 h-3 mr-1" />
-                          Modifica
-                        </Button>
-                      </div>
-                    ) : (item.priceSmall || item.priceMedium || item.priceLarge) ? (
-                      <div className="grid grid-cols-3 gap-3 mb-4">
-                        <div className="text-center">
-                          <div className="text-xs text-gray-500 mb-1">Piccola</div>
-                          <div className="font-semibold text-gray-900">
-                            {item.priceSmall ? `€${item.priceSmall}` : '-'}
-                          </div>
-                        </div>
-                        <div className="text-center">
-                          <div className="text-xs text-gray-500 mb-1">Media</div>
-                          <div className="font-semibold text-gray-900">
-                            {item.priceMedium ? `€${item.priceMedium}` : '-'}
-                          </div>
-                        </div>
-                        <div className="text-center">
-                          <div className="text-xs text-gray-500 mb-1">Grande</div>
-                          <div className="font-semibold text-gray-900">
-                            {item.priceLarge ? `€${item.priceLarge}` : '-'}
-                          </div>
-                        </div>
-                      </div>
-                    ) : (
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => {
-                          startEdit(item);
-                          setTempPrices([
-                            { size: '20cl', price: '4.50' },
-                            { size: '40cl', price: '7.50' }
-                          ]);
-                          setShowPriceManager(true);
-                        }}
-                        className="mb-4"
-                      >
-                        <DollarSign className="w-4 h-4 mr-2" />
-                        Configura prezzi
-                      </Button>
-                    )}
-
-                    {item.description && (
-                      <div className="bg-gray-50 p-3 rounded-lg">
-                        <p className="text-sm text-gray-700 italic">{item.description}</p>
-                      </div>
-                    )}
                   </div>
 
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-1 flex-shrink-0">
                     <Button
                       variant="ghost"
                       size="sm"
@@ -1342,7 +1271,7 @@ export function TapListManager({ pubId, tapList }: TapListManagerProps) {
                           isVisible: !item.isVisible
                         });
                       }}
-                      className="h-8 w-8 p-0"
+                      className="h-8 w-8 p-0 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
                     >
                       {item.isVisible ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                     </Button>
@@ -1353,7 +1282,7 @@ export function TapListManager({ pubId, tapList }: TapListManagerProps) {
                         startEdit(item);
                         setIsAddDialogOpen(true);
                       }}
-                      className="h-8 w-8 p-0"
+                      className="h-8 w-8 p-0 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
                     >
                       <Edit className="w-4 h-4" />
                     </Button>
@@ -1365,12 +1294,46 @@ export function TapListManager({ pubId, tapList }: TapListManagerProps) {
                           deleteTapMutation.mutate(item.id);
                         }
                       }}
-                      className="h-8 w-8 p-0 text-red-500 hover:text-red-700 hover:bg-red-50"
+                      className="h-8 w-8 p-0 text-red-500 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-950"
                     >
                       <Trash2 className="w-4 h-4" />
                     </Button>
                   </div>
                 </div>
+
+                {item.prices && item.prices.length > 0 ? (
+                  <div className="flex flex-wrap gap-2 mt-3 ml-[60px]">
+                    {item.prices.map((price, idx) => (
+                      <Badge key={idx} variant="outline" className="text-xs font-medium bg-amber-50 dark:bg-amber-950/30 border-amber-200 dark:border-amber-800 text-amber-800 dark:text-amber-300">
+                        {price.size}: €{price.price}
+                      </Badge>
+                    ))}
+                  </div>
+                ) : (item.priceSmall || item.priceMedium || item.priceLarge) ? (
+                  <div className="flex flex-wrap gap-2 mt-3 ml-[60px]">
+                    {item.priceSmall && (
+                      <Badge variant="outline" className="text-xs font-medium bg-amber-50 dark:bg-amber-950/30 border-amber-200 dark:border-amber-800 text-amber-800 dark:text-amber-300">
+                        Piccola: €{item.priceSmall}
+                      </Badge>
+                    )}
+                    {item.priceMedium && (
+                      <Badge variant="outline" className="text-xs font-medium bg-amber-50 dark:bg-amber-950/30 border-amber-200 dark:border-amber-800 text-amber-800 dark:text-amber-300">
+                        Media: €{item.priceMedium}
+                      </Badge>
+                    )}
+                    {item.priceLarge && (
+                      <Badge variant="outline" className="text-xs font-medium bg-amber-50 dark:bg-amber-950/30 border-amber-200 dark:border-amber-800 text-amber-800 dark:text-amber-300">
+                        Grande: €{item.priceLarge}
+                      </Badge>
+                    )}
+                  </div>
+                ) : null}
+
+                {item.description && (
+                  <div className="mt-3 ml-[60px]">
+                    <p className="text-sm text-gray-600 dark:text-gray-400 italic">{item.description}</p>
+                  </div>
+                )}
               </div>
             ))}
           </div>
