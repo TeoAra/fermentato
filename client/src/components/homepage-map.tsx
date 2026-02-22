@@ -189,6 +189,8 @@ export default function HomepageMap({ pubs, breweries, userLocation, isLoading, 
     );
   }, [onLocate]);
 
+  const hasAutocenteredRef = useRef(false);
+
   useEffect(() => {
     if (!mapInstanceRef.current || !mapLoaded || !userLocation) return;
     if (userMarkerRef.current) {
@@ -207,6 +209,12 @@ export default function HomepageMap({ pubs, breweries, userLocation, isLoading, 
       zIndex: 9999,
     });
     userMarkerRef.current = marker;
+
+    if (!hasAutocenteredRef.current) {
+      hasAutocenteredRef.current = true;
+      mapInstanceRef.current.panTo({ lat: userLocation.lat, lng: userLocation.lng });
+      mapInstanceRef.current.setZoom(12);
+    }
   }, [userLocation, mapLoaded]);
 
   const geoFilteredPubs = useMemo(() =>
