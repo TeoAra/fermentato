@@ -55,15 +55,18 @@ export default function Home() {
   
   const { data: pubs, isLoading: pubsLoading } = useQuery({
     queryKey: ["/api/pubs"],
+    staleTime: 5 * 60 * 1000,
   });
 
   const { data: breweries, isLoading: breweriesLoading } = useQuery({
     queryKey: ["/api/breweries"],
     queryFn: () => fetch("/api/breweries?random=true&limit=8").then(res => res.json()),
+    staleTime: 5 * 60 * 1000,
   });
 
   const { data: allBreweries } = useQuery({
     queryKey: ["/api/breweries/all"],
+    staleTime: 5 * 60 * 1000,
   });
 
   const { data: favorites } = useQuery({

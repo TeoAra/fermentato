@@ -60,17 +60,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Get all breweries for explore page
   app.get("/api/breweries/all", async (req, res) => {
     try {
-      const breweries = await storage.getBreweries();
-      
-      // Add beer count for each brewery
-      const breweriesWithCount = await Promise.all(
-        breweries.map(async (brewery: any) => {
-          const beerCount = await storage.getBeersByBrewery(brewery.id);
-          return { ...brewery, beerCount: beerCount.length };
-        })
-      );
-      
-      res.json(breweriesWithCount);
+      const allBreweries = await storage.getBreweriesWithBeerCount();
+      res.json(allBreweries);
     } catch (error) {
       console.error("Error fetching all breweries:", error);
       res.status(500).json({ message: "Failed to fetch all breweries" });

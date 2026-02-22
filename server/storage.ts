@@ -191,6 +191,7 @@ export interface IStorage {
 
   // Brewery operations
   getBreweries(): Promise<Brewery[]>;
+  getBreweriesWithBeerCount(): Promise<any[]>;
   getBrewery(id: number): Promise<Brewery | undefined>;
   getRandomBreweries(limit?: number): Promise<Brewery[]>;
   createBrewery(brewery: InsertBrewery): Promise<Brewery>;
@@ -416,6 +417,30 @@ export class DatabaseStorage implements IStorage {
     return await db.select().from(breweries).orderBy(asc(breweries.name));
   }
 
+  async getBreweriesWithBeerCount(): Promise<any[]> {
+    const results = await db
+      .select({
+        id: breweries.id,
+        name: breweries.name,
+        location: breweries.location,
+        region: breweries.region,
+        country: breweries.country,
+        description: breweries.description,
+        logoUrl: breweries.logoUrl,
+        coverImageUrl: breweries.coverImageUrl,
+        websiteUrl: breweries.websiteUrl,
+        latitude: breweries.latitude,
+        longitude: breweries.longitude,
+        createdAt: breweries.createdAt,
+        beerCount: sql<number>`count(${beers.id})::int`,
+      })
+      .from(breweries)
+      .leftJoin(beers, eq(beers.breweryId, breweries.id))
+      .groupBy(breweries.id)
+      .orderBy(asc(breweries.name));
+    return results;
+  }
+
   async getRandomBreweries(limit: number = 10): Promise<Brewery[]> {
     return await db.select().from(breweries).orderBy(sql`RANDOM()`).limit(limit);
   }
@@ -494,7 +519,15 @@ export class DatabaseStorage implements IStorage {
   }
 
   async searchBeers(query: string, filters?: { glutenFree?: boolean; alcoholFree?: boolean }): Promise<any[]> {
-    const conditions = [ilike(beers.name, `%${query}%`)];
+    const words = query.trim().split(/\s+/).filter(w => w.length > 0);
+    if (words.length === 0 && !filters?.glutenFree && !filters?.alcoholFree) return [];
+    const wordConditions = words.map(word => 
+      or(
+        ilike(beers.name, `%${word}%`),
+        ilike(breweries.name, `%${word}%`)
+      )
+    );
+    const conditions = [...wordConditions];
     if (filters?.glutenFree) conditions.push(eq(beers.isGlutenFree, true));
     if (filters?.alcoholFree) conditions.push(eq(beers.isAlcoholFree, true));
 
@@ -1528,6 +1561,16 @@ class StorageWrapper implements IStorage {
     return this.dbCall(
       () => this.databaseStorage.getBreweries(),
       () => memoryStorageInstance.getBreweries()
+    );
+  }
+
+  async getBreweriesWithBeerCount(): Promise<any[]> {
+    return this.dbCall(
+      () => this.databaseStorage.getBreweriesWithBeerCount(),
+      async () => {
+        const allBreweries = await memoryStorageInstance.getBreweries();
+        return allBreweries.map((b: any) => ({ ...b, beerCount: 0 }));
+      }
     );
   }
 

@@ -1,5 +1,5 @@
 /// <reference types="google.maps" />
-import { useEffect, useRef, useState, useCallback } from "react";
+import { useEffect, useRef, useState, useCallback, useMemo } from "react";
 import { Loader } from "@googlemaps/js-api-loader";
 import { MapPin, Loader2 } from "lucide-react";
 
@@ -84,14 +84,34 @@ function createMarkerElement(color: string, logoUrl?: string | null): HTMLElemen
 
 export default function HomepageMap({ pubs, breweries, userLocation, isLoading }: HomepageMapProps) {
   const mapRef = useRef<HTMLDivElement>(null);
+  const sectionRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<google.maps.Map | null>(null);
   const markersRef = useRef<google.maps.marker.AdvancedMarkerElement[]>([]);
   const infoWindowRef = useRef<google.maps.InfoWindow | null>(null);
   const [mapLoaded, setMapLoaded] = useState(false);
   const [mapError, setMapError] = useState(false);
+  const [isVisible, setIsVisible] = useState(false);
+  const initStartedRef = useRef(false);
+
+  useEffect(() => {
+    const section = sectionRef.current;
+    if (!section) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setIsVisible(true);
+          observer.disconnect();
+        }
+      },
+      { rootMargin: "200px" }
+    );
+    observer.observe(section);
+    return () => observer.disconnect();
+  }, []);
 
   const initMap = useCallback(async () => {
-    if (!mapRef.current) return;
+    if (!mapRef.current || initStartedRef.current) return;
+    initStartedRef.current = true;
 
     const apiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
     if (!apiKey) {
@@ -139,8 +159,19 @@ export default function HomepageMap({ pubs, breweries, userLocation, isLoading }
   }, [userLocation]);
 
   useEffect(() => {
-    initMap();
-  }, [initMap]);
+    if (isVisible) {
+      initMap();
+    }
+  }, [isVisible, initMap]);
+
+  const geoFilteredPubs = useMemo(() =>
+    pubs.filter(p => p.latitude && p.longitude && !isNaN(parseFloat(p.latitude)) && !isNaN(parseFloat(p.longitude))),
+    [pubs]
+  );
+  const geoFilteredBreweries = useMemo(() =>
+    breweries.filter(b => b.latitude && b.longitude && !isNaN(parseFloat(b.latitude!)) && !isNaN(parseFloat(b.longitude!))),
+    [breweries]
+  );
 
   useEffect(() => {
     if (!mapInstanceRef.current || !mapLoaded) return;
@@ -153,101 +184,102 @@ export default function HomepageMap({ pubs, breweries, userLocation, isLoading }
     const bounds = new google.maps.LatLngBounds();
     let hasValidMarkers = false;
 
-    const geoFilteredPubs = pubs.filter(
-      (p) => p.latitude && p.longitude && !isNaN(parseFloat(p.latitude)) && !isNaN(parseFloat(p.longitude))
-    );
-    const geoFilteredBreweries = breweries.filter(
-      (b) => b.latitude && b.longitude && !isNaN(parseFloat(b.latitude!)) && !isNaN(parseFloat(b.longitude!))
-    );
+    type MarkerItem = { type: 'pub'; data: MapPub } | { type: 'brewery'; data: MapBrewery };
+    const allItems: MarkerItem[] = [
+      ...geoFilteredPubs.map(p => ({ type: 'pub' as const, data: p })),
+      ...geoFilteredBreweries.map(b => ({ type: 'brewery' as const, data: b })),
+    ];
 
-    geoFilteredPubs.forEach((pub) => {
-      const lat = parseFloat(pub.latitude!);
-      const lng = parseFloat(pub.longitude!);
-      const position = { lat, lng };
-
-      const markerEl = createMarkerElement(PUB_COLOR, pub.logoUrl);
-
-      const marker = new google.maps.marker.AdvancedMarkerElement({
-        map,
-        position,
-        title: pub.name,
-        content: markerEl,
-      });
-
-      marker.addListener("click", () => {
-        const logoHtml = pub.logoUrl
-          ? `<img src="${pub.logoUrl}" alt="${pub.name}" style="width:40px;height:40px;border-radius:8px;object-fit:cover;margin-right:8px;flex-shrink:0;" />`
-          : `<div style="width:40px;height:40px;border-radius:8px;background:#3B82F6;display:flex;align-items:center;justify-content:center;margin-right:8px;flex-shrink:0;"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg></div>`;
-
-        infoWindow.setContent(`
-          <div style="font-family:system-ui,sans-serif;max-width:220px;">
-            <div style="display:flex;align-items:center;margin-bottom:6px;">
-              ${logoHtml}
-              <div>
-                <div style="font-weight:600;font-size:14px;color:#1F2937;">${pub.name}</div>
-                <div style="font-size:11px;color:#3B82F6;font-weight:500;">PUB</div>
-              </div>
-            </div>
-            ${pub.city ? `<div style="font-size:12px;color:#6B7280;margin-bottom:8px;">📍 ${pub.city}</div>` : ""}
-            <a href="/pub/${pub.id}" style="display:inline-block;padding:4px 12px;background:#3B82F6;color:white;border-radius:6px;text-decoration:none;font-size:12px;font-weight:500;">Vai al pub →</a>
-          </div>
-        `);
-        infoWindow.open(map, marker);
-      });
-
-      markersRef.current.push(marker);
-      bounds.extend(position);
-      hasValidMarkers = true;
-    });
-
-    geoFilteredBreweries.forEach((brewery) => {
-      const lat = parseFloat(brewery.latitude!);
-      const lng = parseFloat(brewery.longitude!);
-      const position = { lat, lng };
-
-      const markerEl = createMarkerElement(BREWERY_COLOR, brewery.logoUrl);
-
-      const marker = new google.maps.marker.AdvancedMarkerElement({
-        map,
-        position,
-        title: brewery.name,
-        content: markerEl,
-      });
-
-      marker.addListener("click", () => {
-        const logoHtml = brewery.logoUrl
-          ? `<img src="${brewery.logoUrl}" alt="${brewery.name}" style="width:40px;height:40px;border-radius:8px;object-fit:cover;margin-right:8px;flex-shrink:0;" />`
-          : `<div style="width:40px;height:40px;border-radius:8px;background:#F59E0B;display:flex;align-items:center;justify-content:center;margin-right:8px;flex-shrink:0;">🍺</div>`;
-
-        infoWindow.setContent(`
-          <div style="font-family:system-ui,sans-serif;max-width:220px;">
-            <div style="display:flex;align-items:center;margin-bottom:6px;">
-              ${logoHtml}
-              <div>
-                <div style="font-weight:600;font-size:14px;color:#1F2937;">${brewery.name}</div>
-                <div style="font-size:11px;color:#F59E0B;font-weight:500;">BIRRIFICIO</div>
-              </div>
-            </div>
-            ${brewery.location ? `<div style="font-size:12px;color:#6B7280;margin-bottom:8px;">📍 ${brewery.location}${brewery.country ? `, ${brewery.country}` : ""}</div>` : ""}
-            <a href="/brewery/${brewery.id}" style="display:inline-block;padding:4px 12px;background:#F59E0B;color:white;border-radius:6px;text-decoration:none;font-size:12px;font-weight:500;">Vai al birrificio →</a>
-          </div>
-        `);
-        infoWindow.open(map, marker);
-      });
-
-      markersRef.current.push(marker);
-      bounds.extend(position);
+    allItems.forEach(item => {
+      const lat = parseFloat(item.data.latitude!);
+      const lng = parseFloat(item.data.longitude!);
+      bounds.extend({ lat, lng });
       hasValidMarkers = true;
     });
 
     if (userLocation) {
       bounds.extend({ lat: userLocation.lat, lng: userLocation.lng });
     }
-
     if (hasValidMarkers && !userLocation) {
       map.fitBounds(bounds, { top: 40, bottom: 40, left: 40, right: 40 });
     }
-  }, [pubs, breweries, mapLoaded, userLocation]);
+
+    const BATCH_SIZE = 20;
+    let idx = 0;
+
+    function addBatch() {
+      const end = Math.min(idx + BATCH_SIZE, allItems.length);
+      for (; idx < end; idx++) {
+        const item = allItems[idx];
+        const lat = parseFloat(item.data.latitude!);
+        const lng = parseFloat(item.data.longitude!);
+        const position = { lat, lng };
+        const color = item.type === 'pub' ? PUB_COLOR : BREWERY_COLOR;
+
+        const markerEl = createMarkerElement(color, item.data.logoUrl);
+        const marker = new google.maps.marker.AdvancedMarkerElement({
+          map,
+          position,
+          title: item.data.name,
+          content: markerEl,
+        });
+
+        if (item.type === 'pub') {
+          const pub = item.data as MapPub;
+          marker.addListener("click", () => {
+            const logoHtml = pub.logoUrl
+              ? `<img src="${pub.logoUrl}" alt="${pub.name}" style="width:40px;height:40px;border-radius:8px;object-fit:cover;margin-right:8px;flex-shrink:0;" />`
+              : `<div style="width:40px;height:40px;border-radius:8px;background:#3B82F6;display:flex;align-items:center;justify-content:center;margin-right:8px;flex-shrink:0;"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg></div>`;
+            infoWindow.setContent(`
+              <div style="font-family:system-ui,sans-serif;max-width:220px;">
+                <div style="display:flex;align-items:center;margin-bottom:6px;">
+                  ${logoHtml}
+                  <div>
+                    <div style="font-weight:600;font-size:14px;color:#1F2937;">${pub.name}</div>
+                    <div style="font-size:11px;color:#3B82F6;font-weight:500;">PUB</div>
+                  </div>
+                </div>
+                ${pub.city ? `<div style="font-size:12px;color:#6B7280;margin-bottom:8px;">📍 ${pub.city}</div>` : ""}
+                <a href="/pub/${pub.id}" style="display:inline-block;padding:4px 12px;background:#3B82F6;color:white;border-radius:6px;text-decoration:none;font-size:12px;font-weight:500;">Vai al pub →</a>
+              </div>
+            `);
+            infoWindow.open(map, marker);
+          });
+        } else {
+          const brewery = item.data as MapBrewery;
+          marker.addListener("click", () => {
+            const logoHtml = brewery.logoUrl
+              ? `<img src="${brewery.logoUrl}" alt="${brewery.name}" style="width:40px;height:40px;border-radius:8px;object-fit:cover;margin-right:8px;flex-shrink:0;" />`
+              : `<div style="width:40px;height:40px;border-radius:8px;background:#F59E0B;display:flex;align-items:center;justify-content:center;margin-right:8px;flex-shrink:0;">🍺</div>`;
+            infoWindow.setContent(`
+              <div style="font-family:system-ui,sans-serif;max-width:220px;">
+                <div style="display:flex;align-items:center;margin-bottom:6px;">
+                  ${logoHtml}
+                  <div>
+                    <div style="font-weight:600;font-size:14px;color:#1F2937;">${brewery.name}</div>
+                    <div style="font-size:11px;color:#F59E0B;font-weight:500;">BIRRIFICIO</div>
+                  </div>
+                </div>
+                ${brewery.location ? `<div style="font-size:12px;color:#6B7280;margin-bottom:8px;">📍 ${brewery.location}${brewery.country ? `, ${brewery.country}` : ""}</div>` : ""}
+                <a href="/brewery/${brewery.id}" style="display:inline-block;padding:4px 12px;background:#F59E0B;color:white;border-radius:6px;text-decoration:none;font-size:12px;font-weight:500;">Vai al birrificio →</a>
+              </div>
+            `);
+            infoWindow.open(map, marker);
+          });
+        }
+
+        markersRef.current.push(marker);
+      }
+
+      if (idx < allItems.length) {
+        requestAnimationFrame(addBatch);
+      }
+    }
+
+    if (allItems.length > 0) {
+      requestAnimationFrame(addBatch);
+    }
+  }, [geoFilteredPubs, geoFilteredBreweries, mapLoaded, userLocation]);
 
   if (mapError) return null;
 
@@ -255,7 +287,7 @@ export default function HomepageMap({ pubs, breweries, userLocation, isLoading }
   const breweryCount = breweries.filter(b => b.latitude && b.longitude).length;
 
   return (
-    <section className="mb-16 lg:mb-20">
+    <section ref={sectionRef} className="mb-16 lg:mb-20">
       <div className="glass-card border-0 rounded-2xl overflow-hidden shadow-xl">
         <div className="bg-gradient-to-r from-amber-600 via-orange-500 to-amber-600 px-6 py-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
           <div className="flex items-center gap-3">
