@@ -373,7 +373,7 @@ export default function HomepageMap({ pubs, breweries, userLocation, isLoading, 
             <button
               onClick={handleGeolocate}
               disabled={isLocating}
-              className="absolute bottom-4 right-4 z-20 bg-white dark:bg-gray-800 shadow-lg rounded-xl p-3 hover:bg-gray-50 dark:hover:bg-gray-700 transition-all duration-200 border border-gray-200 dark:border-gray-600 group disabled:opacity-70"
+              className="absolute top-4 left-4 z-20 bg-white dark:bg-gray-800 shadow-lg rounded-xl p-3 hover:bg-gray-50 dark:hover:bg-gray-700 transition-all duration-200 border border-gray-200 dark:border-gray-600 group disabled:opacity-70"
               title="Trova la mia posizione"
             >
               {isLocating ? (
