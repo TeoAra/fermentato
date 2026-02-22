@@ -111,6 +111,8 @@ function mapTapDbRowToDto(row: any): any {
       description: row.beer_description || row.beerDescription,
       imageUrl: row.beer_image_url || row.beerImageUrl,
       logoUrl: row.beer_logo_url || row.beerLogoUrl,
+      isGlutenFree: row.beer_is_gluten_free ?? row.beerIsGlutenFree ?? false,
+      isAlcoholFree: row.beer_is_alcohol_free ?? row.beerIsAlcoholFree ?? false,
       brewery: {
         id: row.brewery_id || row.breweryId,
         name: row.brewery_name || row.breweryName,
@@ -158,6 +160,8 @@ function mapBottleDbRowToDto(row: any): any {
       description: row.beer_description || row.beerDescription,
       imageUrl: row.beer_image_url || row.beerImageUrl,
       logoUrl: row.beer_logo_url || row.beerLogoUrl,
+      isGlutenFree: row.beer_is_gluten_free ?? row.beerIsGlutenFree ?? false,
+      isAlcoholFree: row.beer_is_alcohol_free ?? row.beerIsAlcoholFree ?? false,
       brewery: {
         id: row.brewery_id || row.breweryId,
         name: row.brewery_name || row.breweryName,
@@ -203,7 +207,7 @@ export interface IStorage {
   updateBeer(id: number, updates: Partial<InsertBeer>): Promise<Beer>;
   deleteBeer(id: number): Promise<void>;
   getBeersByBrewery(breweryId: number): Promise<Beer[]>;
-  searchBeers(query: string): Promise<Beer[]>;
+  searchBeers(query: string, filters?: { glutenFree?: boolean; alcoholFree?: boolean }): Promise<Beer[]>;
 
   // Tap list operations
   getTapList(pubId: number): Promise<TapList[]>;
@@ -489,7 +493,11 @@ export class DatabaseStorage implements IStorage {
     return await db.select().from(beers).where(eq(beers.breweryId, breweryId));
   }
 
-  async searchBeers(query: string): Promise<any[]> {
+  async searchBeers(query: string, filters?: { glutenFree?: boolean; alcoholFree?: boolean }): Promise<any[]> {
+    const conditions = [ilike(beers.name, `%${query}%`)];
+    if (filters?.glutenFree) conditions.push(eq(beers.isGlutenFree, true));
+    if (filters?.alcoholFree) conditions.push(eq(beers.isAlcoholFree, true));
+
     const results = await db
       .select({
         id: beers.id,
@@ -502,10 +510,12 @@ export class DatabaseStorage implements IStorage {
         breweryId: beers.breweryId,
         breweryName: breweries.name,
         breweryLogoUrl: breweries.logoUrl,
+        isGlutenFree: beers.isGlutenFree,
+        isAlcoholFree: beers.isAlcoholFree,
       })
       .from(beers)
       .leftJoin(breweries, eq(beers.breweryId, breweries.id))
-      .where(ilike(beers.name, `%${query}%`))
+      .where(and(...conditions))
       .orderBy(asc(beers.name));
     
     return results.map(row => ({
@@ -517,6 +527,8 @@ export class DatabaseStorage implements IStorage {
       description: row.description,
       imageUrl: row.imageUrl,
       breweryId: row.breweryId,
+      isGlutenFree: row.isGlutenFree,
+      isAlcoholFree: row.isAlcoholFree,
       brewery: {
         id: row.breweryId,
         name: row.breweryName,
@@ -533,6 +545,7 @@ export class DatabaseStorage implements IStorage {
           tl.id, tl.pub_id, tl.beer_id, tl.is_active, tl.prices, tl.price_small, tl.price_medium, tl.price_large,
           tl.description, tl.tap_number, tl.added_at, tl.updated_at,
           b.name as beer_name, b.style as beer_style, b.abv as beer_abv, b.image_url as beer_image_url,
+          b.is_gluten_free as beer_is_gluten_free, b.is_alcohol_free as beer_is_alcohol_free,
           br.id as brewery_id, br.name as brewery_name, br.logo_url as brewery_logo_url
         FROM tap_list tl
         INNER JOIN beers b ON tl.beer_id = b.id  
@@ -571,6 +584,8 @@ export class DatabaseStorage implements IStorage {
         beerDescription: beers.description,
         beerImageUrl: beers.imageUrl,
         beerBottleImageUrl: beers.bottleImageUrl,
+        beerIsGlutenFree: beers.isGlutenFree,
+        beerIsAlcoholFree: beers.isAlcoholFree,
         breweryId: breweries.id,
         breweryName: breweries.name,
         breweryLogoUrl: breweries.logoUrl,
@@ -583,7 +598,6 @@ export class DatabaseStorage implements IStorage {
 
     return results.map(row => mapTapDbRowToDto({
       ...row,
-      // Map Drizzle result fields to match the expected mapping format
       beer_name: row.beerName,
       beer_style: row.beerStyle,
       beer_abv: row.beerAbv,
@@ -591,6 +605,8 @@ export class DatabaseStorage implements IStorage {
       beer_description: row.beerDescription,
       beer_image_url: row.beerImageUrl,
       beer_bottle_image_url: row.beerBottleImageUrl,
+      beerIsGlutenFree: row.beerIsGlutenFree,
+      beerIsAlcoholFree: row.beerIsAlcoholFree,
       brewery_id: row.breweryId,
       brewery_name: row.breweryName,
       brewery_logo_url: row.breweryLogoUrl,
@@ -650,6 +666,7 @@ export class DatabaseStorage implements IStorage {
           bl.id, bl.pub_id, bl.beer_id, bl.is_active, bl.is_visible, bl.price_bottle, bl.bottle_size, bl.quantity,
           bl.description, bl.added_at, bl.updated_at, bl.prices,
           b.name as beer_name, b.style as beer_style, b.abv as beer_abv, b.image_url as beer_image_url, b.logo_url as beer_logo_url,
+          b.is_gluten_free as beer_is_gluten_free, b.is_alcohol_free as beer_is_alcohol_free,
           br.id as brewery_id, br.name as brewery_name, br.logo_url as brewery_logo_url
         FROM bottle_list bl
         INNER JOIN beers b ON bl.beer_id = b.id  
@@ -1599,9 +1616,9 @@ class StorageWrapper implements IStorage {
     );
   }
 
-  async searchBeers(query: string): Promise<Beer[]> {
+  async searchBeers(query: string, filters?: { glutenFree?: boolean; alcoholFree?: boolean }): Promise<Beer[]> {
     return this.dbCall(
-      () => this.databaseStorage.searchBeers(query),
+      () => this.databaseStorage.searchBeers(query, filters),
       () => memoryStorageInstance.searchBeers(query)
     );
   }

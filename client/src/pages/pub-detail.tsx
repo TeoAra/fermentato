@@ -130,9 +130,22 @@ const ModernBeerCard = ({ beer, prices, className = "" }: {
                 </p>
               </Link>
             )}
-            <p className="text-xs text-gray-500 dark:text-gray-500 mt-1">
-              {beer?.style || 'N/D'} • {beer?.abv || '0'}% ABV
-            </p>
+            <div className="flex items-center gap-1.5 flex-wrap mt-1">
+              <span className="text-xs text-gray-500 dark:text-gray-500">
+                {beer?.style || 'N/D'} • {beer?.abv || '0'}% ABV
+              </span>
+              {beer?.isGlutenFree && (
+                <span className="inline-flex items-center gap-0.5 text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-green-100 dark:bg-green-900/40 text-green-800 dark:text-green-300 border border-green-300 dark:border-green-700">
+                  <svg viewBox="0 0 16 16" className="w-3 h-3" fill="currentColor"><path d="M8 1a7 7 0 100 14A7 7 0 008 1zm0 1.5a5.5 5.5 0 110 11 5.5 5.5 0 010-11zM5.5 7.5h5v1.5h-5z"/></svg>
+                  GF
+                </span>
+              )}
+              {beer?.isAlcoholFree && (
+                <span className="inline-flex items-center text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-blue-100 dark:bg-blue-900/40 text-blue-800 dark:text-blue-300 border border-blue-300 dark:border-blue-700">
+                  0.0%
+                </span>
+              )}
+            </div>
           </div>
         </div>
 

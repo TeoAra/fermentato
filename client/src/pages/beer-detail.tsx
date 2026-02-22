@@ -122,6 +122,8 @@ export default function BeerDetail() {
     logoUrl: '',
     imageUrl: '',
     bottleImageUrl: '',
+    isGlutenFree: false,
+    isAlcoholFree: false,
   });
   
   const isAdmin = (user as any)?.activeRole === 'admin' || (!((user as any)?.activeRole) && user?.userType === 'admin');
@@ -157,6 +159,8 @@ export default function BeerDetail() {
         logoUrl: beer.logoUrl || '',
         imageUrl: beer.imageUrl || '',
         bottleImageUrl: beer.bottleImageUrl || '',
+        isGlutenFree: beer.isGlutenFree || false,
+        isAlcoholFree: beer.isAlcoholFree || false,
       });
       setIsEditDialogOpen(true);
     }
@@ -172,6 +176,8 @@ export default function BeerDetail() {
       logoUrl: editForm.logoUrl || null,
       imageUrl: editForm.imageUrl || null,
       bottleImageUrl: editForm.bottleImageUrl || null,
+      isGlutenFree: editForm.isGlutenFree,
+      isAlcoholFree: editForm.isAlcoholFree,
     };
     if (editForm.ibu) {
       updates.ibu = parseInt(editForm.ibu);
@@ -362,11 +368,22 @@ export default function BeerDetail() {
                           </p>
                         </Link>
                       )}
-                      <div className="flex flex-col sm:flex-row items-center justify-center md:justify-start space-y-3 sm:space-y-0 sm:space-x-4">
+                      <div className="flex flex-col sm:flex-row items-center justify-center md:justify-start space-y-3 sm:space-y-0 sm:space-x-4 flex-wrap gap-2">
                         <Badge className="bg-gradient-to-r from-blue-500/20 to-indigo-500/20 text-blue-100 border-blue-300/30 backdrop-blur-sm px-3 py-2">
                           <Sparkles className="h-4 w-4 mr-2" />
                           {beer?.style}
                         </Badge>
+                        {beer?.isGlutenFree && (
+                          <Badge className="bg-gradient-to-r from-green-500/20 to-emerald-500/20 text-green-100 border-green-300/30 backdrop-blur-sm px-3 py-2">
+                            <svg viewBox="0 0 16 16" className="w-4 h-4 mr-1.5" fill="currentColor"><path d="M8 1a7 7 0 100 14A7 7 0 008 1zm0 1.5a5.5 5.5 0 110 11 5.5 5.5 0 010-11zM5.5 7.5h5v1.5h-5z"/></svg>
+                            Gluten Free
+                          </Badge>
+                        )}
+                        {beer?.isAlcoholFree && (
+                          <Badge className="bg-gradient-to-r from-sky-500/20 to-blue-500/20 text-sky-100 border-sky-300/30 backdrop-blur-sm px-3 py-2">
+                            0.0% Analcolica
+                          </Badge>
+                        )}
                       </div>
                     </div>
                   </div>
@@ -687,6 +704,29 @@ export default function BeerDetail() {
                 placeholder="Descrizione della birra..."
                 rows={4}
               />
+            </div>
+            <div className="flex items-center gap-6">
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={editForm.isGlutenFree}
+                  onChange={(e) => setEditForm({ ...editForm, isGlutenFree: e.target.checked })}
+                  className="w-4 h-4 rounded border-gray-300 text-green-600 focus:ring-green-500"
+                />
+                <span className="inline-flex items-center gap-1 text-sm font-medium text-green-700 dark:text-green-400">
+                  <svg viewBox="0 0 16 16" className="w-4 h-4" fill="currentColor"><path d="M8 1a7 7 0 100 14A7 7 0 008 1zm0 1.5a5.5 5.5 0 110 11 5.5 5.5 0 010-11zM5.5 7.5h5v1.5h-5z"/></svg>
+                  Gluten Free
+                </span>
+              </label>
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={editForm.isAlcoholFree}
+                  onChange={(e) => setEditForm({ ...editForm, isAlcoholFree: e.target.checked })}
+                  className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                />
+                <span className="text-sm font-medium text-blue-700 dark:text-blue-400">0.0% Analcolica</span>
+              </label>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <ImageUpload

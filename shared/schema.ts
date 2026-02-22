@@ -135,6 +135,8 @@ export const beers = pgTable("beers", {
   bottleImageUrl: varchar("bottle_image_url"), // Immagine della bottiglia
   color: varchar("color"), // Beer color
   isBottled: boolean("is_bottled").default(false), // Se disponibile in bottiglia
+  isGlutenFree: boolean("is_gluten_free").default(false),
+  isAlcoholFree: boolean("is_alcohol_free").default(false),
   createdAt: timestamp("created_at").defaultNow(),
 });
 

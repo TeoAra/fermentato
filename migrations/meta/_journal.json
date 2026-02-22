@@ -43,6 +43,13 @@
       "when": 1771759373903,
       "tag": "0005_tiny_molly_hayes",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1771760655633,
+      "tag": "0006_groovy_meteorite",
+      "breakpoints": true
     }
   ]
 }

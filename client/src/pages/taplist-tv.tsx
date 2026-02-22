@@ -323,6 +323,16 @@ function TapCard({ tap, index, delay }: { tap: any; index: number; delay: number
               {beer.abv}%
             </span>
           )}
+          {beer.isGlutenFree && (
+            <span className="tap-badge rounded-full bg-green-500/15 text-green-400 border border-green-500/25 font-bold whitespace-nowrap">
+              GF
+            </span>
+          )}
+          {beer.isAlcoholFree && (
+            <span className="tap-badge rounded-full bg-blue-500/15 text-blue-400 border border-blue-500/25 font-bold whitespace-nowrap">
+              0.0%
+            </span>
+          )}
         </div>
 
         {prices.length > 0 && (

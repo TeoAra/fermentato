@@ -106,6 +106,8 @@ export function TapListManager({ pubId, tapList }: TapListManagerProps) {
     breweryId: "",
     breweryName: "",
     imageUrl: "",
+    isGlutenFree: false,
+    isAlcoholFree: false,
   });
   const [newBreweryData, setNewBreweryData] = useState({
     name: "",
@@ -260,7 +262,7 @@ export function TapListManager({ pubId, tapList }: TapListManagerProps) {
   });
 
   const createBeerMutation = useMutation({
-    mutationFn: async (data: { name: string; breweryId: string; style: string; abv?: string; ibu?: string; description?: string; imageUrl?: string }) => {
+    mutationFn: async (data: { name: string; breweryId: string; style: string; abv?: string; ibu?: string; description?: string; imageUrl?: string; isGlutenFree?: boolean; isAlcoholFree?: boolean }) => {
       let imageUrl = data.imageUrl;
       if (beerImageFile) {
         imageUrl = await uploadBeerImage();
@@ -376,7 +378,7 @@ export function TapListManager({ pubId, tapList }: TapListManagerProps) {
     setCreatingBeer(false);
     setCreatingBrewery(false);
     setBrewerySearchTerm("");
-    setNewBeerData({ name: "", style: "", abv: "", ibu: "", description: "", breweryId: "", breweryName: "", imageUrl: "" });
+    setNewBeerData({ name: "", style: "", abv: "", ibu: "", description: "", breweryId: "", breweryName: "", imageUrl: "", isGlutenFree: false, isAlcoholFree: false });
     setNewBreweryData({ name: "", location: "", region: "", description: "", logoUrl: "", coverImageUrl: "" });
     setBreweryLogoFile(null);
     setBreweryLogoPreview("");
@@ -708,6 +710,30 @@ export function TapListManager({ pubId, tapList }: TapListManagerProps) {
                         placeholder="Note sulla birra, aromi, sapore..."
                         className="min-h-[60px] text-sm"
                       />
+                    </div>
+
+                    <div className="flex items-center gap-4">
+                      <label className="flex items-center gap-2 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={newBeerData.isGlutenFree}
+                          onChange={(e) => setNewBeerData({ ...newBeerData, isGlutenFree: e.target.checked })}
+                          className="w-4 h-4 rounded border-gray-300 text-green-600 focus:ring-green-500"
+                        />
+                        <span className="inline-flex items-center gap-1 text-xs font-medium text-green-700 dark:text-green-400">
+                          <svg viewBox="0 0 16 16" className="w-3.5 h-3.5" fill="currentColor"><path d="M8 1a7 7 0 100 14A7 7 0 008 1zm0 1.5a5.5 5.5 0 110 11 5.5 5.5 0 010-11zM5.5 7.5h5v1.5h-5z"/></svg>
+                          Gluten Free
+                        </span>
+                      </label>
+                      <label className="flex items-center gap-2 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={newBeerData.isAlcoholFree}
+                          onChange={(e) => setNewBeerData({ ...newBeerData, isAlcoholFree: e.target.checked })}
+                          className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                        />
+                        <span className="text-xs font-medium text-blue-700 dark:text-blue-400">0.0% Analcolica</span>
+                      </label>
                     </div>
 
                     <div>
@@ -1255,9 +1281,22 @@ export function TapListManager({ pubId, tapList }: TapListManagerProps) {
                         )}
                       </div>
                       <p className="text-sm text-gray-600 dark:text-gray-400">{item.beer.brewery?.name || 'Birrificio sconosciuto'}</p>
-                      <p className="text-xs text-gray-500 dark:text-gray-500">
-                        {item.beer.style} • {item.beer.abv}% ABV
-                      </p>
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        <span className="text-xs text-gray-500 dark:text-gray-500">
+                          {item.beer.style} • {item.beer.abv}% ABV
+                        </span>
+                        {(item.beer as any).isGlutenFree && (
+                          <span className="inline-flex items-center gap-0.5 text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-green-100 dark:bg-green-900/40 text-green-800 dark:text-green-300 border border-green-300 dark:border-green-700">
+                            <svg viewBox="0 0 16 16" className="w-3 h-3" fill="currentColor"><path d="M8 1a7 7 0 100 14A7 7 0 008 1zm0 1.5a5.5 5.5 0 110 11 5.5 5.5 0 010-11zM5.5 7.5h5v1.5h-5z"/></svg>
+                            GF
+                          </span>
+                        )}
+                        {(item.beer as any).isAlcoholFree && (
+                          <span className="inline-flex items-center gap-0.5 text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-blue-100 dark:bg-blue-900/40 text-blue-800 dark:text-blue-300 border border-blue-300 dark:border-blue-700">
+                            0.0%
+                          </span>
+                        )}
+                      </div>
                     </div>
                   </div>
 

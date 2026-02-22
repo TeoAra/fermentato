@@ -203,7 +203,11 @@ function renderBeerItem(
   doc.setFontSize(9);
   doc.setFont("helvetica", "normal");
   doc.setTextColor(...GRAY);
-  const details = [brewery, style, abv].filter(Boolean).join(" \u2022 ");
+  const badges: string[] = [];
+  if (item.beer?.isGlutenFree) badges.push("GF");
+  if (item.beer?.isAlcoholFree) badges.push("0.0%");
+  const detailParts = [brewery, style, abv, ...badges].filter(Boolean);
+  const details = detailParts.join(" \u2022 ");
   if (details) {
     doc.text(details, margin, y);
     y += 4;

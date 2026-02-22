@@ -17,6 +17,8 @@ export default function SearchDialog({ isOpen, onClose }: SearchDialogProps) {
   const [recentSearches, setRecentSearches] = useState<string[]>([]);
   const [selectedIndex, setSelectedIndex] = useState(-1);
   const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({});
+  const [filterGlutenFree, setFilterGlutenFree] = useState(false);
+  const [filterAlcoholFree, setFilterAlcoholFree] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
   const INITIAL_SHOW = 5;
@@ -65,10 +67,13 @@ export default function SearchDialog({ isOpen, onClose }: SearchDialogProps) {
   };
 
   const { data: searchResults, isLoading } = useQuery({
-    queryKey: ["/api/search", debouncedSearch],
+    queryKey: ["/api/search", debouncedSearch, filterGlutenFree, filterAlcoholFree],
     queryFn: async () => {
       if (debouncedSearch.length < 2) return null;
-      const response = await fetch(`/api/search?q=${encodeURIComponent(debouncedSearch)}`);
+      const params = new URLSearchParams({ q: debouncedSearch });
+      if (filterGlutenFree) params.set('glutenFree', 'true');
+      if (filterAlcoholFree) params.set('alcoholFree', 'true');
+      const response = await fetch(`/api/search?${params.toString()}`);
       if (!response.ok) throw new Error('Search failed');
       return response.json();
     },
@@ -158,6 +163,30 @@ export default function SearchDialog({ isOpen, onClose }: SearchDialogProps) {
                 <Loader2 className="h-4 w-4 animate-spin text-orange-500" />
               </div>
             )}
+          </div>
+
+          <div className="flex items-center gap-2 mt-3">
+            <button
+              onClick={() => setFilterGlutenFree(!filterGlutenFree)}
+              className={`inline-flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-full border transition-all duration-200 ${
+                filterGlutenFree
+                  ? 'bg-green-100 dark:bg-green-900/40 text-green-800 dark:text-green-300 border-green-400 dark:border-green-600 shadow-sm'
+                  : 'bg-gray-50 dark:bg-gray-800 text-gray-500 dark:text-gray-400 border-gray-200 dark:border-gray-700 hover:border-green-300 dark:hover:border-green-600'
+              }`}
+            >
+              <svg viewBox="0 0 16 16" className="w-3.5 h-3.5" fill="currentColor"><path d="M8 1a7 7 0 100 14A7 7 0 008 1zm0 1.5a5.5 5.5 0 110 11 5.5 5.5 0 010-11zM5.5 7.5h5v1.5h-5z"/></svg>
+              Gluten Free
+            </button>
+            <button
+              onClick={() => setFilterAlcoholFree(!filterAlcoholFree)}
+              className={`inline-flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-full border transition-all duration-200 ${
+                filterAlcoholFree
+                  ? 'bg-blue-100 dark:bg-blue-900/40 text-blue-800 dark:text-blue-300 border-blue-400 dark:border-blue-600 shadow-sm'
+                  : 'bg-gray-50 dark:bg-gray-800 text-gray-500 dark:text-gray-400 border-gray-200 dark:border-gray-700 hover:border-blue-300 dark:hover:border-blue-600'
+              }`}
+            >
+              0.0% Analcolica
+            </button>
           </div>
         </DialogHeader>
 
@@ -415,8 +444,16 @@ export default function SearchDialog({ isOpen, onClose }: SearchDialogProps) {
                               {(beer.brewery?.name || beer.breweryName) && (
                                 <div className="text-xs text-gray-600 dark:text-gray-300 truncate">{beer.brewery?.name || beer.breweryName}</div>
                               )}
-                              <div className="text-xs text-gray-500 dark:text-gray-400 truncate">
-                                {beer.style && beer.abv ? `${beer.style} • ${beer.abv}%` : beer.style || `${beer.abv}%` || 'Dettagli non disponibili'}
+                              <div className="flex items-center gap-1.5 flex-wrap">
+                                <span className="text-xs text-gray-500 dark:text-gray-400">
+                                  {beer.style && beer.abv ? `${beer.style} • ${beer.abv}%` : beer.style || `${beer.abv}%` || 'Dettagli non disponibili'}
+                                </span>
+                                {beer.isGlutenFree && (
+                                  <span className="inline-flex items-center gap-0.5 text-[10px] font-bold px-1 py-0 rounded-full bg-green-100 dark:bg-green-900/40 text-green-800 dark:text-green-300 border border-green-300 dark:border-green-700">GF</span>
+                                )}
+                                {beer.isAlcoholFree && (
+                                  <span className="inline-flex items-center text-[10px] font-bold px-1 py-0 rounded-full bg-blue-100 dark:bg-blue-900/40 text-blue-800 dark:text-blue-300 border border-blue-300 dark:border-blue-700">0.0%</span>
+                                )}
                               </div>
                             </div>
                             <ArrowRight className="h-4 w-4 text-gray-300 group-hover:text-orange-500 flex-shrink-0 opacity-0 group-hover:opacity-100 transition-all duration-200" />

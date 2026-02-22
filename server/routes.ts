@@ -443,13 +443,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Query parameter 'q' is required" });
       }
 
-      const [pubs, breweries, beers] = await Promise.all([
+      const glutenFree = req.query.glutenFree === 'true';
+      const alcoholFree = req.query.alcoholFree === 'true';
+      const filters = (glutenFree || alcoholFree) ? { glutenFree, alcoholFree } : undefined;
+
+      const [pubs, breweries, beersResult] = await Promise.all([
         storage.searchPubs(query),
         storage.searchBreweries(query),
-        storage.searchBeers(query),
+        storage.searchBeers(query, filters),
       ]);
 
-      res.json({ pubs, breweries, beers });
+      res.json({ pubs, breweries, beers: beersResult });
     } catch (error) {
       console.error("Error searching:", error);
       res.status(500).json({ message: "Failed to perform search" });
@@ -2324,6 +2328,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         ibu: req.body.ibu ? parseInt(req.body.ibu) : null,
         description: req.body.description?.trim() || null,
         imageUrl: req.body.imageUrl?.trim() || null,
+        isGlutenFree: req.body.isGlutenFree === true,
+        isAlcoholFree: req.body.isAlcoholFree === true,
       });
       res.json(beer);
     } catch (error) {
