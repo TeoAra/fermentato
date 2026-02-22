@@ -191,6 +191,7 @@ export const menuCategories = pgTable("menu_categories", {
   pubId: integer("pub_id").references(() => pubs.id).notNull(),
   name: varchar("name").notNull(),
   description: text("description"),
+  infoBox: text("info_box"),
   isVisible: boolean("is_visible").default(true),
   orderIndex: integer("order_index").default(0),
   createdAt: timestamp("created_at").defaultNow(),

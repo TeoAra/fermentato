@@ -1,0 +1,1 @@
+ALTER TABLE "menu_categories" ADD COLUMN "info_box" text;
