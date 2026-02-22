@@ -181,6 +181,10 @@ export default function Home() {
           breweries={Array.isArray(allBreweries) ? allBreweries : (Array.isArray(breweries) ? breweries : [])}
           userLocation={userLocation}
           isLoading={pubsLoading || breweriesLoading}
+          onLocate={(loc) => {
+            setUserLocation(loc);
+            setLocationStatus('granted');
+          }}
         />
 
         {/* I Tuoi Pub (solo per pub owner) */}

@@ -1,7 +1,7 @@
 /// <reference types="google.maps" />
 import { useEffect, useRef, useState, useCallback, useMemo } from "react";
 import { Loader } from "@googlemaps/js-api-loader";
-import { MapPin, Loader2 } from "lucide-react";
+import { MapPin, Loader2, LocateFixed } from "lucide-react";
 
 interface MapPub {
   id: number;
@@ -28,6 +28,7 @@ interface HomepageMapProps {
   breweries: MapBrewery[];
   userLocation?: { lat: number; lng: number } | null;
   isLoading?: boolean;
+  onLocate?: (location: { lat: number; lng: number }) => void;
 }
 
 const PUB_COLOR = "#3B82F6";
@@ -82,15 +83,17 @@ function createMarkerElement(color: string, logoUrl?: string | null): HTMLElemen
   return container;
 }
 
-export default function HomepageMap({ pubs, breweries, userLocation, isLoading }: HomepageMapProps) {
+export default function HomepageMap({ pubs, breweries, userLocation, isLoading, onLocate }: HomepageMapProps) {
   const mapRef = useRef<HTMLDivElement>(null);
   const sectionRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<google.maps.Map | null>(null);
   const markersRef = useRef<google.maps.marker.AdvancedMarkerElement[]>([]);
+  const userMarkerRef = useRef<google.maps.marker.AdvancedMarkerElement | null>(null);
   const infoWindowRef = useRef<google.maps.InfoWindow | null>(null);
   const [mapLoaded, setMapLoaded] = useState(false);
   const [mapError, setMapError] = useState(false);
   const [isVisible, setIsVisible] = useState(false);
+  const [isLocating, setIsLocating] = useState(false);
   const initStartedRef = useRef(false);
 
   useEffect(() => {
@@ -135,7 +138,7 @@ export default function HomepageMap({ pubs, breweries, userLocation, isLoading }
 
       const map = new Map(mapRef.current, {
         center,
-        zoom: userLocation ? 10 : 6,
+        zoom: userLocation ? 12 : 6,
         mapId: "fermenta-homepage-map",
         disableDefaultUI: false,
         zoomControl: true,
@@ -163,6 +166,48 @@ export default function HomepageMap({ pubs, breweries, userLocation, isLoading }
       initMap();
     }
   }, [isVisible, initMap]);
+
+  const handleGeolocate = useCallback(() => {
+    if (!navigator.geolocation) return;
+    setIsLocating(true);
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        const loc = { lat: position.coords.latitude, lng: position.coords.longitude };
+        setIsLocating(false);
+        onLocate?.(loc);
+
+        const map = mapInstanceRef.current;
+        if (map) {
+          map.panTo(loc);
+          map.setZoom(12);
+        }
+      },
+      () => {
+        setIsLocating(false);
+      },
+      { enableHighAccuracy: true, timeout: 10000 }
+    );
+  }, [onLocate]);
+
+  useEffect(() => {
+    if (!mapInstanceRef.current || !mapLoaded || !userLocation) return;
+    if (userMarkerRef.current) {
+      userMarkerRef.current.map = null;
+    }
+    const el = document.createElement("div");
+    el.style.cssText = `
+      width: 20px; height: 20px; background: #4285F4; border: 3px solid white;
+      border-radius: 50%; box-shadow: 0 0 0 6px rgba(66,133,244,0.25), 0 2px 4px rgba(0,0,0,0.3);
+    `;
+    const marker = new google.maps.marker.AdvancedMarkerElement({
+      map: mapInstanceRef.current,
+      position: { lat: userLocation.lat, lng: userLocation.lng },
+      title: "La tua posizione",
+      content: el,
+      zIndex: 9999,
+    });
+    userMarkerRef.current = marker;
+  }, [userLocation, mapLoaded]);
 
   const geoFilteredPubs = useMemo(() =>
     pubs.filter(p => p.latitude && p.longitude && !isNaN(parseFloat(p.latitude)) && !isNaN(parseFloat(p.longitude))),
@@ -323,6 +368,21 @@ export default function HomepageMap({ pubs, breweries, userLocation, isLoading }
             </div>
           )}
           <div ref={mapRef} className="w-full h-[400px] md:h-[500px]" />
+
+          {mapLoaded && (
+            <button
+              onClick={handleGeolocate}
+              disabled={isLocating}
+              className="absolute bottom-4 right-4 z-20 bg-white dark:bg-gray-800 shadow-lg rounded-xl p-3 hover:bg-gray-50 dark:hover:bg-gray-700 transition-all duration-200 border border-gray-200 dark:border-gray-600 group disabled:opacity-70"
+              title="Trova la mia posizione"
+            >
+              {isLocating ? (
+                <Loader2 className="w-5 h-5 animate-spin text-blue-500" />
+              ) : (
+                <LocateFixed className={`w-5 h-5 transition-colors ${userLocation ? 'text-blue-500' : 'text-gray-500 dark:text-gray-400 group-hover:text-blue-500'}`} />
+              )}
+            </button>
+          )}
         </div>
       </div>
     </section>
