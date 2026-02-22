@@ -808,6 +808,7 @@ export default function PubDetail() {
                   ) : (
                     <LuppolinoMenu 
                       menu={Array.isArray(menu) ? menu.filter((category: any) => category.isVisible !== false) : []} 
+                      menuInfoBox={(pub as any)?.menuInfoBox}
                     />
                   )}
                 </TabsContent>
