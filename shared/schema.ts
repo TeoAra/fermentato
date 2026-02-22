@@ -116,6 +116,7 @@ export const pubs = pgTable("pubs", {
   ownerId: varchar("owner_id").references(() => users.id),
   vatNumber: varchar("vat_number"), // P.IVA
   businessName: varchar("business_name"),
+  menuInfoBox: text("menu_info_box"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
@@ -215,6 +216,7 @@ export const menuItems = pgTable("menu_items", {
   allergens: jsonb("allergens").$type<string[]>(), // Array of allergen IDs
   isVisible: boolean("is_visible").default(true),
   isAvailable: boolean("is_available").default(true),
+  isInfoBox: boolean("is_info_box").default(false),
   imageUrl: varchar("image_url"),
   orderIndex: integer("order_index").default(0),
   createdAt: timestamp("created_at").defaultNow(),
