@@ -301,41 +301,6 @@ export default function Home() {
           </div>
         )}
 
-        {/* Quick Actions */}
-        <section className="mb-16 lg:mb-20">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <Link href="/explore/pubs">
-              <div className="glass-card border-0 rounded-xl p-8 text-center group hover:scale-105 transition-all duration-300 cursor-pointer">
-                <div className="p-4 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl inline-flex mb-4 group-hover:scale-110 transition-transform">
-                  <MapPin className="h-8 w-8 text-white" />
-                </div>
-                <h3 className="text-xl font-semibold mb-2 text-gray-900 dark:text-white">Trova Pub Vicini</h3>
-                <p className="text-gray-600 dark:text-gray-400 mb-4">Scopri i migliori pub nella tua zona</p>
-              </div>
-            </Link>
-            
-            <Link href="/explore/breweries">
-              <div className="glass-card border-0 rounded-xl p-8 text-center group hover:scale-105 transition-all duration-300 cursor-pointer">
-                <div className="p-4 bg-gradient-to-br from-amber-500 to-orange-600 rounded-xl inline-flex mb-4 group-hover:scale-110 transition-transform">
-                  <Beer className="h-8 w-8 text-white" />
-                </div>
-                <h3 className="text-xl font-semibold mb-2 text-gray-900 dark:text-white">Esplora Birrifici</h3>
-                <p className="text-gray-600 dark:text-gray-400 mb-4">Conosci i birrifici artigianali italiani</p>
-              </div>
-            </Link>
-            
-            <Link href="/dashboard?tab=favorites">
-              <div className="glass-card border-0 rounded-xl p-8 text-center group hover:scale-105 transition-all duration-300 cursor-pointer">
-                <div className="p-4 bg-gradient-to-br from-red-500 to-pink-600 rounded-xl inline-flex mb-4 group-hover:scale-110 transition-transform">
-                  <Heart className="h-8 w-8 text-white" />
-                </div>
-                <h3 className="text-xl font-semibold mb-2 text-gray-900 dark:text-white">I Tuoi Preferiti</h3>
-                <p className="text-gray-600 dark:text-gray-400 mb-4">Gestisci le tue birre e pub preferiti ({Array.isArray(favorites) ? favorites.length : 0})</p>
-              </div>
-            </Link>
-          </div>
-        </section>
-
         <HomepageMap
           pubs={Array.isArray(pubs) ? pubs : []}
           breweries={Array.isArray(allBreweries) ? allBreweries : (Array.isArray(breweries) ? breweries : [])}
