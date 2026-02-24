@@ -204,7 +204,7 @@ function renderBeerItem(
   doc.setFont("helvetica", "normal");
   doc.setTextColor(...GRAY);
   const badges: string[] = [];
-  if (item.beer?.isGlutenFree) badges.push("GF");
+  if (item.beer?.isGlutenFree) badges.push("Senza Glutine");
   if (item.beer?.isAlcoholFree) badges.push("0.0%");
   const detailParts = [brewery, style, abv, ...badges].filter(Boolean);
   const details = detailParts.join(" \u2022 ");

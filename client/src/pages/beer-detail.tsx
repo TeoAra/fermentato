@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useParams, Link } from "wouter";
+import { GlutenFreeIcon } from "@/components/beer-badges";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { 
   Star, 
@@ -374,9 +375,9 @@ export default function BeerDetail() {
                           {beer?.style}
                         </Badge>
                         {beer?.isGlutenFree && (
-                          <Badge className="bg-gradient-to-r from-green-500/20 to-emerald-500/20 text-green-100 border-green-300/30 backdrop-blur-sm px-3 py-2">
-                            <svg viewBox="0 0 16 16" className="w-4 h-4 mr-1.5" fill="currentColor"><path d="M8 1a7 7 0 100 14A7 7 0 008 1zm0 1.5a5.5 5.5 0 110 11 5.5 5.5 0 010-11zM5.5 7.5h5v1.5h-5z"/></svg>
-                            Gluten Free
+                          <Badge className="bg-gradient-to-r from-green-500/20 to-emerald-500/20 text-green-100 border-green-300/30 backdrop-blur-sm px-3 py-2 gap-1.5">
+                            <GlutenFreeIcon size={18} className="text-green-200" />
+                            Senza Glutine
                           </Badge>
                         )}
                         {beer?.isAlcoholFree && (

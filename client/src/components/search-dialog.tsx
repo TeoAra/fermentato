@@ -5,6 +5,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
+import { GlutenFreeSmallBadge, AlcoholFreeBadge } from "@/components/beer-badges";
 
 interface SearchDialogProps {
   isOpen: boolean;
@@ -449,10 +450,10 @@ export default function SearchDialog({ isOpen, onClose }: SearchDialogProps) {
                                   {beer.style && beer.abv ? `${beer.style} • ${beer.abv}%` : beer.style || `${beer.abv}%` || 'Dettagli non disponibili'}
                                 </span>
                                 {beer.isGlutenFree && (
-                                  <span className="inline-flex items-center gap-0.5 text-[10px] font-bold px-1 py-0 rounded-full bg-green-100 dark:bg-green-900/40 text-green-800 dark:text-green-300 border border-green-300 dark:border-green-700">GF</span>
+                                  <GlutenFreeSmallBadge size={11} />
                                 )}
                                 {beer.isAlcoholFree && (
-                                  <span className="inline-flex items-center text-[10px] font-bold px-1 py-0 rounded-full bg-blue-100 dark:bg-blue-900/40 text-blue-800 dark:text-blue-300 border border-blue-300 dark:border-blue-700">0.0%</span>
+                                  <AlcoholFreeBadge size={10} />
                                 )}
                               </div>
                             </div>

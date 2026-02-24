@@ -13,6 +13,7 @@ import { useToast } from "@/hooks/use-toast";
 import { PriceFormatManager } from "@/components/price-format-manager";
 import { AddressAutocomplete } from "@/components/AddressAutocomplete";
 import ImageWithFallback from "@/components/image-with-fallback";
+import { GlutenFreeSmallBadge, AlcoholFreeBadge } from "@/components/beer-badges";
 import { 
   Beer, 
   Plus, 
@@ -1286,15 +1287,10 @@ export function TapListManager({ pubId, tapList }: TapListManagerProps) {
                           {item.beer.style} • {item.beer.abv}% ABV
                         </span>
                         {(item.beer as any).isGlutenFree && (
-                          <span className="inline-flex items-center gap-0.5 text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-green-100 dark:bg-green-900/40 text-green-800 dark:text-green-300 border border-green-300 dark:border-green-700">
-                            <svg viewBox="0 0 16 16" className="w-3 h-3" fill="currentColor"><path d="M8 1a7 7 0 100 14A7 7 0 008 1zm0 1.5a5.5 5.5 0 110 11 5.5 5.5 0 010-11zM5.5 7.5h5v1.5h-5z"/></svg>
-                            GF
-                          </span>
+                          <GlutenFreeSmallBadge size={11} />
                         )}
                         {(item.beer as any).isAlcoholFree && (
-                          <span className="inline-flex items-center gap-0.5 text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-blue-100 dark:bg-blue-900/40 text-blue-800 dark:text-blue-300 border border-blue-300 dark:border-blue-700">
-                            0.0%
-                          </span>
+                          <AlcoholFreeBadge size={10} />
                         )}
                       </div>
                     </div>

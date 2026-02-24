@@ -4,6 +4,7 @@ import { Link } from "wouter";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { MapPin, Beer, Building } from "lucide-react";
+import { GlutenFreeSmallBadge, AlcoholFreeBadge } from "@/components/beer-badges";
 
 interface SearchResult {
   pubs: any[];
@@ -104,10 +105,10 @@ export default function SearchResults({ query, onClose }: SearchResultsProps) {
                 <div className="flex items-center gap-1.5 flex-wrap">
                   <span className="text-xs text-gray-500">{beer.style} • {beer.abv}%</span>
                   {beer.isGlutenFree && (
-                    <span className="inline-flex items-center text-[10px] font-bold px-1 py-0 rounded-full bg-green-100 text-green-800 border border-green-300">GF</span>
+                    <GlutenFreeSmallBadge size={11} />
                   )}
                   {beer.isAlcoholFree && (
-                    <span className="inline-flex items-center text-[10px] font-bold px-1 py-0 rounded-full bg-blue-100 text-blue-800 border border-blue-300">0.0%</span>
+                    <AlcoholFreeBadge size={10} />
                   )}
                 </div>
               </div>

@@ -239,15 +239,11 @@ export default function TaplistTV() {
         }
 
         .tv-badge-gf {
-          font-size: ${isCompact ? '1.3vh' : '1.6vh'};
-          padding: 0.2vh 0.6vw;
-          border-radius: 999px;
-          background: rgba(16,185,129,0.15);
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
           color: #34d399;
-          border: 1px solid rgba(16,185,129,0.25);
-          font-weight: 700;
           flex-shrink: 0;
-          white-space: nowrap;
         }
         .tv-badge-af {
           font-size: ${isCompact ? '1.3vh' : '1.6vh'};
@@ -398,7 +394,23 @@ export default function TaplistTV() {
                   <div className="tv-beer-info">
                     <div className="tv-beer-name-row">
                       <div className="tv-beer-name">{beer.name || "Birra"}</div>
-                      {beer.isGlutenFree && <span className="tv-badge-gf">GF</span>}
+                      {beer.isGlutenFree && (
+                        <span className="tv-badge-gf">
+                          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" style={{ width: isCompact ? '2.2vh' : '2.8vh', height: isCompact ? '2.2vh' : '2.8vh' }}>
+                            <circle cx="50" cy="50" r="46" fill="none" stroke="currentColor" strokeWidth="4" />
+                            <g transform="translate(50,50) scale(0.7)" stroke="currentColor" fill="currentColor">
+                              <line x1="0" y1="30" x2="0" y2="-25" strokeWidth="3.5" fill="none" />
+                              <ellipse cx="-6" cy="-8" rx="5" ry="9" transform="rotate(15, -6, -8)" strokeWidth="1.5" fill="none" />
+                              <ellipse cx="6" cy="-8" rx="5" ry="9" transform="rotate(-15, 6, -8)" strokeWidth="1.5" fill="none" />
+                              <ellipse cx="-8" cy="5" rx="5" ry="9" transform="rotate(25, -8, 5)" strokeWidth="1.5" fill="none" />
+                              <ellipse cx="8" cy="5" rx="5" ry="9" transform="rotate(-25, 8, 5)" strokeWidth="1.5" fill="none" />
+                              <ellipse cx="-5" cy="-20" rx="4" ry="8" transform="rotate(10, -5, -20)" strokeWidth="1.5" fill="none" />
+                              <ellipse cx="5" cy="-20" rx="4" ry="8" transform="rotate(-10, 5, -20)" strokeWidth="1.5" fill="none" />
+                            </g>
+                            <line x1="20" y1="80" x2="80" y2="20" stroke="currentColor" strokeWidth="5" strokeLinecap="round" />
+                          </svg>
+                        </span>
+                      )}
                       {beer.isAlcoholFree && <span className="tv-badge-af">0.0%</span>}
                     </div>
                     {brewery && <div className="tv-beer-brewery">{brewery}</div>}

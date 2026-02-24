@@ -12,6 +12,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Search, Plus, Trash2, BeerIcon, Building2, MapPin, ExternalLink, Upload, Loader2 } from "lucide-react";
 import { Link } from "wouter";
+import { GlutenFreeSmallBadge, AlcoholFreeBadge } from "@/components/beer-badges";
 
 interface AdminContentManagerProps {
   type: 'beers' | 'breweries' | 'pubs';
@@ -363,8 +364,8 @@ export default function AdminContentManager({ type }: AdminContentManagerProps) 
                         )}
                         {item.style && <Badge variant="outline" className="text-xs">{item.style}</Badge>}
                         {item.abv != null && <Badge variant="secondary" className="text-xs">{item.abv}%</Badge>}
-                        {item.isGlutenFree && <Badge className="text-xs bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">GF</Badge>}
-                        {item.isAlcoholFree && <Badge className="text-xs bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">0.0%</Badge>}
+                        {item.isGlutenFree && <GlutenFreeSmallBadge size={12} />}
+                        {item.isAlcoholFree && <AlcoholFreeBadge size={11} />}
                       </div>
                     )}
                     {type === 'breweries' && (
