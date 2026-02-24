@@ -17,10 +17,12 @@ import {
   ArrowDown,
   Filter,
   Download,
-  RefreshCw
+  RefreshCw,
+  ArrowLeft
 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { it } from "date-fns/locale";
+import { Link } from "wouter";
 
 interface GlobalStats {
   totalBeers: number;
@@ -100,6 +102,15 @@ export default function AdminAnalytics() {
 
   return (
     <div className="container mx-auto px-4 py-6 max-w-7xl space-y-6">
+      <div className="flex items-center gap-4 mb-2">
+        <Link href="/admin">
+          <Button variant="outline" size="sm">
+            <ArrowLeft className="w-4 h-4 mr-2" />
+            Dashboard Admin
+          </Button>
+        </Link>
+      </div>
+
       {/* Header Analytics */}
       <div className="flex items-center justify-between">
         <div>

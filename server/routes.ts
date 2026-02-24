@@ -3,7 +3,7 @@ import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { setupAuth, isAuthenticated } from "./auth";
 import { registerAdminRoutes } from "./routes-admin";
-import { sql, eq } from "drizzle-orm";
+import { sql, eq, desc } from "drizzle-orm";
 import { upload, uploadImage, cloudinary } from "./cloudinary";
 import { db } from "./db";
 import { breweries, beers, pubs, users, tapList, notifications, pushSubscriptions, breweryRequests, pubEvents } from "@shared/schema";
@@ -2408,6 +2408,84 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error updating brewery:", error);
       res.status(500).json({ message: "Failed to update brewery" });
+    }
+  });
+
+  // Delete beer (admin only)
+  app.delete("/api/admin/beers/:id", isAuthenticated, isAdmin, async (req: any, res) => {
+    try {
+      const beerId = parseInt(req.params.id);
+      const beer = await storage.getBeer(beerId);
+      if (!beer) return res.status(404).json({ message: "Beer not found" });
+      await storage.deleteBeer(beerId);
+      res.json({ success: true, message: `Birra "${beer.name}" eliminata` });
+    } catch (error) {
+      console.error("Error deleting beer:", error);
+      res.status(500).json({ message: "Failed to delete beer" });
+    }
+  });
+
+  // Delete brewery (admin only)
+  app.delete("/api/admin/breweries/:id", isAuthenticated, isAdmin, async (req: any, res) => {
+    try {
+      const breweryId = parseInt(req.params.id);
+      const brewery = await storage.getBrewery(breweryId);
+      if (!brewery) return res.status(404).json({ message: "Brewery not found" });
+      await storage.deleteBrewery(breweryId);
+      res.json({ success: true, message: `Birrificio "${brewery.name}" eliminato` });
+    } catch (error) {
+      console.error("Error deleting brewery:", error);
+      res.status(500).json({ message: "Failed to delete brewery" });
+    }
+  });
+
+  // Delete pub (admin only)
+  app.delete("/api/admin/pubs/:id", isAuthenticated, isAdmin, async (req: any, res) => {
+    try {
+      const pubId = parseInt(req.params.id);
+      const pub = await storage.getPub(pubId);
+      if (!pub) return res.status(404).json({ message: "Pub not found" });
+      await storage.deletePub(pubId);
+      res.json({ success: true, message: `Pub "${pub.name}" eliminato` });
+    } catch (error) {
+      console.error("Error deleting pub:", error);
+      res.status(500).json({ message: "Failed to delete pub" });
+    }
+  });
+
+  // Admin recent activity (real data from DB)
+  app.get("/api/admin/recent-activity", isAuthenticated, isAdmin, async (req: any, res) => {
+    try {
+      const activities: any[] = [];
+
+      const recentUsers = await db.select({ id: users.id, username: users.username, createdAt: users.createdAt, userType: users.userType })
+        .from(users).orderBy(desc(users.createdAt)).limit(5);
+      for (const u of recentUsers) {
+        activities.push({ type: 'user', action: u.userType === 'pub_owner' ? 'Nuovo pub owner registrato' : 'Nuovo utente registrato', name: u.username || 'Utente', time: u.createdAt, icon: 'user' });
+      }
+
+      const recentPubs = await db.select({ id: pubs.id, name: pubs.name, createdAt: pubs.createdAt, city: pubs.city })
+        .from(pubs).orderBy(desc(pubs.createdAt)).limit(5);
+      for (const p of recentPubs) {
+        activities.push({ type: 'pub', action: 'Nuovo pub registrato', name: p.name, detail: p.city, time: p.createdAt, icon: 'pub' });
+      }
+
+      const recentBreweries = await db.select({ id: breweries.id, name: breweries.name, createdAt: breweries.createdAt, location: breweries.location })
+        .from(breweries).orderBy(desc(breweries.createdAt)).limit(5);
+      for (const b of recentBreweries) {
+        activities.push({ type: 'brewery', action: 'Nuovo birrificio aggiunto', name: b.name, detail: b.location, time: b.createdAt, icon: 'brewery' });
+      }
+
+      activities.sort((a, b) => {
+        const ta = a.time ? new Date(a.time).getTime() : 0;
+        const tb = b.time ? new Date(b.time).getTime() : 0;
+        return tb - ta;
+      });
+
+      res.json(activities.slice(0, 10));
+    } catch (error) {
+      console.error("Error fetching recent activity:", error);
+      res.status(500).json({ message: "Failed to fetch recent activity" });
     }
   });
 

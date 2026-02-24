@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
@@ -8,10 +8,9 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Search, Plus, Edit, Trash2, BeerIcon, Building2, MapPin, Upload, ExternalLink } from "lucide-react";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import { Search, Plus, Trash2, BeerIcon, Building2, MapPin, ExternalLink, Upload, Loader2 } from "lucide-react";
 import { Link } from "wouter";
 
 interface AdminContentManagerProps {
@@ -22,12 +21,12 @@ export default function AdminContentManager({ type }: AdminContentManagerProps) 
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [searchQuery, setSearchQuery] = useState("");
-  const [editingItem, setEditingItem] = useState<any>(null);
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [searchResults, setSearchResults] = useState<any[]>([]);
   const [isSearching, setIsSearching] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState<any>(null);
+  const searchTimerRef = useRef<any>(null);
 
-  // Search mutation for global search
   const searchMutation = useMutation({
     mutationFn: async (query: string) => {
       let endpoint = '';
@@ -35,27 +34,40 @@ export default function AdminContentManager({ type }: AdminContentManagerProps) 
       else if (type === 'breweries') endpoint = '/api/admin/breweries/search';
       else if (type === 'pubs') endpoint = '/api/pubs';
       
-      const params = new URLSearchParams({ q: query, limit: '100' });
+      const params = new URLSearchParams({ q: query, limit: '50' });
       return await fetch(`${endpoint}?${params}`, {
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
       }).then(res => res.json());
     },
     onSuccess: (data) => {
-      setSearchResults(data);
+      setSearchResults(Array.isArray(data) ? data : []);
       setIsSearching(false);
     },
     onError: () => {
-      toast({
-        title: "Errore ricerca",
-        description: "Impossibile cercare nel database",
-        variant: "destructive",
-      });
+      toast({ title: "Errore ricerca", description: "Impossibile cercare nel database", variant: "destructive" });
       setIsSearching(false);
     },
   });
 
-  // Create mutation
+  const deleteMutation = useMutation({
+    mutationFn: async (id: number) => {
+      const endpoint = type === 'beers' ? `/api/admin/beers/${id}` : type === 'breweries' ? `/api/admin/breweries/${id}` : `/api/admin/pubs/${id}`;
+      return await apiRequest(endpoint, { method: "DELETE" });
+    },
+    onSuccess: (data: any) => {
+      toast({ title: "Eliminato", description: data?.message || "Elemento eliminato con successo" });
+      setSearchResults(prev => prev.filter(item => item.id !== deleteTarget?.id));
+      setDeleteTarget(null);
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/stats"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/stats/global"] });
+    },
+    onError: () => {
+      toast({ title: "Errore", description: "Impossibile eliminare l'elemento", variant: "destructive" });
+      setDeleteTarget(null);
+    },
+  });
+
   const createMutation = useMutation({
     mutationFn: async (itemData: any) => {
       let endpoint = '';
@@ -65,59 +77,26 @@ export default function AdminContentManager({ type }: AdminContentManagerProps) 
       return await apiRequest(endpoint, { method: "POST" }, itemData);
     },
     onSuccess: () => {
-      toast({
-        title: "Elemento creato",
-        description: `${type === 'beers' ? 'Birra' : type === 'breweries' ? 'Birrificio' : 'Pub'} creato con successo`,
-      });
+      toast({ title: "Creato", description: `${type === 'beers' ? 'Birra' : type === 'breweries' ? 'Birrificio' : 'Pub'} creato con successo` });
       setCreateDialogOpen(false);
-      if (searchQuery) {
-        searchMutation.mutate(searchQuery);
-      }
+      if (searchQuery) searchMutation.mutate(searchQuery);
     },
     onError: () => {
-      toast({
-        title: "Errore creazione",
-        description: "Impossibile creare l'elemento",
-        variant: "destructive",
-      });
+      toast({ title: "Errore", description: "Impossibile creare l'elemento", variant: "destructive" });
     },
   });
 
-  // Update mutation
-  const updateMutation = useMutation({
-    mutationFn: async ({ id, data }: { id: number; data: any }) => {
-      let endpoint = '';
-      if (type === 'beers') endpoint = `/api/admin/beers/${id}`;
-      else if (type === 'breweries') endpoint = `/api/admin/breweries/${id}`;
-      else if (type === 'pubs') endpoint = `/api/pubs/${id}`;
-      return await apiRequest(endpoint, { method: "PATCH" }, data);
-    },
-    onSuccess: () => {
-      toast({
-        title: "Elemento aggiornato",
-        description: `${type === 'beers' ? 'Birra' : type === 'breweries' ? 'Birrificio' : 'Pub'} aggiornato con successo`,
-      });
-      setEditingItem(null);
-      if (searchQuery) {
-        searchMutation.mutate(searchQuery);
+  const handleSearchInput = (value: string) => {
+    setSearchQuery(value);
+    if (searchTimerRef.current) clearTimeout(searchTimerRef.current);
+    searchTimerRef.current = setTimeout(() => {
+      if (value.trim().length > 0) {
+        setIsSearching(true);
+        searchMutation.mutate(value);
+      } else {
+        setSearchResults([]);
       }
-    },
-    onError: () => {
-      toast({
-        title: "Errore aggiornamento",
-        description: "Impossibile aggiornare l'elemento",
-        variant: "destructive",
-      });
-    },
-  });
-
-  const handleSearch = () => {
-    if (!searchQuery.trim()) {
-      setSearchResults([]);
-      return;
-    }
-    setIsSearching(true);
-    searchMutation.mutate(searchQuery);
+    }, 300);
   };
 
   const handleCreate = (formData: FormData) => {
@@ -125,8 +104,6 @@ export default function AdminContentManager({ type }: AdminContentManagerProps) 
     for (const [key, value] of formData.entries()) {
       data[key] = value;
     }
-    
-    // Convert numeric fields
     if (type === 'beers') {
       data.abv = parseFloat(data.abv);
       data.ibu = data.ibu ? parseInt(data.ibu) : null;
@@ -135,352 +112,130 @@ export default function AdminContentManager({ type }: AdminContentManagerProps) 
       data.latitude = data.latitude ? parseFloat(data.latitude) : null;
       data.longitude = data.longitude ? parseFloat(data.longitude) : null;
     }
-    
     createMutation.mutate(data);
   };
 
-  const handleUpdate = (formData: FormData) => {
-    const data: any = {};
-    for (const [key, value] of formData.entries()) {
-      data[key] = value;
-    }
-    
-    // Convert numeric fields
-    if (type === 'beers') {
-      data.abv = parseFloat(data.abv);
-      data.ibu = data.ibu ? parseInt(data.ibu) : null;
-      data.breweryId = parseInt(data.breweryId);
-    } else if (type === 'pubs') {
-      data.latitude = data.latitude ? parseFloat(data.latitude) : null;
-      data.longitude = data.longitude ? parseFloat(data.longitude) : null;
-    }
-    
-    updateMutation.mutate({ id: editingItem.id, data });
-  };
-
-  const BeerForm = ({ item, onSubmit }: { item?: any; onSubmit: (data: FormData) => void }) => {
-    const { data: breweries = [] } = useQuery({
-      queryKey: ["/api/breweries"],
-    });
-
+  const BeerForm = ({ onSubmit }: { onSubmit: (data: FormData) => void }) => {
     const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
       e.preventDefault();
-      const formData = new FormData(e.currentTarget);
-      onSubmit(formData);
+      onSubmit(new FormData(e.currentTarget));
     };
-
     return (
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
           <Label htmlFor="name">Nome Birra *</Label>
-          <Input 
-            id="name" 
-            name="name" 
-            defaultValue={item?.name} 
-            required 
-            className="mt-1"
-          />
+          <Input id="name" name="name" required className="mt-1" />
         </div>
-
-        <BrewerySearchField defaultBrewery={item?.brewery} />
-
+        <BrewerySearchField />
         <div>
           <Label htmlFor="style">Stile *</Label>
-          <Input 
-            id="style" 
-            name="style" 
-            defaultValue={item?.style} 
-            required 
-            className="mt-1"
-          />
+          <Input id="style" name="style" required className="mt-1" />
         </div>
-
         <div className="grid grid-cols-2 gap-4">
           <div>
             <Label htmlFor="abv">ABV *</Label>
-            <Input 
-              id="abv" 
-              name="abv" 
-              type="number" 
-              step="0.1" 
-              defaultValue={item?.abv} 
-              required 
-              className="mt-1"
-            />
+            <Input id="abv" name="abv" type="number" step="0.1" required className="mt-1" />
           </div>
           <div>
             <Label htmlFor="ibu">IBU</Label>
-            <Input 
-              id="ibu" 
-              name="ibu" 
-              type="number" 
-              defaultValue={item?.ibu} 
-              className="mt-1"
-            />
+            <Input id="ibu" name="ibu" type="number" className="mt-1" />
           </div>
         </div>
-
         <div>
           <Label htmlFor="color">Colore *</Label>
-          <Input 
-            id="color" 
-            name="color" 
-            defaultValue={item?.color} 
-            required 
-            className="mt-1"
-          />
+          <Input id="color" name="color" required className="mt-1" />
         </div>
-
         <div>
-          <Label htmlFor="imageUrl">Immagine Birra *</Label>
-          <div className="flex gap-2 mt-1">
-            <Input 
-              id="imageUrl" 
-              name="imageUrl" 
-              type="url" 
-              defaultValue={item?.imageUrl} 
-              required 
-              placeholder="URL immagine birra"
-              className="flex-1"
-            />
-            <Button type="button" variant="outline" size="sm">
-              <Upload className="w-4 h-4" />
-            </Button>
-          </div>
+          <Label htmlFor="imageUrl">URL Immagine</Label>
+          <Input id="imageUrl" name="imageUrl" type="url" className="mt-1" placeholder="URL immagine birra" />
         </div>
-
         <div>
-          <Label htmlFor="description">Descrizione *</Label>
-          <Textarea 
-            id="description" 
-            name="description" 
-            defaultValue={item?.description} 
-            required 
-            className="mt-1"
-            rows={4}
-          />
+          <Label htmlFor="description">Descrizione</Label>
+          <Textarea id="description" name="description" className="mt-1" rows={3} />
         </div>
-
-        <Button type="submit" className="w-full">
-          {item ? 'Aggiorna Birra' : 'Crea Birra'}
-        </Button>
+        <Button type="submit" className="w-full">Crea Birra</Button>
       </form>
     );
   };
 
-  const BreweryForm = ({ item, onSubmit }: { item?: any; onSubmit: (data: FormData) => void }) => {
+  const BreweryForm = ({ onSubmit }: { onSubmit: (data: FormData) => void }) => {
     const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
       e.preventDefault();
-      const formData = new FormData(e.currentTarget);
-      onSubmit(formData);
+      onSubmit(new FormData(e.currentTarget));
     };
-
     return (
       <form onSubmit={handleSubmit} className="space-y-4">
-      <div>
-        <Label htmlFor="name">Nome Birrificio *</Label>
-        <Input 
-          id="name" 
-          name="name" 
-          defaultValue={item?.name} 
-          required 
-          className="mt-1"
-        />
-      </div>
-
-      <div>
-        <Label htmlFor="location">Nazione *</Label>
-        <Input 
-          id="location" 
-          name="location" 
-          defaultValue={item?.location} 
-          required 
-          className="mt-1"
-        />
-      </div>
-
-      <div>
-        <Label htmlFor="description">Descrizione *</Label>
-        <Textarea 
-          id="description" 
-          name="description" 
-          defaultValue={item?.description} 
-          required 
-          className="mt-1"
-          rows={4}
-        />
-      </div>
-
-      <Button type="submit" className="w-full">
-        {item ? 'Aggiorna Birrificio' : 'Crea Birrificio'}
-      </Button>
+        <div>
+          <Label htmlFor="name">Nome Birrificio *</Label>
+          <Input id="name" name="name" required className="mt-1" />
+        </div>
+        <div>
+          <Label htmlFor="location">Località *</Label>
+          <Input id="location" name="location" required className="mt-1" />
+        </div>
+        <div>
+          <Label htmlFor="region">Regione *</Label>
+          <Input id="region" name="region" required className="mt-1" />
+        </div>
+        <div>
+          <Label htmlFor="description">Descrizione</Label>
+          <Textarea id="description" name="description" className="mt-1" rows={3} />
+        </div>
+        <Button type="submit" className="w-full">Crea Birrificio</Button>
       </form>
     );
   };
 
-  const PubForm = ({ item, onSubmit }: { item?: any; onSubmit: (data: FormData) => void }) => {
+  const PubForm = ({ onSubmit }: { onSubmit: (data: FormData) => void }) => {
     const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
       e.preventDefault();
-      const formData = new FormData(e.currentTarget);
-      onSubmit(formData);
+      onSubmit(new FormData(e.currentTarget));
     };
-
     return (
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
           <Label htmlFor="name">Nome Pub *</Label>
-          <Input 
-            id="name" 
-            name="name" 
-            defaultValue={item?.name} 
-            required 
-            className="mt-1"
-          />
+          <Input id="name" name="name" required className="mt-1" />
         </div>
-
         <div>
           <Label htmlFor="address">Indirizzo *</Label>
-          <Input 
-            id="address" 
-            name="address" 
-            defaultValue={item?.address} 
-            required 
-            className="mt-1"
-          />
+          <Input id="address" name="address" required className="mt-1" />
         </div>
-
         <div className="grid grid-cols-2 gap-4">
           <div>
             <Label htmlFor="city">Città *</Label>
-            <Input 
-              id="city" 
-              name="city" 
-              defaultValue={item?.city} 
-              required 
-              className="mt-1"
-            />
+            <Input id="city" name="city" required className="mt-1" />
           </div>
           <div>
-            <Label htmlFor="phone">Telefono *</Label>
-            <Input 
-              id="phone" 
-              name="phone" 
-              type="tel" 
-              defaultValue={item?.phone} 
-              required 
-              className="mt-1"
-            />
+            <Label htmlFor="phone">Telefono</Label>
+            <Input id="phone" name="phone" type="tel" className="mt-1" />
           </div>
         </div>
-
         <div>
-          <Label htmlFor="email">Email *</Label>
-          <Input 
-            id="email" 
-            name="email" 
-            type="email" 
-            defaultValue={item?.email} 
-            required 
-            className="mt-1"
-          />
+          <Label htmlFor="description">Descrizione</Label>
+          <Textarea id="description" name="description" className="mt-1" rows={3} />
         </div>
-
-        <div>
-          <Label htmlFor="description">Descrizione *</Label>
-          <Textarea 
-            id="description" 
-            name="description" 
-            defaultValue={item?.description} 
-            required 
-            className="mt-1"
-            rows={4}
-          />
-        </div>
-
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <Label htmlFor="latitude">Latitudine</Label>
-            <Input 
-              id="latitude" 
-              name="latitude" 
-              type="number" 
-              step="0.000001" 
-              defaultValue={item?.latitude} 
-              className="mt-1"
-            />
-          </div>
-          <div>
-            <Label htmlFor="longitude">Longitudine</Label>
-            <Input 
-              id="longitude" 
-              name="longitude" 
-              type="number" 
-              step="0.000001" 
-              defaultValue={item?.longitude} 
-              className="mt-1"
-            />
-          </div>
-        </div>
-
-        <div>
-          <Label htmlFor="logoUrl">URL Logo</Label>
-          <Input 
-            id="logoUrl" 
-            name="logoUrl" 
-            type="url" 
-            defaultValue={item?.logoUrl} 
-            className="mt-1"
-          />
-        </div>
-
-        <div>
-          <Label htmlFor="coverImageUrl">URL Immagine di Copertina</Label>
-          <Input 
-            id="coverImageUrl" 
-            name="coverImageUrl" 
-            type="url" 
-            defaultValue={item?.coverImageUrl} 
-            className="mt-1"
-          />
-        </div>
-
-        <Button type="submit" className="w-full">
-          {item ? 'Aggiorna Pub' : 'Crea Pub'}
-        </Button>
+        <Button type="submit" className="w-full">Crea Pub</Button>
       </form>
     );
   };
 
-  // Component for brewery search with autocomplete
   const BrewerySearchField = ({ defaultBrewery }: { defaultBrewery?: any }) => {
-    const [searchQuery, setSearchQuery] = useState(defaultBrewery?.name || "");
+    const [query, setQuery] = useState(defaultBrewery?.name || "");
     const [selectedBrewery, setSelectedBrewery] = useState(defaultBrewery);
-    const [breweryResults, setBreweryResults] = useState<any[]>([]);
+    const [results, setResults] = useState<any[]>([]);
     const [showResults, setShowResults] = useState(false);
 
-    const searchBreweries = async (query: string) => {
-      if (query.length < 2) {
-        setBreweryResults([]);
-        return;
-      }
-      
+    const searchBreweries = async (q: string) => {
+      if (q.length < 2) { setResults([]); return; }
       try {
-        const response = await fetch(`/api/admin/breweries/search?q=${encodeURIComponent(query)}&limit=10`, {
-          credentials: 'include'
-        });
-        const results = await response.json();
-        setBreweryResults(results);
+        const response = await fetch(`/api/admin/breweries/search?q=${encodeURIComponent(q)}&limit=10`, { credentials: 'include' });
+        const data = await response.json();
+        setResults(data);
         setShowResults(true);
       } catch (error) {
         console.error('Error searching breweries:', error);
       }
-    };
-
-    const selectBrewery = (brewery: any) => {
-      setSelectedBrewery(brewery);
-      setSearchQuery(brewery.name);
-      setShowResults(false);
-      setBreweryResults([]);
     };
 
     return (
@@ -489,40 +244,31 @@ export default function AdminContentManager({ type }: AdminContentManagerProps) 
         <Input
           id="brewerySearch"
           type="text"
-          value={searchQuery}
-          onChange={(e) => {
-            setSearchQuery(e.target.value);
-            searchBreweries(e.target.value);
-          }}
-          onFocus={() => {
-            if (breweryResults.length > 0) setShowResults(true);
-          }}
-          onBlur={() => {
-            // Delay to allow clicking on results
-            setTimeout(() => setShowResults(false), 200);
-          }}
+          value={query}
+          onChange={(e) => { setQuery(e.target.value); searchBreweries(e.target.value); }}
+          onFocus={() => { if (results.length > 0) setShowResults(true); }}
+          onBlur={() => setTimeout(() => setShowResults(false), 200)}
           placeholder="Cerca birrificio..."
           required
           className="mt-1"
         />
-        <input
-          type="hidden"
-          name="breweryId"
-          value={selectedBrewery?.id || ""}
-          required
-        />
-        
-        {showResults && breweryResults.length > 0 && (
+        <input type="hidden" name="breweryId" value={selectedBrewery?.id || ""} required />
+        {showResults && results.length > 0 && (
           <div className="absolute z-10 w-full mt-1 bg-white dark:bg-gray-800 border rounded-md shadow-lg max-h-60 overflow-y-auto">
-            {breweryResults.map((brewery) => (
+            {results.map((brewery) => (
               <button
                 key={brewery.id}
                 type="button"
-                onClick={() => selectBrewery(brewery)}
-                className="w-full px-3 py-2 text-left hover:bg-gray-100 dark:hover:bg-gray-700 border-b last:border-b-0"
+                onClick={() => { setSelectedBrewery(brewery); setQuery(brewery.name); setShowResults(false); }}
+                className="w-full px-3 py-2 text-left hover:bg-gray-100 dark:hover:bg-gray-700 border-b last:border-b-0 flex items-center gap-3"
               >
-                <div className="font-medium">{brewery.name}</div>
-                <div className="text-sm text-gray-600 dark:text-gray-400">{brewery.location}</div>
+                {brewery.logoUrl && (
+                  <img src={brewery.logoUrl} alt="" className="w-8 h-8 rounded-full object-cover" />
+                )}
+                <div>
+                  <div className="font-medium">{brewery.name}</div>
+                  <div className="text-sm text-gray-500">{brewery.location}{brewery.country ? `, ${brewery.country}` : ''}</div>
+                </div>
               </button>
             ))}
           </div>
@@ -531,86 +277,134 @@ export default function AdminContentManager({ type }: AdminContentManagerProps) 
     );
   };
 
+  const getItemLink = (item: any) => {
+    if (type === 'beers') return `/beer/${item.id}`;
+    if (type === 'breweries') return `/brewery/${item.id}`;
+    return `/pub/${item.id}`;
+  };
+
+  const typeLabel = type === 'beers' ? 'Birre' : type === 'breweries' ? 'Birrifici' : 'Pub';
+
   return (
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           {type === 'beers' ? <BeerIcon className="w-5 h-5" /> : type === 'breweries' ? <Building2 className="w-5 h-5" /> : <MapPin className="w-5 h-5" />}
-          Gestione {type === 'beers' ? 'Birre' : type === 'breweries' ? 'Birrifici' : 'Pub'}
+          Gestione {typeLabel}
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
-        {/* Search Section - Real-time search */}
         <div className="flex gap-2">
-          <Input
-            placeholder={`Cerca ${type === 'beers' ? 'birre' : type === 'breweries' ? 'birrifici' : 'pub'}...`}
-            value={searchQuery}
-            onChange={(e) => {
-              setSearchQuery(e.target.value);
-              // Auto-search after 300ms delay
-              setTimeout(() => {
-                if (e.target.value.trim().length > 0) {
-                  setIsSearching(true);
-                  searchMutation.mutate(e.target.value);
-                } else {
-                  setSearchResults([]);
-                }
-              }, 300);
-            }}
-          />
-          <Button onClick={handleSearch} disabled={isSearching}>
-            <Search className="w-4 h-4" />
-          </Button>
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+            <Input
+              placeholder={`Cerca ${type === 'beers' ? 'birre (anche per birrificio)...' : type === 'breweries' ? 'birrifici...' : 'pub...'}`}
+              value={searchQuery}
+              onChange={(e) => handleSearchInput(e.target.value)}
+              className="pl-10"
+            />
+          </div>
+          {isSearching && <Loader2 className="w-5 h-5 animate-spin text-gray-400 self-center" />}
         </div>
 
-        {/* Results */}
-        {searchResults.length > 0 ? (
+        {searchResults.length > 0 && (
           <div className="space-y-2">
-            <p className="text-sm text-gray-600">
-              Trovati {searchResults.length} risultati
+            <p className="text-sm text-gray-600 dark:text-gray-400">
+              {searchResults.length} risultati
             </p>
-            {searchResults.map((item) => (
-              <div key={item.id} className="flex items-center justify-between p-3 border rounded-lg">
-                <div className="flex-1">
-                  <h4 className="font-medium">{item.name}</h4>
+            <div className="space-y-2 max-h-[600px] overflow-y-auto">
+              {searchResults.map((item) => (
+                <div key={item.id} className="flex items-center gap-3 p-3 border rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
                   {type === 'beers' && (
-                    <div className="flex gap-2 mt-1">
-                      <Badge variant="outline">{item.style}</Badge>
-                      <Badge variant="outline">{item.abv}% ABV</Badge>
-                      {item.brewery && (
-                        <Badge variant="secondary">{item.brewery.name}</Badge>
+                    <div className="flex-shrink-0">
+                      {item.imageUrl ? (
+                        <img src={item.imageUrl} alt={item.name} className="w-12 h-12 rounded-lg object-cover border" />
+                      ) : (
+                        <div className="w-12 h-12 rounded-lg bg-amber-100 dark:bg-amber-900 flex items-center justify-center">
+                          <BeerIcon className="w-6 h-6 text-amber-600" />
+                        </div>
                       )}
                     </div>
                   )}
                   {type === 'breweries' && (
-                    <p className="text-sm text-gray-600">{item.location}</p>
+                    <div className="flex-shrink-0">
+                      {item.logoUrl ? (
+                        <img src={item.logoUrl} alt={item.name} className="w-12 h-12 rounded-full object-cover border" />
+                      ) : (
+                        <div className="w-12 h-12 rounded-full bg-amber-100 dark:bg-amber-900 flex items-center justify-center">
+                          <Building2 className="w-6 h-6 text-amber-600" />
+                        </div>
+                      )}
+                    </div>
                   )}
                   {type === 'pubs' && (
-                    <p className="text-sm text-gray-600">{item.address}</p>
+                    <div className="flex-shrink-0">
+                      {item.logoUrl ? (
+                        <img src={item.logoUrl} alt={item.name} className="w-12 h-12 rounded-lg object-cover border" />
+                      ) : (
+                        <div className="w-12 h-12 rounded-lg bg-blue-100 dark:bg-blue-900 flex items-center justify-center">
+                          <MapPin className="w-6 h-6 text-blue-600" />
+                        </div>
+                      )}
+                    </div>
                   )}
-                </div>
-                <div className="flex gap-2">
-                  <Link href={type === 'beers' ? `/beer/${item.id}?edit=true` : type === 'breweries' ? `/brewery/${item.id}?edit=true` : `/pub/${item.id}?edit=true`}>
-                    <Button variant="outline" size="sm">
-                      <ExternalLink className="w-4 h-4 mr-1" />
-                      Apri
+
+                  <div className="flex-1 min-w-0">
+                    <h4 className="font-semibold text-gray-900 dark:text-white truncate">{item.name}</h4>
+                    {type === 'beers' && (
+                      <div className="flex flex-wrap items-center gap-1.5 mt-1">
+                        {item.brewery && (
+                          <div className="flex items-center gap-1">
+                            {item.brewery.logoUrl && (
+                              <img src={item.brewery.logoUrl} alt="" className="w-4 h-4 rounded-full object-cover" />
+                            )}
+                            <span className="text-sm font-medium text-amber-700 dark:text-amber-400">{item.brewery.name}</span>
+                          </div>
+                        )}
+                        {item.style && <Badge variant="outline" className="text-xs">{item.style}</Badge>}
+                        {item.abv != null && <Badge variant="secondary" className="text-xs">{item.abv}%</Badge>}
+                        {item.isGlutenFree && <Badge className="text-xs bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">GF</Badge>}
+                        {item.isAlcoholFree && <Badge className="text-xs bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">0.0%</Badge>}
+                      </div>
+                    )}
+                    {type === 'breweries' && (
+                      <p className="text-sm text-gray-500 dark:text-gray-400 truncate">
+                        {item.location}{item.country ? `, ${item.country}` : ''}
+                      </p>
+                    )}
+                    {type === 'pubs' && (
+                      <p className="text-sm text-gray-500 dark:text-gray-400 truncate">
+                        {item.city ? `${item.city} - ` : ''}{item.address || ''}
+                      </p>
+                    )}
+                  </div>
+
+                  <div className="flex gap-2 flex-shrink-0">
+                    <Link href={getItemLink(item)}>
+                      <Button variant="outline" size="sm">
+                        <ExternalLink className="w-4 h-4 mr-1" />
+                        Apri
+                      </Button>
+                    </Link>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="text-red-600 border-red-200 hover:bg-red-50 dark:hover:bg-red-950"
+                      onClick={() => setDeleteTarget(item)}
+                    >
+                      <Trash2 className="w-4 h-4" />
                     </Button>
-                  </Link>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setEditingItem(item)}
-                  >
-                    <Edit className="w-4 h-4" />
-                  </Button>
+                  </div>
                 </div>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
-        ) : searchQuery && !isSearching ? (
+        )}
+
+        {searchQuery && !isSearching && searchResults.length === 0 && (
           <div className="text-center py-8">
             <p className="text-gray-500 mb-4">
-              Nessun risultato trovato per "{searchQuery}"
+              Nessun risultato per "{searchQuery}"
             </p>
             <Dialog open={createDialogOpen} onOpenChange={setCreateDialogOpen}>
               <DialogTrigger asChild>
@@ -625,38 +419,41 @@ export default function AdminContentManager({ type }: AdminContentManagerProps) 
                     Crea {type === 'beers' ? 'Nuova Birra' : type === 'breweries' ? 'Nuovo Birrificio' : 'Nuovo Pub'}
                   </DialogTitle>
                 </DialogHeader>
-                {type === 'beers' ? (
-                  <BeerForm onSubmit={handleCreate} />
-                ) : type === 'breweries' ? (
-                  <BreweryForm onSubmit={handleCreate} />
-                ) : (
-                  <PubForm onSubmit={handleCreate} />
-                )}
+                {type === 'beers' ? <BeerForm onSubmit={handleCreate} /> : type === 'breweries' ? <BreweryForm onSubmit={handleCreate} /> : <PubForm onSubmit={handleCreate} />}
               </DialogContent>
             </Dialog>
           </div>
-        ) : null}
+        )}
 
-        {/* Edit Dialog */}
-        <Dialog open={!!editingItem} onOpenChange={() => setEditingItem(null)}>
-          <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
-            <DialogHeader>
-              <DialogTitle>
-                Modifica {type === 'beers' ? 'Birra' : type === 'breweries' ? 'Birrificio' : 'Pub'}
-              </DialogTitle>
-            </DialogHeader>
-            {editingItem && (
-              type === 'beers' ? (
-                <BeerForm item={editingItem} onSubmit={handleUpdate} />
-              ) : type === 'breweries' ? (
-                <BreweryForm item={editingItem} onSubmit={handleUpdate} />
-              ) : (
-                <PubForm item={editingItem} onSubmit={handleUpdate} />
-              )
-            )}
-          </DialogContent>
-        </Dialog>
+        {!searchQuery && (
+          <div className="text-center py-12 text-gray-500">
+            <Search className="w-12 h-12 mx-auto mb-4 text-gray-300" />
+            <p className="text-lg font-medium">Cerca {typeLabel.toLowerCase()}</p>
+            <p className="text-sm mt-1">Inizia a digitare per trovare {type === 'beers' ? 'birre per nome o birrificio' : type === 'breweries' ? 'birrifici per nome' : 'pub per nome o città'}</p>
+          </div>
+        )}
       </CardContent>
+
+      <AlertDialog open={!!deleteTarget} onOpenChange={(open) => { if (!open) setDeleteTarget(null); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Sei sicuro di eliminare "{deleteTarget?.name}"?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Questa azione non può essere annullata. {type === 'beers' ? 'La birra' : type === 'breweries' ? 'Il birrificio e tutte le sue birre' : 'Il pub'} verrà eliminato permanentemente dal database.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Annulla</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-red-600 hover:bg-red-700"
+              onClick={() => { if (deleteTarget) deleteMutation.mutate(deleteTarget.id); }}
+              disabled={deleteMutation.isPending}
+            >
+              {deleteMutation.isPending ? 'Eliminando...' : 'Elimina'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Card>
   );
 }

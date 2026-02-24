@@ -1,4 +1,3 @@
-import { useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -8,21 +7,45 @@ import {
   Crown, 
   BarChart3, 
   Users, 
-  MessageSquare,
-  Settings,
   Shield,
   Database,
   TrendingUp,
   Activity,
   Bell,
-  Search,
-  Filter,
-  RefreshCw,
   ChevronRight,
-  ExternalLink,
-  FileText
+  FileText,
+  Beer,
+  Store,
+  Building2,
+  ArrowLeft,
+  User,
+  Clock
 } from "lucide-react";
 import { Link } from "wouter";
+import { formatDistanceToNow } from "date-fns";
+import { it } from "date-fns/locale";
+
+interface AdminStats {
+  totalUsers: number;
+  totalPubs: number;
+  totalBreweries: number;
+  totalBeers: number;
+}
+
+interface GlobalStats {
+  totalBeers: number;
+  totalBreweries: number;
+  uniqueStyles: number;
+}
+
+interface RecentActivity {
+  type: string;
+  action: string;
+  name: string;
+  detail?: string;
+  time: string;
+  icon: string;
+}
 
 export default function AdminDashboardNew() {
   const { user, isAuthenticated, isLoading } = useAuth();
@@ -37,32 +60,23 @@ export default function AdminDashboardNew() {
     enabled: isAuthenticated && (user as any)?.userType === 'admin',
   });
 
-  const [notifications] = useState([
-    {
-      id: 1,
-      type: 'review',
-      title: 'Nuove recensioni da moderare',
-      message: '0 recensioni in attesa di approvazione',
-      time: '2 ore fa',
-      priority: 'low'
-    },
-    {
-      id: 2,
-      type: 'database',
-      title: 'Database aggiornato',
-      message: 'Aggiunte 113 nuove birre autentiche al database globale',
-      time: '1 giorno fa',
-      priority: 'medium'
-    },
-    {
-      id: 3,
-      type: 'system',
-      title: 'Sistema ottimizzato',
-      message: 'Tutte le 29.753 birre ora hanno immagini appropriate',
-      time: '2 giorni fa',
-      priority: 'high'
-    }
-  ]);
+  const { data: adminStats } = useQuery<AdminStats>({
+    queryKey: ["/api/admin/stats"],
+    enabled: isAuthenticated && (user as any)?.userType === 'admin',
+    refetchInterval: 30000,
+  });
+
+  const { data: globalStats } = useQuery<GlobalStats>({
+    queryKey: ["/api/stats/global"],
+    enabled: isAuthenticated && (user as any)?.userType === 'admin',
+    refetchInterval: 30000,
+  });
+
+  const { data: recentActivity = [] } = useQuery<RecentActivity[]>({
+    queryKey: ["/api/admin/recent-activity"],
+    enabled: isAuthenticated && (user as any)?.userType === 'admin',
+    refetchInterval: 30000,
+  });
 
   if (isLoading) {
     return (
@@ -81,46 +95,57 @@ export default function AdminDashboardNew() {
     return null;
   }
 
+  const activityIcon = (type: string) => {
+    switch (type) {
+      case 'user': return <User className="w-4 h-4 text-blue-500" />;
+      case 'pub': return <Store className="w-4 h-4 text-orange-500" />;
+      case 'brewery': return <Building2 className="w-4 h-4 text-amber-500" />;
+      default: return <Bell className="w-4 h-4 text-gray-500" />;
+    }
+  };
+
   return (
     <div className="container mx-auto px-4 py-6 max-w-7xl space-y-8">
-      {/* Header */}
+      <div className="flex items-center gap-4 mb-2">
+        <Link href="/">
+          <Button variant="outline" size="sm">
+            <ArrowLeft className="w-4 h-4 mr-2" />
+            Home
+          </Button>
+        </Link>
+      </div>
+
       <div className="bg-gradient-to-r from-indigo-600 to-purple-600 rounded-2xl p-8 text-white relative overflow-hidden">
         <div className="absolute inset-0 bg-black/10"></div>
         <div className="relative z-10">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-6">
-              <div className="w-20 h-20 bg-white/20 rounded-2xl flex items-center justify-center backdrop-blur-sm">
-                <Crown className="w-10 h-10" />
-              </div>
-              <div>
-                <h1 className="text-4xl font-bold mb-2">Centro di Controllo Admin</h1>
-                <p className="text-white/90 text-lg">
-                  Benvenuto Mario - Gestione completa sistema Fermenta.to
-                </p>
-                <div className="flex items-center gap-4 mt-3">
-                  <Badge className="bg-white/20 border-white/30">
-                    29.753 birre autentiche
-                  </Badge>
-                  <Badge className="bg-white/20 border-white/30">
-                    2.968 birrifici mondiali
-                  </Badge>
-                  <Badge className="bg-white/20 border-white/30">
-                    Sistema operativo
-                  </Badge>
-                </div>
-              </div>
+          <div className="flex items-center gap-6">
+            <div className="w-20 h-20 bg-white/20 rounded-2xl flex items-center justify-center backdrop-blur-sm">
+              <Crown className="w-10 h-10" />
             </div>
-            <div className="flex gap-3">
-              <Button variant="outline" className="bg-white/10 border-white/20 text-white hover:bg-white/20">
-                <RefreshCw className="w-4 h-4 mr-2" />
-                Aggiorna
-              </Button>
+            <div>
+              <h1 className="text-4xl font-bold mb-2">Centro di Controllo Admin</h1>
+              <p className="text-white/90 text-lg">
+                Benvenuto {(user as any)?.username || 'Admin'} - Gestione completa sistema Fermenta.to
+              </p>
+              <div className="flex items-center gap-4 mt-3 flex-wrap">
+                <Badge className="bg-white/20 border-white/30">
+                  {adminStats?.totalBeers?.toLocaleString() || globalStats?.totalBeers?.toLocaleString() || '...'} birre
+                </Badge>
+                <Badge className="bg-white/20 border-white/30">
+                  {adminStats?.totalBreweries?.toLocaleString() || globalStats?.totalBreweries?.toLocaleString() || '...'} birrifici
+                </Badge>
+                <Badge className="bg-white/20 border-white/30">
+                  {adminStats?.totalPubs?.toLocaleString() || '...'} pub
+                </Badge>
+                <Badge className="bg-white/20 border-white/30">
+                  {adminStats?.totalUsers?.toLocaleString() || '...'} utenti
+                </Badge>
+              </div>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Quick Actions */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <Link href="/admin/analytics">
           <Card className="hover:shadow-lg transition-all duration-300 cursor-pointer border-l-4 border-l-blue-500 group">
@@ -151,7 +176,7 @@ export default function AdminDashboardNew() {
                     <h3 className="text-lg font-semibold">Gestione Contenuti</h3>
                   </div>
                   <p className="text-sm text-gray-600 dark:text-gray-400">
-                    Modifica birre e birrifici
+                    Birre, birrifici e pub
                   </p>
                 </div>
                 <ChevronRight className="w-5 h-5 text-gray-400 group-hover:text-green-500 transition-colors" />
@@ -186,7 +211,7 @@ export default function AdminDashboardNew() {
                 <div>
                   <div className="flex items-center gap-3 mb-2">
                     <Users className="w-8 h-8 text-purple-500" />
-                    <h3 className="text-lg font-semibold">Utenti & Pub</h3>
+                    <h3 className="text-lg font-semibold">Utenti</h3>
                   </div>
                   <p className="text-sm text-gray-600 dark:text-gray-400">
                     Gestione community
@@ -205,7 +230,7 @@ export default function AdminDashboardNew() {
                 <div>
                   <div className="flex items-center gap-3 mb-2">
                     <FileText className="w-8 h-8 text-amber-500" />
-                    <h3 className="text-lg font-semibold">Richieste Registrazione</h3>
+                    <h3 className="text-lg font-semibold">Richieste</h3>
                     {pendingCount && pendingCount.count > 0 && (
                       <Badge className="bg-red-500 text-white animate-pulse">
                         {pendingCount.count} pub
@@ -218,7 +243,7 @@ export default function AdminDashboardNew() {
                     )}
                   </div>
                   <p className="text-sm text-gray-600 dark:text-gray-400">
-                    Nuove registrazioni locali e birrifici
+                    Nuove registrazioni
                   </p>
                 </div>
                 <ChevronRight className="w-5 h-5 text-gray-400 group-hover:text-amber-500 transition-colors" />
@@ -228,13 +253,11 @@ export default function AdminDashboardNew() {
         </Link>
       </div>
 
-      {/* Dashboard Overview */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Sistema Status */}
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <Activity className="w-5 h-5" />
+              <Activity className="w-5 h-5 text-green-500" />
               Stato Sistema
             </CardTitle>
           </CardHeader>
@@ -243,34 +266,36 @@ export default function AdminDashboardNew() {
               <div className="flex items-center gap-3">
                 <div className="w-3 h-3 bg-green-500 rounded-full animate-pulse"></div>
                 <div>
-                  <p className="font-medium text-green-800 dark:text-green-200">Database Online</p>
-                  <p className="text-sm text-green-600 dark:text-green-300">29.753 birre attive</p>
+                  <p className="font-medium text-green-800 dark:text-green-200">Database</p>
+                  <p className="text-sm text-green-600 dark:text-green-300">
+                    {(adminStats?.totalBeers || globalStats?.totalBeers || 0).toLocaleString()} birre
+                  </p>
                 </div>
               </div>
               <Badge className="bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">
-                100%
+                Online
               </Badge>
             </div>
 
             <div className="flex items-center justify-between p-4 rounded-lg bg-blue-50 dark:bg-blue-900/10">
               <div className="flex items-center gap-3">
-                <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
+                <div className="w-3 h-3 bg-blue-500 rounded-full animate-pulse"></div>
                 <div>
-                  <p className="font-medium text-blue-800 dark:text-blue-200">API Performance</p>
-                  <p className="text-sm text-blue-600 dark:text-blue-300">Risposta &lt; 500ms</p>
+                  <p className="font-medium text-blue-800 dark:text-blue-200">API</p>
+                  <p className="text-sm text-blue-600 dark:text-blue-300">Risposte in tempo reale</p>
                 </div>
               </div>
               <Badge className="bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">
-                Ottimo
+                Attivo
               </Badge>
             </div>
 
             <div className="flex items-center justify-between p-4 rounded-lg bg-purple-50 dark:bg-purple-900/10">
               <div className="flex items-center gap-3">
-                <div className="w-3 h-3 bg-purple-500 rounded-full"></div>
+                <div className="w-3 h-3 bg-purple-500 rounded-full animate-pulse"></div>
                 <div>
-                  <p className="font-medium text-purple-800 dark:text-purple-200">Backup Sistema</p>
-                  <p className="text-sm text-purple-600 dark:text-purple-300">Ultimo: 2 ore fa</p>
+                  <p className="font-medium text-purple-800 dark:text-purple-200">Push Notifications</p>
+                  <p className="text-sm text-purple-600 dark:text-purple-300">WebPush attivo</p>
                 </div>
               </div>
               <Badge className="bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200">
@@ -280,120 +305,102 @@ export default function AdminDashboardNew() {
           </CardContent>
         </Card>
 
-        {/* Statistiche Rapide */}
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <TrendingUp className="w-5 h-5" />
+              <TrendingUp className="w-5 h-5 text-blue-500" />
               Statistiche Live
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="text-center p-4 rounded-lg bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900/20 dark:to-blue-800/20">
-              <div className="text-3xl font-bold text-blue-600 dark:text-blue-400 mb-1">
-                29,753
+            <div className="flex items-center justify-between p-3 rounded-lg bg-gradient-to-r from-blue-50 to-blue-100 dark:from-blue-900/20 dark:to-blue-800/20">
+              <div className="flex items-center gap-3">
+                <Beer className="w-5 h-5 text-blue-600" />
+                <span className="font-medium text-blue-800 dark:text-blue-200">Birre</span>
               </div>
-              <p className="text-sm font-medium text-blue-700 dark:text-blue-300">Birre Autentiche</p>
+              <span className="text-xl font-bold text-blue-600 dark:text-blue-400">
+                {(adminStats?.totalBeers || globalStats?.totalBeers || 0).toLocaleString()}
+              </span>
             </div>
 
-            <div className="text-center p-4 rounded-lg bg-gradient-to-br from-green-50 to-green-100 dark:from-green-900/20 dark:to-green-800/20">
-              <div className="text-3xl font-bold text-green-600 dark:text-green-400 mb-1">
-                2,968
+            <div className="flex items-center justify-between p-3 rounded-lg bg-gradient-to-r from-amber-50 to-amber-100 dark:from-amber-900/20 dark:to-amber-800/20">
+              <div className="flex items-center gap-3">
+                <Building2 className="w-5 h-5 text-amber-600" />
+                <span className="font-medium text-amber-800 dark:text-amber-200">Birrifici</span>
               </div>
-              <p className="text-sm font-medium text-green-700 dark:text-green-300">Birrifici Mondiali</p>
+              <span className="text-xl font-bold text-amber-600 dark:text-amber-400">
+                {(adminStats?.totalBreweries || globalStats?.totalBreweries || 0).toLocaleString()}
+              </span>
             </div>
 
-            <div className="text-center p-4 rounded-lg bg-gradient-to-br from-purple-50 to-purple-100 dark:from-purple-900/20 dark:to-purple-800/20">
-              <div className="text-3xl font-bold text-purple-600 dark:text-purple-400 mb-1">
-                293
+            <div className="flex items-center justify-between p-3 rounded-lg bg-gradient-to-r from-orange-50 to-orange-100 dark:from-orange-900/20 dark:to-orange-800/20">
+              <div className="flex items-center gap-3">
+                <Store className="w-5 h-5 text-orange-600" />
+                <span className="font-medium text-orange-800 dark:text-orange-200">Pub</span>
               </div>
-              <p className="text-sm font-medium text-purple-700 dark:text-purple-300">Stili Unici</p>
+              <span className="text-xl font-bold text-orange-600 dark:text-orange-400">
+                {(adminStats?.totalPubs || 0).toLocaleString()}
+              </span>
             </div>
+
+            <div className="flex items-center justify-between p-3 rounded-lg bg-gradient-to-r from-purple-50 to-purple-100 dark:from-purple-900/20 dark:to-purple-800/20">
+              <div className="flex items-center gap-3">
+                <Users className="w-5 h-5 text-purple-600" />
+                <span className="font-medium text-purple-800 dark:text-purple-200">Utenti</span>
+              </div>
+              <span className="text-xl font-bold text-purple-600 dark:text-purple-400">
+                {(adminStats?.totalUsers || 0).toLocaleString()}
+              </span>
+            </div>
+
+            {globalStats?.uniqueStyles && (
+              <div className="flex items-center justify-between p-3 rounded-lg bg-gradient-to-r from-green-50 to-green-100 dark:from-green-900/20 dark:to-green-800/20">
+                <div className="flex items-center gap-3">
+                  <Database className="w-5 h-5 text-green-600" />
+                  <span className="font-medium text-green-800 dark:text-green-200">Stili</span>
+                </div>
+                <span className="text-xl font-bold text-green-600 dark:text-green-400">
+                  {globalStats.uniqueStyles}
+                </span>
+              </div>
+            )}
           </CardContent>
         </Card>
 
-        {/* Notifiche */}
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <Bell className="w-5 h-5" />
+              <Clock className="w-5 h-5 text-amber-500" />
               Attività Recenti
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
-            {notifications.map((notification) => (
-              <div key={notification.id} className="p-3 rounded-lg bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
-                <div className="flex items-start justify-between">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2 mb-1">
-                      <div className={`w-2 h-2 rounded-full ${
-                        notification.priority === 'high' ? 'bg-red-500' :
-                        notification.priority === 'medium' ? 'bg-yellow-500' :
-                        'bg-green-500'
-                      }`}></div>
-                      <p className="text-sm font-medium">{notification.title}</p>
+            {recentActivity.length > 0 ? (
+              recentActivity.map((activity, index) => (
+                <div key={index} className="p-3 rounded-lg bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+                  <div className="flex items-start gap-3">
+                    <div className="mt-0.5">{activityIcon(activity.type)}</div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-gray-900 dark:text-white">{activity.action}</p>
+                      <p className="text-xs text-gray-700 dark:text-gray-300 font-medium truncate">{activity.name}</p>
+                      {activity.detail && (
+                        <p className="text-xs text-gray-500 dark:text-gray-400">{activity.detail}</p>
+                      )}
+                      {activity.time && (
+                        <p className="text-xs text-gray-400 mt-1">
+                          {formatDistanceToNow(new Date(activity.time), { addSuffix: true, locale: it })}
+                        </p>
+                      )}
                     </div>
-                    <p className="text-xs text-gray-600 dark:text-gray-400 mb-1">
-                      {notification.message}
-                    </p>
-                    <p className="text-xs text-gray-500">{notification.time}</p>
                   </div>
                 </div>
-              </div>
-            ))}
-            
-            <Button variant="outline" size="sm" className="w-full mt-3">
-              <ExternalLink className="w-4 h-4 mr-2" />
-              Vedi tutte le notifiche
-            </Button>
+              ))
+            ) : (
+              <p className="text-sm text-gray-500 text-center py-4">Nessuna attività recente</p>
+            )}
           </CardContent>
         </Card>
       </div>
-
-      {/* Quick Stats */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Database className="w-5 h-5" />
-            Database Globale - Panoramica Completa
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-            <div className="text-center p-6 rounded-xl bg-gradient-to-br from-emerald-50 to-emerald-100 dark:from-emerald-900/20 dark:to-emerald-800/20">
-              <div className="text-4xl font-bold text-emerald-600 dark:text-emerald-400 mb-2">
-                100%
-              </div>
-              <p className="text-sm font-medium text-emerald-700 dark:text-emerald-300">Autenticità Dati</p>
-              <p className="text-xs text-emerald-600 dark:text-emerald-400 mt-1">Verificati da fonti reali</p>
-            </div>
-            
-            <div className="text-center p-6 rounded-xl bg-gradient-to-br from-sky-50 to-sky-100 dark:from-sky-900/20 dark:to-sky-800/20">
-              <div className="text-4xl font-bold text-sky-600 dark:text-sky-400 mb-2">
-                20+
-              </div>
-              <p className="text-sm font-medium text-sky-700 dark:text-sky-300">Paesi Coperti</p>
-              <p className="text-xs text-sky-600 dark:text-sky-400 mt-1">Copertura mondiale</p>
-            </div>
-            
-            <div className="text-center p-6 rounded-xl bg-gradient-to-br from-amber-50 to-amber-100 dark:from-amber-900/20 dark:to-amber-800/20">
-              <div className="text-4xl font-bold text-amber-600 dark:text-amber-400 mb-2">
-                100%
-              </div>
-              <p className="text-sm font-medium text-amber-700 dark:text-amber-300">Immagini</p>
-              <p className="text-xs text-amber-600 dark:text-amber-400 mt-1">Copertura completa</p>
-            </div>
-            
-            <div className="text-center p-6 rounded-xl bg-gradient-to-br from-rose-50 to-rose-100 dark:from-rose-900/20 dark:to-rose-800/20">
-              <div className="text-4xl font-bold text-rose-600 dark:text-rose-400 mb-2">
-                24/7
-              </div>
-              <p className="text-sm font-medium text-rose-700 dark:text-rose-300">Monitoraggio</p>
-              <p className="text-xs text-rose-600 dark:text-rose-400 mt-1">Sistema sempre attivo</p>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
     </div>
   );
 }
