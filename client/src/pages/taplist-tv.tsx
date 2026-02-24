@@ -1,55 +1,10 @@
 import { useParams } from "wouter";
 import { useQuery } from "@tanstack/react-query";
-import { useEffect, useState, useMemo, useRef, useCallback } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { Beer, Droplets } from "lucide-react";
 
-function FitText({ text, className, style }: { text: string; className?: string; style?: React.CSSProperties }) {
-  const ref = useRef<HTMLDivElement>(null);
-  const fitting = useRef(false);
-  const timer = useRef<ReturnType<typeof setTimeout>>();
-
-  const fit = useCallback(() => {
-    if (fitting.current) return;
-    const el = ref.current;
-    if (!el) return;
-    fitting.current = true;
-    el.style.fontSize = '';
-    requestAnimationFrame(() => {
-      if (!el) { fitting.current = false; return; }
-      const computed = window.getComputedStyle(el);
-      let size = parseFloat(computed.fontSize);
-      const minSize = 6;
-      let iterations = 0;
-      while (el.scrollWidth > el.clientWidth + 1 && size > minSize && iterations < 50) {
-        size -= 0.5;
-        el.style.fontSize = size + 'px';
-        iterations++;
-      }
-      fitting.current = false;
-    });
-  }, []);
-
-  useEffect(() => {
-    fit();
-    const parent = ref.current?.parentElement;
-    if (!parent) return;
-    const ro = new ResizeObserver(() => {
-      clearTimeout(timer.current);
-      timer.current = setTimeout(fit, 100);
-    });
-    ro.observe(parent);
-    return () => { ro.disconnect(); clearTimeout(timer.current); };
-  }, [text, fit]);
-
-  return (
-    <div ref={ref} className={className} style={{ ...style, whiteSpace: 'nowrap', overflow: 'hidden' }}>
-      {text}
-    </div>
-  );
-}
-
-const ITEMS_PER_PAGE = 12;
-const PAGE_INTERVAL = 45000;
+const ITEMS_PER_PAGE = 10;
+const PAGE_INTERVAL = 30000;
 
 export default function TaplistTV() {
   const { id } = useParams<{ id: string }>();
@@ -57,7 +12,7 @@ export default function TaplistTV() {
   const [currentPage, setCurrentPage] = useState(0);
 
   useEffect(() => {
-    const interval = setInterval(() => setCurrentTime(new Date()), 60000);
+    const interval = setInterval(() => setCurrentTime(new Date()), 30000);
     return () => clearInterval(interval);
   }, []);
 
@@ -73,6 +28,11 @@ export default function TaplistTV() {
     refetchInterval: 10000,
   });
 
+  const { data: pubSizes = [] } = useQuery({
+    queryKey: ["/api/pubs", id, "sizes"],
+    enabled: !!id,
+  });
+
   const activeTaps = useMemo(() => {
     return Array.isArray(tapList) ? tapList.filter((t: any) => t.isActive !== false) : [];
   }, [tapList]);
@@ -80,10 +40,7 @@ export default function TaplistTV() {
   const totalPages = Math.max(1, Math.ceil(activeTaps.length / ITEMS_PER_PAGE));
 
   useEffect(() => {
-    if (totalPages <= 1) {
-      setCurrentPage(0);
-      return;
-    }
+    if (totalPages <= 1) { setCurrentPage(0); return; }
     const interval = setInterval(() => {
       setCurrentPage(prev => (prev + 1) % totalPages);
     }, PAGE_INTERVAL);
@@ -91,134 +48,272 @@ export default function TaplistTV() {
   }, [totalPages]);
 
   useEffect(() => {
-    if (currentPage >= totalPages || totalPages <= 1) setCurrentPage(0);
-  }, [totalPages, currentPage, activeTaps.length]);
+    if (currentPage >= totalPages) setCurrentPage(0);
+  }, [totalPages, currentPage]);
 
   const pageTaps = useMemo(() => {
     const start = currentPage * ITEMS_PER_PAGE;
     return activeTaps.slice(start, start + ITEMS_PER_PAGE);
   }, [activeTaps, currentPage]);
 
-  const itemCount = pageTaps.length;
-  const layout = useMemo(() => {
-    if (itemCount <= 2) return { cols: 2, rows: 1 };
-    if (itemCount <= 4) return { cols: 2, rows: 2 };
-    if (itemCount <= 6) return { cols: 2, rows: 3 };
-    if (itemCount <= 9) return { cols: 3, rows: 3 };
-    return { cols: 3, rows: 4 };
-  }, [itemCount]);
+  const sizeColumns = useMemo(() => {
+    const sizes = new Set<string>();
+    activeTaps.forEach((tap: any) => {
+      const prices = tap.prices || [];
+      prices.forEach((p: any) => { if (p.size) sizes.add(p.size); });
+    });
+    if (sizes.size === 0) return ["Prezzo"];
+    return Array.from(sizes);
+  }, [activeTaps]);
 
-  const scaleClass = useMemo(() => {
-    if (itemCount <= 2) return "scale-large";
-    if (itemCount <= 4) return "scale-medium";
-    if (itemCount <= 6) return "scale-normal";
-    return "scale-compact";
-  }, [itemCount]);
+  const rowCount = pageTaps.length;
+  const isCompact = rowCount > 8;
 
   return (
-    <div className="h-screen w-screen bg-gradient-to-br from-gray-950 via-gray-900 to-black text-white flex flex-col overflow-hidden">
+    <div className="tv-root">
       <style>{`
-        body { overflow: hidden; cursor: none; margin: 0; padding: 0; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
-        .tap-card-anim { animation: fadeIn 0.4s ease-out both; }
-        .tap-card { height: 100%; display: flex; align-items: stretch; overflow: hidden; }
-        .tap-img-col { display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
-        .tap-img-wrap { border-radius: 50%; overflow: hidden; display: flex; align-items: center; justify-content: center; }
-        .tap-content { display: flex; flex-direction: column; justify-content: center; flex: 1; min-width: 0; }
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { overflow: hidden; cursor: none; margin: 0; padding: 0; font-family: 'Inter', system-ui, -apple-system, sans-serif; }
+        .tv-root {
+          width: 100vw; height: 100vh;
+          background: linear-gradient(165deg, #0c0c1d 0%, #111827 40%, #0f172a 100%);
+          color: #fff;
+          display: flex; flex-direction: column;
+          overflow: hidden;
+        }
 
-        .scale-large .tap-card { padding: 2vh 1.5vw; gap: 1.5vw; }
-        .scale-large .tap-img-col { width: 20vh; }
-        .scale-large .tap-img-wrap { width: 18vh; height: 18vh; }
-        .scale-large .tap-name { font-size: 5.5vh; }
-        .scale-large .tap-brewery { font-size: 3.5vh; }
-        .scale-large .tap-badge { font-size: 2.8vh; padding: 0.8vh 2vh; }
-        .scale-large .tap-price-size { font-size: 2.2vh; }
-        .scale-large .tap-price-val { font-size: 4.5vh; }
-        .scale-large .tap-num { width: 5vh; height: 5vh; font-size: 2.8vh; }
-        .scale-large .tap-badges-row { gap: 1vh; margin-top: 0.8vh; }
-        .scale-large .tap-prices-row { gap: 2vw; margin-top: 1vh; }
+        @keyframes rowSlide {
+          from { opacity: 0; transform: translateX(-20px); }
+          to { opacity: 1; transform: translateX(0); }
+        }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
 
-        .scale-medium .tap-card { padding: 1.5vh 1.2vw; gap: 1.2vw; }
-        .scale-medium .tap-img-col { width: 14vh; }
-        .scale-medium .tap-img-wrap { width: 12vh; height: 12vh; }
-        .scale-medium .tap-name { font-size: 4vh; }
-        .scale-medium .tap-brewery { font-size: 2.6vh; }
-        .scale-medium .tap-badge { font-size: 2vh; padding: 0.5vh 1.5vh; }
-        .scale-medium .tap-price-size { font-size: 1.8vh; }
-        .scale-medium .tap-price-val { font-size: 3.2vh; }
-        .scale-medium .tap-num { width: 4vh; height: 4vh; font-size: 2vh; }
-        .scale-medium .tap-badges-row { gap: 0.8vh; margin-top: 0.6vh; }
-        .scale-medium .tap-prices-row { gap: 1.5vw; margin-top: 0.8vh; }
+        .tv-header {
+          padding: 2vh 3vw;
+          display: flex; align-items: center; justify-content: space-between;
+          background: linear-gradient(180deg, rgba(245,158,11,0.08) 0%, transparent 100%);
+          border-bottom: 1px solid rgba(245,158,11,0.15);
+          flex-shrink: 0;
+        }
+        .tv-header-left { display: flex; align-items: center; gap: 1.5vw; }
+        .tv-header-logo {
+          width: 7vh; height: 7vh;
+          border-radius: 1.2vh;
+          object-fit: cover;
+          border: 2px solid rgba(245,158,11,0.3);
+          box-shadow: 0 0 20px rgba(245,158,11,0.15);
+        }
+        .tv-header-logo-placeholder {
+          width: 7vh; height: 7vh;
+          border-radius: 1.2vh;
+          background: linear-gradient(135deg, #f59e0b, #ea580c);
+          display: flex; align-items: center; justify-content: center;
+          box-shadow: 0 0 20px rgba(245,158,11,0.15);
+        }
+        .tv-pub-name {
+          font-size: 4.5vh; font-weight: 800;
+          background: linear-gradient(90deg, #fbbf24, #f59e0b, #d97706);
+          -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+          letter-spacing: -0.02em; line-height: 1.1;
+        }
+        .tv-pub-sub {
+          font-size: 1.8vh; color: rgba(255,255,255,0.4);
+          font-weight: 500; letter-spacing: 0.15em; text-transform: uppercase;
+          margin-top: 0.3vh;
+        }
+        .tv-header-right { display: flex; align-items: center; gap: 2vw; }
+        .tv-time {
+          font-size: 4.5vh; font-weight: 700;
+          color: rgba(255,255,255,0.85);
+          font-variant-numeric: tabular-nums;
+          letter-spacing: -0.02em;
+        }
+        .tv-date {
+          font-size: 1.5vh; color: rgba(255,255,255,0.35);
+          text-align: right; text-transform: capitalize;
+        }
+        .tv-live {
+          display: flex; align-items: center; gap: 0.5vw;
+          font-size: 1.4vh; color: rgba(16,185,129,0.8);
+          font-weight: 600; text-transform: uppercase; letter-spacing: 0.1em;
+        }
+        .tv-live-dot {
+          width: 1vh; height: 1vh;
+          background: #10b981; border-radius: 50%;
+          animation: pulse 2s infinite;
+        }
 
-        .scale-normal .tap-card { padding: 1.2vh 1vw; gap: 1vw; }
-        .scale-normal .tap-img-col { width: 11vh; }
-        .scale-normal .tap-img-wrap { width: 9.5vh; height: 9.5vh; }
-        .scale-normal .tap-name { font-size: 3.2vh; }
-        .scale-normal .tap-brewery { font-size: 2.2vh; }
-        .scale-normal .tap-badge { font-size: 1.7vh; padding: 0.4vh 1.2vh; }
-        .scale-normal .tap-price-size { font-size: 1.5vh; }
-        .scale-normal .tap-price-val { font-size: 2.8vh; }
-        .scale-normal .tap-num { width: 3.2vh; height: 3.2vh; font-size: 1.6vh; }
-        .scale-normal .tap-badges-row { gap: 0.6vh; margin-top: 0.5vh; }
-        .scale-normal .tap-prices-row { gap: 1.2vw; margin-top: 0.6vh; }
+        .tv-table-wrap {
+          flex: 1; display: flex; flex-direction: column;
+          padding: 1.5vh 3vw 1vh;
+          overflow: hidden;
+        }
 
-        .scale-compact .tap-card { padding: 1vh 0.8vw; gap: 0.8vw; }
-        .scale-compact .tap-img-col { width: 9vh; }
-        .scale-compact .tap-img-wrap { width: 7.5vh; height: 7.5vh; }
-        .scale-compact .tap-name { font-size: 2.6vh; }
-        .scale-compact .tap-brewery { font-size: 1.8vh; }
-        .scale-compact .tap-badge { font-size: 1.4vh; padding: 0.3vh 1vh; }
-        .scale-compact .tap-price-size { font-size: 1.2vh; }
-        .scale-compact .tap-price-val { font-size: 2.2vh; }
-        .scale-compact .tap-num { width: 2.8vh; height: 2.8vh; font-size: 1.4vh; }
-        .scale-compact .tap-badges-row { gap: 0.5vh; margin-top: 0.4vh; }
-        .scale-compact .tap-prices-row { gap: 1vw; margin-top: 0.5vh; }
+        .tv-table-header {
+          display: grid;
+          align-items: center;
+          padding: 1.5vh 2vw;
+          border-bottom: 2px solid rgba(245,158,11,0.2);
+          flex-shrink: 0;
+        }
+        .tv-col-label {
+          font-size: ${isCompact ? '1.4vh' : '1.6vh'};
+          font-weight: 700;
+          color: rgba(245,158,11,0.6);
+          text-transform: uppercase;
+          letter-spacing: 0.12em;
+        }
+        .tv-col-label-right { text-align: right; }
 
-        .tv-header { padding: 1.2vh 2vw; }
-        .tv-header-logo { width: 5vh; height: 5vh; }
-        .tv-header-title { font-size: 3.5vh; }
-        .tv-header-sub { font-size: 1.6vh; }
-        .tv-header-time { font-size: 3.5vh; }
-        .tv-header-date { font-size: 1.6vh; }
-        .tv-header-dot { width: 1.2vh; height: 1.2vh; }
+        .tv-rows { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+
+        .tv-row {
+          display: grid;
+          align-items: center;
+          padding: ${isCompact ? '0 2vw' : '0 2vw'};
+          flex: 1;
+          border-bottom: 1px solid rgba(255,255,255,0.04);
+          animation: rowSlide 0.5s ease-out both;
+          transition: background 0.3s;
+          min-height: 0;
+        }
+        .tv-row:nth-child(even) { background: rgba(255,255,255,0.015); }
+        .tv-row:last-child { border-bottom: none; }
+
+        .tv-tap-num {
+          font-size: ${isCompact ? '2.5vh' : '3vh'};
+          font-weight: 800;
+          color: rgba(245,158,11,0.35);
+          text-align: center;
+          font-variant-numeric: tabular-nums;
+        }
+
+        .tv-beer-img-wrap {
+          width: ${isCompact ? '5.5vh' : '7vh'};
+          height: ${isCompact ? '5.5vh' : '7vh'};
+          border-radius: 50%;
+          overflow: hidden;
+          border: 2px solid rgba(255,255,255,0.08);
+          background: rgba(255,255,255,0.03);
+          display: flex; align-items: center; justify-content: center;
+          flex-shrink: 0;
+        }
+        .tv-beer-img-wrap img {
+          width: 100%; height: 100%; object-fit: cover;
+        }
+
+        .tv-beer-info { display: flex; flex-direction: column; justify-content: center; min-width: 0; }
+        .tv-beer-name {
+          font-size: ${isCompact ? '2.8vh' : '3.5vh'};
+          font-weight: 700; color: #fff;
+          white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+          line-height: 1.2; letter-spacing: -0.01em;
+        }
+        .tv-beer-brewery {
+          font-size: ${isCompact ? '1.6vh' : '2vh'};
+          color: rgba(251,191,36,0.7);
+          font-weight: 500;
+          white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+          line-height: 1.3;
+        }
+
+        .tv-beer-style {
+          font-size: ${isCompact ? '1.5vh' : '1.8vh'};
+          color: rgba(255,255,255,0.5);
+          font-weight: 500;
+          white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+        }
+
+        .tv-beer-abv {
+          font-size: ${isCompact ? '2.2vh' : '2.8vh'};
+          font-weight: 700;
+          color: rgba(245,158,11,0.85);
+          text-align: center;
+          font-variant-numeric: tabular-nums;
+        }
+
+        .tv-badges {
+          display: flex; gap: 0.5vw; align-items: center; justify-content: center;
+        }
+        .tv-badge-gf {
+          font-size: ${isCompact ? '1.2vh' : '1.4vh'};
+          padding: 0.3vh 0.8vw;
+          border-radius: 999px;
+          background: rgba(16,185,129,0.15);
+          color: #34d399;
+          border: 1px solid rgba(16,185,129,0.25);
+          font-weight: 700;
+        }
+        .tv-badge-af {
+          font-size: ${isCompact ? '1.2vh' : '1.4vh'};
+          padding: 0.3vh 0.8vw;
+          border-radius: 999px;
+          background: rgba(59,130,246,0.15);
+          color: #60a5fa;
+          border: 1px solid rgba(59,130,246,0.25);
+          font-weight: 700;
+        }
+
+        .tv-price {
+          font-size: ${isCompact ? '2.6vh' : '3.2vh'};
+          font-weight: 700;
+          color: #fff;
+          text-align: right;
+          font-variant-numeric: tabular-nums;
+        }
+        .tv-price-euro { color: rgba(255,255,255,0.4); font-weight: 400; }
+
+        .tv-footer {
+          padding: 0.5vh 3vw;
+          display: flex; align-items: center; justify-content: space-between;
+          flex-shrink: 0;
+          border-top: 1px solid rgba(255,255,255,0.03);
+        }
+        .tv-footer-brand {
+          font-size: 1.2vh; color: rgba(255,255,255,0.15);
+          font-weight: 600; letter-spacing: 0.1em;
+        }
+        .tv-page-dots {
+          display: flex; gap: 0.8vh; align-items: center;
+        }
+        .tv-page-dot {
+          width: 0.8vh; height: 0.8vh;
+          border-radius: 50%; background: rgba(255,255,255,0.15);
+          transition: all 0.5s;
+        }
+        .tv-page-dot-active {
+          background: #f59e0b;
+          width: 2.5vh;
+          border-radius: 0.4vh;
+          box-shadow: 0 0 8px rgba(245,158,11,0.4);
+        }
       `}</style>
 
-      <div className="tv-header flex items-center justify-between flex-shrink-0 border-b border-gray-800/50">
-        <div className="flex items-center" style={{ gap: '1.5vmin' }}>
+      <div className="tv-header">
+        <div className="tv-header-left">
           {(pub as any)?.logoUrl ? (
-            <img src={(pub as any).logoUrl} alt="" className="tv-header-logo rounded-2xl object-cover border-2 border-amber-500/30" />
+            <img src={(pub as any).logoUrl} alt="" className="tv-header-logo" />
           ) : (
-            <div className="tv-header-logo rounded-2xl bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center">
-              <Beer style={{ width: '60%', height: '60%' }} className="text-white" />
+            <div className="tv-header-logo-placeholder">
+              <Beer style={{ width: '55%', height: '55%' }} className="text-white" />
             </div>
           )}
           <div>
-            <h1 className="tv-header-title font-bold bg-gradient-to-r from-amber-400 to-orange-500 bg-clip-text text-transparent leading-tight">
-              {(pub as any)?.name || "Taplist"}
-            </h1>
-            <p className="tv-header-sub text-gray-500">
-              {activeTaps.length} birre alla spina
-            </p>
+            <div className="tv-pub-name">{(pub as any)?.name || "Taplist"}</div>
+            <div className="tv-pub-sub">Birre alla spina</div>
           </div>
         </div>
-        <div className="flex items-center" style={{ gap: '2vmin' }}>
-          {totalPages > 1 && (
-            <div className="flex items-center" style={{ gap: '0.6vh' }}>
-              {Array.from({ length: totalPages }).map((_, i) => (
-                <div
-                  key={i}
-                  className={`tv-header-dot rounded-full transition-all duration-500 ${
-                    i === currentPage ? 'bg-amber-400 scale-125' : 'bg-gray-600'
-                  }`}
-                />
-              ))}
-            </div>
-          )}
-          <div className="text-right">
-            <div className="tv-header-time font-bold text-gray-300 tabular-nums">
+        <div className="tv-header-right">
+          <div className="tv-live">
+            <div className="tv-live-dot" />
+            LIVE
+          </div>
+          <div>
+            <div className="tv-time">
               {currentTime.toLocaleTimeString("it-IT", { hour: "2-digit", minute: "2-digit" })}
             </div>
-            <div className="tv-header-date text-gray-500">
+            <div className="tv-date">
               {currentTime.toLocaleDateString("it-IT", { weekday: "long", day: "numeric", month: "long" })}
             </div>
           </div>
@@ -226,125 +321,123 @@ export default function TaplistTV() {
       </div>
 
       {activeTaps.length === 0 ? (
-        <div className="flex-1 flex items-center justify-center">
-          <div className="text-center">
-            <Droplets className="w-24 h-24 text-gray-600 mx-auto mb-6" />
-            <h2 className="text-3xl font-bold text-gray-400">Nessuna birra alla spina</h2>
+        <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <div style={{ textAlign: 'center' }}>
+            <Droplets style={{ width: '12vh', height: '12vh', color: 'rgba(255,255,255,0.15)', margin: '0 auto 3vh' }} />
+            <div style={{ fontSize: '4vh', fontWeight: 700, color: 'rgba(255,255,255,0.3)' }}>
+              Nessuna birra alla spina
+            </div>
           </div>
         </div>
       ) : (
-        <div className={`flex-1 overflow-hidden ${scaleClass}`} style={{ padding: '1vh 1.2vw' }}>
+        <div className="tv-table-wrap">
           <div
-            className="grid h-full"
+            className="tv-table-header"
             style={{
-              gridTemplateColumns: `repeat(${layout.cols}, 1fr)`,
-              gridTemplateRows: `repeat(${layout.rows}, 1fr)`,
-              gap: '1vh 0.8vw',
+              gridTemplateColumns: `4vw 8vh 1fr 12vw 6vw 4vw ${sizeColumns.map(() => '8vw').join(' ')}`,
+              gap: '1vw',
             }}
           >
-            {pageTaps.map((tap: any, index: number) => (
-              <TapCard
-                key={tap.id}
-                tap={tap}
-                index={currentPage * ITEMS_PER_PAGE + index}
-                delay={index * 0.05}
-              />
+            <div className="tv-col-label" style={{ textAlign: 'center' }}>#</div>
+            <div className="tv-col-label"></div>
+            <div className="tv-col-label">Birra</div>
+            <div className="tv-col-label">Stile</div>
+            <div className="tv-col-label" style={{ textAlign: 'center' }}>ABV</div>
+            <div className="tv-col-label"></div>
+            {sizeColumns.map((size, i) => (
+              <div key={i} className="tv-col-label tv-col-label-right">{size}</div>
             ))}
+          </div>
+
+          <div className="tv-rows">
+            {pageTaps.map((tap: any, index: number) => {
+              const beer = tap.beer || {};
+              const brewery = beer.brewery?.name || beer.breweryName || "";
+              const prices = tap.prices || [];
+              const imageUrl = beer.imageUrl || beer.image_url || null;
+              const breweryLogo = beer.brewery?.logoUrl || null;
+              const displayImg = imageUrl || breweryLogo;
+
+              const priceMap: Record<string, string> = {};
+              prices.forEach((p: any) => {
+                if (p.size) priceMap[p.size] = p.price;
+                else priceMap["Prezzo"] = p.price;
+              });
+
+              return (
+                <div
+                  key={tap.id}
+                  className="tv-row"
+                  style={{
+                    gridTemplateColumns: `4vw 8vh 1fr 12vw 6vw 4vw ${sizeColumns.map(() => '8vw').join(' ')}`,
+                    gap: '1vw',
+                    animationDelay: `${index * 0.06}s`,
+                  }}
+                >
+                  <div className="tv-tap-num">{tap.tapNumber || index + 1}</div>
+
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <div className="tv-beer-img-wrap">
+                      {displayImg ? (
+                        <img
+                          src={displayImg}
+                          alt=""
+                          onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                        />
+                      ) : (
+                        <Beer style={{ width: '45%', height: '45%', color: 'rgba(245,158,11,0.3)' }} />
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="tv-beer-info">
+                    <div className="tv-beer-name">{beer.name || "Birra"}</div>
+                    {brewery && <div className="tv-beer-brewery">{brewery}</div>}
+                  </div>
+
+                  <div className="tv-beer-style">{beer.style || ""}</div>
+
+                  <div className="tv-beer-abv">{beer.abv ? `${beer.abv}%` : ""}</div>
+
+                  <div className="tv-badges">
+                    {beer.isGlutenFree && <span className="tv-badge-gf">GF</span>}
+                    {beer.isAlcoholFree && <span className="tv-badge-af">0.0</span>}
+                  </div>
+
+                  {sizeColumns.map((size, i) => (
+                    <div key={i} className="tv-price">
+                      {priceMap[size] ? (
+                        <>
+                          <span className="tv-price-euro">€</span>
+                          {parseFloat(priceMap[size]).toFixed(2)}
+                        </>
+                      ) : (
+                        <span style={{ color: 'rgba(255,255,255,0.1)' }}>—</span>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              );
+            })}
           </div>
         </div>
       )}
 
-      <div className="text-center flex-shrink-0" style={{ padding: '0.3vmin 0' }}>
-        <span className="text-gray-700" style={{ fontSize: '0.9vmin' }}>fermenta.to</span>
-      </div>
-    </div>
-  );
-}
-
-function TapCard({ tap, index, delay }: { tap: any; index: number; delay: number }) {
-  const beer = tap.beer || {};
-  const brewery = beer.brewery?.name || beer.breweryName || "";
-  const prices = tap.prices || [];
-  const imageUrl = beer.imageUrl || beer.image_url || null;
-
-  return (
-    <div
-      className="tap-card tap-card-anim relative bg-gray-800/60 backdrop-blur-sm rounded-2xl border border-gray-700/40 overflow-hidden min-h-0"
-      style={{ animationDelay: `${delay}s` }}
-    >
-      <div className="tap-num absolute top-2 right-2 rounded-full bg-amber-500/20 border border-amber-500/30 flex items-center justify-center z-10">
-        <span className="text-amber-400 font-bold">{tap.tapNumber || index + 1}</span>
-      </div>
-
-      <div className="tap-img-col">
-        <div className="tap-img-wrap bg-gray-700/50 border-2 border-amber-500/25">
-          {imageUrl ? (
-            <img
-              src={imageUrl}
-              alt={beer.name || ""}
-              className="w-full h-full object-cover rounded-full"
-              onError={(e) => {
-                const el = e.target as HTMLImageElement;
-                el.style.display = 'none';
-                if (el.parentElement) {
-                  const icon = document.createElement('div');
-                  icon.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="width:50%;height:50%;color:rgba(245,158,11,0.4)"><path d="m7.5 10.5 1.5-1.5"/><path d="M12 2a10 10 0 0 0-6.3 17.7c-.5-.8-.7-1.7-.7-2.7a5 5 0 0 1 5-5c2.5 0 4.2 1.5 5 3.5"/><path d="M17 15v7"/><path d="M21 15v7"/><path d="M17 22h4"/><path d="M17 15h4"/><path d="M9 9a5 5 0 0 1 5-5"/></svg>';
-                  icon.style.cssText = 'display:flex;align-items:center;justify-content:center;width:100%;height:100%';
-                  el.parentElement.appendChild(icon);
-                }
-              }}
-            />
-          ) : (
-            <Beer className="w-1/2 h-1/2 text-amber-500/40" />
-          )}
-        </div>
-      </div>
-
-      <div className="tap-content" style={{ paddingRight: '3vw' }}>
-        <FitText
-          text={beer.name || "Birra"}
-          className="tap-name font-bold text-white leading-tight"
-        />
-        {brewery && (
-          <FitText
-            text={brewery}
-            className="tap-brewery text-amber-400/80 font-medium"
-          />
-        )}
-
-        <div className="tap-badges-row flex items-center flex-wrap">
-          {beer.style && (
-            <span className="tap-badge rounded-full bg-gray-700/60 text-gray-300 border border-gray-600/30 whitespace-nowrap">
-              {beer.style}
-            </span>
-          )}
-          {beer.abv && (
-            <span className="tap-badge rounded-full bg-amber-500/15 text-amber-400 border border-amber-500/25 font-bold whitespace-nowrap">
-              {beer.abv}%
-            </span>
-          )}
-          {beer.isGlutenFree && (
-            <span className="tap-badge rounded-full bg-green-500/15 text-green-400 border border-green-500/25 font-bold whitespace-nowrap">
-              GF
-            </span>
-          )}
-          {beer.isAlcoholFree && (
-            <span className="tap-badge rounded-full bg-blue-500/15 text-blue-400 border border-blue-500/25 font-bold whitespace-nowrap">
-              0.0%
-            </span>
-          )}
-        </div>
-
-        {prices.length > 0 && (
-          <div className="tap-prices-row flex items-center">
-            {prices.map((p: any, i: number) => (
-              <div key={i} className="flex items-baseline gap-1">
-                {p.size && <span className="tap-price-size text-gray-400 uppercase">{p.size}</span>}
-                <span className="tap-price-val font-bold text-white">€{parseFloat(p.price || "0").toFixed(2)}</span>
-              </div>
+      <div className="tv-footer">
+        <div className="tv-footer-brand">FERMENTA.TO</div>
+        {totalPages > 1 && (
+          <div className="tv-page-dots">
+            {Array.from({ length: totalPages }).map((_, i) => (
+              <div
+                key={i}
+                className={`tv-page-dot ${i === currentPage ? 'tv-page-dot-active' : ''}`}
+              />
             ))}
           </div>
         )}
+        <div style={{ fontSize: '1.2vh', color: 'rgba(255,255,255,0.15)' }}>
+          {activeTaps.length} alla spina
+        </div>
       </div>
     </div>
   );
