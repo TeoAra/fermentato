@@ -3,10 +3,10 @@ import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { setupAuth, isAuthenticated } from "./auth";
 import { registerAdminRoutes } from "./routes-admin";
-import { sql, eq, desc } from "drizzle-orm";
+import { sql, eq, and, desc } from "drizzle-orm";
 import { upload, uploadImage, cloudinary } from "./cloudinary";
 import { db } from "./db";
-import { breweries, beers, pubs, users, tapList, notifications, pushSubscriptions, breweryRequests, pubEvents } from "@shared/schema";
+import { breweries, beers, pubs, users, tapList, bottleList, userBeerTastings, favorites, menuCategories, menuItems, pubSizes, notifications, pushSubscriptions, breweryRequests, pubEvents } from "@shared/schema";
 
 import { insertPubSchema, insertTapListSchema, insertBottleListSchema, insertMenuCategorySchema, insertMenuItemSchema, pubRegistrationSchema, insertPubEventSchema } from "@shared/schema";
 import { z } from "zod";
@@ -2200,7 +2200,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Search beers for admin (global search)
+  // Search beers for admin (global search - multi-word, includes brewery name)
   app.get("/api/admin/beers/search", isAuthenticated, async (req: any, res) => {
     try {
       const userId = (req.user as any).id;
@@ -2211,20 +2211,42 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(403).json({ message: "Admin access required" });
       }
 
-      const { q: query = '', limit = 100 } = req.query;
+      const { q: query = '', limit = 50 } = req.query;
+      const queryStr = query.toString().toLowerCase().trim();
+      const searchTerms = queryStr.split(/\s+/).filter((t: string) => t.length > 0);
+      
+      if (searchTerms.length === 0) {
+        return res.json([]);
+      }
+
       const allBeers = await storage.getBeers();
-      const beers = allBeers.filter(beer => 
-        beer.name.toLowerCase().includes(query.toString().toLowerCase()) ||
-        beer.style?.toLowerCase().includes(query.toString().toLowerCase())
-      ).slice(0, parseInt(limit.toString()) || 100);
-      res.json(beers);
+      const allBreweries = await storage.getBreweries();
+      const breweryMap = new Map(allBreweries.map(b => [b.id, b]));
+
+      const beersWithBrewery = allBeers.map(beer => ({
+        ...beer,
+        brewery: breweryMap.get(beer.breweryId) || null,
+      }));
+
+      const filtered = beersWithBrewery.filter(beer => {
+        const searchableText = [
+          beer.name,
+          beer.style,
+          beer.brewery?.name,
+          beer.brewery?.location,
+        ].filter(Boolean).join(' ').toLowerCase();
+
+        return searchTerms.every((term: string) => searchableText.includes(term));
+      }).slice(0, parseInt(limit.toString()) || 50);
+
+      res.json(filtered);
     } catch (error) {
       console.error("Error searching beers:", error);
       res.status(500).json({ message: "Failed to search beers" });
     }
   });
 
-  // Search breweries for admin (global search)
+  // Search breweries for admin (global search - multi-word)
   app.get("/api/admin/breweries/search", isAuthenticated, async (req: any, res) => {
     try {
       const userId = (req.user as any).id;
@@ -2235,16 +2257,117 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(403).json({ message: "Admin access required" });
       }
 
-      const { q: query = '', limit = 100 } = req.query;
+      const { q: query = '', limit = 50 } = req.query;
+      const queryStr = query.toString().toLowerCase().trim();
+      const searchTerms = queryStr.split(/\s+/).filter((t: string) => t.length > 0);
+      
+      if (searchTerms.length === 0) {
+        return res.json([]);
+      }
+
       const allBreweries = await storage.getBreweries();
-      const breweries = allBreweries.filter(brewery => 
-        brewery.name.toLowerCase().includes(query.toString().toLowerCase()) ||
-        brewery.location?.toLowerCase().includes(query.toString().toLowerCase())
-      ).slice(0, parseInt(limit.toString()) || 100);
+      const breweries = allBreweries.filter(brewery => {
+        const searchableText = [
+          brewery.name,
+          brewery.location,
+          brewery.country,
+        ].filter(Boolean).join(' ').toLowerCase();
+
+        return searchTerms.every((term: string) => searchableText.includes(term));
+      }).slice(0, parseInt(limit.toString()) || 50);
+      
       res.json(breweries);
     } catch (error) {
       console.error("Error searching breweries:", error);
       res.status(500).json({ message: "Failed to search breweries" });
+    }
+  });
+
+  // Admin delete beer (cleans up related tap list, bottle list, tastings)
+  app.delete("/api/admin/beers/:id", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = (req.user as any).id;
+      const user = await storage.getUser(userId);
+      const effectiveRole = user?.activeRole || user?.userType;
+      if (effectiveRole !== 'admin') {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+      const beerId = parseInt(req.params.id);
+      const beer = await storage.getBeer(beerId);
+      if (!beer) {
+        return res.status(404).json({ message: "Birra non trovata" });
+      }
+      await db.delete(tapList).where(eq(tapList.beerId, beerId));
+      await db.delete(bottleList).where(eq(bottleList.beerId, beerId));
+      await db.delete(userBeerTastings).where(eq(userBeerTastings.beerId, beerId));
+      await db.delete(favorites).where(and(eq(favorites.itemType, 'beer'), eq(favorites.itemId, beerId)));
+      await storage.deleteBeer(beerId);
+      res.json({ message: `Birra "${beer.name}" eliminata con successo` });
+    } catch (error) {
+      console.error("Error deleting beer:", error);
+      res.status(500).json({ message: "Errore durante l'eliminazione della birra" });
+    }
+  });
+
+  // Admin delete brewery (also deletes its beers and their references)
+  app.delete("/api/admin/breweries/:id", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = (req.user as any).id;
+      const user = await storage.getUser(userId);
+      const effectiveRole = user?.activeRole || user?.userType;
+      if (effectiveRole !== 'admin') {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+      const breweryId = parseInt(req.params.id);
+      const brewery = await storage.getBrewery(breweryId);
+      if (!brewery) {
+        return res.status(404).json({ message: "Birrificio non trovato" });
+      }
+      const breweryBeers = await storage.getBeersByBrewery(breweryId);
+      for (const beer of breweryBeers) {
+        await db.delete(tapList).where(eq(tapList.beerId, beer.id));
+        await db.delete(bottleList).where(eq(bottleList.beerId, beer.id));
+        await db.delete(userBeerTastings).where(eq(userBeerTastings.beerId, beer.id));
+        await db.delete(favorites).where(and(eq(favorites.itemType, 'beer'), eq(favorites.itemId, beer.id)));
+        await storage.deleteBeer(beer.id);
+      }
+      await storage.deleteBrewery(breweryId);
+      res.json({ message: `Birrificio "${brewery.name}" e ${breweryBeers.length} birre eliminate con successo` });
+    } catch (error) {
+      console.error("Error deleting brewery:", error);
+      res.status(500).json({ message: "Errore durante l'eliminazione del birrificio" });
+    }
+  });
+
+  // Admin delete pub (cleans up related data)
+  app.delete("/api/admin/pubs/:id", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = (req.user as any).id;
+      const user = await storage.getUser(userId);
+      const effectiveRole = user?.activeRole || user?.userType;
+      if (effectiveRole !== 'admin') {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+      const pubId = parseInt(req.params.id);
+      const pub = await storage.getPub(pubId);
+      if (!pub) {
+        return res.status(404).json({ message: "Pub non trovato" });
+      }
+      await db.delete(tapList).where(eq(tapList.pubId, pubId));
+      await db.delete(bottleList).where(eq(bottleList.pubId, pubId));
+      const cats = await db.select().from(menuCategories).where(eq(menuCategories.pubId, pubId));
+      for (const cat of cats) {
+        await db.delete(menuItems).where(eq(menuItems.categoryId, cat.id));
+      }
+      await db.delete(menuCategories).where(eq(menuCategories.pubId, pubId));
+      await db.delete(pubSizes).where(eq(pubSizes.pubId, pubId));
+      await db.delete(favorites).where(and(eq(favorites.itemType, 'pub'), eq(favorites.itemId, pubId)));
+      await db.delete(pubEvents).where(eq(pubEvents.pubId, pubId));
+      await storage.deletePub(pubId);
+      res.json({ message: `Pub "${pub.name}" eliminato con successo` });
+    } catch (error) {
+      console.error("Error deleting pub:", error);
+      res.status(500).json({ message: "Errore durante l'eliminazione del pub" });
     }
   });
 
