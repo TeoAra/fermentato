@@ -204,11 +204,16 @@ export default function TaplistTV() {
         }
 
         .tv-beer-info { display: flex; flex-direction: column; justify-content: center; min-width: 0; }
+        .tv-beer-name-row {
+          display: flex; align-items: center; gap: 0.8vw;
+          min-width: 0;
+        }
         .tv-beer-name {
           font-size: ${isCompact ? '2.8vh' : '3.5vh'};
           font-weight: 700; color: #fff;
           white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
           line-height: 1.2; letter-spacing: -0.01em;
+          min-width: 0;
         }
         .tv-beer-brewery {
           font-size: ${isCompact ? '1.6vh' : '2vh'};
@@ -219,9 +224,9 @@ export default function TaplistTV() {
         }
 
         .tv-beer-style {
-          font-size: ${isCompact ? '1.5vh' : '1.8vh'};
-          color: rgba(255,255,255,0.5);
-          font-weight: 500;
+          font-size: ${isCompact ? '2vh' : '2.5vh'};
+          color: rgba(255,255,255,0.55);
+          font-weight: 600;
           white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
         }
 
@@ -233,26 +238,27 @@ export default function TaplistTV() {
           font-variant-numeric: tabular-nums;
         }
 
-        .tv-badges {
-          display: flex; gap: 0.5vw; align-items: center; justify-content: center;
-        }
         .tv-badge-gf {
-          font-size: ${isCompact ? '1.2vh' : '1.4vh'};
-          padding: 0.3vh 0.8vw;
+          font-size: ${isCompact ? '1.3vh' : '1.6vh'};
+          padding: 0.2vh 0.6vw;
           border-radius: 999px;
           background: rgba(16,185,129,0.15);
           color: #34d399;
           border: 1px solid rgba(16,185,129,0.25);
           font-weight: 700;
+          flex-shrink: 0;
+          white-space: nowrap;
         }
         .tv-badge-af {
-          font-size: ${isCompact ? '1.2vh' : '1.4vh'};
-          padding: 0.3vh 0.8vw;
+          font-size: ${isCompact ? '1.3vh' : '1.6vh'};
+          padding: 0.2vh 0.6vw;
           border-radius: 999px;
           background: rgba(59,130,246,0.15);
           color: #60a5fa;
           border: 1px solid rgba(59,130,246,0.25);
           font-weight: 700;
+          flex-shrink: 0;
+          white-space: nowrap;
         }
 
         .tv-price {
@@ -334,7 +340,7 @@ export default function TaplistTV() {
           <div
             className="tv-table-header"
             style={{
-              gridTemplateColumns: `4vw 8vh 1fr 12vw 6vw 4vw ${sizeColumns.map(() => '8vw').join(' ')}`,
+              gridTemplateColumns: `4vw 8vh 1fr 14vw 6vw ${sizeColumns.map(() => '8vw').join(' ')}`,
               gap: '1vw',
             }}
           >
@@ -343,7 +349,6 @@ export default function TaplistTV() {
             <div className="tv-col-label">Birra</div>
             <div className="tv-col-label">Stile</div>
             <div className="tv-col-label" style={{ textAlign: 'center' }}>ABV</div>
-            <div className="tv-col-label"></div>
             {sizeColumns.map((size, i) => (
               <div key={i} className="tv-col-label tv-col-label-right">{size}</div>
             ))}
@@ -369,7 +374,7 @@ export default function TaplistTV() {
                   key={tap.id}
                   className="tv-row"
                   style={{
-                    gridTemplateColumns: `4vw 8vh 1fr 12vw 6vw 4vw ${sizeColumns.map(() => '8vw').join(' ')}`,
+                    gridTemplateColumns: `4vw 8vh 1fr 14vw 6vw ${sizeColumns.map(() => '8vw').join(' ')}`,
                     gap: '1vw',
                     animationDelay: `${index * 0.06}s`,
                   }}
@@ -391,18 +396,17 @@ export default function TaplistTV() {
                   </div>
 
                   <div className="tv-beer-info">
-                    <div className="tv-beer-name">{beer.name || "Birra"}</div>
+                    <div className="tv-beer-name-row">
+                      <div className="tv-beer-name">{beer.name || "Birra"}</div>
+                      {beer.isGlutenFree && <span className="tv-badge-gf">GF</span>}
+                      {beer.isAlcoholFree && <span className="tv-badge-af">0.0%</span>}
+                    </div>
                     {brewery && <div className="tv-beer-brewery">{brewery}</div>}
                   </div>
 
                   <div className="tv-beer-style">{beer.style || ""}</div>
 
                   <div className="tv-beer-abv">{beer.abv ? `${beer.abv}%` : ""}</div>
-
-                  <div className="tv-badges">
-                    {beer.isGlutenFree && <span className="tv-badge-gf">GF</span>}
-                    {beer.isAlcoholFree && <span className="tv-badge-af">0.0</span>}
-                  </div>
 
                   {sizeColumns.map((size, i) => (
                     <div key={i} className="tv-price">
