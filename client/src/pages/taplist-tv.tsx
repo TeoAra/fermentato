@@ -16,6 +16,29 @@ export default function TaplistTV() {
     return () => clearInterval(interval);
   }, []);
 
+  useEffect(() => {
+    let wakeLock: any = null;
+    const requestWakeLock = async () => {
+      try {
+        if ('wakeLock' in navigator) {
+          wakeLock = await (navigator as any).wakeLock.request('screen');
+          wakeLock.addEventListener('release', () => {
+            setTimeout(requestWakeLock, 1000);
+          });
+        }
+      } catch (e) {}
+    };
+    requestWakeLock();
+    const handleVisibility = () => {
+      if (document.visibilityState === 'visible') requestWakeLock();
+    };
+    document.addEventListener('visibilitychange', handleVisibility);
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibility);
+      if (wakeLock) wakeLock.release().catch(() => {});
+    };
+  }, []);
+
   const { data: pub } = useQuery({
     queryKey: ["/api/pubs", id],
     enabled: !!id,
@@ -90,56 +113,56 @@ export default function TaplistTV() {
         @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
 
         .tv-header {
-          padding: 2vh 3vw;
+          padding: 1vh 3vw;
           display: flex; align-items: center; justify-content: space-between;
           background: linear-gradient(180deg, rgba(245,158,11,0.08) 0%, transparent 100%);
           border-bottom: 1px solid rgba(245,158,11,0.15);
           flex-shrink: 0;
         }
-        .tv-header-left { display: flex; align-items: center; gap: 1.5vw; }
+        .tv-header-left { display: flex; align-items: center; gap: 1.2vw; }
         .tv-header-logo {
-          width: 7vh; height: 7vh;
-          border-radius: 1.2vh;
+          width: 5vh; height: 5vh;
+          border-radius: 1vh;
           object-fit: cover;
           border: 2px solid rgba(245,158,11,0.3);
           box-shadow: 0 0 20px rgba(245,158,11,0.15);
         }
         .tv-header-logo-placeholder {
-          width: 7vh; height: 7vh;
-          border-radius: 1.2vh;
+          width: 5vh; height: 5vh;
+          border-radius: 1vh;
           background: linear-gradient(135deg, #f59e0b, #ea580c);
           display: flex; align-items: center; justify-content: center;
           box-shadow: 0 0 20px rgba(245,158,11,0.15);
         }
         .tv-pub-name {
-          font-size: 4.5vh; font-weight: 800;
+          font-size: 3.2vh; font-weight: 800;
           background: linear-gradient(90deg, #fbbf24, #f59e0b, #d97706);
           -webkit-background-clip: text; -webkit-text-fill-color: transparent;
           letter-spacing: -0.02em; line-height: 1.1;
         }
         .tv-pub-sub {
-          font-size: 1.8vh; color: rgba(255,255,255,0.4);
+          font-size: 1.4vh; color: rgba(255,255,255,0.4);
           font-weight: 500; letter-spacing: 0.15em; text-transform: uppercase;
-          margin-top: 0.3vh;
+          margin-top: 0.2vh;
         }
-        .tv-header-right { display: flex; align-items: center; gap: 2vw; }
+        .tv-header-right { display: flex; align-items: center; gap: 1.5vw; }
         .tv-time {
-          font-size: 4.5vh; font-weight: 700;
+          font-size: 3.2vh; font-weight: 700;
           color: rgba(255,255,255,0.85);
           font-variant-numeric: tabular-nums;
           letter-spacing: -0.02em;
         }
         .tv-date {
-          font-size: 1.5vh; color: rgba(255,255,255,0.35);
+          font-size: 1.3vh; color: rgba(255,255,255,0.35);
           text-align: right; text-transform: capitalize;
         }
         .tv-live {
-          display: flex; align-items: center; gap: 0.5vw;
-          font-size: 1.4vh; color: rgba(16,185,129,0.8);
+          display: flex; align-items: center; gap: 0.4vw;
+          font-size: 1.2vh; color: rgba(16,185,129,0.8);
           font-weight: 600; text-transform: uppercase; letter-spacing: 0.1em;
         }
         .tv-live-dot {
-          width: 1vh; height: 1vh;
+          width: 0.8vh; height: 0.8vh;
           background: #10b981; border-radius: 50%;
           animation: pulse 2s infinite;
         }
