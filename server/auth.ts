@@ -140,7 +140,7 @@ export async function setupAuth(app: Express) {
           }
           
           if (!user) {
-            // Create new user
+            // Create new user — flag for onboarding
             const userId = nanoid();
             const [newUser] = await db.insert(users).values({
               id: userId,
@@ -151,7 +151,8 @@ export async function setupAuth(app: Express) {
               userType: 'customer',
               roles: ['customer'],
               activeRole: 'customer',
-              isEmailVerified: true, // Google emails are verified
+              isEmailVerified: true,
+              needsOnboarding: true,
             }).returning();
             user = newUser;
           }
@@ -409,11 +410,15 @@ export async function setupAuth(app: Express) {
       scope: ['profile', 'email'] 
     }));
 
-    app.get('/api/auth/google/callback', 
-      passport.authenticate('google', { 
-        failureRedirect: '/login?error=google_auth_failed',
-        successRedirect: '/'
-      })
+    app.get('/api/auth/google/callback',
+      passport.authenticate('google', { failureRedirect: '/login?error=google_auth_failed' }),
+      (req, res) => {
+        const user = req.user as User;
+        if (user?.needsOnboarding) {
+          return res.redirect('/onboarding');
+        }
+        res.redirect('/');
+      }
     );
   }
 
@@ -458,6 +463,98 @@ export async function setupAuth(app: Express) {
       }
       res.redirect('/');
     });
+  });
+
+  // Complete onboarding after social login
+  app.post('/api/auth/complete-onboarding', isAuthenticated, async (req, res) => {
+    try {
+      const user = req.user as User;
+      const {
+        role, // 'customer' | 'pub_owner' | 'brewery_owner'
+        // pub fields
+        pubName, pubAddress, pubCity, pubRegion, vatNumber, phone, description,
+        // brewery fields
+        breweryId: existingBreweryId, breweryName, breweryLocation, breweryRegion,
+        breweryCountry, breweryVatNumber, breweryPhone, breweryDescription, breweryWebsite,
+      } = req.body;
+
+      let newRoles = ['customer'];
+      let newUserType = 'customer';
+      let newBreweryId = user.breweryId;
+
+      if (role === 'pub_owner') {
+        if (!pubName || !pubAddress || !pubCity) {
+          return res.status(400).json({ message: 'Nome locale, indirizzo e città sono obbligatori' });
+        }
+        newRoles = ['customer', 'pub_owner'];
+        newUserType = 'pub_owner';
+
+        // Create publican request for admin approval
+        await db.insert(publicanRequests).values({
+          userId: user.id,
+          pubName: pubName.trim(),
+          pubAddress: pubAddress.trim(),
+          pubCity: pubCity.trim(),
+          pubRegion: pubRegion?.trim() || pubCity.trim(),
+          vatNumber: vatNumber?.trim() || null,
+          phone: phone?.trim() || null,
+          description: description?.trim() || null,
+          status: 'pending',
+        });
+
+        // Notify admins
+        try {
+          await sendPushToAdmins(`Nuova richiesta pub da ${user.firstName || user.email}: ${pubName}`);
+        } catch {}
+
+      } else if (role === 'brewery_owner') {
+        if (!existingBreweryId && !breweryName) {
+          return res.status(400).json({ message: 'Seleziona o inserisci il nome del birrificio' });
+        }
+        newRoles = ['customer', 'brewery_owner'];
+        newUserType = 'brewery_owner';
+
+        if (existingBreweryId) {
+          newBreweryId = existingBreweryId;
+        } else {
+          // Create brewery request for admin approval
+          await db.insert(breweryRequests).values({
+            userId: user.id,
+            breweryName: breweryName.trim(),
+            breweryLocation: breweryLocation?.trim() || '',
+            breweryRegion: breweryRegion?.trim() || null,
+            breweryCountry: breweryCountry?.trim() || 'Italia',
+            vatNumber: breweryVatNumber?.trim() || null,
+            phone: breweryPhone?.trim() || null,
+            description: breweryDescription?.trim() || null,
+            websiteUrl: breweryWebsite?.trim() || null,
+            status: 'pending',
+          });
+          try {
+            await sendPushToAdmins(`Nuova richiesta birrificio da ${user.firstName || user.email}: ${breweryName}`);
+          } catch {}
+        }
+      }
+
+      // Update user record
+      await db.update(users).set({
+        roles: newRoles,
+        userType: newUserType,
+        activeRole: role === 'customer' ? 'customer' : newRoles[newRoles.length - 1],
+        breweryId: newBreweryId || null,
+        needsOnboarding: false,
+        updatedAt: new Date(),
+      }).where(eq(users.id, user.id));
+
+      const [updatedUser] = await db.select().from(users).where(eq(users.id, user.id));
+      req.login(updatedUser, () => {});
+
+      const { hashedPassword: _, ...userOut } = updatedUser;
+      res.json({ user: userOut, message: 'Profilo completato!' });
+    } catch (error) {
+      console.error('complete-onboarding error:', error);
+      res.status(500).json({ message: 'Errore durante il completamento del profilo' });
+    }
   });
 
   // Request upgrade to pub_owner role

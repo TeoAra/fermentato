@@ -50,6 +50,7 @@ import BreweryDashboard from "@/pages/brewery-dashboard";
 import TermsOfService from "@/pages/tos";
 import PrivacyPolicy from "@/pages/privacy";
 import TaplistTV from "@/pages/taplist-tv";
+import Onboarding from "@/pages/onboarding";
 import { MobileHeader } from "@/components/mobile-header";
 import { BottomNavigation } from "@/components/bottom-navigation";
 import type { User } from "@shared/schema";
@@ -58,9 +59,17 @@ function Router() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const { isAuthenticated, isLoading, user } = useAuth();
   const typedUser = user as User | null;
+  const [location, navigate] = useLocation();
   
   // Track page views when routes change
   useAnalytics();
+
+  // Redirect to onboarding if needed (after social login)
+  useEffect(() => {
+    if (!isLoading && isAuthenticated && typedUser?.needsOnboarding && location !== "/onboarding") {
+      navigate("/onboarding");
+    }
+  }, [isLoading, isAuthenticated, typedUser?.needsOnboarding, location, navigate]);
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-950">
@@ -105,6 +114,7 @@ function Router() {
           <Route path="/pub-registration" component={PubRegistration} />
           <Route path="/become-publican" component={BecomePublican} />
           <Route path="/brewery-dashboard" component={BreweryDashboard} />
+          <Route path="/onboarding" component={Onboarding} />
           <Route path="/tos" component={TermsOfService} />
           <Route path="/terms" component={TermsOfService} />
           <Route path="/privacy" component={PrivacyPolicy} />

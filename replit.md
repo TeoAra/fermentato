@@ -45,6 +45,7 @@ Preferred communication style: Simple, everyday language.
 - **Data Fetching Strategy**: React Query for caching and optimistic updates, with error boundaries and loading states.
 
 ### Recent Features (Feb 2026)
+- **Social Login Onboarding**: After Google OAuth first login, users are redirected to `/onboarding` page. Multi-step wizard: choose role (customer/pub_owner/brewery_owner), fill in pub or brewery details. `needsOnboarding` boolean on users table; auto-redirect in App.tsx. Endpoint: `POST /api/auth/complete-onboarding`.
 - **Events System**: pubEvents table, full CRUD for pub owners, public display in pub detail, push notifications to favorites
 - **QR Codes**: Per-pub QR code generation with download/share (qrcode.react)
 - **PDF Menu Download**: Generate downloadable PDF with taplist, bottles, and food menu (jsPDF)
