@@ -1291,37 +1291,46 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Change user password
+  // Change or set user password
   app.patch("/api/user/password", isAuthenticated, async (req: any, res) => {
     try {
       const userId = (req.user as any)?.id;
-      if (!userId) {
-        return res.status(401).json({ message: "User not authenticated" });
-      }
+      if (!userId) return res.status(401).json({ message: "Non autenticato" });
 
       const { currentPassword, newPassword } = req.body;
-      
-      if (!currentPassword || !newPassword) {
-        return res.status(400).json({ 
-          message: "Password attuale e nuova password sono richieste" 
-        });
+
+      if (!newPassword || newPassword.length < 6) {
+        return res.status(400).json({ message: "La nuova password deve essere di almeno 6 caratteri" });
       }
 
-      if (newPassword.length < 6) {
-        return res.status(400).json({ 
-          message: "La nuova password deve essere di almeno 6 caratteri" 
-        });
-      }
+      const { db } = await import("./db");
+      const { users } = await import("@shared/schema");
+      const { eq } = await import("drizzle-orm");
+      const bcrypt = await import("bcrypt");
 
-      // In a real implementation, you'd verify the current password here
-      // For now, we'll skip current password verification since we don't store passwords
-      // (using external auth provider)
-      
-      // Since we're using Replit Auth, password changes should be handled
-      // through the auth provider. For now, return success message.
-      res.json({ 
-        message: "Per cambiare la password, vai alle impostazioni del tuo account Replit" 
-      });
+      const [user] = await db.select().from(users).where(eq(users.id, userId));
+      if (!user) return res.status(404).json({ message: "Utente non trovato" });
+
+      if (user.hashedPassword) {
+        // Account con password — verifica quella attuale
+        if (!currentPassword) {
+          return res.status(400).json({ message: "Password attuale richiesta" });
+        }
+        const valid = await bcrypt.default.compare(currentPassword, user.hashedPassword);
+        if (!valid) {
+          return res.status(400).json({ message: "Password attuale non corretta" });
+        }
+      }
+      // Account social senza password → imposta direttamente
+
+      const hashed = await bcrypt.default.hash(newPassword, 12);
+      await db.update(users).set({
+        hashedPassword: hashed,
+        passwordLastUpdated: new Date(),
+        updatedAt: new Date(),
+      }).where(eq(users.id, userId));
+
+      res.json({ message: user.hashedPassword ? "Password aggiornata con successo" : "Password impostata con successo" });
     } catch (error) {
       console.error("Error changing password:", error);
       res.status(500).json({ message: "Errore cambio password" });

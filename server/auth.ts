@@ -444,7 +444,7 @@ export async function setupAuth(app: Express) {
     if (req.isAuthenticated() && req.user) {
       const user = req.user as User;
       const { hashedPassword: _, ...userWithoutPassword } = user;
-      res.json(userWithoutPassword);
+      res.json({ ...userWithoutPassword, hasPassword: !!user.hashedPassword });
     } else {
       res.status(401).json({ message: 'Non autenticato' });
     }
