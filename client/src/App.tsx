@@ -98,10 +98,14 @@ function Router() {
           <Route path="/beer/:id" component={BeerDetail} />
           <Route path="/explore/pubs" component={ExplorePubs} />
           <Route path="/explore/breweries" component={ExploreBreweries} />
-          {/* Dashboard routes based on user type or active role */}
+          {/* Dashboard routes based on active role — activeRole is the source of truth */}
           <Route path="/dashboard" component={
-            (typedUser?.userType === 'pub_owner' || typedUser?.activeRole === 'pub_owner') ? SmartPubDashboard : 
-            (typedUser?.userType === 'brewery_owner' || typedUser?.activeRole === 'brewery_owner') ? BreweryDashboard :
+            typedUser?.activeRole === 'pub_owner' ? SmartPubDashboard :
+            typedUser?.activeRole === 'brewery_owner' ? BreweryDashboard :
+            typedUser?.activeRole === 'admin' ? AdminDashboardNew :
+            // Fallback for legacy userType (no activeRole set)
+            typedUser?.userType === 'pub_owner' ? SmartPubDashboard :
+            typedUser?.userType === 'brewery_owner' ? BreweryDashboard :
             UserProfile
           } />
           <Route path="/admin" component={AdminDashboardNew} />

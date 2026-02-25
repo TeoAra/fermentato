@@ -38,13 +38,15 @@ export function BottomNavigation() {
     return () => window.removeEventListener('scroll', handleScroll);
   }, [lastScrollY]);
 
-  // Hide bottom navigation when user is pub owner in dashboard
-  const isPubOwnerInDashboard = isAuthenticated && 
-    (user as any)?.userType === 'pub_owner' && 
-    (location.startsWith("/smart-pub-dashboard") || location.startsWith("/dashboard"));
+  const typedUser = user as any;
+  const activeRole = typedUser?.activeRole || typedUser?.userType || 'customer';
 
-  // On mobile, completely hide navigation for pub owners in dashboard
-  // On desktop, we'll handle this more granularly per section
+  // Label and icon for dashboard tab based on active role
+  const dashboardLabel = !isAuthenticated ? "Accedi" :
+    activeRole === 'pub_owner' ? "Gestione" :
+    activeRole === 'brewery_owner' ? "Birrificio" :
+    activeRole === 'admin' ? "Admin" :
+    "Profilo";
 
   // Navigation items - filter based on authentication status
   const allNavItems = [
@@ -72,7 +74,7 @@ export function BottomNavigation() {
     },
     {
       icon: User,
-      label: isAuthenticated ? "Dashboard" : "Accedi / Registrati",
+      label: dashboardLabel,
       href: isAuthenticated ? "/dashboard" : "/login",
       isActive: isAuthenticated ? location.startsWith("/dashboard") : location === "/login",
       requiresAuth: false
@@ -84,8 +86,8 @@ export function BottomNavigation() {
 
   return (
     <>
-      {/* Mobile Bottom Navigation - Hidden completely for pub owners in dashboard */}
-      {!isPubOwnerInDashboard && (
+      {/* Mobile Bottom Navigation */}
+      {(
         <nav className={`lg:hidden fixed bottom-0 left-0 right-0 z-50 transition-all duration-300 ease-in-out transform ${
           isVisible ? 'translate-y-0' : 'translate-y-full'
         }`}>

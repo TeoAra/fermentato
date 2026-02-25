@@ -23,10 +23,11 @@ export default function Header() {
   const searchRef = useRef<HTMLDivElement>(null);
 
   const isAdmin = typedUser?.userType === 'admin';
+  const hasMultipleRoles = (typedUser?.roles?.length ?? 0) > 1;
 
   const { data: rolesData } = useQuery<{ roles: string[]; activeRole: string }>({
     queryKey: ["/api/auth/roles"],
-    enabled: isAuthenticated && isAdmin,
+    enabled: isAuthenticated && hasMultipleRoles,
   });
 
   const switchRoleMutation = useMutation({
@@ -59,10 +60,8 @@ export default function Header() {
     refetchInterval: 30000,
   });
 
-  // Hide header for pub owners in dashboard
-  const isPubOwnerInDashboard = isAuthenticated && 
-    (user as any)?.userType === 'pub_owner' && 
-    (location.startsWith("/smart-pub-dashboard") || location.startsWith("/dashboard"));
+  // Never hide header — multi-role users need it to switch roles
+  const isPubOwnerInDashboard = false;
 
   // Desktop navigation items - filter based on authentication status
   const allNavItems = [
@@ -235,18 +234,36 @@ export default function Header() {
                       </span>
                     </Button>
                   </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end" className="w-56">
+                  <DropdownMenuContent align="end" className="w-64">
+                    {/* User info */}
+                    <div className="px-3 py-2 border-b border-gray-100 dark:border-gray-800">
+                      <div className="text-sm font-medium text-gray-900 dark:text-white truncate">
+                        {typedUser.firstName ? `${typedUser.firstName} ${typedUser.lastName || ''}`.trim() : typedUser.email?.split('@')[0]}
+                      </div>
+                      {rolesData && (
+                        <div className="flex items-center gap-1.5 mt-1">
+                          {(() => { const Icon = roleIcons[rolesData.activeRole] || User; return <Icon className="h-3 w-3 text-orange-500" />; })()}
+                          <span className="text-xs text-orange-600 dark:text-orange-400 font-medium">
+                            {roleLabels[rolesData.activeRole] || rolesData.activeRole}
+                          </span>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Dashboard link */}
                     <DropdownMenuItem asChild>
                       <Link href="/dashboard" className="flex items-center gap-2 cursor-pointer">
-                        <User className="h-4 w-4" />
-                        Dashboard
+                        {(() => { const activeRole = rolesData?.activeRole || typedUser.activeRole || 'customer'; const Icon = roleIcons[activeRole] || User; return <Icon className="h-4 w-4" />; })()}
+                        {rolesData?.activeRole === 'customer' ? 'Il mio profilo' : rolesData?.activeRole === 'pub_owner' ? 'Pannello pub' : rolesData?.activeRole === 'brewery_owner' ? 'Pannello birrificio' : 'Dashboard'}
                       </Link>
                     </DropdownMenuItem>
-                    {isAdmin && rolesData && rolesData.roles.length > 1 && (
+
+                    {/* Role switcher for multi-role users */}
+                    {rolesData && rolesData.roles.length > 1 && (
                       <>
                         <DropdownMenuSeparator />
-                        <DropdownMenuLabel className="text-xs text-gray-500 font-normal">
-                          Ruolo attivo: {roleLabels[rolesData.activeRole] || rolesData.activeRole}
+                        <DropdownMenuLabel className="text-xs text-gray-400 font-normal px-3 py-1">
+                          Cambia modalità
                         </DropdownMenuLabel>
                         {rolesData.roles
                           .filter(role => role !== rolesData.activeRole)

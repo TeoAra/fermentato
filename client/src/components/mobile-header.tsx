@@ -30,10 +30,11 @@ export function MobileHeader({ onMenuToggle, isMenuOpen }: MobileHeaderProps) {
   const { isAuthenticated, user } = useAuth();
   const typedUser = user as UserType | undefined;
   const isAdmin = typedUser?.userType === 'admin';
+  const hasMultipleRoles = (typedUser?.roles?.length ?? 0) > 1;
 
   const { data: rolesData } = useQuery<{ roles: string[]; activeRole: string }>({
     queryKey: ["/api/auth/roles"],
-    enabled: isAuthenticated && isAdmin,
+    enabled: isAuthenticated && hasMultipleRoles,
   });
 
   const switchRoleMutation = useMutation({
@@ -147,11 +148,11 @@ export function MobileHeader({ onMenuToggle, isMenuOpen }: MobileHeaderProps) {
                     </Link>
                   )}
 
-                  {isAdmin && rolesData && rolesData.roles.length > 1 && (
+                  {rolesData && rolesData.roles.length > 1 && (
                     <>
                       <div className="border-t border-gray-200 dark:border-gray-700 my-2"></div>
                       <div className="px-3 py-1 text-xs text-gray-500 font-normal">
-                        Ruolo attivo: {roleLabels[rolesData.activeRole] || rolesData.activeRole}
+                        Modalità attiva: <span className="text-orange-500 font-medium">{roleLabels[rolesData.activeRole] || rolesData.activeRole}</span>
                       </div>
                       {rolesData.roles
                         .filter(role => role !== rolesData.activeRole)

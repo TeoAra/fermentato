@@ -38,7 +38,7 @@ export function PubOwnerTopBar({
   onLogout 
 }: PubOwnerTopBarProps) {
   return (
-    <div className="sticky top-0 z-50 w-full">
+    <div className="sticky top-14 lg:top-0 z-40 w-full">
       <motion.div 
         className="glass-card border-b border-white/20 dark:border-gray-800/50 backdrop-blur-xl bg-white/80 dark:bg-gray-900/80"
         initial={{ y: -100, opacity: 0 }}
