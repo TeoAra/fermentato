@@ -30,7 +30,8 @@ import {
   TrendingUp,
   Eye,
   MessageSquare,
-  Flag
+  Flag,
+  ArrowLeft
 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { it } from "date-fns/locale";
@@ -163,6 +164,14 @@ export default function AdminDashboard() {
 
   return (
     <div className="container mx-auto px-4 py-6 max-w-7xl">
+      <div className="mb-4">
+        <Link href="/admin">
+          <Button variant="outline" size="sm">
+            <ArrowLeft className="w-4 h-4 mr-2" />
+            Dashboard Admin
+          </Button>
+        </Link>
+      </div>
       {/* Admin Header */}
       <div className="bg-gradient-to-r from-red-600 to-orange-600 rounded-xl p-6 mb-8 text-white relative overflow-hidden">
         <div className="absolute inset-0 bg-black/20"></div>

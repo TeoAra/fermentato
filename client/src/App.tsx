@@ -51,6 +51,7 @@ import TermsOfService from "@/pages/tos";
 import PrivacyPolicy from "@/pages/privacy";
 import TaplistTV from "@/pages/taplist-tv";
 import Onboarding from "@/pages/onboarding";
+import UserPublicProfile from "@/pages/user-public-profile";
 import { MobileHeader } from "@/components/mobile-header";
 import { BottomNavigation } from "@/components/bottom-navigation";
 import type { User } from "@shared/schema";
@@ -124,6 +125,7 @@ function Router() {
           <Route path="/terms" component={TermsOfService} />
           <Route path="/privacy" component={PrivacyPolicy} />
           <Route path="/notifications" component={Notifications} />
+          <Route path="/user/:nickname" component={UserPublicProfile} />
           <Route path="/activity" component={Activity} />
           <Route component={NotFound} />
         </Switch>

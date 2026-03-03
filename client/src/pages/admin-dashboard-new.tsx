@@ -19,7 +19,10 @@ import {
   Building2,
   ArrowLeft,
   User,
-  Clock
+  Clock,
+  Star,
+  CalendarDays,
+  RefreshCw
 } from "lucide-react";
 import { Link } from "wouter";
 import { formatDistanceToNow } from "date-fns";
@@ -30,6 +33,10 @@ interface AdminStats {
   totalPubs: number;
   totalBreweries: number;
   totalBeers: number;
+  totalReviews: number;
+  totalTastings: number;
+  totalEvents: number;
+  lastUpdated: string;
 }
 
 interface GlobalStats {
@@ -125,7 +132,7 @@ export default function AdminDashboardNew() {
             <div>
               <h1 className="text-4xl font-bold mb-2">Centro di Controllo Admin</h1>
               <p className="text-white/90 text-lg">
-                Benvenuto {(user as any)?.username || 'Admin'} - Gestione completa sistema Fermenta.to
+                Benvenuto {(user as any)?.nickname || (user as any)?.firstName || 'Admin'} — Gestione completa sistema Fermenta.to
               </p>
               <div className="flex items-center gap-4 mt-3 flex-wrap">
                 <Badge className="bg-white/20 border-white/30">
@@ -307,63 +314,38 @@ export default function AdminDashboardNew() {
 
         <Card>
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <TrendingUp className="w-5 h-5 text-blue-500" />
-              Statistiche Live
+            <CardTitle className="flex items-center justify-between gap-2">
+              <div className="flex items-center gap-2">
+                <TrendingUp className="w-5 h-5 text-blue-500" />
+                Statistiche Live
+              </div>
+              {adminStats?.lastUpdated && (
+                <span className="text-xs text-gray-400 font-normal flex items-center gap-1">
+                  <RefreshCw className="w-3 h-3" />
+                  {formatDistanceToNow(new Date(adminStats.lastUpdated), { addSuffix: true, locale: it })}
+                </span>
+              )}
             </CardTitle>
           </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="flex items-center justify-between p-3 rounded-lg bg-gradient-to-r from-blue-50 to-blue-100 dark:from-blue-900/20 dark:to-blue-800/20">
-              <div className="flex items-center gap-3">
-                <Beer className="w-5 h-5 text-blue-600" />
-                <span className="font-medium text-blue-800 dark:text-blue-200">Birre</span>
-              </div>
-              <span className="text-xl font-bold text-blue-600 dark:text-blue-400">
-                {(adminStats?.totalBeers || globalStats?.totalBeers || 0).toLocaleString()}
-              </span>
-            </div>
-
-            <div className="flex items-center justify-between p-3 rounded-lg bg-gradient-to-r from-amber-50 to-amber-100 dark:from-amber-900/20 dark:to-amber-800/20">
-              <div className="flex items-center gap-3">
-                <Building2 className="w-5 h-5 text-amber-600" />
-                <span className="font-medium text-amber-800 dark:text-amber-200">Birrifici</span>
-              </div>
-              <span className="text-xl font-bold text-amber-600 dark:text-amber-400">
-                {(adminStats?.totalBreweries || globalStats?.totalBreweries || 0).toLocaleString()}
-              </span>
-            </div>
-
-            <div className="flex items-center justify-between p-3 rounded-lg bg-gradient-to-r from-orange-50 to-orange-100 dark:from-orange-900/20 dark:to-orange-800/20">
-              <div className="flex items-center gap-3">
-                <Store className="w-5 h-5 text-orange-600" />
-                <span className="font-medium text-orange-800 dark:text-orange-200">Pub</span>
-              </div>
-              <span className="text-xl font-bold text-orange-600 dark:text-orange-400">
-                {(adminStats?.totalPubs || 0).toLocaleString()}
-              </span>
-            </div>
-
-            <div className="flex items-center justify-between p-3 rounded-lg bg-gradient-to-r from-purple-50 to-purple-100 dark:from-purple-900/20 dark:to-purple-800/20">
-              <div className="flex items-center gap-3">
-                <Users className="w-5 h-5 text-purple-600" />
-                <span className="font-medium text-purple-800 dark:text-purple-200">Utenti</span>
-              </div>
-              <span className="text-xl font-bold text-purple-600 dark:text-purple-400">
-                {(adminStats?.totalUsers || 0).toLocaleString()}
-              </span>
-            </div>
-
-            {globalStats?.uniqueStyles && (
-              <div className="flex items-center justify-between p-3 rounded-lg bg-gradient-to-r from-green-50 to-green-100 dark:from-green-900/20 dark:to-green-800/20">
+          <CardContent className="space-y-2.5">
+            {[
+              { icon: Beer, label: 'Birre', value: adminStats?.totalBeers || globalStats?.totalBeers || 0, from: 'from-blue-50', to: 'to-blue-100', darkFrom: 'dark:from-blue-900/20', darkTo: 'dark:to-blue-800/20', iconColor: 'text-blue-600', textColor: 'text-blue-800 dark:text-blue-200', valColor: 'text-blue-600 dark:text-blue-400' },
+              { icon: Building2, label: 'Birrifici', value: adminStats?.totalBreweries || globalStats?.totalBreweries || 0, from: 'from-amber-50', to: 'to-amber-100', darkFrom: 'dark:from-amber-900/20', darkTo: 'dark:to-amber-800/20', iconColor: 'text-amber-600', textColor: 'text-amber-800 dark:text-amber-200', valColor: 'text-amber-600 dark:text-amber-400' },
+              { icon: Store, label: 'Pub', value: adminStats?.totalPubs || 0, from: 'from-orange-50', to: 'to-orange-100', darkFrom: 'dark:from-orange-900/20', darkTo: 'dark:to-orange-800/20', iconColor: 'text-orange-600', textColor: 'text-orange-800 dark:text-orange-200', valColor: 'text-orange-600 dark:text-orange-400' },
+              { icon: Users, label: 'Utenti', value: adminStats?.totalUsers || 0, from: 'from-purple-50', to: 'to-purple-100', darkFrom: 'dark:from-purple-900/20', darkTo: 'dark:to-purple-800/20', iconColor: 'text-purple-600', textColor: 'text-purple-800 dark:text-purple-200', valColor: 'text-purple-600 dark:text-purple-400' },
+              { icon: Star, label: 'Recensioni', value: adminStats?.totalReviews || 0, from: 'from-yellow-50', to: 'to-yellow-100', darkFrom: 'dark:from-yellow-900/20', darkTo: 'dark:to-yellow-800/20', iconColor: 'text-yellow-600', textColor: 'text-yellow-800 dark:text-yellow-200', valColor: 'text-yellow-600 dark:text-yellow-400' },
+              { icon: CalendarDays, label: 'Eventi', value: adminStats?.totalEvents || 0, from: 'from-green-50', to: 'to-green-100', darkFrom: 'dark:from-green-900/20', darkTo: 'dark:to-green-800/20', iconColor: 'text-green-600', textColor: 'text-green-800 dark:text-green-200', valColor: 'text-green-600 dark:text-green-400' },
+            ].map(({ icon: Icon, label, value, from, to, darkFrom, darkTo, iconColor, textColor, valColor }) => (
+              <div key={label} className={`flex items-center justify-between p-3 rounded-lg bg-gradient-to-r ${from} ${to} ${darkFrom} ${darkTo}`}>
                 <div className="flex items-center gap-3">
-                  <Database className="w-5 h-5 text-green-600" />
-                  <span className="font-medium text-green-800 dark:text-green-200">Stili</span>
+                  <Icon className={`w-5 h-5 ${iconColor}`} />
+                  <span className={`font-medium ${textColor}`}>{label}</span>
                 </div>
-                <span className="text-xl font-bold text-green-600 dark:text-green-400">
-                  {globalStats.uniqueStyles}
+                <span className={`text-xl font-bold ${valColor}`}>
+                  {value.toLocaleString('it-IT')}
                 </span>
               </div>
-            )}
+            ))}
           </CardContent>
         </Card>
 

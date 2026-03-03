@@ -30,7 +30,11 @@ import {
   Save,
   X,
   Settings,
+  Eye,
+  EyeOff,
+  ExternalLink,
 } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import type { User as UserType } from "@shared/schema";
 import UserFavoritesSection from "@/components/UserFavoritesSection";
@@ -48,6 +52,7 @@ export default function UserProfile() {
   const [isEditingEmail, setIsEditingEmail] = useState(false);
   const [tempEmail, setTempEmail] = useState("");
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [isPublicProfile, setIsPublicProfile] = useState<boolean>(true);
   
   const [passwordData, setPasswordData] = useState({
     currentPassword: "",
@@ -110,6 +115,12 @@ export default function UserProfile() {
   });
 
   const typedUser = user as UserType;
+
+  useEffect(() => {
+    if (typedUser) {
+      setIsPublicProfile((typedUser as any).isPublic ?? true);
+    }
+  }, [(typedUser as any)?.isPublic]);
 
   useEffect(() => {
     if (typedUser) {
@@ -181,6 +192,25 @@ export default function UserProfile() {
         description: error.message || "Impossibile aggiornare il nickname",
         variant: "destructive",
       });
+    },
+  });
+
+  const privacyMutation = useMutation({
+    mutationFn: async (isPublic: boolean) => {
+      return apiRequest("/api/user/privacy", { method: "PATCH" }, { isPublic });
+    },
+    onSuccess: (_data, isPublic) => {
+      setIsPublicProfile(isPublic);
+      queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
+      toast({
+        title: isPublic ? "Profilo reso pubblico" : "Profilo reso privato",
+        description: isPublic
+          ? "Il tuo profilo è ora visibile a tutti"
+          : "Il tuo profilo è ora visibile solo a te",
+      });
+    },
+    onError: () => {
+      toast({ title: "Errore", description: "Impossibile aggiornare le impostazioni privacy", variant: "destructive" });
     },
   });
 
@@ -512,6 +542,42 @@ export default function UserProfile() {
                   <p className="text-xs text-gray-500 mt-1">
                     Puoi modificare l'email ogni 15 giorni
                   </p>
+                </div>
+
+                <div className="border-t border-orange-100 dark:border-gray-700 pt-4">
+                  <h3 className="text-sm font-medium mb-4 text-gray-700 dark:text-gray-300 flex items-center gap-2">
+                    {isPublicProfile ? <Eye className="h-4 w-4 text-orange-600" /> : <EyeOff className="h-4 w-4 text-gray-500" />}
+                    Privacy Profilo
+                  </h3>
+                  <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-800 rounded-xl">
+                    <div className="flex-1 mr-4">
+                      <p className="text-sm font-medium text-gray-900 dark:text-white">
+                        {isPublicProfile ? "Profilo Pubblico" : "Profilo Privato"}
+                      </p>
+                      <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                        {isPublicProfile
+                          ? "Chiunque può vedere il tuo profilo, badge e recensioni tramite /user/" + (typedUser?.nickname || "tu")
+                          : "Solo tu puoi vedere il tuo profilo"}
+                      </p>
+                    </div>
+                    <Switch
+                      checked={isPublicProfile}
+                      onCheckedChange={(val) => privacyMutation.mutate(val)}
+                      disabled={privacyMutation.isPending}
+                      className="data-[state=checked]:bg-orange-500"
+                    />
+                  </div>
+                  {isPublicProfile && typedUser?.nickname && (
+                    <a
+                      href={`/user/${typedUser.nickname}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-1 text-xs text-orange-600 dark:text-orange-400 hover:underline mt-2"
+                    >
+                      <ExternalLink className="h-3 w-3" />
+                      Visualizza il tuo profilo pubblico
+                    </a>
+                  )}
                 </div>
 
                 <div className="border-t border-orange-100 dark:border-gray-700 pt-4">

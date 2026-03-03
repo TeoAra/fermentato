@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { getBadgeForCount } from "@/lib/badges";
 import { useParams, Link } from "wouter";
 import { GlutenFreeIcon } from "@/components/beer-badges";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -211,7 +212,7 @@ export default function BeerDetail() {
   const hasTasted = !!existingTasting;
 
   // Community reviews (public)
-  const { data: reviewsData } = useQuery<{ reviews: any[]; avgRating: number | null; reviewCount: number }>({
+  const { data: reviewsData } = useQuery<{ reviews: any[]; avgRating: number | null; reviewCount: number; distribution: Record<number,number> }>({
     queryKey: ["/api/beers", id, "reviews"],
     enabled: !!id,
   });
@@ -548,6 +549,7 @@ export default function BeerDetail() {
         {reviewsData && reviewsData.reviewCount > 0 && (
           <Card className="glass-card border-0 mb-8">
             <CardContent className="p-6">
+              {/* Header with avg rating */}
               <div className="flex items-center justify-between mb-6">
                 <h2 className="text-xl font-bold text-gray-900 dark:text-white flex items-center">
                   <div className="p-2 bg-gradient-to-r from-yellow-500 to-amber-600 rounded-lg mr-3">
@@ -565,10 +567,39 @@ export default function BeerDetail() {
                   <span className="text-sm text-gray-500">({reviewsData.reviewCount} {reviewsData.reviewCount === 1 ? 'recensione' : 'recensioni'})</span>
                 </div>
               </div>
+
+              {/* Rating Distribution Histogram */}
+              {reviewsData.distribution && (
+                <div className="mb-6 space-y-2 bg-gray-50 dark:bg-gray-800/50 rounded-xl p-4">
+                  {[5, 4, 3, 2, 1].map(star => {
+                    const count = reviewsData.distribution?.[star] || 0;
+                    const pct = reviewsData.reviewCount > 0 ? (count / reviewsData.reviewCount) * 100 : 0;
+                    return (
+                      <div key={star} className="flex items-center gap-3">
+                        <div className="flex items-center gap-1 w-12 flex-shrink-0">
+                          <span className="text-xs font-medium text-gray-600 dark:text-gray-400 w-3">{star}</span>
+                          <Star className="h-3.5 w-3.5 text-yellow-400 fill-yellow-400" />
+                        </div>
+                        <div className="flex-1 h-2.5 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+                          <div
+                            className="h-full bg-gradient-to-r from-yellow-400 to-amber-500 rounded-full transition-all duration-500"
+                            style={{ width: `${pct}%` }}
+                          />
+                        </div>
+                        <span className="text-xs text-gray-500 w-6 text-right">{count}</span>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+
+              {/* Review cards */}
               <div className="space-y-4">
                 {reviewsData.reviews.slice(0, 10).map((review: any) => {
                   const displayName = review.nickname || review.firstName || 'Utente';
                   const initials = displayName[0]?.toUpperCase() || 'U';
+                  const userBadge = getBadgeForCount(Number(review.userReviewCount || 0));
+                  const isPublicReviewer = review.isPublic !== false;
                   return (
                     <div key={review.id} className="flex gap-4 p-4 bg-gray-50 dark:bg-gray-800/50 rounded-xl">
                       <Avatar className="h-10 w-10 flex-shrink-0">
@@ -579,7 +610,16 @@ export default function BeerDetail() {
                       </Avatar>
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center justify-between gap-2 mb-1">
-                          <span className="font-semibold text-sm text-gray-900 dark:text-white">{displayName}</span>
+                          <div className="flex items-center gap-2 min-w-0">
+                            {isPublicReviewer && review.nickname ? (
+                              <Link href={`/user/${review.nickname}`}>
+                                <span className="font-semibold text-sm text-gray-900 dark:text-white hover:text-amber-600 dark:hover:text-amber-400 cursor-pointer transition-colors">{displayName}</span>
+                              </Link>
+                            ) : (
+                              <span className="font-semibold text-sm text-gray-900 dark:text-white">{displayName}</span>
+                            )}
+                            <span className="text-sm flex-shrink-0" title={userBadge.name}>{userBadge.emoji}</span>
+                          </div>
                           <div className="flex items-center gap-1 flex-shrink-0">
                             {[1,2,3,4,5].map(s => (
                               <Star key={s} className={`h-3.5 w-3.5 ${s <= (review.rating || 0) ? 'text-yellow-500 fill-yellow-500' : 'text-gray-300 dark:text-gray-600'}`} />

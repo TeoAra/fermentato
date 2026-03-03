@@ -1573,11 +1573,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Admin routes
   app.get('/api/admin/stats', isAuthenticated, isAdmin, async (req: any, res) => {
     try {
+      const [reviewCountResult] = await db.select({ count: sql<number>`COUNT(*)` }).from(userBeerTastings).where(sql`${userBeerTastings.rating} IS NOT NULL`);
+      const [tastingCountResult] = await db.select({ count: sql<number>`COUNT(*)` }).from(userBeerTastings);
+      const [eventCountResult] = await db.select({ count: sql<number>`COUNT(*)` }).from(pubEvents);
+
       const stats = {
         totalUsers: await storage.getUserCount(),
         totalPubs: await storage.getPubCount(),
         totalBreweries: await storage.getBreweryCount(),
         totalBeers: await storage.getBeerCount(),
+        totalReviews: Number(reviewCountResult?.count || 0),
+        totalTastings: Number(tastingCountResult?.count || 0),
+        totalEvents: Number(eventCountResult?.count || 0),
+        lastUpdated: new Date().toISOString(),
       };
       res.json(stats);
     } catch (error) {
@@ -3223,7 +3231,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // BEER REVIEWS (public tastings with user info)
   // ============================================================
 
-  // GET public reviews for a beer (all tastings with a rating)
+  // GET public reviews for a beer (all tastings with a rating) — includes per-user review count for badges
   app.get("/api/beers/:beerId/reviews", async (req, res) => {
     try {
       const beerId = parseInt(req.params.beerId);
@@ -3239,8 +3247,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
           userId: userBeerTastings.userId,
           nickname: users.nickname,
           firstName: users.firstName,
-          lastName: users.lastName,
           profileImageUrl: users.profileImageUrl,
+          isPublic: users.isPublic,
+          userReviewCount: sql<number>`(SELECT COUNT(*) FROM user_beer_tastings ubt WHERE ubt.user_id = ${userBeerTastings.userId} AND ubt.rating IS NOT NULL)`,
         })
         .from(userBeerTastings)
         .leftJoin(users, eq(userBeerTastings.userId, users.id))
@@ -3251,10 +3260,130 @@ export async function registerRoutes(app: Express): Promise<Server> {
         ? reviews.reduce((sum, r) => sum + (r.rating || 0), 0) / reviews.length
         : null;
 
-      res.json({ reviews, avgRating: avgRating ? Math.round(avgRating * 10) / 10 : null, reviewCount: reviews.length });
+      // Rating distribution
+      const distribution: Record<number, number> = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
+      for (const r of reviews) { if (r.rating) distribution[r.rating] = (distribution[r.rating] || 0) + 1; }
+
+      res.json({
+        reviews,
+        avgRating: avgRating ? Math.round(avgRating * 10) / 10 : null,
+        reviewCount: reviews.length,
+        distribution,
+      });
     } catch (error) {
       console.error("Error fetching beer reviews:", error);
       res.status(500).json({ message: "Failed to fetch reviews" });
+    }
+  });
+
+  // GET brewery average rating (from all beer tastings)
+  app.get("/api/breweries/:id/rating", async (req, res) => {
+    try {
+      const breweryId = parseInt(req.params.id);
+      if (isNaN(breweryId)) return res.status(400).json({ message: "Invalid brewery ID" });
+
+      const [ratingResult] = await db.select({
+        avgRating: sql<number>`ROUND(AVG(${userBeerTastings.rating})::numeric, 1)`,
+        reviewCount: sql<number>`COUNT(${userBeerTastings.rating})`,
+      })
+      .from(userBeerTastings)
+      .innerJoin(beers, eq(userBeerTastings.beerId, beers.id))
+      .where(and(eq(beers.breweryId, breweryId), sql`${userBeerTastings.rating} IS NOT NULL`));
+
+      res.json({
+        avgRating: ratingResult?.avgRating ? parseFloat(String(ratingResult.avgRating)) : null,
+        reviewCount: Number(ratingResult?.reviewCount || 0),
+      });
+    } catch (error) {
+      console.error("Error fetching brewery rating:", error);
+      res.status(500).json({ message: "Failed to fetch brewery rating" });
+    }
+  });
+
+  // GET public user profile by nickname or id
+  app.get("/api/users/:identifier/profile", async (req, res) => {
+    try {
+      const { identifier } = req.params;
+      const currentUserId = (req.user as any)?.id;
+
+      // Try nickname first, then id
+      let [profile] = await db.select({
+        id: users.id,
+        nickname: users.nickname,
+        firstName: users.firstName,
+        lastName: users.lastName,
+        profileImageUrl: users.profileImageUrl,
+        bio: users.bio,
+        favoriteStyles: users.favoriteStyles,
+        joinedAt: users.joinedAt,
+        isPublic: users.isPublic,
+        userType: users.userType,
+      }).from(users).where(eq(users.nickname, identifier));
+
+      if (!profile) {
+        [profile] = await db.select({
+          id: users.id,
+          nickname: users.nickname,
+          firstName: users.firstName,
+          lastName: users.lastName,
+          profileImageUrl: users.profileImageUrl,
+          bio: users.bio,
+          favoriteStyles: users.favoriteStyles,
+          joinedAt: users.joinedAt,
+          isPublic: users.isPublic,
+          userType: users.userType,
+        }).from(users).where(eq(users.id, identifier));
+      }
+
+      if (!profile) return res.status(404).json({ message: "Utente non trovato" });
+
+      const isOwner = currentUserId === profile.id;
+      if (!profile.isPublic && !isOwner) {
+        return res.status(403).json({ message: "Questo profilo è privato" });
+      }
+
+      // Get review count and recent reviews
+      const [countRow] = await db.select({
+        count: sql<number>`COUNT(*)`,
+      }).from(userBeerTastings)
+        .where(and(eq(userBeerTastings.userId, profile.id), sql`${userBeerTastings.rating} IS NOT NULL`));
+      const reviewCount = Number(countRow?.count || 0);
+
+      const recentReviews = await db.select({
+        id: userBeerTastings.id,
+        rating: userBeerTastings.rating,
+        personalNotes: userBeerTastings.personalNotes,
+        tastedAt: userBeerTastings.tastedAt,
+        beerId: userBeerTastings.beerId,
+        beerName: beers.name,
+        beerStyle: beers.style,
+        beerImageUrl: beers.imageUrl,
+      })
+      .from(userBeerTastings)
+      .leftJoin(beers, eq(userBeerTastings.beerId, beers.id))
+      .where(and(eq(userBeerTastings.userId, profile.id), sql`${userBeerTastings.rating} IS NOT NULL`))
+      .orderBy(desc(userBeerTastings.tastedAt))
+      .limit(12);
+
+      res.json({ ...profile, reviewCount, recentReviews, isOwner });
+    } catch (error) {
+      console.error("Error fetching public profile:", error);
+      res.status(500).json({ message: "Failed to fetch profile" });
+    }
+  });
+
+  // PATCH update user privacy setting
+  app.patch("/api/user/privacy", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = (req.user as any).id;
+      const { isPublic } = req.body;
+      if (typeof isPublic !== 'boolean') return res.status(400).json({ message: "isPublic deve essere boolean" });
+
+      await db.update(users).set({ isPublic, updatedAt: new Date() }).where(eq(users.id, userId));
+      res.json({ isPublic });
+    } catch (error) {
+      console.error("Error updating privacy:", error);
+      res.status(500).json({ message: "Errore aggiornamento privacy" });
     }
   });
 

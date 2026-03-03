@@ -152,6 +152,11 @@ export default function BreweryDetail() {
     enabled: !!id,
   });
 
+  const { data: breweryRating } = useQuery<{ avgRating: number | null; reviewCount: number }>({
+    queryKey: ["/api/breweries", id, "rating"],
+    enabled: !!id,
+  });
+
   // Check if brewery is favorited
   const { data: favorites = [] } = useQuery({
     queryKey: ["/api/favorites"],
@@ -368,13 +373,34 @@ export default function BreweryDetail() {
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Quick Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
           <BreweryStatsCard 
             icon={Beer}
             label="Birre"
             value={beers.length}
             gradient="from-amber-500 to-orange-600"
           />
+          {/* Rating Card */}
+          <div className="glass-card rounded-xl p-4">
+            <div className="flex items-center space-x-3">
+              <div className="p-3 rounded-lg bg-gradient-to-br from-yellow-400 to-amber-500">
+                <Star className="h-5 w-5 text-white fill-white" />
+              </div>
+              <div>
+                {breweryRating?.avgRating ? (
+                  <>
+                    <p className="text-2xl font-bold text-gray-900 dark:text-white">{breweryRating.avgRating.toFixed(1)} <span className="text-yellow-500">★</span></p>
+                    <p className="text-sm text-gray-600 dark:text-gray-400 font-medium">{breweryRating.reviewCount} {breweryRating.reviewCount === 1 ? 'recensione' : 'recensioni'}</p>
+                  </>
+                ) : (
+                  <>
+                    <p className="text-2xl font-bold text-gray-400 dark:text-gray-500">—</p>
+                    <p className="text-sm text-gray-500 dark:text-gray-400 font-medium">Nessuna recensione</p>
+                  </>
+                )}
+              </div>
+            </div>
+          </div>
           <a 
             href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(brewery?.name + ' ' + brewery?.location)}`}
             target="_blank"
