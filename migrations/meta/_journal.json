@@ -50,6 +50,13 @@
       "when": 1771760655633,
       "tag": "0006_groovy_meteorite",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1772542800000,
+      "tag": "0007_missing_vps_columns",
+      "breakpoints": true
     }
   ]
 }

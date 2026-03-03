@@ -1,0 +1,107 @@
+root@luppolino:/www/nodeapps/fermenta# pm2 logs fermenta --lines 50
+[TAILING] Tailing last 50 lines for [fermenta] process (change the value with --lines option)
+/root/.pm2/logs/fermenta-out.log last 50 lines:
+1|fermenta | 2026-03-03T12:36:29: 12:36:29 PM [express] GET /api/admin/stats 500 in 167ms :: {"message":"Failed to fetch stats"}
+1|fermenta | 2026-03-03T12:36:30: 12:36:30 PM [express] GET /api/stats/global 200 in 826ms :: {"totalBeers":29745,"totalBreweries":2949…
+1|fermenta | 2026-03-03T12:36:31: Raw favorites from DB: [
+1|fermenta | 2026-03-03T12:36:31:   {
+1|fermenta | 2026-03-03T12:36:31:     id: 7,
+1|fermenta | 2026-03-03T12:36:31:     userId: '45321347',
+1|fermenta | 2026-03-03T12:36:31:     itemType: 'beer',
+1|fermenta | 2026-03-03T12:36:31:     itemId: 20141,
+1|fermenta | 2026-03-03T12:36:31:     createdAt: 2025-07-27T15:57:41.367Z
+1|fermenta | 2026-03-03T12:36:31:   },
+1|fermenta | 2026-03-03T12:36:31:   {
+1|fermenta | 2026-03-03T12:36:31:     id: 8,
+1|fermenta | 2026-03-03T12:36:31:     userId: '45321347',
+1|fermenta | 2026-03-03T12:36:31:     itemType: 'pub',
+1|fermenta | 2026-03-03T12:36:31:     itemId: 7,
+1|fermenta | 2026-03-03T12:36:31:     createdAt: 2025-09-11T12:32:12.453Z
+1|fermenta | 2026-03-03T12:36:31:   }
+1|fermenta | 2026-03-03T12:36:31: ]
+1|fermenta | 2026-03-03T12:36:31: Enriched favorites: [
+1|fermenta | 2026-03-03T12:36:31:   {
+1|fermenta | 2026-03-03T12:36:31:     id: 8,
+1|fermenta | 2026-03-03T12:36:31:     userId: '45321347',
+1|fermenta | 2026-03-03T12:36:31:     itemType: 'pub',
+1|fermenta | 2026-03-03T12:36:31:     itemId: 7,
+1|fermenta | 2026-03-03T12:36:31:     createdAt: 2025-09-11T12:32:12.453Z,
+1|fermenta | 2026-03-03T12:36:31:     itemName: 'Luppolino Pub',
+1|fermenta | 2026-03-03T12:36:31:     itemImageUrl: null
+1|fermenta | 2026-03-03T12:36:31:   },
+1|fermenta | 2026-03-03T12:36:31:   {
+1|fermenta | 2026-03-03T12:36:31:     id: 7,
+1|fermenta | 2026-03-03T12:36:31:     userId: '45321347',
+1|fermenta | 2026-03-03T12:36:31:     itemType: 'beer',
+1|fermenta | 2026-03-03T12:36:31:     itemId: 20141,
+1|fermenta | 2026-03-03T12:36:31:     createdAt: 2025-07-27T15:57:41.367Z,
+1|fermenta | 2026-03-03T12:36:31:     itemName: 'Cane Pazzo',
+1|fermenta | 2026-03-03T12:36:31:     itemImageUrl: 'https://images.unsplash.com/photo-1608270586620-248524c67de9?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80'
+1|fermenta | 2026-03-03T12:36:31:   }
+1|fermenta | 2026-03-03T12:36:31: ]
+1|fermenta | 2026-03-03T12:36:31: 12:36:31 PM [express] GET /api/breweries/all 200 in 178ms :: [{"id":155,"name":"'A Magara","location"…
+1|fermenta | 2026-03-03T12:36:31: 12:36:31 PM [express] GET /api/pubs/8/taplist 200 in 193ms :: [{"id":35,"pubId":8,"beerId":30090,"isA…
+1|fermenta | 2026-03-03T12:36:31: 12:36:31 PM [express] GET /api/favorites 200 in 188ms :: [{"id":8,"userId":"45321347","itemType":"pub…
+1|fermenta | 2026-03-03T12:36:31: 12:36:31 PM [express] GET /api/breweries 200 in 277ms :: [{"id":5328,"name":"JWB (J.Wakefield Brewing…
+1|fermenta | 2026-03-03T12:53:06: Web Push configured with VAPID keys
+1|fermenta | 2026-03-03T12:53:06: Google OAuth callback URL: https://fermenta.to/api/auth/google/callback
+1|fermenta | 2026-03-03T12:53:06: Authentication system initialized successfully
+1|fermenta | 2026-03-03T12:53:06: 12:53:06 PM [express] serving on port 5000
+1|fermenta | 2026-03-03T12:53:47: Web Push configured with VAPID keys
+1|fermenta | 2026-03-03T12:53:47: Google OAuth callback URL: https://fermenta.to/api/auth/google/callback
+1|fermenta | 2026-03-03T12:53:47: Authentication system initialized successfully
+1|fermenta | 2026-03-03T12:53:47: 12:53:47 PM [express] serving on port 5000
+
+/root/.pm2/logs/fermenta-error.log last 50 lines:
+1|fermenta | 2026-03-03T12:53:48: error: column "is_public" does not exist
+1|fermenta | 2026-03-03T12:53:48:     at /www/nodeapps/fermenta/node_modules/pg-pool/index.js:45:11
+1|fermenta | 2026-03-03T12:53:48:     at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+1|fermenta | 2026-03-03T12:53:48:     at async file:///www/nodeapps/fermenta/node_modules/drizzle-orm/node-postgres/session.js:83:22
+1|fermenta | 2026-03-03T12:53:48:     at async file:///www/nodeapps/fermenta/dist/index.js:3266:22
+1|fermenta | 2026-03-03T12:53:49: error: column "is_public" does not exist
+1|fermenta | 2026-03-03T12:53:49:     at /www/nodeapps/fermenta/node_modules/pg-pool/index.js:45:11
+1|fermenta | 2026-03-03T12:53:49:     at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+1|fermenta | 2026-03-03T12:53:49:     at async file:///www/nodeapps/fermenta/node_modules/drizzle-orm/node-postgres/session.js:83:22
+1|fermenta | 2026-03-03T12:53:49:     at async file:///www/nodeapps/fermenta/dist/index.js:3266:22
+1|fermenta | 2026-03-03T12:53:49: error: column "is_public" does not exist
+1|fermenta | 2026-03-03T12:53:49:     at /www/nodeapps/fermenta/node_modules/pg-pool/index.js:45:11
+1|fermenta | 2026-03-03T12:53:49:     at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+1|fermenta | 2026-03-03T12:53:49:     at async file:///www/nodeapps/fermenta/node_modules/drizzle-orm/node-postgres/session.js:83:22
+1|fermenta | 2026-03-03T12:53:49:     at async file:///www/nodeapps/fermenta/dist/index.js:3266:22
+1|fermenta | 2026-03-03T12:53:49: error: column "is_public" does not exist
+1|fermenta | 2026-03-03T12:53:49:     at /www/nodeapps/fermenta/node_modules/pg-pool/index.js:45:11
+1|fermenta | 2026-03-03T12:53:49:     at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+1|fermenta | 2026-03-03T12:53:49:     at async file:///www/nodeapps/fermenta/node_modules/drizzle-orm/node-postgres/session.js:83:22
+1|fermenta | 2026-03-03T12:53:49:     at async file:///www/nodeapps/fermenta/dist/index.js:3266:22
+1|fermenta | 2026-03-03T12:53:52: error: column "is_public" does not exist
+1|fermenta | 2026-03-03T12:53:52:     at /www/nodeapps/fermenta/node_modules/pg-pool/index.js:45:11
+1|fermenta | 2026-03-03T12:53:52:     at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+1|fermenta | 2026-03-03T12:53:52:     at async file:///www/nodeapps/fermenta/node_modules/drizzle-orm/node-postgres/session.js:83:22
+1|fermenta | 2026-03-03T12:53:52:     at async file:///www/nodeapps/fermenta/dist/index.js:3266:22
+1|fermenta | 2026-03-03T12:53:53: error: column "is_public" does not exist
+1|fermenta | 2026-03-03T12:53:53:     at /www/nodeapps/fermenta/node_modules/pg-pool/index.js:45:11
+1|fermenta | 2026-03-03T12:53:53:     at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+1|fermenta | 2026-03-03T12:53:53:     at async file:///www/nodeapps/fermenta/node_modules/drizzle-orm/node-postgres/session.js:83:22
+1|fermenta | 2026-03-03T12:53:53:     at async file:///www/nodeapps/fermenta/dist/index.js:3266:22
+1|fermenta | 2026-03-03T12:54:20: error: column "is_public" does not exist
+1|fermenta | 2026-03-03T12:54:20:     at /www/nodeapps/fermenta/node_modules/pg-pool/index.js:45:11
+1|fermenta | 2026-03-03T12:54:20:     at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+1|fermenta | 2026-03-03T12:54:20:     at async file:///www/nodeapps/fermenta/node_modules/drizzle-orm/node-postgres/session.js:83:22
+1|fermenta | 2026-03-03T12:54:20:     at async file:///www/nodeapps/fermenta/dist/index.js:3266:22
+1|fermenta | 2026-03-03T12:54:21: error: column "is_public" does not exist
+1|fermenta | 2026-03-03T12:54:21:     at /www/nodeapps/fermenta/node_modules/pg-pool/index.js:45:11
+1|fermenta | 2026-03-03T12:54:21:     at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+1|fermenta | 2026-03-03T12:54:21:     at async file:///www/nodeapps/fermenta/node_modules/drizzle-orm/node-postgres/session.js:83:22
+1|fermenta | 2026-03-03T12:54:21:     at async file:///www/nodeapps/fermenta/dist/index.js:3266:22
+1|fermenta | 2026-03-03T12:54:29: error: column "is_public" does not exist
+1|fermenta | 2026-03-03T12:54:29:     at /www/nodeapps/fermenta/node_modules/pg-pool/index.js:45:11
+1|fermenta | 2026-03-03T12:54:29:     at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+1|fermenta | 2026-03-03T12:54:29:     at async file:///www/nodeapps/fermenta/node_modules/drizzle-orm/node-postgres/session.js:83:22
+1|fermenta | 2026-03-03T12:54:29:     at async file:///www/nodeapps/fermenta/dist/index.js:3266:22
+1|fermenta | 2026-03-03T12:54:31: error: column "is_public" does not exist
+1|fermenta | 2026-03-03T12:54:31:     at /www/nodeapps/fermenta/node_modules/pg-pool/index.js:45:11
+1|fermenta | 2026-03-03T12:54:31:     at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+1|fermenta | 2026-03-03T12:54:31:     at async file:///www/nodeapps/fermenta/node_modules/drizzle-orm/node-postgres/session.js:83:22
+1|fermenta | 2026-03-03T12:54:31:     at async file:///www/nodeapps/fermenta/dist/index.js:3266:22
+
+
