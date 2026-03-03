@@ -251,13 +251,11 @@ export default function AdminDashboard() {
                             </td>
                             <td className="px-4 py-3">
                               <div className="flex items-center gap-1.5">
-                                {u.nickname && (
-                                  <Link href={`/user/${u.nickname}`}>
-                                    <Button size="sm" variant="ghost" className="h-7 w-7 p-0" title="Vedi profilo">
-                                      <ExternalLink className="w-3.5 h-3.5" />
-                                    </Button>
-                                  </Link>
-                                )}
+                                <Link href={`/user/${u.nickname || u.id}`}>
+                                  <Button size="sm" variant="ghost" className="h-7 w-7 p-0" title="Vedi profilo">
+                                    <ExternalLink className="w-3.5 h-3.5" />
+                                  </Button>
+                                </Link>
                                 {!isSelf && (
                                   <>
                                     <Button
