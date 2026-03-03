@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { getBadgeForCount } from "@/lib/badges";
 import { useParams, Link } from "wouter";
 import { GlutenFreeIcon } from "@/components/beer-badges";
@@ -22,7 +22,10 @@ import {
   Factory,
   Pencil,
   Save,
-  X
+  X,
+  ChevronDown,
+  Filter,
+  ArrowUpDown
 } from "lucide-react";
 import Footer from "@/components/footer";
 import { Card, CardContent } from "@/components/ui/card";
@@ -114,6 +117,9 @@ export default function BeerDetail() {
   const queryClient = useQueryClient();
   const [showTastingForm, setShowTastingForm] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [reviewFilterRating, setReviewFilterRating] = useState<number | null>(null);
+  const [reviewSortBy, setReviewSortBy] = useState<'recent' | 'highest' | 'lowest'>('recent');
+  const [showAllReviews, setShowAllReviews] = useState(false);
   const [editForm, setEditForm] = useState({
     name: '',
     style: '',
@@ -224,6 +230,16 @@ export default function BeerDetail() {
     queryKey: ["/api/beers", id, "reviews"],
     enabled: !!id,
   });
+
+  const filteredReviews = useMemo(() => {
+    if (!reviewsData?.reviews) return [];
+    let list = [...reviewsData.reviews];
+    if (reviewFilterRating !== null) list = list.filter(r => r.rating === reviewFilterRating);
+    if (reviewSortBy === 'highest') list.sort((a, b) => (b.rating || 0) - (a.rating || 0));
+    else if (reviewSortBy === 'lowest') list.sort((a, b) => (a.rating || 0) - (b.rating || 0));
+    else list.sort((a, b) => new Date(b.tastedAt).getTime() - new Date(a.tastedAt).getTime());
+    return list;
+  }, [reviewsData, reviewFilterRating, reviewSortBy]);
 
   // Favorite mutation
   const favoriteMutation = useMutation({
@@ -583,7 +599,7 @@ export default function BeerDetail() {
           <Card className="glass-card border-0 mb-8">
             <CardContent className="p-6">
               {/* Header with avg rating */}
-              <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center justify-between mb-4">
                 <h2 className="text-xl font-bold text-gray-900 dark:text-white flex items-center">
                   <div className="p-2 bg-gradient-to-r from-yellow-500 to-amber-600 rounded-lg mr-3">
                     <Star className="h-5 w-5 text-white fill-white" />
@@ -593,49 +609,86 @@ export default function BeerDetail() {
                 <div className="flex items-center gap-2">
                   <div className="flex items-center gap-1">
                     {[1,2,3,4,5].map(s => (
-                      <Star key={s} className={`h-5 w-5 ${s <= Math.round(reviewsData.avgRating || 0) ? 'text-yellow-500 fill-yellow-500' : 'text-gray-300 dark:text-gray-600'}`} />
+                      <Star key={s} className={`h-4 w-4 ${s <= Math.round(reviewsData.avgRating || 0) ? 'text-yellow-500 fill-yellow-500' : 'text-gray-300 dark:text-gray-600'}`} />
                     ))}
                   </div>
-                  <span className="text-xl font-bold text-gray-900 dark:text-white">{reviewsData.avgRating?.toFixed(1)}</span>
-                  <span className="text-sm text-gray-500">({reviewsData.reviewCount} {reviewsData.reviewCount === 1 ? 'recensione' : 'recensioni'})</span>
+                  <span className="text-lg font-bold text-gray-900 dark:text-white">{reviewsData.avgRating?.toFixed(1)}</span>
+                  <span className="text-sm text-gray-500 hidden sm:inline">({reviewsData.reviewCount} {reviewsData.reviewCount === 1 ? 'recensione' : 'recensioni'})</span>
                 </div>
               </div>
 
               {/* Rating Distribution Histogram */}
               {reviewsData.distribution && (
-                <div className="mb-6 space-y-2 bg-gray-50 dark:bg-gray-800/50 rounded-xl p-4">
+                <div className="mb-4 space-y-1.5 bg-gray-50 dark:bg-gray-800/50 rounded-xl p-3">
                   {[5, 4, 3, 2, 1].map(star => {
                     const count = reviewsData.distribution?.[star] || 0;
                     const pct = reviewsData.reviewCount > 0 ? (count / reviewsData.reviewCount) * 100 : 0;
+                    const isActive = reviewFilterRating === star;
                     return (
-                      <div key={star} className="flex items-center gap-3">
+                      <button
+                        key={star}
+                        onClick={() => { setReviewFilterRating(isActive ? null : star); setShowAllReviews(false); }}
+                        className={`flex items-center gap-3 w-full rounded-lg px-1 py-0.5 transition-colors ${isActive ? 'bg-amber-100 dark:bg-amber-900/30' : 'hover:bg-gray-100 dark:hover:bg-gray-700/50'}`}
+                      >
                         <div className="flex items-center gap-1 w-12 flex-shrink-0">
                           <span className="text-xs font-medium text-gray-600 dark:text-gray-400 w-3">{star}</span>
-                          <Star className="h-3.5 w-3.5 text-yellow-400 fill-yellow-400" />
+                          <Star className="h-3 w-3 text-yellow-400 fill-yellow-400" />
                         </div>
-                        <div className="flex-1 h-2.5 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+                        <div className="flex-1 h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
                           <div
-                            className="h-full bg-gradient-to-r from-yellow-400 to-amber-500 rounded-full transition-all duration-500"
+                            className={`h-full rounded-full transition-all duration-500 ${isActive ? 'bg-amber-500' : 'bg-gradient-to-r from-yellow-400 to-amber-500'}`}
                             style={{ width: `${pct}%` }}
                           />
                         </div>
                         <span className="text-xs text-gray-500 w-6 text-right">{count}</span>
-                      </div>
+                      </button>
                     );
                   })}
                 </div>
               )}
 
+              {/* Filters */}
+              <div className="flex items-center gap-2 mb-4 flex-wrap">
+                <div className="flex items-center gap-1.5 text-xs text-gray-500">
+                  <Filter className="h-3.5 w-3.5" />
+                  <span className="font-medium">Filtra:</span>
+                </div>
+                {reviewFilterRating !== null && (
+                  <button
+                    onClick={() => setReviewFilterRating(null)}
+                    className="flex items-center gap-1 text-xs bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 px-2.5 py-1 rounded-full font-medium border border-amber-200 dark:border-amber-800 hover:bg-amber-200 dark:hover:bg-amber-800/50 transition-colors"
+                  >
+                    {reviewFilterRating}★ <X className="h-3 w-3" />
+                  </button>
+                )}
+                <div className="flex items-center gap-1.5 ml-auto">
+                  <ArrowUpDown className="h-3.5 w-3.5 text-gray-400" />
+                  {(['recent', 'highest', 'lowest'] as const).map(opt => (
+                    <button
+                      key={opt}
+                      onClick={() => { setReviewSortBy(opt); setShowAllReviews(false); }}
+                      className={`text-xs px-2.5 py-1 rounded-full border font-medium transition-colors ${
+                        reviewSortBy === opt
+                          ? 'bg-gray-800 dark:bg-gray-200 text-white dark:text-gray-900 border-gray-800 dark:border-gray-200'
+                          : 'text-gray-600 dark:text-gray-400 border-gray-200 dark:border-gray-700 hover:border-gray-400'
+                      }`}
+                    >
+                      {opt === 'recent' ? 'Recenti' : opt === 'highest' ? '↑ Voto' : '↓ Voto'}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
               {/* Review cards */}
-              <div className="space-y-4">
-                {reviewsData.reviews.slice(0, 10).map((review: any) => {
+              <div className="space-y-3">
+                {(showAllReviews ? filteredReviews : filteredReviews.slice(0, 5)).map((review: any) => {
                   const displayName = review.nickname || review.firstName || 'Utente';
                   const initials = displayName[0]?.toUpperCase() || 'U';
                   const userBadge = getBadgeForCount(Number(review.userReviewCount || 0));
                   const isPublicReviewer = review.isPublic !== false;
                   return (
-                    <div key={review.id} className="flex gap-4 p-4 bg-gray-50 dark:bg-gray-800/50 rounded-xl">
-                      <Avatar className="h-10 w-10 flex-shrink-0">
+                    <div key={review.id} className="flex gap-3 p-3 bg-gray-50 dark:bg-gray-800/50 rounded-xl">
+                      <Avatar className="h-9 w-9 flex-shrink-0">
                         {review.profileImageUrl && <AvatarImage src={review.profileImageUrl} />}
                         <AvatarFallback className="bg-gradient-to-br from-amber-400 to-orange-500 text-white font-bold text-sm">
                           {initials}
@@ -643,19 +696,19 @@ export default function BeerDetail() {
                       </Avatar>
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center justify-between gap-2 mb-1">
-                          <div className="flex items-center gap-2 min-w-0">
+                          <div className="flex items-center gap-1.5 min-w-0">
                             {isPublicReviewer && review.nickname ? (
                               <Link href={`/user/${review.nickname}`}>
-                                <span className="font-semibold text-sm text-gray-900 dark:text-white hover:text-amber-600 dark:hover:text-amber-400 cursor-pointer transition-colors">{displayName}</span>
+                                <span className="font-semibold text-sm text-gray-900 dark:text-white hover:text-amber-600 dark:hover:text-amber-400 cursor-pointer transition-colors truncate">{displayName}</span>
                               </Link>
                             ) : (
-                              <span className="font-semibold text-sm text-gray-900 dark:text-white">{displayName}</span>
+                              <span className="font-semibold text-sm text-gray-900 dark:text-white truncate">{displayName}</span>
                             )}
                             <span className="text-sm flex-shrink-0" title={userBadge.name}>{userBadge.emoji}</span>
                           </div>
-                          <div className="flex items-center gap-1 flex-shrink-0">
+                          <div className="flex items-center gap-0.5 flex-shrink-0">
                             {[1,2,3,4,5].map(s => (
-                              <Star key={s} className={`h-3.5 w-3.5 ${s <= (review.rating || 0) ? 'text-yellow-500 fill-yellow-500' : 'text-gray-300 dark:text-gray-600'}`} />
+                              <Star key={s} className={`h-3 w-3 ${s <= (review.rating || 0) ? 'text-yellow-500 fill-yellow-500' : 'text-gray-300 dark:text-gray-600'}`} />
                             ))}
                           </div>
                         </div>
@@ -671,6 +724,27 @@ export default function BeerDetail() {
                   );
                 })}
               </div>
+
+              {/* Show more / less */}
+              {filteredReviews.length > 5 && (
+                <button
+                  onClick={() => setShowAllReviews(!showAllReviews)}
+                  className="w-full mt-4 flex items-center justify-center gap-2 py-2.5 text-sm font-medium text-amber-600 dark:text-amber-400 hover:text-amber-700 dark:hover:text-amber-300 border border-dashed border-amber-300 dark:border-amber-700 rounded-xl hover:bg-amber-50 dark:hover:bg-amber-900/10 transition-colors"
+                >
+                  <ChevronDown className={`h-4 w-4 transition-transform ${showAllReviews ? 'rotate-180' : ''}`} />
+                  {showAllReviews
+                    ? 'Mostra meno'
+                    : `Mostra altre ${filteredReviews.length - 5} recensioni`}
+                </button>
+              )}
+
+              {filteredReviews.length === 0 && reviewFilterRating !== null && (
+                <div className="text-center py-6 text-gray-400">
+                  <Star className="h-8 w-8 mx-auto mb-2 opacity-30" />
+                  <p className="text-sm">Nessuna recensione con {reviewFilterRating} stelle</p>
+                  <button onClick={() => setReviewFilterRating(null)} className="text-xs text-amber-600 mt-1 hover:underline">Rimuovi filtro</button>
+                </div>
+              )}
             </CardContent>
           </Card>
         )}

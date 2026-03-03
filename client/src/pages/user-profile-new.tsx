@@ -33,6 +33,11 @@ import {
   Eye,
   EyeOff,
   ExternalLink,
+  Search,
+  Star,
+  Beer as BeerIcon,
+  ChevronDown,
+  TrendingUp,
 } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -40,86 +45,130 @@ import type { User as UserType } from "@shared/schema";
 import UserFavoritesSection from "@/components/UserFavoritesSection";
 import BeerTastingsEditor from "@/components/BeerTastingsEditorNew";
 import { ImageUpload } from "@/components/image-upload";
+import { getBadgeForCount, getNextBadge, getProgressToNextBadge } from "@/lib/badges";
 
-const ALL_BEER_STYLES = [
-  "IPA", "Session IPA", "New England IPA", "Double IPA", "Triple IPA",
-  "Pale Ale", "American Pale Ale", "Extra Pale Ale",
-  "Stout", "Imperial Stout", "Milk Stout", "Oatmeal Stout", "Dry Stout",
-  "Porter", "Baltic Porter", "Robust Porter",
-  "Lager", "Pilsner", "Helles", "Märzen", "Dunkel",
-  "Weizen", "Hefeweizen", "Witbier", "Dunkelweizen",
-  "Saison", "Farmhouse Ale", "Bière de Garde",
-  "Belgian Dubbel", "Belgian Tripel", "Belgian Quadrupel",
-  "Trappist Ale", "Abbey Ale",
-  "Amber Ale", "Red Ale", "Irish Red",
-  "Sour Ale", "Gose", "Berliner Weisse", "Lambic", "Gueuze", "Kriek",
-  "Barleywine", "Strong Ale", "Wee Heavy", "Scotch Ale",
-  "Bock", "Doppelbock", "Maibock", "Eisbock",
-  "Fruit Beer", "Fruited Sour",
-  "Gluten Free", "Analcolica / Low ABV",
-  "Birra Artigianale Italiana",
-];
-
-function StylesPicker({ current, onChange, onSave, isSaving }: {
+function StylesPickerOverview({ current, onChange, onSave, isSaving }: {
   current: string[];
   onChange: (s: string[]) => void;
-  onSave: () => void;
+  onSave: (styles: string[]) => void;
   isSaving: boolean;
 }) {
+  const [styleSearch, setStyleSearch] = useState("");
+  const [showAll, setShowAll] = useState(false);
+
+  const { data: dbStyles = [] } = useQuery<{ style: string }[]>({
+    queryKey: ["/api/beers/styles"],
+    staleTime: 1000 * 60 * 60,
+  });
+
+  const allStyles = dbStyles.map(s => s.style).filter(Boolean).sort();
+  const searchFiltered = styleSearch.trim()
+    ? allStyles.filter(s => s.toLowerCase().includes(styleSearch.toLowerCase()))
+    : allStyles;
+  const SHOW_LIMIT = 30;
+  const visibleStyles = showAll ? searchFiltered : searchFiltered.slice(0, SHOW_LIMIT);
+
   const toggle = (style: string) => {
     if (current.includes(style)) {
-      onChange(current.filter(s => s !== style));
+      const updated = current.filter(s => s !== style);
+      onChange(updated);
+      onSave(updated);
     } else if (current.length < 10) {
-      onChange([...current, style]);
+      const updated = [...current, style];
+      onChange(updated);
+      onSave(updated);
     }
   };
+
   return (
-    <div className="border-t border-orange-100 dark:border-gray-700 pt-4">
-      <div className="flex items-center justify-between mb-3">
-        <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300 flex items-center gap-2">
-          🍺 Stili di birra preferiti
-          <span className="text-xs text-gray-400 font-normal">({current.length}/10 selezionati)</span>
-        </h3>
-        <Button
-          size="sm"
-          onClick={onSave}
-          disabled={isSaving}
-          className="bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white h-8 px-3 text-xs"
-        >
-          {isSaving ? <><Save className="w-3 h-3 mr-1 animate-spin" />Salvando...</> : <><Save className="w-3 h-3 mr-1" />Salva stili</>}
-        </Button>
+    <div className="space-y-3">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h3 className="font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+            <BeerIcon className="w-4 h-4 text-amber-500" />
+            Stili Preferiti
+            <span className="text-xs text-gray-400 font-normal bg-gray-100 dark:bg-gray-800 px-1.5 py-0.5 rounded-full">{current.length}/10</span>
+          </h3>
+          <p className="text-xs text-gray-500 mt-0.5">Seleziona fino a 10 stili. Si salvano automaticamente.</p>
+        </div>
+        {isSaving && <span className="text-xs text-orange-500 animate-pulse">Salvando...</span>}
       </div>
-      <p className="text-xs text-gray-500 mb-3">Scegli fino a 10 stili che ami di più. Appariranno sul tuo profilo pubblico.</p>
-      <div className="flex flex-wrap gap-2 max-h-64 overflow-y-auto pr-1">
-        {ALL_BEER_STYLES.map(style => {
+
+      {/* Currently selected */}
+      {current.length > 0 && (
+        <div className="flex flex-wrap gap-1.5 p-3 bg-amber-50 dark:bg-amber-900/10 rounded-xl border border-amber-100 dark:border-amber-800/30">
+          {current.map(style => (
+            <button
+              key={style}
+              onClick={() => toggle(style)}
+              className="flex items-center gap-1 text-xs bg-amber-500 text-white px-2.5 py-1 rounded-full font-medium shadow-sm hover:bg-amber-600 transition-colors"
+            >
+              ✓ {style} <X className="w-3 h-3 opacity-70" />
+            </button>
+          ))}
+          <button
+            onClick={() => { onChange([]); onSave([]); }}
+            className="text-xs text-red-400 hover:text-red-600 px-2 py-1 rounded-full border border-red-200 dark:border-red-800 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+          >
+            Rimuovi tutti
+          </button>
+        </div>
+      )}
+
+      {/* Search */}
+      <div className="relative">
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400" />
+        <Input
+          value={styleSearch}
+          onChange={e => { setStyleSearch(e.target.value); setShowAll(false); }}
+          placeholder={`Cerca tra ${allStyles.length} stili dal database...`}
+          className="pl-9 text-sm border-orange-200 dark:border-gray-600 focus:border-orange-400 h-9"
+        />
+        {styleSearch && (
+          <button onClick={() => setStyleSearch("")} className="absolute right-2 top-1/2 -translate-y-1/2">
+            <X className="w-3.5 h-3.5 text-gray-400 hover:text-gray-600" />
+          </button>
+        )}
+      </div>
+
+      {/* Style badges */}
+      <div className="flex flex-wrap gap-1.5 max-h-52 overflow-y-auto pr-1">
+        {visibleStyles.map(style => {
           const selected = current.includes(style);
+          const disabled = !selected && current.length >= 10;
           return (
             <button
               key={style}
               type="button"
-              onClick={() => toggle(style)}
-              disabled={!selected && current.length >= 10}
-              className={`text-xs px-3 py-1.5 rounded-full border font-medium transition-all ${
+              onClick={() => !disabled && toggle(style)}
+              disabled={disabled}
+              className={`text-xs px-2.5 py-1 rounded-full border font-medium transition-all duration-150 ${
                 selected
-                  ? 'bg-amber-500 border-amber-500 text-white shadow-sm scale-105'
-                  : current.length >= 10
-                  ? 'bg-gray-100 dark:bg-gray-800 border-gray-200 dark:border-gray-700 text-gray-400 cursor-not-allowed'
-                  : 'bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:border-amber-400 hover:bg-amber-50 dark:hover:bg-amber-900/20'
+                  ? 'bg-amber-500 border-amber-500 text-white shadow-sm'
+                  : disabled
+                  ? 'bg-gray-50 dark:bg-gray-900 border-gray-100 dark:border-gray-800 text-gray-300 dark:text-gray-700 cursor-not-allowed'
+                  : 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:border-amber-400 hover:bg-amber-50 dark:hover:bg-amber-900/20 hover:text-amber-700'
               }`}
             >
-              {selected && '✓ '}{style}
+              {style}
             </button>
           );
         })}
       </div>
-      {current.length > 0 && (
+
+      {/* Show more */}
+      {!styleSearch && searchFiltered.length > SHOW_LIMIT && (
         <button
-          type="button"
-          onClick={() => onChange([])}
-          className="mt-2 text-xs text-red-500 hover:text-red-700 hover:underline"
+          onClick={() => setShowAll(!showAll)}
+          className="flex items-center gap-1 text-xs text-amber-600 dark:text-amber-400 hover:underline"
         >
-          Rimuovi tutti
+          <ChevronDown className={`w-3 h-3 transition-transform ${showAll ? 'rotate-180' : ''}`} />
+          {showAll ? 'Mostra meno' : `Mostra altri ${searchFiltered.length - SHOW_LIMIT} stili`}
         </button>
+      )}
+      {styleSearch && searchFiltered.length === 0 && (
+        <p className="text-xs text-gray-400 text-center py-2">Nessuno stile trovato per "{styleSearch}"</p>
       )}
     </div>
   );
@@ -416,74 +465,132 @@ export default function UserProfile() {
             <TabsTrigger value="settings" className="rounded-lg data-[state=active]:bg-gradient-to-r data-[state=active]:from-orange-500 data-[state=active]:to-orange-600 data-[state=active]:text-white data-[state=active]:shadow-lg transition-all duration-300">Impostazioni</TabsTrigger>
           </TabsList>
 
-          <TabsContent value="overview" className="space-y-6">
-            <Card className="border-0 shadow-lg bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl border-orange-100/50">
-              <CardHeader>
-                <CardTitle className="flex items-center justify-between">
-                  <div className="flex items-center gap-2 text-gray-900 dark:text-white">
-                    <div className="p-2 bg-orange-100 dark:bg-orange-900/30 rounded-lg">
-                      <User className="w-5 h-5 text-orange-600" />
+          <TabsContent value="overview" className="space-y-4">
+            {/* Stats row */}
+            {(() => {
+              const reviewCount = beerTastings.filter((t: any) => t.rating != null).length;
+              const badge = getBadgeForCount(reviewCount);
+              const nextBadge = getNextBadge(reviewCount);
+              const progress = getProgressToNextBadge(reviewCount);
+              return (
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                  <Card className="border-0 shadow-md bg-gradient-to-br from-amber-50 to-orange-50 dark:from-amber-900/20 dark:to-orange-900/20">
+                    <CardContent className="p-4 text-center">
+                      <div className="text-2xl font-bold text-amber-600 dark:text-amber-400">{beerTastings.length}</div>
+                      <div className="text-xs text-gray-600 dark:text-gray-400 mt-0.5 font-medium">Assaggi</div>
+                    </CardContent>
+                  </Card>
+                  <Card className="border-0 shadow-md bg-gradient-to-br from-yellow-50 to-amber-50 dark:from-yellow-900/20 dark:to-amber-900/20">
+                    <CardContent className="p-4 text-center">
+                      <div className="text-2xl font-bold text-yellow-600 dark:text-yellow-400">{reviewCount}</div>
+                      <div className="text-xs text-gray-600 dark:text-gray-400 mt-0.5 font-medium">Recensioni</div>
+                    </CardContent>
+                  </Card>
+                  <Card className="border-0 shadow-md bg-gradient-to-br from-red-50 to-pink-50 dark:from-red-900/20 dark:to-pink-900/20">
+                    <CardContent className="p-4 text-center">
+                      <div className="text-2xl font-bold text-red-500 dark:text-red-400">{Array.isArray(enrichedFavorites) ? enrichedFavorites.length : 0}</div>
+                      <div className="text-xs text-gray-600 dark:text-gray-400 mt-0.5 font-medium">Preferiti</div>
+                    </CardContent>
+                  </Card>
+                  <Card className="border-0 shadow-md bg-gradient-to-br from-purple-50 to-violet-50 dark:from-purple-900/20 dark:to-violet-900/20">
+                    <CardContent className="p-4 text-center">
+                      <div className="text-2xl">{badge.emoji}</div>
+                      <div className="text-xs text-gray-600 dark:text-gray-400 mt-0.5 font-medium truncate">{badge.name}</div>
+                    </CardContent>
+                  </Card>
+                </div>
+              );
+            })()}
+
+            {/* Badge progress */}
+            {(() => {
+              const reviewCount = beerTastings.filter((t: any) => t.rating != null).length;
+              const badge = getBadgeForCount(reviewCount);
+              const nextBadge = getNextBadge(reviewCount);
+              const progress = getProgressToNextBadge(reviewCount);
+              return nextBadge ? (
+                <Card className="border-0 shadow-md bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl">
+                  <CardContent className="p-4">
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="flex items-center gap-2">
+                        <span className="text-lg">{badge.emoji}</span>
+                        <span className="text-sm font-semibold text-gray-800 dark:text-gray-200">{badge.name}</span>
+                      </div>
+                      <div className="flex items-center gap-2 text-sm text-gray-500">
+                        <TrendingUp className="w-3.5 h-3.5" />
+                        <span>→ {nextBadge.emoji} {nextBadge.name}</span>
+                      </div>
                     </div>
-                    Informazioni Profilo
+                    <div className="w-full h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+                      <div
+                        className="h-full bg-gradient-to-r from-orange-400 to-amber-500 rounded-full transition-all duration-700"
+                        style={{ width: `${progress}%` }}
+                      />
+                    </div>
+                    <p className="text-xs text-gray-400 mt-1.5 text-right">
+                      {reviewCount} / {nextBadge.minReviews} recensioni
+                    </p>
+                  </CardContent>
+                </Card>
+              ) : null;
+            })()}
+
+            {/* Bio */}
+            <Card className="border-0 shadow-md bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl">
+              <CardHeader className="pb-3">
+                <CardTitle className="flex items-center justify-between text-base">
+                  <div className="flex items-center gap-2 text-gray-900 dark:text-white">
+                    <User className="w-4 h-4 text-orange-500" />
+                    Bio
                   </div>
                   <Button
                     size="sm"
-                    variant="outline"
+                    variant="ghost"
                     onClick={() => setIsEditing(!isEditing)}
-                    className="border-orange-200 hover:bg-orange-50 hover:text-orange-700 dark:border-orange-800 dark:hover:bg-orange-900/30"
+                    className="text-xs text-gray-500 hover:text-orange-600 h-7 px-2"
                   >
-                    <Edit3 className="w-4 h-4 mr-2" />
+                    <Edit3 className="w-3.5 h-3.5 mr-1" />
                     {isEditing ? "Annulla" : "Modifica"}
                   </Button>
                 </CardTitle>
               </CardHeader>
-              <CardContent>
+              <CardContent className="pt-0">
                 {isEditing ? (
-                  <div className="space-y-4">
-                    <div>
-                      <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">Bio</label>
-                      <Textarea
-                        value={editedProfile.bio}
-                        onChange={(e) => setEditedProfile({ ...editedProfile, bio: e.target.value })}
-                        placeholder="Racconta qualcosa di te..."
-                        rows={3}
-                        className="border-orange-200 focus:border-orange-400 focus:ring-orange-400/20"
-                      />
-                    </div>
-                    
+                  <div className="space-y-3">
+                    <Textarea
+                      value={editedProfile.bio}
+                      onChange={(e) => setEditedProfile({ ...editedProfile, bio: e.target.value })}
+                      placeholder="Racconta qualcosa di te, cosa ami bere..."
+                      rows={3}
+                      className="border-orange-200 focus:border-orange-400 focus:ring-orange-400/20 text-sm"
+                    />
                     <div className="flex gap-2">
-                      <Button onClick={handleSaveProfile} disabled={updateProfileMutation.isPending} className="bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white shadow-lg">
-                        <Save className="w-4 h-4 mr-2" />
+                      <Button size="sm" onClick={handleSaveProfile} disabled={updateProfileMutation.isPending} className="bg-orange-500 hover:bg-orange-600 text-white">
+                        <Save className="w-3.5 h-3.5 mr-1.5" />
                         {updateProfileMutation.isPending ? "Salvando..." : "Salva"}
                       </Button>
-                      <Button
-                        variant="outline"
-                        onClick={() => {
-                          setIsEditing(false);
-                          setEditedProfile({
-                            nickname: typedUser?.nickname || "",
-                            bio: typedUser?.bio || "",
-                            favoriteStyles: typedUser?.favoriteStyles || [],
-                            profileImageUrl: typedUser?.profileImageUrl || "",
-                          });
-                        }}
-                        className="border-orange-200 hover:bg-orange-50 dark:border-orange-800"
-                      >
-                        <X className="w-4 h-4 mr-2" />
-                        Annulla
+                      <Button size="sm" variant="outline" onClick={() => { setIsEditing(false); setEditedProfile({ nickname: typedUser?.nickname || "", bio: typedUser?.bio || "", favoriteStyles: typedUser?.favoriteStyles || [], profileImageUrl: typedUser?.profileImageUrl || "" }); }} className="border-orange-200">
+                        <X className="w-3.5 h-3.5 mr-1.5" />Annulla
                       </Button>
                     </div>
                   </div>
                 ) : (
-                  <div className="space-y-4">
-                    <div>
-                      <h4 className="font-medium mb-2 text-gray-800 dark:text-gray-200">Bio</h4>
-                      <p className="text-gray-600 dark:text-gray-300">
-                        {typedUser.bio || "Nessuna biografia disponibile"}
-                      </p>
-                    </div>
-                  </div>
+                  <p className="text-sm text-gray-600 dark:text-gray-300 leading-relaxed">
+                    {typedUser.bio || <span className="italic text-gray-400">Nessuna bio — clicca Modifica per aggiungerne una</span>}
+                  </p>
                 )}
+              </CardContent>
+            </Card>
+
+            {/* Stili Preferiti */}
+            <Card className="border-0 shadow-md bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl">
+              <CardContent className="p-5">
+                <StylesPickerOverview
+                  current={editedProfile.favoriteStyles}
+                  onChange={(styles) => setEditedProfile(prev => ({ ...prev, favoriteStyles: styles }))}
+                  onSave={(styles) => updateProfileMutation.mutate({ favoriteStyles: styles } as any)}
+                  isSaving={updateProfileMutation.isPending}
+                />
               </CardContent>
             </Card>
 
@@ -663,13 +770,6 @@ export default function UserProfile() {
                     </a>
                   )}
                 </div>
-
-                <StylesPicker
-                  current={editedProfile.favoriteStyles}
-                  onChange={(styles) => setEditedProfile(prev => ({ ...prev, favoriteStyles: styles }))}
-                  onSave={() => updateProfileMutation.mutate({ favoriteStyles: editedProfile.favoriteStyles } as any)}
-                  isSaving={updateProfileMutation.isPending}
-                />
 
                 <div className="border-t border-orange-100 dark:border-gray-700 pt-4">
                   <h3 className="text-sm font-medium mb-4 text-gray-700 dark:text-gray-300">Sicurezza</h3>
