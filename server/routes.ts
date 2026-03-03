@@ -2667,6 +2667,36 @@ export async function registerRoutes(app: Express): Promise<Server> {
         activities.push({ type: 'brewery', action: 'Nuovo birrificio aggiunto', name: b.name, detail: b.location, time: b.createdAt, icon: 'brewery' });
       }
 
+      const recentReviews = await db.select({
+        id: userBeerTastings.id,
+        rating: userBeerTastings.rating,
+        tastedAt: userBeerTastings.tastedAt,
+        beerName: beers.name,
+        reviewerName: users.nickname,
+        reviewerFirst: users.firstName,
+      })
+        .from(userBeerTastings)
+        .innerJoin(beers, eq(beers.id, userBeerTastings.beerId))
+        .innerJoin(users, eq(users.id, userBeerTastings.userId))
+        .where(sql`${userBeerTastings.rating} IS NOT NULL`)
+        .orderBy(desc(userBeerTastings.tastedAt))
+        .limit(5);
+      for (const r of recentReviews) {
+        activities.push({ type: 'review', action: `Recensione ${r.rating}★`, name: r.beerName, detail: `di ${r.reviewerName || r.reviewerFirst || 'Utente'}`, time: r.tastedAt, icon: 'review' });
+      }
+
+      const recentPubEvents = await db.select({ id: pubEvents.id, title: pubEvents.title, createdAt: pubEvents.createdAt })
+        .from(pubEvents).orderBy(desc(pubEvents.createdAt)).limit(3);
+      for (const e of recentPubEvents) {
+        activities.push({ type: 'event', action: 'Nuovo evento pub', name: e.title, time: e.createdAt, icon: 'event' });
+      }
+
+      const recentBreweryEvents = await db.select({ id: breweryEvents.id, title: breweryEvents.title, createdAt: breweryEvents.createdAt })
+        .from(breweryEvents).orderBy(desc(breweryEvents.createdAt)).limit(3);
+      for (const e of recentBreweryEvents) {
+        activities.push({ type: 'event', action: 'Nuovo evento birrificio', name: e.title, time: e.createdAt, icon: 'event' });
+      }
+
       activities.sort((a, b) => {
         const ta = a.time ? new Date(a.time).getTime() : 0;
         const tb = b.time ? new Date(b.time).getTime() : 0;
@@ -3389,7 +3419,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!profile) return res.status(404).json({ message: "Utente non trovato" });
 
       const isOwner = currentUserId === profile.id;
-      if (!profile.isPublic && !isOwner) {
+      if (profile.isPublic === false && !isOwner) {
         return res.status(403).json({ message: "Questo profilo è privato" });
       }
 

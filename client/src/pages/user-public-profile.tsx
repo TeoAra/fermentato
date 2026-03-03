@@ -73,7 +73,7 @@ export default function UserPublicProfile() {
   const { data: profile, isLoading, error } = useQuery<any>({
     queryKey: ["/api/users", nickname, "profile"],
     queryFn: () => fetch(`/api/users/${encodeURIComponent(nickname || "")}/profile`).then(r => {
-      if (!r.ok) throw new Error(r.status === 403 ? "private" : "not_found");
+      if (!r.ok) throw new Error(r.status === 403 ? "private" : r.status === 404 ? "not_found" : "error");
       return r.json();
     }),
     enabled: !!nickname,
@@ -92,17 +92,25 @@ export default function UserPublicProfile() {
     );
   }
 
-  if ((error as any)?.message === "private" || (!isLoading && !profile)) {
+  const errorMsg = (error as any)?.message;
+  if (errorMsg === "private" || errorMsg === "not_found" || (!isLoading && !profile)) {
+    const isPrivate = errorMsg === "private";
     return (
       <div className="min-h-screen bg-gradient-to-br from-gray-50 via-amber-50 to-orange-50 dark:from-gray-950 dark:via-amber-950 dark:to-orange-950 flex items-center justify-center">
         <Card className="max-w-md w-full mx-4 border-0 shadow-2xl">
           <CardContent className="py-12 text-center space-y-6">
-            <div className="w-20 h-20 mx-auto rounded-full bg-gradient-to-br from-gray-400 to-gray-600 flex items-center justify-center">
-              <Lock className="h-10 w-10 text-white" />
+            <div className={`w-20 h-20 mx-auto rounded-full flex items-center justify-center ${isPrivate ? 'bg-gradient-to-br from-gray-400 to-gray-600' : 'bg-gradient-to-br from-amber-400 to-orange-600'}`}>
+              {isPrivate ? <Lock className="h-10 w-10 text-white" /> : <span className="text-4xl">🍺</span>}
             </div>
             <div>
-              <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">Profilo privato</h2>
-              <p className="text-gray-600 dark:text-gray-400">Questo utente ha scelto di mantenere il suo profilo privato.</p>
+              <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
+                {isPrivate ? 'Profilo privato' : 'Utente non trovato'}
+              </h2>
+              <p className="text-gray-600 dark:text-gray-400">
+                {isPrivate
+                  ? 'Questo utente ha scelto di mantenere il suo profilo privato.'
+                  : 'Il profilo che stai cercando non esiste o è stato rimosso.'}
+              </p>
             </div>
             <Button asChild variant="outline">
               <Link href="/">Torna alla home</Link>
