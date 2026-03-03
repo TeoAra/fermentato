@@ -588,7 +588,7 @@ export class DatabaseStorage implements IStorage {
         SELECT 
           tl.id, tl.pub_id, tl.beer_id, tl.is_active, tl.prices, tl.price_small, tl.price_medium, tl.price_large,
           tl.description, tl.tap_number, tl.added_at, tl.updated_at,
-          b.name as beer_name, b.style as beer_style, b.abv as beer_abv, b.image_url as beer_image_url,
+          b.name as beer_name, b.style as beer_style, b.abv as beer_abv, b.image_url as beer_image_url, b.logo_url as beer_logo_url,
           b.is_gluten_free as beer_is_gluten_free, b.is_alcohol_free as beer_is_alcohol_free,
           br.id as brewery_id, br.name as brewery_name, br.logo_url as brewery_logo_url
         FROM tap_list tl
@@ -627,6 +627,7 @@ export class DatabaseStorage implements IStorage {
         beerIbu: beers.ibu,
         beerDescription: beers.description,
         beerImageUrl: beers.imageUrl,
+        beerLogoUrl: beers.logoUrl,
         beerBottleImageUrl: beers.bottleImageUrl,
         beerIsGlutenFree: beers.isGlutenFree,
         beerIsAlcoholFree: beers.isAlcoholFree,
@@ -648,6 +649,7 @@ export class DatabaseStorage implements IStorage {
       beer_ibu: row.beerIbu,
       beer_description: row.beerDescription,
       beer_image_url: row.beerImageUrl,
+      beer_logo_url: row.beerLogoUrl,
       beer_bottle_image_url: row.beerBottleImageUrl,
       beerIsGlutenFree: row.beerIsGlutenFree,
       beerIsAlcoholFree: row.beerIsAlcoholFree,

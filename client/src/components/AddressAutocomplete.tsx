@@ -4,12 +4,17 @@ import { Input } from "@/components/ui/input";
 import { MapPin, Loader2 } from "lucide-react";
 
 
-interface AddressDetails {
+export interface AddressDetails {
   formattedAddress: string;
   city: string;
   region: string;
   country: string;
   placeId: string;
+  lat?: number;
+  lng?: number;
+  postalCode?: string;
+  streetNumber?: string;
+  route?: string;
 }
 
 interface AddressAutocompleteProps {
@@ -27,7 +32,7 @@ export function AddressAutocomplete({
   placeholder = "Cerca indirizzo...",
   disabled = false,
   className = "",
-  countryRestriction = "it",
+  countryRestriction = null,
 }: AddressAutocompleteProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -66,7 +71,7 @@ export function AddressAutocomplete({
           {
             types: ["establishment", "geocode"],
             ...(countryRestriction ? { componentRestrictions: { country: countryRestriction } } : {}),
-            fields: ["formatted_address", "address_components", "place_id", "name"],
+            fields: ["formatted_address", "address_components", "place_id", "name", "geometry"],
           }
         );
 
@@ -77,6 +82,9 @@ export function AddressAutocomplete({
           let city = "";
           let region = "";
           let country = "";
+          let postalCode = "";
+          let streetNumber = "";
+          let route = "";
 
           for (const component of place.address_components) {
             if (component.types.includes("locality")) {
@@ -88,13 +96,28 @@ export function AddressAutocomplete({
             if (!city && component.types.includes("administrative_area_level_3")) {
               city = component.long_name;
             }
+            if (!city && component.types.includes("administrative_area_level_2")) {
+              city = component.long_name;
+            }
             if (component.types.includes("country")) {
               country = component.long_name;
+            }
+            if (component.types.includes("postal_code")) {
+              postalCode = component.long_name;
+            }
+            if (component.types.includes("street_number")) {
+              streetNumber = component.long_name;
+            }
+            if (component.types.includes("route")) {
+              route = component.long_name;
             }
           }
 
           const formattedAddress = place.formatted_address || "";
           setInputValue(formattedAddress);
+
+          const lat = place.geometry?.location?.lat?.();
+          const lng = place.geometry?.location?.lng?.();
 
           onAddressSelect({
             formattedAddress,
@@ -102,6 +125,11 @@ export function AddressAutocomplete({
             region: region || "",
             country: country || "",
             placeId: place.place_id || "",
+            lat: typeof lat === "number" ? lat : undefined,
+            lng: typeof lng === "number" ? lng : undefined,
+            postalCode,
+            streetNumber,
+            route,
           });
         });
 
@@ -118,7 +146,7 @@ export function AddressAutocomplete({
         (window as any).google.maps.event.clearInstanceListeners(autocompleteRef.current);
       }
     };
-  }, [onAddressSelect]);
+  }, [onAddressSelect, countryRestriction]);
 
   return (
     <div className={`relative ${className}`}>

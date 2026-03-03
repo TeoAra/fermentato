@@ -71,6 +71,8 @@ import { EventsManager } from "@/components/events-manager";
 import { PubQRCode } from "@/components/pub-qr-code";
 import { MenuPdfDownload } from "@/components/menu-pdf-download";
 import { Cast, Share2, Link as LinkIcon, Tv, Info } from "lucide-react";
+import { AddressAutocomplete } from "@/components/AddressAutocomplete";
+import { SiFacebook, SiInstagram, SiX, SiTiktok } from "react-icons/si";
 
 function PubMenuInfoBox({ pubId, currentValue }: { pubId: number; currentValue: string }) {
   const [text, setText] = useState(currentValue);
@@ -227,6 +229,7 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
         facebookUrl: currentPub.facebookUrl || '',
         instagramUrl: currentPub.instagramUrl || '',
         twitterUrl: currentPub.twitterUrl || '',
+        tiktokUrl: currentPub.tiktokUrl || '',
         logoUrl: currentPub.logoUrl || '',
         coverImageUrl: currentPub.coverImageUrl || '',
         openingHours: currentPub.openingHours || null,
@@ -1048,65 +1051,68 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
             const isClosed = dayHours?.isClosed;
             
             return (
-              <div key={day.key} className="grid grid-cols-12 gap-2 items-center p-3 border border-gray-200 dark:border-gray-700 rounded-lg bg-gray-50 dark:bg-gray-800">
-                <div className="col-span-3 sm:col-span-2">
-                  <Label className="font-medium text-sm text-gray-900 dark:text-white">{day.label}</Label>
+              <div key={day.key} className="flex flex-col sm:flex-row sm:items-center gap-2 p-3 border border-gray-200 dark:border-gray-700 rounded-lg bg-gray-50 dark:bg-gray-800">
+                <div className="flex items-center justify-between sm:justify-start sm:w-28 flex-shrink-0">
+                  <Label className="font-semibold text-sm text-gray-900 dark:text-white w-24">{day.label}</Label>
+                  <div className="flex items-center gap-2 sm:hidden">
+                    <Switch
+                      checked={isClosed || false}
+                      onCheckedChange={(checked) => {
+                        const newHours = {
+                          ...settingsData.openingHours,
+                          [day.key]: { ...dayHours, isClosed: checked },
+                        };
+                        updateSettingsField('openingHours', newHours);
+                      }}
+                      data-testid={`switch-${day.key}-closed`}
+                    />
+                    <Label className="text-xs text-gray-500">Chiuso</Label>
+                  </div>
                 </div>
-                <div className="col-span-6 sm:col-span-7 flex items-center gap-1">
+                <div className={`flex items-center gap-2 flex-1 ${isClosed ? 'opacity-40 pointer-events-none' : ''}`}>
                   <Input
                     type="time"
                     value={dayHours?.open || "12:00"}
                     onChange={(e) => {
                       const newHours = {
                         ...settingsData.openingHours,
-                        [day.key]: {
-                          ...dayHours,
-                          open: e.target.value,
-                          isClosed: false,
-                        },
+                        [day.key]: { ...dayHours, open: e.target.value, isClosed: false },
                       };
                       updateSettingsField('openingHours', newHours);
                     }}
                     disabled={isClosed}
-                    className="w-full min-w-0 text-sm px-2"
+                    className="flex-1 min-w-0 text-sm"
                     data-testid={`input-${day.key}-open`}
                   />
-                  <span className="text-gray-400 text-xs">-</span>
+                  <span className="text-gray-400 text-sm font-medium flex-shrink-0">—</span>
                   <Input
                     type="time"
                     value={dayHours?.close || "23:00"}
                     onChange={(e) => {
                       const newHours = {
                         ...settingsData.openingHours,
-                        [day.key]: {
-                          ...dayHours,
-                          close: e.target.value,
-                          isClosed: false,
-                        },
+                        [day.key]: { ...dayHours, close: e.target.value, isClosed: false },
                       };
                       updateSettingsField('openingHours', newHours);
                     }}
                     disabled={isClosed}
-                    className="w-full min-w-0 text-sm px-2"
+                    className="flex-1 min-w-0 text-sm"
                     data-testid={`input-${day.key}-close`}
                   />
                 </div>
-                <div className="col-span-3 flex items-center justify-end gap-1">
+                <div className="hidden sm:flex items-center gap-2 flex-shrink-0">
                   <Switch
                     checked={isClosed || false}
                     onCheckedChange={(checked) => {
                       const newHours = {
                         ...settingsData.openingHours,
-                        [day.key]: {
-                          ...dayHours,
-                          isClosed: checked,
-                        },
+                        [day.key]: { ...dayHours, isClosed: checked },
                       };
                       updateSettingsField('openingHours', newHours);
                     }}
                     data-testid={`switch-${day.key}-closed`}
                   />
-                  <Label className="text-xs text-gray-500 hidden sm:inline">Chiuso</Label>
+                  <Label className="text-xs text-gray-500 whitespace-nowrap">Chiuso</Label>
                 </div>
               </div>
             );
@@ -1281,12 +1287,18 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="md:col-span-2">
               <Label htmlFor="pub-address">Indirizzo *</Label>
-              <Input 
-                id="pub-address"
+              <AddressAutocomplete
                 value={settingsData.address || ''}
-                onChange={(e) => updateSettingsField('address', e.target.value)}
-                placeholder="Via Roma, 123"
-                data-testid="input-pub-address"
+                placeholder="Cerca indirizzo nel mondo..."
+                countryRestriction={null}
+                onAddressSelect={(details) => {
+                  const updates: any = { address: details.formattedAddress };
+                  if (details.city) updates.city = details.city;
+                  if (details.region) updates.region = details.region;
+                  if (details.postalCode) updates.postalCode = details.postalCode;
+                  setSettingsData((prev: any) => ({ ...prev, ...updates }));
+                  setSettingsChanged(true);
+                }}
               />
             </div>
             <div>
@@ -1345,65 +1357,68 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
               const isClosed = dayHours?.isClosed;
               
               return (
-                <div key={day.key} className="grid grid-cols-12 gap-2 items-center p-3 border border-gray-200 dark:border-gray-700 rounded-lg bg-gray-50 dark:bg-gray-800">
-                  <div className="col-span-3 sm:col-span-2">
-                    <Label className="font-medium text-sm text-gray-900 dark:text-white">{day.label}</Label>
+                <div key={day.key} className="flex flex-col sm:flex-row sm:items-center gap-2 p-3 border border-gray-200 dark:border-gray-700 rounded-lg bg-gray-50 dark:bg-gray-800">
+                  <div className="flex items-center justify-between sm:justify-start sm:w-28 flex-shrink-0">
+                    <Label className="font-semibold text-sm text-gray-900 dark:text-white w-24">{day.label}</Label>
+                    <div className="flex items-center gap-2 sm:hidden">
+                      <Switch
+                        checked={isClosed || false}
+                        onCheckedChange={(checked) => {
+                          const newHours = {
+                            ...settingsData.openingHours,
+                            [day.key]: { ...dayHours, isClosed: checked },
+                          };
+                          updateSettingsField('openingHours', newHours);
+                        }}
+                        data-testid={`switch-${day.key}-closed`}
+                      />
+                      <Label className="text-xs text-gray-500">Chiuso</Label>
+                    </div>
                   </div>
-                  <div className="col-span-6 sm:col-span-7 flex items-center gap-1">
+                  <div className={`flex items-center gap-2 flex-1 ${isClosed ? 'opacity-40 pointer-events-none' : ''}`}>
                     <Input
                       type="time"
                       value={dayHours?.open || "12:00"}
                       onChange={(e) => {
                         const newHours = {
                           ...settingsData.openingHours,
-                          [day.key]: {
-                            ...dayHours,
-                            open: e.target.value,
-                            isClosed: false,
-                          },
+                          [day.key]: { ...dayHours, open: e.target.value, isClosed: false },
                         };
                         updateSettingsField('openingHours', newHours);
                       }}
                       disabled={isClosed}
-                      className="w-full min-w-0 text-sm px-2"
+                      className="flex-1 min-w-0 text-sm"
                       data-testid={`input-${day.key}-open`}
                     />
-                    <span className="text-gray-400 text-xs">-</span>
+                    <span className="text-gray-400 text-sm font-medium flex-shrink-0">—</span>
                     <Input
                       type="time"
                       value={dayHours?.close || "23:00"}
                       onChange={(e) => {
                         const newHours = {
                           ...settingsData.openingHours,
-                          [day.key]: {
-                            ...dayHours,
-                            close: e.target.value,
-                            isClosed: false,
-                          },
+                          [day.key]: { ...dayHours, close: e.target.value, isClosed: false },
                         };
                         updateSettingsField('openingHours', newHours);
                       }}
                       disabled={isClosed}
-                      className="w-full min-w-0 text-sm px-2"
+                      className="flex-1 min-w-0 text-sm"
                       data-testid={`input-${day.key}-close`}
                     />
                   </div>
-                  <div className="col-span-3 flex items-center justify-end gap-1">
+                  <div className="hidden sm:flex items-center gap-2 flex-shrink-0">
                     <Switch
                       checked={isClosed || false}
                       onCheckedChange={(checked) => {
                         const newHours = {
                           ...settingsData.openingHours,
-                          [day.key]: {
-                            ...dayHours,
-                            isClosed: checked,
-                          },
+                          [day.key]: { ...dayHours, isClosed: checked },
                         };
                         updateSettingsField('openingHours', newHours);
                       }}
                       data-testid={`switch-${day.key}-closed`}
                     />
-                    <Label className="text-xs text-gray-500 hidden sm:inline">Chiuso</Label>
+                    <Label className="text-xs text-gray-500 whitespace-nowrap">Chiuso</Label>
                   </div>
                 </div>
               );
@@ -1413,54 +1428,51 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
 
         {/* Social Media Links */}
         <Card className="p-6">
-          <h3 className="text-lg font-semibold mb-4 flex items-center">
+          <h3 className="text-lg font-semibold mb-1 flex items-center">
             <Globe className="h-5 w-5 mr-2 text-blue-600" />
             Social Media e Web
           </h3>
-          <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
-            Collega i tuoi profili social per aumentare la visibilità del pub.
+          <p className="text-sm text-gray-500 dark:text-gray-400 mb-5">
+            Collega i profili social — il logo appare automaticamente in base all'URL inserito.
           </p>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <Label htmlFor="website-url">Sito Web</Label>
-              <Input 
-                id="website-url"
-                value={settingsData.websiteUrl || ''}
-                onChange={(e) => updateSettingsField('websiteUrl', e.target.value)}
-                placeholder="https://www.ilmiopub.it"
-                data-testid="input-website-url"
-              />
-            </div>
-            <div>
-              <Label htmlFor="facebook-url">Facebook</Label>
-              <Input 
-                id="facebook-url"
-                value={settingsData.facebookUrl || ''}
-                onChange={(e) => updateSettingsField('facebookUrl', e.target.value)}
-                placeholder="https://facebook.com/ilmiopub"
-                data-testid="input-facebook-url"
-              />
-            </div>
-            <div>
-              <Label htmlFor="instagram-url">Instagram</Label>
-              <Input 
-                id="instagram-url"
-                value={settingsData.instagramUrl || ''}
-                onChange={(e) => updateSettingsField('instagramUrl', e.target.value)}
-                placeholder="https://instagram.com/ilmiopub"
-                data-testid="input-instagram-url"
-              />
-            </div>
-            <div>
-              <Label htmlFor="twitter-url">Twitter/X</Label>
-              <Input 
-                id="twitter-url"
-                value={settingsData.twitterUrl || ''}
-                onChange={(e) => updateSettingsField('twitterUrl', e.target.value)}
-                placeholder="https://x.com/ilmiopub"
-                data-testid="input-twitter-url"
-              />
-            </div>
+          <div className="space-y-3">
+            {[
+              { field: 'websiteUrl', label: 'Sito Web', placeholder: 'https://www.ilmiopub.it', icon: null },
+              { field: 'facebookUrl', label: 'Facebook', placeholder: 'https://facebook.com/ilmiopub', icon: 'facebook' },
+              { field: 'instagramUrl', label: 'Instagram', placeholder: 'https://instagram.com/ilmiopub', icon: 'instagram' },
+              { field: 'twitterUrl', label: 'Twitter / X', placeholder: 'https://x.com/ilmiopub', icon: 'twitter' },
+              { field: 'tiktokUrl', label: 'TikTok', placeholder: 'https://tiktok.com/@ilmiopub', icon: 'tiktok' },
+            ].map(({ field, label, placeholder, icon }) => {
+              const val = settingsData[field] || '';
+              const url = val.toLowerCase();
+              let detectedIcon: React.ReactNode = null;
+              let detectedColor = '';
+              if (url.includes('facebook.com') || icon === 'facebook') { detectedIcon = <SiFacebook size={16} />; detectedColor = 'text-[#1877F2]'; }
+              else if (url.includes('instagram.com') || icon === 'instagram') { detectedIcon = <SiInstagram size={16} />; detectedColor = 'text-[#E1306C]'; }
+              else if (url.includes('x.com') || url.includes('twitter.com') || icon === 'twitter') { detectedIcon = <SiX size={16} />; detectedColor = 'text-gray-800 dark:text-white'; }
+              else if (url.includes('tiktok.com') || icon === 'tiktok') { detectedIcon = <SiTiktok size={16} />; detectedColor = 'text-gray-900 dark:text-white'; }
+              else if (val && !url.includes('http')) { detectedIcon = <Globe className="w-4 h-4" />; detectedColor = 'text-blue-500'; }
+              else if (val) { detectedIcon = <Globe className="w-4 h-4" />; detectedColor = 'text-blue-500'; }
+              return (
+                <div key={field} className="flex items-center gap-3">
+                  <div className={`w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0 border ${detectedIcon ? 'bg-white dark:bg-gray-800' : 'bg-gray-100 dark:bg-gray-800 border-dashed'}`}>
+                    <span className={detectedColor || 'text-gray-300'}>
+                      {detectedIcon || <Globe className="w-4 h-4 text-gray-300" />}
+                    </span>
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <Label className="text-xs font-medium text-gray-500 mb-1 block">{label}</Label>
+                    <Input
+                      value={val}
+                      onChange={(e) => updateSettingsField(field, e.target.value)}
+                      placeholder={placeholder}
+                      className="h-9 text-sm"
+                      data-testid={`input-${field}`}
+                    />
+                  </div>
+                </div>
+              );
+            })}
           </div>
         </Card>
 

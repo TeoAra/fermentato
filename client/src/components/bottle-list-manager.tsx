@@ -480,7 +480,7 @@ export function BottleListManager({ pubId, bottleList }: BottleListManagerProps)
               
               const safeBeer = {
                 name: safeItem.beer?.name || "Birra sconosciuta",
-                logoUrl: safeItem.beer?.logoUrl,
+                logoUrl: safeItem.beer?.imageUrl || safeItem.beer?.logoUrl,
                 style: safeItem.beer?.style || "Stile sconosciuto",
                 abv: safeItem.beer?.abv || "0",
                 brewery: {
