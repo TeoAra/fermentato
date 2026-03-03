@@ -12,16 +12,12 @@ import {
   AlertTriangle,
   Star,
   Flag,
-  Eye,
   MessageSquare,
   User,
   Calendar,
   Filter,
-  Search,
-  MoreHorizontal,
-  ThumbsUp,
-  ThumbsDown,
-  ArrowLeft
+  ArrowLeft,
+  BeerIcon
 } from "lucide-react";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
@@ -29,122 +25,81 @@ import { Link } from "wouter";
 import { formatDistanceToNow } from "date-fns";
 import { it } from "date-fns/locale";
 
-interface Review {
+interface ReviewReport {
   id: number;
-  userId: string;
-  beerId: number;
-  pubId: number | null;
-  rating: number;
-  comment: string;
-  status: 'pending' | 'approved' | 'rejected';
-  createdAt: string;
-  beer?: {
-    name: string;
-    brewery: string;
-  };
-  pub?: {
-    name: string;
-  };
-  user?: {
-    firstName: string;
-    lastName: string;
-    email: string;
-  };
-}
-
-interface ReportedContent {
-  id: number;
-  type: 'review' | 'user' | 'pub';
-  targetId: number;
+  reviewId: number;
   reporterId: string;
   reason: string;
-  description: string;
-  status: 'pending' | 'resolved' | 'dismissed';
+  description: string | null;
+  status: string;
   createdAt: string;
+  resolvedAt: string | null;
+  reviewRating: number | null;
+  reviewText: string | null;
+  reviewBeerId: number | null;
+  reviewUserId: string | null;
+  beerName: string | null;
+  beerStyle: string | null;
+  reporterNickname: string | null;
+  reporterFirstName: string | null;
+  reporterAvatar: string | null;
 }
+
+const reasonLabels: Record<string, string> = {
+  inappropriato: "Contenuto inappropriato",
+  spam: "Spam o pubblicità",
+  falso: "Recensione falsa",
+  offensivo: "Linguaggio offensivo",
+  altro: "Altro",
+};
 
 export default function AdminModeration() {
   const { user, isAuthenticated, isLoading } = useAuth();
   const { toast } = useToast();
-  const [selectedTab, setSelectedTab] = useState<"reviews" | "reports">("reviews");
-  const [filterStatus, setFilterStatus] = useState<string>("all");
+  const [statusFilter, setStatusFilter] = useState<string>("pending");
 
-  const { data: pendingReviews, isLoading: reviewsLoading } = useQuery<Review[]>({
-    queryKey: ["/api/admin/reviews/pending"],
-    enabled: isAuthenticated && user?.userType === 'admin',
-  });
-
-  const { data: allReviews } = useQuery<Review[]>({
-    queryKey: ["/api/admin/reviews/all"],
-    enabled: isAuthenticated && user?.userType === 'admin',
-  });
-
-  const { data: reports } = useQuery<ReportedContent[]>({
-    queryKey: ["/api/admin/reports"],
-    enabled: isAuthenticated && user?.userType === 'admin',
-  });
-
-  // Review moderation mutation
-  const reviewActionMutation = useMutation({
-    mutationFn: async ({ reviewId, action }: { reviewId: number; action: 'approve' | 'reject' }) => {
-      return apiRequest(`/api/admin/reviews/${reviewId}/${action}`, "POST");
+  const { data: reports = [], isLoading: reportsLoading, refetch } = useQuery<ReviewReport[]>({
+    queryKey: ["/api/admin/reports", statusFilter],
+    queryFn: async () => {
+      const res = await fetch(`/api/admin/reports?status=${statusFilter}`, { credentials: "include" });
+      if (!res.ok) throw new Error("Failed to fetch reports");
+      return res.json();
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/admin/reviews/pending"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/admin/reviews/all"] });
+    enabled: isAuthenticated && user?.userType === "admin",
+  });
+
+  const reportActionMutation = useMutation({
+    mutationFn: async ({ reportId, action }: { reportId: number; action: "resolve" | "dismiss" }) =>
+      apiRequest(`/api/admin/reports/${reportId}/${action}`, { method: "POST" }),
+    onSuccess: (_, vars) => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/reports"] });
       toast({
-        title: "Recensione processata",
+        title: vars.action === "resolve" ? "Segnalazione risolta" : "Segnalazione archiviata",
         description: "L'azione è stata completata con successo",
       });
     },
     onError: () => {
-      toast({
-        title: "Errore",
-        description: "Errore durante l'elaborazione della recensione",
-        variant: "destructive",
-      });
-    },
-  });
-
-  const reportActionMutation = useMutation({
-    mutationFn: async ({ reportId, action }: { reportId: number; action: 'resolve' | 'dismiss' }) => {
-      return apiRequest(`/api/admin/reports/${reportId}/${action}`, "POST");
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/admin/reports"] });
-      toast({
-        title: "Segnalazione processata",
-        description: "L'azione è stata completata con successo",
-      });
+      toast({ title: "Errore", description: "Impossibile processare la segnalazione", variant: "destructive" });
     },
   });
 
   if (isLoading) {
     return (
-      <div className="container mx-auto px-4 py-8">
-        <div className="flex items-center justify-center min-h-screen">
-          <div className="text-center space-y-4">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
-            <p className="text-gray-600">Caricamento moderazione...</p>
-          </div>
+      <div className="container mx-auto px-4 py-8 flex items-center justify-center min-h-screen">
+        <div className="text-center space-y-4">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
+          <p className="text-gray-600">Caricamento moderazione...</p>
         </div>
       </div>
     );
   }
 
-  if (!isAuthenticated || user?.userType !== 'admin') {
-    return null;
-  }
+  if (!isAuthenticated || user?.userType !== "admin") return null;
 
-  const filteredReviews = allReviews?.filter(review => 
-    filterStatus === 'all' || review.status === filterStatus
-  ) || [];
-
-  const pendingCount = pendingReviews?.length || 0;
-  const reportsCount = reports?.filter(r => r.status === 'pending').length || 0;
+  const pendingCount = statusFilter === "pending" ? reports.length : 0;
 
   return (
-    <div className="container mx-auto px-4 py-6 max-w-7xl space-y-6">
+    <div className="container mx-auto px-4 py-6 max-w-5xl space-y-6">
       <div className="flex items-center gap-4 mb-2">
         <Link href="/admin">
           <Button variant="outline" size="sm">
@@ -154,342 +109,194 @@ export default function AdminModeration() {
         </Link>
       </div>
 
-      {/* Header */}
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Moderazione Contenuti</h1>
-          <p className="text-gray-600 dark:text-gray-400 mt-1">Gestisci recensioni e segnalazioni della community</p>
+          <p className="text-gray-600 dark:text-gray-400 mt-1">Gestisci le segnalazioni della community</p>
         </div>
-        <div className="flex items-center gap-3">
-          {pendingCount > 0 && (
-            <Badge variant="destructive" className="animate-pulse">
-              {pendingCount} in attesa
-            </Badge>
-          )}
-          {reportsCount > 0 && (
-            <Badge variant="outline" className="border-orange-500 text-orange-600">
-              {reportsCount} segnalazioni
-            </Badge>
-          )}
-        </div>
-      </div>
-
-      {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        <Card className="border-l-4 border-l-blue-500">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600">Recensioni Totali</p>
-                <div className="text-2xl font-bold">{allReviews?.length || 0}</div>
-              </div>
-              <MessageSquare className="h-8 w-8 text-blue-500" />
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="border-l-4 border-l-orange-500">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600">In Attesa</p>
-                <div className="text-2xl font-bold text-orange-600">{pendingCount}</div>
-              </div>
-              <AlertTriangle className="h-8 w-8 text-orange-500" />
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="border-l-4 border-l-green-500">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600">Approvate</p>
-                <div className="text-2xl font-bold text-green-600">
-                  {allReviews?.filter(r => r.status === 'approved').length || 0}
-                </div>
-              </div>
-              <CheckCircle className="h-8 w-8 text-green-500" />
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="border-l-4 border-l-red-500">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600">Segnalazioni</p>
-                <div className="text-2xl font-bold text-red-600">{reportsCount}</div>
-              </div>
-              <Flag className="h-8 w-8 text-red-500" />
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Tabs */}
-      <div className="flex items-center gap-4">
-        <div className="flex rounded-lg border border-gray-200 dark:border-gray-700 p-1">
-          <Button 
-            variant={selectedTab === 'reviews' ? 'default' : 'ghost'}
-            size="sm"
-            onClick={() => setSelectedTab('reviews')}
-            className="flex items-center gap-2"
-          >
-            <MessageSquare className="w-4 h-4" />
-            Recensioni
-            {pendingCount > 0 && (
-              <Badge variant="secondary" className="ml-1">
-                {pendingCount}
-              </Badge>
-            )}
-          </Button>
-          <Button 
-            variant={selectedTab === 'reports' ? 'default' : 'ghost'}
-            size="sm"
-            onClick={() => setSelectedTab('reports')}
-            className="flex items-center gap-2"
-          >
-            <Flag className="w-4 h-4" />
-            Segnalazioni
-            {reportsCount > 0 && (
-              <Badge variant="secondary" className="ml-1">
-                {reportsCount}
-              </Badge>
-            )}
-          </Button>
-        </div>
-
-        {selectedTab === 'reviews' && (
-          <div className="flex items-center gap-2">
-            <Filter className="w-4 h-4 text-gray-400" />
-            <select 
-              value={filterStatus} 
-              onChange={(e) => setFilterStatus(e.target.value)}
-              className="rounded border border-gray-200 dark:border-gray-700 px-3 py-1 text-sm bg-background"
-            >
-              <option value="all">Tutte</option>
-              <option value="pending">In attesa</option>
-              <option value="approved">Approvate</option>
-              <option value="rejected">Rifiutate</option>
-            </select>
-          </div>
+        {pendingCount > 0 && (
+          <Badge variant="destructive" className="animate-pulse text-sm px-3 py-1">
+            {pendingCount} in attesa
+          </Badge>
         )}
       </div>
 
-      {/* Content */}
-      {selectedTab === 'reviews' && (
-        <div className="space-y-4">
-          {reviewsLoading ? (
-            <div className="text-center py-12">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
-              <p className="text-gray-600">Caricamento recensioni...</p>
-            </div>
-          ) : filteredReviews.length > 0 ? (
-            filteredReviews.map((review) => (
-              <Card key={review.id} className="hover:shadow-md transition-shadow">
-                <CardContent className="p-6">
-                  <div className="flex items-start justify-between">
-                    <div className="flex items-start gap-4 flex-1">
-                      <Avatar className="w-12 h-12">
-                        <AvatarImage src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${review.userId}`} />
-                        <AvatarFallback>
-                          <User className="w-6 h-6" />
-                        </AvatarFallback>
-                      </Avatar>
-                      
-                      <div className="flex-1">
-                        <div className="flex items-center gap-3 mb-2">
-                          <h3 className="font-semibold">
-                            {review.user?.firstName} {review.user?.lastName} 
-                          </h3>
-                          <Badge 
-                            variant={
-                              review.status === 'approved' ? 'default' : 
-                              review.status === 'pending' ? 'secondary' : 
-                              'destructive'
-                            }
-                          >
-                            {review.status === 'approved' ? 'Approvata' : 
-                             review.status === 'pending' ? 'In attesa' : 
-                             'Rifiutata'}
-                          </Badge>
-                          <div className="flex items-center gap-1">
-                            {[...Array(5)].map((_, i) => (
-                              <Star 
-                                key={i} 
-                                className={`w-4 h-4 ${i < review.rating ? 'fill-yellow-400 text-yellow-400' : 'text-gray-300'}`} 
-                              />
-                            ))}
-                            <span className="ml-1 text-sm font-medium">{review.rating}/5</span>
-                          </div>
-                        </div>
-                        
-                        <div className="mb-3">
-                          <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">
-                            Recensione per: <span className="font-medium">{review.beer?.name}</span> 
-                            {review.beer?.brewery && <span> di {review.beer.brewery}</span>}
-                            {review.pub && <span> presso {review.pub.name}</span>}
-                          </p>
-                          <p className="text-gray-900 dark:text-white">
-                            {review.comment}
-                          </p>
-                        </div>
-                        
-                        <div className="flex items-center gap-4 text-xs text-gray-500">
-                          <span className="flex items-center gap-1">
-                            <Calendar className="w-3 h-3" />
-                            {formatDistanceToNow(new Date(review.createdAt), { addSuffix: true, locale: it })}
-                          </span>
-                          <span className="flex items-center gap-1">
-                            <User className="w-3 h-3" />
-                            ID: {review.userId}
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-                    
-                    {review.status === 'pending' && (
-                      <div className="flex gap-2 ml-4">
-                        <Button 
-                          size="sm" 
-                          onClick={() => reviewActionMutation.mutate({ reviewId: review.id, action: 'approve' })}
-                          className="bg-green-600 hover:bg-green-700"
-                          disabled={reviewActionMutation.isPending}
-                        >
-                          <ThumbsUp className="w-4 h-4 mr-1" />
-                          Approva
-                        </Button>
-                        <Button 
-                          size="sm" 
-                          variant="destructive"
-                          onClick={() => reviewActionMutation.mutate({ reviewId: review.id, action: 'reject' })}
-                          disabled={reviewActionMutation.isPending}
-                        >
-                          <ThumbsDown className="w-4 h-4 mr-1" />
-                          Rifiuta
-                        </Button>
-                      </div>
-                    )}
-                    
-                    {review.status !== 'pending' && (
-                      <div className="flex gap-2 ml-4">
-                        <Button size="sm" variant="outline">
-                          <Eye className="w-4 h-4 mr-1" />
-                          Dettagli
-                        </Button>
-                        <Button size="sm" variant="outline">
-                          <MoreHorizontal className="w-4 h-4" />
-                        </Button>
-                      </div>
-                    )}
-                  </div>
-                </CardContent>
-              </Card>
-            ))
-          ) : (
-            <Card>
-              <CardContent className="p-12 text-center">
-                <CheckCircle className="w-16 h-16 mx-auto text-green-500 mb-4" />
-                <h3 className="text-lg font-semibold mb-2">Tutto sotto controllo!</h3>
-                <p className="text-gray-600">
-                  {filterStatus === 'pending' 
-                    ? 'Non ci sono recensioni in attesa di moderazione' 
-                    : 'Nessuna recensione trovata con i filtri selezionati'}
-                </p>
-              </CardContent>
-            </Card>
-          )}
-        </div>
-      )}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        {[
+          { label: "In attesa", value: "pending", color: "border-l-orange-500", icon: AlertTriangle, iconColor: "text-orange-500" },
+          { label: "Risolte", value: "resolved", color: "border-l-green-500", icon: CheckCircle, iconColor: "text-green-500" },
+          { label: "Archiviate", value: "dismissed", color: "border-l-gray-400", icon: XCircle, iconColor: "text-gray-400" },
+          { label: "Tutte", value: "all", color: "border-l-blue-500", icon: Flag, iconColor: "text-blue-500" },
+        ].map(({ label, value, color, icon: Icon, iconColor }) => (
+          <Card
+            key={value}
+            className={`border-l-4 ${color} cursor-pointer transition-shadow hover:shadow-md ${statusFilter === value ? "ring-2 ring-offset-1 ring-primary" : ""}`}
+            onClick={() => setStatusFilter(value)}
+          >
+            <CardContent className="p-4 flex items-center justify-between">
+              <div>
+                <p className="text-xs font-medium text-gray-500">{label}</p>
+                <p className="text-xl font-bold">{statusFilter === value ? reports.length : "—"}</p>
+              </div>
+              <Icon className={`w-6 h-6 ${iconColor}`} />
+            </CardContent>
+          </Card>
+        ))}
+      </div>
 
-      {selectedTab === 'reports' && (
+      <div className="flex items-center gap-3">
+        <Filter className="w-4 h-4 text-gray-400" />
+        <span className="text-sm text-gray-500">Filtro attivo:</span>
+        {[
+          { label: "In attesa", value: "pending" },
+          { label: "Risolte", value: "resolved" },
+          { label: "Archiviate", value: "dismissed" },
+          { label: "Tutte", value: "all" },
+        ].map(({ label, value }) => (
+          <button
+            key={value}
+            onClick={() => setStatusFilter(value)}
+            className={`px-3 py-1 rounded-full text-xs font-medium transition-colors ${
+              statusFilter === value
+                ? "bg-primary text-white"
+                : "bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-gray-200"
+            }`}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
+
+      {reportsLoading ? (
+        <div className="text-center py-12">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+          <p className="text-gray-600">Caricamento segnalazioni...</p>
+        </div>
+      ) : reports.length === 0 ? (
+        <Card>
+          <CardContent className="p-12 text-center">
+            <Shield className="w-16 h-16 mx-auto text-green-500 mb-4" />
+            <h3 className="text-lg font-semibold mb-2">
+              {statusFilter === "pending" ? "Tutto sotto controllo!" : "Nessuna segnalazione trovata"}
+            </h3>
+            <p className="text-gray-500 text-sm">
+              {statusFilter === "pending"
+                ? "Non ci sono segnalazioni in attesa di revisione."
+                : `Nessuna segnalazione con stato "${statusFilter}".`}
+            </p>
+          </CardContent>
+        </Card>
+      ) : (
         <div className="space-y-4">
-          {reports && reports.length > 0 ? (
-            reports.map((report) => (
+          {reports.map((report) => {
+            const reporterName = report.reporterNickname || report.reporterFirstName || `Utente ${report.reporterId.slice(0, 6)}`;
+            const reasonLabel = reasonLabels[report.reason] || report.reason;
+            return (
               <Card key={report.id} className="hover:shadow-md transition-shadow">
-                <CardContent className="p-6">
-                  <div className="flex items-start justify-between">
-                    <div className="flex items-start gap-4 flex-1">
-                      <div className="w-12 h-12 rounded-full bg-red-100 dark:bg-red-900/20 flex items-center justify-center flex-shrink-0">
-                        <Flag className="w-6 h-6 text-red-600" />
+                <CardContent className="p-5">
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="flex-1 space-y-3">
+                      <div className="flex items-center gap-3 flex-wrap">
+                        <div className="flex items-center gap-2">
+                          <Flag className="w-4 h-4 text-red-500 flex-shrink-0" />
+                          <span className="font-semibold text-sm">{reasonLabel}</span>
+                        </div>
+                        <Badge
+                          variant={
+                            report.status === "resolved" ? "default" :
+                            report.status === "pending" ? "destructive" :
+                            "secondary"
+                          }
+                          className="text-xs"
+                        >
+                          {report.status === "resolved" ? "Risolta" :
+                           report.status === "pending" ? "In attesa" :
+                           "Archiviata"}
+                        </Badge>
+                        <span className="text-xs text-gray-400 flex items-center gap-1">
+                          <Calendar className="w-3 h-3" />
+                          {formatDistanceToNow(new Date(report.createdAt), { addSuffix: true, locale: it })}
+                        </span>
                       </div>
-                      
-                      <div className="flex-1">
-                        <div className="flex items-center gap-3 mb-2">
-                          <h3 className="font-semibold">
-                            Segnalazione {report.type}
-                          </h3>
-                          <Badge 
-                            variant={
-                              report.status === 'resolved' ? 'default' : 
-                              report.status === 'pending' ? 'destructive' : 
-                              'secondary'
-                            }
-                          >
-                            {report.status === 'resolved' ? 'Risolta' : 
-                             report.status === 'pending' ? 'In attesa' : 
-                             'Dismisssa'}
-                          </Badge>
+
+                      {report.reviewText || report.beerName ? (
+                        <div className="bg-amber-50 dark:bg-amber-900/10 border border-amber-200 dark:border-amber-800 rounded-lg p-3">
+                          <div className="flex items-center gap-2 mb-2">
+                            <BeerIcon className="w-3.5 h-3.5 text-amber-600" />
+                            <span className="text-xs font-medium text-amber-700 dark:text-amber-400">
+                              {report.beerName || "Birra"}{report.beerStyle ? ` — ${report.beerStyle}` : ""}
+                            </span>
+                            {report.reviewRating != null && (
+                              <div className="flex items-center gap-0.5">
+                                {[1,2,3,4,5].map(s => (
+                                  <Star key={s} className={`w-3 h-3 ${s <= report.reviewRating! ? "fill-yellow-400 text-yellow-400" : "text-gray-300"}`} />
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                          {report.reviewText && (
+                            <p className="text-sm text-gray-700 dark:text-gray-300 italic">"{report.reviewText}"</p>
+                          )}
+                          {report.reviewBeerId && (
+                            <Link href={`/beer/${report.reviewBeerId}`}>
+                              <button className="text-xs text-amber-600 hover:underline mt-1">Vai alla birra →</button>
+                            </Link>
+                          )}
                         </div>
-                        
-                        <div className="mb-3">
-                          <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">
-                            <span className="font-medium">Motivo:</span> {report.reason}
-                          </p>
-                          <p className="text-gray-900 dark:text-white">
-                            {report.description}
-                          </p>
-                        </div>
-                        
-                        <div className="flex items-center gap-4 text-xs text-gray-500">
-                          <span className="flex items-center gap-1">
-                            <Calendar className="w-3 h-3" />
-                            {formatDistanceToNow(new Date(report.createdAt), { addSuffix: true, locale: it })}
-                          </span>
-                          <span className="flex items-center gap-1">
-                            <User className="w-3 h-3" />
-                            Reporter: {report.reporterId}
-                          </span>
-                        </div>
+                      ) : null}
+
+                      {report.description && (
+                        <p className="text-sm text-gray-600 dark:text-gray-400">
+                          <span className="font-medium">Nota segnalante:</span> {report.description}
+                        </p>
+                      )}
+
+                      <div className="flex items-center gap-2 text-xs text-gray-400">
+                        {report.reporterAvatar ? (
+                          <img src={report.reporterAvatar} className="w-4 h-4 rounded-full" alt="" />
+                        ) : (
+                          <User className="w-3 h-3" />
+                        )}
+                        <span>Segnalato da <span className="font-medium text-gray-600 dark:text-gray-300">{reporterName}</span></span>
+                        <span>·</span>
+                        <span>Report #{report.id}</span>
+                        {report.resolvedAt && (
+                          <>
+                            <span>·</span>
+                            <span>Risolto {formatDistanceToNow(new Date(report.resolvedAt), { addSuffix: true, locale: it })}</span>
+                          </>
+                        )}
                       </div>
                     </div>
-                    
-                    {report.status === 'pending' && (
-                      <div className="flex gap-2 ml-4">
-                        <Button 
-                          size="sm" 
-                          onClick={() => reportActionMutation.mutate({ reportId: report.id, action: 'resolve' })}
-                          className="bg-green-600 hover:bg-green-700"
+
+                    {report.status === "pending" && (
+                      <div className="flex flex-col gap-2 flex-shrink-0">
+                        <Button
+                          size="sm"
+                          className="bg-green-600 hover:bg-green-700 text-white gap-1.5"
                           disabled={reportActionMutation.isPending}
+                          onClick={() => reportActionMutation.mutate({ reportId: report.id, action: "resolve" })}
                         >
-                          <CheckCircle className="w-4 h-4 mr-1" />
+                          <CheckCircle className="w-3.5 h-3.5" />
                           Risolvi
                         </Button>
-                        <Button 
-                          size="sm" 
+                        <Button
+                          size="sm"
                           variant="outline"
-                          onClick={() => reportActionMutation.mutate({ reportId: report.id, action: 'dismiss' })}
+                          className="gap-1.5 text-gray-600"
                           disabled={reportActionMutation.isPending}
+                          onClick={() => reportActionMutation.mutate({ reportId: report.id, action: "dismiss" })}
                         >
-                          <XCircle className="w-4 h-4 mr-1" />
-                          Dismetti
+                          <XCircle className="w-3.5 h-3.5" />
+                          Archivia
                         </Button>
                       </div>
                     )}
                   </div>
                 </CardContent>
               </Card>
-            ))
-          ) : (
-            <Card>
-              <CardContent className="p-12 text-center">
-                <Shield className="w-16 h-16 mx-auto text-green-500 mb-4" />
-                <h3 className="text-lg font-semibold mb-2">Community protetta!</h3>
-                <p className="text-gray-600">Non ci sono segnalazioni da processare</p>
-              </CardContent>
-            </Card>
-          )}
+            );
+          })}
         </div>
       )}
     </div>

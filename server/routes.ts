@@ -6,7 +6,7 @@ import { registerAdminRoutes } from "./routes-admin";
 import { sql, eq, and, desc } from "drizzle-orm";
 import { upload, uploadImage, cloudinary } from "./cloudinary";
 import { db } from "./db";
-import { breweries, beers, pubs, users, tapList, bottleList, userBeerTastings, favorites, menuCategories, menuItems, pubSizes, notifications, pushSubscriptions, breweryRequests, pubEvents, breweryEvents, insertBreweryEventSchema } from "@shared/schema";
+import { breweries, beers, pubs, users, tapList, bottleList, userBeerTastings, favorites, menuCategories, menuItems, pubSizes, notifications, pushSubscriptions, breweryRequests, pubEvents, breweryEvents, insertBreweryEventSchema, reviewReports } from "@shared/schema";
 
 import { insertPubSchema, insertTapListSchema, insertBottleListSchema, insertMenuCategorySchema, insertMenuItemSchema, pubRegistrationSchema, insertPubEventSchema } from "@shared/schema";
 import { z } from "zod";
@@ -1603,7 +1603,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const [reviewCountResult] = await db.select({ count: sql<number>`COUNT(*)` }).from(userBeerTastings).where(sql`${userBeerTastings.rating} IS NOT NULL`);
       const [tastingCountResult] = await db.select({ count: sql<number>`COUNT(*)` }).from(userBeerTastings);
-      const [eventCountResult] = await db.select({ count: sql<number>`COUNT(*)` }).from(pubEvents);
+      const [pubEventCountResult] = await db.select({ count: sql<number>`COUNT(*)` }).from(pubEvents);
+      const [breweryEventCountResult] = await db.select({ count: sql<number>`COUNT(*)` }).from(breweryEvents);
 
       const stats = {
         totalUsers: await storage.getUserCount(),
@@ -1612,7 +1613,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         totalBeers: await storage.getBeerCount(),
         totalReviews: Number(reviewCountResult?.count || 0),
         totalTastings: Number(tastingCountResult?.count || 0),
-        totalEvents: Number(eventCountResult?.count || 0),
+        totalEvents: Number(pubEventCountResult?.count || 0) + Number(breweryEventCountResult?.count || 0),
         lastUpdated: new Date().toISOString(),
       };
       res.json(stats);
@@ -2200,6 +2201,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error fetching user beer tasting:", error);
       res.status(500).json({ message: "Failed to fetch user beer tasting" });
+    }
+  });
+
+
+  app.post("/api/reviews/:tastingId/report", isAuthenticated, async (req: any, res) => {
+    try {
+      const reporterId = (req.user as any).id;
+      const tastingId = parseInt(req.params.tastingId);
+      const { reason, description } = req.body;
+      if (!reason) return res.status(400).json({ message: "Motivo obbligatorio" });
+      const existing = await db.select({ id: reviewReports.id })
+        .from(reviewReports)
+        .where(eq(reviewReports.reviewId, tastingId))
+        .limit(1);
+      const alreadyReported = existing.some((r) => r.id);
+      await db.insert(reviewReports).values({
+        reviewId: tastingId,
+        reporterId,
+        reason,
+        description: description || null,
+      });
+      res.json({ message: "Segnalazione inviata con successo" });
+    } catch (error) {
+      console.error("Error reporting review:", error);
+      res.status(500).json({ message: "Errore nell'invio della segnalazione" });
     }
   });
 

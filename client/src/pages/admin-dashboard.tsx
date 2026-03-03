@@ -377,42 +377,50 @@ export default function AdminDashboard() {
                   </thead>
                   <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
                     {allUsers.map((user: any) => (
-                      <tr key={user.id} className="hover:bg-gray-50 dark:hover:bg-gray-800">
+                      <tr key={user.id} className="hover:bg-gray-50 dark:hover:bg-gray-800 cursor-pointer">
                         <td className="px-6 py-4">
                           <div className="flex items-center gap-3">
-                            <Avatar className="w-8 h-8">
+                            <Avatar className="w-9 h-9">
                               <AvatarImage src={user.profileImageUrl} />
                               <AvatarFallback>
-                                {(user.firstName?.[0] || user.email?.[0] || "U").toUpperCase()}
+                                {(user.nickname?.[0] || user.firstName?.[0] || user.email?.[0] || "U").toUpperCase()}
                               </AvatarFallback>
                             </Avatar>
                             <div>
-                              <p className="font-medium">{user.firstName || user.nickname || "Utente"}</p>
-                              <p className="text-sm text-gray-500">{user.email}</p>
+                              <div className="flex items-center gap-2">
+                                <p className="font-semibold text-sm">{user.nickname || user.firstName || "Utente"}</p>
+                                {user.nickname && (
+                                  <Link href={"/user/" + user.nickname}>
+                                    <span className="text-xs text-amber-600 hover:underline">@{user.nickname}</span>
+                                  </Link>
+                                )}
+                              </div>
+                              <p className="text-xs text-gray-400 truncate max-w-[160px]">{user.email}</p>
                             </div>
                           </div>
                         </td>
                         <td className="px-6 py-4">
-                          <Badge variant={user.userType === 'admin' ? 'destructive' : user.userType === 'pub_owner' ? 'default' : 'secondary'}>
-                            {user.userType === 'admin' ? 'Admin' : user.userType === 'pub_owner' ? 'Pub Owner' : 'Cliente'}
+                          <Badge variant={user.userType === 'admin' ? 'destructive' : user.userType === 'pub_owner' ? 'default' : user.userType === 'brewery_owner' ? 'outline' : 'secondary'} className="text-xs">
+                            {user.userType === 'admin' ? 'Admin' : user.userType === 'pub_owner' ? 'Pub Owner' : user.userType === 'brewery_owner' ? 'Brewery' : 'Cliente'}
                           </Badge>
                         </td>
-                        <td className="px-6 py-4 text-sm text-gray-500">
-                          {formatDistanceToNow(new Date(user.createdAt), { addSuffix: true, locale: it })}
+                        <td className="px-6 py-4 text-xs text-gray-500">
+                          {user.createdAt ? formatDistanceToNow(new Date(user.createdAt), { addSuffix: true, locale: it }) : '—'}
                         </td>
                         <td className="px-6 py-4">
-                          <Badge variant="outline" className="text-green-600 border-green-600">
+                          <Badge variant="outline" className="text-green-600 border-green-600 text-xs">
                             Attivo
                           </Badge>
                         </td>
                         <td className="px-6 py-4">
                           <div className="flex gap-2">
-                            <Button size="sm" variant="outline">
-                              <Eye className="w-4 h-4" />
-                            </Button>
-                            <Button size="sm" variant="outline">
-                              <Edit3 className="w-4 h-4" />
-                            </Button>
+                            {user.nickname && (
+                              <Link href={"/user/" + user.nickname}>
+                                <Button size="sm" variant="outline" title="Vedi profilo pubblico">
+                                  <Eye className="w-3.5 h-3.5" />
+                                </Button>
+                              </Link>
+                            )}
                           </div>
                         </td>
                       </tr>

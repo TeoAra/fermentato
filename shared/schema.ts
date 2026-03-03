@@ -707,6 +707,20 @@ export const insertBreweryEventSchema = createInsertSchema(breweryEvents).omit({
 export type BreweryEvent = typeof breweryEvents.$inferSelect;
 export type InsertBreweryEvent = z.infer<typeof insertBreweryEventSchema>;
 
+// Review Reports table
+export const reviewReports = pgTable("review_reports", {
+  id: serial("id").primaryKey(),
+  reviewId: integer("review_id").notNull(),
+  reporterId: varchar("reporter_id").notNull(),
+  reason: varchar("reason", { length: 50 }).notNull(),
+  description: text("description"),
+  status: varchar("status", { length: 20 }).default("pending"),
+  resolvedAt: timestamp("resolved_at"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export type ReviewReport = typeof reviewReports.$inferSelect;
+
 // Custom schemas for forms
 export const pubRegistrationSchema = insertPubSchema.extend({
   vatNumber: z.string().min(11, "P.IVA deve essere di almeno 11 caratteri"),

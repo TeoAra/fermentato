@@ -107,6 +107,8 @@ export default function AdminDashboardNew() {
       case 'user': return <User className="w-4 h-4 text-blue-500" />;
       case 'pub': return <Store className="w-4 h-4 text-orange-500" />;
       case 'brewery': return <Building2 className="w-4 h-4 text-amber-500" />;
+      case 'review': return <Star className="w-4 h-4 text-yellow-500" />;
+      case 'event': return <CalendarDays className="w-4 h-4 text-green-500" />;
       default: return <Bell className="w-4 h-4 text-gray-500" />;
     }
   };

@@ -25,7 +25,8 @@ import {
   X,
   ChevronDown,
   Filter,
-  ArrowUpDown
+  ArrowUpDown,
+  Flag
 } from "lucide-react";
 import Footer from "@/components/footer";
 import { Card, CardContent } from "@/components/ui/card";
@@ -120,6 +121,9 @@ export default function BeerDetail() {
   const [reviewFilterRating, setReviewFilterRating] = useState<number | null>(null);
   const [reviewSortBy, setReviewSortBy] = useState<'recent' | 'highest' | 'lowest'>('recent');
   const [showAllReviews, setShowAllReviews] = useState(false);
+  const [reportDialogReviewId, setReportDialogReviewId] = useState<number | null>(null);
+  const [reportReason, setReportReason] = useState("inappropriato");
+  const [reportDescription, setReportDescription] = useState("");
   const [editForm, setEditForm] = useState({
     name: '',
     style: '',
@@ -240,6 +244,21 @@ export default function BeerDetail() {
     else list.sort((a, b) => new Date(b.tastedAt).getTime() - new Date(a.tastedAt).getTime());
     return list;
   }, [reviewsData, reviewFilterRating, reviewSortBy]);
+
+  const reportMutation = useMutation({
+    mutationFn: async ({ tastingId, reason, description }: { tastingId: number; reason: string; description: string }) =>
+      apiRequest(`/api/reviews/${tastingId}/report`, { method: "POST" }, { reason, description }),
+    onSuccess: () => {
+      toast({ title: "Segnalazione inviata", description: "Grazie, la segnalazione è stata ricevuta." });
+      setReportDialogReviewId(null);
+      setReportReason("inappropriato");
+      setReportDescription("");
+    },
+    onError: (err: any) => {
+      const msg = err?.message || "Errore nell'invio della segnalazione";
+      toast({ title: "Errore", description: msg, variant: "destructive" });
+    },
+  });
 
   // Favorite mutation
   const favoriteMutation = useMutation({
@@ -715,9 +734,20 @@ export default function BeerDetail() {
                         {review.personalNotes && (
                           <p className="text-sm text-gray-700 dark:text-gray-300 italic mb-1">"{review.personalNotes}"</p>
                         )}
-                        <div className="flex items-center gap-2 text-xs text-gray-400 flex-wrap">
-                          <span>{new Date(review.tastedAt).toLocaleDateString('it-IT')}</span>
-                          {review.format && <span className="before:content-['·'] before:mr-2">{review.format}</span>}
+                        <div className="flex items-center justify-between gap-2 text-xs text-gray-400 flex-wrap">
+                          <div className="flex items-center gap-2">
+                            <span>{new Date(review.tastedAt).toLocaleDateString('it-IT')}</span>
+                            {review.format && <span className="before:content-['·'] before:mr-2">{review.format}</span>}
+                          </div>
+                          {isAuthenticated && (
+                            <button
+                              onClick={() => { setReportDialogReviewId(review.id); }}
+                              className="flex items-center gap-1 text-gray-300 hover:text-red-400 dark:hover:text-red-400 transition-colors opacity-0 group-hover:opacity-100"
+                              title="Segnala recensione"
+                            >
+                              <Flag className="h-3 w-3" />
+                            </button>
+                          )}
                         </div>
                       </div>
                     </div>
@@ -983,6 +1013,60 @@ export default function BeerDetail() {
         </DialogContent>
       </Dialog>
 
+
+      {/* Report Review Dialog */}
+      <Dialog open={reportDialogReviewId !== null} onOpenChange={(open) => { if (!open) setReportDialogReviewId(null); }}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Flag className="w-4 h-4 text-red-500" />
+              Segnala recensione
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 pt-2">
+            <div>
+              <label className="text-sm font-medium text-gray-700 dark:text-gray-300 block mb-2">Motivo della segnalazione</label>
+              <select
+                value={reportReason}
+                onChange={(e) => setReportReason(e.target.value)}
+                className="w-full border border-gray-300 dark:border-gray-600 rounded-md px-3 py-2 text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+              >
+                <option value="inappropriato">Contenuto inappropriato</option>
+                <option value="spam">Spam o pubblicità</option>
+                <option value="falso">Recensione falsa</option>
+                <option value="offensivo">Linguaggio offensivo</option>
+                <option value="altro">Altro</option>
+              </select>
+            </div>
+            <div>
+              <label className="text-sm font-medium text-gray-700 dark:text-gray-300 block mb-2">Descrizione (opzionale)</label>
+              <Textarea
+                value={reportDescription}
+                onChange={(e) => setReportDescription(e.target.value)}
+                placeholder="Spiega brevemente il problema..."
+                rows={3}
+                className="text-sm"
+              />
+            </div>
+            <div className="flex gap-3 pt-2">
+              <Button variant="outline" className="flex-1" onClick={() => setReportDialogReviewId(null)}>
+                Annulla
+              </Button>
+              <Button
+                className="flex-1 bg-red-500 hover:bg-red-600 text-white"
+                disabled={reportMutation.isPending}
+                onClick={() => {
+                  if (reportDialogReviewId) {
+                    reportMutation.mutate({ tastingId: reportDialogReviewId, reason: reportReason, description: reportDescription });
+                  }
+                }}
+              >
+                {reportMutation.isPending ? "Invio..." : "Segnala"}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
       <Footer />
     </div>
   );

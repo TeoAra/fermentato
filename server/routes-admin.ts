@@ -1,6 +1,6 @@
 import { eq, count, desc, asc, sql, or, ilike } from "drizzle-orm";
 import { db } from "./db";
-import { beers, breweries, users, pubs, publicanRequests, breweryRequests } from "@shared/schema";
+import { beers, breweries, users, pubs, publicanRequests, breweryRequests, reviewReports, userBeerTastings, pubEvents, breweryEvents } from "@shared/schema";
 import type { Express } from "express";
 import { isAuthenticated, isAdmin } from "./auth";
 import { sendPushToUser } from "./push-utils";
@@ -318,33 +318,38 @@ export function registerAdminRoutes(app: Express) {
 
   app.get("/api/admin/users", isAuthenticated, async (req: any, res) => {
     try {
-      if ((req.user as any)?.id !== "45321347") {
+      if ((req.user as any)?.userType !== "admin") {
         return res.status(403).json({ message: "Forbidden" });
       }
 
-      const { search, page = 1, limit = 20 } = req.query;
-      const offset = (parseInt(page) - 1) * parseInt(limit);
+      const { search, page = 1, limit = 50 } = req.query;
+      const offset = (Number(page) - 1) * Number(limit);
 
-      let query = db
+      let baseQuery = db
         .select({
           id: users.id,
           email: users.email,
+          nickname: users.nickname,
           firstName: users.firstName,
           lastName: users.lastName,
           userType: users.userType,
+          activeRole: users.activeRole,
           profileImageUrl: users.profileImageUrl,
+          isPublic: users.isPublic,
           createdAt: users.createdAt,
-          updatedAt: users.updatedAt,
         })
         .from(users);
 
       if (search) {
-        query = query.where(sql`${users.email} ILIKE ${'%' + search + '%'} OR ${users.firstName} ILIKE ${'%' + search + '%'} OR ${users.lastName} ILIKE ${'%' + search + '%'}`);
+        const pattern = `%${search}%`;
+        baseQuery = baseQuery.where(
+          sql`${users.email} ILIKE ${pattern} OR ${users.nickname} ILIKE ${pattern} OR ${users.firstName} ILIKE ${pattern}`
+        ) as any;
       }
 
-      const results = await query
-        .orderBy(users.createdAt)
-        .limit(parseInt(limit))
+      const results = await baseQuery
+        .orderBy(desc(users.createdAt))
+        .limit(Number(limit))
         .offset(offset)
         .execute();
 
@@ -497,35 +502,38 @@ export function registerAdminRoutes(app: Express) {
   // Reports endpoints (mock for now since we don't have reports table)
   app.get("/api/admin/reports", isAuthenticated, async (req: any, res) => {
     try {
-      if ((req.user as any)?.id !== "45321347") {
+      if ((req.user as any)?.userType !== "admin") {
         return res.status(403).json({ message: "Forbidden" });
       }
-
-      // Mock reports data - in production this would come from a reports table
-      const reports = [
-        {
-          id: 1,
-          type: 'review',
-          targetId: 1,
-          reporterId: '12345',
-          reason: 'Contenuto inappropriato',
-          description: 'Linguaggio offensivo nella recensione',
-          status: 'pending',
-          createdAt: new Date('2024-01-20T10:00:00Z').toISOString(),
-        },
-        {
-          id: 2,
-          type: 'user',
-          targetId: 2,
-          reporterId: '67890',
-          reason: 'Spam',
-          description: 'Utente che pubblica recensioni false ripetutamente',
-          status: 'pending',
-          createdAt: new Date('2024-01-19T15:30:00Z').toISOString(),
-        },
-      ];
-
-      res.json(reports);
+      const statusFilter = req.query.status as string | undefined;
+      const rows = await db
+        .select({
+          id: reviewReports.id,
+          reviewId: reviewReports.reviewId,
+          reporterId: reviewReports.reporterId,
+          reason: reviewReports.reason,
+          description: reviewReports.description,
+          status: reviewReports.status,
+          createdAt: reviewReports.createdAt,
+          resolvedAt: reviewReports.resolvedAt,
+          reviewRating: userBeerTastings.rating,
+          reviewText: userBeerTastings.personalNotes,
+          reviewBeerId: userBeerTastings.beerId,
+          reviewUserId: userBeerTastings.userId,
+          beerName: beers.name,
+          beerStyle: beers.style,
+          reporterNickname: users.nickname,
+          reporterFirstName: users.firstName,
+          reporterAvatar: users.profileImageUrl,
+        })
+        .from(reviewReports)
+        .leftJoin(userBeerTastings, eq(reviewReports.reviewId, userBeerTastings.id))
+        .leftJoin(beers, eq(userBeerTastings.beerId, beers.id))
+        .leftJoin(users, eq(reviewReports.reporterId, users.id))
+        .where(statusFilter && statusFilter !== 'all' ? eq(reviewReports.status, statusFilter) : sql`1=1`)
+        .orderBy(desc(reviewReports.createdAt))
+        .limit(100);
+      res.json(rows);
     } catch (error) {
       console.error("Error fetching reports:", error);
       res.status(500).json({ message: "Failed to fetch reports" });
@@ -534,14 +542,14 @@ export function registerAdminRoutes(app: Express) {
 
   app.post("/api/admin/reports/:id/resolve", isAuthenticated, async (req: any, res) => {
     try {
-      if ((req.user as any)?.id !== "45321347") {
+      if ((req.user as any)?.userType !== "admin") {
         return res.status(403).json({ message: "Forbidden" });
       }
-
-      const { id } = req.params;
-      
-      // Mock response - in production this would update the reports table
-      res.json({ message: "Report resolved", reportId: id });
+      const id = parseInt(req.params.id);
+      await db.update(reviewReports)
+        .set({ status: 'resolved', resolvedAt: new Date() })
+        .where(eq(reviewReports.id, id));
+      res.json({ message: "Report risolto", reportId: id });
     } catch (error) {
       console.error("Error resolving report:", error);
       res.status(500).json({ message: "Failed to resolve report" });
@@ -550,17 +558,75 @@ export function registerAdminRoutes(app: Express) {
 
   app.post("/api/admin/reports/:id/dismiss", isAuthenticated, async (req: any, res) => {
     try {
-      if ((req.user as any)?.id !== "45321347") {
+      if ((req.user as any)?.userType !== "admin") {
         return res.status(403).json({ message: "Forbidden" });
       }
-
-      const { id } = req.params;
-      
-      // Mock response - in production this would update the reports table
-      res.json({ message: "Report dismissed", reportId: id });
+      const id = parseInt(req.params.id);
+      await db.update(reviewReports)
+        .set({ status: 'dismissed', resolvedAt: new Date() })
+        .where(eq(reviewReports.id, id));
+      res.json({ message: "Report archiviato", reportId: id });
     } catch (error) {
       console.error("Error dismissing report:", error);
       res.status(500).json({ message: "Failed to dismiss report" });
+    }
+  });
+
+  app.get("/api/admin/recent-activity", isAuthenticated, async (req: any, res) => {
+    try {
+      if ((req.user as any)?.userType !== "admin") {
+        return res.status(403).json({ message: "Forbidden" });
+      }
+      const recentUsers = await db.select({
+        name: sql<string>`COALESCE(${users.nickname}, ${users.firstName}, ${users.email})`,
+        detail: users.userType,
+        time: users.createdAt,
+      }).from(users).orderBy(desc(users.createdAt)).limit(5);
+
+      const recentPubs = await db.select({
+        name: pubs.name,
+        detail: pubs.city,
+        time: pubs.createdAt,
+      }).from(pubs).where(sql`${pubs.createdAt} IS NOT NULL`).orderBy(desc(pubs.createdAt)).limit(5);
+
+      const recentBreweries = await db.select({
+        name: breweries.name,
+        detail: breweries.location,
+        time: breweries.createdAt,
+      }).from(breweries).where(sql`${breweries.createdAt} IS NOT NULL`).orderBy(desc(breweries.createdAt)).limit(5);
+
+      const recentReviews = await db.select({
+        reviewerName: sql<string>`COALESCE(${users.nickname}, ${users.firstName}, 'Utente')`,
+        beerName: beers.name,
+        rating: userBeerTastings.rating,
+        time: userBeerTastings.createdAt,
+      }).from(userBeerTastings)
+        .leftJoin(users, eq(userBeerTastings.userId, users.id))
+        .leftJoin(beers, eq(userBeerTastings.beerId, beers.id))
+        .where(sql`${userBeerTastings.rating} IS NOT NULL AND ${userBeerTastings.createdAt} IS NOT NULL`)
+        .orderBy(desc(userBeerTastings.createdAt)).limit(5);
+
+      const recentEvents = await db.select({
+        name: pubEvents.title,
+        detail: sql<string>`'Evento pub'`,
+        time: pubEvents.createdAt,
+      }).from(pubEvents).where(sql`${pubEvents.createdAt} IS NOT NULL`).orderBy(desc(pubEvents.createdAt)).limit(3);
+
+      const combined = [
+        ...recentUsers.map(u => ({ type: 'user', action: 'Nuovo utente iscritto', name: u.name, detail: u.detail, time: u.time?.toISOString() })),
+        ...recentPubs.map(p => ({ type: 'pub', action: 'Nuovo pub registrato', name: p.name, detail: p.detail, time: p.time?.toISOString() })),
+        ...recentBreweries.map(b => ({ type: 'brewery', action: 'Birrificio aggiunto', name: b.name, detail: b.detail, time: b.time?.toISOString() })),
+        ...recentReviews.map(r => ({ type: 'review', action: `Recensione ★${r.rating}`, name: r.beerName || 'Birra', detail: `da ${r.reviewerName}`, time: r.time?.toISOString() })),
+        ...recentEvents.map(e => ({ type: 'event', action: 'Evento creato', name: e.name, detail: null, time: e.time?.toISOString() })),
+      ]
+        .filter(a => a.time)
+        .sort((a, b) => new Date(b.time!).getTime() - new Date(a.time!).getTime())
+        .slice(0, 15);
+
+      res.json(combined);
+    } catch (error) {
+      console.error("Error fetching recent activity:", error);
+      res.status(500).json({ message: "Failed to fetch recent activity" });
     }
   });
 
