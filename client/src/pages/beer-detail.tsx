@@ -706,8 +706,8 @@ export default function BeerDetail() {
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center justify-between gap-2 mb-1">
                           <div className="flex items-center gap-1.5 min-w-0">
-                            {isPublicReviewer && review.nickname ? (
-                              <Link href={`/user/${review.nickname}`}>
+                            {isPublicReviewer ? (
+                              <Link href={`/user/${review.nickname || review.userId}`}>
                                 <span className="font-semibold text-sm text-gray-900 dark:text-white hover:text-amber-600 dark:hover:text-amber-400 cursor-pointer transition-colors truncate">{displayName}</span>
                               </Link>
                             ) : (
