@@ -473,13 +473,7 @@ export default function UserProfile() {
               const nextBadge = getNextBadge(reviewCount);
               const progress = getProgressToNextBadge(reviewCount);
               return (
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                  <Card className="border-0 shadow-md bg-gradient-to-br from-amber-50 to-orange-50 dark:from-amber-900/20 dark:to-orange-900/20">
-                    <CardContent className="p-4 text-center">
-                      <div className="text-2xl font-bold text-amber-600 dark:text-amber-400">{beerTastings.length}</div>
-                      <div className="text-xs text-gray-600 dark:text-gray-400 mt-0.5 font-medium">Assaggi</div>
-                    </CardContent>
-                  </Card>
+                <div className="grid grid-cols-3 gap-3">
                   <Card className="border-0 shadow-md bg-gradient-to-br from-yellow-50 to-amber-50 dark:from-yellow-900/20 dark:to-amber-900/20">
                     <CardContent className="p-4 text-center">
                       <div className="text-2xl font-bold text-yellow-600 dark:text-yellow-400">{reviewCount}</div>

@@ -367,7 +367,7 @@ export default function BeerDetail() {
       
       {/* Modern Hero Section */}
       <div className="relative">
-        <div className="relative h-96 md:h-[500px] overflow-hidden">
+        <div className="relative h-[500px] overflow-hidden">
           <img
             src={beer?.imageUrl || beer?.bottleImageUrl || "https://images.unsplash.com/photo-1608270586620-248524c67de9?w=1200&h=600&fit=crop"}
             alt={`${beer?.name} - Immagine`}
