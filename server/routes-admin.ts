@@ -101,6 +101,29 @@ export function registerAdminRoutes(app: Express) {
     }
   });
 
+
+  app.patch("/api/admin/users/:id", isAuthenticated, async (req: any, res) => {
+    try {
+      if ((req.user as any)?.userType !== "admin") {
+        return res.status(403).json({ message: "Forbidden" });
+      }
+      const userId = req.params.id;
+      if (userId === (req.user as any)?.id) {
+        return res.status(400).json({ message: "Non puoi modificare te stesso da qui" });
+      }
+      const { userType } = req.body;
+      const allowed = ['customer', 'pub_owner', 'brewery_owner', 'admin', 'banned'];
+      if (!userType || !allowed.includes(userType)) {
+        return res.status(400).json({ message: "Tipo utente non valido" });
+      }
+      await db.update(users).set({ userType }).where(eq(users.id, userId));
+      res.json({ message: "Utente aggiornato", userId, userType });
+    } catch (error) {
+      console.error("Error updating user:", error);
+      res.status(500).json({ message: "Errore aggiornamento utente" });
+    }
+  });
+
   // Admin pub management actions
   app.patch("/api/admin/pubs/:id/verify", isAuthenticated, async (req: any, res) => {
     try {

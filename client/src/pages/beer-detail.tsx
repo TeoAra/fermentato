@@ -706,7 +706,7 @@ export default function BeerDetail() {
                   const userBadge = getBadgeForCount(Number(review.userReviewCount || 0));
                   const isPublicReviewer = review.isPublic !== false;
                   return (
-                    <div key={review.id} className="flex gap-3 p-3 bg-gray-50 dark:bg-gray-800/50 rounded-xl">
+                    <div key={review.id} className="flex gap-3 p-3 bg-gray-50 dark:bg-gray-800/50 rounded-xl group">
                       <Avatar className="h-9 w-9 flex-shrink-0">
                         {review.profileImageUrl && <AvatarImage src={review.profileImageUrl} />}
                         <AvatarFallback className="bg-gradient-to-br from-amber-400 to-orange-500 text-white font-bold text-sm">
@@ -742,7 +742,7 @@ export default function BeerDetail() {
                           {isAuthenticated && (
                             <button
                               onClick={() => { setReportDialogReviewId(review.id); }}
-                              className="flex items-center gap-1 text-gray-300 hover:text-red-400 dark:hover:text-red-400 transition-colors opacity-0 group-hover:opacity-100"
+                              className="flex items-center gap-1 text-gray-300 dark:text-gray-600 hover:text-red-400 dark:hover:text-red-400 transition-colors"
                               title="Segnala recensione"
                             >
                               <Flag className="h-3 w-3" />
