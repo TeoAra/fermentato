@@ -1160,50 +1160,36 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
       </div>
 
       <div className="grid grid-cols-1 gap-6">
-        {/* Cover Image Section */}
+        {/* Images */}
         <Card className="p-6">
-          <h3 className="text-lg font-semibold mb-4 flex items-center">
-            <Image className="h-5 w-5 mr-2 text-blue-600" />
-            Immagine di Copertina
+          <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+            <Image className="h-5 w-5 text-blue-600" />
+            Immagini
           </h3>
-          <p className="text-sm text-gray-600 dark:text-gray-400 mb-6">
-            L'immagine principale che rappresenta il tuo pub. Sarà mostrata nella pagina del pub e nei risultati di ricerca.
-          </p>
-          <ImageUpload
-            label="Copertina Pub"
-            description="Immagine principale che verrà mostrata in evidenza sulla pagina del pub"
-            currentImageUrl={settingsData.coverImageUrl}
-            onImageChange={(url) => updateSettingsField('coverImageUrl', url)}
-            folder="pub-covers"
-            aspectRatio="landscape"
-            maxSize={8}
-            recommendedDimensions="1200x630 px"
-            acceptedFormats={['JPG', 'PNG', 'WebP']}
-            showFileInfo={true}
-          />
-        </Card>
-
-        {/* Logo/Profile Image Section */}
-        <Card className="p-6">
-          <h3 className="text-lg font-semibold mb-4 flex items-center">
-            <Users className="h-5 w-5 mr-2 text-purple-600" />
-            Logo/Immagine Profilo
-          </h3>
-          <p className="text-sm text-gray-600 dark:text-gray-400 mb-6">
-            Il logo o l'immagine che identifica il tuo pub. Apparirà come avatar nelle liste e nelle mappe.
-          </p>
-          <ImageUpload
-            label="Logo Pub"
-            description="Logo che identifica il pub, visibile in liste, mappe e risultati di ricerca"
-            currentImageUrl={settingsData.logoUrl}
-            onImageChange={(url) => updateSettingsField('logoUrl', url)}
-            folder="pub-logos"
-            aspectRatio="square"
-            maxSize={3}
-            recommendedDimensions="400x400 px"
-            acceptedFormats={['JPG', 'PNG', 'WebP']}
-            showFileInfo={true}
-          />
+          <div className="space-y-3">
+            <ImageUpload
+              label="Immagine di Copertina"
+              description="1200×630 px consigliato · visibile nella pagina pub e nei risultati di ricerca"
+              currentImageUrl={settingsData.coverImageUrl}
+              onImageChange={(url) => updateSettingsField('coverImageUrl', url)}
+              folder="pub-covers"
+              aspectRatio="landscape"
+              maxSize={8}
+              recommendedDimensions="1200×630 px"
+              acceptedFormats={['JPG', 'PNG', 'WebP']}
+            />
+            <ImageUpload
+              label="Logo / Immagine Profilo"
+              description="400×400 px consigliato · appare come avatar in liste e mappe"
+              currentImageUrl={settingsData.logoUrl}
+              onImageChange={(url) => updateSettingsField('logoUrl', url)}
+              folder="pub-logos"
+              aspectRatio="square"
+              maxSize={3}
+              recommendedDimensions="400×400 px"
+              acceptedFormats={['JPG', 'PNG', 'WebP']}
+            />
+          </div>
         </Card>
 
         {/* Basic Information */}
@@ -1445,31 +1431,25 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
             ].map(({ field, label, placeholder, icon }) => {
               const val = settingsData[field] || '';
               const url = val.toLowerCase();
-              let detectedIcon: React.ReactNode = null;
-              let detectedColor = '';
-              if (url.includes('facebook.com') || icon === 'facebook') { detectedIcon = <SiFacebook size={16} />; detectedColor = 'text-[#1877F2]'; }
-              else if (url.includes('instagram.com') || icon === 'instagram') { detectedIcon = <SiInstagram size={16} />; detectedColor = 'text-[#E1306C]'; }
-              else if (url.includes('x.com') || url.includes('twitter.com') || icon === 'twitter') { detectedIcon = <SiX size={16} />; detectedColor = 'text-gray-800 dark:text-white'; }
-              else if (url.includes('tiktok.com') || icon === 'tiktok') { detectedIcon = <SiTiktok size={16} />; detectedColor = 'text-gray-900 dark:text-white'; }
-              else if (val && !url.includes('http')) { detectedIcon = <Globe className="w-4 h-4" />; detectedColor = 'text-blue-500'; }
-              else if (val) { detectedIcon = <Globe className="w-4 h-4" />; detectedColor = 'text-blue-500'; }
+              let rowIcon: React.ReactNode = <Globe className="w-4 h-4" />;
+              let iconColor = 'text-gray-400';
+              if (icon === 'facebook' || url.includes('facebook.com')) { rowIcon = <SiFacebook size={15} />; iconColor = 'text-[#1877F2]'; }
+              else if (icon === 'instagram' || url.includes('instagram.com')) { rowIcon = <SiInstagram size={15} />; iconColor = 'text-[#E1306C]'; }
+              else if (icon === 'twitter' || url.includes('x.com') || url.includes('twitter.com')) { rowIcon = <SiX size={15} />; iconColor = 'text-gray-800 dark:text-white'; }
+              else if (icon === 'tiktok' || url.includes('tiktok.com')) { rowIcon = <SiTiktok size={15} />; iconColor = 'text-gray-900 dark:text-white'; }
+              else if (val) { iconColor = 'text-blue-500'; }
               return (
-                <div key={field} className="flex items-center gap-3">
-                  <div className={`w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0 border ${detectedIcon ? 'bg-white dark:bg-gray-800' : 'bg-gray-100 dark:bg-gray-800 border-dashed'}`}>
-                    <span className={detectedColor || 'text-gray-300'}>
-                      {detectedIcon || <Globe className="w-4 h-4 text-gray-300" />}
-                    </span>
+                <div key={field} className="relative">
+                  <div className={`absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none z-10 ${iconColor}`}>
+                    {rowIcon}
                   </div>
-                  <div className="flex-1 min-w-0">
-                    <Label className="text-xs font-medium text-gray-500 mb-1 block">{label}</Label>
-                    <Input
-                      value={val}
-                      onChange={(e) => updateSettingsField(field, e.target.value)}
-                      placeholder={placeholder}
-                      className="h-9 text-sm"
-                      data-testid={`input-${field}`}
-                    />
-                  </div>
+                  <Input
+                    value={val}
+                    onChange={(e) => updateSettingsField(field, e.target.value)}
+                    placeholder={`${label} — ${placeholder}`}
+                    className="h-10 pl-9 text-sm"
+                    data-testid={`input-${field}`}
+                  />
                 </div>
               );
             })}

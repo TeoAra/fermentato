@@ -1,12 +1,10 @@
-import { useState, useRef, useCallback, useEffect } from "react";
+import { useState, useRef, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
 import { useToast } from "@/hooks/use-toast";
-import { Upload, X, Image as ImageIcon, Camera, RefreshCw, AlertCircle, CheckCircle2, FileImage, Trash2 } from "lucide-react";
+import { Upload, X, Image as ImageIcon, RefreshCw, AlertCircle, CheckCircle2 } from "lucide-react";
 import { useMutation } from "@tanstack/react-query";
-import { motion, AnimatePresence } from "framer-motion";
 
 type UploadState = 'idle' | 'uploading' | 'success' | 'error';
 
@@ -35,21 +33,17 @@ export function ImageUpload({
   maxSize = 5,
   recommendedDimensions,
   acceptedFormats = ['JPG', 'PNG', 'WebP'],
-  showFileInfo = true,
   disabled = false,
-  hideStateIcon = false,
 }: ImageUploadProps) {
   const [isDragging, setIsDragging] = useState(false);
   const [preview, setPreview] = useState<string | null>(currentImageUrl || null);
   const [uploadState, setUploadState] = useState<UploadState>('idle');
   const [uploadProgress, setUploadProgress] = useState(0);
-  const [fileInfo, setFileInfo] = useState<{ name: string; size: string; type: string } | null>(null);
   const [error, setError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const dropZoneRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
 
-  // Utility functions
   const formatFileSize = (bytes: number): string => {
     if (bytes === 0) return '0 Bytes';
     const k = 1024;
@@ -62,10 +56,7 @@ export function ImageUpload({
     setUploadProgress(0);
     const progressInterval = setInterval(() => {
       setUploadProgress(prev => {
-        if (prev >= 90) {
-          clearInterval(progressInterval);
-          return prev;
-        }
+        if (prev >= 90) { clearInterval(progressInterval); return prev; }
         return prev + Math.random() * 15;
       });
     }, 200);
@@ -76,442 +67,202 @@ export function ImageUpload({
     mutationFn: async (file: File) => {
       setUploadState('uploading');
       setError(null);
-      
-      // Simulate progress since we can't get real progress from fetch
       const progressInterval = simulateProgress();
-
       try {
         const formData = new FormData();
         formData.append('image', file);
         formData.append('folder', folder);
-
-        const response = await fetch('/api/upload/image', {
-          method: 'POST',
-          body: formData,
-          credentials: 'include',
-        });
-
+        const response = await fetch('/api/upload/image', { method: 'POST', body: formData, credentials: 'include' });
         clearInterval(progressInterval);
         setUploadProgress(100);
-
         if (!response.ok) {
           const contentType = response.headers.get('content-type');
-          if (contentType && contentType.includes('application/json')) {
-            const error = await response.json();
-            throw new Error(error.message || 'Upload fallito');
+          if (contentType?.includes('application/json')) {
+            const err = await response.json();
+            throw new Error(err.message || 'Upload fallito');
           }
-          throw new Error(response.status === 401 ? 'Sessione scaduta. Ricarica la pagina e riprova.' : `Upload fallito (errore ${response.status})`);
+          throw new Error(response.status === 401 ? 'Sessione scaduta.' : `Upload fallito (${response.status})`);
         }
-
         const result = await response.json();
         return result.url;
-      } catch (error) {
+      } catch (err) {
         clearInterval(progressInterval);
-        throw error;
+        throw err;
       }
     },
     onSuccess: (url: string) => {
       setUploadState('success');
       setPreview(url);
       onImageChange(url);
-      
-      // Show success state briefly then return to idle
-      setTimeout(() => {
-        setUploadState('idle');
-        setUploadProgress(0);
-      }, 2000);
-
-      toast({
-        title: "✅ Successo!",
-        description: "Immagine caricata correttamente",
-        duration: 3000,
-      });
+      setTimeout(() => { setUploadState('idle'); setUploadProgress(0); }, 1500);
+      toast({ title: "Immagine caricata", duration: 2000 });
     },
-    onError: (error: Error) => {
+    onError: (err: Error) => {
       setUploadState('error');
-      setError(error.message);
+      setError(err.message);
       setUploadProgress(0);
-      
-      toast({
-        title: "❌ Errore Upload",
-        description: error.message,
-        variant: "destructive",
-        duration: 5000,
-      });
+      toast({ title: "Errore upload", description: err.message, variant: "destructive", duration: 4000 });
     },
   });
 
   const handleFileSelect = useCallback((file: File) => {
     if (disabled || uploadState === 'uploading') return;
-
-    // Reset previous error
     setError(null);
-    
-    // Set file info
-    setFileInfo({
-      name: file.name,
-      size: formatFileSize(file.size),
-      type: file.type.split('/')[1].toUpperCase()
-    });
-
-    // Enhanced validation with specific error messages
     if (file.size > maxSize * 1024 * 1024) {
-      const errorMsg = `Il file è troppo grande (${formatFileSize(file.size)}). Dimensione massima: ${maxSize}MB`;
-      setError(errorMsg);
-      setUploadState('error');
-      toast({
-        title: "⚠️ File troppo grande",
-        description: errorMsg,
-        variant: "destructive",
-        duration: 5000,
-      });
+      toast({ title: "File troppo grande", description: `Max ${maxSize}MB`, variant: "destructive" });
       return;
     }
-
-    // Validate file type with detailed feedback
     const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
     if (!validTypes.includes(file.type.toLowerCase())) {
-      const errorMsg = `Formato non supportato (${file.type.split('/')[1].toUpperCase()}). Usa: ${acceptedFormats.join(', ')}`;
-      setError(errorMsg);
-      setUploadState('error');
-      toast({
-        title: "⚠️ Formato non valido",
-        description: errorMsg,
-        variant: "destructive",
-        duration: 5000,
-      });
+      toast({ title: "Formato non valido", description: `Usa: ${acceptedFormats.join(', ')}`, variant: "destructive" });
       return;
     }
-
-    // Additional validation for very small files
-    if (file.size < 1024) {
-      const errorMsg = "Il file sembra essere corrotto o troppo piccolo";
-      setError(errorMsg);
-      setUploadState('error');
-      toast({
-        title: "⚠️ File non valido",
-        description: errorMsg,
-        variant: "destructive",
-        duration: 5000,
-      });
-      return;
-    }
-
     uploadMutation.mutate(file);
   }, [disabled, uploadState, maxSize, acceptedFormats, uploadMutation, toast]);
 
   const handleDrop = useCallback((e: React.DragEvent) => {
     e.preventDefault();
     setIsDragging(false);
-    
     if (disabled || uploadState === 'uploading') return;
-    
     const files = Array.from(e.dataTransfer.files);
-    if (files.length > 0) {
-      handleFileSelect(files[0]);
-    } else if (files.length > 1) {
-      toast({
-        title: "⚠️ Troppi file",
-        description: "Puoi caricare solo un'immagine alla volta",
-        variant: "destructive",
-        duration: 3000,
-      });
-    }
-  }, [disabled, uploadState, handleFileSelect, toast]);
+    if (files.length > 0) handleFileSelect(files[0]);
+  }, [disabled, uploadState, handleFileSelect]);
 
   const handleDragOver = useCallback((e: React.DragEvent) => {
     e.preventDefault();
-    if (!disabled && uploadState !== 'uploading') {
-      setIsDragging(true);
-    }
+    if (!disabled && uploadState !== 'uploading') setIsDragging(true);
   }, [disabled, uploadState]);
 
   const handleDragLeave = useCallback((e: React.DragEvent) => {
     e.preventDefault();
-    // Only set dragging false if we're leaving the drop zone container
-    if (dropZoneRef.current && !dropZoneRef.current.contains(e.relatedTarget as Node)) {
-      setIsDragging(false);
-    }
+    if (dropZoneRef.current && !dropZoneRef.current.contains(e.relatedTarget as Node)) setIsDragging(false);
   }, []);
-
-  const handleFileInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = e.target.files;
-    if (files && files.length > 0) {
-      handleFileSelect(files[0]);
-    }
-  }, [handleFileSelect]);
 
   const handleRemoveImage = useCallback(() => {
     if (uploadState === 'uploading') return;
-    
     setPreview(null);
-    setFileInfo(null);
     setError(null);
     setUploadState('idle');
     setUploadProgress(0);
     onImageChange(null);
-    
-    if (fileInputRef.current) {
-      fileInputRef.current.value = '';
-    }
-
-    toast({
-      title: "🗑️ Immagine rimossa",
-      description: "L'immagine è stata rimossa correttamente",
-      duration: 2000,
-    });
-  }, [uploadState, onImageChange, toast]);
-
-  const handleRetry = useCallback(() => {
-    if (fileInfo && fileInputRef.current?.files?.[0]) {
-      handleFileSelect(fileInputRef.current.files[0]);
-    }
-  }, [fileInfo, handleFileSelect]);
+    if (fileInputRef.current) fileInputRef.current.value = '';
+  }, [uploadState, onImageChange]);
 
   const handleClickUpload = useCallback(() => {
-    if (!disabled && uploadState !== 'uploading') {
-      fileInputRef.current?.click();
-    }
+    if (!disabled && uploadState !== 'uploading') fileInputRef.current?.click();
   }, [disabled, uploadState]);
 
-  const aspectRatioClasses = {
-    square: "aspect-square",
-    landscape: "aspect-video",
-    portrait: "aspect-[3/4]",
-  };
-
-  const getStateIcon = () => {
-    switch (uploadState) {
-      case 'uploading':
-        return <RefreshCw className="w-5 h-5 animate-spin text-blue-500" />;
-      case 'success':
-        return <CheckCircle2 className="w-5 h-5 text-green-500" />;
-      case 'error':
-        return <AlertCircle className="w-5 h-5 text-red-500" />;
-      default:
-        return <Camera className="w-5 h-5 text-gray-400" />;
-    }
-  };
-
-  const getStateColor = () => {
-    switch (uploadState) {
-      case 'uploading':
-        return 'border-blue-500 bg-blue-50 dark:bg-blue-950';
-      case 'success':
-        return 'border-green-500 bg-green-50 dark:bg-green-950';
-      case 'error':
-        return 'border-red-500 bg-red-50 dark:bg-red-950';
-      default:
-        return isDragging 
-          ? 'border-orange-500 bg-orange-50 dark:bg-orange-950' 
-          : 'border-gray-300 dark:border-gray-600 hover:border-gray-400 dark:hover:border-gray-500';
-    }
-  };
+  const thumbnailClasses = aspectRatio === 'landscape'
+    ? 'w-32 h-20 flex-shrink-0'
+    : 'w-16 h-16 flex-shrink-0';
 
   return (
-    <div className="space-y-3">
-      <div className="flex items-center justify-between">
-        <div>
-          <Label className="text-sm font-medium text-gray-900 dark:text-gray-100">
-            {label}
-          </Label>
-          {description && (
-            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-              {description}
-            </p>
+    <div className="space-y-2">
+      <div
+        ref={dropZoneRef}
+        onDrop={handleDrop}
+        onDragOver={handleDragOver}
+        onDragLeave={handleDragLeave}
+        className={`
+          flex items-center gap-4 p-3 rounded-xl border-2 transition-all duration-200
+          ${isDragging ? 'border-orange-400 bg-orange-50 dark:bg-orange-950/30' : 'border-dashed border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600 bg-gray-50/50 dark:bg-gray-800/30'}
+          ${uploadState === 'error' ? 'border-red-400 bg-red-50 dark:bg-red-950/20' : ''}
+          ${uploadState === 'uploading' ? 'border-blue-400 bg-blue-50 dark:bg-blue-950/20' : ''}
+          ${disabled ? 'opacity-50 cursor-not-allowed' : ''}
+        `}
+      >
+        {/* Thumbnail / Placeholder */}
+        <div
+          className={`${thumbnailClasses} rounded-lg overflow-hidden bg-gray-100 dark:bg-gray-800 flex items-center justify-center flex-shrink-0 relative border border-gray-200 dark:border-gray-700`}
+          onClick={!preview ? handleClickUpload : undefined}
+          style={{ cursor: !preview ? 'pointer' : 'default' }}
+        >
+          {preview ? (
+            <>
+              <img src={preview} alt="Anteprima" className="w-full h-full object-cover" />
+              {uploadState === 'uploading' && (
+                <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
+                  <RefreshCw className="w-5 h-5 text-white animate-spin" />
+                </div>
+              )}
+              {uploadState === 'success' && (
+                <div className="absolute inset-0 bg-green-500/30 flex items-center justify-center">
+                  <CheckCircle2 className="w-5 h-5 text-green-600" />
+                </div>
+              )}
+            </>
+          ) : (
+            <div className="flex flex-col items-center gap-1 text-gray-400">
+              {uploadState === 'error' ? (
+                <AlertCircle className="w-6 h-6 text-red-400" />
+              ) : (
+                <Upload className="w-6 h-6" />
+              )}
+            </div>
           )}
         </div>
-        {!hideStateIcon && getStateIcon()}
+
+        {/* Info + Actions */}
+        <div className="flex-1 min-w-0">
+          <p className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">{label}</p>
+          {description && (
+            <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5 line-clamp-1">{description}</p>
+          )}
+          <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">
+            Max {maxSize}MB · {acceptedFormats.join(', ')}
+            {recommendedDimensions && ` · ${recommendedDimensions}`}
+          </p>
+          {uploadState === 'error' && error && (
+            <p className="text-xs text-red-500 mt-1 truncate">{error}</p>
+          )}
+        </div>
+
+        {/* Action Buttons */}
+        <div className="flex flex-col gap-1.5 flex-shrink-0">
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={handleClickUpload}
+            disabled={disabled || uploadState === 'uploading'}
+            className="h-8 px-3 text-xs whitespace-nowrap"
+            data-testid="button-change-image"
+          >
+            {uploadState === 'uploading' ? (
+              <><RefreshCw className="w-3 h-3 mr-1 animate-spin" />{Math.round(uploadProgress)}%</>
+            ) : (
+              <><Upload className="w-3 h-3 mr-1" />{preview ? 'Cambia' : 'Carica'}</>
+            )}
+          </Button>
+          {preview && (
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              onClick={handleRemoveImage}
+              disabled={disabled || uploadState === 'uploading'}
+              className="h-8 px-3 text-xs text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/30 whitespace-nowrap"
+              data-testid="button-remove-image"
+            >
+              <X className="w-3 h-3 mr-1" />
+              Rimuovi
+            </Button>
+          )}
+        </div>
       </div>
 
-      <AnimatePresence mode="wait">
-        {preview ? (
-          <motion.div
-            key="preview"
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.9 }}
-            transition={{ duration: 0.2 }}
-            className="relative group"
-          >
-            <div className={`relative overflow-hidden rounded-xl border-2 ${aspectRatioClasses[aspectRatio]} max-w-sm shadow-lg`}>
-              <img
-                src={preview}
-                alt="Preview immagine caricata"
-                className="w-full h-full object-cover transition-transform group-hover:scale-105"
-              />
-              <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-20 transition-all duration-200" />
-              
-              {/* Action buttons overlay */}
-              <div className="absolute top-2 right-2 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-                <Button
-                  variant="secondary"
-                  size="sm"
-                  className="rounded-full w-8 h-8 p-0 bg-white/90 hover:bg-white shadow-lg"
-                  onClick={handleClickUpload}
-                  disabled={uploadState === 'uploading'}
-                  data-testid="button-change-image"
-                >
-                  <Upload className="w-3 h-3" />
-                </Button>
-                <Button
-                  variant="destructive"
-                  size="sm"
-                  className="rounded-full w-8 h-8 p-0 shadow-lg"
-                  onClick={handleRemoveImage}
-                  disabled={uploadState === 'uploading'}
-                  data-testid="button-remove-image"
-                >
-                  <Trash2 className="w-3 h-3" />
-                </Button>
-              </div>
+      {/* Upload Progress Bar */}
+      {uploadState === 'uploading' && (
+        <div className="px-1">
+          <Progress value={uploadProgress} className="h-1.5" />
+        </div>
+      )}
 
-              {/* Upload progress overlay */}
-              {uploadState === 'uploading' && (
-                <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center">
-                  <div className="text-center text-white">
-                    <RefreshCw className="w-8 h-8 animate-spin mx-auto mb-2" />
-                    <div className="text-sm font-medium">Caricamento...</div>
-                    <div className="text-xs opacity-75">{Math.round(uploadProgress)}%</div>
-                  </div>
-                </div>
-              )}
-            </div>
-
-            {/* File info */}
-            {showFileInfo && fileInfo && (
-              <div className="mt-2 text-xs text-gray-500 dark:text-gray-400 flex items-center gap-2">
-                <FileImage className="w-3 h-3" />
-                <span>{fileInfo.name}</span>
-                <span>•</span>
-                <span>{fileInfo.size}</span>
-                <span>•</span>
-                <span>{fileInfo.type}</span>
-              </div>
-            )}
-          </motion.div>
-        ) : (
-          <motion.div
-            key="dropzone"
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -10 }}
-            transition={{ duration: 0.2 }}
-          >
-            <div
-              ref={dropZoneRef}
-              className={`
-                border-2 border-dashed rounded-xl p-8 text-center transition-all duration-200 cursor-pointer
-                ${aspectRatioClasses[aspectRatio]} max-w-sm
-                ${getStateColor()}
-                ${disabled ? 'opacity-50 cursor-not-allowed' : ''}
-                ${isDragging ? 'scale-105' : 'hover:scale-102'}
-                flex flex-col items-center justify-center relative overflow-hidden
-              `}
-              onDrop={handleDrop}
-              onDragOver={handleDragOver}
-              onDragLeave={handleDragLeave}
-              onClick={handleClickUpload}
-              role="button"
-              tabIndex={disabled ? -1 : 0}
-              aria-label={`Carica ${label.toLowerCase()}`}
-              aria-describedby="upload-description"
-              onKeyDown={(e) => {
-                if ((e.key === 'Enter' || e.key === ' ') && !disabled) {
-                  e.preventDefault();
-                  handleClickUpload();
-                }
-              }}
-              data-testid="dropzone-upload"
-            >
-              {/* Background pattern for drag effect */}
-              {isDragging && (
-                <div className="absolute inset-0 bg-gradient-to-br from-orange-100 to-orange-200 dark:from-orange-900 dark:to-orange-800 opacity-50" />
-              )}
-
-              <div className="relative z-10">
-                {uploadState === 'error' ? (
-                  <AlertCircle className="w-16 h-16 text-red-400 mb-4" />
-                ) : (
-                  <motion.div
-                    animate={isDragging ? { scale: 1.1 } : { scale: 1 }}
-                    transition={{ duration: 0.2 }}
-                  >
-                    <Upload className="w-16 h-16 text-gray-400 mb-4" />
-                  </motion.div>
-                )}
-                
-                <h3 className="text-base font-medium text-gray-900 dark:text-gray-100 mb-2">
-                  {uploadState === 'error' ? 'Errore nel caricamento' : 
-                   isDragging ? 'Rilascia qui' : 'Carica immagine'}
-                </h3>
-                
-                <p id="upload-description" className="text-sm text-gray-600 dark:text-gray-400 mb-3">
-                  {uploadState === 'error' ? error :
-                   isDragging ? 'Rilascia l\'immagine per caricarla' : 
-                   'Trascina un\'immagine qui o clicca per selezionare'}
-                </p>
-                
-                <div className="text-xs text-gray-500 dark:text-gray-400 space-y-1">
-                  <div>Max {maxSize}MB • {acceptedFormats.join(', ')}</div>
-                  {recommendedDimensions && (
-                    <div>Consigliato: {recommendedDimensions}</div>
-                  )}
-                </div>
-
-                {/* Error retry button */}
-                {uploadState === 'error' && (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="mt-4"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleRetry();
-                    }}
-                    data-testid="button-retry-upload"
-                  >
-                    <RefreshCw className="w-4 h-4 mr-2" />
-                    Riprova
-                  </Button>
-                )}
-              </div>
-            </div>
-
-            {/* Upload progress bar */}
-            {uploadState === 'uploading' && (
-              <motion.div
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="mt-4"
-              >
-                <div className="flex items-center justify-between text-sm text-gray-600 dark:text-gray-400 mb-2">
-                  <span>Caricamento in corso...</span>
-                  <span>{Math.round(uploadProgress)}%</span>
-                </div>
-                <Progress 
-                  value={uploadProgress} 
-                  className="h-2"
-                  data-testid="progress-upload"
-                />
-                {fileInfo && (
-                  <div className="text-xs text-gray-500 dark:text-gray-400 mt-2 flex items-center gap-2">
-                    <FileImage className="w-3 h-3" />
-                    <span>{fileInfo.name} ({fileInfo.size})</span>
-                  </div>
-                )}
-              </motion.div>
-            )}
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* Hidden file input */}
       <Input
         ref={fileInputRef}
         type="file"
         accept="image/*"
-        onChange={handleFileInputChange}
+        onChange={(e) => { const f = e.target.files; if (f && f.length > 0) handleFileSelect(f[0]); }}
         className="hidden"
         disabled={disabled}
         data-testid="input-file-hidden"

@@ -236,9 +236,9 @@ export function BottleListManager({ pubId, bottleList }: BottleListManagerProps)
           <span>Gestione Cantina Birre</span>
           <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
             <DialogTrigger asChild>
-              <Button>
-                <Plus className="w-4 h-4 mr-2" />
-                Aggiungi Birra
+              <Button variant="outline" size="sm" className="gap-1.5 text-sm font-medium">
+                <Plus className="w-3.5 h-3.5" />
+                Aggiungi
               </Button>
             </DialogTrigger>
             <DialogContent className="max-w-2xl">
