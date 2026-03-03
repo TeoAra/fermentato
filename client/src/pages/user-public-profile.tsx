@@ -227,7 +227,7 @@ export default function UserPublicProfile() {
               </h2>
               <div className="flex flex-wrap gap-2">
                 {profile.favoriteStyles.map((style: string) => (
-                  <Link key={style} href={`/?q=${encodeURIComponent(style)}`}>
+                  <Link key={style} href={`/search?q=${encodeURIComponent(style)}`}>
                     <Badge
                       variant="secondary"
                       className="bg-amber-100 dark:bg-amber-900/30 text-amber-800 dark:text-amber-200 hover:bg-amber-200 dark:hover:bg-amber-800/50 cursor-pointer transition-colors border border-amber-200 dark:border-amber-700 px-3 py-1"

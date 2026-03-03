@@ -153,7 +153,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
         breweryId: beers.breweryId,
         isGlutenFree: beers.isGlutenFree,
         isAlcoholFree: beers.isAlcoholFree,
-        isVegan: beers.isVegan,
         avgRating: sql<number>`ROUND(AVG(CASE WHEN ${userBeerTastings.rating} IS NOT NULL THEN ${userBeerTastings.rating} END)::numeric, 2)`,
         reviewCount: sql<number>`COUNT(CASE WHEN ${userBeerTastings.rating} IS NOT NULL THEN 1 END)`,
         favoriteCount: sql<number>`(SELECT COUNT(*) FROM favorites f WHERE f.item_type = 'beer' AND f.item_id = ${beers.id})`,
