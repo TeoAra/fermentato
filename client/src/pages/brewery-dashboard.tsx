@@ -24,6 +24,7 @@ import {
   Globe, Phone, FileText, Camera, Clock, AlertTriangle, Building,
   Target, Sparkles, Save, X, Share2, ExternalLink
 } from "lucide-react";
+import { BreweryEventsManager } from "@/components/events-manager";
 
 const beerFormSchema = z.object({
   name: z.string().min(1, "Il nome è obbligatorio"),
@@ -598,6 +599,11 @@ export default function BreweryDashboard() {
               )}
             </>
           )}
+        </div>
+
+        {/* Events Section */}
+        <div className="glass-card border-0 rounded-2xl p-6 mb-8">
+          <BreweryEventsManager breweryId={brewery.id} breweryName={brewery.name} />
         </div>
 
         {/* Website Link */}

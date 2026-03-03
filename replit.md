@@ -44,14 +44,18 @@ Preferred communication style: Simple, everyday language.
 - **Pub Management Flow**: Pub registration, dashboard for tap list/menu management, real-time updates reflected on public-facing pages.
 - **Data Fetching Strategy**: React Query for caching and optimistic updates, with error boundaries and loading states.
 
-### Recent Features (Feb 2026)
+### Recent Features (Feb–Mar 2026)
 - **Social Login Onboarding**: After Google OAuth first login, users are redirected to `/onboarding` page. Multi-step wizard: choose role (customer/pub_owner/brewery_owner), fill in pub or brewery details. `needsOnboarding` boolean on users table; auto-redirect in App.tsx. Endpoint: `POST /api/auth/complete-onboarding`.
-- **Events System**: pubEvents table, full CRUD for pub owners, public display in pub detail, push notifications to favorites
+- **Events System (Pubs)**: pubEvents table, full CRUD for pub owners, public display in pub detail, push notifications to favorites
+- **Events System (Breweries)**: breweryEvents table (same structure), full CRUD via BreweryEventsManager component in brewery dashboard, public display in brewery-detail page, push notifications to brewery favorites
+- **Beer Reviews (Untappd-style)**: user_beer_tastings repurposed as public reviews. `GET /api/beers/:id/reviews` returns all rated tastings with user info (nickname, avatar) + avg rating. Community reviews section in beer-detail page: avg rating stars + list of user reviews. Personal tasting stays private/editable above.
 - **QR Codes**: Per-pub QR code generation with download/share (qrcode.react)
 - **PDF Menu Download**: Generate downloadable PDF with taplist, bottles, and food menu (jsPDF)
 - **TV Taplist Mode**: Full-screen taplist display at `/tv/:id` for TVs/monitors, auto-refreshing
 - **Push Notifications Optimization**: Throttling, batching, TTL/urgency settings, notification tags
 - **Mobile Dashboard UX**: Sticky bottom nav, thumb-friendly sections
+- **Password for social accounts**: `hasPassword` boolean returned in /api/auth/user; PasswordChangeForm is adaptive (shows Google notice, hides current-password field for social users)
+- **Dashboard routing fix**: `activeRole === 'customer'` takes priority over legacy userType fallback
 
 ## External Dependencies
 

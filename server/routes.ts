@@ -6,7 +6,7 @@ import { registerAdminRoutes } from "./routes-admin";
 import { sql, eq, and, desc } from "drizzle-orm";
 import { upload, uploadImage, cloudinary } from "./cloudinary";
 import { db } from "./db";
-import { breweries, beers, pubs, users, tapList, bottleList, userBeerTastings, favorites, menuCategories, menuItems, pubSizes, notifications, pushSubscriptions, breweryRequests, pubEvents } from "@shared/schema";
+import { breweries, beers, pubs, users, tapList, bottleList, userBeerTastings, favorites, menuCategories, menuItems, pubSizes, notifications, pushSubscriptions, breweryRequests, pubEvents, breweryEvents, insertBreweryEventSchema } from "@shared/schema";
 
 import { insertPubSchema, insertTapListSchema, insertBottleListSchema, insertMenuCategorySchema, insertMenuItemSchema, pubRegistrationSchema, insertPubEventSchema } from "@shared/schema";
 import { z } from "zod";
@@ -3074,6 +3074,187 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error deleting pub event:", error);
       res.status(500).json({ message: "Failed to delete event" });
+    }
+  });
+
+  // ============================================================
+  // BREWERY EVENTS ROUTES
+  // ============================================================
+
+  // GET all published events for a brewery (public)
+  app.get("/api/breweries/:breweryId/events", async (req, res) => {
+    try {
+      const breweryId = parseInt(req.params.breweryId);
+      if (isNaN(breweryId)) return res.status(400).json({ message: "Invalid brewery ID" });
+      const events = await db.select().from(breweryEvents)
+        .where(and(eq(breweryEvents.breweryId, breweryId), eq(breweryEvents.isPublished, true)))
+        .orderBy(breweryEvents.eventDate);
+      res.json(events);
+    } catch (error) {
+      console.error("Error fetching brewery events:", error);
+      res.status(500).json({ message: "Failed to fetch brewery events" });
+    }
+  });
+
+  // GET all events (including unpublished) for brewery owner dashboard
+  app.get("/api/breweries/:breweryId/events/all", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = (req.user as any).id;
+      const breweryId = parseInt(req.params.breweryId);
+      if (isNaN(breweryId)) return res.status(400).json({ message: "Invalid brewery ID" });
+
+      const [userRecord] = await db.select().from(users).where(eq(users.id, userId));
+      const isAdmin = userRecord?.userType === 'admin' || (userRecord?.roles || []).includes('admin');
+      const isOwner = userRecord?.breweryId === breweryId;
+      if (!isAdmin && !isOwner) return res.status(403).json({ message: "Not authorized" });
+
+      const events = await db.select().from(breweryEvents)
+        .where(eq(breweryEvents.breweryId, breweryId))
+        .orderBy(breweryEvents.eventDate);
+      res.json(events);
+    } catch (error) {
+      console.error("Error fetching brewery events:", error);
+      res.status(500).json({ message: "Failed to fetch brewery events" });
+    }
+  });
+
+  // POST create event for a brewery
+  app.post("/api/breweries/:breweryId/events", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = (req.user as any).id;
+      const breweryId = parseInt(req.params.breweryId);
+      if (isNaN(breweryId)) return res.status(400).json({ message: "Invalid brewery ID" });
+
+      const [userRecord] = await db.select().from(users).where(eq(users.id, userId));
+      const isAdmin = userRecord?.userType === 'admin' || (userRecord?.roles || []).includes('admin');
+      const isOwner = userRecord?.breweryId === breweryId;
+      if (!isAdmin && !isOwner) return res.status(403).json({ message: "Not authorized to create events for this brewery" });
+
+      const body = { ...req.body, breweryId };
+      if (body.eventDate && typeof body.eventDate === 'string') body.eventDate = new Date(body.eventDate);
+      if (body.endDate && typeof body.endDate === 'string') body.endDate = new Date(body.endDate);
+      const eventData = insertBreweryEventSchema.parse(body);
+      const [event] = await db.insert(breweryEvents).values(eventData).returning();
+
+      // Send push notifications to users who favorited this brewery
+      try {
+        const [brewery] = await db.select().from(breweries).where(eq(breweries.id, breweryId));
+        const favUsers = await db.select().from(favorites)
+          .where(and(eq(favorites.itemType, 'brewery'), eq(favorites.itemId, breweryId)));
+        for (const fav of favUsers) {
+          await storage.createNotification({
+            userId: fav.userId, type: 'event', title: `Nuovo evento da ${brewery?.name || 'birrificio'}!`,
+            message: `"${event.title}" - Non perderlo!`,
+            pubId: null, beerId: null, isRead: false,
+          });
+          sendPushToUser(fav.userId, {
+            title: `Nuovo evento da ${brewery?.name || 'birrificio'}!`,
+            body: `"${event.title}" - Non perderlo!`,
+            url: `/brewery/${breweryId}`, type: 'event',
+          });
+        }
+      } catch (notifError) {
+        console.error("Error sending brewery event notifications:", notifError);
+      }
+
+      res.status(201).json(event);
+    } catch (error) {
+      if (error instanceof z.ZodError) return res.status(400).json({ message: "Validation error", errors: error.errors });
+      console.error("Error creating brewery event:", error);
+      res.status(500).json({ message: "Failed to create event" });
+    }
+  });
+
+  // PATCH update event for a brewery
+  app.patch("/api/breweries/:breweryId/events/:eventId", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = (req.user as any).id;
+      const breweryId = parseInt(req.params.breweryId);
+      const eventId = parseInt(req.params.eventId);
+      if (isNaN(breweryId) || isNaN(eventId)) return res.status(400).json({ message: "Invalid ID" });
+
+      const [userRecord] = await db.select().from(users).where(eq(users.id, userId));
+      const isAdmin = userRecord?.userType === 'admin' || (userRecord?.roles || []).includes('admin');
+      const isOwner = userRecord?.breweryId === breweryId;
+      if (!isAdmin && !isOwner) return res.status(403).json({ message: "Not authorized" });
+
+      const [existing] = await db.select().from(breweryEvents).where(eq(breweryEvents.id, eventId));
+      if (!existing || existing.breweryId !== breweryId) return res.status(404).json({ message: "Event not found" });
+
+      const updateBody = { ...req.body };
+      if (updateBody.eventDate && typeof updateBody.eventDate === 'string') updateBody.eventDate = new Date(updateBody.eventDate);
+      if (updateBody.endDate && typeof updateBody.endDate === 'string') updateBody.endDate = new Date(updateBody.endDate);
+      const updateData = insertBreweryEventSchema.partial().parse(updateBody);
+      const [updated] = await db.update(breweryEvents).set({ ...updateData, updatedAt: new Date() })
+        .where(eq(breweryEvents.id, eventId)).returning();
+      res.json(updated);
+    } catch (error) {
+      if (error instanceof z.ZodError) return res.status(400).json({ message: "Validation error", errors: error.errors });
+      console.error("Error updating brewery event:", error);
+      res.status(500).json({ message: "Failed to update event" });
+    }
+  });
+
+  // DELETE event for a brewery
+  app.delete("/api/breweries/:breweryId/events/:eventId", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = (req.user as any).id;
+      const breweryId = parseInt(req.params.breweryId);
+      const eventId = parseInt(req.params.eventId);
+      if (isNaN(breweryId) || isNaN(eventId)) return res.status(400).json({ message: "Invalid ID" });
+
+      const [userRecord] = await db.select().from(users).where(eq(users.id, userId));
+      const isAdmin = userRecord?.userType === 'admin' || (userRecord?.roles || []).includes('admin');
+      const isOwner = userRecord?.breweryId === breweryId;
+      if (!isAdmin && !isOwner) return res.status(403).json({ message: "Not authorized" });
+
+      const [existing] = await db.select().from(breweryEvents).where(eq(breweryEvents.id, eventId));
+      if (!existing || existing.breweryId !== breweryId) return res.status(404).json({ message: "Event not found" });
+
+      await db.delete(breweryEvents).where(eq(breweryEvents.id, eventId));
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error deleting brewery event:", error);
+      res.status(500).json({ message: "Failed to delete event" });
+    }
+  });
+
+  // ============================================================
+  // BEER REVIEWS (public tastings with user info)
+  // ============================================================
+
+  // GET public reviews for a beer (all tastings with a rating)
+  app.get("/api/beers/:beerId/reviews", async (req, res) => {
+    try {
+      const beerId = parseInt(req.params.beerId);
+      if (isNaN(beerId)) return res.status(400).json({ message: "Invalid beer ID" });
+
+      const reviews = await db
+        .select({
+          id: userBeerTastings.id,
+          rating: userBeerTastings.rating,
+          personalNotes: userBeerTastings.personalNotes,
+          format: userBeerTastings.format,
+          tastedAt: userBeerTastings.tastedAt,
+          userId: userBeerTastings.userId,
+          nickname: users.nickname,
+          firstName: users.firstName,
+          lastName: users.lastName,
+          profileImageUrl: users.profileImageUrl,
+        })
+        .from(userBeerTastings)
+        .leftJoin(users, eq(userBeerTastings.userId, users.id))
+        .where(and(eq(userBeerTastings.beerId, beerId), sql`${userBeerTastings.rating} IS NOT NULL`))
+        .orderBy(desc(userBeerTastings.tastedAt));
+
+      const avgRating = reviews.length > 0
+        ? reviews.reduce((sum, r) => sum + (r.rating || 0), 0) / reviews.length
+        : null;
+
+      res.json({ reviews, avgRating: avgRating ? Math.round(avgRating * 10) / 10 : null, reviewCount: reviews.length });
+    } catch (error) {
+      console.error("Error fetching beer reviews:", error);
+      res.status(500).json({ message: "Failed to fetch reviews" });
     }
   });
 

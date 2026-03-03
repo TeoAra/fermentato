@@ -210,6 +210,12 @@ export default function BeerDetail() {
   const existingTasting = userTastings.find((tasting: any) => tasting.beerId === parseInt(id || '0'));
   const hasTasted = !!existingTasting;
 
+  // Community reviews (public)
+  const { data: reviewsData } = useQuery<{ reviews: any[]; avgRating: number | null; reviewCount: number }>({
+    queryKey: ["/api/beers", id, "reviews"],
+    enabled: !!id,
+  });
+
   // Favorite mutation
   const favoriteMutation = useMutation({
     mutationFn: async ({ itemType, itemId, action }: { itemType: string, itemId: number, action: 'add' | 'remove' }) => {
@@ -534,6 +540,64 @@ export default function BeerDetail() {
                   </p>
                 </div>
               )}
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Community Reviews */}
+        {reviewsData && reviewsData.reviewCount > 0 && (
+          <Card className="glass-card border-0 mb-8">
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-xl font-bold text-gray-900 dark:text-white flex items-center">
+                  <div className="p-2 bg-gradient-to-r from-yellow-500 to-amber-600 rounded-lg mr-3">
+                    <Star className="h-5 w-5 text-white fill-white" />
+                  </div>
+                  Recensioni Community
+                </h2>
+                <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-1">
+                    {[1,2,3,4,5].map(s => (
+                      <Star key={s} className={`h-5 w-5 ${s <= Math.round(reviewsData.avgRating || 0) ? 'text-yellow-500 fill-yellow-500' : 'text-gray-300 dark:text-gray-600'}`} />
+                    ))}
+                  </div>
+                  <span className="text-xl font-bold text-gray-900 dark:text-white">{reviewsData.avgRating?.toFixed(1)}</span>
+                  <span className="text-sm text-gray-500">({reviewsData.reviewCount} {reviewsData.reviewCount === 1 ? 'recensione' : 'recensioni'})</span>
+                </div>
+              </div>
+              <div className="space-y-4">
+                {reviewsData.reviews.slice(0, 10).map((review: any) => {
+                  const displayName = review.nickname || review.firstName || 'Utente';
+                  const initials = displayName[0]?.toUpperCase() || 'U';
+                  return (
+                    <div key={review.id} className="flex gap-4 p-4 bg-gray-50 dark:bg-gray-800/50 rounded-xl">
+                      <Avatar className="h-10 w-10 flex-shrink-0">
+                        {review.profileImageUrl && <AvatarImage src={review.profileImageUrl} />}
+                        <AvatarFallback className="bg-gradient-to-br from-amber-400 to-orange-500 text-white font-bold text-sm">
+                          {initials}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center justify-between gap-2 mb-1">
+                          <span className="font-semibold text-sm text-gray-900 dark:text-white">{displayName}</span>
+                          <div className="flex items-center gap-1 flex-shrink-0">
+                            {[1,2,3,4,5].map(s => (
+                              <Star key={s} className={`h-3.5 w-3.5 ${s <= (review.rating || 0) ? 'text-yellow-500 fill-yellow-500' : 'text-gray-300 dark:text-gray-600'}`} />
+                            ))}
+                          </div>
+                        </div>
+                        {review.personalNotes && (
+                          <p className="text-sm text-gray-700 dark:text-gray-300 italic mb-1">"{review.personalNotes}"</p>
+                        )}
+                        <div className="flex items-center gap-2 text-xs text-gray-400 flex-wrap">
+                          <span>{new Date(review.tastedAt).toLocaleDateString('it-IT')}</span>
+                          {review.format && <span className="before:content-['·'] before:mr-2">{review.format}</span>}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
             </CardContent>
           </Card>
         )}

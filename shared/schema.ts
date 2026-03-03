@@ -683,6 +683,29 @@ export const insertPubEventSchema = createInsertSchema(pubEvents).omit({
 export type PubEvent = typeof pubEvents.$inferSelect;
 export type InsertPubEvent = z.infer<typeof insertPubEventSchema>;
 
+// Brewery Events table (mirrored from pub_events)
+export const breweryEvents = pgTable("brewery_events", {
+  id: serial("id").primaryKey(),
+  breweryId: integer("brewery_id").references(() => breweries.id, { onDelete: "cascade" }).notNull(),
+  title: varchar("title", { length: 255 }).notNull(),
+  description: text("description"),
+  category: varchar("category", { length: 50 }).default("altro"),
+  eventDate: timestamp("event_date").notNull(),
+  endDate: timestamp("end_date"),
+  imageUrl: text("image_url"),
+  isPublished: boolean("is_published").default(true),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export const insertBreweryEventSchema = createInsertSchema(breweryEvents).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+export type BreweryEvent = typeof breweryEvents.$inferSelect;
+export type InsertBreweryEvent = z.infer<typeof insertBreweryEventSchema>;
+
 // Custom schemas for forms
 export const pubRegistrationSchema = insertPubSchema.extend({
   vatNumber: z.string().min(11, "P.IVA deve essere di almeno 11 caratteri"),

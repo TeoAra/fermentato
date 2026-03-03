@@ -15,8 +15,14 @@ import {
   Target,
   Pencil,
   Save,
-  X
+  X,
+  CalendarDays,
+  Calendar,
+  Clock
 } from "lucide-react";
+import { EventCategoryBadge } from "@/components/events-manager";
+import { format, isFuture } from "date-fns";
+import { it as itLocale } from "date-fns/locale";
 import Footer from "@/components/footer";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -138,6 +144,11 @@ export default function BreweryDetail() {
 
   const { data: beers = [], isLoading: beersLoading } = useQuery<Beer[]>({
     queryKey: ["/api/breweries", id, "beers"],
+    enabled: !!id,
+  });
+
+  const { data: breweryEvents = [] } = useQuery<any[]>({
+    queryKey: ["/api/breweries", id, "events"],
     enabled: !!id,
   });
 
@@ -497,6 +508,46 @@ export default function BreweryDetail() {
             </>
           )}
         </div>
+
+        {/* Events Section */}
+        {breweryEvents.length > 0 && (
+          <div className="glass-card border-0 rounded-2xl p-6 mb-8">
+            <h2 className="text-2xl font-bold text-gray-900 dark:text-white flex items-center mb-6">
+              <div className="p-2 bg-gradient-to-r from-purple-500 to-pink-600 rounded-xl mr-3">
+                <CalendarDays className="h-6 w-6 text-white" />
+              </div>
+              Eventi ({breweryEvents.length})
+            </h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {breweryEvents.filter(e => isFuture(new Date(e.eventDate))).slice(0, 4).map((event: any) => (
+                <Card key={event.id} className="overflow-hidden glass-card border-0">
+                  {event.imageUrl && (
+                    <div className="h-36 bg-cover bg-center" style={{ backgroundImage: `url(${event.imageUrl})` }} />
+                  )}
+                  <CardContent className="p-4">
+                    <div className="flex items-center gap-2 mb-1 flex-wrap">
+                      <EventCategoryBadge category={event.category} />
+                      <h4 className="font-semibold text-gray-900 dark:text-white">{event.title}</h4>
+                    </div>
+                    <div className="flex items-center text-sm text-gray-600 dark:text-gray-400 gap-1 mb-1">
+                      <Calendar className="h-3.5 w-3.5 shrink-0" />
+                      <span>{format(new Date(event.eventDate), "d MMMM yyyy 'alle' HH:mm", { locale: itLocale })}</span>
+                    </div>
+                    {event.endDate && (
+                      <div className="flex items-center text-xs text-gray-500 gap-1 mb-1">
+                        <Clock className="h-3 w-3 shrink-0" />
+                        <span>fino alle {format(new Date(event.endDate), "HH:mm", { locale: itLocale })}</span>
+                      </div>
+                    )}
+                    {event.description && (
+                      <p className="text-sm text-gray-600 dark:text-gray-400 line-clamp-2 mt-1">{event.description}</p>
+                    )}
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* Website Link */}
         {brewery?.websiteUrl && (
