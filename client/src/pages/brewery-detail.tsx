@@ -59,6 +59,9 @@ interface Beer {
   ibu?: number;
   description?: string;
   imageUrl?: string;
+  avgRating?: number | null;
+  reviewCount?: number;
+  favoriteCount?: number;
 }
 
 // Stats Card Component
@@ -156,6 +159,14 @@ export default function BreweryDetail() {
     queryKey: ["/api/breweries", id, "rating"],
     enabled: !!id,
   });
+
+  // Brewery favorites count (public)
+  const { data: breweryFavoritesCount } = useQuery<{ count: string }>({
+    queryKey: ["/api/favorites", "brewery", id, "count"],
+    queryFn: () => fetch(`/api/favorites/brewery/${id}/count`).then(r => r.json()),
+    enabled: !!id,
+  });
+  const favCount = breweryFavoritesCount ? parseInt(String(breweryFavoritesCount.count)) : 0;
 
   // Check if brewery is favorited
   const { data: favorites = [] } = useQuery({
@@ -351,7 +362,11 @@ export default function BreweryDetail() {
                       data-testid="button-favorite"
                     >
                       <Heart className={`h-4 w-4 sm:mr-2 ${isBreweryFavorited ? 'fill-current' : ''}`} />
-                      <span className="hidden sm:inline">{isBreweryFavorited ? 'Salvato' : 'Salva'}</span>
+                      <span className="hidden sm:inline">
+                        {isBreweryFavorited ? 'Salvato' : 'Salva'}
+                        {favCount > 0 && <span className="ml-1.5 opacity-80">· {favCount}</span>}
+                      </span>
+                      {favCount > 0 && <span className="sm:hidden ml-1 text-xs opacity-80">{favCount}</span>}
                     </Button>
                     <Button 
                       variant="outline" 
@@ -472,7 +487,17 @@ export default function BreweryDetail() {
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {displayedBeers.map((beer: Beer) => (
                   <Link key={beer.id} href={`/beer/${beer.id}`}>
-                    <Card className="glass-card border-0 h-full hover:scale-105 transition-all duration-300 group cursor-pointer">
+                    <Card className="glass-card border-0 h-full hover:scale-105 transition-all duration-300 group cursor-pointer relative">
+                      {/* Rating badge top-right */}
+                      {beer.avgRating != null && (
+                        <div className="absolute top-3 right-3 z-10 flex items-center gap-1 bg-yellow-400/95 dark:bg-yellow-500/95 text-yellow-900 text-xs font-bold px-2 py-0.5 rounded-full shadow">
+                          <Star className="h-3 w-3 fill-yellow-900" />
+                          {beer.avgRating.toFixed(2)}
+                          {beer.reviewCount && beer.reviewCount > 0 && (
+                            <span className="ml-0.5 opacity-70 font-normal">({beer.reviewCount})</span>
+                          )}
+                        </div>
+                      )}
                       <CardContent className="p-6">
                         <div className="flex items-start space-x-4 mb-4">
                           <ImageWithFallback
@@ -483,7 +508,7 @@ export default function BreweryDetail() {
                             className="w-16 h-16 object-cover rounded-xl"
                             iconSize="lg"
                           />
-                          <div className="flex-1 min-w-0">
+                          <div className="flex-1 min-w-0 pr-8">
                             <h3 className="font-bold text-gray-900 dark:text-white mb-1 group-hover:text-transparent group-hover:bg-gradient-to-r group-hover:from-amber-500 group-hover:to-orange-600 group-hover:bg-clip-text transition-all">
                               {beer.name}
                             </h3>

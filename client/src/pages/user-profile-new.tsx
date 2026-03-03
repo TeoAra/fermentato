@@ -41,6 +41,90 @@ import UserFavoritesSection from "@/components/UserFavoritesSection";
 import BeerTastingsEditor from "@/components/BeerTastingsEditorNew";
 import { ImageUpload } from "@/components/image-upload";
 
+const ALL_BEER_STYLES = [
+  "IPA", "Session IPA", "New England IPA", "Double IPA", "Triple IPA",
+  "Pale Ale", "American Pale Ale", "Extra Pale Ale",
+  "Stout", "Imperial Stout", "Milk Stout", "Oatmeal Stout", "Dry Stout",
+  "Porter", "Baltic Porter", "Robust Porter",
+  "Lager", "Pilsner", "Helles", "Märzen", "Dunkel",
+  "Weizen", "Hefeweizen", "Witbier", "Dunkelweizen",
+  "Saison", "Farmhouse Ale", "Bière de Garde",
+  "Belgian Dubbel", "Belgian Tripel", "Belgian Quadrupel",
+  "Trappist Ale", "Abbey Ale",
+  "Amber Ale", "Red Ale", "Irish Red",
+  "Sour Ale", "Gose", "Berliner Weisse", "Lambic", "Gueuze", "Kriek",
+  "Barleywine", "Strong Ale", "Wee Heavy", "Scotch Ale",
+  "Bock", "Doppelbock", "Maibock", "Eisbock",
+  "Fruit Beer", "Fruited Sour",
+  "Gluten Free", "Analcolica / Low ABV",
+  "Birra Artigianale Italiana",
+];
+
+function StylesPicker({ current, onChange, onSave, isSaving }: {
+  current: string[];
+  onChange: (s: string[]) => void;
+  onSave: () => void;
+  isSaving: boolean;
+}) {
+  const toggle = (style: string) => {
+    if (current.includes(style)) {
+      onChange(current.filter(s => s !== style));
+    } else if (current.length < 10) {
+      onChange([...current, style]);
+    }
+  };
+  return (
+    <div className="border-t border-orange-100 dark:border-gray-700 pt-4">
+      <div className="flex items-center justify-between mb-3">
+        <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300 flex items-center gap-2">
+          🍺 Stili di birra preferiti
+          <span className="text-xs text-gray-400 font-normal">({current.length}/10 selezionati)</span>
+        </h3>
+        <Button
+          size="sm"
+          onClick={onSave}
+          disabled={isSaving}
+          className="bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white h-8 px-3 text-xs"
+        >
+          {isSaving ? <><Save className="w-3 h-3 mr-1 animate-spin" />Salvando...</> : <><Save className="w-3 h-3 mr-1" />Salva stili</>}
+        </Button>
+      </div>
+      <p className="text-xs text-gray-500 mb-3">Scegli fino a 10 stili che ami di più. Appariranno sul tuo profilo pubblico.</p>
+      <div className="flex flex-wrap gap-2 max-h-64 overflow-y-auto pr-1">
+        {ALL_BEER_STYLES.map(style => {
+          const selected = current.includes(style);
+          return (
+            <button
+              key={style}
+              type="button"
+              onClick={() => toggle(style)}
+              disabled={!selected && current.length >= 10}
+              className={`text-xs px-3 py-1.5 rounded-full border font-medium transition-all ${
+                selected
+                  ? 'bg-amber-500 border-amber-500 text-white shadow-sm scale-105'
+                  : current.length >= 10
+                  ? 'bg-gray-100 dark:bg-gray-800 border-gray-200 dark:border-gray-700 text-gray-400 cursor-not-allowed'
+                  : 'bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:border-amber-400 hover:bg-amber-50 dark:hover:bg-amber-900/20'
+              }`}
+            >
+              {selected && '✓ '}{style}
+            </button>
+          );
+        })}
+      </div>
+      {current.length > 0 && (
+        <button
+          type="button"
+          onClick={() => onChange([])}
+          className="mt-2 text-xs text-red-500 hover:text-red-700 hover:underline"
+        >
+          Rimuovi tutti
+        </button>
+      )}
+    </div>
+  );
+}
+
 export default function UserProfile() {
   const { user, isAuthenticated, isLoading } = useAuth();
   const { toast } = useToast();
@@ -579,6 +663,13 @@ export default function UserProfile() {
                     </a>
                   )}
                 </div>
+
+                <StylesPicker
+                  current={editedProfile.favoriteStyles}
+                  onChange={(styles) => setEditedProfile(prev => ({ ...prev, favoriteStyles: styles }))}
+                  onSave={() => updateProfileMutation.mutate({ favoriteStyles: editedProfile.favoriteStyles } as any)}
+                  isSaving={updateProfileMutation.isPending}
+                />
 
                 <div className="border-t border-orange-100 dark:border-gray-700 pt-4">
                   <h3 className="text-sm font-medium mb-4 text-gray-700 dark:text-gray-300">Sicurezza</h3>

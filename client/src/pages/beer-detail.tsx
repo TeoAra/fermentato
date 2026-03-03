@@ -202,6 +202,14 @@ export default function BeerDetail() {
     fav.itemType === 'beer' && fav.itemId === parseInt(id || '0')
   );
 
+  // Beer favorites count (public, no auth needed)
+  const { data: beerFavoritesCount } = useQuery<{ count: string }>({
+    queryKey: ["/api/favorites", "beer", id, "count"],
+    queryFn: () => fetch(`/api/favorites/beer/${id}/count`).then(r => r.json()),
+    enabled: !!id,
+  });
+  const beerFavCount = beerFavoritesCount ? parseInt(String(beerFavoritesCount.count)) : 0;
+
   // Check if user has already tasted this beer
   const { data: userTastings = [] } = useQuery<any[]>({
     queryKey: ["/api/user/beer-tastings"],
@@ -421,7 +429,11 @@ export default function BeerDetail() {
                       data-testid="button-favorite"
                     >
                       <Heart className={`h-4 w-4 sm:mr-2 ${isBeerFavorited ? 'fill-current' : ''}`} />
-                      <span className="hidden sm:inline">{isBeerFavorited ? 'Salvata' : 'Salva'}</span>
+                      <span className="hidden sm:inline">
+                        {isBeerFavorited ? 'Salvata' : 'Salva'}
+                        {beerFavCount > 0 && <span className="ml-1.5 opacity-80">· {beerFavCount}</span>}
+                      </span>
+                      {beerFavCount > 0 && <span className="sm:hidden ml-1 text-xs opacity-80">{beerFavCount}</span>}
                     </Button>
                     <Button 
                       variant="outline" 

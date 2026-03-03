@@ -2553,6 +2553,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Create new pub (admin)
+  app.post("/api/admin/pubs", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = (req.user as any).id;
+      const user = await storage.getUser(userId);
+      const effectiveRole = user?.activeRole || user?.userType;
+      if (effectiveRole !== 'admin') {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+      const pub = await storage.createPub(req.body);
+      res.json(pub);
+    } catch (error) {
+      console.error("Error creating pub:", error);
+      res.status(500).json({ message: "Failed to create pub" });
+    }
+  });
+
   // Update beer (admin only)
   app.patch("/api/admin/beers/:id", isAuthenticated, async (req: any, res) => {
     try {
@@ -2594,48 +2611,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error updating brewery:", error);
       res.status(500).json({ message: "Failed to update brewery" });
-    }
-  });
-
-  // Delete beer (admin only)
-  app.delete("/api/admin/beers/:id", isAuthenticated, isAdmin, async (req: any, res) => {
-    try {
-      const beerId = parseInt(req.params.id);
-      const beer = await storage.getBeer(beerId);
-      if (!beer) return res.status(404).json({ message: "Beer not found" });
-      await storage.deleteBeer(beerId);
-      res.json({ success: true, message: `Birra "${beer.name}" eliminata` });
-    } catch (error) {
-      console.error("Error deleting beer:", error);
-      res.status(500).json({ message: "Failed to delete beer" });
-    }
-  });
-
-  // Delete brewery (admin only)
-  app.delete("/api/admin/breweries/:id", isAuthenticated, isAdmin, async (req: any, res) => {
-    try {
-      const breweryId = parseInt(req.params.id);
-      const brewery = await storage.getBrewery(breweryId);
-      if (!brewery) return res.status(404).json({ message: "Brewery not found" });
-      await storage.deleteBrewery(breweryId);
-      res.json({ success: true, message: `Birrificio "${brewery.name}" eliminato` });
-    } catch (error) {
-      console.error("Error deleting brewery:", error);
-      res.status(500).json({ message: "Failed to delete brewery" });
-    }
-  });
-
-  // Delete pub (admin only)
-  app.delete("/api/admin/pubs/:id", isAuthenticated, isAdmin, async (req: any, res) => {
-    try {
-      const pubId = parseInt(req.params.id);
-      const pub = await storage.getPub(pubId);
-      if (!pub) return res.status(404).json({ message: "Pub not found" });
-      await storage.deletePub(pubId);
-      res.json({ success: true, message: `Pub "${pub.name}" eliminato` });
-    } catch (error) {
-      console.error("Error deleting pub:", error);
-      res.status(500).json({ message: "Failed to delete pub" });
     }
   });
 
@@ -3411,7 +3386,53 @@ export async function registerRoutes(app: Express): Promise<Server> {
       .orderBy(desc(userBeerTastings.tastedAt))
       .limit(12);
 
-      res.json({ ...profile, reviewCount, recentReviews, isOwner });
+      // Total tastings count (for achievements)
+      const [tastingRow] = await db.select({ count: sql<number>`COUNT(*)` })
+        .from(userBeerTastings).where(eq(userBeerTastings.userId, profile.id));
+      const tastingCount = Number(tastingRow?.count || 0);
+
+      // Style counts (for style achievements)
+      const styleCountsRaw = await db.select({
+        style: beers.style,
+        count: sql<number>`COUNT(DISTINCT ${userBeerTastings.beerId})`,
+      })
+      .from(userBeerTastings)
+      .innerJoin(beers, eq(userBeerTastings.beerId, beers.id))
+      .where(and(eq(userBeerTastings.userId, profile.id), sql`${beers.style} IS NOT NULL`))
+      .groupBy(beers.style);
+
+      const styleCounts: Record<string, number> = {};
+      for (const row of styleCountsRaw) {
+        if (row.style) styleCounts[row.style] = Number(row.count);
+      }
+
+      // Country counts (for country achievements)
+      const countryCountsRaw = await db.select({
+        country: breweries.country,
+        count: sql<number>`COUNT(DISTINCT ${userBeerTastings.beerId})`,
+      })
+      .from(userBeerTastings)
+      .innerJoin(beers, eq(userBeerTastings.beerId, beers.id))
+      .innerJoin(breweries, eq(beers.breweryId, breweries.id))
+      .where(and(eq(userBeerTastings.userId, profile.id), sql`${breweries.country} IS NOT NULL`))
+      .groupBy(breweries.country);
+
+      const countryCounts: Record<string, number> = {};
+      for (const row of countryCountsRaw) {
+        if (row.country) countryCounts[row.country] = Number(row.count);
+      }
+
+      res.json({
+        ...profile,
+        reviewCount,
+        tastingCount,
+        recentReviews,
+        isOwner,
+        styleCounts,
+        countryCounts,
+        styleCount: Object.keys(styleCounts).length,
+        countryCount: Object.keys(countryCounts).length,
+      });
     } catch (error) {
       console.error("Error fetching public profile:", error);
       res.status(500).json({ message: "Failed to fetch profile" });

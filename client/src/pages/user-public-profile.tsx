@@ -1,13 +1,22 @@
 import { useParams, Link } from "wouter";
 import { useQuery } from "@tanstack/react-query";
-import { Star, ArrowLeft, Calendar, Beer, Lock, Shield } from "lucide-react";
+import { Star, ArrowLeft, Calendar, Beer, Lock } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
-import { Separator } from "@/components/ui/separator";
 import Footer from "@/components/footer";
-import { getBadgeForCount, getNextBadge, getProgressToNextBadge, BADGE_LEVELS } from "@/lib/badges";
+import {
+  getBadgeForCount,
+  getNextBadge,
+  getProgressToNextBadge,
+  BADGE_LEVELS,
+  computeAchievements,
+  ACHIEVEMENT_CATEGORY_LABEL,
+  ACHIEVEMENT_CATEGORY_EMOJI,
+  type AchievementCategory,
+  type AchievementData,
+} from "@/lib/badges";
 import ImageWithFallback from "@/components/image-with-fallback";
 import { format } from "date-fns";
 import { it } from "date-fns/locale";
@@ -33,23 +42,30 @@ function BadgeCard({ badge, reviewCount, isCurrentLevel }: { badge: any; reviewC
         ? `border-current bg-gradient-to-br ${badge.bgFrom} ${badge.bgTo} text-white shadow-lg scale-105`
         : unlocked
         ? `${badge.borderColor} bg-white dark:bg-gray-800`
-        : "border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 opacity-50"
+        : "border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 opacity-40"
     }`}>
       {isCurrentLevel && (
-        <div className="absolute -top-2 -right-2 bg-yellow-400 text-yellow-900 text-xs font-bold px-2 py-0.5 rounded-full">
-          Livello attuale
+        <div className="absolute -top-2 -right-2 bg-yellow-400 text-yellow-900 text-xs font-bold px-2 py-0.5 rounded-full shadow">
+          Attuale
         </div>
       )}
       <span className="text-3xl">{badge.emoji}</span>
       <span className={`text-xs font-bold text-center leading-tight ${isCurrentLevel ? "text-white" : "text-gray-700 dark:text-gray-300"}`}>
         {badge.name}
       </span>
-      <span className={`text-xs ${isCurrentLevel ? "text-white/80" : "text-gray-500 dark:text-gray-400"}`}>
-        {badge.minReviews}+ recensioni
+      <span className={`text-xs ${isCurrentLevel ? "text-white/80" : "text-gray-400 dark:text-gray-500"}`}>
+        {badge.minReviews}+ rec.
       </span>
     </div>
   );
 }
+
+const CATEGORY_COLORS: Record<AchievementCategory, string> = {
+  quantity: "bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-200 border-blue-200 dark:border-blue-800",
+  style: "bg-amber-100 dark:bg-amber-900/30 text-amber-800 dark:text-amber-200 border-amber-200 dark:border-amber-800",
+  country: "bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-200 border-green-200 dark:border-green-800",
+  special: "bg-purple-100 dark:bg-purple-900/30 text-purple-800 dark:text-purple-200 border-purple-200 dark:border-purple-800",
+};
 
 export default function UserPublicProfile() {
   const { nickname } = useParams<{ nickname: string }>();
@@ -105,6 +121,23 @@ export default function UserPublicProfile() {
   const displayName = profile.nickname || profile.firstName || "Utente";
   const initials = displayName[0]?.toUpperCase() || "U";
 
+  // Compute achievements
+  const achievementData: AchievementData = {
+    reviewCount: profile.reviewCount || 0,
+    tastingCount: profile.tastingCount || 0,
+    styleCounts: profile.styleCounts || {},
+    countryCounts: profile.countryCounts || {},
+    countryCount: profile.countryCount || 0,
+    styleCount: profile.styleCount || 0,
+  };
+  const earnedAchievements = computeAchievements(achievementData);
+  const achievementsByCategory = earnedAchievements.reduce((acc, a) => {
+    if (!acc[a.category]) acc[a.category] = [];
+    acc[a.category].push(a);
+    return acc;
+  }, {} as Record<AchievementCategory, typeof earnedAchievements>);
+  const categoryOrder: AchievementCategory[] = ['quantity', 'style', 'country', 'special'];
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-amber-50 to-orange-50 dark:from-gray-950 dark:via-amber-950 dark:to-orange-950">
       {/* Back button */}
@@ -138,7 +171,7 @@ export default function UserPublicProfile() {
                   <span className="bg-white/20 text-white text-xs px-2 py-0.5 rounded-full">Livello {badge.level}</span>
                 </div>
                 {profile.bio && <p className="text-white/80 text-sm max-w-md">{profile.bio}</p>}
-                <div className="flex items-center justify-center sm:justify-start gap-3 mt-3 text-sm text-white/70">
+                <div className="flex items-center justify-center sm:justify-start gap-4 mt-3 text-sm text-white/70 flex-wrap">
                   <span className="flex items-center gap-1">
                     <Calendar className="h-3.5 w-3.5" />
                     {profile.joinedAt ? `Iscritto ${format(new Date(profile.joinedAt), "MMMM yyyy", { locale: it })}` : "Iscritto da un po'"}
@@ -147,6 +180,11 @@ export default function UserPublicProfile() {
                     <Beer className="h-3.5 w-3.5" />
                     {profile.reviewCount} recensioni
                   </span>
+                  {earnedAchievements.length > 0 && (
+                    <span className="flex items-center gap-1">
+                      🏅 {earnedAchievements.length} achievement
+                    </span>
+                  )}
                 </div>
               </div>
             </div>
@@ -160,7 +198,7 @@ export default function UserPublicProfile() {
                   Progresso verso <strong>{nextBadge.name}</strong> {nextBadge.emoji}
                 </span>
                 <span className="text-sm text-gray-500">
-                  {profile.reviewCount} / {nextBadge.minReviews} recensioni
+                  {profile.reviewCount} / {nextBadge.minReviews}
                 </span>
               </div>
               <div className="h-2.5 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
@@ -180,17 +218,68 @@ export default function UserPublicProfile() {
           )}
         </Card>
 
-        {/* Favorite Styles */}
+        {/* Favorite Styles — clickable */}
         {profile.favoriteStyles && profile.favoriteStyles.length > 0 && (
           <Card className="border-0 shadow-lg">
             <CardContent className="p-6">
-              <h2 className="font-bold text-gray-900 dark:text-white mb-3">Stili preferiti</h2>
+              <h2 className="font-bold text-gray-900 dark:text-white mb-3 flex items-center gap-2">
+                🍺 Stili preferiti
+              </h2>
               <div className="flex flex-wrap gap-2">
                 {profile.favoriteStyles.map((style: string) => (
-                  <Badge key={style} variant="secondary" className="bg-amber-100 dark:bg-amber-900/30 text-amber-800 dark:text-amber-200">
-                    🍺 {style}
-                  </Badge>
+                  <Link key={style} href={`/?q=${encodeURIComponent(style)}`}>
+                    <Badge
+                      variant="secondary"
+                      className="bg-amber-100 dark:bg-amber-900/30 text-amber-800 dark:text-amber-200 hover:bg-amber-200 dark:hover:bg-amber-800/50 cursor-pointer transition-colors border border-amber-200 dark:border-amber-700 px-3 py-1"
+                    >
+                      {style}
+                    </Badge>
+                  </Link>
                 ))}
+              </div>
+              <p className="text-xs text-gray-400 mt-3">Clicca uno stile per cercarlo nel catalogo</p>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Achievement Badges */}
+        {earnedAchievements.length > 0 && (
+          <Card className="border-0 shadow-lg">
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="font-bold text-gray-900 dark:text-white flex items-center gap-2">
+                  🏅 Achievement ({earnedAchievements.length})
+                </h2>
+                <span className="text-xs text-gray-500 dark:text-gray-400">
+                  Badge guadagnati per traguardi speciali
+                </span>
+              </div>
+              <div className="space-y-5">
+                {categoryOrder.map(cat => {
+                  const catAchievements = achievementsByCategory[cat];
+                  if (!catAchievements || catAchievements.length === 0) return null;
+                  return (
+                    <div key={cat}>
+                      <h3 className="text-sm font-semibold text-gray-600 dark:text-gray-400 mb-2 flex items-center gap-2">
+                        <span>{ACHIEVEMENT_CATEGORY_EMOJI[cat]}</span>
+                        {ACHIEVEMENT_CATEGORY_LABEL[cat]}
+                        <span className="text-xs text-gray-400">({catAchievements.length})</span>
+                      </h3>
+                      <div className="flex flex-wrap gap-2">
+                        {catAchievements.map(a => (
+                          <div
+                            key={a.id}
+                            title={a.description}
+                            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-xs font-semibold transition-all hover:scale-105 cursor-default ${CATEGORY_COLORS[a.category]}`}
+                          >
+                            <span className="text-sm">{a.emoji}</span>
+                            {a.name}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
             </CardContent>
           </Card>
@@ -199,7 +288,7 @@ export default function UserPublicProfile() {
         {/* Badge Progression */}
         <Card className="border-0 shadow-lg">
           <CardContent className="p-6">
-            <h2 className="font-bold text-gray-900 dark:text-white mb-1">Percorso badge</h2>
+            <h2 className="font-bold text-gray-900 dark:text-white mb-1">Percorso Livelli</h2>
             <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
               {badge.description}
             </p>
