@@ -474,16 +474,26 @@ export class DatabaseStorage implements IStorage {
   }
 
   async searchBreweries(query: string): Promise<Brewery[]> {
-    return await db
-      .select()
+    const breweriesWithBeers = await db
+      .select({ id: breweries.id, beerCount: sql<number>`COUNT(${beers.id})` })
       .from(breweries)
+      .leftJoin(beers, eq(breweries.id, beers.breweryId))
       .where(or(
         ilike(breweries.name, `%${query}%`),
         ilike(breweries.location, `%${query}%`),
         ilike(breweries.description, `%${query}%`)
       ))
-      .orderBy(asc(breweries.name))
+      .groupBy(breweries.id)
+      .having(sql`COUNT(${beers.id}) > 0`)
+      .orderBy(desc(sql`COUNT(${beers.id})`), asc(breweries.name))
       .limit(10);
+
+    if (breweriesWithBeers.length === 0) return [];
+    const ids = breweriesWithBeers.map(r => r.id);
+    const idOrder = breweriesWithBeers.map(r => r.id);
+    const result = await db.select().from(breweries).where(inArray(breweries.id, ids));
+    result.sort((a, b) => idOrder.indexOf(a.id) - idOrder.indexOf(b.id));
+    return result;
   }
 
   // Beer operations
@@ -524,7 +534,8 @@ export class DatabaseStorage implements IStorage {
     const wordConditions = words.map(word => 
       or(
         ilike(beers.name, `%${word}%`),
-        ilike(breweries.name, `%${word}%`)
+        ilike(breweries.name, `%${word}%`),
+        ilike(beers.style, `%${word}%`)
       )
     );
     const conditions = [...wordConditions];

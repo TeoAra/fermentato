@@ -36,6 +36,7 @@ import {
 import { formatDistanceToNow } from "date-fns";
 import { it } from "date-fns/locale";
 import { RoleSwitcher } from "@/components/role-switcher";
+import AdminContentManager from "@/components/AdminContentManager";
 import { Link } from "wouter";
 
 export default function AdminDashboard() {
@@ -77,56 +78,10 @@ export default function AdminDashboard() {
     enabled: isAuthenticated && user?.userType === 'admin',
   });
 
-  // Fetch all pubs for management
-  const { data: allPubs = [] } = useQuery({
-    queryKey: ["/api/admin/pubs"],
-    enabled: isAuthenticated && user?.userType === 'admin',
-  });
-
-  // Fetch all breweries for management  
-  const { data: allBreweries = [] } = useQuery({
-    queryKey: ["/api/admin/breweries"],
-    enabled: isAuthenticated && user?.userType === 'admin',
-  });
-
-  // Fetch all beers for management
-  const { data: allBeers = [] } = useQuery({
-    queryKey: ["/api/admin/beers"],
-    enabled: isAuthenticated && user?.userType === 'admin',
-  });
-
   // Fetch pending reviews
   const { data: pendingReviews = [] } = useQuery({
     queryKey: ["/api/admin/reviews/pending"],
     enabled: isAuthenticated && user?.userType === 'admin',
-  });
-
-  // Update beer mutation
-  const updateBeerMutation = useMutation({
-    mutationFn: async ({ id, data }: { id: number; data: any }) => {
-      return apiRequest(`/api/admin/beers/${id}`, "PATCH", data);
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/admin/beers"] });
-      toast({
-        title: "Birra aggiornata",
-        description: "Le modifiche sono state salvate con successo",
-      });
-    },
-  });
-
-  // Update brewery mutation
-  const updateBreweryMutation = useMutation({
-    mutationFn: async ({ id, data }: { id: number; data: any }) => {
-      return apiRequest(`/api/admin/breweries/${id}`, "PATCH", data);
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/admin/breweries"] });
-      toast({
-        title: "Birrificio aggiornato",
-        description: "Le modifiche sono state salvate con successo",
-      });
-    },
   });
 
   // Approve/Reject review mutation
@@ -203,55 +158,81 @@ export default function AdminDashboard() {
       </div>
 
       {/* Admin Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-8">
         <Card className="border-l-4 border-l-blue-500">
-          <CardContent className="p-6">
+          <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-600">Utenti Totali</p>
-                <div className="text-2xl font-bold">{adminStats?.totalUsers || allUsers.length}</div>
-                <p className="text-xs text-gray-500 mt-1">Clienti e pub owner attivi</p>
+                <p className="text-xs font-medium text-gray-600 dark:text-gray-400">Utenti</p>
+                <div className="text-2xl font-bold">{adminStats?.totalUsers ?? allUsers.length}</div>
+                <p className="text-xs text-gray-500 mt-0.5">Registrati</p>
               </div>
-              <Users className="h-8 w-8 text-blue-500" />
+              <Users className="h-6 w-6 text-blue-500 opacity-80" />
             </div>
           </CardContent>
         </Card>
 
         <Card className="border-l-4 border-l-orange-500">
-          <CardContent className="p-6">
+          <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-600">Pub Registrati</p>
-                <div className="text-2xl font-bold">{adminStats?.totalPubs || allPubs.length}</div>
-                <p className="text-xs text-gray-500 mt-1">Locali verificati</p>
+                <p className="text-xs font-medium text-gray-600 dark:text-gray-400">Pub</p>
+                <div className="text-2xl font-bold">{adminStats?.totalPubs ?? 0}</div>
+                <p className="text-xs text-gray-500 mt-0.5">Verificati</p>
               </div>
-              <Store className="h-8 w-8 text-orange-500" />
+              <Store className="h-6 w-6 text-orange-500 opacity-80" />
             </div>
           </CardContent>
         </Card>
 
         <Card className="border-l-4 border-l-amber-500">
-          <CardContent className="p-6">
+          <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-600">Birrifici Mondiali</p>
-                <div className="text-2xl font-bold">{stats?.totalBreweries?.toLocaleString() || '2,968'}</div>
-                <p className="text-xs text-gray-500 mt-1">Da 20+ paesi</p>
+                <p className="text-xs font-medium text-gray-600 dark:text-gray-400">Birrifici</p>
+                <div className="text-2xl font-bold">{stats?.totalBreweries?.toLocaleString() || '—'}</div>
+                <p className="text-xs text-gray-500 mt-0.5">Globali</p>
               </div>
-              <Star className="h-8 w-8 text-amber-500" />
+              <Star className="h-6 w-6 text-amber-500 opacity-80" />
             </div>
           </CardContent>
         </Card>
 
         <Card className="border-l-4 border-l-green-500">
-          <CardContent className="p-6">
+          <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-600">Birre Autentiche</p>
-                <div className="text-2xl font-bold">{stats?.totalBeers?.toLocaleString() || '29,753'}</div>
-                <p className="text-xs text-gray-500 mt-1">{stats?.uniqueStyles || 293} stili unici</p>
+                <p className="text-xs font-medium text-gray-600 dark:text-gray-400">Birre</p>
+                <div className="text-2xl font-bold">{stats?.totalBeers?.toLocaleString() || '—'}</div>
+                <p className="text-xs text-gray-500 mt-0.5">{stats?.uniqueStyles || '—'} stili</p>
               </div>
-              <Beer className="h-8 w-8 text-green-500" />
+              <Beer className="h-6 w-6 text-green-500 opacity-80" />
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="border-l-4 border-l-yellow-500">
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-xs font-medium text-gray-600 dark:text-gray-400">Recensioni</p>
+                <div className="text-2xl font-bold">{adminStats?.totalReviews ?? 0}</div>
+                <p className="text-xs text-gray-500 mt-0.5">Community</p>
+              </div>
+              <MessageSquare className="h-6 w-6 text-yellow-500 opacity-80" />
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="border-l-4 border-l-purple-500">
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-xs font-medium text-gray-600 dark:text-gray-400">Eventi</p>
+                <div className="text-2xl font-bold">{adminStats?.totalEvents ?? 0}</div>
+                <p className="text-xs text-gray-500 mt-0.5">Attivi</p>
+              </div>
+              <Activity className="h-6 w-6 text-purple-500 opacity-80" />
             </div>
           </CardContent>
         </Card>
@@ -290,43 +271,55 @@ export default function AdminDashboard() {
         </TabsList>
 
         <TabsContent value="overview" className="space-y-6">
+          {/* Last Updated Banner */}
+          {adminStats?.lastUpdated && (
+            <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-gray-900 rounded-lg px-4 py-2">
+              <CheckCircle className="w-3.5 h-3.5 text-green-500" />
+              Dati aggiornati {formatDistanceToNow(new Date(adminStats.lastUpdated), { addSuffix: true, locale: it })}
+            </div>
+          )}
+
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <Activity className="w-5 h-5" />
-                  Attività Recenti del Sistema
+                  Stato della Piattaforma
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="space-y-4">
+                <div className="space-y-3">
                   <div className="flex items-center gap-3 p-3 rounded-lg bg-green-50 dark:bg-green-900/10">
-                    <CheckCircle className="w-5 h-5 text-green-600" />
+                    <CheckCircle className="w-5 h-5 text-green-600 flex-shrink-0" />
                     <div className="flex-1">
-                      <p className="text-sm font-medium">Database espanso: +113 birre autentiche aggiunte</p>
-                      <p className="text-xs text-gray-500">Include Carlsberg, Heineken, Kingfisher</p>
+                      <p className="text-sm font-medium">Sistema operativo</p>
+                      <p className="text-xs text-gray-500">Database, autenticazione e API funzionanti</p>
                     </div>
+                    <Badge className="bg-green-100 text-green-700 border-green-200 text-xs">Online</Badge>
                   </div>
                   <div className="flex items-center gap-3 p-3 rounded-lg bg-blue-50 dark:bg-blue-900/10">
-                    <Database className="w-5 h-5 text-blue-600" />
+                    <Database className="w-5 h-5 text-blue-600 flex-shrink-0" />
                     <div className="flex-1">
-                      <p className="text-sm font-medium">Copertura globale: 29.753 birre da 20+ paesi</p>
-                      <p className="text-xs text-gray-500">2.968 birrifici, 293 stili unici</p>
+                      <p className="text-sm font-medium">Database birre</p>
+                      <p className="text-xs text-gray-500">{stats?.totalBeers?.toLocaleString() || '—'} birre · {stats?.totalBreweries?.toLocaleString() || '—'} birrifici · {stats?.uniqueStyles || '—'} stili</p>
                     </div>
+                    <Badge variant="outline" className="text-xs">Globale</Badge>
                   </div>
                   <div className="flex items-center gap-3 p-3 rounded-lg bg-amber-50 dark:bg-amber-900/10">
-                    <TrendingUp className="w-5 h-5 text-amber-600" />
+                    <MessageSquare className="w-5 h-5 text-amber-600 flex-shrink-0" />
                     <div className="flex-1">
-                      <p className="text-sm font-medium">Top styles: IPA (2.722), Imperial Stout (2.025)</p>
-                      <p className="text-xs text-gray-500">BrewDog leader con 101 birre</p>
+                      <p className="text-sm font-medium">Attività community</p>
+                      <p className="text-xs text-gray-500">{adminStats?.totalReviews ?? 0} recensioni · {adminStats?.totalTastings ?? 0} assaggi · {adminStats?.totalEvents ?? 0} eventi</p>
                     </div>
+                    <Badge variant="outline" className="text-xs">Live</Badge>
                   </div>
                   <div className="flex items-center gap-3 p-3 rounded-lg bg-purple-50 dark:bg-purple-900/10">
-                    <Beer className="w-5 h-5 text-purple-600" />
+                    <Users className="w-5 h-5 text-purple-600 flex-shrink-0" />
                     <div className="flex-1">
-                      <p className="text-sm font-medium">Tutte le birre hanno immagini autentiche</p>
-                      <p className="text-xs text-gray-500">100% copertura immagini per stile</p>
+                      <p className="text-sm font-medium">Utenti piattaforma</p>
+                      <p className="text-xs text-gray-500">{adminStats?.totalUsers ?? 0} utenti registrati · {adminStats?.totalPubs ?? 0} pub attivi</p>
                     </div>
+                    <Badge variant="outline" className="text-xs">{adminStats?.totalUsers ?? 0} totali</Badge>
                   </div>
                 </div>
               </CardContent>
@@ -434,160 +427,18 @@ export default function AdminDashboard() {
         <TabsContent value="content" className="space-y-6">
           <Tabs defaultValue="beers" className="w-full">
             <TabsList>
-              <TabsTrigger value="beers">Birre ({allBeers.length})</TabsTrigger>
-              <TabsTrigger value="breweries">Birrifici ({allBreweries.length})</TabsTrigger>
-              <TabsTrigger value="pubs">Pub ({allPubs.length})</TabsTrigger>
+              <TabsTrigger value="beers">Birre</TabsTrigger>
+              <TabsTrigger value="breweries">Birrifici</TabsTrigger>
+              <TabsTrigger value="pubs">Pub</TabsTrigger>
             </TabsList>
-
-            <TabsContent value="beers" className="space-y-4">
-              <div className="flex justify-between items-center">
-                <h4 className="text-lg font-semibold">Gestione Birre</h4>
-                <div className="flex gap-2">
-                  <Button variant="outline" size="sm">Importa Birre</Button>
-                  <Button size="sm">Nuova Birra</Button>
-                </div>
-              </div>
-
-              <div className="grid gap-4">
-                {allBeers.slice(0, 10).map((beer: any) => (
-                  <Card key={beer.id}>
-                    <CardContent className="p-4">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-4">
-                          <div className="w-12 h-12 bg-amber-100 rounded-lg flex items-center justify-center">
-                            <Beer className="w-6 w-6 text-amber-600" />
-                          </div>
-                          <div className="flex-1">
-                            <h5 className="font-semibold">{beer.name}</h5>
-                            <p className="text-sm text-gray-600">
-                              {beer.style} • {beer.abv}% ABV • Birrificio #{beer.breweryId}
-                            </p>
-                            {beer.description && (
-                              <p className="text-sm text-gray-500 mt-1 line-clamp-2">
-                                {beer.description}
-                              </p>
-                            )}
-                          </div>
-                        </div>
-                        <div className="flex gap-2">
-                          <Button 
-                            size="sm" 
-                            variant="outline"
-                            onClick={() => {
-                              const newDescription = prompt("Nuova descrizione:", beer.description || "");
-                              if (newDescription !== null) {
-                                updateBeerMutation.mutate({ 
-                                  id: beer.id, 
-                                  data: { description: newDescription } 
-                                });
-                              }
-                            }}
-                          >
-                            <Edit3 className="w-4 h-4" />
-                          </Button>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
+            <TabsContent value="beers" className="mt-4">
+              <AdminContentManager type="beers" />
             </TabsContent>
-
-            <TabsContent value="breweries" className="space-y-4">
-              <div className="flex justify-between items-center">
-                <h4 className="text-lg font-semibold">Gestione Birrifici</h4>
-                <Button size="sm">Nuovo Birrificio</Button>
-              </div>
-
-              <div className="grid gap-4">
-                {allBreweries.slice(0, 10).map((brewery: any) => (
-                  <Card key={brewery.id}>
-                    <CardContent className="p-4">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-4">
-                          <div className="w-12 h-12 bg-yellow-100 rounded-lg flex items-center justify-center">
-                            <Star className="w-6 w-6 text-yellow-600" />
-                          </div>
-                          <div className="flex-1">
-                            <h5 className="font-semibold">{brewery.name}</h5>
-                            <p className="text-sm text-gray-600">
-                              {brewery.location}, {brewery.region}
-                            </p>
-                            {brewery.description && (
-                              <p className="text-sm text-gray-500 mt-1 line-clamp-2">
-                                {brewery.description}
-                              </p>
-                            )}
-                          </div>
-                        </div>
-                        <div className="flex gap-2">
-                          <Button 
-                            size="sm" 
-                            variant="outline"
-                            onClick={() => {
-                              const newDescription = prompt("Nuova descrizione:", brewery.description || "");
-                              if (newDescription !== null) {
-                                updateBreweryMutation.mutate({ 
-                                  id: brewery.id, 
-                                  data: { description: newDescription } 
-                                });
-                              }
-                            }}
-                          >
-                            <Edit3 className="w-4 h-4" />
-                          </Button>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
+            <TabsContent value="breweries" className="mt-4">
+              <AdminContentManager type="breweries" />
             </TabsContent>
-
-            <TabsContent value="pubs" className="space-y-4">
-              <div className="flex justify-between items-center">
-                <h4 className="text-lg font-semibold">Gestione Pub</h4>
-                <Button size="sm">Nuovo Pub</Button>
-              </div>
-
-              <div className="grid gap-4">
-                {allPubs.slice(0, 10).map((pub: any) => (
-                  <Card key={pub.id}>
-                    <CardContent className="p-4">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-4">
-                          <div className="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center">
-                            <Store className="w-6 h-6 text-orange-600" />
-                          </div>
-                          <div className="flex-1">
-                            <h5 className="font-semibold">{pub.name}</h5>
-                            <p className="text-sm text-gray-600">
-                              {pub.address}, {pub.city}
-                            </p>
-                            <p className="text-xs text-gray-500 mt-1">
-                              Owner ID: {pub.ownerId || 'Non assegnato'}
-                            </p>
-                          </div>
-                        </div>
-                        <div className="flex gap-2">
-                          <Link href={`/pub/${pub.id}`}>
-                            <Button size="sm" variant="outline">
-                              <Eye className="w-4 h-4 mr-1" />
-                              Visualizza
-                            </Button>
-                          </Link>
-                          <Link href={`/admin/edit-pub/${pub.id}`}>
-                            <Button size="sm" variant="default">
-                              <Edit3 className="w-4 h-4 mr-1" />
-                              Modifica
-                            </Button>
-                          </Link>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
+            <TabsContent value="pubs" className="mt-4">
+              <AdminContentManager type="pubs" />
             </TabsContent>
           </Tabs>
         </TabsContent>

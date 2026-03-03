@@ -385,10 +385,12 @@ export default function BeerDetail() {
                         </Link>
                       )}
                       <div className="flex flex-col sm:flex-row items-center justify-center md:justify-start space-y-3 sm:space-y-0 sm:space-x-4 flex-wrap gap-2">
-                        <Badge className="bg-gradient-to-r from-blue-500/20 to-indigo-500/20 text-blue-100 border-blue-300/30 backdrop-blur-sm px-3 py-2">
-                          <Sparkles className="h-4 w-4 mr-2" />
-                          {beer?.style}
-                        </Badge>
+                        <Link href={`/search?q=${encodeURIComponent(beer?.style || '')}`}>
+                          <Badge className="bg-gradient-to-r from-blue-500/20 to-indigo-500/20 text-blue-100 border-blue-300/30 backdrop-blur-sm px-3 py-2 cursor-pointer hover:bg-blue-500/30 transition-colors">
+                            <Sparkles className="h-4 w-4 mr-2" />
+                            {beer?.style}
+                          </Badge>
+                        </Link>
                         {beer?.isGlutenFree && (
                           <Badge className="bg-gradient-to-r from-green-500/20 to-emerald-500/20 text-green-100 border-green-300/30 backdrop-blur-sm px-3 py-2 gap-1.5">
                             <GlutenFreeIcon size={18} className="text-green-200" />
@@ -404,6 +406,25 @@ export default function BeerDetail() {
                     </div>
                   </div>
                   
+                  {/* Rating & Likes badges */}
+                  <div className="flex items-center gap-2 flex-wrap justify-center md:justify-end mb-2">
+                    {reviewsData?.avgRating != null && (
+                      <div className="flex items-center gap-1.5 bg-yellow-400/90 backdrop-blur-sm text-yellow-900 font-bold px-3 py-1.5 rounded-full shadow-lg text-sm">
+                        <Star className="h-4 w-4 fill-yellow-900" />
+                        {Number(reviewsData.avgRating).toFixed(2)}
+                        {reviewsData.reviewCount > 0 && (
+                          <span className="font-normal text-yellow-800 text-xs">({reviewsData.reviewCount})</span>
+                        )}
+                      </div>
+                    )}
+                    {beerFavCount > 0 && (
+                      <div className="flex items-center gap-1.5 bg-red-500/80 backdrop-blur-sm text-white font-bold px-3 py-1.5 rounded-full shadow-lg text-sm">
+                        <Heart className="h-4 w-4 fill-white" />
+                        {beerFavCount}
+                      </div>
+                    )}
+                  </div>
+
                   {/* Action buttons */}
                   <div className="flex items-center justify-center md:justify-end space-x-2 sm:space-x-3 w-full md:w-auto">
                     {isAdmin && (
