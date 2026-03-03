@@ -1606,11 +1606,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const [pubEventCountResult] = await db.select({ count: sql<number>`COUNT(*)` }).from(pubEvents);
       const [breweryEventCountResult] = await db.select({ count: sql<number>`COUNT(*)` }).from(breweryEvents);
 
+      const [userCountResult] = await db.select({ count: sql<number>`COUNT(*)` }).from(users);
+      const [pubCountResult] = await db.select({ count: sql<number>`COUNT(*)` }).from(pubs);
+      const [breweryCountResult] = await db.select({ count: sql<number>`COUNT(*)` }).from(breweries);
+      const [beerCountResult] = await db.select({ count: sql<number>`COUNT(*)` }).from(beers);
+
       const stats = {
-        totalUsers: await storage.getUserCount(),
-        totalPubs: await storage.getPubCount(),
-        totalBreweries: await storage.getBreweryCount(),
-        totalBeers: await storage.getBeerCount(),
+        totalUsers: Number(userCountResult?.count || 0),
+        totalPubs: Number(pubCountResult?.count || 0),
+        totalBreweries: Number(breweryCountResult?.count || 0),
+        totalBeers: Number(beerCountResult?.count || 0),
         totalReviews: Number(reviewCountResult?.count || 0),
         totalTastings: Number(tastingCountResult?.count || 0),
         totalEvents: Number(pubEventCountResult?.count || 0) + Number(breweryEventCountResult?.count || 0),

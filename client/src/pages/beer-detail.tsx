@@ -441,27 +441,17 @@ export default function BeerDetail() {
                     </div>
                   </div>
                   
-                  {/* Rating & Likes badges */}
-                  <div className="flex items-center gap-2 flex-wrap justify-center md:justify-end mb-2">
+                  {/* Rating + Action buttons inline */}
+                  <div className="flex items-center justify-center md:justify-end gap-2 w-full md:w-auto flex-wrap">
                     {reviewsData?.avgRating != null && (
-                      <div className="flex items-center gap-1.5 bg-yellow-400/90 backdrop-blur-sm text-yellow-900 font-bold px-3 py-1.5 rounded-full shadow-lg text-sm">
-                        <Star className="h-4 w-4 fill-yellow-900" />
-                        {Number(reviewsData.avgRating).toFixed(2)}
+                      <div className="flex items-center gap-1.5 backdrop-blur-md bg-yellow-400/20 border border-yellow-300/40 text-white font-semibold px-3 py-1.5 rounded-full shadow-lg text-sm min-h-[44px]">
+                        <Star className="h-4 w-4 fill-yellow-300 text-yellow-300" />
+                        <span className="text-yellow-100">{Number(reviewsData.avgRating).toFixed(1)}</span>
                         {reviewsData.reviewCount > 0 && (
-                          <span className="font-normal text-yellow-800 text-xs">({reviewsData.reviewCount})</span>
+                          <span className="text-yellow-200/70 font-normal text-xs">({reviewsData.reviewCount})</span>
                         )}
                       </div>
                     )}
-                    {beerFavCount > 0 && (
-                      <div className="flex items-center gap-1.5 bg-red-500/80 backdrop-blur-sm text-white font-bold px-3 py-1.5 rounded-full shadow-lg text-sm">
-                        <Heart className="h-4 w-4 fill-white" />
-                        {beerFavCount}
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Action buttons */}
-                  <div className="flex items-center justify-center md:justify-end space-x-2 sm:space-x-3 w-full md:w-auto">
                     {isAdmin && (
                       <Button 
                         variant="outline" 
