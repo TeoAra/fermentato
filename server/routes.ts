@@ -140,8 +140,37 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/breweries/:id/beers", async (req, res) => {
     try {
       const breweryId = parseInt(req.params.id);
-      const beers = await storage.getBeersByBrewery(breweryId);
-      res.json(beers);
+      // Fetch beers with avg rating, review count, and favorite count in one query
+      const beerRows = await db.select({
+        id: beers.id,
+        name: beers.name,
+        style: beers.style,
+        abv: beers.abv,
+        ibu: beers.ibu,
+        color: beers.color,
+        description: beers.description,
+        imageUrl: beers.imageUrl,
+        breweryId: beers.breweryId,
+        isGlutenFree: beers.isGlutenFree,
+        isAlcoholFree: beers.isAlcoholFree,
+        isVegan: beers.isVegan,
+        avgRating: sql<number>`ROUND(AVG(CASE WHEN ${userBeerTastings.rating} IS NOT NULL THEN ${userBeerTastings.rating} END)::numeric, 2)`,
+        reviewCount: sql<number>`COUNT(CASE WHEN ${userBeerTastings.rating} IS NOT NULL THEN 1 END)`,
+        favoriteCount: sql<number>`(SELECT COUNT(*) FROM favorites f WHERE f.item_type = 'beer' AND f.item_id = ${beers.id})`,
+      })
+      .from(beers)
+      .leftJoin(userBeerTastings, eq(beers.id, userBeerTastings.beerId))
+      .where(eq(beers.breweryId, breweryId))
+      .groupBy(beers.id)
+      .orderBy(beers.name);
+
+      const result = beerRows.map(b => ({
+        ...b,
+        avgRating: b.avgRating ? parseFloat(String(b.avgRating)) : null,
+        reviewCount: Number(b.reviewCount || 0),
+        favoriteCount: Number(b.favoriteCount || 0),
+      }));
+      res.json(result);
     } catch (error) {
       console.error("Error fetching brewery beers:", error);
       res.status(500).json({ message: "Failed to fetch brewery beers" });
@@ -1614,6 +1643,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.get('/api/admin/pubs/search', isAuthenticated, isAdmin, async (req: any, res) => {
+    try {
+      const q = String(req.query.q || '').trim();
+      const limit = Math.min(parseInt(String(req.query.limit || '50')), 100);
+      if (!q) return res.json([]);
+      const pattern = `%${q}%`;
+      const results = await db.select().from(pubs)
+        .where(sql`(${pubs.name} ILIKE ${pattern} OR ${pubs.city} ILIKE ${pattern} OR ${pubs.address} ILIKE ${pattern})`)
+        .orderBy(pubs.name)
+        .limit(limit);
+      res.json(results);
+    } catch (error) {
+      console.error("Error searching pubs:", error);
+      res.status(500).json({ message: "Failed to search pubs" });
+    }
+  });
+
   app.get('/api/admin/breweries', isAuthenticated, isAdmin, async (req: any, res) => {
     try {
       const breweries = await storage.getAllBreweries();
@@ -2598,10 +2644,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const activities: any[] = [];
 
-      const recentUsers = await db.select({ id: users.id, username: users.username, createdAt: users.createdAt, userType: users.userType })
+      const recentUsers = await db.select({ id: users.id, nickname: users.nickname, firstName: users.firstName, createdAt: users.createdAt, userType: users.userType })
         .from(users).orderBy(desc(users.createdAt)).limit(5);
       for (const u of recentUsers) {
-        activities.push({ type: 'user', action: u.userType === 'pub_owner' ? 'Nuovo pub owner registrato' : 'Nuovo utente registrato', name: u.username || 'Utente', time: u.createdAt, icon: 'user' });
+        activities.push({ type: 'user', action: u.userType === 'pub_owner' ? 'Nuovo pub owner registrato' : u.userType === 'brewery_owner' ? 'Nuovo brewery owner registrato' : 'Nuovo utente registrato', name: u.nickname || u.firstName || 'Utente', time: u.createdAt, icon: 'user' });
       }
 
       const recentPubs = await db.select({ id: pubs.id, name: pubs.name, createdAt: pubs.createdAt, city: pubs.city })
