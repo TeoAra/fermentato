@@ -134,6 +134,10 @@ export function AutoPushSubscriber() {
     if (!('Notification' in window) || !('serviceWorker' in navigator)) return;
     if (Notification.permission !== 'granted') return;
 
+    // On iOS, push only works in standalone PWA mode
+    const isIos = /iPad|iPhone|iPod/.test(navigator.userAgent);
+    if (isIos && !isStandalone()) return;
+
     const alreadySynced = sessionStorage.getItem('push-synced');
     if (alreadySynced) return;
 
@@ -413,6 +417,11 @@ export function PushNotificationPrompt() {
     if (!isAuthenticated) return;
     if (!('Notification' in window) || !('serviceWorker' in navigator)) return;
     if (Notification.permission !== 'default') return;
+
+    // On iOS, push notifications only work when installed as PWA (standalone mode)
+    // Don't show the prompt to iOS users in browser mode
+    const isIos = /iPad|iPhone|iPod/.test(navigator.userAgent);
+    if (isIos && !isStandalone()) return;
 
     const isDismissed = localStorage.getItem('push-prompt-dismissed');
     if (isDismissed) {

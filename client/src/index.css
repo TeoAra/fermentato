@@ -12,12 +12,32 @@
     padding-top: env(safe-area-inset-top);
   }
 
+  .safe-area-pl {
+    padding-left: env(safe-area-inset-left);
+  }
+
+  .safe-area-pr {
+    padding-right: env(safe-area-inset-right);
+  }
+
   .scrollbar-hide {
     -ms-overflow-style: none;
     scrollbar-width: none;
   }
   .scrollbar-hide::-webkit-scrollbar {
     display: none;
+  }
+
+  /* iOS momentum scrolling for scrollable containers */
+  .scroll-ios {
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior: contain;
+  }
+
+  /* Prevent text selection on UI elements */
+  .no-select {
+    -webkit-user-select: none;
+    user-select: none;
   }
 }
 
@@ -112,11 +132,57 @@
 @layer base {
   * {
     @apply border-border;
+    -webkit-tap-highlight-color: transparent;
+    -webkit-touch-callout: none;
+  }
+
+  /* Allow text selection where needed */
+  p, h1, h2, h3, h4, h5, h6, span, li, td, th, label {
+    -webkit-touch-callout: default;
+    -webkit-user-select: text;
+    user-select: text;
+  }
+
+  html {
+    /* Dynamic viewport height for iOS Safari (avoids browser bar overlap) */
+    height: -webkit-fill-available;
   }
 
   body {
     @apply font-sans antialiased bg-background text-foreground;
     scroll-behavior: smooth;
+    /* Prevent iOS overscroll bounce on the body */
+    overscroll-behavior-y: none;
+    /* iOS smooth momentum scrolling */
+    -webkit-overflow-scrolling: touch;
+    min-height: 100vh;
+    min-height: -webkit-fill-available;
+  }
+
+  /* Buttons and interactive elements: remove tap delay on iOS */
+  button, a, [role="button"] {
+    touch-action: manipulation;
+    cursor: pointer;
+  }
+
+  /* Prevent iOS from auto-resizing text */
+  input, textarea, select {
+    -webkit-text-size-adjust: 100%;
+    font-size: max(16px, 1em); /* Minimum 16px prevents iOS zoom */
+  }
+
+  /* Override for desktop where we want smaller text */
+  @media (min-width: 768px) {
+    input, textarea, select {
+      font-size: inherit;
+    }
+  }
+
+  /* iOS standalone mode: extra top padding for status bar */
+  @media all and (display-mode: standalone) {
+    body {
+      padding-top: env(safe-area-inset-top);
+    }
   }
   
   /* Modern Typography Scale */
