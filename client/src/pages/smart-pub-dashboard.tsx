@@ -239,7 +239,7 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
       });
       setSettingsChanged(false);
     }
-  }, [currentPub]);
+  }, [currentPub?.id]);
 
   // Fetch tap list
   const { data: tapList = [] } = useQuery({
@@ -1130,7 +1130,8 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
   );
 
   // Settings Section - Complete Implementation
-  const renderSettings = () => (
+  const renderSettings = () => {
+    return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
@@ -1558,7 +1559,8 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
         </Card>
       </div>
     </div>
-  );
+    );
+  };
 
   // Bottles Section
   const renderBottles = () => (
