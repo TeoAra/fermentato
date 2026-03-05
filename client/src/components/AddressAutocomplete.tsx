@@ -37,6 +37,10 @@ export function AddressAutocomplete({
   const inputRef = useRef<HTMLInputElement>(null);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const autocompleteRef = useRef<any>(null);
+  // Keep callback in a ref so it's always current without being a dep
+  const onAddressSelectRef = useRef(onAddressSelect);
+  useEffect(() => { onAddressSelectRef.current = onAddressSelect; });
+
   const [inputValue, setInputValue] = useState(value);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -119,7 +123,7 @@ export function AddressAutocomplete({
           const lat = place.geometry?.location?.lat?.();
           const lng = place.geometry?.location?.lng?.();
 
-          onAddressSelect({
+          onAddressSelectRef.current({
             formattedAddress,
             city: city || "",
             region: region || "",
@@ -146,7 +150,7 @@ export function AddressAutocomplete({
         (window as any).google.maps.event.clearInstanceListeners(autocompleteRef.current);
       }
     };
-  }, [onAddressSelect, countryRestriction]);
+  }, [countryRestriction]);
 
   return (
     <div className={`relative ${className}`}>

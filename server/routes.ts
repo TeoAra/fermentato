@@ -1527,7 +1527,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         sendPushToUser(userId, {
           title: titleMap[type],
           body: messageMap[type],
-          url: `/pubs/${pubId}`,
+          url: `/pub/${pubId}`,
           type: 'tap_change',
         });
       }
@@ -1556,7 +1556,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           sendPushToUser(userId, {
             title: `La tua birra preferita disponibile!`,
             body: `"${beerName}" è ora alla spina da ${pub.name}.`,
-            url: `/pubs/${pubId}`,
+            url: `/pub/${pubId}`,
             type: 'new_beer',
           });
         }
@@ -1587,7 +1587,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             sendPushToUser(userId, {
               title: `Novità dal tuo birrificio preferito!`,
               body: `${pub.name} ha "${beerName}" di ${breweryName} alla spina.`,
-              url: `/pubs/${pubId}`,
+              url: `/pub/${pubId}`,
               type: 'new_beer',
             });
           }
@@ -3086,7 +3086,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           sendPushToUser(favUserId, {
             title: `Nuovo evento da ${pub.name}!`,
             body: `"${event.title}" - Non perderlo!`,
-            url: `/pubs/${pubId}`, type: 'event',
+            url: `/pub/${pubId}`, type: 'event',
           });
         }
       } catch (notifError) {
