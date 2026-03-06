@@ -19,7 +19,7 @@ import { AddressAutocomplete } from "@/components/AddressAutocomplete";
 import ReCAPTCHA from "react-google-recaptcha";
 import type { Brewery } from "@shared/schema";
 
-const RECAPTCHA_SITE_KEY = import.meta.env.VITE_RECAPTCHA_SITE_KEY as string | undefined;
+const RECAPTCHA_SITE_KEY = (import.meta.env.VITE_RECAPTCHA_SITE_KEY as string | undefined) || "6LcDuIEsAAAAAAPwdAQ2rAKZvA_ae_FmyRlft11z";
 
 const loginSchema = z.object({
   email: z.string().email("Email non valida"),
