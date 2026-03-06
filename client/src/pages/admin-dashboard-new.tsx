@@ -11,15 +11,12 @@ import {
   Database,
   TrendingUp,
   Activity,
-  Bell,
   ChevronRight,
   FileText,
   Beer,
   Store,
   Building2,
   ArrowLeft,
-  User,
-  Clock,
   Star,
   CalendarDays,
   RefreshCw
@@ -45,14 +42,6 @@ interface GlobalStats {
   uniqueStyles: number;
 }
 
-interface RecentActivity {
-  type: string;
-  action: string;
-  name: string;
-  detail?: string;
-  time: string;
-  icon: string;
-}
 
 export default function AdminDashboardNew() {
   const { user, isAuthenticated, isLoading } = useAuth();
@@ -79,11 +68,6 @@ export default function AdminDashboardNew() {
     refetchInterval: 30000,
   });
 
-  const { data: recentActivity = [] } = useQuery<RecentActivity[]>({
-    queryKey: ["/api/admin/recent-activity"],
-    enabled: isAuthenticated && (user as any)?.userType === 'admin',
-    refetchInterval: 30000,
-  });
 
   if (isLoading) {
     return (
@@ -102,16 +86,6 @@ export default function AdminDashboardNew() {
     return null;
   }
 
-  const activityIcon = (type: string) => {
-    switch (type) {
-      case 'user': return <User className="w-4 h-4 text-blue-500" />;
-      case 'pub': return <Store className="w-4 h-4 text-orange-500" />;
-      case 'brewery': return <Building2 className="w-4 h-4 text-amber-500" />;
-      case 'review': return <Star className="w-4 h-4 text-yellow-500" />;
-      case 'event': return <CalendarDays className="w-4 h-4 text-green-500" />;
-      default: return <Bell className="w-4 h-4 text-gray-500" />;
-    }
-  };
 
   return (
     <div className="container mx-auto px-4 py-6 max-w-7xl space-y-8">
@@ -262,7 +236,7 @@ export default function AdminDashboardNew() {
         </Link>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -351,39 +325,6 @@ export default function AdminDashboardNew() {
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Clock className="w-5 h-5 text-amber-500" />
-              Attività Recenti
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            {recentActivity.length > 0 ? (
-              recentActivity.map((activity, index) => (
-                <div key={index} className="p-3 rounded-lg bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
-                  <div className="flex items-start gap-3">
-                    <div className="mt-0.5">{activityIcon(activity.type)}</div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-gray-900 dark:text-white">{activity.action}</p>
-                      <p className="text-xs text-gray-700 dark:text-gray-300 font-medium truncate">{activity.name}</p>
-                      {activity.detail && (
-                        <p className="text-xs text-gray-500 dark:text-gray-400">{activity.detail}</p>
-                      )}
-                      {activity.time && (
-                        <p className="text-xs text-gray-400 mt-1">
-                          {formatDistanceToNow(new Date(activity.time), { addSuffix: true, locale: it })}
-                        </p>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              ))
-            ) : (
-              <p className="text-sm text-gray-500 text-center py-4">Nessuna attività recente</p>
-            )}
-          </CardContent>
-        </Card>
       </div>
     </div>
   );
