@@ -1,6 +1,6 @@
 /// <reference types="google.maps" />
 import { useEffect, useRef, useState, useCallback, useMemo } from "react";
-import { Loader } from "@googlemaps/js-api-loader";
+import { getGoogleMapsLoader } from "@/lib/googleMapsLoader";
 import { MapPin, Loader2, LocateFixed } from "lucide-react";
 
 interface MapPub {
@@ -123,11 +123,7 @@ export default function HomepageMap({ pubs, breweries, userLocation, isLoading, 
     }
 
     try {
-      const loader = new Loader({
-        apiKey,
-        version: "weekly",
-        libraries: ["marker"],
-      });
+      const loader = getGoogleMapsLoader();
 
       const { Map } = await loader.importLibrary("maps");
       await loader.importLibrary("marker");

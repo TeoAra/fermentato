@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Loader } from "@googlemaps/js-api-loader";
+import { getGoogleMapsLoader } from "@/lib/googleMapsLoader";
 import { Input } from "@/components/ui/input";
 import { MapPin } from "lucide-react";
 
@@ -33,11 +33,7 @@ export default function AddressAutocomplete({
         setIsLoading(true);
         setError(null);
 
-        const loader = new Loader({
-          apiKey: "AIzaSyB3sdiFJqXOEQv7YHFj4Z2RDvGeQKX5FRA",
-          version: "weekly",
-          libraries: ["places"]
-        });
+        const loader = getGoogleMapsLoader();
 
         await loader.load();
 
