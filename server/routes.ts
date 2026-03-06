@@ -2647,54 +2647,70 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Admin recent activity (real data from DB)
   app.get("/api/admin/recent-activity", isAuthenticated, isAdmin, async (req: any, res) => {
     try {
+      const limit = Math.min(parseInt(String(req.query.limit || '10')), 100);
+      const typeFilter = req.query.type as string | undefined;
+      const fetchAll = !typeFilter || typeFilter === 'all';
+      const perType = Math.max(limit, 20);
+
       const activities: any[] = [];
 
-      const recentUsers = await db.select({ id: users.id, nickname: users.nickname, firstName: users.firstName, createdAt: users.createdAt, userType: users.userType })
-        .from(users).orderBy(desc(users.createdAt)).limit(5);
-      for (const u of recentUsers) {
-        activities.push({ type: 'user', action: u.userType === 'pub_owner' ? 'Nuovo pub owner registrato' : u.userType === 'brewery_owner' ? 'Nuovo brewery owner registrato' : 'Nuovo utente registrato', name: u.nickname || u.firstName || 'Utente', time: u.createdAt, icon: 'user' });
+      if (fetchAll || typeFilter === 'user') {
+        const recentUsers = await db.select({ id: users.id, nickname: users.nickname, firstName: users.firstName, createdAt: users.createdAt, userType: users.userType })
+          .from(users).orderBy(desc(users.createdAt)).limit(perType);
+        for (const u of recentUsers) {
+          activities.push({ type: 'user', action: u.userType === 'pub_owner' ? 'Nuovo pub owner registrato' : u.userType === 'brewery_owner' ? 'Nuovo brewery owner registrato' : 'Nuovo utente registrato', name: u.nickname || u.firstName || 'Utente', detail: u.userType, time: u.createdAt, icon: 'user', link: '/admin/users' });
+        }
       }
 
-      const recentPubs = await db.select({ id: pubs.id, name: pubs.name, createdAt: pubs.createdAt, city: pubs.city })
-        .from(pubs).orderBy(desc(pubs.createdAt)).limit(5);
-      for (const p of recentPubs) {
-        activities.push({ type: 'pub', action: 'Nuovo pub registrato', name: p.name, detail: p.city, time: p.createdAt, icon: 'pub' });
+      if (fetchAll || typeFilter === 'pub') {
+        const recentPubs = await db.select({ id: pubs.id, name: pubs.name, createdAt: pubs.createdAt, city: pubs.city })
+          .from(pubs).orderBy(desc(pubs.createdAt)).limit(perType);
+        for (const p of recentPubs) {
+          activities.push({ type: 'pub', action: 'Nuovo pub registrato', name: p.name, detail: p.city, time: p.createdAt, icon: 'pub', itemId: p.id, link: `/pub/${p.id}` });
+        }
       }
 
-      const recentBreweries = await db.select({ id: breweries.id, name: breweries.name, createdAt: breweries.createdAt, location: breweries.location })
-        .from(breweries).orderBy(desc(breweries.createdAt)).limit(5);
-      for (const b of recentBreweries) {
-        activities.push({ type: 'brewery', action: 'Nuovo birrificio aggiunto', name: b.name, detail: b.location, time: b.createdAt, icon: 'brewery' });
+      if (fetchAll || typeFilter === 'brewery') {
+        const recentBreweries = await db.select({ id: breweries.id, name: breweries.name, createdAt: breweries.createdAt, location: breweries.location })
+          .from(breweries).orderBy(desc(breweries.createdAt)).limit(perType);
+        for (const b of recentBreweries) {
+          activities.push({ type: 'brewery', action: 'Nuovo birrificio aggiunto', name: b.name, detail: b.location, time: b.createdAt, icon: 'brewery', itemId: b.id, link: `/brewery/${b.id}` });
+        }
       }
 
-      const recentReviews = await db.select({
-        id: userBeerTastings.id,
-        rating: userBeerTastings.rating,
-        tastedAt: userBeerTastings.tastedAt,
-        beerName: beers.name,
-        reviewerName: users.nickname,
-        reviewerFirst: users.firstName,
-      })
-        .from(userBeerTastings)
-        .innerJoin(beers, eq(beers.id, userBeerTastings.beerId))
-        .innerJoin(users, eq(users.id, userBeerTastings.userId))
-        .where(sql`${userBeerTastings.rating} IS NOT NULL`)
-        .orderBy(desc(userBeerTastings.tastedAt))
-        .limit(5);
-      for (const r of recentReviews) {
-        activities.push({ type: 'review', action: `Recensione ${r.rating}★`, name: r.beerName, detail: `di ${r.reviewerName || r.reviewerFirst || 'Utente'}`, time: r.tastedAt, icon: 'review' });
+      if (fetchAll || typeFilter === 'review') {
+        const recentReviews = await db.select({
+          id: userBeerTastings.id,
+          beerId: userBeerTastings.beerId,
+          rating: userBeerTastings.rating,
+          tastedAt: userBeerTastings.tastedAt,
+          beerName: beers.name,
+          reviewerName: users.nickname,
+          reviewerFirst: users.firstName,
+        })
+          .from(userBeerTastings)
+          .innerJoin(beers, eq(beers.id, userBeerTastings.beerId))
+          .innerJoin(users, eq(users.id, userBeerTastings.userId))
+          .where(sql`${userBeerTastings.rating} IS NOT NULL`)
+          .orderBy(desc(userBeerTastings.tastedAt))
+          .limit(perType);
+        for (const r of recentReviews) {
+          activities.push({ type: 'review', action: `Recensione ${r.rating}★`, name: r.beerName, detail: `di ${r.reviewerName || r.reviewerFirst || 'Utente'}`, time: r.tastedAt, icon: 'review', itemId: r.beerId, link: `/beer/${r.beerId}` });
+        }
       }
 
-      const recentPubEvents = await db.select({ id: pubEvents.id, title: pubEvents.title, createdAt: pubEvents.createdAt })
-        .from(pubEvents).orderBy(desc(pubEvents.createdAt)).limit(3);
-      for (const e of recentPubEvents) {
-        activities.push({ type: 'event', action: 'Nuovo evento pub', name: e.title, time: e.createdAt, icon: 'event' });
-      }
+      if (fetchAll || typeFilter === 'event') {
+        const recentPubEvents = await db.select({ id: pubEvents.id, pubId: pubEvents.pubId, title: pubEvents.title, createdAt: pubEvents.createdAt })
+          .from(pubEvents).orderBy(desc(pubEvents.createdAt)).limit(perType);
+        for (const e of recentPubEvents) {
+          activities.push({ type: 'event', action: 'Nuovo evento pub', name: e.title, time: e.createdAt, icon: 'event', itemId: e.pubId, link: `/pub/${e.pubId}` });
+        }
 
-      const recentBreweryEvents = await db.select({ id: breweryEvents.id, title: breweryEvents.title, createdAt: breweryEvents.createdAt })
-        .from(breweryEvents).orderBy(desc(breweryEvents.createdAt)).limit(3);
-      for (const e of recentBreweryEvents) {
-        activities.push({ type: 'event', action: 'Nuovo evento birrificio', name: e.title, time: e.createdAt, icon: 'event' });
+        const recentBreweryEvents = await db.select({ id: breweryEvents.id, breweryId: breweryEvents.breweryId, title: breweryEvents.title, createdAt: breweryEvents.createdAt })
+          .from(breweryEvents).orderBy(desc(breweryEvents.createdAt)).limit(perType);
+        for (const e of recentBreweryEvents) {
+          activities.push({ type: 'event', action: 'Nuovo evento birrificio', name: e.title, time: e.createdAt, icon: 'event', itemId: e.breweryId, link: `/brewery/${e.breweryId}` });
+        }
       }
 
       activities.sort((a, b) => {
@@ -2703,7 +2719,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return tb - ta;
       });
 
-      res.json(activities.slice(0, 10));
+      res.json(activities.slice(0, limit));
     } catch (error) {
       console.error("Error fetching recent activity:", error);
       res.status(500).json({ message: "Failed to fetch recent activity" });
