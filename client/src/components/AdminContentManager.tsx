@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback } from "react";
+import { useState, useRef, useCallback, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
@@ -8,11 +8,14 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
-import { Search, Plus, Trash2, BeerIcon, Building2, MapPin, ExternalLink, Loader2, Star } from "lucide-react";
+import { Search, Plus, Trash2, BeerIcon, Building2, MapPin, ExternalLink, Loader2, ChevronDown } from "lucide-react";
 import { Link } from "wouter";
 import { GlutenFreeSmallBadge, AlcoholFreeBadge } from "@/components/beer-badges";
+import { ImageUpload } from "@/components/image-upload";
+import { AddressAutocomplete } from "@/components/AddressAutocomplete";
 
 interface AdminContentManagerProps {
   type: 'beers' | 'breweries' | 'pubs';
@@ -23,6 +26,490 @@ const SEARCH_ENDPOINTS: Record<string, string> = {
   breweries: '/api/admin/breweries/search',
   pubs: '/api/admin/pubs/search',
 };
+
+const BEER_STYLES = [
+  "IPA", "APA", "NEIPA", "Double IPA", "Triple IPA", "Session IPA", "West Coast IPA",
+  "Lager", "Pilsner", "Helles", "Märzen", "Bock", "Doppelbock", "Dunkel",
+  "Weiss", "Hefeweizen", "Weizenbock", "Kristallweizen",
+  "Stout", "Imperial Stout", "Milk Stout", "Oatmeal Stout", "Dry Stout",
+  "Porter", "Baltic Porter", "Robust Porter",
+  "Saison", "Farmhouse Ale", "Grisette",
+  "Belgian Ale", "Blanche", "Witbier", "Dubbel", "Tripel", "Quadrupel", "Belgian Strong",
+  "Pale Ale", "Amber Ale", "Red Ale", "Golden Ale", "Blonde Ale", "Cream Ale",
+  "Bitter", "ESB", "Mild",
+  "Barley Wine", "English Barley Wine",
+  "Sour", "Gose", "Berliner Weisse", "Lambic", "Gueuze", "Flanders Red", "Kriek",
+  "Kölsch", "Altbier", "Rauchbier", "Schwarzbier",
+  "Scottish Ale", "Scotch Ale", "Brown Ale", "English Brown Ale",
+  "Wheat Beer", "American Wheat", "Fruit Beer", "Spiced Beer", "Honey Beer",
+  "Smoked Beer", "Pumpkin Ale", "Italian Grape Ale", "Italian Pilsner",
+];
+
+const BEER_COLORS = [
+  "dorata", "ambrata", "rame", "marrone", "nera", "bianca", "rubino",
+  "paglierina", "oro", "bronzo", "nocciola", "ebano",
+];
+
+function BrewerySearchField({ onSelect }: { onSelect: (id: number, name: string) => void }) {
+  const [query, setQuery] = useState("");
+  const [selectedName, setSelectedName] = useState("");
+  const [results, setResults] = useState<any[]>([]);
+  const [showResults, setShowResults] = useState(false);
+
+  const searchBreweries = async (q: string) => {
+    if (q.length < 2) { setResults([]); return; }
+    try {
+      const res = await fetch(`/api/admin/breweries/search?q=${encodeURIComponent(q)}&limit=10`, { credentials: 'include' });
+      const data = await res.json();
+      setResults(data);
+      setShowResults(true);
+    } catch {}
+  };
+
+  return (
+    <div className="relative">
+      <Label htmlFor="brewerySearch">Birrificio *</Label>
+      <Input
+        id="brewerySearch"
+        value={selectedName || query}
+        onChange={(e) => { setSelectedName(""); setQuery(e.target.value); searchBreweries(e.target.value); }}
+        onFocus={() => { if (results.length > 0) setShowResults(true); }}
+        onBlur={() => setTimeout(() => setShowResults(false), 200)}
+        placeholder="Cerca birrificio per nome..."
+        required
+        className="mt-1"
+      />
+      {showResults && results.length > 0 && (
+        <div className="absolute z-50 w-full mt-1 bg-white dark:bg-gray-800 border rounded-md shadow-xl max-h-60 overflow-y-auto">
+          {results.map((brewery) => (
+            <button
+              key={brewery.id}
+              type="button"
+              onClick={() => { onSelect(brewery.id, brewery.name); setSelectedName(brewery.name); setQuery(""); setShowResults(false); setResults([]); }}
+              className="w-full px-3 py-2.5 text-left hover:bg-amber-50 dark:hover:bg-gray-700 border-b last:border-b-0 flex items-center gap-3 transition-colors"
+            >
+              {brewery.logoUrl ? (
+                <img src={brewery.logoUrl} alt="" className="w-8 h-8 rounded-full object-cover flex-shrink-0" />
+              ) : (
+                <div className="w-8 h-8 rounded-full bg-amber-100 dark:bg-amber-900 flex items-center justify-center flex-shrink-0">
+                  <Building2 className="w-4 h-4 text-amber-600" />
+                </div>
+              )}
+              <div>
+                <div className="font-medium text-sm">{brewery.name}</div>
+                <div className="text-xs text-gray-500">{brewery.location}{brewery.country ? `, ${brewery.country}` : ''}</div>
+              </div>
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function BeerForm({ onSubmit, isPending }: { onSubmit: (data: any) => void; isPending: boolean }) {
+  const [name, setName] = useState("");
+  const [breweryId, setBreweryId] = useState<number | null>(null);
+  const [style, setStyle] = useState("");
+  const [styleSearch, setStyleSearch] = useState("");
+  const [styleDropdownOpen, setStyleDropdownOpen] = useState(false);
+  const [abv, setAbv] = useState("");
+  const [ibu, setIbu] = useState("");
+  const [color, setColor] = useState("");
+  const [colorDropdownOpen, setColorDropdownOpen] = useState(false);
+  const [description, setDescription] = useState("");
+  const [imageUrl, setImageUrl] = useState<string | null>(null);
+  const [logoUrl, setLogoUrl] = useState<string | null>(null);
+  const [isGlutenFree, setIsGlutenFree] = useState(false);
+  const [isAlcoholFree, setIsAlcoholFree] = useState(false);
+  const [isBottled, setIsBottled] = useState(false);
+
+  const filteredStyles = useMemo(() => {
+    const q = styleSearch.toLowerCase();
+    return q ? BEER_STYLES.filter(s => s.toLowerCase().includes(q)) : BEER_STYLES;
+  }, [styleSearch]);
+
+  const filteredColors = useMemo(() => {
+    return color ? BEER_COLORS.filter(c => c.toLowerCase().includes(color.toLowerCase())) : BEER_COLORS;
+  }, [color]);
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!breweryId) { alert("Seleziona un birrificio"); return; }
+    const data: any = {
+      name,
+      breweryId,
+      style,
+      abv: abv ? parseFloat(abv) : null,
+      ibu: ibu ? parseInt(ibu) : null,
+      color: color || null,
+      description: description || null,
+      imageUrl: imageUrl || null,
+      logoUrl: logoUrl || null,
+      isGlutenFree,
+      isAlcoholFree,
+      isBottled,
+    };
+    onSubmit(data);
+  };
+
+  return (
+    <form onSubmit={handleSubmit} className="space-y-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="md:col-span-2">
+          <ImageUpload
+            label="Immagine Birra"
+            description="Foto della birra o etichetta · consigliato 800×600 px"
+            currentImageUrl={imageUrl || undefined}
+            onImageChange={setImageUrl}
+            folder="beers"
+            aspectRatio="landscape"
+            maxSize={5}
+          />
+        </div>
+
+        <div className="md:col-span-2">
+          <Label>Nome Birra *</Label>
+          <Input value={name} onChange={e => setName(e.target.value)} required className="mt-1" placeholder="Es. Golden Ale Artigianale" />
+        </div>
+
+        <div className="md:col-span-2">
+          <BrewerySearchField onSelect={(id) => setBreweryId(id)} />
+        </div>
+
+        <div className="md:col-span-2 relative">
+          <Label>Stile *</Label>
+          <Input
+            value={styleDropdownOpen ? styleSearch : style}
+            onChange={e => { setStyleSearch(e.target.value); setStyle(e.target.value); setStyleDropdownOpen(true); }}
+            onFocus={() => { setStyleSearch(style); setStyleDropdownOpen(true); }}
+            onBlur={() => setTimeout(() => setStyleDropdownOpen(false), 200)}
+            required
+            className="mt-1"
+            placeholder="Cerca o digita stile..."
+            autoComplete="off"
+          />
+          {styleDropdownOpen && filteredStyles.length > 0 && (
+            <div className="absolute z-50 w-full mt-1 max-h-40 overflow-y-auto border rounded-md bg-white dark:bg-gray-800 shadow-lg">
+              {filteredStyles.slice(0, 12).map(s => (
+                <div key={s} onMouseDown={e => { e.preventDefault(); setStyle(s); setStyleSearch(""); setStyleDropdownOpen(false); }}
+                  className="px-3 py-1.5 text-sm hover:bg-amber-50 dark:hover:bg-amber-900/20 cursor-pointer">{s}</div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        <div>
+          <Label>ABV % *</Label>
+          <Input value={abv} onChange={e => setAbv(e.target.value)} type="number" step="0.1" min="0" max="99" required className="mt-1" placeholder="Es. 5.5" />
+        </div>
+        <div>
+          <Label>IBU</Label>
+          <Input value={ibu} onChange={e => setIbu(e.target.value)} type="number" min="0" className="mt-1" placeholder="Es. 40" />
+        </div>
+
+        <div className="relative">
+          <Label>Colore</Label>
+          <Input
+            value={color}
+            onChange={e => { setColor(e.target.value); setColorDropdownOpen(true); }}
+            onFocus={() => setColorDropdownOpen(true)}
+            onBlur={() => setTimeout(() => setColorDropdownOpen(false), 200)}
+            className="mt-1"
+            placeholder="Es. dorata, ambrata..."
+            autoComplete="off"
+          />
+          {colorDropdownOpen && filteredColors.length > 0 && (
+            <div className="absolute z-50 w-full mt-1 max-h-36 overflow-y-auto border rounded-md bg-white dark:bg-gray-800 shadow-lg">
+              {filteredColors.map(c => (
+                <div key={c} onMouseDown={e => { e.preventDefault(); setColor(c); setColorDropdownOpen(false); }}
+                  className="px-3 py-1.5 text-sm hover:bg-amber-50 dark:hover:bg-amber-900/20 cursor-pointer capitalize">{c}</div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        <div>
+          <ImageUpload
+            label="Logo / Etichetta"
+            description="Logo piccolo o etichetta"
+            currentImageUrl={logoUrl || undefined}
+            onImageChange={setLogoUrl}
+            folder="beers"
+            aspectRatio="square"
+            maxSize={2}
+          />
+        </div>
+
+        <div className="md:col-span-2">
+          <Label>Descrizione</Label>
+          <Textarea value={description} onChange={e => setDescription(e.target.value)} className="mt-1" rows={3} placeholder="Descrivi aromi, gusto, storia della birra..." />
+        </div>
+
+        <div className="md:col-span-2 flex flex-wrap gap-6 pt-1">
+          <label className="flex items-center gap-2 cursor-pointer">
+            <Checkbox checked={isGlutenFree} onCheckedChange={v => setIsGlutenFree(!!v)} />
+            <span className="text-sm font-medium">Senza glutine</span>
+          </label>
+          <label className="flex items-center gap-2 cursor-pointer">
+            <Checkbox checked={isAlcoholFree} onCheckedChange={v => setIsAlcoholFree(!!v)} />
+            <span className="text-sm font-medium">Analcolica</span>
+          </label>
+          <label className="flex items-center gap-2 cursor-pointer">
+            <Checkbox checked={isBottled} onCheckedChange={v => setIsBottled(!!v)} />
+            <span className="text-sm font-medium">Disponibile in bottiglia</span>
+          </label>
+        </div>
+      </div>
+
+      <Button type="submit" className="w-full bg-amber-500 hover:bg-amber-600" disabled={isPending}>
+        {isPending ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Creazione...</> : <><Plus className="w-4 h-4 mr-2" />Crea Birra</>}
+      </Button>
+    </form>
+  );
+}
+
+function BreweryForm({ onSubmit, isPending }: { onSubmit: (data: any) => void; isPending: boolean }) {
+  const [name, setName] = useState("");
+  const [location, setLocation] = useState("");
+  const [region, setRegion] = useState("");
+  const [country, setCountry] = useState("Italia");
+  const [websiteUrl, setWebsiteUrl] = useState("");
+  const [phone, setPhone] = useState("");
+  const [vatNumber, setVatNumber] = useState("");
+  const [description, setDescription] = useState("");
+  const [logoUrl, setLogoUrl] = useState<string | null>(null);
+  const [coverImageUrl, setCoverImageUrl] = useState<string | null>(null);
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    onSubmit({
+      name,
+      location,
+      region,
+      country,
+      websiteUrl: websiteUrl || null,
+      phone: phone || null,
+      vatNumber: vatNumber || null,
+      description: description || null,
+      logoUrl: logoUrl || null,
+      coverImageUrl: coverImageUrl || null,
+    });
+  };
+
+  return (
+    <form onSubmit={handleSubmit} className="space-y-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <ImageUpload
+            label="Logo Birrificio"
+            description="Logo quadrato · 400×400 px consigliato"
+            currentImageUrl={logoUrl || undefined}
+            onImageChange={setLogoUrl}
+            folder="brewery-logos"
+            aspectRatio="square"
+            maxSize={3}
+          />
+        </div>
+        <div>
+          <ImageUpload
+            label="Immagine di Copertina"
+            description="Banner orizzontale · 1200×400 px"
+            currentImageUrl={coverImageUrl || undefined}
+            onImageChange={setCoverImageUrl}
+            folder="brewery-covers"
+            aspectRatio="landscape"
+            maxSize={8}
+          />
+        </div>
+
+        <div className="md:col-span-2">
+          <Label>Nome Birrificio *</Label>
+          <Input value={name} onChange={e => setName(e.target.value)} required className="mt-1" placeholder="Es. Birrificio Artigianale Roma" />
+        </div>
+
+        <div className="md:col-span-2">
+          <Label>Località *</Label>
+          <AddressAutocomplete
+            value={location}
+            onAddressSelect={(details) => {
+              setLocation(details.formattedAddress || details.city || "");
+              if (details.region) setRegion(details.region);
+              if (details.country) setCountry(details.country);
+            }}
+            placeholder="Cerca città o indirizzo..."
+            countryRestriction={null}
+          />
+          <p className="text-xs text-gray-400 mt-1">Seleziona dall'elenco o compila manualmente Regione e Paese qui sotto</p>
+        </div>
+
+        <div>
+          <Label>Regione</Label>
+          <Input value={region} onChange={e => setRegion(e.target.value)} className="mt-1" placeholder="Es. Lazio" />
+        </div>
+        <div>
+          <Label>Paese</Label>
+          <Input value={country} onChange={e => setCountry(e.target.value)} className="mt-1" placeholder="Es. Italia" />
+        </div>
+
+        <div>
+          <Label>Sito Web</Label>
+          <Input value={websiteUrl} onChange={e => setWebsiteUrl(e.target.value)} type="url" className="mt-1" placeholder="https://birrificio.it" />
+        </div>
+        <div>
+          <Label>Telefono</Label>
+          <Input value={phone} onChange={e => setPhone(e.target.value)} type="tel" className="mt-1" placeholder="+39 06 1234567" />
+        </div>
+
+        <div className="md:col-span-2">
+          <Label>Partita IVA</Label>
+          <Input value={vatNumber} onChange={e => setVatNumber(e.target.value)} className="mt-1" placeholder="IT12345678901" />
+        </div>
+
+        <div className="md:col-span-2">
+          <Label>Descrizione</Label>
+          <Textarea value={description} onChange={e => setDescription(e.target.value)} className="mt-1" rows={3} placeholder="Storia, filosofia e caratteristiche del birrificio..." />
+        </div>
+      </div>
+
+      <Button type="submit" className="w-full bg-amber-500 hover:bg-amber-600" disabled={isPending}>
+        {isPending ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Creazione...</> : <><Plus className="w-4 h-4 mr-2" />Crea Birrificio</>}
+      </Button>
+    </form>
+  );
+}
+
+function PubForm({ onSubmit, isPending }: { onSubmit: (data: any) => void; isPending: boolean }) {
+  const [name, setName] = useState("");
+  const [address, setAddress] = useState("");
+  const [city, setCity] = useState("");
+  const [region, setRegion] = useState("");
+  const [postalCode, setPostalCode] = useState("");
+  const [phone, setPhone] = useState("");
+  const [email, setEmail] = useState("");
+  const [websiteUrl, setWebsiteUrl] = useState("");
+  const [description, setDescription] = useState("");
+  const [logoUrl, setLogoUrl] = useState<string | null>(null);
+  const [coverImageUrl, setCoverImageUrl] = useState<string | null>(null);
+  const [facebookUrl, setFacebookUrl] = useState("");
+  const [instagramUrl, setInstagramUrl] = useState("");
+  const [tiktokUrl, setTiktokUrl] = useState("");
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    onSubmit({
+      name,
+      address,
+      city,
+      region,
+      postalCode: postalCode || null,
+      phone: phone || null,
+      email: email || null,
+      websiteUrl: websiteUrl || null,
+      description: description || null,
+      logoUrl: logoUrl || null,
+      coverImageUrl: coverImageUrl || null,
+      facebookUrl: facebookUrl || null,
+      instagramUrl: instagramUrl || null,
+      tiktokUrl: tiktokUrl || null,
+    });
+  };
+
+  return (
+    <form onSubmit={handleSubmit} className="space-y-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <ImageUpload
+            label="Logo / Avatar"
+            description="Logo quadrato · 400×400 px"
+            currentImageUrl={logoUrl || undefined}
+            onImageChange={setLogoUrl}
+            folder="pub-logos"
+            aspectRatio="square"
+            maxSize={3}
+          />
+        </div>
+        <div>
+          <ImageUpload
+            label="Immagine di Copertina"
+            description="Banner orizzontale · 1200×630 px"
+            currentImageUrl={coverImageUrl || undefined}
+            onImageChange={setCoverImageUrl}
+            folder="pub-covers"
+            aspectRatio="landscape"
+            maxSize={8}
+          />
+        </div>
+
+        <div className="md:col-span-2">
+          <Label>Nome Pub *</Label>
+          <Input value={name} onChange={e => setName(e.target.value)} required className="mt-1" placeholder="Es. The Craft Beer Palace" />
+        </div>
+
+        <div className="md:col-span-2">
+          <Label>Indirizzo *</Label>
+          <AddressAutocomplete
+            value={address}
+            onAddressSelect={(details) => {
+              setAddress(details.formattedAddress || "");
+              if (details.city) setCity(details.city);
+              if (details.region) setRegion(details.region);
+              if (details.postalCode) setPostalCode(details.postalCode);
+            }}
+            placeholder="Cerca indirizzo..."
+            countryRestriction={null}
+          />
+          <p className="text-xs text-gray-400 mt-1">Seleziona dall'elenco — Città, Regione e CAP si compilano automaticamente</p>
+        </div>
+
+        <div>
+          <Label>Città *</Label>
+          <Input value={city} onChange={e => setCity(e.target.value)} required className="mt-1" placeholder="Es. Roma" />
+        </div>
+        <div>
+          <Label>Regione</Label>
+          <Input value={region} onChange={e => setRegion(e.target.value)} className="mt-1" placeholder="Es. Lazio" />
+        </div>
+
+        <div>
+          <Label>CAP</Label>
+          <Input value={postalCode} onChange={e => setPostalCode(e.target.value)} className="mt-1" placeholder="00100" />
+        </div>
+        <div>
+          <Label>Telefono</Label>
+          <Input value={phone} onChange={e => setPhone(e.target.value)} type="tel" className="mt-1" placeholder="+39 06 1234567" />
+        </div>
+
+        <div>
+          <Label>Email</Label>
+          <Input value={email} onChange={e => setEmail(e.target.value)} type="email" className="mt-1" placeholder="info@pub.it" />
+        </div>
+        <div>
+          <Label>Sito Web</Label>
+          <Input value={websiteUrl} onChange={e => setWebsiteUrl(e.target.value)} type="url" className="mt-1" placeholder="https://pub.it" />
+        </div>
+
+        <div className="md:col-span-2">
+          <Label>Descrizione</Label>
+          <Textarea value={description} onChange={e => setDescription(e.target.value)} className="mt-1" rows={3} placeholder="Descrivi l'atmosfera, specialità, storia del locale..." />
+        </div>
+
+        <div className="md:col-span-2">
+          <p className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Social Media (opzionali)</p>
+          <div className="grid grid-cols-1 gap-2">
+            <Input value={instagramUrl} onChange={e => setInstagramUrl(e.target.value)} placeholder="Instagram: https://instagram.com/ilpub" className="text-sm" />
+            <Input value={facebookUrl} onChange={e => setFacebookUrl(e.target.value)} placeholder="Facebook: https://facebook.com/ilpub" className="text-sm" />
+            <Input value={tiktokUrl} onChange={e => setTiktokUrl(e.target.value)} placeholder="TikTok: https://tiktok.com/@ilpub" className="text-sm" />
+          </div>
+        </div>
+      </div>
+
+      <Button type="submit" className="w-full bg-blue-500 hover:bg-blue-600" disabled={isPending}>
+        {isPending ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Creazione...</> : <><Plus className="w-4 h-4 mr-2" />Crea Pub</>}
+      </Button>
+    </form>
+  );
+}
 
 export default function AdminContentManager({ type }: AdminContentManagerProps) {
   const { toast } = useToast();
@@ -57,8 +544,7 @@ export default function AdminContentManager({ type }: AdminContentManagerProps) 
 
   const deleteMutation = useMutation({
     mutationFn: async (id: number) => {
-      const endpoint = `/api/admin/${type}/${id}`;
-      return await apiRequest(endpoint, { method: "DELETE" });
+      return await apiRequest(`/api/admin/${type}/${id}`, { method: "DELETE" });
     },
     onSuccess: (data: any) => {
       toast({ title: "Eliminato", description: data?.message || "Elemento eliminato con successo" });
@@ -86,148 +572,6 @@ export default function AdminContentManager({ type }: AdminContentManagerProps) 
       toast({ title: "Errore", description: "Impossibile creare l'elemento", variant: "destructive" });
     },
   });
-
-  const handleCreate = (formData: FormData) => {
-    const data: any = {};
-    for (const [key, value] of formData.entries()) {
-      if (value !== '') data[key] = value;
-    }
-    if (type === 'beers') {
-      if (data.abv) data.abv = parseFloat(data.abv);
-      if (data.ibu) data.ibu = parseInt(data.ibu);
-      else data.ibu = null;
-      if (data.breweryId) data.breweryId = parseInt(data.breweryId);
-    } else if (type === 'pubs') {
-      if (data.latitude) data.latitude = parseFloat(data.latitude);
-      if (data.longitude) data.longitude = parseFloat(data.longitude);
-    }
-    createMutation.mutate(data);
-  };
-
-  const BrewerySearchField = () => {
-    const [query, setQuery] = useState("");
-    const [selectedId, setSelectedId] = useState<number | null>(null);
-    const [results, setResults] = useState<any[]>([]);
-    const [showResults, setShowResults] = useState(false);
-
-    const searchBreweries = async (q: string) => {
-      if (q.length < 2) { setResults([]); return; }
-      try {
-        const res = await fetch(`/api/admin/breweries/search?q=${encodeURIComponent(q)}&limit=10`, { credentials: 'include' });
-        const data = await res.json();
-        setResults(data);
-        setShowResults(true);
-      } catch {}
-    };
-
-    return (
-      <div className="relative">
-        <Label htmlFor="brewerySearch">Birrificio *</Label>
-        <Input
-          id="brewerySearch"
-          value={query}
-          onChange={(e) => { setQuery(e.target.value); searchBreweries(e.target.value); }}
-          onFocus={() => { if (results.length > 0) setShowResults(true); }}
-          onBlur={() => setTimeout(() => setShowResults(false), 200)}
-          placeholder="Cerca birrificio per nome..."
-          required
-          className="mt-1"
-        />
-        <input type="hidden" name="breweryId" value={selectedId ?? ""} required />
-        {showResults && results.length > 0 && (
-          <div className="absolute z-50 w-full mt-1 bg-white dark:bg-gray-800 border rounded-md shadow-xl max-h-60 overflow-y-auto">
-            {results.map((brewery) => (
-              <button
-                key={brewery.id}
-                type="button"
-                onClick={() => { setSelectedId(brewery.id); setQuery(brewery.name); setShowResults(false); }}
-                className="w-full px-3 py-2.5 text-left hover:bg-amber-50 dark:hover:bg-gray-700 border-b last:border-b-0 flex items-center gap-3 transition-colors"
-              >
-                {brewery.logoUrl ? (
-                  <img src={brewery.logoUrl} alt="" className="w-8 h-8 rounded-full object-cover flex-shrink-0" />
-                ) : (
-                  <div className="w-8 h-8 rounded-full bg-amber-100 dark:bg-amber-900 flex items-center justify-center flex-shrink-0">
-                    <Building2 className="w-4 h-4 text-amber-600" />
-                  </div>
-                )}
-                <div>
-                  <div className="font-medium text-sm">{brewery.name}</div>
-                  <div className="text-xs text-gray-500">{brewery.location}{brewery.country ? `, ${brewery.country}` : ''}</div>
-                </div>
-              </button>
-            ))}
-          </div>
-        )}
-      </div>
-    );
-  };
-
-  const BeerForm = () => {
-    const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
-      e.preventDefault();
-      handleCreate(new FormData(e.currentTarget));
-    };
-    return (
-      <form onSubmit={handleSubmit} className="space-y-4">
-        <div><Label>Nome Birra *</Label><Input name="name" required className="mt-1" placeholder="Es. Golden Ale" /></div>
-        <BrewerySearchField />
-        <div><Label>Stile *</Label><Input name="style" required className="mt-1" placeholder="Es. IPA, Stout, Lager..." /></div>
-        <div className="grid grid-cols-2 gap-4">
-          <div><Label>ABV *</Label><Input name="abv" type="number" step="0.1" min="0" max="99" required className="mt-1" placeholder="Es. 5.5" /></div>
-          <div><Label>IBU</Label><Input name="ibu" type="number" min="0" className="mt-1" placeholder="Es. 40" /></div>
-        </div>
-        <div><Label>Colore *</Label><Input name="color" required className="mt-1" placeholder="Es. dorata, ambrata, nera" /></div>
-        <div><Label>URL Immagine</Label><Input name="imageUrl" type="url" className="mt-1" placeholder="https://..." /></div>
-        <div><Label>Descrizione</Label><Textarea name="description" className="mt-1" rows={3} /></div>
-        <Button type="submit" className="w-full bg-amber-500 hover:bg-amber-600" disabled={createMutation.isPending}>
-          {createMutation.isPending ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Creazione...</> : <><Plus className="w-4 h-4 mr-2" />Crea Birra</>}
-        </Button>
-      </form>
-    );
-  };
-
-  const BreweryForm = () => {
-    const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
-      e.preventDefault();
-      handleCreate(new FormData(e.currentTarget));
-    };
-    return (
-      <form onSubmit={handleSubmit} className="space-y-4">
-        <div><Label>Nome Birrificio *</Label><Input name="name" required className="mt-1" /></div>
-        <div><Label>Località *</Label><Input name="location" required className="mt-1" placeholder="Es. Bologna, BO" /></div>
-        <div className="grid grid-cols-2 gap-4">
-          <div><Label>Regione</Label><Input name="region" className="mt-1" placeholder="Es. Emilia-Romagna" /></div>
-          <div><Label>Paese</Label><Input name="country" className="mt-1" placeholder="Es. Italy" /></div>
-        </div>
-        <div><Label>URL Sito Web</Label><Input name="website" type="url" className="mt-1" placeholder="https://..." /></div>
-        <div><Label>Descrizione</Label><Textarea name="description" className="mt-1" rows={3} /></div>
-        <Button type="submit" className="w-full bg-amber-500 hover:bg-amber-600" disabled={createMutation.isPending}>
-          {createMutation.isPending ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Creazione...</> : <><Plus className="w-4 h-4 mr-2" />Crea Birrificio</>}
-        </Button>
-      </form>
-    );
-  };
-
-  const PubForm = () => {
-    const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
-      e.preventDefault();
-      handleCreate(new FormData(e.currentTarget));
-    };
-    return (
-      <form onSubmit={handleSubmit} className="space-y-4">
-        <div><Label>Nome Pub *</Label><Input name="name" required className="mt-1" /></div>
-        <div><Label>Indirizzo *</Label><Input name="address" required className="mt-1" /></div>
-        <div className="grid grid-cols-2 gap-4">
-          <div><Label>Città *</Label><Input name="city" required className="mt-1" /></div>
-          <div><Label>Telefono</Label><Input name="phone" type="tel" className="mt-1" /></div>
-        </div>
-        <div><Label>Descrizione</Label><Textarea name="description" className="mt-1" rows={3} /></div>
-        <Button type="submit" className="w-full bg-blue-500 hover:bg-blue-600" disabled={createMutation.isPending}>
-          {createMutation.isPending ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Creazione...</> : <><Plus className="w-4 h-4 mr-2" />Crea Pub</>}
-        </Button>
-      </form>
-    );
-  };
 
   const getItemLink = (item: any) => {
     if (type === 'beers') return `/beer/${item.id}`;
@@ -410,14 +754,22 @@ export default function AdminContentManager({ type }: AdminContentManagerProps) 
       </Card>
 
       <Dialog open={createDialogOpen} onOpenChange={setCreateDialogOpen}>
-        <DialogContent className="max-w-xl max-h-[85vh] overflow-y-auto">
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Plus className="w-5 h-5" />
-              Aggiungi {type === 'beers' ? 'Nuova Birra' : type === 'breweries' ? 'Nuovo Birrificio' : 'Nuovo Pub'}
+              {type === 'beers' ? 'Aggiungi Nuova Birra' : type === 'breweries' ? 'Aggiungi Nuovo Birrificio' : 'Aggiungi Nuovo Pub'}
             </DialogTitle>
           </DialogHeader>
-          {type === 'beers' ? <BeerForm /> : type === 'breweries' ? <BreweryForm /> : <PubForm />}
+          {type === 'beers' && (
+            <BeerForm onSubmit={data => createMutation.mutate(data)} isPending={createMutation.isPending} />
+          )}
+          {type === 'breweries' && (
+            <BreweryForm onSubmit={data => createMutation.mutate(data)} isPending={createMutation.isPending} />
+          )}
+          {type === 'pubs' && (
+            <PubForm onSubmit={data => createMutation.mutate(data)} isPending={createMutation.isPending} />
+          )}
         </DialogContent>
       </Dialog>
 
