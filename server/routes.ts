@@ -12,6 +12,7 @@ import { insertPubSchema, insertTapListSchema, insertBottleListSchema, insertMen
 import { z } from "zod";
 import webpush from "web-push";
 import { initVapid, sendPushToUser, sendPushToUserImmediate, sendPushToAdmins } from "./push-utils";
+import { testSmtpConnection } from "./email";
 
 const VAPID_PUBLIC_KEY = process.env.VAPID_PUBLIC_KEY || '';
 
@@ -29,6 +30,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   } catch (error: any) {
     console.error("Failed to initialize authentication:", error.message);
   }
+
+  // Test SMTP connection at startup
+  testSmtpConnection();
 
   // Register admin routes
   registerAdminRoutes(app);
