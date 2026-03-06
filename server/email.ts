@@ -9,8 +9,11 @@ function createTransport() {
 
   if (!host || !user || !pass) {
     console.warn("[email] SMTP not configured — emails will be logged to console only");
+    console.warn(`[email] Missing vars: host=${!!host} user=${!!user} pass=${!!pass}`);
     return null;
   }
+
+  console.log(`[email] SMTP config: host=${host} port=${port} secure=${secure} user=${user}`);
 
   return nodemailer.createTransport({
     host,
@@ -19,6 +22,17 @@ function createTransport() {
     auth: { user, pass },
     tls: { rejectUnauthorized: false },
   });
+}
+
+export async function testSmtpConnection(): Promise<void> {
+  const transport = createTransport();
+  if (!transport) return;
+  try {
+    await transport.verify();
+    console.log("[email] ✓ SMTP connection verified successfully");
+  } catch (err: any) {
+    console.error("[email] ✗ SMTP connection FAILED:", err.message);
+  }
 }
 
 const FROM_ADDRESS = process.env.SMTP_FROM || "noreply@fermenta.to";
