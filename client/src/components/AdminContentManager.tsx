@@ -118,11 +118,8 @@ function BeerForm({ onSubmit, isPending }: { onSubmit: (data: any) => void; isPe
   const [color, setColor] = useState("");
   const [colorDropdownOpen, setColorDropdownOpen] = useState(false);
   const [description, setDescription] = useState("");
-  const [imageUrl, setImageUrl] = useState<string | null>(null);
-  const [logoUrl, setLogoUrl] = useState<string | null>(null);
   const [isGlutenFree, setIsGlutenFree] = useState(false);
   const [isAlcoholFree, setIsAlcoholFree] = useState(false);
-  const [isBottled, setIsBottled] = useState(false);
 
   const filteredStyles = useMemo(() => {
     const q = styleSearch.toLowerCase();
@@ -144,11 +141,8 @@ function BeerForm({ onSubmit, isPending }: { onSubmit: (data: any) => void; isPe
       ibu: ibu ? parseInt(ibu) : null,
       color: color || null,
       description: description || null,
-      imageUrl: imageUrl || null,
-      logoUrl: logoUrl || null,
       isGlutenFree,
       isAlcoholFree,
-      isBottled,
     };
     onSubmit(data);
   };
@@ -156,18 +150,6 @@ function BeerForm({ onSubmit, isPending }: { onSubmit: (data: any) => void; isPe
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div className="md:col-span-2">
-          <ImageUpload
-            label="Immagine Birra"
-            description="Foto della birra o etichetta · consigliato 800×600 px"
-            currentImageUrl={imageUrl || undefined}
-            onImageChange={setImageUrl}
-            folder="beers"
-            aspectRatio="landscape"
-            maxSize={5}
-          />
-        </div>
-
         <div className="md:col-span-2">
           <Label>Nome Birra *</Label>
           <Input value={name} onChange={e => setName(e.target.value)} required className="mt-1" placeholder="Es. Golden Ale Artigianale" />
@@ -199,6 +181,17 @@ function BeerForm({ onSubmit, isPending }: { onSubmit: (data: any) => void; isPe
           )}
         </div>
 
+        <div className="md:col-span-2 flex flex-wrap gap-6 pt-1">
+          <label className="flex items-center gap-2 cursor-pointer">
+            <Checkbox checked={isGlutenFree} onCheckedChange={v => setIsGlutenFree(!!v)} />
+            <span className="text-sm font-medium">Senza glutine</span>
+          </label>
+          <label className="flex items-center gap-2 cursor-pointer">
+            <Checkbox checked={isAlcoholFree} onCheckedChange={v => setIsAlcoholFree(!!v)} />
+            <span className="text-sm font-medium">Analcolica</span>
+          </label>
+        </div>
+
         <div>
           <Label>ABV % *</Label>
           <Input value={abv} onChange={e => setAbv(e.target.value)} type="number" step="0.1" min="0" max="99" required className="mt-1" placeholder="Es. 5.5" />
@@ -208,7 +201,7 @@ function BeerForm({ onSubmit, isPending }: { onSubmit: (data: any) => void; isPe
           <Input value={ibu} onChange={e => setIbu(e.target.value)} type="number" min="0" className="mt-1" placeholder="Es. 40" />
         </div>
 
-        <div className="relative">
+        <div className="md:col-span-2 relative">
           <Label>Colore</Label>
           <Input
             value={color}
@@ -229,36 +222,9 @@ function BeerForm({ onSubmit, isPending }: { onSubmit: (data: any) => void; isPe
           )}
         </div>
 
-        <div>
-          <ImageUpload
-            label="Logo / Etichetta"
-            description="Logo piccolo o etichetta"
-            currentImageUrl={logoUrl || undefined}
-            onImageChange={setLogoUrl}
-            folder="beers"
-            aspectRatio="square"
-            maxSize={2}
-          />
-        </div>
-
         <div className="md:col-span-2">
           <Label>Descrizione</Label>
           <Textarea value={description} onChange={e => setDescription(e.target.value)} className="mt-1" rows={3} placeholder="Descrivi aromi, gusto, storia della birra..." />
-        </div>
-
-        <div className="md:col-span-2 flex flex-wrap gap-6 pt-1">
-          <label className="flex items-center gap-2 cursor-pointer">
-            <Checkbox checked={isGlutenFree} onCheckedChange={v => setIsGlutenFree(!!v)} />
-            <span className="text-sm font-medium">Senza glutine</span>
-          </label>
-          <label className="flex items-center gap-2 cursor-pointer">
-            <Checkbox checked={isAlcoholFree} onCheckedChange={v => setIsAlcoholFree(!!v)} />
-            <span className="text-sm font-medium">Analcolica</span>
-          </label>
-          <label className="flex items-center gap-2 cursor-pointer">
-            <Checkbox checked={isBottled} onCheckedChange={v => setIsBottled(!!v)} />
-            <span className="text-sm font-medium">Disponibile in bottiglia</span>
-          </label>
         </div>
       </div>
 
@@ -385,6 +351,7 @@ function PubForm({ onSubmit, isPending }: { onSubmit: (data: any) => void; isPen
   const [city, setCity] = useState("");
   const [region, setRegion] = useState("");
   const [postalCode, setPostalCode] = useState("");
+  const [vatNumber, setVatNumber] = useState("");
   const [phone, setPhone] = useState("");
   const [email, setEmail] = useState("");
   const [websiteUrl, setWebsiteUrl] = useState("");
@@ -403,6 +370,7 @@ function PubForm({ onSubmit, isPending }: { onSubmit: (data: any) => void; isPen
       city,
       region,
       postalCode: postalCode || null,
+      vatNumber: vatNumber || null,
       phone: phone || null,
       email: email || null,
       websiteUrl: websiteUrl || null,
@@ -475,6 +443,11 @@ function PubForm({ onSubmit, isPending }: { onSubmit: (data: any) => void; isPen
           <Label>CAP</Label>
           <Input value={postalCode} onChange={e => setPostalCode(e.target.value)} className="mt-1" placeholder="00100" />
         </div>
+        <div>
+          <Label className="flex items-center gap-1">P.IVA <span className="text-xs text-amber-600 font-normal">(verifica autenticità)</span></Label>
+          <Input value={vatNumber} onChange={e => setVatNumber(e.target.value)} className="mt-1" placeholder="IT12345678901" />
+        </div>
+
         <div>
           <Label>Telefono</Label>
           <Input value={phone} onChange={e => setPhone(e.target.value)} type="tel" className="mt-1" placeholder="+39 06 1234567" />
