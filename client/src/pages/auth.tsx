@@ -13,7 +13,7 @@ import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { queryClient, apiRequest } from "@/lib/queryClient";
-import { Beer, Eye, EyeOff, Mail, Lock, User, Store, Phone, Building2, Factory, Plus, Search } from "lucide-react";
+import { Beer, Eye, EyeOff, Mail, Lock, User, Store, Phone, Building2, Factory, Plus, Search, MailCheck, RefreshCw, CheckCircle2, AlertTriangle } from "lucide-react";
 import { SiGoogle } from "react-icons/si";
 import { AddressAutocomplete } from "@/components/AddressAutocomplete";
 import ReCAPTCHA from "react-google-recaptcha";
@@ -92,6 +92,11 @@ export default function AuthPage() {
   const registerRecaptchaRef = useRef<ReCAPTCHA>(null);
   const [loginRecaptchaToken, setLoginRecaptchaToken] = useState<string | null>(null);
   const [registerRecaptchaToken, setRegisterRecaptchaToken] = useState<string | null>(null);
+  const [pendingVerificationEmail, setPendingVerificationEmail] = useState<string | null>(null);
+  const [emailNotVerified, setEmailNotVerified] = useState<string | null>(null);
+
+  const verifiedParam = typeof window !== "undefined" ? new URLSearchParams(window.location.search).get("verified") : null;
+  const verifiedEmailParam = typeof window !== "undefined" ? new URLSearchParams(window.location.search).get("email") : null;
 
   const loginForm = useForm<LoginForm>({
     resolver: zodResolver(loginSchema),
@@ -172,6 +177,14 @@ export default function AuthPage() {
       setLocation("/");
     },
     onError: (error: any) => {
+      if (error.emailNotVerified) {
+        setEmailNotVerified(error.email || loginForm.getValues("email"));
+        loginRecaptchaRef.current?.reset();
+        setLoginRecaptchaToken(null);
+        return;
+      }
+      loginRecaptchaRef.current?.reset();
+      setLoginRecaptchaToken(null);
       toast({ 
         title: "Errore", 
         description: error.message || "Credenziali non valide", 
@@ -185,21 +198,18 @@ export default function AuthPage() {
       const { confirmPassword, ...registerData } = data;
       return await apiRequest("/api/auth/register", { method: "POST" }, { ...registerData, recaptchaToken: registerRecaptchaToken });
     },
-    onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
-      if (variables.isPublican) {
-        toast({ 
-          title: "Richiesta inviata!", 
-          description: "La tua richiesta di registrazione come publican è stata inviata. Riceverai una notifica quando sarà approvata." 
-        });
-      } else if (variables.isBrewery) {
-        toast({ title: "Benvenuto birrificio!", description: "Il tuo account birrificio è stato creato. Ora puoi gestire le tue birre." });
-      } else {
-        toast({ title: "Registrazione completata!", description: "Benvenuto su Fermenta.to" });
+    onSuccess: (data: any) => {
+      if (data?.pendingVerification) {
+        setPendingVerificationEmail(data.email);
+        return;
       }
+      queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
+      toast({ title: "Registrazione completata!", description: "Benvenuto su Fermenta.to" });
       setLocation("/");
     },
     onError: (error: any) => {
+      registerRecaptchaRef.current?.reset();
+      setRegisterRecaptchaToken(null);
       toast({ 
         title: "Errore", 
         description: error.message || "Errore durante la registrazione", 
@@ -208,9 +218,62 @@ export default function AuthPage() {
     },
   });
 
+  const resendMutation = useMutation({
+    mutationFn: async (email: string) => {
+      return await apiRequest("/api/auth/resend-verification", { method: "POST" }, { email });
+    },
+    onSuccess: () => {
+      toast({ title: "Email inviata!", description: "Controlla la tua casella di posta e clicca il link di conferma." });
+    },
+    onError: () => {
+      toast({ title: "Errore", description: "Impossibile inviare l'email. Riprova.", variant: "destructive" });
+    },
+  });
+
   const handleGoogleLogin = () => {
     window.location.href = "/api/auth/google";
   };
+
+  if (pendingVerificationEmail) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-amber-50 via-orange-50 to-yellow-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 flex items-center justify-center p-4">
+        <Card className="w-full max-w-md shadow-xl border-0 bg-white/80 dark:bg-gray-900/80 backdrop-blur-sm">
+          <CardContent className="pt-10 pb-8 px-8 text-center space-y-6">
+            <div className="mx-auto w-20 h-20 bg-gradient-to-br from-amber-400 to-orange-500 rounded-full flex items-center justify-center shadow-lg">
+              <MailCheck className="w-10 h-10 text-white" />
+            </div>
+            <div>
+              <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">Controlla la tua email!</h2>
+              <p className="text-gray-600 dark:text-gray-400 text-sm leading-relaxed">
+                Abbiamo inviato un link di conferma a
+              </p>
+              <p className="font-semibold text-amber-600 mt-1">{pendingVerificationEmail}</p>
+              <p className="text-gray-500 dark:text-gray-400 text-sm mt-3">
+                Clicca il link nell'email per attivare il tuo account. Il link scade in 24 ore.
+              </p>
+            </div>
+            <div className="space-y-3">
+              <Button
+                variant="outline"
+                className="w-full"
+                onClick={() => resendMutation.mutate(pendingVerificationEmail)}
+                disabled={resendMutation.isPending}
+              >
+                {resendMutation.isPending ? (
+                  <><RefreshCw className="w-4 h-4 mr-2 animate-spin" />Invio in corso...</>
+                ) : (
+                  <><RefreshCw className="w-4 h-4 mr-2" />Reinvia email di conferma</>
+                )}
+              </Button>
+              <Button variant="ghost" className="w-full text-gray-500" onClick={() => { setPendingVerificationEmail(null); setActiveTab("login"); }}>
+                Torna al login
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-amber-50 via-orange-50 to-yellow-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 flex items-center justify-center p-4">
@@ -237,6 +300,41 @@ export default function AuthPage() {
             </TabsList>
 
             <TabsContent value="login" className="space-y-4">
+              {verifiedParam === "success" && (
+                <div className="flex items-center gap-3 p-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-xl">
+                  <CheckCircle2 className="w-5 h-5 text-green-600 flex-shrink-0" />
+                  <p className="text-sm text-green-800 dark:text-green-200 font-medium">Email verificata! Ora puoi accedere al tuo account.</p>
+                </div>
+              )}
+              {verifiedParam === "expired" && (
+                <div className="flex items-start gap-3 p-4 bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800 rounded-xl">
+                  <AlertTriangle className="w-5 h-5 text-orange-600 flex-shrink-0 mt-0.5" />
+                  <div>
+                    <p className="text-sm text-orange-800 dark:text-orange-200 font-medium">Link scaduto.</p>
+                    {verifiedEmailParam && (
+                      <button className="text-sm text-amber-600 underline mt-1" onClick={() => resendMutation.mutate(verifiedEmailParam)}>
+                        Clicca qui per ricevere un nuovo link
+                      </button>
+                    )}
+                  </div>
+                </div>
+              )}
+              {emailNotVerified && (
+                <div className="flex items-start gap-3 p-4 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700 rounded-xl">
+                  <Mail className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
+                  <div className="flex-1">
+                    <p className="text-sm text-amber-800 dark:text-amber-200 font-medium">Email non verificata.</p>
+                    <p className="text-xs text-amber-700 dark:text-amber-300 mt-0.5">Controlla la tua casella di posta e clicca il link di conferma.</p>
+                    <button
+                      className="text-xs text-amber-600 dark:text-amber-400 underline mt-1 hover:no-underline disabled:opacity-50"
+                      onClick={() => resendMutation.mutate(emailNotVerified)}
+                      disabled={resendMutation.isPending}
+                    >
+                      {resendMutation.isPending ? "Invio..." : "Reinvia email di conferma"}
+                    </button>
+                  </div>
+                </div>
+              )}
               <Form {...loginForm}>
                 <form onSubmit={loginForm.handleSubmit((data) => loginMutation.mutate(data))} className="space-y-4">
                   <FormField

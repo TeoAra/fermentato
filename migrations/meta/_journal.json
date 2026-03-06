@@ -57,6 +57,13 @@
       "when": 1772542800000,
       "tag": "0007_missing_vps_columns",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1772812468341,
+      "tag": "0008_clever_molecule_man",
+      "breakpoints": true
     }
   ]
 }

@@ -42,6 +42,8 @@ export const users = pgTable("users", {
   activeRole: varchar("active_role"), // Currently active role for UI/navigation
   breweryId: integer("brewery_id").references(() => breweries.id), // For brewery owners
   isEmailVerified: boolean("is_email_verified").default(false),
+  emailVerificationToken: varchar("email_verification_token"),
+  emailVerificationExpires: timestamp("email_verification_expires"),
   needsOnboarding: boolean("needs_onboarding").default(false),
   isPublic: boolean("is_public").default(true), // Public profile visible to all
   passwordResetToken: varchar("password_reset_token"),

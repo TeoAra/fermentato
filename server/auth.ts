@@ -12,6 +12,7 @@ import { eq, and } from "drizzle-orm";
 import type { User } from "@shared/schema";
 import { storage } from "./storage";
 import { sendPushToAdmins } from "./push-utils";
+import { sendVerificationEmail } from "./email";
 
 const SALT_ROUNDS = 12;
 
@@ -94,6 +95,10 @@ export async function setupAuth(app: Express) {
         const isValid = await verifyPassword(password, user.hashedPassword);
         if (!isValid) {
           return done(null, false, { message: 'Email o password non corretti' });
+        }
+
+        if (!user.isEmailVerified) {
+          return done(null, false, { message: 'EMAIL_NOT_VERIFIED', email: user.email });
         }
         
         return done(null, user);
@@ -268,6 +273,9 @@ export async function setupAuth(app: Express) {
       // Determine roles - brewery_owner is NOT assigned at registration, only after approval
       const userRoles: string[] = ['customer'];
       
+      const verificationToken = nanoid(32);
+      const verificationExpires = new Date(Date.now() + 24 * 60 * 60 * 1000);
+
       const [newUser] = await db.insert(users).values({
         id: userId,
         email: normalizedEmail,
@@ -279,6 +287,8 @@ export async function setupAuth(app: Express) {
         activeRole: 'customer',
         breweryId: null,
         isEmailVerified: false,
+        emailVerificationToken: verificationToken,
+        emailVerificationExpires: verificationExpires,
       }).returning();
       
       // If registering as publican, create a pending request
@@ -380,20 +390,19 @@ export async function setupAuth(app: Express) {
         }
       }
       
-      // Auto-login after registration
-      req.login(newUser, (err) => {
-        if (err) {
-          console.error('Login error after registration:', err);
-          return res.status(500).json({ message: 'Errore durante il login' });
-        }
-        
-        const { hashedPassword: _, ...userWithoutPassword } = newUser;
-        res.json({ 
-          user: userWithoutPassword, 
-          message: isPublican ? 'Richiesta pub inviata, in attesa di approvazione' : isBrewery ? 'Richiesta birrificio inviata, in attesa di approvazione' : 'Registrazione completata',
-          publicanRequest: isPublican ? true : false,
-          breweryRequest: isBrewery ? true : false
-        });
+      // Send verification email and return pending state
+      try {
+        await sendVerificationEmail(normalizedEmail, verificationToken);
+      } catch (emailErr) {
+        console.error('Error sending verification email:', emailErr);
+      }
+
+      res.json({
+        pendingVerification: true,
+        email: normalizedEmail,
+        message: 'Registrazione quasi completata! Controlla la tua email e clicca sul link di conferma per attivare il tuo account.',
+        publicanRequest: isPublican ? true : false,
+        breweryRequest: isBrewery ? true : false,
       });
     } catch (error) {
       console.error('Registration error:', error);
@@ -413,6 +422,13 @@ export async function setupAuth(app: Express) {
         return res.status(500).json({ message: 'Errore durante il login' });
       }
       if (!user) {
+        if (info?.message === 'EMAIL_NOT_VERIFIED') {
+          return res.status(403).json({
+            message: 'Email non verificata. Controlla la tua casella di posta.',
+            emailNotVerified: true,
+            email: info.email,
+          });
+        }
         return res.status(401).json({ message: info?.message || 'Credenziali non valide' });
       }
       
@@ -431,6 +447,56 @@ export async function setupAuth(app: Express) {
         res.json({ user: userWithoutPassword });
       });
     })(req, res, next);
+  });
+
+  // Email verification
+  app.get('/api/auth/verify-email', async (req, res) => {
+    const { token } = req.query;
+    if (!token || typeof token !== 'string') {
+      return res.redirect('/auth?verified=invalid');
+    }
+    try {
+      const [user] = await db.select().from(users).where(eq(users.emailVerificationToken, token));
+      if (!user) {
+        return res.redirect('/auth?verified=invalid');
+      }
+      if (user.emailVerificationExpires && user.emailVerificationExpires < new Date()) {
+        return res.redirect('/auth?verified=expired&email=' + encodeURIComponent(user.email || ''));
+      }
+      await db.update(users).set({
+        isEmailVerified: true,
+        emailVerificationToken: null,
+        emailVerificationExpires: null,
+      }).where(eq(users.id, user.id));
+      res.redirect('/auth?verified=success');
+    } catch (error) {
+      console.error('Email verification error:', error);
+      res.redirect('/auth?verified=invalid');
+    }
+  });
+
+  // Resend verification email
+  app.post('/api/auth/resend-verification', async (req, res) => {
+    try {
+      const { email } = req.body;
+      if (!email) return res.status(400).json({ message: 'Email richiesta' });
+      const normalizedEmail = email.toLowerCase().trim();
+      const [user] = await db.select().from(users).where(eq(users.email, normalizedEmail));
+      if (!user || user.isEmailVerified) {
+        return res.json({ message: 'Se l\'email è registrata e non verificata, riceverai un nuovo link.' });
+      }
+      const verificationToken = nanoid(32);
+      const verificationExpires = new Date(Date.now() + 24 * 60 * 60 * 1000);
+      await db.update(users).set({
+        emailVerificationToken: verificationToken,
+        emailVerificationExpires: verificationExpires,
+      }).where(eq(users.id, user.id));
+      await sendVerificationEmail(normalizedEmail, verificationToken);
+      res.json({ message: 'Email di conferma inviata! Controlla la tua casella di posta.' });
+    } catch (error) {
+      console.error('Resend verification error:', error);
+      res.status(500).json({ message: 'Errore durante l\'invio dell\'email' });
+    }
   });
 
   // Google OAuth routes
