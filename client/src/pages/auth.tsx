@@ -13,7 +13,7 @@ import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { queryClient, apiRequest } from "@/lib/queryClient";
-import { Beer, Eye, EyeOff, Mail, Lock, User, Store, Phone, Building2, Factory, Plus, Search, MailCheck, RefreshCw, CheckCircle2, AlertTriangle } from "lucide-react";
+import { Beer, Eye, EyeOff, Mail, Lock, User, Store, Phone, Building2, Factory, Plus, Search, MailCheck, RefreshCw, CheckCircle2, CheckCircle, XCircle, AlertTriangle } from "lucide-react";
 import { SiGoogle } from "react-icons/si";
 import { AddressAutocomplete } from "@/components/AddressAutocomplete";
 import ReCAPTCHA from "react-google-recaptcha";
@@ -22,17 +22,19 @@ import type { Brewery } from "@shared/schema";
 const RECAPTCHA_SITE_KEY = (import.meta.env.VITE_RECAPTCHA_SITE_KEY as string | undefined) || "6LcDuIEsAAAAAAPwdAQ2rAKZvA_ae_FmyRlft11z";
 
 const loginSchema = z.object({
-  email: z.string().email("Email non valida"),
+  emailOrUsername: z.string().min(1, "Email o username richiesti"),
   password: z.string().min(1, "Password richiesta"),
   rememberMe: z.boolean().default(false),
 });
 
 const registerSchema = z.object({
+  nickname: z.string()
+    .min(3, "Username: minimo 3 caratteri")
+    .max(30, "Username: massimo 30 caratteri")
+    .regex(/^[a-zA-Z0-9_.]+$/, "Solo lettere, numeri, punti e underscore"),
   email: z.string().email("Email non valida"),
   password: z.string().min(8, "La password deve essere di almeno 8 caratteri"),
   confirmPassword: z.string(),
-  firstName: z.string().optional(),
-  lastName: z.string().optional(),
   isPublican: z.boolean().default(false),
   pubName: z.string().optional(),
   pubAddress: z.string().optional(),
@@ -98,19 +100,22 @@ export default function AuthPage() {
   const verifiedParam = typeof window !== "undefined" ? new URLSearchParams(window.location.search).get("verified") : null;
   const verifiedEmailParam = typeof window !== "undefined" ? new URLSearchParams(window.location.search).get("email") : null;
 
+  const [nicknameAvailable, setNicknameAvailable] = useState<boolean | null>(null);
+  const [nicknameChecking, setNicknameChecking] = useState(false);
+  const nicknameTimerRef = useRef<any>(null);
+
   const loginForm = useForm<LoginForm>({
     resolver: zodResolver(loginSchema),
-    defaultValues: { email: "", password: "", rememberMe: false },
+    defaultValues: { emailOrUsername: "", password: "", rememberMe: false },
   });
 
   const registerForm = useForm<RegisterForm>({
     resolver: zodResolver(registerSchema),
     defaultValues: { 
+      nickname: "",
       email: "", 
       password: "", 
-      confirmPassword: "", 
-      firstName: "", 
-      lastName: "",
+      confirmPassword: "",
       isPublican: false,
       pubName: "",
       pubAddress: "",
@@ -166,6 +171,17 @@ export default function AuthPage() {
     registerForm.setValue("breweryRegion", details.region);
     registerForm.setValue("breweryCountry", details.country);
   }, [registerForm]);
+
+  const checkNickname = useCallback(async (value: string) => {
+    if (!value || value.length < 3) { setNicknameAvailable(null); return; }
+    setNicknameChecking(true);
+    try {
+      const res = await fetch(`/api/auth/check-nickname?nickname=${encodeURIComponent(value)}`, { credentials: "include" });
+      const data = await res.json();
+      setNicknameAvailable(data.available);
+    } catch { setNicknameAvailable(null); }
+    finally { setNicknameChecking(false); }
+  }, []);
 
   const loginMutation = useMutation({
     mutationFn: async (data: LoginForm) => {
@@ -339,19 +355,19 @@ export default function AuthPage() {
                 <form onSubmit={loginForm.handleSubmit((data) => loginMutation.mutate(data))} className="space-y-4">
                   <FormField
                     control={loginForm.control}
-                    name="email"
+                    name="emailOrUsername"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Email</FormLabel>
+                        <FormLabel>Email o Username</FormLabel>
                         <FormControl>
                           <div className="relative">
-                            <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                            <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                             <Input 
                               {...field} 
-                              type="email" 
-                              placeholder="tu@esempio.it" 
+                              placeholder="tu@esempio.it oppure @username" 
                               className="pl-10"
                               data-testid="input-login-email"
+                              autoComplete="username"
                             />
                           </div>
                         </FormControl>
@@ -458,47 +474,53 @@ export default function AuthPage() {
             <TabsContent value="register" className="space-y-4">
               <Form {...registerForm}>
                 <form onSubmit={registerForm.handleSubmit((data) => registerMutation.mutate(data))} className="space-y-4">
-                  <div className="grid grid-cols-2 gap-3">
-                    <FormField
-                      control={registerForm.control}
-                      name="firstName"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Nome</FormLabel>
-                          <FormControl>
-                            <div className="relative">
-                              <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                              <Input 
-                                {...field} 
-                                placeholder="Mario" 
-                                className="pl-10"
-                                data-testid="input-register-firstname"
-                              />
-                            </div>
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    
-                    <FormField
-                      control={registerForm.control}
-                      name="lastName"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Cognome</FormLabel>
-                          <FormControl>
-                            <Input 
-                              {...field} 
-                              placeholder="Rossi" 
-                              data-testid="input-register-lastname"
+                  <FormField
+                    control={registerForm.control}
+                    name="nickname"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Username</FormLabel>
+                        <FormControl>
+                          <div className="relative">
+                            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 font-medium text-sm">@</span>
+                            <Input
+                              {...field}
+                              placeholder="il_tuo_username"
+                              className={`pl-7 pr-8 ${
+                                nicknameAvailable === true ? "border-green-500 focus-visible:ring-green-500" :
+                                nicknameAvailable === false ? "border-red-500 focus-visible:ring-red-500" : ""
+                              }`}
+                              data-testid="input-register-nickname"
+                              autoComplete="username"
+                              onChange={(e) => {
+                                field.onChange(e);
+                                const val = e.target.value;
+                                setNicknameAvailable(null);
+                                if (nicknameTimerRef.current) clearTimeout(nicknameTimerRef.current);
+                                nicknameTimerRef.current = setTimeout(() => checkNickname(val), 500);
+                              }}
                             />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
+                            {nicknameChecking && (
+                              <div className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 border-2 border-amber-400 border-t-transparent rounded-full animate-spin" />
+                            )}
+                            {!nicknameChecking && nicknameAvailable === true && (
+                              <CheckCircle className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-green-500" />
+                            )}
+                            {!nicknameChecking && nicknameAvailable === false && (
+                              <XCircle className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-red-500" />
+                            )}
+                          </div>
+                        </FormControl>
+                        {nicknameAvailable === true && (
+                          <p className="text-xs text-green-600">Username disponibile!</p>
+                        )}
+                        {nicknameAvailable === false && (
+                          <p className="text-xs text-red-500">Username già in uso</p>
+                        )}
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
 
                   <FormField
                     control={registerForm.control}

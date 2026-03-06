@@ -8,7 +8,7 @@ import type { Express, RequestHandler } from "express";
 import connectPg from "connect-pg-simple";
 import { db } from "./db";
 import { users, oauthAccounts, publicanRequests, breweries, breweryRequests } from "@shared/schema";
-import { eq, and } from "drizzle-orm";
+import { eq, and, sql } from "drizzle-orm";
 import type { User } from "@shared/schema";
 import { storage } from "./storage";
 import { sendPushToAdmins } from "./push-utils";
@@ -79,13 +79,17 @@ export async function setupAuth(app: Express) {
 
   // Local Strategy (email/password)
   passport.use(new LocalStrategy(
-    { usernameField: 'email', passwordField: 'password' },
-    async (email, password, done) => {
+    { usernameField: 'emailOrUsername', passwordField: 'password' },
+    async (emailOrUsername, password, done) => {
       try {
-        const [user] = await db.select().from(users).where(eq(users.email, email.toLowerCase()));
+        const input = emailOrUsername.trim().toLowerCase();
+        const isEmail = input.includes('@');
+        const [user] = isEmail
+          ? await db.select().from(users).where(eq(users.email, input))
+          : await db.select().from(users).where(eq(sql`lower(${users.nickname})`, input.replace(/^@/, '')));
         
         if (!user) {
-          return done(null, false, { message: 'Email o password non corretti' });
+          return done(null, false, { message: 'Credenziali non corrette' });
         }
         
         if (!user.hashedPassword) {
@@ -213,11 +217,21 @@ export async function setupAuth(app: Express) {
 
   // Auth Routes
 
+  // Check nickname availability
+  app.get('/api/auth/check-nickname', async (req, res) => {
+    const { nickname } = req.query as { nickname: string };
+    if (!nickname || nickname.length < 3) return res.json({ available: false });
+    if (!/^[a-zA-Z0-9_.]+$/.test(nickname)) return res.json({ available: false });
+    const [existing] = await db.select({ id: users.id }).from(users)
+      .where(eq(sql`lower(${users.nickname})`, nickname.toLowerCase()));
+    return res.json({ available: !existing });
+  });
+
   // Register with email/password
   app.post('/api/auth/register', async (req, res) => {
     try {
       const { 
-        email, password, firstName, lastName,
+        nickname, email, password,
         isPublican, pubName, pubAddress, pubCity, pubRegion, vatNumber, phone, description,
         isBrewery, breweryId: existingBreweryId, breweryName, breweryLocation, breweryRegion, breweryCountry, breweryVatNumber, breweryPhone, breweryDescription, breweryWebsite,
         recaptchaToken
@@ -230,6 +244,15 @@ export async function setupAuth(app: Express) {
       
       if (!email || !password) {
         return res.status(400).json({ message: 'Email e password sono obbligatori' });
+      }
+
+      if (!nickname || nickname.trim().length < 3) {
+        return res.status(400).json({ message: 'Username: minimo 3 caratteri' });
+      }
+
+      const normalizedNickname = nickname.trim();
+      if (!/^[a-zA-Z0-9_.]+$/.test(normalizedNickname)) {
+        return res.status(400).json({ message: 'Username: solo lettere, numeri, punti e underscore' });
       }
       
       if (password.length < 8) {
@@ -266,6 +289,12 @@ export async function setupAuth(app: Express) {
       if (existing) {
         return res.status(400).json({ message: 'Email già registrata' });
       }
+
+      // Check if nickname already exists
+      const [existingNick] = await db.select().from(users).where(eq(sql`lower(${users.nickname})`, normalizedNickname.toLowerCase()));
+      if (existingNick) {
+        return res.status(400).json({ message: 'Username già in uso, scegline un altro' });
+      }
       
       const hashedPwd = await hashPassword(password);
       const userId = nanoid();
@@ -280,8 +309,7 @@ export async function setupAuth(app: Express) {
         id: userId,
         email: normalizedEmail,
         hashedPassword: hashedPwd,
-        firstName: firstName || null,
-        lastName: lastName || null,
+        nickname: normalizedNickname,
         userType: 'customer',
         roles: userRoles,
         activeRole: 'customer',
