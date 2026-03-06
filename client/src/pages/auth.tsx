@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import { useLocation } from "wouter";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
@@ -16,7 +16,10 @@ import { queryClient, apiRequest } from "@/lib/queryClient";
 import { Beer, Eye, EyeOff, Mail, Lock, User, Store, Phone, Building2, Factory, Plus, Search } from "lucide-react";
 import { SiGoogle } from "react-icons/si";
 import { AddressAutocomplete } from "@/components/AddressAutocomplete";
+import ReCAPTCHA from "react-google-recaptcha";
 import type { Brewery } from "@shared/schema";
+
+const RECAPTCHA_SITE_KEY = import.meta.env.VITE_RECAPTCHA_SITE_KEY as string | undefined;
 
 const loginSchema = z.object({
   email: z.string().email("Email non valida"),
@@ -85,6 +88,10 @@ export default function AuthPage() {
   const { toast } = useToast();
   const [showPassword, setShowPassword] = useState(false);
   const [activeTab, setActiveTab] = useState("login");
+  const loginRecaptchaRef = useRef<ReCAPTCHA>(null);
+  const registerRecaptchaRef = useRef<ReCAPTCHA>(null);
+  const [loginRecaptchaToken, setLoginRecaptchaToken] = useState<string | null>(null);
+  const [registerRecaptchaToken, setRegisterRecaptchaToken] = useState<string | null>(null);
 
   const loginForm = useForm<LoginForm>({
     resolver: zodResolver(loginSchema),
@@ -305,10 +312,23 @@ export default function AuthPage() {
                     )}
                   />
 
+                  {RECAPTCHA_SITE_KEY && (
+                    <div className="flex justify-center">
+                      <ReCAPTCHA
+                        ref={loginRecaptchaRef}
+                        sitekey={RECAPTCHA_SITE_KEY}
+                        onChange={(token) => setLoginRecaptchaToken(token)}
+                        onExpired={() => setLoginRecaptchaToken(null)}
+                        theme="light"
+                        hl="it"
+                      />
+                    </div>
+                  )}
+
                   <Button 
                     type="submit" 
                     className="w-full bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700"
-                    disabled={loginMutation.isPending}
+                    disabled={loginMutation.isPending || (!!RECAPTCHA_SITE_KEY && !loginRecaptchaToken)}
                     data-testid="button-login"
                   >
                     {loginMutation.isPending ? "Accesso in corso..." : "Accedi"}
@@ -903,10 +923,23 @@ export default function AuthPage() {
                     </div>
                   )}
 
+                  {RECAPTCHA_SITE_KEY && (
+                    <div className="flex justify-center">
+                      <ReCAPTCHA
+                        ref={registerRecaptchaRef}
+                        sitekey={RECAPTCHA_SITE_KEY}
+                        onChange={(token) => setRegisterRecaptchaToken(token)}
+                        onExpired={() => setRegisterRecaptchaToken(null)}
+                        theme="light"
+                        hl="it"
+                      />
+                    </div>
+                  )}
+
                   <Button 
                     type="submit" 
                     className="w-full bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700"
-                    disabled={registerMutation.isPending}
+                    disabled={registerMutation.isPending || (!!RECAPTCHA_SITE_KEY && !registerRecaptchaToken)}
                     data-testid="button-register"
                   >
                     {registerMutation.isPending ? "Registrazione..." : isPublican ? "Invia Richiesta" : isBrewery ? "Registra Birrificio" : "Crea Account"}

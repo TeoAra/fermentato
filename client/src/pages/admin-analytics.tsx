@@ -15,9 +15,6 @@ import {
   Target,
   Activity,
   ArrowUp,
-  Filter,
-  Download,
-  RefreshCw,
   ArrowLeft,
   User,
   Building2,
@@ -114,12 +111,12 @@ export default function AdminAnalytics() {
 
   const { data: globalStats } = useQuery<GlobalStats>({
     queryKey: ["/api/stats/global"],
-    enabled: isAuthenticated && user?.userType === 'admin',
+    enabled: isAuthenticated && (user as any)?.userType === 'admin',
   });
 
   const { data: adminStats } = useQuery<AdminStats>({
     queryKey: ["/api/admin/stats"],
-    enabled: isAuthenticated && user?.userType === 'admin',
+    enabled: isAuthenticated && (user as any)?.userType === 'admin',
   });
 
   const { data: recentActivity = [], isFetching: activityLoading } = useQuery<RecentActivity[]>({
@@ -130,7 +127,7 @@ export default function AdminAnalytics() {
       const res = await fetch(`/api/admin/recent-activity?${params}`, { credentials: 'include' });
       return res.json();
     },
-    enabled: isAuthenticated && user?.userType === 'admin',
+    enabled: isAuthenticated && (user as any)?.userType === 'admin',
     refetchInterval: 30000,
   });
 
@@ -147,7 +144,7 @@ export default function AdminAnalytics() {
     );
   }
 
-  if (!isAuthenticated || user?.userType !== 'admin') return null;
+  if (!isAuthenticated || (user as any)?.userType !== 'admin') return null;
 
   return (
     <div className="container mx-auto px-4 py-6 max-w-7xl space-y-6">
@@ -166,20 +163,7 @@ export default function AdminAnalytics() {
           <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Analytics Avanzate</h1>
           <p className="text-gray-600 dark:text-gray-400 mt-1">Monitoraggio completo del sistema Fermenta.to</p>
         </div>
-        <div className="flex gap-3">
-          <Button variant="outline" size="sm">
-            <Filter className="w-4 h-4 mr-2" />
-            Filtri
-          </Button>
-          <Button variant="outline" size="sm">
-            <Download className="w-4 h-4 mr-2" />
-            Esporta
-          </Button>
-          <Button size="sm">
-            <RefreshCw className="w-4 h-4 mr-2" />
-            Aggiorna
-          </Button>
-        </div>
+        
       </div>
 
       {/* KPI Cards */}

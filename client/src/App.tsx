@@ -55,6 +55,7 @@ import UserPublicProfile from "@/pages/user-public-profile";
 import SearchPage from "@/pages/search";
 import { MobileHeader } from "@/components/mobile-header";
 import { BottomNavigation } from "@/components/bottom-navigation";
+import CookieBanner from "@/components/CookieBanner";
 import type { User } from "@shared/schema";
 
 function Router() {
@@ -170,6 +171,7 @@ function App() {
         <AutoPushSubscriber />
         <PwaInstallPrompt />
         <PushNotificationPrompt />
+        <CookieBanner />
       </TooltipProvider>
     </QueryClientProvider>
   );

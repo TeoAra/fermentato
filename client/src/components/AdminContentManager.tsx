@@ -118,6 +118,7 @@ function BeerForm({ onSubmit, isPending }: { onSubmit: (data: any) => void; isPe
   const [color, setColor] = useState("");
   const [colorDropdownOpen, setColorDropdownOpen] = useState(false);
   const [description, setDescription] = useState("");
+  const [imageUrl, setImageUrl] = useState<string | null>(null);
   const [isGlutenFree, setIsGlutenFree] = useState(false);
   const [isAlcoholFree, setIsAlcoholFree] = useState(false);
 
@@ -141,6 +142,7 @@ function BeerForm({ onSubmit, isPending }: { onSubmit: (data: any) => void; isPe
       ibu: ibu ? parseInt(ibu) : null,
       color: color || null,
       description: description || null,
+      imageUrl: imageUrl || null,
       isGlutenFree,
       isAlcoholFree,
     };
@@ -150,6 +152,18 @@ function BeerForm({ onSubmit, isPending }: { onSubmit: (data: any) => void; isPe
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="md:col-span-2">
+          <ImageUpload
+            label="Immagine Birra"
+            description="Foto della birra · consigliato 800×600 px"
+            currentImageUrl={imageUrl || undefined}
+            onImageChange={setImageUrl}
+            folder="beers"
+            aspectRatio="landscape"
+            maxSize={5}
+          />
+        </div>
+
         <div className="md:col-span-2">
           <Label>Nome Birra *</Label>
           <Input value={name} onChange={e => setName(e.target.value)} required className="mt-1" placeholder="Es. Golden Ale Artigianale" />

@@ -1,5 +1,6 @@
 import { Beer, Facebook, Instagram, Twitter } from "lucide-react";
 import { Link } from "wouter";
+import { CookieSettingsButton } from "@/components/CookieBanner";
 
 export default function Footer() {
   return (
@@ -63,6 +64,9 @@ export default function Footer() {
               </li>
               <li>
                 <a href="#" className="hover:text-primary">Contatti</a>
+              </li>
+              <li>
+                <CookieSettingsButton />
               </li>
             </ul>
           </div>
