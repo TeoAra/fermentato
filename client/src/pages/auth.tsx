@@ -164,7 +164,7 @@ export default function AuthPage() {
 
   const loginMutation = useMutation({
     mutationFn: async (data: LoginForm) => {
-      return await apiRequest("/api/auth/login", { method: "POST" }, data);
+      return await apiRequest("/api/auth/login", { method: "POST" }, { ...data, recaptchaToken: loginRecaptchaToken });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
@@ -183,7 +183,7 @@ export default function AuthPage() {
   const registerMutation = useMutation({
     mutationFn: async (data: RegisterForm) => {
       const { confirmPassword, ...registerData } = data;
-      return await apiRequest("/api/auth/register", { method: "POST" }, registerData);
+      return await apiRequest("/api/auth/register", { method: "POST" }, { ...registerData, recaptchaToken: registerRecaptchaToken });
     },
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });

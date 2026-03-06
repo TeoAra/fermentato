@@ -15,6 +15,24 @@ import { sendPushToAdmins } from "./push-utils";
 
 const SALT_ROUNDS = 12;
 
+async function verifyRecaptcha(token: string | undefined): Promise<boolean> {
+  const secretKey = process.env.RECAPTCHA_SECRET_KEY;
+  if (!secretKey) return true;
+  if (!token) return false;
+  try {
+    const params = new URLSearchParams({ secret: secretKey, response: token });
+    const resp = await fetch(`https://www.google.com/recaptcha/api/siteverify`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: params.toString(),
+    });
+    const data = await resp.json() as { success: boolean };
+    return data.success === true;
+  } catch {
+    return false;
+  }
+}
+
 export function getSession() {
   const sessionTtl = 7 * 24 * 60 * 60 * 1000; // 1 week
   const pgStore = connectPg(session);
@@ -196,8 +214,14 @@ export async function setupAuth(app: Express) {
       const { 
         email, password, firstName, lastName,
         isPublican, pubName, pubAddress, pubCity, pubRegion, vatNumber, phone, description,
-        isBrewery, breweryId: existingBreweryId, breweryName, breweryLocation, breweryRegion, breweryCountry, breweryVatNumber, breweryPhone, breweryDescription, breweryWebsite
+        isBrewery, breweryId: existingBreweryId, breweryName, breweryLocation, breweryRegion, breweryCountry, breweryVatNumber, breweryPhone, breweryDescription, breweryWebsite,
+        recaptchaToken
       } = req.body;
+
+      const recaptchaOk = await verifyRecaptcha(recaptchaToken);
+      if (!recaptchaOk) {
+        return res.status(400).json({ message: 'Verifica reCAPTCHA fallita. Riprova.' });
+      }
       
       if (!email || !password) {
         return res.status(400).json({ message: 'Email e password sono obbligatori' });
@@ -378,7 +402,12 @@ export async function setupAuth(app: Express) {
   });
 
   // Login with email/password
-  app.post('/api/auth/login', (req, res, next) => {
+  app.post('/api/auth/login', async (req, res, next) => {
+    const recaptchaOk = await verifyRecaptcha(req.body.recaptchaToken);
+    if (!recaptchaOk) {
+      return res.status(400).json({ message: 'Verifica reCAPTCHA fallita. Riprova.' });
+    }
+
     passport.authenticate('local', (err: any, user: User, info: any) => {
       if (err) {
         return res.status(500).json({ message: 'Errore durante il login' });

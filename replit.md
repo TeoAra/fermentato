@@ -61,6 +61,8 @@ Preferred communication style: Simple, everyday language.
 - **Mobile Dashboard UX**: Sticky bottom nav, thumb-friendly sections
 - **Password for social accounts**: `hasPassword` boolean returned in /api/auth/user; PasswordChangeForm is adaptive (shows Google notice, hides current-password field for social users)
 - **Dashboard routing fix**: `activeRole === 'customer'` takes priority over legacy userType fallback
+- **Cookie Consent Banner**: `CookieBanner.tsx` component with 4 levels (Essential/Preferences/Analytics/Marketing), localStorage persistence, expandable categories, `getCookiePreferences()` export. Rendered in `App.tsx`. `CookieSettingsButton` exported and used in `footer.tsx`. Appears after 0.8s delay on first visit.
+- **reCAPTCHA v2**: Integrated `react-google-recaptcha` in `auth.tsx` on both login and register forms. Widget appears only when `VITE_RECAPTCHA_SITE_KEY` env var is set. Token sent as `recaptchaToken` in POST body. Server-side verification in `server/auth.ts` via `verifyRecaptcha()` helper calling Google siteverify API using `RECAPTCHA_SECRET_KEY` secret. Both env vars configured.
 
 ## External Dependencies
 
