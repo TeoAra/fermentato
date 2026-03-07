@@ -63,6 +63,8 @@ Preferred communication style: Simple, everyday language.
 - **Dashboard routing fix**: `activeRole === 'customer'` takes priority over legacy userType fallback
 - **Cookie Consent Banner**: `CookieBanner.tsx` component with 4 levels (Essential/Preferences/Analytics/Marketing), localStorage persistence, expandable categories, `getCookiePreferences()` export. Rendered in `App.tsx`. `CookieSettingsButton` exported and used in `footer.tsx`. Appears after 0.8s delay on first visit.
 - **reCAPTCHA v2**: Integrated `react-google-recaptcha` in `auth.tsx` on both login and register forms. Widget appears only when `VITE_RECAPTCHA_SITE_KEY` env var is set. Token sent as `recaptchaToken` in POST body. Server-side verification in `server/auth.ts` via `verifyRecaptcha()` helper calling Google siteverify API using `RECAPTCHA_SECRET_KEY` secret. Both env vars configured.
+- **Theme System (Dark/Light)**: `client/src/lib/theme.tsx` provides `ThemeProvider` + `useTheme` hook with localStorage persistence and `prefers-color-scheme` detection. `ThemeToggle` component (`client/src/components/theme-toggle.tsx`) with animated Sun/Moon icons. Integrated in both `header.tsx` (desktop) and `mobile-header.tsx`. Full CSS variable system in `index.css`: light mode (warm gray bg + amber primary + teal accent) and dark mode (deep navy/slate bg + same amber/teal/purple accents). Orange → Amber migration across all nav components.
+- **Global Redesign (Mar 2026)**: Landing page hero redesigned with dark navy background + two-column layout (feature cards on right). Homepage, CTA section, stats banner updated with multi-color accents (amber/teal/purple). Platform renamed from "Italian community" to global craft beer platform.
 
 ## External Dependencies
 

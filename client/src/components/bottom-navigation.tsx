@@ -110,8 +110,8 @@ export function BottomNavigation() {
                       data-testid={`nav-${item.label.toLowerCase().replace(' ', '-')}`}
                       className={`group flex flex-col items-center justify-center py-2 px-3 rounded-2xl transition-all duration-300 transform active:scale-95 ${
                         isActive
-                          ? "text-orange-600 dark:text-orange-400 bg-orange-50 dark:bg-orange-900/20"
-                          : "text-gray-600 dark:text-gray-400 hover:text-orange-600 dark:hover:text-orange-400 hover:bg-gray-50 dark:hover:bg-gray-800/50"
+                          ? "text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/20"
+                          : "text-gray-600 dark:text-gray-400 hover:text-amber-600 dark:hover:text-amber-400 hover:bg-gray-50 dark:hover:bg-slate-800/50"
                       }`}
                     >
                       <div className="relative">
@@ -125,12 +125,12 @@ export function BottomNavigation() {
                         )}
                       </div>
                       <span className={`text-xs font-medium mt-1 transition-all duration-300 ${
-                        isActive ? 'text-orange-600 dark:text-orange-400' : ''
+                        isActive ? 'text-amber-600 dark:text-amber-400' : ''
                       }`}>
                         {item.label}
                       </span>
                       {isActive && (
-                        <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 w-1 h-1 bg-orange-500 rounded-full" />
+                        <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 w-1 h-1 bg-amber-500 rounded-full" />
                       )}
                     </a>
                   ) : (
@@ -139,8 +139,8 @@ export function BottomNavigation() {
                         data-testid={`nav-${item.label.toLowerCase().replace(' ', '-')}`}
                         className={`group flex flex-col items-center justify-center py-2 px-3 rounded-2xl transition-all duration-300 transform active:scale-95 ${
                           isActive
-                            ? "text-orange-600 dark:text-orange-400 bg-orange-50 dark:bg-orange-900/20"
-                            : "text-gray-600 dark:text-gray-400 hover:text-orange-600 dark:hover:text-orange-400 hover:bg-gray-50 dark:hover:bg-gray-800/50"
+                            ? "text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/20"
+                            : "text-gray-600 dark:text-gray-400 hover:text-amber-600 dark:hover:text-amber-400 hover:bg-gray-50 dark:hover:bg-slate-800/50"
                         }`}
                       >
                         <div className="relative">
@@ -154,12 +154,12 @@ export function BottomNavigation() {
                           )}
                         </div>
                         <span className={`text-xs font-medium mt-1 transition-all duration-300 ${
-                          isActive ? 'text-orange-600 dark:text-orange-400' : ''
+                          isActive ? 'text-amber-600 dark:text-amber-400' : ''
                         }`}>
                           {item.label}
                         </span>
                         {isActive && (
-                          <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 w-1 h-1 bg-orange-500 rounded-full" />
+                          <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 w-1 h-1 bg-amber-500 rounded-full" />
                         )}
                       </div>
                     </Link>
@@ -173,7 +173,7 @@ export function BottomNavigation() {
               <button
                 onClick={() => setIsSearchOpen(true)}
                 data-testid="button-search"
-                className="group bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 dark:from-orange-400 dark:to-orange-500 text-white rounded-full p-4 shadow-2xl transition-all duration-300 transform active:scale-95 hover:scale-110 hover:shadow-orange-500/25 hover:shadow-2xl"
+                className="group bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-white rounded-full p-4 shadow-2xl transition-all duration-300 transform active:scale-95 hover:scale-110 hover:shadow-amber-500/25 hover:shadow-2xl"
               >
                 <div className="relative">
                   <Search className="h-6 w-6 transition-transform duration-300 group-hover:rotate-12" />

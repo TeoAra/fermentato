@@ -56,6 +56,7 @@ import SearchPage from "@/pages/search";
 import { MobileHeader } from "@/components/mobile-header";
 import { BottomNavigation } from "@/components/bottom-navigation";
 import CookieBanner from "@/components/CookieBanner";
+import { ThemeProvider } from "@/lib/theme";
 import type { User } from "@shared/schema";
 
 function Router() {
@@ -75,7 +76,7 @@ function Router() {
   }, [isLoading, isAuthenticated, typedUser?.needsOnboarding, location, navigate]);
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-950">
+    <div className="min-h-screen bg-background text-foreground">
       {/* Scroll to top on route change */}
       <ScrollToTop />
       
@@ -164,16 +165,18 @@ function App() {
   }
 
   return (
-    <QueryClientProvider client={queryClient}>
-      <TooltipProvider>
-        <Toaster />
-        <Router />
-        <AutoPushSubscriber />
-        <PwaInstallPrompt />
-        <PushNotificationPrompt />
-        <CookieBanner />
-      </TooltipProvider>
-    </QueryClientProvider>
+    <ThemeProvider>
+      <QueryClientProvider client={queryClient}>
+        <TooltipProvider>
+          <Toaster />
+          <Router />
+          <AutoPushSubscriber />
+          <PwaInstallPrompt />
+          <PushNotificationPrompt />
+          <CookieBanner />
+        </TooltipProvider>
+      </QueryClientProvider>
+    </ThemeProvider>
   );
 }
 

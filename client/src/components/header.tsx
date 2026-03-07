@@ -12,6 +12,7 @@ import SearchResults from "@/components/search-results";
 import SearchDialog from "@/components/search-dialog";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger, DropdownMenuLabel, DropdownMenuSub, DropdownMenuSubTrigger, DropdownMenuSubContent } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { ThemeToggle } from "@/components/theme-toggle";
 
 export default function Header() {
   const { user, isAuthenticated } = useAuth();
@@ -126,15 +127,15 @@ export default function Header() {
   return (
     <>
       {/* Integrated Desktop Header with Navigation */}
-      <header className="sticky top-0 z-50 bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl border-b border-white/20 dark:border-gray-800/50 shadow-lg hidden lg:block">
+      <header className="sticky top-0 z-50 bg-white/85 dark:bg-slate-900/85 backdrop-blur-xl border-b border-gray-200/60 dark:border-slate-800/60 shadow-sm hidden lg:block">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-12 gap-4 items-center h-16">
             {/* Logo - Fixed Width */}
             <div className="col-span-2">
               <Link href="/" className="flex items-center gap-2" data-testid="logo-desktop">
-                <Beer className="h-8 w-8 text-orange-600" />
+                <Beer className="h-8 w-8 text-amber-500" />
                 <span className="text-xl font-bold text-gray-900 dark:text-white">
-                  Fermenta<span className="text-orange-600">.to</span>
+                  Fermenta<span className="text-amber-500">.to</span>
                 </span>
               </Link>
             </div>
@@ -142,7 +143,7 @@ export default function Header() {
             {/* Main Navigation */}
             <div className="col-span-5">
               <nav className="flex items-center justify-center">
-                <div className="flex items-center space-x-1 bg-gray-100/50 dark:bg-gray-800/50 rounded-2xl p-1">
+                <div className="flex items-center space-x-1 bg-gray-100/60 dark:bg-slate-800/60 rounded-2xl p-1">
                   {navItems.map((item) => {
                     const Icon = item.icon;
                     const isActive = item.isActive;
@@ -153,7 +154,7 @@ export default function Header() {
                           <a
                             href={item.href}
                             data-testid={`nav-desktop-${item.label.toLowerCase().replace(' ', '-')}`}
-                            className={`relative flex items-center space-x-2 px-4 py-2 rounded-xl text-sm font-medium transition-all duration-300 ${isActive ? 'text-white shadow-lg bg-gradient-to-r from-orange-500 to-orange-600' : 'text-gray-600 dark:text-gray-400 hover:text-orange-600 dark:hover:text-orange-400 hover:bg-white/50 dark:hover:bg-gray-700/50'}`}
+                            className={`relative flex items-center space-x-2 px-4 py-2 rounded-xl text-sm font-medium transition-all duration-300 ${isActive ? 'text-white shadow-md bg-gradient-to-r from-amber-500 to-amber-600' : 'text-gray-600 dark:text-gray-400 hover:text-amber-600 dark:hover:text-amber-400 hover:bg-white/60 dark:hover:bg-slate-700/60'}`}
                           >
                             <div className="relative">
                               <Icon className="h-4 w-4" />
@@ -169,7 +170,7 @@ export default function Header() {
                           <Link href={item.href}>
                             <div
                               data-testid={`nav-desktop-${item.label.toLowerCase().replace(' ', '-')}`}
-                              className={`relative flex items-center space-x-2 px-4 py-2 rounded-xl text-sm font-medium transition-all duration-300 cursor-pointer ${isActive ? 'text-white shadow-lg bg-gradient-to-r from-orange-500 to-orange-600' : 'text-gray-600 dark:text-gray-400 hover:text-orange-600 dark:hover:text-orange-400 hover:bg-white/50 dark:hover:bg-gray-700/50'}`}
+                              className={`relative flex items-center space-x-2 px-4 py-2 rounded-xl text-sm font-medium transition-all duration-300 cursor-pointer ${isActive ? 'text-white shadow-md bg-gradient-to-r from-amber-500 to-amber-600' : 'text-gray-600 dark:text-gray-400 hover:text-amber-600 dark:hover:text-amber-400 hover:bg-white/60 dark:hover:bg-slate-700/60'}`}
                             >
                               <div className="relative">
                                 <Icon className="h-4 w-4" />
@@ -203,7 +204,7 @@ export default function Header() {
                     setShowResults(e.target.value.length > 2);
                   }}
                   onFocus={() => setShowResults(searchQuery.length > 2)}
-                  className="pl-10 pr-4 bg-white/50 dark:bg-gray-800/50 border-white/20 dark:border-gray-700/50"
+                  className="pl-10 pr-4 bg-white/60 dark:bg-slate-800/60 border-gray-200 dark:border-slate-700"
                   data-testid="search-input-desktop"
                 />
                 {showResults && (
@@ -216,7 +217,8 @@ export default function Header() {
             </div>
 
             {/* User Section */}
-            <div className="col-span-2 flex items-center justify-end gap-2">
+            <div className="col-span-2 flex items-center justify-end gap-1">
+              <ThemeToggle />
               {isAuthenticated && typedUser ? (
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
@@ -225,7 +227,7 @@ export default function Header() {
                         {typedUser.profileImageUrl && (
                           <AvatarImage src={typedUser.profileImageUrl} alt={typedUser.nickname || 'Profilo'} />
                         )}
-                        <AvatarFallback className="bg-orange-100 text-orange-600 text-sm">
+                        <AvatarFallback className="bg-amber-100 text-amber-600 text-sm">
                           {typedUser.nickname?.[0]?.toUpperCase() || typedUser.firstName?.[0] || typedUser.email?.[0]?.toUpperCase() || 'U'}
                         </AvatarFallback>
                       </Avatar>
@@ -242,8 +244,8 @@ export default function Header() {
                       </div>
                       {rolesData && (
                         <div className="flex items-center gap-1.5 mt-1">
-                          {(() => { const Icon = roleIcons[rolesData.activeRole] || User; return <Icon className="h-3 w-3 text-orange-500" />; })()}
-                          <span className="text-xs text-orange-600 dark:text-orange-400 font-medium">
+                          {(() => { const Icon = roleIcons[rolesData.activeRole] || User; return <Icon className="h-3 w-3 text-amber-500" />; })()}
+                          <span className="text-xs text-amber-600 dark:text-amber-400 font-medium">
                             {roleLabels[rolesData.activeRole] || rolesData.activeRole}
                           </span>
                         </div>
@@ -298,7 +300,7 @@ export default function Header() {
                   </DropdownMenuContent>
                 </DropdownMenu>
               ) : (
-                <Button asChild variant="default" size="sm" className="bg-orange-600 hover:bg-orange-700">
+                <Button asChild variant="default" size="sm" className="bg-amber-500 hover:bg-amber-400 text-gray-900 font-semibold">
                   <Link href="/login" data-testid="login-button">Accedi / Registrati</Link>
                 </Button>
               )}
