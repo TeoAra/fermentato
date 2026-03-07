@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
@@ -23,6 +23,7 @@ import {
   Mail,
   Key,
   Upload,
+  Camera,
   ChevronDown,
   ChevronUp,
   Trash2,
@@ -33,7 +34,6 @@ import {
 } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Link } from "wouter";
-import { ImageUpload } from "@/components/image-upload";
 import type { User as UserType } from "@shared/schema";
 import UserFavoritesSection from "@/components/UserFavoritesSection";
 import BeerTastingsEditor from "@/components/BeerTastingsEditorNew";
@@ -193,6 +193,28 @@ export default function UserProfile() {
     deleteAccountMutation.mutate();
   };
 
+  const avatarInputRef = useRef<HTMLInputElement>(null);
+  const [avatarUploading, setAvatarUploading] = useState(false);
+
+  const handleAvatarUpload = async (file: File) => {
+    if (!file) return;
+    setAvatarUploading(true);
+    try {
+      const formData = new FormData();
+      formData.append('image', file);
+      formData.append('folder', 'profile-images');
+      const response = await fetch('/api/upload/image', { method: 'POST', body: formData, credentials: 'include' });
+      const data = await response.json();
+      if (data.url) {
+        await updateProfileMutation.mutateAsync({ profileImageUrl: data.url });
+      }
+    } catch {
+      toast({ title: "Errore upload", description: "Impossibile caricare la foto", variant: "destructive" });
+    } finally {
+      setAvatarUploading(false);
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="min-h-screen bg-gray-50 dark:bg-gray-950 flex items-center justify-center">
@@ -215,25 +237,45 @@ export default function UserProfile() {
         <Card className="mb-6">
           <CardContent className="pt-6">
             <div className="flex flex-col md:flex-row items-center gap-6">
-              {/* Profile Image Upload */}
-              <div className="w-28 md:w-36 flex-shrink-0">
-                <ImageUpload
-                  label=""
-                  description=""
-                  currentImageUrl={typedUser.profileImageUrl || undefined}
-                  onImageChange={async (url) => {
-                    if (url) {
-                      try {
-                        await updateProfileMutation.mutateAsync({ profileImageUrl: url });
-                      } catch (e) {}
-                    }
-                  }}
-                  folder="profile-images"
-                  aspectRatio="square"
-                  maxSize={5}
-                  showFileInfo={false}
-                  recommendedDimensions="200x200"
-                />
+              {/* Profile Image Upload - circular avatar with camera icon */}
+              <div className="flex-shrink-0">
+                <div className="relative w-24 h-24">
+                  <div
+                    className="w-24 h-24 rounded-full overflow-hidden bg-amber-500 flex items-center justify-center cursor-pointer ring-4 ring-amber-200 dark:ring-amber-800"
+                    onClick={() => avatarInputRef.current?.click()}
+                  >
+                    {typedUser.profileImageUrl ? (
+                      <img src={typedUser.profileImageUrl} alt="Avatar" className="w-full h-full object-cover" />
+                    ) : (
+                      <span className="text-3xl font-bold text-white select-none">
+                        {(typedUser.nickname || typedUser.firstName || 'U')[0].toUpperCase()}
+                      </span>
+                    )}
+                    {avatarUploading && (
+                      <div className="absolute inset-0 bg-black/50 rounded-full flex items-center justify-center">
+                        <div className="w-6 h-6 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                      </div>
+                    )}
+                  </div>
+                  <button
+                    onClick={() => avatarInputRef.current?.click()}
+                    className="absolute bottom-0 right-0 w-8 h-8 rounded-full bg-amber-500 border-2 border-white dark:border-slate-800 flex items-center justify-center hover:bg-amber-600 transition-colors shadow-md"
+                    disabled={avatarUploading}
+                  >
+                    <Camera className="w-4 h-4 text-white" />
+                  </button>
+                  <input
+                    ref={avatarInputRef}
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (file) handleAvatarUpload(file);
+                      e.target.value = '';
+                    }}
+                  />
+                </div>
               </div>
 
               <div className="flex-1 text-center md:text-left">

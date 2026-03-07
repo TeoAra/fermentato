@@ -299,18 +299,31 @@ export default function Landing() {
         )}
 
         {/* ===== MAPPA INTERATTIVA ===== */}
-        <section>
-          <HomepageMap
-            pubs={Array.isArray(pubs) ? pubs : []}
-            breweries={Array.isArray(breweries) ? breweries : []}
-            userLocation={userLocation}
-            isLoading={pubsLoading || breweriesLoading}
-            onLocate={(loc) => {
-              setUserLocation(loc);
-              setLocationStatus('granted');
-            }}
-          />
-        </section>
+        {locationStatus === 'granted' ? (
+          <section>
+            <HomepageMap
+              pubs={Array.isArray(pubs) ? pubs : []}
+              breweries={Array.isArray(breweries) ? breweries : []}
+              userLocation={userLocation}
+              isLoading={pubsLoading || breweriesLoading}
+              onLocate={(loc) => {
+                setUserLocation(loc);
+                setLocationStatus('granted');
+              }}
+            />
+          </section>
+        ) : locationStatus !== 'denied' && (
+          <section className="rounded-2xl border border-dashed border-gray-200 dark:border-slate-700 bg-gray-50 dark:bg-slate-800/50 p-8 text-center">
+            <MapPin className="w-10 h-10 text-gray-300 dark:text-slate-600 mx-auto mb-3" />
+            <p className="text-gray-500 dark:text-gray-400 font-medium mb-3">
+              Attiva la posizione per vedere pub e birrifici sulla mappa
+            </p>
+            <Button size="sm" onClick={handleRequestLocation} className="bg-amber-500 hover:bg-amber-600 text-white">
+              <Navigation className="w-4 h-4 mr-2" />
+              Attiva GPS
+            </Button>
+          </section>
+        )}
 
         {/* ===== PUB VICINI ===== */}
         <section>

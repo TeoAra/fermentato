@@ -124,12 +124,12 @@ export default function BeerTastingsEditor({ beerTastings }: BeerTastingsEditorP
     <>
       <Card>
         <CardHeader>
-          <div className="flex items-center justify-between">
-            <CardTitle className="flex items-center gap-2">
-              <Beer className="w-5 h-5" />
-              Birre Assaggiate ({beerTastings?.length || 0})
+          <div className="flex flex-wrap items-center gap-2">
+            <CardTitle className="flex items-center gap-2 flex-1 min-w-0">
+              <Beer className="w-5 h-5 flex-shrink-0" />
+              <span className="truncate">Birre Assaggiate ({beerTastings?.length || 0})</span>
             </CardTitle>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 flex-shrink-0">
               <Button
                 variant={showFilters ? "default" : "outline"}
                 size="sm"
@@ -143,7 +143,7 @@ export default function BeerTastingsEditor({ beerTastings }: BeerTastingsEditorP
                 )}
               </Button>
               <Select value={String(perPage)} onValueChange={(v) => { setPerPage(Number(v)); setCurrentPage(1); }}>
-                <SelectTrigger className="w-20 h-8 text-xs">
+                <SelectTrigger className="w-16 h-8 text-xs">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>

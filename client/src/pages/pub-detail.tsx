@@ -621,6 +621,26 @@ export default function PubDetail() {
                       <Share2 className="h-4 w-4 sm:mr-2" />
                       <span className="hidden sm:inline">Condividi</span>
                     </Button>
+                    {((pub as any)?.latitude && (pub as any)?.longitude) || (pub as any)?.address ? (
+                      <a
+                        href={
+                          (pub as any)?.latitude && (pub as any)?.longitude
+                            ? `https://www.google.com/maps/dir/?api=1&destination=${(pub as any).latitude},${(pub as any).longitude}`
+                            : `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent((pub as any).address)}`
+                        }
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="backdrop-blur-md bg-blue-500/40 border-blue-300/60 text-white hover:bg-blue-500/60 transition-all duration-300 font-medium shadow-lg min-h-[44px] min-w-[44px]"
+                        >
+                          <Navigation className="h-4 w-4 sm:mr-2" />
+                          <span className="hidden sm:inline">Mappa</span>
+                        </Button>
+                      </a>
+                    ) : null}
                     {canManage && (
                       <Link href={isAdmin ? `/admin/edit-pub/${id}` : "/dashboard"}>
                         <Button 
