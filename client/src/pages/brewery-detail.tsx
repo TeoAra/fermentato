@@ -409,7 +409,7 @@ export default function BreweryDetail() {
                   </>
                 ) : (
                   <>
-                    <p className="text-2xl font-bold text-gray-400 dark:text-gray-500">—</p>
+                    <p className="text-2xl font-bold text-gray-400 dark:text-gray-400">—</p>
                     <p className="text-sm text-gray-500 dark:text-gray-400 font-medium">Nessuna recensione</p>
                   </>
                 )}
@@ -473,7 +473,7 @@ export default function BreweryDetail() {
           ) : beers.length === 0 ? (
             <div className="text-center py-16">
               <div className="w-20 h-20 bg-gradient-to-r from-gray-200 to-gray-300 dark:from-gray-700 dark:to-gray-600 rounded-full flex items-center justify-center mx-auto mb-6">
-                <Beer className="h-10 w-10 text-gray-400 dark:text-gray-500" />
+                <Beer className="h-10 w-10 text-gray-400 dark:text-gray-400" />
               </div>
               <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
                 Nessuna birra disponibile

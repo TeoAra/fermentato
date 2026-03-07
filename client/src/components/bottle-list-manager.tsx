@@ -520,7 +520,7 @@ export function BottleListManager({ pubId, bottleList }: BottleListManagerProps)
                         </div>
                         <p className="text-sm text-gray-600 dark:text-gray-400">{safeBeer.brewery.name}</p>
                         <div className="flex items-center gap-1.5 flex-wrap">
-                          <span className="text-xs text-gray-500 dark:text-gray-500">
+                          <span className="text-xs text-gray-500 dark:text-gray-400">
                             {safeBeer.style} • {safeBeer.abv}% ABV • {safeItem.size || "33cl"}
                           </span>
                           {(item.beer as any)?.isGlutenFree && (

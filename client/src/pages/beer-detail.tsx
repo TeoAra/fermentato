@@ -618,7 +618,7 @@ export default function BeerDetail() {
                 <div className="flex items-center gap-2">
                   <div className="flex items-center gap-1">
                     {[1,2,3,4,5].map(s => (
-                      <Star key={s} className={`h-4 w-4 ${s <= Math.round(reviewsData.avgRating || 0) ? 'text-yellow-500 fill-yellow-500' : 'text-gray-300 dark:text-gray-600'}`} />
+                      <Star key={s} className={`h-4 w-4 ${s <= Math.round(reviewsData.avgRating || 0) ? 'text-yellow-500 fill-yellow-500' : 'text-gray-300 dark:text-gray-400'}`} />
                     ))}
                   </div>
                   <span className="text-lg font-bold text-gray-900 dark:text-white">{reviewsData.avgRating?.toFixed(1)}</span>
@@ -717,7 +717,7 @@ export default function BeerDetail() {
                           </div>
                           <div className="flex items-center gap-0.5 flex-shrink-0">
                             {[1,2,3,4,5].map(s => (
-                              <Star key={s} className={`h-3 w-3 ${s <= (review.rating || 0) ? 'text-yellow-500 fill-yellow-500' : 'text-gray-300 dark:text-gray-600'}`} />
+                              <Star key={s} className={`h-3 w-3 ${s <= (review.rating || 0) ? 'text-yellow-500 fill-yellow-500' : 'text-gray-300 dark:text-gray-400'}`} />
                             ))}
                           </div>
                         </div>
@@ -744,7 +744,7 @@ export default function BeerDetail() {
                           {isAuthenticated && (
                             <button
                               onClick={() => { setReportDialogReviewId(review.id); }}
-                              className="flex items-center gap-1 text-gray-300 dark:text-gray-600 hover:text-red-400 dark:hover:text-red-400 transition-colors"
+                              className="flex items-center gap-1 text-gray-300 dark:text-gray-400 hover:text-red-400 dark:hover:text-red-400 transition-colors"
                               title="Segnala recensione"
                             >
                               <Flag className="h-3 w-3" />
@@ -800,7 +800,7 @@ export default function BeerDetail() {
             ) : totalLocations === 0 ? (
               <div className="text-center py-12">
                 <div className="w-16 h-16 bg-gradient-to-r from-gray-200 to-gray-300 dark:from-gray-700 dark:to-gray-600 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <MapPin className="h-8 w-8 text-gray-400 dark:text-gray-500" />
+                  <MapPin className="h-8 w-8 text-gray-400 dark:text-gray-400" />
                 </div>
                 <p className="text-gray-600 dark:text-gray-400">
                   Questa birra non è al momento disponibile in nessun locale.

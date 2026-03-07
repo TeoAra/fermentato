@@ -27,7 +27,7 @@ function StarDisplay({ rating }: { rating: number }) {
       {[1, 2, 3, 4, 5].map((s) => (
         <Star
           key={s}
-          className={`h-3.5 w-3.5 ${s <= rating ? "text-yellow-500 fill-yellow-500" : "text-gray-300 dark:text-gray-600"}`}
+          className={`h-3.5 w-3.5 ${s <= rating ? "text-yellow-500 fill-yellow-500" : "text-gray-300 dark:text-gray-400"}`}
         />
       ))}
     </div>
@@ -53,7 +53,7 @@ function BadgeCard({ badge, reviewCount, isCurrentLevel }: { badge: any; reviewC
       <span className={`text-xs font-bold text-center leading-tight ${isCurrentLevel ? "text-white" : "text-gray-700 dark:text-gray-300"}`}>
         {badge.name}
       </span>
-      <span className={`text-xs ${isCurrentLevel ? "text-white/80" : "text-gray-400 dark:text-gray-500"}`}>
+      <span className={`text-xs ${isCurrentLevel ? "text-white/80" : "text-gray-400 dark:text-gray-400"}`}>
         {badge.minReviews}+ rec.
       </span>
     </div>

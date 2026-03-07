@@ -160,7 +160,7 @@ const ModernBeerCard = ({ beer, prices, className = "" }: {
             <div className="space-y-1.5">
               {prices.map((price: any, index: number) => (
                 <div key={index}>
-                  <div className="text-xs text-gray-400 dark:text-gray-500">
+                  <div className="text-xs text-gray-400 dark:text-gray-400">
                     {typeof price === 'object' ? (price as any).size : price}
                   </div>
                   <div className="text-sm font-bold text-gray-900 dark:text-white">
@@ -199,7 +199,7 @@ const PubStatsCard = ({
         <p className="text-2xl font-bold text-gray-900 dark:text-white">{value}</p>
         <p className="text-sm text-gray-600 dark:text-gray-400 font-medium">{label}</p>
         {description && (
-          <p className="text-xs text-gray-500 dark:text-gray-500 mt-1">{description}</p>
+          <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{description}</p>
         )}
       </div>
     </div>

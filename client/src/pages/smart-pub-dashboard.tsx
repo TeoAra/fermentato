@@ -490,7 +490,7 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
           <AnimatePresence>
             {description && (
               <motion.p 
-                className="text-xs text-gray-500 dark:text-gray-500"
+                className="text-xs text-gray-500 dark:text-gray-400"
                 initial={{ opacity: 0, height: 0 }}
                 whileHover={{ opacity: 1, height: 'auto' }}
                 exit={{ opacity: 0, height: 0 }}

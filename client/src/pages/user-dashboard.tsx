@@ -133,7 +133,7 @@ export default function UserDashboard() {
             {title}
           </p>
           {description && (
-            <p className="text-xs text-gray-500 dark:text-gray-500 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+            <p className="text-xs text-gray-500 dark:text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
               {description}
             </p>
           )}

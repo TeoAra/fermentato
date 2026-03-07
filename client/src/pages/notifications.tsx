@@ -441,7 +441,7 @@ export default function Notifications() {
         {notificationsList.length === 0 && (
           <Card>
             <CardContent className="p-8 text-center">
-              <Bell className="h-12 w-12 text-gray-300 dark:text-gray-600 mx-auto mb-3" />
+              <Bell className="h-12 w-12 text-gray-300 dark:text-gray-400 mx-auto mb-3" />
               <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
                 Nessuna notifica
               </h3>

@@ -522,7 +522,7 @@ export default function MenuCategoryManager({ pubId, categories }: MenuCategoryM
                 repeatType: "reverse"
               }}
             >
-              <Utensils className="h-10 w-10 text-gray-400 dark:text-gray-500" />
+              <Utensils className="h-10 w-10 text-gray-400 dark:text-gray-400" />
             </motion.div>
             <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
               Nessuna categoria menu

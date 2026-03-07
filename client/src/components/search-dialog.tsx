@@ -137,7 +137,7 @@ export default function SearchDialog({ isOpen, onClose }: SearchDialogProps) {
           {/* Modern Search Input */}
           <div className="relative">
             <div className="absolute inset-y-0 left-0 flex items-center pl-4 pointer-events-none">
-              <Search className="h-5 w-5 text-gray-400 dark:text-gray-500" />
+              <Search className="h-5 w-5 text-gray-400 dark:text-gray-400" />
             </div>
             <Input
               ref={inputRef}
@@ -244,7 +244,7 @@ export default function SearchDialog({ isOpen, onClose }: SearchDialogProps) {
               {/* Welcome message */}
               <div className="text-center py-8">
                 <div className="relative inline-block">
-                  <Search className="h-16 w-16 text-gray-300 dark:text-gray-600 mx-auto mb-4" />
+                  <Search className="h-16 w-16 text-gray-300 dark:text-gray-400 mx-auto mb-4" />
                   <Sparkles className="h-6 w-6 text-orange-500 absolute -top-1 -right-1 animate-pulse" />
                 </div>
                 <p className="text-gray-500 dark:text-gray-400 text-sm leading-relaxed">
@@ -482,13 +482,13 @@ export default function SearchDialog({ isOpen, onClose }: SearchDialogProps) {
               {(!searchResults.pubs?.length && !searchResults.breweries?.length && !searchResults.beers?.length) && (
                 <div className="text-center py-12">
                   <div className="relative inline-block mb-4">
-                    <Search className="h-16 w-16 text-gray-300 dark:text-gray-600 mx-auto" />
+                    <Search className="h-16 w-16 text-gray-300 dark:text-gray-400 mx-auto" />
                     <X className="h-6 w-6 text-red-400 absolute -bottom-1 -right-1" />
                   </div>
                   <p className="text-gray-500 dark:text-gray-400 text-lg font-medium mb-2">
                     Nessun risultato trovato
                   </p>
-                  <p className="text-gray-400 dark:text-gray-500 text-sm">
+                  <p className="text-gray-400 dark:text-gray-400 text-sm">
                     Prova con termini di ricerca diversi per "<span className="font-medium">{debouncedSearch}</span>"
                   </p>
                 </div>
@@ -496,7 +496,7 @@ export default function SearchDialog({ isOpen, onClose }: SearchDialogProps) {
             </div>
           ) : (
             <div className="p-6 text-center">
-              <Search className="h-12 w-12 mx-auto mb-3 text-gray-300 dark:text-gray-600" />
+              <Search className="h-12 w-12 mx-auto mb-3 text-gray-300 dark:text-gray-400" />
               <p className="text-gray-500 dark:text-gray-400">
                 Inizia la tua ricerca...
               </p>

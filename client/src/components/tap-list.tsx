@@ -106,7 +106,7 @@ export default function TapList({ tapList }: TapListProps) {
                   {tap.prices && tap.prices.length > 0 ? (
                     tap.prices.map((priceItem, index) => (
                       <div key={index}>
-                        <div className="text-xs text-gray-400 dark:text-gray-500">{priceItem.size}</div>
+                        <div className="text-xs text-gray-400 dark:text-gray-400">{priceItem.size}</div>
                         <div className="text-sm font-bold text-gray-900 dark:text-white">€{parseFloat(priceItem.price).toFixed(2)}</div>
                       </div>
                     ))
@@ -114,19 +114,19 @@ export default function TapList({ tapList }: TapListProps) {
                     <>
                       {tap.priceSmall && parseFloat(tap.priceSmall) > 0 && (
                         <div>
-                          <div className="text-xs text-gray-400 dark:text-gray-500">Piccola</div>
+                          <div className="text-xs text-gray-400 dark:text-gray-400">Piccola</div>
                           <div className="text-sm font-bold text-gray-900 dark:text-white">€{parseFloat(tap.priceSmall).toFixed(2)}</div>
                         </div>
                       )}
                       {tap.priceMedium && parseFloat(tap.priceMedium) > 0 && (
                         <div>
-                          <div className="text-xs text-gray-400 dark:text-gray-500">Media</div>
+                          <div className="text-xs text-gray-400 dark:text-gray-400">Media</div>
                           <div className="text-sm font-bold text-gray-900 dark:text-white">€{parseFloat(tap.priceMedium).toFixed(2)}</div>
                         </div>
                       )}
                       {tap.priceLarge && parseFloat(tap.priceLarge) > 0 && (
                         <div>
-                          <div className="text-xs text-gray-400 dark:text-gray-500">Grande</div>
+                          <div className="text-xs text-gray-400 dark:text-gray-400">Grande</div>
                           <div className="text-sm font-bold text-gray-900 dark:text-white">€{parseFloat(tap.priceLarge).toFixed(2)}</div>
                         </div>
                       )}

@@ -214,7 +214,7 @@ export function ImageUpload({
           {description && (
             <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5 line-clamp-1">{description}</p>
           )}
-          <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">
+          <p className="text-xs text-gray-400 dark:text-gray-400 mt-0.5">
             Max {maxSize}MB · {acceptedFormats.join(', ')}
             {recommendedDimensions && ` · ${recommendedDimensions}`}
           </p>

@@ -110,15 +110,15 @@
 .dark {
   /* Base surfaces */
   --background: hsl(222, 47%, 5%);
-  --foreground: hsl(210, 30%, 95%);
+  --foreground: hsl(0, 0%, 98%);
   --muted: hsl(215, 25%, 13%);
-  --muted-foreground: hsl(215, 15%, 55%);
+  --muted-foreground: hsl(215, 15%, 65%);
 
   /* Card / Popover */
   --popover: hsl(222, 40%, 8%);
-  --popover-foreground: hsl(210, 30%, 95%);
+  --popover-foreground: hsl(0, 0%, 98%);
   --card: hsl(222, 40%, 8%);
-  --card-foreground: hsl(210, 30%, 95%);
+  --card-foreground: hsl(0, 0%, 98%);
 
   /* Borders / Inputs */
   --border: hsl(215, 20%, 18%);
@@ -130,7 +130,7 @@
 
   /* Secondary — Slate Blue */
   --secondary: hsl(215, 30%, 22%);
-  --secondary-foreground: hsl(210, 30%, 95%);
+  --secondary-foreground: hsl(0, 0%, 98%);
 
   /* Accent — Amber/Orange */
   --accent: hsl(38, 70%, 22%);
