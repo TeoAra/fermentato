@@ -74,7 +74,13 @@ export default function AdminDashboardNew() {
   });
 
   const { data: recentActivity = [] } = useQuery<any[]>({
-    queryKey: ["/api/admin/recent-activity"],
+    queryKey: ["/api/admin/recent-activity", activityFilter],
+    queryFn: async () => {
+      const params = new URLSearchParams({ limit: '15' });
+      if (activityFilter !== 'all') params.append('type', activityFilter);
+      const res = await fetch(`/api/admin/recent-activity?${params}`, { credentials: 'include' });
+      return res.json();
+    },
     enabled: isAuthenticated && (user as any)?.userType === 'admin',
     refetchInterval: 60000,
   });
@@ -371,7 +377,7 @@ export default function AdminDashboardNew() {
             <p className="text-center text-gray-400 py-6">Nessuna attività recente</p>
           ) : (
             <div className="space-y-1">
-              {recentActivity.filter((item: any) => activityFilter === 'all' || item.icon === activityFilter).slice(0, 15).map((item: any, i: number) => (
+              {recentActivity.map((item: any, i: number) => (
                 <div key={i} className="flex items-start gap-3 p-3 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800/40 transition-colors">
                   <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5 ${
                     item.icon === 'user' ? 'bg-purple-100 dark:bg-purple-900/40' :
