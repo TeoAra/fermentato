@@ -36,7 +36,7 @@ export default function Home() {
         setLocationStatus('granted');
       },
       () => { setLocationStatus('denied'); },
-      { enableHighAccuracy: false, timeout: 10000, maximumAge: 300000 }
+      { enableHighAccuracy: true, timeout: 15000, maximumAge: 30000 }
     );
   }, []);
 

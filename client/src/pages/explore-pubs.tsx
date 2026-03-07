@@ -111,7 +111,7 @@ export default function ExplorePubs() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex items-center gap-4">
             <Link href="/">
-              <Button variant="ghost" size="sm" className="text-gray-600 dark:text-slate-400 hover:text-gray-900 dark:hover:text-white">
+              <Button variant="ghost" size="sm" className="text-amber-600 dark:text-amber-400 hover:text-amber-700 hover:bg-amber-50 dark:hover:text-amber-300 dark:hover:bg-amber-500/10 font-medium">
                 <ArrowLeft className="w-4 h-4 mr-2" />
                 Torna alla Home
               </Button>
