@@ -1,4 +1,4 @@
-import { Beer, Facebook, Instagram, Twitter } from "lucide-react";
+import { Beer, Facebook, Instagram } from "lucide-react";
 import { Link } from "wouter";
 import { CookieSettingsButton } from "@/components/CookieBanner";
 
@@ -16,14 +16,11 @@ export default function Footer() {
               La piattaforma definitiva per scoprire le migliori birre artigianali nei pub e birrifici d'Italia.
             </p>
             <div className="flex space-x-4">
-              <a href="#" className="text-gray-300 hover:text-primary">
+              <a href="https://www.facebook.com/fermentato.social" target="_blank" rel="noopener noreferrer" className="text-gray-300 hover:text-primary">
                 <Facebook size={24} />
               </a>
-              <a href="#" className="text-gray-300 hover:text-primary">
+              <a href="https://www.instagram.com/fermentato.social" target="_blank" rel="noopener noreferrer" className="text-gray-300 hover:text-primary">
                 <Instagram size={24} />
-              </a>
-              <a href="#" className="text-gray-300 hover:text-primary">
-                <Twitter size={24} />
               </a>
             </div>
           </div>

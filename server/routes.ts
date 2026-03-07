@@ -1789,6 +1789,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Total counts
       const totalBeers = await db.select().from(beers);
       const totalBreweries = await db.select().from(breweries);
+      const totalPubs = await db.select({ id: pubs.id }).from(pubs);
+      const totalUsers = await db.select({ id: users.id }).from(users);
       
       // Unique styles
       const uniqueStyles = await db
@@ -1822,6 +1824,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json({
         totalBeers: totalBeers.length,
         totalBreweries: totalBreweries.length,
+        totalPubs: totalPubs.length,
+        totalUsers: totalUsers.length,
         uniqueStyles: uniqueStyles.length,
         topStyles: topStyles,
         topBreweries: topBreweries,

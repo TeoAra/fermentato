@@ -29,7 +29,8 @@ import {
   MessageSquare,
   CalendarDays,
   Store,
-  Beer
+  Beer,
+  Trash2
 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { it } from "date-fns/locale";
@@ -61,6 +62,7 @@ export default function AdminDashboard() {
   const [editRole, setEditRole] = useState("");
   const [banTarget, setBanTarget] = useState<any>(null);
   const [unbanTarget, setUnbanTarget] = useState<any>(null);
+  const [deleteTarget, setDeleteTarget] = useState<any>(null);
 
   useEffect(() => {
     if (!isLoading && (!isAuthenticated || user?.userType !== "admin")) {
@@ -98,6 +100,20 @@ export default function AdminDashboard() {
     },
     onError: (err: any) => {
       toast({ title: "Errore", description: err?.message || "Impossibile aggiornare l'utente", variant: "destructive" });
+    },
+  });
+
+  const deleteUserMutation = useMutation({
+    mutationFn: async (userId: string) =>
+      apiRequest(`/api/admin/users/${userId}`, { method: "DELETE" }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/users"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/stats"] });
+      toast({ title: "Utente eliminato", description: "L'account è stato eliminato definitivamente" });
+      setDeleteTarget(null);
+    },
+    onError: (err: any) => {
+      toast({ title: "Errore", description: err?.message || "Impossibile eliminare l'utente", variant: "destructive" });
     },
   });
 
@@ -288,6 +304,15 @@ export default function AdminDashboard() {
                                         <Ban className="w-3.5 h-3.5" />
                                       </Button>
                                     )}
+                                    <Button
+                                      size="sm"
+                                      variant="ghost"
+                                      className="h-7 w-7 p-0 hover:bg-red-100 dark:hover:bg-red-900/30 hover:text-red-700"
+                                      title="Elimina utente"
+                                      onClick={() => setDeleteTarget(u)}
+                                    >
+                                      <Trash2 className="w-3.5 h-3.5" />
+                                    </Button>
                                   </>
                                 )}
                               </div>
@@ -510,6 +535,32 @@ export default function AdminDashboard() {
             >
               <CheckCircle className="w-4 h-4 mr-2" />
               Sbanna utente
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* ===== DELETE CONFIRM DIALOG ===== */}
+      <AlertDialog open={!!deleteTarget} onOpenChange={(open) => { if (!open) setDeleteTarget(null); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2 text-red-600">
+              <Trash2 className="w-5 h-5" />
+              Eliminare {deleteTarget?.nickname || deleteTarget?.email || "questo utente"}?
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              <span className="font-semibold text-red-600">Questa azione è irreversibile.</span> L'account, le recensioni, i preferiti e tutti i dati associati verranno eliminati definitivamente.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Annulla</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-red-600 hover:bg-red-700"
+              onClick={() => deleteUserMutation.mutate(deleteTarget.id)}
+              disabled={deleteUserMutation.isPending}
+            >
+              <Trash2 className="w-4 h-4 mr-2" />
+              {deleteUserMutation.isPending ? "Eliminazione..." : "Elimina definitivamente"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
