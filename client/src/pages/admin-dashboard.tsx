@@ -106,14 +106,26 @@ export default function AdminDashboard() {
   const deleteUserMutation = useMutation({
     mutationFn: async (userId: string) =>
       apiRequest(`/api/admin/users/${userId}`, { method: "DELETE" }),
+    onMutate: async (userId: string) => {
+      await queryClient.cancelQueries({ queryKey: ["/api/admin/users"] });
+      const previousUsers = queryClient.getQueryData<any[]>(["/api/admin/users"]);
+      queryClient.setQueryData<any[]>(["/api/admin/users"], (old) =>
+        old ? old.filter((u) => u.id !== userId) : []
+      );
+      return { previousUsers };
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/admin/users"] });
       queryClient.invalidateQueries({ queryKey: ["/api/admin/stats"] });
       toast({ title: "Utente eliminato", description: "L'account è stato eliminato definitivamente" });
       setDeleteTarget(null);
     },
-    onError: (err: any) => {
+    onError: (err: any, _userId, context: any) => {
+      if (context?.previousUsers) {
+        queryClient.setQueryData(["/api/admin/users"], context.previousUsers);
+      }
       toast({ title: "Errore", description: err?.message || "Impossibile eliminare l'utente", variant: "destructive" });
+      setDeleteTarget(null);
     },
   });
 
