@@ -205,11 +205,16 @@ export default function UserProfile() {
       formData.append('folder', 'profile-images');
       const response = await fetch('/api/upload/image', { method: 'POST', body: formData, credentials: 'include' });
       const data = await response.json();
-      if (data.url) {
-        await updateProfileMutation.mutateAsync({ profileImageUrl: data.url });
+      if (!response.ok) {
+        throw new Error(data.message || `Errore ${response.status}`);
       }
-    } catch {
-      toast({ title: "Errore upload", description: "Impossibile caricare la foto", variant: "destructive" });
+      if (!data.url) {
+        throw new Error("Nessun URL ricevuto dal server");
+      }
+      await updateProfileMutation.mutateAsync({ profileImageUrl: data.url });
+      toast({ title: "Foto aggiornata", description: "La tua immagine del profilo è stata aggiornata" });
+    } catch (e: any) {
+      toast({ title: "Errore upload", description: e.message || "Impossibile caricare la foto", variant: "destructive" });
     } finally {
       setAvatarUploading(false);
     }
@@ -238,11 +243,11 @@ export default function UserProfile() {
           <CardContent className="pt-6">
             <div className="flex flex-col md:flex-row items-center gap-6">
               {/* Profile Image Upload - circular avatar with camera icon */}
-              <div className="flex-shrink-0">
-                <div className="relative w-24 h-24">
+              <div className="flex-shrink-0 flex flex-col items-center gap-2">
+                <div className="relative w-24 h-24 group">
                   <div
                     className="w-24 h-24 rounded-full overflow-hidden bg-amber-500 flex items-center justify-center cursor-pointer ring-4 ring-amber-200 dark:ring-amber-800"
-                    onClick={() => avatarInputRef.current?.click()}
+                    onClick={() => !avatarUploading && avatarInputRef.current?.click()}
                   >
                     {typedUser.profileImageUrl ? (
                       <img src={typedUser.profileImageUrl} alt="Avatar" className="w-full h-full object-cover" />
@@ -251,15 +256,19 @@ export default function UserProfile() {
                         {(typedUser.nickname || typedUser.firstName || 'U')[0].toUpperCase()}
                       </span>
                     )}
-                    {avatarUploading && (
-                      <div className="absolute inset-0 bg-black/50 rounded-full flex items-center justify-center">
-                        <div className="w-6 h-6 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                      </div>
-                    )}
+                    {/* Overlay on hover */}
+                    <div className="absolute inset-0 rounded-full bg-black/0 group-hover:bg-black/40 transition-all flex items-center justify-center">
+                      {!avatarUploading && (
+                        <Camera className="w-7 h-7 text-white opacity-0 group-hover:opacity-100 transition-opacity" />
+                      )}
+                      {avatarUploading && (
+                        <div className="w-7 h-7 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                      )}
+                    </div>
                   </div>
                   <button
-                    onClick={() => avatarInputRef.current?.click()}
-                    className="absolute bottom-0 right-0 w-8 h-8 rounded-full bg-amber-500 border-2 border-white dark:border-slate-800 flex items-center justify-center hover:bg-amber-600 transition-colors shadow-md"
+                    onClick={() => !avatarUploading && avatarInputRef.current?.click()}
+                    className="absolute bottom-0 right-0 w-8 h-8 rounded-full bg-amber-500 border-2 border-white dark:border-slate-800 flex items-center justify-center hover:bg-amber-600 active:bg-amber-700 transition-colors shadow-md"
                     disabled={avatarUploading}
                   >
                     <Camera className="w-4 h-4 text-white" />
@@ -276,6 +285,13 @@ export default function UserProfile() {
                     }}
                   />
                 </div>
+                <button
+                  onClick={() => !avatarUploading && avatarInputRef.current?.click()}
+                  className="text-xs text-amber-600 dark:text-amber-400 hover:underline font-medium"
+                  disabled={avatarUploading}
+                >
+                  {avatarUploading ? "Caricamento..." : "Cambia foto"}
+                </button>
               </div>
 
               <div className="flex-1 text-center md:text-left">
