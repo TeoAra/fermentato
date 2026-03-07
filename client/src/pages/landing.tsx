@@ -54,7 +54,8 @@ export default function Landing() {
     return [...pubs]
       .map((pub: any) => ({
         ...pub,
-        _distance: pub.latitude && pub.longitude
+        _distance: pub.latitude && pub.longitude &&
+          parseFloat(pub.latitude) !== 0 && parseFloat(pub.longitude) !== 0
           ? haversineDistance(userLocation.lat, userLocation.lng, parseFloat(pub.latitude), parseFloat(pub.longitude))
           : Infinity,
       }))
@@ -71,7 +72,8 @@ export default function Landing() {
     return [...breweries]
       .map((b: any) => ({
         ...b,
-        _distance: b.latitude && b.longitude
+        _distance: b.latitude && b.longitude &&
+          parseFloat(b.latitude) !== 0 && parseFloat(b.longitude) !== 0
           ? haversineDistance(userLocation.lat, userLocation.lng, parseFloat(b.latitude), parseFloat(b.longitude))
           : Infinity,
       }))
