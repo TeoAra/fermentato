@@ -725,9 +725,21 @@ export default function BeerDetail() {
                           <p className="text-sm text-gray-700 dark:text-gray-300 italic mb-1">"{review.personalNotes}"</p>
                         )}
                         <div className="flex items-center justify-between gap-2 text-xs text-gray-400 flex-wrap">
-                          <div className="flex items-center gap-2">
-                            <span>{new Date(review.tastedAt).toLocaleDateString('it-IT')}</span>
-                            {review.format && <span className="before:content-['·'] before:mr-2">{review.format}</span>}
+                          <div className="flex items-center gap-1 flex-wrap">
+                            <span>Degustata il {new Date(review.tastedAt).toLocaleDateString('it-IT')}</span>
+                            {review.format && <span>in {review.format}</span>}
+                            {review.pubId && review.pubName && (
+                              <>
+                                <span>presso</span>
+                                <a
+                                  href={`/pub/${review.pubId}`}
+                                  className="text-amber-500 hover:text-amber-600 dark:text-amber-400 hover:underline font-medium"
+                                  onClick={(e) => e.stopPropagation()}
+                                >
+                                  {review.pubName}
+                                </a>
+                              </>
+                            )}
                           </div>
                           {isAuthenticated && (
                             <button

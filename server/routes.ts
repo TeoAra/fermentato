@@ -3311,6 +3311,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
           format: userBeerTastings.format,
           tastedAt: userBeerTastings.tastedAt,
           userId: userBeerTastings.userId,
+          pubId: userBeerTastings.pubId,
+          pubName: pubs.name,
           nickname: users.nickname,
           firstName: users.firstName,
           profileImageUrl: users.profileImageUrl,
@@ -3319,6 +3321,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         })
         .from(userBeerTastings)
         .leftJoin(users, eq(userBeerTastings.userId, users.id))
+        .leftJoin(pubs, eq(userBeerTastings.pubId, pubs.id))
         .where(and(eq(userBeerTastings.beerId, beerId), sql`${userBeerTastings.rating} IS NOT NULL`))
         .orderBy(desc(userBeerTastings.tastedAt));
 
