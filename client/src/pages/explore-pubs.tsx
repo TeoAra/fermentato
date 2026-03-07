@@ -43,10 +43,9 @@ const statiItaliani = [
 function PubSquareCard({ pub }: { pub: any }) {
   return (
     <Link href={`/pub/${pub.id}`}>
-      <Card className="overflow-hidden hover:shadow-lg transition-all duration-200 cursor-pointer group h-48">
+      <Card className="overflow-hidden hover:shadow-lg transition-all duration-200 cursor-pointer group h-48 border border-gray-100 dark:border-slate-700 bg-white dark:bg-slate-800">
         <CardContent className="p-4 h-full flex flex-col">
-          {/* Pub Image */}
-          <div className="relative w-full h-24 mb-3 rounded-lg overflow-hidden bg-gray-100">
+          <div className="relative w-full h-24 mb-3 rounded-lg overflow-hidden bg-gray-100 dark:bg-slate-700">
             <img
               src={pub.logoUrl || "https://images.unsplash.com/photo-1514933651103-005eec06c04b?ixlib=rb-4.0.3&auto=format&fit=crop&w=200&h=150"}
               alt={pub.name}
@@ -54,25 +53,23 @@ function PubSquareCard({ pub }: { pub: any }) {
             />
           </div>
           
-          {/* Pub Info */}
           <div className="flex-1 flex flex-col">
-            <h3 className="font-semibold text-sm mb-1 line-clamp-1 group-hover:text-primary transition-colors">
+            <h3 className="font-semibold text-sm mb-1 line-clamp-1 text-gray-900 dark:text-amber-400 group-hover:text-amber-600 dark:group-hover:text-amber-300 transition-colors">
               {pub.name}
             </h3>
             
-            <div className="flex items-center gap-1 text-xs text-gray-600 mb-2">
+            <div className="flex items-center gap-1 text-xs text-gray-500 dark:text-slate-400 mb-2">
               <MapPin className="w-3 h-3 flex-shrink-0" />
               <span className="line-clamp-1">{pub.address}</span>
             </div>
             
-            {/* Tags */}
             <div className="flex flex-wrap gap-1 mt-auto">
-              <Badge variant="outline" className="text-xs px-2 py-0.5 h-auto">
+              <Badge variant="outline" className="text-xs px-2 py-0.5 h-auto border-gray-200 dark:border-slate-600 text-gray-600 dark:text-slate-400">
                 <Store className="w-3 h-3 mr-1" />
                 Pub
               </Badge>
               
-              <Badge variant={isOpenNow(pub.openingHours) ? "default" : "secondary"} className={`text-xs px-2 py-0.5 h-auto ${isOpenNow(pub.openingHours) ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+              <Badge variant={isOpenNow(pub.openingHours) ? "default" : "secondary"} className={`text-xs px-2 py-0.5 h-auto ${isOpenNow(pub.openingHours) ? 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-400' : 'bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-400'}`}>
                 <Clock className="w-3 h-3 mr-1" />
                 {isOpenNow(pub.openingHours) ? 'Aperto' : 'Chiuso'}
               </Badge>
@@ -109,31 +106,29 @@ export default function ExplorePubs() {
   }, {}) : {};
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <div className="bg-white shadow-sm border-b">
+    <div className="min-h-screen bg-gray-50 dark:bg-slate-900">
+      <div className="bg-white dark:bg-slate-900 shadow-sm border-b border-gray-200 dark:border-slate-800">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex items-center gap-4">
             <Link href="/">
-              <Button variant="ghost" size="sm">
+              <Button variant="ghost" size="sm" className="text-gray-600 dark:text-slate-400 hover:text-gray-900 dark:hover:text-white">
                 <ArrowLeft className="w-4 h-4 mr-2" />
                 Torna alla Home
               </Button>
             </Link>
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">Esplora Tutti i Pub</h1>
-              <p className="text-gray-600">Scopri pub organizzati per regione</p>
+              <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Esplora Tutti i Pub</h1>
+              <p className="text-gray-500 dark:text-slate-400">Scopri pub organizzati per regione</p>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Content */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {isLoading ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {[...Array(6)].map((_, i) => (
-              <div key={i} className="bg-white rounded-lg shadow-md h-48 animate-pulse" />
+              <div key={i} className="bg-gray-100 dark:bg-slate-800 rounded-lg h-48 animate-pulse" />
             ))}
           </div>
         ) : (
@@ -151,14 +146,14 @@ export default function ExplorePubs() {
                   <CollapsibleTrigger asChild>
                     <Button
                       variant="outline"
-                      className="w-full justify-between text-left h-auto p-4 mb-4"
+                      className="w-full justify-between text-left h-auto p-4 mb-4 bg-white dark:bg-slate-800 border-gray-200 dark:border-slate-700 text-gray-900 dark:text-white hover:bg-gray-50 dark:hover:bg-slate-700"
                     >
                       <div className="flex items-center gap-3">
-                        <MapPin className="w-5 h-5 text-primary" />
+                        <MapPin className="w-5 h-5 text-teal-500" />
                         <span className="font-semibold text-lg">{state}</span>
-                        <Badge variant="secondary">{statePubs.length} pub</Badge>
+                        <Badge variant="secondary" className="bg-gray-100 dark:bg-slate-700 text-gray-600 dark:text-slate-300">{statePubs.length} pub</Badge>
                       </div>
-                      <div className="text-gray-400">
+                      <div className="text-gray-400 dark:text-slate-500">
                         {openStates.includes(state) ? '−' : '+'}
                       </div>
                     </Button>

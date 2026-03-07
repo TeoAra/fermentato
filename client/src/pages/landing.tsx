@@ -92,38 +92,35 @@ export default function Landing() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-950">
+    <div className="min-h-screen bg-white dark:bg-slate-950">
 
       {/* ===== HERO ===== */}
-      <section className="relative overflow-hidden bg-gradient-to-br from-gray-900 via-slate-800 to-gray-900 min-h-[520px] lg:min-h-[580px]">
-        {/* Background image with dark overlay */}
+      <section className="relative overflow-hidden bg-gradient-to-br from-amber-50 via-white to-slate-100 dark:from-gray-900 dark:via-slate-800 dark:to-gray-900 min-h-[520px] lg:min-h-[580px]">
         <div className="absolute inset-0">
           <img
             src="https://images.unsplash.com/photo-1436076863939-06870fe779c2?w=1920&h=600&fit=crop"
             alt="Craft beer"
-            className="w-full h-full object-cover opacity-20"
+            className="w-full h-full object-cover opacity-10 dark:opacity-20"
           />
-          <div className="absolute inset-0 bg-gradient-to-r from-gray-900/95 via-slate-900/80 to-transparent"></div>
+          <div className="absolute inset-0 bg-gradient-to-r from-white/95 via-amber-50/70 to-transparent dark:from-gray-900/95 dark:via-slate-900/80 dark:to-transparent"></div>
         </div>
 
-        {/* Decorative accent blobs */}
-        <div className="absolute top-0 right-0 w-96 h-96 bg-amber-500/10 rounded-full blur-3xl pointer-events-none"></div>
-        <div className="absolute bottom-0 left-1/2 w-64 h-64 bg-teal-500/10 rounded-full blur-3xl pointer-events-none"></div>
+        <div className="absolute top-0 right-0 w-96 h-96 bg-amber-400/8 dark:bg-amber-500/10 rounded-full blur-3xl pointer-events-none"></div>
+        <div className="absolute bottom-0 left-1/2 w-64 h-64 bg-teal-400/8 dark:bg-teal-500/10 rounded-full blur-3xl pointer-events-none"></div>
 
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 lg:py-28">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
 
-            {/* Left — text + CTA */}
             <div>
-              <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-amber-500/20 text-amber-300 text-sm font-medium mb-6 border border-amber-500/30">
+              <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-amber-500/10 dark:bg-amber-500/20 text-amber-700 dark:text-amber-300 text-sm font-medium mb-6 border border-amber-500/20 dark:border-amber-500/30">
                 <Globe className="w-4 h-4" />
                 La piattaforma del craft beer
               </div>
-              <h1 className="text-4xl md:text-5xl lg:text-5xl font-bold text-white mb-5 leading-tight">
+              <h1 className="text-4xl md:text-5xl lg:text-5xl font-bold text-gray-900 dark:text-white mb-5 leading-tight">
                 Scopri il nuovo modo<br />
-                <span className="text-amber-400">di bere artigianale</span>
+                <span className="text-amber-500 dark:text-amber-400">di bere artigianale</span>
               </h1>
-              <p className="text-lg text-gray-300 mb-8 leading-relaxed max-w-lg">
+              <p className="text-lg text-gray-600 dark:text-gray-300 mb-8 leading-relaxed max-w-lg">
                 Trova pub, birrifici e la perfetta birra artigianale vicino a te. La community globale del craft beer e non solo.
               </p>
               <div className="flex flex-wrap gap-3">
@@ -134,7 +131,7 @@ export default function Landing() {
                   </Button>
                 </a>
                 <Link href="/explore/breweries">
-                  <Button size="lg" className="bg-white/10 hover:bg-white/20 text-white font-semibold px-8 border border-white/20 backdrop-blur-sm">
+                  <Button size="lg" className="bg-gray-900/8 hover:bg-gray-900/15 dark:bg-white/10 dark:hover:bg-white/20 text-gray-800 dark:text-white font-semibold px-8 border border-gray-900/15 dark:border-white/20 backdrop-blur-sm">
                     <Search className="mr-2 w-5 h-5" />
                     Esplora la mappa
                   </Button>
@@ -142,7 +139,6 @@ export default function Landing() {
               </div>
             </div>
 
-            {/* Right — feature cards */}
             <div className="hidden lg:flex flex-col gap-4">
               {[
                 {
@@ -164,13 +160,13 @@ export default function Landing() {
                   desc: "Scala i livelli da Germoglio a Leggenda del Luppolo",
                 },
               ].map(({ icon: Icon, color, title, desc }) => (
-                <div key={title} className="flex items-start gap-4 p-4 rounded-2xl bg-white/5 border border-white/10 backdrop-blur-sm hover:bg-white/10 transition-colors">
+                <div key={title} className="flex items-start gap-4 p-4 rounded-2xl bg-white/80 dark:bg-white/5 border border-gray-200/80 dark:border-white/10 backdrop-blur-sm hover:bg-white dark:hover:bg-white/10 transition-colors shadow-sm dark:shadow-none">
                   <div className={`p-2.5 rounded-xl bg-gradient-to-br ${color} flex-shrink-0`}>
                     <Icon className="w-5 h-5 text-white" />
                   </div>
                   <div>
-                    <p className="font-semibold text-white text-sm">{title}</p>
-                    <p className="text-gray-400 text-xs mt-0.5 leading-relaxed">{desc}</p>
+                    <p className="font-semibold text-gray-900 dark:text-white text-sm">{title}</p>
+                    <p className="text-gray-500 dark:text-gray-400 text-xs mt-0.5 leading-relaxed">{desc}</p>
                   </div>
                 </div>
               ))}
@@ -181,19 +177,19 @@ export default function Landing() {
 
       {/* ===== STATS BANNER ===== */}
       {globalStats && (
-        <section className="bg-gradient-to-r from-slate-800 to-gray-800 py-7 border-y border-white/5">
+        <section className="bg-amber-50 dark:bg-gradient-to-r dark:from-slate-800 dark:to-gray-800 py-7 border-y border-amber-100 dark:border-white/5">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-6 text-center text-white">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-6 text-center">
               {[
-                { value: (globalStats.totalBreweries || 0).toLocaleString("it-IT"), label: "Birrifici", icon: Building2, accent: "text-amber-400" },
-                { value: (globalStats.totalBeers || 0).toLocaleString("it-IT"), label: "Birre", icon: Beer, accent: "text-orange-400" },
-                { value: (globalStats.totalPubs || 0).toLocaleString("it-IT"), label: "Pub", icon: Store, accent: "text-teal-400" },
-                { value: (globalStats.totalUsers || 0).toLocaleString("it-IT"), label: "Appassionati", icon: Users, accent: "text-purple-400" },
+                { value: (globalStats.totalBreweries || 0).toLocaleString("it-IT"), label: "Birrifici", icon: Building2, accent: "text-amber-500 dark:text-amber-400" },
+                { value: (globalStats.totalBeers || 0).toLocaleString("it-IT"), label: "Birre", icon: Beer, accent: "text-amber-600 dark:text-orange-400" },
+                { value: (globalStats.totalPubs || 0).toLocaleString("it-IT"), label: "Pub", icon: Store, accent: "text-teal-600 dark:text-teal-400" },
+                { value: (globalStats.totalUsers || 0).toLocaleString("it-IT"), label: "Appassionati", icon: Users, accent: "text-purple-600 dark:text-purple-400" },
               ].map(({ value, label, icon: Icon, accent }) => (
                 <div key={label} className="flex flex-col items-center">
                   <Icon className={`w-5 h-5 mb-2 ${accent}`} />
-                  <span className="text-2xl font-bold">{value}</span>
-                  <span className="text-gray-400 text-xs mt-0.5">{label}</span>
+                  <span className="text-2xl font-bold text-gray-900 dark:text-white">{value}</span>
+                  <span className="text-gray-500 dark:text-gray-400 text-xs mt-0.5">{label}</span>
                 </div>
               ))}
             </div>
@@ -207,30 +203,30 @@ export default function Landing() {
         <section>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <Link href="/explore/pubs">
-              <div className="glass-card border-0 rounded-xl p-8 text-center group hover:scale-105 transition-all duration-300 cursor-pointer">
+              <div className="bg-white dark:bg-slate-800 border border-gray-100 dark:border-slate-700 rounded-xl p-8 text-center group hover:scale-105 hover:shadow-md dark:hover:shadow-slate-700/30 transition-all duration-300 cursor-pointer shadow-sm">
                 <div className="p-4 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl inline-flex mb-4 group-hover:scale-110 transition-transform">
                   <MapPin className="h-8 w-8 text-white" />
                 </div>
                 <h3 className="text-xl font-semibold mb-2 text-gray-900 dark:text-white">Trova Pub Vicini</h3>
-                <p className="text-gray-600 dark:text-gray-400">Scopri i migliori pub nella tua zona</p>
+                <p className="text-gray-500 dark:text-gray-400">Scopri i migliori pub nella tua zona</p>
               </div>
             </Link>
             <Link href="/explore/breweries">
-              <div className="glass-card border-0 rounded-xl p-8 text-center group hover:scale-105 transition-all duration-300 cursor-pointer">
+              <div className="bg-white dark:bg-slate-800 border border-gray-100 dark:border-slate-700 rounded-xl p-8 text-center group hover:scale-105 hover:shadow-md dark:hover:shadow-slate-700/30 transition-all duration-300 cursor-pointer shadow-sm">
                 <div className="p-4 bg-gradient-to-br from-amber-500 to-orange-600 rounded-xl inline-flex mb-4 group-hover:scale-110 transition-transform">
                   <Beer className="h-8 w-8 text-white" />
                 </div>
                 <h3 className="text-xl font-semibold mb-2 text-gray-900 dark:text-white">Esplora Birrifici</h3>
-                <p className="text-gray-600 dark:text-gray-400">Birrifici artigianali da tutto il mondo</p>
+                <p className="text-gray-500 dark:text-gray-400">Birrifici artigianali da tutto il mondo</p>
               </div>
             </Link>
             <a href="/api/login">
-              <div className="glass-card border-0 rounded-xl p-8 text-center group hover:scale-105 transition-all duration-300 cursor-pointer">
+              <div className="bg-white dark:bg-slate-800 border border-gray-100 dark:border-slate-700 rounded-xl p-8 text-center group hover:scale-105 hover:shadow-md dark:hover:shadow-slate-700/30 transition-all duration-300 cursor-pointer shadow-sm">
                 <div className="p-4 bg-gradient-to-br from-red-500 to-pink-600 rounded-xl inline-flex mb-4 group-hover:scale-110 transition-transform">
                   <Heart className="h-8 w-8 text-white" />
                 </div>
                 <h3 className="text-xl font-semibold mb-2 text-gray-900 dark:text-white">I Tuoi Preferiti</h3>
-                <p className="text-gray-600 dark:text-gray-400">Accedi per gestire i tuoi preferiti</p>
+                <p className="text-gray-500 dark:text-gray-400">Accedi per gestire i tuoi preferiti</p>
               </div>
             </a>
           </div>
@@ -240,7 +236,7 @@ export default function Landing() {
         <section>
           <div className="text-center mb-10">
             <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-3">Come funziona</h2>
-            <p className="text-gray-600 dark:text-gray-400 max-w-xl mx-auto">Tutto quello che ti serve per esplorare il mondo del craft beer e non solo, in tre semplici passi</p>
+            <p className="text-gray-500 dark:text-gray-400 max-w-xl mx-auto">Tutto quello che ti serve per esplorare il mondo del craft beer in tre semplici passi</p>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             {[
@@ -266,13 +262,13 @@ export default function Landing() {
                 color: "from-purple-500 to-pink-500",
               },
             ].map(({ step, icon: Icon, title, desc, color }) => (
-              <div key={step} className="relative glass-card rounded-2xl p-8 border-0">
-                <div className="absolute -top-4 -left-2 text-6xl font-black text-gray-100 dark:text-gray-800 select-none leading-none">{step}</div>
+              <div key={step} className="relative bg-white dark:bg-slate-800 rounded-2xl p-8 border border-gray-100 dark:border-slate-700 shadow-sm hover:shadow-md dark:hover:shadow-slate-700/30 transition-shadow">
+                <div className="absolute -top-4 -left-2 text-6xl font-black text-gray-100 dark:text-slate-700 select-none leading-none">{step}</div>
                 <div className={`relative p-3 bg-gradient-to-br ${color} rounded-xl inline-flex mb-5`}>
                   <Icon className="w-6 h-6 text-white" />
                 </div>
                 <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-2 relative">{title}</h3>
-                <p className="text-gray-600 dark:text-gray-400 text-sm leading-relaxed relative">{desc}</p>
+                <p className="text-gray-500 dark:text-gray-400 text-sm leading-relaxed relative">{desc}</p>
               </div>
             ))}
           </div>
@@ -318,7 +314,7 @@ export default function Landing() {
           </div>
           {pubsLoading ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {[...Array(3)].map((_, i) => <div key={i} className="bg-white rounded-xl shadow-md h-80 animate-pulse" />)}
+              {[...Array(3)].map((_, i) => <div key={i} className="bg-gray-100 dark:bg-slate-800 rounded-xl h-80 animate-pulse" />)}
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -346,7 +342,7 @@ export default function Landing() {
           </div>
           {breweriesLoading ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-              {[...Array(4)].map((_, i) => <div key={i} className="bg-white rounded-xl shadow-md h-72 animate-pulse" />)}
+              {[...Array(4)].map((_, i) => <div key={i} className="bg-gray-100 dark:bg-slate-800 rounded-xl h-72 animate-pulse" />)}
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -359,21 +355,20 @@ export default function Landing() {
 
         {/* ===== CTA ISCRIZIONE ===== */}
         <section>
-          <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-slate-800 via-gray-900 to-slate-900 p-10 lg:p-16 text-center border border-white/5">
-            {/* Colored accent blobs */}
-            <div className="absolute top-0 left-0 w-72 h-72 bg-amber-500/15 rounded-full blur-3xl pointer-events-none"></div>
-            <div className="absolute bottom-0 right-0 w-72 h-72 bg-teal-500/15 rounded-full blur-3xl pointer-events-none"></div>
-            <div className="absolute top-1/2 left-1/2 w-48 h-48 bg-purple-500/10 rounded-full blur-2xl pointer-events-none -translate-x-1/2 -translate-y-1/2"></div>
+          <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-amber-50 via-white to-slate-100 dark:from-slate-800 dark:via-gray-900 dark:to-slate-900 p-10 lg:p-16 text-center border border-amber-100 dark:border-white/5">
+            <div className="absolute top-0 left-0 w-72 h-72 bg-amber-400/15 dark:bg-amber-500/15 rounded-full blur-3xl pointer-events-none"></div>
+            <div className="absolute bottom-0 right-0 w-72 h-72 bg-teal-400/15 dark:bg-teal-500/15 rounded-full blur-3xl pointer-events-none"></div>
+            <div className="absolute top-1/2 left-1/2 w-48 h-48 bg-purple-400/10 dark:bg-purple-500/10 rounded-full blur-2xl pointer-events-none -translate-x-1/2 -translate-y-1/2"></div>
             <div className="relative">
-              <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-amber-500/20 text-amber-300 text-sm font-medium mb-6 border border-amber-500/30">
+              <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-amber-500/10 dark:bg-amber-500/20 text-amber-700 dark:text-amber-300 text-sm font-medium mb-6 border border-amber-500/20 dark:border-amber-500/30">
                 <Globe className="w-3.5 h-3.5" />
                 Unisciti alla community globale
               </div>
-              <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
+              <h2 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-4">
                 Diventa parte del<br />
-                <span className="text-amber-400">movimento craft beer</span>
+                <span className="text-amber-500 dark:text-amber-400">movimento craft beer</span>
               </h2>
-              <p className="text-gray-400 text-lg mb-8 max-w-lg mx-auto">
+              <p className="text-gray-600 dark:text-gray-400 text-lg mb-8 max-w-lg mx-auto">
                 Recensisci birre, scopri pub, segui i tuoi birrifici preferiti e connettiti con appassionati da tutto il mondo.
               </p>
               <div className="flex flex-col sm:flex-row gap-3 justify-center">
@@ -384,7 +379,7 @@ export default function Landing() {
                   </Button>
                 </a>
                 <Link href="/explore/breweries">
-                  <Button size="lg" className="bg-white/10 hover:bg-white/20 text-white font-semibold px-8 border border-white/15 backdrop-blur-sm">
+                  <Button size="lg" className="bg-gray-900/8 hover:bg-gray-900/15 dark:bg-white/10 dark:hover:bg-white/20 text-gray-800 dark:text-white font-semibold px-8 border border-gray-900/15 dark:border-white/20 backdrop-blur-sm">
                     <Award className="mr-2 w-5 h-5" />
                     Scopri i birrifici
                   </Button>

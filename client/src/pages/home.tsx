@@ -96,50 +96,48 @@ export default function Home() {
 
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-amber-50 to-orange-50 dark:from-gray-950 dark:via-amber-950 dark:to-orange-950">
+    <div className="min-h-screen bg-white dark:bg-slate-950">
       
-      {/* Welcome Hero with Glassmorphism */}
-      <section className="relative overflow-hidden">
+      {/* Welcome Hero */}
+      <section className="relative overflow-hidden bg-gradient-to-br from-amber-50 via-white to-slate-100 dark:from-gray-900 dark:via-slate-800 dark:to-gray-900">
         <div className="absolute inset-0">
           <img
             src="https://images.unsplash.com/photo-1436076863939-06870fe779c2?w=1920&h=400&fit=crop"
             alt="Beer background"
-            className="w-full h-full object-cover"
+            className="w-full h-full object-cover opacity-10 dark:opacity-20"
           />
-          <div className="absolute inset-0 bg-gradient-to-r from-amber-600/90 via-orange-600/90 to-red-600/90"></div>
+          <div className="absolute inset-0 bg-gradient-to-r from-white/90 via-amber-50/60 to-transparent dark:from-gray-900/95 dark:via-slate-900/80 dark:to-transparent"></div>
         </div>
         
-        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 lg:py-20">
-          <div className="glass-card rounded-2xl p-8 backdrop-blur-md bg-white/10 border border-white/20">
-            <div className="flex flex-col lg:flex-row items-center justify-between gap-6">
-              <div className="text-center lg:text-left">
-                <h1 className="text-3xl md:text-4xl font-bold mb-4 text-white">
-                  Scopri le Migliori Birre d'Italia 🍺
-                </h1>
-                <p className="text-xl text-orange-100">
-                  Trova pub, birrifici e la perfetta birra artigianale per te
-                </p>
-              </div>
+        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-14 lg:py-18">
+          <div className="flex flex-col lg:flex-row items-center justify-between gap-6">
+            <div className="text-center lg:text-left">
+              <h1 className="text-3xl md:text-4xl font-bold mb-3 text-gray-900 dark:text-white">
+                Benvenuto su <span className="text-amber-500 dark:text-amber-400">Fermenta.to</span>
+              </h1>
+              <p className="text-lg text-gray-600 dark:text-gray-300">
+                Trova pub, birrifici e la perfetta birra artigianale vicino a te
+              </p>
+            </div>
+            
+            <div className="flex gap-3">
+              {(user as any)?.userType === 'pub_owner' && (
+                <Link href="/dashboard">
+                  <Button className="bg-amber-500 hover:bg-amber-400 text-gray-900 font-semibold shadow-md border-0">
+                    <Beer className="mr-2" />
+                    Dashboard Pub
+                  </Button>
+                </Link>
+              )}
               
-              <div className="flex gap-3">
-                {(user as any)?.userType === 'pub_owner' && (
-                  <Link href="/dashboard">
-                    <Button className="bg-white text-amber-600 hover:bg-gray-100 shadow-lg">
-                      <Beer className="mr-2" />
-                      Dashboard Pub
-                    </Button>
-                  </Link>
-                )}
-                
-                {((user as any)?.activeRole === 'admin' || (!((user as any)?.activeRole) && (user as any)?.userType === 'admin')) && (
-                  <Link href="/admin">
-                    <Button className="bg-yellow-500 text-white hover:bg-yellow-600 shadow-lg">
-                      <TrendingUp className="mr-2" />
-                      Admin Panel
-                    </Button>
-                  </Link>
-                )}
-              </div>
+              {((user as any)?.activeRole === 'admin' || (!((user as any)?.activeRole) && (user as any)?.userType === 'admin')) && (
+                <Link href="/admin">
+                  <Button className="bg-slate-700 hover:bg-slate-600 dark:bg-slate-600 dark:hover:bg-slate-500 text-white font-semibold shadow-md border-0">
+                    <TrendingUp className="mr-2" />
+                    Admin Panel
+                  </Button>
+                </Link>
+              )}
             </div>
           </div>
         </div>
@@ -293,7 +291,7 @@ export default function Home() {
                 
                 return (
                   <Link key={favorite.id} href={href}>
-                    <div className="group relative glass-card border-0 rounded-xl p-3 hover:shadow-lg hover:scale-[1.03] transition-all duration-200 cursor-pointer h-full">
+                    <div className="group relative bg-white dark:bg-slate-800 border border-gray-100 dark:border-slate-700 rounded-xl p-3 hover:shadow-lg hover:scale-[1.03] transition-all duration-200 cursor-pointer h-full">
                       <div className={`absolute top-2 right-2 ${typeColor} rounded-full p-1`}>
                         <TypeIcon className="w-3 h-3 text-white" />
                       </div>
@@ -318,24 +316,24 @@ export default function Home() {
         ) : null}
 
         {/* Statistiche Platform */}
-        <section className="mb-16 lg:mb-20 glass-card border-0 rounded-2xl p-10 lg:p-12">
+        <section className="mb-16 lg:mb-20 bg-amber-50 dark:bg-slate-800 border border-amber-100 dark:border-slate-700 rounded-2xl p-10 lg:p-12">
           <h2 className="text-3xl font-bold text-center text-gray-900 dark:text-white mb-12">
             La Community Fermenta.to
           </h2>
           
           <div className="grid grid-cols-1 md:grid-cols-3 gap-10 lg:gap-12">
             <div className="text-center">
-              <div className="text-4xl font-bold bg-gradient-to-r from-amber-500 to-orange-600 bg-clip-text text-transparent mb-2">29,753</div>
+              <div className="text-4xl font-bold text-amber-500 dark:text-amber-400 mb-2">29,753</div>
               <div className="text-gray-600 dark:text-gray-400">Birre nel Catalogo</div>
             </div>
             
             <div className="text-center">
-              <div className="text-4xl font-bold bg-gradient-to-r from-blue-500 to-indigo-600 bg-clip-text text-transparent mb-2">2,968</div>
+              <div className="text-4xl font-bold text-blue-600 dark:text-blue-400 mb-2">2,968</div>
               <div className="text-gray-600 dark:text-gray-400">Birrifici Mondiali</div>
             </div>
             
             <div className="text-center">
-              <div className="text-4xl font-bold bg-gradient-to-r from-green-500 to-emerald-600 bg-clip-text text-transparent mb-2">293</div>
+              <div className="text-4xl font-bold text-teal-600 dark:text-teal-400 mb-2">293</div>
               <div className="text-gray-600 dark:text-gray-400">Stili Diversi</div>
             </div>
           </div>
