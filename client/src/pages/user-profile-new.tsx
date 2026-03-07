@@ -132,43 +132,40 @@ function StylesPickerOverview({ current, onChange, onSave, isSaving }: {
         )}
       </div>
 
-      {/* Style badges */}
-      <div className="flex flex-wrap gap-1.5 max-h-52 overflow-y-auto pr-1">
-        {visibleStyles.map(style => {
-          const selected = current.includes(style);
-          const disabled = !selected && current.length >= 10;
-          return (
-            <button
-              key={style}
-              type="button"
-              onClick={() => !disabled && toggle(style)}
-              disabled={disabled}
-              className={`text-xs px-2.5 py-1 rounded-full border font-medium transition-all duration-150 ${
-                selected
-                  ? 'bg-amber-500 border-amber-500 text-white shadow-sm'
-                  : disabled
-                  ? 'bg-gray-50 dark:bg-gray-900 border-gray-100 dark:border-gray-800 text-gray-300 dark:text-gray-700 cursor-not-allowed'
-                  : 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:border-amber-400 hover:bg-amber-50 dark:hover:bg-amber-900/20 hover:text-amber-700'
-              }`}
-            >
-              {style}
-            </button>
-          );
-        })}
-      </div>
-
-      {/* Show more */}
-      {!styleSearch && searchFiltered.length > SHOW_LIMIT && (
-        <button
-          onClick={() => setShowAll(!showAll)}
-          className="flex items-center gap-1 text-xs text-amber-600 dark:text-amber-400 hover:underline"
-        >
-          <ChevronDown className={`w-3 h-3 transition-transform ${showAll ? 'rotate-180' : ''}`} />
-          {showAll ? 'Mostra meno' : `Mostra altri ${searchFiltered.length - SHOW_LIMIT} stili`}
-        </button>
-      )}
-      {styleSearch && searchFiltered.length === 0 && (
-        <p className="text-xs text-gray-400 text-center py-2">Nessuno stile trovato per "{styleSearch}"</p>
+      {/* Style badges — solo quando si sta cercando */}
+      {styleSearch.trim() ? (
+        <>
+          <div className="flex flex-wrap gap-1.5 max-h-52 overflow-y-auto pr-1">
+            {visibleStyles.map(style => {
+              const selected = current.includes(style);
+              const disabled = !selected && current.length >= 10;
+              return (
+                <button
+                  key={style}
+                  type="button"
+                  onClick={() => !disabled && toggle(style)}
+                  disabled={disabled}
+                  className={`text-xs px-2.5 py-1 rounded-full border font-medium transition-all duration-150 ${
+                    selected
+                      ? 'bg-amber-500 border-amber-500 text-white shadow-sm'
+                      : disabled
+                      ? 'bg-gray-50 dark:bg-gray-900 border-gray-100 dark:border-gray-800 text-gray-300 dark:text-gray-700 cursor-not-allowed'
+                      : 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:border-amber-400 hover:bg-amber-50 dark:hover:bg-amber-900/20 hover:text-amber-700'
+                  }`}
+                >
+                  {style}
+                </button>
+              );
+            })}
+          </div>
+          {searchFiltered.length === 0 && (
+            <p className="text-xs text-gray-400 text-center py-2">Nessuno stile trovato per "{styleSearch}"</p>
+          )}
+        </>
+      ) : current.length === 0 && (
+        <p className="text-xs text-gray-400 text-center py-3">
+          Cerca uno stile qui sopra per aggiungerlo ai preferiti
+        </p>
       )}
     </div>
   );
