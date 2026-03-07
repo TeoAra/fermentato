@@ -6,6 +6,7 @@ import { Beer, MapPin, Heart, Store, Users, Navigation, Star, Award, Zap, Chevro
 import Footer from "@/components/footer";
 import PubCard from "@/components/pub-card";
 import BreweryCard from "@/components/brewery-card";
+import HomepageMap from "@/components/homepage-map";
 
 function haversineDistance(lat1: number, lon1: number, lat2: number, lon2: number): number {
   const R = 6371;
@@ -351,6 +352,20 @@ export default function Landing() {
               ))}
             </div>
           )}
+        </section>
+
+        {/* ===== MAPPA INTERATTIVA ===== */}
+        <section>
+          <HomepageMap
+            pubs={Array.isArray(pubs) ? pubs : []}
+            breweries={Array.isArray(breweries) ? breweries : []}
+            userLocation={userLocation}
+            isLoading={pubsLoading || breweriesLoading}
+            onLocate={(loc) => {
+              setUserLocation(loc);
+              setLocationStatus('granted');
+            }}
+          />
         </section>
 
         {/* ===== CTA ISCRIZIONE ===== */}

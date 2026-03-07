@@ -872,6 +872,27 @@ export default function PubDetail() {
                 </CardTitle>
               </CardHeader>
               <CardContent className="p-6 space-y-6">
+                {/* Address with Maps button */}
+                {(pub as any)?.address && (
+                  <div className="flex items-start space-x-3">
+                    <div className="p-2 rounded-lg bg-amber-100 dark:bg-amber-900 flex-shrink-0">
+                      <MapPin className="h-4 w-4 text-amber-600 dark:text-amber-400" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-medium text-gray-900 dark:text-white text-sm">{(pub as any).address}</p>
+                      <a
+                        href={`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent((pub as any).address)}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center mt-1.5 px-3 py-1.5 rounded-lg bg-blue-500 hover:bg-blue-600 text-white text-xs font-semibold transition-colors gap-1.5"
+                      >
+                        <Navigation className="h-3 w-3" />
+                        Avvia navigazione
+                      </a>
+                    </div>
+                  </div>
+                )}
+
                 {/* Phone */}
                 {(pub as any)?.phone && (
                   <div className="flex items-center space-x-3">

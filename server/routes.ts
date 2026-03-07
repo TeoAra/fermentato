@@ -423,23 +423,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const random = req.query.random === 'true';
       const limit = req.query.limit ? parseInt(req.query.limit as string) : undefined;
-      
-      let breweries;
-      if (random) {
-        breweries = await storage.getRandomBreweries(limit || 4);
-      } else {
-        breweries = await storage.getBreweries();
-      }
-      
-      // Add beer count for each brewery
-      const breweriesWithCount = await Promise.all(
-        breweries.map(async (brewery: any) => {
-          const beers = await storage.getBeersByBrewery(brewery.id);
-          return { ...brewery, beerCount: beers.length };
-        })
-      );
-      
-      res.json(breweriesWithCount);
+      const result = await storage.getBreweriesWithBeerCount(limit, random);
+      res.json(result);
     } catch (error) {
       console.error("Error fetching breweries:", error);
       res.status(500).json({ message: "Failed to fetch breweries" });
@@ -486,31 +471,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Database statistics endpoint
   app.get("/api/stats", async (req, res) => {
     try {
-      const [allPubs, allBreweries, allBeers] = await Promise.all([
-        storage.getPubs(),
-        storage.getBreweries(),
-        storage.getBeers(),
+      const [pubCount, breweryCount, beerCount] = await Promise.all([
+        db.select({ count: sql<number>`COUNT(*)::int` }).from(pubs),
+        db.select({ count: sql<number>`COUNT(*)::int` }).from(breweries),
+        db.select({ count: sql<number>`COUNT(*)::int` }).from(beers),
       ]);
-
-      // Calculate statistics
       const stats = {
-        totalPubs: allPubs.length,
-        totalBreweries: allBreweries.length,
-        totalBeers: allBeers.length,
-        averageBeersPerBrewery: allBreweries.length > 0 ? Math.round(allBeers.length / allBreweries.length) : 0,
-        topBeerStyles: allBeers.reduce((acc: Record<string, number>, beer) => {
-          const style = beer.style || "Unknown";
-          acc[style] = (acc[style] || 0) + 1;
-          return acc;
-        }, {}),
-        breweryLocations: allBreweries.reduce((acc: Record<string, number>, brewery) => {
-          const location = brewery.location || "Unknown";
-          acc[location] = (acc[location] || 0) + 1;
-          return acc;
-        }, {}),
+        totalPubs: pubCount[0]?.count || 0,
+        totalBreweries: breweryCount[0]?.count || 0,
+        totalBeers: beerCount[0]?.count || 0,
+        averageBeersPerBrewery: breweryCount[0]?.count > 0 ? Math.round((beerCount[0]?.count || 0) / breweryCount[0].count) : 0,
         lastUpdated: new Date().toISOString()
       };
-
       res.json(stats);
     } catch (error) {
       console.error("Error fetching database stats:", error);

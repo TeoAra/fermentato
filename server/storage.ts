@@ -191,7 +191,7 @@ export interface IStorage {
 
   // Brewery operations
   getBreweries(): Promise<Brewery[]>;
-  getBreweriesWithBeerCount(): Promise<any[]>;
+  getBreweriesWithBeerCount(limit?: number, random?: boolean): Promise<any[]>;
   getBrewery(id: number): Promise<Brewery | undefined>;
   getRandomBreweries(limit?: number): Promise<Brewery[]>;
   createBrewery(brewery: InsertBrewery): Promise<Brewery>;
@@ -417,8 +417,8 @@ export class DatabaseStorage implements IStorage {
     return await db.select().from(breweries).orderBy(asc(breweries.name));
   }
 
-  async getBreweriesWithBeerCount(): Promise<any[]> {
-    const results = await db
+  async getBreweriesWithBeerCount(limit?: number, random?: boolean): Promise<any[]> {
+    const query = db
       .select({
         id: breweries.id,
         name: breweries.name,
@@ -437,8 +437,11 @@ export class DatabaseStorage implements IStorage {
       .from(breweries)
       .leftJoin(beers, eq(beers.breweryId, breweries.id))
       .groupBy(breweries.id)
-      .orderBy(asc(breweries.name));
-    return results;
+      .orderBy(random ? sql`RANDOM()` : asc(breweries.name));
+    if (limit) {
+      return await query.limit(limit);
+    }
+    return await query;
   }
 
   async getRandomBreweries(limit: number = 10): Promise<Brewery[]> {
@@ -1577,9 +1580,9 @@ class StorageWrapper implements IStorage {
     );
   }
 
-  async getBreweriesWithBeerCount(): Promise<any[]> {
+  async getBreweriesWithBeerCount(limit?: number, random?: boolean): Promise<any[]> {
     return this.dbCall(
-      () => this.databaseStorage.getBreweriesWithBeerCount(),
+      () => this.databaseStorage.getBreweriesWithBeerCount(limit, random),
       async () => {
         const allBreweries = await memoryStorageInstance.getBreweries();
         return allBreweries.map((b: any) => ({ ...b, beerCount: 0 }));
