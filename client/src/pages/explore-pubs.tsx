@@ -146,10 +146,10 @@ export default function ExplorePubs() {
                   <CollapsibleTrigger asChild>
                     <Button
                       variant="outline"
-                      className="w-full justify-between text-left h-auto p-4 mb-4 bg-white dark:bg-slate-800 border-gray-200 dark:border-slate-700 text-gray-900 dark:text-white hover:bg-gray-50 dark:hover:bg-slate-700"
+                      className="w-full justify-between text-left h-auto p-4 mb-4 bg-white dark:bg-slate-800 border-gray-200 dark:border-slate-700 text-gray-900 dark:text-white hover:bg-amber-50 hover:text-gray-900 hover:border-amber-200 dark:hover:bg-slate-700 dark:hover:text-white dark:hover:border-amber-500/30"
                     >
                       <div className="flex items-center gap-3">
-                        <MapPin className="w-5 h-5 text-teal-500" />
+                        <MapPin className="w-5 h-5 text-amber-500" />
                         <span className="font-semibold text-lg">{state}</span>
                         <Badge variant="secondary" className="bg-gray-100 dark:bg-slate-700 text-gray-600 dark:text-slate-300">{statePubs.length} pub</Badge>
                       </div>

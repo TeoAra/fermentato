@@ -275,7 +275,7 @@ export default function ExploreBreweries() {
                   <CollapsibleTrigger asChild>
                     <Button
                       variant="outline"
-                      className="w-full justify-between text-left h-auto p-4 mb-4 bg-white dark:bg-slate-800 border-gray-200 dark:border-slate-700 text-gray-900 dark:text-white hover:bg-gray-50 dark:hover:bg-slate-700"
+                      className="w-full justify-between text-left h-auto p-4 mb-4 bg-white dark:bg-slate-800 border-gray-200 dark:border-slate-700 text-gray-900 dark:text-white hover:bg-amber-50 hover:text-gray-900 hover:border-amber-200 dark:hover:bg-slate-700 dark:hover:text-white dark:hover:border-amber-500/30"
                     >
                       <div className="flex items-center gap-3">
                         <Beer className="w-5 h-5 text-amber-500" />
