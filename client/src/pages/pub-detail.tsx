@@ -230,46 +230,15 @@ export default function PubDetail() {
     enabled: !!id,
   });
 
-  const { data: menuData = [], isLoading: menuLoading } = useQuery({
-    queryKey: ["/api/pubs", id, "menu"],
+  // Single query for full menu (categories + all items) — eliminates N+1
+  const { data: menuFull = [], isLoading: menuLoading } = useQuery({
+    queryKey: ["/api/pubs", id, "menu", "full"],
+    queryFn: () => apiRequest(`/api/pubs/${id}/menu/full`),
     enabled: !!id,
+    staleTime: 60_000,
   });
 
-  // Fetch all products for all categories
-  const { data: allCategoryProducts } = useQuery({
-    queryKey: ["/api/pubs", id, "menu", "all-products", menuData?.map((c: any) => c.id).join(',')],
-    queryFn: async () => {
-      if (!id || !Array.isArray(menuData) || menuData.length === 0) return {};
-      
-      const productMap: Record<number, any[]> = {};
-      
-      const promises = menuData.map(async (category: any) => {
-        try {
-          const products = await apiRequest(`/api/pubs/${id}/menu/categories/${category.id}/items`, { method: 'GET' });
-          return { categoryId: category.id, products: Array.isArray(products) ? products : [] };
-        } catch (error) {
-          return { categoryId: category.id, products: [] };
-        }
-      });
-      
-      const results = await Promise.all(promises);
-      results.forEach(({ categoryId, products }) => {
-        productMap[categoryId] = products;
-      });
-      
-      return productMap;
-    },
-    enabled: !!id && Array.isArray(menuData) && menuData.length > 0,
-  });
-
-  // Merge products into categories
-  const menu = useMemo(() => {
-    if (!Array.isArray(menuData)) return [];
-    return menuData.map((category: any) => ({
-      ...category,
-      items: allCategoryProducts?.[category.id] || []
-    }));
-  }, [menuData, allCategoryProducts]);
+  const menu = useMemo(() => Array.isArray(menuFull) ? menuFull : [], [menuFull]);
 
   const { data: bottles, isLoading: bottlesLoading } = useQuery({
     queryKey: ["/api/pubs", id, "bottles"],
@@ -280,6 +249,20 @@ export default function PubDetail() {
     queryKey: [`/api/pubs/${id}/events`],
     enabled: !!id,
   });
+
+  // Auto-open event from shared link (?event=N) and switch to Events tab
+  useEffect(() => {
+    if (!Array.isArray(pubEvents) || pubEvents.length === 0) return;
+    const params = new URLSearchParams(window.location.search);
+    const eventId = params.get("event");
+    if (eventId) {
+      const found = pubEvents.find((e: any) => String(e.id) === eventId);
+      if (found) {
+        setActiveTab("events");
+        setSelectedEvent(found);
+      }
+    }
+  }, [pubEvents]);
 
   const { data: favoritesCountData, isLoading: favoritesCountLoading } = useQuery({
     queryKey: ["/api/favorites", "pub", id, "count"],
@@ -842,7 +825,7 @@ export default function PubDetail() {
                   </div>
                   <div className="space-y-4">
                     {Array.isArray(pubEvents) && pubEvents.filter((e: any) => isFuture(new Date(e.eventDate))).map((event: any) => (
-                      <Card key={event.id} className="overflow-hidden">
+                      <Card key={event.id} className="overflow-hidden cursor-pointer hover:shadow-md transition-shadow" onClick={() => setSelectedEvent(event)}>
                         {event.imageUrl && (
                           <div className="h-40 bg-cover bg-center relative" style={{ backgroundImage: `url(${event.imageUrl})` }}>
                             <div className="absolute top-2 left-2">

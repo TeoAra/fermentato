@@ -19,7 +19,10 @@ import {
   ArrowLeft,
   Star,
   CalendarDays,
-  RefreshCw
+  RefreshCw,
+  UserPlus,
+  MapPin,
+  Clock
 } from "lucide-react";
 import { Link } from "wouter";
 import { formatDistanceToNow } from "date-fns";
@@ -66,6 +69,12 @@ export default function AdminDashboardNew() {
     queryKey: ["/api/stats/global"],
     enabled: isAuthenticated && (user as any)?.userType === 'admin',
     refetchInterval: 120000,
+  });
+
+  const { data: recentActivity = [] } = useQuery<any[]>({
+    queryKey: ["/api/admin/recent-activity"],
+    enabled: isAuthenticated && (user as any)?.userType === 'admin',
+    refetchInterval: 60000,
   });
 
 
@@ -326,6 +335,60 @@ export default function AdminDashboardNew() {
         </Card>
 
       </div>
+
+      {/* Recent Activity */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Clock className="w-5 h-5 text-indigo-500" />
+            Attività Recente
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          {recentActivity.length === 0 ? (
+            <p className="text-center text-gray-400 py-6">Nessuna attività recente</p>
+          ) : (
+            <div className="space-y-1">
+              {recentActivity.slice(0, 12).map((item: any, i: number) => (
+                <div key={i} className="flex items-start gap-3 p-3 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800/40 transition-colors">
+                  <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5 ${
+                    item.icon === 'user' ? 'bg-purple-100 dark:bg-purple-900/40' :
+                    item.icon === 'pub' ? 'bg-blue-100 dark:bg-blue-900/40' :
+                    item.icon === 'brewery' ? 'bg-amber-100 dark:bg-amber-900/40' :
+                    item.icon === 'review' ? 'bg-yellow-100 dark:bg-yellow-900/40' :
+                    'bg-green-100 dark:bg-green-900/40'
+                  }`}>
+                    {item.icon === 'user' ? <UserPlus className="w-4 h-4 text-purple-500" /> :
+                     item.icon === 'pub' ? <MapPin className="w-4 h-4 text-blue-500" /> :
+                     item.icon === 'brewery' ? <Building2 className="w-4 h-4 text-amber-500" /> :
+                     item.icon === 'review' ? <Star className="w-4 h-4 text-yellow-500" /> :
+                     item.icon === 'event' ? <CalendarDays className="w-4 h-4 text-green-500" /> :
+                     <Activity className="w-4 h-4 text-gray-400" />}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-gray-700 dark:text-gray-300">{item.action}</p>
+                    <p className="text-sm text-gray-900 dark:text-white font-semibold truncate">{item.name}{item.detail ? <span className="font-normal text-gray-500"> · {item.detail}</span> : null}</p>
+                  </div>
+                  <div className="flex items-center gap-2 flex-shrink-0">
+                    {item.time && (
+                      <span className="text-xs text-gray-400">
+                        {formatDistanceToNow(new Date(item.time), { addSuffix: true, locale: it })}
+                      </span>
+                    )}
+                    {item.link && (
+                      <Link href={item.link}>
+                        <Button variant="ghost" size="sm" className="h-6 px-2 text-xs text-gray-400 hover:text-gray-700">
+                          <ChevronRight className="w-3 h-3" />
+                        </Button>
+                      </Link>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
     </div>
   );
 }

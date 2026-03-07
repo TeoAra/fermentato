@@ -407,6 +407,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Full menu endpoint: categories + all items in a single query (eliminates N+1)
+  app.get("/api/pubs/:id/menu/full", async (req, res) => {
+    try {
+      const pubId = parseInt(req.params.id);
+      if (isNaN(pubId)) return res.status(400).json({ message: "Invalid pub ID" });
+      const menu = await storage.getMenuByPub(pubId);
+      res.setHeader('Cache-Control', 'public, max-age=60, stale-while-revalidate=30');
+      res.json(menu);
+    } catch (error) {
+      console.error("Error fetching full menu:", error);
+      res.status(500).json({ message: "Failed to fetch menu" });
+    }
+  });
+
   // Get bottle list (cantina) for a pub
   app.get("/api/pubs/:id/bottles", async (req, res) => {
     try {
