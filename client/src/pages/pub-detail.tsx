@@ -28,6 +28,7 @@ import {
   TrendingUp,
   Target,
   Monitor,
+  MapPin,
 } from "lucide-react";
 import Footer from "@/components/footer";
 import TapList from "@/components/tap-list";
