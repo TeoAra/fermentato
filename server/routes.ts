@@ -6,7 +6,7 @@ import { registerAdminRoutes } from "./routes-admin";
 import { sql, eq, and, desc, asc } from "drizzle-orm";
 import { upload, uploadImage, cloudinary } from "./cloudinary";
 import { db } from "./db";
-import { breweries, beers, pubs, users, tapList, bottleList, userBeerTastings, favorites, menuCategories, menuItems, pubSizes, notifications, pushSubscriptions, breweryRequests, pubEvents, breweryEvents, insertBreweryEventSchema, reviewReports } from "@shared/schema";
+import { breweries, beers, pubs, users, tapList, bottleList, userBeerTastings, favorites, menuCategories, menuItems, pubSizes, notifications, pushSubscriptions, breweryRequests, pubEvents, breweryEvents, insertBreweryEventSchema, reviewReports, oauthAccounts, userActivities, ratings, publicanRequests, notificationPreferences } from "@shared/schema";
 
 import { insertPubSchema, insertTapListSchema, insertBottleListSchema, insertMenuCategorySchema, insertMenuItemSchema, pubRegistrationSchema, insertPubEventSchema } from "@shared/schema";
 import { z } from "zod";
@@ -1649,11 +1649,36 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const targetId = req.params.id;
       const target = await storage.getUser(targetId);
       if (!target) return res.status(404).json({ message: "Utente non trovato" });
-      // Clean up user data before deleting
+
+      // Cannot delete yourself
+      if (targetId === (req.user as any).id) {
+        return res.status(400).json({ message: "Non puoi eliminare il tuo account" });
+      }
+
+      // Clean up all child records in FK-dependency order
       await db.delete(notifications).where(eq(notifications.userId, targetId));
+      await db.delete(notificationPreferences).where(eq(notificationPreferences.userId, targetId));
       await db.delete(favorites).where(eq(favorites.userId, targetId));
       await db.delete(userBeerTastings).where(eq(userBeerTastings.userId, targetId));
-      await storage.deleteUser(targetId);
+      await db.delete(ratings).where(eq(ratings.userId, targetId));
+      await db.delete(userActivities).where(eq(userActivities.userId, targetId));
+      await db.delete(pushSubscriptions).where(eq(pushSubscriptions.userId, targetId));
+      await db.delete(oauthAccounts).where(eq(oauthAccounts.userId, targetId));
+
+      // Disassociate pubs from this owner (don't delete the pub)
+      await db.update(pubs).set({ ownerId: null }).where(eq(pubs.ownerId, targetId));
+
+      // Nullify reviewed_by references (admin who reviewed requests)
+      await db.update(publicanRequests).set({ reviewedBy: null }).where(eq(publicanRequests.reviewedBy, targetId));
+      await db.update(breweryRequests).set({ reviewedBy: null }).where(eq(breweryRequests.reviewedBy, targetId));
+
+      // Delete requests submitted by this user
+      await db.delete(publicanRequests).where(eq(publicanRequests.userId, targetId));
+      await db.delete(breweryRequests).where(eq(breweryRequests.userId, targetId));
+
+      // Finally delete the user
+      await db.delete(users).where(eq(users.id, targetId));
+
       res.json({ success: true, message: `Utente "${target.nickname || target.firstName || targetId}" eliminato` });
     } catch (error) {
       console.error("Error deleting user:", error);
