@@ -591,7 +591,8 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
               <div
                 className="bg-gray-100 dark:bg-gray-800 rounded-lg p-3 flex items-center justify-between gap-2 cursor-pointer hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
                 onClick={() => {
-                  navigator.clipboard.writeText(`${window.location.origin}/tv/${currentPub?.id}`);
+                  navigator.clipboard?.writeText(`${window.location.origin}/tv/${currentPub?.id}`)
+                    .catch(() => {});
                   toast({ title: "Link copiato!" });
                 }}
               >

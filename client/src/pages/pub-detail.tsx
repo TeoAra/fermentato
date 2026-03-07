@@ -49,6 +49,7 @@ import { EventCategoryBadge, EventShareButtons } from "@/components/events-manag
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { format, isFuture } from "date-fns";
 import { it as itLocale } from "date-fns/locale";
+import { getMapNavigationUrl } from "@/lib/utils";
 
 type OpenStatus = 'open' | 'closing_soon' | 'opening_soon' | 'closed';
 
@@ -607,7 +608,7 @@ export default function PubDetail() {
                     </Button>
                     {((pub as any)?.latitude && (pub as any)?.longitude) || (pub as any)?.address ? (
                       <a
-                        href={`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(`${(pub as any).name}, ${(pub as any).address}`)}`}
+                        href={getMapNavigationUrl((pub as any).name, (pub as any).address)}
                         target="_blank"
                         rel="noopener noreferrer"
                       >
@@ -881,7 +882,7 @@ export default function PubDetail() {
                     <div className="flex-1 min-w-0">
                       <p className="font-medium text-gray-900 dark:text-white text-sm">{(pub as any).address}</p>
                       <a
-                        href={`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(`${(pub as any).name}, ${(pub as any).address}`)}`}
+                        href={getMapNavigationUrl((pub as any).name, (pub as any).address)}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="inline-flex items-center mt-1.5 px-3 py-1.5 rounded-lg bg-blue-500 hover:bg-blue-600 text-white text-xs font-semibold transition-colors gap-1.5"
