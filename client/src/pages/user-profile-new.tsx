@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useAuth } from "@/hooks/useAuth";
@@ -38,13 +38,13 @@ import {
   Beer as BeerIcon,
   ChevronDown,
   TrendingUp,
+  Camera,
 } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import type { User as UserType } from "@shared/schema";
 import UserFavoritesSection from "@/components/UserFavoritesSection";
 import BeerTastingsEditor from "@/components/BeerTastingsEditorNew";
-import { ImageUpload } from "@/components/image-upload";
 import { getBadgeForCount, getNextBadge, getProgressToNextBadge } from "@/lib/badges";
 
 function StylesPickerOverview({ current, onChange, onSave, isSaving }: {
@@ -176,6 +176,9 @@ export default function UserProfile() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   
+  const avatarInputRef = useRef<HTMLInputElement>(null);
+  const [avatarUploading, setAvatarUploading] = useState(false);
+
   const [isEditing, setIsEditing] = useState(false);
   const [isEditingNickname, setIsEditingNickname] = useState(false);
   const [tempNickname, setTempNickname] = useState("");
@@ -384,6 +387,26 @@ export default function UserProfile() {
     return Math.max(0, 15 - diffInDays);
   };
 
+  const handleAvatarUpload = async (file: File) => {
+    if (!file || !canUpdateProfileImage()) return;
+    setAvatarUploading(true);
+    try {
+      const formData = new FormData();
+      formData.append('image', file);
+      formData.append('folder', 'profile-images');
+      const response = await fetch('/api/upload/image', { method: 'POST', body: formData, credentials: 'include' });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.message || `Errore ${response.status}`);
+      if (!data.url) throw new Error("Nessun URL ricevuto dal server");
+      await updateProfileMutation.mutateAsync({ profileImageUrl: data.url, lastProfileImageUpdate: new Date() } as any);
+      toast({ title: "Foto aggiornata", description: "La tua immagine del profilo è stata aggiornata" });
+    } catch (e: any) {
+      toast({ title: "Errore upload", description: e.message || "Impossibile caricare la foto", variant: "destructive" });
+    } finally {
+      setAvatarUploading(false);
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="container mx-auto px-4 py-8">
@@ -407,25 +430,51 @@ export default function UserProfile() {
           <div className="absolute inset-0 bg-gradient-to-tr from-white/5 via-transparent to-white/10" />
           <CardContent className="pt-8 pb-8 relative z-10">
             <div className="flex flex-col md:flex-row items-center gap-6">
-              <div className="w-32 h-32 md:w-36 md:h-36 flex-shrink-0 rounded-full overflow-hidden ring-4 ring-white/30 shadow-2xl [&>div]:!space-y-0 [&>div>div:first-child]:hidden [&_div.relative]:!rounded-full [&_div.aspect-square]:!max-w-none [&_div.aspect-square]:!border-0 [&_div.aspect-square]:!shadow-none [&_div.aspect-square]:!rounded-none">
-                <ImageUpload
-                  label=""
-                  description=""
-                  currentImageUrl={typedUser.profileImageUrl || undefined}
-                  onImageChange={async (url) => {
-                    if (url) {
-                      try {
-                        await updateProfileMutation.mutateAsync({ profileImageUrl: url, lastProfileImageUpdate: new Date() } as any);
-                      } catch (e) {}
-                    }
-                  }}
-                  folder="profile-images"
-                  aspectRatio="square"
-                  maxSize={5}
-                  showFileInfo={false}
-                  disabled={!canUpdateProfileImage()}
-                  hideStateIcon={true}
-                />
+              <div className="flex-shrink-0 flex flex-col items-center gap-2">
+                <div className="relative w-32 h-32 md:w-36 md:h-36 group">
+                  <div
+                    className={`w-32 h-32 md:w-36 md:h-36 rounded-full overflow-hidden ring-4 ring-white/30 shadow-2xl flex items-center justify-center bg-amber-600 ${canUpdateProfileImage() ? 'cursor-pointer' : 'cursor-not-allowed'}`}
+                    onClick={() => canUpdateProfileImage() && !avatarUploading && avatarInputRef.current?.click()}
+                  >
+                    {typedUser.profileImageUrl ? (
+                      <img src={typedUser.profileImageUrl} alt="Avatar" className="w-full h-full object-cover" />
+                    ) : (
+                      <span className="text-4xl font-bold text-white select-none">
+                        {(typedUser.nickname || typedUser.firstName || 'U')[0].toUpperCase()}
+                      </span>
+                    )}
+                    <div className="absolute inset-0 rounded-full bg-black/0 group-hover:bg-black/40 transition-all flex items-center justify-center">
+                      {avatarUploading ? (
+                        <div className="w-8 h-8 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                      ) : canUpdateProfileImage() ? (
+                        <Camera className="w-8 h-8 text-white opacity-0 group-hover:opacity-100 transition-opacity" />
+                      ) : null}
+                    </div>
+                  </div>
+                  {canUpdateProfileImage() && (
+                    <button
+                      onClick={() => !avatarUploading && avatarInputRef.current?.click()}
+                      className="absolute bottom-1 right-1 w-9 h-9 rounded-full bg-amber-500 border-2 border-white/70 flex items-center justify-center hover:bg-amber-600 active:bg-amber-700 transition-colors shadow-lg"
+                      disabled={avatarUploading}
+                    >
+                      <Camera className="w-4 h-4 text-white" />
+                    </button>
+                  )}
+                  <input
+                    ref={avatarInputRef}
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (file) handleAvatarUpload(file);
+                      e.target.value = '';
+                    }}
+                  />
+                </div>
+                {avatarUploading && (
+                  <span className="text-xs text-white/80">Caricamento...</span>
+                )}
               </div>
 
               <div className="flex-1 text-center md:text-left">
