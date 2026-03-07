@@ -82,7 +82,7 @@ export default function BreweryCard({ brewery, beerCount = 0, distance }: Brewer
 
   return (
     <Link href={`/brewery/${brewery.id}`}>
-      <Card className="overflow-hidden hover:shadow-md transition-all duration-200 border border-gray-100 cursor-pointer group relative">
+      <Card className="overflow-hidden hover:shadow-md transition-all duration-200 border border-gray-100 dark:border-slate-700 cursor-pointer group relative">
         <CardContent className="p-4">
           {/* Mobile-First Layout */}
           <div className="flex items-center gap-4">
@@ -101,11 +101,11 @@ export default function BreweryCard({ brewery, beerCount = 0, distance }: Brewer
             
             {/* Brewery Info */}
             <div className="flex-1 min-w-0">
-              <h3 className="font-semibold text-base sm:text-lg text-gray-900 group-hover:text-primary transition-colors truncate mb-1">
+              <h3 className="font-semibold text-base sm:text-lg text-gray-900 dark:text-amber-400 group-hover:text-amber-600 dark:group-hover:text-amber-300 transition-colors truncate mb-1">
                 {typeof brewery.name === 'string' ? brewery.name : brewery.name?.toString() || 'Birrificio'}
               </h3>
               
-              <div className="flex items-center gap-1 text-sm text-gray-600 mb-2">
+              <div className="flex items-center gap-1 text-sm text-gray-600 dark:text-slate-400 mb-2">
                 <MapPin className="w-3 h-3 flex-shrink-0" />
                 <span className="truncate">
                   {distance != null

@@ -148,7 +148,7 @@ export default function PubCard({ pub, distance }: PubCardProps) {
         
         <CardContent className="p-6">
           <div className="flex items-center justify-between mb-2">
-            <h3 className="text-xl font-semibold text-secondary truncate">{pub.name}</h3>
+            <h3 className="text-xl font-semibold text-slate-900 dark:text-amber-400 truncate">{pub.name}</h3>
             <div className="flex items-center space-x-1">
               <Button
                 variant="ghost"
@@ -164,13 +164,13 @@ export default function PubCard({ pub, distance }: PubCardProps) {
               >
                 <Heart className={`w-4 h-4 ${isFavorite ? 'fill-current' : ''}`} />
               </Button>
-              <span className="text-sm text-gray-600 font-medium">
+              <span className="text-sm text-gray-600 dark:text-slate-400 font-medium">
                 {favoritesCount}
               </span>
             </div>
           </div>
           
-          <p className="text-gray-600 mb-3 flex items-center">
+          <p className="text-gray-600 dark:text-slate-400 mb-3 flex items-center">
             <MapPin className="w-4 h-4 mr-1 flex-shrink-0" />
             <span className="truncate">
               {distance != null ? pub.city : `${pub.address}, ${pub.city}`}
