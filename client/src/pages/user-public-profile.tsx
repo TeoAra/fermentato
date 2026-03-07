@@ -161,8 +161,9 @@ export default function UserPublicProfile() {
       <div className="max-w-4xl mx-auto px-4 pb-12 space-y-6">
         {/* Hero Profile Card */}
         <Card className="border-0 shadow-2xl overflow-hidden">
-          <div className={`bg-gradient-to-br ${badge.bgFrom} ${badge.bgTo} p-8`}>
-            <div className="flex flex-col sm:flex-row items-center sm:items-start gap-6">
+          <div className="relative bg-gradient-to-br from-slate-800 to-slate-900 p-8 overflow-hidden">
+            <div className={`absolute inset-0 bg-gradient-to-br ${badge.bgFrom} ${badge.bgTo} opacity-[0.18]`} />
+            <div className="relative z-10 flex flex-col sm:flex-row items-center sm:items-start gap-6">
               <div className="relative flex-shrink-0">
                 <Avatar className="h-28 w-28 ring-4 ring-white/40 shadow-xl">
                   {profile.profileImageUrl && <AvatarImage src={profile.profileImageUrl} />}

@@ -426,7 +426,7 @@ export default function UserProfile() {
     <div className="container mx-auto px-4 py-8 max-w-4xl">
       <div className="space-y-6">
         {/* Header Card */}
-        <Card className="border-0 shadow-xl bg-gradient-to-br from-amber-500 via-orange-500 to-amber-600 dark:from-slate-900 dark:via-amber-800/50 dark:to-slate-800 text-white overflow-hidden relative">
+        <Card className="border-0 shadow-xl bg-gradient-to-br from-amber-600 via-orange-600 to-amber-700 dark:from-slate-900 dark:via-amber-800/50 dark:to-slate-800 text-white overflow-hidden relative">
           <div className="absolute inset-0 bg-gradient-to-tr from-white/5 via-transparent to-white/10" />
           <CardContent className="pt-8 pb-8 relative z-10">
             <div className="flex flex-col md:flex-row items-center gap-6">
