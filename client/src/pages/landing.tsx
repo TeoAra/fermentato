@@ -298,6 +298,20 @@ export default function Landing() {
           </div>
         )}
 
+        {/* ===== MAPPA INTERATTIVA ===== */}
+        <section>
+          <HomepageMap
+            pubs={Array.isArray(pubs) ? pubs : []}
+            breweries={Array.isArray(breweries) ? breweries : []}
+            userLocation={userLocation}
+            isLoading={pubsLoading || breweriesLoading}
+            onLocate={(loc) => {
+              setUserLocation(loc);
+              setLocationStatus('granted');
+            }}
+          />
+        </section>
+
         {/* ===== PUB VICINI ===== */}
         <section>
           <div className="flex items-center justify-between mb-8">
@@ -352,20 +366,6 @@ export default function Landing() {
               ))}
             </div>
           )}
-        </section>
-
-        {/* ===== MAPPA INTERATTIVA ===== */}
-        <section>
-          <HomepageMap
-            pubs={Array.isArray(pubs) ? pubs : []}
-            breweries={Array.isArray(breweries) ? breweries : []}
-            userLocation={userLocation}
-            isLoading={pubsLoading || breweriesLoading}
-            onLocate={(loc) => {
-              setUserLocation(loc);
-              setLocationStatus('granted');
-            }}
-          />
         </section>
 
         {/* ===== CTA ISCRIZIONE ===== */}
