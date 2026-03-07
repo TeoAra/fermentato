@@ -3,7 +3,7 @@ import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { setupAuth, isAuthenticated } from "./auth";
 import { registerAdminRoutes } from "./routes-admin";
-import { sql, eq, and, desc } from "drizzle-orm";
+import { sql, eq, and, desc, asc } from "drizzle-orm";
 import { upload, uploadImage, cloudinary } from "./cloudinary";
 import { db } from "./db";
 import { breweries, beers, pubs, users, tapList, bottleList, userBeerTastings, favorites, menuCategories, menuItems, pubSizes, notifications, pushSubscriptions, breweryRequests, pubEvents, breweryEvents, insertBreweryEventSchema, reviewReports } from "@shared/schema";
@@ -3037,7 +3037,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (isNaN(pubId)) {
         return res.status(400).json({ message: "Invalid pub ID" });
       }
-      const events = await storage.getPubEvents(pubId);
+      const events = await storage.getPubEvents(pubId, true);
       const publishedEvents = events.filter(e => e.isPublished);
       res.json(publishedEvents);
     } catch (error) {
@@ -3175,8 +3175,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const breweryId = parseInt(req.params.breweryId);
       if (isNaN(breweryId)) return res.status(400).json({ message: "Invalid brewery ID" });
       const events = await db.select().from(breweryEvents)
-        .where(and(eq(breweryEvents.breweryId, breweryId), eq(breweryEvents.isPublished, true)))
-        .orderBy(breweryEvents.eventDate);
+        .where(and(
+          eq(breweryEvents.breweryId, breweryId),
+          eq(breweryEvents.isPublished, true),
+          sql`COALESCE(${breweryEvents.endDate}, ${breweryEvents.eventDate}) + INTERVAL '12 hours' > NOW()`,
+        ))
+        .orderBy(asc(breweryEvents.eventDate));
       res.json(events);
     } catch (error) {
       console.error("Error fetching brewery events:", error);
@@ -3230,10 +3234,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const favUsers = await db.select().from(favorites)
           .where(and(eq(favorites.itemType, 'brewery'), eq(favorites.itemId, breweryId)));
         for (const fav of favUsers) {
+          const prefs = await storage.getNotificationPreferences(fav.userId);
+          if (prefs && !prefs.events) continue;
           await storage.createNotification({
             userId: fav.userId, type: 'event', title: `Nuovo evento da ${brewery?.name || 'birrificio'}!`,
             message: `"${event.title}" - Non perderlo!`,
-            pubId: null, beerId: null, isRead: false,
+            pubId: null, beerId: null, breweryId, isRead: false,
           });
           sendPushToUser(fav.userId, {
             title: `Nuovo evento da ${brewery?.name || 'birrificio'}!`,
@@ -3515,6 +3521,56 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ message: "Errore aggiornamento privacy" });
     }
   });
+
+  // Background job: every 60s check for events that just started and send push notifications
+  setInterval(async () => {
+    try {
+      const { pubEvents: pendingPub, breweryEvents: pendingBrewery } = await storage.getPendingStartNotifications();
+
+      for (const event of pendingPub) {
+        const favUserIds = await storage.getUsersWhoFavoritedPub(event.pubId);
+        for (const favUserId of favUserIds) {
+          const prefs = await storage.getNotificationPreferences(favUserId);
+          if (prefs && !prefs.events) continue;
+          await storage.createNotification({
+            userId: favUserId, type: 'event',
+            title: `L'evento "${event.title}" è iniziato!`,
+            message: `${event.pubName} ti aspetta adesso!`,
+            pubId: event.pubId, beerId: null, isRead: false,
+          });
+          sendPushToUser(favUserId, {
+            title: `L'evento "${event.title}" è iniziato!`,
+            body: `${event.pubName} ti aspetta adesso!`,
+            url: `/pub/${event.pubId}`, type: 'event',
+          });
+        }
+        await storage.markPubEventStartSent(event.id);
+      }
+
+      for (const event of pendingBrewery) {
+        const favUsers = await db.select().from(favorites)
+          .where(and(eq(favorites.itemType, 'brewery'), eq(favorites.itemId, event.breweryId)));
+        for (const fav of favUsers) {
+          const prefs = await storage.getNotificationPreferences(fav.userId);
+          if (prefs && !prefs.events) continue;
+          await storage.createNotification({
+            userId: fav.userId, type: 'event',
+            title: `L'evento "${event.title}" è iniziato!`,
+            message: `${event.breweryName} ti aspetta adesso!`,
+            pubId: null, beerId: null, breweryId: event.breweryId, isRead: false,
+          });
+          sendPushToUser(fav.userId, {
+            title: `L'evento "${event.title}" è iniziato!`,
+            body: `${event.breweryName} ti aspetta adesso!`,
+            url: `/brewery/${event.breweryId}`, type: 'event',
+          });
+        }
+        await storage.markBreweryEventStartSent(event.id);
+      }
+    } catch (err) {
+      console.error('Event start notification job error:', err);
+    }
+  }, 60 * 1000);
 
   const httpServer = createServer(app);
   return httpServer;

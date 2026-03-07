@@ -294,12 +294,15 @@ export interface IStorage {
   deletePushSubscriptionsByUser(userId: string): Promise<void>;
 
   // Pub Events operations
-  getPubEvents(pubId: number): Promise<PubEvent[]>;
+  getPubEvents(pubId: number, publicOnly?: boolean): Promise<PubEvent[]>;
   getPubEvent(id: number): Promise<PubEvent | undefined>;
   createPubEvent(event: InsertPubEvent): Promise<PubEvent>;
   updatePubEvent(id: number, updates: Partial<InsertPubEvent>): Promise<PubEvent>;
   deletePubEvent(id: number): Promise<void>;
   getUpcomingEvents(limit?: number): Promise<any[]>;
+  markPubEventStartSent(id: number): Promise<void>;
+  markBreweryEventStartSent(id: number): Promise<void>;
+  getPendingStartNotifications(): Promise<{ pubEvents: any[]; breweryEvents: any[] }>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -1387,10 +1390,15 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Pub Events operations
-  async getPubEvents(pubId: number): Promise<PubEvent[]> {
+  async getPubEvents(pubId: number, publicOnly = false): Promise<PubEvent[]> {
+    const conditions = [eq(pubEvents.pubId, pubId)];
+    if (publicOnly) {
+      // Show event if: COALESCE(endDate, eventDate) + 12 hours > now
+      conditions.push(sql`COALESCE(${pubEvents.endDate}, ${pubEvents.eventDate}) + INTERVAL '12 hours' > NOW()`);
+    }
     return db.select().from(pubEvents)
-      .where(eq(pubEvents.pubId, pubId))
-      .orderBy(desc(pubEvents.eventDate));
+      .where(and(...conditions))
+      .orderBy(asc(pubEvents.eventDate));
   }
 
   async getPubEvent(id: number): Promise<PubEvent | undefined> {
@@ -1462,6 +1470,53 @@ export class DatabaseStorage implements IStorage {
         longitude: row.pubLongitude,
       },
     }));
+  }
+
+  async markPubEventStartSent(id: number): Promise<void> {
+    await db.update(pubEvents).set({ startNotificationSent: true }).where(eq(pubEvents.id, id));
+  }
+
+  async markBreweryEventStartSent(id: number): Promise<void> {
+    await db.update(breweryEvents).set({ startNotificationSent: true }).where(eq(breweryEvents.id, id));
+  }
+
+  async getPendingStartNotifications(): Promise<{ pubEvents: any[]; breweryEvents: any[] }> {
+    const now = new Date();
+    const fiveMinAgo = new Date(now.getTime() - 5 * 60 * 1000);
+
+    const pendingPubEvents = await db.select({
+      id: pubEvents.id,
+      pubId: pubEvents.pubId,
+      title: pubEvents.title,
+      eventDate: pubEvents.eventDate,
+      pubName: pubs.name,
+    })
+      .from(pubEvents)
+      .innerJoin(pubs, eq(pubEvents.pubId, pubs.id))
+      .where(and(
+        eq(pubEvents.isPublished, true),
+        eq(pubEvents.startNotificationSent, false),
+        sql`${pubEvents.eventDate} <= ${now}`,
+        sql`${pubEvents.eventDate} >= ${fiveMinAgo}`,
+      ));
+
+    const pendingBreweryEvents = await db.select({
+      id: breweryEvents.id,
+      breweryId: breweryEvents.breweryId,
+      title: breweryEvents.title,
+      eventDate: breweryEvents.eventDate,
+      breweryName: breweries.name,
+    })
+      .from(breweryEvents)
+      .innerJoin(breweries, eq(breweryEvents.breweryId, breweries.id))
+      .where(and(
+        eq(breweryEvents.isPublished, true),
+        eq(breweryEvents.startNotificationSent, false),
+        sql`${breweryEvents.eventDate} <= ${now}`,
+        sql`${breweryEvents.eventDate} >= ${fiveMinAgo}`,
+      ));
+
+    return { pubEvents: pendingPubEvents, breweryEvents: pendingBreweryEvents };
   }
 }
 
@@ -2128,9 +2183,9 @@ class StorageWrapper implements IStorage {
   }
 
   // Pub Events operations
-  async getPubEvents(pubId: number): Promise<PubEvent[]> {
+  async getPubEvents(pubId: number, publicOnly?: boolean): Promise<PubEvent[]> {
     return this.dbCall(
-      () => this.databaseStorage.getPubEvents(pubId),
+      () => this.databaseStorage.getPubEvents(pubId, publicOnly),
       async () => []
     );
   }
@@ -2167,6 +2222,27 @@ class StorageWrapper implements IStorage {
     return this.dbCall(
       () => this.databaseStorage.getUpcomingEvents(limit),
       async () => []
+    );
+  }
+
+  async markPubEventStartSent(id: number): Promise<void> {
+    return this.dbCall(
+      () => this.databaseStorage.markPubEventStartSent(id),
+      async () => {}
+    );
+  }
+
+  async markBreweryEventStartSent(id: number): Promise<void> {
+    return this.dbCall(
+      () => this.databaseStorage.markBreweryEventStartSent(id),
+      async () => {}
+    );
+  }
+
+  async getPendingStartNotifications(): Promise<{ pubEvents: any[]; breweryEvents: any[] }> {
+    return this.dbCall(
+      () => this.databaseStorage.getPendingStartNotifications(),
+      async () => ({ pubEvents: [], breweryEvents: [] })
     );
   }
 }

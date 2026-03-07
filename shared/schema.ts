@@ -619,6 +619,7 @@ export const notifications = pgTable("notifications", {
   message: text("message").notNull(),
   pubId: integer("pub_id").references(() => pubs.id),
   beerId: integer("beer_id").references(() => beers.id),
+  breweryId: integer("brewery_id").references(() => breweries.id),
   isRead: boolean("is_read").default(false),
   createdAt: timestamp("created_at").defaultNow(),
 });
@@ -674,6 +675,7 @@ export const pubEvents = pgTable("pub_events", {
   endDate: timestamp("end_date"),
   imageUrl: text("image_url"),
   isPublished: boolean("is_published").default(true),
+  startNotificationSent: boolean("start_notification_sent").default(false),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
@@ -697,6 +699,7 @@ export const breweryEvents = pgTable("brewery_events", {
   endDate: timestamp("end_date"),
   imageUrl: text("image_url"),
   isPublished: boolean("is_published").default(true),
+  startNotificationSent: boolean("start_notification_sent").default(false),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });

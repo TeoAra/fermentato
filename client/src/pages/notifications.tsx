@@ -181,6 +181,8 @@ export default function Notifications() {
     }
     if (notification.pubId) {
       setLocation(`/pub/${notification.pubId}`);
+    } else if (notification.breweryId) {
+      setLocation(`/brewery/${notification.breweryId}`);
     }
   };
 
