@@ -58,7 +58,7 @@ export default function Header() {
   const { data: unreadData } = useQuery<{ count: number }>({
     queryKey: ['/api/notifications/unread-count'],
     enabled: isAuthenticated,
-    refetchInterval: 30000,
+    refetchInterval: 120000,
   });
 
   // Never hide header — multi-role users need it to switch roles

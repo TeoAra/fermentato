@@ -43,6 +43,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/pubs", async (req, res) => {
     try {
       const pubs = await storage.getPubs();
+      res.setHeader('Cache-Control', 'public, max-age=120, stale-while-revalidate=30');
       res.json(pubs);
     } catch (error) {
       console.error("Error fetching pubs:", error);
@@ -424,6 +425,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const random = req.query.random === 'true';
       const limit = req.query.limit ? parseInt(req.query.limit as string) : undefined;
       const result = await storage.getBreweriesWithBeerCount(limit, random);
+      res.setHeader('Cache-Control', 'public, max-age=300, stale-while-revalidate=60');
       res.json(result);
     } catch (error) {
       console.error("Error fetching breweries:", error);
@@ -483,6 +485,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         averageBeersPerBrewery: breweryCount[0]?.count > 0 ? Math.round((beerCount[0]?.count || 0) / breweryCount[0].count) : 0,
         lastUpdated: new Date().toISOString()
       };
+      res.setHeader('Cache-Control', 'public, max-age=300, stale-while-revalidate=60');
       res.json(stats);
     } catch (error) {
       console.error("Error fetching database stats:", error);
@@ -1758,49 +1761,35 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Get global beer statistics
   app.get('/api/stats/global', async (req, res) => {
     try {
-      // Total counts
-      const totalBeers = await db.select().from(beers);
-      const totalBreweries = await db.select().from(breweries);
-      const totalPubs = await db.select({ id: pubs.id }).from(pubs);
-      const totalUsers = await db.select({ id: users.id }).from(users);
-      
-      // Unique styles
-      const uniqueStyles = await db
-        .selectDistinct({ style: beers.style })
-        .from(beers);
-      
-      // Top beer styles
-      const topStyles = await db
-        .select({
-          style: beers.style,
-          count: sql<number>`count(*)`
-        })
-        .from(beers)
-        .groupBy(beers.style)
-        .orderBy(sql`count(*) desc`)
-        .limit(10);
+      const [beerCount, breweryCount, pubCount, userCount, styleCount, topStyles, topBreweries] = await Promise.all([
+        db.select({ count: sql<number>`COUNT(*)::int` }).from(beers),
+        db.select({ count: sql<number>`COUNT(*)::int` }).from(breweries),
+        db.select({ count: sql<number>`COUNT(*)::int` }).from(pubs),
+        db.select({ count: sql<number>`COUNT(*)::int` }).from(users),
+        db.select({ count: sql<number>`COUNT(DISTINCT style)::int` }).from(beers),
+        db.select({ style: beers.style, count: sql<number>`COUNT(*)::int` })
+          .from(beers).groupBy(beers.style).orderBy(sql`COUNT(*) desc`).limit(10),
+        db.select({
+            breweryName: breweries.name,
+            location: breweries.location,
+            beerCount: sql<number>`COUNT(${beers.id})::int`
+          })
+          .from(breweries)
+          .leftJoin(beers, eq(breweries.id, beers.breweryId))
+          .groupBy(breweries.id, breweries.name, breweries.location)
+          .orderBy(sql`COUNT(${beers.id}) desc`)
+          .limit(10),
+      ]);
 
-      // Breweries with most beers
-      const topBreweries = await db
-        .select({
-          breweryName: breweries.name,
-          location: breweries.location,
-          beerCount: sql<number>`count(${beers.id})`
-        })
-        .from(breweries)
-        .leftJoin(beers, eq(breweries.id, beers.breweryId))
-        .groupBy(breweries.id, breweries.name, breweries.location)
-        .orderBy(sql`count(${beers.id}) desc`)
-        .limit(10);
-
+      res.setHeader('Cache-Control', 'public, max-age=300, stale-while-revalidate=60');
       res.json({
-        totalBeers: totalBeers.length,
-        totalBreweries: totalBreweries.length,
-        totalPubs: totalPubs.length,
-        totalUsers: totalUsers.length,
-        uniqueStyles: uniqueStyles.length,
-        topStyles: topStyles,
-        topBreweries: topBreweries,
+        totalBeers: beerCount[0]?.count || 0,
+        totalBreweries: breweryCount[0]?.count || 0,
+        totalPubs: pubCount[0]?.count || 0,
+        totalUsers: userCount[0]?.count || 0,
+        uniqueStyles: styleCount[0]?.count || 0,
+        topStyles,
+        topBreweries,
         lastUpdated: new Date().toISOString()
       });
     } catch (error) {

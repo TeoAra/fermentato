@@ -128,7 +128,7 @@ export default function AdminAnalytics() {
       return res.json();
     },
     enabled: isAuthenticated && (user as any)?.userType === 'admin',
-    refetchInterval: 30000,
+    refetchInterval: 120000,
   });
 
   if (isLoading) {

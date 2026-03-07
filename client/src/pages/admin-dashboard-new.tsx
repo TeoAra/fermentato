@@ -59,13 +59,13 @@ export default function AdminDashboardNew() {
   const { data: adminStats } = useQuery<AdminStats>({
     queryKey: ["/api/admin/stats"],
     enabled: isAuthenticated && (user as any)?.userType === 'admin',
-    refetchInterval: 30000,
+    refetchInterval: 120000,
   });
 
   const { data: globalStats } = useQuery<GlobalStats>({
     queryKey: ["/api/stats/global"],
     enabled: isAuthenticated && (user as any)?.userType === 'admin',
-    refetchInterval: 30000,
+    refetchInterval: 120000,
   });
 
 

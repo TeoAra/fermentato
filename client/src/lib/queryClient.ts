@@ -21,32 +21,25 @@ export async function apiRequest(
   options?: RequestInit,
   jsonBody?: unknown,
 ): Promise<any> {
-  // Runtime validation for robust error handling
   if (options?.method && typeof options.method !== 'string') {
     console.warn('apiRequest: method should be string, got:', typeof options.method, options.method);
-    // Prevent fetch error by removing invalid method
     const { method, ...cleanOptions } = options;
     options = { ...cleanOptions, method: 'GET' };
   }
 
-  // Validate method is uppercase if provided
   const method = options?.method ? options.method.toUpperCase() : 'GET';
   
-  // Handle different body types
   let body: BodyInit | undefined;
   let headers: Record<string, string> = { ...(options?.headers as Record<string, string>) };
   
   if (jsonBody !== undefined) {
-    // JSON body provided as separate parameter
     if (jsonBody instanceof FormData) {
       body = jsonBody;
-      // Don't set Content-Type for FormData (browser sets it with boundary)
     } else {
       body = JSON.stringify(jsonBody);
       headers = { ...headers, 'Content-Type': 'application/json' };
     }
   } else if (options?.body) {
-    // Body provided in options
     if (options.body instanceof FormData) {
       body = options.body;
     } else if (typeof options.body === 'string') {
@@ -70,7 +63,6 @@ export async function apiRequest(
 
   await throwIfResNotOk(res);
   
-  // Parse JSON if response has content
   if (res.status !== 204 && res.headers.get('content-type')?.includes('application/json')) {
     return await res.json();
   }
@@ -102,7 +94,9 @@ export const queryClient = new QueryClient({
       queryFn: getQueryFn({ on401: "returnNull" }),
       refetchInterval: false,
       refetchOnWindowFocus: false,
-      staleTime: 0, // No caching for auth data
+      refetchOnReconnect: true,
+      staleTime: 5 * 60 * 1000,
+      gcTime: 10 * 60 * 1000,
       retry: false,
     },
     mutations: {
@@ -110,3 +104,12 @@ export const queryClient = new QueryClient({
     },
   },
 });
+
+// Pause all queries when tab hidden — saves CPU/battery on mobile
+if (typeof document !== 'undefined') {
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'hidden') {
+      queryClient.cancelQueries();
+    }
+  });
+}

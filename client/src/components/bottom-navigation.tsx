@@ -15,7 +15,7 @@ export function BottomNavigation() {
   const { data: unreadData } = useQuery<{ count: number }>({
     queryKey: ['/api/notifications/unread-count'],
     enabled: isAuthenticated,
-    refetchInterval: 30000,
+    refetchInterval: 120000,
   });
 
   // Smart hide/show on scroll for better UX - MOVED BEFORE CONDITIONAL LOGIC

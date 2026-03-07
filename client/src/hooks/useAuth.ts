@@ -9,6 +9,7 @@ export function useAuth() {
 
   const { data: user, isLoading } = useQuery({
     queryKey: ["/api/auth/user"],
+    staleTime: 0,
     retry: false,
   });
 
