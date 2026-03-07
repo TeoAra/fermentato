@@ -119,19 +119,21 @@ export default function AdminAnalytics() {
     enabled: isAuthenticated && (user as any)?.userType === 'admin',
   });
 
-  const { data: recentActivity = [], isFetching: activityLoading } = useQuery<RecentActivity[]>({
-    queryKey: ["/api/admin/recent-activity", activityType, activityLimit],
-    queryFn: async ({ queryKey }) => {
-      const [, filter, limit] = queryKey as [string, string, number];
-      const params = new URLSearchParams({ limit: String(limit) });
-      if (filter !== 'all') params.append('type', filter);
-      const res = await fetch(`/api/admin/recent-activity?${params}`, { credentials: 'include' });
+  const { data: allActivityData = [], isFetching: activityLoading } = useQuery<RecentActivity[]>({
+    queryKey: ["/api/admin/recent-activity"],
+    queryFn: async () => {
+      const res = await fetch(`/api/admin/recent-activity?limit=100`, { credentials: 'include' });
       return res.json();
     },
     enabled: isAuthenticated && (user as any)?.userType === 'admin',
     staleTime: 0,
     refetchInterval: 120000,
   });
+
+  const recentActivity = (activityType === 'all'
+    ? allActivityData
+    : allActivityData.filter((item: any) => item.type === activityType)
+  ).slice(0, activityLimit);
 
   if (isLoading) {
     return (

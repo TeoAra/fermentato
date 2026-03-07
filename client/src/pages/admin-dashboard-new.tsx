@@ -73,19 +73,20 @@ export default function AdminDashboardNew() {
     refetchInterval: 120000,
   });
 
-  const { data: recentActivity = [] } = useQuery<any[]>({
-    queryKey: ["/api/admin/recent-activity", activityFilter],
-    queryFn: async ({ queryKey }) => {
-      const filter = queryKey[1] as string;
-      const params = new URLSearchParams({ limit: '15' });
-      if (filter !== 'all') params.append('type', filter);
-      const res = await fetch(`/api/admin/recent-activity?${params}`, { credentials: 'include' });
+  const { data: allActivity = [] } = useQuery<any[]>({
+    queryKey: ["/api/admin/recent-activity"],
+    queryFn: async () => {
+      const res = await fetch(`/api/admin/recent-activity?limit=50`, { credentials: 'include' });
       return res.json();
     },
     enabled: isAuthenticated && (user as any)?.userType === 'admin',
     staleTime: 0,
     refetchInterval: 60000,
   });
+
+  const recentActivity = activityFilter === 'all'
+    ? allActivity.slice(0, 15)
+    : allActivity.filter((item: any) => item.type === activityFilter);
 
 
   if (isLoading) {
