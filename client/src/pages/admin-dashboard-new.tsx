@@ -1,5 +1,6 @@
 import { useAuth } from "@/hooks/useAuth";
 import { useQuery } from "@tanstack/react-query";
+import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -48,6 +49,7 @@ interface GlobalStats {
 
 export default function AdminDashboardNew() {
   const { user, isAuthenticated, isLoading } = useAuth();
+  const [activityFilter, setActivityFilter] = useState<string>('all');
   
   const { data: pendingCount } = useQuery<{ count: number }>({
     queryKey: ["/api/admin/publican-requests/pending-count"],
@@ -343,13 +345,33 @@ export default function AdminDashboardNew() {
             <Clock className="w-5 h-5 text-indigo-500" />
             Attività Recente
           </CardTitle>
+          <div className="flex flex-wrap gap-1.5 pt-1">
+            {[
+              { key: 'all', label: 'Tutti' },
+              { key: 'user', label: 'Utenti' },
+              { key: 'pub', label: 'Pub' },
+              { key: 'brewery', label: 'Birrifici' },
+              { key: 'review', label: 'Recensioni' },
+              { key: 'event', label: 'Eventi' },
+            ].map(({ key, label }) => (
+              <Button
+                key={key}
+                variant={activityFilter === key ? 'default' : 'outline'}
+                size="sm"
+                className="h-7 text-xs"
+                onClick={() => setActivityFilter(key)}
+              >
+                {label}
+              </Button>
+            ))}
+          </div>
         </CardHeader>
         <CardContent>
           {recentActivity.length === 0 ? (
             <p className="text-center text-gray-400 py-6">Nessuna attività recente</p>
           ) : (
             <div className="space-y-1">
-              {recentActivity.slice(0, 12).map((item: any, i: number) => (
+              {recentActivity.filter((item: any) => activityFilter === 'all' || item.icon === activityFilter).slice(0, 15).map((item: any, i: number) => (
                 <div key={i} className="flex items-start gap-3 p-3 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800/40 transition-colors">
                   <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5 ${
                     item.icon === 'user' ? 'bg-purple-100 dark:bg-purple-900/40' :

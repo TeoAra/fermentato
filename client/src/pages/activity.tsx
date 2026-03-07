@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { MapPin, Loader2, Navigation, Clock, AlertCircle, Beer, Trash2, X, Calendar, CalendarDays } from "lucide-react";
+import { MapPin, Loader2, Navigation, Clock, AlertCircle, Beer, Trash2, X, Calendar, CalendarDays, ChevronDown } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -92,6 +92,7 @@ export default function Activity() {
   const [locationError, setLocationError] = useState<string | null>(null);
   const [requestingLocation, setRequestingLocation] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState<any>(null);
+  const [showMorePubs, setShowMorePubs] = useState(false);
   const [dismissedIds, setDismissedIds] = useState<Set<number>>(() => {
     try {
       const stored = localStorage.getItem('dismissedTapChanges');
@@ -168,7 +169,7 @@ export default function Activity() {
         })
         .filter((pub: any) => pub.distance <= parseFloat(radius))
         .sort((a: any, b: any) => a.distance - b.distance)
-    : Array.isArray(allPubs) ? allPubs.slice(0, 6) : [];
+    : Array.isArray(allPubs) ? allPubs.slice(0, 10) : [];
 
   const nearbyEvents = useMemo(() => {
     if (!Array.isArray(upcomingEvents)) return [];
@@ -312,44 +313,56 @@ export default function Activity() {
               <Button variant="link" size="sm" onClick={() => setRadius("50")}>Espandi a 50 km</Button>
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {nearbyPubs.map((pub: any) => {
-                const openStatus = getOpenStatus(pub.openingHours);
-                return (
-                  <Link key={pub.id} href={`/pub/${pub.id}`}>
-                    <Card className="hover:shadow-lg hover:scale-[1.02] transition-all duration-200 cursor-pointer h-full">
-                      <CardContent className="p-4">
-                        <div className="flex items-start gap-3">
-                          <div className="w-12 h-12 bg-orange-100 dark:bg-orange-900/20 rounded-lg flex items-center justify-center flex-shrink-0">
-                            <MapPin className="h-6 w-6 text-orange-600" />
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <h3 className="font-semibold text-sm mb-1 truncate">{pub.name}</h3>
-                            <p className="text-xs text-gray-500 mb-2 flex items-center gap-1">
-                              <MapPin className="w-3 h-3 flex-shrink-0" />
-                              <span className="line-clamp-1">
-                                {userLocation && pub.distance !== 9999 ? pub.city || pub.address?.split(',').pop()?.trim() : pub.address}
-                              </span>
-                              {userLocation && pub.distance !== 9999 && (
-                                <span className="font-medium text-blue-600 dark:text-blue-400 whitespace-nowrap">
-                                  {formatDistance(pub.distance)}
+            <>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {(showMorePubs ? nearbyPubs : nearbyPubs.slice(0, 10)).map((pub: any) => {
+                  const openStatus = getOpenStatus(pub.openingHours);
+                  return (
+                    <Link key={pub.id} href={`/pub/${pub.id}`}>
+                      <Card className="hover:shadow-lg hover:scale-[1.02] transition-all duration-200 cursor-pointer h-full">
+                        <CardContent className="p-4">
+                          <div className="flex items-start gap-3">
+                            <div className="w-12 h-12 bg-orange-100 dark:bg-orange-900/20 rounded-lg flex items-center justify-center flex-shrink-0">
+                              <MapPin className="h-6 w-6 text-orange-600" />
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <h3 className="font-semibold text-sm mb-1 truncate">{pub.name}</h3>
+                              <p className="text-xs text-gray-500 mb-2 flex items-center gap-1">
+                                <MapPin className="w-3 h-3 flex-shrink-0" />
+                                <span className="line-clamp-1">
+                                  {userLocation && pub.distance !== 9999 ? pub.city || pub.address?.split(',').pop()?.trim() : pub.address}
                                 </span>
-                              )}
-                            </p>
-                            <div className="flex items-center gap-2 flex-wrap">
-                              <Badge className={`text-xs ${openStatus.color}`}>
-                                <Clock className="h-3 w-3 mr-1" />
-                                {openStatus.label}
-                              </Badge>
+                                {userLocation && pub.distance !== 9999 && (
+                                  <span className="font-medium text-blue-600 dark:text-blue-400 whitespace-nowrap">
+                                    {formatDistance(pub.distance)}
+                                  </span>
+                                )}
+                              </p>
+                              <div className="flex items-center gap-2 flex-wrap">
+                                <Badge className={`text-xs ${openStatus.color}`}>
+                                  <Clock className="h-3 w-3 mr-1" />
+                                  {openStatus.label}
+                                </Badge>
+                              </div>
                             </div>
                           </div>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  </Link>
-                );
-              })}
-            </div>
+                        </CardContent>
+                      </Card>
+                    </Link>
+                  );
+                })}
+              </div>
+              {nearbyPubs.length > 10 && !showMorePubs && (
+                <Button
+                  variant="outline"
+                  className="w-full mt-4"
+                  onClick={() => setShowMorePubs(true)}
+                >
+                  <ChevronDown className="h-4 w-4 mr-2" />
+                  Mostra di più ({nearbyPubs.length - 10} altri locali)
+                </Button>
+              )}
+            </>
           )}
         </section>
 

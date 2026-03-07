@@ -50,6 +50,9 @@ import {
   pubEvents,
   type PubEvent,
   type InsertPubEvent,
+  breweryEvents,
+  type BreweryEvent,
+  type InsertBreweryEvent,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, desc, like, inArray, sql, or, asc, ilike } from "drizzle-orm";

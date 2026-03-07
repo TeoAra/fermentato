@@ -1631,6 +1631,36 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.patch('/api/admin/users/:id', isAuthenticated, isAdmin, async (req: any, res) => {
+    try {
+      const targetId = req.params.id;
+      const { userType } = req.body;
+      if (!userType) return res.status(400).json({ message: "userType required" });
+      await db.update(users).set({ userType }).where(eq(users.id, targetId));
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error updating user:", error);
+      res.status(500).json({ message: "Failed to update user" });
+    }
+  });
+
+  app.delete('/api/admin/users/:id', isAuthenticated, isAdmin, async (req: any, res) => {
+    try {
+      const targetId = req.params.id;
+      const target = await storage.getUser(targetId);
+      if (!target) return res.status(404).json({ message: "Utente non trovato" });
+      // Clean up user data before deleting
+      await db.delete(notifications).where(eq(notifications.userId, targetId));
+      await db.delete(favorites).where(eq(favorites.userId, targetId));
+      await db.delete(userBeerTastings).where(eq(userBeerTastings.userId, targetId));
+      await storage.deleteUser(targetId);
+      res.json({ success: true, message: `Utente "${target.nickname || target.firstName || targetId}" eliminato` });
+    } catch (error) {
+      console.error("Error deleting user:", error);
+      res.status(500).json({ message: "Errore eliminazione utente" });
+    }
+  });
+
   app.get('/api/admin/pubs', isAuthenticated, isAdmin, async (req: any, res) => {
     try {
       const pubs = await storage.getAllPubs();
@@ -2776,6 +2806,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error deleting notification:", error);
       res.status(500).json({ message: "Failed to delete notification" });
+    }
+  });
+
+  app.delete("/api/notifications", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = (req.user as any).id;
+      await db.delete(notifications).where(eq(notifications.userId, userId));
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error deleting all notifications:", error);
+      res.status(500).json({ message: "Failed to delete notifications" });
     }
   });
 
