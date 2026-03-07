@@ -107,73 +107,71 @@ const ModernBeerCard = ({ beer, prices, className = "" }: {
   prices?: any[];
   className?: string;
 }) => (
-  <Card className={`p-6 hover:shadow-lg transition-all duration-300 border-l-4 border-l-emerald-500 bg-white dark:bg-gray-800 ${className}`}>
-    <div className="flex items-start justify-between space-x-4">
-      {/* Left side: Beer details */}
-      <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-3 mb-4">
-          <ImageWithFallback
-            src={beer?.imageUrl || beer?.brewery?.logoUrl}
-            alt={beer?.name || 'Beer'}
-            imageType="beer"
-            containerClassName="w-12 h-12 rounded-lg flex-shrink-0"
-            className="w-12 h-12 rounded-lg object-cover flex-shrink-0"
-            iconSize="md"
-          />
-          <div className="flex-1 min-w-0">
-            <Link href={`/beer/${beer?.id}`}>
-              <h3 className="font-semibold text-lg break-words hover:text-primary cursor-pointer transition-colors text-gray-900 dark:text-white">
-                {beer?.name || 'Nome non disponibile'}
-              </h3>
+  <Card className={`overflow-hidden hover:shadow-lg transition-all duration-300 border-l-4 border-l-emerald-500 bg-white dark:bg-gray-800 ${className}`}>
+    <div className="flex gap-3 p-4">
+      <ImageWithFallback
+        src={beer?.imageUrl || beer?.brewery?.logoUrl}
+        alt={beer?.name || 'Beer'}
+        imageType="beer"
+        containerClassName="w-14 h-14 rounded-xl flex-shrink-0 self-center"
+        className="w-14 h-14 rounded-xl object-cover"
+        iconSize="md"
+      />
+
+      <div className="flex-1 min-w-0 flex gap-2 justify-between">
+        <div className="flex-1 min-w-0">
+          <Link href={`/beer/${beer?.id}`}>
+            <h3 className="font-bold text-base leading-snug line-clamp-1 hover:text-amber-600 dark:hover:text-amber-400 cursor-pointer transition-colors text-gray-900 dark:text-white">
+              {beer?.name || 'Nome non disponibile'}
+            </h3>
+          </Link>
+
+          {beer?.brewery?.id ? (
+            <Link href={`/brewery/${beer.brewery.id}`}>
+              <p className="text-xs text-amber-600 dark:text-amber-400 hover:text-amber-700 dark:hover:text-amber-300 cursor-pointer transition-colors truncate leading-snug mt-0.5">
+                {beer.brewery.name || beer?.breweryName || 'Birrificio'}
+              </p>
             </Link>
-            {beer?.brewery?.id && (
-              <Link href={`/brewery/${beer.brewery.id}`}>
-                <p className="text-xs text-gray-500 dark:text-gray-400 break-words hover:text-emerald-600 dark:hover:text-emerald-400 cursor-pointer transition-colors">
-                  {beer.brewery.name || beer?.breweryName || 'Birrificio'}
-                </p>
-              </Link>
-            )}
-            <div className="flex items-center gap-1.5 flex-wrap mt-1">
-              <span className="text-xs text-gray-500 dark:text-gray-500">
-                {beer?.style || 'N/D'} • {beer?.abv || '0'}% ABV
-              </span>
-              {beer?.isGlutenFree && (
-                <GlutenFreeSmallBadge size={11} />
-              )}
-              {beer?.isAlcoholFree && (
-                <AlcoholFreeBadge size={10} />
-              )}
-            </div>
+          ) : beer?.breweryName ? (
+            <p className="text-xs text-gray-500 dark:text-gray-400 truncate leading-snug mt-0.5">{beer.breweryName}</p>
+          ) : null}
+
+          <p className="text-xs text-gray-500 dark:text-gray-400 truncate leading-snug mt-0.5">
+            {beer?.style || 'Stile N/D'}
+          </p>
+
+          <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
+            <span className="text-xs font-medium text-gray-600 dark:text-gray-400">
+              {beer?.isAlcoholFree ? '0.0% ABV' : `${beer?.abv || '0'}% ABV`}
+            </span>
+            {beer?.isGlutenFree && <GlutenFreeSmallBadge size={11} />}
+            {beer?.isAlcoholFree && <AlcoholFreeBadge size={10} />}
           </div>
+
+          {beer?.description && (
+            <p className="text-xs text-gray-500 dark:text-gray-400 italic mt-1.5 line-clamp-2">
+              {beer.description}
+            </p>
+          )}
         </div>
 
-        {/* Description if available */}
-        {beer?.description && (
-          <div className="mt-4 pt-3 border-t border-gray-200/50 dark:border-gray-700/50">
-            <div className="bg-gray-50 dark:bg-gray-800/50 p-3 rounded-lg">
-              <p className="text-sm text-gray-700 dark:text-gray-300 italic leading-relaxed">{beer.description}</p>
+        {prices && prices.length > 0 && (
+          <div className="flex-shrink-0 text-right self-center">
+            <div className="space-y-1.5">
+              {prices.map((price: any, index: number) => (
+                <div key={index}>
+                  <div className="text-xs text-gray-400 dark:text-gray-500">
+                    {typeof price === 'object' ? (price as any).size : price}
+                  </div>
+                  <div className="text-sm font-bold text-gray-900 dark:text-white">
+                    €{typeof price === 'object' ? parseFloat((price as any).price).toFixed(2) : parseFloat(price).toFixed(2)}
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
         )}
       </div>
-
-      {/* Right side: Prices */}
-      {prices && prices.length > 0 && (
-        <div className="flex-shrink-0 min-w-[120px]">
-          <div className="space-y-2">
-            {prices.map((price: any, index: number) => (
-              <div key={index} className="text-right">
-                <div className="text-xs text-gray-500 dark:text-gray-400">
-                  {typeof price === 'object' ? (price as any).size : price}
-                </div>
-                <div className="font-semibold text-gray-900 dark:text-white">
-                  €{typeof price === 'object' ? parseFloat((price as any).price).toFixed(2) : parseFloat(price).toFixed(2)}
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
     </div>
   </Card>
 );
