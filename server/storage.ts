@@ -1877,7 +1877,7 @@ class StorageWrapper implements IStorage {
 
   async getMenuByPub(pubId: number): Promise<any> {
     return this.dbCall(
-      () => this.databaseStorage.getMenuCategories(pubId),
+      () => this.databaseStorage.getMenuByPub(pubId),
       async () => { return []; }
     );
   }

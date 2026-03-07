@@ -403,8 +403,8 @@ export default function UserProfile() {
     <div className="container mx-auto px-4 py-8 max-w-4xl">
       <div className="space-y-6">
         {/* Header Card */}
-        <Card className="border-0 shadow-xl bg-gradient-to-br from-orange-500 to-orange-600 text-white overflow-hidden relative">
-          <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHZpZXdCb3g9IjAgMCA0MCA0MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48Y2lyY2xlIGN4PSIyMCIgY3k9IjIwIiByPSIxIiBmaWxsPSJyZ2JhKDI1NSwyNTUsMjU1LDAuMSkiLz48L3N2Zz4=')] opacity-30" />
+        <Card className="border-0 shadow-xl bg-gradient-to-br from-amber-500 via-orange-500 to-amber-600 dark:from-slate-900 dark:via-amber-800/50 dark:to-slate-800 text-white overflow-hidden relative">
+          <div className="absolute inset-0 bg-gradient-to-tr from-white/5 via-transparent to-white/10" />
           <CardContent className="pt-8 pb-8 relative z-10">
             <div className="flex flex-col md:flex-row items-center gap-6">
               <div className="w-32 h-32 md:w-36 md:h-36 flex-shrink-0 rounded-full overflow-hidden ring-4 ring-white/30 shadow-2xl [&>div]:!space-y-0 [&>div>div:first-child]:hidden [&_div.relative]:!rounded-full [&_div.aspect-square]:!max-w-none [&_div.aspect-square]:!border-0 [&_div.aspect-square]:!shadow-none [&_div.aspect-square]:!rounded-none">
@@ -456,10 +456,10 @@ export default function UserProfile() {
 
         {/* Main Content */}
         <Tabs defaultValue="overview" className="w-full">
-          <TabsList className="grid w-full grid-cols-3 bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl border border-orange-100 dark:border-gray-700 rounded-xl p-1 shadow-lg">
-            <TabsTrigger value="overview" className="rounded-lg data-[state=active]:bg-gradient-to-r data-[state=active]:from-orange-500 data-[state=active]:to-orange-600 data-[state=active]:text-white data-[state=active]:shadow-lg transition-all duration-300">Panoramica</TabsTrigger>
-            <TabsTrigger value="favorites" className="rounded-lg data-[state=active]:bg-gradient-to-r data-[state=active]:from-orange-500 data-[state=active]:to-orange-600 data-[state=active]:text-white data-[state=active]:shadow-lg transition-all duration-300">Preferiti</TabsTrigger>
-            <TabsTrigger value="settings" className="rounded-lg data-[state=active]:bg-gradient-to-r data-[state=active]:from-orange-500 data-[state=active]:to-orange-600 data-[state=active]:text-white data-[state=active]:shadow-lg transition-all duration-300">Impostazioni</TabsTrigger>
+          <TabsList className="grid w-full grid-cols-3 bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl border border-amber-100 dark:border-gray-700 rounded-xl p-1 shadow-lg">
+            <TabsTrigger value="overview" className="rounded-lg data-[state=active]:bg-gradient-to-r data-[state=active]:from-amber-500 data-[state=active]:to-orange-600 data-[state=active]:text-white data-[state=active]:shadow-lg transition-all duration-300">Panoramica</TabsTrigger>
+            <TabsTrigger value="favorites" className="rounded-lg data-[state=active]:bg-gradient-to-r data-[state=active]:from-amber-500 data-[state=active]:to-orange-600 data-[state=active]:text-white data-[state=active]:shadow-lg transition-all duration-300">Preferiti</TabsTrigger>
+            <TabsTrigger value="settings" className="rounded-lg data-[state=active]:bg-gradient-to-r data-[state=active]:from-amber-500 data-[state=active]:to-orange-600 data-[state=active]:text-white data-[state=active]:shadow-lg transition-all duration-300">Impostazioni</TabsTrigger>
           </TabsList>
 
           <TabsContent value="overview" className="space-y-4">
@@ -514,7 +514,7 @@ export default function UserProfile() {
                     </div>
                     <div className="w-full h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
                       <div
-                        className="h-full bg-gradient-to-r from-orange-400 to-amber-500 rounded-full transition-all duration-700"
+                        className="h-full bg-gradient-to-r from-amber-400 to-amber-600 rounded-full transition-all duration-700"
                         style={{ width: `${progress}%` }}
                       />
                     </div>
@@ -556,7 +556,7 @@ export default function UserProfile() {
                       className="border-orange-200 focus:border-orange-400 focus:ring-orange-400/20 text-sm"
                     />
                     <div className="flex gap-2">
-                      <Button size="sm" onClick={handleSaveProfile} disabled={updateProfileMutation.isPending} className="bg-orange-500 hover:bg-orange-600 text-white">
+                      <Button size="sm" onClick={handleSaveProfile} disabled={updateProfileMutation.isPending} className="bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 text-white">
                         <Save className="w-3.5 h-3.5 mr-1.5" />
                         {updateProfileMutation.isPending ? "Salvando..." : "Salva"}
                       </Button>
@@ -592,7 +592,7 @@ export default function UserProfile() {
             <Card className="border-0 shadow-lg bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2 text-gray-900 dark:text-white">
-                  <div className="p-2 bg-orange-100 dark:bg-orange-900/30 rounded-lg">
+                  <div className="p-2 bg-amber-100 dark:bg-amber-900/30 rounded-lg">
                     <Heart className="w-5 h-5 text-orange-600" />
                   </div>
                   I Tuoi Preferiti ({Array.isArray(enrichedFavorites) ? enrichedFavorites.length : 0})
@@ -608,7 +608,7 @@ export default function UserProfile() {
             <Card className="border-0 shadow-lg bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2 text-gray-900 dark:text-white">
-                  <div className="p-2 bg-orange-100 dark:bg-orange-900/30 rounded-lg">
+                  <div className="p-2 bg-amber-100 dark:bg-amber-900/30 rounded-lg">
                     <Settings className="w-5 h-5 text-orange-600" />
                   </div>
                   Impostazioni Account
@@ -629,7 +629,7 @@ export default function UserProfile() {
                         size="sm"
                         onClick={handleNicknameSave}
                         disabled={nicknameUpdateMutation.isPending || !canUpdateNickname()}
-                        className="bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white"
+                        className="bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 text-white"
                       >
                         <Save className="w-4 h-4" />
                       </Button>
@@ -688,7 +688,7 @@ export default function UserProfile() {
                         onClick={() => {
                           setIsEditingEmail(false);
                         }}
-                        className="bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white"
+                        className="bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 text-white"
                       >
                         <Save className="w-4 h-4" />
                       </Button>
@@ -746,7 +746,7 @@ export default function UserProfile() {
                       checked={isPublicProfile}
                       onCheckedChange={(val) => privacyMutation.mutate(val)}
                       disabled={privacyMutation.isPending}
-                      className="data-[state=checked]:bg-orange-500"
+                      className="data-[state=checked]:bg-amber-500"
                     />
                   </div>
                   {isPublicProfile && typedUser?.nickname && (
@@ -911,7 +911,7 @@ export default function UserProfile() {
         
         <Button 
           type="submit" 
-          className="w-full bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white shadow-lg"
+          className="w-full bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 text-white shadow-lg"
           disabled={passwordChangeMutation.isPending}
         >
           {passwordChangeMutation.isPending ? "Salvataggio..." : isSocialAccount ? "Imposta Password" : "Cambia Password"}

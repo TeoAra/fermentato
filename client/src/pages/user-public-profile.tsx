@@ -82,7 +82,7 @@ export default function UserPublicProfile() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-50 via-amber-50 to-orange-50 dark:from-gray-950 dark:via-amber-950 dark:to-orange-950">
+      <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-indigo-50 dark:from-gray-950 dark:via-blue-950 dark:to-indigo-950">
         <div className="max-w-4xl mx-auto px-4 py-12 space-y-6">
           <div className="skeleton h-64 rounded-2xl" />
           <div className="grid grid-cols-3 gap-4">{[...Array(3)].map((_, i) => <div key={i} className="skeleton h-24 rounded-xl" />)}</div>
@@ -96,7 +96,7 @@ export default function UserPublicProfile() {
   if (errorMsg === "private" || errorMsg === "not_found" || (!isLoading && !profile)) {
     const isPrivate = errorMsg === "private";
     return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-50 via-amber-50 to-orange-50 dark:from-gray-950 dark:via-amber-950 dark:to-orange-950 flex items-center justify-center">
+      <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-indigo-50 dark:from-gray-950 dark:via-blue-950 dark:to-indigo-950 flex items-center justify-center">
         <Card className="max-w-md w-full mx-4 border-0 shadow-2xl">
           <CardContent className="py-12 text-center space-y-6">
             <div className={`w-20 h-20 mx-auto rounded-full flex items-center justify-center ${isPrivate ? 'bg-gradient-to-br from-gray-400 to-gray-600' : 'bg-gradient-to-br from-amber-400 to-orange-600'}`}>
@@ -147,7 +147,7 @@ export default function UserPublicProfile() {
   const categoryOrder: AchievementCategory[] = ['quantity', 'style', 'country', 'special'];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-amber-50 to-orange-50 dark:from-gray-950 dark:via-amber-950 dark:to-orange-950">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-indigo-50 dark:from-gray-950 dark:via-blue-950 dark:to-indigo-950">
       {/* Back button */}
       <div className="max-w-4xl mx-auto px-4 pt-6">
         <Button variant="ghost" asChild className="mb-4 -ml-2">
