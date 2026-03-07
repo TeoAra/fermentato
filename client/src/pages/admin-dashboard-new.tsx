@@ -75,13 +75,15 @@ export default function AdminDashboardNew() {
 
   const { data: recentActivity = [] } = useQuery<any[]>({
     queryKey: ["/api/admin/recent-activity", activityFilter],
-    queryFn: async () => {
+    queryFn: async ({ queryKey }) => {
+      const filter = queryKey[1] as string;
       const params = new URLSearchParams({ limit: '15' });
-      if (activityFilter !== 'all') params.append('type', activityFilter);
+      if (filter !== 'all') params.append('type', filter);
       const res = await fetch(`/api/admin/recent-activity?${params}`, { credentials: 'include' });
       return res.json();
     },
     enabled: isAuthenticated && (user as any)?.userType === 'admin',
+    staleTime: 0,
     refetchInterval: 60000,
   });
 
