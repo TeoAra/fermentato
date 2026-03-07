@@ -1676,13 +1676,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
       await db.delete(publicanRequests).where(eq(publicanRequests.userId, targetId));
       await db.delete(breweryRequests).where(eq(breweryRequests.userId, targetId));
 
-      // Finally delete the user
-      await db.delete(users).where(eq(users.id, targetId));
+      // Finally delete the user using raw SQL with RETURNING to confirm deletion
+      const deleted = await db.execute(sql`DELETE FROM users WHERE id = ${targetId} RETURNING id`);
+      
+      if (!deleted.rows || deleted.rows.length === 0) {
+        console.error(`[admin] Delete user ${targetId}: DELETE returned 0 rows - possible FK constraint or missing record`);
+        // Try to get FK violations by querying remaining refs
+        const refs = await db.execute(sql`
+          SELECT 'notifications' as tbl, COUNT(*) FROM notifications WHERE user_id = ${targetId}
+          UNION ALL SELECT 'favorites', COUNT(*) FROM favorites WHERE user_id = ${targetId}
+          UNION ALL SELECT 'ratings', COUNT(*) FROM ratings WHERE user_id = ${targetId}
+          UNION ALL SELECT 'pubs_owner', COUNT(*) FROM pubs WHERE owner_id = ${targetId}
+        `);
+        console.error("[admin] Remaining FK refs:", refs.rows);
+        return res.status(500).json({ message: "Eliminazione fallita: il record non è stato rimosso dal database" });
+      }
 
+      console.log(`[admin] User ${targetId} deleted successfully`);
       res.json({ success: true, message: `Utente "${target.nickname || target.firstName || targetId}" eliminato` });
-    } catch (error) {
-      console.error("Error deleting user:", error);
-      res.status(500).json({ message: "Errore eliminazione utente" });
+    } catch (error: any) {
+      console.error("Error deleting user:", error?.message || error);
+      res.status(500).json({ message: `Errore eliminazione: ${error?.message || "Errore sconosciuto"}` });
     }
   });
 
