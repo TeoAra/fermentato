@@ -80,6 +80,11 @@ export default function Home() {
     enabled: isAuthenticated && (user as any)?.userType === 'pub_owner',
   });
 
+  const { data: globalStats } = useQuery<{ totalBeers: number; totalBreweries: number; uniqueStyles: number }>({
+    queryKey: ["/api/stats"],
+    staleTime: 10 * 60 * 1000,
+  });
+
   const sortedPubs = useMemo(() => {
     if (!Array.isArray(pubs)) return [];
     if (!userLocation) return pubs.slice(0, 3);
@@ -323,17 +328,17 @@ export default function Home() {
           
           <div className="grid grid-cols-1 md:grid-cols-3 gap-10 lg:gap-12">
             <div className="text-center">
-              <div className="text-4xl font-bold text-amber-500 dark:text-amber-400 mb-2">29,753</div>
+              <div className="text-4xl font-bold text-amber-500 dark:text-amber-400 mb-2">{globalStats?.totalBeers?.toLocaleString("it-IT") ?? '...'}</div>
               <div className="text-gray-600 dark:text-gray-400">Birre nel Catalogo</div>
             </div>
             
             <div className="text-center">
-              <div className="text-4xl font-bold text-blue-600 dark:text-blue-400 mb-2">2,968</div>
+              <div className="text-4xl font-bold text-blue-600 dark:text-blue-400 mb-2">{globalStats?.totalBreweries?.toLocaleString("it-IT") ?? '...'}</div>
               <div className="text-gray-600 dark:text-gray-400">Birrifici Mondiali</div>
             </div>
             
             <div className="text-center">
-              <div className="text-4xl font-bold text-teal-600 dark:text-teal-400 mb-2">293</div>
+              <div className="text-4xl font-bold text-teal-600 dark:text-teal-400 mb-2">{globalStats?.uniqueStyles?.toLocaleString("it-IT") ?? '...'}</div>
               <div className="text-gray-600 dark:text-gray-400">Stili Diversi</div>
             </div>
           </div>

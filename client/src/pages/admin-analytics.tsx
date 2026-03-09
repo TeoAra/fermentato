@@ -33,6 +33,9 @@ import { Link, useLocation } from "wouter";
 interface GlobalStats {
   totalBeers: number;
   totalBreweries: number;
+  totalPubs: number;
+  totalReviews: number;
+  totalEvents: number;
   uniqueStyles: number;
   topStyles: Array<{ style: string; count: string }>;
   topBreweries: Array<{ breweryName: string; location: string; beerCount: string }>;
@@ -193,10 +196,9 @@ export default function AdminAnalytics() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-gray-600">Database Birre</p>
-                <div className="text-2xl font-bold">{globalStats?.totalBeers?.toLocaleString() || '29,753'}</div>
+                <div className="text-2xl font-bold">{globalStats?.totalBeers?.toLocaleString() || '—'}</div>
                 <div className="flex items-center mt-2">
-                  <ArrowUp className="w-4 h-4 text-green-500 mr-1" />
-                  <span className="text-xs text-green-600">+113 questa settimana</span>
+                  <span className="text-xs text-green-600">Dati in tempo reale</span>
                 </div>
               </div>
               <Beer className="h-8 w-8 text-green-500" />
@@ -225,10 +227,10 @@ export default function AdminAnalytics() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-gray-600">Rating Medio</p>
-                <div className="text-2xl font-bold">{adminStats?.averageRating || '4.2'}</div>
+                <div className="text-2xl font-bold">{adminStats?.averageRating ? adminStats.averageRating.toFixed(1) : '—'}</div>
                 <div className="flex items-center mt-2">
                   <Target className="w-4 h-4 text-purple-500 mr-1" />
-                  <span className="text-xs text-purple-600">Su {adminStats?.totalReviews || '1,247'} recensioni</span>
+                  <span className="text-xs text-purple-600">Su {(adminStats?.totalReviews || globalStats?.totalReviews || 0).toLocaleString()} recensioni</span>
                 </div>
               </div>
               <Activity className="h-8 w-8 text-purple-500" />
@@ -525,21 +527,21 @@ export default function AdminAnalytics() {
           <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
             <div className="text-center p-6 rounded-lg bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900/20 dark:to-blue-800/20">
               <div className="text-4xl font-bold text-blue-600 dark:text-blue-400 mb-2">
-                {globalStats?.totalBeers?.toLocaleString() || '29,753'}
+                {globalStats?.totalBeers?.toLocaleString() || '—'}
               </div>
               <p className="text-sm font-medium text-blue-700 dark:text-blue-300">Birre Totali</p>
               <p className="text-xs text-blue-600 dark:text-blue-400 mt-1">Database mondiale</p>
             </div>
             <div className="text-center p-6 rounded-lg bg-gradient-to-br from-green-50 to-green-100 dark:from-green-900/20 dark:to-green-800/20">
               <div className="text-4xl font-bold text-green-600 dark:text-green-400 mb-2">
-                {globalStats?.totalBreweries?.toLocaleString() || '2,968'}
+                {globalStats?.totalBreweries?.toLocaleString() || '—'}
               </div>
               <p className="text-sm font-medium text-green-700 dark:text-green-300">Birrifici</p>
               <p className="text-xs text-green-600 dark:text-green-400 mt-1">20+ paesi</p>
             </div>
             <div className="text-center p-6 rounded-lg bg-gradient-to-br from-purple-50 to-purple-100 dark:from-purple-900/20 dark:to-purple-800/20">
               <div className="text-4xl font-bold text-purple-600 dark:text-purple-400 mb-2">
-                {globalStats?.uniqueStyles || '293'}
+                {globalStats?.uniqueStyles?.toLocaleString() || '—'}
               </div>
               <p className="text-sm font-medium text-purple-700 dark:text-purple-300">Stili Unici</p>
               <p className="text-xs text-purple-600 dark:text-purple-400 mt-1">Varietà globale</p>

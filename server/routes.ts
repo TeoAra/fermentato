@@ -487,15 +487,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Database statistics endpoint
   app.get("/api/stats", async (req, res) => {
     try {
-      const [pubCount, breweryCount, beerCount] = await Promise.all([
+      const [pubCount, breweryCount, beerCount, reviewCount, eventCount] = await Promise.all([
         db.select({ count: sql<number>`COUNT(*)::int` }).from(pubs),
         db.select({ count: sql<number>`COUNT(*)::int` }).from(breweries),
         db.select({ count: sql<number>`COUNT(*)::int` }).from(beers),
+        db.select({ count: sql<number>`COUNT(*)::int` }).from(userBeerTastings).where(sql`rating IS NOT NULL`),
+        db.select({ count: sql<number>`(SELECT COUNT(*) FROM pub_events) + (SELECT COUNT(*) FROM brewery_events)` }),
       ]);
       const stats = {
         totalPubs: pubCount[0]?.count || 0,
         totalBreweries: breweryCount[0]?.count || 0,
         totalBeers: beerCount[0]?.count || 0,
+        totalReviews: reviewCount[0]?.count || 0,
+        totalEvents: eventCount[0]?.count || 0,
         averageBeersPerBrewery: breweryCount[0]?.count > 0 ? Math.round((beerCount[0]?.count || 0) / breweryCount[0].count) : 0,
         lastUpdated: new Date().toISOString()
       };
@@ -1844,12 +1848,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Get global beer statistics
   app.get('/api/stats/global', async (req, res) => {
     try {
-      const [beerCount, breweryCount, pubCount, userCount, styleCount, topStyles, topBreweries] = await Promise.all([
+      const [beerCount, breweryCount, pubCount, userCount, styleCount, reviewCount, eventCount, topStyles, topBreweries] = await Promise.all([
         db.select({ count: sql<number>`COUNT(*)::int` }).from(beers),
         db.select({ count: sql<number>`COUNT(*)::int` }).from(breweries),
         db.select({ count: sql<number>`COUNT(*)::int` }).from(pubs),
         db.select({ count: sql<number>`COUNT(*)::int` }).from(users),
         db.select({ count: sql<number>`COUNT(DISTINCT style)::int` }).from(beers),
+        db.select({ count: sql<number>`COUNT(*)::int` }).from(userBeerTastings).where(sql`rating IS NOT NULL`),
+        db.select({ count: sql<number>`(SELECT COUNT(*) FROM pub_events) + (SELECT COUNT(*) FROM brewery_events)` }),
         db.select({ style: beers.style, count: sql<number>`COUNT(*)::int` })
           .from(beers).groupBy(beers.style).orderBy(sql`COUNT(*) desc`).limit(10),
         db.select({
@@ -1870,6 +1876,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         totalBreweries: breweryCount[0]?.count || 0,
         totalPubs: pubCount[0]?.count || 0,
         totalUsers: userCount[0]?.count || 0,
+        totalReviews: reviewCount[0]?.count || 0,
+        totalEvents: eventCount[0]?.count || 0,
         uniqueStyles: styleCount[0]?.count || 0,
         topStyles,
         topBreweries,
@@ -2357,34 +2365,35 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const { q: query = '', limit = 50 } = req.query;
-      const queryStr = query.toString().toLowerCase().trim();
-      const searchTerms = queryStr.split(/\s+/).filter((t: string) => t.length > 0);
+      const queryStr = query.toString().trim();
+      const limitNum = Math.min(parseInt(limit.toString()) || 50, 100);
+
+      if (!queryStr) return res.json([]);
+
+      const searchTerms = queryStr.toLowerCase().split(/\s+/).filter((t: string) => t.length > 0);
       
-      if (searchTerms.length === 0) {
-        return res.json([]);
-      }
+      const whereClauses = searchTerms.map(term => {
+        const p = `%${term}%`;
+        return sql`(LOWER(b.name) LIKE ${p} OR LOWER(b.style) LIKE ${p} OR LOWER(br.name) LIKE ${p} OR LOWER(br.location) LIKE ${p})`;
+      });
 
-      const allBeers = await storage.getBeers();
-      const allBreweries = await storage.getBreweries();
-      const breweryMap = new Map(allBreweries.map(b => [b.id, b]));
+      const results = await db.execute(sql`
+        SELECT 
+          b.id, b.name, b.style, b.abv, b.ibu, b.color, b.image_url AS "imageUrl",
+          b.is_gluten_free AS "isGlutenFree", b.is_alcohol_free AS "isAlcoholFree",
+          b.description, b.brewery_id AS "breweryId",
+          JSON_BUILD_OBJECT(
+            'id', br.id, 'name', br.name, 'location', br.location, 
+            'country', br.country, 'logoUrl', br.logo_url
+          ) AS brewery
+        FROM beers b
+        LEFT JOIN breweries br ON b.brewery_id = br.id
+        WHERE ${sql.join(whereClauses, sql` AND `)}
+        ORDER BY b.name ASC
+        LIMIT ${limitNum}
+      `);
 
-      const beersWithBrewery = allBeers.map(beer => ({
-        ...beer,
-        brewery: breweryMap.get(beer.breweryId) || null,
-      }));
-
-      const filtered = beersWithBrewery.filter(beer => {
-        const searchableText = [
-          beer.name,
-          beer.style,
-          beer.brewery?.name,
-          beer.brewery?.location,
-        ].filter(Boolean).join(' ').toLowerCase();
-
-        return searchTerms.every((term: string) => searchableText.includes(term));
-      }).slice(0, parseInt(limit.toString()) || 50);
-
-      res.json(filtered);
+      res.json(results.rows);
     } catch (error) {
       console.error("Error searching beers:", error);
       res.status(500).json({ message: "Failed to search beers" });
@@ -2402,26 +2411,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(403).json({ message: "Admin access required" });
       }
 
-      const { q: query = '', limit = 50 } = req.query;
-      const queryStr = query.toString().toLowerCase().trim();
-      const searchTerms = queryStr.split(/\s+/).filter((t: string) => t.length > 0);
-      
-      if (searchTerms.length === 0) {
-        return res.json([]);
-      }
+      const queryStr = String(req.query.q || '').trim();
+      const limitNum = Math.min(parseInt(String(req.query.limit || '50')), 100);
 
-      const allBreweries = await storage.getBreweries();
-      const breweries = allBreweries.filter(brewery => {
-        const searchableText = [
-          brewery.name,
-          brewery.location,
-          brewery.country,
-        ].filter(Boolean).join(' ').toLowerCase();
+      if (!queryStr) return res.json([]);
 
-        return searchTerms.every((term: string) => searchableText.includes(term));
-      }).slice(0, parseInt(limit.toString()) || 50);
+      const searchTerms = queryStr.toLowerCase().split(/\s+/).filter((t: string) => t.length > 0);
       
-      res.json(breweries);
+      const whereClauses = searchTerms.map(term => {
+        const p = `%${term}%`;
+        return sql`(LOWER(name) LIKE ${p} OR LOWER(location) LIKE ${p} OR LOWER(country) LIKE ${p} OR LOWER(region) LIKE ${p})`;
+      });
+
+      const results = await db.select({
+        id: breweries.id,
+        name: breweries.name,
+        location: breweries.location,
+        country: breweries.country,
+        region: breweries.region,
+        logoUrl: breweries.logoUrl,
+        coverImageUrl: breweries.coverImageUrl,
+        websiteUrl: breweries.websiteUrl,
+      }).from(breweries)
+        .where(sql.join(whereClauses, sql` AND `))
+        .orderBy(breweries.name)
+        .limit(limitNum);
+      
+      res.json(results);
     } catch (error) {
       console.error("Error searching breweries:", error);
       res.status(500).json({ message: "Failed to search breweries" });

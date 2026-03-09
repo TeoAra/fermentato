@@ -72,6 +72,8 @@ Preferred communication style: Simple, everyday language.
 - **Activity Page (Mar 2026)**: nearbyPubs increased from 6 to 10, with "Mostra di più" button when more results available.
 - **Admin Dashboard (Mar 2026)**: "Attività Recente" section in admin-dashboard-new.tsx now has filter buttons (Tutti/Utenti/Pub/Birrifici/Recensioni/Eventi). Added missing `PATCH /api/admin/users/:id` and `DELETE /api/admin/users/:id` server routes. Fixed missing `breweryEvents` import in storage.ts.
 - **Leaflet Map (Mar 2026)**: Replaced Google Maps with OpenStreetMap via react-leaflet 4.x in `homepage-map.tsx`. No API key required. Custom div icons with logo/emoji for pub (blue) and brewery (amber) markers. IntersectionObserver lazy-load preserved.
+- **Live Stats Everywhere (Mar 2026)**: Removed ALL hardcoded fallback counts (29,753 / 2,968 / 293 / 4.2 / 1,247) from `admin-analytics.tsx` and `home.tsx`. Both `/api/stats` and `/api/stats/global` now return `totalReviews` and `totalEvents` in addition to existing fields. `home.tsx` fetches stats from `/api/stats` and shows live `totalBeers`, `totalBreweries`, `uniqueStyles`. `GlobalStats` type updated. Admin analytics rating shows `—` when no data.
+- **Admin Search Performance (Mar 2026)**: Rewrote `/api/admin/beers/search` from in-memory scan (all 29K beers) to direct SQL with LEFT JOIN to breweries table — returns brewery name/logo/country/location inline, supports multi-word search. Rewrote `/api/admin/breweries/search` from in-memory scan (all 50K breweries) to Drizzle ORM query with `sql.join` multi-word WHERE clauses. Pubs search already used SQL.
 
 ## External Dependencies
 
