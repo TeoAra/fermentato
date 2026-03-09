@@ -59,7 +59,7 @@ export function MobileHeader({ onMenuToggle, isMenuOpen }: MobileHeaderProps) {
         <div className="flex items-center justify-between px-4 h-full">
           {/* Logo */}
           <Link href="/">
-            <img src="/logo-full.png" alt="Fermenta.to" className="h-8 w-auto dark:bg-white dark:rounded-lg dark:px-2 dark:py-0.5" />
+            <img src="/logo-full.png" alt="Fermenta.to" className="h-8 w-auto dark:brightness-0 dark:invert" />
           </Link>
 
           {/* Actions */}

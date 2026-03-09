@@ -133,7 +133,7 @@ export default function Header() {
             {/* Logo - Fixed Width */}
             <div className="col-span-2">
               <Link href="/" data-testid="logo-desktop">
-                <img src="/logo-full.png" alt="Fermenta.to" className="h-9 w-auto dark:bg-white dark:rounded-lg dark:px-2 dark:py-0.5" />
+                <img src="/logo-full.png" alt="Fermenta.to" className="h-9 w-auto dark:brightness-0 dark:invert" />
               </Link>
             </div>
 
