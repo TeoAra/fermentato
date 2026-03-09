@@ -59,7 +59,9 @@ export function MobileHeader({ onMenuToggle, isMenuOpen }: MobileHeaderProps) {
         <div className="flex items-center justify-between px-4 h-full">
           {/* Logo */}
           <Link href="/" className="flex items-center space-x-2">
-            <img src="/logo-icon.png" alt="Fermenta.to" className="w-8 h-8 dark:invert" />
+            <div className="w-8 h-8 bg-gradient-to-br from-amber-500 to-amber-600 rounded-lg flex items-center justify-center">
+              <Beer className="w-4 h-4 text-white" />
+            </div>
             <span className="text-lg font-bold text-gray-900 dark:text-white">
               Fermenta<span className="text-amber-500">.to</span>
             </span>
