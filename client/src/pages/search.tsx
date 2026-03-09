@@ -179,174 +179,84 @@ export default function SearchPage() {
           </form>
         </div>
 
-        {/* Advanced filters panel */}
+        {/* Advanced filters panel — desktop only (mobile uses bottom bar) */}
         {showFilters && (
-          <div className="mb-4 p-4 rounded-xl bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 shadow-sm space-y-4">
+          <div className="hidden sm:block mb-4 p-4 rounded-xl bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 shadow-sm space-y-3">
             <div className="flex items-center justify-between">
               <span className="text-sm font-semibold text-gray-700 dark:text-slate-200 flex items-center gap-1.5">
                 <SlidersHorizontal className="w-4 h-4 text-amber-500" />
-                Filtri avanzati
+                Filtri
               </span>
               {hasActiveFilters && (
                 <button onClick={clearFilters} className="text-xs text-amber-600 hover:text-amber-700 font-medium flex items-center gap-1">
-                  <X className="w-3 h-3" /> Cancella tutti
+                  <X className="w-3 h-3" /> Cancella ({activeFilterCount})
                 </button>
               )}
             </div>
 
-            {/* Special characteristics */}
-            {(activeTab === "all" || activeTab === "beers") && (
-              <div className="space-y-3">
-                <p className="text-xs font-semibold text-gray-500 dark:text-slate-400 uppercase tracking-wide flex items-center gap-1">
-                  <Beer className="w-3 h-3" /> Caratteristiche birra
-                </p>
-                <div className="flex flex-wrap gap-2">
-                  <button
-                    onClick={() => setFilterGlutenFree(f => !f)}
-                    className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-all ${filterGlutenFree ? "bg-green-500 text-white border-green-500" : "bg-white dark:bg-slate-700 border-gray-200 dark:border-slate-600 text-gray-600 dark:text-slate-300 hover:border-green-300"}`}
-                  >
-                    🌾 Senza glutine
+            <div className="flex flex-wrap gap-1.5">
+              {/* Gluten / alcohol free */}
+              <button onClick={() => setFilterGlutenFree(f => !f)}
+                className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-all ${filterGlutenFree ? "bg-green-500 text-white border-green-500" : "border-gray-200 dark:border-slate-600 text-gray-600 dark:text-slate-300 hover:border-green-400"}`}>
+                🌾 Senza glutine
+              </button>
+              <button onClick={() => setFilterAlcoholFree(f => !f)}
+                className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-all ${filterAlcoholFree ? "bg-blue-500 text-white border-blue-500" : "border-gray-200 dark:border-slate-600 text-gray-600 dark:text-slate-300 hover:border-blue-400"}`}>
+                💧 Analcolica
+              </button>
+
+              {/* ABV presets */}
+              <span className="self-center text-xs text-gray-400 px-1">|</span>
+              {([["🍺 Light <5%", "", "4.9"], ["⚡ Strong >7%", "7", ""], ["💥 Imperial >9%", "9", ""]] as [string,string,string][]).map(([label, min, max]) => (
+                <button key={label}
+                  onClick={() => { setFilterMinAbv(filterMinAbv === min && filterMaxAbv === max ? "" : min); setFilterMaxAbv(filterMinAbv === min && filterMaxAbv === max ? "" : max); }}
+                  className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-all ${filterMinAbv === min && filterMaxAbv === max ? "bg-orange-500 text-white border-orange-500" : "border-gray-200 dark:border-slate-600 text-gray-600 dark:text-slate-300 hover:border-orange-400"}`}>
+                  {label}
+                </button>
+              ))}
+
+              {/* IBU presets */}
+              <span className="self-center text-xs text-gray-400 px-1">|</span>
+              {([["😌 Dolce", "", "19"], ["⚖️ Bilanciata", "20", "50"], ["🌿 Amara", "60", ""]] as [string,string,string][]).map(([label, min, max]) => (
+                <button key={label}
+                  onClick={() => { setFilterMinIbu(filterMinIbu === min && filterMaxIbu === max ? "" : min); setFilterMaxIbu(filterMinIbu === min && filterMaxIbu === max ? "" : max); }}
+                  className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-all ${filterMinIbu === min && filterMaxIbu === max ? "bg-green-600 text-white border-green-600" : "border-gray-200 dark:border-slate-600 text-gray-600 dark:text-slate-300 hover:border-green-400"}`}>
+                  {label}
+                </button>
+              ))}
+            </div>
+
+            {/* Style pills — top 12 */}
+            {popularStyles && popularStyles.length > 0 && (
+              <div className="flex flex-wrap gap-1.5 pt-1 border-t border-gray-100 dark:border-slate-700">
+                <span className="self-center text-xs text-gray-400 mr-1">Stile:</span>
+                {filterStyle && (
+                  <button onClick={() => setFilterStyle("")}
+                    className="px-2.5 py-1 rounded-full text-xs font-medium border bg-amber-500 text-white border-amber-500 flex items-center gap-1">
+                    {filterStyle} <X className="w-3 h-3" />
                   </button>
-                  <button
-                    onClick={() => setFilterAlcoholFree(f => !f)}
-                    className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-all ${filterAlcoholFree ? "bg-blue-500 text-white border-blue-500" : "bg-white dark:bg-slate-700 border-gray-200 dark:border-slate-600 text-gray-600 dark:text-slate-300 hover:border-blue-300"}`}
-                  >
-                    💧 Analcolica (0.0%)
-                  </button>
-                </div>
-
-                {/* ABV range */}
-                <div>
-                  <p className="text-xs font-medium text-gray-500 dark:text-slate-400 mb-1.5 flex items-center gap-1">
-                    <Flame className="w-3 h-3 text-orange-400" /> Gradazione alcolica (ABV %)
-                  </p>
-                  <div className="flex items-center gap-2">
-                    <Input
-                      type="number"
-                      min="0" max="25" step="0.5"
-                      placeholder="Min"
-                      value={filterMinAbv}
-                      onChange={e => setFilterMinAbv(e.target.value)}
-                      className="h-8 text-sm w-20 border-gray-200 dark:border-slate-600 bg-white dark:bg-slate-700"
-                    />
-                    <span className="text-xs text-gray-400">—</span>
-                    <Input
-                      type="number"
-                      min="0" max="25" step="0.5"
-                      placeholder="Max"
-                      value={filterMaxAbv}
-                      onChange={e => setFilterMaxAbv(e.target.value)}
-                      className="h-8 text-sm w-20 border-gray-200 dark:border-slate-600 bg-white dark:bg-slate-700"
-                    />
-                    <span className="text-xs text-gray-400">%</span>
-                    {/* Quick ABV presets */}
-                    <div className="flex gap-1 ml-2">
-                      {[["Light (<5%)", "", "4.9"], ["Strong (>7%)", "7", ""], ["Imperial (>9%)", "9", ""]].map(([label, min, max]) => (
-                        <button
-                          key={label}
-                          onClick={() => { setFilterMinAbv(min); setFilterMaxAbv(max); }}
-                          className={`px-2 py-1 rounded-full text-[10px] font-medium border transition-all ${filterMinAbv === min && filterMaxAbv === max ? "bg-orange-500 text-white border-orange-500" : "border-gray-200 dark:border-slate-600 text-gray-500 dark:text-slate-400 hover:border-orange-300"}`}
-                        >
-                          {label}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-
-                {/* IBU range */}
-                <div>
-                  <p className="text-xs font-medium text-gray-500 dark:text-slate-400 mb-1.5">
-                    🌿 Amaro (IBU)
-                  </p>
-                  <div className="flex items-center gap-2">
-                    <Input
-                      type="number"
-                      min="0" max="200" step="5"
-                      placeholder="Min"
-                      value={filterMinIbu}
-                      onChange={e => setFilterMinIbu(e.target.value)}
-                      className="h-8 text-sm w-20 border-gray-200 dark:border-slate-600 bg-white dark:bg-slate-700"
-                    />
-                    <span className="text-xs text-gray-400">—</span>
-                    <Input
-                      type="number"
-                      min="0" max="200" step="5"
-                      placeholder="Max"
-                      value={filterMaxIbu}
-                      onChange={e => setFilterMaxIbu(e.target.value)}
-                      className="h-8 text-sm w-20 border-gray-200 dark:border-slate-600 bg-white dark:bg-slate-700"
-                    />
-                    <span className="text-xs text-gray-400">IBU</span>
-                    <div className="flex gap-1 ml-2">
-                      {[["Dolce (<20)", "", "19"], ["Bilanciata", "20", "50"], ["Amara (>60)", "60", ""]].map(([label, min, max]) => (
-                        <button
-                          key={label}
-                          onClick={() => { setFilterMinIbu(min); setFilterMaxIbu(max); }}
-                          className={`px-2 py-1 rounded-full text-[10px] font-medium border transition-all ${filterMinIbu === min && filterMaxIbu === max ? "bg-green-600 text-white border-green-600" : "border-gray-200 dark:border-slate-600 text-gray-500 dark:text-slate-400 hover:border-green-300"}`}
-                        >
-                          {label}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-
-                {/* Style pills from popular styles API */}
-                {popularStyles && popularStyles.length > 0 && (
-                  <div>
-                    <p className="text-xs font-medium text-gray-500 dark:text-slate-400 mb-1.5">
-                      🍺 Stile birra — {popularStyles.length} disponibili
-                    </p>
-                    <div className="flex flex-wrap gap-1.5 max-h-36 overflow-y-auto pr-1">
-                      <button
-                        onClick={() => setFilterStyle("")}
-                        className={`px-2.5 py-1 rounded-full text-xs font-medium border transition-all ${!filterStyle ? "bg-amber-500 text-white border-amber-500" : "bg-white dark:bg-slate-700 border-gray-200 dark:border-slate-600 text-gray-600 dark:text-slate-300 hover:border-amber-300"}`}
-                      >
-                        Tutti
-                      </button>
-                      {popularStyles.map(({ style, count }) => (
-                        <button
-                          key={style}
-                          onClick={() => setFilterStyle(filterStyle === style ? "" : style)}
-                          className={`px-2.5 py-1 rounded-full text-xs font-medium border transition-all flex items-center gap-1 ${filterStyle === style ? "bg-amber-500 text-white border-amber-500" : "bg-white dark:bg-slate-700 border-gray-200 dark:border-slate-600 text-gray-600 dark:text-slate-300 hover:border-amber-300"}`}
-                        >
-                          {style}
-                          <span className={`text-[10px] ${filterStyle === style ? "text-amber-100" : "text-gray-400 dark:text-slate-500"}`}>
-                            {count >= 1000 ? `${Math.floor(count / 1000)}k` : count}
-                          </span>
-                        </button>
-                      ))}
-                    </div>
-                  </div>
                 )}
+                {popularStyles.slice(0, 12).filter(({ style }) => style !== filterStyle).map(({ style }) => (
+                  <button key={style}
+                    onClick={() => setFilterStyle(style)}
+                    className="px-2.5 py-1 rounded-full text-xs font-medium border border-gray-200 dark:border-slate-600 text-gray-600 dark:text-slate-300 hover:border-amber-400 hover:text-amber-600 transition-all bg-white dark:bg-slate-700">
+                    {style}
+                  </button>
+                ))}
               </div>
             )}
 
-            {/* Brewery / country filter */}
+            {/* Country filter */}
             {(activeTab === "all" || activeTab === "breweries") && (
-              <div className="space-y-2">
-                <p className="text-xs font-semibold text-gray-500 dark:text-slate-400 uppercase tracking-wide flex items-center gap-1">
-                  <Building2 className="w-3 h-3" /> Birrifici — filtra per paese
-                </p>
-                <Input
-                  value={filterCountry}
-                  onChange={e => setFilterCountry(e.target.value)}
-                  placeholder="es. Italia, Germany, Belgium..."
-                  className="h-9 text-sm border-gray-200 dark:border-slate-600 bg-white dark:bg-slate-700"
-                />
-                {/* Quick country chips */}
-                <div className="flex flex-wrap gap-1.5">
-                  {["Italia", "Germany", "Belgium", "USA", "UK", "Czech Republic", "France", "Netherlands"].map(c => (
-                    <button
-                      key={c}
-                      onClick={() => setFilterCountry(filterCountry === c ? "" : c)}
-                      className={`px-2.5 py-1 rounded-full text-xs font-medium border transition-all ${filterCountry === c ? "bg-orange-500 text-white border-orange-500" : "bg-white dark:bg-slate-700 border-gray-200 dark:border-slate-600 text-gray-600 dark:text-slate-300 hover:border-orange-300"}`}
-                    >
-                      {c}
-                    </button>
-                  ))}
-                </div>
+              <div className="flex flex-wrap gap-1.5 pt-1 border-t border-gray-100 dark:border-slate-700">
+                <span className="self-center text-xs text-gray-400 mr-1">Paese:</span>
+                {["Italia", "Germany", "Belgium", "USA", "UK", "France"].map(c => (
+                  <button key={c}
+                    onClick={() => setFilterCountry(filterCountry === c ? "" : c)}
+                    className={`px-2.5 py-1 rounded-full text-xs font-medium border transition-all ${filterCountry === c ? "bg-orange-500 text-white border-orange-500" : "border-gray-200 dark:border-slate-600 text-gray-600 dark:text-slate-300 hover:border-orange-400"}`}>
+                    {c}
+                  </button>
+                ))}
               </div>
             )}
           </div>
