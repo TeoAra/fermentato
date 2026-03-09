@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Link } from "wouter";
 import { MapPin, Beer, ArrowLeft, Heart } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -209,8 +209,11 @@ function BrewerySquareCard({ brewery }: { brewery: any }) {
   );
 }
 
+const PAGE_SIZE = 30;
+
 export default function ExploreBreweries() {
   const [openCountries, setOpenCountries] = useState<string[]>([]);
+  const [showCounts, setShowCounts] = useState<Record<string, number>>({});
 
   const { data: allBreweries, isLoading } = useQuery({
     queryKey: ["/api/breweries/all"],
@@ -218,21 +221,30 @@ export default function ExploreBreweries() {
   });
 
   const toggleCountry = (country: string) => {
-    setOpenCountries(prev => 
-      prev.includes(country) 
+    setOpenCountries(prev =>
+      prev.includes(country)
         ? prev.filter(c => c !== country)
         : [...prev, country]
     );
   };
 
-  const breweriesByCountry = Array.isArray(allBreweries) ? allBreweries
-    .filter((brewery: any) => (brewery.beerCount || 0) > 0)
-    .reduce((acc: any, brewery: any) => {
+  const { breweriesByCountry, totalBreweries } = useMemo(() => {
+    if (!Array.isArray(allBreweries)) return { breweriesByCountry: {}, totalBreweries: 0 };
+    const map: Record<string, any[]> = {};
+    for (const brewery of allBreweries) {
       const country = detectCountry(brewery);
-      if (!acc[country]) acc[country] = [];
-      acc[country].push(brewery);
-      return acc;
-    }, {}) : {};
+      if (!map[country]) map[country] = [];
+      map[country].push(brewery);
+    }
+    for (const country of Object.keys(map)) {
+      map[country].sort((a: any, b: any) => {
+        const bc = (b.beerCount || 0) - (a.beerCount || 0);
+        if (bc !== 0) return bc;
+        return a.name.localeCompare(b.name);
+      });
+    }
+    return { breweriesByCountry: map, totalBreweries: allBreweries.length };
+  }, [allBreweries]);
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-slate-900">
@@ -247,7 +259,9 @@ export default function ExploreBreweries() {
             </Link>
             <div>
               <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Esplora Tutti i Birrifici</h1>
-              <p className="text-gray-500 dark:text-slate-400">Scopri birrifici da tutto il mondo organizzati per paese</p>
+              <p className="text-gray-500 dark:text-slate-400">
+                {totalBreweries > 0 ? `${totalBreweries.toLocaleString('it-IT')} birrifici da tutto il mondo` : 'Scopri birrifici da tutto il mondo organizzati per paese'}
+              </p>
             </div>
           </div>
         </div>
@@ -265,6 +279,9 @@ export default function ExploreBreweries() {
             {paesiMondiali.map(country => {
               const countryBreweries = breweriesByCountry[country] || [];
               if (countryBreweries.length === 0) return null;
+              const limit = showCounts[country] || PAGE_SIZE;
+              const visible = countryBreweries.slice(0, limit);
+              const remaining = countryBreweries.length - limit;
 
               return (
                 <Collapsible
@@ -280,20 +297,31 @@ export default function ExploreBreweries() {
                       <div className="flex items-center gap-3">
                         <Beer className="w-5 h-5 text-amber-500" />
                         <span className="font-semibold text-lg">{country}</span>
-                        <Badge variant="secondary" className="bg-gray-100 dark:bg-slate-700 text-gray-600 dark:text-slate-300">{countryBreweries.length} birrifici</Badge>
+                        <Badge variant="secondary" className="bg-gray-100 dark:bg-slate-700 text-gray-600 dark:text-slate-300">{countryBreweries.length.toLocaleString('it-IT')} birrifici</Badge>
                       </div>
                       <div className="text-gray-400 dark:text-slate-500">
                         {openCountries.includes(country) ? '−' : '+'}
                       </div>
                     </Button>
                   </CollapsibleTrigger>
-                  
+
                   <CollapsibleContent>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 mb-6">
-                      {countryBreweries.map((brewery: any) => (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 mb-4">
+                      {visible.map((brewery: any) => (
                         <BrewerySquareCard key={brewery.id} brewery={brewery} />
                       ))}
                     </div>
+                    {remaining > 0 && (
+                      <div className="flex justify-center mb-6">
+                        <Button
+                          variant="outline"
+                          className="border-amber-300 text-amber-700 dark:border-amber-600 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-900/20"
+                          onClick={() => setShowCounts(prev => ({ ...prev, [country]: limit + PAGE_SIZE }))}
+                        >
+                          Mostra altri {Math.min(remaining, PAGE_SIZE)} birrifici ({remaining.toLocaleString('it-IT')} rimasti)
+                        </Button>
+                      </div>
+                    )}
                   </CollapsibleContent>
                 </Collapsible>
               );

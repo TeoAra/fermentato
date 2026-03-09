@@ -483,7 +483,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   async searchBreweries(query: string): Promise<Brewery[]> {
-    const breweriesWithBeers = await db
+    const breweriesRanked = await db
       .select({ id: breweries.id, beerCount: sql<number>`COUNT(${beers.id})` })
       .from(breweries)
       .leftJoin(beers, eq(breweries.id, beers.breweryId))
@@ -493,13 +493,12 @@ export class DatabaseStorage implements IStorage {
         ilike(breweries.description, `%${query}%`)
       ))
       .groupBy(breweries.id)
-      .having(sql`COUNT(${beers.id}) > 0`)
       .orderBy(desc(sql`COUNT(${beers.id})`), asc(breweries.name))
       .limit(10);
 
-    if (breweriesWithBeers.length === 0) return [];
-    const ids = breweriesWithBeers.map(r => r.id);
-    const idOrder = breweriesWithBeers.map(r => r.id);
+    if (breweriesRanked.length === 0) return [];
+    const ids = breweriesRanked.map(r => r.id);
+    const idOrder = breweriesRanked.map(r => r.id);
     const result = await db.select().from(breweries).where(inArray(breweries.id, ids));
     result.sort((a, b) => idOrder.indexOf(a.id) - idOrder.indexOf(b.id));
     return result;
