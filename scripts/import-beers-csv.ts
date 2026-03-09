@@ -1,60 +1,100 @@
 /**
  * Script: import-beers-csv.ts
  *
- * Importa birre da CSV nel DB, collegandole ai birrifici per NOME.
+ * Importa birre da CSV nel DB, collegandole ai birrifici per nome.
  * Gestisce file con 1M+ righe in streaming (senza caricare tutto in memoria).
- * Skippa birre già presenti (stesso nome + stesso birrificio).
+ * Skippa birre già presenti (stesso nome normalizzato + stesso birrificio).
  *
- * Uso:
- *   npx tsx scripts/import-beers-csv.ts <file.csv>
- *   npx tsx scripts/import-beers-csv.ts attached_assets/birre_yhop_1753136978542.csv
+ * Uso (un file):
+ *   npx tsx scripts/import-beers-csv.ts attached_assets/file.csv
+ *
+ * Uso (due file in sequenza):
+ *   npx tsx scripts/import-beers-csv.ts \
+ *     attached_assets/rb_Beers_A-J_clean2_1773065275434.csv \
+ *     attached_assets/rb_Beers_K-Z_clean2_1773065275434.csv
  *
  * Formati colonne supportati (rilevati automaticamente dall'intestazione):
  *
  *   FORMATO A (yhop/italiano):
  *     ID, Nome Birra, Birrificio, Stile, ABV, Descrizione, Immagine
  *
- *   FORMATO B (ratebeer-style con brewery_id):
- *     beer_id, beer_name, brewery_id, brewery_name, style, abv, description, ...
- *     (brewery_id riferisce al mapping xlsx_id → db_id salvato in brewery-id-map.json)
- *
- * Il mapping xlsx birrifici va generato prima con: import-breweries-xlsx.ts
+ *   FORMATO B (ratebeer nuovo):
+ *     Beer ID, Brewer Name, Beer Name, ABV, Style Name, Brewer Country Name, Brewer Country Code
  */
 
 import fs from "fs";
 import path from "path";
 import { createReadStream } from "fs";
 import csvParser from "csv-parser";
-import { drizzle } from "drizzle-orm/neon-http";
-import { neon } from "@neondatabase/serverless";
+import { Pool as NeonPool, neonConfig } from "@neondatabase/serverless";
+import { drizzle } from "drizzle-orm/neon-serverless";
+import ws from "ws";
 import { beers, breweries } from "../shared/schema";
+import { sql } from "drizzle-orm";
+
+neonConfig.webSocketConstructor = ws;
 
 const DATABASE_URL = process.env.DATABASE_URL!;
 if (!DATABASE_URL) throw new Error("DATABASE_URL non impostato");
 
-const db = drizzle(neon(DATABASE_URL));
+const pool = new NeonPool({ connectionString: DATABASE_URL });
+const db = drizzle({ client: pool });
 
 // ─── Normalizzazione ─────────────────────────────────────────────────────────
 function normName(s: string): string {
-  return (s || "").trim().toLowerCase().replace(/\s+/g, " ");
+  return (s || "")
+    .trim()
+    // Apostrofi curvi → dritto, virgolette tipografiche → standard
+    .replace(/[\u2018\u2019\u02BC\u0060]/g, "'")
+    .replace(/[\u201C\u201D]/g, '"')
+    // BOM residuo
+    .replace(/\uFEFF/g, "")
+    .toLowerCase()
+    .replace(/\s+/g, " ");
 }
 
+// Parse ABV - gestisce:
+//   - interi tipo 45 → 4.5%, 120 → 12.0%
+//   - scientific notation artifact "6,4E+14" → 6.4%
+//   - decimali normali "4.5" → 4.5%
 function parseAbv(raw: string): number | null {
-  if (!raw) return null;
-  const n = parseFloat(raw.replace("%", "").trim());
-  if (isNaN(n)) return null;
-  return Math.round(n * 10) / 10; // 1 decimale
+  if (!raw || !raw.trim()) return null;
+  const s = raw.trim();
+  if (s === "0") return 0;
+
+  let val: number;
+
+  if (s.toUpperCase().includes("E")) {
+    // "6,4E+14" → prendi la parte prima di E → "6,4" → 6.4
+    const beforeE = s.split(/[Ee]/)[0];
+    val = parseFloat(beforeE.replace(",", "."));
+  } else {
+    val = parseFloat(s.replace(",", ".").replace("%", ""));
+  }
+
+  if (isNaN(val) || val < 0) return null;
+
+  // Se è un intero > 30, è probabilmente memorizzato come ABV × 10
+  // es. 45 → 4.5%, 120 → 12.0%
+  if (val > 30) {
+    val = val / 10;
+  }
+
+  // Ancora troppo alto dopo la divisione → dato errato
+  if (val > 50) return null;
+
+  return Math.round(val * 10) / 10;
 }
 
 // ─── Rileva formato CSV dall'intestazione ────────────────────────────────────
 type Format = "A_yhop" | "B_ratebeer";
 
 function detectFormat(headers: string[]): Format {
-  const h = headers.map(x => x.toLowerCase().trim());
+  const h = headers.map((x) => x.toLowerCase().trim());
   if (h.includes("nome birra") || h.includes("birrificio")) return "A_yhop";
-  if (h.includes("brewery_id") || h.includes("beer_name")) return "B_ratebeer";
-  // Fallback: prova a capire
-  if (h.some(x => x.includes("brewer"))) return "B_ratebeer";
+  // "beer id", "brewer name", "beer name" ecc.
+  if (h.includes("brewer name") || h.includes("beer name")) return "B_ratebeer";
+  if (h.some((x) => x.includes("brewer"))) return "B_ratebeer";
   return "A_yhop";
 }
 
@@ -64,37 +104,28 @@ interface BeerRow {
   style: string;
   abv: number | null;
   description?: string;
-  breweryNameRaw?: string;   // per formato A e B (lookup per nome)
-  breweryXlsxId?: number;    // per formato B (lookup per id mapping)
+  breweryNameRaw: string;
 }
 
 function extractRow(row: Record<string, string>, format: Format): BeerRow | null {
   if (format === "A_yhop") {
-    const name    = (row["Nome Birra"] || row["nome birra"] || "").trim();
+    const name = (row["Nome Birra"] || row["nome birra"] || "").trim();
     const brewery = (row["Birrificio"] || row["birrificio"] || "").trim();
-    const style   = (row["Stile"]     || row["stile"]      || "").trim();
-    const abv     = parseAbv(row["ABV"] || row["abv"] || "");
-    const desc    = (row["Descrizione"] || row["descrizione"] || "").trim();
-    if (!name || !brewery || !style) return null;
-    return { name, style, abv, description: desc || undefined, breweryNameRaw: brewery };
+    const style = (row["Stile"] || row["stile"] || "").trim();
+    const abv = parseAbv(row["ABV"] || row["abv"] || "");
+    const desc = (row["Descrizione"] || row["descrizione"] || "").trim();
+    if (!name || !brewery) return null;
+    return { name, style: style || "Other", abv, description: desc || undefined, breweryNameRaw: brewery };
   }
 
   if (format === "B_ratebeer") {
-    const name       = (row["beer_name"]     || row["Beer Name"]     || row["name"]         || "").trim();
-    const brewName   = (row["brewery_name"]  || row["Brewery Name"]  || row["brewer_name"]  || "").trim();
-    const brewIdRaw  = (row["brewery_id"]    || row["Brewer ID"]     || "").trim();
-    const style      = (row["style"]         || row["Style"]         || row["beer_style"]   || "").trim();
-    const abv        = parseAbv(row["abv"]   || row["ABV"]           || "");
-    const desc       = (row["description"]   || row["Description"]   || "").trim();
-    if (!name || !style) return null;
-    return {
-      name,
-      style,
-      abv,
-      description: desc || undefined,
-      breweryNameRaw: brewName || undefined,
-      breweryXlsxId: brewIdRaw ? Number(brewIdRaw) : undefined,
-    };
+    // Colonne: Beer ID, Brewer Name, Beer Name, ABV, Style Name, Brewer Country Name, Brewer Country Code
+    const name = (row["Beer Name"] || row["beer name"] || row["beer_name"] || "").trim();
+    const brewery = (row["Brewer Name"] || row["brewer name"] || row["brewer_name"] || "").trim();
+    const style = (row["Style Name"] || row["style name"] || row["style"] || "").trim();
+    const abv = parseAbv(row["ABV"] || row["abv"] || "");
+    if (!name || !brewery) return null;
+    return { name, style: style || "Other", abv, breweryNameRaw: brewery };
   }
 
   return null;
@@ -102,150 +133,165 @@ function extractRow(row: Record<string, string>, format: Format): BeerRow | null
 
 // ─── Main ────────────────────────────────────────────────────────────────────
 async function main() {
-  const csvFile   = process.argv[2];
-  const mapFile   = path.resolve("scripts/brewery-id-map.json");
+  const csvFiles = process.argv.slice(2);
 
-  if (!csvFile) {
-    console.error("Uso: npx tsx scripts/import-beers-csv.ts <file.csv>");
+  if (csvFiles.length === 0) {
+    console.error("Uso: npx tsx scripts/import-beers-csv.ts <file1.csv> [file2.csv] ...");
     process.exit(1);
-  }
-  if (!fs.existsSync(csvFile)) {
-    console.error(`File non trovato: ${csvFile}`);
-    process.exit(1);
-  }
-
-  // ─── Carica mapping xlsx_id → db_id (se esiste) ──────────────────────────
-  let xlsxIdToDbId: Record<number, number> = {};
-  if (fs.existsSync(mapFile)) {
-    xlsxIdToDbId = JSON.parse(fs.readFileSync(mapFile, "utf-8"));
-    console.log(`📋 Mapping birrifici caricato: ${Object.keys(xlsxIdToDbId).length} voci`);
-  } else {
-    console.log("⚠️  Nessun file brewery-id-map.json trovato — collegamento solo per nome");
   }
 
   // ─── Carica tutti i birrifici dal DB (nome → id) ──────────────────────────
-  console.log("🔍 Caricamento birrifici dal DB...");
+  console.log("Caricamento birrifici dal DB...");
   const allBreweries = await db.select({ id: breweries.id, name: breweries.name }).from(breweries);
   const breweryByName = new Map<string, number>();
   for (const b of allBreweries) {
     breweryByName.set(normName(b.name), b.id);
   }
-  console.log(`   ${breweryByName.size} birrifici disponibili`);
+  console.log(`   ${breweryByName.size} birrifici disponibili per il matching`);
 
-  // ─── Carica birre esistenti (name lower + brewery_id) per dedup ───────────
-  console.log("🔍 Caricamento birre esistenti...");
-  const allBeers = await db.select({ name: beers.name, breweryId: beers.breweryId }).from(beers);
-  const existingBeers = new Set<string>();
-  for (const b of allBeers) {
-    existingBeers.add(`${normName(b.name)}::${b.breweryId}`);
-  }
-  console.log(`   ${existingBeers.size} birre già nel DB`);
+  // Dedup gestito dal DB via ON CONFLICT DO NOTHING (idx_beers_name_brewery_unique)
+  const existingCountResult = await db.select({ count: sql<number>`COUNT(*)` }).from(beers);
+  console.log(`   ${existingCountResult[0]?.count ?? 0} birre già presenti nel DB (dedup via indice DB)`);
 
-  // ─── Streaming lettura CSV ────────────────────────────────────────────────
-  console.log(`\n📂 Lettura CSV: ${csvFile}`);
+  // ─── Stato globale ────────────────────────────────────────────────────────
+  let totalInserted = 0;
+  let totalSkipped = 0;
+  let totalNoBrewery = 0;
+  let totalErrors = 0;
+  let totalLines = 0;
 
-  let format: Format | null = null;
-  let inserted = 0;
-  let skipped  = 0;
-  let noBrewery = 0;
-  let errors  = 0;
-  let total   = 0;
+  const BATCH_SIZE = 500;
 
-  const BATCH_SIZE = 300;
-  let batch: typeof beers.$inferInsert[] = [];
-
-  const flush = async () => {
-    if (batch.length === 0) return;
-    try {
-      await db.insert(beers).values(batch);
-      inserted += batch.length;
-    } catch (e: any) {
-      // Prova insert uno a uno per isolare eventuali errori
-      for (const row of batch) {
-        try {
-          await db.insert(beers).values([row]);
-          inserted++;
-        } catch {
-          errors++;
-        }
-      }
-    }
-    batch = [];
-  };
-
-  // Usa for-await per gestire il backpressure correttamente (non carica tutto in memoria)
-  const stream = createReadStream(csvFile).pipe(csvParser());
-
-  let headersRead = false;
-  for await (const row of stream as AsyncIterable<Record<string, string>>) {
-    if (!headersRead) {
-      headersRead = true;
-      format = detectFormat(Object.keys(row));
-      console.log(`   Formato rilevato: ${format}`);
+  // ─── Processa ogni file CSV ───────────────────────────────────────────────
+  for (const csvFile of csvFiles) {
+    const fullPath = path.resolve(csvFile);
+    if (!fs.existsSync(fullPath)) {
+      console.error(`File non trovato: ${fullPath}`);
+      continue;
     }
 
-    total++;
+    console.log(`\nImportazione: ${path.basename(csvFile)}`);
 
-    const extracted = extractRow(row, format!);
-    if (!extracted) { skipped++; continue; }
+    let format: Format | null = null;
+    let headersRead = false;
+    let fileLines = 0;
+    let fileInserted = 0;
+    let fileSkipped = 0;
+    let fileNoBrewery = 0;
+    let fileErrors = 0;
 
-    // ── Trova brewery_id nel DB ───────────────────────────────────────────
-    let dbBreweryId: number | undefined;
+    let batch: typeof beers.$inferInsert[] = [];
 
-    // 1. Prova via xlsx_id → db_id (se disponibile)
-    if (extracted.breweryXlsxId && xlsxIdToDbId[extracted.breweryXlsxId]) {
-      dbBreweryId = xlsxIdToDbId[extracted.breweryXlsxId];
-    }
-
-    // 2. Prova via nome birrificio (match esatto normalizzato)
-    if (!dbBreweryId && extracted.breweryNameRaw) {
-      const norm = normName(extracted.breweryNameRaw);
-      dbBreweryId = breweryByName.get(norm);
-
-      // 3. Fallback: ricerca parziale (parole chiave del nome)
-      if (!dbBreweryId && norm.length > 5) {
-        const tokens = norm.split(" ").slice(0, 3).join(" ");
-        for (const [key, id] of breweryByName) {
-          if (key.startsWith(tokens)) {
-            dbBreweryId = id;
-            break;
+    const flush = async () => {
+      if (batch.length === 0) return;
+      try {
+        const result = await db.insert(beers).values(batch).onConflictDoNothing();
+        const inserted = (result as any)?.rowCount ?? batch.length;
+        fileInserted += inserted;
+        totalInserted += inserted;
+        const skipped = batch.length - inserted;
+        fileSkipped += skipped;
+        totalSkipped += skipped;
+      } catch (e: any) {
+        for (const row of batch) {
+          try {
+            await db.insert(beers).values([row]).onConflictDoNothing();
+            fileInserted++;
+            totalInserted++;
+          } catch {
+            fileErrors++;
+            totalErrors++;
           }
         }
       }
+      batch = [];
+    };
+
+    const stream = createReadStream(fullPath, { encoding: "utf8" }).pipe(
+      csvParser({ bom: true, skipLines: 0 })
+    );
+
+    for await (const row of stream as AsyncIterable<Record<string, string>>) {
+      if (!headersRead) {
+        headersRead = true;
+        format = detectFormat(Object.keys(row));
+        console.log(`   Formato rilevato: ${format}`);
+      }
+
+      fileLines++;
+      totalLines++;
+
+      const extracted = extractRow(row, format!);
+      if (!extracted) {
+        fileSkipped++;
+        totalSkipped++;
+        continue;
+      }
+
+      // ── Trova brewery_id nel DB per nome ────────────────────────────────
+      const normalizedBrewerName = normName(extracted.breweryNameRaw);
+      const dbBreweryId = breweryByName.get(normalizedBrewerName);
+
+      if (!dbBreweryId) {
+        fileNoBrewery++;
+        totalNoBrewery++;
+        continue;
+      }
+
+      // ── Aggiunge al batch (dedup via ON CONFLICT DO NOTHING sull'indice DB) ─
+      const beerRow: any = {
+        name: extracted.name.substring(0, 255),
+        style: (extracted.style || "Other").substring(0, 100),
+        abv: extracted.abv !== null ? String(extracted.abv) : null,
+        description: extracted.description || null,
+        breweryId: dbBreweryId,
+        isAlcoholFree: extracted.abv === 0,
+        isGlutenFree: false,
+      };
+
+      batch.push(beerRow);
+
+      if (batch.length >= BATCH_SIZE) await flush();
+
+      if (fileLines % 50000 === 0) {
+        console.log(
+          `   [${new Date().toISOString().substring(11,19)}] ${fileLines.toLocaleString()} righe | inserite: ${fileInserted.toLocaleString()} | no_birrificio: ${fileNoBrewery.toLocaleString()} | dup: ${fileSkipped.toLocaleString()}`
+        );
+      }
     }
 
-    if (!dbBreweryId) { noBrewery++; continue; }
+    await flush();
 
-    // ── Dedup ─────────────────────────────────────────────────────────────
-    const key = `${normName(extracted.name)}::${dbBreweryId}`;
-    if (existingBeers.has(key)) { skipped++; continue; }
-    existingBeers.add(key);
-
-    // ── Aggiunge al batch ──────────────────────────────────────────────────
-    batch.push({
-      name: extracted.name,
-      style: extracted.style || "Unknown",
-      abv: extracted.abv !== null ? String(extracted.abv) : undefined,
-      description: extracted.description,
-      breweryId: dbBreweryId,
-    } as any);
-
-    if (batch.length >= BATCH_SIZE) await flush(); // stream in pausa automatica con for-await
-
-    if (total % 10000 === 0) {
-      process.stdout.write(
-        `   ${total} righe lette | ins=${inserted} skip=${skipped} no_brewery=${noBrewery} err=${errors}\r`
-      );
-    }
+    console.log(`\n   File completato:`);
+    console.log(`     Righe lette:              ${fileLines.toLocaleString()}`);
+    console.log(`     Birre inserite:           ${fileInserted.toLocaleString()}`);
+    console.log(`     Duplicate (skip):         ${fileSkipped.toLocaleString()}`);
+    console.log(`     Birrificio non trovato:   ${fileNoBrewery.toLocaleString()}`);
+    console.log(`     Errori:                   ${fileErrors.toLocaleString()}`);
   }
-  await flush();
 
-  console.log(`\n\n✅ Import completato!`);
-  console.log(`   Totale righe lette:       ${total}`);
-  console.log(`   Birre inserite:           ${inserted}`);
-  console.log(`   Skippate (duplicati):     ${skipped}`);
-  console.log(`   Skippate (no birrificio): ${noBrewery}`);
-  console.log(`   Errori:                   ${errors}`);
+  // ─── Riepilogo finale ─────────────────────────────────────────────────────
+  console.log(`\n${"=".repeat(50)}`);
+  console.log(`IMPORTAZIONE COMPLETATA`);
+  console.log(`${"=".repeat(50)}`);
+  console.log(`Totale righe processate:    ${totalLines.toLocaleString()}`);
+  console.log(`Totale birre inserite:      ${totalInserted.toLocaleString()}`);
+  console.log(`Duplicate saltate:          ${totalSkipped.toLocaleString()}`);
+  console.log(`Birrificio non trovato:     ${totalNoBrewery.toLocaleString()}`);
+  console.log(`Errori:                     ${totalErrors.toLocaleString()}`);
+
+  // ─── Aggiorna sequenza ID ─────────────────────────────────────────────────
+  const maxIdResult = await db.execute(sql`SELECT MAX(id) AS max_id FROM beers`);
+  const newMaxId = Number((maxIdResult.rows[0] as any).max_id) || 0;
+  if (newMaxId > 0) {
+    await db.execute(sql`SELECT setval('beers_id_seq', ${newMaxId})`);
+    console.log(`\nSequenza ID aggiornata a: ${newMaxId}`);
+  }
+
+  process.exit(0);
 }
 
-main().catch(e => { console.error("Errore fatale:", e); process.exit(1); });
+main().catch((e) => {
+  console.error("Errore fatale:", e);
+  process.exit(1);
+});

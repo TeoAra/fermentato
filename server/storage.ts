@@ -568,7 +568,7 @@ export class DatabaseStorage implements IStorage {
       .from(beers)
       .leftJoin(breweries, eq(beers.breweryId, breweries.id))
       .where(and(...conditions))
-      .orderBy(asc(beers.name));
+      .limit(50);
     
     return results.map(row => ({
       id: row.id,
