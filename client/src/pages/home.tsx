@@ -107,7 +107,7 @@ export default function Home() {
       <section className="relative overflow-hidden bg-gradient-to-br from-amber-50 via-white to-slate-100 dark:from-gray-900 dark:via-slate-800 dark:to-gray-900">
         <div className="absolute inset-0">
           <img
-            src="https://images.unsplash.com/photo-1436076863939-06870fe779c2?w=1920&h=400&fit=crop"
+            src="/hero-beer.jpg"
             alt="Beer background"
             className="w-full h-full object-cover opacity-10 dark:opacity-20"
           />

@@ -304,7 +304,7 @@ export default function BreweryDetail() {
       <div className="relative">
         <div className="relative h-96 md:h-[500px] overflow-hidden">
           <img
-            src={brewery?.coverImageUrl || "https://images.unsplash.com/photo-1532634922-8fe0b757fb13?w=1200&h=600&fit=crop"}
+            src={brewery?.coverImageUrl || "/brewery-cover.jpg"}
             alt={`${brewery?.name} - Copertina`}
             className="w-full h-full object-cover"
           />

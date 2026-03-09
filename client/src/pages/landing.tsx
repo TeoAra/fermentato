@@ -101,7 +101,7 @@ export default function Landing() {
       <section className="relative overflow-hidden bg-gradient-to-br from-amber-50 via-white to-slate-100 dark:from-gray-900 dark:via-slate-800 dark:to-gray-900 min-h-[520px] lg:min-h-[580px]">
         <div className="absolute inset-0">
           <img
-            src="https://images.unsplash.com/photo-1436076863939-06870fe779c2?w=1920&h=600&fit=crop"
+            src="/hero-beer.jpg"
             alt="Craft beer"
             className="w-full h-full object-cover opacity-10 dark:opacity-20"
           />

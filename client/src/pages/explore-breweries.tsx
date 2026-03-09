@@ -111,7 +111,7 @@ function getItalianName(country: string): string {
   return countryNameMap[country] ?? country;
 }
 
-const BREWERY_FALLBACK = "https://images.unsplash.com/photo-1559526324-593bc073d938?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=300";
+const BREWERY_FALLBACK = "/brewery-cover.jpg";
 
 function BreweryCard({ brewery }: { brewery: any }) {
   const { isAuthenticated } = useAuth();
@@ -252,7 +252,7 @@ export default function ExploreBreweries() {
     <div className="min-h-screen bg-gray-50 dark:bg-slate-900">
       {/* Hero */}
       <div className="relative bg-gradient-to-br from-amber-600 via-amber-500 to-orange-500 dark:from-amber-800 dark:via-amber-700 dark:to-orange-700 overflow-hidden">
-        <div className="absolute inset-0 opacity-10" style={{ backgroundImage: "url('https://images.unsplash.com/photo-1559526324-593bc073d938?auto=format&fit=crop&w=1200')", backgroundSize: "cover", backgroundPosition: "center" }} />
+        <div className="absolute inset-0 opacity-10" style={{ backgroundImage: "url('/brewery-cover.jpg')", backgroundSize: "cover", backgroundPosition: "center" }} />
         <div className="absolute inset-0 bg-gradient-to-br from-amber-600/90 to-orange-600/80" />
         <div className="relative max-w-5xl mx-auto px-4 sm:px-6 py-10">
           <div className="flex items-center gap-3 mb-6">
