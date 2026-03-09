@@ -26,19 +26,28 @@ import fs from "fs";
 import path from "path";
 import { createReadStream } from "fs";
 import csvParser from "csv-parser";
-import { Pool as NeonPool, neonConfig } from "@neondatabase/serverless";
-import { drizzle } from "drizzle-orm/neon-serverless";
-import ws from "ws";
 import { beers, breweries } from "../shared/schema";
 import { sql } from "drizzle-orm";
-
-neonConfig.webSocketConstructor = ws;
 
 const DATABASE_URL = process.env.DATABASE_URL!;
 if (!DATABASE_URL) throw new Error("DATABASE_URL non impostato");
 
-const pool = new NeonPool({ connectionString: DATABASE_URL });
-const db = drizzle({ client: pool });
+const isNeon = DATABASE_URL.includes("neon.tech") || DATABASE_URL.includes("neon.");
+
+let db: any;
+if (isNeon) {
+  const { Pool: NeonPool, neonConfig } = await import("@neondatabase/serverless");
+  const { drizzle } = await import("drizzle-orm/neon-serverless");
+  const { default: ws } = await import("ws");
+  neonConfig.webSocketConstructor = ws;
+  const pool = new NeonPool({ connectionString: DATABASE_URL });
+  db = drizzle({ client: pool });
+} else {
+  const pg = await import("pg");
+  const { drizzle } = await import("drizzle-orm/node-postgres");
+  const pool = new pg.default.Pool({ connectionString: DATABASE_URL });
+  db = drizzle({ client: pool });
+}
 
 // ─── Normalizzazione ─────────────────────────────────────────────────────────
 function normName(s: string): string {

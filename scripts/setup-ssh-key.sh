@@ -8,14 +8,20 @@ if [ -z "$VPS_SSH_KEY" ]; then
 fi
 
 mkdir -p ~/.ssh
-echo "$VPS_SSH_KEY" > ~/.ssh/id_replit_sync
-chmod 600 ~/.ssh/id_replit_sync
 
-# Verifica che sia una chiave privata valida
-if ! head -1 ~/.ssh/id_replit_sync | grep -q "BEGIN"; then
-  echo "❌ VPS_SSH_KEY non sembra una chiave privata valida."
-  echo "   Deve iniziare con: -----BEGIN OPENSSH PRIVATE KEY-----"
-  rm ~/.ssh/id_replit_sync
+# Ricostruisce la chiave con il formato OpenSSH corretto (Replit collassa i newline)
+node -e "
+const key = process.env.VPS_SSH_KEY;
+const match = key.match(/-----BEGIN OPENSSH PRIVATE KEY-----(.*?)-----END OPENSSH PRIVATE KEY-----/s);
+if (!match) { console.error('Chiave non valida'); process.exit(1); }
+const body = match[1].replace(/\s+/g, '');
+const lines = body.match(/.{1,70}/g).join('\n');
+const finalKey = '-----BEGIN OPENSSH PRIVATE KEY-----\n' + lines + '\n-----END OPENSSH PRIVATE KEY-----\n';
+require('fs').writeFileSync('/home/runner/.ssh/id_replit_sync', finalKey, {mode: 0o600});
+"
+
+if ! ssh-keygen -y -f ~/.ssh/id_replit_sync > /dev/null 2>&1; then
+  echo "❌ Chiave SSH non valida. Controlla il valore di VPS_SSH_KEY."
   exit 1
 fi
 
