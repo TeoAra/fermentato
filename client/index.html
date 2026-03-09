@@ -23,27 +23,32 @@
     <script type="text/javascript" src="https://www.gstatic.com/cv/js/sender/v1/cast_sender.js?loadCastFramework=1"></script>
     <script type="text/javascript">
       window['__onGCastApiAvailable'] = function(isAvailable) {
-        if (isAvailable) {
+        if (!isAvailable || !window.cast || !window.cast.framework) return;
+        try {
           fetch('/api/cast-config').then(function(r) { return r.json(); }).then(function(config) {
-            var ctx = cast.framework.CastContext.getInstance();
-            ctx.setOptions({
-              receiverApplicationId: config.appId || chrome.cast.media.DEFAULT_MEDIA_RECEIVER_APP_ID,
-              autoJoinPolicy: chrome.cast.AutoJoinPolicy.ORIGIN_SCOPED
-            });
-            window.__castAvailable = true;
-            window.__castCustomReceiver = !!config.appId;
-            window.dispatchEvent(new Event('castAvailable'));
+            try {
+              var ctx = window.cast.framework.CastContext.getInstance();
+              ctx.setOptions({
+                receiverApplicationId: config.appId || window.chrome.cast.media.DEFAULT_MEDIA_RECEIVER_APP_ID,
+                autoJoinPolicy: window.chrome.cast.AutoJoinPolicy.ORIGIN_SCOPED
+              });
+              window.__castAvailable = true;
+              window.__castCustomReceiver = !!config.appId;
+              window.dispatchEvent(new Event('castAvailable'));
+            } catch(e) { window.__castAvailable = false; }
           }).catch(function() {
-            var ctx = cast.framework.CastContext.getInstance();
-            ctx.setOptions({
-              receiverApplicationId: chrome.cast.media.DEFAULT_MEDIA_RECEIVER_APP_ID,
-              autoJoinPolicy: chrome.cast.AutoJoinPolicy.ORIGIN_SCOPED
-            });
-            window.__castAvailable = true;
-            window.__castCustomReceiver = false;
-            window.dispatchEvent(new Event('castAvailable'));
+            try {
+              var ctx = window.cast.framework.CastContext.getInstance();
+              ctx.setOptions({
+                receiverApplicationId: window.chrome.cast.media.DEFAULT_MEDIA_RECEIVER_APP_ID,
+                autoJoinPolicy: window.chrome.cast.AutoJoinPolicy.ORIGIN_SCOPED
+              });
+              window.__castAvailable = true;
+              window.__castCustomReceiver = false;
+              window.dispatchEvent(new Event('castAvailable'));
+            } catch(e) { window.__castAvailable = false; }
           });
-        }
+        } catch(e) { window.__castAvailable = false; }
       };
     </script>
     <script type="text/javascript" src="https://replit.com/public/js/replit-dev-banner.js"></script>
