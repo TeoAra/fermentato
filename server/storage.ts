@@ -213,7 +213,7 @@ export interface IStorage {
   updateBeer(id: number, updates: Partial<InsertBeer>): Promise<Beer>;
   deleteBeer(id: number): Promise<void>;
   getBeersByBrewery(breweryId: number): Promise<Beer[]>;
-  searchBeers(query: string, filters?: { glutenFree?: boolean; alcoholFree?: boolean }): Promise<Beer[]>;
+  searchBeers(query: string, filters?: { glutenFree?: boolean; alcoholFree?: boolean; style?: string; minAbv?: number; maxAbv?: number; minIbu?: number; maxIbu?: number }): Promise<Beer[]>;
 
   // Tap list operations
   getTapList(pubId: number): Promise<TapList[]>;
@@ -581,9 +581,10 @@ export class DatabaseStorage implements IStorage {
     return await db.select().from(beers).where(eq(beers.breweryId, breweryId));
   }
 
-  async searchBeers(query: string, filters?: { glutenFree?: boolean; alcoholFree?: boolean }): Promise<any[]> {
+  async searchBeers(query: string, filters?: { glutenFree?: boolean; alcoholFree?: boolean; style?: string; minAbv?: number; maxAbv?: number; minIbu?: number; maxIbu?: number }): Promise<any[]> {
     const words = query.trim().split(/\s+/).filter(w => w.length > 0);
-    if (words.length === 0 && !filters?.glutenFree && !filters?.alcoholFree) return [];
+    const hasFilters = filters && Object.values(filters).some(v => v !== undefined && v !== false && v !== "");
+    if (words.length === 0 && !hasFilters) return [];
     const wordConditions = words.map(word => 
       or(
         ilike(beers.name, `%${word}%`),
@@ -594,6 +595,11 @@ export class DatabaseStorage implements IStorage {
     const conditions = [...wordConditions];
     if (filters?.glutenFree) conditions.push(eq(beers.isGlutenFree, true));
     if (filters?.alcoholFree) conditions.push(eq(beers.isAlcoholFree, true));
+    if (filters?.style) conditions.push(ilike(beers.style, `%${filters.style}%`));
+    if (filters?.minAbv !== undefined) conditions.push(sql`${beers.abv}::numeric >= ${filters.minAbv}`);
+    if (filters?.maxAbv !== undefined) conditions.push(sql`${beers.abv}::numeric <= ${filters.maxAbv}`);
+    if (filters?.minIbu !== undefined) conditions.push(sql`${beers.ibu}::numeric >= ${filters.minIbu}`);
+    if (filters?.maxIbu !== undefined) conditions.push(sql`${beers.ibu}::numeric <= ${filters.maxIbu}`);
 
     const results = await db
       .select({
@@ -1791,7 +1797,7 @@ class StorageWrapper implements IStorage {
     );
   }
 
-  async searchBeers(query: string, filters?: { glutenFree?: boolean; alcoholFree?: boolean }): Promise<Beer[]> {
+  async searchBeers(query: string, filters?: { glutenFree?: boolean; alcoholFree?: boolean; style?: string; minAbv?: number; maxAbv?: number; minIbu?: number; maxIbu?: number }): Promise<Beer[]> {
     return this.dbCall(
       () => this.databaseStorage.searchBeers(query, filters),
       () => memoryStorageInstance.searchBeers(query)

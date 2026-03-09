@@ -86,6 +86,60 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get top beer styles with counts (real data from DB)
+  app.get("/api/beers/popular-styles", async (req, res) => {
+    try {
+      const limit = Math.min(50, parseInt(req.query.limit as string) || 30);
+      const rows = await db
+        .select({
+          style: beers.style,
+          count: sql<number>`COUNT(*)::int`,
+        })
+        .from(beers)
+        .where(sql`${beers.style} IS NOT NULL AND ${beers.style} != ''`)
+        .groupBy(beers.style)
+        .orderBy(sql`COUNT(*) DESC`)
+        .limit(limit);
+      res.json(rows);
+    } catch (error) {
+      console.error("Error fetching popular styles:", error);
+      res.status(500).json({ message: "Failed to fetch popular styles" });
+    }
+  });
+
+  // Get real search suggestions (popular styles, top breweries, top cities)
+  app.get("/api/search/suggestions", async (req, res) => {
+    try {
+      const [topStyles, topBreweries, topCities] = await Promise.all([
+        db.select({ name: beers.style, count: sql<number>`COUNT(*)::int` })
+          .from(beers)
+          .where(sql`${beers.style} IS NOT NULL AND ${beers.style} != ''`)
+          .groupBy(beers.style)
+          .orderBy(sql`COUNT(*) DESC`)
+          .limit(12),
+        db.select({ name: breweries.name })
+          .from(breweries)
+          .where(sql`${breweries.name} IS NOT NULL AND ${breweries.name} != ''`)
+          .orderBy(sql`RANDOM()`)
+          .limit(6),
+        db.select({ name: pubs.city, count: sql<number>`COUNT(*)::int` })
+          .from(pubs)
+          .where(sql`${pubs.city} IS NOT NULL AND ${pubs.city} != ''`)
+          .groupBy(pubs.city)
+          .orderBy(sql`COUNT(*) DESC`)
+          .limit(6),
+      ]);
+      res.json({
+        styles: topStyles.map(r => r.name).filter(Boolean),
+        breweries: topBreweries.map(r => r.name).filter(Boolean),
+        cities: topCities.map(r => r.name).filter(Boolean),
+      });
+    } catch (error) {
+      console.error("Error fetching suggestions:", error);
+      res.status(500).json({ message: "Failed to fetch suggestions" });
+    }
+  });
+
   // Get beer details by ID
   app.get("/api/beers/:id", async (req, res) => {
     try {
@@ -495,7 +549,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const glutenFree = req.query.glutenFree === 'true';
       const alcoholFree = req.query.alcoholFree === 'true';
-      const filters = (glutenFree || alcoholFree) ? { glutenFree, alcoholFree } : undefined;
+      const style = (req.query.style as string) || undefined;
+      const minAbv = req.query.minAbv ? parseFloat(req.query.minAbv as string) : undefined;
+      const maxAbv = req.query.maxAbv ? parseFloat(req.query.maxAbv as string) : undefined;
+      const minIbu = req.query.minIbu ? parseFloat(req.query.minIbu as string) : undefined;
+      const maxIbu = req.query.maxIbu ? parseFloat(req.query.maxIbu as string) : undefined;
+      const filters: any = {};
+      if (glutenFree) filters.glutenFree = true;
+      if (alcoholFree) filters.alcoholFree = true;
+      if (style) filters.style = style;
+      if (minAbv !== undefined) filters.minAbv = minAbv;
+      if (maxAbv !== undefined) filters.maxAbv = maxAbv;
+      if (minIbu !== undefined) filters.minIbu = minIbu;
+      if (maxIbu !== undefined) filters.maxIbu = maxIbu;
 
       const [pubs, breweries, beersResult] = await Promise.all([
         storage.searchPubs(query),
