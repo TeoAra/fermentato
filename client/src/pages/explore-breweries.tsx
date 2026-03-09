@@ -11,102 +11,81 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 
-const paesiMondiali = [
-  "Italia", "Germania", "Stati Uniti", "Belgio", "Regno Unito", "Francia", 
-  "Spagna", "Olanda", "Repubblica Ceca", "Canada", "Australia", "Giappone",
-  "Messico", "Brasile", "Danimarca", "Svezia", "Norvegia", "Finlandia",
-  "Austria", "Svizzera", "Irlanda", "Polonia", "Portogallo", "Nuova Zelanda",
-  "Israele", "India", "Altri"
-];
-
 const countryNameMap: Record<string, string> = {
   "Italy": "Italia", "Italia": "Italia",
-  "Germany": "Germania", "Germania": "Germania", "Deutschland": "Germania",
-  "United States": "Stati Uniti", "USA": "Stati Uniti", "US": "Stati Uniti", "Stati Uniti": "Stati Uniti",
-  "Belgium": "Belgio", "Belgio": "Belgio", "Belgique": "Belgio", "België": "Belgio",
-  "United Kingdom": "Regno Unito", "UK": "Regno Unito", "Regno Unito": "Regno Unito",
-  "France": "Francia", "Francia": "Francia",
-  "Spain": "Spagna", "Spagna": "Spagna", "España": "Spagna",
-  "Netherlands": "Olanda", "Olanda": "Olanda", "Holland": "Olanda", "Paesi Bassi": "Olanda",
-  "Czech Republic": "Repubblica Ceca", "Czechia": "Repubblica Ceca", "Repubblica Ceca": "Repubblica Ceca",
+  "Germany": "Germania", "Deutschland": "Germania",
+  "United States": "Stati Uniti", "USA": "Stati Uniti", "US": "Stati Uniti",
+  "Belgium": "Belgio", "Belgique": "Belgio", "België": "Belgio",
+  "United Kingdom": "Regno Unito", "UK": "Regno Unito",
+  "England": "Inghilterra",
+  "Scotland": "Scozia",
+  "Wales": "Galles",
+  "Northern Ireland": "Irlanda del Nord",
+  "France": "Francia",
+  "Spain": "Spagna", "España": "Spagna",
+  "Netherlands": "Paesi Bassi", "Holland": "Paesi Bassi",
+  "Czech Republic": "Rep. Ceca", "Czechia": "Rep. Ceca",
   "Canada": "Canada",
   "Australia": "Australia",
-  "Japan": "Giappone", "Giappone": "Giappone",
-  "Mexico": "Messico", "Messico": "Messico", "México": "Messico",
-  "Brazil": "Brasile", "Brasile": "Brasile", "Brasil": "Brasile",
-  "Denmark": "Danimarca", "Danimarca": "Danimarca", "Danmark": "Danimarca",
-  "Sweden": "Svezia", "Svezia": "Svezia", "Sverige": "Svezia",
-  "Norway": "Norvegia", "Norvegia": "Norvegia", "Norge": "Norvegia",
-  "Finland": "Finlandia", "Finlandia": "Finlandia", "Suomi": "Finlandia",
+  "Japan": "Giappone",
+  "Mexico": "Messico", "México": "Messico",
+  "Brazil": "Brasile", "Brasil": "Brasile",
+  "Denmark": "Danimarca", "Danmark": "Danimarca",
+  "Sweden": "Svezia", "Sverige": "Svezia",
+  "Norway": "Norvegia", "Norge": "Norvegia",
+  "Finland": "Finlandia", "Suomi": "Finlandia",
   "Austria": "Austria", "Österreich": "Austria",
-  "Switzerland": "Svizzera", "Svizzera": "Svizzera", "Schweiz": "Svizzera", "Suisse": "Svizzera",
-  "Ireland": "Irlanda", "Irlanda": "Irlanda",
-  "Poland": "Polonia", "Polonia": "Polonia", "Polska": "Polonia",
-  "Portugal": "Portogallo", "Portogallo": "Portogallo",
-  "New Zealand": "Nuova Zelanda", "Nuova Zelanda": "Nuova Zelanda",
-  "Israel": "Israele", "Israele": "Israele",
+  "Switzerland": "Svizzera", "Schweiz": "Svizzera", "Suisse": "Svizzera",
+  "Ireland": "Irlanda",
+  "Poland": "Polonia", "Polska": "Polonia",
+  "Portugal": "Portogallo",
+  "New Zealand": "Nuova Zelanda",
+  "Israel": "Israele",
   "India": "India",
-};
-
-const regionToCountry: Record<string, string> = {
-  "Abruzzo": "Italia", "Basilicata": "Italia", "Calabria": "Italia", "Campania": "Italia",
-  "Emilia-Romagna": "Italia", "Friuli-Venezia Giulia": "Italia", "Lazio": "Italia",
-  "Liguria": "Italia", "Lombardia": "Italia", "Molise": "Italia", "Piemonte": "Italia",
-  "Puglia": "Italia", "Sardegna": "Italia", "Sicilia": "Italia", "Toscana": "Italia",
-  "Trentino-Alto Adige": "Italia", "Umbria": "Italia", "Valle d'Aosta": "Italia", "Veneto": "Italia",
-  "Italia": "Italia",
-  "AN": "Italia", "AP": "Italia", "FM": "Italia", "FO": "Italia", "IM": "Italia",
-  "MB": "Italia", "MC": "Italia", "NL": "Italia", "PU": "Italia", "SA": "Italia",
-  "SP": "Italia", "SV": "Italia",
-  "Bavaria": "Germania", "Nord": "Germania",
-  "England": "Regno Unito", "UK": "Regno Unito",
-  "Alsace": "Francia",
-  "East Flanders": "Belgio", "West Flanders": "Belgio", "Hainaut": "Belgio",
-  "Brussels": "Belgio", "Région wallonne": "Belgio",
-  "Gelderland": "Olanda", "North Holland": "Olanda",
-  "Madrid": "Spagna",
-  "Lisbon": "Portogallo", "Porto": "Portogallo",
-  "Plzen": "Repubblica Ceca", "Krusovice": "Repubblica Ceca",
-  "Arizona": "Stati Uniti", "California": "Stati Uniti", "Colorado": "Stati Uniti",
-  "Idaho": "Stati Uniti", "Indiana": "Stati Uniti", "Massachusetts": "Stati Uniti",
-  "Michigan": "Stati Uniti", "Minnesota": "Stati Uniti", "Nevada": "Stati Uniti",
-  "New York": "Stati Uniti", "North Carolina": "Stati Uniti", "Ohio": "Stati Uniti",
-  "Oklahoma": "Stati Uniti", "Oregon": "Stati Uniti", "South Carolina": "Stati Uniti",
-  "Texas": "Stati Uniti", "Washington": "Stati Uniti", "Wisconsin": "Stati Uniti", "WA": "Stati Uniti",
-  "Ontario": "Canada", "Quebec": "Canada", "Nova Scotia": "Canada",
-  "Baja California": "Messico", "Sinaloa": "Messico",
-  "Rio de Janeiro": "Brasile",
-  "NSW": "Australia", "Queensland": "Australia", "Victoria": "Australia",
-  "Auckland": "Nuova Zelanda", "Otago": "Nuova Zelanda", "Wellington": "Nuova Zelanda",
-  "Tokyo": "Giappone", "Ibaraki": "Giappone", "Okinawa": "Giappone",
-  "Saitama": "Giappone", "Shizuoka": "Giappone",
-  "Cork": "Irlanda", "Kilkenny": "Irlanda",
-  "Estero": "Altri",
+  "Russia": "Russia",
+  "China": "Cina",
+  "South Korea": "Corea del Sud",
+  "Argentina": "Argentina",
+  "South Africa": "Sudafrica",
+  "Ukraine": "Ucraina",
+  "Hungary": "Ungheria",
+  "Colombia": "Colombia",
+  "Chile": "Cile",
+  "Slovakia": "Slovacchia",
+  "Slovenia": "Slovenia",
+  "Thailand": "Thailandia",
+  "Croatia": "Croazia",
+  "Greece": "Grecia",
+  "Vietnam": "Vietnam",
+  "Estonia": "Estonia",
+  "Romania": "Romania",
+  "Peru": "Perù",
+  "Latvia": "Lettonia",
+  "Serbia": "Serbia",
+  "Lithuania": "Lituania",
+  "Belarus": "Bielorussia",
+  "Costa Rica": "Costa Rica",
+  "Bulgaria": "Bulgaria",
+  "Philippines": "Filippine",
+  "Ecuador": "Ecuador",
+  "Taiwan": "Taiwan",
+  "Hong Kong": "Hong Kong",
+  "Singapore": "Singapore",
+  "Uruguay": "Uruguay",
 };
 
 function detectCountry(brewery: any): string {
+  const dbCountry = brewery.country?.trim();
+  if (dbCountry) {
+    return countryNameMap[dbCountry] ?? dbCountry;
+  }
   const loc = brewery.location || "";
   const parts = loc.split(",").map((p: string) => p.trim());
   if (parts.length >= 2) {
     const lastPart = parts[parts.length - 1];
-    const mapped = countryNameMap[lastPart];
-    if (mapped) return mapped;
+    if (countryNameMap[lastPart]) return countryNameMap[lastPart];
   }
-
-  const region = brewery.region || "";
-  if (region && regionToCountry[region]) {
-    return regionToCountry[region];
-  }
-
-  if (region && countryNameMap[region]) {
-    return countryNameMap[region];
-  }
-
-  for (const [key, value] of Object.entries(countryNameMap)) {
-    if (loc.toLowerCase().includes(key.toLowerCase())) return value;
-  }
-
-  return "Altri";
+  return "Sconosciuto";
 }
 
 function BrewerySquareCard({ brewery }: { brewery: any }) {
@@ -228,8 +207,8 @@ export default function ExploreBreweries() {
     );
   };
 
-  const { breweriesByCountry, totalBreweries } = useMemo(() => {
-    if (!Array.isArray(allBreweries)) return { breweriesByCountry: {}, totalBreweries: 0 };
+  const { breweriesByCountry, countryList, totalBreweries } = useMemo(() => {
+    if (!Array.isArray(allBreweries)) return { breweriesByCountry: {}, countryList: [], totalBreweries: 0 };
     const map: Record<string, any[]> = {};
     for (const brewery of allBreweries) {
       const country = detectCountry(brewery);
@@ -243,7 +222,8 @@ export default function ExploreBreweries() {
         return a.name.localeCompare(b.name);
       });
     }
-    return { breweriesByCountry: map, totalBreweries: allBreweries.length };
+    const sorted = Object.keys(map).sort((a, b) => map[b].length - map[a].length);
+    return { breweriesByCountry: map, countryList: sorted, totalBreweries: allBreweries.length };
   }, [allBreweries]);
 
   return (
@@ -276,7 +256,7 @@ export default function ExploreBreweries() {
           </div>
         ) : (
           <div className="space-y-6">
-            {paesiMondiali.map(country => {
+            {countryList.map(country => {
               const countryBreweries = breweriesByCountry[country] || [];
               if (countryBreweries.length === 0) return null;
               const limit = showCounts[country] || PAGE_SIZE;
