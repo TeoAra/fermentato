@@ -132,11 +132,8 @@ export default function Header() {
           <div className="grid grid-cols-12 gap-4 items-center h-16">
             {/* Logo - Fixed Width */}
             <div className="col-span-2">
-              <Link href="/" className="flex items-center gap-2" data-testid="logo-desktop">
-                <img src="/logo-mug.png" alt="Fermenta.to" className="h-8 w-auto" />
-                <span className="text-xl font-bold text-gray-900 dark:text-white">
-                  Fermenta<span className="text-amber-500">.to</span>
-                </span>
+              <Link href="/" data-testid="logo-desktop">
+                <img src="/logo-full.png" alt="Fermenta.to" className="h-9 w-auto dark:brightness-[3]" />
               </Link>
             </div>
 

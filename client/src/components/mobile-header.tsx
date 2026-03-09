@@ -58,11 +58,8 @@ export function MobileHeader({ onMenuToggle, isMenuOpen }: MobileHeaderProps) {
       <header className="lg:hidden fixed top-0 left-0 right-0 z-50 bg-white dark:bg-slate-900 border-b border-gray-200 dark:border-slate-800 h-14">
         <div className="flex items-center justify-between px-4 h-full">
           {/* Logo */}
-          <Link href="/" className="flex items-center space-x-2">
-            <img src="/logo-mug.png" alt="Fermenta.to" className="h-8 w-auto" />
-            <span className="text-lg font-bold text-gray-900 dark:text-white">
-              Fermenta<span className="text-amber-500">.to</span>
-            </span>
+          <Link href="/">
+            <img src="/logo-full.png" alt="Fermenta.to" className="h-8 w-auto dark:brightness-[3]" />
           </Link>
 
           {/* Actions */}
