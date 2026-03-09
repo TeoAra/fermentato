@@ -12,6 +12,9 @@
 
 set -e
 
+# Ripristina chiave SSH dal segreto
+bash "$(dirname "$0")/setup-ssh-key.sh" || exit 1
+
 VPS_HOST="root@45.134.39.247"
 VPS_DB="postgres://fermenta:antanicorp94@127.0.0.1:5432/fermenta"
 VPS_APP="/www/nodeapps/fermenta"
