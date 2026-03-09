@@ -1,11 +1,10 @@
 import { useQuery } from "@tanstack/react-query";
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect, useCallback } from "react";
 import { Link } from "wouter";
-import { MapPin, Beer, ArrowLeft, Heart } from "lucide-react";
+import { MapPin, Beer, ArrowLeft, Heart, Search, Globe, X, ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { useAuth } from "@/hooks/useAuth";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
@@ -74,239 +73,352 @@ const countryNameMap: Record<string, string> = {
   "Uruguay": "Uruguay",
 };
 
-function detectCountry(brewery: any): string {
-  const dbCountry = brewery.country?.trim();
-  if (dbCountry) {
-    return countryNameMap[dbCountry] ?? dbCountry;
-  }
-  const loc = brewery.location || "";
-  const parts = loc.split(",").map((p: string) => p.trim());
-  if (parts.length >= 2) {
-    const lastPart = parts[parts.length - 1];
-    if (countryNameMap[lastPart]) return countryNameMap[lastPart];
-  }
-  return "Sconosciuto";
+const countryFlags: Record<string, string> = {
+  "United States": "🇺🇸", "USA": "🇺🇸", "US": "🇺🇸",
+  "England": "🏴󠁧󠁢󠁥󠁮󠁧󠁿", "Germany": "🇩🇪", "Deutschland": "🇩🇪",
+  "France": "🇫🇷", "Canada": "🇨🇦", "Italy": "🇮🇹", "Italia": "🇮🇹",
+  "Spain": "🇪🇸", "España": "🇪🇸", "Japan": "🇯🇵",
+  "Netherlands": "🇳🇱", "Holland": "🇳🇱", "Belgium": "🇧🇪", "Belgique": "🇧🇪",
+  "Australia": "🇦🇺", "Brazil": "🇧🇷", "Brasil": "🇧🇷",
+  "Czech Republic": "🇨🇿", "Czechia": "🇨🇿",
+  "Switzerland": "🇨🇭", "Schweiz": "🇨🇭",
+  "Sweden": "🇸🇪", "Sverige": "🇸🇪",
+  "Norway": "🇳🇴", "Norge": "🇳🇴",
+  "Denmark": "🇩🇰", "Danmark": "🇩🇰",
+  "Finland": "🇫🇮", "Suomi": "🇫🇮",
+  "Austria": "🇦🇹", "Österreich": "🇦🇹",
+  "Ireland": "🇮🇪", "Poland": "🇵🇱", "Polska": "🇵🇱",
+  "Portugal": "🇵🇹", "New Zealand": "🇳🇿",
+  "United Kingdom": "🇬🇧", "UK": "🇬🇧",
+  "Scotland": "🏴󠁧󠁢󠁳󠁣󠁴󠁿", "Wales": "🏴󠁧󠁢󠁷󠁬󠁳󠁿",
+  "Israel": "🇮🇱", "India": "🇮🇳", "Russia": "🇷🇺", "China": "🇨🇳",
+  "South Korea": "🇰🇷", "Argentina": "🇦🇷", "South Africa": "🇿🇦",
+  "Ukraine": "🇺🇦", "Hungary": "🇭🇺", "Colombia": "🇨🇴", "Chile": "🇨🇱",
+  "Slovakia": "🇸🇰", "Slovenia": "🇸🇮", "Thailand": "🇹🇭",
+  "Croatia": "🇭🇷", "Greece": "🇬🇷", "Vietnam": "🇻🇳",
+  "Estonia": "🇪🇪", "Romania": "🇷🇴", "Peru": "🇵🇪",
+  "Latvia": "🇱🇻", "Serbia": "🇷🇸", "Lithuania": "🇱🇹",
+  "Belarus": "🇧🇾", "Costa Rica": "🇨🇷", "Bulgaria": "🇧🇬",
+  "Philippines": "🇵🇭", "Ecuador": "🇪🇨", "Taiwan": "🇹🇼",
+  "Mexico": "🇲🇽", "México": "🇲🇽",
+};
+
+function getFlag(country: string): string {
+  return countryFlags[country] || "🌍";
 }
 
-function BrewerySquareCard({ brewery }: { brewery: any }) {
+function getItalianName(country: string): string {
+  return countryNameMap[country] ?? country;
+}
+
+const BREWERY_FALLBACK = "https://images.unsplash.com/photo-1559526324-593bc073d938?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=300";
+
+function BreweryCard({ brewery }: { brewery: any }) {
   const { isAuthenticated } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const [imgError, setImgError] = useState(false);
 
-  // Check if brewery is favorited
   const { data: favorites = [] } = useQuery({
     queryKey: ["/api/favorites"],
     enabled: isAuthenticated,
   });
 
-  const isBreweryFavorited = Array.isArray(favorites) && favorites.some((fav: any) => 
-    fav.itemType === 'brewery' && fav.itemId === brewery.id
+  const isFav = Array.isArray(favorites) && favorites.some(
+    (f: any) => f.itemType === "brewery" && f.itemId === brewery.id
   );
 
-  // Favorite mutation
-  const favoriteMutation = useMutation({
-    mutationFn: async ({ action }: { action: 'add' | 'remove' }) => {
-      if (action === 'add') {
-        return apiRequest('/api/favorites', 'POST', { itemType: 'brewery', itemId: brewery.id });
-      } else {
-        return apiRequest(`/api/favorites/brewery/${brewery.id}`, 'DELETE');
-      }
-    },
+  const favMut = useMutation({
+    mutationFn: ({ action }: { action: "add" | "remove" }) =>
+      action === "add"
+        ? apiRequest("/api/favorites", "POST", { itemType: "brewery", itemId: brewery.id })
+        : apiRequest(`/api/favorites/brewery/${brewery.id}`, "DELETE"),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/favorites"] });
-      toast({
-        title: "Successo",
-        description: isBreweryFavorited ? "Rimosso dai favoriti" : "Aggiunto ai favoriti",
-      });
+      toast({ title: isFav ? "Rimosso dai preferiti" : "Aggiunto ai preferiti" });
     },
   });
 
-  const handleFavoriteToggle = (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    
-    if (!isAuthenticated) {
-      toast({
-        title: "Accesso richiesto",
-        description: "Effettua l'accesso per aggiungere ai favoriti",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    favoriteMutation.mutate({
-      action: isBreweryFavorited ? 'remove' : 'add'
-    });
-  };
+  const flag = getFlag(brewery.country || "");
+  const italianCountry = getItalianName(brewery.country || "");
 
   return (
     <Link href={`/brewery/${brewery.id}`}>
-      <Card className="overflow-hidden hover:shadow-lg transition-all duration-200 cursor-pointer group h-48 relative border border-gray-100 dark:border-slate-700 bg-white dark:bg-slate-800">
-        <CardContent className="p-4 h-full flex flex-col">
+      <div className="group relative rounded-2xl overflow-hidden cursor-pointer bg-white dark:bg-slate-800 shadow-md hover:shadow-xl transition-all duration-300 hover:-translate-y-1 border border-gray-100 dark:border-slate-700">
+        <div className="relative h-44 overflow-hidden bg-gradient-to-br from-amber-100 to-orange-100 dark:from-amber-900/30 dark:to-orange-900/20">
+          <img
+            src={imgError || !brewery.logoUrl ? BREWERY_FALLBACK : brewery.logoUrl}
+            alt={brewery.name}
+            className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+            onError={() => setImgError(true)}
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-transparent" />
+          <div className="absolute bottom-0 left-0 right-0 p-3">
+            <p className="text-white font-bold text-sm leading-tight line-clamp-2 drop-shadow">{brewery.name}</p>
+          </div>
           {isAuthenticated && (
-            <Button
-              variant="ghost"
-              size="sm"
-              className={`absolute top-2 right-2 h-8 w-8 p-0 z-10 ${isBreweryFavorited ? 'text-red-600 hover:text-red-700' : 'text-gray-400 hover:text-red-600'}`}
-              onClick={handleFavoriteToggle}
-              disabled={favoriteMutation.isPending}
+            <button
+              onClick={(e) => { e.preventDefault(); e.stopPropagation(); favMut.mutate({ action: isFav ? "remove" : "add" }); }}
+              className={`absolute top-2 right-2 w-8 h-8 rounded-full flex items-center justify-center transition-all shadow ${isFav ? "bg-red-500 text-white" : "bg-white/80 text-gray-500 hover:bg-red-50 hover:text-red-500"}`}
             >
-              <Heart className={`w-4 h-4 ${isBreweryFavorited ? 'fill-current' : ''}`} />
-            </Button>
+              <Heart className={`w-4 h-4 ${isFav ? "fill-current" : ""}`} />
+            </button>
           )}
+        </div>
 
-          <div className="relative w-full h-24 mb-3 rounded-lg overflow-hidden bg-gray-100 dark:bg-slate-700">
-            <img
-              src={brewery.logoUrl || "https://images.unsplash.com/photo-1571613316887-6f8d5cbf7ef7?ixlib=rb-4.0.3&auto=format&fit=crop&w=200&h=150"}
-              alt={`Logo ${brewery.name}`}
-              className="w-full h-full object-cover group-hover:scale-105 transition-transform"
-            />
+        <div className="p-3">
+          <div className="flex items-center gap-1.5 text-xs text-gray-500 dark:text-slate-400 mb-2">
+            <span className="text-base leading-none">{flag}</span>
+            <span className="truncate">{italianCountry}</span>
+            {brewery.location && brewery.location !== brewery.country && (
+              <>
+                <span className="text-gray-300 dark:text-slate-600">·</span>
+                <span className="truncate">{brewery.location}</span>
+              </>
+            )}
           </div>
-          
-          <div className="flex-1 flex flex-col">
-            <h3 className="font-semibold text-sm mb-1 line-clamp-1 text-gray-900 dark:text-amber-400 group-hover:text-amber-600 dark:group-hover:text-amber-300 transition-colors">
-              {brewery.name}
-            </h3>
-            
-            <div className="flex items-center gap-1 text-xs text-gray-500 dark:text-slate-400 mb-2">
-              <MapPin className="w-3 h-3 flex-shrink-0" />
-              <span className="line-clamp-1">
-                {brewery.location}, {brewery.region || brewery.country}
-              </span>
-            </div>
-            
-            <div className="flex flex-wrap gap-1 mt-auto">
-              <Badge variant="outline" className="text-xs px-2 py-0.5 h-auto border-gray-200 dark:border-slate-600 text-gray-600 dark:text-slate-400">
-                <Beer className="w-3 h-3 mr-1" />
-                {brewery.beerCount || 0} birre
-              </Badge>
-            </div>
+          <div className="flex items-center gap-1.5">
+            <Beer className="w-3.5 h-3.5 text-amber-500 flex-shrink-0" />
+            <span className="text-xs font-semibold text-amber-600 dark:text-amber-400">
+              {Number(brewery.beerCount || 0).toLocaleString("it-IT")} birre
+            </span>
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
     </Link>
   );
 }
 
-const PAGE_SIZE = 30;
+const PAGE_SIZE = 48;
 
 export default function ExploreBreweries() {
-  const [openCountries, setOpenCountries] = useState<string[]>([]);
-  const [showCounts, setShowCounts] = useState<Record<string, number>>({});
+  const [searchInput, setSearchInput] = useState("");
+  const [debouncedQ, setDebouncedQ] = useState("");
+  const [selectedCountry, setSelectedCountry] = useState("");
+  const [page, setPage] = useState(1);
 
-  const { data: allBreweries, isLoading } = useQuery({
-    queryKey: ["/api/breweries/all"],
-    queryFn: () => fetch("/api/breweries/all").then(res => res.json()),
+  useEffect(() => {
+    const t = setTimeout(() => {
+      setDebouncedQ(searchInput);
+      setPage(1);
+    }, 350);
+    return () => clearTimeout(t);
+  }, [searchInput]);
+
+  const { data: countries = [] } = useQuery<{ country: string; count: number }[]>({
+    queryKey: ["/api/breweries/countries"],
+    staleTime: 10 * 60 * 1000,
   });
 
-  const toggleCountry = (country: string) => {
-    setOpenCountries(prev =>
-      prev.includes(country)
-        ? prev.filter(c => c !== country)
-        : [...prev, country]
-    );
+  const { data, isLoading } = useQuery<{ breweries: any[]; total: number }>({
+    queryKey: ["/api/breweries/explore", debouncedQ, selectedCountry, page],
+    queryFn: () => {
+      const p = new URLSearchParams();
+      if (debouncedQ) p.set("q", debouncedQ);
+      if (selectedCountry) p.set("country", selectedCountry);
+      p.set("page", String(page));
+      p.set("limit", String(PAGE_SIZE));
+      return fetch(`/api/breweries/explore?${p}`).then(r => r.json());
+    },
+    staleTime: 30000,
+  });
+
+  const breweries = data?.breweries || [];
+  const total = data?.total || 0;
+  const totalPages = Math.ceil(total / PAGE_SIZE);
+
+  const topCountries = useMemo(() => {
+    return countries
+      .filter(c => c.country && c.country.trim())
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 24);
+  }, [countries]);
+
+  const handleCountrySelect = useCallback((country: string) => {
+    setSelectedCountry(prev => prev === country ? "" : country);
+    setPage(1);
+  }, []);
+
+  const clearFilters = () => {
+    setSearchInput("");
+    setDebouncedQ("");
+    setSelectedCountry("");
+    setPage(1);
   };
 
-  const { breweriesByCountry, countryList, totalBreweries } = useMemo(() => {
-    if (!Array.isArray(allBreweries)) return { breweriesByCountry: {}, countryList: [], totalBreweries: 0 };
-    const map: Record<string, any[]> = {};
-    for (const brewery of allBreweries) {
-      const country = detectCountry(brewery);
-      if (!map[country]) map[country] = [];
-      map[country].push(brewery);
-    }
-    for (const country of Object.keys(map)) {
-      map[country].sort((a: any, b: any) => {
-        const bc = (b.beerCount || 0) - (a.beerCount || 0);
-        if (bc !== 0) return bc;
-        return a.name.localeCompare(b.name);
-      });
-    }
-    const sorted = Object.keys(map).sort((a, b) => map[b].length - map[a].length);
-    return { breweriesByCountry: map, countryList: sorted, totalBreweries: allBreweries.length };
-  }, [allBreweries]);
+  const hasFilters = debouncedQ || selectedCountry;
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-slate-900">
-      <div className="bg-white dark:bg-slate-900 shadow-sm border-b border-gray-200 dark:border-slate-800">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <div className="flex items-center gap-4">
+      {/* Hero */}
+      <div className="relative bg-gradient-to-br from-amber-600 via-amber-500 to-orange-500 dark:from-amber-800 dark:via-amber-700 dark:to-orange-700 overflow-hidden">
+        <div className="absolute inset-0 opacity-10" style={{ backgroundImage: "url('https://images.unsplash.com/photo-1559526324-593bc073d938?auto=format&fit=crop&w=1200')", backgroundSize: "cover", backgroundPosition: "center" }} />
+        <div className="absolute inset-0 bg-gradient-to-br from-amber-600/90 to-orange-600/80" />
+        <div className="relative max-w-5xl mx-auto px-4 sm:px-6 py-10">
+          <div className="flex items-center gap-3 mb-6">
             <Link href="/">
-              <Button variant="ghost" size="sm" className="text-amber-600 dark:text-amber-400 hover:text-amber-700 hover:bg-amber-50 dark:hover:text-amber-300 dark:hover:bg-amber-500/10 font-medium">
-                <ArrowLeft className="w-4 h-4 mr-2" />
-                Torna alla Home
+              <Button variant="ghost" size="sm" className="text-white/80 hover:text-white hover:bg-white/10">
+                <ArrowLeft className="w-4 h-4 mr-1" />
+                Home
               </Button>
             </Link>
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Esplora Tutti i Birrifici</h1>
-              <p className="text-gray-500 dark:text-slate-400">
-                {totalBreweries > 0 ? `${totalBreweries.toLocaleString('it-IT')} birrifici da tutto il mondo` : 'Scopri birrifici da tutto il mondo organizzati per paese'}
-              </p>
+          </div>
+
+          <div className="text-center mb-8">
+            <div className="flex justify-center mb-3">
+              <div className="bg-white/20 rounded-full p-3">
+                <Globe className="w-8 h-8 text-white" />
+              </div>
             </div>
+            <h1 className="text-3xl sm:text-4xl font-extrabold text-white mb-2 tracking-tight">
+              Esplora i Birrifici del Mondo
+            </h1>
+            <p className="text-amber-100 text-base">
+              {total > 0
+                ? `${total.toLocaleString("it-IT")} birrifici${selectedCountry ? ` in ${getItalianName(selectedCountry)}` : " in tutto il mondo"}`
+                : "Scopri i migliori birrifici artigianali dal mondo"}
+            </p>
+          </div>
+
+          {/* Search bar */}
+          <div className="max-w-xl mx-auto relative">
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 z-10" />
+            <Input
+              value={searchInput}
+              onChange={e => setSearchInput(e.target.value)}
+              placeholder="Cerca birrificio per nome..."
+              className="pl-12 pr-12 py-3 h-12 text-base rounded-xl border-0 shadow-lg bg-white dark:bg-slate-800 text-gray-900 dark:text-white focus-visible:ring-2 focus-visible:ring-white"
+            />
+            {searchInput && (
+              <button
+                onClick={() => { setSearchInput(""); setDebouncedQ(""); setPage(1); }}
+                className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            )}
           </div>
         </div>
       </div>
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {isLoading ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {[...Array(9)].map((_, i) => (
-              <div key={i} className="bg-gray-100 dark:bg-slate-800 rounded-lg h-48 animate-pulse" />
+      {/* Country pills */}
+      <div className="sticky top-0 z-20 bg-white dark:bg-slate-900 border-b border-gray-200 dark:border-slate-800 shadow-sm">
+        <div className="max-w-5xl mx-auto px-4 py-3">
+          <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
+            <button
+              onClick={() => { setSelectedCountry(""); setPage(1); }}
+              className={`flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium transition-all border ${
+                !selectedCountry
+                  ? "bg-amber-500 text-white border-amber-500 shadow-sm"
+                  : "bg-white dark:bg-slate-800 text-gray-600 dark:text-slate-300 border-gray-200 dark:border-slate-700 hover:border-amber-300 hover:text-amber-600"
+              }`}
+            >
+              <Globe className="w-3.5 h-3.5" />
+              <span>Tutti</span>
+            </button>
+            {topCountries.map(c => (
+              <button
+                key={c.country}
+                onClick={() => handleCountrySelect(c.country)}
+                className={`flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium transition-all border ${
+                  selectedCountry === c.country
+                    ? "bg-amber-500 text-white border-amber-500 shadow-sm"
+                    : "bg-white dark:bg-slate-800 text-gray-600 dark:text-slate-300 border-gray-200 dark:border-slate-700 hover:border-amber-300 hover:text-amber-600"
+                }`}
+              >
+                <span>{getFlag(c.country)}</span>
+                <span>{getItalianName(c.country)}</span>
+                <span className={`text-xs ${selectedCountry === c.country ? "text-amber-100" : "text-gray-400"}`}>
+                  {c.count.toLocaleString("it-IT")}
+                </span>
+              </button>
             ))}
           </div>
-        ) : (
-          <div className="space-y-6">
-            {countryList.map(country => {
-              const countryBreweries = breweriesByCountry[country] || [];
-              if (countryBreweries.length === 0) return null;
-              const limit = showCounts[country] || PAGE_SIZE;
-              const visible = countryBreweries.slice(0, limit);
-              const remaining = countryBreweries.length - limit;
+        </div>
+      </div>
 
-              return (
-                <Collapsible
-                  key={country}
-                  open={openCountries.includes(country)}
-                  onOpenChange={() => toggleCountry(country)}
-                >
-                  <CollapsibleTrigger asChild>
-                    <Button
-                      variant="outline"
-                      className="w-full justify-between text-left h-auto p-4 mb-4 bg-white dark:bg-slate-800 border-gray-200 dark:border-slate-700 text-gray-900 dark:text-white hover:bg-amber-50 hover:text-gray-900 hover:border-amber-200 dark:hover:bg-slate-700 dark:hover:text-white dark:hover:border-amber-500/30"
-                    >
-                      <div className="flex items-center gap-3">
-                        <Beer className="w-5 h-5 text-amber-500" />
-                        <span className="font-semibold text-lg">{country}</span>
-                        <Badge variant="secondary" className="bg-gray-100 dark:bg-slate-700 text-gray-600 dark:text-slate-300">{countryBreweries.length.toLocaleString('it-IT')} birrifici</Badge>
-                      </div>
-                      <div className="text-gray-400 dark:text-slate-500">
-                        {openCountries.includes(country) ? '−' : '+'}
-                      </div>
-                    </Button>
-                  </CollapsibleTrigger>
-
-                  <CollapsibleContent>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 mb-4">
-                      {visible.map((brewery: any) => (
-                        <BrewerySquareCard key={brewery.id} brewery={brewery} />
-                      ))}
-                    </div>
-                    {remaining > 0 && (
-                      <div className="flex justify-center mb-6">
-                        <Button
-                          variant="outline"
-                          className="border-amber-300 text-amber-700 dark:border-amber-600 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-900/20"
-                          onClick={() => setShowCounts(prev => ({ ...prev, [country]: limit + PAGE_SIZE }))}
-                        >
-                          Mostra altri {Math.min(remaining, PAGE_SIZE)} birrifici ({remaining.toLocaleString('it-IT')} rimasti)
-                        </Button>
-                      </div>
-                    )}
-                  </CollapsibleContent>
-                </Collapsible>
-              );
-            })}
+      {/* Content */}
+      <main className="max-w-5xl mx-auto px-4 sm:px-6 py-6">
+        {hasFilters && (
+          <div className="flex items-center gap-2 mb-4">
+            <span className="text-sm text-gray-500 dark:text-slate-400">Filtri attivi:</span>
+            {debouncedQ && (
+              <Badge variant="secondary" className="gap-1">
+                "{debouncedQ}"
+                <X className="w-3 h-3 cursor-pointer" onClick={() => { setSearchInput(""); setDebouncedQ(""); setPage(1); }} />
+              </Badge>
+            )}
+            {selectedCountry && (
+              <Badge variant="secondary" className="gap-1">
+                {getFlag(selectedCountry)} {getItalianName(selectedCountry)}
+                <X className="w-3 h-3 cursor-pointer" onClick={() => { setSelectedCountry(""); setPage(1); }} />
+              </Badge>
+            )}
+            <button onClick={clearFilters} className="text-xs text-amber-600 hover:text-amber-700 font-medium">
+              Cancella tutti
+            </button>
           </div>
+        )}
+
+        {isLoading ? (
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-4 gap-4">
+            {[...Array(12)].map((_, i) => (
+              <div key={i} className="rounded-2xl overflow-hidden animate-pulse">
+                <div className="h-44 bg-gray-200 dark:bg-slate-700" />
+                <div className="p-3 bg-white dark:bg-slate-800 space-y-2">
+                  <div className="h-3 bg-gray-200 dark:bg-slate-700 rounded w-3/4" />
+                  <div className="h-3 bg-gray-200 dark:bg-slate-700 rounded w-1/2" />
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : breweries.length === 0 ? (
+          <div className="text-center py-20">
+            <Globe className="w-16 h-16 mx-auto mb-4 text-gray-200 dark:text-slate-700" />
+            <p className="font-semibold text-gray-600 dark:text-slate-300 text-lg">Nessun birrificio trovato</p>
+            <p className="text-gray-400 text-sm mt-1">Prova con un nome diverso o un altro paese</p>
+            <Button onClick={clearFilters} variant="outline" className="mt-4 border-amber-300 text-amber-600 hover:bg-amber-50">
+              Rimuovi filtri
+            </Button>
+          </div>
+        ) : (
+          <>
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+              {breweries.map((brewery: any) => (
+                <BreweryCard key={brewery.id} brewery={brewery} />
+              ))}
+            </div>
+
+            {/* Pagination */}
+            {totalPages > 1 && (
+              <div className="flex items-center justify-center gap-3 mt-8">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  disabled={page <= 1}
+                  onClick={() => { setPage(p => p - 1); window.scrollTo({ top: 0, behavior: "smooth" }); }}
+                  className="border-amber-200 text-amber-700 dark:border-amber-700 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-900/20 disabled:opacity-40"
+                >
+                  <ChevronLeft className="w-4 h-4 mr-1" />
+                  Precedente
+                </Button>
+                <span className="text-sm text-gray-500 dark:text-slate-400 px-2">
+                  Pagina <span className="font-semibold text-gray-800 dark:text-white">{page}</span> di{" "}
+                  <span className="font-semibold text-gray-800 dark:text-white">{totalPages.toLocaleString("it-IT")}</span>
+                </span>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  disabled={page >= totalPages}
+                  onClick={() => { setPage(p => p + 1); window.scrollTo({ top: 0, behavior: "smooth" }); }}
+                  className="border-amber-200 text-amber-700 dark:border-amber-700 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-900/20 disabled:opacity-40"
+                >
+                  Successiva
+                  <ChevronRight className="w-4 h-4 ml-1" />
+                </Button>
+              </div>
+            )}
+          </>
         )}
       </main>
     </div>

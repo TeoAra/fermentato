@@ -55,7 +55,7 @@ import {
   type InsertBreweryEvent,
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, and, desc, like, inArray, sql, or, asc, ilike } from "drizzle-orm";
+import { eq, and, desc, like, inArray, sql, or, asc, ilike, isNotNull, ne } from "drizzle-orm";
 import { memoryStorageInstance } from "./memoryStorage";
 
 // Mapping utilities for field conversion
@@ -201,6 +201,8 @@ export interface IStorage {
   updateBrewery(id: number, updates: Partial<InsertBrewery>): Promise<Brewery>;
   deleteBrewery(id: number): Promise<void>;
   searchBreweries(query: string): Promise<Brewery[]>;
+  exploreBreweries(q: string, country: string, page: number, limit: number): Promise<{ breweries: any[]; total: number }>;
+  getBreweryCountries(): Promise<{ country: string; count: number }[]>;
 
   // Beer operations
   getBeers(): Promise<Beer[]>;
@@ -502,6 +504,49 @@ export class DatabaseStorage implements IStorage {
     const result = await db.select().from(breweries).where(inArray(breweries.id, ids));
     result.sort((a, b) => idOrder.indexOf(a.id) - idOrder.indexOf(b.id));
     return result;
+  }
+
+  async exploreBreweries(q: string, country: string, page: number, limit: number): Promise<{ breweries: any[]; total: number }> {
+    const conditions: any[] = [];
+    if (q && q.length >= 2) conditions.push(ilike(breweries.name, `%${q}%`));
+    if (country) conditions.push(ilike(breweries.country, country));
+    const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
+    const offset = (page - 1) * limit;
+
+    const [countResult, rows] = await Promise.all([
+      db.select({ count: sql<number>`COUNT(*)::int` }).from(breweries).where(whereClause),
+      db
+        .select({
+          id: breweries.id,
+          name: breweries.name,
+          location: breweries.location,
+          region: breweries.region,
+          country: breweries.country,
+          logoUrl: breweries.logoUrl,
+          description: breweries.description,
+          websiteUrl: breweries.websiteUrl,
+          beerCount: sql<number>`COUNT(${beers.id})`,
+        })
+        .from(breweries)
+        .leftJoin(beers, eq(breweries.id, beers.breweryId))
+        .where(whereClause)
+        .groupBy(breweries.id)
+        .orderBy(desc(sql`COUNT(${beers.id})`), asc(breweries.name))
+        .limit(limit)
+        .offset(offset),
+    ]);
+
+    return { breweries: rows, total: Number(countResult[0]?.count || 0) };
+  }
+
+  async getBreweryCountries(): Promise<{ country: string; count: number }[]> {
+    const rows = await db
+      .select({ country: breweries.country, count: sql<number>`COUNT(*)::int` })
+      .from(breweries)
+      .where(and(isNotNull(breweries.country), ne(breweries.country, "")))
+      .groupBy(breweries.country)
+      .orderBy(desc(sql`COUNT(*)`));
+    return rows.map(r => ({ country: r.country!, count: Number(r.count) }));
   }
 
   // Beer operations
@@ -1679,6 +1724,20 @@ class StorageWrapper implements IStorage {
     return this.dbCall(
       () => this.databaseStorage.searchBreweries(query),
       () => memoryStorageInstance.searchBreweries(query)
+    );
+  }
+
+  async exploreBreweries(q: string, country: string, page: number, limit: number): Promise<{ breweries: any[]; total: number }> {
+    return this.dbCall(
+      () => this.databaseStorage.exploreBreweries(q, country, page, limit),
+      async () => ({ breweries: [], total: 0 })
+    );
+  }
+
+  async getBreweryCountries(): Promise<{ country: string; count: number }[]> {
+    return this.dbCall(
+      () => this.databaseStorage.getBreweryCountries(),
+      async () => []
     );
   }
 

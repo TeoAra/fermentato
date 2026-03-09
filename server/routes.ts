@@ -113,6 +113,32 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Explore breweries (paginated, filterable by name + country)
+  app.get("/api/breweries/explore", async (req, res) => {
+    try {
+      const q = (req.query.q as string) || "";
+      const country = (req.query.country as string) || "";
+      const page = Math.max(1, parseInt(req.query.page as string) || 1);
+      const limit = Math.min(60, parseInt(req.query.limit as string) || 48);
+      const result = await storage.exploreBreweries(q, country, page, limit);
+      res.json(result);
+    } catch (error) {
+      console.error("Error exploring breweries:", error);
+      res.status(500).json({ message: "Failed to explore breweries" });
+    }
+  });
+
+  // Get all brewery countries with counts
+  app.get("/api/breweries/countries", async (req, res) => {
+    try {
+      const countries = await storage.getBreweryCountries();
+      res.json(countries);
+    } catch (error) {
+      console.error("Error fetching brewery countries:", error);
+      res.status(500).json({ message: "Failed to fetch brewery countries" });
+    }
+  });
+
   // Search breweries (public, for registration)
   app.get("/api/breweries/search", async (req, res) => {
     try {
