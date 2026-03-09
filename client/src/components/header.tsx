@@ -133,7 +133,7 @@ export default function Header() {
             {/* Logo - Fixed Width */}
             <div className="col-span-2">
               <Link href="/" className="flex items-center gap-2" data-testid="logo-desktop">
-                <Beer className="h-8 w-8 text-amber-500" />
+                <img src="/logo-icon.png" alt="Fermenta.to" className="h-8 w-8 dark:invert" />
                 <span className="text-xl font-bold text-gray-900 dark:text-white">
                   Fermenta<span className="text-amber-500">.to</span>
                 </span>
