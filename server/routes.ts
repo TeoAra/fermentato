@@ -13,6 +13,7 @@ import { z } from "zod";
 import webpush from "web-push";
 import { initVapid, sendPushToUser, sendPushToUserImmediate, sendPushToAdmins } from "./push-utils";
 import { testSmtpConnection } from "./email";
+import { translateToItalian, looksItalian } from "./translate";
 
 const VAPID_PUBLIC_KEY = process.env.VAPID_PUBLIC_KEY || '';
 
@@ -149,6 +150,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Beer not found" });
       }
       res.json(beer);
+      // Auto-translate description in background if not Italian
+      if (beer.description && !looksItalian(beer.description)) {
+        translateToItalian(beer.description).then(async (translated) => {
+          if (translated) {
+            await db.execute(sql`UPDATE beers SET description = ${translated} WHERE id = ${beerId}`);
+          }
+        }).catch(() => {});
+      }
     } catch (error) {
       console.error("Error fetching beer:", error);
       res.status(500).json({ message: "Failed to fetch beer" });
@@ -1714,6 +1723,43 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error fetching admin stats:", error);
       res.status(500).json({ message: "Failed to fetch stats" });
+    }
+  });
+
+  // Batch translate beer descriptions to Italian
+  app.post('/api/admin/translate-beers', isAuthenticated, isAdmin, async (req: any, res) => {
+    const batchSize = Math.min(parseInt(req.query.batch as string) || 20, 50);
+    const offsetVal = parseInt(req.query.offset as string) || 0;
+    try {
+      const rows = await db.execute(sql`
+        SELECT id, description FROM beers
+        WHERE description IS NOT NULL
+          AND description != ''
+          AND length(description) > 10
+        ORDER BY id
+        LIMIT ${batchSize} OFFSET ${offsetVal}
+      `) as any;
+      const beerList = rows.rows || rows;
+      let translated = 0;
+      let skipped = 0;
+      for (const beer of beerList) {
+        if (looksItalian(beer.description)) {
+          skipped++;
+          continue;
+        }
+        const result = await translateToItalian(beer.description);
+        if (result) {
+          await db.execute(sql`UPDATE beers SET description = ${result} WHERE id = ${beer.id}`);
+          translated++;
+        } else {
+          skipped++;
+        }
+        await new Promise(r => setTimeout(r, 300));
+      }
+      res.json({ translated, skipped, processed: beerList.length, nextOffset: offsetVal + beerList.length });
+    } catch (error) {
+      console.error("Translation batch error:", error);
+      res.status(500).json({ message: "Translation failed", error: String(error) });
     }
   });
 

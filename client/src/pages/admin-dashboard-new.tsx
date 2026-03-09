@@ -1,6 +1,7 @@
 import { useAuth } from "@/hooks/useAuth";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation } from "@tanstack/react-query";
 import { useState } from "react";
+import { apiRequest } from "@/lib/queryClient";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -23,7 +24,11 @@ import {
   RefreshCw,
   UserPlus,
   MapPin,
-  Clock
+  Clock,
+  Languages,
+  Play,
+  CheckCircle2,
+  SkipForward
 } from "lucide-react";
 import { Link } from "wouter";
 import { formatDistanceToNow } from "date-fns";
@@ -50,6 +55,19 @@ interface GlobalStats {
 export default function AdminDashboardNew() {
   const { user, isAuthenticated, isLoading } = useAuth();
   const [activityFilter, setActivityFilter] = useState<string>('all');
+  const [translateResult, setTranslateResult] = useState<{ translated: number; skipped: number; processed: number; nextOffset: number } | null>(null);
+  const [translateOffset, setTranslateOffset] = useState(0);
+
+  const translateMutation = useMutation({
+    mutationFn: async (offset: number) => {
+      const res = await apiRequest('POST', `/api/admin/translate-beers?batch=20&offset=${offset}`);
+      return res.json();
+    },
+    onSuccess: (data) => {
+      setTranslateResult(data);
+      setTranslateOffset(data.nextOffset);
+    },
+  });
   
   const { data: pendingCount } = useQuery<{ count: number }>({
     queryKey: ["/api/admin/publican-requests/pending-count"],
@@ -346,6 +364,66 @@ export default function AdminDashboardNew() {
         </Card>
 
       </div>
+
+      {/* Translation Tool */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Languages className="w-5 h-5 text-teal-500" />
+            Traduzione Automatica Descrizioni
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            <p className="text-sm text-gray-500 dark:text-gray-400">
+              Traduci le descrizioni delle birre dall'inglese all'italiano in lotti da 20 alla volta (via MyMemory API).
+              Le descrizioni già in italiano vengono saltate automaticamente.
+            </p>
+            <div className="flex items-center gap-3 flex-wrap">
+              <Button
+                onClick={() => translateMutation.mutate(translateOffset)}
+                disabled={translateMutation.isPending}
+                className="bg-teal-600 hover:bg-teal-700 text-white"
+              >
+                {translateMutation.isPending ? (
+                  <><RefreshCw className="w-4 h-4 mr-2 animate-spin" /> Traduzione in corso...</>
+                ) : (
+                  <><Play className="w-4 h-4 mr-2" /> Traduci prossimo batch (20)</>
+                )}
+              </Button>
+              {translateOffset > 0 && (
+                <Button variant="outline" size="sm" onClick={() => { setTranslateOffset(0); setTranslateResult(null); }}>
+                  <SkipForward className="w-4 h-4 mr-1" /> Reset offset
+                </Button>
+              )}
+              {translateOffset > 0 && (
+                <span className="text-sm text-gray-400">Offset corrente: {translateOffset.toLocaleString()}</span>
+              )}
+            </div>
+            {translateResult && (
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mt-2">
+                {[
+                  { label: 'Tradotte', value: translateResult.translated, icon: CheckCircle2, color: 'text-teal-600 dark:text-teal-400', bg: 'bg-teal-50 dark:bg-teal-900/20' },
+                  { label: 'Saltate (già IT)', value: translateResult.skipped, icon: SkipForward, color: 'text-gray-500', bg: 'bg-gray-50 dark:bg-gray-800/20' },
+                  { label: 'Processate', value: translateResult.processed, icon: RefreshCw, color: 'text-blue-600 dark:text-blue-400', bg: 'bg-blue-50 dark:bg-blue-900/20' },
+                  { label: 'Prossimo offset', value: translateResult.nextOffset, icon: Languages, color: 'text-amber-600 dark:text-amber-400', bg: 'bg-amber-50 dark:bg-amber-900/20' },
+                ].map(({ label, value, icon: Icon, color, bg }) => (
+                  <div key={label} className={`rounded-lg p-3 ${bg}`}>
+                    <div className="flex items-center gap-2 mb-1">
+                      <Icon className={`w-4 h-4 ${color}`} />
+                      <span className="text-xs text-gray-500">{label}</span>
+                    </div>
+                    <span className={`text-xl font-bold ${color}`}>{value.toLocaleString('it-IT')}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+            {translateMutation.isError && (
+              <p className="text-sm text-red-500">Errore durante la traduzione. Riprova tra qualche secondo.</p>
+            )}
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Recent Activity */}
       <Card>
