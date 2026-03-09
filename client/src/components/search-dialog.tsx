@@ -493,6 +493,21 @@ export default function SearchDialog({ isOpen, onClose }: SearchDialogProps) {
                   </p>
                 </div>
               )}
+
+              {/* Ricerca Avanzata CTA */}
+              {((searchResults.pubs?.length || 0) + (searchResults.breweries?.length || 0) + (searchResults.beers?.length || 0)) > 0 && (
+                <div className="pt-2 pb-1">
+                  <a
+                    href={`/search?q=${encodeURIComponent(debouncedSearch)}`}
+                    onClick={handleClose}
+                    className="flex items-center justify-center gap-2 w-full py-3 px-4 rounded-xl bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-900/20 dark:to-orange-900/20 border border-amber-200 dark:border-amber-800 text-amber-700 dark:text-amber-300 hover:from-amber-100 hover:to-orange-100 dark:hover:from-amber-900/30 dark:hover:to-orange-900/30 transition-all duration-200 text-sm font-medium"
+                  >
+                    <Search className="h-4 w-4" />
+                    Vai alla Ricerca Avanzata
+                    <ArrowRight className="h-4 w-4" />
+                  </a>
+                </div>
+              )}
             </div>
           ) : (
             <div className="p-6 text-center">

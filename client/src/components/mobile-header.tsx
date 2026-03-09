@@ -1,4 +1,4 @@
-import { Menu, X, LogOut, LogIn, User, Settings, Store, Beer, Shield, ChevronRight } from "lucide-react";
+import { Menu, X, LogOut, LogIn, User, Settings, Store, Beer, Shield, Search } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
@@ -7,6 +7,8 @@ import { apiRequest, queryClient } from "@/lib/queryClient";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import type { User as UserType } from "@shared/schema";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { useState } from "react";
+import SearchDialog from "@/components/search-dialog";
 
 interface MobileHeaderProps {
   onMenuToggle: () => void;
@@ -32,6 +34,7 @@ export function MobileHeader({ onMenuToggle, isMenuOpen }: MobileHeaderProps) {
   const typedUser = user as UserType | undefined;
   const isAdmin = typedUser?.userType === 'admin';
   const hasMultipleRoles = (typedUser?.roles?.length ?? 0) > 1;
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
 
   const { data: rolesData } = useQuery<{ roles: string[]; activeRole: string }>({
     queryKey: ["/api/auth/roles"],
@@ -66,6 +69,15 @@ export function MobileHeader({ onMenuToggle, isMenuOpen }: MobileHeaderProps) {
 
           {/* Actions */}
           <div className="flex items-center gap-1">
+            {/* Search button */}
+            <button
+              onClick={() => setIsSearchOpen(true)}
+              className="p-2 text-gray-600 dark:text-gray-300 hover:text-amber-600 dark:hover:text-amber-400 transition-colors"
+              aria-label="Ricerca avanzata"
+            >
+              <Search className="h-5 w-5" />
+            </button>
+
             {isAuthenticated && typedUser && (
               <Link href="/dashboard">
                 <Avatar className="h-7 w-7">
@@ -217,7 +229,7 @@ export function MobileHeader({ onMenuToggle, isMenuOpen }: MobileHeaderProps) {
         )}
       </header>
 
-      {/* Rimuovo il Search Dialog dal mobile header perché ora è gestito dalla bottom nav */}
+      <SearchDialog isOpen={isSearchOpen} onClose={() => setIsSearchOpen(false)} />
     </>
   );
 }

@@ -193,27 +193,37 @@ export default function Header() {
 
             {/* Search Bar */}
             <div className="col-span-3" ref={searchRef}>
-              <form onSubmit={handleSearch} className="relative max-w-xs ml-auto">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-                <Input
-                  type="search"
-                  placeholder="Cerca pub, birre..."
-                  value={searchQuery}
-                  onChange={(e) => {
-                    setSearchQuery(e.target.value);
-                    setShowResults(e.target.value.length > 2);
-                  }}
-                  onFocus={() => setShowResults(searchQuery.length > 2)}
-                  className="pl-10 pr-4 bg-white/60 dark:bg-slate-800/60 border-gray-200 dark:border-slate-700"
-                  data-testid="search-input-desktop"
-                />
+              <div className="relative max-w-xs ml-auto">
+                <form onSubmit={handleSearch} className="relative">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+                  <Input
+                    type="search"
+                    placeholder="Cerca pub, birre..."
+                    value={searchQuery}
+                    onChange={(e) => {
+                      setSearchQuery(e.target.value);
+                      setShowResults(e.target.value.length > 2);
+                    }}
+                    onFocus={() => setShowResults(searchQuery.length > 2)}
+                    className="pl-10 pr-28 bg-white/60 dark:bg-slate-800/60 border-gray-200 dark:border-slate-700"
+                    data-testid="search-input-desktop"
+                  />
+                  <Link href={searchQuery.trim() ? `/search?q=${encodeURIComponent(searchQuery.trim())}` : "/search"}>
+                    <button
+                      type="button"
+                      className="absolute right-2 top-1/2 -translate-y-1/2 text-xs text-amber-600 dark:text-amber-400 hover:text-amber-700 dark:hover:text-amber-300 font-medium whitespace-nowrap transition-colors"
+                    >
+                      Avanzata
+                    </button>
+                  </Link>
+                </form>
                 {showResults && (
                   <SearchResults 
                     query={searchQuery} 
                     onClose={() => setShowResults(false)} 
                   />
                 )}
-              </form>
+              </div>
             </div>
 
             {/* User Section */}

@@ -342,4 +342,10 @@
 }
 .dark .pac-item       { border-color: hsl(215, 20%, 18%); }
 .dark .pac-item:hover { background-color: hsl(215, 25%, 13%); }
+
+/* Fix Leaflet z-index so modals/dialogs render above the map */
+.leaflet-pane         { z-index: 4 !important; }
+.leaflet-top,
+.leaflet-bottom       { z-index: 5 !important; }
+.leaflet-control      { z-index: 5 !important; }
 .dark .pac-item-query { color: hsl(210, 30%, 95%); }
