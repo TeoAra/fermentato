@@ -179,9 +179,9 @@ export default function SearchPage() {
           </form>
         </div>
 
-        {/* Advanced filters panel — desktop only (mobile uses bottom bar) */}
+        {/* Advanced filters panel */}
         {showFilters && (
-          <div className="hidden sm:block mb-4 p-4 rounded-xl bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 shadow-sm space-y-3">
+          <div className="mb-4 p-4 rounded-xl bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 shadow-sm space-y-3">
             <div className="flex items-center justify-between">
               <span className="text-sm font-semibold text-gray-700 dark:text-slate-200 flex items-center gap-1.5">
                 <SlidersHorizontal className="w-4 h-4 text-amber-500" />
@@ -507,53 +507,6 @@ export default function SearchPage() {
 
       {/* Sticky mobile bottom bar — replaces BottomNavigation on /search */}
       <div className="sm:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/95 dark:bg-slate-900/95 backdrop-blur-sm border-t border-gray-200 dark:border-slate-700 shadow-lg">
-        {/* Filter panel (slides up when open) */}
-        {showFilters && (
-          <div className="p-3 border-b border-gray-100 dark:border-slate-800 bg-white dark:bg-slate-900 space-y-2 max-h-72 overflow-y-auto">
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-semibold text-gray-600 dark:text-slate-300 uppercase tracking-wide">Filtri avanzati</span>
-              {hasActiveFilters && (
-                <button onClick={clearFilters} className="text-xs text-amber-600 font-medium">Cancella ({activeFilterCount})</button>
-              )}
-            </div>
-            {/* Quick filter chips */}
-            <div className="flex flex-wrap gap-1.5">
-              <button
-                onClick={() => setFilterGlutenFree(f => !f)}
-                className={`px-2.5 py-1 rounded-full text-xs font-medium border transition-all ${filterGlutenFree ? "bg-green-500 text-white border-green-500" : "border-gray-200 dark:border-slate-600 text-gray-600 dark:text-slate-300"}`}
-              >🌾 Senza glutine</button>
-              <button
-                onClick={() => setFilterAlcoholFree(f => !f)}
-                className={`px-2.5 py-1 rounded-full text-xs font-medium border transition-all ${filterAlcoholFree ? "bg-blue-500 text-white border-blue-500" : "border-gray-200 dark:border-slate-600 text-gray-600 dark:text-slate-300"}`}
-              >💧 Analcolica</button>
-            </div>
-            {/* ABV quick presets */}
-            <div className="flex flex-wrap gap-1.5">
-              <span className="text-xs text-gray-400 self-center">ABV:</span>
-              {[["<5%", "", "4.9"], [">7%", "7", ""], [">9%", "9", ""]].map(([label, min, max]) => (
-                <button
-                  key={label}
-                  onClick={() => { setFilterMinAbv(filterMinAbv === min && filterMaxAbv === max ? "" : min); setFilterMaxAbv(filterMinAbv === min && filterMaxAbv === max ? "" : max); }}
-                  className={`px-2 py-0.5 rounded-full text-xs font-medium border transition-all ${filterMinAbv === min && filterMaxAbv === max ? "bg-orange-500 text-white border-orange-500" : "border-gray-200 dark:border-slate-600 text-gray-500"}`}
-                >{label}</button>
-              ))}
-            </div>
-            {/* Style pills */}
-            {popularStyles && popularStyles.length > 0 && (
-              <div className="flex flex-wrap gap-1.5">
-                <span className="text-xs text-gray-400 self-center">Stile:</span>
-                {popularStyles.slice(0, 12).map(({ style }) => (
-                  <button
-                    key={style}
-                    onClick={() => setFilterStyle(filterStyle === style ? "" : style)}
-                    className={`px-2 py-0.5 rounded-full text-xs font-medium border transition-all ${filterStyle === style ? "bg-amber-500 text-white border-amber-500" : "border-gray-200 dark:border-slate-600 text-gray-500"}`}
-                  >{style}</button>
-                ))}
-              </div>
-            )}
-          </div>
-        )}
-
         {/* Bottom tab bar */}
         <div className="flex items-center px-2 py-2 gap-1">
           {tabs.map(tab => {

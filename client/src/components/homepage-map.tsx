@@ -1,5 +1,5 @@
-import { useEffect, useRef, useState, useCallback, useMemo } from "react";
-import { MapPin, Loader2, LocateFixed } from "lucide-react";
+import { useEffect, useRef, useState, useMemo } from "react";
+import { MapPin } from "lucide-react";
 import { MapContainer, TileLayer, Marker, Popup, useMap } from "react-leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
@@ -43,12 +43,6 @@ function createDivIcon(color: string, logoUrl?: string | null): L.DivIcon {
   return L.divIcon({ html, iconSize: [40, 48], iconAnchor: [20, 48], popupAnchor: [0, -52], className: "" });
 }
 
-const userIcon = L.divIcon({
-  html: `<div style="width:18px;height:18px;background:#4285F4;border:3px solid white;border-radius:50%;box-shadow:0 0 0 5px rgba(66,133,244,0.25),0 2px 4px rgba(0,0,0,0.3);"></div>`,
-  iconSize: [18, 18],
-  iconAnchor: [9, 9],
-  className: "",
-});
 
 interface MapPub {
   id: number;
@@ -78,6 +72,7 @@ interface HomepageMapProps {
   onLocate?: (location: { lat: number; lng: number }) => void;
 }
 
+
 function MapController({ userLocation, hasData }: { userLocation?: { lat: number; lng: number } | null; hasData: boolean }) {
   const map = useMap();
   const hasCenteredRef = useRef(false);
@@ -99,10 +94,9 @@ function MapController({ userLocation, hasData }: { userLocation?: { lat: number
   return null;
 }
 
-export default function HomepageMap({ pubs, breweries, userLocation, isLoading, onLocate }: HomepageMapProps) {
+export default function HomepageMap({ pubs, breweries, userLocation, isLoading }: HomepageMapProps) {
   const sectionRef = useRef<HTMLDivElement>(null);
   const [isVisible, setIsVisible] = useState(false);
-  const [isLocating, setIsLocating] = useState(false);
 
   useEffect(() => {
     const section = sectionRef.current;
@@ -119,20 +113,6 @@ export default function HomepageMap({ pubs, breweries, userLocation, isLoading, 
     observer.observe(section);
     return () => observer.disconnect();
   }, []);
-
-  const handleGeolocate = useCallback(() => {
-    if (!navigator.geolocation) return;
-    setIsLocating(true);
-    navigator.geolocation.getCurrentPosition(
-      (position) => {
-        const loc = { lat: position.coords.latitude, lng: position.coords.longitude };
-        setIsLocating(false);
-        onLocate?.(loc);
-      },
-      () => { setIsLocating(false); },
-      { enableHighAccuracy: true, timeout: 10000 }
-    );
-  }, [onLocate]);
 
   const geoFilteredPubs = useMemo(() =>
     pubs.filter(p => p.latitude && p.longitude && !isNaN(parseFloat(p.latitude)) && !isNaN(parseFloat(p.longitude))),
@@ -256,27 +236,10 @@ export default function HomepageMap({ pubs, breweries, userLocation, isLoading, 
                 </Marker>
               ))}
 
-              {userLocation && (
-                <Marker position={[userLocation.lat, userLocation.lng]} icon={userIcon}>
-                  <Popup><span style={{ fontSize: "13px" }}>La tua posizione</span></Popup>
-                </Marker>
-              )}
             </MapContainer>
             </div>
           )}
 
-          <button
-            onClick={handleGeolocate}
-            disabled={isLocating}
-            className="absolute top-4 left-4 z-[1000] bg-white dark:bg-gray-800 shadow-lg rounded-xl p-3 hover:bg-gray-50 dark:hover:bg-gray-700 transition-all duration-200 border border-gray-200 dark:border-gray-600 group disabled:opacity-70"
-            title="Trova la mia posizione"
-          >
-            {isLocating ? (
-              <Loader2 className="w-5 h-5 animate-spin text-blue-500" />
-            ) : (
-              <LocateFixed className={`w-5 h-5 transition-colors ${userLocation ? "text-blue-500" : "text-gray-500 dark:text-gray-400 group-hover:text-blue-500"}`} />
-            )}
-          </button>
         </div>
       </div>
     </section>
