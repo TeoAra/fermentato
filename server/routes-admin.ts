@@ -932,4 +932,120 @@ export function registerAdminRoutes(app: Express) {
       res.status(500).json({ message: "Errore durante il rifiuto" });
     }
   });
+
+  // ========================================
+  // Admin Search endpoints (for AdminContentManager)
+  // ========================================
+
+  app.get("/api/admin/beers/search", isAuthenticated, isAdmin, async (req: any, res) => {
+    try {
+      const { q, limit = 50 } = req.query;
+      if (!q || String(q).trim().length < 1) return res.json([]);
+
+      const pattern = `%${q}%`;
+      const results = await db
+        .select({
+          id: beers.id,
+          name: beers.name,
+          style: beers.style,
+          abv: beers.abv,
+          ibu: beers.ibu,
+          description: beers.description,
+          imageUrl: beers.imageUrl,
+          isGlutenFree: beers.isGlutenFree,
+          isAlcoholFree: beers.isAlcoholFree,
+          brewery: {
+            id: breweries.id,
+            name: breweries.name,
+            logoUrl: breweries.logoUrl,
+          },
+        })
+        .from(beers)
+        .leftJoin(breweries, eq(beers.breweryId, breweries.id))
+        .where(
+          or(
+            ilike(beers.name, pattern),
+            ilike(breweries.name, pattern),
+            ilike(beers.style, pattern),
+          )
+        )
+        .orderBy(beers.name)
+        .limit(Number(limit));
+
+      res.json(results);
+    } catch (error) {
+      console.error("Error searching beers:", error);
+      res.status(500).json({ message: "Errore nella ricerca birre" });
+    }
+  });
+
+  app.get("/api/admin/pubs/search", isAuthenticated, isAdmin, async (req: any, res) => {
+    try {
+      const { q, limit = 50 } = req.query;
+      if (!q || String(q).trim().length < 1) return res.json([]);
+
+      const pattern = `%${q}%`;
+      const results = await db
+        .select()
+        .from(pubs)
+        .where(
+          or(
+            ilike(pubs.name, pattern),
+            ilike(pubs.city, pattern),
+            ilike(pubs.address, pattern),
+          )
+        )
+        .orderBy(pubs.name)
+        .limit(Number(limit));
+
+      res.json(results);
+    } catch (error) {
+      console.error("Error searching pubs:", error);
+      res.status(500).json({ message: "Errore nella ricerca pub" });
+    }
+  });
+
+  // ========================================
+  // Admin DELETE endpoints
+  // ========================================
+
+  app.delete("/api/admin/beers/:id", isAuthenticated, isAdmin, async (req: any, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) return res.status(400).json({ message: "ID non valido" });
+
+      await db.delete(beers).where(eq(beers.id, id));
+      res.json({ message: "Birra eliminata con successo" });
+    } catch (error) {
+      console.error("Error deleting beer:", error);
+      res.status(500).json({ message: "Errore durante l'eliminazione" });
+    }
+  });
+
+  app.delete("/api/admin/breweries/:id", isAuthenticated, isAdmin, async (req: any, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) return res.status(400).json({ message: "ID non valido" });
+
+      await db.delete(beers).where(eq(beers.breweryId, id));
+      await db.delete(breweries).where(eq(breweries.id, id));
+      res.json({ message: "Birrificio e relative birre eliminate con successo" });
+    } catch (error) {
+      console.error("Error deleting brewery:", error);
+      res.status(500).json({ message: "Errore durante l'eliminazione" });
+    }
+  });
+
+  app.delete("/api/admin/pubs/:id", isAuthenticated, isAdmin, async (req: any, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) return res.status(400).json({ message: "ID non valido" });
+
+      await db.delete(pubs).where(eq(pubs.id, id));
+      res.json({ message: "Pub eliminato con successo" });
+    } catch (error) {
+      console.error("Error deleting pub:", error);
+      res.status(500).json({ message: "Errore durante l'eliminazione" });
+    }
+  });
 }

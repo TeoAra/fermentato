@@ -38,6 +38,9 @@ export function BottomNavigation() {
     return () => window.removeEventListener('scroll', handleScroll);
   }, [lastScrollY]);
 
+  // Hide on search page — search has its own mobile bottom bar
+  if (location === '/search') return null;
+
   const typedUser = user as any;
   const activeRole = typedUser?.activeRole || typedUser?.userType || 'customer';
 

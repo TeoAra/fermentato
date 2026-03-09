@@ -118,7 +118,8 @@ export default function SearchPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-amber-50/30 to-orange-50/30 dark:from-gray-950 dark:via-slate-900 dark:to-slate-900">
-      <div className="max-w-3xl mx-auto px-4 py-5">
+      {/* Extra bottom padding on mobile to avoid overlap with sticky search bar */}
+      <div className="max-w-3xl mx-auto px-4 py-5 pb-28 sm:pb-5">
 
         {/* Search bar */}
         <div className="flex items-center gap-2 mb-5">
@@ -144,24 +145,22 @@ export default function SearchPage() {
             <Button type="submit" className="bg-amber-500 hover:bg-amber-600 text-white h-11 rounded-xl shadow-sm px-4">
               Cerca
             </Button>
-            {query.length > 1 && (
-              <Button
-                type="button"
-                variant="outline"
-                size="icon"
-                className={`h-11 w-11 rounded-xl flex-shrink-0 border-gray-200 dark:border-slate-700 ${hasActiveFilters ? "border-amber-400 text-amber-600 bg-amber-50 dark:bg-amber-900/20" : ""}`}
-                onClick={() => setShowFilters(f => !f)}
-                title="Filtri avanzati"
-              >
-                <SlidersHorizontal className="h-4 w-4" />
-                {hasActiveFilters && <span className="absolute top-1 right-1 w-2 h-2 bg-amber-500 rounded-full" />}
-              </Button>
-            )}
+            <Button
+              type="button"
+              variant="outline"
+              size="icon"
+              className={`relative h-11 w-11 rounded-xl flex-shrink-0 border-gray-200 dark:border-slate-700 ${hasActiveFilters ? "border-amber-400 text-amber-600 bg-amber-50 dark:bg-amber-900/20" : ""}`}
+              onClick={() => setShowFilters(f => !f)}
+              title="Filtri avanzati"
+            >
+              <SlidersHorizontal className="h-4 w-4" />
+              {hasActiveFilters && <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-amber-500 rounded-full" />}
+            </Button>
           </form>
         </div>
 
         {/* Advanced filters panel */}
-        {showFilters && query.length > 1 && (
+        {showFilters && (
           <div className="mb-4 p-4 rounded-xl bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 shadow-sm space-y-3">
             <div className="flex items-center justify-between mb-1">
               <span className="text-sm font-semibold text-gray-700 dark:text-slate-200">Filtri avanzati</span>
@@ -437,6 +436,100 @@ export default function SearchPage() {
       </div>
 
       <Footer />
+
+      {/* Sticky mobile bottom bar — replaces BottomNavigation on /search */}
+      <div className="sm:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/95 dark:bg-slate-900/95 backdrop-blur-sm border-t border-gray-200 dark:border-slate-700 shadow-lg">
+        {/* Filter panel (slides up when open) */}
+        {showFilters && (
+          <div className="p-3 border-b border-gray-100 dark:border-slate-800 bg-white dark:bg-slate-900 space-y-2">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-semibold text-gray-600 dark:text-slate-300 uppercase tracking-wide">Filtri avanzati</span>
+              {hasActiveFilters && (
+                <button onClick={clearFilters} className="text-xs text-amber-600 font-medium">Cancella</button>
+              )}
+            </div>
+            {/* Quick filter chips */}
+            <div className="flex flex-wrap gap-1.5">
+              <button
+                onClick={() => setFilterGlutenFree(f => !f)}
+                className={`px-2.5 py-1 rounded-full text-xs font-medium border transition-all ${filterGlutenFree ? "bg-green-500 text-white border-green-500" : "border-gray-200 dark:border-slate-600 text-gray-600 dark:text-slate-300"}`}
+              >🌾 Senza glutine</button>
+              <button
+                onClick={() => setFilterAlcoholFree(f => !f)}
+                className={`px-2.5 py-1 rounded-full text-xs font-medium border transition-all ${filterAlcoholFree ? "bg-blue-500 text-white border-blue-500" : "border-gray-200 dark:border-slate-600 text-gray-600 dark:text-slate-300"}`}
+              >💧 Analcolica</button>
+            </div>
+            {availableStyles.length > 0 && (
+              <div className="relative">
+                <select
+                  value={filterStyle}
+                  onChange={e => setFilterStyle(e.target.value)}
+                  className="w-full text-xs border border-gray-200 dark:border-slate-600 rounded-lg px-3 py-2 bg-white dark:bg-slate-800 text-gray-700 dark:text-slate-200 appearance-none"
+                >
+                  <option value="">Tutti gli stili</option>
+                  {availableStyles.map(s => <option key={s} value={s}>{s}</option>)}
+                </select>
+                <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400 pointer-events-none" />
+              </div>
+            )}
+            {(activeTab === "all" || activeTab === "breweries") && results?.breweries && results.breweries.length > 0 && (
+              <Input
+                value={filterCountry}
+                onChange={e => setFilterCountry(e.target.value)}
+                placeholder="Paese birrificio (es. Italia, Germany...)"
+                className="h-8 text-xs border-gray-200 dark:border-slate-600 bg-white dark:bg-slate-800"
+              />
+            )}
+          </div>
+        )}
+
+        {/* Tab bar + filter button */}
+        <div className="flex items-stretch h-14 px-1">
+          {tabs.map(tab => {
+            const count = tabCounts[tab.id];
+            const Icon = tab.icon;
+            return (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id)}
+                className={`flex-1 flex flex-col items-center justify-center gap-0.5 py-1 text-xs font-medium transition-colors ${
+                  activeTab === tab.id
+                    ? "text-amber-600 dark:text-amber-400"
+                    : "text-gray-500 dark:text-slate-400"
+                }`}
+              >
+                <div className="relative">
+                  <Icon className="h-4.5 w-4.5" style={{width:'1.15rem', height:'1.15rem'}} />
+                  {count > 0 && activeTab !== tab.id && (
+                    <span className="absolute -top-1 -right-1.5 text-[9px] bg-amber-500 text-white rounded-full w-3.5 h-3.5 flex items-center justify-center leading-none">
+                      {count > 9 ? "9+" : count}
+                    </span>
+                  )}
+                </div>
+                <span className="leading-none">{tab.label}</span>
+                {activeTab === tab.id && (
+                  <span className="w-1 h-1 rounded-full bg-amber-500 mt-0.5" />
+                )}
+              </button>
+            );
+          })}
+          {/* Filter toggle button */}
+          <button
+            onClick={() => setShowFilters(f => !f)}
+            className={`flex flex-col items-center justify-center gap-0.5 py-1 px-3 text-xs font-medium border-l border-gray-100 dark:border-slate-700 transition-colors ${
+              showFilters || hasActiveFilters
+                ? "text-amber-600 dark:text-amber-400"
+                : "text-gray-500 dark:text-slate-400"
+            }`}
+          >
+            <div className="relative">
+              <SlidersHorizontal style={{width:'1.15rem', height:'1.15rem'}} />
+              {hasActiveFilters && <span className="absolute -top-1 -right-1.5 w-2 h-2 bg-amber-500 rounded-full" />}
+            </div>
+            <span className="leading-none">Filtri</span>
+          </button>
+        </div>
+      </div>
     </div>
   );
 }
