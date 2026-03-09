@@ -133,7 +133,8 @@ export default function Header() {
             {/* Logo - Fixed Width */}
             <div className="col-span-2">
               <Link href="/" data-testid="logo-desktop">
-                <img src="/logo-full.png" alt="Fermenta.to" className="h-9 w-auto dark:brightness-0 dark:invert" />
+                <img src="/logo-full.png" alt="Fermenta.to" className="h-9 w-auto block dark:hidden" />
+                <img src="/logo-dark-mode.png" alt="Fermenta.to" className="h-9 w-auto hidden dark:block" />
               </Link>
             </div>
 
