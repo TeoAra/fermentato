@@ -83,23 +83,29 @@ async function runPaddleOCR(dataUrl: string): Promise<{ text: string; available:
 async function runLocalTesseract(dataUrl: string): Promise<string> {
   const tmp = await writeTempImage(dataUrl);
   if (!tmp) return "";
+
+  const runTesseract = async (psm: string): Promise<string> => {
+    try {
+      const { stdout } = await execFileAsync(
+        "tesseract", [tmp.path, "stdout", "-l", "ita+eng", "--psm", psm, "--oem", "3"],
+        { timeout: 15000 }
+      );
+      return stdout.trim();
+    } catch (e: any) {
+      // Tesseract exits with code 1 when text confidence is low but may still produce stdout
+      if (e?.stdout && (e.stdout as string).trim().length > 0) return (e.stdout as string).trim();
+      if (!e?.message?.includes("ENOENT")) console.error("Tesseract error:", e?.message?.split("\n")[0]);
+      return "";
+    }
+  };
+
   try {
-    // PSM 11 = sparse text (best for labels with mixed text + graphics)
-    const { stdout } = await execFileAsync(
-      "tesseract", [tmp.path, "stdout", "-l", "ita+eng", "--psm", "11", "--oem", "3"],
-      { timeout: 15000 }
-    );
-    const text = stdout.trim();
-    if (text.length >= 4) return text;
-    // Retry with PSM 6 (block of text)
-    const { stdout: s2 } = await execFileAsync(
-      "tesseract", [tmp.path, "stdout", "-l", "ita+eng", "--psm", "6", "--oem", "3"],
-      { timeout: 15000 }
-    );
-    return s2.trim();
-  } catch (e: any) {
-    if (!e?.message?.includes("ENOENT")) console.error("Tesseract error:", e?.message);
-    return "";
+    // PSM 11 = sparse text (best for labels with mixed layout)
+    const text11 = await runTesseract("11");
+    if (text11.length >= 4) return text11;
+    // PSM 6 = assume uniform block of text
+    const text6 = await runTesseract("6");
+    return text6;
   } finally {
     unlink(tmp.path).catch(() => {});
   }

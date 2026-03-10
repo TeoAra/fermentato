@@ -255,35 +255,24 @@ export default function LabelScanner({ onResult, onClose }: LabelScannerProps) {
       } catch { /* fallback to full frame */ }
     }
 
-    setStatusMsg("Analisi testo in corso...");
+    setStatusMsg("Analisi AI in corso — attendi ~20s...");
 
     const stepInterval = setInterval(() => {
       setOcrStep(prev => (prev + 1) % OCR_STEPS.length);
     }, 1800);
 
-    const tryOcr = async (dataUrl: string): Promise<string> => {
+    try {
+      // Use cropped viewfinder image (less background noise = better OCR)
+      const ocrSource = croppedCanvas
+        ? croppedCanvas.toDataURL("image/jpeg", 0.97)
+        : fullDataUrl;
+
       const img = new Image();
-      img.src = dataUrl;
+      img.src = ocrSource;
       await new Promise<void>((res, rej) => { img.onload = () => res(); img.onerror = rej; });
       const processed = prepareImageForApi(img);
       const rawText = await callOcrApi(processed);
-      return cleanOcrText(rawText);
-    };
-
-    try {
-      // 1st attempt: cropped to viewfinder area (more focused, less background noise)
-      let cleaned = "";
-      if (croppedCanvas) {
-        try {
-          const croppedUrl = croppedCanvas.toDataURL("image/jpeg", 0.97);
-          cleaned = await tryOcr(croppedUrl);
-        } catch {}
-      }
-
-      // 2nd attempt: full frame if crop found nothing
-      if (!cleaned || cleaned.length < 2) {
-        cleaned = await tryOcr(fullDataUrl);
-      }
+      const cleaned = cleanOcrText(rawText);
 
       setDetectedText(cleaned);
       clearInterval(stepInterval);

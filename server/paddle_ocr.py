@@ -19,6 +19,54 @@ os.environ["OMP_NUM_THREADS"] = "2"
 os.environ["PADDLE_PDX_DISABLE_MODEL_SOURCE_CHECK"] = "True"
 
 
+def parse_result(result):
+    """
+    Parse PaddleOCR result — handles both v2 list format and v3 PaddleX dict format.
+    v2: [[ [[box], [text, conf]], ... ]]
+    v3: [{ 'rec_texts': [...], 'rec_scores': [...], ... }]
+    """
+    lines = []
+    if not result:
+        return lines
+
+    for item in result:
+        # ── PaddleOCR v3 / PaddleX dict format ──────────────────────────────
+        if isinstance(item, dict):
+            texts = item.get("rec_texts", [])
+            scores = item.get("rec_scores", [1.0] * len(texts))
+            for text, score in zip(texts, scores):
+                try:
+                    if str(text).strip() and float(score) > 0.30:
+                        lines.append(str(text).strip())
+                except Exception:
+                    continue
+            continue
+
+        # ── PaddleOCR v2 list-of-lists format ───────────────────────────────
+        if isinstance(item, (list, tuple)):
+            for entry in item:
+                try:
+                    if isinstance(entry, (list, tuple)) and len(entry) >= 2:
+                        text_info = entry[1]
+                        if isinstance(text_info, (list, tuple)) and len(text_info) >= 1:
+                            text = str(text_info[0])
+                            conf = float(text_info[1]) if len(text_info) >= 2 else 1.0
+                        else:
+                            text = str(text_info)
+                            conf = 1.0
+                        if text.strip() and conf > 0.30:
+                            lines.append(text.strip())
+                    elif isinstance(entry, dict):
+                        text = str(entry.get("transcription", entry.get("text", "")))
+                        conf = float(entry.get("score", entry.get("confidence", 1.0)))
+                        if text.strip() and conf > 0.30:
+                            lines.append(text.strip())
+                except Exception:
+                    continue
+
+    return lines
+
+
 def main():
     if len(sys.argv) < 2:
         sys.exit(0)
@@ -33,42 +81,23 @@ def main():
         sys.exit(2)
 
     try:
-        # PaddleOCR v3 — minimal params, mkldnn disabled
-        ocr = PaddleOCR(lang="en")
+        # Disable slow pipeline steps — only load det + rec models (no doc orientation/unwarping)
+        ocr = PaddleOCR(
+            lang="en",
+            use_doc_orientation_classify=False,
+            use_doc_unwarping=False,
+            use_angle_cls=False,
+        )
         result = ocr.ocr(image_path)
-        lines = []
 
-        if result:
-            for page in result:
-                if not page:
-                    continue
-                for item in page:
-                    try:
-                        # v2/v3 legacy: [[box], [text, conf]]
-                        if isinstance(item, (list, tuple)) and len(item) >= 2:
-                            text_info = item[1]
-                            if isinstance(text_info, (list, tuple)) and len(text_info) >= 2:
-                                text = str(text_info[0])
-                                conf = float(text_info[1])
-                            elif isinstance(text_info, (list, tuple)) and len(text_info) == 1:
-                                text = str(text_info[0])
-                                conf = 1.0
-                            else:
-                                text = str(text_info)
-                                conf = 1.0
-                        # v3 dict format
-                        elif isinstance(item, dict):
-                            text = str(item.get("transcription", item.get("text", "")))
-                            conf = float(item.get("score", item.get("confidence", 1.0)))
-                        else:
-                            continue
+        # Debug: print raw result shape to stderr for diagnostics
+        print(f"DEBUG result type={type(result).__name__} len={len(result) if result else 0}", file=sys.stderr)
+        if result and len(result) > 0:
+            print(f"DEBUG first item type={type(result[0]).__name__} keys={list(result[0].keys()) if isinstance(result[0], dict) else 'list'}", file=sys.stderr)
 
-                        if text.strip() and conf > 0.35:
-                            lines.append(text.strip())
-                    except Exception:
-                        continue
-
+        lines = parse_result(result)
         print("\n".join(lines))
+
     except Exception as e:
         print(f"ERROR: {e}", file=sys.stderr)
         sys.exit(1)
