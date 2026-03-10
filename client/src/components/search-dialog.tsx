@@ -1,11 +1,12 @@
 import { useState, useEffect, useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Search, X, MapPin, Building, Beer, Clock, TrendingUp, ArrowRight, Sparkles, Loader2, ChevronDown, ChevronUp } from "lucide-react";
+import { Search, X, MapPin, Building, Beer, Clock, TrendingUp, ArrowRight, Sparkles, Loader2, ChevronDown, ChevronUp, PlusCircle } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { GlutenFreeSmallBadge, AlcoholFreeBadge } from "@/components/beer-badges";
+import AdditionRequestModal from "@/components/AdditionRequestModal";
 
 interface SearchDialogProps {
   isOpen: boolean;
@@ -21,6 +22,7 @@ export default function SearchDialog({ isOpen, onClose }: SearchDialogProps) {
   const [filterGlutenFree, setFilterGlutenFree] = useState(false);
   const [filterAlcoholFree, setFilterAlcoholFree] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
+  const [additionModalOpen, setAdditionModalOpen] = useState(false);
 
   const INITIAL_SHOW = 5;
   const toggleSection = (section: string) => {
@@ -129,6 +131,7 @@ export default function SearchDialog({ isOpen, onClose }: SearchDialogProps) {
   ];
 
   return (
+    <>
     <Dialog open={isOpen} onOpenChange={handleClose}>
       <DialogContent className="max-w-2xl max-h-[85vh] p-0 gap-0 flex flex-col bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl border-white/20 dark:border-gray-800/50">
         <DialogHeader className="p-6 pb-4">
@@ -480,7 +483,7 @@ export default function SearchDialog({ isOpen, onClose }: SearchDialogProps) {
 
               {/* No Results */}
               {(!searchResults.pubs?.length && !searchResults.breweries?.length && !searchResults.beers?.length) && (
-                <div className="text-center py-12">
+                <div className="text-center py-10">
                   <div className="relative inline-block mb-4">
                     <Search className="h-16 w-16 text-gray-300 dark:text-gray-400 mx-auto" />
                     <X className="h-6 w-6 text-red-400 absolute -bottom-1 -right-1" />
@@ -488,9 +491,16 @@ export default function SearchDialog({ isOpen, onClose }: SearchDialogProps) {
                   <p className="text-gray-500 dark:text-gray-400 text-lg font-medium mb-2">
                     Nessun risultato trovato
                   </p>
-                  <p className="text-gray-400 dark:text-gray-400 text-sm">
+                  <p className="text-gray-400 dark:text-gray-400 text-sm mb-5">
                     Prova con termini di ricerca diversi per "<span className="font-medium">{debouncedSearch}</span>"
                   </p>
+                  <button
+                    onClick={() => { onClose(); setTimeout(() => setAdditionModalOpen(true), 150); }}
+                    className="inline-flex items-center gap-2 px-4 py-2.5 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 text-amber-700 dark:text-amber-300 rounded-xl text-sm font-medium hover:bg-amber-100 dark:hover:bg-amber-900/30 transition-colors"
+                  >
+                    <PlusCircle className="h-4 w-4" />
+                    Non la trovi? Suggeriscila
+                  </button>
                 </div>
               )}
 
@@ -526,8 +536,8 @@ export default function SearchDialog({ isOpen, onClose }: SearchDialogProps) {
             </div>
           </div>
 
-          {/* Ricerca Avanzata — always visible */}
-          <div className="px-4 py-3">
+          {/* Ricerca Avanzata + Suggerisci — always visible */}
+          <div className="px-4 py-3 flex flex-col gap-2">
             <a
               href={debouncedSearch ? `/search?q=${encodeURIComponent(debouncedSearch)}` : "/search"}
               onClick={handleClose}
@@ -537,9 +547,26 @@ export default function SearchDialog({ isOpen, onClose }: SearchDialogProps) {
               Vai alla Ricerca Avanzata
               <ArrowRight className="h-4 w-4" />
             </a>
+            {debouncedSearch.length >= 2 && (
+              <button
+                onClick={() => { onClose(); setTimeout(() => setAdditionModalOpen(true), 150); }}
+                className="flex items-center justify-center gap-2 w-full py-2 px-4 rounded-xl border border-gray-200 dark:border-gray-700 text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors text-sm"
+              >
+                <PlusCircle className="h-4 w-4 text-amber-500" />
+                Non la trovi? Suggerisci un'aggiunta
+              </button>
+            )}
           </div>
         </div>
       </DialogContent>
     </Dialog>
+
+    <AdditionRequestModal
+      open={additionModalOpen}
+      onClose={() => setAdditionModalOpen(false)}
+      initialBeerName={debouncedSearch}
+      defaultTab="beer"
+    />
+    </>
   );
 }

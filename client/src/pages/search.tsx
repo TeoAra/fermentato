@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { useSearch } from "wouter";
 import { Link } from "wouter";
-import { Beer, Building2, MapPin, Search, ArrowLeft, SlidersHorizontal, X } from "lucide-react";
+import { Beer, Building2, MapPin, Search, ArrowLeft, SlidersHorizontal, X, PlusCircle } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,6 +9,7 @@ import { useState, useEffect, useMemo } from "react";
 import { GlutenFreeSmallBadge, AlcoholFreeBadge } from "@/components/beer-badges";
 import ImageWithFallback from "@/components/image-with-fallback";
 import Footer from "@/components/footer";
+import AdditionRequestModal from "@/components/AdditionRequestModal";
 
 interface SearchResult {
   pubs: any[];
@@ -35,6 +36,7 @@ export default function SearchPage() {
   const [filterMaxAbv, setFilterMaxAbv] = useState("");
   const [filterMinIbu, setFilterMinIbu] = useState("");
   const [filterMaxIbu, setFilterMaxIbu] = useState("");
+  const [additionModalOpen, setAdditionModalOpen] = useState(false);
 
   useEffect(() => {
     setInputValue(initialQ);
@@ -113,6 +115,7 @@ export default function SearchPage() {
   const activeFilterCount = [filterGlutenFree, filterAlcoholFree, !!filterStyle, !!filterCountry, !!filterMinAbv, !!filterMaxAbv, !!filterMinIbu, !!filterMaxIbu].filter(Boolean).length;
 
   return (
+    <>
     <div className="min-h-screen bg-gray-50 dark:bg-slate-900">
 
       {/* Gradient header */}
@@ -325,11 +328,22 @@ export default function SearchPage() {
                   : `Nessun risultato per "${query}"`}
                 {hasActiveFilters && <span className="text-amber-600"> · filtri attivi ({activeFilterCount})</span>}
               </p>
+              <div className="flex items-center gap-3">
+                {query && (
+                  <button
+                    onClick={() => setAdditionModalOpen(true)}
+                    className="flex items-center gap-1 text-xs text-amber-600 dark:text-amber-400 hover:underline"
+                  >
+                    <PlusCircle className="h-3.5 w-3.5" />
+                    Suggerisci
+                  </button>
+                )}
               {hasActiveFilters && (
                 <button onClick={clearFilters} className="text-xs text-amber-600 hover:underline">
                   Rimuovi filtri
                 </button>
               )}
+              </div>
             </div>
 
             {/* Beer section */}
@@ -463,12 +477,21 @@ export default function SearchPage() {
                 </div>
                 <p className="font-semibold text-gray-600 dark:text-slate-300">Nessun risultato per "{query}"</p>
                 <p className="text-sm text-gray-400 dark:text-slate-500 mt-1">Prova con termini diversi o rimuovi i filtri</p>
-                {hasActiveFilters && (
-                  <Button variant="outline" size="sm" onClick={clearFilters} className="mt-4">
-                    <X className="w-3.5 h-3.5 mr-1.5" />
-                    Rimuovi filtri
-                  </Button>
-                )}
+                <div className="flex items-center justify-center gap-3 mt-4 flex-wrap">
+                  {hasActiveFilters && (
+                    <Button variant="outline" size="sm" onClick={clearFilters}>
+                      <X className="w-3.5 h-3.5 mr-1.5" />
+                      Rimuovi filtri
+                    </Button>
+                  )}
+                  <button
+                    onClick={() => setAdditionModalOpen(true)}
+                    className="inline-flex items-center gap-2 px-4 py-2 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 text-amber-700 dark:text-amber-300 rounded-lg text-sm font-medium hover:bg-amber-100 dark:hover:bg-amber-900/30 transition-colors"
+                  >
+                    <PlusCircle className="h-4 w-4" />
+                    Non la trovi? Suggeriscila
+                  </button>
+                </div>
               </div>
             )}
           </div>
@@ -477,5 +500,13 @@ export default function SearchPage() {
 
       <Footer />
     </div>
+
+    <AdditionRequestModal
+      open={additionModalOpen}
+      onClose={() => setAdditionModalOpen(false)}
+      initialBeerName={query}
+      defaultTab="beer"
+    />
+    </>
   );
 }
