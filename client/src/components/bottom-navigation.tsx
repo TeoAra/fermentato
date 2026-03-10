@@ -1,6 +1,6 @@
 import { Search, User, Bell, MapPin, Home, Sparkles } from "lucide-react";
 import { Link, useLocation } from "wouter";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { useQuery } from "@tanstack/react-query";
 import SearchDialog from "./search-dialog";
@@ -9,34 +9,11 @@ export function BottomNavigation() {
   const [location] = useLocation();
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const { isAuthenticated, user } = useAuth();
-  const [isVisible, setIsVisible] = useState(true);
-  const [lastScrollY, setLastScrollY] = useState(0);
-
   const { data: unreadData } = useQuery<{ count: number }>({
     queryKey: ['/api/notifications/unread-count'],
     enabled: isAuthenticated,
     refetchInterval: 120000,
   });
-
-  // Smart hide/show on scroll for better UX - MOVED BEFORE CONDITIONAL LOGIC
-  useEffect(() => {
-    const handleScroll = () => {
-      const currentScrollY = window.scrollY;
-      const isScrollingDown = currentScrollY > lastScrollY;
-      const isScrolledEnough = currentScrollY > 100;
-      
-      if (isScrollingDown && isScrolledEnough) {
-        setIsVisible(false);
-      } else {
-        setIsVisible(true);
-      }
-      
-      setLastScrollY(currentScrollY);
-    };
-
-    window.addEventListener('scroll', handleScroll, { passive: true });
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, [lastScrollY]);
 
   // Hide on search page — search has its own mobile bottom bar
   if (location === '/search') return null;
@@ -91,13 +68,8 @@ export function BottomNavigation() {
     <>
       {/* Mobile Bottom Navigation */}
       {(
-        <nav className={`lg:hidden fixed bottom-0 left-0 right-0 z-50 transition-all duration-300 ease-in-out transform ${
-          isVisible ? 'translate-y-0' : 'translate-y-full'
-        }`}>
-        {/* Glassmorphism background */}
-        <div className="bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl border-t border-white/20 dark:border-gray-800/50 shadow-2xl">
-          {/* Gradient overlay for depth */}
-          <div className="absolute inset-0 bg-gradient-to-t from-white/10 to-transparent dark:from-gray-800/10 pointer-events-none" />
+        <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-50">
+        <div className="bg-white dark:bg-gray-900 border-t-2 border-amber-100 dark:border-slate-700 shadow-[0_-4px_24px_rgba(0,0,0,0.08)] dark:shadow-[0_-4px_24px_rgba(0,0,0,0.3)]">
           
           <div className="relative flex items-center justify-between px-4 py-3 safe-area-pb">
             {/* Navigation Items */}

@@ -127,14 +127,14 @@ export default function Header() {
   return (
     <>
       {/* Integrated Desktop Header with Navigation */}
-      <header className="sticky top-0 z-50 bg-white dark:bg-slate-900 border-b border-gray-200 dark:border-slate-800 shadow-sm hidden lg:block">
+      <header className="sticky top-0 z-50 bg-white dark:bg-slate-900 border-b border-gray-100 dark:border-slate-800 shadow-sm hidden lg:block">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-12 gap-4 items-center h-16">
+          <div className="grid grid-cols-12 gap-4 items-center h-[72px]">
             {/* Logo - Fixed Width */}
             <div className="col-span-2">
               <Link href="/" data-testid="logo-desktop">
-                <img src="/logo-full.png" alt="Fermenta.to" className="h-9 w-auto block dark:hidden" />
-                <img src="/logo-dark-mode.png" alt="Fermenta.to" className="h-9 w-auto hidden dark:block" />
+                <img src="/logo-full.png" alt="Fermenta.to" className="h-11 w-auto block dark:hidden" />
+                <img src="/logo-dark-mode.png" alt="Fermenta.to" className="h-11 w-auto hidden dark:block" />
               </Link>
             </div>
 

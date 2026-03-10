@@ -17,6 +17,23 @@ import { translateToItalian, looksItalian } from "./translate";
 
 const VAPID_PUBLIC_KEY = process.env.VAPID_PUBLIC_KEY || '';
 
+// Simple in-memory search cache with TTL
+const searchCache = new Map<string, { data: any; ts: number }>();
+const SEARCH_CACHE_TTL = 5 * 60 * 1000; // 5 minutes
+function getCached(key: string) {
+  const entry = searchCache.get(key);
+  if (!entry) return null;
+  if (Date.now() - entry.ts > SEARCH_CACHE_TTL) { searchCache.delete(key); return null; }
+  return entry.data;
+}
+function setCache(key: string, data: any) {
+  if (searchCache.size > 500) {
+    const oldest = [...searchCache.entries()].sort((a, b) => a[1].ts - b[1].ts).slice(0, 100);
+    oldest.forEach(([k]) => searchCache.delete(k));
+  }
+  searchCache.set(key, { data, ts: Date.now() });
+}
+
 if (initVapid()) {
   console.log('Web Push configured with VAPID keys');
 } else {
@@ -111,6 +128,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Get real search suggestions (popular styles, top breweries, top cities)
   app.get("/api/search/suggestions", async (req, res) => {
     try {
+      const cached = getCached('suggestions');
+      if (cached) return res.json(cached);
       const [topStyles, topBreweries, topCities] = await Promise.all([
         db.select({ name: beers.style, count: sql<number>`COUNT(*)::int` })
           .from(beers)
@@ -130,11 +149,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
           .orderBy(sql`COUNT(*) DESC`)
           .limit(6),
       ]);
-      res.json({
+      const result = {
         styles: topStyles.map(r => r.name).filter(Boolean),
         breweries: topBreweries.map(r => r.name).filter(Boolean),
         cities: topCities.map(r => r.name).filter(Boolean),
-      });
+      };
+      setCache('suggestions', result);
+      res.json(result);
     } catch (error) {
       console.error("Error fetching suggestions:", error);
       res.status(500).json({ message: "Failed to fetch suggestions" });
@@ -563,6 +584,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const maxAbv = req.query.maxAbv ? parseFloat(req.query.maxAbv as string) : undefined;
       const minIbu = req.query.minIbu ? parseFloat(req.query.minIbu as string) : undefined;
       const maxIbu = req.query.maxIbu ? parseFloat(req.query.maxIbu as string) : undefined;
+
+      const cacheKey = `search:${query}:${glutenFree}:${alcoholFree}:${style}:${minAbv}:${maxAbv}:${minIbu}:${maxIbu}`;
+      const cached = getCached(cacheKey);
+      if (cached) {
+        res.setHeader('X-Cache', 'HIT');
+        return res.json(cached);
+      }
+
       const filters: any = {};
       if (glutenFree) filters.glutenFree = true;
       if (alcoholFree) filters.alcoholFree = true;
@@ -578,7 +607,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         storage.searchBeers(query, filters),
       ]);
 
-      res.json({ pubs, breweries, beers: beersResult });
+      const result = { pubs, breweries, beers: beersResult };
+      setCache(cacheKey, result);
+      res.setHeader('X-Cache', 'MISS');
+      res.json(result);
     } catch (error) {
       console.error("Error searching:", error);
       res.status(500).json({ message: "Failed to perform search" });
