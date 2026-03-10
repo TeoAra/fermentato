@@ -54,6 +54,7 @@ import TaplistTV from "@/pages/taplist-tv";
 import Onboarding from "@/pages/onboarding";
 import UserPublicProfile from "@/pages/user-public-profile";
 import SearchPage from "@/pages/search";
+import ScanPage from "@/pages/scan";
 import { MobileHeader } from "@/components/mobile-header";
 import { BottomNavigation } from "@/components/bottom-navigation";
 import CookieBanner from "@/components/CookieBanner";
@@ -132,6 +133,7 @@ function Router() {
           <Route path="/notifications" component={Notifications} />
           <Route path="/user/:nickname" component={UserPublicProfile} />
           <Route path="/search" component={SearchPage} />
+          <Route path="/scan" component={ScanPage} />
           <Route path="/activity" component={Activity} />
           <Route component={NotFound} />
         </Switch>

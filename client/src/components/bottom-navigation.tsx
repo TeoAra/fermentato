@@ -1,4 +1,4 @@
-import { Search, User, Bell, MapPin, Home, Sparkles } from "lucide-react";
+import { Search, User, Bell, MapPin, Home, Sparkles, ScanLine } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import { useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
@@ -15,8 +15,8 @@ export function BottomNavigation() {
     refetchInterval: 120000,
   });
 
-  // Hide on search page — search has its own mobile bottom bar
-  if (location === '/search') return null;
+  // Hide on search and scan pages (full screen)
+  if (location === '/search' || location === '/scan') return null;
 
   const typedUser = user as any;
   const activeRole = typedUser?.activeRole || typedUser?.userType || 'customer';
@@ -143,8 +143,20 @@ export function BottomNavigation() {
               );
             })}
             
-            {/* Central Search Button - Floating FAB */}
-            <div className="absolute left-1/2 top-0 transform -translate-x-1/2 -translate-y-1/2">
+            {/* Central FAB area: Search + Scan */}
+            <div className="absolute left-1/2 top-0 transform -translate-x-1/2 -translate-y-1/2 flex items-center gap-2">
+              {/* Scan FAB */}
+              <Link href="/scan">
+                <button
+                  data-testid="button-scan"
+                  className="group bg-gradient-to-r from-slate-700 to-slate-800 hover:from-slate-600 hover:to-slate-700 text-white rounded-full p-3 shadow-xl transition-all duration-300 transform active:scale-95 hover:scale-110"
+                >
+                  <ScanLine className="h-5 w-5 transition-transform duration-300 group-hover:scale-110" />
+                  <span className="sr-only">Scansiona etichetta</span>
+                </button>
+              </Link>
+
+              {/* Search FAB */}
               <button
                 onClick={() => setIsSearchOpen(true)}
                 data-testid="button-search"
@@ -155,8 +167,6 @@ export function BottomNavigation() {
                   <Sparkles className="absolute -top-1 -right-1 h-3 w-3 text-white/70 animate-pulse" />
                 </div>
                 <span className="sr-only">Cerca pub, birrifici e birre</span>
-                
-                {/* Ripple effect */}
                 <div className="absolute inset-0 rounded-full bg-white/20 animate-ping opacity-0 group-active:animate-none group-active:opacity-100" />
               </button>
             </div>
