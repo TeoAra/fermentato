@@ -193,7 +193,7 @@ export function MobileHeader({ onMenuToggle, isMenuOpen }: MobileHeaderProps) {
             <div className="px-4 pt-3 pb-1">
               <span className="text-[11px] font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500">Esplora</span>
             </div>
-            <MenuItem href="/search" icon={Search} label="Cerca birre" desc="Database di oltre 1M di birre" />
+            <MenuItem href="/search" icon={Search} label="Ricerca avanzata" desc="Database di oltre 1M di birre" />
             <MenuItem href="/explore/breweries" icon={Building2Icon} label="Birrifici" desc="Artigianali italiani e internazionali" />
             <MenuItem href="/explore/pubs" icon={MapPin} label="Pub & Locali" desc="Dove bere artigianale in Italia" />
 
