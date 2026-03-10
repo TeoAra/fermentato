@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { useSearch } from "wouter";
 import { Link } from "wouter";
-import { Beer, Building2, MapPin, Search, ArrowLeft, SlidersHorizontal, X, ChevronDown, Flame } from "lucide-react";
+import { Beer, Building2, MapPin, Search, ArrowLeft, SlidersHorizontal, X } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -65,20 +65,6 @@ export default function SearchPage() {
     staleTime: 1000 * 60 * 60,
   });
 
-  const { data: suggestions } = useQuery<{ styles: string[]; breweries: string[]; cities: string[] }>({
-    queryKey: ["/api/search/suggestions"],
-    queryFn: () => fetch("/api/search/suggestions").then(r => r.json()),
-    staleTime: 1000 * 60 * 60,
-  });
-
-  const popularSearches = useMemo(() => {
-    if (!suggestions) return ["IPA", "Lager", "Stout", "Weizen", "Pilsner", "Sour", "Porter", "Saison"];
-    return [
-      ...(suggestions.styles?.slice(0, 8) || []),
-      ...(suggestions.cities?.slice(0, 4) || []),
-    ].slice(0, 12);
-  }, [suggestions]);
-
   const filteredBeers = results?.beers || [];
   const filteredBreweries = useMemo(() => {
     if (!results?.breweries) return [];
@@ -104,13 +90,6 @@ export default function SearchPage() {
     window.history.replaceState(null, "", `/search?q=${encodeURIComponent(inputValue)}`);
   };
 
-  const handleQuickSearch = (term: string) => {
-    setInputValue(term);
-    setQuery(term);
-    setActiveTab("all");
-    window.history.replaceState(null, "", `/search?q=${encodeURIComponent(term)}`);
-  };
-
   const hasActiveFilters = filterGlutenFree || filterAlcoholFree || filterStyle || filterCountry || filterMinAbv || filterMaxAbv || filterMinIbu || filterMaxIbu;
 
   const clearFilters = () => {
@@ -134,50 +113,68 @@ export default function SearchPage() {
   const activeFilterCount = [filterGlutenFree, filterAlcoholFree, !!filterStyle, !!filterCountry, !!filterMinAbv, !!filterMaxAbv, !!filterMinIbu, !!filterMaxIbu].filter(Boolean).length;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-amber-50/30 to-orange-50/30 dark:from-gray-950 dark:via-slate-900 dark:to-slate-900">
-      <div className="max-w-3xl mx-auto px-4 py-5 pb-28 sm:pb-5">
+    <div className="min-h-screen bg-gray-50 dark:bg-slate-900">
 
-        {/* Search bar */}
-        <div className="flex items-center gap-2 mb-5">
-          <Button variant="ghost" size="sm" asChild className="-ml-2 flex-shrink-0 text-gray-500 hover:text-gray-700">
-            <Link href="/"><ArrowLeft className="h-4 w-4" /></Link>
-          </Button>
-          <form onSubmit={handleSearch} className="flex-1 flex gap-2">
+      {/* Gradient header */}
+      <div className="relative bg-gradient-to-br from-amber-500 via-amber-500 to-orange-500 dark:from-amber-700 dark:via-amber-700 dark:to-orange-700 overflow-hidden">
+        <div className="absolute inset-0 bg-black/5" />
+        <div className="relative max-w-3xl mx-auto px-4 pt-4 pb-5">
+          <div className="flex items-center gap-3 mb-4">
+            <Link href="/">
+              <Button variant="ghost" size="sm" className="text-white/80 hover:text-white hover:bg-white/10 -ml-1">
+                <ArrowLeft className="h-4 w-4 mr-1" />
+                Indietro
+              </Button>
+            </Link>
+            <div className="flex-1">
+              <h1 className="text-white font-bold text-lg leading-tight">Ricerca Avanzata</h1>
+              <p className="text-white/75 text-xs">Birre · Birrifici · Pub</p>
+            </div>
+          </div>
+
+          <form onSubmit={handleSearch} className="flex gap-2">
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
               <Input
                 value={inputValue}
                 onChange={e => setInputValue(e.target.value)}
                 placeholder="Cerca birre, stili, birrifici, pub..."
-                className="pl-10 pr-10 h-11 rounded-xl border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800 shadow-sm focus-visible:ring-amber-400"
-                autoFocus
+                className="pl-10 pr-10 h-11 rounded-xl border-0 bg-white dark:bg-slate-800 shadow-md focus-visible:ring-amber-300"
               />
               {inputValue && (
-                <button type="button" onClick={() => { setInputValue(""); setQuery(""); }} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
+                <button
+                  type="button"
+                  onClick={() => { setInputValue(""); setQuery(""); }}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                >
                   <X className="h-4 w-4" />
                 </button>
               )}
             </div>
-            <Button type="submit" className="bg-amber-500 hover:bg-amber-600 text-white h-11 rounded-xl shadow-sm px-4">
+            <Button type="submit" className="bg-white/20 hover:bg-white/30 text-white border border-white/30 h-11 rounded-xl px-4 backdrop-blur-sm">
               Cerca
             </Button>
             <Button
               type="button"
               variant="outline"
               size="icon"
-              className={`relative h-11 w-11 rounded-xl flex-shrink-0 border-gray-200 dark:border-slate-700 ${hasActiveFilters ? "border-amber-400 text-amber-600 bg-amber-50 dark:bg-amber-900/20" : ""}`}
+              className={`relative h-11 w-11 rounded-xl flex-shrink-0 border-white/30 bg-white/10 text-white hover:bg-white/20 hover:text-white backdrop-blur-sm ${hasActiveFilters ? "bg-white/25 border-white/60" : ""}`}
               onClick={() => setShowFilters(f => !f)}
               title="Filtri avanzati"
             >
               <SlidersHorizontal className="h-4 w-4" />
               {activeFilterCount > 0 && (
-                <span className="absolute -top-1.5 -right-1.5 w-4 h-4 bg-amber-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center">
+                <span className="absolute -top-1.5 -right-1.5 w-4 h-4 bg-white text-amber-600 text-[10px] font-bold rounded-full flex items-center justify-center">
                   {activeFilterCount}
                 </span>
               )}
             </Button>
           </form>
         </div>
+      </div>
+
+      {/* Content */}
+      <div className="max-w-3xl mx-auto px-4 py-4 pb-28 sm:pb-8">
 
         {/* Advanced filters panel */}
         {showFilters && (
@@ -195,7 +192,6 @@ export default function SearchPage() {
             </div>
 
             <div className="flex flex-wrap gap-1.5">
-              {/* Gluten / alcohol free */}
               <button onClick={() => setFilterGlutenFree(f => !f)}
                 className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-all ${filterGlutenFree ? "bg-green-500 text-white border-green-500" : "border-gray-200 dark:border-slate-600 text-gray-600 dark:text-slate-300 hover:border-green-400"}`}>
                 🌾 Senza glutine
@@ -205,7 +201,6 @@ export default function SearchPage() {
                 💧 Analcolica
               </button>
 
-              {/* ABV presets */}
               <span className="self-center text-xs text-gray-400 px-1">|</span>
               {([["🍺 Light <5%", "", "4.9"], ["⚡ Strong >7%", "7", ""], ["💥 Imperial >9%", "9", ""]] as [string,string,string][]).map(([label, min, max]) => (
                 <button key={label}
@@ -215,7 +210,6 @@ export default function SearchPage() {
                 </button>
               ))}
 
-              {/* IBU presets */}
               <span className="self-center text-xs text-gray-400 px-1">|</span>
               {([["😌 Dolce", "", "19"], ["⚖️ Bilanciata", "20", "50"], ["🌿 Amara", "60", ""]] as [string,string,string][]).map(([label, min, max]) => (
                 <button key={label}
@@ -226,7 +220,6 @@ export default function SearchPage() {
               ))}
             </div>
 
-            {/* Style pills — top 12 */}
             {popularStyles && popularStyles.length > 0 && (
               <div className="flex flex-wrap gap-1.5 pt-1 border-t border-gray-100 dark:border-slate-700">
                 <span className="self-center text-xs text-gray-400 mr-1">Stile:</span>
@@ -246,7 +239,6 @@ export default function SearchPage() {
               </div>
             )}
 
-            {/* Country filter */}
             {(activeTab === "all" || activeTab === "breweries") && (
               <div className="flex flex-wrap gap-1.5 pt-1 border-t border-gray-100 dark:border-slate-700">
                 <span className="self-center text-xs text-gray-400 mr-1">Paese:</span>
@@ -262,56 +254,31 @@ export default function SearchPage() {
           </div>
         )}
 
-        {/* Popular searches (initial state) */}
+        {/* Empty state */}
         {query.length <= 1 && (
-          <div className="space-y-6 py-4">
-            <div>
-              <p className="text-sm font-semibold text-gray-500 dark:text-slate-400 mb-3 uppercase tracking-wide">Ricerche popolari</p>
-              <div className="flex flex-wrap gap-2">
-                {popularSearches.map(term => (
-                  <button
-                    key={term}
-                    onClick={() => handleQuickSearch(term)}
-                    className="px-4 py-2 rounded-full bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 text-sm font-medium text-gray-700 dark:text-slate-200 hover:border-amber-400 hover:text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-900/20 transition-all shadow-sm"
-                  >
-                    {term}
-                  </button>
-                ))}
-              </div>
+          <div className="flex flex-col items-center justify-center py-16 text-center">
+            <div className="w-20 h-20 rounded-full bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center mb-5">
+              <Search className="h-10 w-10 text-amber-400 dark:text-amber-500" />
             </div>
-
-            {/* Top styles grid */}
-            {popularStyles && popularStyles.length > 0 && (
-              <div>
-                <p className="text-sm font-semibold text-gray-500 dark:text-slate-400 mb-3 uppercase tracking-wide">Top stili nel database</p>
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-                  {popularStyles.slice(0, 9).map(({ style, count }) => (
-                    <button
-                      key={style}
-                      onClick={() => handleQuickSearch(style)}
-                      className="flex items-center justify-between px-3 py-2.5 rounded-xl bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 hover:border-amber-400 hover:bg-amber-50 dark:hover:bg-amber-900/20 transition-all shadow-sm group text-left"
-                    >
-                      <span className="text-sm font-medium text-gray-700 dark:text-slate-200 group-hover:text-amber-700 dark:group-hover:text-amber-300 truncate">{style}</span>
-                      <span className="text-xs text-gray-400 dark:text-slate-500 ml-1 flex-shrink-0">
-                        {count >= 1000 ? `${Math.floor(count / 1000)}k` : count}
-                      </span>
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            <div className="text-center py-6 text-gray-400">
-              <Search className="h-14 w-14 mx-auto mb-3 opacity-20" />
-              <p className="font-medium text-gray-500">Cerca birre, stili, birrifici o pub</p>
-              <p className="text-sm mt-1 text-gray-400">Digita almeno 2 caratteri per iniziare</p>
+            <p className="text-lg font-semibold text-gray-700 dark:text-slate-200 mb-1">
+              Cosa stai cercando?
+            </p>
+            <p className="text-sm text-gray-400 dark:text-slate-500 max-w-xs">
+              Digita almeno 2 caratteri per cercare tra birre, birrifici e pub
+            </p>
+            <div className="flex items-center gap-4 mt-6 text-xs text-gray-400 dark:text-slate-500">
+              <span className="flex items-center gap-1.5"><Beer className="w-3.5 h-3.5 text-amber-400" /> Birre</span>
+              <span className="text-gray-200 dark:text-slate-700">·</span>
+              <span className="flex items-center gap-1.5"><Building2 className="w-3.5 h-3.5 text-amber-400" /> Birrifici</span>
+              <span className="text-gray-200 dark:text-slate-700">·</span>
+              <span className="flex items-center gap-1.5"><MapPin className="w-3.5 h-3.5 text-blue-400" /> Pub</span>
             </div>
           </div>
         )}
 
         {/* Loading */}
         {isLoading && (
-          <div className="space-y-2.5">
+          <div className="space-y-2.5 mt-2">
             {[...Array(5)].map((_, i) => (
               <div key={i} className="h-16 rounded-xl bg-gray-100 dark:bg-slate-800 animate-pulse" />
             ))}
@@ -464,15 +431,21 @@ export default function SearchPage() {
                 <div className="space-y-1.5">
                   {filteredPubs.map((pub: any) => (
                     <Link key={pub.id} href={`/pub/${pub.id}`}>
-                      <div className="flex items-center gap-3 p-3 rounded-xl bg-white dark:bg-slate-800 border border-gray-100 dark:border-slate-700 hover:border-blue-300 hover:shadow-md transition-all cursor-pointer group">
-                        <div className="w-11 h-11 flex-shrink-0 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center">
-                          <MapPin className="h-5 w-5 text-blue-500" />
-                        </div>
+                      <div className="flex items-center gap-3 p-3 rounded-xl bg-white dark:bg-slate-800 border border-gray-100 dark:border-slate-700 hover:border-blue-300 dark:hover:border-blue-600 hover:shadow-md transition-all cursor-pointer group">
+                        <ImageWithFallback
+                          src={pub.logoUrl}
+                          alt={pub.name}
+                          imageType="pub"
+                          containerClassName="w-11 h-11 flex-shrink-0 rounded-lg"
+                          className="w-11 h-11 object-cover rounded-lg"
+                        />
                         <div className="flex-1 min-w-0">
                           <div className="font-semibold text-sm text-gray-900 dark:text-white truncate group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
                             {pub.name}
                           </div>
-                          <div className="text-xs text-gray-500 dark:text-slate-400 truncate">{pub.city} — {pub.address}</div>
+                          <div className="text-xs text-gray-500 dark:text-slate-400 truncate">
+                            {pub.city}{pub.address ? ` · ${pub.address}` : ""}
+                          </div>
                         </div>
                         <Badge className="flex-shrink-0 text-xs bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400 border-0">Pub</Badge>
                       </div>
@@ -482,18 +455,17 @@ export default function SearchPage() {
               </section>
             )}
 
-            {/* Empty state */}
-            {tabCounts[activeTab] === 0 && (
+            {/* No results */}
+            {tabCounts.all === 0 && (
               <div className="text-center py-14">
-                <Search className="h-12 w-12 mx-auto mb-3 text-gray-200 dark:text-slate-700" />
-                <p className="font-semibold text-gray-600 dark:text-slate-300">
-                  {hasActiveFilters ? "Nessun risultato con i filtri attivi" : `Nessun risultato per "${query}"`}
-                </p>
-                <p className="text-sm text-gray-400 mt-1">
-                  {hasActiveFilters ? "Prova a rimuovere qualche filtro" : "Prova con un termine diverso"}
-                </p>
+                <div className="w-16 h-16 rounded-full bg-gray-100 dark:bg-slate-800 flex items-center justify-center mx-auto mb-4">
+                  <Search className="h-8 w-8 text-gray-300 dark:text-slate-600" />
+                </div>
+                <p className="font-semibold text-gray-600 dark:text-slate-300">Nessun risultato per "{query}"</p>
+                <p className="text-sm text-gray-400 dark:text-slate-500 mt-1">Prova con termini diversi o rimuovi i filtri</p>
                 {hasActiveFilters && (
-                  <Button onClick={clearFilters} variant="outline" size="sm" className="mt-3 border-amber-300 text-amber-600 hover:bg-amber-50">
+                  <Button variant="outline" size="sm" onClick={clearFilters} className="mt-4">
+                    <X className="w-3.5 h-3.5 mr-1.5" />
                     Rimuovi filtri
                   </Button>
                 )}
@@ -504,57 +476,6 @@ export default function SearchPage() {
       </div>
 
       <Footer />
-
-      {/* Sticky mobile bottom bar — replaces BottomNavigation on /search */}
-      <div className="sm:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/95 dark:bg-slate-900/95 backdrop-blur-sm border-t border-gray-200 dark:border-slate-700 shadow-lg">
-        {/* Bottom tab bar */}
-        <div className="flex items-center px-2 py-2 gap-1">
-          {tabs.map(tab => {
-            const count = tabCounts[tab.id];
-            const Icon = tab.icon;
-            const isActive = activeTab === tab.id;
-            return (
-              <button
-                key={tab.id}
-                onClick={() => { setActiveTab(tab.id); setShowFilters(false); }}
-                className={`flex-1 flex flex-col items-center justify-center py-1.5 rounded-xl transition-all ${
-                  isActive
-                    ? "bg-amber-500 text-white"
-                    : "text-gray-500 dark:text-slate-400 hover:bg-gray-50 dark:hover:bg-slate-800"
-                }`}
-              >
-                <div className="relative">
-                  <Icon className="h-4.5 w-4.5" style={{width:'1.15rem', height:'1.15rem'}} />
-                  {count > 0 && !isActive && (
-                    <span className="absolute -top-2 -right-2 text-[9px] font-bold bg-gray-200 dark:bg-slate-600 text-gray-700 dark:text-slate-200 rounded-full px-1 min-w-4 text-center">
-                      {count > 9 ? "9+" : count}
-                    </span>
-                  )}
-                </div>
-                <span className="text-[10px] font-medium mt-0.5">{tab.label}</span>
-              </button>
-            );
-          })}
-
-          {/* Filters button */}
-          <button
-            onClick={() => setShowFilters(f => !f)}
-            className={`flex-1 flex flex-col items-center justify-center py-1.5 rounded-xl transition-all relative ${
-              showFilters || hasActiveFilters
-                ? "bg-amber-50 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400"
-                : "text-gray-500 dark:text-slate-400"
-            }`}
-          >
-            <SlidersHorizontal style={{width:'1.15rem', height:'1.15rem'}} />
-            {activeFilterCount > 0 && (
-              <span className="absolute top-1 right-2 text-[9px] font-bold bg-amber-500 text-white rounded-full w-4 h-4 flex items-center justify-center">
-                {activeFilterCount}
-              </span>
-            )}
-            <span className="text-[10px] font-medium mt-0.5">Filtri</span>
-          </button>
-        </div>
-      </div>
     </div>
   );
 }
