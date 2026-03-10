@@ -10,7 +10,7 @@ interface LabelScannerProps {
 }
 
 // ─── Resize + compress frame to JPEG < 900 KB ────────────────────────────────
-function prepareImageForApi(src: HTMLCanvasElement | HTMLImageElement, maxW = 1400): string {
+function prepareImageForApi(src: HTMLCanvasElement | HTMLImageElement, maxW = 900): string {
   const isCanvas = src instanceof HTMLCanvasElement;
   const sw = isCanvas ? (src as HTMLCanvasElement).width : (src as HTMLImageElement).naturalWidth;
   const sh = isCanvas ? (src as HTMLCanvasElement).height : (src as HTMLImageElement).naturalHeight;
@@ -37,7 +37,7 @@ function prepareImageForApi(src: HTMLCanvasElement | HTMLImageElement, maxW = 14
   }
   ctx.putImageData(imgData, 0, 0);
 
-  return c.toDataURL("image/jpeg", 0.85);
+  return c.toDataURL("image/jpeg", 0.72);
 }
 
 // ─── Call backend OCR proxy (OCR.space Engine 2) ────────────────────────────
