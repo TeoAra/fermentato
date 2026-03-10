@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """
-PaddleOCR v2 text extractor for beer label images.
+PaddleOCR v3 text extractor for beer label images.
+Uses FLAGS_use_mkldnn=0 to avoid PIR/OneDNN incompatibility on CPU.
 Usage: python3 paddle_ocr.py <image_path>
 Outputs extracted text to stdout (one text block per line).
 Exit codes: 0=ok, 1=error, 2=not installed
@@ -10,11 +11,13 @@ import os
 import warnings
 warnings.filterwarnings("ignore")
 
+# Disable MKL-DNN (OneDNN) — causes PIR attribute conversion crash on some CPU/PaddlePaddle combos
+os.environ["FLAGS_use_mkldnn"] = "0"
 os.environ["FLAGS_call_stack_level"] = "0"
 os.environ["GLOG_minloglevel"] = "3"
-os.environ["KMP_AFFINITY"] = "disabled"
 os.environ["OMP_NUM_THREADS"] = "2"
 os.environ["PADDLE_PDX_DISABLE_MODEL_SOURCE_CHECK"] = "True"
+
 
 def main():
     if len(sys.argv) < 2:
@@ -30,38 +33,46 @@ def main():
         sys.exit(2)
 
     try:
-        # PaddleOCR v2 API
-        ocr = PaddleOCR(
-            use_angle_cls=True,
-            lang="en",
-            use_gpu=False,
-            show_log=False,
-            det_db_thresh=0.3,
-            det_db_box_thresh=0.45,
-            rec_batch_num=4,
-        )
-        result = ocr.ocr(image_path, cls=True)
+        # PaddleOCR v3 — minimal params, mkldnn disabled
+        ocr = PaddleOCR(lang="en")
+        result = ocr.ocr(image_path)
         lines = []
 
-        if result and result[0]:
-            for line in result[0]:
-                if not line or len(line) < 2:
+        if result:
+            for page in result:
+                if not page:
                     continue
-                text_info = line[1]
-                if isinstance(text_info, (list, tuple)):
-                    text = str(text_info[0]) if len(text_info) > 0 else ""
-                    conf = float(text_info[1]) if len(text_info) > 1 else 1.0
-                else:
-                    text = str(text_info)
-                    conf = 1.0
+                for item in page:
+                    try:
+                        # v2/v3 legacy: [[box], [text, conf]]
+                        if isinstance(item, (list, tuple)) and len(item) >= 2:
+                            text_info = item[1]
+                            if isinstance(text_info, (list, tuple)) and len(text_info) >= 2:
+                                text = str(text_info[0])
+                                conf = float(text_info[1])
+                            elif isinstance(text_info, (list, tuple)) and len(text_info) == 1:
+                                text = str(text_info[0])
+                                conf = 1.0
+                            else:
+                                text = str(text_info)
+                                conf = 1.0
+                        # v3 dict format
+                        elif isinstance(item, dict):
+                            text = str(item.get("transcription", item.get("text", "")))
+                            conf = float(item.get("score", item.get("confidence", 1.0)))
+                        else:
+                            continue
 
-                if text.strip() and conf > 0.30:
-                    lines.append(text.strip())
+                        if text.strip() and conf > 0.35:
+                            lines.append(text.strip())
+                    except Exception:
+                        continue
 
         print("\n".join(lines))
     except Exception as e:
         print(f"ERROR: {e}", file=sys.stderr)
         sys.exit(1)
+
 
 if __name__ == "__main__":
     main()
