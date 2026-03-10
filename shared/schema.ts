@@ -754,6 +754,43 @@ export const insertContentSuggestionSchema = createInsertSchema(contentSuggestio
 export type ContentSuggestion = typeof contentSuggestions.$inferSelect;
 export type InsertContentSuggestion = typeof contentSuggestions.$inferInsert;
 
+// Addition requests — users can request new beers or breweries to be added
+export const additionRequests = pgTable("addition_requests", {
+  id: serial("id").primaryKey(),
+  userId: varchar("user_id").references(() => users.id, { onDelete: "cascade" }).notNull(),
+  type: varchar("type", { length: 20 }).notNull(), // 'beer' | 'brewery'
+  status: varchar("status", { length: 20 }).notNull().default("pending"), // 'pending' | 'approved' | 'rejected'
+  // Beer fields
+  beerName: varchar("beer_name"),
+  style: varchar("style"),
+  abv: varchar("abv"),
+  // Brewery fields (for type='brewery' or to link a beer to existing brewery)
+  breweryName: varchar("brewery_name"),
+  breweryId: integer("brewery_id").references(() => breweries.id),
+  city: varchar("city"),
+  country: varchar("country"),
+  websiteUrl: varchar("website_url"),
+  // Common
+  description: text("description"),
+  imageUrl: varchar("image_url"),
+  notes: text("notes"),
+  adminNotes: text("admin_notes"),
+  reviewedBy: varchar("reviewed_by").references(() => users.id),
+  reviewedAt: timestamp("reviewed_at"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const insertAdditionRequestSchema = createInsertSchema(additionRequests).omit({
+  id: true,
+  status: true,
+  adminNotes: true,
+  reviewedBy: true,
+  reviewedAt: true,
+  createdAt: true,
+});
+export type AdditionRequest = typeof additionRequests.$inferSelect;
+export type InsertAdditionRequest = z.infer<typeof insertAdditionRequestSchema>;
+
 // Static editable pages (Contatti, Chi Siamo, Prezzi, Supporto)
 export const staticPages = pgTable("static_pages", {
   id: serial("id").primaryKey(),

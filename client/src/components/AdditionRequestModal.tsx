@@ -1,0 +1,296 @@
+import { useState } from "react";
+import { useMutation, useQuery } from "@tanstack/react-query";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { CheckCircle, Beer, Building2, Loader2, Search, X } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
+import { apiRequest } from "@/lib/queryClient";
+
+interface Props {
+  open: boolean;
+  onClose: () => void;
+  initialBeerName?: string;
+  initialBreweryName?: string;
+  defaultTab?: "beer" | "brewery";
+}
+
+interface BrewerySearchResult {
+  id: number;
+  name: string;
+  location: string;
+  country: string | null;
+}
+
+export default function AdditionRequestModal({ open, onClose, initialBeerName = "", initialBreweryName = "", defaultTab = "beer" }: Props) {
+  const { toast } = useToast();
+  const [tab, setTab] = useState<"beer" | "brewery">(defaultTab);
+  const [success, setSuccess] = useState(false);
+
+  // Beer form state
+  const [beerName, setBeerName] = useState(initialBeerName);
+  const [style, setStyle] = useState("");
+  const [abv, setAbv] = useState("");
+  const [beerBreweryQuery, setBeerBreweryQuery] = useState(initialBreweryName);
+  const [selectedBrewery, setSelectedBrewery] = useState<BrewerySearchResult | null>(null);
+  const [beerDescription, setBeerDescription] = useState("");
+  const [beerNotes, setBeerNotes] = useState("");
+
+  // Brewery form state
+  const [breweryName, setBreweryName] = useState(initialBreweryName);
+  const [city, setCity] = useState("");
+  const [country, setCountry] = useState("Italia");
+  const [websiteUrl, setWebsiteUrl] = useState("");
+  const [breweryDescription, setBreweryDescription] = useState("");
+  const [breweryNotes, setBreweryNotes] = useState("");
+
+  // Brewery search for beer form
+  const [showBreweryResults, setShowBreweryResults] = useState(false);
+  const { data: breweryResults = [] } = useQuery<BrewerySearchResult[]>({
+    queryKey: ["/api/admin/breweries/search", beerBreweryQuery],
+    queryFn: async () => {
+      if (!beerBreweryQuery.trim() || beerBreweryQuery.trim().length < 2 || selectedBrewery) return [];
+      const res = await fetch(`/api/admin/breweries/search?q=${encodeURIComponent(beerBreweryQuery)}&limit=8`);
+      if (!res.ok) return [];
+      return res.json();
+    },
+    enabled: beerBreweryQuery.trim().length >= 2 && !selectedBrewery,
+  });
+
+  const mutation = useMutation({
+    mutationFn: async (data: Record<string, any>) => {
+      const res = await apiRequest("POST", "/api/addition-requests", data);
+      return res.json();
+    },
+    onSuccess: () => {
+      setSuccess(true);
+    },
+    onError: (err: any) => {
+      toast({ title: "Errore", description: err.message || "Errore durante l'invio", variant: "destructive" });
+    },
+  });
+
+  const handleSubmitBeer = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!beerName.trim()) {
+      toast({ title: "Errore", description: "Il nome della birra è obbligatorio", variant: "destructive" });
+      return;
+    }
+    mutation.mutate({
+      type: "beer",
+      beerName: beerName.trim(),
+      breweryId: selectedBrewery?.id || null,
+      breweryName: selectedBrewery ? null : (beerBreweryQuery.trim() || null),
+      style: style.trim() || null,
+      abv: abv.trim() || null,
+      description: beerDescription.trim() || null,
+      notes: beerNotes.trim() || null,
+    });
+  };
+
+  const handleSubmitBrewery = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!breweryName.trim()) {
+      toast({ title: "Errore", description: "Il nome del birrificio è obbligatorio", variant: "destructive" });
+      return;
+    }
+    mutation.mutate({
+      type: "brewery",
+      breweryName: breweryName.trim(),
+      city: city.trim() || null,
+      country: country.trim() || null,
+      websiteUrl: websiteUrl.trim() || null,
+      description: breweryDescription.trim() || null,
+      notes: breweryNotes.trim() || null,
+    });
+  };
+
+  const handleClose = () => {
+    setSuccess(false);
+    onClose();
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={handleClose}>
+      <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2 text-gray-900 dark:text-white">
+            <Beer className="h-5 w-5 text-amber-500" />
+            Suggerisci un'aggiunta
+          </DialogTitle>
+        </DialogHeader>
+
+        {success ? (
+          <div className="flex flex-col items-center justify-center py-8 gap-4 text-center">
+            <div className="w-16 h-16 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center">
+              <CheckCircle className="h-8 w-8 text-green-500" />
+            </div>
+            <div>
+              <p className="text-lg font-semibold text-gray-900 dark:text-white">Richiesta inviata!</p>
+              <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                La tua richiesta verrà esaminata dall'admin o dal gestore del birrificio a breve.
+              </p>
+            </div>
+            <Button onClick={handleClose} className="bg-amber-500 hover:bg-amber-600 text-white">
+              Chiudi
+            </Button>
+          </div>
+        ) : (
+          <>
+            <p className="text-sm text-gray-500 dark:text-gray-400 -mt-1">
+              Non hai trovato quello che cercavi? Puoi suggerire l'aggiunta di una birra o un birrificio. Verrà esaminata e approvata da un amministratore o dal proprietario del birrificio.
+            </p>
+
+            <Tabs value={tab} onValueChange={v => setTab(v as "beer" | "brewery")}>
+              <TabsList className="grid w-full grid-cols-2">
+                <TabsTrigger value="beer" className="gap-2">
+                  <Beer className="h-4 w-4" /> Birra
+                </TabsTrigger>
+                <TabsTrigger value="brewery" className="gap-2">
+                  <Building2 className="h-4 w-4" /> Birrificio
+                </TabsTrigger>
+              </TabsList>
+
+              <TabsContent value="beer" className="mt-4">
+                <form onSubmit={handleSubmitBeer} className="flex flex-col gap-4">
+                  <div>
+                    <Label htmlFor="beerName">Nome birra *</Label>
+                    <Input
+                      id="beerName"
+                      value={beerName}
+                      onChange={e => setBeerName(e.target.value)}
+                      placeholder="es. Moretti Baffo d'Oro"
+                      className="mt-1"
+                    />
+                  </div>
+
+                  <div className="relative">
+                    <Label htmlFor="beerBrewery">Birrificio</Label>
+                    <div className="relative mt-1">
+                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                      <Input
+                        id="beerBrewery"
+                        value={selectedBrewery ? selectedBrewery.name : beerBreweryQuery}
+                        onChange={e => {
+                          setSelectedBrewery(null);
+                          setBeerBreweryQuery(e.target.value);
+                          setShowBreweryResults(true);
+                        }}
+                        onFocus={() => setShowBreweryResults(true)}
+                        placeholder="Cerca birrificio (opzionale)..."
+                        className="pl-9 pr-9"
+                        readOnly={!!selectedBrewery}
+                      />
+                      {selectedBrewery && (
+                        <button
+                          type="button"
+                          onClick={() => { setSelectedBrewery(null); setBeerBreweryQuery(""); }}
+                          className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                        >
+                          <X className="h-4 w-4" />
+                        </button>
+                      )}
+                    </div>
+                    {showBreweryResults && !selectedBrewery && breweryResults.length > 0 && (
+                      <div className="absolute z-50 w-full mt-1 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 shadow-lg max-h-48 overflow-y-auto">
+                        {breweryResults.map(br => (
+                          <button
+                            key={br.id}
+                            type="button"
+                            onClick={() => { setSelectedBrewery(br); setBeerBreweryQuery(br.name); setShowBreweryResults(false); }}
+                            className="w-full text-left px-3 py-2.5 hover:bg-gray-50 dark:hover:bg-gray-700 text-sm border-b border-gray-100 dark:border-gray-700 last:border-0"
+                          >
+                            <span className="font-medium text-gray-900 dark:text-white">{br.name}</span>
+                            <span className="text-gray-400 ml-2 text-xs">{br.location}</span>
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                    {selectedBrewery && (
+                      <p className="text-xs text-green-600 dark:text-green-400 mt-1">
+                        Birrificio collegato: {selectedBrewery.name}
+                      </p>
+                    )}
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <Label htmlFor="style">Stile</Label>
+                      <Input id="style" value={style} onChange={e => setStyle(e.target.value)} placeholder="es. IPA, Lager..." className="mt-1" />
+                    </div>
+                    <div>
+                      <Label htmlFor="abv">ABV (%)</Label>
+                      <Input id="abv" value={abv} onChange={e => setAbv(e.target.value)} placeholder="es. 5.4" className="mt-1" type="text" />
+                    </div>
+                  </div>
+
+                  <div>
+                    <Label htmlFor="beerDescription">Descrizione</Label>
+                    <Textarea id="beerDescription" value={beerDescription} onChange={e => setBeerDescription(e.target.value)} placeholder="Breve descrizione della birra..." className="mt-1 resize-none" rows={2} />
+                  </div>
+
+                  <div>
+                    <Label htmlFor="beerNotes">Note aggiuntive</Label>
+                    <Textarea id="beerNotes" value={beerNotes} onChange={e => setBeerNotes(e.target.value)} placeholder="Altre informazioni utili..." className="mt-1 resize-none" rows={2} />
+                  </div>
+
+                  <Button type="submit" disabled={mutation.isPending} className="bg-amber-500 hover:bg-amber-600 text-white w-full">
+                    {mutation.isPending ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Invio in corso...</> : "Invia richiesta"}
+                  </Button>
+                </form>
+              </TabsContent>
+
+              <TabsContent value="brewery" className="mt-4">
+                <form onSubmit={handleSubmitBrewery} className="flex flex-col gap-4">
+                  <div>
+                    <Label htmlFor="breweryName">Nome birrificio *</Label>
+                    <Input
+                      id="breweryName"
+                      value={breweryName}
+                      onChange={e => setBreweryName(e.target.value)}
+                      placeholder="es. Birrificio del Ducato"
+                      className="mt-1"
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <Label htmlFor="city">Città</Label>
+                      <Input id="city" value={city} onChange={e => setCity(e.target.value)} placeholder="es. Milano" className="mt-1" />
+                    </div>
+                    <div>
+                      <Label htmlFor="country">Paese</Label>
+                      <Input id="country" value={country} onChange={e => setCountry(e.target.value)} placeholder="Italia" className="mt-1" />
+                    </div>
+                  </div>
+
+                  <div>
+                    <Label htmlFor="websiteUrl">Sito web</Label>
+                    <Input id="websiteUrl" value={websiteUrl} onChange={e => setWebsiteUrl(e.target.value)} placeholder="https://..." className="mt-1" type="url" />
+                  </div>
+
+                  <div>
+                    <Label htmlFor="breweryDescription">Descrizione</Label>
+                    <Textarea id="breweryDescription" value={breweryDescription} onChange={e => setBreweryDescription(e.target.value)} placeholder="Breve descrizione del birrificio..." className="mt-1 resize-none" rows={2} />
+                  </div>
+
+                  <div>
+                    <Label htmlFor="breweryNotes">Note aggiuntive</Label>
+                    <Textarea id="breweryNotes" value={breweryNotes} onChange={e => setBreweryNotes(e.target.value)} placeholder="Altre informazioni utili..." className="mt-1 resize-none" rows={2} />
+                  </div>
+
+                  <Button type="submit" disabled={mutation.isPending} className="bg-amber-500 hover:bg-amber-600 text-white w-full">
+                    {mutation.isPending ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Invio in corso...</> : "Invia richiesta"}
+                  </Button>
+                </form>
+              </TabsContent>
+            </Tabs>
+          </>
+        )}
+      </DialogContent>
+    </Dialog>
+  );
+}

@@ -1,6 +1,6 @@
 import { eq, count, desc, asc, sql, or, ilike, and } from "drizzle-orm";
 import { db } from "./db";
-import { beers, breweries, users, pubs, publicanRequests, breweryRequests, reviewReports, userBeerTastings, pubEvents, breweryEvents, contentSuggestions } from "@shared/schema";
+import { beers, breweries, users, pubs, publicanRequests, breweryRequests, reviewReports, userBeerTastings, pubEvents, breweryEvents, contentSuggestions, additionRequests } from "@shared/schema";
 import type { Express } from "express";
 import { isAuthenticated, isAdmin } from "./auth";
 import { sendPushToUser, sendPushToAdmins } from "./push-utils";
@@ -1175,6 +1175,182 @@ export function registerAdminRoutes(app: Express) {
       res.json({ message: "Suggerimento rifiutato" });
     } catch (error) {
       console.error("Error rejecting suggestion:", error);
+      res.status(500).json({ message: "Errore durante il rifiuto" });
+    }
+  });
+
+  // ─── Addition Requests (admin + brewery_owner) ────────────────────────────
+
+  // Middleware: isAdmin OR is brewery_owner (used inline below)
+  const canManageAdditions = async (req: any, res: any, next: any) => {
+    const userType = req.user?.userType || req.user?.claims?.userType;
+    const isAdminUser = userType === 'admin';
+    const isBreweryOwner = userType === 'brewery_owner' || (req.user?.roles || []).includes('brewery_owner');
+    if (isAdminUser || isBreweryOwner) return next();
+    return res.status(403).json({ message: "Accesso non autorizzato" });
+  };
+
+  // List all addition requests (admin sees all; brewery_owner sees only their brewery's beer requests)
+  app.get("/api/admin/addition-requests", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user?.claims?.sub || req.user?.id;
+      const userRecord = await db.select({ userType: users.userType, roles: users.roles, breweryId: users.breweryId })
+        .from(users).where(eq(users.id, userId)).limit(1);
+      if (!userRecord.length) return res.status(403).json({ message: "Utente non trovato" });
+
+      const { userType, roles, breweryId } = userRecord[0];
+      const isAdminUser = userType === 'admin';
+      const isBreweryOwner = userType === 'brewery_owner' || (roles || []).includes('brewery_owner');
+      if (!isAdminUser && !isBreweryOwner) return res.status(403).json({ message: "Accesso non autorizzato" });
+
+      const statusFilter = (req.query.status as string) || 'pending';
+
+      let query = db.select({
+        request: additionRequests,
+        user: { id: users.id, nickname: users.nickname, firstName: users.firstName, profileImageUrl: users.profileImageUrl },
+      })
+        .from(additionRequests)
+        .leftJoin(users, eq(additionRequests.userId, users.id))
+        .where(eq(additionRequests.status, statusFilter))
+        .orderBy(desc(additionRequests.createdAt));
+
+      let rows = await query;
+
+      // Brewery owners only see beer requests for their brewery
+      if (isBreweryOwner && !isAdminUser && breweryId) {
+        rows = rows.filter(r => r.request.type === 'beer' && r.request.breweryId === breweryId);
+      }
+
+      const result = rows.map(r => ({ ...r.request, user: r.user }));
+      res.json(result);
+    } catch (error) {
+      console.error("Error listing addition requests:", error);
+      res.status(500).json({ message: "Errore nel caricamento delle richieste" });
+    }
+  });
+
+  // Pending count for admin badge
+  app.get("/api/admin/addition-requests/pending-count", isAuthenticated, isAdmin, async (_req, res) => {
+    try {
+      const [{ value }] = await db.select({ value: count() })
+        .from(additionRequests).where(eq(additionRequests.status, 'pending'));
+      res.json({ count: value });
+    } catch {
+      res.json({ count: 0 });
+    }
+  });
+
+  // Approve addition request → create beer or brewery in DB
+  app.patch("/api/admin/addition-requests/:id/approve", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user?.claims?.sub || req.user?.id;
+      const userRecord = await db.select({ userType: users.userType, roles: users.roles, breweryId: users.breweryId })
+        .from(users).where(eq(users.id, userId)).limit(1);
+      if (!userRecord.length) return res.status(403).json({ message: "Utente non trovato" });
+
+      const { userType, roles, breweryId: myBreweryId } = userRecord[0];
+      const isAdminUser = userType === 'admin';
+      const isBreweryOwner = userType === 'brewery_owner' || (roles || []).includes('brewery_owner');
+      if (!isAdminUser && !isBreweryOwner) return res.status(403).json({ message: "Accesso non autorizzato" });
+
+      const reqId = parseInt(req.params.id);
+      const [request] = await db.select().from(additionRequests).where(eq(additionRequests.id, reqId)).limit(1);
+      if (!request) return res.status(404).json({ message: "Richiesta non trovata" });
+      if (request.status !== 'pending') return res.status(400).json({ message: "Richiesta già gestita" });
+
+      // Brewery owners can only approve beer requests for their brewery
+      if (isBreweryOwner && !isAdminUser) {
+        if (request.type !== 'beer' || request.breweryId !== myBreweryId) {
+          return res.status(403).json({ message: "Non autorizzato per questa richiesta" });
+        }
+      }
+
+      const { adminNotes } = req.body;
+      let createdId: number | null = null;
+
+      if (request.type === 'brewery') {
+        const [created] = await db.insert(breweries).values({
+          name: request.breweryName!,
+          location: request.city || '',
+          region: '',
+          country: request.country || 'Italia',
+          description: request.description || null,
+          websiteUrl: request.websiteUrl || null,
+        }).returning();
+        createdId = created.id;
+      } else {
+        const [created] = await db.insert(beers).values({
+          name: request.beerName!,
+          style: request.style || 'Non specificato',
+          abv: request.abv ? parseFloat(request.abv) : null,
+          breweryId: request.breweryId || null,
+          description: request.description || null,
+        }).returning();
+        createdId = created.id;
+      }
+
+      await db.update(additionRequests).set({
+        status: 'approved',
+        adminNotes: adminNotes || null,
+        reviewedAt: new Date(),
+        reviewedBy: userId,
+      }).where(eq(additionRequests.id, reqId));
+
+      // Notify the requester
+      const typeLabel = request.type === 'beer' ? 'birra' : 'birrificio';
+      const name = request.type === 'beer' ? request.beerName : request.breweryName;
+      await sendPushToUser(request.userId, {
+        title: '✅ Richiesta approvata',
+        body: `La tua richiesta di aggiungere "${name}" è stata approvata!`,
+        url: createdId ? `/${request.type === 'beer' ? 'beer' : 'brewery'}/${createdId}` : '/scan',
+        type: 'addition_approved',
+      });
+
+      res.json({ message: `${typeLabel} aggiunt${request.type === 'beer' ? 'a' : 'o'} con successo`, id: createdId });
+    } catch (error) {
+      console.error("Error approving addition request:", error);
+      res.status(500).json({ message: "Errore durante l'approvazione" });
+    }
+  });
+
+  // Reject addition request
+  app.patch("/api/admin/addition-requests/:id/reject", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user?.claims?.sub || req.user?.id;
+      const userRecord = await db.select({ userType: users.userType, roles: users.roles, breweryId: users.breweryId })
+        .from(users).where(eq(users.id, userId)).limit(1);
+      if (!userRecord.length) return res.status(403).json({ message: "Utente non trovato" });
+
+      const { userType, roles } = userRecord[0];
+      const isAdminUser = userType === 'admin';
+      const isBreweryOwner = userType === 'brewery_owner' || (roles || []).includes('brewery_owner');
+      if (!isAdminUser && !isBreweryOwner) return res.status(403).json({ message: "Accesso non autorizzato" });
+
+      const reqId = parseInt(req.params.id);
+      const [request] = await db.select().from(additionRequests).where(eq(additionRequests.id, reqId)).limit(1);
+      if (!request) return res.status(404).json({ message: "Richiesta non trovata" });
+      if (request.status !== 'pending') return res.status(400).json({ message: "Richiesta già gestita" });
+
+      const { adminNotes } = req.body;
+
+      await db.update(additionRequests).set({
+        status: 'rejected',
+        adminNotes: adminNotes || null,
+        reviewedAt: new Date(),
+        reviewedBy: userId,
+      }).where(eq(additionRequests.id, reqId));
+
+      const name = request.type === 'beer' ? request.beerName : request.breweryName;
+      await sendPushToUser(request.userId, {
+        title: '❌ Richiesta non approvata',
+        body: `La richiesta di aggiungere "${name}" non è stata accettata${adminNotes ? ': ' + adminNotes : '.'}`,
+        url: '/scan',
+        type: 'addition_rejected',
+      });
+
+      res.json({ message: "Richiesta rifiutata" });
+    } catch (error) {
+      console.error("Error rejecting addition request:", error);
       res.status(500).json({ message: "Errore durante il rifiuto" });
     }
   });

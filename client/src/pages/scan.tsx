@@ -1,9 +1,10 @@
 import { useState, useCallback, useEffect } from "react";
 import { useLocation } from "wouter";
-import { Scan, Beer, Building2, ArrowLeft, Search, X, Lock, LogIn } from "lucide-react";
+import { Scan, Beer, Building2, ArrowLeft, Search, X, Lock, LogIn, PlusCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import LabelScanner from "@/components/LabelScanner";
+import AdditionRequestModal from "@/components/AdditionRequestModal";
 import { Link } from "wouter";
 import { useAuth } from "@/hooks/useAuth";
 
@@ -84,6 +85,7 @@ export default function ScanPage() {
   const [beers, setBeers] = useState<BeerResult[]>([]);
   const [breweries, setBreweries] = useState<BreweryResult[]>([]);
   const [usedQuery, setUsedQuery] = useState("");
+  const [additionModalOpen, setAdditionModalOpen] = useState(false);
   const [isSearching, setIsSearching] = useState(false);
 
   const runSearch = useCallback(async (query: string) => {
@@ -276,7 +278,7 @@ export default function ScanPage() {
 
         {/* No results */}
         {scanState === "notfound" && !isSearching && (
-          <div className="flex flex-col items-center justify-center py-20 gap-4 text-center">
+          <div className="flex flex-col items-center justify-center py-16 gap-4 text-center">
             <Beer className="h-16 w-16 text-gray-300 dark:text-gray-700" />
             <div>
               <p className="text-lg font-semibold text-gray-700 dark:text-gray-300">Nessuna birra trovata</p>
@@ -284,17 +286,32 @@ export default function ScanPage() {
                 Prova a riscansionare avvicinandoti oppure modifica il testo qui sopra.
               </p>
             </div>
-            <div className="flex gap-3 mt-2">
+            <div className="flex gap-3 mt-2 flex-wrap justify-center">
               <Button variant="outline" onClick={handleRescan} className="gap-2">
                 <Scan className="h-4 w-4" />
                 Riscansiona
               </Button>
               <Button
-                className="gap-2 bg-amber-500 hover:bg-amber-600"
+                variant="outline"
                 onClick={() => navigate(`/search?q=${encodeURIComponent(manualQuery)}`)}
+                className="gap-2"
               >
                 <Search className="h-4 w-4" />
                 Cerca avanzata
+              </Button>
+            </div>
+            <div className="w-full max-w-xs mt-2 p-4 bg-amber-50 dark:bg-amber-900/20 rounded-xl border border-amber-200 dark:border-amber-800">
+              <p className="text-sm font-medium text-amber-800 dark:text-amber-300 mb-1">Non è nel database?</p>
+              <p className="text-xs text-amber-600 dark:text-amber-400 mb-3">
+                Puoi suggerire l'aggiunta di questa birra o birrificio. Verrà esaminata e approvata a breve.
+              </p>
+              <Button
+                size="sm"
+                onClick={() => setAdditionModalOpen(true)}
+                className="w-full bg-amber-500 hover:bg-amber-600 text-white gap-2"
+              >
+                <PlusCircle className="h-4 w-4" />
+                Suggerisci aggiunta
               </Button>
             </div>
           </div>
@@ -381,6 +398,13 @@ export default function ScanPage() {
           </>
         )}
       </div>
+
+      <AdditionRequestModal
+        open={additionModalOpen}
+        onClose={() => setAdditionModalOpen(false)}
+        initialBeerName={manualQuery}
+        defaultTab="beer"
+      />
     </div>
   );
 }

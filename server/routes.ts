@@ -12,7 +12,7 @@ import { registerAdminRoutes } from "./routes-admin";
 import { sql, eq, and, desc, asc } from "drizzle-orm";
 import { upload, uploadImage, cloudinary } from "./cloudinary";
 import { db } from "./db";
-import { breweries, beers, pubs, users, tapList, bottleList, userBeerTastings, favorites, menuCategories, menuItems, pubSizes, notifications, pushSubscriptions, breweryRequests, pubEvents, breweryEvents, insertBreweryEventSchema, reviewReports, oauthAccounts, userActivities, ratings, publicanRequests, notificationPreferences, staticPages } from "@shared/schema";
+import { breweries, beers, pubs, users, tapList, bottleList, userBeerTastings, favorites, menuCategories, menuItems, pubSizes, notifications, pushSubscriptions, breweryRequests, pubEvents, breweryEvents, insertBreweryEventSchema, reviewReports, oauthAccounts, userActivities, ratings, publicanRequests, notificationPreferences, staticPages, additionRequests } from "@shared/schema";
 
 import { insertPubSchema, insertTapListSchema, insertBottleListSchema, insertMenuCategorySchema, insertMenuItemSchema, pubRegistrationSchema, insertPubEventSchema } from "@shared/schema";
 import { z } from "zod";
@@ -4063,6 +4063,96 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } else {
       const [created] = await db.insert(staticPages).values({ slug, title, content: safeContent }).returning();
       return res.status(201).json(created);
+    }
+  });
+
+  // ─── Addition Requests (user-facing) ─────────────────────────────────────────
+
+  // Submit a new beer or brewery addition request
+  app.post("/api/addition-requests", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user?.claims?.sub || req.user?.id;
+      if (!userId) return res.status(401).json({ message: "Non autenticato" });
+
+      const { type, beerName, breweryName, breweryId, style, abv, city, country, websiteUrl, description, notes } = req.body;
+      if (!type || !['beer', 'brewery'].includes(type)) {
+        return res.status(400).json({ message: "Tipo non valido (beer o brewery)" });
+      }
+      if (type === 'beer' && !beerName?.trim()) {
+        return res.status(400).json({ message: "Nome birra obbligatorio" });
+      }
+      if (type === 'brewery' && !breweryName?.trim()) {
+        return res.status(400).json({ message: "Nome birrificio obbligatorio" });
+      }
+
+      const [request] = await db.insert(additionRequests).values({
+        userId,
+        type,
+        beerName: beerName?.trim() || null,
+        breweryName: breweryName?.trim() || null,
+        breweryId: breweryId ? parseInt(breweryId) : null,
+        style: style?.trim() || null,
+        abv: abv?.trim() || null,
+        city: city?.trim() || null,
+        country: country?.trim() || null,
+        websiteUrl: websiteUrl?.trim() || null,
+        description: description?.trim() || null,
+        notes: notes?.trim() || null,
+      }).returning();
+
+      // Get submitter name
+      const [submitter] = await db.select({ nickname: users.nickname, firstName: users.firstName })
+        .from(users).where(eq(users.id, userId)).limit(1);
+      const submitterName = submitter?.nickname || submitter?.firstName || 'Un utente';
+
+      const typeLabel = type === 'beer' ? 'birra' : 'birrificio';
+      const itemLabel = type === 'beer' ? (beerName || 'nuova birra') : (breweryName || 'nuovo birrificio');
+
+      // Notify all admins
+      await sendPushToAdmins({
+        title: `🍺 Richiesta aggiunta ${typeLabel}`,
+        body: `${submitterName} vuole aggiungere: ${itemLabel}`,
+        url: '/admin/addition-requests',
+        type: 'addition_request',
+      });
+
+      // If beer request for existing brewery: notify brewery owner
+      if (type === 'beer' && breweryId) {
+        const brId = parseInt(breweryId);
+        const [owner] = await db.select({ id: users.id })
+          .from(users)
+          .where(and(eq(users.breweryId, brId), eq(users.userType, 'brewery_owner')))
+          .limit(1);
+        if (owner) {
+          await sendPushToUser(owner.id, {
+            title: '🍺 Richiesta nuova birra',
+            body: `${submitterName} vuole aggiungere "${itemLabel}" al tuo birrificio`,
+            url: '/admin/addition-requests',
+            type: 'addition_request',
+          });
+        }
+      }
+
+      res.status(201).json(request);
+    } catch (error) {
+      console.error("Error creating addition request:", error);
+      res.status(500).json({ message: "Errore durante l'invio della richiesta" });
+    }
+  });
+
+  // List current user's own addition requests
+  app.get("/api/addition-requests/mine", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user?.claims?.sub || req.user?.id;
+      if (!userId) return res.status(401).json({ message: "Non autenticato" });
+
+      const rows = await db.select().from(additionRequests)
+        .where(eq(additionRequests.userId, userId))
+        .orderBy(desc(additionRequests.createdAt));
+      res.json(rows);
+    } catch (error) {
+      console.error("Error fetching user addition requests:", error);
+      res.status(500).json({ message: "Errore nel caricamento" });
     }
   });
 

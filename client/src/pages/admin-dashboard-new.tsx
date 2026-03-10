@@ -29,7 +29,8 @@ import {
   Play,
   CheckCircle2,
   SkipForward,
-  Lightbulb
+  Lightbulb,
+  PlusCircle
 } from "lucide-react";
 import { Link } from "wouter";
 import { formatDistanceToNow } from "date-fns";
@@ -83,6 +84,13 @@ export default function AdminDashboardNew() {
   const { data: suggestionsPendingCount } = useQuery<{ count: number }>({
     queryKey: ["/api/admin/suggestions/pending-count"],
     queryFn: () => fetch("/api/admin/suggestions/pending-count").then(r => r.json()),
+    enabled: isAuthenticated && (user as any)?.userType === 'admin',
+    refetchInterval: 30000,
+  });
+
+  const { data: additionsPendingCount } = useQuery<{ count: number }>({
+    queryKey: ["/api/admin/addition-requests/pending-count"],
+    queryFn: () => fetch("/api/admin/addition-requests/pending-count").then(r => r.json()),
     enabled: isAuthenticated && (user as any)?.userType === 'admin',
     refetchInterval: 30000,
   });
@@ -254,6 +262,30 @@ export default function AdminDashboardNew() {
                   </p>
                 </div>
                 <ChevronRight className="w-5 h-5 text-gray-400 group-hover:text-yellow-500 transition-colors" />
+              </div>
+            </CardContent>
+          </Card>
+        </Link>
+
+        <Link href="/admin/addition-requests">
+          <Card className="hover:shadow-lg transition-all duration-300 cursor-pointer border-l-4 border-l-green-500 group relative">
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <div className="flex items-center gap-3 mb-2">
+                    <PlusCircle className="w-8 h-8 text-green-500" />
+                    <h3 className="text-lg font-semibold">Aggiunte</h3>
+                    {additionsPendingCount && additionsPendingCount.count > 0 && (
+                      <Badge className="bg-green-500 text-white animate-pulse">
+                        {additionsPendingCount.count}
+                      </Badge>
+                    )}
+                  </div>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">
+                    Birre e birrifici proposti dagli utenti
+                  </p>
+                </div>
+                <ChevronRight className="w-5 h-5 text-gray-400 group-hover:text-green-500 transition-colors" />
               </div>
             </CardContent>
           </Card>
