@@ -4074,7 +4074,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userId = req.user?.claims?.sub || req.user?.id;
       if (!userId) return res.status(401).json({ message: "Non autenticato" });
 
-      const { type, beerName, breweryName, breweryId, style, abv, city, country, websiteUrl, description, notes } = req.body;
+      const { type, beerName, breweryName, breweryId, style, abv, city, country, websiteUrl, description, notes, imageUrl, logoUrl, coverImageUrl } = req.body;
       if (!type || !['beer', 'brewery'].includes(type)) {
         return res.status(400).json({ message: "Tipo non valido (beer o brewery)" });
       }
@@ -4097,6 +4097,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         country: country?.trim() || null,
         websiteUrl: websiteUrl?.trim() || null,
         description: description?.trim() || null,
+        imageUrl: imageUrl?.trim() || null,
+        logoUrl: logoUrl?.trim() || null,
+        coverImageUrl: coverImageUrl?.trim() || null,
         notes: notes?.trim() || null,
       }).returning();
 

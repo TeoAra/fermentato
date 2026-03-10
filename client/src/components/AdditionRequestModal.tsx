@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { CheckCircle, Beer, Building2, Loader2, Search, X, Zap } from "lucide-react";
+import { CheckCircle, Beer, Building2, Loader2, Search, X, Zap, Upload } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { useAuth } from "@/hooks/useAuth";
@@ -26,6 +26,110 @@ interface BrewerySearchResult {
   country: string | null;
 }
 
+function ImageUploadField({
+  label,
+  value,
+  onChange,
+  folder,
+  hint,
+  aspect = "square",
+}: {
+  label: string;
+  value: string;
+  onChange: (url: string) => void;
+  folder: string;
+  hint?: string;
+  aspect?: "square" | "wide";
+}) {
+  const { toast } = useToast();
+  const inputRef = useRef<HTMLInputElement>(null);
+  const [uploading, setUploading] = useState(false);
+
+  const handleFile = async (file: File) => {
+    if (!file) return;
+    if (file.size > 10 * 1024 * 1024) {
+      toast({ title: "File troppo grande", description: "Max 10MB", variant: "destructive" });
+      return;
+    }
+    setUploading(true);
+    try {
+      const formData = new FormData();
+      formData.append("image", file);
+      formData.append("folder", folder);
+      const res = await fetch("/api/upload/image", {
+        method: "POST",
+        body: formData,
+        credentials: "include",
+      });
+      if (!res.ok) throw new Error("Upload fallito");
+      const data = await res.json();
+      onChange(data.url);
+    } catch (err: any) {
+      toast({ title: "Errore upload", description: err.message, variant: "destructive" });
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const previewClass = aspect === "wide"
+    ? "w-full h-28 object-cover rounded-lg"
+    : "w-20 h-20 object-cover rounded-lg";
+
+  return (
+    <div>
+      <Label>{label}</Label>
+      {hint && <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">{hint}</p>}
+      <div className="mt-1.5 flex items-start gap-3">
+        {value ? (
+          <div className="relative flex-shrink-0">
+            <img src={value} alt={label} className={previewClass} />
+            <button
+              type="button"
+              onClick={() => onChange("")}
+              className="absolute -top-1.5 -right-1.5 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center hover:bg-red-600"
+            >
+              <X className="h-3 w-3" />
+            </button>
+          </div>
+        ) : (
+          <button
+            type="button"
+            onClick={() => inputRef.current?.click()}
+            disabled={uploading}
+            className={`flex items-center justify-center gap-2 border-2 border-dashed border-gray-200 dark:border-gray-700 rounded-lg text-gray-400 dark:text-gray-500 hover:border-amber-400 hover:text-amber-500 transition-colors ${aspect === "wide" ? "w-full h-20" : "w-20 h-20"}`}
+          >
+            {uploading
+              ? <Loader2 className="h-5 w-5 animate-spin" />
+              : <><Upload className="h-4 w-4" />{aspect === "wide" ? <span className="text-xs">Carica immagine</span> : null}</>
+            }
+          </button>
+        )}
+        {!value && aspect === "square" && (
+          <div className="flex flex-col justify-center gap-1">
+            <button
+              type="button"
+              onClick={() => inputRef.current?.click()}
+              disabled={uploading}
+              className="text-xs text-amber-600 dark:text-amber-400 hover:underline flex items-center gap-1"
+            >
+              <Upload className="h-3.5 w-3.5" />
+              {uploading ? "Caricamento..." : "Carica"}
+            </button>
+            <p className="text-xs text-gray-400">JPG, PNG, WebP · max 10MB</p>
+          </div>
+        )}
+      </div>
+      <input
+        ref={inputRef}
+        type="file"
+        accept="image/*"
+        className="hidden"
+        onChange={e => { const f = e.target.files?.[0]; if (f) handleFile(f); e.target.value = ""; }}
+      />
+    </div>
+  );
+}
+
 export default function AdditionRequestModal({ open, onClose, initialBeerName = "", initialBreweryName = "", defaultTab = "beer" }: Props) {
   const { toast } = useToast();
   const { user } = useAuth();
@@ -38,10 +142,13 @@ export default function AdditionRequestModal({ open, onClose, initialBeerName = 
   const [beerName, setBeerName] = useState(initialBeerName);
   const [style, setStyle] = useState("");
   const [abv, setAbv] = useState("");
+  const [ibu, setIbu] = useState("");
   const [beerBreweryQuery, setBeerBreweryQuery] = useState(initialBreweryName);
   const [selectedBrewery, setSelectedBrewery] = useState<BrewerySearchResult | null>(null);
   const [beerDescription, setBeerDescription] = useState("");
   const [beerNotes, setBeerNotes] = useState("");
+  const [beerLogoUrl, setBeerLogoUrl] = useState("");
+  const [beerImageUrl, setBeerImageUrl] = useState("");
 
   // Brewery form state
   const [breweryName, setBreweryName] = useState(initialBreweryName);
@@ -50,6 +157,8 @@ export default function AdditionRequestModal({ open, onClose, initialBeerName = 
   const [websiteUrl, setWebsiteUrl] = useState("");
   const [breweryDescription, setBreweryDescription] = useState("");
   const [breweryNotes, setBreweryNotes] = useState("");
+  const [breweryLogoUrl, setBreweryLogoUrl] = useState("");
+  const [breweryCoverUrl, setBreweryCoverUrl] = useState("");
 
   // Brewery search for beer form
   const [showBreweryResults, setShowBreweryResults] = useState(false);
@@ -79,8 +188,26 @@ export default function AdditionRequestModal({ open, onClose, initialBeerName = 
       const { type, ...payload } = data;
       const url = type === "beer" ? "/api/admin/beers" : "/api/admin/breweries";
       const body = type === "beer"
-        ? { name: payload.beerName, style: payload.style || "Non specificato", abv: payload.abv ? parseFloat(payload.abv) : null, breweryId: payload.breweryId || null, description: payload.description || null }
-        : { name: payload.breweryName, location: payload.city || "", region: "", country: payload.country || "Italia", description: payload.description || null, websiteUrl: payload.websiteUrl || null };
+        ? {
+            name: payload.beerName,
+            style: payload.style || "Non specificato",
+            abv: payload.abv ? parseFloat(payload.abv) : null,
+            ibu: payload.ibu ? parseInt(payload.ibu) : null,
+            breweryId: payload.breweryId || null,
+            description: payload.description || null,
+            logoUrl: payload.logoUrl || null,
+            imageUrl: payload.imageUrl || null,
+          }
+        : {
+            name: payload.breweryName,
+            location: payload.city || "",
+            region: "",
+            country: payload.country || "Italia",
+            description: payload.description || null,
+            websiteUrl: payload.websiteUrl || null,
+            logoUrl: payload.logoUrl || null,
+            coverImageUrl: payload.coverImageUrl || null,
+          };
       const res = await apiRequest("POST", url, body);
       if (!res.ok) { const e = await res.json(); throw new Error(e.message); }
       return res.json();
@@ -102,8 +229,11 @@ export default function AdditionRequestModal({ open, onClose, initialBeerName = 
       breweryName: selectedBrewery ? null : (beerBreweryQuery.trim() || null),
       style: style.trim() || null,
       abv: abv.trim() || null,
+      ibu: ibu.trim() || null,
       description: beerDescription.trim() || null,
       notes: beerNotes.trim() || null,
+      logoUrl: beerLogoUrl || null,
+      imageUrl: beerImageUrl || null,
     };
     if (direct) directMutation.mutate(data);
     else mutation.mutate(data);
@@ -123,6 +253,8 @@ export default function AdditionRequestModal({ open, onClose, initialBeerName = 
       websiteUrl: websiteUrl.trim() || null,
       description: breweryDescription.trim() || null,
       notes: breweryNotes.trim() || null,
+      logoUrl: breweryLogoUrl || null,
+      coverImageUrl: breweryCoverUrl || null,
     };
     if (direct) directMutation.mutate(data);
     else mutation.mutate(data);
@@ -189,6 +321,7 @@ export default function AdditionRequestModal({ open, onClose, initialBeerName = 
                 </TabsTrigger>
               </TabsList>
 
+              {/* ── BEER TAB ── */}
               <TabsContent value="beer" className="mt-4">
                 <form onSubmit={handleSubmitBeer} className="flex flex-col gap-4">
                   <div>
@@ -202,6 +335,7 @@ export default function AdditionRequestModal({ open, onClose, initialBeerName = 
                     />
                   </div>
 
+                  {/* Brewery search */}
                   <div className="relative">
                     <Label htmlFor="beerBrewery">Birrificio</Label>
                     <div className="relative mt-1">
@@ -270,8 +404,31 @@ export default function AdditionRequestModal({ open, onClose, initialBeerName = 
                     </div>
                     <div>
                       <Label htmlFor="abv">ABV (%)</Label>
-                      <Input id="abv" value={abv} onChange={e => setAbv(e.target.value)} placeholder="es. 5.4" className="mt-1" type="text" />
+                      <Input id="abv" value={abv} onChange={e => setAbv(e.target.value)} placeholder="es. 5.4" className="mt-1" />
                     </div>
+                  </div>
+
+                  <div>
+                    <Label htmlFor="ibu">IBU</Label>
+                    <Input id="ibu" value={ibu} onChange={e => setIbu(e.target.value)} placeholder="es. 35" className="mt-1" />
+                  </div>
+
+                  {/* Image uploads */}
+                  <div className="grid grid-cols-2 gap-4 pt-1">
+                    <ImageUploadField
+                      label="Etichetta / Logo"
+                      value={beerLogoUrl}
+                      onChange={setBeerLogoUrl}
+                      folder="beer-labels"
+                      hint="Etichetta della bottiglia"
+                    />
+                    <ImageUploadField
+                      label="Immagine principale"
+                      value={beerImageUrl}
+                      onChange={setBeerImageUrl}
+                      folder="beers"
+                      hint="Foto della birra"
+                    />
                   </div>
 
                   <div>
@@ -302,6 +459,7 @@ export default function AdditionRequestModal({ open, onClose, initialBeerName = 
                 </form>
               </TabsContent>
 
+              {/* ── BREWERY TAB ── */}
               <TabsContent value="brewery" className="mt-4">
                 <form onSubmit={handleSubmitBrewery} className="flex flex-col gap-4">
                   <div>
@@ -330,6 +488,25 @@ export default function AdditionRequestModal({ open, onClose, initialBeerName = 
                     <Label htmlFor="websiteUrl">Sito web</Label>
                     <Input id="websiteUrl" value={websiteUrl} onChange={e => setWebsiteUrl(e.target.value)} placeholder="https://..." className="mt-1" type="url" />
                   </div>
+
+                  {/* Logo upload */}
+                  <ImageUploadField
+                    label="Logo birrificio"
+                    value={breweryLogoUrl}
+                    onChange={setBreweryLogoUrl}
+                    folder="brewery-logos"
+                    hint="Logo quadrato del birrificio"
+                  />
+
+                  {/* Cover upload */}
+                  <ImageUploadField
+                    label="Immagine di copertina"
+                    value={breweryCoverUrl}
+                    onChange={setBreweryCoverUrl}
+                    folder="brewery-covers"
+                    hint="Banner orizzontale (es. 1200×400px)"
+                    aspect="wide"
+                  />
 
                   <div>
                     <Label htmlFor="breweryDescription">Descrizione</Label>

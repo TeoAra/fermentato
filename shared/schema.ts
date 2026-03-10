@@ -773,6 +773,8 @@ export const additionRequests = pgTable("addition_requests", {
   // Common
   description: text("description"),
   imageUrl: varchar("image_url"),
+  logoUrl: varchar("logo_url"),
+  coverImageUrl: varchar("cover_image_url"),
   notes: text("notes"),
   adminNotes: text("admin_notes"),
   reviewedBy: varchar("reviewed_by").references(() => users.id),

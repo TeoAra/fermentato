@@ -1276,6 +1276,8 @@ export function registerAdminRoutes(app: Express) {
           country: request.country || 'Italia',
           description: request.description || null,
           websiteUrl: request.websiteUrl || null,
+          logoUrl: (request as any).logoUrl || null,
+          coverImageUrl: (request as any).coverImageUrl || null,
         }).returning();
         createdId = created.id;
       } else {
@@ -1285,6 +1287,8 @@ export function registerAdminRoutes(app: Express) {
           abv: request.abv ? parseFloat(request.abv) : null,
           breweryId: request.breweryId || null,
           description: request.description || null,
+          imageUrl: request.imageUrl || null,
+          logoUrl: (request as any).logoUrl || null,
         }).returning();
         createdId = created.id;
       }
