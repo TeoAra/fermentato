@@ -1,9 +1,9 @@
-import { eq, count, desc, asc, sql, or, ilike } from "drizzle-orm";
+import { eq, count, desc, asc, sql, or, ilike, and } from "drizzle-orm";
 import { db } from "./db";
-import { beers, breweries, users, pubs, publicanRequests, breweryRequests, reviewReports, userBeerTastings, pubEvents, breweryEvents } from "@shared/schema";
+import { beers, breweries, users, pubs, publicanRequests, breweryRequests, reviewReports, userBeerTastings, pubEvents, breweryEvents, contentSuggestions } from "@shared/schema";
 import type { Express } from "express";
 import { isAuthenticated, isAdmin } from "./auth";
-import { sendPushToUser } from "./push-utils";
+import { sendPushToUser, sendPushToAdmins } from "./push-utils";
 import { storage } from "./storage";
 
 export function registerAdminRoutes(app: Express) {
@@ -985,6 +985,197 @@ export function registerAdminRoutes(app: Express) {
     } catch (error) {
       console.error("Error deleting pub:", error);
       res.status(500).json({ message: "Errore durante l'eliminazione" });
+    }
+  });
+
+  // ─── Content Suggestions ───────────────────────────────────────────────────
+
+  // Submit a suggestion (any authenticated user)
+  app.post("/api/suggestions", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user?.claims?.sub || req.user?.id;
+      if (!userId) return res.status(401).json({ message: "Non autenticato" });
+
+      const { type, itemId, proposedChanges, currentData, message } = req.body;
+      if (!type || !itemId || !proposedChanges) {
+        return res.status(400).json({ message: "Dati mancanti" });
+      }
+      if (!['beer', 'brewery'].includes(type)) {
+        return res.status(400).json({ message: "Tipo non valido" });
+      }
+
+      const [suggestion] = await db.insert(contentSuggestions).values({
+        type,
+        itemId: parseInt(itemId),
+        userId,
+        proposedChanges,
+        currentData: currentData || null,
+        message: message || null,
+      }).returning();
+
+      // Get user info for notification
+      const [submitter] = await db.select({ nickname: users.nickname, firstName: users.firstName })
+        .from(users).where(eq(users.id, userId)).limit(1);
+      const submitterName = submitter?.nickname || submitter?.firstName || 'Un utente';
+
+      // Notify all admins
+      const itemLabel = type === 'beer' ? 'birra' : 'birrificio';
+      await sendPushToAdmins({
+        title: '📝 Nuovo suggerimento',
+        body: `${submitterName} ha suggerito modifiche a una ${itemLabel}`,
+        url: '/admin/suggestions',
+        type: 'suggestion',
+      });
+
+      // If brewery: notify brewery owner (if registered)
+      if (type === 'brewery') {
+        const [breweryOwner] = await db.select({ id: users.id })
+          .from(users)
+          .where(and(eq(users.breweryId, parseInt(itemId)), eq(users.userType, 'brewery_owner')))
+          .limit(1);
+        if (breweryOwner) {
+          await sendPushToUser(breweryOwner.id, {
+            title: '📝 Suggerimento ricevuto',
+            body: `${submitterName} ha suggerito modifiche al tuo birrificio`,
+            url: `/brewery/${itemId}`,
+            type: 'suggestion',
+          });
+        }
+      }
+
+      res.status(201).json(suggestion);
+    } catch (error) {
+      console.error("Error creating suggestion:", error);
+      res.status(500).json({ message: "Errore durante l'invio del suggerimento" });
+    }
+  });
+
+  // List all suggestions (admin only)
+  app.get("/api/admin/suggestions", isAuthenticated, isAdmin, async (req: any, res) => {
+    try {
+      const statusFilter = (req.query.status as string) || 'pending';
+      const rows = await db.select({
+        suggestion: contentSuggestions,
+        user: {
+          id: users.id,
+          nickname: users.nickname,
+          firstName: users.firstName,
+          lastName: users.lastName,
+          profileImageUrl: users.profileImageUrl,
+        },
+      })
+        .from(contentSuggestions)
+        .leftJoin(users, eq(contentSuggestions.userId, users.id))
+        .where(eq(contentSuggestions.status, statusFilter))
+        .orderBy(desc(contentSuggestions.createdAt));
+
+      // Enrich with item name
+      const enriched = await Promise.all(rows.map(async (row) => {
+        let itemName = '';
+        try {
+          if (row.suggestion.type === 'beer') {
+            const [b] = await db.select({ name: beers.name }).from(beers).where(eq(beers.id, row.suggestion.itemId)).limit(1);
+            itemName = b?.name || '';
+          } else {
+            const [br] = await db.select({ name: breweries.name }).from(breweries).where(eq(breweries.id, row.suggestion.itemId)).limit(1);
+            itemName = br?.name || '';
+          }
+        } catch {}
+        return { ...row.suggestion, user: row.user, itemName };
+      }));
+
+      res.json(enriched);
+    } catch (error) {
+      console.error("Error fetching suggestions:", error);
+      res.status(500).json({ message: "Errore nel caricamento dei suggerimenti" });
+    }
+  });
+
+  // Pending count (for admin badge)
+  app.get("/api/admin/suggestions/pending-count", isAuthenticated, isAdmin, async (req: any, res) => {
+    try {
+      const [{ value }] = await db.select({ value: count() })
+        .from(contentSuggestions)
+        .where(eq(contentSuggestions.status, 'pending'));
+      res.json({ count: value });
+    } catch (error) {
+      res.json({ count: 0 });
+    }
+  });
+
+  // Approve suggestion — apply changes to beer/brewery
+  app.patch("/api/admin/suggestions/:id/approve", isAuthenticated, isAdmin, async (req: any, res) => {
+    try {
+      const suggestionId = parseInt(req.params.id);
+      const adminId = req.user?.claims?.sub || req.user?.id;
+      const { adminNotes } = req.body;
+
+      const [suggestion] = await db.select().from(contentSuggestions).where(eq(contentSuggestions.id, suggestionId)).limit(1);
+      if (!suggestion) return res.status(404).json({ message: "Suggerimento non trovato" });
+      if (suggestion.status !== 'pending') return res.status(400).json({ message: "Suggerimento già gestito" });
+
+      const changes = suggestion.proposedChanges as Record<string, any>;
+
+      // Apply changes
+      if (suggestion.type === 'beer') {
+        await storage.updateBeer(suggestion.itemId, changes);
+      } else {
+        await storage.updateBrewery(suggestion.itemId, changes);
+      }
+
+      // Mark as approved
+      await db.update(contentSuggestions).set({
+        status: 'approved',
+        adminNotes: adminNotes || null,
+        reviewedAt: new Date(),
+        reviewedBy: adminId,
+      }).where(eq(contentSuggestions.id, suggestionId));
+
+      // Notify the user who suggested
+      await sendPushToUser(suggestion.userId, {
+        title: '✅ Suggerimento approvato',
+        body: `Il tuo suggerimento per ${suggestion.type === 'beer' ? 'la birra' : 'il birrificio'} è stato approvato!`,
+        url: `/${suggestion.type === 'beer' ? 'beer' : 'brewery'}/${suggestion.itemId}`,
+        type: 'suggestion_approved',
+      });
+
+      res.json({ message: "Suggerimento approvato e modifiche applicate" });
+    } catch (error) {
+      console.error("Error approving suggestion:", error);
+      res.status(500).json({ message: "Errore durante l'approvazione" });
+    }
+  });
+
+  // Reject suggestion
+  app.patch("/api/admin/suggestions/:id/reject", isAuthenticated, isAdmin, async (req: any, res) => {
+    try {
+      const suggestionId = parseInt(req.params.id);
+      const adminId = req.user?.claims?.sub || req.user?.id;
+      const { adminNotes } = req.body;
+
+      const [suggestion] = await db.select().from(contentSuggestions).where(eq(contentSuggestions.id, suggestionId)).limit(1);
+      if (!suggestion) return res.status(404).json({ message: "Suggerimento non trovato" });
+      if (suggestion.status !== 'pending') return res.status(400).json({ message: "Suggerimento già gestito" });
+
+      await db.update(contentSuggestions).set({
+        status: 'rejected',
+        adminNotes: adminNotes || null,
+        reviewedAt: new Date(),
+        reviewedBy: adminId,
+      }).where(eq(contentSuggestions.id, suggestionId));
+
+      // Notify the user who suggested
+      await sendPushToUser(suggestion.userId, {
+        title: '❌ Suggerimento non approvato',
+        body: `Il tuo suggerimento per ${suggestion.type === 'beer' ? 'la birra' : 'il birrificio'} non è stato accettato${adminNotes ? ': ' + adminNotes : '.'}`,
+        url: `/${suggestion.type === 'beer' ? 'beer' : 'brewery'}/${suggestion.itemId}`,
+        type: 'suggestion_rejected',
+      });
+
+      res.json({ message: "Suggerimento rifiutato" });
+    } catch (error) {
+      console.error("Error rejecting suggestion:", error);
+      res.status(500).json({ message: "Errore durante il rifiuto" });
     }
   });
 }

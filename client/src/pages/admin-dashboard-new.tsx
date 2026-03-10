@@ -28,7 +28,8 @@ import {
   Languages,
   Play,
   CheckCircle2,
-  SkipForward
+  SkipForward,
+  Lightbulb
 } from "lucide-react";
 import { Link } from "wouter";
 import { formatDistanceToNow } from "date-fns";
@@ -77,6 +78,13 @@ export default function AdminDashboardNew() {
   const { data: breweryPendingCount } = useQuery<{ count: number }>({
     queryKey: ["/api/admin/brewery-requests/pending-count"],
     enabled: isAuthenticated && (user as any)?.userType === 'admin',
+  });
+
+  const { data: suggestionsPendingCount } = useQuery<{ count: number }>({
+    queryKey: ["/api/admin/suggestions/pending-count"],
+    queryFn: () => fetch("/api/admin/suggestions/pending-count").then(r => r.json()),
+    enabled: isAuthenticated && (user as any)?.userType === 'admin',
+    refetchInterval: 30000,
   });
 
   const { data: adminStats } = useQuery<AdminStats>({
@@ -222,6 +230,30 @@ export default function AdminDashboardNew() {
                   </p>
                 </div>
                 <ChevronRight className="w-5 h-5 text-gray-400 group-hover:text-orange-500 transition-colors" />
+              </div>
+            </CardContent>
+          </Card>
+        </Link>
+
+        <Link href="/admin/suggestions">
+          <Card className="hover:shadow-lg transition-all duration-300 cursor-pointer border-l-4 border-l-yellow-500 group relative">
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <div className="flex items-center gap-3 mb-2">
+                    <Lightbulb className="w-8 h-8 text-yellow-500" />
+                    <h3 className="text-lg font-semibold">Suggerimenti</h3>
+                    {suggestionsPendingCount && suggestionsPendingCount.count > 0 && (
+                      <Badge className="bg-yellow-500 text-white animate-pulse">
+                        {suggestionsPendingCount.count}
+                      </Badge>
+                    )}
+                  </div>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">
+                    Modifiche proposte dagli utenti
+                  </p>
+                </div>
+                <ChevronRight className="w-5 h-5 text-gray-400 group-hover:text-yellow-500 transition-colors" />
               </div>
             </CardContent>
           </Card>

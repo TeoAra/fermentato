@@ -26,7 +26,8 @@ import {
   ChevronDown,
   Filter,
   ArrowUpDown,
-  Flag
+  Flag,
+  Lightbulb
 } from "lucide-react";
 import Footer from "@/components/footer";
 import { Card, CardContent } from "@/components/ui/card";
@@ -44,6 +45,7 @@ import { apiRequest } from "@/lib/queryClient";
 import BeerTastingForm from "@/components/BeerTastingForm";
 import ImageWithFallback from "@/components/image-with-fallback";
 import { ImageUpload } from "@/components/image-upload";
+import SuggestChangeDialog from "@/components/SuggestChangeDialog";
 
 interface Beer {
   id: number;
@@ -118,6 +120,7 @@ export default function BeerDetail() {
   const queryClient = useQueryClient();
   const [showTastingForm, setShowTastingForm] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [isSuggestDialogOpen, setIsSuggestDialogOpen] = useState(false);
   const [reviewFilterRating, setReviewFilterRating] = useState<number | null>(null);
   const [reviewSortBy, setReviewSortBy] = useState<'recent' | 'highest' | 'lowest'>('recent');
   const [showAllReviews, setShowAllReviews] = useState(false);
@@ -491,6 +494,18 @@ export default function BeerDetail() {
                       <Share2 className="h-4 w-4 sm:mr-2" />
                       <span className="hidden sm:inline">Condividi</span>
                     </Button>
+                    {isAuthenticated && !isAdmin && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setIsSuggestDialogOpen(true)}
+                        className="backdrop-blur-md bg-white/10 border-white/30 text-white hover:bg-amber-500/30 hover:border-amber-300/50 transition-all duration-300 font-medium shadow-lg min-h-[44px] min-w-[44px]"
+                        data-testid="button-suggest-change"
+                      >
+                        <Lightbulb className="h-4 w-4 sm:mr-2" />
+                        <span className="hidden sm:inline">Suggerisci modifica</span>
+                      </Button>
+                    )}
                   </div>
                 </div>
               </div>
@@ -1069,6 +1084,29 @@ export default function BeerDetail() {
           </div>
         </DialogContent>
       </Dialog>
+      {/* Suggest Change Dialog */}
+      {beer && (
+        <SuggestChangeDialog
+          open={isSuggestDialogOpen}
+          onOpenChange={setIsSuggestDialogOpen}
+          type="beer"
+          itemId={beer.id}
+          currentData={{
+            name: beer.name,
+            style: beer.style,
+            abv: beer.abv,
+            ibu: beer.ibu ?? null,
+            description: beer.description ?? null,
+            color: beer.color ?? null,
+            logoUrl: beer.logoUrl ?? null,
+            imageUrl: beer.imageUrl ?? null,
+            bottleImageUrl: beer.bottleImageUrl ?? null,
+            isGlutenFree: beer.isGlutenFree ?? false,
+            isAlcoholFree: beer.isAlcoholFree ?? false,
+          }}
+        />
+      )}
+
       <Footer />
     </div>
   );

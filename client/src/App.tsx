@@ -40,6 +40,7 @@ import AdminPublicanRequests from "@/pages/admin-publican-requests";
 import AdminAnalytics from "@/pages/admin-analytics";
 import AdminContent from "@/pages/admin-content";
 import AdminModeration from "@/pages/admin-moderation";
+import AdminSuggestions from "@/pages/admin-suggestions";
 import AdminEditPub from "@/pages/admin-edit-pub";
 import ExplorePubs from "@/pages/explore-pubs";
 import ExploreBreweries from "@/pages/explore-breweries";
@@ -117,6 +118,7 @@ function Router() {
           <Route path="/admin/analytics" component={AdminAnalytics} />
           <Route path="/admin/content" component={AdminContent} />
           <Route path="/admin/moderation" component={AdminModeration} />
+          <Route path="/admin/suggestions" component={AdminSuggestions} />
           <Route path="/admin/publican-requests" component={AdminPublicanRequests} />
           <Route path="/admin/users" component={AdminDashboard} />
           <Route path="/admin/edit-pub/:id" component={AdminEditPub} />

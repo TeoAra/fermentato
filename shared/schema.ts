@@ -726,6 +726,34 @@ export const reviewReports = pgTable("review_reports", {
 
 export type ReviewReport = typeof reviewReports.$inferSelect;
 
+// Content suggestion table — users can suggest changes to beers or breweries
+export const contentSuggestions = pgTable("content_suggestions", {
+  id: serial("id").primaryKey(),
+  type: varchar("type", { length: 20 }).notNull(), // 'beer' | 'brewery'
+  itemId: integer("item_id").notNull(),
+  userId: varchar("user_id").notNull().references(() => users.id),
+  status: varchar("status", { length: 20 }).default("pending").notNull(),
+  proposedChanges: jsonb("proposed_changes").notNull(),
+  currentData: jsonb("current_data"),
+  message: text("message"),
+  adminNotes: text("admin_notes"),
+  createdAt: timestamp("created_at").defaultNow(),
+  reviewedAt: timestamp("reviewed_at"),
+  reviewedBy: varchar("reviewed_by"),
+});
+
+export const insertContentSuggestionSchema = createInsertSchema(contentSuggestions).omit({
+  id: true,
+  status: true,
+  adminNotes: true,
+  createdAt: true,
+  reviewedAt: true,
+  reviewedBy: true,
+});
+
+export type ContentSuggestion = typeof contentSuggestions.$inferSelect;
+export type InsertContentSuggestion = typeof contentSuggestions.$inferInsert;
+
 // Custom schemas for forms
 export const pubRegistrationSchema = insertPubSchema.extend({
   vatNumber: z.string().min(11, "P.IVA deve essere di almeno 11 caratteri"),

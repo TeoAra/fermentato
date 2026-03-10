@@ -56,6 +56,7 @@ Preferred communication style: Simple, everyday language.
 - **Global Redesign**: Updated landing page, homepage, and CTA sections.
 - **Performance Optimization**: Eliminated N+1 queries for pub menus and optimized admin search.
 - **Large-scale Data Import**: Efficient import of over 1 million beer records with optimized search capabilities.
+- **Content Suggestions**: Users can suggest changes to beer/brewery data (including images). Admins and brewery owners are notified via push. Admin review panel at `/admin/suggestions` with diff view, approve (applies changes) and reject (notifies user) actions.
 
 ## External Dependencies
 

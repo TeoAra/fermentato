@@ -18,7 +18,8 @@ import {
   X,
   CalendarDays,
   Calendar,
-  Clock
+  Clock,
+  Lightbulb
 } from "lucide-react";
 import { EventCategoryBadge } from "@/components/events-manager";
 import { format, isFuture } from "date-fns";
@@ -38,6 +39,7 @@ import { apiRequest } from "@/lib/queryClient";
 import { useState } from "react";
 import ImageWithFallback from "@/components/image-with-fallback";
 import { ImageUpload } from "@/components/image-upload";
+import SuggestChangeDialog from "@/components/SuggestChangeDialog";
 import AddressAutocomplete from "@/components/address-autocomplete";
 
 interface Brewery {
@@ -86,6 +88,7 @@ export default function BreweryDetail() {
   const queryClient = useQueryClient();
   const [showAllBeers, setShowAllBeers] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [isSuggestDialogOpen, setIsSuggestDialogOpen] = useState(false);
   const [editForm, setEditForm] = useState({
     name: '',
     location: '',
@@ -378,6 +381,18 @@ export default function BreweryDetail() {
                       <Share2 className="h-4 w-4 sm:mr-2" />
                       <span className="hidden sm:inline">Condividi</span>
                     </Button>
+                    {isAuthenticated && !isAdmin && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setIsSuggestDialogOpen(true)}
+                        className="backdrop-blur-md bg-white/10 border-white/30 text-white hover:bg-amber-500/30 hover:border-amber-300/50 transition-all duration-300 font-medium shadow-lg min-h-[44px] min-w-[44px]"
+                        data-testid="button-suggest-change"
+                      >
+                        <Lightbulb className="h-4 w-4 sm:mr-2" />
+                        <span className="hidden sm:inline">Suggerisci modifica</span>
+                      </Button>
+                    )}
                   </div>
                 </div>
               </div>
@@ -719,6 +734,25 @@ export default function BreweryDetail() {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Suggest Change Dialog */}
+      {brewery && (
+        <SuggestChangeDialog
+          open={isSuggestDialogOpen}
+          onOpenChange={setIsSuggestDialogOpen}
+          type="brewery"
+          itemId={brewery.id}
+          currentData={{
+            name: brewery.name,
+            location: brewery.location,
+            region: brewery.region ?? null,
+            description: brewery.description ?? null,
+            websiteUrl: brewery.websiteUrl ?? null,
+            logoUrl: brewery.logoUrl ?? null,
+            coverImageUrl: brewery.coverImageUrl ?? null,
+          }}
+        />
+      )}
 
       <Footer />
     </div>
