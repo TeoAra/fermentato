@@ -82,7 +82,7 @@ export default function Home() {
 
   const { data: globalStats } = useQuery<{ totalBeers: number; totalBreweries: number; uniqueStyles: number; totalUsers: number; totalPubs: number }>({
     queryKey: ["/api/stats"],
-    staleTime: 10 * 60 * 1000,
+    staleTime: 60 * 1000,
   });
 
   const sortedPubs = useMemo(() => {
