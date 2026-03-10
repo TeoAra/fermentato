@@ -3964,6 +3964,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // ── Static Pages (public read, admin write) ────────────────────────────────
+
+  function sanitizePageHtml(html: string): string {
+    return html
+      .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
+      .replace(/<iframe\b[^<]*(?:(?!<\/iframe>)<[^<]*)*<\/iframe>/gi, '')
+      .replace(/<object\b[^<]*(?:(?!<\/object>)<[^<]*)*<\/object>/gi, '')
+      .replace(/<embed[^>]*>/gi, '')
+      .replace(/\s+on\w+\s*=\s*["'][^"']*["']/gi, '')
+      .replace(/javascript\s*:/gi, '#');
+  }
+
   app.get("/api/pages/:slug", async (req, res) => {
     const { slug } = req.params;
     const [page] = await db.select().from(staticPages).where(eq(staticPages.slug, slug));
@@ -3980,15 +3991,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
     const { slug } = req.params;
     const { title, content } = req.body;
     if (!title || content === undefined) return res.status(400).json({ error: "title and content required" });
+    const safeContent = sanitizePageHtml(String(content));
     const [existing] = await db.select().from(staticPages).where(eq(staticPages.slug, slug));
     if (existing) {
       const [updated] = await db.update(staticPages)
-        .set({ title, content, updatedAt: new Date() })
+        .set({ title, content: safeContent, updatedAt: new Date() })
         .where(eq(staticPages.slug, slug))
         .returning();
       return res.json(updated);
     } else {
-      const [created] = await db.insert(staticPages).values({ slug, title, content }).returning();
+      const [created] = await db.insert(staticPages).values({ slug, title, content: safeContent }).returning();
       return res.status(201).json(created);
     }
   });

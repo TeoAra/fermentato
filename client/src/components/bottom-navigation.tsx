@@ -33,13 +33,11 @@ export function BottomNavigation() {
   }) {
     return (
       <Link href={href}>
-        <div
-          className={`group flex flex-col items-center justify-center py-2 px-2 rounded-2xl transition-all duration-300 transform active:scale-95 min-w-[56px] ${
-            isActive
-              ? "text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/20"
-              : "text-gray-500 dark:text-gray-400 hover:text-amber-600 dark:hover:text-amber-400 hover:bg-gray-50 dark:hover:bg-slate-800/50"
-          }`}
-        >
+        <div className={`group flex flex-col items-center justify-center py-1.5 px-3 rounded-2xl transition-all duration-300 active:scale-95 ${
+          isActive
+            ? "text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/20"
+            : "text-gray-500 dark:text-gray-400 hover:text-amber-600 dark:hover:text-amber-400 hover:bg-gray-50 dark:hover:bg-slate-800/50"
+        }`}>
           <div className="relative">
             <Icon className={`h-5 w-5 transition-all duration-300 ${isActive ? 'scale-110' : 'group-hover:scale-105'}`} />
             {badge && badge > 0 && (
@@ -48,7 +46,7 @@ export function BottomNavigation() {
               </div>
             )}
           </div>
-          <span className={`text-[10px] font-medium mt-1 leading-tight transition-all duration-300 ${isActive ? 'text-amber-600 dark:text-amber-400' : ''}`}>
+          <span className={`text-[10px] font-medium mt-1 leading-tight ${isActive ? 'text-amber-600 dark:text-amber-400' : ''}`}>
             {label}
           </span>
         </div>
@@ -59,85 +57,59 @@ export function BottomNavigation() {
   return (
     <>
       <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-50">
-        <div className="bg-white dark:bg-gray-900 border-t-2 border-amber-100 dark:border-slate-700 shadow-[0_-4px_24px_rgba(0,0,0,0.08)] dark:shadow-[0_-4px_24px_rgba(0,0,0,0.3)]">
-          {/* Extra top padding to make room for the floating FABs above the bar */}
-          <div className="flex items-center justify-between px-2 pt-8 pb-3 safe-area-pb">
+        <div className="relative bg-white dark:bg-gray-900 border-t-2 border-amber-100 dark:border-slate-700 shadow-[0_-4px_24px_rgba(0,0,0,0.08)] dark:shadow-[0_-4px_24px_rgba(0,0,0,0.3)]">
 
-            {/* LEFT SIDE: Home + (Attività if auth) */}
-            <div className="flex items-center gap-1">
-              <NavItem
-                icon={Home}
-                label="Home"
-                href="/"
-                isActive={location === "/"}
-              />
-              {isAuthenticated && (
-                <NavItem
-                  icon={MapPin}
-                  label="Attività"
-                  href="/activity"
-                  isActive={location.startsWith("/activity")}
-                />
-              )}
-            </div>
+          {/* ── FABs: sit at the very top of the bar, half protruding above ── */}
+          <div className="absolute left-1/2 -translate-x-1/2 -top-6 flex items-center gap-2.5 z-10">
+            {/* Scan */}
+            <Link href="/scan">
+              <button
+                data-testid="button-scan"
+                className="group bg-gradient-to-r from-slate-700 to-slate-800 hover:from-slate-600 hover:to-slate-700 text-white rounded-full p-2.5 shadow-xl transition-all duration-300 active:scale-95 hover:scale-110"
+              >
+                <ScanLine className="h-5 w-5" />
+                <span className="sr-only">Scansiona etichetta</span>
+              </button>
+            </Link>
 
-            {/* CENTER SPACER — FABs float above this area */}
-            <div className="flex-1 flex items-center justify-center relative" style={{ minWidth: 120 }}>
-              {/* FAB buttons absolutely positioned above the bar */}
-              <div className="absolute bottom-1 left-1/2 -translate-x-1/2 flex items-center gap-2">
-                {/* Scan FAB */}
-                <Link href="/scan">
-                  <button
-                    data-testid="button-scan"
-                    className="group bg-gradient-to-r from-slate-700 to-slate-800 hover:from-slate-600 hover:to-slate-700 text-white rounded-full p-3 shadow-xl transition-all duration-300 transform active:scale-95 hover:scale-110"
-                  >
-                    <ScanLine className="h-5 w-5 transition-transform duration-300 group-hover:scale-110" />
-                    <span className="sr-only">Scansiona etichetta</span>
-                  </button>
-                </Link>
-
-                {/* Search FAB */}
-                <button
-                  onClick={() => setIsSearchOpen(true)}
-                  data-testid="button-search"
-                  className="group relative bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-white rounded-full p-4 shadow-2xl transition-all duration-300 transform active:scale-95 hover:scale-110 hover:shadow-amber-500/25"
-                >
-                  <div className="relative">
-                    <Search className="h-6 w-6 transition-transform duration-300 group-hover:rotate-12" />
-                    <Sparkles className="absolute -top-1 -right-1 h-3 w-3 text-white/70 animate-pulse" />
-                  </div>
-                  <span className="sr-only">Cerca pub, birrifici e birre</span>
-                </button>
+            {/* Search (main FAB, larger) */}
+            <button
+              onClick={() => setIsSearchOpen(true)}
+              data-testid="button-search"
+              className="group relative bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-white rounded-full p-3.5 shadow-2xl transition-all duration-300 active:scale-95 hover:scale-110 hover:shadow-amber-500/25"
+            >
+              <div className="relative">
+                <Search className="h-6 w-6" />
+                <Sparkles className="absolute -top-1 -right-1 h-3 w-3 text-white/70 animate-pulse" />
               </div>
-            </div>
-
-            {/* RIGHT SIDE: (Notifiche if auth) + Profilo/Accedi */}
-            <div className="flex items-center gap-1">
-              {isAuthenticated && (
-                <NavItem
-                  icon={Bell}
-                  label="Notifiche"
-                  href="/notifications"
-                  isActive={location.startsWith("/notification")}
-                  badge={unreadCount}
-                />
-              )}
-              <NavItem
-                icon={User}
-                label={dashboardLabel}
-                href={isAuthenticated ? "/dashboard" : "/login"}
-                isActive={isAuthenticated ? location.startsWith("/dashboard") : location === "/login"}
-              />
-            </div>
-
+              <span className="sr-only">Cerca pub, birrifici e birre</span>
+            </button>
           </div>
+
+          {/* ── Nav items: padded down from the FABs ── */}
+          <div className="flex items-center justify-around px-4 pt-8 pb-3 safe-area-pb">
+            <NavItem icon={Home} label="Home" href="/" isActive={location === "/"} />
+
+            {isAuthenticated && (
+              <NavItem icon={MapPin} label="Attività" href="/activity" isActive={location.startsWith("/activity")} />
+            )}
+
+            {isAuthenticated && (
+              <NavItem icon={Bell} label="Notifiche" href="/notifications" isActive={location.startsWith("/notification")} badge={unreadCount} />
+            )}
+
+            <NavItem
+              icon={User}
+              label={dashboardLabel}
+              href={isAuthenticated ? "/dashboard" : "/login"}
+              isActive={isAuthenticated ? location.startsWith("/dashboard") : location === "/login"}
+            />
+          </div>
+
         </div>
       </nav>
 
-      <SearchDialog
-        isOpen={isSearchOpen}
-        onClose={() => setIsSearchOpen(false)}
-      />
+      <SearchDialog isOpen={isSearchOpen} onClose={() => setIsSearchOpen(false)} />
     </>
   );
 }

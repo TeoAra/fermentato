@@ -57,8 +57,11 @@ Preferred communication style: Simple, everyday language.
 - **Performance Optimization**: Eliminated N+1 queries for pub menus and optimized admin search.
 - **Large-scale Data Import**: Efficient import of over 1 million beer records with optimized search capabilities.
 - **Content Suggestions**: Users can suggest changes to beer/brewery data (including images). Admins and brewery owners are notified via push. Admin review panel at `/admin/suggestions` with diff view, approve (applies changes) and reject (notifies user) actions.
-- **Label Scanner**: Camera-based beer label/barcode scanner at `/scan`. Uses native BarcodeDetector API for EAN barcodes (lookup via Open Food Facts), falls back to PaddleOCR (Python, VPS) → Tesseract 5 → OCR.space Engine 2 cascade. PaddleOCR installed on VPS via pip, script at `/www/nodeapps/fermenta/server/paddle_ocr.py`.
-- **Static Editable Pages**: Admin-managed pages (Contatti, Chi Siamo, Prezzi e Piani, Supporto) stored in `static_pages` DB table. Admin edits at `/admin/pages` using Tiptap v3 rich text editor (bold/italic/headings/lists/links/images/color/font). Public views at `/contatti`, `/chi-siamo`, `/prezzi`, `/supporto`.
+- **Label Scanner**: Camera-based beer label/barcode scanner at `/scan`. Uses native BarcodeDetector API for EAN barcodes (lookup via Open Food Facts), falls back to PaddleOCR (Python, VPS) → Tesseract 5 → OCR.space Engine 2 cascade. PaddleOCR v2.10.0 + PaddlePaddle 2.6.2 installed on VPS (downgraded from v3 due to PIR API breaking changes), script at `/www/nodeapps/fermenta/server/paddle_ocr.py`.
+- **Static Editable Pages**: Admin-managed pages (Contatti, Chi Siamo, Prezzi e Piani, Supporto) stored in `static_pages` DB table. Admin edits at `/admin/pages` using Tiptap v3 rich text editor (bold/italic/headings/lists/links/images/color/font). Public views at `/contatti`, `/chi-siamo`, `/prezzi`, `/supporto`. HTML sanitized server-side (strips script/iframe/event handlers) before storage.
+- **Admin Content Manager**: `/admin/content` 3-tab layout (Birre/Birrifici/Pub). Beer search shows brewery logo, name, ABV, IBU, style badges. Delete with AlertDialog confirmation. No edit button — use Apri to navigate to entity page.
+- **Admin Delete APIs**: DELETE `/api/admin/beers/:id`, `/api/admin/breweries/:id`, `/api/admin/pubs/:id` all implemented with cascade cleanup.
+- **Admin Recent Activity**: GET `/api/admin/recent-activity` returns latest user registrations, reviews, pub/brewery creations, events with type filtering. Dashboard polls every 60s.
 
 ## External Dependencies
 
