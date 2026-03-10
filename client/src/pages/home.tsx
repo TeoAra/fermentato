@@ -80,7 +80,7 @@ export default function Home() {
     enabled: isAuthenticated && (user as any)?.userType === 'pub_owner',
   });
 
-  const { data: globalStats } = useQuery<{ totalBeers: number; totalBreweries: number; uniqueStyles: number }>({
+  const { data: globalStats } = useQuery<{ totalBeers: number; totalBreweries: number; uniqueStyles: number; totalUsers: number; totalPubs: number }>({
     queryKey: ["/api/stats"],
     staleTime: 10 * 60 * 1000,
   });
@@ -326,20 +326,30 @@ export default function Home() {
             La Community Fermenta.to
           </h2>
           
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-10 lg:gap-12">
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-8 lg:gap-10">
             <div className="text-center">
-              <div className="text-4xl font-bold text-amber-500 dark:text-amber-400 mb-2">{globalStats?.totalBeers?.toLocaleString("it-IT") ?? '...'}</div>
-              <div className="text-gray-600 dark:text-gray-400">Birre nel Catalogo</div>
+              <div className="text-4xl font-bold text-amber-500 dark:text-amber-400 mb-2">{globalStats?.totalBeers != null ? globalStats.totalBeers.toLocaleString("it-IT") : '...'}</div>
+              <div className="text-sm text-gray-600 dark:text-gray-400">Birre nel Catalogo</div>
             </div>
             
             <div className="text-center">
-              <div className="text-4xl font-bold text-blue-600 dark:text-blue-400 mb-2">{globalStats?.totalBreweries?.toLocaleString("it-IT") ?? '...'}</div>
-              <div className="text-gray-600 dark:text-gray-400">Birrifici Mondiali</div>
+              <div className="text-4xl font-bold text-blue-600 dark:text-blue-400 mb-2">{globalStats?.totalBreweries != null ? globalStats.totalBreweries.toLocaleString("it-IT") : '...'}</div>
+              <div className="text-sm text-gray-600 dark:text-gray-400">Birrifici Mondiali</div>
             </div>
             
             <div className="text-center">
-              <div className="text-4xl font-bold text-teal-600 dark:text-teal-400 mb-2">{globalStats?.uniqueStyles?.toLocaleString("it-IT") ?? '...'}</div>
-              <div className="text-gray-600 dark:text-gray-400">Stili Diversi</div>
+              <div className="text-4xl font-bold text-teal-600 dark:text-teal-400 mb-2">{globalStats?.uniqueStyles != null ? globalStats.uniqueStyles.toLocaleString("it-IT") : '...'}</div>
+              <div className="text-sm text-gray-600 dark:text-gray-400">Stili Diversi</div>
+            </div>
+
+            <div className="text-center">
+              <div className="text-4xl font-bold text-green-600 dark:text-green-400 mb-2">{globalStats?.totalUsers != null ? globalStats.totalUsers.toLocaleString("it-IT") : '...'}</div>
+              <div className="text-sm text-gray-600 dark:text-gray-400">Utenti Registrati</div>
+            </div>
+
+            <div className="text-center col-span-2 md:col-span-1">
+              <div className="text-4xl font-bold text-purple-600 dark:text-purple-400 mb-2">{globalStats?.totalPubs != null ? globalStats.totalPubs.toLocaleString("it-IT") : '...'}</div>
+              <div className="text-sm text-gray-600 dark:text-gray-400">Pub & Locali</div>
             </div>
           </div>
         </section>

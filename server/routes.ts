@@ -620,12 +620,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Database statistics endpoint
   app.get("/api/stats", async (req, res) => {
     try {
-      const [pubCount, breweryCount, beerCount, reviewCount, eventCount] = await Promise.all([
+      const [pubCount, breweryCount, beerCount, reviewCount, eventCount, userCount, styleCount] = await Promise.all([
         db.select({ count: sql<number>`COUNT(*)::int` }).from(pubs),
         db.select({ count: sql<number>`COUNT(*)::int` }).from(breweries),
         db.select({ count: sql<number>`COUNT(*)::int` }).from(beers),
         db.select({ count: sql<number>`COUNT(*)::int` }).from(userBeerTastings).where(sql`rating IS NOT NULL`),
         db.select({ count: sql<number>`(SELECT COUNT(*) FROM pub_events) + (SELECT COUNT(*) FROM brewery_events)` }),
+        db.select({ count: sql<number>`COUNT(*)::int` }).from(users),
+        db.select({ count: sql<number>`COUNT(DISTINCT style)::int` }).from(beers),
       ]);
       const stats = {
         totalPubs: pubCount[0]?.count || 0,
@@ -633,6 +635,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         totalBeers: beerCount[0]?.count || 0,
         totalReviews: reviewCount[0]?.count || 0,
         totalEvents: eventCount[0]?.count || 0,
+        totalUsers: userCount[0]?.count || 0,
+        uniqueStyles: styleCount[0]?.count || 0,
         averageBeersPerBrewery: breweryCount[0]?.count > 0 ? Math.round((beerCount[0]?.count || 0) / breweryCount[0].count) : 0,
         lastUpdated: new Date().toISOString()
       };
