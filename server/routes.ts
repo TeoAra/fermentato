@@ -5,6 +5,7 @@ import { promisify } from "util";
 import { tmpdir } from "os";
 import { writeFile, unlink } from "fs/promises";
 import { randomBytes } from "crypto";
+import { GoogleGenerativeAI } from "@google/generative-ai";
 const execFileAsync = promisify(execFile);
 import { storage } from "./storage";
 import { setupAuth, isAuthenticated, isAdmin } from "./auth";
@@ -48,6 +49,47 @@ async function writeTempImage(dataUrl: string): Promise<{ path: string; ext: str
   const path = `${tmpdir()}/ocr_${randomBytes(8).toString("hex")}.${ext}`;
   await writeFile(path, Buffer.from(m[3], "base64"));
   return { path, ext };
+}
+
+// ── Gemini Vision OCR (primary engine — fast, handles stylised beer label fonts) ──
+async function runGeminiOCR(dataUrl: string): Promise<{ text: string; available: boolean }> {
+  const apiKey = process.env.GEMINI_API_KEY;
+  if (!apiKey) return { text: "", available: false };
+
+  const m = dataUrl.match(/^data:(image\/(\w+));base64,(.+)$/);
+  if (!m) return { text: "", available: false };
+
+  try {
+    const genAI = new GoogleGenerativeAI(apiKey);
+    const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
+
+    const result = await model.generateContent({
+      contents: [{
+        role: "user",
+        parts: [
+          {
+            inlineData: {
+              mimeType: m[1] as "image/jpeg" | "image/png" | "image/webp",
+              data: m[3],
+            },
+          },
+          {
+            text: "This is a beer label or bottle. Extract ALL visible text from it: beer name, brewery name, style, ABV, any taglines or descriptions. Return ONLY the extracted text, one piece per line, no explanations.",
+          },
+        ],
+      }],
+      generationConfig: {
+        temperature: 0.1,
+        maxOutputTokens: 256,
+      },
+    });
+
+    const text = result.response.text().trim();
+    return { text, available: true };
+  } catch (e: any) {
+    console.error("Gemini OCR error:", e?.message?.substring(0, 120));
+    return { text: "", available: true };
+  }
 }
 
 // ── PaddleOCR (best accuracy, Python script) ────────────────────────────────
@@ -3919,9 +3961,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   }, 60 * 1000);
 
-  // OCR endpoint — uses local Tesseract 5 (free, no limits) as primary engine.
-  // Falls back to OCR.space if Tesseract is unavailable.
-  // Set OCR_SPACE_KEY env var for 25k/month free personal key from ocr.space.
+  // OCR endpoint — Gemini Vision as primary, Tesseract + OCR.space as fallback.
   app.post("/api/scan/ocr", isAuthenticated, async (req, res) => {
     try {
       const { image } = req.body as { image?: string };
@@ -3929,19 +3969,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: "Missing image data" });
       }
 
-      // ── 1. PaddleOCR (best accuracy — neural net, handles stylised fonts) ───
+      // ── 1. Gemini Vision (primary — fast, handles stylised beer label fonts) ─
+      const gemini = await runGeminiOCR(image);
+      if (gemini.available && gemini.text.trim().length >= 3) {
+        return res.json({ text: gemini.text, exitCode: 1, engine: "gemini" });
+      }
+
+      // ── 2. PaddleOCR (fallback — neural net on VPS) ────────────────────────
       const paddle = await runPaddleOCR(image);
       if (paddle.available && paddle.text.trim().length >= 3) {
         return res.json({ text: paddle.text, exitCode: 1, engine: "paddleocr" });
       }
 
-      // ── 2. Tesseract fallback (always available on VPS) ───────────────────
+      // ── 3. Tesseract fallback (always available on VPS) ───────────────────
       const tesseractText = await runLocalTesseract(image);
       if (tesseractText && tesseractText.trim().length >= 3) {
         return res.json({ text: tesseractText, exitCode: 1, engine: "tesseract" });
       }
 
-      // ── 3. OCR.space cloud (only if personal key set) ─────────────────────
+      // ── 4. OCR.space cloud (only if personal key set) ─────────────────────
       const apiKey = process.env.OCR_SPACE_KEY;
       if (!apiKey) {
         return res.json({ text: tesseractText || "", exitCode: 0, engine: paddle.available ? "paddleocr" : "tesseract" });

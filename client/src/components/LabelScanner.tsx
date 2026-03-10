@@ -255,7 +255,7 @@ export default function LabelScanner({ onResult, onClose }: LabelScannerProps) {
       } catch { /* fallback to full frame */ }
     }
 
-    setStatusMsg("Analisi AI in corso — attendi ~20s...");
+    setStatusMsg("Analisi AI in corso...");
 
     const stepInterval = setInterval(() => {
       setOcrStep(prev => (prev + 1) % OCR_STEPS.length);
