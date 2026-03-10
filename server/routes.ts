@@ -3860,7 +3860,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       params.append("apikey", apiKey);
       params.append("base64Image", image);
       params.append("language", "ita");
-      params.append("OCREngine", "2");
+      params.append("OCREngine", "1");
       params.append("scale", "true");
       params.append("detectOrientation", "true");
       params.append("isTable", "false");
