@@ -57,6 +57,7 @@ Preferred communication style: Simple, everyday language.
 - **Performance Optimization**: Eliminated N+1 queries for pub menus and optimized admin search.
 - **Large-scale Data Import**: Efficient import of over 1 million beer records with optimized search capabilities.
 - **Content Suggestions**: Users can suggest changes to beer/brewery data (including images). Admins and brewery owners are notified via push. Admin review panel at `/admin/suggestions` with diff view, approve (applies changes) and reject (notifies user) actions.
+- **Label Scanner**: Camera-based beer label/barcode scanner at `/scan`. Uses native BarcodeDetector API for EAN barcodes (lookup via Open Food Facts), falls back to OCR.space Engine 2 via backend proxy (`/api/scan/ocr`) for label text recognition. Free tier: 500 req/day (demo key) or 25k/month with `OCR_SPACE_KEY` env var.
 
 ## External Dependencies
 

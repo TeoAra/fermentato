@@ -3842,6 +3842,57 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   }, 60 * 1000);
 
+  // ── OCR.space proxy ─────────────────────────────────────────────────────────
+  // Accepts a base64 data-URL image from the frontend and forwards it to
+  // OCR.space (Engine 2 — much more accurate than Tesseract for scene text).
+  // Free demo key: 500 req/day. Set OCR_SPACE_KEY env var for a free personal
+  // key (25,000 req/month) from https://ocr.space/ocrapi/freekey
+  app.post("/api/scan/ocr", async (req, res) => {
+    try {
+      const { image } = req.body as { image?: string };
+      if (!image || !image.startsWith("data:image")) {
+        return res.status(400).json({ error: "Missing image data" });
+      }
+
+      const apiKey = process.env.OCR_SPACE_KEY || "helloworld";
+
+      const params = new URLSearchParams();
+      params.append("apikey", apiKey);
+      params.append("base64Image", image);
+      params.append("language", "ita");
+      params.append("OCREngine", "2");
+      params.append("scale", "true");
+      params.append("detectOrientation", "true");
+      params.append("isTable", "false");
+      params.append("isOverlayRequired", "false");
+
+      const ocrRes = await fetch("https://api.ocr.space/parse/image", {
+        method: "POST",
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        body: params.toString(),
+      });
+
+      if (!ocrRes.ok) {
+        return res.status(502).json({ error: "OCR.space unreachable" });
+      }
+
+      const ocrData = await ocrRes.json() as any;
+
+      if (ocrData.IsErroredOnProcessing) {
+        return res.status(422).json({ error: ocrData.ErrorMessage || "OCR failed" });
+      }
+
+      const parsed = ocrData.ParsedResults?.[0];
+      const text: string = parsed?.ParsedText || "";
+
+      // Return raw text — cleaning is done on the frontend
+      return res.json({ text, exitCode: parsed?.FileParseExitCode ?? -1 });
+    } catch (err) {
+      console.error("OCR proxy error:", err);
+      return res.status(500).json({ error: "OCR proxy error" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }
