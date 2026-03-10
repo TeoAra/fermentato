@@ -40,33 +40,61 @@ function setCache(key: string, data: any) {
   searchCache.set(key, { data, ts: Date.now() });
 }
 
-// ── Local Tesseract OCR helper ───────────────────────────────────────────────
-// Writes the base64 image to a temp file, runs Tesseract 5, returns text.
-// PSM 11 = sparse text (best for multi-line labels with logo/graphics mixed in).
-async function runLocalTesseract(dataUrl: string): Promise<string> {
-  let tmpPath = "";
-  try {
-    const [, mime, b64] = dataUrl.match(/^data:(image\/\w+);base64,(.+)$/) || [];
-    if (!b64) return "";
-    const ext = mime?.includes("png") ? "png" : "jpg";
-    tmpPath = `${tmpdir()}/ocr_${randomBytes(8).toString("hex")}.${ext}`;
-    await writeFile(tmpPath, Buffer.from(b64, "base64"));
+// ── Shared helper: base64 dataURL → temp file ───────────────────────────────
+async function writeTempImage(dataUrl: string): Promise<{ path: string; ext: string } | null> {
+  const m = dataUrl.match(/^data:(image\/(\w+));base64,(.+)$/);
+  if (!m) return null;
+  const ext = m[2] === "png" ? "png" : "jpg";
+  const path = `${tmpdir()}/ocr_${randomBytes(8).toString("hex")}.${ext}`;
+  await writeFile(path, Buffer.from(m[3], "base64"));
+  return { path, ext };
+}
 
-    // Try PSM 11 first (sparse text — ideal for complex labels with graphics)
-    const args = [tmpPath, "stdout", "-l", "ita+eng", "--psm", "11", "--oem", "3"];
-    const { stdout } = await execFileAsync("tesseract", args, { timeout: 15000 });
+// ── PaddleOCR (best accuracy, Python script) ────────────────────────────────
+// Runs server/paddle_ocr.py — installed once on VPS, cached models ~200MB.
+const PADDLE_SCRIPT = new URL("../server/paddle_ocr.py", import.meta.url).pathname;
+
+async function runPaddleOCR(dataUrl: string): Promise<{ text: string; available: boolean }> {
+  const tmp = await writeTempImage(dataUrl);
+  if (!tmp) return { text: "", available: false };
+  try {
+    const { stdout } = await execFileAsync("python3", [PADDLE_SCRIPT, tmp.path], {
+      timeout: 30000,
+      env: { ...process.env, GLOG_minloglevel: "3", FLAGS_call_stack_level: "0", PADDLE_PDX_DISABLE_MODEL_SOURCE_CHECK: "True" },
+    });
+    return { text: stdout.trim(), available: true };
+  } catch (e: any) {
+    if (e?.code === 2) return { text: "", available: false }; // not installed
+    if (!e?.message?.includes("ENOENT")) console.error("PaddleOCR error:", e?.message);
+    return { text: "", available: true };
+  } finally {
+    unlink(tmp.path).catch(() => {});
+  }
+}
+
+// ── Tesseract fallback (already on VPS, fast, no models to download) ─────────
+async function runLocalTesseract(dataUrl: string): Promise<string> {
+  const tmp = await writeTempImage(dataUrl);
+  if (!tmp) return "";
+  try {
+    // PSM 11 = sparse text (best for labels with mixed text + graphics)
+    const { stdout } = await execFileAsync(
+      "tesseract", [tmp.path, "stdout", "-l", "ita+eng", "--psm", "11", "--oem", "3"],
+      { timeout: 15000 }
+    );
     const text = stdout.trim();
     if (text.length >= 4) return text;
-
-    // Retry with PSM 6 (uniform block) if sparse returned nothing
-    const args2 = [tmpPath, "stdout", "-l", "ita+eng", "--psm", "6", "--oem", "3"];
-    const { stdout: stdout2 } = await execFileAsync("tesseract", args2, { timeout: 15000 });
-    return stdout2.trim();
+    // Retry with PSM 6 (block of text)
+    const { stdout: s2 } = await execFileAsync(
+      "tesseract", [tmp.path, "stdout", "-l", "ita+eng", "--psm", "6", "--oem", "3"],
+      { timeout: 15000 }
+    );
+    return s2.trim();
   } catch (e: any) {
     if (!e?.message?.includes("ENOENT")) console.error("Tesseract error:", e?.message);
     return "";
   } finally {
-    if (tmpPath) unlink(tmpPath).catch(() => {});
+    unlink(tmp.path).catch(() => {});
   }
 }
 
@@ -3888,16 +3916,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: "Missing image data" });
       }
 
-      // ── Try local Tesseract first ──────────────────────────────────────────
+      // ── 1. PaddleOCR (best accuracy — neural net, handles stylised fonts) ───
+      const paddle = await runPaddleOCR(image);
+      if (paddle.available && paddle.text.trim().length >= 3) {
+        return res.json({ text: paddle.text, exitCode: 1, engine: "paddleocr" });
+      }
+
+      // ── 2. Tesseract fallback (always available on VPS) ───────────────────
       const tesseractText = await runLocalTesseract(image);
       if (tesseractText && tesseractText.trim().length >= 3) {
         return res.json({ text: tesseractText, exitCode: 1, engine: "tesseract" });
       }
 
-      // ── Fallback: OCR.space (only if key is set — avoids shared demo rate limit) ─
+      // ── 3. OCR.space cloud (only if personal key set) ─────────────────────
       const apiKey = process.env.OCR_SPACE_KEY;
       if (!apiKey) {
-        return res.json({ text: tesseractText || "", exitCode: 0, engine: "tesseract" });
+        return res.json({ text: tesseractText || "", exitCode: 0, engine: paddle.available ? "paddleocr" : "tesseract" });
       }
 
       const params = new URLSearchParams();
