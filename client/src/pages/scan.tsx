@@ -67,7 +67,11 @@ async function searchWithFallback(text: string): Promise<{
     const data: SearchResult = await res.json();
     const total = (data.beers?.length ?? 0) + (data.breweries?.length ?? 0);
     if (total > 0) {
-      return { beers: data.beers ?? [], breweries: data.breweries ?? [], usedQuery: q };
+      const beers = (data.beers ?? []).map((b: any) => ({
+        ...b,
+        breweryName: b.breweryName || b.brewery?.name || null,
+      }));
+      return { beers, breweries: data.breweries ?? [], usedQuery: q };
     }
   }
   return { beers: [], breweries: [], usedQuery: queries[0] ?? text };

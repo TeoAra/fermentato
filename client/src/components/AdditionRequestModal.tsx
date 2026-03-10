@@ -6,9 +6,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { CheckCircle, Beer, Building2, Loader2, Search, X } from "lucide-react";
+import { CheckCircle, Beer, Building2, Loader2, Search, X, Zap } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
+import { useAuth } from "@/hooks/useAuth";
 
 interface Props {
   open: boolean;
@@ -27,8 +28,11 @@ interface BrewerySearchResult {
 
 export default function AdditionRequestModal({ open, onClose, initialBeerName = "", initialBreweryName = "", defaultTab = "beer" }: Props) {
   const { toast } = useToast();
+  const { user } = useAuth();
+  const isAdmin = (user as any)?.userType === "admin";
   const [tab, setTab] = useState<"beer" | "brewery">(defaultTab);
   const [success, setSuccess] = useState(false);
+  const [createdDirect, setCreatedDirect] = useState(false);
 
   // Beer form state
   const [beerName, setBeerName] = useState(initialBeerName);
@@ -63,23 +67,35 @@ export default function AdditionRequestModal({ open, onClose, initialBeerName = 
   const mutation = useMutation({
     mutationFn: async (data: Record<string, any>) => {
       const res = await apiRequest("POST", "/api/addition-requests", data);
+      if (!res.ok) { const e = await res.json(); throw new Error(e.message); }
       return res.json();
     },
-    onSuccess: () => {
-      setSuccess(true);
-    },
-    onError: (err: any) => {
-      toast({ title: "Errore", description: err.message || "Errore durante l'invio", variant: "destructive" });
-    },
+    onSuccess: () => { setSuccess(true); setCreatedDirect(false); },
+    onError: (err: any) => toast({ title: "Errore", description: err.message || "Errore durante l'invio", variant: "destructive" }),
   });
 
-  const handleSubmitBeer = (e: React.FormEvent) => {
+  const directMutation = useMutation({
+    mutationFn: async (data: Record<string, any>) => {
+      const { type, ...payload } = data;
+      const url = type === "beer" ? "/api/admin/beers" : "/api/admin/breweries";
+      const body = type === "beer"
+        ? { name: payload.beerName, style: payload.style || "Non specificato", abv: payload.abv ? parseFloat(payload.abv) : null, breweryId: payload.breweryId || null, description: payload.description || null }
+        : { name: payload.breweryName, location: payload.city || "", region: "", country: payload.country || "Italia", description: payload.description || null, websiteUrl: payload.websiteUrl || null };
+      const res = await apiRequest("POST", url, body);
+      if (!res.ok) { const e = await res.json(); throw new Error(e.message); }
+      return res.json();
+    },
+    onSuccess: () => { setSuccess(true); setCreatedDirect(true); },
+    onError: (err: any) => toast({ title: "Errore", description: err.message || "Errore durante la creazione", variant: "destructive" }),
+  });
+
+  const handleSubmitBeer = (e: React.FormEvent, direct = false) => {
     e.preventDefault();
     if (!beerName.trim()) {
       toast({ title: "Errore", description: "Il nome della birra è obbligatorio", variant: "destructive" });
       return;
     }
-    mutation.mutate({
+    const data = {
       type: "beer",
       beerName: beerName.trim(),
       breweryId: selectedBrewery?.id || null,
@@ -88,16 +104,18 @@ export default function AdditionRequestModal({ open, onClose, initialBeerName = 
       abv: abv.trim() || null,
       description: beerDescription.trim() || null,
       notes: beerNotes.trim() || null,
-    });
+    };
+    if (direct) directMutation.mutate(data);
+    else mutation.mutate(data);
   };
 
-  const handleSubmitBrewery = (e: React.FormEvent) => {
+  const handleSubmitBrewery = (e: React.FormEvent, direct = false) => {
     e.preventDefault();
     if (!breweryName.trim()) {
       toast({ title: "Errore", description: "Il nome del birrificio è obbligatorio", variant: "destructive" });
       return;
     }
-    mutation.mutate({
+    const data = {
       type: "brewery",
       breweryName: breweryName.trim(),
       city: city.trim() || null,
@@ -105,8 +123,12 @@ export default function AdditionRequestModal({ open, onClose, initialBeerName = 
       websiteUrl: websiteUrl.trim() || null,
       description: breweryDescription.trim() || null,
       notes: breweryNotes.trim() || null,
-    });
+    };
+    if (direct) directMutation.mutate(data);
+    else mutation.mutate(data);
   };
+
+  const isPending = mutation.isPending || directMutation.isPending;
 
   const handleClose = () => {
     setSuccess(false);
@@ -129,10 +151,21 @@ export default function AdditionRequestModal({ open, onClose, initialBeerName = 
               <CheckCircle className="h-8 w-8 text-green-500" />
             </div>
             <div>
-              <p className="text-lg font-semibold text-gray-900 dark:text-white">Richiesta inviata!</p>
-              <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-                La tua richiesta verrà esaminata dall'admin o dal gestore del birrificio a breve.
-              </p>
+              {createdDirect ? (
+                <>
+                  <p className="text-lg font-semibold text-gray-900 dark:text-white">Creata con successo!</p>
+                  <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                    Il record è stato aggiunto direttamente al database.
+                  </p>
+                </>
+              ) : (
+                <>
+                  <p className="text-lg font-semibold text-gray-900 dark:text-white">Richiesta inviata!</p>
+                  <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                    La tua richiesta verrà esaminata dall'admin o dal gestore del birrificio a breve.
+                  </p>
+                </>
+              )}
             </div>
             <Button onClick={handleClose} className="bg-amber-500 hover:bg-amber-600 text-white">
               Chiudi
@@ -141,7 +174,9 @@ export default function AdditionRequestModal({ open, onClose, initialBeerName = 
         ) : (
           <>
             <p className="text-sm text-gray-500 dark:text-gray-400 -mt-1">
-              Non hai trovato quello che cercavi? Puoi suggerire l'aggiunta di una birra o un birrificio. Verrà esaminata e approvata da un amministratore o dal proprietario del birrificio.
+              {isAdmin
+                ? "Come admin puoi creare il record direttamente, oppure inviarlo in approvazione al flusso standard."
+                : "Non hai trovato quello che cercavi? Puoi suggerire l'aggiunta di una birra o un birrificio. Verrà esaminata e approvata da un amministratore o dal proprietario del birrificio."}
             </p>
 
             <Tabs value={tab} onValueChange={v => setTab(v as "beer" | "brewery")}>
@@ -237,9 +272,21 @@ export default function AdditionRequestModal({ open, onClose, initialBeerName = 
                     <Textarea id="beerNotes" value={beerNotes} onChange={e => setBeerNotes(e.target.value)} placeholder="Altre informazioni utili..." className="mt-1 resize-none" rows={2} />
                   </div>
 
-                  <Button type="submit" disabled={mutation.isPending} className="bg-amber-500 hover:bg-amber-600 text-white w-full">
-                    {mutation.isPending ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Invio in corso...</> : "Invia richiesta"}
-                  </Button>
+                  <div className={`flex gap-2 ${isAdmin ? 'flex-col sm:flex-row' : ''}`}>
+                    <Button type="submit" disabled={isPending} className="bg-amber-500 hover:bg-amber-600 text-white flex-1">
+                      {mutation.isPending ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Invio...</> : "Invia richiesta"}
+                    </Button>
+                    {isAdmin && (
+                      <Button
+                        type="button"
+                        disabled={isPending}
+                        onClick={e => handleSubmitBeer(e as any, true)}
+                        className="bg-green-600 hover:bg-green-700 text-white flex-1 gap-1.5"
+                      >
+                        {directMutation.isPending ? <><Loader2 className="h-4 w-4 animate-spin" /> Creazione...</> : <><Zap className="h-4 w-4" /> Crea direttamente</>}
+                      </Button>
+                    )}
+                  </div>
                 </form>
               </TabsContent>
 
@@ -282,9 +329,21 @@ export default function AdditionRequestModal({ open, onClose, initialBeerName = 
                     <Textarea id="breweryNotes" value={breweryNotes} onChange={e => setBreweryNotes(e.target.value)} placeholder="Altre informazioni utili..." className="mt-1 resize-none" rows={2} />
                   </div>
 
-                  <Button type="submit" disabled={mutation.isPending} className="bg-amber-500 hover:bg-amber-600 text-white w-full">
-                    {mutation.isPending ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Invio in corso...</> : "Invia richiesta"}
-                  </Button>
+                  <div className={`flex gap-2 ${isAdmin ? 'flex-col sm:flex-row' : ''}`}>
+                    <Button type="submit" disabled={isPending} className="bg-amber-500 hover:bg-amber-600 text-white flex-1">
+                      {mutation.isPending ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Invio...</> : "Invia richiesta"}
+                    </Button>
+                    {isAdmin && (
+                      <Button
+                        type="button"
+                        disabled={isPending}
+                        onClick={e => handleSubmitBrewery(e as any, true)}
+                        className="bg-green-600 hover:bg-green-700 text-white flex-1 gap-1.5"
+                      >
+                        {directMutation.isPending ? <><Loader2 className="h-4 w-4 animate-spin" /> Creazione...</> : <><Zap className="h-4 w-4" /> Crea direttamente</>}
+                      </Button>
+                    )}
+                  </div>
                 </form>
               </TabsContent>
             </Tabs>
