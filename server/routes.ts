@@ -3847,7 +3847,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // OCR.space (Engine 2 — much more accurate than Tesseract for scene text).
   // Free demo key: 500 req/day. Set OCR_SPACE_KEY env var for a free personal
   // key (25,000 req/month) from https://ocr.space/ocrapi/freekey
-  app.post("/api/scan/ocr", async (req, res) => {
+  app.post("/api/scan/ocr", isAuthenticated, async (req, res) => {
     try {
       const { image } = req.body as { image?: string };
       if (!image || !image.startsWith("data:image")) {

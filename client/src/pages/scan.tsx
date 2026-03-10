@@ -1,10 +1,11 @@
 import { useState, useCallback, useEffect } from "react";
 import { useLocation } from "wouter";
-import { Scan, Beer, Building2, ArrowLeft, Search, X } from "lucide-react";
+import { Scan, Beer, Building2, ArrowLeft, Search, X, Lock, LogIn } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import LabelScanner from "@/components/LabelScanner";
 import { Link } from "wouter";
+import { useAuth } from "@/hooks/useAuth";
 
 interface BeerResult {
   id: number;
@@ -73,6 +74,7 @@ async function searchWithFallback(text: string): Promise<{
 
 export default function ScanPage() {
   const [, navigate] = useLocation();
+  const { user, isAuthenticated, isLoading } = useAuth();
   const [scanState, setScanState] = useState<ScanState>("camera");
   const [detectedText, setDetectedText] = useState("");
   const [detectedSource, setDetectedSource] = useState<"ocr" | "barcode">("ocr");
@@ -128,6 +130,80 @@ export default function ScanPage() {
   const handleCloseScanner = () => navigate("/");
 
   const totalResults = beers.length + breweries.length;
+
+  // Auth gate — show spinner while loading
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-950 flex items-center justify-center">
+        <div className="w-10 h-10 rounded-full border-4 border-amber-400 border-t-transparent animate-spin" />
+      </div>
+    );
+  }
+
+  // Not logged in → invite to login
+  if (!isAuthenticated) {
+    return (
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-950 flex flex-col items-center justify-center px-6 text-center gap-6">
+        <div className="w-20 h-20 rounded-full bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center">
+          <Lock className="h-10 w-10 text-amber-500" />
+        </div>
+        <div>
+          <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
+            Accesso riservato
+          </h2>
+          <p className="text-gray-500 dark:text-gray-400 max-w-sm">
+            Lo scanner etichette è disponibile solo per gli utenti registrati. Crea un account gratuito per iniziare.
+          </p>
+        </div>
+        <div className="flex flex-col gap-3 w-full max-w-xs">
+          <a href="/api/login">
+            <Button className="w-full bg-amber-500 hover:bg-amber-600 gap-2">
+              <LogIn className="h-4 w-4" />
+              Accedi o registrati
+            </Button>
+          </a>
+          <Link href="/">
+            <Button variant="outline" className="w-full gap-2">
+              <ArrowLeft className="h-4 w-4" />
+              Torna alla home
+            </Button>
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
+  // Logged in but onboarding not complete → invite to finish setup
+  if ((user as any)?.needsOnboarding) {
+    return (
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-950 flex flex-col items-center justify-center px-6 text-center gap-6">
+        <div className="w-20 h-20 rounded-full bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center">
+          <Lock className="h-10 w-10 text-amber-500" />
+        </div>
+        <div>
+          <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
+            Completa la registrazione
+          </h2>
+          <p className="text-gray-500 dark:text-gray-400 max-w-sm">
+            Devi completare la configurazione del tuo account per accedere allo scanner etichette.
+          </p>
+        </div>
+        <div className="flex flex-col gap-3 w-full max-w-xs">
+          <Link href="/onboarding">
+            <Button className="w-full bg-amber-500 hover:bg-amber-600">
+              Completa la registrazione
+            </Button>
+          </Link>
+          <Link href="/">
+            <Button variant="outline" className="w-full gap-2">
+              <ArrowLeft className="h-4 w-4" />
+              Torna alla home
+            </Button>
+          </Link>
+        </div>
+      </div>
+    );
+  }
 
   if (scanState === "camera") {
     return <LabelScanner onResult={handleScanResult} onClose={handleCloseScanner} />;
