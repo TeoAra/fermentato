@@ -55,16 +55,26 @@ function BrewerySearchField({ onSelect }: { onSelect: (id: number, name: string)
   const [selectedName, setSelectedName] = useState("");
   const [results, setResults] = useState<any[]>([]);
   const [showResults, setShowResults] = useState(false);
+  const abortRef = useRef<AbortController | null>(null);
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const searchBreweries = async (q: string) => {
+  const searchBreweries = useCallback((q: string) => {
+    if (debounceRef.current) clearTimeout(debounceRef.current);
     if (q.length < 2) { setResults([]); return; }
-    try {
-      const res = await fetch(`/api/admin/breweries/search?q=${encodeURIComponent(q)}&limit=10`, { credentials: 'include' });
-      const data = await res.json();
-      setResults(data);
-      setShowResults(true);
-    } catch {}
-  };
+    debounceRef.current = setTimeout(async () => {
+      if (abortRef.current) abortRef.current.abort();
+      abortRef.current = new AbortController();
+      try {
+        const res = await fetch(`/api/admin/breweries/search?q=${encodeURIComponent(q)}&limit=10`, { credentials: 'include', signal: abortRef.current.signal });
+        if (!res.ok) return;
+        const data = await res.json();
+        setResults(Array.isArray(data) ? data : []);
+        setShowResults(true);
+      } catch (e: any) {
+        if (e?.name !== 'AbortError') setResults([]);
+      }
+    }, 250);
+  }, []);
 
   return (
     <div className="relative">
@@ -73,7 +83,7 @@ function BrewerySearchField({ onSelect }: { onSelect: (id: number, name: string)
         id="brewerySearch"
         value={selectedName || query}
         onChange={(e) => { setSelectedName(""); setQuery(e.target.value); searchBreweries(e.target.value); }}
-        onFocus={() => { if (results.length > 0) setShowResults(true); }}
+        onFocus={() => { if (results.length > 0 && !selectedName) setShowResults(true); }}
         onBlur={() => setTimeout(() => setShowResults(false), 200)}
         placeholder="Cerca birrificio per nome..."
         required

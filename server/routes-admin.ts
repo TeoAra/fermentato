@@ -50,7 +50,7 @@ export function registerAdminRoutes(app: Express) {
   // Admin pub management actions
   app.patch("/api/admin/pubs/:id/verify", isAuthenticated, async (req: any, res) => {
     try {
-      if ((req.user as any)?.id !== "45321347") {
+      if ((req.user as any)?.userType !== 'admin') {
         return res.status(403).json({ message: "Forbidden" });
       }
 
@@ -63,7 +63,7 @@ export function registerAdminRoutes(app: Express) {
 
   app.patch("/api/admin/pubs/:id/suspend", isAuthenticated, async (req: any, res) => {
     try {
-      if ((req.user as any)?.id !== "45321347") {
+      if ((req.user as any)?.userType !== 'admin') {
         return res.status(403).json({ message: "Forbidden" });
       }
 
@@ -76,7 +76,7 @@ export function registerAdminRoutes(app: Express) {
   // Admin analytics endpoints
   app.get("/api/admin/analytics/growth", isAuthenticated, async (req: any, res) => {
     try {
-      if ((req.user as any)?.id !== "45321347") {
+      if ((req.user as any)?.userType !== 'admin') {
         return res.status(403).json({ message: "Forbidden" });
       }
 
@@ -96,7 +96,7 @@ export function registerAdminRoutes(app: Express) {
 
   app.get("/api/admin/analytics/popular-beers", isAuthenticated, async (req: any, res) => {
     try {
-      if ((req.user as any)?.id !== "45321347") {
+      if ((req.user as any)?.userType !== 'admin') {
         return res.status(403).json({ message: "Forbidden" });
       }
 
@@ -126,7 +126,7 @@ export function registerAdminRoutes(app: Express) {
   // Admin-only data endpoints
   app.get("/api/admin/beers", isAuthenticated, async (req: any, res) => {
     try {
-      if ((req.user as any)?.id !== "45321347") {
+      if ((req.user as any)?.userType !== 'admin') {
         return res.status(403).json({ message: "Forbidden" });
       }
 
@@ -166,7 +166,7 @@ export function registerAdminRoutes(app: Express) {
 
   app.get("/api/admin/breweries", isAuthenticated, async (req: any, res) => {
     try {
-      if ((req.user as any)?.id !== "45321347") {
+      if ((req.user as any)?.userType !== 'admin') {
         return res.status(403).json({ message: "Forbidden" });
       }
 
@@ -197,13 +197,9 @@ export function registerAdminRoutes(app: Express) {
     }
   });
 
-  // Add missing brewery search endpoint
-  app.get("/api/admin/breweries/search", isAuthenticated, async (req: any, res) => {
+  // Brewery search endpoint for AdminContentManager
+  app.get("/api/admin/breweries/search", isAuthenticated, isAdmin, async (req: any, res) => {
     try {
-      if ((req.user as any)?.id !== "45321347") {
-        return res.status(403).json({ message: "Forbidden" });
-      }
-
       const { q: search, limit = 20 } = req.query;
 
       let query = db.select().from(breweries);
@@ -212,14 +208,15 @@ export function registerAdminRoutes(app: Express) {
         query = query.where(
           or(
             ilike(breweries.name, `%${search}%`),
-            ilike(breweries.location, `%${search}%`)
+            ilike(breweries.location, `%${search}%`),
+            ilike(breweries.country, `%${search}%`)
           )
-        );
+        ) as any;
       }
 
       const results = await query
         .orderBy(breweries.name)
-        .limit(parseInt(limit))
+        .limit(parseInt(String(limit)))
         .execute();
 
       res.json(results);
@@ -231,7 +228,7 @@ export function registerAdminRoutes(app: Express) {
 
   app.get("/api/admin/pubs", isAuthenticated, async (req: any, res) => {
     try {
-      if ((req.user as any)?.id !== "45321347") {
+      if ((req.user as any)?.userType !== 'admin') {
         return res.status(403).json({ message: "Forbidden" });
       }
 
@@ -309,7 +306,7 @@ export function registerAdminRoutes(app: Express) {
   // Beer and brewery update endpoints
   app.patch("/api/admin/beers/:id", isAuthenticated, async (req: any, res) => {
     try {
-      if ((req.user as any)?.id !== "45321347") {
+      if ((req.user as any)?.userType !== 'admin') {
         return res.status(403).json({ message: "Forbidden" });
       }
 
@@ -340,7 +337,7 @@ export function registerAdminRoutes(app: Express) {
 
   app.patch("/api/admin/breweries/:id", isAuthenticated, async (req: any, res) => {
     try {
-      if ((req.user as any)?.id !== "45321347") {
+      if ((req.user as any)?.userType !== 'admin') {
         return res.status(403).json({ message: "Forbidden" });
       }
 
@@ -372,7 +369,7 @@ export function registerAdminRoutes(app: Express) {
   // Review moderation endpoints (mock for now since reviews table doesn't exist)
   app.get("/api/admin/reviews/all", isAuthenticated, async (req: any, res) => {
     try {
-      if ((req.user as any)?.id !== "45321347") {
+      if ((req.user as any)?.userType !== 'admin') {
         return res.status(403).json({ message: "Forbidden" });
       }
 
@@ -415,7 +412,7 @@ export function registerAdminRoutes(app: Express) {
 
   app.post("/api/admin/reviews/:id/approve", isAuthenticated, async (req: any, res) => {
     try {
-      if ((req.user as any)?.id !== "45321347") {
+      if ((req.user as any)?.userType !== 'admin') {
         return res.status(403).json({ message: "Forbidden" });
       }
 
@@ -431,7 +428,7 @@ export function registerAdminRoutes(app: Express) {
 
   app.post("/api/admin/reviews/:id/reject", isAuthenticated, async (req: any, res) => {
     try {
-      if ((req.user as any)?.id !== "45321347") {
+      if ((req.user as any)?.userType !== 'admin') {
         return res.status(403).json({ message: "Forbidden" });
       }
 
@@ -515,64 +512,6 @@ export function registerAdminRoutes(app: Express) {
     } catch (error) {
       console.error("Error dismissing report:", error);
       res.status(500).json({ message: "Failed to dismiss report" });
-    }
-  });
-
-  app.get("/api/admin/recent-activity", isAuthenticated, async (req: any, res) => {
-    try {
-      if ((req.user as any)?.userType !== "admin") {
-        return res.status(403).json({ message: "Forbidden" });
-      }
-      const recentUsers = await db.select({
-        name: sql<string>`COALESCE(${users.nickname}, ${users.firstName}, ${users.email})`,
-        detail: users.userType,
-        time: users.createdAt,
-      }).from(users).orderBy(desc(users.createdAt)).limit(5);
-
-      const recentPubs = await db.select({
-        name: pubs.name,
-        detail: pubs.city,
-        time: pubs.createdAt,
-      }).from(pubs).where(sql`${pubs.createdAt} IS NOT NULL`).orderBy(desc(pubs.createdAt)).limit(5);
-
-      const recentBreweries = await db.select({
-        name: breweries.name,
-        detail: breweries.location,
-        time: breweries.createdAt,
-      }).from(breweries).where(sql`${breweries.createdAt} IS NOT NULL`).orderBy(desc(breweries.createdAt)).limit(5);
-
-      const recentReviews = await db.select({
-        reviewerName: sql<string>`COALESCE(${users.nickname}, ${users.firstName}, 'Utente')`,
-        beerName: beers.name,
-        rating: userBeerTastings.rating,
-        time: userBeerTastings.createdAt,
-      }).from(userBeerTastings)
-        .leftJoin(users, eq(userBeerTastings.userId, users.id))
-        .leftJoin(beers, eq(userBeerTastings.beerId, beers.id))
-        .where(sql`${userBeerTastings.rating} IS NOT NULL AND ${userBeerTastings.createdAt} IS NOT NULL`)
-        .orderBy(desc(userBeerTastings.createdAt)).limit(5);
-
-      const recentEvents = await db.select({
-        name: pubEvents.title,
-        detail: sql<string>`'Evento pub'`,
-        time: pubEvents.createdAt,
-      }).from(pubEvents).where(sql`${pubEvents.createdAt} IS NOT NULL`).orderBy(desc(pubEvents.createdAt)).limit(3);
-
-      const combined = [
-        ...recentUsers.map(u => ({ type: 'user', action: 'Nuovo utente iscritto', name: u.name, detail: u.detail, time: u.time?.toISOString() })),
-        ...recentPubs.map(p => ({ type: 'pub', action: 'Nuovo pub registrato', name: p.name, detail: p.detail, time: p.time?.toISOString() })),
-        ...recentBreweries.map(b => ({ type: 'brewery', action: 'Birrificio aggiunto', name: b.name, detail: b.detail, time: b.time?.toISOString() })),
-        ...recentReviews.map(r => ({ type: 'review', action: `Recensione ★${r.rating}`, name: r.beerName || 'Birra', detail: `da ${r.reviewerName}`, time: r.time?.toISOString() })),
-        ...recentEvents.map(e => ({ type: 'event', action: 'Evento creato', name: e.name, detail: null, time: e.time?.toISOString() })),
-      ]
-        .filter(a => a.time)
-        .sort((a, b) => new Date(b.time!).getTime() - new Date(a.time!).getTime())
-        .slice(0, 15);
-
-      res.json(combined);
-    } catch (error) {
-      console.error("Error fetching recent activity:", error);
-      res.status(500).json({ message: "Failed to fetch recent activity" });
     }
   });
 

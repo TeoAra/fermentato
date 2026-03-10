@@ -95,7 +95,9 @@ export default function AdminDashboardNew() {
     queryKey: ["/api/admin/recent-activity"],
     queryFn: async () => {
       const res = await fetch(`/api/admin/recent-activity?limit=50`, { credentials: 'include' });
-      return res.json();
+      if (!res.ok) return [];
+      const data = await res.json();
+      return Array.isArray(data) ? data : [];
     },
     enabled: isAuthenticated && (user as any)?.userType === 'admin',
     staleTime: 0,
