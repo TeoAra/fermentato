@@ -5,7 +5,6 @@ import { promisify } from "util";
 import { tmpdir } from "os";
 import { writeFile, unlink } from "fs/promises";
 import { randomBytes } from "crypto";
-import { GoogleGenerativeAI } from "@google/generative-ai";
 const execFileAsync = promisify(execFile);
 import { storage } from "./storage";
 import { setupAuth, isAuthenticated, isAdmin } from "./auth";
@@ -51,7 +50,10 @@ async function writeTempImage(dataUrl: string): Promise<{ path: string; ext: str
   return { path, ext };
 }
 
-// ── Gemini Vision OCR (primary engine — fast, handles stylised beer label fonts) ──
+// ── Gemini Vision OCR (primary engine — direct HTTP, handles stylised beer label fonts) ──
+const GEMINI_MODEL = "gemini-2.5-flash";
+const GEMINI_API_URL = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent`;
+
 async function runGeminiOCR(dataUrl: string): Promise<{ text: string; available: boolean }> {
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) return { text: "", available: false };
@@ -60,31 +62,31 @@ async function runGeminiOCR(dataUrl: string): Promise<{ text: string; available:
   if (!m) return { text: "", available: false };
 
   try {
-    const genAI = new GoogleGenerativeAI(apiKey);
-    const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
-
-    const result = await model.generateContent({
+    const body = {
       contents: [{
-        role: "user",
         parts: [
-          {
-            inlineData: {
-              mimeType: m[1] as "image/jpeg" | "image/png" | "image/webp",
-              data: m[3],
-            },
-          },
-          {
-            text: "This is a beer label or bottle. Extract ALL visible text from it: beer name, brewery name, style, ABV, any taglines or descriptions. Return ONLY the extracted text, one piece per line, no explanations.",
-          },
+          { inline_data: { mime_type: m[1], data: m[3] } },
+          { text: "This is a beer label or bottle. Extract the beer name and brewery name. Return them on separate lines, beer name first, then brewery name. Return ONLY the names — no ABV, no style, no other text, no explanations." },
         ],
       }],
-      generationConfig: {
-        temperature: 0.1,
-        maxOutputTokens: 256,
-      },
+      generationConfig: { temperature: 0.1, maxOutputTokens: 128 },
+    };
+
+    const res = await fetch(`${GEMINI_API_URL}?key=${apiKey}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+      signal: AbortSignal.timeout(15000),
     });
 
-    const text = result.response.text().trim();
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      console.error(`Gemini OCR HTTP ${res.status}:`, (err as any)?.error?.message?.substring(0, 120));
+      return { text: "", available: res.status !== 401 && res.status !== 403 };
+    }
+
+    const data: any = await res.json();
+    const text = data?.candidates?.[0]?.content?.parts?.[0]?.text?.trim() ?? "";
     return { text, available: true };
   } catch (e: any) {
     console.error("Gemini OCR error:", e?.message?.substring(0, 120));
