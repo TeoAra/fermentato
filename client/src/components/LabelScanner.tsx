@@ -9,8 +9,11 @@ interface LabelScannerProps {
   onClose: () => void;
 }
 
-// ─── Resize + compress frame to JPEG < 900 KB ────────────────────────────────
-function prepareImageForApi(src: HTMLCanvasElement | HTMLImageElement, maxW = 900): string {
+// ─── Prepare image for local Tesseract OCR ───────────────────────────────────
+// PNG (lossless) at up to 1400px preserves text edges better than JPEG.
+// We convert to greyscale and apply aggressive contrast stretching so
+// Tesseract can distinguish characters more reliably.
+function prepareImageForApi(src: HTMLCanvasElement | HTMLImageElement, maxW = 1400): string {
   const isCanvas = src instanceof HTMLCanvasElement;
   const sw = isCanvas ? (src as HTMLCanvasElement).width : (src as HTMLImageElement).naturalWidth;
   const sh = isCanvas ? (src as HTMLCanvasElement).height : (src as HTMLImageElement).naturalHeight;
@@ -26,18 +29,33 @@ function prepareImageForApi(src: HTMLCanvasElement | HTMLImageElement, maxW = 90
   ctx.imageSmoothingQuality = "high";
   ctx.drawImage(src as any, 0, 0, w, h);
 
-  // Slight contrast boost in greyscale helps OCR.space Engine 2
+  // Convert to greyscale + stretch contrast (Tesseract works best with high-contrast B&W)
   const imgData = ctx.getImageData(0, 0, w, h);
   const d = imgData.data;
+
+  // First pass: find actual min/max luminance in image
+  let minL = 255, maxL = 0;
   for (let i = 0; i < d.length; i += 4) {
-    const gray = 0.299 * d[i] + 0.587 * d[i + 1] + 0.114 * d[i + 2];
-    // Stretch contrast: clamp to [30, 225] → [0, 255]
-    const v = Math.min(255, Math.max(0, ((gray - 30) / 195) * 255));
+    const l = 0.299 * d[i] + 0.587 * d[i + 1] + 0.114 * d[i + 2];
+    if (l < minL) minL = l;
+    if (l > maxL) maxL = l;
+  }
+  const range = Math.max(1, maxL - minL);
+
+  // Second pass: normalise + apply mild S-curve for crisper edges
+  for (let i = 0; i < d.length; i += 4) {
+    const l = 0.299 * d[i] + 0.587 * d[i + 1] + 0.114 * d[i + 2];
+    // Normalise to [0,1]
+    let n = (l - minL) / range;
+    // S-curve: emphasise mid-range contrast
+    n = n < 0.5 ? 2 * n * n : 1 - Math.pow(-2 * n + 2, 2) / 2;
+    const v = Math.round(n * 255);
     d[i] = d[i + 1] = d[i + 2] = v;
   }
   ctx.putImageData(imgData, 0, 0);
 
-  return c.toDataURL("image/jpeg", 0.72);
+  // PNG: lossless, no compression artefacts around text characters
+  return c.toDataURL("image/png");
 }
 
 // ─── Call backend OCR proxy (OCR.space Engine 2) ────────────────────────────

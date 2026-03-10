@@ -1,5 +1,11 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
+import { execFile } from "child_process";
+import { promisify } from "util";
+import { tmpdir } from "os";
+import { writeFile, unlink } from "fs/promises";
+import { randomBytes } from "crypto";
+const execFileAsync = promisify(execFile);
 import { storage } from "./storage";
 import { setupAuth, isAuthenticated } from "./auth";
 import { registerAdminRoutes } from "./routes-admin";
@@ -32,6 +38,36 @@ function setCache(key: string, data: any) {
     oldest.forEach(([k]) => searchCache.delete(k));
   }
   searchCache.set(key, { data, ts: Date.now() });
+}
+
+// ── Local Tesseract OCR helper ───────────────────────────────────────────────
+// Writes the base64 image to a temp file, runs Tesseract 5, returns text.
+// PSM 11 = sparse text (best for multi-line labels with logo/graphics mixed in).
+async function runLocalTesseract(dataUrl: string): Promise<string> {
+  let tmpPath = "";
+  try {
+    const [, mime, b64] = dataUrl.match(/^data:(image\/\w+);base64,(.+)$/) || [];
+    if (!b64) return "";
+    const ext = mime?.includes("png") ? "png" : "jpg";
+    tmpPath = `${tmpdir()}/ocr_${randomBytes(8).toString("hex")}.${ext}`;
+    await writeFile(tmpPath, Buffer.from(b64, "base64"));
+
+    // Try PSM 11 first (sparse text — ideal for complex labels with graphics)
+    const args = [tmpPath, "stdout", "-l", "ita+eng", "--psm", "11", "--oem", "3"];
+    const { stdout } = await execFileAsync("tesseract", args, { timeout: 15000 });
+    const text = stdout.trim();
+    if (text.length >= 4) return text;
+
+    // Retry with PSM 6 (uniform block) if sparse returned nothing
+    const args2 = [tmpPath, "stdout", "-l", "ita+eng", "--psm", "6", "--oem", "3"];
+    const { stdout: stdout2 } = await execFileAsync("tesseract", args2, { timeout: 15000 });
+    return stdout2.trim();
+  } catch (e: any) {
+    if (!e?.message?.includes("ENOENT")) console.error("Tesseract error:", e?.message);
+    return "";
+  } finally {
+    if (tmpPath) unlink(tmpPath).catch(() => {});
+  }
 }
 
 if (initVapid()) {
@@ -3842,11 +3878,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   }, 60 * 1000);
 
-  // ── OCR.space proxy ─────────────────────────────────────────────────────────
-  // Accepts a base64 data-URL image from the frontend and forwards it to
-  // OCR.space (Engine 2 — much more accurate than Tesseract for scene text).
-  // Free demo key: 500 req/day. Set OCR_SPACE_KEY env var for a free personal
-  // key (25,000 req/month) from https://ocr.space/ocrapi/freekey
+  // OCR endpoint — uses local Tesseract 5 (free, no limits) as primary engine.
+  // Falls back to OCR.space if Tesseract is unavailable.
+  // Set OCR_SPACE_KEY env var for 25k/month free personal key from ocr.space.
   app.post("/api/scan/ocr", isAuthenticated, async (req, res) => {
     try {
       const { image } = req.body as { image?: string };
@@ -3854,13 +3888,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: "Missing image data" });
       }
 
-      const apiKey = process.env.OCR_SPACE_KEY || "helloworld";
+      // ── Try local Tesseract first ──────────────────────────────────────────
+      const tesseractText = await runLocalTesseract(image);
+      if (tesseractText && tesseractText.trim().length >= 3) {
+        return res.json({ text: tesseractText, exitCode: 1, engine: "tesseract" });
+      }
+
+      // ── Fallback: OCR.space (only if key is set — avoids shared demo rate limit) ─
+      const apiKey = process.env.OCR_SPACE_KEY;
+      if (!apiKey) {
+        return res.json({ text: tesseractText || "", exitCode: 0, engine: "tesseract" });
+      }
 
       const params = new URLSearchParams();
       params.append("apikey", apiKey);
       params.append("base64Image", image);
       params.append("language", "ita");
-      params.append("OCREngine", "1");
+      params.append("OCREngine", "2");
       params.append("scale", "true");
       params.append("detectOrientation", "true");
       params.append("isTable", "false");
@@ -3870,26 +3914,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
         method: "POST",
         headers: { "Content-Type": "application/x-www-form-urlencoded" },
         body: params.toString(),
+        signal: AbortSignal.timeout(15000),
       });
 
-      if (!ocrRes.ok) {
-        return res.status(502).json({ error: "OCR.space unreachable" });
-      }
-
+      if (!ocrRes.ok) return res.json({ text: "", exitCode: -1, engine: "ocrspace_fail" });
       const ocrData = await ocrRes.json() as any;
-
-      if (ocrData.IsErroredOnProcessing) {
-        return res.status(422).json({ error: ocrData.ErrorMessage || "OCR failed" });
-      }
+      if (ocrData.IsErroredOnProcessing) return res.json({ text: "", exitCode: -1 });
 
       const parsed = ocrData.ParsedResults?.[0];
-      const text: string = parsed?.ParsedText || "";
-
-      // Return raw text — cleaning is done on the frontend
-      return res.json({ text, exitCode: parsed?.FileParseExitCode ?? -1 });
+      return res.json({ text: parsed?.ParsedText || "", exitCode: parsed?.FileParseExitCode ?? -1, engine: "ocrspace" });
     } catch (err) {
-      console.error("OCR proxy error:", err);
-      return res.status(500).json({ error: "OCR proxy error" });
+      console.error("OCR error:", err);
+      return res.status(500).json({ error: "OCR failed" });
     }
   });
 
