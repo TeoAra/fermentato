@@ -229,7 +229,7 @@ export default function AdditionRequestModal({ open, onClose, initialBeerName = 
                         </button>
                       )}
                     </div>
-                    {showBreweryResults && !selectedBrewery && breweryResults.length > 0 && (
+                    {showBreweryResults && !selectedBrewery && beerBreweryQuery.trim().length >= 2 && (
                       <div className="absolute z-50 w-full mt-1 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 shadow-lg max-h-48 overflow-y-auto">
                         {breweryResults.map(br => (
                           <button
@@ -242,6 +242,18 @@ export default function AdditionRequestModal({ open, onClose, initialBeerName = 
                             <span className="text-gray-400 ml-2 text-xs">{br.location}</span>
                           </button>
                         ))}
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setBreweryName(beerBreweryQuery.trim());
+                            setShowBreweryResults(false);
+                            setTab("brewery");
+                          }}
+                          className="w-full text-left px-3 py-2.5 hover:bg-amber-50 dark:hover:bg-amber-900/20 text-sm flex items-center gap-2 text-amber-600 dark:text-amber-400 font-medium border-t border-gray-100 dark:border-gray-700"
+                        >
+                          <Building2 className="h-4 w-4 flex-shrink-0" />
+                          Birrificio non trovato? Suggeriscilo
+                        </button>
                       </div>
                     )}
                     {selectedBrewery && (
