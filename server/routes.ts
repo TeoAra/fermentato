@@ -7,12 +7,12 @@ import { writeFile, unlink } from "fs/promises";
 import { randomBytes } from "crypto";
 const execFileAsync = promisify(execFile);
 import { storage } from "./storage";
-import { setupAuth, isAuthenticated } from "./auth";
+import { setupAuth, isAuthenticated, isAdmin } from "./auth";
 import { registerAdminRoutes } from "./routes-admin";
 import { sql, eq, and, desc, asc } from "drizzle-orm";
 import { upload, uploadImage, cloudinary } from "./cloudinary";
 import { db } from "./db";
-import { breweries, beers, pubs, users, tapList, bottleList, userBeerTastings, favorites, menuCategories, menuItems, pubSizes, notifications, pushSubscriptions, breweryRequests, pubEvents, breweryEvents, insertBreweryEventSchema, reviewReports, oauthAccounts, userActivities, ratings, publicanRequests, notificationPreferences } from "@shared/schema";
+import { breweries, beers, pubs, users, tapList, bottleList, userBeerTastings, favorites, menuCategories, menuItems, pubSizes, notifications, pushSubscriptions, breweryRequests, pubEvents, breweryEvents, insertBreweryEventSchema, reviewReports, oauthAccounts, userActivities, ratings, publicanRequests, notificationPreferences, staticPages } from "@shared/schema";
 
 import { insertPubSchema, insertTapListSchema, insertBottleListSchema, insertMenuCategorySchema, insertMenuItemSchema, pubRegistrationSchema, insertPubEventSchema } from "@shared/schema";
 import { z } from "zod";
@@ -3960,6 +3960,36 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (err) {
       console.error("OCR error:", err);
       return res.status(500).json({ error: "OCR failed" });
+    }
+  });
+
+  // ── Static Pages (public read, admin write) ────────────────────────────────
+  app.get("/api/pages/:slug", async (req, res) => {
+    const { slug } = req.params;
+    const [page] = await db.select().from(staticPages).where(eq(staticPages.slug, slug));
+    if (!page) return res.status(404).json({ error: "Page not found" });
+    res.json(page);
+  });
+
+  app.get("/api/admin/pages", isAuthenticated, isAdmin, async (_req, res) => {
+    const pages = await db.select().from(staticPages).orderBy(asc(staticPages.slug));
+    res.json(pages);
+  });
+
+  app.put("/api/admin/pages/:slug", isAuthenticated, isAdmin, async (req, res) => {
+    const { slug } = req.params;
+    const { title, content } = req.body;
+    if (!title || content === undefined) return res.status(400).json({ error: "title and content required" });
+    const [existing] = await db.select().from(staticPages).where(eq(staticPages.slug, slug));
+    if (existing) {
+      const [updated] = await db.update(staticPages)
+        .set({ title, content, updatedAt: new Date() })
+        .where(eq(staticPages.slug, slug))
+        .returning();
+      return res.json(updated);
+    } else {
+      const [created] = await db.insert(staticPages).values({ slug, title, content }).returning();
+      return res.status(201).json(created);
     }
   });
 

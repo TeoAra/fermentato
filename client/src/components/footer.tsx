@@ -29,20 +29,15 @@ export default function Footer() {
             <h3 className="font-semibold mb-4 text-slate-900 dark:text-white">Per i Locali</h3>
             <ul className="space-y-2 text-slate-500 dark:text-slate-400">
               <li>
-                <Link href="/register-pub" className="hover:text-amber-500 dark:hover:text-amber-400 transition-colors">
-                  Registra il tuo Pub
-                </Link>
-              </li>
-              <li>
                 <Link href="/dashboard" className="hover:text-amber-500 dark:hover:text-amber-400 transition-colors">
                   Dashboard Gestione
                 </Link>
               </li>
               <li>
-                <a href="#" className="hover:text-amber-500 dark:hover:text-amber-400 transition-colors">Prezzi e Piani</a>
+                <Link href="/prezzi" className="hover:text-amber-500 dark:hover:text-amber-400 transition-colors">Prezzi e Piani</Link>
               </li>
               <li>
-                <a href="#" className="hover:text-amber-500 dark:hover:text-amber-400 transition-colors">Supporto</a>
+                <Link href="/supporto" className="hover:text-amber-500 dark:hover:text-amber-400 transition-colors">Supporto</Link>
               </li>
             </ul>
           </div>
@@ -51,7 +46,7 @@ export default function Footer() {
             <h3 className="font-semibold mb-4 text-slate-900 dark:text-white">Informazioni</h3>
             <ul className="space-y-2 text-slate-500 dark:text-slate-400">
               <li>
-                <a href="#" className="hover:text-amber-500 dark:hover:text-amber-400 transition-colors">Chi Siamo</a>
+                <Link href="/chi-siamo" className="hover:text-amber-500 dark:hover:text-amber-400 transition-colors">Chi Siamo</Link>
               </li>
               <li>
                 <Link href="/privacy" className="hover:text-amber-500 dark:hover:text-amber-400 transition-colors">Privacy Policy</Link>
@@ -60,7 +55,7 @@ export default function Footer() {
                 <Link href="/tos" className="hover:text-amber-500 dark:hover:text-amber-400 transition-colors">Termini di Servizio</Link>
               </li>
               <li>
-                <a href="#" className="hover:text-amber-500 dark:hover:text-amber-400 transition-colors">Contatti</a>
+                <Link href="/contatti" className="hover:text-amber-500 dark:hover:text-amber-400 transition-colors">Contatti</Link>
               </li>
               <li>
                 <CookieSettingsButton />

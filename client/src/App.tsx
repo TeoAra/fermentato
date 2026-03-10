@@ -55,6 +55,8 @@ import Onboarding from "@/pages/onboarding";
 import UserPublicProfile from "@/pages/user-public-profile";
 import SearchPage from "@/pages/search";
 import ScanPage from "@/pages/scan";
+import AdminPages from "@/pages/admin-pages";
+import { ContattiPage, ChiSiamoPage, PrezziPage, SupportoPage } from "@/pages/static-page";
 import { MobileHeader } from "@/components/mobile-header";
 import { BottomNavigation } from "@/components/bottom-navigation";
 import CookieBanner from "@/components/CookieBanner";
@@ -123,6 +125,7 @@ function Router() {
           <Route path="/admin/publican-requests" component={AdminPublicanRequests} />
           <Route path="/admin/users" component={AdminDashboard} />
           <Route path="/admin/edit-pub/:id" component={AdminEditPub} />
+          <Route path="/admin/pages" component={AdminPages} />
           <Route path="/pub-registration" component={PubRegistration} />
           <Route path="/become-publican" component={BecomePublican} />
           <Route path="/brewery-dashboard" component={BreweryDashboard} />
@@ -135,6 +138,10 @@ function Router() {
           <Route path="/search" component={SearchPage} />
           <Route path="/scan" component={ScanPage} />
           <Route path="/activity" component={Activity} />
+          <Route path="/contatti" component={ContattiPage} />
+          <Route path="/chi-siamo" component={ChiSiamoPage} />
+          <Route path="/prezzi" component={PrezziPage} />
+          <Route path="/supporto" component={SupportoPage} />
           <Route component={NotFound} />
         </Switch>
       </main>

@@ -754,6 +754,19 @@ export const insertContentSuggestionSchema = createInsertSchema(contentSuggestio
 export type ContentSuggestion = typeof contentSuggestions.$inferSelect;
 export type InsertContentSuggestion = typeof contentSuggestions.$inferInsert;
 
+// Static editable pages (Contatti, Chi Siamo, Prezzi, Supporto)
+export const staticPages = pgTable("static_pages", {
+  id: serial("id").primaryKey(),
+  slug: varchar("slug", { length: 100 }).unique().notNull(),
+  title: varchar("title", { length: 200 }).notNull(),
+  content: text("content").notNull().default(""),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export const insertStaticPageSchema = createInsertSchema(staticPages).omit({ id: true, updatedAt: true });
+export type StaticPage = typeof staticPages.$inferSelect;
+export type InsertStaticPage = z.infer<typeof insertStaticPageSchema>;
+
 // Custom schemas for forms
 export const pubRegistrationSchema = insertPubSchema.extend({
   vatNumber: z.string().min(11, "P.IVA deve essere di almeno 11 caratteri"),

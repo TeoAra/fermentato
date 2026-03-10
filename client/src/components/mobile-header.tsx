@@ -175,7 +175,7 @@ export function MobileHeader({ onMenuToggle, isMenuOpen }: MobileHeaderProps) {
                 <div>
                   <div className="font-semibold text-gray-900 dark:text-white">Ospite</div>
                   <button
-                    onClick={() => { onMenuToggle(); window.location.href = '/auth'; }}
+                    onClick={() => { onMenuToggle(); window.location.href = '/login'; }}
                     className="text-xs text-amber-600 dark:text-amber-400 font-medium"
                   >
                     Accedi o registrati →
@@ -263,7 +263,7 @@ export function MobileHeader({ onMenuToggle, isMenuOpen }: MobileHeaderProps) {
             ) : (
               <button
                 className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-900/20 transition-colors"
-                onClick={() => { onMenuToggle(); window.location.href = '/auth'; }}
+                onClick={() => { onMenuToggle(); window.location.href = '/login'; }}
               >
                 <LogIn className="h-5 w-5" />
                 <span className="text-sm font-semibold">Accedi</span>
