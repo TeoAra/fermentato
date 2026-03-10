@@ -59,8 +59,15 @@ async function runPaddleOCR(dataUrl: string): Promise<{ text: string; available:
   if (!tmp) return { text: "", available: false };
   try {
     const { stdout } = await execFileAsync("python3", [PADDLE_SCRIPT, tmp.path], {
-      timeout: 30000,
-      env: { ...process.env, GLOG_minloglevel: "3", FLAGS_call_stack_level: "0", PADDLE_PDX_DISABLE_MODEL_SOURCE_CHECK: "True" },
+      timeout: 55000,
+      env: {
+        ...process.env,
+        GLOG_minloglevel: "3",
+        FLAGS_call_stack_level: "0",
+        FLAGS_use_mkldnn: "0",
+        PADDLE_PDX_DISABLE_MODEL_SOURCE_CHECK: "True",
+        OMP_NUM_THREADS: "2",
+      },
     });
     return { text: stdout.trim(), available: true };
   } catch (e: any) {

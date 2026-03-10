@@ -9,7 +9,9 @@ interface LabelScannerProps {
   onClose: () => void;
 }
 
-function prepareImageForApi(src: HTMLCanvasElement | HTMLImageElement, maxW = 1400): string {
+// Prepare image for OCR: keep COLOR (PaddleOCR v3 works better with color),
+// resize to max 1800px, apply gentle sharpening to help character edges.
+function prepareImageForApi(src: HTMLCanvasElement | HTMLImageElement, maxW = 1800): string {
   const isCanvas = src instanceof HTMLCanvasElement;
   const sw = isCanvas ? (src as HTMLCanvasElement).width : (src as HTMLImageElement).naturalWidth;
   const sh = isCanvas ? (src as HTMLCanvasElement).height : (src as HTMLImageElement).naturalHeight;
@@ -25,24 +27,71 @@ function prepareImageForApi(src: HTMLCanvasElement | HTMLImageElement, maxW = 14
   ctx.imageSmoothingQuality = "high";
   ctx.drawImage(src as any, 0, 0, w, h);
 
+  // Gentle unsharp mask: sharpen edges without converting to greyscale
+  // Keep full color for PaddleOCR v3 which is trained on color images
   const imgData = ctx.getImageData(0, 0, w, h);
   const d = imgData.data;
-  let minL = 255, maxL = 0;
-  for (let i = 0; i < d.length; i += 4) {
-    const l = 0.299 * d[i] + 0.587 * d[i + 1] + 0.114 * d[i + 2];
-    if (l < minL) minL = l;
-    if (l > maxL) maxL = l;
-  }
-  const range = Math.max(1, maxL - minL);
-  for (let i = 0; i < d.length; i += 4) {
-    const l = 0.299 * d[i] + 0.587 * d[i + 1] + 0.114 * d[i + 2];
-    let n = (l - minL) / range;
-    n = n < 0.5 ? 2 * n * n : 1 - Math.pow(-2 * n + 2, 2) / 2;
-    const v = Math.round(n * 255);
-    d[i] = d[i + 1] = d[i + 2] = v;
+  const orig = new Uint8ClampedArray(d);
+
+  // Simple 3x3 unsharp mask (amount=0.5)
+  const amount = 0.5;
+  for (let y = 1; y < h - 1; y++) {
+    for (let x = 1; x < w - 1; x++) {
+      const i = (y * w + x) * 4;
+      for (let c2 = 0; c2 < 3; c2++) {
+        const blur = (
+          orig[((y - 1) * w + (x - 1)) * 4 + c2] + orig[((y - 1) * w + x) * 4 + c2] + orig[((y - 1) * w + (x + 1)) * 4 + c2] +
+          orig[(y * w + (x - 1)) * 4 + c2]         + orig[(y * w + x) * 4 + c2]         + orig[(y * w + (x + 1)) * 4 + c2] +
+          orig[((y + 1) * w + (x - 1)) * 4 + c2] + orig[((y + 1) * w + x) * 4 + c2] + orig[((y + 1) * w + (x + 1)) * 4 + c2]
+        ) / 9;
+        d[i + c2] = Math.min(255, Math.max(0, orig[i + c2] + amount * (orig[i + c2] - blur)));
+      }
+    }
   }
   ctx.putImageData(imgData, 0, 0);
-  return c.toDataURL("image/png");
+
+  // JPEG 93% — good quality with reasonable size
+  return c.toDataURL("image/jpeg", 0.93);
+}
+
+// Crop the captured video frame to the viewfinder area
+function cropToViewfinder(
+  canvas: HTMLCanvasElement,
+  video: HTMLVideoElement,
+  boxPct: { x: number; y: number; w: number; h: number }
+): HTMLCanvasElement {
+  const vw = video.videoWidth;
+  const vh = video.videoHeight;
+  const dw = video.clientWidth || window.innerWidth;
+  const dh = video.clientHeight || window.innerHeight;
+
+  // object-fit: cover — scale to fill, then center-crop
+  const scaleX = vw / dw;
+  const scaleY = vh / dh;
+  const coverScale = Math.max(scaleX, scaleY);
+
+  // Offset of the video inside display (cover may overflow)
+  const offsetX = (vw / coverScale - dw) / 2;
+  const offsetY = (vh / coverScale - dh) / 2;
+
+  // Viewfinder box in display coords
+  const bx = boxPct.x * dw;
+  const by = boxPct.y * dh;
+  const bw = boxPct.w * dw;
+  const bh = boxPct.h * dh;
+
+  // Convert to video coords
+  const cx = Math.round((bx + offsetX) * coverScale);
+  const cy = Math.round((by + offsetY) * coverScale);
+  const cw = Math.round(bw * coverScale);
+  const ch = Math.round(bh * coverScale);
+
+  const out = document.createElement("canvas");
+  out.width = cw;
+  out.height = ch;
+  const ctx = out.getContext("2d")!;
+  ctx.drawImage(canvas, cx, cy, cw, ch, 0, 0, cw, ch);
+  return out;
 }
 
 async function callOcrApi(dataUrl: string): Promise<string> {
@@ -73,6 +122,9 @@ const OCR_STEPS = [
   { label: "OCR locale", icon: "📖", color: "text-blue-400" },
   { label: "Cloud OCR", icon: "☁️", color: "text-cyan-400" },
 ];
+
+// Viewfinder box as % of the camera display area (used for both rendering and crop)
+const VF = { x: 0.05, y: 0.10, w: 0.90, h: 0.70 };
 
 export default function LabelScanner({ onResult, onClose }: LabelScannerProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -179,10 +231,12 @@ export default function LabelScanner({ onResult, onClose }: LabelScannerProps) {
     setDetectedText("");
     setOcrStep(0);
 
-    let rawDataUrl: string;
+    let fullDataUrl: string;
+    let croppedCanvas: HTMLCanvasElement | null = null;
+
     if (sourceDataUrl) {
-      rawDataUrl = sourceDataUrl;
-      setCapturedImage(rawDataUrl);
+      fullDataUrl = sourceDataUrl;
+      setCapturedImage(fullDataUrl);
     } else {
       if (!videoRef.current || !canvasRef.current) {
         setStatusMsg("Errore cattura immagine"); setMode("error"); return;
@@ -192,8 +246,13 @@ export default function LabelScanner({ onResult, onClose }: LabelScannerProps) {
       canvas.width = video.videoWidth;
       canvas.height = video.videoHeight;
       canvas.getContext("2d")!.drawImage(video, 0, 0);
-      rawDataUrl = canvas.toDataURL("image/jpeg", 0.95);
-      setCapturedImage(rawDataUrl);
+      fullDataUrl = canvas.toDataURL("image/jpeg", 0.97);
+      setCapturedImage(fullDataUrl);
+
+      // Crop to viewfinder area — OCR gets a clean, focused region
+      try {
+        croppedCanvas = cropToViewfinder(canvas, video, VF);
+      } catch { /* fallback to full frame */ }
     }
 
     setStatusMsg("Analisi testo in corso...");
@@ -202,26 +261,38 @@ export default function LabelScanner({ onResult, onClose }: LabelScannerProps) {
       setOcrStep(prev => (prev + 1) % OCR_STEPS.length);
     }, 1800);
 
+    const tryOcr = async (dataUrl: string): Promise<string> => {
+      const img = new Image();
+      img.src = dataUrl;
+      await new Promise<void>((res, rej) => { img.onload = () => res(); img.onerror = rej; });
+      const processed = prepareImageForApi(img);
+      const rawText = await callOcrApi(processed);
+      return cleanOcrText(rawText);
+    };
+
     try {
-      let processedUrl = rawDataUrl;
-      try {
-        const img = new Image();
-        img.src = rawDataUrl;
-        await new Promise<void>((res, rej) => { img.onload = () => res(); img.onerror = rej; });
-        processedUrl = prepareImageForApi(img);
-      } catch {}
+      // 1st attempt: cropped to viewfinder area (more focused, less background noise)
+      let cleaned = "";
+      if (croppedCanvas) {
+        try {
+          const croppedUrl = croppedCanvas.toDataURL("image/jpeg", 0.97);
+          cleaned = await tryOcr(croppedUrl);
+        } catch {}
+      }
 
-      const rawText = await callOcrApi(processedUrl);
-      const cleaned = cleanOcrText(rawText);
+      // 2nd attempt: full frame if crop found nothing
+      if (!cleaned || cleaned.length < 2) {
+        cleaned = await tryOcr(fullDataUrl);
+      }
+
       setDetectedText(cleaned);
-
       clearInterval(stepInterval);
 
       if (cleaned.length >= 2) {
         setMode("done");
         onResult(cleaned, "ocr");
       } else {
-        setStatusMsg("Nessun testo — avvicinati all'etichetta e riprova");
+        setStatusMsg("Nessun testo rilevato — avvicinati e riprova");
         setMode("error");
       }
     } catch (err) {
@@ -325,14 +396,41 @@ export default function LabelScanner({ onResult, onClose }: LabelScannerProps) {
 
             {/* ── Viewfinder overlay ─── */}
             {isScanning && !capturedImage && (
-              <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                {/* Dimmed areas */}
-                <div className="absolute inset-0" style={{
-                  background: "radial-gradient(ellipse 72% 52% at 50% 48%, transparent 70%, rgba(0,0,0,0.55) 100%)"
-                }} />
+              <div className="absolute inset-0 pointer-events-none">
+                {/* Semi-transparent mask outside the scan box */}
+                <div
+                  className="absolute inset-0"
+                  style={{
+                    background: `linear-gradient(to bottom,
+                      rgba(0,0,0,0.5) ${VF.y * 100}%,
+                      transparent ${VF.y * 100}%,
+                      transparent ${(VF.y + VF.h) * 100}%,
+                      rgba(0,0,0,0.5) ${(VF.y + VF.h) * 100}%
+                    )`,
+                  }}
+                />
+                <div
+                  className="absolute inset-0"
+                  style={{
+                    background: `linear-gradient(to right,
+                      rgba(0,0,0,0.5) ${VF.x * 100}%,
+                      transparent ${VF.x * 100}%,
+                      transparent ${(VF.x + VF.w) * 100}%,
+                      rgba(0,0,0,0.5) ${(VF.x + VF.w) * 100}%
+                    )`,
+                  }}
+                />
 
-                {/* Scanning box */}
-                <div className="relative w-72 h-52">
+                {/* Scanning box positioned via VF percentages */}
+                <div
+                  className="absolute"
+                  style={{
+                    left: `${VF.x * 100}%`,
+                    top: `${VF.y * 100}%`,
+                    width: `${VF.w * 100}%`,
+                    height: `${VF.h * 100}%`,
+                  }}
+                >
                   {/* Corner marks — amber glow */}
                   {[
                     "top-0 left-0 border-t-2 border-l-2 rounded-tl-2xl",
@@ -342,25 +440,25 @@ export default function LabelScanner({ onResult, onClose }: LabelScannerProps) {
                   ].map((cls, i) => (
                     <div
                       key={i}
-                      className={cn("absolute w-8 h-8 border-amber-400", cls)}
-                      style={{ filter: "drop-shadow(0 0 6px rgba(251,191,36,0.8))" }}
+                      className={cn("absolute w-9 h-9 border-amber-400", cls)}
+                      style={{ filter: "drop-shadow(0 0 7px rgba(251,191,36,0.9))" }}
                     />
                   ))}
 
                   {/* Animated laser scan line */}
                   <div
-                    className="absolute left-2 right-2 h-px pointer-events-none"
+                    className="absolute left-3 right-3 h-px pointer-events-none"
                     style={{
                       top: `${scanLinePos}%`,
                       background: "linear-gradient(90deg, transparent, rgba(251,191,36,0.9) 20%, rgba(251,191,36,1) 50%, rgba(251,191,36,0.9) 80%, transparent)",
-                      boxShadow: "0 0 8px 2px rgba(251,191,36,0.5)",
+                      boxShadow: "0 0 10px 3px rgba(251,191,36,0.45)",
                       transition: "top 16ms linear",
                     }}
                   />
                 </div>
 
                 {/* Hint text */}
-                <p className="absolute bottom-32 left-0 right-0 text-center text-white/40 text-xs px-8 tracking-wide">
+                <p className="absolute bottom-28 left-0 right-0 text-center text-white/40 text-xs px-8 tracking-wide">
                   Barcode rilevato automaticamente · tocca per scattare
                 </p>
               </div>
