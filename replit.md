@@ -64,6 +64,10 @@ Preferred communication style: Simple, everyday language.
 - **Admin Delete APIs**: DELETE `/api/admin/beers/:id`, `/api/admin/breweries/:id`, `/api/admin/pubs/:id` all implemented with cascade cleanup.
 - **Admin Recent Activity**: GET `/api/admin/recent-activity` returns latest user registrations, reviews, pub/brewery creations, events with type filtering. Dashboard polls every 60s.
 - **Scan History**: Users see their scan history at `/scan/history`. Each entry shows thumbnail, matched beer/brewery (with link), OCR engine badge, latency, and OCR text. Clicking a result on `/scan` saves feedback (chosenBeerId/chosenBreweryId) to the log. Admin can view all scan logs via GET `/api/admin/scan-logs` (paginated, joined with users/beers/breweries).
+- **Barcode + Open Food Facts Integration**: `beers` table has a `barcode` (VARCHAR) column. When LabelScanner detects an EAN barcode via BarcodeDetector API, it calls Open Food Facts, captures both the EAN code and `image_front_url`. `onBarcodeFound` callback passes data to `scan.tsx` which stores in refs. When user selects a beer result, `POST /api/beers/:id/enrich-barcode` saves the barcode (if not set) and OFF image as `logo_url` (if no image). Fire-and-forget.
+- **Brewery Image Enrichment Scripts**: Two TypeScript scripts in `scripts/` folder to bulk-enrich beer images:
+  - `scripts/find-brewery-websites.ts` — populates `website_url` for breweries using OpenBreweryDB (US, ~8k) and URL pattern guessing (Italy: `{name}.it`, Germany: `{name}.de`, etc.). Run with `npx tsx scripts/find-brewery-websites.ts --country Italia --limit 500`.
+  - `scripts/crawl-brewery-images.ts` — crawls brewery websites with set `website_url`, extracts beer product images, uploads to Cloudinary, saves `logo_url`. Run with `npx tsx scripts/crawl-brewery-images.ts --country Italia --limit 200 --resume`.
 
 ## External Dependencies
 
