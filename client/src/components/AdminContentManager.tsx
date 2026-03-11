@@ -11,7 +11,8 @@ import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
-import { Search, Plus, Trash2, BeerIcon, Building2, MapPin, ExternalLink, Loader2, ChevronDown, CheckSquare, Square, Edit2, RefreshCw, X, GitMerge } from "lucide-react";
+import { Separator } from "@/components/ui/separator";
+import { Search, Plus, Trash2, BeerIcon, Building2, MapPin, ExternalLink, Loader2, CheckSquare, Square, Edit2, RefreshCw, X, GitMerge, Wand2, Replace, Tag, Palette, Globe, LayoutGrid, AlignLeft, ChevronRight } from "lucide-react";
 import { Link } from "wouter";
 import { GlutenFreeSmallBadge, AlcoholFreeBadge } from "@/components/beer-badges";
 import { ImageUpload } from "@/components/image-upload";
@@ -144,78 +145,37 @@ function BeerForm({ onSubmit, isPending }: { onSubmit: (data: any) => void; isPe
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!breweryId) { alert("Seleziona un birrificio"); return; }
-    const data: any = {
-      name,
-      breweryId,
-      style,
-      abv: abv ? parseFloat(abv) : null,
-      ibu: ibu ? parseInt(ibu) : null,
-      color: color || null,
-      description: description || null,
-      imageUrl: imageUrl || null,
-      isGlutenFree,
-      isAlcoholFree,
-    };
-    onSubmit(data);
+    onSubmit({ name, breweryId, style, abv: abv ? parseFloat(abv) : null, ibu: ibu ? parseInt(ibu) : null, color: color || null, description: description || null, imageUrl: imageUrl || null, isGlutenFree, isAlcoholFree });
   };
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div className="md:col-span-2">
-          <ImageUpload
-            label="Immagine Birra"
-            description="Foto della birra · consigliato 800×600 px"
-            currentImageUrl={imageUrl || undefined}
-            onImageChange={setImageUrl}
-            folder="beers"
-            aspectRatio="landscape"
-            maxSize={5}
-          />
+          <ImageUpload label="Immagine Birra" description="Foto della birra · consigliato 800×600 px" currentImageUrl={imageUrl || undefined} onImageChange={setImageUrl} folder="beers" aspectRatio="landscape" maxSize={5} />
         </div>
-
         <div className="md:col-span-2">
           <Label>Nome Birra *</Label>
           <Input value={name} onChange={e => setName(e.target.value)} required className="mt-1" placeholder="Es. Golden Ale Artigianale" />
         </div>
-
         <div className="md:col-span-2">
           <BrewerySearchField onSelect={(id) => setBreweryId(id)} />
         </div>
-
         <div className="md:col-span-2 relative">
           <Label>Stile *</Label>
-          <Input
-            value={styleDropdownOpen ? styleSearch : style}
-            onChange={e => { setStyleSearch(e.target.value); setStyle(e.target.value); setStyleDropdownOpen(true); }}
-            onFocus={() => { setStyleSearch(style); setStyleDropdownOpen(true); }}
-            onBlur={() => setTimeout(() => setStyleDropdownOpen(false), 200)}
-            required
-            className="mt-1"
-            placeholder="Cerca o digita stile..."
-            autoComplete="off"
-          />
+          <Input value={styleDropdownOpen ? styleSearch : style} onChange={e => { setStyleSearch(e.target.value); setStyle(e.target.value); setStyleDropdownOpen(true); }} onFocus={() => { setStyleSearch(style); setStyleDropdownOpen(true); }} onBlur={() => setTimeout(() => setStyleDropdownOpen(false), 200)} required className="mt-1" placeholder="Cerca o digita stile..." autoComplete="off" />
           {styleDropdownOpen && filteredStyles.length > 0 && (
             <div className="absolute z-50 w-full mt-1 max-h-40 overflow-y-auto border rounded-md bg-white dark:bg-gray-800 shadow-lg">
               {filteredStyles.slice(0, 12).map(s => (
-                <div key={s} onMouseDown={e => { e.preventDefault(); setStyle(s); setStyleSearch(""); setStyleDropdownOpen(false); }}
-                  className="px-3 py-1.5 text-sm hover:bg-amber-50 dark:hover:bg-amber-900/20 cursor-pointer">{s}</div>
+                <div key={s} onMouseDown={e => { e.preventDefault(); setStyle(s); setStyleSearch(""); setStyleDropdownOpen(false); }} className="px-3 py-1.5 text-sm hover:bg-amber-50 dark:hover:bg-amber-900/20 cursor-pointer">{s}</div>
               ))}
             </div>
           )}
         </div>
-
         <div className="md:col-span-2 flex flex-wrap gap-6 pt-1">
-          <label className="flex items-center gap-2 cursor-pointer">
-            <Checkbox checked={isGlutenFree} onCheckedChange={v => setIsGlutenFree(!!v)} />
-            <span className="text-sm font-medium">Senza glutine</span>
-          </label>
-          <label className="flex items-center gap-2 cursor-pointer">
-            <Checkbox checked={isAlcoholFree} onCheckedChange={v => setIsAlcoholFree(!!v)} />
-            <span className="text-sm font-medium">Analcolica</span>
-          </label>
+          <label className="flex items-center gap-2 cursor-pointer"><Checkbox checked={isGlutenFree} onCheckedChange={v => setIsGlutenFree(!!v)} /><span className="text-sm font-medium">Senza glutine</span></label>
+          <label className="flex items-center gap-2 cursor-pointer"><Checkbox checked={isAlcoholFree} onCheckedChange={v => setIsAlcoholFree(!!v)} /><span className="text-sm font-medium">Analcolica</span></label>
         </div>
-
         <div>
           <Label>ABV % *</Label>
           <Input value={abv} onChange={e => setAbv(e.target.value)} type="number" step="0.1" min="0" max="99" required className="mt-1" placeholder="Es. 5.5" />
@@ -224,34 +184,22 @@ function BeerForm({ onSubmit, isPending }: { onSubmit: (data: any) => void; isPe
           <Label>IBU</Label>
           <Input value={ibu} onChange={e => setIbu(e.target.value)} type="number" min="0" className="mt-1" placeholder="Es. 40" />
         </div>
-
         <div className="md:col-span-2 relative">
           <Label>Colore</Label>
-          <Input
-            value={color}
-            onChange={e => { setColor(e.target.value); setColorDropdownOpen(true); }}
-            onFocus={() => setColorDropdownOpen(true)}
-            onBlur={() => setTimeout(() => setColorDropdownOpen(false), 200)}
-            className="mt-1"
-            placeholder="Es. dorata, ambrata..."
-            autoComplete="off"
-          />
+          <Input value={color} onChange={e => { setColor(e.target.value); setColorDropdownOpen(true); }} onFocus={() => setColorDropdownOpen(true)} onBlur={() => setTimeout(() => setColorDropdownOpen(false), 200)} className="mt-1" placeholder="Es. dorata, ambrata..." autoComplete="off" />
           {colorDropdownOpen && filteredColors.length > 0 && (
             <div className="absolute z-50 w-full mt-1 max-h-36 overflow-y-auto border rounded-md bg-white dark:bg-gray-800 shadow-lg">
               {filteredColors.map(c => (
-                <div key={c} onMouseDown={e => { e.preventDefault(); setColor(c); setColorDropdownOpen(false); }}
-                  className="px-3 py-1.5 text-sm hover:bg-amber-50 dark:hover:bg-amber-900/20 cursor-pointer capitalize">{c}</div>
+                <div key={c} onMouseDown={e => { e.preventDefault(); setColor(c); setColorDropdownOpen(false); }} className="px-3 py-1.5 text-sm hover:bg-amber-50 dark:hover:bg-amber-900/20 cursor-pointer capitalize">{c}</div>
               ))}
             </div>
           )}
         </div>
-
         <div className="md:col-span-2">
           <Label>Descrizione</Label>
           <Textarea value={description} onChange={e => setDescription(e.target.value)} className="mt-1" rows={3} placeholder="Descrivi aromi, gusto, storia della birra..." />
         </div>
       </div>
-
       <Button type="submit" className="w-full bg-amber-500 hover:bg-amber-600" disabled={isPending}>
         {isPending ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Creazione...</> : <><Plus className="w-4 h-4 mr-2" />Crea Birra</>}
       </Button>
@@ -273,95 +221,27 @@ function BreweryForm({ onSubmit, isPending }: { onSubmit: (data: any) => void; i
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    onSubmit({
-      name,
-      location,
-      region,
-      country,
-      websiteUrl: websiteUrl || null,
-      phone: phone || null,
-      vatNumber: vatNumber || null,
-      description: description || null,
-      logoUrl: logoUrl || null,
-      coverImageUrl: coverImageUrl || null,
-    });
+    onSubmit({ name, location, region, country, websiteUrl: websiteUrl || null, phone: phone || null, vatNumber: vatNumber || null, description: description || null, logoUrl: logoUrl || null, coverImageUrl: coverImageUrl || null });
   };
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div>
-          <ImageUpload
-            label="Logo Birrificio"
-            description="Logo quadrato · 400×400 px consigliato"
-            currentImageUrl={logoUrl || undefined}
-            onImageChange={setLogoUrl}
-            folder="brewery-logos"
-            aspectRatio="square"
-            maxSize={3}
-          />
-        </div>
-        <div>
-          <ImageUpload
-            label="Immagine di Copertina"
-            description="Banner orizzontale · 1200×400 px"
-            currentImageUrl={coverImageUrl || undefined}
-            onImageChange={setCoverImageUrl}
-            folder="brewery-covers"
-            aspectRatio="landscape"
-            maxSize={8}
-          />
-        </div>
-
-        <div className="md:col-span-2">
-          <Label>Nome Birrificio *</Label>
-          <Input value={name} onChange={e => setName(e.target.value)} required className="mt-1" placeholder="Es. Birrificio Artigianale Roma" />
-        </div>
-
+        <div><ImageUpload label="Logo Birrificio" description="Logo quadrato · 400×400 px" currentImageUrl={logoUrl || undefined} onImageChange={setLogoUrl} folder="brewery-logos" aspectRatio="square" maxSize={3} /></div>
+        <div><ImageUpload label="Immagine di Copertina" description="Banner · 1200×400 px" currentImageUrl={coverImageUrl || undefined} onImageChange={setCoverImageUrl} folder="brewery-covers" aspectRatio="landscape" maxSize={8} /></div>
+        <div className="md:col-span-2"><Label>Nome Birrificio *</Label><Input value={name} onChange={e => setName(e.target.value)} required className="mt-1" placeholder="Es. Birrificio Artigianale Roma" /></div>
         <div className="md:col-span-2">
           <Label>Località *</Label>
-          <AddressAutocomplete
-            value={location}
-            onAddressSelect={(details) => {
-              setLocation(details.formattedAddress || details.city || "");
-              if (details.region) setRegion(details.region);
-              if (details.country) setCountry(details.country);
-            }}
-            placeholder="Cerca città o indirizzo..."
-            countryRestriction={null}
-          />
-          <p className="text-xs text-gray-400 mt-1">Seleziona dall'elenco o compila manualmente Regione e Paese qui sotto</p>
+          <AddressAutocomplete value={location} onAddressSelect={(d) => { setLocation(d.formattedAddress || d.city || ""); if (d.region) setRegion(d.region); if (d.country) setCountry(d.country); }} placeholder="Cerca città o indirizzo..." countryRestriction={null} />
+          <p className="text-xs text-gray-400 mt-1">Seleziona dall'elenco o compila manualmente Regione e Paese</p>
         </div>
-
-        <div>
-          <Label>Regione</Label>
-          <Input value={region} onChange={e => setRegion(e.target.value)} className="mt-1" placeholder="Es. Lazio" />
-        </div>
-        <div>
-          <Label>Paese</Label>
-          <Input value={country} onChange={e => setCountry(e.target.value)} className="mt-1" placeholder="Es. Italia" />
-        </div>
-
-        <div>
-          <Label>Sito Web</Label>
-          <Input value={websiteUrl} onChange={e => setWebsiteUrl(e.target.value)} type="url" className="mt-1" placeholder="https://birrificio.it" />
-        </div>
-        <div>
-          <Label>Telefono</Label>
-          <Input value={phone} onChange={e => setPhone(e.target.value)} type="tel" className="mt-1" placeholder="+39 06 1234567" />
-        </div>
-
-        <div className="md:col-span-2">
-          <Label>Partita IVA</Label>
-          <Input value={vatNumber} onChange={e => setVatNumber(e.target.value)} className="mt-1" placeholder="IT12345678901" />
-        </div>
-
-        <div className="md:col-span-2">
-          <Label>Descrizione</Label>
-          <Textarea value={description} onChange={e => setDescription(e.target.value)} className="mt-1" rows={3} placeholder="Storia, filosofia e caratteristiche del birrificio..." />
-        </div>
+        <div><Label>Regione</Label><Input value={region} onChange={e => setRegion(e.target.value)} className="mt-1" placeholder="Es. Lazio" /></div>
+        <div><Label>Paese</Label><Input value={country} onChange={e => setCountry(e.target.value)} className="mt-1" placeholder="Es. Italia" /></div>
+        <div><Label>Sito Web</Label><Input value={websiteUrl} onChange={e => setWebsiteUrl(e.target.value)} type="url" className="mt-1" placeholder="https://birrificio.it" /></div>
+        <div><Label>Telefono</Label><Input value={phone} onChange={e => setPhone(e.target.value)} type="tel" className="mt-1" placeholder="+39 06 1234567" /></div>
+        <div className="md:col-span-2"><Label>Partita IVA</Label><Input value={vatNumber} onChange={e => setVatNumber(e.target.value)} className="mt-1" placeholder="IT12345678901" /></div>
+        <div className="md:col-span-2"><Label>Descrizione</Label><Textarea value={description} onChange={e => setDescription(e.target.value)} className="mt-1" rows={3} placeholder="Storia, filosofia e caratteristiche del birrificio..." /></div>
       </div>
-
       <Button type="submit" className="w-full bg-amber-500 hover:bg-amber-600" disabled={isPending}>
         {isPending ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Creazione...</> : <><Plus className="w-4 h-4 mr-2" />Crea Birrificio</>}
       </Button>
@@ -388,111 +268,30 @@ function PubForm({ onSubmit, isPending }: { onSubmit: (data: any) => void; isPen
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    onSubmit({
-      name,
-      address,
-      city,
-      region,
-      postalCode: postalCode || null,
-      vatNumber: vatNumber || null,
-      phone: phone || null,
-      email: email || null,
-      websiteUrl: websiteUrl || null,
-      description: description || null,
-      logoUrl: logoUrl || null,
-      coverImageUrl: coverImageUrl || null,
-      facebookUrl: facebookUrl || null,
-      instagramUrl: instagramUrl || null,
-      tiktokUrl: tiktokUrl || null,
-    });
+    onSubmit({ name, address, city, region, postalCode: postalCode || null, vatNumber: vatNumber || null, phone: phone || null, email: email || null, websiteUrl: websiteUrl || null, description: description || null, logoUrl: logoUrl || null, coverImageUrl: coverImageUrl || null, facebookUrl: facebookUrl || null, instagramUrl: instagramUrl || null, tiktokUrl: tiktokUrl || null });
   };
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div>
-          <ImageUpload
-            label="Logo / Avatar"
-            description="Logo quadrato · 400×400 px"
-            currentImageUrl={logoUrl || undefined}
-            onImageChange={setLogoUrl}
-            folder="pub-logos"
-            aspectRatio="square"
-            maxSize={3}
-          />
-        </div>
-        <div>
-          <ImageUpload
-            label="Immagine di Copertina"
-            description="Banner orizzontale · 1200×630 px"
-            currentImageUrl={coverImageUrl || undefined}
-            onImageChange={setCoverImageUrl}
-            folder="pub-covers"
-            aspectRatio="landscape"
-            maxSize={8}
-          />
-        </div>
-
-        <div className="md:col-span-2">
-          <Label>Nome Pub *</Label>
-          <Input value={name} onChange={e => setName(e.target.value)} required className="mt-1" placeholder="Es. The Craft Beer Palace" />
-        </div>
-
+        <div><ImageUpload label="Logo / Avatar" description="Logo quadrato · 400×400 px" currentImageUrl={logoUrl || undefined} onImageChange={setLogoUrl} folder="pub-logos" aspectRatio="square" maxSize={3} /></div>
+        <div><ImageUpload label="Immagine di Copertina" description="Banner · 1200×630 px" currentImageUrl={coverImageUrl || undefined} onImageChange={setCoverImageUrl} folder="pub-covers" aspectRatio="landscape" maxSize={8} /></div>
+        <div className="md:col-span-2"><Label>Nome Pub *</Label><Input value={name} onChange={e => setName(e.target.value)} required className="mt-1" placeholder="Es. The Craft Beer Palace" /></div>
         <div className="md:col-span-2">
           <Label>Indirizzo *</Label>
-          <AddressAutocomplete
-            value={address}
-            onAddressSelect={(details) => {
-              setAddress(details.formattedAddress || "");
-              if (details.city) setCity(details.city);
-              if (details.region) setRegion(details.region);
-              if (details.postalCode) setPostalCode(details.postalCode);
-            }}
-            placeholder="Cerca indirizzo..."
-            countryRestriction={null}
-          />
-          <p className="text-xs text-gray-400 mt-1">Seleziona dall'elenco — Città, Regione e CAP si compilano automaticamente</p>
+          <AddressAutocomplete value={address} onAddressSelect={(d) => { setAddress(d.formattedAddress || ""); if (d.city) setCity(d.city); if (d.region) setRegion(d.region); if (d.postalCode) setPostalCode(d.postalCode); }} placeholder="Cerca indirizzo..." countryRestriction={null} />
+          <p className="text-xs text-gray-400 mt-1">Città, Regione e CAP si compilano automaticamente</p>
         </div>
-
-        <div>
-          <Label>Città *</Label>
-          <Input value={city} onChange={e => setCity(e.target.value)} required className="mt-1" placeholder="Es. Roma" />
-        </div>
-        <div>
-          <Label>Regione</Label>
-          <Input value={region} onChange={e => setRegion(e.target.value)} className="mt-1" placeholder="Es. Lazio" />
-        </div>
-
-        <div>
-          <Label>CAP</Label>
-          <Input value={postalCode} onChange={e => setPostalCode(e.target.value)} className="mt-1" placeholder="00100" />
-        </div>
-        <div>
-          <Label className="flex items-center gap-1">P.IVA <span className="text-xs text-amber-600 font-normal">(verifica autenticità)</span></Label>
-          <Input value={vatNumber} onChange={e => setVatNumber(e.target.value)} className="mt-1" placeholder="IT12345678901" />
-        </div>
-
-        <div>
-          <Label>Telefono</Label>
-          <Input value={phone} onChange={e => setPhone(e.target.value)} type="tel" className="mt-1" placeholder="+39 06 1234567" />
-        </div>
-
-        <div>
-          <Label>Email</Label>
-          <Input value={email} onChange={e => setEmail(e.target.value)} type="email" className="mt-1" placeholder="info@pub.it" />
-        </div>
-        <div>
-          <Label>Sito Web</Label>
-          <Input value={websiteUrl} onChange={e => setWebsiteUrl(e.target.value)} type="url" className="mt-1" placeholder="https://pub.it" />
-        </div>
-
+        <div><Label>Città *</Label><Input value={city} onChange={e => setCity(e.target.value)} required className="mt-1" placeholder="Es. Roma" /></div>
+        <div><Label>Regione</Label><Input value={region} onChange={e => setRegion(e.target.value)} className="mt-1" placeholder="Es. Lazio" /></div>
+        <div><Label>CAP</Label><Input value={postalCode} onChange={e => setPostalCode(e.target.value)} className="mt-1" placeholder="00100" /></div>
+        <div><Label>P.IVA</Label><Input value={vatNumber} onChange={e => setVatNumber(e.target.value)} className="mt-1" placeholder="IT12345678901" /></div>
+        <div><Label>Telefono</Label><Input value={phone} onChange={e => setPhone(e.target.value)} type="tel" className="mt-1" placeholder="+39 06 1234567" /></div>
+        <div><Label>Email</Label><Input value={email} onChange={e => setEmail(e.target.value)} type="email" className="mt-1" placeholder="info@pub.it" /></div>
+        <div><Label>Sito Web</Label><Input value={websiteUrl} onChange={e => setWebsiteUrl(e.target.value)} type="url" className="mt-1" placeholder="https://pub.it" /></div>
+        <div className="md:col-span-2"><Label>Descrizione</Label><Textarea value={description} onChange={e => setDescription(e.target.value)} className="mt-1" rows={3} placeholder="Descrivi atmosfera, specialità, storia del locale..." /></div>
         <div className="md:col-span-2">
-          <Label>Descrizione</Label>
-          <Textarea value={description} onChange={e => setDescription(e.target.value)} className="mt-1" rows={3} placeholder="Descrivi l'atmosfera, specialità, storia del locale..." />
-        </div>
-
-        <div className="md:col-span-2">
-          <p className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Social Media (opzionali)</p>
+          <p className="text-sm font-semibold mb-2">Social Media</p>
           <div className="grid grid-cols-1 gap-2">
             <Input value={instagramUrl} onChange={e => setInstagramUrl(e.target.value)} placeholder="Instagram: https://instagram.com/ilpub" className="text-sm" />
             <Input value={facebookUrl} onChange={e => setFacebookUrl(e.target.value)} placeholder="Facebook: https://facebook.com/ilpub" className="text-sm" />
@@ -500,7 +299,6 @@ function PubForm({ onSubmit, isPending }: { onSubmit: (data: any) => void; isPen
           </div>
         </div>
       </div>
-
       <Button type="submit" className="w-full bg-blue-500 hover:bg-blue-600" disabled={isPending}>
         {isPending ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Creazione...</> : <><Plus className="w-4 h-4 mr-2" />Crea Pub</>}
       </Button>
@@ -518,12 +316,9 @@ export default function AdminContentManager({ type }: AdminContentManagerProps) 
   const [deleteTarget, setDeleteTarget] = useState<any>(null);
   const searchTimerRef = useRef<any>(null);
 
-  // Mass edit state
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
-  const [massEditOpen, setMassEditOpen] = useState(false);
-  const [massDeleteOpen, setMassDeleteOpen] = useState(false);
   const [massFields, setMassFields] = useState<Record<string, string>>({});
-  // Merge state (breweries only)
+  const [massDeleteOpen, setMassDeleteOpen] = useState(false);
   const [mergeOpen, setMergeOpen] = useState(false);
   const [keepId, setKeepId] = useState<number | null>(null);
 
@@ -541,12 +336,11 @@ export default function AdminContentManager({ type }: AdminContentManagerProps) 
     if (!query.trim()) { setSearchResults([]); setIsSearching(false); return; }
     setIsSearching(true);
     try {
-      const params = new URLSearchParams({ q: query, limit: '50' });
-      const res = await fetch(`${SEARCH_ENDPOINTS[type]}?${params}`, { credentials: 'include' });
+      const res = await fetch(`${SEARCH_ENDPOINTS[type]}?q=${encodeURIComponent(query)}&limit=50`, { credentials: 'include' });
       const data = await res.json();
       setSearchResults(Array.isArray(data) ? data : []);
     } catch {
-      toast({ title: "Errore ricerca", description: "Impossibile cercare nel database", variant: "destructive" });
+      toast({ title: "Errore ricerca", variant: "destructive" });
     } finally {
       setIsSearching(false);
     }
@@ -559,44 +353,31 @@ export default function AdminContentManager({ type }: AdminContentManagerProps) 
   };
 
   const deleteMutation = useMutation({
-    mutationFn: async (id: number) => {
-      return await apiRequest(`/api/admin/${type}/${id}`, { method: "DELETE" });
-    },
+    mutationFn: async (id: number) => apiRequest(`/api/admin/${type}/${id}`, { method: "DELETE" }),
     onSuccess: (data: any) => {
-      toast({ title: "Eliminato", description: data?.message || "Elemento eliminato con successo" });
+      toast({ title: "Eliminato", description: data?.message || "Elemento eliminato" });
       setSearchResults(prev => prev.filter(item => item.id !== deleteTarget?.id));
       setDeleteTarget(null);
       queryClient.invalidateQueries({ queryKey: ["/api/admin/stats"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/stats/global"] });
     },
-    onError: () => {
-      toast({ title: "Errore", description: "Impossibile eliminare l'elemento", variant: "destructive" });
-      setDeleteTarget(null);
-    },
+    onError: () => { toast({ title: "Errore", description: "Impossibile eliminare", variant: "destructive" }); setDeleteTarget(null); },
   });
 
   const createMutation = useMutation({
-    mutationFn: async (itemData: any) => {
-      return await apiRequest(`/api/admin/${type}`, { method: "POST" }, itemData);
-    },
+    mutationFn: async (data: any) => apiRequest(`/api/admin/${type}`, { method: "POST" }, data),
     onSuccess: () => {
-      toast({ title: "Creato con successo", description: `${type === 'beers' ? 'Birra' : type === 'breweries' ? 'Birrificio' : 'Pub'} aggiunto al database` });
+      toast({ title: "Creato con successo" });
       setCreateDialogOpen(false);
       if (searchQuery) runSearch(searchQuery);
     },
-    onError: () => {
-      toast({ title: "Errore", description: "Impossibile creare l'elemento", variant: "destructive" });
-    },
+    onError: () => toast({ title: "Errore creazione", variant: "destructive" }),
   });
 
   const massEditMutation = useMutation({
-    mutationFn: async ({ ids, updates }: { ids: number[]; updates: Record<string, string> }) => {
-      const nonEmpty = Object.fromEntries(Object.entries(updates).filter(([, v]) => v !== ""));
-      return await apiRequest(`/api/admin/${type}/mass-update`, { method: "PATCH" }, { ids, updates: nonEmpty });
-    },
+    mutationFn: async ({ ids, updates }: { ids: number[]; updates: Record<string, any> }) =>
+      apiRequest(`/api/admin/${type}/mass-update`, { method: "PATCH" }, { ids, updates }),
     onSuccess: (data: any) => {
       toast({ title: "Aggiornati", description: `${data?.updated ?? selectedIds.size} record aggiornati` });
-      setMassEditOpen(false);
       setMassFields({});
       clearSelection();
       if (searchQuery) runSearch(searchQuery);
@@ -616,30 +397,37 @@ export default function AdminContentManager({ type }: AdminContentManagerProps) 
       clearSelection();
       queryClient.invalidateQueries({ queryKey: ["/api/admin/stats"] });
     },
-    onError: () => toast({ title: "Errore", description: "Alcuni record non sono stati eliminati", variant: "destructive" }),
+    onError: () => toast({ title: "Errore eliminazione", variant: "destructive" }),
   });
 
   const syncBeerNamesMutation = useMutation({
-    mutationFn: async (breweryId: number) =>
-      await apiRequest(`/api/admin/breweries/${breweryId}/sync-beer-names`, { method: "POST" }),
-    onSuccess: (data: any) =>
-      toast({ title: "Nomi sincronizzati", description: `${data?.updated ?? 0} birre aggiornate con il nome "${data?.breweryName}"` }),
-    onError: () => toast({ title: "Errore", description: "Impossibile sincronizzare i nomi", variant: "destructive" }),
+    mutationFn: async (breweryId: number) => apiRequest(`/api/admin/breweries/${breweryId}/sync-beer-names`, { method: "POST" }),
+    onSuccess: (data: any) => toast({ title: "Nomi sincronizzati", description: `${data?.updated ?? 0} birre aggiornate` }),
+    onError: () => toast({ title: "Errore sync", variant: "destructive" }),
   });
 
   const mergeMutation = useMutation({
     mutationFn: async ({ keepId, mergeId }: { keepId: number; mergeId: number }) =>
-      await apiRequest('/api/admin/breweries/merge', { method: "POST" }, { keepId, mergeId }),
+      apiRequest('/api/admin/breweries/merge', { method: "POST" }, { keepId, mergeId }),
     onSuccess: (data: any) => {
-      toast({ title: "Merge completato", description: `"${data?.keepName}" ora ha ${data?.beersMoved} birre. Il duplicato è stato eliminato.` });
-      setMergeOpen(false);
-      setKeepId(null);
-      clearSelection();
+      toast({ title: "Merge completato", description: `"${data?.keepName}" ora ha ${data?.beersMoved} birre` });
+      setMergeOpen(false); setKeepId(null); clearSelection();
       if (searchQuery) runSearch(searchQuery);
-      queryClient.invalidateQueries({ queryKey: ["/api/admin/stats"] });
     },
-    onError: () => toast({ title: "Errore merge", description: "Impossibile completare il merge dei birrifici", variant: "destructive" }),
+    onError: () => toast({ title: "Errore merge", variant: "destructive" }),
   });
+
+  const applyMassEdit = () => {
+    if (selectedIds.size === 0) { toast({ title: "Nessun elemento selezionato", description: "Seleziona almeno un elemento dalla lista", variant: "destructive" }); return; }
+    const { nameFindText, nameFindReplaceWith, nameStripPrefix, ...rest } = massFields;
+    const updates: Record<string, any> = Object.fromEntries(Object.entries(rest).filter(([, v]) => v !== "" && v !== undefined));
+    if (nameStripPrefix?.trim()) updates.nameStripPrefix = nameStripPrefix;
+    if (nameFindText?.trim()) updates.nameFindReplace = { find: nameFindText, replace: nameFindReplaceWith ?? "" };
+    if (Object.keys(updates).length === 0) { toast({ title: "Nessun campo da aggiornare", description: "Compila almeno un campo prima di applicare", variant: "destructive" }); return; }
+    massEditMutation.mutate({ ids: [...selectedIds], updates });
+  };
+
+  const hasMassFields = Object.values(massFields).some(v => v !== "" && v !== undefined);
 
   const getItemLink = (item: any) => {
     if (type === 'beers') return `/beer/${item.id}`;
@@ -650,28 +438,20 @@ export default function AdminContentManager({ type }: AdminContentManagerProps) 
   const typeLabel = type === 'beers' ? 'Birre' : type === 'breweries' ? 'Birrifici' : 'Pub';
   const singularLabel = type === 'beers' ? 'Birra' : type === 'breweries' ? 'Birrificio' : 'Pub';
   const accentColor = type === 'pubs' ? 'blue' : 'amber';
+  const selCount = selectedIds.size;
 
   return (
     <>
-      <Card>
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <CardTitle className="flex items-center gap-2">
-              {type === 'beers' ? <BeerIcon className="w-5 h-5 text-amber-500" /> : type === 'breweries' ? <Building2 className="w-5 h-5 text-amber-500" /> : <MapPin className="w-5 h-5 text-blue-500" />}
-              Gestione {typeLabel}
-              {searchResults.length > 0 && (
-                <Badge variant="secondary" className="ml-2">{searchResults.length} trovati</Badge>
-              )}
-            </CardTitle>
-            <div className="flex items-center gap-2">
-              {type === 'breweries' && (
-                <Link href="/admin/duplicates">
-                  <Button size="sm" variant="outline" className="border-purple-300 text-purple-700 hover:bg-purple-50 dark:border-purple-700 dark:text-purple-400 dark:hover:bg-purple-900/20">
-                    <GitMerge className="w-4 h-4 mr-1.5" />
-                    Trova Duplicati
-                  </Button>
-                </Link>
-              )}
+      <div className="grid grid-cols-1 xl:grid-cols-[1fr_340px] gap-6 items-start">
+        {/* ── LEFT: List ── */}
+        <Card>
+          <CardHeader className="pb-3">
+            <div className="flex items-center justify-between">
+              <CardTitle className="flex items-center gap-2 text-base">
+                {type === 'beers' ? <BeerIcon className="w-5 h-5 text-amber-500" /> : type === 'breweries' ? <Building2 className="w-5 h-5 text-amber-500" /> : <MapPin className="w-5 h-5 text-blue-500" />}
+                Gestione {typeLabel}
+                {searchResults.length > 0 && <Badge variant="secondary">{searchResults.length} trovati</Badge>}
+              </CardTitle>
               <Button
                 size="sm"
                 className={`${accentColor === 'blue' ? 'bg-blue-500 hover:bg-blue-600' : 'bg-amber-500 hover:bg-amber-600'} text-white`}
@@ -681,244 +461,317 @@ export default function AdminContentManager({ type }: AdminContentManagerProps) 
                 Aggiungi {singularLabel}
               </Button>
             </div>
-          </div>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-            <Input
-              placeholder={
-                type === 'beers' ? 'Cerca per nome birra o birrificio...' :
-                type === 'breweries' ? 'Cerca per nome o paese...' :
-                'Cerca per nome, città o indirizzo...'
-              }
-              value={searchQuery}
-              onChange={(e) => handleSearchInput(e.target.value)}
-              className="pl-10 pr-10"
-            />
-            {isSearching && (
-              <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 animate-spin text-gray-400" />
-            )}
-          </div>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            {/* Search */}
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+              <Input
+                placeholder={type === 'beers' ? 'Cerca per nome birra o birrificio...' : type === 'breweries' ? 'Cerca per nome o paese...' : 'Cerca per nome, città o indirizzo...'}
+                value={searchQuery}
+                onChange={(e) => handleSearchInput(e.target.value)}
+                className="pl-10 pr-10"
+              />
+              {isSearching && <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 animate-spin text-gray-400" />}
+            </div>
 
-          {searchResults.length > 0 && (
-            <>
-              {/* Select all bar */}
-              <div className="flex items-center gap-2 px-1 text-sm text-gray-500 dark:text-gray-400">
-                <button
-                  type="button"
-                  onClick={selectedIds.size === searchResults.length ? clearSelection : selectAll}
-                  className="flex items-center gap-1.5 hover:text-amber-600 transition-colors"
-                >
+            {/* Select all bar */}
+            {searchResults.length > 0 && (
+              <div className="flex items-center gap-3 px-1 py-1 text-sm text-gray-500">
+                <button type="button" onClick={selectedIds.size === searchResults.length ? clearSelection : selectAll} className="flex items-center gap-1.5 hover:text-amber-600 transition-colors font-medium">
                   {selectedIds.size === searchResults.length && searchResults.length > 0
                     ? <CheckSquare className="w-4 h-4 text-amber-500" />
                     : <Square className="w-4 h-4" />}
-                  {selectedIds.size > 0 ? `${selectedIds.size} selezionati` : "Seleziona tutti"}
+                  {selCount > 0 ? `${selCount} selezionati` : "Seleziona tutti"}
                 </button>
-                {selectedIds.size > 0 && (
-                  <button type="button" onClick={clearSelection} className="ml-2 text-xs text-gray-400 hover:text-red-500 flex items-center gap-1">
+                {selCount > 0 && (
+                  <button type="button" onClick={clearSelection} className="flex items-center gap-1 text-xs text-gray-400 hover:text-red-500 transition-colors">
                     <X className="w-3 h-3" /> Deseleziona
                   </button>
                 )}
               </div>
-            </>
-          )}
+            )}
 
-          {searchResults.length > 0 && (
-            <div className="space-y-2 max-h-[580px] overflow-y-auto pr-1">
-              {searchResults.map((item) => (
-                <div key={item.id} className={`flex items-center gap-3 p-3 border rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800/60 transition-colors group ${selectedIds.has(item.id) ? 'border-amber-400 bg-amber-50/50 dark:bg-amber-900/10' : ''}`}>
-                  {/* Selection checkbox */}
-                  <div className="flex-shrink-0" onClick={(e) => { e.stopPropagation(); toggleSelect(item.id); }}>
-                    <Checkbox checked={selectedIds.has(item.id)} className="w-4 h-4 cursor-pointer" />
-                  </div>
+            {/* Results list */}
+            {searchResults.length > 0 && (
+              <div className="space-y-1.5 max-h-[600px] overflow-y-auto pr-1">
+                {searchResults.map((item) => (
+                  <div key={item.id} className={`flex items-center gap-3 p-2.5 border rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800/60 transition-colors ${selectedIds.has(item.id) ? 'border-amber-400 bg-amber-50/50 dark:bg-amber-900/10' : ''}`}>
+                    <div className="flex-shrink-0 cursor-pointer" onClick={() => toggleSelect(item.id)}>
+                      <Checkbox checked={selectedIds.has(item.id)} className="w-4 h-4" />
+                    </div>
 
-                  {type === 'beers' && (
-                    <div className="flex-shrink-0">
-                      {item.imageUrl ? (
-                        <img src={item.imageUrl} alt={item.name} className="w-12 h-12 rounded-lg object-cover border shadow-sm" />
+                    {/* Thumbnail */}
+                    <div className="flex-shrink-0 cursor-pointer" onClick={() => toggleSelect(item.id)}>
+                      {(item.imageUrl || item.logoUrl) ? (
+                        <img src={item.imageUrl || item.logoUrl} alt={item.name} className={`w-10 h-10 object-cover border shadow-sm ${type === 'breweries' ? 'rounded-full' : 'rounded-lg'}`} />
                       ) : (
-                        <div className="w-12 h-12 rounded-lg bg-amber-100 dark:bg-amber-900/40 flex items-center justify-center border">
-                          <BeerIcon className="w-6 h-6 text-amber-500" />
+                        <div className={`w-10 h-10 ${type === 'breweries' ? 'rounded-full' : 'rounded-lg'} ${type === 'pubs' ? 'bg-blue-100 dark:bg-blue-900/40' : 'bg-amber-100 dark:bg-amber-900/40'} flex items-center justify-center border`}>
+                          {type === 'beers' ? <BeerIcon className="w-5 h-5 text-amber-500" /> : type === 'breweries' ? <Building2 className="w-5 h-5 text-amber-500" /> : <MapPin className="w-5 h-5 text-blue-500" />}
                         </div>
                       )}
                     </div>
-                  )}
-                  {type === 'breweries' && (
-                    <div className="flex-shrink-0">
-                      {item.logoUrl ? (
-                        <img src={item.logoUrl} alt={item.name} className="w-12 h-12 rounded-full object-cover border shadow-sm" />
-                      ) : (
-                        <div className="w-12 h-12 rounded-full bg-amber-100 dark:bg-amber-900/40 flex items-center justify-center border">
-                          <Building2 className="w-6 h-6 text-amber-500" />
+
+                    {/* Info */}
+                    <div className="flex-1 min-w-0 cursor-pointer" onClick={() => toggleSelect(item.id)}>
+                      <div className="font-semibold text-sm truncate text-gray-900 dark:text-white">
+                        {item.name}
+                        <span className="ml-1.5 text-xs text-gray-400 font-normal">#{item.id}</span>
+                      </div>
+                      {type === 'beers' && (
+                        <div className="flex flex-wrap items-center gap-1 mt-0.5">
+                          {item.brewery && (
+                            <div className="flex items-center gap-1">
+                              {item.brewery.logoUrl && <img src={item.brewery.logoUrl} alt="" className="w-3.5 h-3.5 rounded-full object-cover" />}
+                              <span className="text-xs text-amber-700 dark:text-amber-400 font-medium">{item.brewery.name}</span>
+                            </div>
+                          )}
+                          {item.style && <Badge variant="outline" className="text-xs py-0 h-4">{item.style}</Badge>}
+                          {item.abv != null && <Badge variant="secondary" className="text-xs py-0 h-4 bg-orange-100 dark:bg-orange-900/40 text-orange-700">{item.abv}%</Badge>}
+                          {item.isGlutenFree && <GlutenFreeSmallBadge size={12} />}
+                          {item.isAlcoholFree && <AlcoholFreeBadge size={11} />}
                         </div>
                       )}
-                    </div>
-                  )}
-                  {type === 'pubs' && (
-                    <div className="flex-shrink-0">
-                      {item.logoUrl ? (
-                        <img src={item.logoUrl} alt={item.name} className="w-12 h-12 rounded-lg object-cover border shadow-sm" />
-                      ) : (
-                        <div className="w-12 h-12 rounded-lg bg-blue-100 dark:bg-blue-900/40 flex items-center justify-center border">
-                          <MapPin className="w-6 h-6 text-blue-500" />
+                      {type === 'breweries' && (
+                        <div className="flex items-center gap-1.5 mt-0.5">
+                          <span className="text-xs text-gray-500 truncate">{[item.location, item.country].filter(Boolean).join(' · ')}</span>
+                          {item.region && <Badge variant="outline" className="text-xs py-0 h-4">{item.region}</Badge>}
                         </div>
                       )}
+                      {type === 'pubs' && (
+                        <span className="text-xs text-gray-500 truncate block mt-0.5">{[item.city, item.address].filter(Boolean).join(' — ')}</span>
+                      )}
                     </div>
-                  )}
 
-                  <div className="flex-1 min-w-0">
-                    <h4 className="font-semibold text-gray-900 dark:text-white truncate text-sm">
-                      {item.name}
-                      {item.id && <span className="ml-1.5 text-xs text-gray-400 font-normal">#{item.id}</span>}
-                    </h4>
-                    {type === 'beers' && (
-                      <div className="flex flex-wrap items-center gap-1.5 mt-1">
-                        {item.brewery && (
-                          <div className="flex items-center gap-1">
-                            {item.brewery.logoUrl && (
-                              <img src={item.brewery.logoUrl} alt="" className="w-4 h-4 rounded-full object-cover" />
-                            )}
-                            <span className="text-xs font-semibold text-amber-700 dark:text-amber-400">{item.brewery.name}</span>
-                          </div>
-                        )}
-                        {item.style && <Badge variant="outline" className="text-xs py-0">{item.style}</Badge>}
-                        {item.abv != null && (
-                          <Badge variant="secondary" className="text-xs py-0 bg-orange-100 dark:bg-orange-900/40 text-orange-700 dark:text-orange-300">
-                            {item.abv}% ABV
-                          </Badge>
-                        )}
-                        {item.ibu != null && (
-                          <Badge variant="secondary" className="text-xs py-0 bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300">
-                            {item.ibu} IBU
-                          </Badge>
-                        )}
-                        {item.isGlutenFree && <GlutenFreeSmallBadge size={12} />}
-                        {item.isAlcoholFree && <AlcoholFreeBadge size={11} />}
-                      </div>
-                    )}
-                    {type === 'breweries' && (
-                      <div className="flex items-center gap-2 mt-1">
-                        <span className="text-xs text-gray-500 dark:text-gray-400">
-                          {[item.location, item.country].filter(Boolean).join(' · ')}
-                        </span>
-                        {item.region && <Badge variant="outline" className="text-xs py-0">{item.region}</Badge>}
-                      </div>
-                    )}
-                    {type === 'pubs' && (
-                      <div className="flex items-center gap-2 mt-1">
-                        <span className="text-xs text-gray-500 dark:text-gray-400 truncate">
-                          {[item.city, item.address].filter(Boolean).join(' — ')}
-                        </span>
-                      </div>
-                    )}
-                  </div>
-
-                  <div className="flex gap-1.5 flex-shrink-0">
-                    {type === 'breweries' && (
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="h-8 px-2 text-xs text-blue-600 border-blue-200 hover:bg-blue-50 dark:hover:bg-blue-950"
-                        title="Sincronizza nome birrificio su tutte le sue birre"
-                        onClick={() => syncBeerNamesMutation.mutate(item.id)}
-                        disabled={syncBeerNamesMutation.isPending}
-                      >
-                        <RefreshCw className={`w-3.5 h-3.5 ${syncBeerNamesMutation.isPending ? 'animate-spin' : ''}`} />
+                    {/* Actions */}
+                    <div className="flex gap-1 flex-shrink-0">
+                      {type === 'breweries' && (
+                        <Button variant="ghost" size="sm" className="h-7 w-7 p-0 text-blue-500 hover:text-blue-700 hover:bg-blue-50" title="Sincronizza nomi birre" onClick={() => syncBeerNamesMutation.mutate(item.id)} disabled={syncBeerNamesMutation.isPending}>
+                          <RefreshCw className={`w-3.5 h-3.5 ${syncBeerNamesMutation.isPending ? 'animate-spin' : ''}`} />
+                        </Button>
+                      )}
+                      <Link href={getItemLink(item)}>
+                        <Button variant="ghost" size="sm" className="h-7 w-7 p-0 text-gray-500 hover:text-gray-800" title="Apri pagina">
+                          <ExternalLink className="w-3.5 h-3.5" />
+                        </Button>
+                      </Link>
+                      <Button variant="ghost" size="sm" className="h-7 w-7 p-0 text-red-400 hover:text-red-600 hover:bg-red-50" title="Elimina" onClick={() => setDeleteTarget(item)}>
+                        <Trash2 className="w-3.5 h-3.5" />
                       </Button>
-                    )}
-                    <Link href={getItemLink(item)}>
-                      <Button variant="outline" size="sm" className="h-8 px-2.5 text-xs">
-                        <ExternalLink className="w-3.5 h-3.5 mr-1" />
-                        Apri
-                      </Button>
-                    </Link>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="h-8 px-2.5 text-red-600 border-red-200 hover:bg-red-50 dark:hover:bg-red-950 hover:border-red-400"
-                      onClick={() => setDeleteTarget(item)}
-                    >
-                      <Trash2 className="w-3.5 h-3.5" />
-                    </Button>
+                    </div>
                   </div>
+                ))}
+              </div>
+            )}
+
+            {searchQuery && !isSearching && searchResults.length === 0 && (
+              <div className="text-center py-10 text-gray-400">
+                <Search className="w-12 h-12 mx-auto mb-3 opacity-30" />
+                <p className="font-medium text-gray-500">Nessun risultato per "{searchQuery}"</p>
+                <p className="text-sm mt-1">Prova con termini diversi o aggiungi un nuovo elemento</p>
+              </div>
+            )}
+
+            {!searchQuery && !isSearching && (
+              <div className="text-center py-12 text-gray-400">
+                <Search className="w-14 h-14 mx-auto mb-4 opacity-20" />
+                <p className="text-base font-medium text-gray-500">Cerca {typeLabel.toLowerCase()}</p>
+                <p className="text-sm mt-1">
+                  {type === 'beers' ? 'Per nome birra o birrificio' : type === 'breweries' ? 'Per nome, città o paese' : 'Per nome, città o indirizzo'}
+                </p>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* ── RIGHT: Action Panel ── */}
+        <div className="space-y-4">
+
+          {/* Selection summary */}
+          <Card className={`${selCount > 0 ? 'border-amber-400 bg-amber-50 dark:bg-amber-900/10' : 'border-dashed border-gray-200 dark:border-gray-700'} transition-colors`}>
+            <CardContent className="pt-4 pb-4">
+              <div className="flex items-center justify-between mb-1">
+                <div className="flex items-center gap-2">
+                  <CheckSquare className={`w-4 h-4 ${selCount > 0 ? 'text-amber-500' : 'text-gray-300'}`} />
+                  <span className={`text-sm font-semibold ${selCount > 0 ? 'text-amber-700 dark:text-amber-400' : 'text-gray-400'}`}>
+                    {selCount > 0 ? `${selCount} ${type === 'beers' ? 'birre' : type === 'breweries' ? 'birrifici' : 'pub'} selezionati` : 'Nessuna selezione'}
+                  </span>
                 </div>
-              ))}
-            </div>
-          )}
-
-          {/* Mass edit action bar — shown when items selected */}
-          {selectedIds.size > 0 && (
-            <div className="sticky bottom-0 left-0 right-0 bg-amber-500 dark:bg-amber-600 text-white rounded-xl p-3 flex items-center justify-between shadow-lg border border-amber-400 z-10">
-              <div className="flex items-center gap-2 font-medium text-sm">
-                <CheckSquare className="w-4 h-4" />
-                {selectedIds.size} {type === 'beers' ? 'birre' : type === 'breweries' ? 'birrifici' : 'pub'} selezionati
-              </div>
-              <div className="flex gap-2">
-                {type === 'breweries' && selectedIds.size === 2 && (
-                  <Button
-                    size="sm"
-                    variant="secondary"
-                    className="h-8 bg-purple-500 hover:bg-purple-600 border-purple-400 text-white text-xs"
-                    onClick={() => {
-                      const [first] = Array.from(selectedIds);
-                      setKeepId(first);
-                      setMergeOpen(true);
-                    }}
-                  >
-                    <GitMerge className="w-3.5 h-3.5 mr-1" />
-                    Merge
-                  </Button>
+                {selCount > 0 && (
+                  <button type="button" onClick={clearSelection} className="text-xs text-gray-400 hover:text-red-500 flex items-center gap-1">
+                    <X className="w-3 h-3" />
+                  </button>
                 )}
-                <Button
-                  size="sm"
-                  variant="secondary"
-                  className="h-8 bg-white/20 hover:bg-white/30 border-white/30 text-white text-xs"
-                  onClick={() => { setMassFields({}); setMassEditOpen(true); }}
-                >
-                  <Edit2 className="w-3.5 h-3.5 mr-1" />
-                  Modifica
-                </Button>
-                <Button
-                  size="sm"
-                  variant="secondary"
-                  className="h-8 bg-red-500 hover:bg-red-600 border-red-400 text-white text-xs"
-                  onClick={() => setMassDeleteOpen(true)}
-                >
-                  <Trash2 className="w-3.5 h-3.5 mr-1" />
-                  Elimina
-                </Button>
-                <Button size="sm" variant="ghost" className="h-8 text-white hover:bg-white/20 text-xs" onClick={clearSelection}>
-                  <X className="w-3.5 h-3.5" />
-                </Button>
               </div>
-            </div>
-          )}
+              {selCount === 0 && <p className="text-xs text-gray-400">Spunta gli elementi nella lista per abilitare le azioni di massa.</p>}
+            </CardContent>
+          </Card>
 
-          {searchQuery && !isSearching && searchResults.length === 0 && (
-            <div className="text-center py-10">
-              <div className="w-14 h-14 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center mx-auto mb-3">
-                <Search className="w-7 h-7 text-gray-400" />
-              </div>
-              <p className="text-gray-600 dark:text-gray-400 font-medium">Nessun risultato per "{searchQuery}"</p>
-              <p className="text-sm text-gray-500 mt-1">Prova a cercare con termini diversi o aggiungi un nuovo elemento</p>
-            </div>
-          )}
+          {/* Mass Edit Panel */}
+          <Card>
+            <CardHeader className="pb-2 pt-4">
+              <CardTitle className="text-sm flex items-center gap-2 text-gray-700 dark:text-gray-300">
+                <Wand2 className="w-4 h-4 text-amber-500" />
+                Modifica massiva
+                {selCount > 0 && <Badge className="bg-amber-500 text-white text-xs">{selCount}</Badge>}
+              </CardTitle>
+              <p className="text-xs text-gray-400 mt-0.5">Compila i campi da aggiornare, lascia vuoti gli altri.</p>
+            </CardHeader>
+            <CardContent className="space-y-3 pb-4">
+              {/* BEERS fields */}
+              {type === 'beers' && (
+                <>
+                  <div>
+                    <Label className="text-xs font-semibold text-gray-500 uppercase tracking-wide flex items-center gap-1.5 mb-1.5">
+                      <AlignLeft className="w-3.5 h-3.5" /> Rimuovi prefisso dal nome
+                    </Label>
+                    <Input className="h-8 text-sm" placeholder="Es. «Birra del Borgo»" value={massFields.nameStripPrefix ?? ""} onChange={e => setMassFields(f => ({ ...f, nameStripPrefix: e.target.value }))} />
+                    <p className="text-xs text-gray-400 mt-0.5">Rimuove il testo dall'inizio del nome (non case-sensitive)</p>
+                  </div>
+                  <Separator />
+                  <div>
+                    <Label className="text-xs font-semibold text-gray-500 uppercase tracking-wide flex items-center gap-1.5 mb-1.5">
+                      <Replace className="w-3.5 h-3.5" /> Trova e sostituisci nel nome
+                    </Label>
+                    <div className="flex gap-2">
+                      <Input className="h-8 text-sm flex-1" placeholder="Testo da trovare" value={massFields.nameFindText ?? ""} onChange={e => setMassFields(f => ({ ...f, nameFindText: e.target.value }))} />
+                      <Input className="h-8 text-sm flex-1" placeholder="Sostituisci con" value={massFields.nameFindReplaceWith ?? ""} onChange={e => setMassFields(f => ({ ...f, nameFindReplaceWith: e.target.value }))} />
+                    </div>
+                    <p className="text-xs text-gray-400 mt-0.5">Case-sensitive · vuoto = elimina il testo trovato</p>
+                  </div>
+                  <Separator />
+                  <div>
+                    <Label className="text-xs font-semibold text-gray-500 uppercase tracking-wide flex items-center gap-1.5 mb-1.5">
+                      <Tag className="w-3.5 h-3.5" /> Stile
+                    </Label>
+                    <Input className="h-8 text-sm" placeholder="Es. IPA, Lager, Stout..." value={massFields.style ?? ""} onChange={e => setMassFields(f => ({ ...f, style: e.target.value }))} />
+                  </div>
+                  <div>
+                    <Label className="text-xs font-semibold text-gray-500 uppercase tracking-wide flex items-center gap-1.5 mb-1.5">
+                      <Palette className="w-3.5 h-3.5" /> Colore
+                    </Label>
+                    <Input className="h-8 text-sm" placeholder="Es. dorata, ambrata, nera..." value={massFields.color ?? ""} onChange={e => setMassFields(f => ({ ...f, color: e.target.value }))} />
+                  </div>
+                </>
+              )}
 
-          {!searchQuery && !isSearching && (
-            <div className="text-center py-12 text-gray-400">
-              <Search className="w-14 h-14 mx-auto mb-4 opacity-30" />
-              <p className="text-lg font-medium text-gray-500 dark:text-gray-400">Cerca {typeLabel.toLowerCase()}</p>
-              <p className="text-sm mt-1">
-                {type === 'beers' ? 'Cerca per nome birra o nome birrificio' :
-                 type === 'breweries' ? 'Cerca per nome, città o paese' :
-                 'Cerca per nome, città o indirizzo'}
-              </p>
-            </div>
-          )}
-        </CardContent>
-      </Card>
+              {/* BREWERIES fields */}
+              {type === 'breweries' && (
+                <>
+                  <div>
+                    <Label className="text-xs font-semibold text-gray-500 uppercase tracking-wide flex items-center gap-1.5 mb-1.5">
+                      <Globe className="w-3.5 h-3.5" /> Paese
+                    </Label>
+                    <Input className="h-8 text-sm" placeholder="Es. Italia, Germany..." value={massFields.country ?? ""} onChange={e => setMassFields(f => ({ ...f, country: e.target.value }))} />
+                  </div>
+                  <div>
+                    <Label className="text-xs font-semibold text-gray-500 uppercase tracking-wide flex items-center gap-1.5 mb-1.5">
+                      <LayoutGrid className="w-3.5 h-3.5" /> Regione
+                    </Label>
+                    <Input className="h-8 text-sm" placeholder="Es. Lazio, Bavaria..." value={massFields.region ?? ""} onChange={e => setMassFields(f => ({ ...f, region: e.target.value }))} />
+                  </div>
+                  <div>
+                    <Label className="text-xs font-semibold text-gray-500 uppercase tracking-wide flex items-center gap-1.5 mb-1.5">
+                      <MapPin className="w-3.5 h-3.5 text-gray-400" /> Città
+                    </Label>
+                    <Input className="h-8 text-sm" placeholder="Es. Roma, Berlin..." value={massFields.location ?? ""} onChange={e => setMassFields(f => ({ ...f, location: e.target.value }))} />
+                  </div>
+                </>
+              )}
 
+              {/* PUBS fields */}
+              {type === 'pubs' && (
+                <>
+                  <div>
+                    <Label className="text-xs font-semibold text-gray-500 uppercase tracking-wide flex items-center gap-1.5 mb-1.5">
+                      <MapPin className="w-3.5 h-3.5 text-gray-400" /> Città
+                    </Label>
+                    <Input className="h-8 text-sm" placeholder="Es. Roma, Milano..." value={massFields.city ?? ""} onChange={e => setMassFields(f => ({ ...f, city: e.target.value }))} />
+                  </div>
+                  <div>
+                    <Label className="text-xs font-semibold text-gray-500 uppercase tracking-wide flex items-center gap-1.5 mb-1.5">
+                      <LayoutGrid className="w-3.5 h-3.5" /> Regione
+                    </Label>
+                    <Input className="h-8 text-sm" placeholder="Es. Lazio, Lombardia..." value={massFields.region ?? ""} onChange={e => setMassFields(f => ({ ...f, region: e.target.value }))} />
+                  </div>
+                  <div>
+                    <Label className="text-xs font-semibold text-gray-500 uppercase tracking-wide flex items-center gap-1.5 mb-1.5">
+                      <Globe className="w-3.5 h-3.5" /> Paese
+                    </Label>
+                    <Input className="h-8 text-sm" placeholder="Es. Italia" value={massFields.country ?? ""} onChange={e => setMassFields(f => ({ ...f, country: e.target.value }))} />
+                  </div>
+                </>
+              )}
+
+              <Button
+                className="w-full bg-amber-500 hover:bg-amber-600 mt-1"
+                disabled={massEditMutation.isPending || (!hasMassFields)}
+                onClick={applyMassEdit}
+              >
+                {massEditMutation.isPending
+                  ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Aggiornando...</>
+                  : <><Wand2 className="w-4 h-4 mr-2" />Applica a {selCount > 0 ? `${selCount} record` : 'selezione'}</>}
+              </Button>
+            </CardContent>
+          </Card>
+
+          {/* Danger zone: mass delete */}
+          <Card className="border-red-200 dark:border-red-900">
+            <CardHeader className="pb-2 pt-4">
+              <CardTitle className="text-sm flex items-center gap-2 text-red-600 dark:text-red-400">
+                <Trash2 className="w-4 h-4" />
+                Elimina selezionati
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="pb-4">
+              <p className="text-xs text-gray-500 mb-3">Elimina definitivamente tutti gli elementi selezionati. Non è reversibile.</p>
+              <Button
+                variant="destructive"
+                className="w-full"
+                disabled={selCount === 0 || massDeleteMutation.isPending}
+                onClick={() => setMassDeleteOpen(true)}
+              >
+                {massDeleteMutation.isPending
+                  ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Eliminando...</>
+                  : <><Trash2 className="w-4 h-4 mr-2" />Elimina {selCount > 0 ? `${selCount} elementi` : 'selezionati'}</>}
+              </Button>
+            </CardContent>
+          </Card>
+
+          {/* Breweries-only tools */}
+          {type === 'breweries' && (
+            <Card className="border-purple-200 dark:border-purple-900">
+              <CardHeader className="pb-2 pt-4">
+                <CardTitle className="text-sm flex items-center gap-2 text-purple-700 dark:text-purple-400">
+                  <GitMerge className="w-4 h-4" />
+                  Strumenti Birrifici
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-2 pb-4">
+                <Button
+                  className="w-full bg-purple-600 hover:bg-purple-700 text-white"
+                  disabled={selCount !== 2 || mergeMutation.isPending}
+                  onClick={() => { const [first] = Array.from(selectedIds); setKeepId(first); setMergeOpen(true); }}
+                >
+                  <GitMerge className="w-4 h-4 mr-2" />
+                  {selCount === 2 ? 'Merge 2 birrifici selezionati' : 'Seleziona esattamente 2 per merge'}
+                </Button>
+                <p className="text-xs text-gray-400 px-0.5">Unisce tutte le birre e dati in un unico birrificio.</p>
+                <Separator className="my-1" />
+                <Link href="/admin/duplicates">
+                  <Button variant="outline" className="w-full border-purple-300 text-purple-700 hover:bg-purple-50 dark:border-purple-700 dark:text-purple-400 dark:hover:bg-purple-900/20">
+                    <Search className="w-4 h-4 mr-2" />
+                    Trova birrifici duplicati
+                    <ChevronRight className="w-4 h-4 ml-auto" />
+                  </Button>
+                </Link>
+              </CardContent>
+            </Card>
+          )}
+        </div>
+      </div>
+
+      {/* ── Create Dialog ── */}
       <Dialog open={createDialogOpen} onOpenChange={setCreateDialogOpen}>
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
@@ -927,315 +780,96 @@ export default function AdminContentManager({ type }: AdminContentManagerProps) 
               {type === 'beers' ? 'Aggiungi Nuova Birra' : type === 'breweries' ? 'Aggiungi Nuovo Birrificio' : 'Aggiungi Nuovo Pub'}
             </DialogTitle>
           </DialogHeader>
-          {type === 'beers' && (
-            <BeerForm onSubmit={data => createMutation.mutate(data)} isPending={createMutation.isPending} />
-          )}
-          {type === 'breweries' && (
-            <BreweryForm onSubmit={data => createMutation.mutate(data)} isPending={createMutation.isPending} />
-          )}
-          {type === 'pubs' && (
-            <PubForm onSubmit={data => createMutation.mutate(data)} isPending={createMutation.isPending} />
-          )}
+          {type === 'beers' && <BeerForm onSubmit={data => createMutation.mutate(data)} isPending={createMutation.isPending} />}
+          {type === 'breweries' && <BreweryForm onSubmit={data => createMutation.mutate(data)} isPending={createMutation.isPending} />}
+          {type === 'pubs' && <PubForm onSubmit={data => createMutation.mutate(data)} isPending={createMutation.isPending} />}
         </DialogContent>
       </Dialog>
 
+      {/* ── Delete single ── */}
       <AlertDialog open={!!deleteTarget} onOpenChange={(open) => { if (!open) setDeleteTarget(null); }}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Elimina "{deleteTarget?.name}"?</AlertDialogTitle>
             <AlertDialogDescription>
               Questa azione <strong>non può essere annullata</strong>.{' '}
-              {type === 'beers' ? 'La birra verrà rimossa dal catalogo e da tutte le tap list.' :
-               type === 'breweries' ? 'Il birrificio e tutte le sue birre associate verranno eliminate permanentemente.' :
-               'Il pub, il suo menu e tutta la sua configurazione verranno eliminati permanentemente.'}
+              {type === 'beers' ? 'La birra verrà rimossa dal catalogo e da tutte le tap list.' : type === 'breweries' ? 'Il birrificio e tutte le sue birre verranno eliminate permanentemente.' : 'Il pub e tutta la sua configurazione verranno eliminati permanentemente.'}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Annulla</AlertDialogCancel>
-            <AlertDialogAction
-              className="bg-red-600 hover:bg-red-700 focus:ring-red-600"
-              onClick={() => { if (deleteTarget) deleteMutation.mutate(deleteTarget.id); }}
-              disabled={deleteMutation.isPending}
-            >
-              {deleteMutation.isPending ? (
-                <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Eliminando...</>
-              ) : (
-                <><Trash2 className="w-4 h-4 mr-2" />Elimina definitivamente</>
-              )}
+            <AlertDialogAction className="bg-red-600 hover:bg-red-700" onClick={() => { if (deleteTarget) deleteMutation.mutate(deleteTarget.id); }} disabled={deleteMutation.isPending}>
+              {deleteMutation.isPending ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Eliminando...</> : <><Trash2 className="w-4 h-4 mr-2" />Elimina definitivamente</>}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
 
-      {/* ── Mass Edit Dialog ── */}
-      <Dialog open={massEditOpen} onOpenChange={setMassEditOpen}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <Edit2 className="w-5 h-5 text-amber-500" />
-              Modifica massiva — {selectedIds.size} {type === 'beers' ? 'birre' : type === 'breweries' ? 'birrifici' : 'pub'}
-            </DialogTitle>
-          </DialogHeader>
-          <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">
-            Lascia vuoti i campi che non vuoi modificare. Solo i campi compilati verranno aggiornati su tutti i record selezionati.
-          </p>
-          <div className="space-y-3 py-2">
-            {type === 'breweries' && (
-              <>
-                <div>
-                  <Label className="text-sm">Paese</Label>
-                  <Input
-                    className="mt-1"
-                    placeholder="Es. Italia, Germany, France…"
-                    value={massFields.country ?? ""}
-                    onChange={e => setMassFields(f => ({ ...f, country: e.target.value }))}
-                  />
-                </div>
-                <div>
-                  <Label className="text-sm">Regione</Label>
-                  <Input
-                    className="mt-1"
-                    placeholder="Es. Lazio, Bavaria…"
-                    value={massFields.region ?? ""}
-                    onChange={e => setMassFields(f => ({ ...f, region: e.target.value }))}
-                  />
-                </div>
-                <div>
-                  <Label className="text-sm">Città</Label>
-                  <Input
-                    className="mt-1"
-                    placeholder="Es. Roma, Berlin…"
-                    value={massFields.location ?? ""}
-                    onChange={e => setMassFields(f => ({ ...f, location: e.target.value }))}
-                  />
-                </div>
-              </>
-            )}
-            {type === 'beers' && (
-              <>
-                <div className="border-b pb-3">
-                  <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Nome birra</p>
-                  <div className="space-y-2">
-                    <div>
-                      <Label className="text-sm">Rimuovi prefisso dal nome</Label>
-                      <Input
-                        className="mt-1"
-                        placeholder="Es. «Badalà » → toglie dal titolo"
-                        value={massFields.nameStripPrefix ?? ""}
-                        onChange={e => setMassFields(f => ({ ...f, nameStripPrefix: e.target.value }))}
-                      />
-                      <p className="text-xs text-gray-400 mt-0.5">Rimuove il testo inserito dall'inizio di ogni nome (non case-sensitive)</p>
-                    </div>
-                    <div className="flex gap-2 items-end">
-                      <div className="flex-1">
-                        <Label className="text-sm">Trova nel nome</Label>
-                        <Input
-                          className="mt-1"
-                          placeholder="Testo da trovare"
-                          value={massFields.nameFindText ?? ""}
-                          onChange={e => setMassFields(f => ({ ...f, nameFindText: e.target.value }))}
-                        />
-                      </div>
-                      <div className="flex-1">
-                        <Label className="text-sm">Sostituisci con</Label>
-                        <Input
-                          className="mt-1"
-                          placeholder="(vuoto = elimina)"
-                          value={massFields.nameFindReplaceWith ?? ""}
-                          onChange={e => setMassFields(f => ({ ...f, nameFindReplaceWith: e.target.value }))}
-                        />
-                      </div>
-                    </div>
-                    <p className="text-xs text-gray-400">Trova e sostituisce ovunque nel nome (case-sensitive)</p>
-                  </div>
-                </div>
-                <div>
-                  <Label className="text-sm">Stile</Label>
-                  <Input
-                    className="mt-1"
-                    placeholder="Es. IPA, Lager, Stout…"
-                    value={massFields.style ?? ""}
-                    onChange={e => setMassFields(f => ({ ...f, style: e.target.value }))}
-                  />
-                </div>
-                <div>
-                  <Label className="text-sm">Colore</Label>
-                  <Input
-                    className="mt-1"
-                    placeholder="Es. dorata, ambrata, nera…"
-                    value={massFields.color ?? ""}
-                    onChange={e => setMassFields(f => ({ ...f, color: e.target.value }))}
-                  />
-                </div>
-              </>
-            )}
-            {type === 'pubs' && (
-              <>
-                <div>
-                  <Label className="text-sm">Città</Label>
-                  <Input
-                    className="mt-1"
-                    placeholder="Es. Roma, Milano…"
-                    value={massFields.city ?? ""}
-                    onChange={e => setMassFields(f => ({ ...f, city: e.target.value }))}
-                  />
-                </div>
-                <div>
-                  <Label className="text-sm">Regione</Label>
-                  <Input
-                    className="mt-1"
-                    placeholder="Es. Lazio, Lombardia…"
-                    value={massFields.region ?? ""}
-                    onChange={e => setMassFields(f => ({ ...f, region: e.target.value }))}
-                  />
-                </div>
-                <div>
-                  <Label className="text-sm">Paese</Label>
-                  <Input
-                    className="mt-1"
-                    placeholder="Es. Italia"
-                    value={massFields.country ?? ""}
-                    onChange={e => setMassFields(f => ({ ...f, country: e.target.value }))}
-                  />
-                </div>
-              </>
-            )}
-          </div>
-          <div className="flex gap-2 pt-2">
-            <Button variant="outline" className="flex-1" onClick={() => setMassEditOpen(false)}>
-              Annulla
-            </Button>
-            <Button
-              className="flex-1 bg-amber-500 hover:bg-amber-600"
-              disabled={massEditMutation.isPending || Object.values(massFields).every(v => !v)}
-              onClick={() => {
-                // Build updates: convert flat massFields into the correct shape for the API
-                // Filter out empty strings so we don't overwrite fields with blanks
-                const { nameFindText, nameFindReplaceWith, nameStripPrefix, ...rest } = massFields;
-                const updates: Record<string, any> = Object.fromEntries(
-                  Object.entries(rest).filter(([, v]) => v !== "" && v !== undefined)
-                );
-                if (nameStripPrefix?.trim()) updates.nameStripPrefix = nameStripPrefix;
-                if (nameFindText?.trim()) updates.nameFindReplace = { find: nameFindText, replace: nameFindReplaceWith ?? "" };
-                massEditMutation.mutate({ ids: [...selectedIds], updates });
-              }}
-            >
-              {massEditMutation.isPending ? (
-                <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Aggiornando...</>
-              ) : (
-                <><Edit2 className="w-4 h-4 mr-2" />Applica a {selectedIds.size} record</>
-              )}
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
-
-      {/* ── Mass Delete Confirmation ── */}
+      {/* ── Mass delete confirm ── */}
       <AlertDialog open={massDeleteOpen} onOpenChange={setMassDeleteOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Elimina {selectedIds.size} {type === 'beers' ? 'birre' : type === 'breweries' ? 'birrifici' : 'pub'}?</AlertDialogTitle>
+            <AlertDialogTitle>Elimina {selCount} {type === 'beers' ? 'birre' : type === 'breweries' ? 'birrifici' : 'pub'}?</AlertDialogTitle>
             <AlertDialogDescription>
-              Questa azione <strong>non può essere annullata</strong>. Verranno eliminati permanentemente <strong>{selectedIds.size} record</strong>.
-              {type === 'breweries' && " Anche tutte le birre associate a questi birrifici verranno eliminate."}
+              Questa operazione <strong>non può essere annullata</strong>. Tutti gli {selCount} elementi selezionati verranno eliminati definitivamente, inclusi tutti i dati associati.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Annulla</AlertDialogCancel>
-            <AlertDialogAction
-              className="bg-red-600 hover:bg-red-700"
-              onClick={() => massDeleteMutation.mutate([...selectedIds])}
-              disabled={massDeleteMutation.isPending}
-            >
-              {massDeleteMutation.isPending ? (
-                <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Eliminando...</>
-              ) : (
-                <><Trash2 className="w-4 h-4 mr-2" />Elimina {selectedIds.size} record</>
-              )}
+            <AlertDialogAction className="bg-red-600 hover:bg-red-700" onClick={() => massDeleteMutation.mutate([...selectedIds])} disabled={massDeleteMutation.isPending}>
+              {massDeleteMutation.isPending ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Eliminando...</> : <><Trash2 className="w-4 h-4 mr-2" />Elimina {selCount} elementi</>}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
 
-      {/* ── Merge Breweries Dialog ── */}
-      {mergeOpen && type === 'breweries' && (() => {
-        const ids = Array.from(selectedIds);
-        const brewA = searchResults.find((r: any) => r.id === ids[0]);
-        const brewB = searchResults.find((r: any) => r.id === ids[1]);
-        if (!brewA || !brewB) return null;
-        const mergeId = keepId === ids[0] ? ids[1] : ids[0];
-        const keptBrew = keepId === ids[0] ? brewA : brewB;
-        const deletedBrew = keepId === ids[0] ? brewB : brewA;
-        return (
-          <Dialog open={mergeOpen} onOpenChange={(open) => { if (!open) setMergeOpen(false); }}>
-            <DialogContent className="max-w-lg">
-              <DialogHeader>
-                <DialogTitle className="flex items-center gap-2">
-                  <GitMerge className="w-5 h-5 text-purple-500" />
-                  Merge birrifici duplicati
-                </DialogTitle>
-              </DialogHeader>
-
-              <p className="text-sm text-gray-600 dark:text-gray-400">
-                Scegli quale birrificio <strong>mantenere</strong>. Tutte le birre, eventi e dati dell'altro verranno migrati su quello mantenuto, poi il duplicato sarà eliminato.
-              </p>
-
-              <div className="flex gap-3 mt-2">
-                {[brewA, brewB].map((brew: any) => {
-                  const isKept = keepId === brew.id;
-                  return (
-                    <button
-                      key={brew.id}
-                      onClick={() => setKeepId(brew.id)}
-                      className={`flex-1 p-3 rounded-xl border-2 text-left transition-all ${isKept ? 'border-purple-500 bg-purple-50 dark:bg-purple-900/20' : 'border-gray-200 dark:border-gray-700 hover:border-gray-300'}`}
-                    >
-                      <div className="flex items-center gap-2 mb-1">
-                        {brew.logo_url ? (
-                          <img src={brew.logo_url} alt={brew.name} className="w-8 h-8 rounded-full object-cover border" />
-                        ) : (
-                          <div className="w-8 h-8 rounded-full bg-amber-100 dark:bg-amber-900/40 flex items-center justify-center">
-                            <Building2 className="w-4 h-4 text-amber-500" />
-                          </div>
-                        )}
-                        <span className={`text-sm font-semibold ${isKept ? 'text-purple-700 dark:text-purple-300' : ''}`}>{brew.name}</span>
-                      </div>
-                      <div className="text-xs text-gray-500 space-y-0.5">
-                        {brew.country && <div>🌍 {brew.country}</div>}
-                        {brew.region && <div>📍 {brew.region}</div>}
-                        <div>🍺 {brew.beer_count ?? '?'} birre</div>
-                      </div>
-                      <div className={`mt-2 text-xs font-medium ${isKept ? 'text-purple-600' : 'text-red-500'}`}>
-                        {isKept ? '✓ Mantieni questo' : '✗ Elimina questo'}
-                      </div>
-                    </button>
-                  );
-                })}
+      {/* ── Merge Dialog ── */}
+      {type === 'breweries' && mergeOpen && (
+        <Dialog open={mergeOpen} onOpenChange={setMergeOpen}>
+          <DialogContent className="max-w-lg">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <GitMerge className="w-5 h-5 text-purple-500" />
+                Merge birrifici duplicati
+              </DialogTitle>
+            </DialogHeader>
+            <p className="text-sm text-gray-500 mb-4">Scegli quale birrificio <strong>mantenere</strong>. Tutte le birre, eventi e dati dell'altro verranno migrati su quello mantenuto, poi il duplicato sarà eliminato.</p>
+            <div className="grid grid-cols-2 gap-3">
+              {Array.from(selectedIds).map((id) => {
+                const item = searchResults.find(r => r.id === id);
+                if (!item) return null;
+                const isKeep = keepId === id;
+                return (
+                  <div key={id} onClick={() => setKeepId(id)} className={`cursor-pointer p-3 rounded-xl border-2 transition-all ${isKeep ? 'border-green-500 bg-green-50 dark:bg-green-900/20' : 'border-red-300 bg-red-50 dark:bg-red-900/10 hover:border-gray-300'}`}>
+                    <div className="flex items-center gap-2 mb-2">
+                      {item.logoUrl ? <img src={item.logoUrl} alt="" className="w-8 h-8 rounded-full object-cover" /> : <div className="w-8 h-8 rounded-full bg-amber-100 flex items-center justify-center"><Building2 className="w-4 h-4 text-amber-500" /></div>}
+                      <div className="font-semibold text-sm">{item.name}</div>
+                    </div>
+                    <div className="text-xs text-gray-500 space-y-0.5">
+                      {item.country && <div>🌍 {item.country}</div>}
+                      {item.region && <div>📍 {item.region}</div>}
+                    </div>
+                    <div className={`text-xs font-semibold mt-2 ${isKeep ? 'text-green-600' : 'text-red-500'}`}>
+                      {isKeep ? '✓ Mantieni questo' : '✗ Elimina questo'}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+            {keepId && (
+              <div className="mt-3 p-3 bg-amber-50 dark:bg-amber-900/20 rounded-lg border border-amber-200 text-sm text-amber-800 dark:text-amber-300">
+                ⚠️ Attenzione: "{searchResults.find(r => r.id !== keepId && selectedIds.has(r.id))?.name}" (ID {Array.from(selectedIds).find(id => id !== keepId)}) sarà <strong>eliminato definitivamente</strong>. Le sue birre saranno spostate su "{searchResults.find(r => r.id === keepId)?.name}".
               </div>
-
-              <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-3 text-xs text-red-700 dark:text-red-400 mt-1">
-                <strong>⚠ Attenzione:</strong> "{deletedBrew?.name}" (ID {mergeId}) sarà <strong>eliminato definitivamente</strong>. Le sue birre saranno spostate su "{keptBrew?.name}".
-              </div>
-
-              <div className="flex gap-2 mt-1">
-                <Button variant="outline" className="flex-1" onClick={() => setMergeOpen(false)}>
-                  Annulla
-                </Button>
-                <Button
-                  className="flex-1 bg-purple-600 hover:bg-purple-700 text-white"
-                  disabled={mergeMutation.isPending || !keepId}
-                  onClick={() => mergeMutation.mutate({ keepId: keepId!, mergeId })}
-                >
-                  {mergeMutation.isPending ? (
-                    <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Merge in corso...</>
-                  ) : (
-                    <><GitMerge className="w-4 h-4 mr-2" />Conferma merge</>
-                  )}
-                </Button>
-              </div>
-            </DialogContent>
-          </Dialog>
-        );
-      })()}
+            )}
+            <div className="flex gap-3 mt-2">
+              <Button variant="outline" className="flex-1" onClick={() => { setMergeOpen(false); setKeepId(null); }}>Annulla</Button>
+              <Button className="flex-1 bg-purple-600 hover:bg-purple-700 text-white" disabled={!keepId || mergeMutation.isPending} onClick={() => { if (!keepId) return; const mergeId = Array.from(selectedIds).find(id => id !== keepId)!; mergeMutation.mutate({ keepId, mergeId }); }}>
+                {mergeMutation.isPending ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Merging...</> : <><GitMerge className="w-4 h-4 mr-2" />Conferma merge</>}
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
+      )}
     </>
   );
 }
