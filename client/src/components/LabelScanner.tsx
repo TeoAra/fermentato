@@ -5,7 +5,7 @@ import { cn } from "@/lib/utils";
 type ScanMode = "idle" | "scanning" | "processing" | "done" | "error";
 
 interface LabelScannerProps {
-  onResult: (text: string, source: "ocr" | "barcode") => void;
+  onResult: (text: string, source: "ocr" | "barcode", imageDataUrl?: string, engine?: string) => void;
   onClose: () => void;
 }
 
@@ -94,7 +94,7 @@ function cropToViewfinder(
   return out;
 }
 
-async function callOcrApi(dataUrl: string): Promise<string> {
+async function callOcrApi(dataUrl: string): Promise<{ text: string; engine: string }> {
   const res = await fetch("/api/scan/ocr", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -102,7 +102,7 @@ async function callOcrApi(dataUrl: string): Promise<string> {
   });
   if (!res.ok) throw new Error("OCR API error " + res.status);
   const data = await res.json();
-  return (data.text as string) || "";
+  return { text: (data.text as string) || "", engine: (data.engine as string) || "unknown" };
 }
 
 function cleanOcrText(raw: string): string {
@@ -218,7 +218,7 @@ export default function LabelScanner({ onResult, onClose }: LabelScannerProps) {
       if (data.status === 1 && data.product) {
         const p = data.product;
         const name = [p.product_name, p.brands].filter(Boolean).join(" ").trim();
-        if (name) { onResult(name, "barcode"); return; }
+        if (name) { onResult(name, "barcode", undefined, "barcode"); return; }
       }
     } catch {}
     setStatusMsg("Barcode non trovato — analizzo l'etichetta...");
@@ -271,7 +271,7 @@ export default function LabelScanner({ onResult, onClose }: LabelScannerProps) {
       img.src = ocrSource;
       await new Promise<void>((res, rej) => { img.onload = () => res(); img.onerror = rej; });
       const processed = prepareImageForApi(img);
-      const rawText = await callOcrApi(processed);
+      const { text: rawText, engine: ocrEngine } = await callOcrApi(processed);
       const cleaned = cleanOcrText(rawText);
 
       setDetectedText(cleaned);
@@ -279,7 +279,7 @@ export default function LabelScanner({ onResult, onClose }: LabelScannerProps) {
 
       if (cleaned.length >= 2) {
         setMode("done");
-        onResult(cleaned, "ocr");
+        onResult(cleaned, "ocr", fullDataUrl, ocrEngine);
       } else {
         setStatusMsg("Nessun testo rilevato — avvicinati e riprova");
         setMode("error");

@@ -1,6 +1,6 @@
 import { eq, count, desc, asc, sql, or, ilike, and } from "drizzle-orm";
 import { db } from "./db";
-import { beers, breweries, users, pubs, publicanRequests, breweryRequests, reviewReports, userBeerTastings, pubEvents, breweryEvents, contentSuggestions, additionRequests } from "@shared/schema";
+import { beers, breweries, users, pubs, publicanRequests, breweryRequests, reviewReports, userBeerTastings, pubEvents, breweryEvents, contentSuggestions, additionRequests, scanLogs } from "@shared/schema";
 import type { Express } from "express";
 import { isAuthenticated, isAdmin } from "./auth";
 import { sendPushToUser, sendPushToAdmins } from "./push-utils";
@@ -8,7 +8,7 @@ import { storage } from "./storage";
 
 export function registerAdminRoutes(app: Express) {
   // User management endpoints
-  app.patch('/api/admin/users/:id/suspend', isAuthenticated, async (req, res) => {
+  app.patch('/api/admin/users/:id/suspend', isAuthenticated, isAdmin, async (req, res) => {
     try {
       const userId = req.params.id;
       const currentUserId = (req.user as any)?.claims?.sub;
@@ -17,7 +17,7 @@ export function registerAdminRoutes(app: Express) {
         return res.status(400).json({ error: "Non puoi sospendere te stesso" });
       }
 
-      // For now, we'll just return success (in production, implement actual suspension logic)
+      await db.update(users).set({ userType: 'banned' }).where(eq(users.id, userId));
       res.json({ message: "Utente sospeso con successo", userId });
     } catch (error) {
       console.error('Error suspending user:', error);
@@ -1356,6 +1356,50 @@ export function registerAdminRoutes(app: Express) {
     } catch (error) {
       console.error("Error rejecting addition request:", error);
       res.status(500).json({ message: "Errore durante il rifiuto" });
+    }
+  });
+
+  // Admin scan logs
+  app.get('/api/admin/scan-logs', isAuthenticated, isAdmin, async (req, res) => {
+    try {
+      const limit = Math.min(parseInt(req.query.limit as string) || 100, 500);
+      const offset = parseInt(req.query.offset as string) || 0;
+
+      const rows = await db
+        .select({
+          id: scanLogs.id,
+          userId: scanLogs.userId,
+          imageUrl: scanLogs.imageUrl,
+          ocrText: scanLogs.ocrText,
+          ocrEngine: scanLogs.ocrEngine,
+          source: scanLogs.source,
+          usedQuery: scanLogs.usedQuery,
+          topCandidates: scanLogs.topCandidates,
+          chosenBeerId: scanLogs.chosenBeerId,
+          chosenBreweryId: scanLogs.chosenBreweryId,
+          wasCorrect: scanLogs.wasCorrect,
+          latencyMs: scanLogs.latencyMs,
+          createdAt: scanLogs.createdAt,
+          userNickname: users.nickname,
+          beerName: beers.name,
+          beerStyle: beers.style,
+          beerLogoUrl: beers.imageUrl,
+          breweryName: breweries.name,
+        })
+        .from(scanLogs)
+        .leftJoin(users, eq(scanLogs.userId, users.id))
+        .leftJoin(beers, eq(scanLogs.chosenBeerId, beers.id))
+        .leftJoin(breweries, eq(scanLogs.chosenBreweryId, breweries.id))
+        .orderBy(desc(scanLogs.createdAt))
+        .limit(limit)
+        .offset(offset);
+
+      const [{ total }] = await db.select({ total: count() }).from(scanLogs);
+
+      res.json({ logs: rows, total, limit, offset });
+    } catch (error) {
+      console.error("Error fetching admin scan logs:", error);
+      res.status(500).json({ message: "Errore" });
     }
   });
 }

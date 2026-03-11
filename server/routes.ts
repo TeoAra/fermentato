@@ -12,7 +12,7 @@ import { registerAdminRoutes } from "./routes-admin";
 import { sql, eq, and, desc, asc } from "drizzle-orm";
 import { upload, uploadImage, cloudinary } from "./cloudinary";
 import { db } from "./db";
-import { breweries, beers, pubs, users, tapList, bottleList, userBeerTastings, favorites, menuCategories, menuItems, pubSizes, notifications, pushSubscriptions, breweryRequests, pubEvents, breweryEvents, insertBreweryEventSchema, reviewReports, oauthAccounts, userActivities, ratings, publicanRequests, notificationPreferences, staticPages, additionRequests } from "@shared/schema";
+import { breweries, beers, pubs, users, tapList, bottleList, userBeerTastings, favorites, menuCategories, menuItems, pubSizes, notifications, pushSubscriptions, breweryRequests, pubEvents, breweryEvents, insertBreweryEventSchema, reviewReports, oauthAccounts, userActivities, ratings, publicanRequests, notificationPreferences, staticPages, additionRequests, scanLogs } from "@shared/schema";
 
 import { insertPubSchema, insertTapListSchema, insertBottleListSchema, insertMenuCategorySchema, insertMenuItemSchema, pubRegistrationSchema, insertPubEventSchema } from "@shared/schema";
 import { z } from "zod";
@@ -4156,6 +4156,114 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error fetching user addition requests:", error);
       res.status(500).json({ message: "Errore nel caricamento" });
+    }
+  });
+
+  // ─── Scan Logs ────────────────────────────────────────────────────────────────
+
+  // Create a scan log (called after OCR + search completes)
+  app.post("/api/scan-logs", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user?.claims?.sub || req.user?.id;
+      if (!userId) return res.status(401).json({ message: "Non autenticato" });
+
+      const { ocrText, ocrEngine, source, usedQuery, topCandidates, latencyMs, imageDataUrl } = req.body;
+
+      let imageUrl: string | null = null;
+      if (imageDataUrl && imageDataUrl.startsWith("data:image")) {
+        try {
+          const buffer = Buffer.from(imageDataUrl.split(",")[1], "base64");
+          imageUrl = await uploadImage(buffer, "scan-logs");
+        } catch (e) {
+          console.error("Scan log image upload failed:", e);
+        }
+      }
+
+      const [log] = await db.insert(scanLogs).values({
+        userId,
+        imageUrl,
+        ocrText: ocrText || null,
+        ocrEngine: ocrEngine || null,
+        source: source || "ocr",
+        usedQuery: usedQuery || null,
+        topCandidates: topCandidates || null,
+        latencyMs: latencyMs || null,
+      }).returning();
+
+      res.status(201).json({ id: log.id });
+    } catch (error) {
+      console.error("Error creating scan log:", error);
+      res.status(500).json({ message: "Errore" });
+    }
+  });
+
+  // Save user feedback for a scan log (chosen result + correctness)
+  app.patch("/api/scan-logs/:id/feedback", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user?.claims?.sub || req.user?.id;
+      const logId = parseInt(req.params.id);
+      const { chosenBeerId, chosenBreweryId, wasCorrect, correctedBeerId } = req.body;
+
+      const [existing] = await db.select({ userId: scanLogs.userId })
+        .from(scanLogs).where(eq(scanLogs.id, logId)).limit(1);
+      if (!existing || existing.userId !== userId) {
+        return res.status(404).json({ message: "Log non trovato" });
+      }
+
+      await db.update(scanLogs).set({
+        chosenBeerId: chosenBeerId || null,
+        chosenBreweryId: chosenBreweryId || null,
+        wasCorrect: wasCorrect ?? null,
+        correctedBeerId: correctedBeerId || null,
+      }).where(eq(scanLogs.id, logId));
+
+      res.json({ ok: true });
+    } catch (error) {
+      console.error("Error updating scan log feedback:", error);
+      res.status(500).json({ message: "Errore" });
+    }
+  });
+
+  // Get current user's scan history
+  app.get("/api/scan-logs/mine", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user?.claims?.sub || req.user?.id;
+      if (!userId) return res.status(401).json({ message: "Non autenticato" });
+
+      const limit = Math.min(parseInt(req.query.limit as string) || 20, 100);
+      const offset = parseInt(req.query.offset as string) || 0;
+
+      const rows = await db
+        .select({
+          id: scanLogs.id,
+          imageUrl: scanLogs.imageUrl,
+          ocrText: scanLogs.ocrText,
+          ocrEngine: scanLogs.ocrEngine,
+          source: scanLogs.source,
+          usedQuery: scanLogs.usedQuery,
+          topCandidates: scanLogs.topCandidates,
+          chosenBeerId: scanLogs.chosenBeerId,
+          chosenBreweryId: scanLogs.chosenBreweryId,
+          wasCorrect: scanLogs.wasCorrect,
+          latencyMs: scanLogs.latencyMs,
+          createdAt: scanLogs.createdAt,
+          beerName: beers.name,
+          beerStyle: beers.style,
+          beerLogoUrl: beers.logoUrl,
+          breweryName: breweries.name,
+        })
+        .from(scanLogs)
+        .leftJoin(beers, eq(scanLogs.chosenBeerId, beers.id))
+        .leftJoin(breweries, eq(scanLogs.chosenBreweryId, breweries.id))
+        .where(eq(scanLogs.userId, userId))
+        .orderBy(desc(scanLogs.createdAt))
+        .limit(limit)
+        .offset(offset);
+
+      res.json(rows);
+    } catch (error) {
+      console.error("Error fetching scan logs:", error);
+      res.status(500).json({ message: "Errore" });
     }
   });
 

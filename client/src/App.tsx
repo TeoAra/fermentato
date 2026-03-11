@@ -56,6 +56,7 @@ import Onboarding from "@/pages/onboarding";
 import UserPublicProfile from "@/pages/user-public-profile";
 import SearchPage from "@/pages/search";
 import ScanPage from "@/pages/scan";
+import ScanHistoryPage from "@/pages/scan-history";
 import AdminPages from "@/pages/admin-pages";
 import { ContattiPage, ChiSiamoPage, PrezziPage, SupportoPage } from "@/pages/static-page";
 import { MobileHeader } from "@/components/mobile-header";
@@ -139,6 +140,7 @@ function Router() {
           <Route path="/user/:nickname" component={UserPublicProfile} />
           <Route path="/search" component={SearchPage} />
           <Route path="/scan" component={ScanPage} />
+          <Route path="/scan/history" component={ScanHistoryPage} />
           <Route path="/activity" component={Activity} />
           <Route path="/contatti" component={ContattiPage} />
           <Route path="/chi-siamo" component={ChiSiamoPage} />

@@ -1,6 +1,6 @@
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import { useLocation } from "wouter";
-import { Scan, Beer, Building2, ArrowLeft, Search, X, Lock, LogIn, PlusCircle } from "lucide-react";
+import { Scan, Beer, Building2, ArrowLeft, Search, X, Lock, LogIn, PlusCircle, History } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import LabelScanner from "@/components/LabelScanner";
@@ -92,29 +92,90 @@ export default function ScanPage() {
   const [additionModalOpen, setAdditionModalOpen] = useState(false);
   const [isSearching, setIsSearching] = useState(false);
 
-  const runSearch = useCallback(async (query: string) => {
+  // Scan log tracking
+  const currentImageRef = useRef<string | undefined>(undefined);
+  const currentEngineRef = useRef<string | undefined>(undefined);
+  const currentOcrTextRef = useRef<string>("");
+  const currentLogIdRef = useRef<number | null>(null);
+
+  const createScanLog = useCallback(async (
+    ocrText: string,
+    source: string,
+    usedQ: string,
+    candidates: Array<{id: number; name: string; type: string}>,
+    latency: number,
+  ) => {
+    try {
+      const res = await fetch("/api/scan-logs", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({
+          ocrText,
+          ocrEngine: currentEngineRef.current,
+          source,
+          usedQuery: usedQ,
+          topCandidates: candidates,
+          latencyMs: latency,
+          imageDataUrl: currentImageRef.current,
+        }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        currentLogIdRef.current = data.id;
+      }
+    } catch { /* fire-and-forget, ignore errors */ }
+  }, []);
+
+  const saveFeedback = useCallback(async (chosenBeerId?: number, chosenBreweryId?: number) => {
+    const logId = currentLogIdRef.current;
+    if (!logId) return;
+    try {
+      await fetch(`/api/scan-logs/${logId}/feedback`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ chosenBeerId, chosenBreweryId }),
+      });
+    } catch { /* ignore */ }
+  }, []);
+
+  const runSearch = useCallback(async (query: string, source?: string) => {
     if (query.trim().length < 2) return;
     setIsSearching(true);
     setScanState("searching");
+    const t0 = Date.now();
     try {
       const { beers: b, breweries: br, usedQuery: uq } = await searchWithFallback(query.trim());
       setBeers(b);
       setBreweries(br);
       setUsedQuery(uq);
-      setScanState(b.length + br.length > 0 ? "results" : "notfound");
+      const found = b.length + br.length > 0;
+      setScanState(found ? "results" : "notfound");
+
+      // Fire-and-forget scan log
+      const candidates = [
+        ...b.slice(0, 5).map(x => ({ id: x.id, name: x.name, type: "beer" })),
+        ...br.slice(0, 3).map(x => ({ id: x.id, name: x.name, type: "brewery" })),
+      ];
+      createScanLog(currentOcrTextRef.current, source || detectedSource, uq, candidates, Date.now() - t0);
     } catch {
       setScanState("notfound");
     } finally {
       setIsSearching(false);
     }
-  }, []);
+  }, [detectedSource, createScanLog]);
 
-  const handleScanResult = useCallback((text: string, source: "ocr" | "barcode") => {
+  const handleScanResult = useCallback((text: string, source: "ocr" | "barcode", imageDataUrl?: string, engine?: string) => {
+    currentImageRef.current = imageDataUrl;
+    currentEngineRef.current = engine;
+    currentOcrTextRef.current = text;
+    currentLogIdRef.current = null;
     setDetectedText(text);
     setDetectedSource(source);
     setSearchQuery(text);
     setManualQuery(text);
-    runSearch(text);
+    runSearch(text, source);
   }, [runSearch]);
 
   // Re-run search when manual query changes (debounced)
@@ -324,9 +385,15 @@ export default function ScanPage() {
         {/* Results */}
         {scanState === "results" && !isSearching && totalResults > 0 && (
           <>
-            <p className="text-xs text-gray-500 dark:text-gray-400 mb-4">
-              {totalResults} risultat{totalResults === 1 ? "o" : "i"} trovat{totalResults === 1 ? "o" : "i"}
-            </p>
+            <div className="flex items-center justify-between mb-4">
+              <p className="text-xs text-gray-500 dark:text-gray-400">
+                {totalResults} risultat{totalResults === 1 ? "o" : "i"} trovat{totalResults === 1 ? "o" : "i"}
+              </p>
+              <Link href="/scan/history" className="flex items-center gap-1 text-xs text-amber-600 dark:text-amber-400 hover:underline">
+                <History className="h-3.5 w-3.5" />
+                Storico
+              </Link>
+            </div>
 
             {/* Beers */}
             {beers.length > 0 && (
@@ -337,31 +404,33 @@ export default function ScanPage() {
                 </h2>
                 <div className="space-y-2">
                   {beers.map(beer => (
-                    <Link key={beer.id} href={`/beer/${beer.id}`}>
-                      <div className="flex items-center gap-3 bg-white dark:bg-gray-900 rounded-2xl p-3 shadow-sm border border-gray-100 dark:border-gray-800 active:scale-[0.98] transition-transform cursor-pointer hover:border-amber-200 dark:hover:border-amber-900">
-                        <div className="w-12 h-12 rounded-xl bg-amber-50 dark:bg-amber-900/20 flex items-center justify-center overflow-hidden shrink-0">
-                          {beer.imageUrl ? (
-                            <img src={beer.imageUrl} alt={beer.name} className="w-full h-full object-cover rounded-xl" />
-                          ) : (
-                            <Beer className="h-6 w-6 text-amber-400" />
+                    <div
+                      key={beer.id}
+                      onClick={() => { saveFeedback(beer.id, undefined); navigate(`/beer/${beer.id}`); }}
+                      className="flex items-center gap-3 bg-white dark:bg-gray-900 rounded-2xl p-3 shadow-sm border border-gray-100 dark:border-gray-800 active:scale-[0.98] transition-transform cursor-pointer hover:border-amber-200 dark:hover:border-amber-900"
+                    >
+                      <div className="w-12 h-12 rounded-xl bg-amber-50 dark:bg-amber-900/20 flex items-center justify-center overflow-hidden shrink-0">
+                        {beer.imageUrl ? (
+                          <img src={beer.imageUrl} alt={beer.name} className="w-full h-full object-cover rounded-xl" />
+                        ) : (
+                          <Beer className="h-6 w-6 text-amber-400" />
+                        )}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="font-semibold text-gray-900 dark:text-white truncate text-sm">{beer.name}</p>
+                        {beer.breweryName && (
+                          <p className="text-xs text-gray-500 dark:text-gray-400 truncate">{beer.breweryName}</p>
+                        )}
+                        <div className="flex items-center gap-2 mt-1 flex-wrap">
+                          {beer.style && (
+                            <Badge variant="secondary" className="text-xs py-0 px-1.5">{beer.style}</Badge>
                           )}
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <p className="font-semibold text-gray-900 dark:text-white truncate text-sm">{beer.name}</p>
-                          {beer.breweryName && (
-                            <p className="text-xs text-gray-500 dark:text-gray-400 truncate">{beer.breweryName}</p>
+                          {beer.abv && (
+                            <span className="text-xs text-amber-600 dark:text-amber-400 font-medium">{beer.abv}% ABV</span>
                           )}
-                          <div className="flex items-center gap-2 mt-1 flex-wrap">
-                            {beer.style && (
-                              <Badge variant="secondary" className="text-xs py-0 px-1.5">{beer.style}</Badge>
-                            )}
-                            {beer.abv && (
-                              <span className="text-xs text-amber-600 dark:text-amber-400 font-medium">{beer.abv}% ABV</span>
-                            )}
-                          </div>
                         </div>
                       </div>
-                    </Link>
+                    </div>
                   ))}
                 </div>
               </section>
@@ -376,25 +445,27 @@ export default function ScanPage() {
                 </h2>
                 <div className="space-y-2">
                   {breweries.map(brewery => (
-                    <Link key={brewery.id} href={`/brewery/${brewery.id}`}>
-                      <div className="flex items-center gap-3 bg-white dark:bg-gray-900 rounded-2xl p-3 shadow-sm border border-gray-100 dark:border-gray-800 active:scale-[0.98] transition-transform cursor-pointer hover:border-blue-200 dark:hover:border-blue-900">
-                        <div className="w-12 h-12 rounded-xl bg-blue-50 dark:bg-blue-900/20 flex items-center justify-center overflow-hidden shrink-0">
-                          {brewery.logoUrl ? (
-                            <img src={brewery.logoUrl} alt={brewery.name} className="w-full h-full object-cover rounded-xl" />
-                          ) : (
-                            <Building2 className="h-6 w-6 text-blue-400" />
-                          )}
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <p className="font-semibold text-gray-900 dark:text-white truncate text-sm">{brewery.name}</p>
-                          {(brewery.city || brewery.country) && (
-                            <p className="text-xs text-gray-500 dark:text-gray-400">
-                              {[brewery.city, brewery.country].filter(Boolean).join(", ")}
-                            </p>
-                          )}
-                        </div>
+                    <div
+                      key={brewery.id}
+                      onClick={() => { saveFeedback(undefined, brewery.id); navigate(`/brewery/${brewery.id}`); }}
+                      className="flex items-center gap-3 bg-white dark:bg-gray-900 rounded-2xl p-3 shadow-sm border border-gray-100 dark:border-gray-800 active:scale-[0.98] transition-transform cursor-pointer hover:border-blue-200 dark:hover:border-blue-900"
+                    >
+                      <div className="w-12 h-12 rounded-xl bg-blue-50 dark:bg-blue-900/20 flex items-center justify-center overflow-hidden shrink-0">
+                        {brewery.logoUrl ? (
+                          <img src={brewery.logoUrl} alt={brewery.name} className="w-full h-full object-cover rounded-xl" />
+                        ) : (
+                          <Building2 className="h-6 w-6 text-blue-400" />
+                        )}
                       </div>
-                    </Link>
+                      <div className="flex-1 min-w-0">
+                        <p className="font-semibold text-gray-900 dark:text-white truncate text-sm">{brewery.name}</p>
+                        {(brewery.city || brewery.country) && (
+                          <p className="text-xs text-gray-500 dark:text-gray-400">
+                            {[brewery.city, brewery.country].filter(Boolean).join(", ")}
+                          </p>
+                        )}
+                      </div>
+                    </div>
                   ))}
                 </div>
               </section>

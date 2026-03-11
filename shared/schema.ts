@@ -807,6 +807,23 @@ export type StaticPage = typeof staticPages.$inferSelect;
 export type InsertStaticPage = z.infer<typeof insertStaticPageSchema>;
 
 // Custom schemas for forms
+export const scanLogs = pgTable("scan_logs", {
+  id: serial("id").primaryKey(),
+  userId: varchar("user_id").references(() => users.id, { onDelete: "cascade" }).notNull(),
+  imageUrl: varchar("image_url"),
+  ocrText: text("ocr_text"),
+  ocrEngine: varchar("ocr_engine", { length: 30 }),
+  source: varchar("source", { length: 20 }),
+  usedQuery: varchar("used_query"),
+  topCandidates: jsonb("top_candidates"),
+  chosenBeerId: integer("chosen_beer_id").references(() => beers.id, { onDelete: "set null" }),
+  chosenBreweryId: integer("chosen_brewery_id").references(() => breweries.id, { onDelete: "set null" }),
+  wasCorrect: boolean("was_correct"),
+  correctedBeerId: integer("corrected_beer_id").references(() => beers.id, { onDelete: "set null" }),
+  latencyMs: integer("latency_ms"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
 export const pubRegistrationSchema = insertPubSchema.extend({
   vatNumber: z.string().min(11, "P.IVA deve essere di almeno 11 caratteri"),
   businessName: z.string().min(1, "Ragione sociale è obbligatoria"),

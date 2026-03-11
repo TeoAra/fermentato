@@ -63,6 +63,7 @@ Preferred communication style: Simple, everyday language.
 - **Addition Requests**: Users can request new beers or breweries via `AdditionRequestModal` (accessible from `/scan` notfound state). Requests stored in `addition_requests` table. Admin reviews at `/admin/addition-requests` (approve creates the record, reject notifies user). Brewery owners see only beer requests for their brewery. Push notifications sent to admins and brewery owners on submission.
 - **Admin Delete APIs**: DELETE `/api/admin/beers/:id`, `/api/admin/breweries/:id`, `/api/admin/pubs/:id` all implemented with cascade cleanup.
 - **Admin Recent Activity**: GET `/api/admin/recent-activity` returns latest user registrations, reviews, pub/brewery creations, events with type filtering. Dashboard polls every 60s.
+- **Scan History**: Users see their scan history at `/scan/history`. Each entry shows thumbnail, matched beer/brewery (with link), OCR engine badge, latency, and OCR text. Clicking a result on `/scan` saves feedback (chosenBeerId/chosenBreweryId) to the log. Admin can view all scan logs via GET `/api/admin/scan-logs` (paginated, joined with users/beers/breweries).
 
 ## External Dependencies
 
