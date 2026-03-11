@@ -1003,6 +1003,42 @@ export default function AdminContentManager({ type }: AdminContentManagerProps) 
             )}
             {type === 'beers' && (
               <>
+                <div className="border-b pb-3">
+                  <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Nome birra</p>
+                  <div className="space-y-2">
+                    <div>
+                      <Label className="text-sm">Rimuovi prefisso dal nome</Label>
+                      <Input
+                        className="mt-1"
+                        placeholder="Es. «Badalà » → toglie dal titolo"
+                        value={massFields.nameStripPrefix ?? ""}
+                        onChange={e => setMassFields(f => ({ ...f, nameStripPrefix: e.target.value }))}
+                      />
+                      <p className="text-xs text-gray-400 mt-0.5">Rimuove il testo inserito dall'inizio di ogni nome (non case-sensitive)</p>
+                    </div>
+                    <div className="flex gap-2 items-end">
+                      <div className="flex-1">
+                        <Label className="text-sm">Trova nel nome</Label>
+                        <Input
+                          className="mt-1"
+                          placeholder="Testo da trovare"
+                          value={massFields.nameFindText ?? ""}
+                          onChange={e => setMassFields(f => ({ ...f, nameFindText: e.target.value }))}
+                        />
+                      </div>
+                      <div className="flex-1">
+                        <Label className="text-sm">Sostituisci con</Label>
+                        <Input
+                          className="mt-1"
+                          placeholder="(vuoto = elimina)"
+                          value={massFields.nameFindReplaceWith ?? ""}
+                          onChange={e => setMassFields(f => ({ ...f, nameFindReplaceWith: e.target.value }))}
+                        />
+                      </div>
+                    </div>
+                    <p className="text-xs text-gray-400">Trova e sostituisce ovunque nel nome (case-sensitive)</p>
+                  </div>
+                </div>
                 <div>
                   <Label className="text-sm">Stile</Label>
                   <Input
@@ -1062,7 +1098,14 @@ export default function AdminContentManager({ type }: AdminContentManagerProps) 
             <Button
               className="flex-1 bg-amber-500 hover:bg-amber-600"
               disabled={massEditMutation.isPending || Object.values(massFields).every(v => !v)}
-              onClick={() => massEditMutation.mutate({ ids: [...selectedIds], updates: massFields })}
+              onClick={() => {
+                // Build updates: convert flat massFields into the correct shape for the API
+                const { nameFindText, nameFindReplaceWith, nameStripPrefix, ...rest } = massFields;
+                const updates: Record<string, any> = { ...rest };
+                if (nameStripPrefix) updates.nameStripPrefix = nameStripPrefix;
+                if (nameFindText) updates.nameFindReplace = { find: nameFindText, replace: nameFindReplaceWith ?? "" };
+                massEditMutation.mutate({ ids: [...selectedIds], updates });
+              }}
             >
               {massEditMutation.isPending ? (
                 <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Aggiornando...</>
