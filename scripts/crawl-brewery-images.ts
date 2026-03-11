@@ -64,24 +64,36 @@ function urlSlug(url: string): string {
 
 // ─── Image filters ─────────────────────────────────────────────────────────
 
-const BAD_PATTERNS = ["logo", "header", "banner", "icon", "favicon", "sprite", "background", "bg-", "placeholder", "flag", "map", "social", "facebook", "instagram", "twitter", "arrow", "cart", "basket", "menu-icon", "hamburger"];
-const GOOD_PATTERNS = ["birra", "beer", "bier", "label", "etichett", "bottl", "can", "lager", "ale", "ipa", "stout", "porter", "product", "prodott", "craft"];
+// Only reject images with these patterns when no positive signal compensates
+const HARD_BAD = ["favicon", "sprite", "flag", "map", "facebook", "instagram", "twitter", "arrow", "cart", "basket", "hamburger", "menu-icon", "checkout", "paypal", "visa", "mastercard"];
+// Soft bad — only reject if no good signal present
+const SOFT_BAD = ["header", "banner", "background", "bg-", "placeholder", "placeholder"];
+const GOOD_PATTERNS = ["birra", "beer", "bier", "label", "etichett", "bottl", "lager", "ale", "ipa", "stout", "porter", "product", "prodott", "craft", "can", "lattina", "fusto"];
 
 function isLikelyBeerImage(url: string, alt = "", title = ""): boolean {
   const u = url.toLowerCase(), a = (alt + " " + title).toLowerCase();
-  if (BAD_PATTERNS.some(k => u.includes(k))) return false;
-  if (GOOD_PATTERNS.some(k => u.includes(k) || a.includes(k))) return true;
-  // Accept any image with dimension hints that suggest product images (not tiny icons)
-  const ext = u.match(/\.(jpg|jpeg|png|webp)($|\?)/i);
-  if (!ext) return false;
-  // Reject tiny images by URL hints
-  if (u.match(/\d+x\d+/) && u.match(/[1-9]\d?x[1-9]\d?(?!\d)/)) return false;
+  // Hard rejects (always)
+  if (HARD_BAD.some(k => u.includes(k))) return false;
+  // Must have an image extension or Cloudinary-style URL
+  const hasExt = /\.(jpg|jpeg|png|webp|avif)($|\?)/i.test(u) || u.includes("cloudinary.com") || u.includes("cdn");
+  if (!hasExt) return false;
+  // Positive signals override soft-bad
+  const hasGood = GOOD_PATTERNS.some(k => u.includes(k) || a.includes(k));
+  if (hasGood) return true;
+  // Soft bad without good signal → reject
+  if (SOFT_BAD.some(k => u.includes(k))) return false;
+  // Standalone "logo" in URL without beer context: allow it — many Italian sites name product images logo-birraXYZ.jpg
+  // but reject clearly non-product logos (e.g. site logo in header)
+  if ((u.includes("logo") || u.includes("brand")) && !a && !alt) return false;
+  // Reject tiny images by URL dimension hints like 32x32, 16x16
+  if (/[_\-](\d{1,2})x(\d{1,2})[_\-.]/.test(u)) return false;
   return true;
 }
 
 function isBreweryLogo(url: string, alt = ""): boolean {
   const u = url.toLowerCase(), a = alt.toLowerCase();
-  return u.includes("logo") || a.includes("logo") || a.includes("birrificio") || u.includes("brand");
+  return (u.includes("logo") || a.includes("logo") || a.includes("birrificio") || u.includes("brand")) &&
+    !GOOD_PATTERNS.some(k => u.includes(k));
 }
 
 // ─── HTML parsing utilities ────────────────────────────────────────────────
@@ -113,27 +125,69 @@ function extractBreweryLogoCandidates(baseUrl: string, html: string): string[] {
   return candidates;
 }
 
+/** Normalize a lazy-loaded img tag so all src variants are captured */
+function normalizeImgTag(tag: string): string {
+  // Promote data-src / data-lazy-src / data-original / data-image / data-lazy into src="" if src is empty/placeholder
+  const srcVal = tag.match(/\bsrc=["']([^"']+)["']/i)?.[1] ?? "";
+  const isPlaceholder = !srcVal || srcVal.startsWith("data:") || srcVal.includes("placeholder") || srcVal.includes("blank.gif") || srcVal.includes("transparent");
+  if (isPlaceholder) {
+    // Try in priority order
+    const lazySrc =
+      tag.match(/\bdata-lazy-src=["']([^"']+)["']/i)?.[1] ??
+      tag.match(/\bdata-src=["']([^"']+)["']/i)?.[1] ??
+      tag.match(/\bdata-original=["']([^"']+)["']/i)?.[1] ??
+      tag.match(/\bdata-image=["']([^"']+)["']/i)?.[1] ??
+      tag.match(/\bdata-lazy=["']([^"']+)["']/i)?.[1] ??
+      tag.match(/\bdata-lazy-load=["']([^"']+)["']/i)?.[1] ??
+      tag.match(/\bdata-bg=["']([^"']+)["']/i)?.[1];
+    if (lazySrc) tag = tag.replace(/\bsrc=["'][^"']*["']/i, `src="${lazySrc}"`);
+  }
+  // Also promote best srcset candidate (highest width)
+  if (!tag.match(/\bsrc=["'][^"']{4,}["']/i)) {
+    const srcset = tag.match(/\bsrcset=["']([^"']+)["']/i)?.[1];
+    if (srcset) {
+      const best = srcset.split(",").map(s => s.trim().split(/\s+/)).reduce((a, b) => {
+        const aw = parseInt(a[1] ?? "0"), bw = parseInt(b[1] ?? "0");
+        return bw > aw ? b : a;
+      });
+      if (best[0]) tag = tag.replace(/\bsrc=["'][^"']*["']/i, `src="${best[0]}"`);
+    }
+  }
+  return tag;
+}
+
 /** Parse page into "product blocks" — regions of HTML containing an image + nearby text */
 function extractProductBlocks(html: string): Array<{ imgTags: string[]; text: string }> {
   const blocks: Array<{ imgTags: string[]; text: string }> = [];
+  const seen = new Set<string>(); // avoid duplicate img URLs
 
-  // Strategy 1: <article>, <figure>, <li class="product">, <div class="*product*|*beer*|*birra*|*item*">
-  const blockRe = /(<(?:article|figure|li)[^>]*>)([\s\S]*?)(<\/(?:article|figure|li)>)/gi;
+  const addBlock = (imgTags: string[], text: string) => {
+    const normalized = imgTags.map(normalizeImgTag);
+    const fresh = normalized.filter(t => {
+      const u = t.match(/\bsrc=["']([^"']+)["']/i)?.[1] ?? "";
+      if (!u || seen.has(u)) return false;
+      seen.add(u);
+      return true;
+    });
+    if (fresh.length) blocks.push({ imgTags: fresh, text });
+  };
+
   let m: RegExpExecArray | null;
+
+  // Strategy 1: <article>, <figure>, <li> blocks
+  const blockRe = /(<(?:article|figure|li)[^>]*>)([\s\S]*?)(<\/(?:article|figure|li)>)/gi;
   while ((m = blockRe.exec(html)) !== null) {
     const inner = m[2];
     const imgTags = [...inner.matchAll(/<img[^>]+>/gi)].map(x => x[0]);
-    if (imgTags.length) blocks.push({ imgTags, text: stripTags(inner) });
+    if (imgTags.length) addBlock(imgTags, stripTags(inner));
   }
 
-  // Strategy 2: divs with product/beer/item class
-  const divRe = /<div[^>]+class=["'][^"']*(?:product|beer|birra|item|card|brew)[^"']*["'][^>]*>([\s\S]*?)<\/div>/gi;
+  // Strategy 2: divs with product/beer/item class (limit inner size to avoid whole-page capture)
+  const divRe = /<div[^>]+class=["'][^"']*(?:product|beer|birra|item|card|brew|bottle|lattina)[^"']*["'][^>]*>([\s\S]{0,4000}?)<\/div>/gi;
   while ((m = divRe.exec(html)) !== null) {
     const inner = m[1];
     const imgTags = [...inner.matchAll(/<img[^>]+>/gi)].map(x => x[0]);
-    if (imgTags.length > 0 && inner.length < 3000) {
-      blocks.push({ imgTags, text: stripTags(inner) });
-    }
+    if (imgTags.length) addBlock(imgTags, stripTags(inner));
   }
 
   // Strategy 3: <a> wrapping an img (common in WooCommerce/Shopify)
@@ -142,8 +196,9 @@ function extractProductBlocks(html: string): Array<{ imgTags: string[]; text: st
     const aTag = m[1], imgTag = m[2];
     const hrefMatch = aTag.match(/href=["']([^"']+)["']/i);
     const altMatch = imgTag.match(/alt=["']([^"']+)["']/i);
-    const text = [hrefMatch?.[1] ?? "", altMatch?.[1] ?? ""].join(" ");
-    blocks.push({ imgTags: [imgTag], text });
+    const titleMatch = aTag.match(/title=["']([^"']+)["']/i);
+    const text = [hrefMatch?.[1] ?? "", altMatch?.[1] ?? "", titleMatch?.[1] ?? ""].join(" ");
+    addBlock([imgTag], text);
   }
 
   // Strategy 4: JSON-LD product data
@@ -154,13 +209,25 @@ function extractProductBlocks(html: string): Array<{ imgTags: string[]; text: st
       const items = Array.isArray(data) ? data : [data];
       for (const item of items) {
         const name = item.name ?? "";
-        const imgUrl = item.image?.url ?? item.image ?? "";
-        if (name && imgUrl && typeof imgUrl === "string") {
-          // Create synthetic block
-          blocks.push({ imgTags: [`<img src="${imgUrl}" alt="${name}">`], text: name });
+        const rawImg = item.image?.url ?? (Array.isArray(item.image) ? item.image[0] : item.image) ?? "";
+        const imgUrl = typeof rawImg === "string" ? rawImg : "";
+        if (name && imgUrl) {
+          addBlock([`<img src="${imgUrl}" alt="${name}">`], name);
         }
       }
     } catch { /* ignore invalid JSON */ }
+  }
+
+  // Strategy 5: standalone <img> tags NOT already in a block (last resort)
+  const allImgs = [...html.matchAll(/<img[^>]+>/gi)].map(x => x[0]);
+  for (const imgTag of allImgs) {
+    const norm = normalizeImgTag(imgTag);
+    const u = norm.match(/\bsrc=["']([^"']+)["']/i)?.[1] ?? "";
+    if (u && !seen.has(u)) {
+      const alt = imgTag.match(/alt=["']([^"']+)["']/i)?.[1] ?? "";
+      seen.add(u);
+      blocks.push({ imgTags: [norm], text: alt });
+    }
   }
 
   return blocks;
@@ -202,33 +269,41 @@ interface BeerMatch {
 function matchBlocksToBeers(
   baseUrl: string,
   blocks: Array<{ imgTags: string[]; text: string }>,
-  dbBeers: Array<{ id: number; name: string }>
+  dbBeers: Array<{ id: number; name: string }>,
+  verbose = false
 ): Map<number, BeerMatch> {
   const results = new Map<number, BeerMatch>();
+  let consideredImgs = 0, rejectedFilter = 0;
 
   for (const block of blocks) {
     for (const imgTag of block.imgTags) {
-      const srcMatch = imgTag.match(/(?:data-lazy-src|data-src|src)=["']([^"']+)["']/i);
-      const altMatch = imgTag.match(/alt=["']([^"']+)["']/i);
-      const titleMatch = imgTag.match(/title=["']([^"']+)["']/i);
+      const srcMatch = imgTag.match(/\bsrc=["']([^"']+)["']/i);
+      const altMatch = imgTag.match(/\balt=["']([^"']+)["']/i);
+      const titleMatch = imgTag.match(/\btitle=["']([^"']+)["']/i);
       if (!srcMatch) continue;
 
       const rawSrc = srcMatch[1];
+      if (rawSrc.startsWith("data:")) continue;
       const imgUrl = resolveUrl(baseUrl, rawSrc);
-      if (!imgUrl || imgUrl.startsWith("data:")) continue;
+      if (!imgUrl) continue;
 
       const alt = altMatch?.[1] ?? "";
       const title = titleMatch?.[1] ?? "";
 
-      if (!isLikelyBeerImage(imgUrl, alt, title)) continue;
+      consideredImgs++;
+      if (!isLikelyBeerImage(imgUrl, alt, title)) {
+        rejectedFilter++;
+        continue;
+      }
 
       // Gather text candidates to match against beer names
+      const slug = urlSlug(imgUrl);
       const textCandidates: Array<{ text: string; source: string; bonus: number }> = [
-        { text: alt, source: "alt", bonus: 0.1 },
-        { text: title, source: "title", bonus: 0.05 },
+        { text: alt, source: "alt", bonus: 0.15 },
+        { text: title, source: "title", bonus: 0.1 },
+        { text: slug, source: "url-slug", bonus: 0.05 },
         { text: block.text, source: "context", bonus: 0 },
-        { text: urlSlug(imgUrl), source: "url-slug", bonus: 0 },
-      ].filter(c => c.text.length > 2);
+      ].filter(c => c.text.length > 1);
 
       for (const beer of dbBeers) {
         let bestScore = 0, bestSource = "";
@@ -237,7 +312,8 @@ function matchBlocksToBeers(
           if (score > bestScore) { bestScore = score; bestSource = candidate.source; }
         }
 
-        const threshold = bestSource === "context" ? 0.6 : 0.5;
+        // Lower threshold — 0.35 for named sources (alt/title/url), 0.45 for context
+        const threshold = bestSource === "context" ? 0.45 : 0.35;
         if (bestScore >= threshold) {
           const existing = results.get(beer.id);
           if (!existing || bestScore > existing.score) {
@@ -253,6 +329,10 @@ function matchBlocksToBeers(
         }
       }
     }
+  }
+
+  if (verbose) {
+    console.log(`    [debug] blocks=${blocks.length} imgs_considered=${consideredImgs} rejected_by_filter=${rejectedFilter} matched=${results.size}`);
   }
 
   return results;
@@ -411,7 +491,7 @@ async function main() {
       if (pageUrl !== brewery.website_url) stats.pages++;
 
       const blocks = extractProductBlocks(html);
-      const matches = matchBlocksToBeers(brewery.website_url, blocks, dbBeers);
+      const matches = matchBlocksToBeers(brewery.website_url, blocks, dbBeers, true);
 
       for (const [beerId, match] of matches) {
         const existing = bestMatches.get(beerId);
