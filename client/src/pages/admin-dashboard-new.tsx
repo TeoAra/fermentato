@@ -62,7 +62,7 @@ export default function AdminDashboardNew() {
 
   const translateMutation = useMutation({
     mutationFn: async (offset: number) => {
-      const res = await apiRequest('POST', `/api/admin/translate-beers?batch=20&offset=${offset}`);
+      const res = await apiRequest('POST', `/api/admin/translate-beers?batch=10&offset=${offset}`);
       return res.json();
     },
     onSuccess: (data) => {
@@ -461,8 +461,8 @@ export default function AdminDashboardNew() {
         <CardContent>
           <div className="space-y-4">
             <p className="text-sm text-gray-500 dark:text-gray-400">
-              Traduci le descrizioni delle birre dall'inglese all'italiano in lotti da 20 alla volta (via MyMemory API).
-              Le descrizioni già in italiano vengono saltate automaticamente.
+              Traduci le descrizioni delle birre in italiano in lotti da 10 alla volta (via Gemini AI).
+              Supporta qualsiasi lingua (inglese, danese, tedesco, ecc.). Le descrizioni già in italiano vengono saltate automaticamente.
             </p>
             <div className="flex items-center gap-3 flex-wrap">
               <Button
@@ -473,7 +473,7 @@ export default function AdminDashboardNew() {
                 {translateMutation.isPending ? (
                   <><RefreshCw className="w-4 h-4 mr-2 animate-spin" /> Traduzione in corso...</>
                 ) : (
-                  <><Play className="w-4 h-4 mr-2" /> Traduci prossimo batch (20)</>
+                  <><Play className="w-4 h-4 mr-2" /> Traduci prossimo batch (10)</>
                 )}
               </Button>
               {translateOffset > 0 && (

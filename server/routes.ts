@@ -1885,7 +1885,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Batch translate beer descriptions to Italian
   app.post('/api/admin/translate-beers', isAuthenticated, isAdmin, async (req: any, res) => {
-    const batchSize = Math.min(parseInt(req.query.batch as string) || 20, 50);
+    const batchSize = Math.min(parseInt(req.query.batch as string) || 10, 30);
     const offsetVal = parseInt(req.query.offset as string) || 0;
     try {
       const rows = await db.execute(sql`
@@ -1908,10 +1908,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         if (result) {
           await db.execute(sql`UPDATE beers SET description = ${result} WHERE id = ${beer.id}`);
           translated++;
+          await new Promise(r => setTimeout(r, 500));
         } else {
           skipped++;
         }
-        await new Promise(r => setTimeout(r, 300));
       }
       res.json({ translated, skipped, processed: beerList.length, nextOffset: offsetVal + beerList.length });
     } catch (error) {
