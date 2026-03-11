@@ -11,7 +11,7 @@ import { setupAuth, isAuthenticated, isAdmin } from "./auth";
 import { registerAdminRoutes } from "./routes-admin";
 import { sql, eq, and, desc, asc } from "drizzle-orm";
 import { upload, uploadImage, cloudinary } from "./cloudinary";
-import { db } from "./db";
+import { db, pool } from "./db";
 import { breweries, beers, pubs, users, tapList, bottleList, userBeerTastings, favorites, menuCategories, menuItems, pubSizes, notifications, pushSubscriptions, breweryRequests, pubEvents, breweryEvents, insertBreweryEventSchema, reviewReports, oauthAccounts, userActivities, ratings, publicanRequests, notificationPreferences, staticPages, additionRequests, scanLogs } from "@shared/schema";
 
 import { insertPubSchema, insertTapListSchema, insertBottleListSchema, insertMenuCategorySchema, insertMenuItemSchema, pubRegistrationSchema, insertPubEventSchema } from "@shared/schema";
@@ -2046,6 +2046,81 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error fetching all beers:", error);
       res.status(500).json({ message: "Failed to fetch beers" });
+    }
+  });
+
+  // Mass update beers (must be before /:id to avoid Express conflict)
+  app.patch('/api/admin/beers/mass-update', isAuthenticated, isAdmin, async (req: any, res) => {
+    try {
+      const { ids, updates } = req.body as { ids: number[]; updates: Record<string, any> };
+      if (!Array.isArray(ids) || ids.length === 0) return res.status(400).json({ message: "ids array required" });
+      const allowed = ['style', 'color', 'abv', 'ibu', 'is_gluten_free', 'is_alcohol_free', 'brewery_id', 'brewery_name'];
+      const safeUpdates = Object.fromEntries(Object.entries(updates).filter(([k]) => allowed.includes(k)));
+      if (Object.keys(safeUpdates).length === 0) return res.status(400).json({ message: "No valid fields to update" });
+      const keys = Object.keys(safeUpdates);
+      const setClauses = keys.map((k, i) => `"${k}" = $${i + 2}`).join(', ');
+      const values = [ids, ...Object.values(safeUpdates)];
+      await pool.query(`UPDATE beers SET ${setClauses} WHERE id = ANY($1::int[])`, values);
+      res.json({ updated: ids.length });
+    } catch (error) {
+      console.error("Mass update beers error:", error);
+      res.status(500).json({ message: "Failed to mass update beers" });
+    }
+  });
+
+  // Mass update breweries (must be before /:id to avoid Express conflict)
+  app.patch('/api/admin/breweries/mass-update', isAuthenticated, isAdmin, async (req: any, res) => {
+    try {
+      const { ids, updates } = req.body as { ids: number[]; updates: Record<string, any> };
+      if (!Array.isArray(ids) || ids.length === 0) return res.status(400).json({ message: "ids array required" });
+      const allowed = ['country', 'region', 'location', 'city', 'website_url'];
+      const safeUpdates = Object.fromEntries(Object.entries(updates).filter(([k]) => allowed.includes(k)));
+      if (Object.keys(safeUpdates).length === 0) return res.status(400).json({ message: "No valid fields to update" });
+      const keys = Object.keys(safeUpdates);
+      const setClauses = keys.map((k, i) => `"${k}" = $${i + 2}`).join(', ');
+      const values = [ids, ...Object.values(safeUpdates)];
+      await pool.query(`UPDATE breweries SET ${setClauses} WHERE id = ANY($1::int[])`, values);
+      res.json({ updated: ids.length });
+    } catch (error) {
+      console.error("Mass update breweries error:", error);
+      res.status(500).json({ message: "Failed to mass update breweries" });
+    }
+  });
+
+  // Sync brewery_name field in beers for a specific brewery
+  app.post('/api/admin/breweries/:id/sync-beer-names', isAuthenticated, isAdmin, async (req: any, res) => {
+    try {
+      const breweryId = parseInt(req.params.id);
+      const { rows: brewRows } = await pool.query(`SELECT name FROM breweries WHERE id = $1`, [breweryId]);
+      if (!brewRows.length) return res.status(404).json({ message: "Brewery not found" });
+      const breweryName = brewRows[0].name;
+      const result = await pool.query(
+        `UPDATE beers SET brewery_name = $1 WHERE brewery_id = $2 AND (brewery_name IS NULL OR brewery_name != $1)`,
+        [breweryName, breweryId]
+      );
+      res.json({ updated: result.rowCount ?? 0, breweryName });
+    } catch (error) {
+      console.error("Sync beer names error:", error);
+      res.status(500).json({ message: "Failed to sync beer names" });
+    }
+  });
+
+  // Mass update pubs (must be before /:id to avoid Express conflict)
+  app.patch('/api/admin/pubs/mass-update', isAuthenticated, isAdmin, async (req: any, res) => {
+    try {
+      const { ids, updates } = req.body as { ids: number[]; updates: Record<string, any> };
+      if (!Array.isArray(ids) || ids.length === 0) return res.status(400).json({ message: "ids array required" });
+      const allowed = ['city', 'region', 'country'];
+      const safeUpdates = Object.fromEntries(Object.entries(updates).filter(([k]) => allowed.includes(k)));
+      if (Object.keys(safeUpdates).length === 0) return res.status(400).json({ message: "No valid fields to update" });
+      const keys = Object.keys(safeUpdates);
+      const setClauses = keys.map((k, i) => `"${k}" = $${i + 2}`).join(', ');
+      const values = [ids, ...Object.values(safeUpdates)];
+      await pool.query(`UPDATE pubs SET ${setClauses} WHERE id = ANY($1::int[])`, values);
+      res.json({ updated: ids.length });
+    } catch (error) {
+      console.error("Mass update pubs error:", error);
+      res.status(500).json({ message: "Failed to mass update pubs" });
     }
   });
 

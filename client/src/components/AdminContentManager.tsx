@@ -11,7 +11,7 @@ import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
-import { Search, Plus, Trash2, BeerIcon, Building2, MapPin, ExternalLink, Loader2, ChevronDown } from "lucide-react";
+import { Search, Plus, Trash2, BeerIcon, Building2, MapPin, ExternalLink, Loader2, ChevronDown, CheckSquare, Square, Edit2, RefreshCw, X } from "lucide-react";
 import { Link } from "wouter";
 import { GlutenFreeSmallBadge, AlcoholFreeBadge } from "@/components/beer-badges";
 import { ImageUpload } from "@/components/image-upload";
@@ -518,6 +518,22 @@ export default function AdminContentManager({ type }: AdminContentManagerProps) 
   const [deleteTarget, setDeleteTarget] = useState<any>(null);
   const searchTimerRef = useRef<any>(null);
 
+  // Mass edit state
+  const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
+  const [massEditOpen, setMassEditOpen] = useState(false);
+  const [massDeleteOpen, setMassDeleteOpen] = useState(false);
+  const [massFields, setMassFields] = useState<Record<string, string>>({});
+
+  const toggleSelect = (id: number) => {
+    setSelectedIds(prev => {
+      const next = new Set(prev);
+      next.has(id) ? next.delete(id) : next.add(id);
+      return next;
+    });
+  };
+  const selectAll = () => setSelectedIds(new Set(searchResults.map(r => r.id)));
+  const clearSelection = () => setSelectedIds(new Set());
+
   const runSearch = useCallback(async (query: string) => {
     if (!query.trim()) { setSearchResults([]); setIsSearching(false); return; }
     setIsSearching(true);
@@ -568,6 +584,44 @@ export default function AdminContentManager({ type }: AdminContentManagerProps) 
     onError: () => {
       toast({ title: "Errore", description: "Impossibile creare l'elemento", variant: "destructive" });
     },
+  });
+
+  const massEditMutation = useMutation({
+    mutationFn: async ({ ids, updates }: { ids: number[]; updates: Record<string, string> }) => {
+      const nonEmpty = Object.fromEntries(Object.entries(updates).filter(([, v]) => v !== ""));
+      return await apiRequest(`/api/admin/${type}/mass-update`, { method: "PATCH" }, { ids, updates: nonEmpty });
+    },
+    onSuccess: (data: any) => {
+      toast({ title: "Aggiornati", description: `${data?.updated ?? selectedIds.size} record aggiornati` });
+      setMassEditOpen(false);
+      setMassFields({});
+      clearSelection();
+      if (searchQuery) runSearch(searchQuery);
+    },
+    onError: () => toast({ title: "Errore", description: "Impossibile aggiornare i record", variant: "destructive" }),
+  });
+
+  const massDeleteMutation = useMutation({
+    mutationFn: async (ids: number[]) => {
+      await Promise.all(ids.map(id => apiRequest(`/api/admin/${type}/${id}`, { method: "DELETE" })));
+      return ids;
+    },
+    onSuccess: (ids: number[]) => {
+      toast({ title: "Eliminati", description: `${ids.length} record eliminati` });
+      setMassDeleteOpen(false);
+      setSearchResults(prev => prev.filter(r => !ids.includes(r.id)));
+      clearSelection();
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/stats"] });
+    },
+    onError: () => toast({ title: "Errore", description: "Alcuni record non sono stati eliminati", variant: "destructive" }),
+  });
+
+  const syncBeerNamesMutation = useMutation({
+    mutationFn: async (breweryId: number) =>
+      await apiRequest(`/api/admin/breweries/${breweryId}/sync-beer-names`, { method: "POST" }),
+    onSuccess: (data: any) =>
+      toast({ title: "Nomi sincronizzati", description: `${data?.updated ?? 0} birre aggiornate con il nome "${data?.breweryName}"` }),
+    onError: () => toast({ title: "Errore", description: "Impossibile sincronizzare i nomi", variant: "destructive" }),
   });
 
   const getItemLink = (item: any) => {
@@ -621,9 +675,37 @@ export default function AdminContentManager({ type }: AdminContentManagerProps) 
           </div>
 
           {searchResults.length > 0 && (
-            <div className="space-y-2 max-h-[620px] overflow-y-auto pr-1">
+            <>
+              {/* Select all bar */}
+              <div className="flex items-center gap-2 px-1 text-sm text-gray-500 dark:text-gray-400">
+                <button
+                  type="button"
+                  onClick={selectedIds.size === searchResults.length ? clearSelection : selectAll}
+                  className="flex items-center gap-1.5 hover:text-amber-600 transition-colors"
+                >
+                  {selectedIds.size === searchResults.length && searchResults.length > 0
+                    ? <CheckSquare className="w-4 h-4 text-amber-500" />
+                    : <Square className="w-4 h-4" />}
+                  {selectedIds.size > 0 ? `${selectedIds.size} selezionati` : "Seleziona tutti"}
+                </button>
+                {selectedIds.size > 0 && (
+                  <button type="button" onClick={clearSelection} className="ml-2 text-xs text-gray-400 hover:text-red-500 flex items-center gap-1">
+                    <X className="w-3 h-3" /> Deseleziona
+                  </button>
+                )}
+              </div>
+            </>
+          )}
+
+          {searchResults.length > 0 && (
+            <div className="space-y-2 max-h-[580px] overflow-y-auto pr-1">
               {searchResults.map((item) => (
-                <div key={item.id} className="flex items-center gap-3 p-3 border rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800/60 transition-colors group">
+                <div key={item.id} className={`flex items-center gap-3 p-3 border rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800/60 transition-colors group ${selectedIds.has(item.id) ? 'border-amber-400 bg-amber-50/50 dark:bg-amber-900/10' : ''}`}>
+                  {/* Selection checkbox */}
+                  <div className="flex-shrink-0" onClick={(e) => { e.stopPropagation(); toggleSelect(item.id); }}>
+                    <Checkbox checked={selectedIds.has(item.id)} className="w-4 h-4 cursor-pointer" />
+                  </div>
+
                   {type === 'beers' && (
                     <div className="flex-shrink-0">
                       {item.imageUrl ? (
@@ -706,6 +788,18 @@ export default function AdminContentManager({ type }: AdminContentManagerProps) 
                   </div>
 
                   <div className="flex gap-1.5 flex-shrink-0">
+                    {type === 'breweries' && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="h-8 px-2 text-xs text-blue-600 border-blue-200 hover:bg-blue-50 dark:hover:bg-blue-950"
+                        title="Sincronizza nome birrificio su tutte le sue birre"
+                        onClick={() => syncBeerNamesMutation.mutate(item.id)}
+                        disabled={syncBeerNamesMutation.isPending}
+                      >
+                        <RefreshCw className={`w-3.5 h-3.5 ${syncBeerNamesMutation.isPending ? 'animate-spin' : ''}`} />
+                      </Button>
+                    )}
                     <Link href={getItemLink(item)}>
                       <Button variant="outline" size="sm" className="h-8 px-2.5 text-xs">
                         <ExternalLink className="w-3.5 h-3.5 mr-1" />
@@ -723,6 +817,39 @@ export default function AdminContentManager({ type }: AdminContentManagerProps) 
                   </div>
                 </div>
               ))}
+            </div>
+          )}
+
+          {/* Mass edit action bar — shown when items selected */}
+          {selectedIds.size > 0 && (
+            <div className="sticky bottom-0 left-0 right-0 bg-amber-500 dark:bg-amber-600 text-white rounded-xl p-3 flex items-center justify-between shadow-lg border border-amber-400 z-10">
+              <div className="flex items-center gap-2 font-medium text-sm">
+                <CheckSquare className="w-4 h-4" />
+                {selectedIds.size} {type === 'beers' ? 'birre' : type === 'breweries' ? 'birrifici' : 'pub'} selezionati
+              </div>
+              <div className="flex gap-2">
+                <Button
+                  size="sm"
+                  variant="secondary"
+                  className="h-8 bg-white/20 hover:bg-white/30 border-white/30 text-white text-xs"
+                  onClick={() => { setMassFields({}); setMassEditOpen(true); }}
+                >
+                  <Edit2 className="w-3.5 h-3.5 mr-1" />
+                  Modifica
+                </Button>
+                <Button
+                  size="sm"
+                  variant="secondary"
+                  className="h-8 bg-red-500 hover:bg-red-600 border-red-400 text-white text-xs"
+                  onClick={() => setMassDeleteOpen(true)}
+                >
+                  <Trash2 className="w-3.5 h-3.5 mr-1" />
+                  Elimina
+                </Button>
+                <Button size="sm" variant="ghost" className="h-8 text-white hover:bg-white/20 text-xs" onClick={clearSelection}>
+                  <X className="w-3.5 h-3.5" />
+                </Button>
+              </div>
             </div>
           )}
 
@@ -792,6 +919,150 @@ export default function AdminContentManager({ type }: AdminContentManagerProps) 
                 <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Eliminando...</>
               ) : (
                 <><Trash2 className="w-4 h-4 mr-2" />Elimina definitivamente</>
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* ── Mass Edit Dialog ── */}
+      <Dialog open={massEditOpen} onOpenChange={setMassEditOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Edit2 className="w-5 h-5 text-amber-500" />
+              Modifica massiva — {selectedIds.size} {type === 'beers' ? 'birre' : type === 'breweries' ? 'birrifici' : 'pub'}
+            </DialogTitle>
+          </DialogHeader>
+          <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">
+            Lascia vuoti i campi che non vuoi modificare. Solo i campi compilati verranno aggiornati su tutti i record selezionati.
+          </p>
+          <div className="space-y-3 py-2">
+            {type === 'breweries' && (
+              <>
+                <div>
+                  <Label className="text-sm">Paese</Label>
+                  <Input
+                    className="mt-1"
+                    placeholder="Es. Italia, Germany, France…"
+                    value={massFields.country ?? ""}
+                    onChange={e => setMassFields(f => ({ ...f, country: e.target.value }))}
+                  />
+                </div>
+                <div>
+                  <Label className="text-sm">Regione</Label>
+                  <Input
+                    className="mt-1"
+                    placeholder="Es. Lazio, Bavaria…"
+                    value={massFields.region ?? ""}
+                    onChange={e => setMassFields(f => ({ ...f, region: e.target.value }))}
+                  />
+                </div>
+                <div>
+                  <Label className="text-sm">Città</Label>
+                  <Input
+                    className="mt-1"
+                    placeholder="Es. Roma, Berlin…"
+                    value={massFields.location ?? ""}
+                    onChange={e => setMassFields(f => ({ ...f, location: e.target.value }))}
+                  />
+                </div>
+              </>
+            )}
+            {type === 'beers' && (
+              <>
+                <div>
+                  <Label className="text-sm">Stile</Label>
+                  <Input
+                    className="mt-1"
+                    placeholder="Es. IPA, Lager, Stout…"
+                    value={massFields.style ?? ""}
+                    onChange={e => setMassFields(f => ({ ...f, style: e.target.value }))}
+                  />
+                </div>
+                <div>
+                  <Label className="text-sm">Colore</Label>
+                  <Input
+                    className="mt-1"
+                    placeholder="Es. dorata, ambrata, nera…"
+                    value={massFields.color ?? ""}
+                    onChange={e => setMassFields(f => ({ ...f, color: e.target.value }))}
+                  />
+                </div>
+              </>
+            )}
+            {type === 'pubs' && (
+              <>
+                <div>
+                  <Label className="text-sm">Città</Label>
+                  <Input
+                    className="mt-1"
+                    placeholder="Es. Roma, Milano…"
+                    value={massFields.city ?? ""}
+                    onChange={e => setMassFields(f => ({ ...f, city: e.target.value }))}
+                  />
+                </div>
+                <div>
+                  <Label className="text-sm">Regione</Label>
+                  <Input
+                    className="mt-1"
+                    placeholder="Es. Lazio, Lombardia…"
+                    value={massFields.region ?? ""}
+                    onChange={e => setMassFields(f => ({ ...f, region: e.target.value }))}
+                  />
+                </div>
+                <div>
+                  <Label className="text-sm">Paese</Label>
+                  <Input
+                    className="mt-1"
+                    placeholder="Es. Italia"
+                    value={massFields.country ?? ""}
+                    onChange={e => setMassFields(f => ({ ...f, country: e.target.value }))}
+                  />
+                </div>
+              </>
+            )}
+          </div>
+          <div className="flex gap-2 pt-2">
+            <Button variant="outline" className="flex-1" onClick={() => setMassEditOpen(false)}>
+              Annulla
+            </Button>
+            <Button
+              className="flex-1 bg-amber-500 hover:bg-amber-600"
+              disabled={massEditMutation.isPending || Object.values(massFields).every(v => !v)}
+              onClick={() => massEditMutation.mutate({ ids: [...selectedIds], updates: massFields })}
+            >
+              {massEditMutation.isPending ? (
+                <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Aggiornando...</>
+              ) : (
+                <><Edit2 className="w-4 h-4 mr-2" />Applica a {selectedIds.size} record</>
+              )}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* ── Mass Delete Confirmation ── */}
+      <AlertDialog open={massDeleteOpen} onOpenChange={setMassDeleteOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Elimina {selectedIds.size} {type === 'beers' ? 'birre' : type === 'breweries' ? 'birrifici' : 'pub'}?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Questa azione <strong>non può essere annullata</strong>. Verranno eliminati permanentemente <strong>{selectedIds.size} record</strong>.
+              {type === 'breweries' && " Anche tutte le birre associate a questi birrifici verranno eliminate."}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Annulla</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-red-600 hover:bg-red-700"
+              onClick={() => massDeleteMutation.mutate([...selectedIds])}
+              disabled={massDeleteMutation.isPending}
+            >
+              {massDeleteMutation.isPending ? (
+                <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Eliminando...</>
+              ) : (
+                <><Trash2 className="w-4 h-4 mr-2" />Elimina {selectedIds.size} record</>
               )}
             </AlertDialogAction>
           </AlertDialogFooter>
