@@ -58,6 +58,7 @@ import SearchPage from "@/pages/search";
 import ScanPage from "@/pages/scan";
 import ScanHistoryPage from "@/pages/scan-history";
 import AdminPages from "@/pages/admin-pages";
+import AdminDuplicates from "@/pages/admin-duplicates";
 import { ContattiPage, ChiSiamoPage, PrezziPage, SupportoPage } from "@/pages/static-page";
 import { MobileHeader } from "@/components/mobile-header";
 import { BottomNavigation } from "@/components/bottom-navigation";
@@ -122,6 +123,7 @@ function Router() {
           <Route path="/admin" component={AdminDashboardNew} />
           <Route path="/admin/analytics" component={AdminAnalytics} />
           <Route path="/admin/content" component={AdminContent} />
+          <Route path="/admin/duplicates" component={AdminDuplicates} />
           <Route path="/admin/moderation" component={AdminModeration} />
           <Route path="/admin/suggestions" component={AdminSuggestions} />
           <Route path="/admin/addition-requests" component={AdminAdditionRequests} />

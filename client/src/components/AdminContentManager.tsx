@@ -663,14 +663,24 @@ export default function AdminContentManager({ type }: AdminContentManagerProps) 
                 <Badge variant="secondary" className="ml-2">{searchResults.length} trovati</Badge>
               )}
             </CardTitle>
-            <Button
-              size="sm"
-              className={`${accentColor === 'blue' ? 'bg-blue-500 hover:bg-blue-600' : 'bg-amber-500 hover:bg-amber-600'} text-white`}
-              onClick={() => setCreateDialogOpen(true)}
-            >
-              <Plus className="w-4 h-4 mr-1.5" />
-              Aggiungi {singularLabel}
-            </Button>
+            <div className="flex items-center gap-2">
+              {type === 'breweries' && (
+                <Link href="/admin/duplicates">
+                  <Button size="sm" variant="outline" className="border-purple-300 text-purple-700 hover:bg-purple-50 dark:border-purple-700 dark:text-purple-400 dark:hover:bg-purple-900/20">
+                    <GitMerge className="w-4 h-4 mr-1.5" />
+                    Trova Duplicati
+                  </Button>
+                </Link>
+              )}
+              <Button
+                size="sm"
+                className={`${accentColor === 'blue' ? 'bg-blue-500 hover:bg-blue-600' : 'bg-amber-500 hover:bg-amber-600'} text-white`}
+                onClick={() => setCreateDialogOpen(true)}
+              >
+                <Plus className="w-4 h-4 mr-1.5" />
+                Aggiungi {singularLabel}
+              </Button>
+            </div>
           </div>
         </CardHeader>
         <CardContent className="space-y-4">

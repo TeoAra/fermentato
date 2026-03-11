@@ -2122,6 +2122,64 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Find duplicate breweries using pg_trgm similarity
+  app.get('/api/admin/breweries/find-duplicates', isAuthenticated, isAdmin, async (req: any, res) => {
+    try {
+      const threshold = parseFloat(req.query.threshold as string) || 0.75;
+      const country = req.query.country as string || null;
+      const limit = Math.min(parseInt(req.query.limit as string) || 100, 500);
+
+      let rows: any[];
+      try {
+        // Use pg_trgm similarity for fuzzy matching
+        const countryFilter = country ? `AND (b1.country = $3 OR b2.country = $3)` : '';
+        const params: any[] = [threshold, limit];
+        if (country) params.push(country);
+
+        const result = await pool.query(`
+          SELECT
+            b1.id as id1, b1.name as name1, b1.country as country1,
+            b1.region as region1, b1.location as location1, b1.logo_url as logo1,
+            b2.id as id2, b2.name as name2, b2.country as country2,
+            b2.region as region2, b2.location as location2, b2.logo_url as logo2,
+            ROUND(similarity(lower(b1.name), lower(b2.name))::numeric, 3) as sim,
+            (SELECT COUNT(*) FROM beers WHERE brewery_id = b1.id)::int as beers1,
+            (SELECT COUNT(*) FROM beers WHERE brewery_id = b2.id)::int as beers2
+          FROM breweries b1
+          JOIN breweries b2 ON b1.id < b2.id
+            AND similarity(lower(b1.name), lower(b2.name)) >= $1
+            ${countryFilter}
+          ORDER BY sim DESC, LEAST(b1.id, b2.id)
+          LIMIT $2
+        `, params);
+        rows = result.rows;
+      } catch (trgmErr: any) {
+        // Fallback: exact lowercase name match
+        const result = await pool.query(`
+          SELECT
+            b1.id as id1, b1.name as name1, b1.country as country1,
+            b1.region as region1, b1.location as location1, b1.logo_url as logo1,
+            b2.id as id2, b2.name as name2, b2.country as country2,
+            b2.region as region2, b2.location as location2, b2.logo_url as logo2,
+            1.0 as sim,
+            (SELECT COUNT(*) FROM beers WHERE brewery_id = b1.id)::int as beers1,
+            (SELECT COUNT(*) FROM beers WHERE brewery_id = b2.id)::int as beers2
+          FROM breweries b1
+          JOIN breweries b2 ON b1.id < b2.id
+            AND lower(b1.name) = lower(b2.name)
+          ORDER BY b1.name
+          LIMIT $1
+        `, [limit]);
+        rows = result.rows;
+      }
+
+      res.json(rows);
+    } catch (error) {
+      console.error("Find duplicates error:", error);
+      res.status(500).json({ message: "Errore nella ricerca duplicati" });
+    }
+  });
+
   // Merge two breweries — keepId survives, mergeId is deleted after migrating all data
   app.post('/api/admin/breweries/merge', isAuthenticated, isAdmin, async (req: any, res) => {
     try {
