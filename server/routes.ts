@@ -2743,14 +2743,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Admin delete beer (cleans up related tap list, bottle list, tastings)
-  app.delete("/api/admin/beers/:id", isAuthenticated, async (req: any, res) => {
+  app.delete("/api/admin/beers/:id", isAuthenticated, isAdmin, async (req: any, res) => {
     try {
-      const userId = (req.user as any).id;
-      const user = await storage.getUser(userId);
-      const effectiveRole = user?.activeRole || user?.userType;
-      if (effectiveRole !== 'admin') {
-        return res.status(403).json({ message: "Admin access required" });
-      }
       const beerId = parseInt(req.params.id);
       const beer = await storage.getBeer(beerId);
       if (!beer) {
@@ -2769,14 +2763,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Admin delete brewery (also deletes its beers and their references)
-  app.delete("/api/admin/breweries/:id", isAuthenticated, async (req: any, res) => {
+  app.delete("/api/admin/breweries/:id", isAuthenticated, isAdmin, async (req: any, res) => {
     try {
-      const userId = (req.user as any).id;
-      const user = await storage.getUser(userId);
-      const effectiveRole = user?.activeRole || user?.userType;
-      if (effectiveRole !== 'admin') {
-        return res.status(403).json({ message: "Admin access required" });
-      }
       const breweryId = parseInt(req.params.id);
       const brewery = await storage.getBrewery(breweryId);
       if (!brewery) {
@@ -2799,14 +2787,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Admin delete pub (cleans up related data)
-  app.delete("/api/admin/pubs/:id", isAuthenticated, async (req: any, res) => {
+  app.delete("/api/admin/pubs/:id", isAuthenticated, isAdmin, async (req: any, res) => {
     try {
-      const userId = (req.user as any).id;
-      const user = await storage.getUser(userId);
-      const effectiveRole = user?.activeRole || user?.userType;
-      if (effectiveRole !== 'admin') {
-        return res.status(403).json({ message: "Admin access required" });
-      }
       const pubId = parseInt(req.params.id);
       const pub = await storage.getPub(pubId);
       if (!pub) {
@@ -2963,50 +2945,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error creating pub:", error);
       res.status(500).json({ message: "Failed to create pub" });
-    }
-  });
-
-  // Update beer (admin only)
-  app.patch("/api/admin/beers/:id", isAuthenticated, async (req: any, res) => {
-    try {
-      const userId = (req.user as any).id;
-      const user = await storage.getUser(userId);
-      
-      const effectiveRole = user?.activeRole || user?.userType;
-      if (effectiveRole !== 'admin') {
-        return res.status(403).json({ message: "Admin access required" });
-      }
-
-      const beerId = parseInt(req.params.id);
-      const updates = req.body;
-      
-      const updatedBeer = await storage.updateBeer(beerId, updates);
-      res.json(updatedBeer);
-    } catch (error) {
-      console.error("Error updating beer:", error);
-      res.status(500).json({ message: "Failed to update beer" });
-    }
-  });
-
-  // Update brewery (admin only)
-  app.patch("/api/admin/breweries/:id", isAuthenticated, async (req: any, res) => {
-    try {
-      const userId = (req.user as any).id;
-      const user = await storage.getUser(userId);
-      
-      const effectiveRole = user?.activeRole || user?.userType;
-      if (effectiveRole !== 'admin') {
-        return res.status(403).json({ message: "Admin access required" });
-      }
-
-      const breweryId = parseInt(req.params.id);
-      const updates = req.body;
-      
-      const updatedBrewery = await storage.updateBrewery(breweryId, updates);
-      res.json(updatedBrewery);
-    } catch (error) {
-      console.error("Error updating brewery:", error);
-      res.status(500).json({ message: "Failed to update brewery" });
     }
   });
 

@@ -107,11 +107,11 @@ export default function AdminDashboardNew() {
     refetchInterval: 120000,
   });
 
-  const { data: allActivity = [] } = useQuery<any[]>({
+  const { data: allActivity = [], isError: activityError } = useQuery<any[]>({
     queryKey: ["/api/admin/recent-activity"],
     queryFn: async () => {
       const res = await fetch(`/api/admin/recent-activity?limit=50`, { credentials: 'include' });
-      if (!res.ok) return [];
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const data = await res.json();
       return Array.isArray(data) ? data : [];
     },
@@ -539,7 +539,9 @@ export default function AdminDashboardNew() {
           </div>
         </CardHeader>
         <CardContent>
-          {recentActivity.length === 0 ? (
+          {activityError ? (
+            <p className="text-center text-red-500 py-6">Errore nel caricamento attività</p>
+          ) : recentActivity.length === 0 ? (
             <p className="text-center text-gray-400 py-6">Nessuna attività recente</p>
           ) : (
             <div className="space-y-1">
