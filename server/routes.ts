@@ -1784,6 +1784,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           body: messageMap[type],
           url: `/pub/${pubId}`,
           type: 'tap_change',
+          icon: pub.logoUrl || undefined,
         });
       }
 
@@ -1813,6 +1814,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             body: `"${beerName}" è ora alla spina da ${pub.name}.`,
             url: `/pub/${pubId}`,
             type: 'new_beer',
+            icon: pub.logoUrl || undefined,
           });
         }
 
@@ -1844,6 +1846,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
               body: `${pub.name} ha "${beerName}" di ${breweryName} alla spina.`,
               url: `/pub/${pubId}`,
               type: 'new_beer',
+              icon: brewery?.logoUrl || undefined,
             });
           }
         }
@@ -3420,6 +3423,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             title: `Nuovo evento da ${pub.name}!`,
             body: `"${event.title}" - Non perderlo!`,
             url: `/pub/${pubId}`, type: 'event',
+            icon: pub.logoUrl || undefined,
           });
         }
       } catch (notifError) {
@@ -3579,6 +3583,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             title: `Nuovo evento da ${brewery?.name || 'birrificio'}!`,
             body: `"${event.title}" - Non perderlo!`,
             url: `/brewery/${breweryId}`, type: 'event',
+            icon: brewery?.logoUrl || undefined,
           });
         }
       } catch (notifError) {
@@ -3876,6 +3881,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             title: `L'evento "${event.title}" è iniziato!`,
             body: `${event.pubName} ti aspetta adesso!`,
             url: `/pub/${event.pubId}`, type: 'event',
+            icon: event.pubLogoUrl || undefined,
           });
         }
         await storage.markPubEventStartSent(event.id);
@@ -3897,6 +3903,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             title: `L'evento "${event.title}" è iniziato!`,
             body: `${event.breweryName} ti aspetta adesso!`,
             url: `/brewery/${event.breweryId}`, type: 'event',
+            icon: event.breweryLogoUrl || undefined,
           });
         }
         await storage.markBreweryEventStartSent(event.id);

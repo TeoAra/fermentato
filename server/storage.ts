@@ -1543,6 +1543,7 @@ export class DatabaseStorage implements IStorage {
       title: pubEvents.title,
       eventDate: pubEvents.eventDate,
       pubName: pubs.name,
+      pubLogoUrl: pubs.logoUrl,
     })
       .from(pubEvents)
       .innerJoin(pubs, eq(pubEvents.pubId, pubs.id))
@@ -1559,6 +1560,7 @@ export class DatabaseStorage implements IStorage {
       title: breweryEvents.title,
       eventDate: breweryEvents.eventDate,
       breweryName: breweries.name,
+      breweryLogoUrl: breweries.logoUrl,
     })
       .from(breweryEvents)
       .innerJoin(breweries, eq(breweryEvents.breweryId, breweries.id))

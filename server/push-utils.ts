@@ -40,7 +40,7 @@ async function deliverPush(userId: string, payload: any) {
   await Promise.allSettled(sendPromises);
 }
 
-export async function sendPushToUser(userId: string, payload: { title: string; body: string; url?: string; type?: string; tag?: string }) {
+export async function sendPushToUser(userId: string, payload: { title: string; body: string; url?: string; type?: string; tag?: string; icon?: string; image?: string }) {
   if (!vapidConfigured) return;
   try {
     const tag = payload.tag || `fermenta-${payload.type || 'general'}`;
@@ -68,7 +68,7 @@ export async function sendPushToUser(userId: string, payload: { title: string; b
   }
 }
 
-export async function sendPushToUserImmediate(userId: string, payload: { title: string; body: string; url?: string; type?: string; tag?: string }) {
+export async function sendPushToUserImmediate(userId: string, payload: { title: string; body: string; url?: string; type?: string; tag?: string; icon?: string; image?: string }) {
   if (!vapidConfigured) return;
   try {
     const tag = payload.tag || `fermenta-${payload.type || 'general'}`;

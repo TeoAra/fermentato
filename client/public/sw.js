@@ -44,8 +44,9 @@ self.addEventListener('push', (event) => {
 
   const options = {
     body: data.body || data.message || 'Nuova notifica',
-    icon: '/icons/icon-192.svg',
+    icon: data.icon || '/icons/icon-192.svg',
     badge: '/icons/icon-192.svg',
+    image: data.image || undefined,
     tag: tag,
     renotify: false,
     requireInteraction: false,
