@@ -1,0 +1,32 @@
+Ti sei fermato qua e sei andato in errore
+Let me check the admin dashboard's current system
+ quindi verifica questi passaggi:
+ 
+bella ma da ancora errore qua. ah l'utente normale non può vedere questi analytics perchè sono dati riservati per scopi personali del birrificio verificato e del pub e amministratore. i birrifici registrati e confermati hanno la spunta di birrificio verificato.
+
+Per i birrifici non voglio fare a pagamento. però vorrei che avessero già tutto questo:
+Tutto del piano Gratuito
+Profilo verificato con badge ufficiale
+Gestione catalogo birre illimitato
+Upload immagini prodotti e logo HD
+Gestione eventi e degustazioni
+Statistiche visualizzazioni e ricerche
+Risposta alle recensioni degli utenti
+Notifiche push ai seguaci del birrificio
+Analytics dettagliate (visite, birre più cercate)
+Segnalazioni e richieste dai fan
+Ricezione richieste di aggiunta birre
+Dashboard admin dedicata
+Priorità nei risultati di ricerca
+Supporto email prioritario
+
+il piano pub invece è uno solo (al momento) e deve includere tutto quanto e costare 65€ all'anno. il pulsante inizia gratis cambialo in registrati e il pulsante contatti non si vede perchè tutto bianco. È possibile avere sia pub che birrificio?
+Sì. I piani pub e birrificio sono separati e possono coesistere sullo stesso account. in questo caso invece dovrebbe essere un brewpub e quindi gestire anche qui la registrazione come se fosse un pub ma con doppia dashboard
+
+tutte le pagine devono comunque avere header e footer incluse quelle statiche linkate in footer
+
+
+se passo a pub owner con chromiumpd@gmail.com vorrei che luppolino pub fosse associato a me, al mio account in quanto mio. inoltre su prezzi e piani sarebbe da metterlo in guest home per incentivare la registrazione. poi l'attivazione del piano avvierà l'iter di registrazione pub con pagina dedicata nello stesso stile con checkout (da valutare quale) e una volta automatizzato il pagamento il pub sarà verificato automaticamente e avra tutte le sue funzioni. quindi nella schermata di login/registrazione, non ci sarà piu la spunta che se sei pub ti chiederà solo i dati, ma ti rimanderà alla pagina dedicata. se invece è un brewpub sarà necessario mettere anche una spunta per poi effettuare la ricerca da database se esiste il birrificio e se manca di crearlo con tutti i dati necessari richiesti in database. se per caso il pub scade la licenza annuale verrà ibernato, ovvero l'utente passerà solamente a utente normale e non piu con le funzioni da pub, ma il pub non sarà cancellato, rimarrà con puntatore e tutto ibernato. un po' com è yhop.
+
+io poi ho la possibilità di vedere le scadenze dei pub dalla admin dashboard e se voglio posso regalare a chi mi interessa l'abbonamento. per quello voglio che ci sia un periodo di prova di 15 giorni
+
