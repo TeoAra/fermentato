@@ -311,23 +311,27 @@ export function registerAdminRoutes(app: Express) {
 
       let updatedCount = 0;
 
+      const safeIds = ids.map(Number).filter(n => !isNaN(n) && n > 0);
+      if (safeIds.length === 0) return res.status(400).json({ message: "ids array required" });
+      const idList = safeIds.join(',');
+
       if (updates.nameStripPrefix && typeof updates.nameStripPrefix === 'string' && updates.nameStripPrefix.trim()) {
         const prefix = updates.nameStripPrefix;
         await pool.query(
-          `UPDATE beers SET name = TRIM(CASE WHEN LOWER(name) LIKE LOWER($2) || '%' THEN SUBSTRING(name FROM $3) ELSE name END) WHERE id = ANY($1::int[])`,
-          [ids, prefix, prefix.length + 1]
+          `UPDATE beers SET name = TRIM(CASE WHEN LOWER(name) LIKE $1 || '%' THEN SUBSTRING(name FROM $2::int) ELSE name END) WHERE id IN (${idList})`,
+          [prefix.toLowerCase(), prefix.length + 1]
         );
-        updatedCount = ids.length;
+        updatedCount = safeIds.length;
       }
 
       if (updates.nameFindReplace && typeof updates.nameFindReplace === 'object' && updates.nameFindReplace.find) {
         const { find, replace = '' } = updates.nameFindReplace as { find: string; replace?: string };
         if (find.trim()) {
           await pool.query(
-            `UPDATE beers SET name = TRIM(REPLACE(name, $2, $3)) WHERE id = ANY($1::int[])`,
-            [ids, find, replace]
+            `UPDATE beers SET name = TRIM(REPLACE(name, $1, $2)) WHERE id IN (${idList})`,
+            [find, replace]
           );
-          updatedCount = ids.length;
+          updatedCount = safeIds.length;
         }
       }
 
@@ -335,10 +339,10 @@ export function registerAdminRoutes(app: Express) {
       const safeUpdates = Object.fromEntries(Object.entries(updates).filter(([k]) => allowed.includes(k)));
       if (Object.keys(safeUpdates).length > 0) {
         const keys = Object.keys(safeUpdates);
-        const setClauses = keys.map((k, i) => `"${k}" = $${i + 2}`).join(', ');
-        const values = [ids, ...Object.values(safeUpdates)];
-        await pool.query(`UPDATE beers SET ${setClauses} WHERE id = ANY($1::int[])`, values);
-        updatedCount = ids.length;
+        const setClauses = keys.map((k, i) => `"${k}" = $${i + 1}`).join(', ');
+        const values = Object.values(safeUpdates);
+        await pool.query(`UPDATE beers SET ${setClauses} WHERE id IN (${idList})`, values);
+        updatedCount = safeIds.length;
       }
 
       if (updatedCount === 0) return res.status(400).json({ message: "Nessun campo valido da aggiornare" });
@@ -354,14 +358,16 @@ export function registerAdminRoutes(app: Express) {
     try {
       const { ids, updates } = req.body as { ids: number[]; updates: Record<string, any> };
       if (!Array.isArray(ids) || ids.length === 0) return res.status(400).json({ message: "ids array required" });
+      const safeIds = ids.map(Number).filter(n => !isNaN(n) && n > 0);
+      if (safeIds.length === 0) return res.status(400).json({ message: "ids array required" });
       const allowed = ['country', 'region', 'location', 'city', 'website_url'];
       const safeUpdates = Object.fromEntries(Object.entries(updates).filter(([k]) => allowed.includes(k)));
       if (Object.keys(safeUpdates).length === 0) return res.status(400).json({ message: "No valid fields to update" });
       const keys = Object.keys(safeUpdates);
-      const setClauses = keys.map((k, i) => `"${k}" = $${i + 2}`).join(', ');
-      const values = [ids, ...Object.values(safeUpdates)];
-      await pool.query(`UPDATE breweries SET ${setClauses} WHERE id = ANY($1::int[])`, values);
-      res.json({ updated: ids.length });
+      const setClauses = keys.map((k, i) => `"${k}" = $${i + 1}`).join(', ');
+      const values = Object.values(safeUpdates);
+      await pool.query(`UPDATE breweries SET ${setClauses} WHERE id IN (${safeIds.join(',')})`, values);
+      res.json({ updated: safeIds.length });
     } catch (error) {
       console.error("Mass update breweries error:", error);
       res.status(500).json({ message: "Failed to mass update breweries" });
@@ -373,14 +379,16 @@ export function registerAdminRoutes(app: Express) {
     try {
       const { ids, updates } = req.body as { ids: number[]; updates: Record<string, any> };
       if (!Array.isArray(ids) || ids.length === 0) return res.status(400).json({ message: "ids array required" });
+      const safeIds = ids.map(Number).filter(n => !isNaN(n) && n > 0);
+      if (safeIds.length === 0) return res.status(400).json({ message: "ids array required" });
       const allowed = ['city', 'region', 'country'];
       const safeUpdates = Object.fromEntries(Object.entries(updates).filter(([k]) => allowed.includes(k)));
       if (Object.keys(safeUpdates).length === 0) return res.status(400).json({ message: "No valid fields to update" });
       const keys = Object.keys(safeUpdates);
-      const setClauses = keys.map((k, i) => `"${k}" = $${i + 2}`).join(', ');
-      const values = [ids, ...Object.values(safeUpdates)];
-      await pool.query(`UPDATE pubs SET ${setClauses} WHERE id = ANY($1::int[])`, values);
-      res.json({ updated: ids.length });
+      const setClauses = keys.map((k, i) => `"${k}" = $${i + 1}`).join(', ');
+      const values = Object.values(safeUpdates);
+      await pool.query(`UPDATE pubs SET ${setClauses} WHERE id IN (${safeIds.join(',')})`, values);
+      res.json({ updated: safeIds.length });
     } catch (error) {
       console.error("Mass update pubs error:", error);
       res.status(500).json({ message: "Failed to mass update pubs" });

@@ -3,6 +3,7 @@ import { useRoute, Link } from "wouter";
 import { ArrowLeft, Clock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import Footer from "@/components/footer";
 import type { StaticPage } from "@shared/schema";
 
 const SLUG_MAP: Record<string, string> = {
@@ -89,17 +90,37 @@ function StaticPageView({ slug }: StaticPageViewProps) {
 }
 
 export function ContattiPage() {
-  return <div className="min-h-screen bg-white dark:bg-slate-950 pt-20 pb-24"><StaticPageView slug="contatti" /></div>;
+  return (
+    <div className="min-h-screen bg-white dark:bg-slate-950 pt-20">
+      <StaticPageView slug="contatti" />
+      <Footer />
+    </div>
+  );
 }
 
 export function ChiSiamoPage() {
-  return <div className="min-h-screen bg-white dark:bg-slate-950 pt-20 pb-24"><StaticPageView slug="chi-siamo" /></div>;
+  return (
+    <div className="min-h-screen bg-white dark:bg-slate-950 pt-20">
+      <StaticPageView slug="chi-siamo" />
+      <Footer />
+    </div>
+  );
 }
 
 export function PrezziPage() {
-  return <div className="min-h-screen bg-white dark:bg-slate-950 pt-20 pb-24"><StaticPageView slug="prezzi" /></div>;
+  return (
+    <div className="min-h-screen bg-white dark:bg-slate-950 pt-20">
+      <StaticPageView slug="prezzi" />
+      <Footer />
+    </div>
+  );
 }
 
 export function SupportoPage() {
-  return <div className="min-h-screen bg-white dark:bg-slate-950 pt-20 pb-24"><StaticPageView slug="supporto" /></div>;
+  return (
+    <div className="min-h-screen bg-white dark:bg-slate-950 pt-20">
+      <StaticPageView slug="supporto" />
+      <Footer />
+    </div>
+  );
 }
