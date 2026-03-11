@@ -3,7 +3,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { Beer, Search, Bell, MapPin, Home, User, LogOut, Shield, Store } from "lucide-react";
+import { Beer, Search, Bell, MapPin, Home, User, LogOut, Shield, Store, Building2, Activity } from "lucide-react";
 import type { User as UserType } from "@shared/schema";
 import { useState, useRef, useEffect } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
@@ -74,7 +74,21 @@ export default function Header() {
       requiresAuth: false
     },
     {
+      icon: Building2,
+      label: "Birrifici",
+      href: "/explore/breweries",
+      isActive: location.startsWith("/explore/breweries"),
+      requiresAuth: false
+    },
+    {
       icon: MapPin,
+      label: "Pub & Locali",
+      href: "/explore/pubs",
+      isActive: location.startsWith("/explore/pubs"),
+      requiresAuth: false
+    },
+    {
+      icon: Activity,
       label: "Attività",
       href: "/activity",
       isActive: location.startsWith("/activity"),
