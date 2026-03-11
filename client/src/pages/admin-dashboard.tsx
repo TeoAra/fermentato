@@ -30,7 +30,16 @@ import {
   CalendarDays,
   Store,
   Beer,
-  Trash2
+  Trash2,
+  Activity,
+  Clock,
+  RefreshCw,
+  FileText,
+  Flag,
+  Lightbulb,
+  ChevronRight,
+  Server,
+  Wifi
 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { it } from "date-fns/locale";
@@ -63,6 +72,7 @@ export default function AdminDashboard() {
   const [banTarget, setBanTarget] = useState<any>(null);
   const [unbanTarget, setUnbanTarget] = useState<any>(null);
   const [deleteTarget, setDeleteTarget] = useState<any>(null);
+  const [activityFilter, setActivityFilter] = useState("all");
 
   useEffect(() => {
     if (!isLoading && (!isAuthenticated || user?.userType !== "admin")) {
@@ -85,6 +95,18 @@ export default function AdminDashboard() {
   const { data: allUsers = [], isLoading: usersLoading } = useQuery<any[]>({
     queryKey: ["/api/admin/users"],
     enabled: isAuthenticated && user?.userType === "admin",
+  });
+
+  const { data: recentActivity = [], isLoading: activityLoading, refetch: refetchActivity } = useQuery<any[]>({
+    queryKey: ["/api/admin/recent-activity", activityFilter],
+    queryFn: async () => {
+      const params = activityFilter !== "all" ? `?type=${activityFilter}&limit=15` : "?limit=15";
+      const res = await fetch(`/api/admin/recent-activity${params}`);
+      if (!res.ok) throw new Error("Failed to fetch activity");
+      return res.json();
+    },
+    enabled: isAuthenticated && user?.userType === "admin",
+    refetchInterval: 60000,
   });
 
   const updateUserMutation = useMutation({
@@ -186,6 +208,150 @@ export default function AdminDashboard() {
             </CardContent>
           </Card>
         ))}
+      </div>
+
+      {/* ===== RECENT ACTIVITY + QUICK LINKS ===== */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        {/* Recent Activity */}
+        <Card className="lg:col-span-2">
+          <CardHeader className="pb-3">
+            <div className="flex items-center justify-between">
+              <CardTitle className="flex items-center gap-2 text-base">
+                <Activity className="w-4 h-4 text-amber-500" />
+                Attività Recente
+              </CardTitle>
+              <div className="flex items-center gap-2">
+                <div className="flex gap-1 flex-wrap">
+                  {[
+                    { key: "all", label: "Tutto" },
+                    { key: "user", label: "Utenti" },
+                    { key: "review", label: "Recensioni" },
+                    { key: "pub", label: "Pub" },
+                    { key: "brewery", label: "Birrifici" },
+                  ].map(({ key, label }) => (
+                    <button
+                      key={key}
+                      onClick={() => setActivityFilter(key)}
+                      className={`text-xs px-2 py-0.5 rounded-full border transition-colors ${activityFilter === key ? "bg-amber-500 text-white border-amber-500" : "border-gray-200 dark:border-gray-700 text-gray-500 hover:border-amber-400"}`}
+                    >
+                      {label}
+                    </button>
+                  ))}
+                </div>
+                <button onClick={() => refetchActivity()} className="text-gray-400 hover:text-amber-500 transition-colors" title="Aggiorna">
+                  <RefreshCw className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent className="pt-0">
+            {activityLoading ? (
+              <div className="flex items-center justify-center py-8">
+                <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-amber-500" />
+              </div>
+            ) : recentActivity.length === 0 ? (
+              <p className="text-sm text-gray-400 text-center py-6">Nessuna attività recente</p>
+            ) : (
+              <div className="space-y-1 max-h-72 overflow-y-auto">
+                {recentActivity.map((item: any, i: number) => {
+                  const IconMap: Record<string, any> = {
+                    user: Users, pub: Store, brewery: Building2, review: Star, event: CalendarDays,
+                  };
+                  const ColorMap: Record<string, string> = {
+                    user: "text-blue-500 bg-blue-50 dark:bg-blue-900/20",
+                    pub: "text-orange-500 bg-orange-50 dark:bg-orange-900/20",
+                    brewery: "text-amber-500 bg-amber-50 dark:bg-amber-900/20",
+                    review: "text-yellow-500 bg-yellow-50 dark:bg-yellow-900/20",
+                    event: "text-purple-500 bg-purple-50 dark:bg-purple-900/20",
+                  };
+                  const Icon = IconMap[item.type] || Activity;
+                  const colorClass = ColorMap[item.type] || "text-gray-500 bg-gray-50";
+                  const content = (
+                    <div key={i} className="flex items-center gap-3 p-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
+                      <div className={`w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 ${colorClass}`}>
+                        <Icon className="w-3.5 h-3.5" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-xs font-medium text-gray-700 dark:text-gray-200 truncate">{item.action}</p>
+                        <p className="text-xs text-gray-500 truncate">{item.name}{item.detail ? ` · ${item.detail}` : ""}</p>
+                      </div>
+                      <div className="flex items-center gap-1 text-xs text-gray-400 flex-shrink-0">
+                        <Clock className="w-3 h-3" />
+                        {item.time ? formatDistanceToNow(new Date(item.time), { addSuffix: true, locale: it }) : "—"}
+                      </div>
+                    </div>
+                  );
+                  return item.link ? (
+                    <Link key={i} href={item.link}>{content}</Link>
+                  ) : content;
+                })}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Quick Links + System Status */}
+        <div className="space-y-4">
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm flex items-center gap-2">
+                <ChevronRight className="w-4 h-4 text-amber-500" />
+                Accesso Rapido
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="pt-0 space-y-1">
+              {[
+                { href: "/admin", icon: BarChart3, label: "Dashboard Admin" },
+                { href: "/admin/content", icon: Database, label: "Gestione Contenuti" },
+                { href: "/admin/analytics", icon: TrendingUp, label: "Analytics" },
+                { href: "/admin/suggestions", icon: Lightbulb, label: "Suggerimenti" },
+                { href: "/admin/addition-requests", icon: Flag, label: "Richieste Aggiunta" },
+                { href: "/admin/pages", icon: FileText, label: "Pagine Statiche" },
+              ].map(({ href, icon: Icon, label }) => (
+                <Link key={href} href={href}>
+                  <div className="flex items-center gap-2.5 px-2 py-1.5 rounded-md hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors cursor-pointer group">
+                    <Icon className="w-3.5 h-3.5 text-gray-400 group-hover:text-amber-500 transition-colors" />
+                    <span className="text-sm text-gray-600 dark:text-gray-300 group-hover:text-gray-900 dark:group-hover:text-white transition-colors">{label}</span>
+                    <ChevronRight className="w-3 h-3 text-gray-300 group-hover:text-amber-500 ml-auto transition-colors" />
+                  </div>
+                </Link>
+              ))}
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm flex items-center gap-2">
+                <Server className="w-4 h-4 text-green-500" />
+                Stato Sistema
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="pt-0 space-y-2">
+              {[
+                { label: "Database", status: adminStats ? "online" : "checking", icon: Database },
+                { label: "API Server", status: "online", icon: Wifi },
+                { label: "Ultimo aggiorn.", status: adminStats?.lastUpdated ? formatDistanceToNow(new Date(adminStats.lastUpdated), { addSuffix: true, locale: it }) : "—", icon: Clock, isInfo: true },
+              ].map(({ label, status, icon: Icon, isInfo }) => (
+                <div key={label} className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Icon className="w-3.5 h-3.5 text-gray-400" />
+                    <span className="text-xs text-gray-600 dark:text-gray-300">{label}</span>
+                  </div>
+                  {isInfo ? (
+                    <span className="text-xs text-gray-400">{status}</span>
+                  ) : (
+                    <div className="flex items-center gap-1">
+                      <div className={`w-1.5 h-1.5 rounded-full ${status === "online" ? "bg-green-500" : "bg-yellow-500 animate-pulse"}`} />
+                      <span className={`text-xs font-medium ${status === "online" ? "text-green-600" : "text-yellow-600"}`}>
+                        {status === "online" ? "Online" : "Verifica..."}
+                      </span>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </CardContent>
+          </Card>
+        </div>
       </div>
 
       <Tabs defaultValue="users" className="w-full">

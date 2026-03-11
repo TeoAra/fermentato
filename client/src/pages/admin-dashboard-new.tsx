@@ -62,7 +62,7 @@ export default function AdminDashboardNew() {
 
   const translateMutation = useMutation({
     mutationFn: async (offset: number) => {
-      const res = await apiRequest('POST', `/api/admin/translate-beers?batch=10&offset=${offset}`);
+      const res = await apiRequest(`/api/admin/translate-beers?batch=10&offset=${offset}`, { method: 'POST' });
       return res.json();
     },
     onSuccess: (data) => {
