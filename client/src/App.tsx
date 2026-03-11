@@ -59,7 +59,9 @@ import ScanPage from "@/pages/scan";
 import ScanHistoryPage from "@/pages/scan-history";
 import AdminPages from "@/pages/admin-pages";
 import AdminDuplicates from "@/pages/admin-duplicates";
+import AdminSubscriptions from "@/pages/admin-subscriptions";
 import PrezziPageNew from "@/pages/prezzi";
+import AttivaPub from "@/pages/attiva-pub";
 import { ContattiPage, ChiSiamoPage, SupportoPage } from "@/pages/static-page";
 import { MobileHeader } from "@/components/mobile-header";
 import { BottomNavigation } from "@/components/bottom-navigation";
@@ -132,6 +134,7 @@ function Router() {
           <Route path="/admin/users" component={AdminDashboard} />
           <Route path="/admin/edit-pub/:id" component={AdminEditPub} />
           <Route path="/admin/pages" component={AdminPages} />
+          <Route path="/admin/subscriptions" component={AdminSubscriptions} />
           <Route path="/pub-registration" component={PubRegistration} />
           <Route path="/become-publican" component={BecomePublican} />
           <Route path="/brewery-dashboard" component={BreweryDashboard} />
@@ -148,6 +151,7 @@ function Router() {
           <Route path="/contatti" component={ContattiPage} />
           <Route path="/chi-siamo" component={ChiSiamoPage} />
           <Route path="/prezzi" component={PrezziPageNew} />
+          <Route path="/attiva-pub" component={AttivaPub} />
           <Route path="/supporto" component={SupportoPage} />
           <Route component={NotFound} />
         </Switch>

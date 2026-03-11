@@ -2,7 +2,7 @@ import { Link } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import { useState, useEffect, useMemo } from "react";
 import { Button } from "@/components/ui/button";
-import { Beer, MapPin, Heart, Store, Users, Navigation, Star, Award, Zap, ChevronRight, Building2, Search, TrendingUp, Globe, Sparkles } from "lucide-react";
+import { Beer, MapPin, Heart, Store, Users, Navigation, Star, Award, Zap, ChevronRight, Building2, Search, TrendingUp, Globe, Sparkles, CheckCircle2, Crown, Shield } from "lucide-react";
 import Footer from "@/components/footer";
 import PubCard from "@/components/pub-card";
 import BreweryCard from "@/components/brewery-card";
@@ -381,6 +381,84 @@ export default function Landing() {
               ))}
             </div>
           )}
+        </section>
+
+        {/* ===== PRICING TEASER ===== */}
+        <section>
+          <div className="text-center mb-10">
+            <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-3">Sei un pub o un birrificio?</h2>
+            <p className="text-gray-500 dark:text-gray-400 max-w-xl mx-auto">Porta la tua attività online e raggiungi migliaia di appassionati del craft beer</p>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-3xl mx-auto">
+            {/* Pub plan teaser */}
+            <div className="bg-gradient-to-br from-amber-500 to-orange-500 rounded-2xl p-6 text-white shadow-xl shadow-amber-200 dark:shadow-amber-900/30">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center">
+                  <Crown className="w-5 h-5" />
+                </div>
+                <div>
+                  <p className="font-bold text-lg leading-tight">Piano Pub Pro</p>
+                  <p className="text-white/70 text-sm">Per pub e birrerie</p>
+                </div>
+              </div>
+              <div className="flex items-end gap-1 mb-4">
+                <span className="text-4xl font-bold">€65</span>
+                <span className="text-white/70 mb-1 text-sm">/anno</span>
+              </div>
+              <div className="space-y-2 mb-5">
+                {["Taplist digitale illimitata", "Analytics e notifiche push", "QR Code + modalità TV", "Badge profilo verificato"].map(f => (
+                  <div key={f} className="flex items-center gap-2 text-sm">
+                    <CheckCircle2 className="w-4 h-4 text-white/80 flex-shrink-0" />
+                    <span className="text-white/90">{f}</span>
+                  </div>
+                ))}
+              </div>
+              <Link href="/attiva-pub">
+                <Button className="w-full bg-white text-amber-600 hover:bg-amber-50 font-bold shadow-none">
+                  <Zap className="w-4 h-4 mr-2" />
+                  Registrati
+                </Button>
+              </Link>
+            </div>
+
+            {/* Brewery plan teaser */}
+            <div className="bg-gradient-to-br from-slate-800 to-gray-900 dark:from-slate-700 dark:to-gray-800 rounded-2xl p-6 text-white shadow-xl border border-slate-700">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-10 h-10 bg-white/10 rounded-xl flex items-center justify-center">
+                  <Shield className="w-5 h-5 text-orange-400" />
+                </div>
+                <div>
+                  <p className="font-bold text-lg leading-tight">Birrificio Verificato</p>
+                  <p className="text-white/50 text-sm">Per produttori artigianali</p>
+                </div>
+              </div>
+              <div className="flex items-end gap-1 mb-4">
+                <span className="text-4xl font-bold text-orange-400">€0</span>
+                <span className="text-white/50 mb-1 text-sm">/sempre</span>
+              </div>
+              <div className="space-y-2 mb-5">
+                {["Catalogo birre illimitato", "Analytics dettagliate", "Badge verificato ufficiale", "Notifiche push ai follower"].map(f => (
+                  <div key={f} className="flex items-center gap-2 text-sm">
+                    <CheckCircle2 className="w-4 h-4 text-orange-400/80 flex-shrink-0" />
+                    <span className="text-white/80">{f}</span>
+                  </div>
+                ))}
+              </div>
+              <Link href="/prezzi">
+                <Button variant="outline" className="w-full border-white/30 text-white hover:bg-white/10 hover:text-white font-bold">
+                  <Building2 className="w-4 h-4 mr-2" />
+                  Scopri come funziona
+                </Button>
+              </Link>
+            </div>
+          </div>
+          <div className="text-center mt-6">
+            <Link href="/prezzi">
+              <Button variant="ghost" className="text-amber-600 dark:text-amber-400 font-semibold">
+                Confronta tutti i piani <ChevronRight className="w-4 h-4 ml-1" />
+              </Button>
+            </Link>
+          </div>
         </section>
 
         {/* ===== CTA ISCRIZIONE ===== */}

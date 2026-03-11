@@ -2,7 +2,7 @@ import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { Check, X, Beer, Building2, Zap, Shield, Star, MessageCircle, BarChart3, Bell, QrCode, FileText, Tv2, Users, Map, Calendar, Image, RefreshCw, Lock, Crown, Sparkles, Mail, CheckCircle2 } from "lucide-react";
+import { Check, X, Beer, Building2, Zap, Shield, Star, MessageCircle, BarChart3, Bell, QrCode, FileText, Tv2, Users, Map, Calendar, Image, RefreshCw, Lock, Crown, Sparkles, Mail, CheckCircle2, ArrowRight } from "lucide-react";
 import { SEO } from "@/components/seo";
 import Footer from "@/components/footer";
 
@@ -86,10 +86,10 @@ export default function PrezziPage() {
               </div>
               <CardContent className="p-6">
                 <Button className="w-full bg-amber-500 hover:bg-amber-600 text-white mb-6 h-11 text-base font-semibold" asChild>
-                  <a href="mailto:info@fermenta.to?subject=Abbonamento Pub Pro">
+                  <Link href="/attiva-pub">
                     <Zap className="w-4 h-4 mr-2" />
-                    Attiva il Piano Pub
-                  </a>
+                    Registrati
+                  </Link>
                 </Button>
                 <div className="space-y-2">
                   {[
@@ -310,11 +310,17 @@ export default function PrezziPage() {
           <h2 className="text-2xl font-bold mb-2">Pronto a iniziare?</h2>
           <p className="text-white/80 mb-6 max-w-md mx-auto">Registra il tuo profilo oggi. Nessuna carta di credito richiesta.</p>
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
-            <Button size="lg" className="bg-white text-amber-600 hover:bg-gray-50 font-semibold" asChild>
-              <Link href="/auth">Registrati</Link>
+            <Button size="lg" className="bg-white text-amber-600 hover:bg-gray-50 font-semibold shadow-md" asChild>
+              <Link href="/attiva-pub">
+                <ArrowRight className="w-4 h-4 mr-2" />
+                Registrati
+              </Link>
             </Button>
-            <Button size="lg" className="bg-transparent border-2 border-white text-white hover:bg-white/10 font-semibold" asChild>
-              <a href="mailto:info@fermenta.to">Contattaci</a>
+            <Button size="lg" variant="outline" className="border-2 border-white text-white hover:bg-white hover:text-amber-600 font-semibold bg-white/10" asChild>
+              <a href="mailto:info@fermenta.to">
+                <Mail className="w-4 h-4 mr-2" />
+                Contattaci
+              </a>
             </Button>
           </div>
         </div>

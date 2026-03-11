@@ -4610,6 +4610,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Pub subscription request (sends email/notification to admin)
+  app.post("/api/pub-subscription-request", async (req: any, res) => {
+    try {
+      const { pubName, ownerName, email, vatNumber, phone, city, notes } = req.body;
+      if (!pubName || !ownerName || !email) {
+        return res.status(400).json({ message: "Dati obbligatori mancanti" });
+      }
+      // Log the request for admin review
+      console.log("[PUB SUBSCRIPTION REQUEST]", { pubName, ownerName, email, vatNumber, phone, city, notes, timestamp: new Date().toISOString() });
+      res.json({ message: "Richiesta ricevuta" });
+    } catch (error) {
+      console.error("Error handling pub subscription request:", error);
+      res.status(500).json({ message: "Errore" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }

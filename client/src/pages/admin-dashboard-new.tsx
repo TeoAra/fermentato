@@ -30,7 +30,8 @@ import {
   CheckCircle2,
   SkipForward,
   Lightbulb,
-  PlusCircle
+  PlusCircle,
+  CreditCard
 } from "lucide-react";
 import { Link } from "wouter";
 import { formatDistanceToNow } from "date-fns";
@@ -355,6 +356,25 @@ export default function AdminDashboardNew() {
                   </p>
                 </div>
                 <ChevronRight className="w-5 h-5 text-gray-400 group-hover:text-teal-500 transition-colors" />
+              </div>
+            </CardContent>
+          </Card>
+        </Link>
+
+        <Link href="/admin/subscriptions">
+          <Card className="hover:shadow-lg transition-all duration-300 cursor-pointer border-l-4 border-l-emerald-500 group">
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <div className="flex items-center gap-3 mb-2">
+                    <CreditCard className="w-8 h-8 text-emerald-500" />
+                    <h3 className="text-lg font-semibold">Abbonamenti Pub</h3>
+                  </div>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">
+                    Scadenze, prove gratuite e regali
+                  </p>
+                </div>
+                <ChevronRight className="w-5 h-5 text-gray-400 group-hover:text-emerald-500 transition-colors" />
               </div>
             </CardContent>
           </Card>

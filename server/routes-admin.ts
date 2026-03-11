@@ -1451,6 +1451,166 @@ export function registerAdminRoutes(app: Express) {
     }
   });
 
+  // ======= PUB SUBSCRIPTION MANAGEMENT =======
+
+  // List all pubs with subscription info
+  app.get('/api/admin/pub-subscriptions', isAuthenticated, isAdmin, async (req, res) => {
+    try {
+      const rows = await db
+        .select({
+          id: pubs.id,
+          name: pubs.name,
+          city: pubs.city,
+          isVerified: pubs.isVerified,
+          subscriptionStatus: pubs.subscriptionStatus,
+          subscriptionExpiresAt: pubs.subscriptionExpiresAt,
+          trialEndsAt: pubs.trialEndsAt,
+          ownerId: pubs.ownerId,
+          ownerEmail: users.email,
+          ownerNickname: users.nickname,
+        })
+        .from(pubs)
+        .leftJoin(users, eq(pubs.ownerId, users.id))
+        .orderBy(desc(pubs.createdAt));
+      res.json(rows);
+    } catch (error) {
+      console.error("Error fetching pub subscriptions:", error);
+      res.status(500).json({ message: "Errore" });
+    }
+  });
+
+  // Gift/extend a pub subscription (admin only)
+  app.post('/api/admin/pubs/:id/gift-subscription', isAuthenticated, isAdmin, async (req: any, res) => {
+    try {
+      const pubId = parseInt(req.params.id);
+      const { months } = req.body;
+      const m = parseInt(months) || 12;
+
+      const [existing] = await db.select({ subscriptionExpiresAt: pubs.subscriptionExpiresAt, subscriptionStatus: pubs.subscriptionStatus })
+        .from(pubs).where(eq(pubs.id, pubId));
+
+      if (!existing) return res.status(404).json({ message: "Pub non trovato" });
+
+      const now = new Date();
+      const base = existing.subscriptionExpiresAt && new Date(existing.subscriptionExpiresAt) > now
+        ? new Date(existing.subscriptionExpiresAt)
+        : now;
+      base.setMonth(base.getMonth() + m);
+
+      await db.update(pubs).set({
+        isVerified: true,
+        subscriptionStatus: 'gifted',
+        subscriptionExpiresAt: base,
+        trialEndsAt: null,
+      }).where(eq(pubs.id, pubId));
+
+      res.json({ message: `Abbonamento regalato per ${m} mesi`, expiresAt: base });
+    } catch (error) {
+      console.error("Error gifting subscription:", error);
+      res.status(500).json({ message: "Errore" });
+    }
+  });
+
+  // Revoke a pub subscription (admin only)
+  app.post('/api/admin/pubs/:id/revoke-subscription', isAuthenticated, isAdmin, async (req: any, res) => {
+    try {
+      const pubId = parseInt(req.params.id);
+      await db.update(pubs).set({
+        isVerified: false,
+        subscriptionStatus: 'none',
+        subscriptionExpiresAt: null,
+        trialEndsAt: null,
+      }).where(eq(pubs.id, pubId));
+      res.json({ message: "Abbonamento revocato" });
+    } catch (error) {
+      console.error("Error revoking subscription:", error);
+      res.status(500).json({ message: "Errore" });
+    }
+  });
+
+  // Activate trial for a pub (pub owner or admin)
+  app.post('/api/pubs/:id/start-trial', isAuthenticated, async (req: any, res) => {
+    try {
+      const pubId = parseInt(req.params.id);
+      const userId = req.user?.id || req.user?.claims?.sub;
+      const isAdminUser = (req.user as any)?.userType === 'admin';
+
+      const [existing] = await db.select().from(pubs).where(eq(pubs.id, pubId));
+      if (!existing) return res.status(404).json({ message: "Pub non trovato" });
+
+      if (!isAdminUser && existing.ownerId !== userId) {
+        return res.status(403).json({ message: "Non autorizzato" });
+      }
+
+      // Only allow if no prior subscription
+      if (existing.subscriptionStatus !== 'none') {
+        return res.status(400).json({ message: "Il pub ha già un abbonamento o ha già usato il periodo di prova" });
+      }
+
+      const trialEnds = new Date();
+      trialEnds.setDate(trialEnds.getDate() + 15);
+
+      await db.update(pubs).set({
+        isVerified: true,
+        subscriptionStatus: 'trial',
+        trialEndsAt: trialEnds,
+      }).where(eq(pubs.id, pubId));
+
+      res.json({ message: "Periodo di prova attivato (15 giorni)", trialEndsAt: trialEnds });
+    } catch (error) {
+      console.error("Error starting trial:", error);
+      res.status(500).json({ message: "Errore" });
+    }
+  });
+
+  // Activate paid subscription (pub owner - after payment confirmation)
+  app.post('/api/pubs/:id/activate-subscription', isAuthenticated, async (req: any, res) => {
+    try {
+      const pubId = parseInt(req.params.id);
+      const userId = req.user?.id || req.user?.claims?.sub;
+      const isAdminUser = (req.user as any)?.userType === 'admin';
+
+      const [existing] = await db.select().from(pubs).where(eq(pubs.id, pubId));
+      if (!existing) return res.status(404).json({ message: "Pub non trovato" });
+
+      if (!isAdminUser && existing.ownerId !== userId) {
+        return res.status(403).json({ message: "Non autorizzato" });
+      }
+
+      const expiresAt = new Date();
+      expiresAt.setFullYear(expiresAt.getFullYear() + 1);
+
+      await db.update(pubs).set({
+        isVerified: true,
+        subscriptionStatus: 'active',
+        subscriptionExpiresAt: expiresAt,
+        trialEndsAt: null,
+      }).where(eq(pubs.id, pubId));
+
+      res.json({ message: "Abbonamento attivato per 1 anno", expiresAt });
+    } catch (error) {
+      console.error("Error activating subscription:", error);
+      res.status(500).json({ message: "Errore" });
+    }
+  });
+
+  // Update pub verify route to actually update DB
+  app.patch("/api/admin/pubs/:id/verify-and-activate", isAuthenticated, isAdmin, async (req: any, res) => {
+    try {
+      const pubId = parseInt(req.params.id);
+      const expiresAt = new Date();
+      expiresAt.setFullYear(expiresAt.getFullYear() + 1);
+      await db.update(pubs).set({
+        isVerified: true,
+        subscriptionStatus: 'active',
+        subscriptionExpiresAt: expiresAt,
+      }).where(eq(pubs.id, pubId));
+      res.json({ message: "Pub verificato e abbonamento attivato", pubId });
+    } catch (error) {
+      res.status(500).json({ message: "Errore" });
+    }
+  });
+
   // Admin scan logs
   app.get('/api/admin/scan-logs', isAuthenticated, isAdmin, async (req, res) => {
     try {

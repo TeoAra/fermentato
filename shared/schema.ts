@@ -121,6 +121,11 @@ export const pubs = pgTable("pubs", {
   vatNumber: varchar("vat_number"), // P.IVA
   businessName: varchar("business_name"),
   menuInfoBox: text("menu_info_box"),
+  // Subscription / verification
+  isVerified: boolean("is_verified").default(false),
+  subscriptionStatus: varchar("subscription_status").default("none"), // 'none' | 'trial' | 'active' | 'expired' | 'gifted'
+  subscriptionExpiresAt: timestamp("subscription_expires_at"),
+  trialEndsAt: timestamp("trial_ends_at"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
