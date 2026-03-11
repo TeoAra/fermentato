@@ -2196,19 +2196,38 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (both.length < 2) return res.status(404).json({ message: "Uno o entrambi i birrifici non trovati" });
       const keepName = both.find((r: any) => r.id === keepId)?.name;
 
+      // Check which optional columns exist (schema may differ across environments)
+      const { rows: colChecks } = await pool.query(`
+        SELECT table_name, column_name
+        FROM information_schema.columns
+        WHERE (table_name = 'user_beer_tastings' AND column_name = 'brewery_id')
+           OR (table_name = 'beers' AND column_name = 'brewery_name')
+      `);
+      const hasTastingsBreweryId = colChecks.some((r: any) => r.table_name === 'user_beer_tastings' && r.column_name === 'brewery_id');
+      const hasBeersBreweryName  = colChecks.some((r: any) => r.table_name === 'beers' && r.column_name === 'brewery_name');
+
       // Run all migrations in a transaction
       await pool.query('BEGIN');
       try {
         // 1. Move beers
-        await pool.query(
-          `UPDATE beers SET brewery_id = $1, brewery_name = $2 WHERE brewery_id = $3`,
-          [keepId, keepName, mergeId]
-        );
-        // 2. Move user_beer_tastings
-        await pool.query(
-          `UPDATE user_beer_tastings SET brewery_id = $1 WHERE brewery_id = $2`,
-          [keepId, mergeId]
-        );
+        if (hasBeersBreweryName) {
+          await pool.query(
+            `UPDATE beers SET brewery_id = $1, brewery_name = $2 WHERE brewery_id = $3`,
+            [keepId, keepName, mergeId]
+          );
+        } else {
+          await pool.query(
+            `UPDATE beers SET brewery_id = $1 WHERE brewery_id = $2`,
+            [keepId, mergeId]
+          );
+        }
+        // 2. Move user_beer_tastings (only if brewery_id column exists)
+        if (hasTastingsBreweryId) {
+          await pool.query(
+            `UPDATE user_beer_tastings SET brewery_id = $1 WHERE brewery_id = $2`,
+            [keepId, mergeId]
+          );
+        }
         // 3. Move brewery events (re-assign to kept brewery)
         await pool.query(
           `UPDATE brewery_events SET brewery_id = $1 WHERE brewery_id = $2`,
