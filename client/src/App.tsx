@@ -59,7 +59,8 @@ import ScanPage from "@/pages/scan";
 import ScanHistoryPage from "@/pages/scan-history";
 import AdminPages from "@/pages/admin-pages";
 import AdminDuplicates from "@/pages/admin-duplicates";
-import { ContattiPage, ChiSiamoPage, PrezziPage, SupportoPage } from "@/pages/static-page";
+import PrezziPageNew from "@/pages/prezzi";
+import { ContattiPage, ChiSiamoPage, SupportoPage } from "@/pages/static-page";
 import { MobileHeader } from "@/components/mobile-header";
 import { BottomNavigation } from "@/components/bottom-navigation";
 import CookieBanner from "@/components/CookieBanner";
@@ -146,7 +147,7 @@ function Router() {
           <Route path="/activity" component={Activity} />
           <Route path="/contatti" component={ContattiPage} />
           <Route path="/chi-siamo" component={ChiSiamoPage} />
-          <Route path="/prezzi" component={PrezziPage} />
+          <Route path="/prezzi" component={PrezziPageNew} />
           <Route path="/supporto" component={SupportoPage} />
           <Route component={NotFound} />
         </Switch>

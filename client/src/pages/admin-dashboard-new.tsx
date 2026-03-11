@@ -60,6 +60,8 @@ export default function AdminDashboardNew() {
   const [translateResult, setTranslateResult] = useState<{ translated: number; skipped: number; processed: number; nextOffset: number } | null>(null);
   const [translateOffset, setTranslateOffset] = useState(0);
 
+  const isAdminUser = (user as any)?.activeRole === 'admin' || (!((user as any)?.activeRole) && (user as any)?.userType === 'admin');
+
   const translateMutation = useMutation({
     mutationFn: async (offset: number) => {
       const res = await apiRequest(`/api/admin/translate-beers?batch=10&offset=${offset}`, { method: 'POST' });
@@ -73,37 +75,37 @@ export default function AdminDashboardNew() {
   
   const { data: pendingCount } = useQuery<{ count: number }>({
     queryKey: ["/api/admin/publican-requests/pending-count"],
-    enabled: isAuthenticated && (user as any)?.userType === 'admin',
+    enabled: isAuthenticated && isAdminUser,
   });
 
   const { data: breweryPendingCount } = useQuery<{ count: number }>({
     queryKey: ["/api/admin/brewery-requests/pending-count"],
-    enabled: isAuthenticated && (user as any)?.userType === 'admin',
+    enabled: isAuthenticated && isAdminUser,
   });
 
   const { data: suggestionsPendingCount } = useQuery<{ count: number }>({
     queryKey: ["/api/admin/suggestions/pending-count"],
     queryFn: () => fetch("/api/admin/suggestions/pending-count").then(r => r.json()),
-    enabled: isAuthenticated && (user as any)?.userType === 'admin',
+    enabled: isAuthenticated && isAdminUser,
     refetchInterval: 30000,
   });
 
   const { data: additionsPendingCount } = useQuery<{ count: number }>({
     queryKey: ["/api/admin/addition-requests/pending-count"],
     queryFn: () => fetch("/api/admin/addition-requests/pending-count").then(r => r.json()),
-    enabled: isAuthenticated && (user as any)?.userType === 'admin',
+    enabled: isAuthenticated && isAdminUser,
     refetchInterval: 30000,
   });
 
   const { data: adminStats } = useQuery<AdminStats>({
     queryKey: ["/api/admin/stats"],
-    enabled: isAuthenticated && (user as any)?.userType === 'admin',
+    enabled: isAuthenticated && isAdminUser,
     refetchInterval: 120000,
   });
 
   const { data: globalStats } = useQuery<GlobalStats>({
     queryKey: ["/api/stats/global"],
-    enabled: isAuthenticated && (user as any)?.userType === 'admin',
+    enabled: isAuthenticated && isAdminUser,
     refetchInterval: 120000,
   });
 
@@ -115,7 +117,7 @@ export default function AdminDashboardNew() {
       const data = await res.json();
       return Array.isArray(data) ? data : [];
     },
-    enabled: isAuthenticated && (user as any)?.userType === 'admin',
+    enabled: isAuthenticated && isAdminUser,
     staleTime: 0,
     refetchInterval: 60000,
   });
@@ -138,7 +140,7 @@ export default function AdminDashboardNew() {
     );
   }
 
-  if (!isAuthenticated || (user as any)?.userType !== 'admin') {
+  if (!isAuthenticated || !isAdminUser) {
     return null;
   }
 
