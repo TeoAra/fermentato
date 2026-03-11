@@ -3,6 +3,7 @@ import { Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
+import { Link } from "wouter";
 
 interface SearchResults {
   pubs: any[];
@@ -47,10 +48,12 @@ export default function SearchBar() {
             <div className="p-3 border-b">
               <h4 className="font-semibold text-sm text-gray-900 mb-2">Pub</h4>
               {searchResults.pubs.slice(0, 3).map((pub: any) => (
-                <div key={pub.id} className="py-2 px-2 hover:bg-gray-50 rounded cursor-pointer">
-                  <div className="font-medium">{pub.name}</div>
-                  <div className="text-sm text-gray-600">{pub.address}, {pub.city}</div>
-                </div>
+                <Link key={pub.id} href={`/pub/${pub.id}`} onClick={() => setQuery("")}>
+                  <div className="py-2 px-2 hover:bg-gray-50 rounded cursor-pointer">
+                    <div className="font-medium">{pub.name}</div>
+                    <div className="text-sm text-gray-600">{pub.address}, {pub.city}</div>
+                  </div>
+                </Link>
               ))}
             </div>
           )}
@@ -59,10 +62,12 @@ export default function SearchBar() {
             <div className="p-3 border-b">
               <h4 className="font-semibold text-sm text-gray-900 mb-2">Birrifici</h4>
               {searchResults.breweries.slice(0, 3).map((brewery: any) => (
-                <div key={brewery.id} className="py-2 px-2 hover:bg-gray-50 rounded cursor-pointer">
-                  <div className="font-medium">{brewery.name}</div>
-                  <div className="text-sm text-gray-600">{brewery.location}, {brewery.region}</div>
-                </div>
+                <Link key={brewery.id} href={`/brewery/${brewery.id}`} onClick={() => setQuery("")}>
+                  <div className="py-2 px-2 hover:bg-gray-50 rounded cursor-pointer">
+                    <div className="font-medium">{brewery.name}</div>
+                    <div className="text-sm text-gray-600">{brewery.location}, {brewery.region}</div>
+                  </div>
+                </Link>
               ))}
             </div>
           )}
@@ -71,10 +76,12 @@ export default function SearchBar() {
             <div className="p-3">
               <h4 className="font-semibold text-sm text-gray-900 mb-2">Birre</h4>
               {searchResults.beers.slice(0, 3).map((beer: any) => (
-                <div key={beer.id} className="py-2 px-2 hover:bg-gray-50 rounded cursor-pointer">
-                  <div className="font-medium">{beer.name}</div>
-                  <div className="text-sm text-gray-600">{beer.style} - {beer.abv}% ABV</div>
-                </div>
+                <Link key={beer.id} href={`/beer/${beer.id}`} onClick={() => setQuery("")}>
+                  <div className="py-2 px-2 hover:bg-gray-50 rounded cursor-pointer">
+                    <div className="font-medium">{beer.name}</div>
+                    <div className="text-sm text-gray-600">{beer.style} - {beer.abv}% ABV</div>
+                  </div>
+                </Link>
               ))}
             </div>
           )}
