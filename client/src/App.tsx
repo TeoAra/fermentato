@@ -60,6 +60,7 @@ import ScanHistoryPage from "@/pages/scan-history";
 import AdminPages from "@/pages/admin-pages";
 import AdminDuplicates from "@/pages/admin-duplicates";
 import AdminSubscriptions from "@/pages/admin-subscriptions";
+import RegistraPub from "@/pages/registra-pub";
 import PrezziPageNew from "@/pages/prezzi";
 import AttivaPub from "@/pages/attiva-pub";
 import { ContattiPage, ChiSiamoPage, SupportoPage } from "@/pages/static-page";
@@ -135,6 +136,7 @@ function Router() {
           <Route path="/admin/edit-pub/:id" component={AdminEditPub} />
           <Route path="/admin/pages" component={AdminPages} />
           <Route path="/admin/subscriptions" component={AdminSubscriptions} />
+          <Route path="/registra-pub" component={RegistraPub} />
           <Route path="/pub-registration" component={PubRegistration} />
           <Route path="/become-publican" component={BecomePublican} />
           <Route path="/brewery-dashboard" component={BreweryDashboard} />

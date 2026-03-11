@@ -86,9 +86,9 @@ export default function PrezziPage() {
               </div>
               <CardContent className="p-6">
                 <Button className="w-full bg-amber-500 hover:bg-amber-600 text-white mb-6 h-11 text-base font-semibold" asChild>
-                  <Link href="/attiva-pub">
+                  <Link href="/registra-pub">
                     <Zap className="w-4 h-4 mr-2" />
-                    Registrati
+                    Registra il tuo pub — prova gratis
                   </Link>
                 </Button>
                 <div className="space-y-2">
@@ -311,9 +311,9 @@ export default function PrezziPage() {
           <p className="text-white/80 mb-6 max-w-md mx-auto">Registra il tuo profilo oggi. Nessuna carta di credito richiesta.</p>
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
             <Button size="lg" className="bg-white text-amber-600 hover:bg-gray-50 font-semibold shadow-md" asChild>
-              <Link href="/attiva-pub">
+              <Link href="/registra-pub">
                 <ArrowRight className="w-4 h-4 mr-2" />
-                Registrati
+                Registra il tuo pub — prova gratis
               </Link>
             </Button>
             <Button size="lg" variant="outline" className="border-2 border-white text-white hover:bg-white hover:text-amber-600 font-semibold bg-white/10" asChild>

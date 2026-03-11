@@ -861,6 +861,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Cancel trial for current user's pub
+  app.post("/api/my-pub/cancel-trial", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = (req.user as any).id;
+      const [pub] = await db.select().from(pubs).where(eq(pubs.ownerId, userId));
+      if (!pub) return res.status(404).json({ message: "Nessun pub trovato" });
+      if (pub.subscriptionStatus !== 'trial') {
+        return res.status(400).json({ message: "Il pub non è in prova" });
+      }
+      await db.update(pubs).set({
+        subscriptionStatus: 'none',
+        trialEndsAt: null,
+        isVerified: false,
+      }).where(eq(pubs.id, pub.id));
+      res.json({ message: "Prova annullata" });
+    } catch (error) {
+      console.error("Error cancelling trial:", error);
+      res.status(500).json({ message: "Errore durante l'annullamento" });
+    }
+  });
+
   // Get pubs owned by current user  
   app.get("/api/my-pubs", isAuthenticated, async (req: any, res) => {
     try {

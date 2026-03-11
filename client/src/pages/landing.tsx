@@ -413,10 +413,10 @@ export default function Landing() {
                   </div>
                 ))}
               </div>
-              <Link href="/attiva-pub">
+              <Link href="/registra-pub">
                 <Button className="w-full bg-white text-amber-600 hover:bg-amber-50 font-bold shadow-none">
                   <Zap className="w-4 h-4 mr-2" />
-                  Registrati
+                  Registra il tuo pub — gratis 15 giorni
                 </Button>
               </Link>
             </div>

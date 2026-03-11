@@ -7,7 +7,7 @@ import { nanoid } from "nanoid";
 import type { Express, RequestHandler } from "express";
 import connectPg from "connect-pg-simple";
 import { db } from "./db";
-import { users, oauthAccounts, publicanRequests, breweries, breweryRequests } from "@shared/schema";
+import { users, oauthAccounts, publicanRequests, breweries, breweryRequests, pubs } from "@shared/schema";
 import { eq, and, sql } from "drizzle-orm";
 import type { User } from "@shared/schema";
 import { storage } from "./storage";
@@ -438,6 +438,150 @@ export async function setupAuth(app: Express) {
     }
   });
 
+  // Register a pub or brewpub (direct pub creation + optional trial start on email verify)
+  app.post('/api/auth/register-pub', async (req, res) => {
+    try {
+      const {
+        nickname, email, password,
+        pubName, pubAddress, pubCity, pubRegion, vatNumber, phone, description,
+        isBrewpub,
+        breweryId: existingBreweryId, breweryName, breweryLocation, breweryRegion, breweryCountry,
+        breweryVatNumber, breweryPhone, breweryDescription, breweryWebsite,
+        recaptchaToken,
+      } = req.body;
+
+      const recaptchaOk = await verifyRecaptcha(recaptchaToken);
+      if (!recaptchaOk) return res.status(400).json({ message: 'Verifica reCAPTCHA fallita. Riprova.' });
+
+      if (!nickname || nickname.trim().length < 3) return res.status(400).json({ message: 'Username: minimo 3 caratteri' });
+      if (!/^[a-zA-Z0-9_.]+$/.test(nickname.trim())) return res.status(400).json({ message: 'Username: solo lettere, numeri, punti e underscore' });
+      if (!email || !password) return res.status(400).json({ message: 'Email e password sono obbligatori' });
+      if (password.length < 8) return res.status(400).json({ message: 'La password deve essere di almeno 8 caratteri' });
+
+      const trimmedPubName = (pubName || '').trim();
+      const trimmedPubAddress = (pubAddress || '').trim();
+      const trimmedPubCity = (pubCity || '').trim();
+      if (!trimmedPubName || !trimmedPubAddress || !trimmedPubCity) {
+        return res.status(400).json({ message: 'Nome locale, indirizzo e città sono obbligatori' });
+      }
+
+      const normalizedEmail = email.toLowerCase().trim();
+      const normalizedNickname = nickname.trim();
+
+      const [existingEmail] = await db.select().from(users).where(eq(users.email, normalizedEmail));
+      if (existingEmail) return res.status(400).json({ message: 'Email già registrata' });
+
+      const [existingNick] = await db.select().from(users).where(eq(sql`lower(${users.nickname})`, normalizedNickname.toLowerCase()));
+      if (existingNick) return res.status(400).json({ message: 'Username già in uso, scegline un altro' });
+
+      const hashedPwd = await hashPassword(password);
+      const userId = nanoid();
+      const verificationToken = nanoid(32);
+      const verificationExpires = new Date(Date.now() + 24 * 60 * 60 * 1000);
+
+      await db.insert(users).values({
+        id: userId,
+        email: normalizedEmail,
+        hashedPassword: hashedPwd,
+        nickname: normalizedNickname,
+        userType: 'customer',
+        roles: ['customer'],
+        activeRole: 'customer',
+        breweryId: null,
+        isEmailVerified: false,
+        emailVerificationToken: verificationToken,
+        emailVerificationExpires: verificationExpires,
+      });
+
+      // Create pub directly in pubs table (unverified, no subscription yet)
+      await db.insert(pubs).values({
+        name: trimmedPubName,
+        address: trimmedPubAddress,
+        city: trimmedPubCity,
+        region: (pubRegion || '').trim() || trimmedPubCity,
+        phone: (phone || '').trim() || null,
+        description: (description || '').trim() || null,
+        vatNumber: (vatNumber || '').trim() || null,
+        ownerId: userId,
+        isVerified: false,
+        subscriptionStatus: 'none',
+        isActive: true,
+      });
+
+      // If brewpub: create brewery request for admin approval
+      if (isBrewpub) {
+        const trimmedBreweryName = (breweryName || '').trim();
+        if (trimmedBreweryName || existingBreweryId) {
+          await db.insert(breweryRequests).values({
+            userId,
+            breweryName: trimmedBreweryName || 'Birrificio',
+            breweryLocation: (breweryLocation || '').trim() || trimmedPubCity,
+            breweryRegion: (breweryRegion || '').trim() || null,
+            breweryCountry: (breweryCountry || '').trim() || null,
+            vatNumber: (breweryVatNumber || '').trim() || null,
+            phone: (breweryPhone || '').trim() || null,
+            email: normalizedEmail,
+            websiteUrl: (breweryWebsite || '').trim() || null,
+            description: (breweryDescription || '').trim() || null,
+            existingBreweryId: existingBreweryId ? parseInt(existingBreweryId) : null,
+            status: 'pending',
+          });
+
+          try {
+            const adminIds = await storage.getAdminUserIds();
+            for (const adminId of adminIds) {
+              await storage.createNotification({
+                userId: adminId,
+                type: 'new_brewery_request',
+                title: 'Nuova richiesta brewpub',
+                message: `${normalizedEmail} ha registrato il brewpub "${trimmedPubName}" e richiede di associare il birrificio "${trimmedBreweryName || 'esistente'}".`,
+                pubId: null,
+                beerId: null,
+                isRead: false,
+              });
+            }
+          } catch (e) { console.error('Error sending brewpub notification:', e); }
+        }
+      }
+
+      // Notify admins of new pub registration
+      try {
+        const adminIds = await storage.getAdminUserIds();
+        for (const adminId of adminIds) {
+          await storage.createNotification({
+            userId: adminId,
+            type: 'new_pub_request',
+            title: 'Nuovo pub registrato',
+            message: `${normalizedEmail} ha registrato "${trimmedPubName}" (${trimmedPubCity})${isBrewpub ? ' come brewpub' : ''}.`,
+            pubId: null,
+            beerId: null,
+            isRead: false,
+          });
+        }
+        await sendPushToAdmins({
+          title: 'Nuovo pub registrato',
+          body: `${normalizedEmail} ha registrato "${trimmedPubName}" (${trimmedPubCity}).`,
+          url: '/admin/subscriptions',
+        });
+      } catch (e) { console.error('Error sending admin notification:', e); }
+
+      try {
+        await sendVerificationEmail(normalizedEmail, verificationToken);
+      } catch (e) { console.error('Error sending verification email:', e); }
+
+      res.json({
+        pendingVerification: true,
+        email: normalizedEmail,
+        message: 'Registrazione quasi completata! Controlla la tua email e clicca sul link di conferma per avviare la tua prova gratuita di 15 giorni.',
+        pubRegistration: true,
+        isBrewpub: !!isBrewpub,
+      });
+    } catch (error) {
+      console.error('Pub registration error:', error);
+      res.status(500).json({ message: 'Errore durante la registrazione' });
+    }
+  });
+
   // Login with email/password
   app.post('/api/auth/login', async (req, res, next) => {
     const recaptchaOk = await verifyRecaptcha(req.body.recaptchaToken);
@@ -496,6 +640,19 @@ export async function setupAuth(app: Express) {
         emailVerificationToken: null,
         emailVerificationExpires: null,
       }).where(eq(users.id, user.id));
+
+      // If user has a pub with no subscription yet, start 15-day trial automatically
+      const [userPub] = await db.select().from(pubs).where(eq(pubs.ownerId, user.id));
+      if (userPub && (!userPub.subscriptionStatus || userPub.subscriptionStatus === 'none')) {
+        const trialEndsAt = new Date(Date.now() + 15 * 24 * 60 * 60 * 1000);
+        await db.update(pubs).set({
+          subscriptionStatus: 'trial',
+          trialEndsAt,
+          isVerified: true,
+        }).where(eq(pubs.id, userPub.id));
+        return res.redirect('/pub-dashboard?trial=started');
+      }
+
       res.redirect('/auth?verified=success');
     } catch (error) {
       console.error('Email verification error:', error);

@@ -687,122 +687,26 @@ export default function AuthPage() {
                     </div>
                   </div>
 
-                  {/* Pub Details - shown when isPublican is true */}
+                  {/* Pub / Brewpub → redirect to dedicated registration page */}
                   {isPublican && (
-                    <div className="space-y-4 p-4 bg-gray-50 dark:bg-gray-800/50 rounded-lg border border-gray-200 dark:border-gray-700">
-                      <h3 className="font-medium text-gray-900 dark:text-gray-100 flex items-center gap-2">
-                        <Building2 className="w-4 h-4" />
-                        Dati del Locale
-                      </h3>
-                      
-                      <FormField
-                        control={registerForm.control}
-                        name="pubName"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Nome del Locale *</FormLabel>
-                            <FormControl>
-                              <div className="relative">
-                                <Store className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                                <Input 
-                                  {...field} 
-                                  placeholder="Es. Birrificio Roma" 
-                                  className="pl-10"
-                                  data-testid="input-pub-name"
-                                />
-                              </div>
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-
-                      <FormField
-                        control={registerForm.control}
-                        name="pubAddress"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Indirizzo del Locale *</FormLabel>
-                            <FormControl>
-                              <AddressAutocomplete
-                                value={field.value}
-                                onAddressSelect={handleAddressSelect}
-                                placeholder="Cerca il tuo locale o indirizzo..."
-                              />
-                            </FormControl>
-                            <FormDescription className="text-xs">
-                              Cerca il nome del locale o l'indirizzo. Città e regione verranno compilati automaticamente.
-                            </FormDescription>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-
-                      <div className="grid grid-cols-2 gap-3">
-                        <FormField
-                          control={registerForm.control}
-                          name="vatNumber"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>P.IVA</FormLabel>
-                              <FormControl>
-                                <Input 
-                                  {...field} 
-                                  placeholder="IT12345678901" 
-                                  data-testid="input-vat-number"
-                                />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-
-                        <FormField
-                          control={registerForm.control}
-                          name="phone"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Telefono</FormLabel>
-                              <FormControl>
-                                <div className="relative">
-                                  <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                                  <Input 
-                                    {...field} 
-                                    placeholder="+39 06 1234567" 
-                                    className="pl-10"
-                                    data-testid="input-phone"
-                                  />
-                                </div>
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
+                    <div className="p-4 bg-amber-50 dark:bg-amber-900/20 rounded-lg border border-amber-200 dark:border-amber-800 space-y-3">
+                      <div className="flex items-start gap-3">
+                        <div className="p-2 bg-amber-100 dark:bg-amber-800/40 rounded-full flex-shrink-0 mt-0.5">
+                          <Store className="w-4 h-4 text-amber-600" />
+                        </div>
+                        <div>
+                          <p className="font-medium text-amber-900 dark:text-amber-100 text-sm">Registrazione pub dedicata</p>
+                          <p className="text-xs text-amber-700 dark:text-amber-300 mt-0.5">
+                            Completa la registrazione nella pagina dedicata per gestire il tuo locale su Fermenta.to.
+                          </p>
+                        </div>
                       </div>
-
-                      <FormField
-                        control={registerForm.control}
-                        name="description"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Descrizione</FormLabel>
-                            <FormControl>
-                              <Textarea 
-                                {...field} 
-                                placeholder="Racconta del tuo locale..." 
-                                className="resize-none"
-                                rows={3}
-                                data-testid="input-description"
-                              />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-
-                      <p className="text-xs text-gray-500 dark:text-gray-400">
-                        * Dopo la registrazione, la tua richiesta sarà verificata dal nostro team. Riceverai una notifica quando il tuo locale sarà approvato.
-                      </p>
+                      <ul className="text-xs text-amber-700 dark:text-amber-300 space-y-1 pl-2">
+                        <li className="flex items-center gap-1.5"><span className="text-green-600">✓</span> 15 giorni di prova gratuita</li>
+                        <li className="flex items-center gap-1.5"><span className="text-green-600">✓</span> Poi solo €65/anno (IVA inclusa)</li>
+                        <li className="flex items-center gap-1.5"><span className="text-green-600">✓</span> Puoi annullare la prova in qualsiasi momento</li>
+                        <li className="flex items-center gap-1.5"><span className="text-green-600">✓</span> Supporto brewpub (gestisci pub + birrificio)</li>
+                      </ul>
                     </div>
                   )}
 
@@ -1043,7 +947,7 @@ export default function AuthPage() {
                     </div>
                   )}
 
-                  {RECAPTCHA_SITE_KEY && (
+                  {RECAPTCHA_SITE_KEY && !isPublican && (
                     <div className="flex justify-center">
                       <ReCAPTCHA
                         ref={registerRecaptchaRef}
@@ -1056,14 +960,35 @@ export default function AuthPage() {
                     </div>
                   )}
 
-                  <Button 
-                    type="submit" 
-                    className="w-full bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700"
-                    disabled={registerMutation.isPending || (!!RECAPTCHA_SITE_KEY && !registerRecaptchaToken)}
-                    data-testid="button-register"
-                  >
-                    {registerMutation.isPending ? "Registrazione..." : isPublican ? "Invia Richiesta" : isBrewery ? "Registra Birrificio" : "Crea Account"}
-                  </Button>
+                  {isPublican ? (
+                    <Button
+                      type="button"
+                      className="w-full bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700"
+                      onClick={async () => {
+                        const valid = await registerForm.trigger(['nickname', 'email', 'password', 'confirmPassword']);
+                        if (!valid) return;
+                        const vals = registerForm.getValues();
+                        sessionStorage.setItem('pub_reg_basic', JSON.stringify({
+                          nickname: vals.nickname,
+                          email: vals.email,
+                          password: vals.password,
+                          confirmPassword: vals.confirmPassword,
+                        }));
+                        setLocation('/registra-pub');
+                      }}
+                    >
+                      Continua la registrazione del pub →
+                    </Button>
+                  ) : (
+                    <Button 
+                      type="submit" 
+                      className="w-full bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700"
+                      disabled={registerMutation.isPending || (!!RECAPTCHA_SITE_KEY && !registerRecaptchaToken)}
+                      data-testid="button-register"
+                    >
+                      {registerMutation.isPending ? "Registrazione..." : isBrewery ? "Registra Birrificio" : "Crea Account"}
+                    </Button>
+                  )}
                 </form>
               </Form>
 

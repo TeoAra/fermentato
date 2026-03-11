@@ -1,5 +1,8 @@
 import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useLocation } from "wouter";
+import { formatDistanceToNow, isAfter } from "date-fns";
+import { it } from "date-fns/locale";
 import { apiRequest } from "@/lib/queryClient";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
@@ -41,6 +44,10 @@ interface Pub {
   tiktokUrl?: string;
   openingHours?: any;
   ownerId: string;
+  subscriptionStatus?: string;
+  trialEndsAt?: string;
+  subscriptionExpiresAt?: string;
+  isVerified?: boolean;
 }
 
 interface TapItem {
@@ -109,7 +116,30 @@ interface MenuItem {
 export default function PubDashboard() {
   const { user, isAuthenticated, isLoading } = useAuth();
   const { toast } = useToast();
+  const queryClient = useQueryClient();
+  const [, setLocation] = useLocation();
   const [selectedPub, setSelectedPub] = useState<Pub | null>(null);
+  const [showTrialWelcome, setShowTrialWelcome] = useState(false);
+
+  // Show welcome message if redirected from email verification
+  useEffect(() => {
+    if (typeof window !== 'undefined' && window.location.search.includes('trial=started')) {
+      setShowTrialWelcome(true);
+      window.history.replaceState({}, '', '/pub-dashboard');
+    }
+  }, []);
+
+  const cancelTrialMutation = useMutation({
+    mutationFn: () => apiRequest("/api/my-pub/cancel-trial", { method: "POST" }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/my-pubs"] });
+      toast({ title: "Prova annullata", description: "La tua prova gratuita è stata annullata. Puoi riattivarla in qualsiasi momento." });
+      setSelectedPub(null);
+    },
+    onError: (error: any) => {
+      toast({ title: "Errore", description: error.message || "Impossibile annullare la prova", variant: "destructive" });
+    },
+  });
 
   // Check authentication
   useEffect(() => {
@@ -276,6 +306,97 @@ export default function PubDashboard() {
           </CardContent>
         </Card>
       )}
+
+      {/* Trial welcome banner */}
+      {showTrialWelcome && (
+        <Card className="border-green-200 dark:border-green-800 bg-green-50 dark:bg-green-900/20 mb-2">
+          <CardContent className="p-4">
+            <div className="flex items-start gap-3">
+              <span className="text-2xl">🎉</span>
+              <div className="flex-1">
+                <p className="font-semibold text-green-800 dark:text-green-200">Email verificata! La tua prova gratuita è iniziata.</p>
+                <p className="text-sm text-green-700 dark:text-green-300 mt-0.5">Hai 15 giorni per esplorare tutte le funzionalità del tuo pub su Fermenta.to. Buona gestione!</p>
+              </div>
+              <button onClick={() => setShowTrialWelcome(false)} className="text-green-600 hover:text-green-800 text-lg leading-none">×</button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Subscription status banner */}
+      {pubs.length > 0 && (() => {
+        const pub = selectedPub || pubs[0];
+        const status = pub.subscriptionStatus || 'none';
+        const now = new Date();
+        if (status === 'trial' && pub.trialEndsAt) {
+          const trialEnd = new Date(pub.trialEndsAt);
+          const isExpired = !isAfter(trialEnd, now);
+          if (isExpired) {
+            return (
+              <Card className="border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-900/20">
+                <CardContent className="p-4">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                    <div>
+                      <p className="font-semibold text-red-800 dark:text-red-200">⏱️ La tua prova gratuita è terminata</p>
+                      <p className="text-sm text-red-700 dark:text-red-300">Abbonati per continuare a gestire il tuo pub su Fermenta.to.</p>
+                    </div>
+                    <Button className="bg-amber-500 hover:bg-amber-600 text-white shrink-0" onClick={() => setLocation('/attiva-pub')}>
+                      Abbonati — €65/anno
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            );
+          }
+          const daysLeft = Math.ceil((trialEnd.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+          return (
+            <Card className={`border-amber-200 dark:border-amber-800 ${daysLeft <= 5 ? 'bg-orange-50 dark:bg-orange-900/20' : 'bg-amber-50 dark:bg-amber-900/20'}`}>
+              <CardContent className="p-4">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                  <div>
+                    <p className="font-semibold text-amber-900 dark:text-amber-100">
+                      {daysLeft <= 5 ? '⚠️' : '⏳'} Prova gratuita in corso — {daysLeft} {daysLeft === 1 ? 'giorno' : 'giorni'} rimasti
+                    </p>
+                    <p className="text-sm text-amber-700 dark:text-amber-300">
+                      Scade il {new Date(pub.trialEndsAt).toLocaleDateString('it-IT')}. Abbonati per continuare senza interruzioni.
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-2 shrink-0">
+                    <Button variant="outline" size="sm" className="text-xs text-red-600 border-red-200 hover:bg-red-50 dark:border-red-800 dark:hover:bg-red-900/20" onClick={() => {
+                      if (window.confirm("Sei sicuro di voler annullare la prova gratuita? Il tuo pub verrà disattivato.")) {
+                        cancelTrialMutation.mutate();
+                      }
+                    }} disabled={cancelTrialMutation.isPending}>
+                      Annulla prova
+                    </Button>
+                    <Button className="bg-amber-500 hover:bg-amber-600 text-white" size="sm" onClick={() => setLocation('/attiva-pub')}>
+                      Abbonati — €65/anno
+                    </Button>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          );
+        }
+        if (status === 'none') {
+          return (
+            <Card className="border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50">
+              <CardContent className="p-4">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                  <div>
+                    <p className="font-semibold text-gray-800 dark:text-gray-200">🔒 Attiva il tuo abbonamento</p>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">Abbonati per rendere visibile il tuo pub su Fermenta.to.</p>
+                  </div>
+                  <Button className="bg-amber-500 hover:bg-amber-600 text-white shrink-0" onClick={() => setLocation('/attiva-pub')}>
+                    Abbonati — €65/anno
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          );
+        }
+        return null;
+      })()}
 
       {selectedPub && (
         <div className="space-y-6">
