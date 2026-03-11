@@ -1,12 +1,25 @@
 import { useState, useCallback, useEffect, useRef } from "react";
 import { useLocation } from "wouter";
-import { Scan, Beer, Building2, ArrowLeft, Search, X, Lock, LogIn, PlusCircle, History } from "lucide-react";
+import { Scan, Beer, Building2, ArrowLeft, Search, X, Lock, LogIn, PlusCircle, History, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import LabelScanner from "@/components/LabelScanner";
 import AdditionRequestModal from "@/components/AdditionRequestModal";
 import { Link } from "wouter";
 import { useAuth } from "@/hooks/useAuth";
+
+interface ImageSearchResult {
+  id: number;
+  name: string;
+  style?: string;
+  abv?: string;
+  logoUrl?: string;
+  imageUrl?: string;
+  breweryId?: number;
+  breweryName?: string;
+  breweryLogoUrl?: string;
+  similarity: number;
+}
 
 interface BeerResult {
   id: number;
@@ -91,6 +104,8 @@ export default function ScanPage() {
   const [usedQuery, setUsedQuery] = useState("");
   const [additionModalOpen, setAdditionModalOpen] = useState(false);
   const [isSearching, setIsSearching] = useState(false);
+  const [imageSimilarResults, setImageSimilarResults] = useState<ImageSearchResult[]>([]);
+  const [isImageSearching, setIsImageSearching] = useState(false);
 
   // Scan log tracking
   const currentImageRef = useRef<string | undefined>(undefined);
@@ -166,6 +181,24 @@ export default function ScanPage() {
     }
   }, [detectedSource, createScanLog]);
 
+  const runImageSearch = useCallback(async (imageDataUrl: string) => {
+    setIsImageSearching(true);
+    try {
+      const res = await fetch("/api/scan/image-search", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ image: imageDataUrl, limit: 5 }),
+      });
+      if (!res.ok) return;
+      const data = await res.json();
+      if (data.available && data.results?.length > 0) {
+        setImageSimilarResults(data.results.filter((r: ImageSearchResult) => r.similarity >= 0.6));
+      }
+    } catch { /* service not available, ignore silently */ }
+    finally { setIsImageSearching(false); }
+  }, []);
+
   const handleScanResult = useCallback((text: string, source: "ocr" | "barcode", imageDataUrl?: string, engine?: string) => {
     currentImageRef.current = imageDataUrl;
     currentEngineRef.current = engine;
@@ -175,8 +208,10 @@ export default function ScanPage() {
     setDetectedSource(source);
     setSearchQuery(text);
     setManualQuery(text);
+    setImageSimilarResults([]);
     runSearch(text, source);
-  }, [runSearch]);
+    if (imageDataUrl) runImageSearch(imageDataUrl);
+  }, [runSearch, runImageSearch]);
 
   // Re-run search when manual query changes (debounced)
   useEffect(() => {
@@ -192,6 +227,7 @@ export default function ScanPage() {
     setManualQuery("");
     setBeers([]);
     setBreweries([]);
+    setImageSimilarResults([]);
   };
 
   const handleCloseScanner = () => navigate("/");
@@ -470,7 +506,49 @@ export default function ScanPage() {
                 </div>
               </section>
             )}
+
           </>
+        )}
+
+        {/* Visual Similarity Results — shown regardless of OCR result */}
+        {(scanState === "results" || scanState === "notfound") && (imageSimilarResults.length > 0 || isImageSearching) && (
+          <section className="mt-4 px-4">
+            <h2 className="flex items-center gap-2 text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-3">
+              <Sparkles className="h-3.5 w-3.5 text-purple-500" />
+              Per somiglianza visiva
+              {isImageSearching && <span className="w-3 h-3 rounded-full border-2 border-purple-400 border-t-transparent animate-spin" />}
+            </h2>
+            <div className="space-y-2">
+              {imageSimilarResults.map(beer => (
+                <div
+                  key={`img-${beer.id}`}
+                  onClick={() => { saveFeedback(beer.id, undefined); navigate(`/beer/${beer.id}`); }}
+                  className="flex items-center gap-3 bg-white dark:bg-gray-900 rounded-2xl p-3 shadow-sm border border-purple-100 dark:border-purple-900/40 active:scale-[0.98] transition-transform cursor-pointer hover:border-purple-300 dark:hover:border-purple-700"
+                >
+                  <div className="w-12 h-12 rounded-xl bg-amber-50 dark:bg-amber-900/20 flex items-center justify-center overflow-hidden shrink-0">
+                    {(beer.logoUrl || beer.imageUrl) ? (
+                      <img src={beer.logoUrl || beer.imageUrl} alt={beer.name} className="w-full h-full object-cover rounded-xl" />
+                    ) : (
+                      <Beer className="h-6 w-6 text-amber-400" />
+                    )}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-semibold text-gray-900 dark:text-white truncate text-sm">{beer.name}</p>
+                    {beer.breweryName && (
+                      <p className="text-xs text-amber-700 dark:text-amber-400 truncate">{beer.breweryName}</p>
+                    )}
+                    <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
+                      {beer.style && <Badge variant="outline" className="text-xs py-0 px-1.5">{beer.style}</Badge>}
+                      {beer.abv && <span className="text-xs text-amber-600 dark:text-amber-400 font-medium">{beer.abv}% ABV</span>}
+                      <span className="text-xs text-purple-500 dark:text-purple-400 font-medium">
+                        {Math.round(beer.similarity * 100)}% simile
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </section>
         )}
       </div>
 

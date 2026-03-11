@@ -3963,6 +3963,91 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   }, 60 * 1000);
 
+  // CLIP image-similarity search endpoint
+  // Calls the local CLIP service (127.0.0.1:5002) to embed the photo,
+  // then uses pgvector cosine similarity to find matching beers.
+  const CLIP_SERVICE_URL = "http://127.0.0.1:5002";
+  const CLIP_TIMEOUT_MS = 8000;
+
+  async function callClipEmbed(imageDataUrl: string): Promise<number[] | null> {
+    try {
+      const base64 = imageDataUrl.replace(/^data:image\/[a-z]+;base64,/, "");
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), CLIP_TIMEOUT_MS);
+      const resp = await fetch(`${CLIP_SERVICE_URL}/embed`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ image_b64: base64 }),
+        signal: controller.signal,
+      });
+      clearTimeout(timer);
+      if (!resp.ok) return null;
+      const data = await resp.json() as { embedding: number[] };
+      return data.embedding ?? null;
+    } catch {
+      return null;
+    }
+  }
+
+  app.post("/api/scan/image-search", isAuthenticated, async (req: any, res) => {
+    try {
+      const { image, limit = 5 } = req.body as { image?: string; limit?: number };
+      if (!image || !image.startsWith("data:image")) {
+        return res.status(400).json({ error: "image required" });
+      }
+
+      const base64 = image.replace(/^data:image\/[a-z]+;base64,/, "");
+      const maxLimit = Math.min(Number(limit), 10);
+
+      // Call CLIP service /search endpoint (handles embed + similarity in Python/numpy)
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), CLIP_TIMEOUT_MS);
+      let clipResp: Response;
+      try {
+        clipResp = await fetch(`${CLIP_SERVICE_URL}/search`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ image_b64: base64, limit: maxLimit, min_similarity: 0.5 }),
+          signal: controller.signal,
+        });
+        clearTimeout(timer);
+      } catch {
+        clearTimeout(timer);
+        return res.json({ available: false, results: [] });
+      }
+
+      if (!clipResp.ok) return res.json({ available: false, results: [] });
+      const clipData = await clipResp.json() as { results: Array<{ id: number; similarity: number }>; indexed: number };
+
+      if (!clipData.results?.length) {
+        return res.json({ available: true, results: [], indexed: clipData.indexed ?? 0 });
+      }
+
+      // Fetch full beer details for matched IDs
+      const ids = clipData.results.map((r: any) => r.id);
+      const simMap = Object.fromEntries(clipData.results.map((r: any) => [r.id, r.similarity]));
+
+      const beerRows = await db.execute(sql`
+        SELECT b.id, b.name, b.style, b.abv,
+               b.logo_url as "logoUrl", b.image_url as "imageUrl",
+               br.id as "breweryId", br.name as "breweryName", br.logo_url as "breweryLogoUrl"
+        FROM beers b
+        LEFT JOIN breweries br ON br.id = b.brewery_id
+        WHERE b.id = ANY(${ids}::int[])
+      `);
+
+      const results = (beerRows.rows as any[]).map(b => ({
+        ...b,
+        similarity: simMap[b.id] ?? 0,
+      })).sort((a, b) => b.similarity - a.similarity);
+
+      res.json({ available: true, results, indexed: clipData.indexed ?? 0 });
+    } catch (error) {
+      console.error("Image search error:", error);
+      res.json({ available: false, results: [] });
+    }
+  });
+
   // OCR endpoint — Gemini Vision as primary, Tesseract + OCR.space as fallback.
   app.post("/api/scan/ocr", isAuthenticated, async (req, res) => {
     try {
