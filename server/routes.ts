@@ -2051,6 +2051,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const beerId = parseInt(req.params.id);
       const updates = req.body;
       const beer = await storage.updateBeer(beerId, updates);
+      if (updates.logoUrl || updates.imageUrl || updates.logo_url || updates.image_url) {
+        clipIndexBeer(beerId, updates.logoUrl || updates.logo_url || updates.imageUrl || updates.image_url);
+      }
       res.json(beer);
     } catch (error) {
       console.error("Error updating beer:", error);
@@ -3274,6 +3277,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(403).json({ message: "Non puoi modificare questa birra" });
       }
       const updated = await storage.updateBeer(beerId, req.body);
+      const newImg = req.body.logoUrl || req.body.logo_url || req.body.imageUrl || req.body.image_url;
+      if (newImg) clipIndexBeer(beerId, newImg);
       res.json(updated);
     } catch (error) {
       console.error("Error updating beer:", error);
@@ -3968,6 +3973,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // then uses pgvector cosine similarity to find matching beers.
   const CLIP_SERVICE_URL = "http://127.0.0.1:5002";
   const CLIP_TIMEOUT_MS = 8000;
+
+  /** Fire-and-forget: indicizza una birra nel CLIP service in background. */
+  function clipIndexBeer(beerId: number, imageUrl: string | null | undefined): void {
+    if (!imageUrl || !imageUrl.startsWith("http")) return;
+    fetch(`${CLIP_SERVICE_URL}/index`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id: beerId, url: imageUrl }),
+      signal: AbortSignal.timeout(30000),
+    }).catch(() => {});
+  }
 
   async function callClipEmbed(imageDataUrl: string): Promise<number[] | null> {
     try {
