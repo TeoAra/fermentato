@@ -11,7 +11,7 @@ import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
-import { Search, Plus, Trash2, BeerIcon, Building2, MapPin, ExternalLink, Loader2, ChevronDown, CheckSquare, Square, Edit2, RefreshCw, X } from "lucide-react";
+import { Search, Plus, Trash2, BeerIcon, Building2, MapPin, ExternalLink, Loader2, ChevronDown, CheckSquare, Square, Edit2, RefreshCw, X, GitMerge } from "lucide-react";
 import { Link } from "wouter";
 import { GlutenFreeSmallBadge, AlcoholFreeBadge } from "@/components/beer-badges";
 import { ImageUpload } from "@/components/image-upload";
@@ -523,6 +523,9 @@ export default function AdminContentManager({ type }: AdminContentManagerProps) 
   const [massEditOpen, setMassEditOpen] = useState(false);
   const [massDeleteOpen, setMassDeleteOpen] = useState(false);
   const [massFields, setMassFields] = useState<Record<string, string>>({});
+  // Merge state (breweries only)
+  const [mergeOpen, setMergeOpen] = useState(false);
+  const [keepId, setKeepId] = useState<number | null>(null);
 
   const toggleSelect = (id: number) => {
     setSelectedIds(prev => {
@@ -622,6 +625,20 @@ export default function AdminContentManager({ type }: AdminContentManagerProps) 
     onSuccess: (data: any) =>
       toast({ title: "Nomi sincronizzati", description: `${data?.updated ?? 0} birre aggiornate con il nome "${data?.breweryName}"` }),
     onError: () => toast({ title: "Errore", description: "Impossibile sincronizzare i nomi", variant: "destructive" }),
+  });
+
+  const mergeMutation = useMutation({
+    mutationFn: async ({ keepId, mergeId }: { keepId: number; mergeId: number }) =>
+      await apiRequest('/api/admin/breweries/merge', { method: "POST" }, { keepId, mergeId }),
+    onSuccess: (data: any) => {
+      toast({ title: "Merge completato", description: `"${data?.keepName}" ora ha ${data?.beersMoved} birre. Il duplicato è stato eliminato.` });
+      setMergeOpen(false);
+      setKeepId(null);
+      clearSelection();
+      if (searchQuery) runSearch(searchQuery);
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/stats"] });
+    },
+    onError: () => toast({ title: "Errore merge", description: "Impossibile completare il merge dei birrifici", variant: "destructive" }),
   });
 
   const getItemLink = (item: any) => {
@@ -828,6 +845,21 @@ export default function AdminContentManager({ type }: AdminContentManagerProps) 
                 {selectedIds.size} {type === 'beers' ? 'birre' : type === 'breweries' ? 'birrifici' : 'pub'} selezionati
               </div>
               <div className="flex gap-2">
+                {type === 'breweries' && selectedIds.size === 2 && (
+                  <Button
+                    size="sm"
+                    variant="secondary"
+                    className="h-8 bg-purple-500 hover:bg-purple-600 border-purple-400 text-white text-xs"
+                    onClick={() => {
+                      const [first] = Array.from(selectedIds);
+                      setKeepId(first);
+                      setMergeOpen(true);
+                    }}
+                  >
+                    <GitMerge className="w-3.5 h-3.5 mr-1" />
+                    Merge
+                  </Button>
+                )}
                 <Button
                   size="sm"
                   variant="secondary"
@@ -1068,6 +1100,86 @@ export default function AdminContentManager({ type }: AdminContentManagerProps) 
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* ── Merge Breweries Dialog ── */}
+      {mergeOpen && type === 'breweries' && (() => {
+        const ids = Array.from(selectedIds);
+        const brewA = searchResults.find((r: any) => r.id === ids[0]);
+        const brewB = searchResults.find((r: any) => r.id === ids[1]);
+        if (!brewA || !brewB) return null;
+        const mergeId = keepId === ids[0] ? ids[1] : ids[0];
+        const keptBrew = keepId === ids[0] ? brewA : brewB;
+        const deletedBrew = keepId === ids[0] ? brewB : brewA;
+        return (
+          <Dialog open={mergeOpen} onOpenChange={(open) => { if (!open) setMergeOpen(false); }}>
+            <DialogContent className="max-w-lg">
+              <DialogHeader>
+                <DialogTitle className="flex items-center gap-2">
+                  <GitMerge className="w-5 h-5 text-purple-500" />
+                  Merge birrifici duplicati
+                </DialogTitle>
+              </DialogHeader>
+
+              <p className="text-sm text-gray-600 dark:text-gray-400">
+                Scegli quale birrificio <strong>mantenere</strong>. Tutte le birre, eventi e dati dell'altro verranno migrati su quello mantenuto, poi il duplicato sarà eliminato.
+              </p>
+
+              <div className="flex gap-3 mt-2">
+                {[brewA, brewB].map((brew: any) => {
+                  const isKept = keepId === brew.id;
+                  return (
+                    <button
+                      key={brew.id}
+                      onClick={() => setKeepId(brew.id)}
+                      className={`flex-1 p-3 rounded-xl border-2 text-left transition-all ${isKept ? 'border-purple-500 bg-purple-50 dark:bg-purple-900/20' : 'border-gray-200 dark:border-gray-700 hover:border-gray-300'}`}
+                    >
+                      <div className="flex items-center gap-2 mb-1">
+                        {brew.logo_url ? (
+                          <img src={brew.logo_url} alt={brew.name} className="w-8 h-8 rounded-full object-cover border" />
+                        ) : (
+                          <div className="w-8 h-8 rounded-full bg-amber-100 dark:bg-amber-900/40 flex items-center justify-center">
+                            <Building2 className="w-4 h-4 text-amber-500" />
+                          </div>
+                        )}
+                        <span className={`text-sm font-semibold ${isKept ? 'text-purple-700 dark:text-purple-300' : ''}`}>{brew.name}</span>
+                      </div>
+                      <div className="text-xs text-gray-500 space-y-0.5">
+                        {brew.country && <div>🌍 {brew.country}</div>}
+                        {brew.region && <div>📍 {brew.region}</div>}
+                        <div>🍺 {brew.beer_count ?? '?'} birre</div>
+                      </div>
+                      <div className={`mt-2 text-xs font-medium ${isKept ? 'text-purple-600' : 'text-red-500'}`}>
+                        {isKept ? '✓ Mantieni questo' : '✗ Elimina questo'}
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+
+              <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-3 text-xs text-red-700 dark:text-red-400 mt-1">
+                <strong>⚠ Attenzione:</strong> "{deletedBrew?.name}" (ID {mergeId}) sarà <strong>eliminato definitivamente</strong>. Le sue birre saranno spostate su "{keptBrew?.name}".
+              </div>
+
+              <div className="flex gap-2 mt-1">
+                <Button variant="outline" className="flex-1" onClick={() => setMergeOpen(false)}>
+                  Annulla
+                </Button>
+                <Button
+                  className="flex-1 bg-purple-600 hover:bg-purple-700 text-white"
+                  disabled={mergeMutation.isPending || !keepId}
+                  onClick={() => mergeMutation.mutate({ keepId: keepId!, mergeId })}
+                >
+                  {mergeMutation.isPending ? (
+                    <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Merge in corso...</>
+                  ) : (
+                    <><GitMerge className="w-4 h-4 mr-2" />Conferma merge</>
+                  )}
+                </Button>
+              </div>
+            </DialogContent>
+          </Dialog>
+        );
+      })()}
     </>
   );
 }

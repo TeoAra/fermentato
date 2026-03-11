@@ -2087,6 +2087,74 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Merge two breweries — keepId survives, mergeId is deleted after migrating all data
+  app.post('/api/admin/breweries/merge', isAuthenticated, isAdmin, async (req: any, res) => {
+    try {
+      const { keepId, mergeId } = req.body as { keepId: number; mergeId: number };
+      if (!keepId || !mergeId || keepId === mergeId) {
+        return res.status(400).json({ message: "keepId e mergeId devono essere diversi e validi" });
+      }
+
+      // Verify both breweries exist
+      const { rows: both } = await pool.query(
+        `SELECT id, name FROM breweries WHERE id = ANY($1::int[])`,
+        [[keepId, mergeId]]
+      );
+      if (both.length < 2) return res.status(404).json({ message: "Uno o entrambi i birrifici non trovati" });
+      const keepName = both.find((r: any) => r.id === keepId)?.name;
+
+      // Run all migrations in a transaction
+      await pool.query('BEGIN');
+      try {
+        // 1. Move beers
+        await pool.query(
+          `UPDATE beers SET brewery_id = $1, brewery_name = $2 WHERE brewery_id = $3`,
+          [keepId, keepName, mergeId]
+        );
+        // 2. Move user_beer_tastings
+        await pool.query(
+          `UPDATE user_beer_tastings SET brewery_id = $1 WHERE brewery_id = $2`,
+          [keepId, mergeId]
+        );
+        // 3. Move brewery events (re-assign to kept brewery)
+        await pool.query(
+          `UPDATE brewery_events SET brewery_id = $1 WHERE brewery_id = $2`,
+          [keepId, mergeId]
+        );
+        // 4. Move addition_requests
+        await pool.query(
+          `UPDATE addition_requests SET existing_brewery_id = $1 WHERE existing_brewery_id = $2`,
+          [keepId, mergeId]
+        );
+        // 5. Move brewery owner users (only if keepId has no owner, else set null)
+        await pool.query(
+          `UPDATE users SET brewery_id = $1 WHERE brewery_id = $2`,
+          [keepId, mergeId]
+        );
+        // 6. Delete the merged brewery (scan_logs.chosen_brewery_id is set null on cascade)
+        await pool.query(`DELETE FROM breweries WHERE id = $1`, [mergeId]);
+        await pool.query('COMMIT');
+      } catch (txErr) {
+        await pool.query('ROLLBACK');
+        throw txErr;
+      }
+
+      const beerCount = await pool.query(
+        `SELECT COUNT(*) FROM beers WHERE brewery_id = $1`, [keepId]
+      );
+      res.json({
+        success: true,
+        keepId,
+        mergeId,
+        keepName,
+        beersMoved: parseInt(beerCount.rows[0].count),
+      });
+    } catch (error) {
+      console.error("Brewery merge error:", error);
+      res.status(500).json({ message: "Errore durante il merge dei birrifici" });
+    }
+  });
+
   // Sync brewery_name field in beers for a specific brewery
   app.post('/api/admin/breweries/:id/sync-beer-names', isAuthenticated, isAdmin, async (req: any, res) => {
     try {
