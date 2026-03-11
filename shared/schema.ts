@@ -141,6 +141,7 @@ export const beers = pgTable("beers", {
   isBottled: boolean("is_bottled").default(false), // Se disponibile in bottiglia
   isGlutenFree: boolean("is_gluten_free").default(false),
   isAlcoholFree: boolean("is_alcohol_free").default(false),
+  barcode: varchar("barcode"), // EAN/UPC barcode
   createdAt: timestamp("created_at").defaultNow(),
 });
 

@@ -4236,6 +4236,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Enrich a beer with barcode and/or OFF image URL (from scanner)
+  app.post("/api/beers/:id/enrich-barcode", isAuthenticated, async (req: any, res) => {
+    try {
+      const beerId = parseInt(req.params.id);
+      const { barcode, offImageUrl } = req.body;
+      if (!barcode && !offImageUrl) return res.json({ updated: false });
+
+      const [beer] = await db.select().from(beers).where(eq(beers.id, beerId)).limit(1);
+      if (!beer) return res.status(404).json({ error: "Beer not found" });
+
+      const updates: Record<string, unknown> = {};
+      if (barcode && !beer.barcode) updates.barcode = barcode;
+      if (offImageUrl && !beer.logoUrl && !beer.imageUrl) updates.logoUrl = offImageUrl;
+
+      if (Object.keys(updates).length > 0) {
+        await db.update(beers).set(updates).where(eq(beers.id, beerId));
+        return res.json({ updated: true, fields: Object.keys(updates) });
+      }
+      res.json({ updated: false, reason: "already set" });
+    } catch (e: any) {
+      res.status(500).json({ error: e.message });
+    }
+  });
+
   // Save user feedback for a scan log (chosen result + correctness)
   app.patch("/api/scan-logs/:id/feedback", isAuthenticated, async (req: any, res) => {
     try {

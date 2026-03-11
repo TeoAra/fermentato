@@ -7,6 +7,7 @@ type ScanMode = "idle" | "scanning" | "processing" | "done" | "error";
 interface LabelScannerProps {
   onResult: (text: string, source: "ocr" | "barcode", imageDataUrl?: string, engine?: string) => void;
   onClose: () => void;
+  onBarcodeFound?: (ean: string, offImageUrl: string | null) => void;
 }
 
 // Prepare image for OCR: keep COLOR (PaddleOCR v3 works better with color),
@@ -126,7 +127,7 @@ const OCR_STEPS = [
 // Viewfinder box as % of the camera display area (used for both rendering and crop)
 const VF = { x: 0.05, y: 0.10, w: 0.90, h: 0.70 };
 
-export default function LabelScanner({ onResult, onClose }: LabelScannerProps) {
+export default function LabelScanner({ onResult, onClose, onBarcodeFound }: LabelScannerProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
@@ -218,7 +219,12 @@ export default function LabelScanner({ onResult, onClose }: LabelScannerProps) {
       if (data.status === 1 && data.product) {
         const p = data.product;
         const name = [p.product_name, p.brands].filter(Boolean).join(" ").trim();
-        if (name) { onResult(name, "barcode", undefined, "barcode"); return; }
+        if (name) {
+          const offImageUrl = p.image_front_url || p.image_url || null;
+          onBarcodeFound?.(code, offImageUrl);
+          onResult(name, "barcode", undefined, "barcode");
+          return;
+        }
       }
     } catch {}
     setStatusMsg("Barcode non trovato — analizzo l'etichetta...");

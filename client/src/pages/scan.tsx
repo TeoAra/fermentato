@@ -113,6 +113,10 @@ export default function ScanPage() {
   const currentOcrTextRef = useRef<string>("");
   const currentLogIdRef = useRef<number | null>(null);
 
+  // Barcode data from Open Food Facts (set when barcode detected)
+  const pendingEanRef = useRef<string | null>(null);
+  const pendingOffImageUrlRef = useRef<string | null>(null);
+
   const createScanLog = useCallback(async (
     ocrText: string,
     source: string,
@@ -153,6 +157,20 @@ export default function ScanPage() {
         body: JSON.stringify({ chosenBeerId, chosenBreweryId }),
       });
     } catch { /* ignore */ }
+  }, []);
+
+  const enrichBarcodeData = useCallback(async (beerId: number) => {
+    const ean = pendingEanRef.current;
+    const offImageUrl = pendingOffImageUrlRef.current;
+    if (!ean && !offImageUrl) return;
+    try {
+      await fetch(`/api/beers/${beerId}/enrich-barcode`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ barcode: ean, offImageUrl }),
+      });
+    } catch { /* fire-and-forget */ }
   }, []);
 
   const runSearch = useCallback(async (query: string, source?: string) => {
@@ -199,11 +217,20 @@ export default function ScanPage() {
     finally { setIsImageSearching(false); }
   }, []);
 
+  const handleBarcodeFound = useCallback((ean: string, offImageUrl: string | null) => {
+    pendingEanRef.current = ean;
+    pendingOffImageUrlRef.current = offImageUrl;
+  }, []);
+
   const handleScanResult = useCallback((text: string, source: "ocr" | "barcode", imageDataUrl?: string, engine?: string) => {
     currentImageRef.current = imageDataUrl;
     currentEngineRef.current = engine;
     currentOcrTextRef.current = text;
     currentLogIdRef.current = null;
+    if (source !== "barcode") {
+      pendingEanRef.current = null;
+      pendingOffImageUrlRef.current = null;
+    }
     setDetectedText(text);
     setDetectedSource(source);
     setSearchQuery(text);
@@ -309,7 +336,7 @@ export default function ScanPage() {
   }
 
   if (scanState === "camera") {
-    return <LabelScanner onResult={handleScanResult} onClose={handleCloseScanner} />;
+    return <LabelScanner onResult={handleScanResult} onClose={handleCloseScanner} onBarcodeFound={handleBarcodeFound} />;
   }
 
   return (
@@ -442,7 +469,7 @@ export default function ScanPage() {
                   {beers.map(beer => (
                     <div
                       key={beer.id}
-                      onClick={() => { saveFeedback(beer.id, undefined); navigate(`/beer/${beer.id}`); }}
+                      onClick={() => { saveFeedback(beer.id, undefined); enrichBarcodeData(beer.id); navigate(`/beer/${beer.id}`); }}
                       className="flex items-center gap-3 bg-white dark:bg-gray-900 rounded-2xl p-3 shadow-sm border border-gray-100 dark:border-gray-800 active:scale-[0.98] transition-transform cursor-pointer hover:border-amber-200 dark:hover:border-amber-900"
                     >
                       <div className="w-12 h-12 rounded-xl bg-amber-50 dark:bg-amber-900/20 flex items-center justify-center overflow-hidden shrink-0">
@@ -522,7 +549,7 @@ export default function ScanPage() {
               {imageSimilarResults.map(beer => (
                 <div
                   key={`img-${beer.id}`}
-                  onClick={() => { saveFeedback(beer.id, undefined); navigate(`/beer/${beer.id}`); }}
+                  onClick={() => { saveFeedback(beer.id, undefined); enrichBarcodeData(beer.id); navigate(`/beer/${beer.id}`); }}
                   className="flex items-center gap-3 bg-white dark:bg-gray-900 rounded-2xl p-3 shadow-sm border border-purple-100 dark:border-purple-900/40 active:scale-[0.98] transition-transform cursor-pointer hover:border-purple-300 dark:hover:border-purple-700"
                 >
                   <div className="w-12 h-12 rounded-xl bg-amber-50 dark:bg-amber-900/20 flex items-center justify-center overflow-hidden shrink-0">
