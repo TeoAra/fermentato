@@ -1100,10 +1100,13 @@ export default function AdminContentManager({ type }: AdminContentManagerProps) 
               disabled={massEditMutation.isPending || Object.values(massFields).every(v => !v)}
               onClick={() => {
                 // Build updates: convert flat massFields into the correct shape for the API
+                // Filter out empty strings so we don't overwrite fields with blanks
                 const { nameFindText, nameFindReplaceWith, nameStripPrefix, ...rest } = massFields;
-                const updates: Record<string, any> = { ...rest };
-                if (nameStripPrefix) updates.nameStripPrefix = nameStripPrefix;
-                if (nameFindText) updates.nameFindReplace = { find: nameFindText, replace: nameFindReplaceWith ?? "" };
+                const updates: Record<string, any> = Object.fromEntries(
+                  Object.entries(rest).filter(([, v]) => v !== "" && v !== undefined)
+                );
+                if (nameStripPrefix?.trim()) updates.nameStripPrefix = nameStripPrefix;
+                if (nameFindText?.trim()) updates.nameFindReplace = { find: nameFindText, replace: nameFindReplaceWith ?? "" };
                 massEditMutation.mutate({ ids: [...selectedIds], updates });
               }}
             >

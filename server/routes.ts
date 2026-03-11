@@ -2156,17 +2156,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
           `UPDATE brewery_events SET brewery_id = $1 WHERE brewery_id = $2`,
           [keepId, mergeId]
         );
-        // 4. Move addition_requests
+        // 4. Move addition_requests (column is brewery_id, not existing_brewery_id)
         await pool.query(
-          `UPDATE addition_requests SET existing_brewery_id = $1 WHERE existing_brewery_id = $2`,
+          `UPDATE addition_requests SET brewery_id = $1 WHERE brewery_id = $2`,
           [keepId, mergeId]
         );
-        // 5. Move brewery owner users (only if keepId has no owner, else set null)
+        // 4b. Move brewery_requests (this table uses existing_brewery_id)
+        await pool.query(
+          `UPDATE brewery_requests SET existing_brewery_id = $1 WHERE existing_brewery_id = $2`,
+          [keepId, mergeId]
+        );
+        // 5. Move brewery owner users
         await pool.query(
           `UPDATE users SET brewery_id = $1 WHERE brewery_id = $2`,
           [keepId, mergeId]
         );
-        // 6. Delete the merged brewery (scan_logs.chosen_brewery_id is set null on cascade)
+        // 6. Null-out notifications brewery_id (no cascade on this column — must clear manually)
+        await pool.query(
+          `UPDATE notifications SET brewery_id = NULL WHERE brewery_id = $1`,
+          [mergeId]
+        );
+        // 7. Delete the merged brewery (scan_logs.chosen_brewery_id is set null on cascade)
         await pool.query(`DELETE FROM breweries WHERE id = $1`, [mergeId]);
         await pool.query('COMMIT');
       } catch (txErr) {
@@ -2935,6 +2945,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       await db.delete(bottleList).where(eq(bottleList.beerId, beerId));
       await db.delete(userBeerTastings).where(eq(userBeerTastings.beerId, beerId));
       await db.delete(favorites).where(and(eq(favorites.itemType, 'beer'), eq(favorites.itemId, beerId)));
+      // Null-out notifications (FK with NO ACTION — must clear manually)
+      await db.execute(sql`UPDATE notifications SET beer_id = NULL WHERE beer_id = ${beerId}`);
       await storage.deleteBeer(beerId);
       res.json({ message: `Birra "${beer.name}" eliminata con successo` });
     } catch (error) {
@@ -2957,8 +2969,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
         await db.delete(bottleList).where(eq(bottleList.beerId, beer.id));
         await db.delete(userBeerTastings).where(eq(userBeerTastings.beerId, beer.id));
         await db.delete(favorites).where(and(eq(favorites.itemType, 'beer'), eq(favorites.itemId, beer.id)));
+        await db.execute(sql`UPDATE notifications SET beer_id = NULL WHERE beer_id = ${beer.id}`);
         await storage.deleteBeer(beer.id);
       }
+      // Clear brewery FK references before deleting (all NO ACTION constraints)
+      await db.execute(sql`UPDATE notifications SET brewery_id = NULL WHERE brewery_id = ${breweryId}`);
+      await db.execute(sql`UPDATE users SET brewery_id = NULL WHERE brewery_id = ${breweryId}`);
+      await db.execute(sql`UPDATE brewery_requests SET existing_brewery_id = NULL WHERE existing_brewery_id = ${breweryId}`);
+      await db.execute(sql`UPDATE addition_requests SET brewery_id = NULL WHERE brewery_id = ${breweryId}`);
+      await db.delete(favorites).where(and(eq(favorites.itemType, 'brewery'), eq(favorites.itemId, breweryId)));
       await storage.deleteBrewery(breweryId);
       res.json({ message: `Birrificio "${brewery.name}" e ${breweryBeers.length} birre eliminate con successo` });
     } catch (error) {
@@ -2985,6 +3004,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       await db.delete(pubSizes).where(eq(pubSizes.pubId, pubId));
       await db.delete(favorites).where(and(eq(favorites.itemType, 'pub'), eq(favorites.itemId, pubId)));
       await db.delete(pubEvents).where(eq(pubEvents.pubId, pubId));
+      await db.delete(ratings).where(eq(ratings.pubId, pubId));
+      // Null-out FK references with NO ACTION
+      await db.execute(sql`UPDATE notifications SET pub_id = NULL WHERE pub_id = ${pubId}`);
+      await db.execute(sql`UPDATE user_beer_tastings SET pub_id = NULL WHERE pub_id = ${pubId}`);
       await storage.deletePub(pubId);
       res.json({ message: `Pub "${pub.name}" eliminato con successo` });
     } catch (error) {
