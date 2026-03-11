@@ -143,7 +143,7 @@ export default function Header() {
       {/* Integrated Desktop Header with Navigation */}
       <header className="sticky top-0 z-50 bg-white dark:bg-slate-900 border-b border-gray-100 dark:border-slate-800 shadow-sm hidden lg:block">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-12 gap-4 items-center h-[72px]">
+          <div className="grid grid-cols-12 gap-2 items-center h-[72px]">
             {/* Logo - Fixed Width */}
             <div className="col-span-2">
               <Link href="/" data-testid="logo-desktop">
@@ -153,9 +153,9 @@ export default function Header() {
             </div>
 
             {/* Main Navigation */}
-            <div className="col-span-5">
+            <div className="col-span-6">
               <nav className="flex items-center justify-center">
-                <div className="flex items-center space-x-1 bg-gray-100/60 dark:bg-slate-800/60 rounded-2xl p-1">
+                <div className="flex items-center gap-0.5 bg-gray-100/60 dark:bg-slate-800/60 rounded-2xl p-1">
                   {navItems.map((item) => {
                     const Icon = item.icon;
                     const isActive = item.isActive;
@@ -166,12 +166,12 @@ export default function Header() {
                           <a
                             href={item.href}
                             data-testid={`nav-desktop-${item.label.toLowerCase().replace(' ', '-')}`}
-                            className={`relative flex items-center space-x-2 px-4 py-2 rounded-xl text-sm font-medium transition-all duration-300 ${isActive ? 'text-white shadow-md bg-gradient-to-r from-amber-500 to-amber-600' : 'text-gray-600 dark:text-gray-400 hover:text-amber-600 dark:hover:text-amber-400 hover:bg-white/60 dark:hover:bg-slate-700/60'}`}
+                            className={`relative flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-medium transition-all duration-300 whitespace-nowrap ${isActive ? 'text-white shadow-md bg-gradient-to-r from-amber-500 to-amber-600' : 'text-gray-600 dark:text-gray-400 hover:text-amber-600 dark:hover:text-amber-400 hover:bg-white/60 dark:hover:bg-slate-700/60'}`}
                           >
-                            <div className="relative">
-                              <Icon className="h-4 w-4" />
+                            <div className="relative flex-shrink-0">
+                              <Icon className="h-3.5 w-3.5" />
                               {item.badge && item.badge > 0 && (
-                                <div className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center min-w-[20px] shadow-lg">
+                                <div className="absolute -top-2 -right-2 bg-red-500 text-white text-[10px] rounded-full h-4 w-4 flex items-center justify-center min-w-[16px] shadow-lg">
                                   {item.badge && item.badge > 99 ? '99+' : item.badge}
                                 </div>
                               )}
@@ -182,12 +182,12 @@ export default function Header() {
                           <Link href={item.href}>
                             <div
                               data-testid={`nav-desktop-${item.label.toLowerCase().replace(' ', '-')}`}
-                              className={`relative flex items-center space-x-2 px-4 py-2 rounded-xl text-sm font-medium transition-all duration-300 cursor-pointer ${isActive ? 'text-white shadow-md bg-gradient-to-r from-amber-500 to-amber-600' : 'text-gray-600 dark:text-gray-400 hover:text-amber-600 dark:hover:text-amber-400 hover:bg-white/60 dark:hover:bg-slate-700/60'}`}
+                              className={`relative flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-medium transition-all duration-300 cursor-pointer whitespace-nowrap ${isActive ? 'text-white shadow-md bg-gradient-to-r from-amber-500 to-amber-600' : 'text-gray-600 dark:text-gray-400 hover:text-amber-600 dark:hover:text-amber-400 hover:bg-white/60 dark:hover:bg-slate-700/60'}`}
                             >
-                              <div className="relative">
-                                <Icon className="h-4 w-4" />
+                              <div className="relative flex-shrink-0">
+                                <Icon className="h-3.5 w-3.5" />
                                 {item.badge && item.badge > 0 && (
-                                  <div className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center min-w-[20px] shadow-lg">
+                                  <div className="absolute -top-2 -right-2 bg-red-500 text-white text-[10px] rounded-full h-4 w-4 flex items-center justify-center min-w-[16px] shadow-lg">
                                     {item.badge && item.badge > 99 ? '99+' : item.badge}
                                   </div>
                                 )}
@@ -204,7 +204,7 @@ export default function Header() {
             </div>
 
             {/* Search Bar */}
-            <div className="col-span-3" ref={searchRef}>
+            <div className="col-span-2" ref={searchRef}>
               <div className="relative max-w-xs ml-auto">
                 <form onSubmit={handleSearch} className="relative">
                   <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
@@ -217,7 +217,7 @@ export default function Header() {
                       setShowResults(e.target.value.length > 2);
                     }}
                     onFocus={() => setShowResults(searchQuery.length > 2)}
-                    className="pl-10 pr-28 bg-white/60 dark:bg-slate-800/60 border-gray-200 dark:border-slate-700"
+                    className="pl-9 pr-20 bg-white/60 dark:bg-slate-800/60 border-gray-200 dark:border-slate-700 text-sm"
                     data-testid="search-input-desktop"
                   />
                   <Link href={searchQuery.trim() ? `/search?q=${encodeURIComponent(searchQuery.trim())}` : "/search"}>
