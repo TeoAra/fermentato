@@ -964,16 +964,16 @@ export default function AuthPage() {
                     <Button
                       type="button"
                       className="w-full bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700"
-                      onClick={async () => {
-                        const valid = await registerForm.trigger(['nickname', 'email', 'password', 'confirmPassword']);
-                        if (!valid) return;
+                      onClick={() => {
                         const vals = registerForm.getValues();
-                        sessionStorage.setItem('pub_reg_basic', JSON.stringify({
-                          nickname: vals.nickname,
-                          email: vals.email,
-                          password: vals.password,
-                          confirmPassword: vals.confirmPassword,
-                        }));
+                        if (vals.nickname || vals.email || vals.password) {
+                          sessionStorage.setItem('pub_reg_basic', JSON.stringify({
+                            nickname: vals.nickname,
+                            email: vals.email,
+                            password: vals.password,
+                            confirmPassword: vals.confirmPassword,
+                          }));
+                        }
                         setLocation('/registra-pub');
                       }}
                     >
