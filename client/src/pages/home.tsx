@@ -198,7 +198,7 @@ export default function Home() {
                 <div className="p-2 bg-gradient-to-r from-blue-500 to-indigo-600 rounded-xl mr-3">
                   <Store className="h-6 w-6 text-white" />
                 </div>
-                I Tuoi Pub
+                Il Tuo Pub
               </h2>
               {(!Array.isArray(myPubs) || myPubs.length === 0) && (
                 <Link href="/registra-pub">

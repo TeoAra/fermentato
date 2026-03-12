@@ -108,18 +108,19 @@ export default function AdminSubscriptions() {
 
   return (
     <div className="container mx-auto px-4 py-6 max-w-6xl space-y-6">
-      <div className="flex items-center gap-4">
+      <div className="flex flex-wrap items-center gap-3">
         <Link href="/admin">
-          <Button variant="outline" size="sm">
+          <Button variant="outline" size="sm" className="shrink-0">
             <ArrowLeft className="w-4 h-4 mr-2" />
-            Dashboard Admin
+            <span className="hidden sm:inline">Dashboard Admin</span>
+            <span className="sm:hidden">Admin</span>
           </Button>
         </Link>
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
-          <CreditCard className="w-6 h-6 text-emerald-500" />
-          Abbonamenti Pub
+        <h1 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white flex items-center gap-2 flex-1 min-w-0">
+          <CreditCard className="w-5 h-5 sm:w-6 sm:h-6 text-emerald-500 shrink-0" />
+          <span className="truncate">Abbonamenti Pub</span>
         </h1>
-        <Button variant="ghost" size="sm" onClick={() => refetch()} className="ml-auto">
+        <Button variant="ghost" size="sm" onClick={() => refetch()} className="shrink-0">
           <RefreshCw className="w-4 h-4" />
         </Button>
       </div>
