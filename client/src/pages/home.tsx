@@ -391,7 +391,7 @@ export default function Home() {
                 </div>
                 Stili più Amati
               </h2>
-              <Link href="/explore/breweries">
+              <Link href="/explore/beers">
                 <Button variant="ghost" size="sm" className="text-amber-600 hover:text-amber-700 dark:text-amber-400 font-semibold text-sm">Esplora →</Button>
               </Link>
             </div>

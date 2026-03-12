@@ -246,6 +246,38 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Browse beers by exact style (case-insensitive)
+  app.get("/api/beers/by-style", async (req, res) => {
+    try {
+      const style = (req.query.style as string)?.trim();
+      if (!style) return res.status(400).json({ message: "style param required" });
+      const limit = Math.min(100, parseInt(req.query.limit as string) || 60);
+      const offset = parseInt(req.query.offset as string) || 0;
+      const rows = await db
+        .select({
+          id: beers.id,
+          name: beers.name,
+          style: beers.style,
+          abv: beers.abv,
+          ibu: beers.ibu,
+          imageUrl: beers.imageUrl,
+          breweryId: beers.breweryId,
+          breweryName: breweries.name,
+          breweryLogoUrl: breweries.logoUrl,
+        })
+        .from(beers)
+        .leftJoin(breweries, eq(beers.breweryId, breweries.id))
+        .where(sql`lower(${beers.style}) = lower(${style})`)
+        .orderBy(beers.name)
+        .limit(limit)
+        .offset(offset);
+      res.json(rows);
+    } catch (error) {
+      console.error("Error fetching beers by style:", error);
+      res.status(500).json({ message: "Failed to fetch beers by style" });
+    }
+  });
+
   // Get real search suggestions (popular styles, top breweries, top cities)
   app.get("/api/search/suggestions", async (req, res) => {
     try {
