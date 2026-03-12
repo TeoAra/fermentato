@@ -1,10 +1,6 @@
-import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "wouter";
-import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { MapPin, Beer, Building } from "lucide-react";
-import { GlutenFreeSmallBadge, AlcoholFreeBadge } from "@/components/beer-badges";
+import { MapPin, Beer, Building2, Search, ArrowRight } from "lucide-react";
 
 interface SearchResult {
   pubs: any[];
@@ -26,97 +22,152 @@ export default function SearchResults({ query, onClose }: SearchResultsProps) {
 
   if (!query || query.length < 3) return null;
 
+  const container = "absolute top-full right-0 mt-2 z-50 w-[480px] max-w-[calc(100vw-1rem)] max-h-[70vh] overflow-y-auto bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-gray-100 dark:border-slate-700 overflow-hidden";
+
   if (isLoading) {
     return (
-      <Card className="absolute top-full left-0 right-0 mt-1 z-50 max-h-96 overflow-y-auto">
-        <CardContent className="p-4">
-          <div className="text-center text-gray-500">Cercando...</div>
-        </CardContent>
-      </Card>
+      <div className={container}>
+        <div className="p-6 flex items-center gap-3 text-gray-500 dark:text-slate-400">
+          <div className="w-5 h-5 border-2 border-amber-400 border-t-transparent rounded-full animate-spin" />
+          <span className="text-sm">Ricerca in corso...</span>
+        </div>
+      </div>
     );
   }
 
   const hasResults = results && (
-    (results.pubs && results.pubs.length > 0) || 
-    (results.breweries && results.breweries.length > 0) || 
-    (results.beers && results.beers.length > 0)
+    (results.pubs?.length > 0) ||
+    (results.breweries?.length > 0) ||
+    (results.beers?.length > 0)
   );
 
   if (!hasResults) {
     return (
-      <Card className="absolute top-full left-0 right-0 mt-1 z-50">
-        <CardContent className="p-4">
-          <div className="text-center text-gray-500">Nessun risultato per "{query}"</div>
-        </CardContent>
-      </Card>
+      <div className={container}>
+        <div className="p-6 text-center">
+          <Search className="w-8 h-8 text-gray-300 dark:text-slate-600 mx-auto mb-2" />
+          <p className="text-sm font-medium text-gray-500 dark:text-slate-400">Nessun risultato per</p>
+          <p className="text-sm font-bold text-gray-800 dark:text-white mt-0.5">"{query}"</p>
+        </div>
+      </div>
     );
   }
 
   return (
-    <Card className="absolute top-full left-0 right-0 mt-1 z-50 max-h-96 overflow-y-auto">
-      <CardContent className="p-4 space-y-4">
-        {/* Pub Results */}
-        {results.pubs && results.pubs.slice(0, 8).map((pub) => (
-          <Link key={`pub-${pub.id}`} href={`/pub/${pub.id}`}>
-            <div
-              className="flex items-center gap-3 p-2 hover:bg-gray-50 dark:hover:bg-gray-800 rounded-lg cursor-pointer"
-              onClick={onClose}
-            >
-              <MapPin className="h-4 w-4 text-orange-600 flex-shrink-0" />
-              <div className="flex-1 min-w-0">
-                <div className="font-medium text-sm truncate">{pub.name}</div>
-                <div className="text-xs text-gray-500 truncate">{pub.address}</div>
-              </div>
-              <Badge variant="secondary" className="text-xs">Pub</Badge>
-            </div>
-          </Link>
-        ))}
+    <div className={container}>
+      {/* Pub Results */}
+      {results.pubs && results.pubs.length > 0 && (
+        <section>
+          <div className="px-4 pt-3 pb-1">
+            <span className="text-[10px] font-bold uppercase tracking-widest text-gray-400 dark:text-slate-500">Pub & Locali</span>
+          </div>
+          <ul>
+            {results.pubs.slice(0, 4).map((pub) => (
+              <li key={`pub-${pub.id}`}>
+                <Link href={`/pub/${pub.id}`}>
+                  <div className="flex items-center gap-3 px-4 py-2.5 hover:bg-amber-50 dark:hover:bg-slate-800 transition-colors cursor-pointer group" onClick={onClose}>
+                    <div className="w-9 h-9 rounded-xl bg-orange-100 dark:bg-orange-900/30 flex items-center justify-center flex-shrink-0">
+                      {pub.imageUrl ? (
+                        <img src={pub.imageUrl} alt="" className="w-9 h-9 rounded-xl object-cover" />
+                      ) : (
+                        <MapPin className="w-4 h-4 text-orange-500" />
+                      )}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-semibold text-gray-900 dark:text-white truncate group-hover:text-amber-600 dark:group-hover:text-amber-400 transition-colors">{pub.name}</p>
+                      {pub.address && <p className="text-xs text-gray-500 dark:text-slate-400 truncate">{pub.address}</p>}
+                    </div>
+                    <span className="flex-shrink-0 text-[10px] font-bold uppercase tracking-wide text-orange-500 bg-orange-50 dark:bg-orange-900/20 px-2 py-0.5 rounded-full">Pub</span>
+                  </div>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
 
-        {/* Brewery Results */}
-        {results.breweries && results.breweries.slice(0, 5).map((brewery) => (
-          <Link key={`brewery-${brewery.id}`} href={`/brewery/${brewery.id}`}>
-            <div
-              className="flex items-center gap-3 p-2 hover:bg-gray-50 dark:hover:bg-gray-800 rounded-lg cursor-pointer"
-              onClick={onClose}
-            >
-              <Building className="h-4 w-4 text-orange-600 flex-shrink-0" />
-              <div className="flex-1 min-w-0">
-                <div className="font-medium text-sm truncate">{brewery.name}</div>
-                <div className="text-xs text-gray-500 truncate">{brewery.location}</div>
-              </div>
-              <Badge variant="outline" className="text-xs">Birrificio</Badge>
-            </div>
-          </Link>
-        ))}
+      {/* Brewery Results */}
+      {results.breweries && results.breweries.length > 0 && (
+        <section>
+          {results.pubs?.length > 0 && <div className="border-t border-gray-100 dark:border-slate-800 mx-4" />}
+          <div className="px-4 pt-3 pb-1">
+            <span className="text-[10px] font-bold uppercase tracking-widest text-gray-400 dark:text-slate-500">Birrifici</span>
+          </div>
+          <ul>
+            {results.breweries.slice(0, 4).map((brewery) => (
+              <li key={`brewery-${brewery.id}`}>
+                <Link href={`/brewery/${brewery.id}`}>
+                  <div className="flex items-center gap-3 px-4 py-2.5 hover:bg-amber-50 dark:hover:bg-slate-800 transition-colors cursor-pointer group" onClick={onClose}>
+                    <div className="w-9 h-9 rounded-xl flex-shrink-0 overflow-hidden bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center">
+                      {brewery.logoUrl ? (
+                        <img src={brewery.logoUrl} alt="" className="w-9 h-9 object-cover" />
+                      ) : (
+                        <Building2 className="w-4 h-4 text-amber-500" />
+                      )}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-semibold text-gray-900 dark:text-white truncate group-hover:text-amber-600 dark:group-hover:text-amber-400 transition-colors">{brewery.name}</p>
+                      {brewery.location && <p className="text-xs text-gray-500 dark:text-slate-400 truncate">{brewery.location}</p>}
+                    </div>
+                    <span className="flex-shrink-0 text-[10px] font-bold uppercase tracking-wide text-amber-600 bg-amber-50 dark:bg-amber-900/20 px-2 py-0.5 rounded-full">Birrificio</span>
+                  </div>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
 
-        {/* Beer Results */}
-        {results.beers && results.beers.slice(0, 5).map((beer) => (
-          <Link key={`beer-${beer.id}`} href={`/beer/${beer.id}`}>
-            <div
-              className="flex items-center gap-3 p-2 hover:bg-gray-50 dark:hover:bg-gray-800 rounded-lg cursor-pointer"
-              onClick={onClose}
-            >
-              <Beer className="h-4 w-4 text-orange-600 flex-shrink-0" />
-              <div className="flex-1 min-w-0">
-                <div className="font-medium text-sm truncate">{beer.name}</div>
-                {(beer.brewery?.name || beer.breweryName) && (
-                  <div className="text-xs text-gray-600 dark:text-gray-300 truncate">{beer.brewery?.name || beer.breweryName}</div>
-                )}
-                <div className="flex items-center gap-1.5 flex-wrap">
-                  <span className="text-xs text-gray-500">{beer.style} • {beer.abv}%</span>
-                  {beer.isGlutenFree && (
-                    <GlutenFreeSmallBadge size={11} />
-                  )}
-                  {beer.isAlcoholFree && (
-                    <AlcoholFreeBadge size={10} />
-                  )}
-                </div>
-              </div>
-              <Badge variant="outline" className="text-xs">Birra</Badge>
-            </div>
-          </Link>
-        ))}
-      </CardContent>
-    </Card>
+      {/* Beer Results */}
+      {results.beers && results.beers.length > 0 && (
+        <section>
+          {(results.pubs?.length > 0 || results.breweries?.length > 0) && <div className="border-t border-gray-100 dark:border-slate-800 mx-4" />}
+          <div className="px-4 pt-3 pb-1">
+            <span className="text-[10px] font-bold uppercase tracking-widest text-gray-400 dark:text-slate-500">Birre</span>
+          </div>
+          <ul>
+            {results.beers.slice(0, 5).map((beer) => (
+              <li key={`beer-${beer.id}`}>
+                <Link href={`/beer/${beer.id}`}>
+                  <div className="flex items-center gap-3 px-4 py-2.5 hover:bg-amber-50 dark:hover:bg-slate-800 transition-colors cursor-pointer group" onClick={onClose}>
+                    <div className="w-9 h-9 rounded-xl flex-shrink-0 overflow-hidden bg-yellow-50 dark:bg-yellow-900/20 flex items-center justify-center">
+                      {beer.imageUrl ? (
+                        <img src={beer.imageUrl} alt="" className="w-9 h-9 object-cover" />
+                      ) : (
+                        <Beer className="w-4 h-4 text-yellow-500" />
+                      )}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-semibold text-gray-900 dark:text-white truncate group-hover:text-amber-600 dark:group-hover:text-amber-400 transition-colors">{beer.name}</p>
+                      <p className="text-xs text-gray-500 dark:text-slate-400 truncate">
+                        {beer.brewery?.name || beer.breweryName}
+                        {(beer.style || beer.abv) && (
+                          <span className="text-gray-400 dark:text-slate-500">
+                            {beer.brewery?.name || beer.breweryName ? " · " : ""}
+                            {[beer.style, beer.abv ? `${beer.abv}%` : null].filter(Boolean).join(" · ")}
+                          </span>
+                        )}
+                      </p>
+                    </div>
+                    <span className="flex-shrink-0 text-[10px] font-bold uppercase tracking-wide text-yellow-600 bg-yellow-50 dark:bg-yellow-900/20 px-2 py-0.5 rounded-full">Birra</span>
+                  </div>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+
+      {/* Footer link to full search */}
+      <div className="border-t border-gray-100 dark:border-slate-800 px-4 py-2.5">
+        <Link href={`/search?q=${encodeURIComponent(query)}`}>
+          <div className="flex items-center justify-center gap-2 text-sm text-amber-600 dark:text-amber-400 hover:text-amber-700 dark:hover:text-amber-300 font-semibold transition-colors cursor-pointer py-1 rounded-lg hover:bg-amber-50 dark:hover:bg-slate-800" onClick={onClose}>
+            <Search className="w-4 h-4" />
+            Cerca "{query}" — risultati completi
+            <ArrowRight className="w-4 h-4" />
+          </div>
+        </Link>
+      </div>
+    </div>
   );
 }
