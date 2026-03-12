@@ -58,10 +58,19 @@ export default function Home() {
     staleTime: 5 * 60 * 1000,
   });
 
-  const { data: breweries, isLoading: breweriesLoading } = useQuery({
+  const { data: breweriesRaw, isLoading: breweriesLoading } = useQuery({
     queryKey: ["/api/breweries"],
-    queryFn: () => fetch("/api/breweries?random=true&limit=8").then(res => res.json()),
+    queryFn: () => fetch("/api/breweries?random=true&limit=40").then(res => res.json()),
     staleTime: 5 * 60 * 1000,
+  });
+  // Only show breweries with a logo for the discovery section
+  const breweries = Array.isArray(breweriesRaw)
+    ? breweriesRaw.filter((b: any) => b.logoUrl || b.coverImageUrl).slice(0, 8)
+    : [];
+
+  const { data: popularStyles } = useQuery<{ style: string; count: number }[]>({
+    queryKey: ["/api/beers/popular-styles"],
+    staleTime: 10 * 60 * 1000,
   });
 
   const { data: allBreweries } = useQuery({
@@ -120,7 +129,7 @@ export default function Home() {
           <div className="absolute inset-0 bg-gradient-to-r from-white/90 via-amber-50/60 to-transparent dark:from-gray-900/95 dark:via-slate-900/80 dark:to-transparent"></div>
         </div>
         
-        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-14 lg:py-18">
+        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 lg:py-10">
           <div className="flex flex-col lg:flex-row items-center justify-between gap-6">
             <div className="text-center lg:text-left">
               <h1 className="text-3xl md:text-4xl font-bold mb-3 text-gray-900 dark:text-white">
@@ -205,45 +214,62 @@ export default function Home() {
           }}
         />
 
-        {/* I Tuoi Pub (per pub owner e admin con pub) */}
+        {/* Il Tuo Pub (per pub owner e admin con pub) */}
         {((user as any)?.userType === 'pub_owner' || ((user as any)?.userType === 'admin' && Array.isArray(myPubs) && myPubs.length > 0)) ? (
-          <section className="mb-16 lg:mb-20">
-            <div className="flex items-center justify-between mb-8">
-              <h2 className="text-3xl font-bold text-gray-900 dark:text-white flex items-center">
-                <div className="p-2 bg-gradient-to-r from-blue-500 to-indigo-600 rounded-xl mr-3">
-                  <Store className="h-6 w-6 text-white" />
+          <section className="mb-8">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
+                <div className="p-1.5 bg-gradient-to-r from-blue-500 to-indigo-600 rounded-lg">
+                  <Store className="h-4 w-4 text-white" />
                 </div>
                 Il Tuo Pub
               </h2>
-              {(!Array.isArray(myPubs) || myPubs.length === 0) && (
-                <Link href="/registra-pub">
-                  <Button className="bg-primary text-white hover:bg-primary/90">
-                    + Aggiungi Pub
-                  </Button>
-                </Link>
-              )}
+              <Link href="/dashboard">
+                <Button size="sm" variant="ghost" className="text-amber-600 dark:text-amber-400 font-semibold text-sm">Dashboard →</Button>
+              </Link>
             </div>
-            
             {pubsLoading ? (
-              <div className="animate-pulse">
-                <div className="bg-white rounded-xl shadow-md h-80 w-full max-w-md"></div>
+              <div className="h-24 bg-gray-100 dark:bg-slate-800 rounded-2xl animate-pulse" />
+            ) : Array.isArray(myPubs) && myPubs.length > 0 ? (
+              <div className="space-y-3">
+                {myPubs.map((pub: any) => (
+                  <div key={pub.id} className="bg-white dark:bg-slate-800 border border-gray-100 dark:border-slate-700 rounded-2xl p-4 flex items-center gap-4 shadow-sm">
+                    <div className="w-16 h-16 rounded-xl overflow-hidden flex-shrink-0 bg-gray-100 dark:bg-slate-700 flex items-center justify-center">
+                      {(pub.logoUrl || pub.coverImageUrl || pub.imageUrl) ? (
+                        <img src={pub.logoUrl || pub.coverImageUrl || pub.imageUrl} alt={pub.name} className="w-16 h-16 object-cover" />
+                      ) : (
+                        <Store className="w-7 h-7 text-gray-400" />
+                      )}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-0.5">
+                        <p className="font-bold text-gray-900 dark:text-white truncate">{pub.name}</p>
+                        {pub.isVerified && (
+                          <span className="text-[10px] font-bold text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-900/20 px-1.5 py-0.5 rounded-full flex-shrink-0">✓ Verificato</span>
+                        )}
+                      </div>
+                      <p className="text-xs text-gray-500 dark:text-slate-400 truncate">{pub.address}</p>
+                      {pub.subscriptionStatus && pub.subscriptionStatus !== 'none' && (
+                        <span className="inline-block mt-1 text-[10px] font-semibold text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-900/20 px-2 py-0.5 rounded-full capitalize">
+                          {pub.subscriptionStatus === 'trial' ? '⏱ Prova attiva' : pub.subscriptionStatus === 'active' ? '✓ Piano attivo' : pub.subscriptionStatus === 'gifted' ? '🎁 Piano gifted' : pub.subscriptionStatus}
+                        </span>
+                      )}
+                    </div>
+                    <div className="flex flex-col gap-2 flex-shrink-0">
+                      <Link href="/dashboard">
+                        <Button size="sm" className="bg-amber-500 hover:bg-amber-400 text-gray-900 font-medium text-xs px-3">Gestisci</Button>
+                      </Link>
+                      <Link href={`/pub/${pub.id}`}>
+                        <Button size="sm" variant="outline" className="text-xs px-3 w-full">Pagina</Button>
+                      </Link>
+                    </div>
+                  </div>
+                ))}
               </div>
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                {Array.isArray(myPubs) ? myPubs.map((pub: any) => (
-                  <PubCard 
-                    key={pub.id} 
-                    pub={pub} 
-                  />
-                )) : null}
-                {Array.isArray(myPubs) && myPubs.length === 0 && (
-                  <div className="col-span-full text-center py-12">
-                    <p className="text-gray-500 mb-4">Non hai ancora registrato nessun pub</p>
-                    <Link href="/registra-pub">
-                      <Button>Registra il tuo primo pub</Button>
-                    </Link>
-                  </div>
-                )}
+              <div className="bg-gray-50 dark:bg-slate-800/50 rounded-2xl p-6 text-center">
+                <p className="text-gray-500 dark:text-slate-400 text-sm mb-3">Non hai ancora registrato nessun pub</p>
+                <Link href="/registra-pub"><Button size="sm">Registra il tuo pub</Button></Link>
               </div>
             )}
           </section>
@@ -251,29 +277,28 @@ export default function Home() {
 
         {/* Pub in Evidenza (solo per clienti, non per pub owner o admin con pub) */}
         {((user as any)?.userType !== 'pub_owner' && !((user as any)?.userType === 'admin' && Array.isArray(myPubs) && myPubs.length > 0)) ? (
-          <section className="mb-16 lg:mb-20">
-            <div className="flex items-center justify-between mb-8">
-              <h2 className="text-3xl font-bold text-gray-900 dark:text-white flex items-center">
-                <div className="p-2 bg-gradient-to-r from-blue-500 to-indigo-600 rounded-xl mr-3">
-                  <Store className="h-6 w-6 text-white" />
+          <section className="mb-8">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
+                <div className="p-1.5 bg-gradient-to-r from-blue-500 to-indigo-600 rounded-lg">
+                  <Store className="h-4 w-4 text-white" />
                 </div>
                 {userLocation ? 'Pub Vicini' : 'Pub Consigliati'}
               </h2>
               <Link href="/explore/pubs">
-                <Button variant="ghost" className="text-amber-600 hover:text-amber-700 dark:text-amber-400 font-semibold">
+                <Button variant="ghost" size="sm" className="text-amber-600 hover:text-amber-700 dark:text-amber-400 font-semibold text-sm">
                   Vedi tutti →
                 </Button>
               </Link>
             </div>
-
             {pubsLoading ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {[...Array(3)].map((_, i) => (
-                  <div key={i} className="bg-white rounded-xl shadow-md h-80 animate-pulse" />
+                  <div key={i} className="bg-white rounded-xl shadow-md h-64 animate-pulse" />
                 ))}
               </div>
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {sortedPubs.map((pub: any) => (
                   <PubCard 
                     key={pub.id} 
@@ -288,85 +313,94 @@ export default function Home() {
 
         {/* Il Tuo Birrificio (solo per brewery_owner) */}
         {(user as any)?.userType === 'brewery_owner' && myBreweryData?.brewery && (
-          <section className="mb-16 lg:mb-20">
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white flex items-center">
-                <div className="p-2 bg-gradient-to-r from-amber-500 to-orange-600 rounded-xl mr-3">
-                  <Building2 className="h-5 w-5 sm:h-6 sm:w-6 text-white" />
+          <section className="mb-8">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
+                <div className="p-1.5 bg-gradient-to-r from-amber-500 to-orange-600 rounded-lg">
+                  <Building2 className="h-4 w-4 text-white" />
                 </div>
                 Il Tuo Birrificio
               </h2>
               <Link href="/brewery-dashboard">
-                <Button variant="ghost" className="text-amber-600 hover:text-amber-700 dark:text-amber-400 font-semibold text-sm">
-                  Gestisci →
-                </Button>
+                <Button size="sm" variant="ghost" className="text-amber-600 dark:text-amber-400 font-semibold text-sm">Gestisci →</Button>
               </Link>
             </div>
-            <div className="bg-white dark:bg-slate-800 border border-gray-100 dark:border-slate-700 rounded-2xl p-6 shadow-sm">
-              <div className="flex flex-col sm:flex-row items-center sm:items-start gap-5">
+            <div className="bg-white dark:bg-slate-800 border border-gray-100 dark:border-slate-700 rounded-2xl p-4 flex items-center gap-4 shadow-sm">
+              <div className="w-16 h-16 rounded-xl overflow-hidden flex-shrink-0 bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center">
                 {myBreweryData.brewery.logoUrl ? (
-                  <img src={myBreweryData.brewery.logoUrl} alt={myBreweryData.brewery.name} className="w-20 h-20 rounded-2xl object-cover ring-2 ring-amber-100 dark:ring-amber-900 flex-shrink-0" />
+                  <img src={myBreweryData.brewery.logoUrl} alt={myBreweryData.brewery.name} className="w-16 h-16 object-contain" />
                 ) : (
-                  <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center flex-shrink-0">
-                    <Building2 className="w-10 h-10 text-white" />
-                  </div>
+                  <Building2 className="w-7 h-7 text-amber-500" />
                 )}
-                <div className="flex-1 text-center sm:text-left">
-                  <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-1">{myBreweryData.brewery.name}</h3>
-                  <p className="text-sm text-gray-500 dark:text-slate-400 flex items-center justify-center sm:justify-start gap-1 mb-4">
-                    <MapPin className="w-3.5 h-3.5" />{myBreweryData.brewery.location}
-                  </p>
-                  <div className="flex flex-wrap gap-2 justify-center sm:justify-start">
-                    <Link href="/brewery-dashboard">
-                      <Button size="sm" className="bg-amber-500 hover:bg-amber-400 text-gray-900 font-medium">
-                        <List className="w-4 h-4 mr-1.5" />
-                        Gestisci Birre ({myBreweryData.beers?.length ?? 0})
-                      </Button>
-                    </Link>
-                    <Link href={`/brewery/${myBreweryData.brewery.id}`}>
-                      <Button size="sm" variant="outline" className="border-amber-200 text-amber-700 dark:border-amber-800 dark:text-amber-400">
-                        <ChevronRight className="w-4 h-4 mr-1" />
-                        Pagina Pubblica
-                      </Button>
-                    </Link>
-                  </div>
-                </div>
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="font-bold text-gray-900 dark:text-white truncate">{myBreweryData.brewery.name}</p>
+                <p className="text-xs text-gray-500 dark:text-slate-400 flex items-center gap-1 mt-0.5">
+                  <MapPin className="w-3 h-3" />{myBreweryData.brewery.location}
+                </p>
+                <p className="text-xs text-amber-600 dark:text-amber-400 mt-1">{myBreweryData.beers?.length ?? 0} birre nel catalogo</p>
+              </div>
+              <div className="flex flex-col gap-2 flex-shrink-0">
+                <Link href="/brewery-dashboard">
+                  <Button size="sm" className="bg-amber-500 hover:bg-amber-400 text-gray-900 font-medium text-xs px-3">Gestisci</Button>
+                </Link>
+                <Link href={`/brewery/${myBreweryData.brewery.id}`}>
+                  <Button size="sm" variant="outline" className="text-xs px-3 w-full">Pagina</Button>
+                </Link>
               </div>
             </div>
           </section>
         )}
 
         {/* Birrifici da Scoprire */}
-        {isAuthenticated && Array.isArray(breweries) && breweries.length > 0 && (user as any)?.userType !== 'pub_owner' && (
-          <section className="mb-16 lg:mb-20">
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white flex items-center">
-                <div className="p-2 bg-gradient-to-r from-amber-500 to-amber-600 rounded-xl mr-3">
-                  <Beer className="h-5 w-5 sm:h-6 sm:w-6 text-white" />
+        {isAuthenticated && breweries.length > 0 && (user as any)?.userType !== 'pub_owner' && (
+          <section className="mb-8">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
+                <div className="p-1.5 bg-gradient-to-r from-amber-500 to-amber-600 rounded-lg">
+                  <Building2 className="h-4 w-4 text-white" />
                 </div>
                 Birrifici da Scoprire
               </h2>
               <Link href="/explore">
-                <Button variant="ghost" className="text-amber-600 hover:text-amber-700 dark:text-amber-400 font-semibold text-sm">
-                  Vedi tutti →
-                </Button>
+                <Button variant="ghost" size="sm" className="text-amber-600 hover:text-amber-700 dark:text-amber-400 font-semibold text-sm">Vedi tutti →</Button>
               </Link>
             </div>
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-4 gap-4">
-              {(Array.isArray(breweries) ? breweries : []).slice(0, 8).map((brewery: any) => (
+            <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-3">
+              {breweries.map((brewery: any) => (
                 <Link key={brewery.id} href={`/brewery/${brewery.id}`}>
-                  <div className="group bg-white dark:bg-slate-800 border border-gray-100 dark:border-slate-700 rounded-xl p-4 hover:shadow-lg hover:border-amber-200 dark:hover:border-amber-800 transition-all duration-200 cursor-pointer h-full flex flex-col items-center text-center gap-3">
-                    {brewery.logoUrl ? (
-                      <img src={brewery.logoUrl} alt={brewery.name} className="w-14 h-14 rounded-xl object-cover group-hover:scale-105 transition-transform" />
-                    ) : (
-                      <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center group-hover:scale-105 transition-transform">
-                        <Building2 className="w-7 h-7 text-white" />
-                      </div>
-                    )}
-                    <div>
-                      <p className="font-semibold text-sm text-gray-900 dark:text-white line-clamp-1 group-hover:text-amber-600 dark:group-hover:text-amber-400 transition-colors">{brewery.name}</p>
-                      <p className="text-xs text-gray-500 dark:text-slate-400 mt-0.5 line-clamp-1">{brewery.location}</p>
+                  <div className="group flex flex-col items-center text-center gap-2 cursor-pointer">
+                    <div className="w-14 h-14 rounded-2xl overflow-hidden bg-amber-50 dark:bg-amber-900/20 flex items-center justify-center shadow-sm group-hover:shadow-md group-hover:scale-105 transition-all">
+                      <img src={brewery.logoUrl || brewery.coverImageUrl} alt={brewery.name} className="w-14 h-14 object-contain p-1" />
                     </div>
+                    <p className="text-xs font-medium text-gray-700 dark:text-gray-300 line-clamp-2 leading-tight group-hover:text-amber-600 dark:group-hover:text-amber-400 transition-colors">{brewery.name}</p>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          </section>
+        )}
+
+        {/* Stili Popolari — per tutti gli utenti loggati */}
+        {isAuthenticated && Array.isArray(popularStyles) && popularStyles.length > 0 && (
+          <section className="mb-8">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
+                <div className="p-1.5 bg-gradient-to-r from-yellow-500 to-amber-500 rounded-lg">
+                  <Beer className="h-4 w-4 text-white" />
+                </div>
+                Stili più Amati
+              </h2>
+              <Link href="/explore">
+                <Button variant="ghost" size="sm" className="text-amber-600 hover:text-amber-700 dark:text-amber-400 font-semibold text-sm">Esplora →</Button>
+              </Link>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {popularStyles.slice(0, 16).map((s) => (
+                <Link key={s.style} href={`/explore?style=${encodeURIComponent(s.style)}`}>
+                  <div className="group flex items-center gap-2 bg-white dark:bg-slate-800 border border-gray-100 dark:border-slate-700 hover:border-amber-300 dark:hover:border-amber-700 rounded-full px-3 py-1.5 cursor-pointer transition-all hover:shadow-sm">
+                    <span className="text-sm font-medium text-gray-800 dark:text-gray-200 group-hover:text-amber-600 dark:group-hover:text-amber-400">{s.style}</span>
+                    <span className="text-[10px] font-bold text-amber-500 bg-amber-50 dark:bg-amber-900/20 px-1.5 py-0.5 rounded-full">{s.count.toLocaleString('it-IT')}</span>
                   </div>
                 </Link>
               ))}
@@ -376,16 +410,16 @@ export default function Home() {
 
         {/* I Tuoi Preferiti */}
         {user && favorites && Array.isArray(favorites) && favorites.length > 0 ? (
-          <section className="mb-16 lg:mb-20">
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-2xl font-bold text-gray-900 dark:text-white flex items-center">
-                <div className="p-2 bg-gradient-to-br from-red-500 to-pink-600 rounded-xl mr-3">
-                  <Heart className="h-5 w-5 text-white" />
+          <section className="mb-8">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
+                <div className="p-1.5 bg-gradient-to-br from-red-500 to-pink-600 rounded-lg">
+                  <Heart className="h-4 w-4 text-white" />
                 </div>
                 I Tuoi Preferiti
               </h2>
               <Link href="/dashboard?tab=favorites">
-                <Button variant="ghost" className="text-amber-600 hover:text-amber-700 dark:text-amber-400 font-semibold text-sm">
+                <Button variant="ghost" size="sm" className="text-amber-600 hover:text-amber-700 dark:text-amber-400 font-semibold text-sm">
                   Vedi tutti →
                 </Button>
               </Link>
@@ -426,35 +460,30 @@ export default function Home() {
         ) : null}
 
         {/* Statistiche Platform */}
-        <section className="mb-16 lg:mb-20 bg-amber-50 dark:bg-slate-800 border border-amber-100 dark:border-slate-700 rounded-2xl p-10 lg:p-12">
-          <h2 className="text-3xl font-bold text-center text-gray-900 dark:text-white mb-12">
+        <section className="mb-8 bg-amber-50 dark:bg-slate-800 border border-amber-100 dark:border-slate-700 rounded-2xl p-5 lg:p-6">
+          <h2 className="text-base font-bold text-center text-gray-700 dark:text-gray-300 mb-4 uppercase tracking-wide">
             La Community Fermenta.to
           </h2>
-          
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-8 lg:gap-10">
+          <div className="grid grid-cols-3 md:grid-cols-5 gap-4">
             <div className="text-center">
-              <div className="text-4xl font-bold text-amber-500 dark:text-amber-400 mb-2">{globalStats?.totalBeers != null ? globalStats.totalBeers.toLocaleString("it-IT") : '...'}</div>
-              <div className="text-sm text-gray-600 dark:text-gray-400">Birre nel Catalogo</div>
+              <div className="text-2xl font-bold text-amber-500 dark:text-amber-400">{globalStats?.totalBeers != null ? globalStats.totalBeers.toLocaleString("it-IT") : '...'}</div>
+              <div className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Birre</div>
             </div>
-            
             <div className="text-center">
-              <div className="text-4xl font-bold text-blue-600 dark:text-blue-400 mb-2">{globalStats?.totalBreweries != null ? globalStats.totalBreweries.toLocaleString("it-IT") : '...'}</div>
-              <div className="text-sm text-gray-600 dark:text-gray-400">Birrifici Mondiali</div>
+              <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">{globalStats?.totalBreweries != null ? globalStats.totalBreweries.toLocaleString("it-IT") : '...'}</div>
+              <div className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Birrifici</div>
             </div>
-            
             <div className="text-center">
-              <div className="text-4xl font-bold text-teal-600 dark:text-teal-400 mb-2">{globalStats?.uniqueStyles != null ? globalStats.uniqueStyles.toLocaleString("it-IT") : '...'}</div>
-              <div className="text-sm text-gray-600 dark:text-gray-400">Stili Diversi</div>
+              <div className="text-2xl font-bold text-teal-600 dark:text-teal-400">{globalStats?.uniqueStyles != null ? globalStats.uniqueStyles.toLocaleString("it-IT") : '...'}</div>
+              <div className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Stili</div>
             </div>
-
             <div className="text-center">
-              <div className="text-4xl font-bold text-green-600 dark:text-green-400 mb-2">{globalStats?.totalUsers != null ? globalStats.totalUsers.toLocaleString("it-IT") : '...'}</div>
-              <div className="text-sm text-gray-600 dark:text-gray-400">Utenti Registrati</div>
+              <div className="text-2xl font-bold text-green-600 dark:text-green-400">{globalStats?.totalUsers != null ? globalStats.totalUsers.toLocaleString("it-IT") : '...'}</div>
+              <div className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Utenti</div>
             </div>
-
-            <div className="text-center col-span-2 md:col-span-1">
-              <div className="text-4xl font-bold text-purple-600 dark:text-purple-400 mb-2">{globalStats?.totalPubs != null ? globalStats.totalPubs.toLocaleString("it-IT") : '...'}</div>
-              <div className="text-sm text-gray-600 dark:text-gray-400">Pub & Locali</div>
+            <div className="text-center col-span-1">
+              <div className="text-2xl font-bold text-purple-600 dark:text-purple-400">{globalStats?.totalPubs != null ? globalStats.totalPubs.toLocaleString("it-IT") : '...'}</div>
+              <div className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Pub</div>
             </div>
           </div>
         </section>
