@@ -45,6 +45,7 @@ import AdminAdditionRequests from "@/pages/admin-addition-requests";
 import AdminEditPub from "@/pages/admin-edit-pub";
 import ExplorePubs from "@/pages/explore-pubs";
 import ExploreBreweries from "@/pages/explore-breweries";
+import ExploreBeers from "@/pages/explore-beers";
 import DemoLoginPage from "@/pages/demo-login-page";
 import AuthPage from "@/pages/auth";
 import BecomePublican from "@/pages/become-publican";
@@ -113,6 +114,7 @@ function Router() {
           <Route path="/beer/:id" component={BeerDetail} />
           <Route path="/explore/pubs" component={ExplorePubs} />
           <Route path="/explore/breweries" component={ExploreBreweries} />
+          <Route path="/explore/beers" component={ExploreBeers} />
           {/* Dashboard routes — activeRole is the source of truth */}
           <Route path="/dashboard" component={
             typedUser?.activeRole === 'pub_owner' ? SmartPubDashboard :
