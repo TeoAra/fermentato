@@ -334,9 +334,9 @@ export default function BreweryDetail() {
                           {brewery?.name}
                         </h1>
                         {(brewery as any)?.hasOwner && (
-                          <div className="flex items-center gap-1.5 bg-emerald-500/25 backdrop-blur-sm border border-emerald-300/40 rounded-full px-3 py-1 mt-2 md:mt-0 self-center md:self-auto">
-                            <ShieldCheck className="h-4 w-4 text-emerald-300" />
-                            <span className="text-xs font-semibold text-emerald-100">Birrificio Verificato</span>
+                          <div className="flex items-center gap-1.5 bg-emerald-600 border border-emerald-500 rounded-full px-3 py-1 mt-2 md:mt-0 self-center md:self-auto shadow-sm">
+                            <ShieldCheck className="h-4 w-4 text-white" />
+                            <span className="text-xs font-semibold text-white">Birrificio Verificato</span>
                           </div>
                         )}
                       </div>

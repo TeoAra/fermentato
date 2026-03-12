@@ -1,6 +1,6 @@
 import { eq, count, desc, asc, sql, or, ilike, and } from "drizzle-orm";
 import { db, pool } from "./db";
-import { beers, breweries, users, pubs, publicanRequests, breweryRequests, reviewReports, userBeerTastings, pubEvents, breweryEvents, contentSuggestions, additionRequests, scanLogs } from "@shared/schema";
+import { beers, breweries, users, pubs, publicanRequests, breweryRequests, reviewReports, userBeerTastings, pubEvents, breweryEvents, contentSuggestions, additionRequests, scanLogs, favorites } from "@shared/schema";
 import type { Express } from "express";
 import { isAuthenticated, isAdmin } from "./auth";
 import { sendPushToUser, sendPushToAdmins } from "./push-utils";
@@ -898,6 +898,35 @@ export function registerAdminRoutes(app: Express) {
         });
       } catch (notifErr) {
         console.error('Error sending approval notification:', notifErr);
+      }
+
+      // Notify all users who have favorited this brewery
+      try {
+        const breweryFollowers = await db
+          .select({ userId: favorites.userId })
+          .from(favorites)
+          .where(
+            and(
+              eq(favorites.itemType, 'brewery'),
+              eq(favorites.itemId, assignedBreweryId),
+            )
+          );
+
+        const breweryLabel = request.breweryName;
+        const notifyPromises = breweryFollowers
+          .filter(f => f.userId !== request.userId)
+          .map(f =>
+            sendPushToUser(f.userId, {
+              title: '🛡️ Birrificio Verificato',
+              body: `${breweryLabel} è ora un birrificio verificato su Fermenta.to!`,
+              url: `/brewery/${assignedBreweryId}`,
+              type: 'brewery_verified',
+              tag: `brewery_verified_${assignedBreweryId}`,
+            }).catch(() => {})
+          );
+        await Promise.allSettled(notifyPromises);
+      } catch (followerNotifErr) {
+        console.error('Error notifying brewery followers:', followerNotifErr);
       }
 
       res.json({
