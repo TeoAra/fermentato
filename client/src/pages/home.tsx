@@ -200,11 +200,13 @@ export default function Home() {
                 </div>
                 I Tuoi Pub
               </h2>
-              <Link href="/pub-registration">
-                <Button className="bg-primary text-white hover:bg-primary/90">
-                  + Aggiungi Pub
-                </Button>
-              </Link>
+              {(!Array.isArray(myPubs) || myPubs.length === 0) && (
+                <Link href="/registra-pub">
+                  <Button className="bg-primary text-white hover:bg-primary/90">
+                    + Aggiungi Pub
+                  </Button>
+                </Link>
+              )}
             </div>
             
             {pubsLoading ? (
@@ -222,7 +224,7 @@ export default function Home() {
                 {Array.isArray(myPubs) && myPubs.length === 0 && (
                   <div className="col-span-full text-center py-12">
                     <p className="text-gray-500 mb-4">Non hai ancora registrato nessun pub</p>
-                    <Link href="/pub-registration">
+                    <Link href="/registra-pub">
                       <Button>Registra il tuo primo pub</Button>
                     </Link>
                   </div>

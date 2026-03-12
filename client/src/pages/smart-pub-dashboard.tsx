@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { Link } from "wouter";
 import { useAuth } from "@/hooks/useAuth";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
@@ -1740,9 +1741,11 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
           <p className="text-gray-600 dark:text-gray-400">
             Non hai ancora registrato un pub. Registrane uno per accedere alla dashboard.
           </p>
-          <Button className="mt-4">
-            Registra un Pub
-          </Button>
+          <Link href="/registra-pub">
+            <Button className="mt-4">
+              Registra un Pub
+            </Button>
+          </Link>
         </div>
       </div>
     );
