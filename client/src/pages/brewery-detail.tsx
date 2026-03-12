@@ -19,7 +19,8 @@ import {
   CalendarDays,
   Calendar,
   Clock,
-  Lightbulb
+  Lightbulb,
+  ShieldCheck,
 } from "lucide-react";
 import { EventCategoryBadge } from "@/components/events-manager";
 import { format, isFuture } from "date-fns";
@@ -328,9 +329,17 @@ export default function BreweryDetail() {
                       </Avatar>
                     )}
                     <div className="text-center md:text-left">
-                      <h1 className="text-2xl sm:text-3xl md:text-4xl text-white mb-4 font-bold leading-tight">
-                        {brewery?.name}
-                      </h1>
+                      <div className="flex flex-col md:flex-row md:items-center md:gap-3 mb-4">
+                        <h1 className="text-2xl sm:text-3xl md:text-4xl text-white font-bold leading-tight">
+                          {brewery?.name}
+                        </h1>
+                        {(brewery as any)?.hasOwner && (
+                          <div className="flex items-center gap-1.5 bg-emerald-500/25 backdrop-blur-sm border border-emerald-300/40 rounded-full px-3 py-1 mt-2 md:mt-0 self-center md:self-auto">
+                            <ShieldCheck className="h-4 w-4 text-emerald-300" />
+                            <span className="text-xs font-semibold text-emerald-100">Birrificio Verificato</span>
+                          </div>
+                        )}
+                      </div>
                       <div className="flex flex-col sm:flex-row items-center justify-center md:justify-start space-y-3 sm:space-y-0 sm:space-x-4">
                         <div className="flex items-center text-white/90 backdrop-blur-sm bg-white/10 rounded-lg px-4 py-2">
                           <MapPin className="h-4 w-4 mr-2" />

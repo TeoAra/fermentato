@@ -29,6 +29,7 @@ import {
   Target,
   Monitor,
   MapPin,
+  ShieldCheck,
 } from "lucide-react";
 import Footer from "@/components/footer";
 import TapList from "@/components/tap-list";
@@ -542,6 +543,12 @@ export default function PubDetail() {
                         <h1 className="text-2xl sm:text-3xl md:text-4xl text-white font-bold leading-tight">
                           {(pub as any)?.name}
                         </h1>
+                        {(pub as any)?.isVerified && (
+                          <div className="flex items-center gap-1.5 bg-emerald-500/25 backdrop-blur-sm border border-emerald-300/40 rounded-full px-3 py-1 mt-1 md:mt-0 self-start md:self-auto">
+                            <ShieldCheck className="h-4 w-4 text-emerald-300" />
+                            <span className="text-xs font-semibold text-emerald-100">Pub Verificato</span>
+                          </div>
+                        )}
                         {/* Preferiti inline su desktop */}
                         <div className="hidden md:flex items-center bg-red-500/20 backdrop-blur-sm border border-red-300/30 rounded-full px-3 py-1">
                           <Heart className="h-4 w-4 mr-1.5 text-red-400 fill-current" />

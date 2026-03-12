@@ -61,16 +61,18 @@ export function BottomNavigation() {
 
           {/* ── FABs: sit at the very top of the bar, half protruding above ── */}
           <div className="absolute left-1/2 -translate-x-1/2 -top-6 flex items-center gap-2.5 z-10">
-            {/* Scan */}
-            <Link href="/scan">
-              <button
-                data-testid="button-scan"
-                className="group bg-gradient-to-r from-slate-700 to-slate-800 hover:from-slate-600 hover:to-slate-700 text-white rounded-full p-2.5 shadow-xl transition-all duration-300 active:scale-95 hover:scale-110"
-              >
-                <ScanLine className="h-5 w-5" />
-                <span className="sr-only">Scansiona etichetta</span>
-              </button>
-            </Link>
+            {/* Scan - solo per admin */}
+            {activeRole === 'admin' && (
+              <Link href="/scan">
+                <button
+                  data-testid="button-scan"
+                  className="group bg-gradient-to-r from-slate-700 to-slate-800 hover:from-slate-600 hover:to-slate-700 text-white rounded-full p-2.5 shadow-xl transition-all duration-300 active:scale-95 hover:scale-110"
+                >
+                  <ScanLine className="h-5 w-5" />
+                  <span className="sr-only">Scansiona etichetta</span>
+                </button>
+              </Link>
+            )}
 
             {/* Search (main FAB, larger) */}
             <button

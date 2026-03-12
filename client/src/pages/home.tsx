@@ -2,7 +2,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "wouter";
 import { useState, useEffect, useMemo } from "react";
-import { Beer, MapPin, Heart, Store, TrendingUp, Navigation } from "lucide-react";
+import { Beer, MapPin, Heart, Store, TrendingUp, Navigation, Building2, ChevronRight, Zap, List, CalendarDays, Settings2 } from "lucide-react";
 import Footer from "@/components/footer";
 import PubCard from "@/components/pub-card";
 import HomepageMap from "@/components/homepage-map";
@@ -80,6 +80,12 @@ export default function Home() {
     enabled: isAuthenticated && ((user as any)?.userType === 'pub_owner' || (user as any)?.userType === 'admin'),
   });
 
+  // Fetch brewery for brewery owners
+  const { data: myBreweryData } = useQuery<{ brewery: any; beers: any[] }>({
+    queryKey: ["/api/brewery/mine"],
+    enabled: isAuthenticated && (user as any)?.userType === 'brewery_owner',
+  });
+
   const { data: globalStats } = useQuery<{ totalBeers: number; totalBreweries: number; uniqueStyles: number; totalUsers: number; totalPubs: number }>({
     queryKey: ["/api/stats"],
     staleTime: 60 * 1000,
@@ -125,12 +131,21 @@ export default function Home() {
               </p>
             </div>
             
-            <div className="flex gap-3">
+            <div className="flex flex-wrap gap-3 justify-center lg:justify-end">
               {(user as any)?.userType === 'pub_owner' && (
                 <Link href="/dashboard">
                   <Button className="bg-amber-500 hover:bg-amber-400 text-gray-900 font-semibold shadow-md border-0">
-                    <Beer className="mr-2" />
-                    Dashboard Pub
+                    <Store className="mr-2 h-4 w-4" />
+                    Gestisci Pub
+                  </Button>
+                </Link>
+              )}
+
+              {(user as any)?.userType === 'brewery_owner' && (
+                <Link href="/brewery-dashboard">
+                  <Button className="bg-amber-500 hover:bg-amber-400 text-gray-900 font-semibold shadow-md border-0">
+                    <Building2 className="mr-2 h-4 w-4" />
+                    Il Mio Birrificio
                   </Button>
                 </Link>
               )}
@@ -138,7 +153,7 @@ export default function Home() {
               {((user as any)?.activeRole === 'admin' || (!((user as any)?.activeRole) && (user as any)?.userType === 'admin')) && (
                 <Link href="/admin">
                   <Button className="bg-slate-700 hover:bg-slate-600 dark:bg-slate-600 dark:hover:bg-slate-500 text-white font-semibold shadow-md border-0">
-                    <TrendingUp className="mr-2" />
+                    <TrendingUp className="mr-2 h-4 w-4" />
                     Admin Panel
                   </Button>
                 </Link>
@@ -270,6 +285,94 @@ export default function Home() {
             )}
           </section>
         ) : null}
+
+        {/* Il Tuo Birrificio (solo per brewery_owner) */}
+        {(user as any)?.userType === 'brewery_owner' && myBreweryData?.brewery && (
+          <section className="mb-16 lg:mb-20">
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white flex items-center">
+                <div className="p-2 bg-gradient-to-r from-amber-500 to-orange-600 rounded-xl mr-3">
+                  <Building2 className="h-5 w-5 sm:h-6 sm:w-6 text-white" />
+                </div>
+                Il Tuo Birrificio
+              </h2>
+              <Link href="/brewery-dashboard">
+                <Button variant="ghost" className="text-amber-600 hover:text-amber-700 dark:text-amber-400 font-semibold text-sm">
+                  Gestisci →
+                </Button>
+              </Link>
+            </div>
+            <div className="bg-white dark:bg-slate-800 border border-gray-100 dark:border-slate-700 rounded-2xl p-6 shadow-sm">
+              <div className="flex flex-col sm:flex-row items-center sm:items-start gap-5">
+                {myBreweryData.brewery.logoUrl ? (
+                  <img src={myBreweryData.brewery.logoUrl} alt={myBreweryData.brewery.name} className="w-20 h-20 rounded-2xl object-cover ring-2 ring-amber-100 dark:ring-amber-900 flex-shrink-0" />
+                ) : (
+                  <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center flex-shrink-0">
+                    <Building2 className="w-10 h-10 text-white" />
+                  </div>
+                )}
+                <div className="flex-1 text-center sm:text-left">
+                  <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-1">{myBreweryData.brewery.name}</h3>
+                  <p className="text-sm text-gray-500 dark:text-slate-400 flex items-center justify-center sm:justify-start gap-1 mb-4">
+                    <MapPin className="w-3.5 h-3.5" />{myBreweryData.brewery.location}
+                  </p>
+                  <div className="flex flex-wrap gap-2 justify-center sm:justify-start">
+                    <Link href="/brewery-dashboard">
+                      <Button size="sm" className="bg-amber-500 hover:bg-amber-400 text-gray-900 font-medium">
+                        <List className="w-4 h-4 mr-1.5" />
+                        Gestisci Birre ({myBreweryData.beers?.length ?? 0})
+                      </Button>
+                    </Link>
+                    <Link href={`/brewery/${myBreweryData.brewery.id}`}>
+                      <Button size="sm" variant="outline" className="border-amber-200 text-amber-700 dark:border-amber-800 dark:text-amber-400">
+                        <ChevronRight className="w-4 h-4 mr-1" />
+                        Pagina Pubblica
+                      </Button>
+                    </Link>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </section>
+        )}
+
+        {/* Birrifici da Scoprire */}
+        {isAuthenticated && Array.isArray(breweries) && breweries.length > 0 && (user as any)?.userType !== 'pub_owner' && (
+          <section className="mb-16 lg:mb-20">
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white flex items-center">
+                <div className="p-2 bg-gradient-to-r from-amber-500 to-amber-600 rounded-xl mr-3">
+                  <Beer className="h-5 w-5 sm:h-6 sm:w-6 text-white" />
+                </div>
+                Birrifici da Scoprire
+              </h2>
+              <Link href="/explore">
+                <Button variant="ghost" className="text-amber-600 hover:text-amber-700 dark:text-amber-400 font-semibold text-sm">
+                  Vedi tutti →
+                </Button>
+              </Link>
+            </div>
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-4 gap-4">
+              {(Array.isArray(breweries) ? breweries : []).slice(0, 8).map((brewery: any) => (
+                <Link key={brewery.id} href={`/brewery/${brewery.id}`}>
+                  <div className="group bg-white dark:bg-slate-800 border border-gray-100 dark:border-slate-700 rounded-xl p-4 hover:shadow-lg hover:border-amber-200 dark:hover:border-amber-800 transition-all duration-200 cursor-pointer h-full flex flex-col items-center text-center gap-3">
+                    {brewery.logoUrl ? (
+                      <img src={brewery.logoUrl} alt={brewery.name} className="w-14 h-14 rounded-xl object-cover group-hover:scale-105 transition-transform" />
+                    ) : (
+                      <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center group-hover:scale-105 transition-transform">
+                        <Building2 className="w-7 h-7 text-white" />
+                      </div>
+                    )}
+                    <div>
+                      <p className="font-semibold text-sm text-gray-900 dark:text-white line-clamp-1 group-hover:text-amber-600 dark:group-hover:text-amber-400 transition-colors">{brewery.name}</p>
+                      <p className="text-xs text-gray-500 dark:text-slate-400 mt-0.5 line-clamp-1">{brewery.location}</p>
+                    </div>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          </section>
+        )}
 
         {/* I Tuoi Preferiti */}
         {user && favorites && Array.isArray(favorites) && favorites.length > 0 ? (

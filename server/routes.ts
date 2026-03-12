@@ -365,7 +365,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!brewery) {
         return res.status(404).json({ message: "Brewery not found" });
       }
-      res.json(brewery);
+      // Check if brewery has a verified owner
+      const [ownerRow] = await db.select({ id: users.id }).from(users).where(eq(users.breweryId, breweryId)).limit(1);
+      res.json({ ...brewery, hasOwner: !!ownerRow });
     } catch (error) {
       console.error("Error fetching brewery:", error);
       res.status(500).json({ message: "Failed to fetch brewery" });
