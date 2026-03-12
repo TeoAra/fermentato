@@ -207,7 +207,7 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
   // Fetch pub data - either from admin mode or owner mode
   const { data: userPubs, isLoading: pubsLoading } = useQuery({
     queryKey: isAdminMode ? ["/api/pubs", adminPubId] : ["/api/my-pubs"],
-    enabled: isAuthenticated && (isAdminMode || (user as any)?.userType === 'pub_owner'),
+    enabled: isAuthenticated && (isAdminMode || (user as any)?.userType === 'pub_owner' || (user as any)?.userType === 'admin'),
   });
 
   // In admin mode, userPubs is a single pub object; in owner mode it's an array

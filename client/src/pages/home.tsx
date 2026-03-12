@@ -77,7 +77,7 @@ export default function Home() {
   // Fetch user's own pubs for pub owners
   const { data: myPubs } = useQuery({
     queryKey: ["/api/my-pubs"],
-    enabled: isAuthenticated && (user as any)?.userType === 'pub_owner',
+    enabled: isAuthenticated && ((user as any)?.userType === 'pub_owner' || (user as any)?.userType === 'admin'),
   });
 
   const { data: globalStats } = useQuery<{ totalBeers: number; totalBreweries: number; uniqueStyles: number; totalUsers: number; totalPubs: number }>({
@@ -190,8 +190,8 @@ export default function Home() {
           }}
         />
 
-        {/* I Tuoi Pub (solo per pub owner) */}
-        {(user as any)?.userType === 'pub_owner' ? (
+        {/* I Tuoi Pub (per pub owner e admin con pub) */}
+        {((user as any)?.userType === 'pub_owner' || ((user as any)?.userType === 'admin' && Array.isArray(myPubs) && myPubs.length > 0)) ? (
           <section className="mb-16 lg:mb-20">
             <div className="flex items-center justify-between mb-8">
               <h2 className="text-3xl font-bold text-gray-900 dark:text-white flex items-center">
@@ -232,8 +232,8 @@ export default function Home() {
           </section>
         ) : null}
 
-        {/* Pub in Evidenza (solo per clienti) */}
-        {(user as any)?.userType !== 'pub_owner' ? (
+        {/* Pub in Evidenza (solo per clienti, non per pub owner o admin con pub) */}
+        {((user as any)?.userType !== 'pub_owner' && !((user as any)?.userType === 'admin' && Array.isArray(myPubs) && myPubs.length > 0)) ? (
           <section className="mb-16 lg:mb-20">
             <div className="flex items-center justify-between mb-8">
               <h2 className="text-3xl font-bold text-gray-900 dark:text-white flex items-center">
