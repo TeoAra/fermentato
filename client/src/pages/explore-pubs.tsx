@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link } from "wouter";
 import { MapPin, Store, ArrowLeft, Clock } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -104,6 +104,14 @@ export default function ExplorePubs() {
     acc[state].push(pub);
     return acc;
   }, {}) : {};
+
+  // Auto-open all regions that have pubs when data loads
+  useEffect(() => {
+    if (Array.isArray(allPubs) && allPubs.length > 0) {
+      const regionsWithPubs = Object.keys(pubsByState);
+      setOpenStates(regionsWithPubs);
+    }
+  }, [allPubs]);
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-slate-900">
