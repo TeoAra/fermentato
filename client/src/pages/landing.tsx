@@ -445,7 +445,7 @@ export default function Landing() {
                 ))}
               </div>
               <Link href="/prezzi">
-                <Button variant="outline" className="w-full border-white/30 text-white hover:bg-white/10 hover:text-white font-bold">
+                <Button className="w-full bg-orange-500 hover:bg-orange-400 text-white font-bold border-0">
                   <Building2 className="w-4 h-4 mr-2" />
                   Scopri come funziona
                 </Button>
