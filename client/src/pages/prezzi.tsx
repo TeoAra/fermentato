@@ -288,12 +288,12 @@ export default function PrezziPage() {
           <h2 className="text-2xl font-bold text-center text-gray-900 dark:text-white mb-8">Domande frequenti</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {[
-              { q: "Come si attiva il piano pub?", a: "Invia una mail a info@fermenta.to con il nome del tuo pub. Attiviamo il piano entro 24 ore lavorative. Nessun contratto vincolante, nessun rinnovo automatico." },
-              { q: "Come faccio a ottenere la verifica birrificio?", a: "Registra il profilo del birrificio, poi contattaci a info@fermenta.to. Il team verifica i dati e attiva il badge entro 24 ore. La verifica è completamente gratuita." },
-              { q: "Posso disdire il piano pub?", a: "Sì. Nessun vincolo. Il piano rimane attivo fino alla scadenza annuale e non si rinnova automaticamente." },
-              { q: "Come avviene il pagamento del piano pub?", a: "Accettiamo bonifico bancario e carta di credito. A pagamento confermato attiviamo il piano entro pochi minuti." },
+              { q: "Come si attiva il piano pub?", a: "Registra il tuo pub e attiva subito il periodo di prova gratuito di 15 giorni — senza carta di credito. Al termine, puoi continuare con il piano completo a €65/anno (IVA inclusa) tramite carta, PayPal o altri metodi online. L'abbonamento si rinnova automaticamente salvo disdetta anticipata." },
+              { q: "Come faccio a ottenere la verifica birrificio?", a: "Registra il profilo del birrificio. Il team verifica i dati e attiva il badge entro poche ore. La verifica è completamente gratuita." },
+              { q: "Posso disdire il piano pub?", a: "Sì, in qualsiasi momento prima del rinnovo annuale. Il piano rimane attivo fino alla scadenza e non verrà rinnovato. Nessun costo di recesso." },
+              { q: "Come avviene il pagamento del piano pub?", a: "Il pagamento avviene tramite carta di credito/debito, PayPal e altri metodi online. L'addebito è annuale e automatico salvo disdetta anticipata." },
               { q: "Posso avere sia pub che birrificio?", a: "Sì. I due piani sono separati e coesistono sullo stesso account. Se sei un brewpub avrai una doppia dashboard — una per il birrificio, una per il pub." },
-              { q: "I prezzi includono l'IVA?", a: "I prezzi indicati sono IVA esclusa. Per soggetti con P.IVA italiana si applica l'aliquota ordinaria del 22%." },
+              { q: "I prezzi includono l'IVA?", a: "Sì, i prezzi indicati sono IVA inclusa (22% Italia)." },
             ].map(({ q, a }) => (
               <Card key={q} className="bg-gray-50 dark:bg-gray-800/50 border-0">
                 <CardContent className="p-5">
@@ -308,7 +308,7 @@ export default function PrezziPage() {
         {/* CTA bottom */}
         <div className="text-center bg-gradient-to-r from-amber-500 to-orange-500 rounded-2xl p-8 text-white mb-8">
           <h2 className="text-2xl font-bold mb-2">Pronto a iniziare?</h2>
-          <p className="text-white/80 mb-6 max-w-md mx-auto">Registra il tuo profilo oggi. Nessuna carta di credito richiesta.</p>
+          <p className="text-white/80 mb-6 max-w-md mx-auto">15 giorni di prova gratuita, senza carta di credito. Poi €65/anno con rinnovo automatico, disdici quando vuoi.</p>
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
             <Button size="lg" className="bg-white text-amber-600 hover:bg-gray-50 font-semibold shadow-md" asChild>
               <Link href="/registra-pub">
