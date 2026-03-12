@@ -1,0 +1,57 @@
+root@luppolino:~# -- Prima verifica gli ID sul VPS
+-bash: --: command not found
+root@luppolino:~# SELECT id, name FROM breweries
+-bash: SELECT: command not found
+root@luppolino:~# WHERE name ILIKE '%carrobiolo%' OR name ILIKE '%piccolo opificio%';
+-bash: WHERE: command not found
+root@luppolino:~#
+root@luppolino:~# -- Poi esegui il merge (sostituisci KEEP_ID e MERGE_ID con quelli trovati sopra)
+-bash: syntax error near unexpected token `('
+root@luppolino:~# UPDATE beers SET brewery_id = KEEP_ID WHERE brewery_id = MERGE_ID;
+-bash: UPDATE: command not found
+root@luppolino:~# UPDATE brewery_events SET brewery_id = KEEP_ID WHERE brewery_id = MERGE_ID;
+-bash: UPDATE: command not found
+root@luppolino:~# UPDATE addition_requests SET brewery_id = KEEP_ID WHERE brewery_id = MERGE_ID;
+-bash: UPDATE: command not found
+root@luppolino:~# UPDATE brewery_requests SET existing_brewery_id = KEEP_ID WHERE existing_brewery_id = MERGE_ID;
+-bash: UPDATE: command not found
+root@luppolino:~# UPDATE users SET brewery_id = KEEP_ID WHERE brewery_id = MERGE_ID;
+-bash: UPDATE: command not found
+root@luppolino:~# UPDATE notifications SET brewery_id = NULL WHERE brewery_id = MERGE_ID;
+-bash: UPDATE: command not found
+root@luppolino:~# DELETE FROM breweries WHERE id = MERGE_ID;
+-bash: DELETE: command not found
+root@luppolino:~# root@luppolino:~# -- Prima verifica gli ID sul VPS
+-bash: root@luppolino:~#: command not found
+root@luppolino:~# -bash: --: command not found
+-bash: -bash:: command not found
+root@luppolino:~# root@luppolino:~# SELECT id, name FROM breweries
+-bash: root@luppolino:~#: command not found
+root@luppolino:~# -bash: SELECT: command not found
+-bash: -bash:: command not found
+root@luppolino:~# root@luppolino:~# WHERE name ILIKE '%carrobiolo%' OR name ILIKE '%piccolo opificio%';
+-bash: root@luppolino:~#: command not found
+root@luppolino:~# -bash: WHERE: command not found
+-bash: -bash:: command not found
+root@luppolino:~# root@luppolino:~#
+-bash: root@luppolino:~#: command not found
+root@luppolino:~# root@luppolino:~# -- Poi esegui il merge (sostituisci KEEP_ID e MERGE_ID con quelli trovati sopra)
+-bash: syntax error near unexpected token `('
+root@luppolino:~# -bash: syntax error near unexpected token `('
+> root@luppolino:~# UPDATE beers SET brewery_id = KEEP_ID WHERE brewery_id = MERGE_ID;
+> -bash: UPDATE: command not found
+> root@luppolino:~# UPDATE brewery_events SET brewery_id = KEEP_ID WHERE brewery_id = MERGE_ID;
+> -bash: UPDATE: command not found
+> root@luppolino:~# UPDATE addition_requests SET brewery_id = KEEP_ID WHERE brewery_id = MERGE_ID;
+> -bash: UPDATE: command not found
+> root@luppolino:~# UPDATE brewery_requests SET existing_brewery_id = KEEP_ID WHERE existing_brewery_id = MERGE_ID;
+> -bash: UPDATE: command not found
+> root@luppolino:~# UPDATE users SET brewery_id = KEEP_ID WHERE brewery_id = MERGE_ID;
+> -bash: UPDATE: command not found
+> root@luppolino:~# UPDATE notifications SET brewery_id = NULL WHERE brewery_id = MERGE_ID;
+> -bash: UPDATE: command not found
+> root@luppolino:~# DELETE FROM breweries WHERE id = MERGE_ID;
+> -bash: DELETE: command not found
+> root@luppolino:~#
+> \q
+> ^C
