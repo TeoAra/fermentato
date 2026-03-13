@@ -4665,19 +4665,95 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Pub subscription request (sends email/notification to admin)
+  // Pub subscription request (sends email/notification to admin) - legacy fallback
   app.post("/api/pub-subscription-request", async (req: any, res) => {
     try {
       const { pubName, ownerName, email, vatNumber, phone, city, notes } = req.body;
       if (!pubName || !ownerName || !email) {
         return res.status(400).json({ message: "Dati obbligatori mancanti" });
       }
-      // Log the request for admin review
       console.log("[PUB SUBSCRIPTION REQUEST]", { pubName, ownerName, email, vatNumber, phone, city, notes, timestamp: new Date().toISOString() });
       res.json({ message: "Richiesta ricevuta" });
     } catch (error) {
       console.error("Error handling pub subscription request:", error);
       res.status(500).json({ message: "Errore" });
+    }
+  });
+
+  // Stripe Checkout Session per abbonamento pub (€65/anno, 15 giorni di prova)
+  app.post("/api/stripe/pub-checkout", isAuthenticated, async (req: any, res) => {
+    try {
+      const { getUncachableStripeClient } = await import("./stripeClient");
+      const stripe = await getUncachableStripeClient();
+
+      const userId = req.user?.id;
+      const userEmail = req.user?.email;
+      const userName = req.user?.username || req.user?.displayName || "";
+      const domain = process.env.REPLIT_DOMAINS?.split(",")[0] || "fermenta.to";
+      const baseUrl = `https://${domain}`;
+
+      // Trova o crea il prezzo €65/anno con 15 giorni di prova
+      // Prima cerca un prezzo esistente tramite la variabile d'ambiente
+      let priceId = process.env.STRIPE_PUB_PRICE_ID;
+      if (!priceId) {
+        // Cerca o crea il prodotto e il prezzo
+        const products = await stripe.products.list({ active: true, limit: 10 });
+        let product = products.data.find(p => p.metadata?.fermenta_type === "pub_subscription");
+        if (!product) {
+          product = await stripe.products.create({
+            name: "Piano Pub Pro — Fermenta.to",
+            description: "Accesso completo al pannello pub: taplist digitale, analytics, notifiche push, badge verificato",
+            metadata: { fermenta_type: "pub_subscription" },
+          });
+        }
+        const prices = await stripe.prices.list({ product: product.id, active: true, limit: 10 });
+        let price = prices.data.find(p => p.unit_amount === 6500 && p.currency === "eur" && p.recurring?.interval === "year");
+        if (!price) {
+          price = await stripe.prices.create({
+            product: product.id,
+            unit_amount: 6500,
+            currency: "eur",
+            recurring: { interval: "year" },
+            metadata: { fermenta_type: "pub_subscription" },
+          });
+        }
+        priceId = price.id;
+      }
+
+      // Crea o trova il customer Stripe per l'utente
+      const existingCustomers = await stripe.customers.list({ email: userEmail, limit: 1 });
+      let customerId: string;
+      if (existingCustomers.data.length > 0) {
+        customerId = existingCustomers.data[0].id;
+      } else {
+        const customer = await stripe.customers.create({
+          email: userEmail,
+          name: userName,
+          metadata: { fermenta_user_id: String(userId) },
+        });
+        customerId = customer.id;
+      }
+
+      // Crea la Checkout Session con trial di 15 giorni
+      const session = await stripe.checkout.sessions.create({
+        mode: "subscription",
+        customer: customerId,
+        line_items: [{ price: priceId, quantity: 1 }],
+        subscription_data: {
+          trial_period_days: 15,
+          metadata: { fermenta_user_id: String(userId) },
+        },
+        success_url: `${baseUrl}/attiva-pub?checkout_success=1&session_id={CHECKOUT_SESSION_ID}`,
+        cancel_url: `${baseUrl}/attiva-pub`,
+        payment_method_collection: "if_required",
+        locale: "it",
+        metadata: { fermenta_user_id: String(userId) },
+      });
+
+      res.json({ url: session.url, sessionId: session.id });
+    } catch (error: any) {
+      console.error("Stripe checkout error:", error.message);
+      res.status(500).json({ message: "Errore nella creazione del pagamento: " + error.message });
     }
   });
 

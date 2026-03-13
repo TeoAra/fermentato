@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link } from "wouter";
 import { useAuth } from "@/hooks/useAuth";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -7,15 +7,12 @@ import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import { SEO } from "@/components/seo";
 import Footer from "@/components/footer";
 import {
   Crown, CheckCircle2, Zap, Beer, ArrowRight, Shield, Star, Bell, BarChart3,
-  QrCode, Tv2, FileText, Calendar, MapPin, Clock, Mail, Building2, Users,
-  ArrowLeft, Gift
+  QrCode, Tv2, FileText, Calendar, MapPin, Clock, CreditCard, Building2, Users,
+  ArrowLeft, Gift, Lock
 } from "lucide-react";
 
 const PUB_FEATURES = [
@@ -42,9 +39,15 @@ export default function AttivaPub() {
   const queryClient = useQueryClient();
   const [step, setStep] = useState<Step>("choose");
   const [selectedPub, setSelectedPub] = useState<any>(null);
-  const [form, setForm] = useState({
-    pubName: "", ownerName: "", email: "", vatNumber: "", phone: "", city: "", notes: ""
-  });
+
+  // Controlla se si ritorna da Stripe Checkout con successo
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("checkout_success") === "1") {
+      setStep("checkout-success");
+      window.history.replaceState({}, "", "/attiva-pub");
+    }
+  }, []);
 
   const { data: userPubs = [] } = useQuery<any[]>({
     queryKey: ["/api/my-pubs"],
@@ -63,22 +66,18 @@ export default function AttivaPub() {
   });
 
   const checkoutMutation = useMutation({
-    mutationFn: (data: typeof form) =>
-      apiRequest("/api/pub-subscription-request", { method: "POST" }, data),
-    onSuccess: () => setStep("checkout-success"),
-    onError: () => {
-      setStep("checkout-success");
+    mutationFn: () => apiRequest("/api/stripe/pub-checkout", { method: "POST" }),
+    onSuccess: (data: any) => {
+      if (data?.url) {
+        window.location.href = data.url;
+      } else {
+        toast({ title: "Errore", description: "Nessun URL di pagamento ricevuto", variant: "destructive" });
+      }
+    },
+    onError: (err: any) => {
+      toast({ title: "Errore", description: err?.message || "Impossibile avviare il pagamento", variant: "destructive" });
     },
   });
-
-  const handleCheckoutSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!form.pubName || !form.ownerName || !form.email) {
-      toast({ title: "Campi obbligatori", description: "Compila nome pub, nome e cognome ed email", variant: "destructive" });
-      return;
-    }
-    checkoutMutation.mutate(form);
-  };
 
   if (step === "trial-success") {
     return (
@@ -118,36 +117,33 @@ export default function AttivaPub() {
 
   if (step === "checkout-success") {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-amber-50 to-white dark:from-gray-950 dark:to-gray-900 pt-20 flex flex-col">
-        <SEO title="Richiesta inviata — Fermenta.to" url="https://fermenta.to/attiva-pub" />
+      <div className="min-h-screen bg-gradient-to-b from-green-50 to-white dark:from-gray-950 dark:to-gray-900 pt-20 flex flex-col">
+        <SEO title="Abbonamento attivato — Fermenta.to" url="https://fermenta.to/attiva-pub" />
         <div className="flex-1 flex items-center justify-center px-4 py-16">
           <div className="max-w-md text-center space-y-6">
-            <div className="w-20 h-20 bg-amber-100 dark:bg-amber-900/40 rounded-full flex items-center justify-center mx-auto">
-              <Mail className="w-10 h-10 text-amber-500" />
+            <div className="w-20 h-20 bg-green-100 dark:bg-green-900/40 rounded-full flex items-center justify-center mx-auto">
+              <CheckCircle2 className="w-10 h-10 text-green-500" />
             </div>
-            <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Richiesta inviata!</h1>
+            <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Abbonamento attivato!</h1>
             <p className="text-gray-600 dark:text-gray-400 text-lg">
-              Abbiamo ricevuto la tua richiesta. Ti contatteremo entro 24 ore con le istruzioni per il pagamento e l'attivazione.
+              Benvenuto nel Piano Pub Pro. Il tuo periodo di prova di 15 giorni è iniziato — nessun addebito per ora.
             </p>
-            <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-xl p-4 text-left space-y-2">
-              <p className="font-semibold text-amber-800 dark:text-amber-200 text-sm">Come funziona l'attivazione:</p>
-              <div className="space-y-1.5">
-                {[
-                  "Riceverai un'email con i dati per il bonifico bancario (o link al pagamento con carta)",
-                  "Effettua il pagamento di €65 + IVA",
-                  "Il tuo profilo verrà verificato e attivato automaticamente",
-                  "Puoi usare il prova gratuita di 15 giorni nel frattempo",
-                ].map((s, i) => (
-                  <div key={i} className="flex items-start gap-2 text-sm text-amber-700 dark:text-amber-300">
-                    <span className="font-bold flex-shrink-0">{i + 1}.</span>
-                    <span>{s}</span>
-                  </div>
-                ))}
+            <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-xl p-4">
+              <div className="flex items-center gap-2 justify-center text-green-700 dark:text-green-300 font-semibold">
+                <Clock className="w-4 h-4" />
+                15 giorni gratuiti · poi €65/anno IVA inclusa
               </div>
             </div>
-            <Link href="/">
-              <Button variant="outline">Torna alla home</Button>
-            </Link>
+            <div className="flex flex-col sm:flex-row gap-3 justify-center">
+              <Link href="/dashboard">
+                <Button className="bg-amber-500 hover:bg-amber-600 text-white font-semibold">
+                  Vai alla dashboard <ArrowRight className="w-4 h-4 ml-2" />
+                </Button>
+              </Link>
+              <Link href="/">
+                <Button variant="outline">Torna alla home</Button>
+              </Link>
+            </div>
           </div>
         </div>
         <Footer />
@@ -159,7 +155,7 @@ export default function AttivaPub() {
     return (
       <div className="min-h-screen bg-gradient-to-b from-amber-50 to-white dark:from-gray-950 dark:to-gray-900 pt-20 flex flex-col">
         <SEO title="Attiva Piano Pub — Fermenta.to" url="https://fermenta.to/attiva-pub" />
-        <div className="max-w-2xl mx-auto px-4 py-12 flex-1 w-full">
+        <div className="max-w-lg mx-auto px-4 py-12 flex-1 w-full">
           <button onClick={() => setStep("choose")} className="flex items-center gap-2 text-gray-500 hover:text-gray-900 dark:hover:text-white text-sm mb-8 transition-colors">
             <ArrowLeft className="w-4 h-4" /> Torna indietro
           </button>
@@ -169,88 +165,81 @@ export default function AttivaPub() {
               <Crown className="w-6 h-6 text-amber-600" />
             </div>
             <div>
-              <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Attiva Piano Pub Pro</h1>
-              <p className="text-gray-500 dark:text-gray-400 text-sm">€65 / anno + IVA · Accesso completo</p>
+              <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Piano Pub Pro</h1>
+              <p className="text-gray-500 dark:text-gray-400 text-sm">15 giorni gratis · poi €65/anno IVA inclusa</p>
             </div>
           </div>
 
-          <form onSubmit={handleCheckoutSubmit} className="space-y-6">
+          <div className="space-y-4">
+            {/* Riepilogo piano */}
             <Card>
-              <CardContent className="p-6 space-y-4">
-                <h2 className="font-semibold text-gray-900 dark:text-white mb-2">Dati del pub</h2>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div className="space-y-1.5">
-                    <Label htmlFor="pubName">Nome del pub *</Label>
-                    <Input id="pubName" value={form.pubName} onChange={e => setForm(f => ({ ...f, pubName: e.target.value }))} placeholder="es. Luppolino Pub" required />
-                  </div>
-                  <div className="space-y-1.5">
-                    <Label htmlFor="city">Città *</Label>
-                    <Input id="city" value={form.city} onChange={e => setForm(f => ({ ...f, city: e.target.value }))} placeholder="es. Milano" required />
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardContent className="p-6 space-y-4">
-                <h2 className="font-semibold text-gray-900 dark:text-white mb-2">Dati del titolare</h2>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div className="space-y-1.5">
-                    <Label htmlFor="ownerName">Nome e Cognome *</Label>
-                    <Input id="ownerName" value={form.ownerName} onChange={e => setForm(f => ({ ...f, ownerName: e.target.value }))} placeholder="Mario Rossi" required />
-                  </div>
-                  <div className="space-y-1.5">
-                    <Label htmlFor="email">Email *</Label>
-                    <Input id="email" type="email" value={form.email} onChange={e => setForm(f => ({ ...f, email: e.target.value }))} placeholder="tuo@email.com" required />
-                  </div>
-                  <div className="space-y-1.5">
-                    <Label htmlFor="phone">Telefono</Label>
-                    <Input id="phone" type="tel" value={form.phone} onChange={e => setForm(f => ({ ...f, phone: e.target.value }))} placeholder="+39 333 1234567" />
-                  </div>
-                  <div className="space-y-1.5">
-                    <Label htmlFor="vatNumber">P.IVA (se disponibile)</Label>
-                    <Input id="vatNumber" value={form.vatNumber} onChange={e => setForm(f => ({ ...f, vatNumber: e.target.value }))} placeholder="IT01234567890" />
-                  </div>
-                </div>
-                <div className="space-y-1.5">
-                  <Label htmlFor="notes">Note aggiuntive</Label>
-                  <Textarea id="notes" value={form.notes} onChange={e => setForm(f => ({ ...f, notes: e.target.value }))} placeholder="Informazioni aggiuntive sul tuo pub..." rows={3} />
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card className="bg-amber-50 dark:bg-amber-900/10 border-amber-200 dark:border-amber-800">
               <CardContent className="p-6">
+                <div className="flex justify-between items-center mb-4">
+                  <span className="font-semibold text-gray-900 dark:text-white">Piano Pub Pro — annuale</span>
+                  <span className="text-2xl font-bold text-amber-600">€65</span>
+                </div>
+                <div className="space-y-2">
+                  {[
+                    "15 giorni di prova gratuita",
+                    "Badge pub verificato",
+                    "Taplist digitale illimitata",
+                    "Analytics e notifiche push",
+                    "Disdici quando vuoi",
+                  ].map((f, i) => (
+                    <div key={i} className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
+                      <CheckCircle2 className="w-4 h-4 text-green-500 flex-shrink-0" />
+                      {f}
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Info pagamento */}
+            <Card className="bg-amber-50 dark:bg-amber-900/10 border-amber-200 dark:border-amber-800">
+              <CardContent className="p-5">
                 <div className="flex items-start gap-3">
-                  <Mail className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
+                  <CreditCard className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
                   <div>
-                    <p className="font-semibold text-amber-800 dark:text-amber-200 text-sm">Come funziona il pagamento</p>
+                    <p className="font-semibold text-amber-800 dark:text-amber-200 text-sm">Pagamento sicuro con Stripe</p>
                     <p className="text-sm text-amber-700 dark:text-amber-300 mt-1">
-                      Dopo aver inviato questa richiesta, ti contatteremo entro 24 ore con le istruzioni di pagamento (bonifico bancario o carta di credito). Il piano verrà attivato automaticamente dopo la conferma del pagamento.
+                      Inserisci i tuoi dati di pagamento nella pagina sicura Stripe. Non verrai addebitato per i primi 15 giorni.
                     </p>
-                    <p className="text-sm font-semibold text-amber-800 dark:text-amber-200 mt-2">Importo: €65 + IVA 22% = €79,30</p>
                   </div>
                 </div>
               </CardContent>
             </Card>
 
             <div className="flex flex-col sm:flex-row gap-3">
-              <Button type="submit" className="flex-1 bg-amber-500 hover:bg-amber-600 text-white font-bold h-12 text-base" disabled={checkoutMutation.isPending}>
-                {checkoutMutation.isPending ? "Invio in corso..." : (
+              <Button
+                className="flex-1 bg-amber-500 hover:bg-amber-600 text-white font-bold h-12 text-base"
+                disabled={checkoutMutation.isPending || !isAuthenticated}
+                onClick={() => checkoutMutation.mutate()}
+              >
+                {checkoutMutation.isPending ? "Caricamento..." : (
                   <>
-                    <Zap className="w-4 h-4 mr-2" />
-                    Invia richiesta di attivazione
+                    <Lock className="w-4 h-4 mr-2" />
+                    Procedi al pagamento sicuro
                   </>
                 )}
               </Button>
               {isAuthenticated && userPubs.length > 0 && userPubs.some((p: any) => p.subscriptionStatus === 'none') && (
                 <Button type="button" variant="outline" className="flex-1 h-12" onClick={() => setStep("trial-confirm")}>
                   <Gift className="w-4 h-4 mr-2" />
-                  Prova 15 giorni gratis
+                  Prova gratis senza carta
                 </Button>
               )}
             </div>
-          </form>
+            {!isAuthenticated && (
+              <p className="text-center text-sm text-gray-500 dark:text-gray-400">
+                <Link href="/login" className="text-amber-600 hover:underline font-semibold">Accedi</Link> per procedere al pagamento.
+              </p>
+            )}
+            <div className="flex items-center justify-center gap-2 text-xs text-gray-400 dark:text-gray-500">
+              <Lock className="w-3 h-3" />
+              Pagamento sicuro e cifrato · Powered by Stripe
+            </div>
+          </div>
         </div>
         <Footer />
       </div>

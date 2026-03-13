@@ -524,8 +524,8 @@ export default function PubDetail() {
                   <div className="flex flex-col md:flex-row items-center space-y-4 md:space-y-0 md:space-x-6 w-full md:w-auto justify-center md:justify-start">
                     {/* Logo con bordo colorato per stato apertura */}
                     <div className="relative flex-shrink-0">
-                      <Avatar className={`h-20 w-20 ring-4 ${openStatus.borderColor} flex-shrink-0`}>
-                        <AvatarImage src={(pub as any)?.logoUrl} alt={`${(pub as any)?.name} - Logo`} />
+                      <Avatar className={`h-20 w-20 ring-4 ${openStatus.borderColor} flex-shrink-0 bg-white`}>
+                        <AvatarImage src={(pub as any)?.logoUrl} alt={`${(pub as any)?.name} - Logo`} className="object-contain p-1" />
                         <AvatarFallback className="bg-gradient-to-br from-amber-500 to-orange-600 text-white text-2xl">
                           {(pub as any)?.name?.[0] || 'P'}
                         </AvatarFallback>
@@ -544,7 +544,7 @@ export default function PubDetail() {
                           {(pub as any)?.name}
                         </h1>
                         {(pub as any)?.isVerified && (
-                          <div className="flex items-center gap-1.5 bg-emerald-600 border border-emerald-500 rounded-full px-3 py-1 mt-1 md:mt-0 self-start md:self-auto shadow-sm">
+                          <div className="flex items-center gap-1.5 bg-emerald-600 border border-emerald-500 rounded-full px-3 py-1 mt-1 md:mt-0 self-center md:self-auto shadow-sm">
                             <ShieldCheck className="h-4 w-4 text-white" />
                             <span className="text-xs font-semibold text-white">Pub Verificato</span>
                           </div>
