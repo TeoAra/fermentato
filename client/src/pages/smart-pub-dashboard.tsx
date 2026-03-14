@@ -167,6 +167,7 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
   const { user, isAuthenticated } = useAuth();
   const isAdminMode = !!adminPubId;
   const { toast } = useToast();
+  const isPwa = typeof window !== 'undefined' && window.matchMedia('(display-mode: standalone)').matches;
   const queryClient = useQueryClient();
 
   // Logout handler
@@ -603,7 +604,7 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
                 <LinkIcon className="h-4 w-4 shrink-0 text-gray-400" />
               </div>
 
-              <Button
+              {!isPwa && <Button
                 className="w-full gap-2 bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 py-5 text-base"
                 onClick={async () => {
                   const w = window as any;
@@ -642,7 +643,7 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
               >
                 <Cast className="h-5 w-5" />
                 Trasmetti Taplist su TV
-              </Button>
+              </Button>}
 
               <div className="flex gap-2">
                 <Button
