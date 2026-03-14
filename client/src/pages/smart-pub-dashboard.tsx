@@ -186,6 +186,16 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
       window.location.href = '/';
     }
   };
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('trial') === 'started') {
+      setTimeout(() => {
+        toast({ title: "Email verificata! Prova gratuita attivata 🎉", description: "Hai 15 giorni per esplorare tutte le funzionalità di Fermenta.to." });
+      }, 800);
+      window.history.replaceState({}, '', '/dashboard');
+    }
+  }, []);
+
   const [currentSection, setCurrentSection] = useState<DashboardSection>('overview');
   const [editingItem, setEditingItem] = useState<number | string | null>(null);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);

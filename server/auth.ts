@@ -650,7 +650,7 @@ export async function setupAuth(app: Express) {
           trialEndsAt,
           isVerified: true,
         }).where(eq(pubs.id, userPub.id));
-        return res.redirect('/pub-dashboard?trial=started');
+        return res.redirect('/dashboard?trial=started');
       }
 
       res.redirect('/auth?verified=success');
