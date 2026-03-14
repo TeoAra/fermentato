@@ -85,17 +85,19 @@ export function MobileHeader({ onMenuToggle, isMenuOpen }: MobileHeaderProps) {
 
   return (
     <>
-      <header className="lg:hidden fixed top-0 left-0 right-0 z-50 bg-white dark:bg-slate-900 border-b border-gray-100 dark:border-slate-800 h-16 shadow-sm">
-        <div className="flex items-center justify-between px-4 h-full">
+      <header className="lg:hidden fixed top-0 left-0 right-0 z-50 h-16">
+        {/* Frosted background */}
+        <div className="absolute inset-0 bg-white/90 dark:bg-[hsl(25,14%,7%)]/93 backdrop-blur-xl border-b border-[hsl(36,14%,87%)]/80 dark:border-[hsl(25,12%,14%)]/80" />
+        <div className="relative flex items-center justify-between px-4 h-full">
           <Link href="/">
-            <img src="/logo-full.png" alt="Fermenta.to" className="h-10 w-auto block dark:hidden" />
-            <img src="/logo-dark-mode.png" alt="Fermenta.to" className="h-10 w-auto hidden dark:block" />
+            <img src="/logo-full.png" alt="Fermenta.to" className="h-9 w-auto block dark:hidden" />
+            <img src="/logo-dark-mode.png" alt="Fermenta.to" className="h-9 w-auto hidden dark:block" />
           </Link>
 
-          <div className="flex items-center gap-1">
+          <div className="flex items-center gap-0.5">
             <button
               onClick={() => setIsSearchOpen(true)}
-              className="p-2.5 text-gray-500 dark:text-gray-400 hover:text-amber-600 dark:hover:text-amber-400 hover:bg-gray-100 dark:hover:bg-slate-800 rounded-xl transition-colors"
+              className="p-2.5 text-[hsl(28,8%,52%)] dark:text-[hsl(35,8%,52%)] hover:text-[hsl(35,90%,42%)] dark:hover:text-[hsl(38,88%,58%)] hover:bg-[hsl(36,14%,93%)] dark:hover:bg-[hsl(25,12%,13%)] rounded-xl transition-colors"
               aria-label="Cerca"
             >
               <Search className="h-5 w-5" />
@@ -103,7 +105,7 @@ export function MobileHeader({ onMenuToggle, isMenuOpen }: MobileHeaderProps) {
 
             {isAuthenticated && typedUser && (
               <Link href="/notifications" className="relative p-2.5">
-                <Bell className="h-5 w-5 text-gray-500 dark:text-gray-400 hover:text-amber-600 dark:hover:text-amber-400 transition-colors" />
+                <Bell className="h-5 w-5 text-[hsl(28,8%,52%)] dark:text-[hsl(35,8%,52%)] hover:text-[hsl(35,90%,42%)] dark:hover:text-[hsl(38,88%,58%)] transition-colors" />
                 {(unreadData?.count ?? 0) > 0 && (
                   <span className="absolute top-1.5 right-1.5 h-4 w-4 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center">
                     {(unreadData?.count ?? 0) > 9 ? '9+' : unreadData?.count}
@@ -114,11 +116,11 @@ export function MobileHeader({ onMenuToggle, isMenuOpen }: MobileHeaderProps) {
 
             {isAuthenticated && typedUser && (
               <Link href="/dashboard">
-                <Avatar className="h-9 w-9 ring-2 ring-amber-200 dark:ring-amber-800">
+                <Avatar className="h-8 w-8 ring-2 ring-[hsl(38,80%,82%)] dark:ring-[hsl(35,40%,28%)]">
                   {typedUser.profileImageUrl && (
                     <AvatarImage src={typedUser.profileImageUrl} alt={typedUser.nickname || 'Profilo'} />
                   )}
-                  <AvatarFallback className="bg-amber-100 dark:bg-amber-900 text-amber-600 dark:text-amber-400 text-sm font-semibold">
+                  <AvatarFallback className="bg-[hsl(38,80%,93%)] dark:bg-[hsl(35,30%,18%)] text-[hsl(35,90%,38%)] dark:text-[hsl(38,88%,60%)] text-sm font-semibold">
                     {typedUser.nickname?.[0]?.toUpperCase() || typedUser.firstName?.[0] || 'U'}
                   </AvatarFallback>
                 </Avatar>
@@ -129,7 +131,7 @@ export function MobileHeader({ onMenuToggle, isMenuOpen }: MobileHeaderProps) {
 
             <button
               onClick={onMenuToggle}
-              className="p-2.5 text-gray-500 dark:text-gray-400 hover:text-amber-600 dark:hover:text-amber-400 hover:bg-gray-100 dark:hover:bg-slate-800 rounded-xl transition-colors"
+              className="p-2.5 text-[hsl(28,8%,52%)] dark:text-[hsl(35,8%,52%)] hover:text-[hsl(35,90%,42%)] dark:hover:text-[hsl(38,88%,58%)] hover:bg-[hsl(36,14%,93%)] dark:hover:bg-[hsl(25,12%,13%)] rounded-xl transition-colors"
               aria-label={isMenuOpen ? "Chiudi menu" : "Apri menu"}
             >
               {isMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}

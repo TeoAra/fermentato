@@ -104,7 +104,7 @@ function Router() {
       />
       
       {/* Main Content */}
-      <main className="lg:pt-0 pt-14 pb-16 lg:pb-0">
+      <main className="lg:pt-0 pt-16 pb-16 lg:pb-0">
         <Switch>
           <Route path="/" component={isLoading || !isAuthenticated ? Landing : Home} />
           <Route path="/login" component={AuthPage} />
