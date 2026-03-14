@@ -40,6 +40,7 @@ export default function AttivaPub() {
   const [step, setStep] = useState<Step>("choose");
   const [selectedPub, setSelectedPub] = useState<any>(null);
   const [registrationType, setRegistrationType] = useState<"pub" | "brewpub">("pub");
+  const [activationTimedOut, setActivationTimedOut] = useState(false);
 
   // ── Mutations ──────────────────────────────────────────────────────────────
 
@@ -91,23 +92,48 @@ export default function AttivaPub() {
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
-    const sessionId = params.get("session_id") || undefined;
 
+    // ── Case 1: returning from Stripe checkout ─────────────────────────────
     if (params.get("checkout_success") === "1") {
-      // Recover registration type saved before Stripe redirect
+      const sessionId = params.get("session_id") || undefined;
+
+      // Save to sessionStorage BEFORE clearing URL so refresh also works
+      if (sessionId) sessionStorage.setItem("fermenta_stripe_session", sessionId);
       const savedType = sessionStorage.getItem("fermenta_reg_type") as "pub" | "brewpub" | null;
-      if (savedType) {
-        setRegistrationType(savedType);
-        sessionStorage.removeItem("fermenta_reg_type");
-      }
+      if (savedType) setRegistrationType(savedType);
+
+      // Clear URL so refreshing doesn't re-trigger
       window.history.replaceState({}, "", "/attiva-pub");
       setStep("activating");
-      if (isAuthenticated) activateMutation.mutate(sessionId);
-    } else if (params.get("direct") === "1" && isAuthenticated) {
-      // Detect brewpub case from server redirect
+
+      // Fire mutation immediately if auth is ready; otherwise the
+      // "pending activation" branch below handles it on next effect run
+      if (isAuthenticated) {
+        sessionStorage.removeItem("fermenta_reg_type");
+        sessionStorage.removeItem("fermenta_stripe_session");
+        activateMutation.mutate(sessionId);
+      }
+      return;
+    }
+
+    // ── Case 2: auth loaded — pending activation (race condition recovery) ──
+    if (isAuthenticated) {
+      const pendingSession = sessionStorage.getItem("fermenta_stripe_session");
+      if (pendingSession) {
+        const savedType = sessionStorage.getItem("fermenta_reg_type") as "pub" | "brewpub" | null;
+        if (savedType) setRegistrationType(savedType);
+        sessionStorage.removeItem("fermenta_reg_type");
+        sessionStorage.removeItem("fermenta_stripe_session");
+        setStep("activating");
+        activateMutation.mutate(pendingSession);
+        return;
+      }
+    }
+
+    // ── Case 3: post-email-verification direct checkout ────────────────────
+    if (params.get("direct") === "1" && isAuthenticated) {
       const type = params.get("type") === "brewpub" ? "brewpub" : "pub";
       setRegistrationType(type);
-      // Persist across Stripe redirect
       sessionStorage.setItem("fermenta_reg_type", type);
       window.history.replaceState({}, "", "/attiva-pub");
       setStep("checkout");
@@ -122,15 +148,47 @@ export default function AttivaPub() {
     enabled: isAuthenticated,
   });
 
+  // ── Activation timeout fallback ───────────────────────────────────────────
+  useEffect(() => {
+    if (step !== "activating") return;
+    const t = setTimeout(() => setActivationTimedOut(true), 12000);
+    return () => clearTimeout(t);
+  }, [step]);
+
   // ── Step: activating (spinner while we activate the pub) ──────────────────
 
   if (step === "activating") {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-amber-50 to-white dark:from-gray-950 dark:to-gray-900 flex items-center justify-center">
-        <div className="text-center space-y-4">
-          <Loader2 className="w-12 h-12 text-amber-500 animate-spin mx-auto" />
-          <p className="text-lg font-semibold text-gray-900 dark:text-white">Attivazione in corso…</p>
-          <p className="text-gray-500 dark:text-gray-400 text-sm">Stiamo configurando il tuo pub. Un attimo.</p>
+      <div className="min-h-screen bg-gradient-to-b from-amber-50 to-white dark:from-gray-950 dark:to-gray-900 flex items-center justify-center px-4">
+        <div className="text-center space-y-4 max-w-sm">
+          {!activationTimedOut ? (
+            <>
+              <Loader2 className="w-12 h-12 text-amber-500 animate-spin mx-auto" />
+              <p className="text-lg font-semibold text-gray-900 dark:text-white">Attivazione in corso…</p>
+              <p className="text-gray-500 dark:text-gray-400 text-sm">Stiamo configurando il tuo pub. Un attimo.</p>
+            </>
+          ) : (
+            <>
+              <CheckCircle2 className="w-12 h-12 text-amber-500 mx-auto" />
+              <p className="text-lg font-semibold text-gray-900 dark:text-white">Il pagamento è stato ricevuto</p>
+              <p className="text-gray-500 dark:text-gray-400 text-sm">
+                L'attivazione potrebbe richiedere qualche secondo in più. Clicca qui sotto per completarla.
+              </p>
+              <Button
+                onClick={() => { setActivationTimedOut(false); activateMutation.mutate(undefined); }}
+                disabled={activateMutation.isPending}
+                className="bg-amber-500 hover:bg-amber-600 text-white font-semibold"
+              >
+                {activateMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
+                Completa attivazione
+              </Button>
+              <div className="pt-2">
+                <Link href="/dashboard">
+                  <Button variant="ghost" className="text-sm text-gray-500">Vai alla dashboard →</Button>
+                </Link>
+              </div>
+            </>
+          )}
         </div>
       </div>
     );
