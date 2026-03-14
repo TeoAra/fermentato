@@ -533,6 +533,18 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
       animate={{ opacity: 1 }}
       transition={{ duration: 0.6 }}
     >
+      {/* Role switcher banner */}
+      <div className="flex items-center justify-between bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800/40 rounded-xl px-4 py-2.5">
+        <div className="flex items-center gap-2 text-sm text-amber-800 dark:text-amber-200 font-medium">
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+          Modalità gestione pub
+        </div>
+        <a href="/profile" className="flex items-center gap-1.5 text-sm text-amber-700 dark:text-amber-300 hover:text-amber-900 dark:hover:text-amber-100 font-semibold transition-colors">
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+          Vai al profilo utente →
+        </a>
+      </div>
+
       {/* Hero Section */}
       <motion.div 
         className="glass-card rounded-2xl p-8 mb-8 relative overflow-hidden"

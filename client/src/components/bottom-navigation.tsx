@@ -1,4 +1,4 @@
-import { Search, User, Bell, MapPin, Home, ScanLine } from "lucide-react";
+import { Search, User, Bell, MapPin, Home, ScanLine, Store } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import { useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
@@ -83,7 +83,9 @@ export function BottomNavigation() {
         <div className="relative flex items-center justify-around px-1 pt-1.5" style={{ paddingBottom: `max(env(safe-area-inset-bottom), 8px)` }}>
 
           <NavItem icon={Home} label="Home" href="/" isActive={location === "/"} />
-          <NavItem icon={MapPin} label="Pub" href="/explore/pubs" isActive={location.startsWith("/explore/pubs")} />
+          {activeRole !== 'pub_owner' && activeRole !== 'brewery_owner' && (
+            <NavItem icon={MapPin} label="Pub" href="/explore/pubs" isActive={location.startsWith("/explore/pubs")} />
+          )}
           <SearchItem />
 
           {isAuthenticated && (
@@ -109,12 +111,29 @@ export function BottomNavigation() {
             </Link>
           )}
 
-          <NavItem
-            icon={User}
-            label={dashboardLabel}
-            href={isAuthenticated ? "/dashboard" : "/login"}
-            isActive={location.startsWith("/dashboard") || location.startsWith("/login")}
-          />
+          {(activeRole === 'pub_owner' || activeRole === 'brewery_owner') ? (
+            <>
+              <NavItem
+                icon={User}
+                label="Profilo"
+                href="/profile"
+                isActive={location.startsWith("/profile")}
+              />
+              <NavItem
+                icon={Store}
+                label={activeRole === 'brewery_owner' ? "Birrificio" : "Gestione"}
+                href="/dashboard"
+                isActive={location.startsWith("/dashboard")}
+              />
+            </>
+          ) : (
+            <NavItem
+              icon={User}
+              label={dashboardLabel}
+              href={isAuthenticated ? "/dashboard" : "/login"}
+              isActive={location.startsWith("/dashboard") || location.startsWith("/login")}
+            />
+          )}
         </div>
       </nav>
 

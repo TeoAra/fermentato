@@ -128,6 +128,8 @@ function Router() {
             !typedUser?.activeRole && typedUser?.userType === 'brewery_owner' ? BreweryDashboard :
             UserProfile
           } />
+          {/* /profile always shows the user profile regardless of active role */}
+          <Route path="/profile" component={UserProfile} />
           <Route path="/admin" component={AdminDashboardNew} />
           <Route path="/admin/analytics" component={AdminAnalytics} />
           <Route path="/admin/content" component={AdminContent} />
