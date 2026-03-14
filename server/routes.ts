@@ -2076,6 +2076,202 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // ─── Admin: Publican Requests (legacy storico — pub ora attivati via Stripe) ───
+
+  app.get('/api/admin/publican-requests', isAuthenticated, isAdmin, async (req: any, res) => {
+    try {
+      const requests = await db
+        .select({
+          id: publicanRequests.id,
+          userId: publicanRequests.userId,
+          pubName: publicanRequests.pubName,
+          pubAddress: publicanRequests.pubAddress,
+          pubCity: publicanRequests.pubCity,
+          pubRegion: publicanRequests.pubRegion,
+          vatNumber: publicanRequests.vatNumber,
+          phone: publicanRequests.phone,
+          email: publicanRequests.email,
+          description: publicanRequests.description,
+          status: publicanRequests.status,
+          adminNotes: publicanRequests.adminNotes,
+          createdAt: publicanRequests.createdAt,
+          reviewedAt: publicanRequests.reviewedAt,
+          reviewedBy: publicanRequests.reviewedBy,
+          userFirstName: users.firstName,
+          userLastName: users.lastName,
+          userEmail: users.email,
+        })
+        .from(publicanRequests)
+        .leftJoin(users, eq(publicanRequests.userId, users.id))
+        .orderBy(desc(publicanRequests.createdAt));
+      res.json(requests);
+    } catch (error) {
+      console.error("Error fetching publican requests:", error);
+      res.status(500).json({ message: "Failed to fetch publican requests" });
+    }
+  });
+
+  app.post('/api/admin/publican-requests/:id/reject', isAuthenticated, isAdmin, async (req: any, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const { adminNotes } = req.body;
+      const adminId = (req.user as any).id;
+      await db.update(publicanRequests).set({
+        status: 'rejected',
+        adminNotes: adminNotes || null,
+        reviewedAt: new Date(),
+        reviewedBy: adminId,
+      }).where(eq(publicanRequests.id, id));
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error rejecting publican request:", error);
+      res.status(500).json({ message: "Failed to reject publican request" });
+    }
+  });
+
+  // ─── Admin: Brewery Requests (unico caso con approvazione admin) ───────────
+
+  app.get('/api/admin/brewery-requests', isAuthenticated, isAdmin, async (req: any, res) => {
+    try {
+      const requests = await db
+        .select({
+          id: breweryRequests.id,
+          userId: breweryRequests.userId,
+          breweryName: breweryRequests.breweryName,
+          breweryLocation: breweryRequests.breweryLocation,
+          breweryRegion: breweryRequests.breweryRegion,
+          breweryCountry: breweryRequests.breweryCountry,
+          vatNumber: breweryRequests.vatNumber,
+          phone: breweryRequests.phone,
+          email: breweryRequests.email,
+          websiteUrl: breweryRequests.websiteUrl,
+          description: breweryRequests.description,
+          existingBreweryId: breweryRequests.existingBreweryId,
+          status: breweryRequests.status,
+          adminNotes: breweryRequests.adminNotes,
+          createdAt: breweryRequests.createdAt,
+          reviewedAt: breweryRequests.reviewedAt,
+          reviewedBy: breweryRequests.reviewedBy,
+          userFirstName: users.firstName,
+          userLastName: users.lastName,
+          userEmail: users.email,
+        })
+        .from(breweryRequests)
+        .leftJoin(users, eq(breweryRequests.userId, users.id))
+        .orderBy(desc(breweryRequests.createdAt));
+      res.json(requests);
+    } catch (error) {
+      console.error("Error fetching brewery requests:", error);
+      res.status(500).json({ message: "Failed to fetch brewery requests" });
+    }
+  });
+
+  app.post('/api/admin/brewery-requests/:id/approve', isAuthenticated, isAdmin, async (req: any, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const { adminNotes } = req.body;
+      const adminId = (req.user as any).id;
+
+      const [brewReq] = await db.select().from(breweryRequests).where(eq(breweryRequests.id, id));
+      if (!brewReq) return res.status(404).json({ message: "Richiesta non trovata" });
+      if (brewReq.status === 'approved') return res.status(400).json({ message: "Già approvata" });
+
+      let breweryId: number;
+
+      if (brewReq.existingBreweryId) {
+        // Claim existing brewery
+        breweryId = brewReq.existingBreweryId;
+      } else {
+        // Create new brewery from request data
+        const [newBrewery] = await db.insert(breweries).values({
+          name: brewReq.breweryName,
+          location: brewReq.breweryLocation,
+          region: brewReq.breweryRegion || brewReq.breweryLocation,
+          country: brewReq.breweryCountry || 'Italia',
+          vatNumber: brewReq.vatNumber || null,
+          phone: brewReq.phone || null,
+          websiteUrl: brewReq.websiteUrl || null,
+          description: brewReq.description || null,
+        }).returning();
+        breweryId = newBrewery.id;
+      }
+
+      // Update brewery request status
+      await db.update(breweryRequests).set({
+        status: 'approved',
+        adminNotes: adminNotes || null,
+        reviewedAt: new Date(),
+        reviewedBy: adminId,
+      }).where(eq(breweryRequests.id, id));
+
+      // Promote user: add brewery_owner role preserving existing roles
+      const [existingUser] = await db.select({ roles: users.roles, userType: users.userType }).from(users).where(eq(users.id, brewReq.userId));
+      const currentRoles: string[] = existingUser?.roles || ['customer'];
+      const newRoles = currentRoles.includes('brewery_owner') ? currentRoles : [...currentRoles, 'brewery_owner'];
+      const isPubOwner = currentRoles.includes('pub_owner');
+
+      await db.update(users).set({
+        roles: newRoles,
+        userType: isPubOwner ? existingUser.userType : 'brewery_owner',
+        activeRole: 'brewery_owner',
+        breweryId,
+        updatedAt: new Date(),
+      }).where(eq(users.id, brewReq.userId));
+
+      // Notify user
+      try {
+        await db.insert(notifications).values({
+          userId: brewReq.userId,
+          type: 'system',
+          title: '🎉 Birrificio approvato!',
+          message: `Il tuo birrificio "${brewReq.breweryName}" è stato verificato. Ora puoi accedere alla dashboard del birrificio.`,
+          isRead: false,
+        });
+      } catch {}
+
+      res.json({ success: true, breweryId });
+    } catch (error) {
+      console.error("Error approving brewery request:", error);
+      res.status(500).json({ message: "Failed to approve brewery request" });
+    }
+  });
+
+  app.post('/api/admin/brewery-requests/:id/reject', isAuthenticated, isAdmin, async (req: any, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const { adminNotes } = req.body;
+      const adminId = (req.user as any).id;
+
+      const [brewReq] = await db.select().from(breweryRequests).where(eq(breweryRequests.id, id));
+      if (!brewReq) return res.status(404).json({ message: "Richiesta non trovata" });
+
+      await db.update(breweryRequests).set({
+        status: 'rejected',
+        adminNotes: adminNotes || null,
+        reviewedAt: new Date(),
+        reviewedBy: adminId,
+      }).where(eq(breweryRequests.id, id));
+
+      // Notify user
+      try {
+        await db.insert(notifications).values({
+          userId: brewReq.userId,
+          type: 'system',
+          title: 'Richiesta birrificio non approvata',
+          message: adminNotes
+            ? `La tua richiesta per "${brewReq.breweryName}" non è stata approvata. Nota: ${adminNotes}`
+            : `La tua richiesta per "${brewReq.breweryName}" non è stata approvata. Contattaci per maggiori informazioni.`,
+          isRead: false,
+        });
+      } catch {}
+
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error rejecting brewery request:", error);
+      res.status(500).json({ message: "Failed to reject brewery request" });
+    }
+  });
+
   app.get('/api/admin/pubs', isAuthenticated, isAdmin, async (req: any, res) => {
     try {
       const pubs = await storage.getAllPubs();

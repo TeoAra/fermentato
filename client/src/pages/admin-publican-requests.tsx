@@ -91,7 +91,7 @@ export default function AdminPublicanRequests() {
   const { toast } = useToast();
   const { user, isAuthenticated, isLoading } = useAuth();
   const queryClient = useQueryClient();
-  const [section, setSection] = useState<"pub" | "brewery">("pub");
+  const [section, setSection] = useState<"pub" | "brewery">("brewery");
   const [activeTab, setActiveTab] = useState("pending");
   const [adminNotes, setAdminNotes] = useState("");
   const [dialogAction, setDialogAction] = useState<"approve" | "reject" | null>(null);
@@ -352,16 +352,11 @@ export default function AdminPublicanRequests() {
           </div>
 
           {showActions && (
-            <div className="flex gap-2">
-              <Button
-                size="sm"
-                onClick={() => handlePubAction(request, "approve")}
-                className="bg-green-600 hover:bg-green-700"
-                data-testid={`button-approve-${request.id}`}
-              >
-                <CheckCircle className="h-4 w-4 mr-1" />
-                Approva
-              </Button>
+            <div className="flex flex-col gap-2 items-end">
+              <div className="flex items-center gap-1.5 text-xs text-green-700 dark:text-green-400 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg px-2.5 py-1.5">
+                <CheckCircle className="h-3.5 w-3.5" />
+                Attivazione via Stripe
+              </div>
               <Button
                 size="sm"
                 variant="destructive"
@@ -569,6 +564,12 @@ export default function AdminPublicanRequests() {
 
       {section === "pub" && (
         <Tabs value={activeTab} onValueChange={setActiveTab}>
+          <div className="mb-4 flex items-start gap-3 p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg text-sm text-blue-800 dark:text-blue-200">
+            <CheckCircle className="h-4 w-4 mt-0.5 flex-shrink-0 text-blue-600" />
+            <span>
+              <strong>Attivazione automatica via Stripe.</strong> I nuovi pub si attivano autonomamente dopo il checkout (prova gratuita 15 giorni → €65/anno). Non è necessaria approvazione manuale. Questa sezione mostra solo lo storico e permette di rifiutare richieste anomale.
+            </span>
+          </div>
           <TabsList className="mb-6">
             <TabsTrigger value="pending" className="gap-2">
               <Clock className="h-4 w-4" />
