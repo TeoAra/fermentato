@@ -802,25 +802,28 @@ export async function setupAuth(app: Express) {
         if (!pubName || !pubAddress || !pubCity) {
           return res.status(400).json({ message: 'Nome locale, indirizzo e città sono obbligatori' });
         }
-        newRoles = ['customer', 'pub_owner'];
-        newUserType = 'pub_owner';
+        // Keep user as 'customer' until Stripe checkout is completed
+        newRoles = ['customer'];
+        newUserType = 'customer';
 
-        // Create publican request for admin approval
-        await db.insert(publicanRequests).values({
-          userId: user.id,
-          pubName: pubName.trim(),
-          pubAddress: pubAddress.trim(),
-          pubCity: pubCity.trim(),
-          pubRegion: pubRegion?.trim() || pubCity.trim(),
+        // Create pub directly (unverified, no subscription) — Stripe will activate it
+        await db.insert(pubs).values({
+          name: pubName.trim(),
+          address: pubAddress.trim(),
+          city: pubCity.trim(),
+          region: pubRegion?.trim() || pubCity.trim(),
           vatNumber: vatNumber?.trim() || null,
           phone: phone?.trim() || null,
           description: description?.trim() || null,
-          status: 'pending',
+          ownerId: user.id,
+          isVerified: false,
+          subscriptionStatus: 'none',
+          isActive: true,
         });
 
-        // Notify admins
+        // Notify admins of new registration
         try {
-          await sendPushToAdmins(`Nuova richiesta pub da ${user.firstName || user.email}: ${pubName}`);
+          await sendPushToAdmins(`Nuovo pub registrato via Google: ${pubName} (${pubCity})`);
         } catch {}
 
       } else if (role === 'brewery_owner') {
@@ -856,7 +859,7 @@ export async function setupAuth(app: Express) {
       await db.update(users).set({
         roles: newRoles,
         userType: newUserType,
-        activeRole: role === 'customer' ? 'customer' : newRoles[newRoles.length - 1],
+        activeRole: 'customer',
         breweryId: newBreweryId || null,
         needsOnboarding: false,
         updatedAt: new Date(),
@@ -866,7 +869,10 @@ export async function setupAuth(app: Express) {
       req.login(updatedUser, () => {});
 
       const { hashedPassword: _, ...userOut } = updatedUser;
-      res.json({ user: userOut, message: 'Profilo completato!' });
+
+      // For pub_owner: redirect to Stripe checkout (role is assigned after payment)
+      const redirectTo = role === 'pub_owner' ? '/attiva-pub?direct=1' : null;
+      res.json({ user: userOut, message: 'Profilo completato!', redirectTo });
     } catch (error) {
       console.error('complete-onboarding error:', error);
       res.status(500).json({ message: 'Errore durante il completamento del profilo' });

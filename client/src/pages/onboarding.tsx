@@ -79,10 +79,15 @@ export default function Onboarding() {
     mutationFn: async (data: any) => {
       return apiRequest("/api/auth/complete-onboarding", { method: "POST" }, data);
     },
-    onSuccess: async () => {
+    onSuccess: async (data: any) => {
       await queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
-      setStep("done");
-      setTimeout(() => navigate("/"), 1800);
+      if (data?.redirectTo) {
+        // Pub: go straight to Stripe checkout
+        navigate(data.redirectTo);
+      } else {
+        setStep("done");
+        setTimeout(() => navigate("/"), 1800);
+      }
     },
     onError: (err: any) => {
       toast({ title: "Errore", description: err.message || "Errore durante il salvataggio", variant: "destructive" });
@@ -189,7 +194,7 @@ export default function Onboarding() {
               </div>
             </div>
             <p className="text-xs text-amber-400/80 bg-amber-400/10 rounded-lg px-3 py-2 mb-6">
-              La richiesta verrà verificata dall'admin prima dell'attivazione.
+              Dopo il salvataggio, completerai l'attivazione con Stripe — 15 giorni gratuiti, poi €65/anno IVA inclusa.
             </p>
 
             <Form {...pubForm}>
@@ -288,7 +293,7 @@ export default function Onboarding() {
               </div>
             </div>
             <p className="text-xs text-emerald-400/80 bg-emerald-400/10 rounded-lg px-3 py-2 mb-6">
-              La richiesta verrà verificata dall'admin prima dell'attivazione.
+              La richiesta di associazione al birrificio verrà verificata dal nostro team (di solito entro 24-48 ore).
             </p>
 
             {/* Search existing brewery */}
