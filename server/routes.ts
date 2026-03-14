@@ -4997,18 +4997,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
         customerId = customer.id;
       }
 
-      // Crea la Checkout Session con trial di 15 giorni
+      // Riattivazione: nessun trial (abbonamento già usato in passato)
+      const isReactivation = req.body?.reactivate === true;
+
+      const subscriptionData: any = {
+        metadata: { fermenta_user_id: String(userId) },
+      };
+      if (!isReactivation) {
+        subscriptionData.trial_period_days = 15;
+      }
+
+      // Crea la Checkout Session
       const session = await stripe.checkout.sessions.create({
         mode: "subscription",
         customer: customerId,
         line_items: [{ price: priceId, quantity: 1 }],
-        subscription_data: {
-          trial_period_days: 15,
-          metadata: { fermenta_user_id: String(userId) },
-        },
+        subscription_data: subscriptionData,
         success_url: `${baseUrl}/attiva-pub?checkout_success=1&session_id={CHECKOUT_SESSION_ID}`,
         cancel_url: `${baseUrl}/attiva-pub`,
-        payment_method_collection: "if_required",
+        payment_method_collection: isReactivation ? "always" : "if_required",
         locale: "it",
         metadata: { fermenta_user_id: String(userId) },
       });

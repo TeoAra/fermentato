@@ -75,7 +75,8 @@ export default function AttivaPub() {
   });
 
   const checkoutMutation = useMutation({
-    mutationFn: () => apiRequest("/api/stripe/pub-checkout", { method: "POST" }),
+    mutationFn: (params: { reactivate?: boolean } = {}) =>
+      apiRequest("/api/stripe/pub-checkout", { method: "POST" }, params),
     onSuccess: (data: any) => {
       if (data?.url) {
         window.location.href = data.url;
@@ -147,6 +148,10 @@ export default function AttivaPub() {
     queryKey: ["/api/my-pubs"],
     enabled: isAuthenticated,
   });
+
+  // User has already used (and cancelled) a subscription → no trial allowed on reactivation
+  const isReactivation = isAuthenticated && Array.isArray(userPubs) &&
+    (userPubs as any[]).some((p: any) => p.subscriptionStatus === 'cancelled');
 
   // ── Activation timeout fallback ───────────────────────────────────────────
   useEffect(() => {
@@ -290,9 +295,13 @@ export default function AttivaPub() {
   // ── Step: checkout ────────────────────────────────────────────────────────
 
   if (step === "checkout") {
+    const checkoutFeatures = isReactivation
+      ? ["Badge pub verificato", "Taplist digitale illimitata", "Menu bottiglia e food", "Analytics visitatori", "Notifiche push ai clienti", "Dashboard gestionale completa"]
+      : ["15 giorni di prova gratuita", "Badge pub verificato", "Taplist digitale illimitata", "Analytics e notifiche push", "Disdici quando vuoi nei 15 giorni — nessun addebito"];
+
     return (
       <div className="min-h-screen bg-gradient-to-b from-amber-50 to-white dark:from-gray-950 dark:to-gray-900 pt-20 flex flex-col">
-        <SEO title="Attiva Piano Pub — Fermenta.to" url="https://fermenta.to/attiva-pub" />
+        <SEO title={isReactivation ? "Riattiva Piano Pub — Fermenta.to" : "Attiva Piano Pub — Fermenta.to"} url="https://fermenta.to/attiva-pub" />
         <div className="max-w-lg mx-auto px-4 py-12 flex-1 w-full">
           <button onClick={() => setStep("choose")} className="flex items-center gap-2 text-gray-500 hover:text-gray-900 dark:hover:text-white text-sm mb-8 transition-colors">
             <ArrowLeft className="w-4 h-4" /> Torna indietro
@@ -303,8 +312,12 @@ export default function AttivaPub() {
               <Crown className="w-6 h-6 text-amber-600" />
             </div>
             <div>
-              <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Piano Pub Pro</h1>
-              <p className="text-gray-500 dark:text-gray-400 text-sm">15 giorni gratis · poi €65/anno IVA inclusa</p>
+              <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+                {isReactivation ? "Riattiva il tuo pub" : "Piano Pub Pro"}
+              </h1>
+              <p className="text-gray-500 dark:text-gray-400 text-sm">
+                {isReactivation ? "€65/anno IVA inclusa · rinnovo automatico annuale" : "15 giorni gratis · poi €65/anno IVA inclusa"}
+              </p>
             </div>
           </div>
 
@@ -316,13 +329,7 @@ export default function AttivaPub() {
                   <span className="text-2xl font-bold text-amber-600">€65</span>
                 </div>
                 <div className="space-y-2">
-                  {[
-                    "15 giorni di prova gratuita",
-                    "Badge pub verificato",
-                    "Taplist digitale illimitata",
-                    "Analytics e notifiche push",
-                    "Disdici quando vuoi nei 15 giorni — nessun addebito",
-                  ].map((f, i) => (
+                  {checkoutFeatures.map((f, i) => (
                     <div key={i} className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
                       <CheckCircle2 className="w-4 h-4 text-green-500 flex-shrink-0" />
                       {f}
@@ -332,27 +339,31 @@ export default function AttivaPub() {
               </CardContent>
             </Card>
 
-            <Card className="bg-amber-50 dark:bg-amber-900/10 border-amber-200 dark:border-amber-800">
-              <CardContent className="p-5">
-                <div className="flex items-start gap-3">
-                  <CreditCard className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
-                  <div>
-                    <p className="font-semibold text-amber-800 dark:text-amber-200 text-sm">Pre-autorizzazione a €0</p>
-                    <p className="text-sm text-amber-700 dark:text-amber-300 mt-1">
-                      Inserisci i dati della carta per la pre-autorizzazione. Non verrai addebitato per i primi 15 giorni. Se disdici prima della scadenza, non paghi nulla.
-                    </p>
+            {!isReactivation && (
+              <Card className="bg-amber-50 dark:bg-amber-900/10 border-amber-200 dark:border-amber-800">
+                <CardContent className="p-5">
+                  <div className="flex items-start gap-3">
+                    <CreditCard className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
+                    <div>
+                      <p className="font-semibold text-amber-800 dark:text-amber-200 text-sm">Pre-autorizzazione a €0</p>
+                      <p className="text-sm text-amber-700 dark:text-amber-300 mt-1">
+                        Inserisci i dati della carta per la pre-autorizzazione. Non verrai addebitato per i primi 15 giorni. Se disdici prima della scadenza, non paghi nulla.
+                      </p>
+                    </div>
                   </div>
-                </div>
-              </CardContent>
-            </Card>
+                </CardContent>
+              </Card>
+            )}
 
             <Button
               className="w-full bg-amber-500 hover:bg-amber-600 text-white font-bold h-12 text-base"
               disabled={checkoutMutation.isPending || !isAuthenticated}
-              onClick={() => checkoutMutation.mutate()}
+              onClick={() => checkoutMutation.mutate({ reactivate: isReactivation })}
             >
               {checkoutMutation.isPending ? (
                 <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Reindirizzamento a Stripe…</>
+              ) : isReactivation ? (
+                <><Zap className="w-4 h-4 mr-2" />Riattiva — €65/anno</>
               ) : (
                 <><Lock className="w-4 h-4 mr-2" />Procedi al pagamento sicuro</>
               )}
@@ -473,59 +484,92 @@ export default function AttivaPub() {
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-10">
-          <Card
-            className="border-2 border-dashed border-amber-300 dark:border-amber-700 hover:border-amber-400 dark:hover:border-amber-600 transition-colors cursor-pointer group"
-            onClick={() => isAuthenticated ? setStep("trial-confirm") : window.location.href = "/api/login"}
-          >
-            <CardContent className="p-6">
-              <div className="flex items-center gap-3 mb-3">
-                <div className="w-10 h-10 bg-amber-100 dark:bg-amber-900/40 rounded-xl flex items-center justify-center">
-                  <Gift className="w-5 h-5 text-amber-600" />
+        {/* Riattivazione: solo checkout diretto a €65, nessuna prova gratuita */}
+        {isReactivation ? (
+          <div className="max-w-sm mx-auto mb-10">
+            <Card
+              className="border-2 border-amber-400 dark:border-amber-500 shadow-xl shadow-amber-100 dark:shadow-amber-900/20 cursor-pointer group"
+              onClick={() => setStep("checkout")}
+            >
+              <div className="bg-gradient-to-r from-amber-500 to-orange-500 rounded-t-xl px-5 py-4 text-white">
+                <div className="flex items-center justify-between mb-1">
+                  <div className="flex items-center gap-2">
+                    <Crown className="w-4 h-4" />
+                    <span className="font-bold">Piano Pub Pro</span>
+                  </div>
+                  <Badge className="bg-white/20 border-0 text-white text-xs">Tutto incluso</Badge>
                 </div>
-                <div>
-                  <p className="font-bold text-gray-900 dark:text-white">Prova gratuita</p>
-                  <p className="text-xs text-gray-500">15 giorni — nessuna carta di credito</p>
+                <div className="flex items-end gap-1">
+                  <span className="text-3xl font-bold">€65</span>
+                  <span className="text-white/80 mb-0.5 text-sm">/ anno</span>
                 </div>
               </div>
-              <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
-                Esplora tutte le funzionalità gratuitamente per 15 giorni. Nessun obbligo, nessun rinnovo automatico.
-              </p>
-              <Button className="w-full bg-amber-500 hover:bg-amber-600 text-white group-hover:bg-amber-600">
-                <Gift className="w-4 h-4 mr-2" />
-                Inizia la prova gratuita
-              </Button>
-            </CardContent>
-          </Card>
+              <CardContent className="p-6">
+                <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+                  Riattiva il tuo pub e rendi il profilo nuovamente visibile. Rinnovo automatico annuale.
+                </p>
+                <Button className="w-full bg-amber-500 hover:bg-amber-600 text-white group-hover:bg-amber-600">
+                  <Zap className="w-4 h-4 mr-2" />
+                  Riattiva — €65/anno
+                </Button>
+              </CardContent>
+            </Card>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-10">
+            <Card
+              className="border-2 border-dashed border-amber-300 dark:border-amber-700 hover:border-amber-400 dark:hover:border-amber-600 transition-colors cursor-pointer group"
+              onClick={() => isAuthenticated ? setStep("trial-confirm") : window.location.href = "/api/login"}
+            >
+              <CardContent className="p-6">
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="w-10 h-10 bg-amber-100 dark:bg-amber-900/40 rounded-xl flex items-center justify-center">
+                    <Gift className="w-5 h-5 text-amber-600" />
+                  </div>
+                  <div>
+                    <p className="font-bold text-gray-900 dark:text-white">Prova gratuita</p>
+                    <p className="text-xs text-gray-500">15 giorni — nessuna carta di credito</p>
+                  </div>
+                </div>
+                <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+                  Esplora tutte le funzionalità gratuitamente per 15 giorni. Nessun obbligo, nessun rinnovo automatico.
+                </p>
+                <Button className="w-full bg-amber-500 hover:bg-amber-600 text-white group-hover:bg-amber-600">
+                  <Gift className="w-4 h-4 mr-2" />
+                  Inizia la prova gratuita
+                </Button>
+              </CardContent>
+            </Card>
 
-          <Card
-            className="border-2 border-amber-400 dark:border-amber-500 shadow-xl shadow-amber-100 dark:shadow-amber-900/20 cursor-pointer group"
-            onClick={() => setStep("checkout")}
-          >
-            <div className="bg-gradient-to-r from-amber-500 to-orange-500 rounded-t-xl px-5 py-4 text-white">
-              <div className="flex items-center justify-between mb-1">
-                <div className="flex items-center gap-2">
-                  <Crown className="w-4 h-4" />
-                  <span className="font-bold">Piano Pub Pro</span>
+            <Card
+              className="border-2 border-amber-400 dark:border-amber-500 shadow-xl shadow-amber-100 dark:shadow-amber-900/20 cursor-pointer group"
+              onClick={() => setStep("checkout")}
+            >
+              <div className="bg-gradient-to-r from-amber-500 to-orange-500 rounded-t-xl px-5 py-4 text-white">
+                <div className="flex items-center justify-between mb-1">
+                  <div className="flex items-center gap-2">
+                    <Crown className="w-4 h-4" />
+                    <span className="font-bold">Piano Pub Pro</span>
+                  </div>
+                  <Badge className="bg-white/20 border-0 text-white text-xs">Tutto incluso</Badge>
                 </div>
-                <Badge className="bg-white/20 border-0 text-white text-xs">Tutto incluso</Badge>
+                <div className="flex items-end gap-1">
+                  <span className="text-3xl font-bold">€65</span>
+                  <span className="text-white/80 mb-0.5 text-sm">/ anno</span>
+                </div>
               </div>
-              <div className="flex items-end gap-1">
-                <span className="text-3xl font-bold">€65</span>
-                <span className="text-white/80 mb-0.5 text-sm">/ anno</span>
-              </div>
-            </div>
-            <CardContent className="p-6">
-              <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
-                Attiva subito con 15 giorni di prova gratuita. Se disdici nei 15 giorni non paghi nulla.
-              </p>
-              <Button className="w-full bg-amber-500 hover:bg-amber-600 text-white group-hover:bg-amber-600">
-                <Zap className="w-4 h-4 mr-2" />
-                Attiva ora — €0 per 15 giorni
-              </Button>
-            </CardContent>
-          </Card>
-        </div>
+              <CardContent className="p-6">
+                <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+                  Attiva subito con 15 giorni di prova gratuita. Se disdici nei 15 giorni non paghi nulla.
+                </p>
+                <Button className="w-full bg-amber-500 hover:bg-amber-600 text-white group-hover:bg-amber-600">
+                  <Zap className="w-4 h-4 mr-2" />
+                  Attiva ora — €0 per 15 giorni
+                </Button>
+              </CardContent>
+            </Card>
+          </div>
+        )}
 
         <Card className="mb-10">
           <CardContent className="p-6">
@@ -549,25 +593,12 @@ export default function AttivaPub() {
                 <p className="font-semibold text-purple-800 dark:text-purple-200 text-sm">Sei un brewpub?</p>
                 <p className="text-sm text-purple-700 dark:text-purple-300 mt-1">
                   Se produci e somministri birra artigianale, puoi attivare sia il piano Pub che la verifica Birrificio sullo stesso account.
+                  Registrati come brewpub durante la fase di iscrizione.
                 </p>
-                <Link href="/prezzi#brewpub">
-                  <Button variant="link" className="text-purple-600 dark:text-purple-400 p-0 h-auto text-sm mt-1">
-                    Scopri come funziona →
-                  </Button>
-                </Link>
               </div>
             </div>
           </CardContent>
         </Card>
-
-        <div className="text-center">
-          <Link href="/prezzi">
-            <Button variant="ghost" className="text-gray-500 hover:text-gray-900 dark:hover:text-white">
-              <ArrowLeft className="w-4 h-4 mr-2" />
-              Torna alla pagina prezzi
-            </Button>
-          </Link>
-        </div>
       </div>
 
       <Footer />
