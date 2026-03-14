@@ -4997,9 +4997,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Check if pub already exists for user
       const [existingPub] = await db.select().from(pubs).where(eq(pubs.ownerId, userId));
       if (existingPub) {
-        // Already activated, just ensure role is set and trial is active
+        // Ensure pub has trial/active status
         const trialEndsAt = existingPub.trialEndsAt || new Date(Date.now() + 15 * 24 * 60 * 60 * 1000);
         await db.update(pubs).set({ isVerified: true, subscriptionStatus: "trial", trialEndsAt }).where(eq(pubs.id, existingPub.id));
+
+        // Also ensure user has pub_owner role (could be missing if registered via register-pub)
+        const currentRoles: string[] = req.user?.roles || ["customer"];
+        if (!currentRoles.includes("pub_owner")) {
+          const newRoles = [...currentRoles, "pub_owner"];
+          await db.update(users).set({
+            roles: newRoles,
+            userType: "pub_owner",
+            activeRole: "pub_owner",
+            updatedAt: new Date(),
+          }).where(eq(users.id, userId));
+          const [updatedUser] = await db.select().from(users).where(eq(users.id, userId));
+          req.login(updatedUser, () => {});
+        }
+
         return res.json({ success: true, pub: existingPub, alreadyActive: true });
       }
 

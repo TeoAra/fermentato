@@ -644,18 +644,16 @@ export async function setupAuth(app: Express) {
       // Determine landing page based on user's registration type
       let redirectUrl = '/profile?verified=success';
 
-      // Check if pub owner: existing pub → start trial
+      // Check if pub owner: existing pub
       const [userPub] = await db.select().from(pubs).where(eq(pubs.ownerId, user.id));
       if (userPub) {
         if (!userPub.subscriptionStatus || userPub.subscriptionStatus === 'none') {
-          const trialEndsAt = new Date(Date.now() + 15 * 24 * 60 * 60 * 1000);
-          await db.update(pubs).set({
-            subscriptionStatus: 'trial',
-            trialEndsAt,
-            isVerified: true,
-          }).where(eq(pubs.id, userPub.id));
+          // Pub created during registration but Stripe not yet done → go to checkout
+          redirectUrl = '/attiva-pub?direct=1';
+        } else {
+          // Already has trial/active subscription → go to dashboard
+          redirectUrl = '/dashboard?trial=started';
         }
-        redirectUrl = '/dashboard?trial=started';
       } else {
         // Check for pending pub request → send to Stripe checkout directly
         const [pubReq] = await db.select().from(publicanRequests).where(eq(publicanRequests.userId, user.id));
