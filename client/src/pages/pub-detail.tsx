@@ -508,7 +508,7 @@ export default function PubDetail() {
       
       {/* Modern Hero Section */}
       <div className="relative">
-        <div className="relative h-96 md:h-[500px] overflow-hidden">
+        <div className="relative h-[480px] md:h-[560px] overflow-hidden">
           <img
             src={(pub as any)?.coverImageUrl || "https://images.unsplash.com/photo-1514933651103-005eec06c04b?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&h=600"}
             alt={`${(pub as any)?.name} - Copertina`}

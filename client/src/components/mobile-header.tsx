@@ -87,7 +87,7 @@ export function MobileHeader({ onMenuToggle, isMenuOpen }: MobileHeaderProps) {
     <>
       <header className="lg:hidden fixed top-0 left-0 right-0 z-50 h-16">
         {/* Frosted background */}
-        <div className="absolute inset-0 bg-white/90 dark:bg-[hsl(25,14%,7%)]/93 backdrop-blur-xl border-b border-[hsl(36,14%,87%)]/80 dark:border-[hsl(25,12%,14%)]/80" />
+        <div className="absolute inset-0 bg-[hsl(40,20%,97%)] dark:bg-[hsl(25,14%,8%)] border-b border-[hsl(36,14%,87%)] dark:border-[hsl(25,12%,14%)]" />
         <div className="relative flex items-center justify-between px-4 h-full">
           <Link href="/">
             <img src="/logo-full.png" alt="Fermenta.to" className="h-9 w-auto block dark:hidden" />
