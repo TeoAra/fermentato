@@ -679,6 +679,7 @@ export class DatabaseStorage implements IStorage {
         priceLarge: tapList.priceLarge,
         description: tapList.description,
         tapNumber: tapList.tapNumber,
+        tapType: tapList.tapType,
         addedAt: tapList.addedAt,
         updatedAt: tapList.updatedAt,
         beerName: beers.name,
