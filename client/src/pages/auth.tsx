@@ -19,7 +19,8 @@ import { AddressAutocomplete } from "@/components/AddressAutocomplete";
 import ReCAPTCHA from "react-google-recaptcha";
 import type { Brewery } from "@shared/schema";
 
-const RECAPTCHA_SITE_KEY = import.meta.env.VITE_RECAPTCHA_SITE_KEY as string | undefined;
+const RECAPTCHA_SITE_KEY = (import.meta.env.VITE_RECAPTCHA_SITE_KEY as string | undefined) ||
+  (import.meta.env.PROD ? "6LcDuIEsAAAAAAPwdAQ2rAKZvA_ae_FmyRlft11z" : undefined);
 
 const loginSchema = z.object({
   emailOrUsername: z.string().min(1, "Email o username richiesti"),
