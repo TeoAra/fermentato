@@ -496,7 +496,7 @@ export default function Home() {
           </section>
         )}
 
-        {/* Stili Popolari — per tutti gli utenti loggati */}
+        {/* Stili Popolari — classifica con barra di progresso */}
         {isAuthenticated && Array.isArray(popularStyles) && popularStyles.length > 0 && (
           <section className="mb-8">
             <div className="flex items-center justify-between mb-4">
@@ -508,16 +508,40 @@ export default function Home() {
                 <Button variant="ghost" size="sm" className="text-amber-600 hover:text-amber-700 dark:text-amber-400 font-semibold text-sm">Esplora →</Button>
               </Link>
             </div>
-            <div className="flex flex-wrap gap-2">
-              {popularStyles.slice(0, 16).map((s) => (
-                <Link key={s.style} href={`/explore/beers?style=${encodeURIComponent(s.style)}`}>
-                  <div className="group flex items-center gap-2 bg-[hsl(38,14%,97%)] dark:bg-[hsl(25,12%,13%)] border border-[hsl(36,14%,87%)] dark:border-[hsl(25,12%,17%)] hover:border-[hsl(35,80%,58%)] dark:hover:border-[hsl(35,70%,42%)] rounded-full px-3 py-1.5 cursor-pointer transition-colors hover:shadow-sm">
-                    <span className="text-sm font-medium text-[hsl(28,14%,22%)] dark:text-[hsl(35,10%,80%)] group-hover:text-[hsl(35,90%,38%)] dark:group-hover:text-[hsl(38,88%,60%)]">{s.style}</span>
-                    <span className="text-[10px] font-bold text-[hsl(35,90%,42%)] bg-[hsl(38,80%,93%)] dark:bg-[hsl(35,30%,14%)] dark:text-[hsl(38,88%,60%)] px-1.5 py-0.5 rounded-full">{s.count.toLocaleString('it-IT')}</span>
-                  </div>
-                </Link>
-              ))}
-            </div>
+            {(() => {
+              const top = popularStyles.slice(0, 10);
+              const max = top[0]?.count ?? 1;
+              return (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-0">
+                  {top.map((s, i) => (
+                    <Link key={s.style} href={`/explore/beers?style=${encodeURIComponent(s.style)}`}>
+                      <div className="group flex items-center gap-3 py-2.5 border-b border-[hsl(36,14%,90%)] dark:border-[hsl(25,12%,16%)] last:border-0 cursor-pointer hover:bg-[hsl(38,20%,97%)] dark:hover:bg-[hsl(25,12%,12%)] rounded-lg px-1 transition-colors">
+                        {/* Rank */}
+                        <span className={`flex-shrink-0 w-5 text-right text-[11px] font-bold ${i < 3 ? 'text-[hsl(35,90%,42%)] dark:text-[hsl(38,88%,58%)]' : 'text-gray-400 dark:text-gray-600'}`}>
+                          {i + 1}
+                        </span>
+                        {/* Name + bar */}
+                        <div className="flex-1 min-w-0">
+                          <p className="text-[13px] font-medium text-[hsl(28,14%,18%)] dark:text-[hsl(35,10%,82%)] group-hover:text-[hsl(35,90%,38%)] dark:group-hover:text-[hsl(38,88%,60%)] truncate transition-colors leading-tight mb-1">
+                            {s.style}
+                          </p>
+                          <div className="h-1 bg-[hsl(36,14%,88%)] dark:bg-[hsl(25,12%,18%)] rounded-full overflow-hidden">
+                            <div
+                              className="h-full bg-[hsl(35,90%,50%)] dark:bg-[hsl(38,80%,52%)] rounded-full transition-all"
+                              style={{ width: `${Math.round((s.count / max) * 100)}%` }}
+                            />
+                          </div>
+                        </div>
+                        {/* Count */}
+                        <span className="flex-shrink-0 text-[11px] font-semibold text-[hsl(35,90%,42%)] dark:text-[hsl(38,80%,60%)] tabular-nums">
+                          {s.count.toLocaleString('it-IT')}
+                        </span>
+                      </div>
+                    </Link>
+                  ))}
+                </div>
+              );
+            })()}
           </section>
         )}
 
@@ -571,30 +595,36 @@ export default function Home() {
         ) : null}
 
         {/* Statistiche Platform */}
-        <section className="mb-8 bg-amber-50 dark:bg-slate-800 border border-amber-100 dark:border-slate-700 rounded-2xl p-5 lg:p-6">
-          <h2 className="text-base font-bold text-center text-gray-700 dark:text-gray-300 mb-4 uppercase tracking-wide">
+        <section className="mb-8 bg-[hsl(38,30%,96%)] dark:bg-[hsl(25,14%,10%)] border border-[hsl(36,20%,88%)] dark:border-[hsl(25,12%,17%)] rounded-2xl p-5 lg:p-6">
+          <h2 className="text-[11px] font-bold text-center text-[hsl(28,8%,52%)] dark:text-[hsl(35,6%,52%)] mb-5 uppercase tracking-[0.12em]">
             La Community Fermenta.to
           </h2>
-          <div className="grid grid-cols-3 md:grid-cols-5 gap-4">
+          {/* Riga 1: le 3 voci principali */}
+          <div className="grid grid-cols-3 gap-4 mb-4">
             <div className="text-center">
-              <div className="text-2xl font-bold text-amber-500 dark:text-amber-400">{globalStats?.totalBeers != null ? globalStats.totalBeers.toLocaleString("it-IT") : '...'}</div>
-              <div className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Birre</div>
+              <div className="text-2xl font-bold text-[hsl(35,90%,44%)] dark:text-[hsl(38,88%,58%)] tabular-nums">{globalStats?.totalBeers != null ? globalStats.totalBeers.toLocaleString("it-IT") : '—'}</div>
+              <div className="text-[11px] text-[hsl(28,8%,52%)] dark:text-[hsl(35,6%,52%)] mt-1 font-medium uppercase tracking-wide">Birre</div>
+            </div>
+            <div className="text-center border-x border-[hsl(36,14%,86%)] dark:border-[hsl(25,12%,18%)]">
+              <div className="text-2xl font-bold text-[hsl(215,75%,50%)] dark:text-[hsl(215,80%,65%)] tabular-nums">{globalStats?.totalBreweries != null ? globalStats.totalBreweries.toLocaleString("it-IT") : '—'}</div>
+              <div className="text-[11px] text-[hsl(28,8%,52%)] dark:text-[hsl(35,6%,52%)] mt-1 font-medium uppercase tracking-wide">Birrifici</div>
             </div>
             <div className="text-center">
-              <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">{globalStats?.totalBreweries != null ? globalStats.totalBreweries.toLocaleString("it-IT") : '...'}</div>
-              <div className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Birrifici</div>
+              <div className="text-2xl font-bold text-[hsl(175,55%,38%)] dark:text-[hsl(175,60%,55%)] tabular-nums">{globalStats?.uniqueStyles != null ? globalStats.uniqueStyles.toLocaleString("it-IT") : '—'}</div>
+              <div className="text-[11px] text-[hsl(28,8%,52%)] dark:text-[hsl(35,6%,52%)] mt-1 font-medium uppercase tracking-wide">Stili</div>
+            </div>
+          </div>
+          {/* Divisore */}
+          <div className="border-t border-[hsl(36,14%,86%)] dark:border-[hsl(25,12%,18%)] mb-4" />
+          {/* Riga 2: Utenti e Pub — centrata */}
+          <div className="flex justify-center gap-12">
+            <div className="text-center">
+              <div className="text-xl font-bold text-[hsl(142,55%,38%)] dark:text-[hsl(142,60%,55%)] tabular-nums">{globalStats?.totalUsers != null ? globalStats.totalUsers.toLocaleString("it-IT") : '—'}</div>
+              <div className="text-[11px] text-[hsl(28,8%,52%)] dark:text-[hsl(35,6%,52%)] mt-1 font-medium uppercase tracking-wide">Utenti</div>
             </div>
             <div className="text-center">
-              <div className="text-2xl font-bold text-teal-600 dark:text-teal-400">{globalStats?.uniqueStyles != null ? globalStats.uniqueStyles.toLocaleString("it-IT") : '...'}</div>
-              <div className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Stili</div>
-            </div>
-            <div className="text-center">
-              <div className="text-2xl font-bold text-green-600 dark:text-green-400">{globalStats?.totalUsers != null ? globalStats.totalUsers.toLocaleString("it-IT") : '...'}</div>
-              <div className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Utenti</div>
-            </div>
-            <div className="text-center col-span-1">
-              <div className="text-2xl font-bold text-purple-600 dark:text-purple-400">{globalStats?.totalPubs != null ? globalStats.totalPubs.toLocaleString("it-IT") : '...'}</div>
-              <div className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Pub</div>
+              <div className="text-xl font-bold text-[hsl(270,55%,50%)] dark:text-[hsl(270,60%,68%)] tabular-nums">{globalStats?.totalPubs != null ? globalStats.totalPubs.toLocaleString("it-IT") : '—'}</div>
+              <div className="text-[11px] text-[hsl(28,8%,52%)] dark:text-[hsl(35,6%,52%)] mt-1 font-medium uppercase tracking-wide">Pub</div>
             </div>
           </div>
         </section>
