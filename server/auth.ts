@@ -657,10 +657,10 @@ export async function setupAuth(app: Express) {
         }
         redirectUrl = '/dashboard?trial=started';
       } else {
-        // Check for pending pub request
+        // Check for pending pub request → send to Stripe checkout directly
         const [pubReq] = await db.select().from(publicanRequests).where(eq(publicanRequests.userId, user.id));
         if (pubReq) {
-          redirectUrl = '/dashboard?pub-pending=true';
+          redirectUrl = '/attiva-pub?direct=1';
         } else {
           // Check for pending brewery request
           const [brewReq] = await db.select().from(breweryRequests).where(eq(breweryRequests.userId, user.id));

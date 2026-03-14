@@ -4757,6 +4757,88 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // ─── Auto-activate pub after Stripe checkout ─────────────────────────────
+  app.post("/api/stripe/activate-pub", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user?.id;
+      if (!userId) return res.status(401).json({ message: "Non autenticato" });
+
+      const { sessionId } = req.body;
+
+      // Optionally verify the Stripe session belongs to this user
+      if (sessionId) {
+        try {
+          const { getUncachableStripeClient } = await import("./stripeClient");
+          const stripe = await getUncachableStripeClient();
+          const session = await stripe.checkout.sessions.retrieve(sessionId);
+          if (session.status !== "complete") {
+            return res.status(400).json({ message: "Checkout non completato" });
+          }
+        } catch (stripeErr: any) {
+          console.warn("Stripe session verify warning:", stripeErr.message);
+        }
+      }
+
+      // Check if pub already exists for user
+      const [existingPub] = await db.select().from(pubs).where(eq(pubs.ownerId, userId));
+      if (existingPub) {
+        // Already activated, just ensure role is set and trial is active
+        const trialEndsAt = existingPub.trialEndsAt || new Date(Date.now() + 15 * 24 * 60 * 60 * 1000);
+        await db.update(pubs).set({ isVerified: true, subscriptionStatus: "trial", trialEndsAt }).where(eq(pubs.id, existingPub.id));
+        return res.json({ success: true, pub: existingPub, alreadyActive: true });
+      }
+
+      // Find the publicanRequest
+      const [pubReq] = await db.select().from(publicanRequests).where(eq(publicanRequests.userId, userId));
+      if (!pubReq) {
+        return res.status(404).json({ message: "Nessuna richiesta pub trovata. Registra prima il tuo locale." });
+      }
+
+      // Create the pub from the request data
+      const trialEndsAt = new Date(Date.now() + 15 * 24 * 60 * 60 * 1000);
+      const [newPub] = await db.insert(pubs).values({
+        name: pubReq.pubName,
+        address: pubReq.pubAddress,
+        city: pubReq.pubCity,
+        region: pubReq.pubRegion || pubReq.pubCity,
+        phone: pubReq.phone || null,
+        email: pubReq.email || req.user?.email || null,
+        description: pubReq.description || null,
+        vatNumber: pubReq.vatNumber || null,
+        ownerId: userId,
+        isVerified: true,
+        subscriptionStatus: "trial",
+        trialEndsAt,
+        isActive: true,
+      }).returning();
+
+      // Update publicanRequest to approved
+      await db.update(publicanRequests).set({
+        status: "approved",
+        reviewedAt: new Date(),
+      }).where(eq(publicanRequests.id, pubReq.id));
+
+      // Promote user to pub_owner role
+      const currentRoles = req.user?.roles || ["customer"];
+      const newRoles = currentRoles.includes("pub_owner") ? currentRoles : [...currentRoles, "pub_owner"];
+      await db.update(users).set({
+        roles: newRoles,
+        userType: "pub_owner",
+        activeRole: "pub_owner",
+        updatedAt: new Date(),
+      }).where(eq(users.id, userId));
+
+      // Refresh session
+      const [updatedUser] = await db.select().from(users).where(eq(users.id, userId));
+      req.login(updatedUser, () => {});
+
+      res.json({ success: true, pub: newPub });
+    } catch (error: any) {
+      console.error("activate-pub error:", error);
+      res.status(500).json({ message: "Errore durante l'attivazione: " + error.message });
+    }
+  });
+
   // ─── Analytics: track pub page view (anonymous, fire-and-forget) ───────────
   app.post("/api/analytics/pub-view", async (req, res) => {
     try {
