@@ -362,7 +362,7 @@ export default function Home() {
               {breweries.map((brewery: any) => (
                 <Link key={brewery.id} href={`/brewery/${brewery.id}`}>
                   <div className="group flex flex-col items-center text-center gap-2 cursor-pointer">
-                    <div className="w-14 h-14 rounded-2xl overflow-hidden bg-amber-50 dark:bg-amber-900/20 flex items-center justify-center shadow-sm group-hover:shadow-md group-hover:scale-105 transition-all">
+                    <div className="w-14 h-14 rounded-2xl overflow-hidden bg-amber-50 dark:bg-amber-900/20 flex items-center justify-center shadow-sm group-hover:shadow-md group-hover:scale-105 transition-[shadow,transform]">
                       <img src={brewery.logoUrl || brewery.coverImageUrl} alt={brewery.name} className="w-14 h-14 object-contain p-1" />
                     </div>
                     <p className="text-xs font-medium text-gray-700 dark:text-gray-300 line-clamp-2 leading-tight group-hover:text-amber-600 dark:group-hover:text-amber-400 transition-colors">{brewery.name}</p>
@@ -388,7 +388,7 @@ export default function Home() {
             <div className="flex flex-wrap gap-2">
               {popularStyles.slice(0, 16).map((s) => (
                 <Link key={s.style} href={`/explore/beers?style=${encodeURIComponent(s.style)}`}>
-                  <div className="group flex items-center gap-2 bg-[hsl(38,14%,97%)] dark:bg-[hsl(25,12%,13%)] border border-[hsl(36,14%,87%)] dark:border-[hsl(25,12%,17%)] hover:border-[hsl(35,80%,58%)] dark:hover:border-[hsl(35,70%,42%)] rounded-full px-3 py-1.5 cursor-pointer transition-all hover:shadow-sm">
+                  <div className="group flex items-center gap-2 bg-[hsl(38,14%,97%)] dark:bg-[hsl(25,12%,13%)] border border-[hsl(36,14%,87%)] dark:border-[hsl(25,12%,17%)] hover:border-[hsl(35,80%,58%)] dark:hover:border-[hsl(35,70%,42%)] rounded-full px-3 py-1.5 cursor-pointer transition-colors hover:shadow-sm">
                     <span className="text-sm font-medium text-[hsl(28,14%,22%)] dark:text-[hsl(35,10%,80%)] group-hover:text-[hsl(35,90%,38%)] dark:group-hover:text-[hsl(38,88%,60%)]">{s.style}</span>
                     <span className="text-[10px] font-bold text-[hsl(35,90%,42%)] bg-[hsl(38,80%,93%)] dark:bg-[hsl(35,30%,14%)] dark:text-[hsl(38,88%,60%)] px-1.5 py-0.5 rounded-full">{s.count.toLocaleString('it-IT')}</span>
                   </div>
@@ -423,7 +423,7 @@ export default function Home() {
                 
                 return (
                   <Link key={favorite.id} href={href}>
-                    <div className="group relative bg-white dark:bg-slate-800 border border-gray-100 dark:border-slate-700 rounded-xl p-3 hover:shadow-lg hover:scale-[1.03] transition-all duration-200 cursor-pointer h-full">
+                    <div className="group relative bg-white dark:bg-slate-800 border border-gray-100 dark:border-slate-700 rounded-xl p-3 hover:shadow-lg hover:scale-[1.03] transition-[shadow,transform] duration-200 cursor-pointer h-full">
                       <div className={`absolute top-2 right-2 ${typeColor} rounded-full p-1`}>
                         <TypeIcon className="w-3 h-3 text-white" />
                       </div>

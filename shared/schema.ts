@@ -175,6 +175,7 @@ export const tapList = pgTable("tap_list", {
   priceMedium: decimal("price_medium", { precision: 5, scale: 2 }), // 0.4L
   priceLarge: decimal("price_large", { precision: 5, scale: 2 }), // 0.5L
   tapNumber: integer("tap_number"),
+  tapType: varchar("tap_type", { length: 20 }).default("spina"), // "spina" | "pompa"
   description: text("description"), // Note personalizzate del pub
   addedAt: timestamp("added_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),

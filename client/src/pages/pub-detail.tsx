@@ -219,6 +219,7 @@ export default function PubDetail() {
   const { data: pub, isLoading: pubLoading } = useQuery({
     queryKey: ["/api/pubs", id],
     enabled: !!id,
+    staleTime: 3 * 60_000,
   });
 
   // Check if the current user is the owner of this pub or an admin
@@ -229,6 +230,7 @@ export default function PubDetail() {
   const { data: tapList, isLoading: tapLoading } = useQuery({
     queryKey: ["/api/pubs", id, "taplist"],
     enabled: !!id,
+    staleTime: 2 * 60_000,
   });
 
   // Single query for full menu (categories + all items) — eliminates N+1
@@ -236,7 +238,7 @@ export default function PubDetail() {
     queryKey: ["/api/pubs", id, "menu", "full"],
     queryFn: () => apiRequest(`/api/pubs/${id}/menu/full`),
     enabled: !!id,
-    staleTime: 60_000,
+    staleTime: 5 * 60_000,
   });
 
   const menu = useMemo(() => Array.isArray(menuFull) ? menuFull : [], [menuFull]);
@@ -244,11 +246,13 @@ export default function PubDetail() {
   const { data: bottles, isLoading: bottlesLoading } = useQuery({
     queryKey: ["/api/pubs", id, "bottles"],
     enabled: !!id,
+    staleTime: 3 * 60_000,
   });
 
   const { data: pubEvents = [] } = useQuery({
     queryKey: [`/api/pubs/${id}/events`],
     enabled: !!id,
+    staleTime: 2 * 60_000,
   });
 
   // Auto-open event from shared link (?event=N) and switch to Events tab
@@ -268,12 +272,14 @@ export default function PubDetail() {
   const { data: favoritesCountData, isLoading: favoritesCountLoading } = useQuery({
     queryKey: ["/api/favorites", "pub", id, "count"],
     enabled: !!id,
+    staleTime: 60_000,
   });
 
   // Check if current pub is in user's favorites
   const { data: isFavoriteData } = useQuery({
     queryKey: ["/api/favorites", "pub", id, "check"],
     enabled: !!id && isAuthenticated,
+    staleTime: 60_000,
   });
 
   const isFavorite = isFavoriteData?.isFavorite || false;

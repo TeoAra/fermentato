@@ -105,13 +105,6 @@ export default function LuppolinoMenu({ menu, menuInfoBox }: LuppolinoMenuProps)
                     )}
                   </div>
                   
-                  {hasItems && (
-                    <div className="flex items-center space-x-3 mr-6">
-                      <Badge variant="outline" className="bg-blue-50 dark:bg-blue-950 text-blue-800 dark:text-blue-200 border-blue-200 dark:border-blue-800">
-                        {regularItems.length} {regularItems.length === 1 ? 'piatto' : 'piatti'}
-                      </Badge>
-                    </div>
-                  )}
                 </div>
               </AccordionTrigger>
 

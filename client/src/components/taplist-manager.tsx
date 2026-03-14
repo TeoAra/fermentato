@@ -64,6 +64,7 @@ interface TapItem {
   priceMedium?: string;
   priceLarge?: string;
   tapNumber?: number;
+  tapType?: string;
   description?: string;
   isVisible: boolean;
 }
@@ -85,6 +86,7 @@ export function TapListManager({ pubId, tapList }: TapListManagerProps) {
     beerId: "",
     prices: [] as PriceItem[],
     tapNumber: "",
+    tapType: "spina" as "spina" | "pompa",
     description: "",
     isVisible: true,
   });
@@ -372,6 +374,7 @@ export function TapListManager({ pubId, tapList }: TapListManagerProps) {
       beerId: "",
       prices: [],
       tapNumber: "",
+      tapType: "spina",
       description: "",
       isVisible: true,
     });
@@ -412,6 +415,7 @@ export function TapListManager({ pubId, tapList }: TapListManagerProps) {
       beerId: item.beer.id.toString(),
       prices: prices,
       tapNumber: item.tapNumber?.toString() || "",
+      tapType: (item.tapType === "pompa" ? "pompa" : "spina") as "spina" | "pompa",
       description: item.description || "",
       isVisible: item.isVisible,
     });
@@ -426,6 +430,7 @@ export function TapListManager({ pubId, tapList }: TapListManagerProps) {
     const submitData = {
       beerId: parseInt(formData.beerId),
       tapNumber: formData.tapNumber ? parseInt(formData.tapNumber) : null,
+      tapType: formData.tapType,
       description: formData.description || null,
       isVisible: formData.isVisible,
     };
@@ -1160,6 +1165,35 @@ export function TapListManager({ pubId, tapList }: TapListManagerProps) {
                   )}
                 </div>
 
+                {/* Tipo di erogazione */}
+                <div>
+                  <Label className="text-sm font-medium mb-2 block">Tipo di erogazione</Label>
+                  <div className="grid grid-cols-2 gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setFormData({ ...formData, tapType: "spina" })}
+                      className={`flex items-center justify-center gap-2 rounded-lg border px-4 py-2.5 text-sm font-medium transition-colors ${
+                        formData.tapType === "spina"
+                          ? "bg-amber-50 border-amber-400 text-amber-800 dark:bg-amber-900/30 dark:border-amber-500 dark:text-amber-300"
+                          : "border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 hover:border-amber-300 dark:hover:border-amber-700"
+                      }`}
+                    >
+                      🍺 In Spina
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setFormData({ ...formData, tapType: "pompa" })}
+                      className={`flex items-center justify-center gap-2 rounded-lg border px-4 py-2.5 text-sm font-medium transition-colors ${
+                        formData.tapType === "pompa"
+                          ? "bg-violet-50 border-violet-400 text-violet-800 dark:bg-violet-900/30 dark:border-violet-500 dark:text-violet-300"
+                          : "border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 hover:border-violet-300 dark:hover:border-violet-700"
+                      }`}
+                    >
+                      🪣 In Pompa
+                    </button>
+                  </div>
+                </div>
+
                 {/* Dettagli Aggiuntivi */}
                 <div className="grid grid-cols-2 gap-4">
                   <div>
@@ -1269,6 +1303,11 @@ export function TapListManager({ pubId, tapList }: TapListManagerProps) {
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 flex-wrap">
                         <h3 className="font-semibold text-base text-gray-900 dark:text-white truncate">{item.beer.name}</h3>
+                        {item.tapType === "pompa" && (
+                          <Badge variant="outline" className="text-xs flex-shrink-0 border-violet-300 text-violet-700 dark:text-violet-400">
+                            In Pompa
+                          </Badge>
+                        )}
                         {item.tapNumber && (
                           <Badge variant="outline" className="text-xs flex-shrink-0 border-amber-300 text-amber-700 dark:text-amber-400">
                             Spina {item.tapNumber}
