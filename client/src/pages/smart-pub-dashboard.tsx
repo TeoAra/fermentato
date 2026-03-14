@@ -607,26 +607,28 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
                 className="w-full gap-2 bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 py-5 text-base"
                 onClick={async () => {
                   const w = window as any;
-                  if (!w.__castAvailable || !w.cast || !w.chrome?.cast) {
-                    toast({ title: "Cast non disponibile", description: "Apri questa pagina in Chrome", variant: "destructive" });
+                  const castFramework = w.cast?.framework;
+
+                  if (!castFramework) {
+                    // Cast SDK non caricato — apri la pagina TV e suggerisci Cast nativo di Chrome
+                    window.open(`/tv/${currentPub?.id}`, '_blank');
+                    toast({ title: "Pagina TV aperta", description: "Usa il menu di Chrome per trasmettere" });
                     return;
                   }
 
                   try {
-                    const ctx = w.cast.framework.CastContext.getInstance();
-                    toast({ title: "Connessione alla TV...", description: "Seleziona il dispositivo" });
+                    const ctx = castFramework.CastContext.getInstance();
                     ctx.setOptions({
                       receiverApplicationId: '6666EC62',
-                      autoJoinPolicy: w.chrome.cast.AutoJoinPolicy.ORIGIN_SCOPED
+                      autoJoinPolicy: w.chrome?.cast?.AutoJoinPolicy?.ORIGIN_SCOPED ?? 'origin_scoped'
                     });
-                    console.log('Cast: requesting session with app ID 6666EC62');
+                    toast({ title: "Connessione alla TV...", description: "Seleziona il dispositivo" });
                     await ctx.requestSession();
                     const session = ctx.getCurrentSession();
                     if (!session) {
                       toast({ title: "Sessione non creata", description: "Riprova", variant: "destructive" });
                       return;
                     }
-                    console.log('Cast: session established, sending taplist URL');
                     toast({ title: "Connesso!", description: "Invio taplist live..." });
                     const taplistUrl = `https://fermenta.to/tv/${currentPub?.id}`;
                     await session.sendMessage('urn:x-cast:fermenta.to', { url: taplistUrl });
@@ -635,8 +637,10 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
                     if (err?.code === 'cancel' || err?.message === 'cancel') return;
                     const errCode = err?.code || '';
                     const errDesc = err?.description || err?.message || '';
-                    console.error('Cast error:', JSON.stringify(err), 'code:', errCode, 'desc:', errDesc);
-                    toast({ title: `Errore Cast (${errCode})`, description: errDesc || JSON.stringify(err), variant: "destructive" });
+                    console.error('Cast error:', errCode, errDesc);
+                    // Fallback: apri la pagina TV
+                    window.open(`/tv/${currentPub?.id}`, '_blank');
+                    toast({ title: "Pagina TV aperta", description: "Usa Cast di Chrome per trasmetterla" });
                   }
                 }}
               >
