@@ -1993,7 +1993,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const targetId = req.params.id;
       const { userType } = req.body;
       if (!userType) return res.status(400).json({ message: "userType required" });
-      await db.update(users).set({ userType }).where(eq(users.id, targetId));
+
+      const [existingUser] = await db.select({ roles: users.roles }).from(users).where(eq(users.id, targetId));
+      const currentRoles: string[] = existingUser?.roles || ['customer'];
+
+      const roleMap: Record<string, string> = {
+        pub_owner: 'pub_owner',
+        brewery_owner: 'brewery_owner',
+        admin: 'admin',
+        customer: 'customer',
+      };
+      const newRole = roleMap[userType] || userType;
+      const newRoles = currentRoles.includes(newRole) ? currentRoles : ['customer', ...currentRoles.filter(r => r !== 'customer'), newRole];
+
+      await db.update(users).set({
+        userType,
+        roles: newRoles,
+        activeRole: userType === 'customer' ? 'customer' : newRole,
+        updatedAt: new Date(),
+      }).where(eq(users.id, targetId));
+
       res.json({ success: true });
     } catch (error) {
       console.error("Error updating user:", error);

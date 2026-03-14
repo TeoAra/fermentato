@@ -27,6 +27,7 @@ import {
 } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { BreweryEventsManager } from "@/components/events-manager";
+import { RoleSwitcherBanner } from "@/components/role-switcher-banner";
 
 const beerFormSchema = z.object({
   name: z.string().min(1, "Il nome è obbligatorio"),
@@ -650,6 +651,8 @@ export default function BreweryDashboard() {
       </div>
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <RoleSwitcherBanner currentView="brewery" />
+
         {/* Quick Stats */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
           <BreweryStatsCard

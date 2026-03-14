@@ -46,6 +46,7 @@ import type { User as UserType } from "@shared/schema";
 import UserFavoritesSection from "@/components/UserFavoritesSection";
 import BeerTastingsEditor from "@/components/BeerTastingsEditorNew";
 import { getBadgeForCount, getNextBadge, getProgressToNextBadge } from "@/lib/badges";
+import { RoleSwitcherBanner } from "@/components/role-switcher-banner";
 
 function StylesPickerOverview({ current, onChange, onSave, isSaving }: {
   current: string[];
@@ -442,21 +443,7 @@ export default function UserProfile() {
     <div className="container mx-auto px-4 py-8 max-w-4xl">
       <div className="space-y-6">
         {/* Role switcher banner for pub/brewery owners */}
-        {(isPubOwner || isBreweryOwner) && (
-          <div className="flex items-center justify-between bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700/60 rounded-xl px-4 py-2.5">
-            <div className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-300 font-medium">
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-              Profilo utente
-            </div>
-            <a
-              href="/dashboard"
-              className="flex items-center gap-1.5 text-sm text-amber-700 dark:text-amber-400 hover:text-amber-900 dark:hover:text-amber-200 font-semibold transition-colors"
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
-              {isBreweryOwner ? 'Vai al birrificio →' : 'Vai alla gestione pub →'}
-            </a>
-          </div>
-        )}
+        <RoleSwitcherBanner currentView="profile" />
 
         {/* Header Card */}
         <Card className="border-0 shadow-xl bg-gradient-to-br from-amber-600 via-orange-600 to-amber-700 dark:from-slate-900 dark:via-amber-800/50 dark:to-slate-800 text-white overflow-hidden relative">

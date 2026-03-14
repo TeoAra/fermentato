@@ -92,6 +92,21 @@ export default function RegistraPub() {
         if (data.confirmPassword) form.setValue('confirmPassword', data.confirmPassword);
         sessionStorage.removeItem('pub_reg_basic');
       }
+      const storedBrewery = sessionStorage.getItem('pub_reg_brewery');
+      if (storedBrewery) {
+        const bd = JSON.parse(storedBrewery);
+        form.setValue('isBrewpub', true);
+        if (bd.breweryId) form.setValue('breweryId', bd.breweryId);
+        if (bd.breweryName) form.setValue('breweryName', bd.breweryName);
+        if (bd.breweryLocation) form.setValue('breweryLocation', bd.breweryLocation);
+        if (bd.breweryRegion) form.setValue('breweryRegion', bd.breweryRegion);
+        if (bd.breweryCountry) form.setValue('breweryCountry', bd.breweryCountry);
+        if (bd.breweryVatNumber) form.setValue('breweryVatNumber', bd.breweryVatNumber);
+        if (bd.breweryPhone) form.setValue('breweryPhone', bd.breweryPhone);
+        if (bd.breweryDescription) form.setValue('breweryDescription', bd.breweryDescription);
+        if (bd.breweryWebsite) form.setValue('breweryWebsite', bd.breweryWebsite);
+        sessionStorage.removeItem('pub_reg_brewery');
+      }
     } catch {}
   }, []);
 

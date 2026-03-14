@@ -628,14 +628,6 @@ export default function AuthPage() {
                                 checked={field.value}
                                 onCheckedChange={(checked) => {
                                   field.onChange(checked);
-                                  if (checked) {
-                                    registerForm.setValue("isBrewery", false);
-                                    setSelectedBrewery(null);
-                                    setCreatingNewBrewery(false);
-                                    setBrewerySearch("");
-                                    registerForm.setValue("breweryId", undefined);
-                                    registerForm.setValue("breweryName", "");
-                                  }
                                 }}
                                 data-testid="switch-is-publican"
                               />
@@ -670,9 +662,7 @@ export default function AuthPage() {
                                 checked={field.value}
                                 onCheckedChange={(checked) => {
                                   field.onChange(checked);
-                                  if (checked) {
-                                    registerForm.setValue("isPublican", false);
-                                  } else {
+                                  if (!checked) {
                                     setSelectedBrewery(null);
                                     setCreatingNewBrewery(false);
                                     setBrewerySearch("");
@@ -975,10 +965,24 @@ export default function AuthPage() {
                             confirmPassword: vals.confirmPassword,
                           }));
                         }
+                        if (vals.isBrewery) {
+                          sessionStorage.setItem('pub_reg_brewery', JSON.stringify({
+                            isBrewpub: true,
+                            breweryId: vals.breweryId,
+                            breweryName: vals.breweryName,
+                            breweryLocation: vals.breweryLocation,
+                            breweryRegion: vals.breweryRegion,
+                            breweryCountry: vals.breweryCountry,
+                            breweryVatNumber: vals.breweryVatNumber,
+                            breweryPhone: vals.breweryPhone,
+                            breweryDescription: vals.breweryDescription,
+                            breweryWebsite: vals.breweryWebsite,
+                          }));
+                        }
                         setLocation('/registra-pub');
                       }}
                     >
-                      Continua la registrazione del pub →
+                      {isBrewery ? 'Registra come Brewpub →' : 'Continua la registrazione del pub →'}
                     </Button>
                   ) : (
                     <Button 
