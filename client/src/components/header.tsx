@@ -1,7 +1,6 @@
 import { Link, useLocation } from "wouter";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Beer, Search, Bell, MapPin, Home, User, LogOut, Shield, Store, Building2, Activity } from "lucide-react";
 import type { User as UserType } from "@shared/schema";
@@ -61,232 +60,153 @@ export default function Header() {
     refetchInterval: 120000,
   });
 
-  // Never hide header — multi-role users need it to switch roles
-  const isPubOwnerInDashboard = false;
-
-  // Desktop navigation items - filter based on authentication status
   const allNavItems = [
-    {
-      icon: Home,
-      label: "Home",
-      href: "/",
-      isActive: location === "/",
-      requiresAuth: false
-    },
-    {
-      icon: Building2,
-      label: "Birrifici",
-      href: "/explore/breweries",
-      isActive: location.startsWith("/explore/breweries"),
-      requiresAuth: false
-    },
-    {
-      icon: MapPin,
-      label: "Pub & Locali",
-      href: "/explore/pubs",
-      isActive: location.startsWith("/explore/pubs"),
-      requiresAuth: false
-    },
-    {
-      icon: Activity,
-      label: "Attività",
-      href: "/activity",
-      isActive: location.startsWith("/activity"),
-      requiresAuth: true
-    },
-    {
-      icon: Bell,
-      label: "Notifiche",
-      href: "/notifications", 
-      isActive: location.startsWith("/notifications"),
-      badge: (unreadData?.count && unreadData.count > 0) ? unreadData.count : undefined,
-      requiresAuth: true
-    },
-    {
-      icon: User,
-      label: "Dashboard",
-      href: "/dashboard",
-      isActive: location.startsWith("/dashboard"),
-      requiresAuth: true
-    }
+    { label: "Home", href: "/", isActive: location === "/", requiresAuth: false },
+    { label: "Birrifici", href: "/explore/breweries", isActive: location.startsWith("/explore/breweries"), requiresAuth: false },
+    { label: "Pub & Locali", href: "/explore/pubs", isActive: location.startsWith("/explore/pubs"), requiresAuth: false },
+    { label: "Attività", href: "/activity", isActive: location.startsWith("/activity"), requiresAuth: true, badge: undefined as number | undefined },
+    { label: "Notifiche", href: "/notifications", isActive: location.startsWith("/notifications"), requiresAuth: true, badge: (unreadData?.count && unreadData.count > 0) ? unreadData.count : undefined },
+    { label: "Dashboard", href: "/dashboard", isActive: location.startsWith("/dashboard"), requiresAuth: true, badge: undefined as number | undefined },
   ];
 
-  // Filter items: show all for authenticated users, only non-auth-required for guests
   const navItems = allNavItems.filter(item => isAuthenticated || !item.requiresAuth);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
-    if (searchQuery.trim()) {
-      console.log("Searching for:", searchQuery);
-    }
   };
 
-  // Close search results when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (searchRef.current && !searchRef.current.contains(event.target as Node)) {
         setShowResults(false);
       }
     };
-
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  // Don't render header for pub owners in dashboard
-  if (isPubOwnerInDashboard) {
-    return null;
-  }
-
   return (
     <>
-      {/* Integrated Desktop Header with Navigation */}
-      <header className="sticky top-0 z-50 bg-white dark:bg-slate-900 border-b border-gray-100 dark:border-slate-800 shadow-sm hidden lg:block">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-12 gap-2 items-center h-[72px]">
-            {/* Logo - Fixed Width */}
-            <div className="col-span-2">
-              <Link href="/" data-testid="logo-desktop">
-                <img src="/logo-full.png" alt="Fermenta.to" className="h-11 w-auto block dark:hidden" />
-                <img src="/logo-dark-mode.png" alt="Fermenta.to" className="h-11 w-auto hidden dark:block" />
-              </Link>
-            </div>
+      <header className="sticky top-0 z-50 hidden lg:block">
+        {/* Frosted background */}
+        <div className="absolute inset-0 bg-white/90 dark:bg-[hsl(25,14%,7%)]/92 backdrop-blur-xl border-b border-[hsl(36,14%,87%)] dark:border-[hsl(25,12%,14%)]" />
+        
+        <div className="relative max-w-7xl mx-auto px-6 lg:px-8">
+          <div className="flex items-center h-[68px] gap-8">
+            {/* Logo */}
+            <Link href="/" data-testid="logo-desktop" className="flex-shrink-0">
+              <img src="/logo-full.png" alt="Fermenta.to" className="h-10 w-auto block dark:hidden" />
+              <img src="/logo-dark-mode.png" alt="Fermenta.to" className="h-10 w-auto hidden dark:block" />
+            </Link>
 
             {/* Main Navigation */}
-            <div className="col-span-6">
-              <nav className="flex items-center justify-center">
-                <div className="flex items-center gap-0.5 bg-gray-100/60 dark:bg-slate-800/60 rounded-2xl p-1">
-                  {navItems.map((item) => {
-                    const Icon = item.icon;
-                    const isActive = item.isActive;
-                    
-                    return (
-                      <div key={item.label}>
-                        {item.href.startsWith('/api/') ? (
-                          <a
-                            href={item.href}
-                            data-testid={`nav-desktop-${item.label.toLowerCase().replace(' ', '-')}`}
-                            className={`relative flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-medium transition-all duration-300 whitespace-nowrap ${isActive ? 'text-white shadow-md bg-gradient-to-r from-amber-500 to-amber-600' : 'text-gray-600 dark:text-gray-400 hover:text-amber-600 dark:hover:text-amber-400 hover:bg-white/60 dark:hover:bg-slate-700/60'}`}
-                          >
-                            <div className="relative flex-shrink-0">
-                              <Icon className="h-3.5 w-3.5" />
-                              {item.badge && item.badge > 0 && (
-                                <div className="absolute -top-2 -right-2 bg-red-500 text-white text-[10px] rounded-full h-4 w-4 flex items-center justify-center min-w-[16px] shadow-lg">
-                                  {item.badge && item.badge > 99 ? '99+' : item.badge}
-                                </div>
-                              )}
-                            </div>
-                            <span>{item.label}</span>
-                          </a>
-                        ) : (
-                          <Link href={item.href}>
-                            <div
-                              data-testid={`nav-desktop-${item.label.toLowerCase().replace(' ', '-')}`}
-                              className={`relative flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-medium transition-all duration-300 cursor-pointer whitespace-nowrap ${isActive ? 'text-white shadow-md bg-gradient-to-r from-amber-500 to-amber-600' : 'text-gray-600 dark:text-gray-400 hover:text-amber-600 dark:hover:text-amber-400 hover:bg-white/60 dark:hover:bg-slate-700/60'}`}
-                            >
-                              <div className="relative flex-shrink-0">
-                                <Icon className="h-3.5 w-3.5" />
-                                {item.badge && item.badge > 0 && (
-                                  <div className="absolute -top-2 -right-2 bg-red-500 text-white text-[10px] rounded-full h-4 w-4 flex items-center justify-center min-w-[16px] shadow-lg">
-                                    {item.badge && item.badge > 99 ? '99+' : item.badge}
-                                  </div>
-                                )}
-                              </div>
-                              <span>{item.label}</span>
-                            </div>
-                          </Link>
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
-              </nav>
-            </div>
+            <nav className="flex items-center gap-0.5 flex-1">
+              {navItems.map((item) => {
+                const isActive = item.isActive;
+                const content = (
+                  <span className={`relative flex items-center gap-0 px-3.5 py-1 text-[13px] font-medium tracking-wide transition-colors duration-200 ${
+                    isActive
+                      ? "text-[hsl(35,90%,38%)] dark:text-[hsl(38,92%,56%)]"
+                      : "text-[hsl(28,10%,44%)] dark:text-[hsl(35,8%,58%)] hover:text-[hsl(28,18%,13%)] dark:hover:text-[hsl(40,12%,90%)]"
+                  }`}>
+                    {item.label}
+                    {item.badge && item.badge > 0 ? (
+                      <span className="ml-1.5 inline-flex items-center justify-center w-4 h-4 text-[10px] font-bold bg-red-500 text-white rounded-full">
+                        {item.badge > 99 ? '99+' : item.badge}
+                      </span>
+                    ) : null}
+                    {/* Active underline */}
+                    {isActive && (
+                      <span className="absolute -bottom-[22px] left-0 right-0 h-[2px] rounded-full bg-[hsl(35,90%,42%)] dark:bg-[hsl(38,92%,52%)]" />
+                    )}
+                  </span>
+                );
+
+                if (item.href.startsWith('/api/')) {
+                  return <a key={item.label} href={item.href}>{content}</a>;
+                }
+                return <Link key={item.label} href={item.href}>{content}</Link>;
+              })}
+            </nav>
 
             {/* Search Bar */}
-            <div className="col-span-2" ref={searchRef}>
-              <div className="relative max-w-xs ml-auto">
+            <div className="w-52 flex-shrink-0" ref={searchRef}>
+              <div className="relative">
                 <form onSubmit={handleSearch} className="relative">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-[hsl(30,8%,58%)] h-3.5 w-3.5" />
                   <Input
                     type="search"
-                    placeholder="Cerca pub, birre..."
+                    placeholder="Cerca pub, birre…"
                     value={searchQuery}
                     onChange={(e) => {
                       setSearchQuery(e.target.value);
                       setShowResults(e.target.value.length > 2);
                     }}
                     onFocus={() => setShowResults(searchQuery.length > 2)}
-                    className="pl-9 pr-20 bg-white/60 dark:bg-slate-800/60 border-gray-200 dark:border-slate-700 text-sm"
+                    className="pl-8 pr-16 h-8 text-[13px] bg-[hsl(40,14%,94%)] dark:bg-[hsl(25,12%,13%)] border-transparent focus:border-[hsl(35,90%,42%)] dark:focus:border-[hsl(38,92%,52%)] focus:ring-0 focus:bg-white dark:focus:bg-[hsl(25,14%,10%)] transition-all duration-200 placeholder:text-[hsl(30,8%,60%)] dark:placeholder:text-[hsl(35,8%,50%)]"
                     data-testid="search-input-desktop"
                   />
                   <Link href={searchQuery.trim() ? `/search?q=${encodeURIComponent(searchQuery.trim())}` : "/search"}>
                     <button
                       type="button"
-                      className="absolute right-2 top-1/2 -translate-y-1/2 text-xs text-amber-600 dark:text-amber-400 hover:text-amber-700 dark:hover:text-amber-300 font-medium whitespace-nowrap transition-colors"
+                      className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[11px] text-[hsl(35,90%,40%)] dark:text-[hsl(38,88%,58%)] hover:text-[hsl(35,90%,34%)] font-semibold transition-colors"
                     >
-                      Avanzata
+                      Tutte
                     </button>
                   </Link>
                 </form>
                 {showResults && (
-                  <SearchResults 
-                    query={searchQuery} 
-                    onClose={() => setShowResults(false)} 
-                  />
+                  <SearchResults query={searchQuery} onClose={() => setShowResults(false)} />
                 )}
               </div>
             </div>
 
             {/* User Section */}
-            <div className="col-span-2 flex items-center justify-end gap-1">
+            <div className="flex items-center gap-1.5 flex-shrink-0">
               <ThemeToggle />
               {isAuthenticated && typedUser ? (
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" className="flex items-center gap-2 px-2" data-testid="user-menu-button">
-                      <Avatar className="h-8 w-8">
+                    <button className="flex items-center gap-2 px-1.5 py-1 rounded-lg hover:bg-[hsl(38,14%,93%)] dark:hover:bg-[hsl(25,12%,14%)] transition-colors" data-testid="user-menu-button">
+                      <Avatar className="h-7 w-7 ring-2 ring-[hsl(35,90%,42%)]/20 dark:ring-[hsl(38,92%,52%)]/20">
                         {typedUser.profileImageUrl && (
                           <AvatarImage src={typedUser.profileImageUrl} alt={typedUser.nickname || 'Profilo'} />
                         )}
-                        <AvatarFallback className="bg-amber-100 text-amber-600 text-sm">
+                        <AvatarFallback className="bg-[hsl(38,80%,93%)] text-[hsl(28,70%,28%)] text-xs font-semibold">
                           {typedUser.nickname?.[0]?.toUpperCase() || typedUser.firstName?.[0] || typedUser.email?.[0]?.toUpperCase() || 'U'}
                         </AvatarFallback>
                       </Avatar>
-                      <span className="hidden xl:inline text-sm font-medium text-gray-700 dark:text-gray-300 max-w-[100px] truncate">
+                      <span className="hidden xl:inline text-[13px] font-medium text-[hsl(28,18%,20%)] dark:text-[hsl(40,12%,86%)] max-w-[90px] truncate">
                         {typedUser.firstName || typedUser.email?.split('@')[0]}
                       </span>
-                    </Button>
+                    </button>
                   </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end" className="w-64">
-                    {/* User info */}
-                    <div className="px-3 py-2 border-b border-gray-100 dark:border-gray-800">
-                      <div className="text-sm font-medium text-gray-900 dark:text-white truncate">
+                  <DropdownMenuContent align="end" className="w-60">
+                    <div className="px-3 py-2.5 border-b border-[hsl(36,14%,87%)] dark:border-[hsl(25,12%,17%)]">
+                      <div className="text-[13px] font-semibold text-[hsl(28,18%,13%)] dark:text-[hsl(40,12%,94%)] truncate">
                         {typedUser.firstName ? `${typedUser.firstName} ${typedUser.lastName || ''}`.trim() : typedUser.email?.split('@')[0]}
                       </div>
                       {rolesData && (
-                        <div className="flex items-center gap-1.5 mt-1">
-                          {(() => { const Icon = roleIcons[rolesData.activeRole] || User; return <Icon className="h-3 w-3 text-amber-500" />; })()}
-                          <span className="text-xs text-amber-600 dark:text-amber-400 font-medium">
+                        <div className="flex items-center gap-1.5 mt-0.5">
+                          {(() => { const Icon = roleIcons[rolesData.activeRole] || User; return <Icon className="h-3 w-3 text-[hsl(35,90%,42%)] dark:text-[hsl(38,92%,52%)]" />; })()}
+                          <span className="text-xs text-[hsl(35,90%,40%)] dark:text-[hsl(38,88%,58%)] font-medium">
                             {roleLabels[rolesData.activeRole] || rolesData.activeRole}
                           </span>
                         </div>
                       )}
                     </div>
 
-                    {/* Dashboard link */}
                     <DropdownMenuItem asChild>
-                      <Link href="/dashboard" className="flex items-center gap-2 cursor-pointer">
-                        {(() => { const activeRole = rolesData?.activeRole || typedUser.activeRole || 'customer'; const Icon = roleIcons[activeRole] || User; return <Icon className="h-4 w-4" />; })()}
+                      <Link href="/dashboard" className="flex items-center gap-2 cursor-pointer text-[13px]">
+                        {(() => { const activeRole = rolesData?.activeRole || typedUser.activeRole || 'customer'; const Icon = roleIcons[activeRole] || User; return <Icon className="h-3.5 w-3.5" />; })()}
                         {rolesData?.activeRole === 'customer' ? 'Il mio profilo' : rolesData?.activeRole === 'pub_owner' ? 'Pannello pub' : rolesData?.activeRole === 'brewery_owner' ? 'Pannello birrificio' : 'Dashboard'}
                       </Link>
                     </DropdownMenuItem>
 
-                    {/* Role switcher for multi-role users */}
                     {rolesData && rolesData.roles.length > 1 && (
                       <>
                         <DropdownMenuSeparator />
-                        <DropdownMenuLabel className="text-xs text-gray-400 font-normal px-3 py-1">
+                        <DropdownMenuLabel className="text-[11px] text-[hsl(30,8%,56%)] font-normal px-3 py-1 uppercase tracking-wider">
                           Cambia modalità
                         </DropdownMenuLabel>
                         {rolesData.roles
@@ -296,11 +216,11 @@ export default function Header() {
                             return (
                               <DropdownMenuItem
                                 key={role}
-                                className="flex items-center gap-2 cursor-pointer"
+                                className="flex items-center gap-2 cursor-pointer text-[13px]"
                                 onClick={() => switchRoleMutation.mutate(role)}
                                 disabled={switchRoleMutation.isPending}
                               >
-                                <Icon className="h-4 w-4" />
+                                <Icon className="h-3.5 w-3.5" />
                                 Passa a {roleLabels[role] || role}
                               </DropdownMenuItem>
                             );
@@ -308,22 +228,22 @@ export default function Header() {
                       </>
                     )}
                     <DropdownMenuSeparator />
-                    <DropdownMenuItem 
-                      className="flex items-center gap-2 cursor-pointer text-red-600"
+                    <DropdownMenuItem
+                      className="flex items-center gap-2 cursor-pointer text-[13px] text-red-600 dark:text-red-400"
                       data-testid="logout-button"
                       onClick={() => {
                         fetch('/api/auth/logout', { method: 'POST', credentials: 'include' })
                           .then(() => window.location.href = '/');
                       }}
                     >
-                      <LogOut className="h-4 w-4" />
+                      <LogOut className="h-3.5 w-3.5" />
                       Esci
                     </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
               ) : (
-                <Button asChild variant="default" size="sm" className="bg-amber-500 hover:bg-amber-400 text-gray-900 font-semibold">
-                  <Link href="/login" data-testid="login-button">Accedi / Registrati</Link>
+                <Button asChild size="sm" className="h-8 px-4 text-[13px] font-semibold tracking-wide bg-[hsl(35,90%,42%)] hover:bg-[hsl(35,90%,38%)] text-white shadow-none">
+                  <Link href="/login" data-testid="login-button">Accedi</Link>
                 </Button>
               )}
             </div>
@@ -331,10 +251,9 @@ export default function Header() {
         </div>
       </header>
 
-      {/* Enhanced Search Dialog */}
-      <SearchDialog 
-        isOpen={isSearchOpen} 
-        onClose={() => setIsSearchOpen(false)} 
+      <SearchDialog
+        isOpen={isSearchOpen}
+        onClose={() => setIsSearchOpen(false)}
       />
     </>
   );

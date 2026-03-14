@@ -1,4 +1,4 @@
-import { Search, User, Bell, MapPin, Home, Sparkles, ScanLine } from "lucide-react";
+import { Search, User, Bell, MapPin, Home, ScanLine } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import { useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
@@ -33,22 +33,23 @@ export function BottomNavigation() {
   }) {
     return (
       <Link href={href}>
-        <div className={`group flex flex-col items-center justify-center py-1.5 px-3 rounded-2xl transition-all duration-300 active:scale-95 ${
-          isActive
-            ? "text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/20"
-            : "text-gray-500 dark:text-gray-400 hover:text-amber-600 dark:hover:text-amber-400 hover:bg-gray-50 dark:hover:bg-slate-800/50"
+        <div className={`flex flex-col items-center justify-center py-1 px-2.5 min-w-[52px] transition-all duration-200 active:scale-90 ${
+          isActive ? "text-[hsl(35,90%,40%)] dark:text-[hsl(38,88%,58%)]" : "text-[hsl(28,8%,52%)] dark:text-[hsl(35,8%,52%)]"
         }`}>
-          <div className="relative">
-            <Icon className={`h-5 w-5 transition-all duration-300 ${isActive ? 'scale-110' : 'group-hover:scale-105'}`} />
+          <div className="relative mb-0.5">
+            <Icon className={`h-[22px] w-[22px] transition-all duration-200 ${isActive ? 'stroke-[2.2px]' : 'stroke-[1.7px]'}`} />
             {badge && badge > 0 && (
-              <div className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full h-4 w-4 flex items-center justify-center shadow-lg">
-                {badge > 99 ? '99+' : badge}
-              </div>
+              <span className="absolute -top-1.5 -right-1.5 flex items-center justify-center w-3.5 h-3.5 text-[9px] font-bold bg-red-500 text-white rounded-full">
+                {badge > 9 ? '9+' : badge}
+              </span>
             )}
           </div>
-          <span className={`text-[10px] font-medium mt-1 leading-tight ${isActive ? 'text-amber-600 dark:text-amber-400' : ''}`}>
+          <span className={`text-[10px] leading-tight font-medium ${isActive ? 'font-semibold' : ''}`}>
             {label}
           </span>
+          {isActive && (
+            <span className="mt-0.5 w-4 h-[2.5px] rounded-full bg-[hsl(35,90%,42%)] dark:bg-[hsl(38,88%,56%)]" />
+          )}
         </div>
       </Link>
     );
@@ -57,57 +58,54 @@ export function BottomNavigation() {
   return (
     <>
       <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-50">
-        <div className="relative bg-white dark:bg-gray-900 border-t-2 border-amber-100 dark:border-slate-700 shadow-[0_-4px_24px_rgba(0,0,0,0.08)] dark:shadow-[0_-4px_24px_rgba(0,0,0,0.3)]">
+        {/* Glass background */}
+        <div className="absolute inset-0 bg-white/88 dark:bg-[hsl(25,14%,7%)]/92 backdrop-blur-xl border-t border-[hsl(36,14%,88%)]/70 dark:border-[hsl(25,12%,14%)]/80" />
 
-          {/* ── FABs: sit at the very top of the bar, half protruding above ── */}
-          <div className="absolute left-1/2 -translate-x-1/2 -top-6 flex items-center gap-2.5 z-10">
-            {/* Scan - solo per admin */}
-            {activeRole === 'admin' && (
-              <Link href="/scan">
-                <button
-                  data-testid="button-scan"
-                  className="group bg-gradient-to-r from-slate-700 to-slate-800 hover:from-slate-600 hover:to-slate-700 text-white rounded-full p-2.5 shadow-xl transition-all duration-300 active:scale-95 hover:scale-110"
-                >
-                  <ScanLine className="h-5 w-5" />
-                  <span className="sr-only">Scansiona etichetta</span>
-                </button>
-              </Link>
-            )}
+        <div className="relative flex items-end justify-around px-1 pt-2 pb-[env(safe-area-inset-bottom)]" style={{ paddingBottom: `max(env(safe-area-inset-bottom), 8px)` }}>
 
-            {/* Search (main FAB, larger) */}
+          {/* Nav items */}
+          <NavItem icon={Home} label="Home" href="/" isActive={location === "/"} />
+          <NavItem icon={MapPin} label="Pub" href="/explore/pubs" isActive={location.startsWith("/explore/pubs")} />
+
+          {/* Central Search FAB */}
+          <div className="flex flex-col items-center justify-end pb-0.5">
             <button
               onClick={() => setIsSearchOpen(true)}
               data-testid="button-search"
-              className="group relative bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-white rounded-full p-3.5 shadow-2xl transition-all duration-300 active:scale-95 hover:scale-110 hover:shadow-amber-500/25"
+              className="flex flex-col items-center justify-center w-12 h-12 rounded-2xl bg-[hsl(35,90%,42%)] dark:bg-[hsl(38,88%,50%)] shadow-[0_4px_16px_hsla(35,80%,40%,0.35)] active:scale-90 transition-all duration-200 -mt-3"
             >
-              <div className="relative">
-                <Search className="h-6 w-6" />
-                <Sparkles className="absolute -top-1 -right-1 h-3 w-3 text-white/70 animate-pulse" />
-              </div>
-              <span className="sr-only">Cerca pub, birrifici e birre</span>
+              <Search className="h-5 w-5 text-white stroke-[2px]" />
             </button>
+            <span className="text-[10px] font-medium text-[hsl(28,8%,52%)] dark:text-[hsl(35,8%,52%)] mt-1">Cerca</span>
           </div>
 
-          {/* ── Nav items: padded down from the FABs ── */}
-          <div className="flex items-center justify-around px-4 pt-8 pb-3 safe-area-pb">
-            <NavItem icon={Home} label="Home" href="/" isActive={location === "/"} />
-
-            {isAuthenticated && (
-              <NavItem icon={MapPin} label="Attività" href="/activity" isActive={location.startsWith("/activity")} />
-            )}
-
-            {isAuthenticated && (
-              <NavItem icon={Bell} label="Notifiche" href="/notifications" isActive={location.startsWith("/notification")} badge={unreadCount} />
-            )}
-
+          {isAuthenticated && (
             <NavItem
-              icon={User}
-              label={dashboardLabel}
-              href={isAuthenticated ? "/dashboard" : "/login"}
-              isActive={isAuthenticated ? location.startsWith("/dashboard") : location === "/login"}
+              icon={Bell}
+              label="Notifiche"
+              href="/notifications"
+              isActive={location.startsWith("/notifications")}
+              badge={unreadCount}
             />
-          </div>
+          )}
 
+          {activeRole === 'admin' && (
+            <Link href="/scan">
+              <div className={`flex flex-col items-center justify-center py-1 px-2.5 min-w-[52px] transition-all duration-200 active:scale-90 ${
+                location === '/scan' ? "text-[hsl(35,90%,40%)] dark:text-[hsl(38,88%,58%)]" : "text-[hsl(28,8%,52%)] dark:text-[hsl(35,8%,52%)]"
+              }`}>
+                <ScanLine className="h-[22px] w-[22px] mb-0.5 stroke-[1.7px]" />
+                <span className="text-[10px] leading-tight font-medium">Scan</span>
+              </div>
+            </Link>
+          )}
+
+          <NavItem
+            icon={User}
+            label={dashboardLabel}
+            href={isAuthenticated ? "/dashboard" : "/login"}
+            isActive={location.startsWith("/dashboard") || location.startsWith("/login")}
+          />
         </div>
       </nav>
 

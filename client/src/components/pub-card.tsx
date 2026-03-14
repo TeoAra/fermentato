@@ -127,69 +127,74 @@ export default function PubCard({ pub, distance }: PubCardProps) {
     toggleFavoriteMutation.mutate();
   };
 
+  const open = isOpenNow(pub.openingHours);
+
   return (
     <Link href={`/pub/${pub.id}`}>
-      <Card className="overflow-hidden hover:shadow-lg transition-shadow cursor-pointer">
+      <Card className="overflow-hidden cursor-pointer group hover:shadow-[0_6px_20px_hsla(28,25%,8%,0.10)] dark:hover:shadow-[0_6px_20px_hsla(0,0%,0%,0.40)] transition-all duration-250 hover:-translate-y-0.5">
         <div className="relative">
           <ImageWithFallback
             src={pub.coverImageUrl}
             alt={`${pub.name} - Copertina`}
             imageType="pub"
-            containerClassName="w-full h-48"
-            className="w-full h-48 object-cover"
+            containerClassName="w-full h-44"
+            className="w-full h-44 object-cover group-hover:scale-[1.02] transition-transform duration-300"
             iconSize="xl"
           />
           {!pub.isActive && (
-            <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center">
-              <span className="text-white font-semibold">Temporaneamente Chiuso</span>
+            <div className="absolute inset-0 bg-black/55 flex items-center justify-center">
+              <span className="text-white font-semibold text-sm tracking-wide">Temporaneamente Chiuso</span>
             </div>
           )}
+          {/* Open/closed pill */}
+          <div className={`absolute top-3 left-3 flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold backdrop-blur-sm ${
+            open
+              ? 'bg-green-500/90 text-white'
+              : 'bg-black/50 text-white/80'
+          }`}>
+            <span className={`w-1.5 h-1.5 rounded-full ${open ? 'bg-white' : 'bg-white/60'}`} />
+            {open ? 'Aperto' : 'Chiuso'}
+          </div>
         </div>
-        
-        <CardContent className="p-6">
-          <div className="flex items-center justify-between mb-2">
-            <h3 className="text-xl font-semibold text-slate-900 dark:text-amber-400 truncate">{pub.name}</h3>
-            <div className="flex items-center space-x-1">
-              <Button
-                variant="ghost"
-                size="sm"
-                className={`h-8 w-8 p-0 ${
-                  isFavorite 
-                    ? 'text-red-600 hover:text-red-700' 
-                    : 'text-gray-400 hover:text-red-600'
+
+        <CardContent className="p-5">
+          <div className="flex items-start justify-between mb-1.5">
+            <h3 className="text-base font-semibold text-[hsl(28,18%,13%)] dark:text-[hsl(40,12%,92%)] truncate leading-snug">{pub.name}</h3>
+            <div className="flex items-center gap-1 flex-shrink-0 ml-2">
+              <button
+                className={`p-1 rounded-lg transition-colors ${
+                  isFavorite
+                    ? 'text-red-500'
+                    : 'text-[hsl(28,8%,62%)] dark:text-[hsl(35,8%,48%)] hover:text-red-400'
                 }`}
                 onClick={handleFavoriteClick}
                 disabled={toggleFavoriteMutation.isPending}
                 data-testid={`button-favorite-pub-${pub.id}`}
               >
                 <Heart className={`w-4 h-4 ${isFavorite ? 'fill-current' : ''}`} />
-              </Button>
-              <span className="text-sm text-gray-600 dark:text-slate-400 font-medium">
+              </button>
+              <span className="text-xs text-[hsl(28,8%,56%)] dark:text-[hsl(35,8%,48%)] font-medium min-w-[14px]">
                 {favoritesCount}
               </span>
             </div>
           </div>
-          
-          <p className="text-gray-600 dark:text-slate-400 mb-3 flex items-center">
-            <MapPin className="w-4 h-4 mr-1 flex-shrink-0" />
+
+          <p className="text-sm text-[hsl(28,8%,50%)] dark:text-[hsl(35,8%,52%)] flex items-center mb-3">
+            <MapPin className="w-3.5 h-3.5 mr-1 flex-shrink-0 opacity-70" />
             <span className="truncate">
               {distance != null ? pub.city : `${pub.address}, ${pub.city}`}
             </span>
             {distance != null && (
-              <span className="ml-2 text-sm font-medium text-blue-600 dark:text-blue-400 whitespace-nowrap">
+              <span className="ml-2 text-xs font-semibold text-[hsl(35,90%,42%)] dark:text-[hsl(38,88%,58%)] whitespace-nowrap">
                 {distance < 1 ? `${Math.round(distance * 1000)}m` : `${distance.toFixed(1)}km`}
               </span>
             )}
           </p>
-          
-          <div className="flex items-center justify-between text-sm">
-            <Badge variant="secondary" className="bg-green-100 text-green-800">
-              <Beer className="w-3 h-3 mr-1" />
-              {beersOnTap} spine attive
-            </Badge>
-            <span className={`flex items-center ${isOpenNow(pub.openingHours) ? 'text-green-600' : 'text-red-600'}`}>
-              <Clock className="w-4 h-4 mr-1" />
-              {isOpenNow(pub.openingHours) ? 'Aperto ora' : 'Chiuso ora'}
+
+          <div className="flex items-center gap-1.5">
+            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold bg-[hsl(38,14%,93%)] dark:bg-[hsl(25,12%,15%)] text-[hsl(28,18%,28%)] dark:text-[hsl(35,10%,68%)]">
+              <Beer className="w-3 h-3" />
+              {beersOnTap} spine
             </span>
           </div>
         </CardContent>

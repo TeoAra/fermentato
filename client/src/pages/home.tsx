@@ -116,26 +116,26 @@ export default function Home() {
 
 
   return (
-    <div className="min-h-screen bg-white dark:bg-slate-950">
+    <div className="min-h-screen bg-[hsl(38,14%,97%)] dark:bg-[hsl(25,14%,7%)]">
       
       {/* Welcome Hero */}
-      <section className="relative overflow-hidden bg-gradient-to-br from-amber-50 via-white to-slate-100 dark:from-gray-900 dark:via-slate-800 dark:to-gray-900">
+      <section className="relative overflow-hidden bg-gradient-to-br from-[hsl(38,30%,96%)] via-[hsl(40,20%,98%)] to-[hsl(36,14%,94%)] dark:from-[hsl(25,18%,9%)] dark:via-[hsl(28,14%,8%)] dark:to-[hsl(25,14%,7%)]">
         <div className="absolute inset-0">
           <img
             src="/hero-beer.jpg"
             alt="Beer background"
-            className="w-full h-full object-cover opacity-10 dark:opacity-20"
+            className="w-full h-full object-cover opacity-[0.08] dark:opacity-[0.15]"
           />
-          <div className="absolute inset-0 bg-gradient-to-r from-white/90 via-amber-50/60 to-transparent dark:from-gray-900/95 dark:via-slate-900/80 dark:to-transparent"></div>
+          <div className="absolute inset-0 bg-gradient-to-r from-[hsl(38,30%,97%)]/90 via-[hsl(38,20%,97%)]/60 to-transparent dark:from-[hsl(25,18%,8%)]/95 dark:via-[hsl(28,14%,7%)]/80 dark:to-transparent"></div>
         </div>
         
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 lg:py-10">
           <div className="flex flex-col lg:flex-row items-center justify-between gap-6">
             <div className="text-center lg:text-left">
-              <h1 className="text-3xl md:text-4xl font-bold mb-3 text-gray-900 dark:text-white">
-                Benvenuto su <span className="text-amber-500 dark:text-amber-400">Fermenta.to</span>
+              <h1 className="text-3xl md:text-4xl font-bold mb-3 text-[hsl(28,18%,13%)] dark:text-[hsl(40,12%,92%)] tracking-tight">
+                Benvenuto su <span className="text-[hsl(35,90%,42%)] dark:text-[hsl(38,88%,58%)]">Fermenta.to</span>
               </h1>
-              <p className="text-lg text-gray-600 dark:text-gray-300">
+              <p className="text-base text-[hsl(28,8%,44%)] dark:text-[hsl(35,8%,58%)] leading-relaxed">
                 Trova pub, birrifici e la perfetta birra artigianale vicino a te
               </p>
             </div>
@@ -218,10 +218,8 @@ export default function Home() {
         {((user as any)?.userType === 'pub_owner' || ((user as any)?.userType === 'admin' && Array.isArray(myPubs) && myPubs.length > 0)) ? (
           <section className="mb-8">
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
-                <div className="p-1.5 bg-gradient-to-r from-blue-500 to-indigo-600 rounded-lg">
-                  <Store className="h-4 w-4 text-white" />
-                </div>
+              <h2 className="text-lg font-semibold text-[hsl(28,18%,13%)] dark:text-[hsl(40,12%,92%)] flex items-center gap-2 tracking-tight">
+                <Store className="h-4.5 w-4.5 text-[hsl(35,90%,42%)] dark:text-[hsl(38,88%,58%)]" />
                 Il Tuo Pub
               </h2>
               <Link href="/dashboard">
@@ -233,7 +231,7 @@ export default function Home() {
             ) : Array.isArray(myPubs) && myPubs.length > 0 ? (
               <div className="space-y-3">
                 {myPubs.map((pub: any) => (
-                  <div key={pub.id} className="bg-white dark:bg-slate-800 border border-gray-100 dark:border-slate-700 rounded-2xl p-4 flex items-center gap-4 shadow-sm">
+                  <div key={pub.id} className="bg-[hsl(40,14%,99%)] dark:bg-[hsl(25,12%,12%)] border border-[hsl(36,14%,88%)] dark:border-[hsl(25,12%,17%)] rounded-2xl p-4 flex items-center gap-4 shadow-[0_1px_3px_hsla(28,16%,8%,0.06)]">
                     <div className="w-16 h-16 rounded-xl overflow-hidden flex-shrink-0 bg-gray-100 dark:bg-slate-700 flex items-center justify-center">
                       {(pub.logoUrl || pub.coverImageUrl || pub.imageUrl) ? (
                         <img src={pub.logoUrl || pub.coverImageUrl || pub.imageUrl} alt={pub.name} className="w-16 h-16 object-cover" />
@@ -279,10 +277,8 @@ export default function Home() {
         {((user as any)?.userType !== 'pub_owner' && !((user as any)?.userType === 'admin' && Array.isArray(myPubs) && myPubs.length > 0)) ? (
           <section className="mb-8">
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
-                <div className="p-1.5 bg-gradient-to-r from-blue-500 to-indigo-600 rounded-lg">
-                  <Store className="h-4 w-4 text-white" />
-                </div>
+              <h2 className="text-lg font-semibold text-[hsl(28,18%,13%)] dark:text-[hsl(40,12%,92%)] flex items-center gap-2 tracking-tight">
+                <MapPin className="h-4 w-4 text-[hsl(35,90%,42%)] dark:text-[hsl(38,88%,58%)]" />
                 {userLocation ? 'Pub Vicini' : 'Pub Consigliati'}
               </h2>
               <Link href="/explore/pubs">
@@ -315,10 +311,8 @@ export default function Home() {
         {(user as any)?.userType === 'brewery_owner' && myBreweryData?.brewery && (
           <section className="mb-8">
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
-                <div className="p-1.5 bg-gradient-to-r from-amber-500 to-orange-600 rounded-lg">
-                  <Building2 className="h-4 w-4 text-white" />
-                </div>
+              <h2 className="text-lg font-semibold text-[hsl(28,18%,13%)] dark:text-[hsl(40,12%,92%)] flex items-center gap-2 tracking-tight">
+                <Building2 className="h-4 w-4 text-[hsl(35,90%,42%)] dark:text-[hsl(38,88%,58%)]" />
                 Il Tuo Birrificio
               </h2>
               <Link href="/brewery-dashboard">
@@ -356,10 +350,8 @@ export default function Home() {
         {isAuthenticated && breweries.length > 0 && (user as any)?.userType !== 'pub_owner' && (
           <section className="mb-8">
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
-                <div className="p-1.5 bg-gradient-to-r from-amber-500 to-amber-600 rounded-lg">
-                  <Building2 className="h-4 w-4 text-white" />
-                </div>
+              <h2 className="text-lg font-semibold text-[hsl(28,18%,13%)] dark:text-[hsl(40,12%,92%)] flex items-center gap-2 tracking-tight">
+                <Building2 className="h-4 w-4 text-[hsl(35,90%,42%)] dark:text-[hsl(38,88%,58%)]" />
                 Birrifici da Scoprire
               </h2>
               <Link href="/explore">
@@ -385,10 +377,8 @@ export default function Home() {
         {isAuthenticated && Array.isArray(popularStyles) && popularStyles.length > 0 && (
           <section className="mb-8">
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
-                <div className="p-1.5 bg-gradient-to-r from-yellow-500 to-amber-500 rounded-lg">
-                  <Beer className="h-4 w-4 text-white" />
-                </div>
+              <h2 className="text-lg font-semibold text-[hsl(28,18%,13%)] dark:text-[hsl(40,12%,92%)] flex items-center gap-2 tracking-tight">
+                <Beer className="h-4 w-4 text-[hsl(35,90%,42%)] dark:text-[hsl(38,88%,58%)]" />
                 Stili più Amati
               </h2>
               <Link href="/explore/beers">
@@ -398,9 +388,9 @@ export default function Home() {
             <div className="flex flex-wrap gap-2">
               {popularStyles.slice(0, 16).map((s) => (
                 <Link key={s.style} href={`/explore/beers?style=${encodeURIComponent(s.style)}`}>
-                  <div className="group flex items-center gap-2 bg-white dark:bg-slate-800 border border-gray-100 dark:border-slate-700 hover:border-amber-300 dark:hover:border-amber-700 rounded-full px-3 py-1.5 cursor-pointer transition-all hover:shadow-sm">
-                    <span className="text-sm font-medium text-gray-800 dark:text-gray-200 group-hover:text-amber-600 dark:group-hover:text-amber-400">{s.style}</span>
-                    <span className="text-[10px] font-bold text-amber-500 bg-amber-50 dark:bg-amber-900/20 px-1.5 py-0.5 rounded-full">{s.count.toLocaleString('it-IT')}</span>
+                  <div className="group flex items-center gap-2 bg-[hsl(38,14%,97%)] dark:bg-[hsl(25,12%,13%)] border border-[hsl(36,14%,87%)] dark:border-[hsl(25,12%,17%)] hover:border-[hsl(35,80%,58%)] dark:hover:border-[hsl(35,70%,42%)] rounded-full px-3 py-1.5 cursor-pointer transition-all hover:shadow-sm">
+                    <span className="text-sm font-medium text-[hsl(28,14%,22%)] dark:text-[hsl(35,10%,80%)] group-hover:text-[hsl(35,90%,38%)] dark:group-hover:text-[hsl(38,88%,60%)]">{s.style}</span>
+                    <span className="text-[10px] font-bold text-[hsl(35,90%,42%)] bg-[hsl(38,80%,93%)] dark:bg-[hsl(35,30%,14%)] dark:text-[hsl(38,88%,60%)] px-1.5 py-0.5 rounded-full">{s.count.toLocaleString('it-IT')}</span>
                   </div>
                 </Link>
               ))}
@@ -412,10 +402,8 @@ export default function Home() {
         {user && favorites && Array.isArray(favorites) && favorites.length > 0 ? (
           <section className="mb-8">
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
-                <div className="p-1.5 bg-gradient-to-br from-red-500 to-pink-600 rounded-lg">
-                  <Heart className="h-4 w-4 text-white" />
-                </div>
+              <h2 className="text-lg font-semibold text-[hsl(28,18%,13%)] dark:text-[hsl(40,12%,92%)] flex items-center gap-2 tracking-tight">
+                <Heart className="h-4 w-4 text-[hsl(35,90%,42%)] dark:text-[hsl(38,88%,58%)]" />
                 I Tuoi Preferiti
               </h2>
               <Link href="/dashboard?tab=favorites">
