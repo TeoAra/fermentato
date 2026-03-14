@@ -200,7 +200,7 @@ export default function TaplistTV() {
         @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
 
         .tv-header {
-          padding: 1.8vh 3.5vw;
+          padding: 1vh 3.5vw;
           display: flex; align-items: center; justify-content: space-between;
           background: linear-gradient(180deg, rgba(245,158,11,0.08) 0%, transparent 100%);
           border-bottom: 1px solid rgba(245,158,11,0.15);
@@ -208,41 +208,41 @@ export default function TaplistTV() {
         }
         .tv-header-left { display: flex; align-items: center; gap: 1.4vw; }
         .tv-header-logo {
-          width: 6vh; height: 6vh;
-          border-radius: 1vh;
+          width: 4.5vh; height: 4.5vh;
+          border-radius: 0.8vh;
           object-fit: cover;
           border: 2px solid rgba(245,158,11,0.3);
           box-shadow: 0 0 20px rgba(245,158,11,0.15);
         }
         .tv-header-logo-placeholder {
-          width: 6vh; height: 6vh;
-          border-radius: 1vh;
+          width: 4.5vh; height: 4.5vh;
+          border-radius: 0.8vh;
           background: linear-gradient(135deg, #f59e0b, #ea580c);
           display: flex; align-items: center; justify-content: center;
           box-shadow: 0 0 20px rgba(245,158,11,0.15);
         }
         .tv-pub-name {
-          font-size: 3.8vh; font-weight: 800;
+          font-size: 3vh; font-weight: 800;
           background: linear-gradient(90deg, #fbbf24, #f59e0b, #d97706);
           -webkit-background-clip: text; -webkit-text-fill-color: transparent;
           letter-spacing: -0.02em; line-height: 1.1;
         }
         .tv-pub-sub {
-          font-size: 1.4vh; color: rgba(255,255,255,0.4);
+          font-size: 1.2vh; color: rgba(255,255,255,0.4);
           font-weight: 500; letter-spacing: 0.15em; text-transform: uppercase;
-          margin-top: 0.3vh;
+          margin-top: 0.2vh;
         }
         .tv-header-right { display: flex; align-items: center; gap: 2vw; }
         .tv-time {
-          font-size: 3.8vh; font-weight: 700;
+          font-size: 3vh; font-weight: 700;
           color: rgba(255,255,255,0.85);
           font-variant-numeric: tabular-nums;
           letter-spacing: -0.02em;
         }
         .tv-date {
-          font-size: 1.4vh; color: rgba(255,255,255,0.35);
+          font-size: 1.2vh; color: rgba(255,255,255,0.35);
           text-align: right; text-transform: capitalize;
-          margin-top: 0.2vh;
+          margin-top: 0.1vh;
         }
         .tv-live {
           display: flex; align-items: center; gap: 0.5vw;
@@ -257,18 +257,18 @@ export default function TaplistTV() {
 
         .tv-table-wrap {
           flex: 1; display: flex; flex-direction: column;
-          padding: 2vh 3.5vw 1.5vh;
+          padding: 1vh 3.5vw 1vh;
           overflow: hidden;
-          gap: 0.5vh;
+          gap: 0;
         }
 
         .tv-table-header {
           display: grid;
           align-items: center;
-          padding: 1.2vh 2vw 1.2vh 2.4vw;
+          padding: 0.7vh 2vw 0.7vh 2.4vw;
           border-bottom: 2px solid rgba(245,158,11,0.2);
           flex-shrink: 0;
-          margin-bottom: 0.5vh;
+          margin-bottom: 0.3vh;
         }
         .tv-col-label {
           font-size: ${isCompact ? '1.4vh' : '1.7vh'};
@@ -298,7 +298,7 @@ export default function TaplistTV() {
           display: flex; align-items: center; gap: 1.5vw;
           padding: 0 2vw;
           flex-shrink: 0;
-          height: 4.5vh;
+          height: 3vh;
           animation: rowSlide 0.5s ease-out both;
         }
         .tv-section-line {
@@ -320,8 +320,8 @@ export default function TaplistTV() {
         }
 
         .tv-beer-img-wrap {
-          width: ${isCompact ? '6vh' : '7.5vh'};
-          height: ${isCompact ? '6vh' : '7.5vh'};
+          width: ${isCompact ? '5.5vh' : '6.5vh'};
+          height: ${isCompact ? '5.5vh' : '6.5vh'};
           border-radius: 50%;
           overflow: hidden;
           border: 2px solid rgba(255,255,255,0.08);
@@ -389,7 +389,7 @@ export default function TaplistTV() {
         .tv-price-euro { color: rgba(255,255,255,0.4); font-weight: 400; }
 
         .tv-footer {
-          padding: 0.8vh 3.5vw;
+          padding: 0.4vh 3.5vw;
           display: flex; align-items: center; justify-content: space-between;
           flex-shrink: 0;
           border-top: 1px solid rgba(255,255,255,0.04);
