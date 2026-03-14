@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { useAuth } from "@/hooks/useAuth";
@@ -363,6 +363,20 @@ export default function BreweryDashboard() {
   const { toast } = useToast();
   const { user, isLoading: authLoading } = useAuth();
   const [dialogOpen, setDialogOpen] = useState(false);
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('verified') === 'success') {
+      setTimeout(() => {
+        toast({
+          title: "Email verificata!",
+          description: "Benvenuto su Fermenta.to. La tua richiesta di registrazione come birrificio è in attesa di approvazione.",
+        });
+      }, 800);
+      window.history.replaceState({}, '', '/brewery-dashboard');
+    }
+  }, []);
+
   const [editingBeer, setEditingBeer] = useState<Beer | null>(null);
   const [showAllBeers, setShowAllBeers] = useState(false);
   const [isEditingProfile, setIsEditingProfile] = useState(false);

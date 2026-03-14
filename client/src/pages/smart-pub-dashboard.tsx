@@ -193,6 +193,14 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
         toast({ title: "Email verificata! Prova gratuita attivata 🎉", description: "Hai 15 giorni per esplorare tutte le funzionalità di Fermenta.to." });
       }, 800);
       window.history.replaceState({}, '', '/dashboard');
+    } else if (params.get('pub-pending') === 'true') {
+      setTimeout(() => {
+        toast({
+          title: "Email verificata!",
+          description: "La tua richiesta di registrazione è in attesa di approvazione. Ti avviseremo entro breve.",
+        });
+      }, 800);
+      window.history.replaceState({}, '', '/dashboard');
     }
   }, []);
 

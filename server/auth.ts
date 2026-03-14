@@ -19,7 +19,7 @@ const SALT_ROUNDS = 12;
 async function verifyRecaptcha(token: string | undefined): Promise<boolean> {
   const secretKey = process.env.RECAPTCHA_SECRET_KEY;
   if (!secretKey) return true;
-  if (!token) return true;
+  if (!token) return false;
   try {
     const params = new URLSearchParams({ secret: secretKey, response: token });
     const resp = await fetch(`https://www.google.com/recaptcha/api/siteverify`, {
@@ -635,25 +635,49 @@ export async function setupAuth(app: Express) {
       if (user.emailVerificationExpires && user.emailVerificationExpires < new Date()) {
         return res.redirect('/auth?verified=expired&email=' + encodeURIComponent(user.email || ''));
       }
-      await db.update(users).set({
+      const [updatedUser] = await db.update(users).set({
         isEmailVerified: true,
         emailVerificationToken: null,
         emailVerificationExpires: null,
-      }).where(eq(users.id, user.id));
+      }).where(eq(users.id, user.id)).returning();
 
-      // If user has a pub with no subscription yet, start 15-day trial automatically
+      // Determine landing page based on user's registration type
+      let redirectUrl = '/profile?verified=success';
+
+      // Check if pub owner: existing pub → start trial
       const [userPub] = await db.select().from(pubs).where(eq(pubs.ownerId, user.id));
-      if (userPub && (!userPub.subscriptionStatus || userPub.subscriptionStatus === 'none')) {
-        const trialEndsAt = new Date(Date.now() + 15 * 24 * 60 * 60 * 1000);
-        await db.update(pubs).set({
-          subscriptionStatus: 'trial',
-          trialEndsAt,
-          isVerified: true,
-        }).where(eq(pubs.id, userPub.id));
-        return res.redirect('/dashboard?trial=started');
+      if (userPub) {
+        if (!userPub.subscriptionStatus || userPub.subscriptionStatus === 'none') {
+          const trialEndsAt = new Date(Date.now() + 15 * 24 * 60 * 60 * 1000);
+          await db.update(pubs).set({
+            subscriptionStatus: 'trial',
+            trialEndsAt,
+            isVerified: true,
+          }).where(eq(pubs.id, userPub.id));
+        }
+        redirectUrl = '/dashboard?trial=started';
+      } else {
+        // Check for pending pub request
+        const [pubReq] = await db.select().from(publicanRequests).where(eq(publicanRequests.userId, user.id));
+        if (pubReq) {
+          redirectUrl = '/dashboard?pub-pending=true';
+        } else {
+          // Check for pending brewery request
+          const [brewReq] = await db.select().from(breweryRequests).where(eq(breweryRequests.userId, user.id));
+          if (brewReq) {
+            redirectUrl = '/brewery-dashboard?verified=success';
+          }
+        }
       }
 
-      res.redirect('/auth?verified=success');
+      // Auto-login the user so they don't need to fill login form + reCAPTCHA
+      req.login(updatedUser, (loginErr) => {
+        if (loginErr) {
+          console.error('Auto-login after verify failed:', loginErr);
+          return res.redirect(redirectUrl);
+        }
+        res.redirect(redirectUrl);
+      });
     } catch (error) {
       console.error('Email verification error:', error);
       res.redirect('/auth?verified=invalid');

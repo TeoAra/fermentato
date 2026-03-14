@@ -213,6 +213,19 @@ export default function UserProfile() {
     }
   }, [isAuthenticated, isLoading, toast]);
 
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('verified') === 'success') {
+      setTimeout(() => {
+        toast({
+          title: "Benvenuto su Fermenta.to!",
+          description: "La tua email è stata verificata. Inizia a esplorare birre, pub e birrifici.",
+        });
+      }, 800);
+      window.history.replaceState({}, '', '/profile');
+    }
+  }, []);
+
   const { data: beerTastings = [] } = useQuery<any[]>({
     queryKey: ["/api/user/beer-tastings"],
     enabled: isAuthenticated,
