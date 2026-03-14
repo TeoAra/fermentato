@@ -904,15 +904,63 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (pub.subscriptionStatus !== 'trial') {
         return res.status(400).json({ message: "Il pub non è in prova" });
       }
+      // Also cancel on Stripe (subscription in trialing state)
+      try {
+        const { getUncachableStripeClient } = await import("./stripeClient");
+        const stripe = await getUncachableStripeClient();
+        const userEmail = (req.user as any).email;
+        const customers = await stripe.customers.list({ email: userEmail, limit: 1 });
+        if (customers.data.length > 0) {
+          const trialingSubs = await stripe.subscriptions.list({ customer: customers.data[0].id, status: 'trialing', limit: 1 });
+          for (const sub of trialingSubs.data) await stripe.subscriptions.cancel(sub.id);
+        }
+      } catch (stripeErr: any) { console.warn("Stripe trial cancel warning:", stripeErr.message); }
+
       await db.update(pubs).set({
-        subscriptionStatus: 'none',
+        subscriptionStatus: 'cancelled',
         trialEndsAt: null,
         isVerified: false,
+        isActive: false,
       }).where(eq(pubs.id, pub.id));
-      res.json({ message: "Prova annullata" });
+      res.json({ message: "Prova annullata. Il pub è stato ibernato." });
     } catch (error) {
       console.error("Error cancelling trial:", error);
       res.status(500).json({ message: "Errore durante l'annullamento" });
+    }
+  });
+
+  // Cancel active paid subscription → hibernate pub
+  app.post("/api/my-pub/cancel-subscription", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = (req.user as any).id;
+      const userEmail = (req.user as any).email;
+      const [pub] = await db.select().from(pubs).where(eq(pubs.ownerId, userId));
+      if (!pub) return res.status(404).json({ message: "Nessun pub trovato" });
+
+      // Cancel on Stripe — look up by customer email
+      try {
+        const { getUncachableStripeClient } = await import("./stripeClient");
+        const stripe = await getUncachableStripeClient();
+        const customers = await stripe.customers.list({ email: userEmail, limit: 1 });
+        if (customers.data.length > 0) {
+          const cid = customers.data[0].id;
+          for (const status of ['active', 'trialing'] as const) {
+            const subs = await stripe.subscriptions.list({ customer: cid, status, limit: 5 });
+            for (const sub of subs.data) await stripe.subscriptions.cancel(sub.id);
+          }
+        }
+      } catch (stripeErr: any) { console.warn("Stripe subscription cancel warning:", stripeErr.message); }
+
+      await db.update(pubs).set({
+        subscriptionStatus: 'cancelled',
+        trialEndsAt: null,
+        isVerified: false,
+        isActive: false,
+      }).where(eq(pubs.id, pub.id));
+      res.json({ message: "Abbonamento disdetto. Il pub è stato ibernato." });
+    } catch (error) {
+      console.error("Error cancelling subscription:", error);
+      res.status(500).json({ message: "Errore durante la disdetta" });
     }
   });
 

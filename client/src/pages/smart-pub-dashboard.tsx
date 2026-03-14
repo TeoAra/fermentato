@@ -12,6 +12,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { AllergenSelector, AllergenDisplay } from "@/components/allergen-selector";
 import { PriceFormatManager } from "@/components/price-format-manager";
 import { Label } from "@/components/ui/label";
@@ -56,7 +57,12 @@ import {
   Zap,
   Target,
   Crown,
-  Wine
+  Wine,
+  Gift,
+  ShieldOff,
+  RefreshCw,
+  AlertTriangle,
+  CheckCircle
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { formatDistanceToNow } from "date-fns";
@@ -223,6 +229,27 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
   // Settings form state
   const [settingsData, setSettingsData] = useState<any>({});
   const [settingsChanged, setSettingsChanged] = useState(false);
+
+  // Subscription cancel dialog
+  const [showCancelDialog, setShowCancelDialog] = useState(false);
+
+  const cancelSubMutation = useMutation({
+    mutationFn: () => {
+      const status = currentPub?.subscriptionStatus;
+      const endpoint = status === 'trial'
+        ? '/api/my-pub/cancel-trial'
+        : '/api/my-pub/cancel-subscription';
+      return apiRequest(endpoint, { method: 'POST' });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/my-pubs'] });
+      setShowCancelDialog(false);
+      toast({ title: 'Abbonamento disdetto', description: 'Il pub è stato ibernato. Puoi riattivarlo in qualsiasi momento.' });
+    },
+    onError: (err: any) => {
+      toast({ title: 'Errore', description: err?.message || 'Impossibile disdire', variant: 'destructive' });
+    },
+  });
 
   // Fetch pub data - either from admin mode or owner mode
   const { data: userPubs, isLoading: pubsLoading } = useQuery({
@@ -534,7 +561,77 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
     </motion.div>
   );
 
-  // Modern Overview Section with Animations
+  // ── Subscription banner (shown on every section) ──────────────────────────
+  const renderSubscriptionBanner = () => {
+    if (!currentPub || isAdminMode) return null;
+    const status = currentPub.subscriptionStatus as string;
+    const trialEndsAt = currentPub.trialEndsAt ? new Date(currentPub.trialEndsAt) : null;
+    const daysLeft = trialEndsAt ? Math.max(0, Math.ceil((trialEndsAt.getTime() - Date.now()) / 86400000)) : 0;
+    const isTrialExpiringSoon = status === 'trial' && daysLeft <= 3;
+
+    if (status === 'trial' && trialEndsAt) {
+      return (
+        <div className={`mb-6 flex items-center justify-between gap-4 rounded-xl border px-4 py-3 ${isTrialExpiringSoon ? 'bg-orange-50 dark:bg-orange-900/20 border-orange-300 dark:border-orange-700' : 'bg-green-50 dark:bg-green-900/20 border-green-300 dark:border-green-700'}`}>
+          <div className="flex items-center gap-3 min-w-0">
+            <Gift className={`w-5 h-5 flex-shrink-0 ${isTrialExpiringSoon ? 'text-orange-500' : 'text-green-500'}`} />
+            <div className="min-w-0">
+              <p className={`font-semibold text-sm ${isTrialExpiringSoon ? 'text-orange-800 dark:text-orange-200' : 'text-green-800 dark:text-green-200'}`}>
+                {daysLeft > 0 ? `Prova gratuita · ${daysLeft} giorn${daysLeft === 1 ? 'o' : 'i'} rimanent${daysLeft === 1 ? 'e' : 'i'}` : 'Prova scaduta'}
+              </p>
+              <p className={`text-xs ${isTrialExpiringSoon ? 'text-orange-600 dark:text-orange-400' : 'text-green-600 dark:text-green-400'}`}>
+                {daysLeft > 0 ? `Poi €65/anno IVA inclusa · ${trialEndsAt.toLocaleDateString('it-IT')}` : 'Il tuo abbonamento si rinnoverà automaticamente'}
+              </p>
+            </div>
+          </div>
+          <Button size="sm" variant="outline" onClick={() => setShowCancelDialog(true)}
+            className="flex-shrink-0 text-red-600 border-red-300 hover:bg-red-50 dark:hover:bg-red-900/20 text-xs">
+            Disdici
+          </Button>
+        </div>
+      );
+    }
+
+    if (status === 'active') {
+      return (
+        <div className="mb-6 flex items-center justify-between gap-4 rounded-xl border border-blue-300 dark:border-blue-700 bg-blue-50 dark:bg-blue-900/20 px-4 py-3">
+          <div className="flex items-center gap-3 min-w-0">
+            <CheckCircle className="w-5 h-5 flex-shrink-0 text-blue-500" />
+            <div className="min-w-0">
+              <p className="font-semibold text-sm text-blue-800 dark:text-blue-200">Piano Pub Pro — Attivo</p>
+              <p className="text-xs text-blue-600 dark:text-blue-400">€65/anno IVA inclusa · rinnovo automatico</p>
+            </div>
+          </div>
+          <Button size="sm" variant="outline" onClick={() => setShowCancelDialog(true)}
+            className="flex-shrink-0 text-red-600 border-red-300 hover:bg-red-50 dark:hover:bg-red-900/20 text-xs">
+            Disdici
+          </Button>
+        </div>
+      );
+    }
+
+    // Hibernated / no subscription
+    if (!currentPub.isActive || status === 'none' || status === 'cancelled' || status === 'expired') {
+      return (
+        <div className="mb-6 flex items-center justify-between gap-4 rounded-xl border border-red-300 dark:border-red-700 bg-red-50 dark:bg-red-900/20 px-4 py-3">
+          <div className="flex items-center gap-3 min-w-0">
+            <ShieldOff className="w-5 h-5 flex-shrink-0 text-red-500" />
+            <div className="min-w-0">
+              <p className="font-semibold text-sm text-red-800 dark:text-red-200">Pub ibernato</p>
+              <p className="text-xs text-red-600 dark:text-red-400">Il profilo non è visibile. Riattiva l'abbonamento per riprendere.</p>
+            </div>
+          </div>
+          <Link href="/attiva-pub">
+            <Button size="sm" className="flex-shrink-0 bg-amber-500 hover:bg-amber-600 text-white text-xs">
+              Riattiva
+            </Button>
+          </Link>
+        </div>
+      );
+    }
+
+    return null;
+  };
+
   const renderOverview = () => (
     <motion.div 
       className="space-y-8"
@@ -1791,39 +1888,95 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
       <div className="flex-1">
         <div className="p-4 sm:p-6 md:p-8">
           <div className="max-w-7xl mx-auto">
-              {currentSection === 'overview' && renderOverview()}
-              
-              {currentSection === 'taplist' && renderTaplist()}
-              {currentSection === 'bottles' && renderBottles()}
-              {currentSection === 'menu' && renderMenu()}
-              {currentSection === 'events' && (
-                <EventsManager pubId={currentPub?.id || 0} pubName={currentPub?.name} />
-              )}
-              {currentSection === 'analytics' && renderAnalytics()}
-              {currentSection === 'settings' && renderSettings()}
-              {currentSection === 'profile' && renderProfile()}
-              
-              {/* Fallback for unimplemented sections */}
-              {!['overview', 'taplist', 'bottles', 'menu', 'events', 'hours', 'analytics', 'settings', 'profile'].includes(currentSection) && (
-                <div className="text-center py-16">
-                  <div className="space-y-4">
-                    <div className={`w-16 h-16 rounded-2xl bg-gradient-to-br ${sections.find(s => s.id === currentSection)?.gradient} mx-auto flex items-center justify-center`}>
-                      {sections.find(s => s.id === currentSection)?.icon && 
-                        React.createElement(sections.find(s => s.id === currentSection)!.icon, { className: "w-8 h-8 text-white" })
-                      }
+
+            {/* Subscription banner — always visible */}
+            {renderSubscriptionBanner()}
+
+            {/* Hibernation overlay — blocks all sections when pub is inactive */}
+            {!isAdminMode && currentPub && !currentPub.isActive && currentSection !== 'overview' && (
+              <div className="flex flex-col items-center justify-center py-24 text-center space-y-4">
+                <ShieldOff className="w-16 h-16 text-red-400 mx-auto" />
+                <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Pub ibernato</h2>
+                <p className="text-gray-500 dark:text-gray-400 max-w-sm">
+                  Questa sezione non è disponibile mentre l'abbonamento è sospeso. Riattiva il pub per continuare.
+                </p>
+                <Link href="/attiva-pub">
+                  <Button className="bg-amber-500 hover:bg-amber-600 text-white">
+                    <RefreshCw className="w-4 h-4 mr-2" /> Riattiva abbonamento
+                  </Button>
+                </Link>
+              </div>
+            )}
+
+            {/* Section content — hidden when hibernated (except overview) */}
+            {(isAdminMode || currentPub?.isActive || currentSection === 'overview') && (
+              <>
+                {currentSection === 'overview' && renderOverview()}
+                {currentSection === 'taplist' && renderTaplist()}
+                {currentSection === 'bottles' && renderBottles()}
+                {currentSection === 'menu' && renderMenu()}
+                {currentSection === 'events' && (
+                  <EventsManager pubId={currentPub?.id || 0} pubName={currentPub?.name} />
+                )}
+                {currentSection === 'analytics' && renderAnalytics()}
+                {currentSection === 'settings' && renderSettings()}
+                {currentSection === 'profile' && renderProfile()}
+                {!['overview', 'taplist', 'bottles', 'menu', 'events', 'hours', 'analytics', 'settings', 'profile'].includes(currentSection) && (
+                  <div className="text-center py-16">
+                    <div className="space-y-4">
+                      <div className={`w-16 h-16 rounded-2xl bg-gradient-to-br ${sections.find(s => s.id === currentSection)?.gradient} mx-auto flex items-center justify-center`}>
+                        {sections.find(s => s.id === currentSection)?.icon && 
+                          React.createElement(sections.find(s => s.id === currentSection)!.icon, { className: "w-8 h-8 text-white" })
+                        }
+                      </div>
+                      <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
+                        {sections.find(s => s.id === currentSection)?.name}
+                      </h2>
+                      <p className="text-gray-600 dark:text-gray-400">Sezione in fase di sviluppo.</p>
                     </div>
-                    <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
-                      {sections.find(s => s.id === currentSection)?.name}
-                    </h2>
-                    <p className="text-gray-600 dark:text-gray-400">
-                      Sezione in fase di sviluppo.
-                    </p>
                   </div>
-                </div>
-              )}
+                )}
+              </>
+            )}
           </div>
         </div>
       </div>
+
+      {/* Cancel subscription confirmation dialog */}
+      <AlertDialog open={showCancelDialog} onOpenChange={setShowCancelDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2">
+              <AlertTriangle className="w-5 h-5 text-red-500" />
+              {currentPub?.subscriptionStatus === 'trial' ? 'Disdici la prova gratuita?' : 'Disdici l\'abbonamento?'}
+            </AlertDialogTitle>
+            <AlertDialogDescription className="space-y-2">
+              <span className="block">
+                {currentPub?.subscriptionStatus === 'trial'
+                  ? 'Annullando la prova, il tuo pub verrà immediatamente ibernato e non sarà più visibile agli utenti. Nessun addebito verrà effettuato.'
+                  : 'Disdire l\'abbonamento iberna immediatamente il pub. Il profilo non sarà più visibile. Puoi riattivarlo in qualsiasi momento.'}
+              </span>
+              <span className="block font-medium text-gray-900 dark:text-white">
+                Sei sicuro di voler continuare?
+              </span>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Annulla</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => cancelSubMutation.mutate()}
+              disabled={cancelSubMutation.isPending}
+              className="bg-red-600 hover:bg-red-700 text-white"
+            >
+              {cancelSubMutation.isPending ? (
+                <><RefreshCw className="w-4 h-4 mr-2 animate-spin" /> Elaborazione…</>
+              ) : (
+                currentPub?.subscriptionStatus === 'trial' ? 'Sì, disdici la prova' : 'Sì, disdici abbonamento'
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
