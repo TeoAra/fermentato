@@ -641,31 +641,45 @@ export async function setupAuth(app: Express) {
         emailVerificationExpires: null,
       }).where(eq(users.id, user.id)).returning();
 
-      // Determine landing page based on user's registration type
-      let redirectUrl = '/profile?verified=success';
+      // Fetch all relevant registration data in parallel to determine user type
+      const [[userPub], [pubReq], [brewReq]] = await Promise.all([
+        db.select().from(pubs).where(eq(pubs.ownerId, user.id)),
+        db.select().from(publicanRequests).where(eq(publicanRequests.userId, user.id)),
+        db.select().from(breweryRequests).where(eq(breweryRequests.userId, user.id)),
+      ]);
 
-      // Check if pub owner: existing pub
-      const [userPub] = await db.select().from(pubs).where(eq(pubs.ownerId, user.id));
-      if (userPub) {
-        if (!userPub.subscriptionStatus || userPub.subscriptionStatus === 'none') {
-          // Pub created during registration but Stripe not yet done → go to checkout
-          redirectUrl = '/attiva-pub?direct=1';
-        } else {
-          // Already has trial/active subscription → go to dashboard
-          redirectUrl = '/dashboard?trial=started';
-        }
+      const pubNeedsStripe = userPub && (!userPub.subscriptionStatus || userPub.subscriptionStatus === 'none');
+      const pubActive = userPub && userPub.subscriptionStatus && userPub.subscriptionStatus !== 'none';
+
+      /*
+       * Registration type matrix:
+       *
+       *  pubNeedsStripe + brewReq  → brewpub  (pub via Stripe + brewery pending admin)
+       *  pubNeedsStripe only       → pub      (pub via Stripe)
+       *  pubActive                 → pub re-verify (already has subscription)
+       *  pubReq only (old flow)    → pub      (publicanRequest, via Stripe)
+       *  brewReq only              → brewery  (brewery-only, waiting admin approval)
+       *  nothing                   → customer
+       */
+      let redirectUrl: string;
+      if (pubNeedsStripe && brewReq) {
+        // Brewpub: complete pub activation via Stripe first; brewery request goes to admin
+        redirectUrl = '/attiva-pub?direct=1&type=brewpub';
+      } else if (pubNeedsStripe) {
+        // Pub: needs Stripe checkout to activate
+        redirectUrl = '/attiva-pub?direct=1';
+      } else if (pubActive) {
+        // Pub already subscribed (re-verification or edge case)
+        redirectUrl = '/dashboard?verified=success';
+      } else if (pubReq) {
+        // Old registration flow via /api/auth/register with isPublican=true
+        redirectUrl = '/attiva-pub?direct=1';
+      } else if (brewReq) {
+        // Brewery-only: in attesa di approvazione admin
+        redirectUrl = '/brewery-dashboard?verified=success';
       } else {
-        // Check for pending pub request → send to Stripe checkout directly
-        const [pubReq] = await db.select().from(publicanRequests).where(eq(publicanRequests.userId, user.id));
-        if (pubReq) {
-          redirectUrl = '/attiva-pub?direct=1';
-        } else {
-          // Check for pending brewery request
-          const [brewReq] = await db.select().from(breweryRequests).where(eq(breweryRequests.userId, user.id));
-          if (brewReq) {
-            redirectUrl = '/brewery-dashboard?verified=success';
-          }
-        }
+        // Pure customer
+        redirectUrl = '/profile?verified=success';
       }
 
       // Auto-login the user so they don't need to fill login form + reCAPTCHA

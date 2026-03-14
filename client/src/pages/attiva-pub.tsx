@@ -39,6 +39,7 @@ export default function AttivaPub() {
   const queryClient = useQueryClient();
   const [step, setStep] = useState<Step>("choose");
   const [selectedPub, setSelectedPub] = useState<any>(null);
+  const [registrationType, setRegistrationType] = useState<"pub" | "brewpub">("pub");
 
   // ── Mutations ──────────────────────────────────────────────────────────────
 
@@ -93,11 +94,21 @@ export default function AttivaPub() {
     const sessionId = params.get("session_id") || undefined;
 
     if (params.get("checkout_success") === "1") {
+      // Recover registration type saved before Stripe redirect
+      const savedType = sessionStorage.getItem("fermenta_reg_type") as "pub" | "brewpub" | null;
+      if (savedType) {
+        setRegistrationType(savedType);
+        sessionStorage.removeItem("fermenta_reg_type");
+      }
       window.history.replaceState({}, "", "/attiva-pub");
       setStep("activating");
       if (isAuthenticated) activateMutation.mutate(sessionId);
     } else if (params.get("direct") === "1" && isAuthenticated) {
-      // Auto-start checkout after email verification — only when auth is confirmed
+      // Detect brewpub case from server redirect
+      const type = params.get("type") === "brewpub" ? "brewpub" : "pub";
+      setRegistrationType(type);
+      // Persist across Stripe redirect
+      sessionStorage.setItem("fermenta_reg_type", type);
       window.history.replaceState({}, "", "/attiva-pub");
       setStep("checkout");
       setTimeout(() => checkoutMutation.mutate(), 800);
@@ -166,15 +177,18 @@ export default function AttivaPub() {
   // ── Step: checkout-success ────────────────────────────────────────────────
 
   if (step === "checkout-success") {
+    const isBrewpub = registrationType === "brewpub";
     return (
       <div className="min-h-screen bg-gradient-to-b from-green-50 to-white dark:from-gray-950 dark:to-gray-900 pt-20 flex flex-col">
-        <SEO title="Pub attivato — Fermenta.to" url="https://fermenta.to/attiva-pub" />
+        <SEO title={isBrewpub ? "Brewpub attivato — Fermenta.to" : "Pub attivato — Fermenta.to"} url="https://fermenta.to/attiva-pub" />
         <div className="flex-1 flex items-center justify-center px-4 py-16">
           <div className="max-w-md text-center space-y-6">
             <div className="w-20 h-20 bg-green-100 dark:bg-green-900/40 rounded-full flex items-center justify-center mx-auto">
               <CheckCircle2 className="w-10 h-10 text-green-500" />
             </div>
-            <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Il tuo pub è attivo!</h1>
+            <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
+              {isBrewpub ? "Il tuo brewpub è attivo!" : "Il tuo pub è attivo!"}
+            </h1>
             <p className="text-gray-600 dark:text-gray-400 text-lg">
               Benvenuto nel Piano Pub Pro. Il tuo periodo di prova di 15 giorni è iniziato — nessun addebito per ora.
             </p>
@@ -187,6 +201,17 @@ export default function AttivaPub() {
                 Puoi disdire in qualsiasi momento durante la prova senza alcun addebito.
               </p>
             </div>
+            {isBrewpub && (
+              <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-xl p-4 text-left space-y-1">
+                <div className="flex items-center gap-2 text-amber-700 dark:text-amber-300 font-semibold text-sm">
+                  <Building2 className="w-4 h-4" />
+                  Richiesta birrificio in attesa
+                </div>
+                <p className="text-xs text-amber-600 dark:text-amber-400">
+                  La parte birrificio del tuo brewpub è in attesa di verifica da parte del nostro team. Riceverai una notifica appena approvata — di solito entro 24-48 ore.
+                </p>
+              </div>
+            )}
             <div className="flex flex-col sm:flex-row gap-3 justify-center">
               <Link href="/dashboard">
                 <Button className="bg-amber-500 hover:bg-amber-600 text-white font-semibold">
