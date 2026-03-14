@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useEffect, useState, useMemo } from "react";
 import { Beer, Droplets } from "lucide-react";
 
-const ITEMS_PER_PAGE = 10;
+const ITEMS_PER_PAGE = 8;
 const PAGE_INTERVAL = 30000;
 
 export default function TaplistTV() {
@@ -22,16 +22,12 @@ export default function TaplistTV() {
       try {
         if ('wakeLock' in navigator) {
           wakeLock = await (navigator as any).wakeLock.request('screen');
-          wakeLock.addEventListener('release', () => {
-            setTimeout(requestWakeLock, 1000);
-          });
+          wakeLock.addEventListener('release', () => { setTimeout(requestWakeLock, 1000); });
         }
       } catch (e) {}
     };
     requestWakeLock();
-    const handleVisibility = () => {
-      if (document.visibilityState === 'visible') requestWakeLock();
-    };
+    const handleVisibility = () => { if (document.visibilityState === 'visible') requestWakeLock(); };
     document.addEventListener('visibilitychange', handleVisibility);
     return () => {
       document.removeEventListener('visibilitychange', handleVisibility);
@@ -39,58 +35,149 @@ export default function TaplistTV() {
     };
   }, []);
 
-  const { data: pub } = useQuery({
-    queryKey: ["/api/pubs", id],
-    enabled: !!id,
-    refetchInterval: 15000,
-  });
-
-  const { data: tapList = [] } = useQuery({
-    queryKey: ["/api/pubs", id, "taplist"],
-    enabled: !!id,
-    refetchInterval: 10000,
-  });
-
-  const { data: pubSizes = [] } = useQuery({
-    queryKey: ["/api/pubs", id, "sizes"],
-    enabled: !!id,
-  });
+  const { data: pub } = useQuery({ queryKey: ["/api/pubs", id], enabled: !!id, refetchInterval: 15000 });
+  const { data: tapList = [] } = useQuery({ queryKey: ["/api/pubs", id, "taplist"], enabled: !!id, refetchInterval: 10000 });
 
   const activeTaps = useMemo(() => {
-    return Array.isArray(tapList) ? tapList.filter((t: any) => t.isActive !== false) : [];
+    const taps = Array.isArray(tapList) ? tapList.filter((t: any) => t.isActive !== false) : [];
+    const spina = taps.filter((t: any) => (t.tapType || 'spina') === 'spina');
+    const pompa = taps.filter((t: any) => t.tapType === 'pompa');
+    return { spina, pompa, all: [...spina, ...pompa] };
   }, [tapList]);
 
-  const totalPages = Math.max(1, Math.ceil(activeTaps.length / ITEMS_PER_PAGE));
-
-  useEffect(() => {
-    if (totalPages <= 1) { setCurrentPage(0); return; }
-    const interval = setInterval(() => {
-      setCurrentPage(prev => (prev + 1) % totalPages);
-    }, PAGE_INTERVAL);
-    return () => clearInterval(interval);
-  }, [totalPages]);
-
-  useEffect(() => {
-    if (currentPage >= totalPages) setCurrentPage(0);
-  }, [totalPages, currentPage]);
-
-  const pageTaps = useMemo(() => {
-    const start = currentPage * ITEMS_PER_PAGE;
-    return activeTaps.slice(start, start + ITEMS_PER_PAGE);
-  }, [activeTaps, currentPage]);
+  const hasPompa = activeTaps.pompa.length > 0;
+  const hasSpina = activeTaps.spina.length > 0;
 
   const sizeColumns = useMemo(() => {
     const sizes = new Set<string>();
-    activeTaps.forEach((tap: any) => {
-      const prices = tap.prices || [];
-      prices.forEach((p: any) => { if (p.size) sizes.add(p.size); });
+    activeTaps.all.forEach((tap: any) => {
+      (tap.prices || []).forEach((p: any) => { if (p.size) sizes.add(p.size); });
     });
     if (sizes.size === 0) return ["Prezzo"];
     return Array.from(sizes);
-  }, [activeTaps]);
+  }, [activeTaps.all]);
 
-  const rowCount = pageTaps.length;
-  const isCompact = rowCount > 8;
+  const totalItems = activeTaps.all.length + (hasPompa && hasSpina ? 1 : 0);
+  const totalPages = Math.max(1, Math.ceil(totalItems / ITEMS_PER_PAGE));
+
+  useEffect(() => {
+    if (totalPages <= 1) { setCurrentPage(0); return; }
+    const interval = setInterval(() => setCurrentPage(prev => (prev + 1) % totalPages), PAGE_INTERVAL);
+    return () => clearInterval(interval);
+  }, [totalPages]);
+
+  useEffect(() => { if (currentPage >= totalPages) setCurrentPage(0); }, [totalPages, currentPage]);
+
+  const isCompact = activeTaps.all.length > 7;
+
+  const gridCols = `5vw 9vh 1fr 13vw 6vw ${sizeColumns.map(() => '9vw').join(' ')}`;
+
+  const renderRow = (tap: any, index: number, animIdx: number) => {
+    const beer = tap.beer || {};
+    const brewery = beer.brewery?.name || beer.breweryName || "";
+    const prices = tap.prices || [];
+    const imageUrl = beer.imageUrl || beer.image_url || null;
+    const breweryLogo = beer.brewery?.logoUrl || null;
+    const displayImg = imageUrl || breweryLogo;
+    const priceMap: Record<string, string> = {};
+    prices.forEach((p: any) => { if (p.size) priceMap[p.size] = p.price; else priceMap["Prezzo"] = p.price; });
+    const isPompa = tap.tapType === 'pompa';
+
+    return (
+      <div
+        key={tap.id}
+        className="tv-row"
+        style={{
+          gridTemplateColumns: gridCols,
+          gap: '1.2vw',
+          animationDelay: `${animIdx * 0.06}s`,
+          borderLeft: isPompa ? '3px solid rgba(139,92,246,0.5)' : '3px solid transparent',
+        }}
+      >
+        <div className="tv-tap-num">{tap.tapNumber || index + 1}</div>
+
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <div className="tv-beer-img-wrap">
+            {displayImg ? (
+              <img src={displayImg} alt="" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
+            ) : (
+              <Beer style={{ width: '45%', height: '45%', color: 'rgba(245,158,11,0.3)' }} />
+            )}
+          </div>
+        </div>
+
+        <div className="tv-beer-info">
+          <div className="tv-beer-name-row">
+            <div className="tv-beer-name">{beer.name || "Birra"}</div>
+            {beer.isGlutenFree && (
+              <span className="tv-badge-gf">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" style={{ width: isCompact ? '2.2vh' : '2.8vh', height: isCompact ? '2.2vh' : '2.8vh' }}>
+                  <circle cx="50" cy="50" r="46" fill="none" stroke="currentColor" strokeWidth="4" />
+                  <g transform="translate(50,50) scale(0.7)" stroke="currentColor" fill="currentColor">
+                    <line x1="0" y1="30" x2="0" y2="-25" strokeWidth="3.5" fill="none" />
+                    <ellipse cx="-6" cy="-8" rx="5" ry="9" transform="rotate(15, -6, -8)" strokeWidth="1.5" fill="none" />
+                    <ellipse cx="6" cy="-8" rx="5" ry="9" transform="rotate(-15, 6, -8)" strokeWidth="1.5" fill="none" />
+                    <ellipse cx="-8" cy="5" rx="5" ry="9" transform="rotate(25, -8, 5)" strokeWidth="1.5" fill="none" />
+                    <ellipse cx="8" cy="5" rx="5" ry="9" transform="rotate(-25, 8, 5)" strokeWidth="1.5" fill="none" />
+                    <ellipse cx="-5" cy="-20" rx="4" ry="8" transform="rotate(10, -5, -20)" strokeWidth="1.5" fill="none" />
+                    <ellipse cx="5" cy="-20" rx="4" ry="8" transform="rotate(-10, 5, -20)" strokeWidth="1.5" fill="none" />
+                  </g>
+                  <line x1="20" y1="80" x2="80" y2="20" stroke="currentColor" strokeWidth="5" strokeLinecap="round" />
+                </svg>
+              </span>
+            )}
+            {beer.isAlcoholFree && <span className="tv-badge-af">0.0%</span>}
+          </div>
+          {brewery && <div className="tv-beer-brewery">{brewery}</div>}
+        </div>
+
+        <div className="tv-beer-style">{beer.style || ""}</div>
+        <div className="tv-beer-abv">{beer.abv ? `${beer.abv}%` : ""}</div>
+
+        {sizeColumns.map((size, i) => (
+          <div key={i} className="tv-price">
+            {priceMap[size] ? (
+              <><span className="tv-price-euro">€</span>{parseFloat(priceMap[size]).toFixed(2)}</>
+            ) : (
+              <span style={{ color: 'rgba(255,255,255,0.1)' }}>—</span>
+            )}
+          </div>
+        ))}
+      </div>
+    );
+  };
+
+  const renderSectionDivider = (label: string, color: string, animIdx: number) => (
+    <div
+      key={`divider-${label}`}
+      className="tv-section-divider"
+      style={{ animationDelay: `${animIdx * 0.06}s` }}
+    >
+      <div className="tv-section-line" style={{ background: color }} />
+      <span className="tv-section-label" style={{ color }}>{label}</span>
+      <div className="tv-section-line" style={{ background: color }} />
+    </div>
+  );
+
+  const renderRows = () => {
+    let animIdx = 0;
+    const rows: React.ReactNode[] = [];
+
+    if (!hasPompa || !hasSpina) {
+      activeTaps.all.forEach((tap: any, i: number) => {
+        rows.push(renderRow(tap, i, animIdx++));
+      });
+    } else {
+      activeTaps.spina.forEach((tap: any, i: number) => {
+        rows.push(renderRow(tap, i, animIdx++));
+      });
+      rows.push(renderSectionDivider("In Pompa", "rgba(139,92,246,0.8)", animIdx++));
+      activeTaps.pompa.forEach((tap: any, i: number) => {
+        rows.push(renderRow(tap, i + activeTaps.spina.length, animIdx++));
+      });
+    }
+    return rows;
+  };
 
   return (
     <div className="tv-root">
@@ -107,35 +194,35 @@ export default function TaplistTV() {
         }
 
         @keyframes rowSlide {
-          from { opacity: 0; transform: translateX(-20px); }
+          from { opacity: 0; transform: translateX(-16px); }
           to { opacity: 1; transform: translateX(0); }
         }
         @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
 
         .tv-header {
-          padding: 1vh 3vw;
+          padding: 1.8vh 3.5vw;
           display: flex; align-items: center; justify-content: space-between;
           background: linear-gradient(180deg, rgba(245,158,11,0.08) 0%, transparent 100%);
           border-bottom: 1px solid rgba(245,158,11,0.15);
           flex-shrink: 0;
         }
-        .tv-header-left { display: flex; align-items: center; gap: 1.2vw; }
+        .tv-header-left { display: flex; align-items: center; gap: 1.4vw; }
         .tv-header-logo {
-          width: 5vh; height: 5vh;
+          width: 6vh; height: 6vh;
           border-radius: 1vh;
           object-fit: cover;
           border: 2px solid rgba(245,158,11,0.3);
           box-shadow: 0 0 20px rgba(245,158,11,0.15);
         }
         .tv-header-logo-placeholder {
-          width: 5vh; height: 5vh;
+          width: 6vh; height: 6vh;
           border-radius: 1vh;
           background: linear-gradient(135deg, #f59e0b, #ea580c);
           display: flex; align-items: center; justify-content: center;
           box-shadow: 0 0 20px rgba(245,158,11,0.15);
         }
         .tv-pub-name {
-          font-size: 3.2vh; font-weight: 800;
+          font-size: 3.8vh; font-weight: 800;
           background: linear-gradient(90deg, #fbbf24, #f59e0b, #d97706);
           -webkit-background-clip: text; -webkit-text-fill-color: transparent;
           letter-spacing: -0.02em; line-height: 1.1;
@@ -143,45 +230,48 @@ export default function TaplistTV() {
         .tv-pub-sub {
           font-size: 1.4vh; color: rgba(255,255,255,0.4);
           font-weight: 500; letter-spacing: 0.15em; text-transform: uppercase;
-          margin-top: 0.2vh;
+          margin-top: 0.3vh;
         }
-        .tv-header-right { display: flex; align-items: center; gap: 1.5vw; }
+        .tv-header-right { display: flex; align-items: center; gap: 2vw; }
         .tv-time {
-          font-size: 3.2vh; font-weight: 700;
+          font-size: 3.8vh; font-weight: 700;
           color: rgba(255,255,255,0.85);
           font-variant-numeric: tabular-nums;
           letter-spacing: -0.02em;
         }
         .tv-date {
-          font-size: 1.3vh; color: rgba(255,255,255,0.35);
+          font-size: 1.4vh; color: rgba(255,255,255,0.35);
           text-align: right; text-transform: capitalize;
+          margin-top: 0.2vh;
         }
         .tv-live {
-          display: flex; align-items: center; gap: 0.4vw;
-          font-size: 1.2vh; color: rgba(16,185,129,0.8);
+          display: flex; align-items: center; gap: 0.5vw;
+          font-size: 1.3vh; color: rgba(16,185,129,0.8);
           font-weight: 600; text-transform: uppercase; letter-spacing: 0.1em;
         }
         .tv-live-dot {
-          width: 0.8vh; height: 0.8vh;
+          width: 0.9vh; height: 0.9vh;
           background: #10b981; border-radius: 50%;
           animation: pulse 2s infinite;
         }
 
         .tv-table-wrap {
           flex: 1; display: flex; flex-direction: column;
-          padding: 1.5vh 3vw 1vh;
+          padding: 2vh 3.5vw 1.5vh;
           overflow: hidden;
+          gap: 0.5vh;
         }
 
         .tv-table-header {
           display: grid;
           align-items: center;
-          padding: 1.5vh 2vw;
+          padding: 1.2vh 2vw 1.2vh 2.4vw;
           border-bottom: 2px solid rgba(245,158,11,0.2);
           flex-shrink: 0;
+          margin-bottom: 0.5vh;
         }
         .tv-col-label {
-          font-size: ${isCompact ? '1.4vh' : '1.6vh'};
+          font-size: ${isCompact ? '1.4vh' : '1.7vh'};
           font-weight: 700;
           color: rgba(245,158,11,0.6);
           text-transform: uppercase;
@@ -189,23 +279,40 @@ export default function TaplistTV() {
         }
         .tv-col-label-right { text-align: right; }
 
-        .tv-rows { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+        .tv-rows { flex: 1; display: flex; flex-direction: column; overflow: hidden; gap: 0; }
 
         .tv-row {
           display: grid;
           align-items: center;
-          padding: ${isCompact ? '0 2vw' : '0 2vw'};
+          padding: 0 2vw;
           flex: 1;
           border-bottom: 1px solid rgba(255,255,255,0.04);
           animation: rowSlide 0.5s ease-out both;
           transition: background 0.3s;
           min-height: 0;
         }
-        .tv-row:nth-child(even) { background: rgba(255,255,255,0.015); }
+        .tv-row:nth-child(even) { background: rgba(255,255,255,0.018); }
         .tv-row:last-child { border-bottom: none; }
 
+        .tv-section-divider {
+          display: flex; align-items: center; gap: 1.5vw;
+          padding: 0 2vw;
+          flex-shrink: 0;
+          height: 4.5vh;
+          animation: rowSlide 0.5s ease-out both;
+        }
+        .tv-section-line {
+          flex: 1; height: 1px; opacity: 0.4;
+        }
+        .tv-section-label {
+          font-size: 1.5vh; font-weight: 700;
+          text-transform: uppercase; letter-spacing: 0.18em;
+          white-space: nowrap;
+          flex-shrink: 0;
+        }
+
         .tv-tap-num {
-          font-size: ${isCompact ? '2.5vh' : '3vh'};
+          font-size: ${isCompact ? '2.5vh' : '3.2vh'};
           font-weight: 800;
           color: rgba(245,158,11,0.35);
           text-align: center;
@@ -213,8 +320,8 @@ export default function TaplistTV() {
         }
 
         .tv-beer-img-wrap {
-          width: ${isCompact ? '5.5vh' : '7vh'};
-          height: ${isCompact ? '5.5vh' : '7vh'};
+          width: ${isCompact ? '6vh' : '7.5vh'};
+          height: ${isCompact ? '6vh' : '7.5vh'};
           border-radius: 50%;
           overflow: hidden;
           border: 2px solid rgba(255,255,255,0.08);
@@ -222,24 +329,22 @@ export default function TaplistTV() {
           display: flex; align-items: center; justify-content: center;
           flex-shrink: 0;
         }
-        .tv-beer-img-wrap img {
-          width: 100%; height: 100%; object-fit: cover;
-        }
+        .tv-beer-img-wrap img { width: 100%; height: 100%; object-fit: cover; }
 
-        .tv-beer-info { display: flex; flex-direction: column; justify-content: center; min-width: 0; }
+        .tv-beer-info { display: flex; flex-direction: column; justify-content: center; min-width: 0; gap: 0.3vh; }
         .tv-beer-name-row {
           display: flex; align-items: center; gap: 0.8vw;
           min-width: 0;
         }
         .tv-beer-name {
-          font-size: ${isCompact ? '2.8vh' : '3.5vh'};
+          font-size: ${isCompact ? '2.8vh' : '3.6vh'};
           font-weight: 700; color: #fff;
           white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
           line-height: 1.2; letter-spacing: -0.01em;
           min-width: 0;
         }
         .tv-beer-brewery {
-          font-size: ${isCompact ? '1.6vh' : '2vh'};
+          font-size: ${isCompact ? '1.6vh' : '2.1vh'};
           color: rgba(251,191,36,0.7);
           font-weight: 500;
           white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
@@ -248,13 +353,13 @@ export default function TaplistTV() {
 
         .tv-beer-style {
           font-size: ${isCompact ? '2vh' : '2.5vh'};
-          color: rgba(255,255,255,0.55);
+          color: rgba(255,255,255,0.5);
           font-weight: 600;
           white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
         }
 
         .tv-beer-abv {
-          font-size: ${isCompact ? '2.2vh' : '2.8vh'};
+          font-size: ${isCompact ? '2.2vh' : '2.9vh'};
           font-weight: 700;
           color: rgba(245,158,11,0.85);
           text-align: center;
@@ -262,11 +367,8 @@ export default function TaplistTV() {
         }
 
         .tv-badge-gf {
-          display: inline-flex;
-          align-items: center;
-          justify-content: center;
-          color: #34d399;
-          flex-shrink: 0;
+          display: inline-flex; align-items: center; justify-content: center;
+          color: #34d399; flex-shrink: 0;
         }
         .tv-badge-af {
           font-size: ${isCompact ? '1.3vh' : '1.6vh'};
@@ -275,42 +377,34 @@ export default function TaplistTV() {
           background: rgba(59,130,246,0.15);
           color: #60a5fa;
           border: 1px solid rgba(59,130,246,0.25);
-          font-weight: 700;
-          flex-shrink: 0;
-          white-space: nowrap;
+          font-weight: 700; flex-shrink: 0; white-space: nowrap;
         }
 
         .tv-price {
-          font-size: ${isCompact ? '2.6vh' : '3.2vh'};
-          font-weight: 700;
-          color: #fff;
-          text-align: right;
-          font-variant-numeric: tabular-nums;
+          font-size: ${isCompact ? '2.6vh' : '3.3vh'};
+          font-weight: 700; color: #fff;
+          text-align: right; font-variant-numeric: tabular-nums;
         }
         .tv-price-euro { color: rgba(255,255,255,0.4); font-weight: 400; }
 
         .tv-footer {
-          padding: 0.5vh 3vw;
+          padding: 0.8vh 3.5vw;
           display: flex; align-items: center; justify-content: space-between;
           flex-shrink: 0;
-          border-top: 1px solid rgba(255,255,255,0.03);
+          border-top: 1px solid rgba(255,255,255,0.04);
         }
         .tv-footer-brand {
-          font-size: 1.2vh; color: rgba(255,255,255,0.15);
+          font-size: 1.3vh; color: rgba(255,255,255,0.15);
           font-weight: 600; letter-spacing: 0.1em;
         }
-        .tv-page-dots {
-          display: flex; gap: 0.8vh; align-items: center;
-        }
+        .tv-page-dots { display: flex; gap: 0.8vh; align-items: center; }
         .tv-page-dot {
           width: 0.8vh; height: 0.8vh;
           border-radius: 50%; background: rgba(255,255,255,0.15);
           transition: all 0.5s;
         }
         .tv-page-dot-active {
-          background: #f59e0b;
-          width: 2.5vh;
-          border-radius: 0.4vh;
+          background: #f59e0b; width: 2.5vh; border-radius: 0.4vh;
           box-shadow: 0 0 8px rgba(245,158,11,0.4);
         }
       `}</style>
@@ -345,7 +439,7 @@ export default function TaplistTV() {
         </div>
       </div>
 
-      {activeTaps.length === 0 ? (
+      {activeTaps.all.length === 0 ? (
         <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
           <div style={{ textAlign: 'center' }}>
             <Droplets style={{ width: '12vh', height: '12vh', color: 'rgba(255,255,255,0.15)', margin: '0 auto 3vh' }} />
@@ -358,10 +452,7 @@ export default function TaplistTV() {
         <div className="tv-table-wrap">
           <div
             className="tv-table-header"
-            style={{
-              gridTemplateColumns: `4vw 8vh 1fr 14vw 6vw ${sizeColumns.map(() => '8vw').join(' ')}`,
-              gap: '1vw',
-            }}
+            style={{ gridTemplateColumns: gridCols, gap: '1.2vw' }}
           >
             <div className="tv-col-label" style={{ textAlign: 'center' }}>#</div>
             <div className="tv-col-label"></div>
@@ -374,90 +465,7 @@ export default function TaplistTV() {
           </div>
 
           <div className="tv-rows">
-            {pageTaps.map((tap: any, index: number) => {
-              const beer = tap.beer || {};
-              const brewery = beer.brewery?.name || beer.breweryName || "";
-              const prices = tap.prices || [];
-              const imageUrl = beer.imageUrl || beer.image_url || null;
-              const breweryLogo = beer.brewery?.logoUrl || null;
-              const displayImg = imageUrl || breweryLogo;
-
-              const priceMap: Record<string, string> = {};
-              prices.forEach((p: any) => {
-                if (p.size) priceMap[p.size] = p.price;
-                else priceMap["Prezzo"] = p.price;
-              });
-
-              return (
-                <div
-                  key={tap.id}
-                  className="tv-row"
-                  style={{
-                    gridTemplateColumns: `4vw 8vh 1fr 14vw 6vw ${sizeColumns.map(() => '8vw').join(' ')}`,
-                    gap: '1vw',
-                    animationDelay: `${index * 0.06}s`,
-                  }}
-                >
-                  <div className="tv-tap-num">{tap.tapNumber || index + 1}</div>
-
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                    <div className="tv-beer-img-wrap">
-                      {displayImg ? (
-                        <img
-                          src={displayImg}
-                          alt=""
-                          onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
-                        />
-                      ) : (
-                        <Beer style={{ width: '45%', height: '45%', color: 'rgba(245,158,11,0.3)' }} />
-                      )}
-                    </div>
-                  </div>
-
-                  <div className="tv-beer-info">
-                    <div className="tv-beer-name-row">
-                      <div className="tv-beer-name">{beer.name || "Birra"}</div>
-                      {beer.isGlutenFree && (
-                        <span className="tv-badge-gf">
-                          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" style={{ width: isCompact ? '2.2vh' : '2.8vh', height: isCompact ? '2.2vh' : '2.8vh' }}>
-                            <circle cx="50" cy="50" r="46" fill="none" stroke="currentColor" strokeWidth="4" />
-                            <g transform="translate(50,50) scale(0.7)" stroke="currentColor" fill="currentColor">
-                              <line x1="0" y1="30" x2="0" y2="-25" strokeWidth="3.5" fill="none" />
-                              <ellipse cx="-6" cy="-8" rx="5" ry="9" transform="rotate(15, -6, -8)" strokeWidth="1.5" fill="none" />
-                              <ellipse cx="6" cy="-8" rx="5" ry="9" transform="rotate(-15, 6, -8)" strokeWidth="1.5" fill="none" />
-                              <ellipse cx="-8" cy="5" rx="5" ry="9" transform="rotate(25, -8, 5)" strokeWidth="1.5" fill="none" />
-                              <ellipse cx="8" cy="5" rx="5" ry="9" transform="rotate(-25, 8, 5)" strokeWidth="1.5" fill="none" />
-                              <ellipse cx="-5" cy="-20" rx="4" ry="8" transform="rotate(10, -5, -20)" strokeWidth="1.5" fill="none" />
-                              <ellipse cx="5" cy="-20" rx="4" ry="8" transform="rotate(-10, 5, -20)" strokeWidth="1.5" fill="none" />
-                            </g>
-                            <line x1="20" y1="80" x2="80" y2="20" stroke="currentColor" strokeWidth="5" strokeLinecap="round" />
-                          </svg>
-                        </span>
-                      )}
-                      {beer.isAlcoholFree && <span className="tv-badge-af">0.0%</span>}
-                    </div>
-                    {brewery && <div className="tv-beer-brewery">{brewery}</div>}
-                  </div>
-
-                  <div className="tv-beer-style">{beer.style || ""}</div>
-
-                  <div className="tv-beer-abv">{beer.abv ? `${beer.abv}%` : ""}</div>
-
-                  {sizeColumns.map((size, i) => (
-                    <div key={i} className="tv-price">
-                      {priceMap[size] ? (
-                        <>
-                          <span className="tv-price-euro">€</span>
-                          {parseFloat(priceMap[size]).toFixed(2)}
-                        </>
-                      ) : (
-                        <span style={{ color: 'rgba(255,255,255,0.1)' }}>—</span>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              );
-            })}
+            {renderRows()}
           </div>
         </div>
       )}
@@ -467,15 +475,13 @@ export default function TaplistTV() {
         {totalPages > 1 && (
           <div className="tv-page-dots">
             {Array.from({ length: totalPages }).map((_, i) => (
-              <div
-                key={i}
-                className={`tv-page-dot ${i === currentPage ? 'tv-page-dot-active' : ''}`}
-              />
+              <div key={i} className={`tv-page-dot ${i === currentPage ? 'tv-page-dot-active' : ''}`} />
             ))}
           </div>
         )}
-        <div style={{ fontSize: '1.2vh', color: 'rgba(255,255,255,0.15)' }}>
-          {activeTaps.length} alla spina
+        <div style={{ fontSize: '1.3vh', color: 'rgba(255,255,255,0.2)', display: 'flex', gap: '1.5vw', alignItems: 'center' }}>
+          {hasSpina && <span>{activeTaps.spina.length} spina</span>}
+          {hasPompa && <span style={{ color: 'rgba(139,92,246,0.5)' }}>{activeTaps.pompa.length} pompa</span>}
         </div>
       </div>
     </div>
