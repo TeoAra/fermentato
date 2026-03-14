@@ -70,7 +70,7 @@ export default function TaplistTV() {
 
   const isCompact = activeTaps.all.length > 7;
 
-  const gridCols = `5vw 9vh 1fr 13vw 6vw ${sizeColumns.map(() => '9vw').join(' ')}`;
+  const gridCols = `5vw 9vh 1fr 20vw 6vw ${sizeColumns.map(() => '9vw').join(' ')}`;
 
   const renderRow = (tap: any, index: number, animIdx: number) => {
     const beer = tap.beer || {};
@@ -356,6 +356,7 @@ export default function TaplistTV() {
           color: rgba(255,255,255,0.5);
           font-weight: 600;
           white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+          text-align: center;
         }
 
         .tv-beer-abv {
@@ -457,7 +458,7 @@ export default function TaplistTV() {
             <div className="tv-col-label" style={{ textAlign: 'center' }}>#</div>
             <div className="tv-col-label"></div>
             <div className="tv-col-label">Birra</div>
-            <div className="tv-col-label">Stile</div>
+            <div className="tv-col-label" style={{ textAlign: 'center' }}>Stile</div>
             <div className="tv-col-label" style={{ textAlign: 'center' }}>ABV</div>
             {sizeColumns.map((size, i) => (
               <div key={i} className="tv-col-label tv-col-label-right">{size}</div>
