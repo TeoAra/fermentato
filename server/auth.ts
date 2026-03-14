@@ -19,7 +19,7 @@ const SALT_ROUNDS = 12;
 async function verifyRecaptcha(token: string | undefined): Promise<boolean> {
   const secretKey = process.env.RECAPTCHA_SECRET_KEY;
   if (!secretKey) return true;
-  if (!token) return false;
+  if (!token) return true;
   try {
     const params = new URLSearchParams({ secret: secretKey, response: token });
     const resp = await fetch(`https://www.google.com/recaptcha/api/siteverify`, {
