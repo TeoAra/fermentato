@@ -600,18 +600,18 @@ export default function Home() {
             La Community Fermenta.to
           </h2>
           {/* Riga 1: le 3 voci principali */}
-          <div className="grid grid-cols-3 gap-4 mb-4">
+          <div className="grid grid-cols-3 gap-2 mb-4">
             <div className="text-center">
-              <div className="text-2xl font-bold text-[hsl(35,90%,44%)] dark:text-[hsl(38,88%,58%)] tabular-nums">{globalStats?.totalBeers != null ? globalStats.totalBeers.toLocaleString("it-IT") : '—'}</div>
-              <div className="text-[11px] text-[hsl(28,8%,52%)] dark:text-[hsl(35,6%,52%)] mt-1 font-medium uppercase tracking-wide">Birre</div>
+              <div className="text-[17px] font-bold text-[hsl(35,90%,44%)] dark:text-[hsl(38,88%,58%)] tabular-nums leading-tight">{globalStats?.totalBeers != null ? globalStats.totalBeers.toLocaleString("it-IT") : '—'}</div>
+              <div className="text-[10px] text-[hsl(28,8%,52%)] dark:text-[hsl(35,6%,52%)] mt-1 font-medium uppercase tracking-wide">Birre</div>
             </div>
             <div className="text-center border-x border-[hsl(36,14%,86%)] dark:border-[hsl(25,12%,18%)]">
-              <div className="text-2xl font-bold text-[hsl(215,75%,50%)] dark:text-[hsl(215,80%,65%)] tabular-nums">{globalStats?.totalBreweries != null ? globalStats.totalBreweries.toLocaleString("it-IT") : '—'}</div>
-              <div className="text-[11px] text-[hsl(28,8%,52%)] dark:text-[hsl(35,6%,52%)] mt-1 font-medium uppercase tracking-wide">Birrifici</div>
+              <div className="text-[17px] font-bold text-[hsl(215,75%,50%)] dark:text-[hsl(215,80%,65%)] tabular-nums leading-tight">{globalStats?.totalBreweries != null ? globalStats.totalBreweries.toLocaleString("it-IT") : '—'}</div>
+              <div className="text-[10px] text-[hsl(28,8%,52%)] dark:text-[hsl(35,6%,52%)] mt-1 font-medium uppercase tracking-wide">Birrifici</div>
             </div>
             <div className="text-center">
-              <div className="text-2xl font-bold text-[hsl(175,55%,38%)] dark:text-[hsl(175,60%,55%)] tabular-nums">{globalStats?.uniqueStyles != null ? globalStats.uniqueStyles.toLocaleString("it-IT") : '—'}</div>
-              <div className="text-[11px] text-[hsl(28,8%,52%)] dark:text-[hsl(35,6%,52%)] mt-1 font-medium uppercase tracking-wide">Stili</div>
+              <div className="text-[17px] font-bold text-[hsl(175,55%,38%)] dark:text-[hsl(175,60%,55%)] tabular-nums leading-tight">{globalStats?.uniqueStyles != null ? globalStats.uniqueStyles.toLocaleString("it-IT") : '—'}</div>
+              <div className="text-[10px] text-[hsl(28,8%,52%)] dark:text-[hsl(35,6%,52%)] mt-1 font-medium uppercase tracking-wide">Stili</div>
             </div>
           </div>
           {/* Divisore */}
@@ -619,12 +619,12 @@ export default function Home() {
           {/* Riga 2: Utenti e Pub — centrata */}
           <div className="flex justify-center gap-12">
             <div className="text-center">
-              <div className="text-xl font-bold text-[hsl(142,55%,38%)] dark:text-[hsl(142,60%,55%)] tabular-nums">{globalStats?.totalUsers != null ? globalStats.totalUsers.toLocaleString("it-IT") : '—'}</div>
-              <div className="text-[11px] text-[hsl(28,8%,52%)] dark:text-[hsl(35,6%,52%)] mt-1 font-medium uppercase tracking-wide">Utenti</div>
+              <div className="text-[15px] font-bold text-[hsl(142,55%,38%)] dark:text-[hsl(142,60%,55%)] tabular-nums leading-tight">{globalStats?.totalUsers != null ? globalStats.totalUsers.toLocaleString("it-IT") : '—'}</div>
+              <div className="text-[10px] text-[hsl(28,8%,52%)] dark:text-[hsl(35,6%,52%)] mt-1 font-medium uppercase tracking-wide">Utenti</div>
             </div>
             <div className="text-center">
-              <div className="text-xl font-bold text-[hsl(270,55%,50%)] dark:text-[hsl(270,60%,68%)] tabular-nums">{globalStats?.totalPubs != null ? globalStats.totalPubs.toLocaleString("it-IT") : '—'}</div>
-              <div className="text-[11px] text-[hsl(28,8%,52%)] dark:text-[hsl(35,6%,52%)] mt-1 font-medium uppercase tracking-wide">Pub</div>
+              <div className="text-[15px] font-bold text-[hsl(270,55%,50%)] dark:text-[hsl(270,60%,68%)] tabular-nums leading-tight">{globalStats?.totalPubs != null ? globalStats.totalPubs.toLocaleString("it-IT") : '—'}</div>
+              <div className="text-[10px] text-[hsl(28,8%,52%)] dark:text-[hsl(35,6%,52%)] mt-1 font-medium uppercase tracking-wide">Pub</div>
             </div>
           </div>
         </section>
