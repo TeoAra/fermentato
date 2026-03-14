@@ -30,7 +30,10 @@ import {
   AlertTriangle,
   Settings,
   Building,
-  Store
+  Store,
+  Map,
+  Trophy,
+  Factory,
 } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Link } from "wouter";
@@ -79,6 +82,17 @@ export default function UserProfile() {
   const { data: beerTastings = [] } = useQuery<any[]>({
     queryKey: ["/api/user/beer-tastings"],
     enabled: isAuthenticated,
+  });
+
+  const { data: passport } = useQuery<{
+    regions: { region: string; location: string; beers_tasted: number; breweries_tasted: number }[];
+    totalBeers: number;
+    totalBreweries: number;
+  }>({
+    queryKey: ["/api/users/me/beer-passport"],
+    queryFn: () => apiRequest("/api/users/me/beer-passport"),
+    enabled: isAuthenticated,
+    staleTime: 5 * 60_000,
   });
 
   const { data: favorites = [] } = useQuery({
@@ -349,6 +363,79 @@ export default function UserProfile() {
               </CardHeader>
               <CardContent>
                 <UserFavoritesSection favorites={enrichedFavorites || []} />
+              </CardContent>
+            </Card>
+
+            {/* ─── Beer Passport ─────────────────────────────────────────────── */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Map className="w-5 h-5 text-amber-600" />
+                  Beer Passport
+                </CardTitle>
+                <p className="text-sm text-gray-500 dark:text-gray-400">
+                  Le regioni italiane (e del mondo) che hai esplorato attraverso le birre
+                </p>
+              </CardHeader>
+              <CardContent>
+                {!passport || (passport.regions.length === 0 && passport.totalBeers === 0) ? (
+                  <div className="text-center py-10 text-gray-400">
+                    <Map className="w-12 h-12 mx-auto mb-3 opacity-30" />
+                    <p className="text-sm font-medium">Nessuna birra registrata ancora</p>
+                    <p className="text-xs mt-1">Aggiungi le birre che hai assaggiato per costruire il tuo passport</p>
+                  </div>
+                ) : (
+                  <div className="space-y-5">
+                    {/* KPI row */}
+                    <div className="grid grid-cols-3 gap-3">
+                      {[
+                        { icon: Beer, label: "Birre", value: passport.totalBeers },
+                        { icon: Factory, label: "Birrifici", value: passport.totalBreweries },
+                        { icon: Map, label: "Regioni", value: passport.regions.length },
+                      ].map(({ icon: Icon, label, value }) => (
+                        <div key={label} className="text-center p-3 rounded-xl bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800">
+                          <Icon className="w-4 h-4 text-amber-600 dark:text-amber-400 mx-auto mb-1" />
+                          <p className="text-xl font-bold text-gray-900 dark:text-white">{value}</p>
+                          <p className="text-xs text-gray-500 dark:text-gray-400">{label}</p>
+                        </div>
+                      ))}
+                    </div>
+
+                    {/* Region bars */}
+                    {passport.regions.length > 0 && (
+                      <div className="space-y-2">
+                        <p className="text-xs font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500 mb-3">
+                          Regioni esplorate ({passport.regions.length})
+                        </p>
+                        {(() => {
+                          const maxBeers = Math.max(...passport.regions.map(r => r.beers_tasted), 1);
+                          return passport.regions.map((r, i) => (
+                            <div key={r.region} className="flex items-center gap-3">
+                              {i === 0 && <Trophy className="w-3.5 h-3.5 text-amber-500 flex-shrink-0" />}
+                              {i > 0 && <span className="w-3.5 h-3.5 flex-shrink-0 text-center text-xs text-gray-400 font-medium">{i + 1}</span>}
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-center justify-between mb-0.5">
+                                  <span className="text-xs font-medium text-gray-700 dark:text-gray-300 truncate">
+                                    {r.region}{r.location && r.location !== r.region ? ` · ${r.location}` : ""}
+                                  </span>
+                                  <span className="text-xs text-gray-500 ml-2 flex-shrink-0">
+                                    {r.beers_tasted} birra{r.beers_tasted !== 1 ? "e" : ""}
+                                  </span>
+                                </div>
+                                <div className="h-1.5 bg-gray-100 dark:bg-gray-700 rounded-full overflow-hidden">
+                                  <div
+                                    className="h-full bg-gradient-to-r from-amber-400 to-orange-500 rounded-full transition-all duration-500"
+                                    style={{ width: `${Math.round((r.beers_tasted / maxBeers) * 100)}%` }}
+                                  />
+                                </div>
+                              </div>
+                            </div>
+                          ));
+                        })()}
+                      </div>
+                    )}
+                  </div>
+                )}
               </CardContent>
             </Card>
           </div>

@@ -22,6 +22,11 @@ import {
   Clock,
   Lightbulb,
   ShieldCheck,
+  Megaphone,
+  Newspaper,
+  Rocket,
+  Users,
+  Store,
 } from "lucide-react";
 import { EventCategoryBadge } from "@/components/events-manager";
 import { format, isFuture } from "date-fns";
@@ -158,6 +163,18 @@ export default function BreweryDetail() {
   const { data: breweryEvents = [] } = useQuery<any[]>({
     queryKey: ["/api/breweries", id, "events"],
     enabled: !!id,
+  });
+
+  const { data: announcements = [] } = useQuery<any[]>({
+    queryKey: ["/api/breweries", id, "announcements"],
+    enabled: !!id,
+    staleTime: 3 * 60_000,
+  });
+
+  const { data: distribution = [] } = useQuery<any[]>({
+    queryKey: ["/api/breweries", id, "distribution"],
+    enabled: !!id,
+    staleTime: 5 * 60_000,
   });
 
   const { data: breweryRating } = useQuery<{ avgRating: number | null; reviewCount: number }>({
@@ -648,6 +665,87 @@ export default function BreweryDetail() {
                     )}
                   </CardContent>
                 </Card>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* ─── Announcements Section ─────────────────────────────────────── */}
+        {announcements.length > 0 && (
+          <div className="glass-card border-0 rounded-2xl p-6 mb-8">
+            <h2 className="text-2xl font-bold text-gray-900 dark:text-white flex items-center mb-6">
+              <div className="p-2 bg-gradient-to-r from-amber-500 to-orange-600 rounded-xl mr-3">
+                <Megaphone className="h-6 w-6 text-white" />
+              </div>
+              Annunci & Uscite
+            </h2>
+            <div className="space-y-4">
+              {announcements.slice(0, 5).map((ann: any) => {
+                const typeMap: Record<string, { label: string; color: string; Icon: any }> = {
+                  news: { label: "Novità", color: "bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300", Icon: Newspaper },
+                  release: { label: "Nuova Birra", color: "bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300", Icon: Rocket },
+                  collab: { label: "Collaborazione", color: "bg-purple-100 text-purple-700 dark:bg-purple-900/40 dark:text-purple-300", Icon: Users },
+                };
+                const t = typeMap[ann.type] ?? typeMap.news;
+                return (
+                  <div key={ann.id} className="p-4 rounded-xl border border-gray-200 dark:border-gray-700 bg-white/50 dark:bg-gray-800/50">
+                    <div className="flex items-center gap-2 mb-1 flex-wrap">
+                      <span className={`inline-flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-full ${t.color}`}>
+                        <t.Icon className="w-3 h-3" />{t.label}
+                      </span>
+                      {ann.releaseDate && (
+                        <span className="text-xs text-gray-500">
+                          Uscita: {new Date(ann.releaseDate).toLocaleDateString("it-IT")}
+                        </span>
+                      )}
+                      <span className="text-xs text-gray-400 ml-auto">
+                        {new Date(ann.createdAt).toLocaleDateString("it-IT")}
+                      </span>
+                    </div>
+                    <p className="font-semibold text-gray-900 dark:text-white">{ann.title}</p>
+                    {ann.content && <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">{ann.content}</p>}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        {/* ─── Distribution Section ─────────────────────────────────────────── */}
+        {distribution.length > 0 && (
+          <div className="glass-card border-0 rounded-2xl p-6 mb-8">
+            <h2 className="text-2xl font-bold text-gray-900 dark:text-white flex items-center mb-6">
+              <div className="p-2 bg-gradient-to-r from-blue-500 to-indigo-600 rounded-xl mr-3">
+                <Store className="h-6 w-6 text-white" />
+              </div>
+              Dove Trovarci in Spina
+              <span className="ml-3 text-base font-normal text-gray-500 dark:text-gray-400">— {distribution.length} pub</span>
+            </h2>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {distribution.map((pub: any) => (
+                <Link key={pub.id} href={`/pub/${pub.id}`}>
+                  <div className="flex items-center gap-3 p-4 rounded-xl border border-gray-200 dark:border-gray-700 bg-white/50 dark:bg-gray-800/50 hover:border-amber-400 dark:hover:border-amber-500 transition-colors cursor-pointer group">
+                    {pub.logo_url ? (
+                      <img src={pub.logo_url} alt={pub.name} className="w-10 h-10 rounded-full object-cover flex-shrink-0" />
+                    ) : (
+                      <div className="w-10 h-10 rounded-full bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center flex-shrink-0">
+                        <Store className="w-5 h-5 text-white" />
+                      </div>
+                    )}
+                    <div className="flex-1 min-w-0">
+                      <p className="font-semibold text-sm text-gray-900 dark:text-white truncate group-hover:text-amber-600 dark:group-hover:text-amber-400">{pub.name}</p>
+                      {(pub.city || pub.region) && (
+                        <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
+                          <MapPin className="w-3 h-3 inline mr-0.5" />
+                          {[pub.city, pub.region].filter(Boolean).join(", ")}
+                        </p>
+                      )}
+                      <p className="text-xs text-amber-600 dark:text-amber-400 font-medium mt-0.5">
+                        {pub.beer_count} {Number(pub.beer_count) === 1 ? "birra" : "birre"} in spina
+                      </p>
+                    </div>
+                  </div>
+                </Link>
               ))}
             </div>
           </div>

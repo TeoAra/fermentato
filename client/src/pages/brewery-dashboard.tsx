@@ -1,5 +1,5 @@
 import { useState, useCallback } from "react";
-import { useQuery, useMutation } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
@@ -22,8 +22,10 @@ import ImageWithFallback from "@/components/image-with-fallback";
 import {
   Beer as BeerIcon, Plus, Pencil, Trash2, Factory, MapPin, Loader2,
   Globe, Phone, FileText, Camera, Clock, AlertTriangle, Building,
-  Target, Sparkles, Save, X, Share2, ExternalLink
+  Target, Sparkles, Save, X, Share2, ExternalLink,
+  Megaphone, Store, Newspaper, Rocket, Users
 } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { BreweryEventsManager } from "@/components/events-manager";
 
 const beerFormSchema = z.object({
@@ -106,6 +108,236 @@ function RejectedOverlay({ breweryName, adminNotes }: { breweryName: string; adm
           </Button>
         </CardContent>
       </Card>
+    </div>
+  );
+}
+
+// ─── Announcements Manager ──────────────────────────────────────────────────
+function AnnouncementsManager({ breweryId }: { breweryId: number }) {
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+  const [open, setOpen] = useState(false);
+  const [form, setForm] = useState({ type: "news", title: "", content: "", releaseDate: "" });
+
+  const { data: announcements = [], isLoading } = useQuery<any[]>({
+    queryKey: ["/api/breweries", breweryId, "announcements"],
+    queryFn: () => apiRequest(`/api/breweries/${breweryId}/announcements`),
+    staleTime: 2 * 60_000,
+  });
+
+  const createMutation = useMutation({
+    mutationFn: (body: any) => apiRequest(`/api/breweries/${breweryId}/announcements`, { method: "POST" }, body),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/breweries", breweryId, "announcements"] });
+      setOpen(false);
+      setForm({ type: "news", title: "", content: "", releaseDate: "" });
+      toast({ title: "Annuncio pubblicato!" });
+    },
+    onError: (e: any) => toast({ title: "Errore", description: e.message, variant: "destructive" }),
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: (annId: number) => apiRequest(`/api/breweries/${breweryId}/announcements/${annId}`, { method: "DELETE" }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["/api/breweries", breweryId, "announcements"] }),
+  });
+
+  const typeLabel: Record<string, { label: string; color: string; icon: any }> = {
+    news: { label: "Novità", color: "bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300", icon: Newspaper },
+    release: { label: "Nuova Birra", color: "bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300", icon: Rocket },
+    collab: { label: "Collaborazione", color: "bg-purple-100 text-purple-700 dark:bg-purple-900/40 dark:text-purple-300", icon: Users },
+  };
+
+  return (
+    <div className="glass-card border-0 rounded-2xl p-6 mb-8">
+      <div className="flex items-center justify-between mb-6">
+        <h2 className="text-2xl font-bold text-gray-900 dark:text-white flex items-center">
+          <div className="p-2 bg-gradient-to-r from-amber-500 to-orange-600 rounded-xl mr-3">
+            <Megaphone className="h-6 w-6 text-white" />
+          </div>
+          Annunci & Uscite
+        </h2>
+        <Button
+          onClick={() => setOpen(true)}
+          className="bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700"
+        >
+          <Plus className="w-4 h-4 mr-2" />
+          Nuovo Annuncio
+        </Button>
+      </div>
+
+      {isLoading ? (
+        <div className="space-y-3">{[1,2].map(i => <div key={i} className="h-20 rounded-xl bg-gray-100 dark:bg-gray-800 animate-pulse" />)}</div>
+      ) : announcements.length === 0 ? (
+        <div className="text-center py-12 text-gray-400">
+          <Megaphone className="w-12 h-12 mx-auto mb-3 opacity-30" />
+          <p className="text-sm">Nessun annuncio ancora. Pubblica una nuova birra, un evento o una collaborazione!</p>
+        </div>
+      ) : (
+        <div className="space-y-4">
+          {announcements.map((ann: any) => {
+            const t = typeLabel[ann.type] ?? typeLabel.news;
+            const TIcon = t.icon;
+            return (
+              <div key={ann.id} className="flex gap-4 p-4 rounded-xl border border-gray-200 dark:border-gray-700 bg-white/50 dark:bg-gray-800/50">
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 mb-1 flex-wrap">
+                    <span className={`inline-flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-full ${t.color}`}>
+                      <TIcon className="w-3 h-3" />{t.label}
+                    </span>
+                    {ann.releaseDate && (
+                      <span className="text-xs text-gray-500">
+                        Data uscita: {new Date(ann.releaseDate).toLocaleDateString("it-IT")}
+                      </span>
+                    )}
+                    <span className="text-xs text-gray-400 ml-auto">
+                      {new Date(ann.createdAt).toLocaleDateString("it-IT")}
+                    </span>
+                  </div>
+                  <p className="font-semibold text-gray-900 dark:text-white text-sm">{ann.title}</p>
+                  {ann.content && <p className="text-xs text-gray-600 dark:text-gray-400 mt-1 line-clamp-2">{ann.content}</p>}
+                </div>
+                <button
+                  onClick={() => deleteMutation.mutate(ann.id)}
+                  className="text-gray-400 hover:text-red-500 transition-colors flex-shrink-0 mt-1"
+                >
+                  <Trash2 className="w-4 h-4" />
+                </button>
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {/* Create dialog */}
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Nuovo Annuncio</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 pt-2">
+            <div className="space-y-1">
+              <label className="text-sm font-medium">Tipo</label>
+              <Select value={form.type} onValueChange={(v) => setForm(f => ({ ...f, type: v }))}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="news">Novità / News</SelectItem>
+                  <SelectItem value="release">Nuova Birra / Uscita Limitata</SelectItem>
+                  <SelectItem value="collab">Collaborazione</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-1">
+              <label className="text-sm font-medium">Titolo *</label>
+              <Input
+                placeholder="Es. Nuova IPA estiva in arrivo!"
+                value={form.title}
+                onChange={(e) => setForm(f => ({ ...f, title: e.target.value }))}
+              />
+            </div>
+            <div className="space-y-1">
+              <label className="text-sm font-medium">Descrizione</label>
+              <Textarea
+                placeholder="Racconta qualcosa di più..."
+                rows={3}
+                value={form.content}
+                onChange={(e) => setForm(f => ({ ...f, content: e.target.value }))}
+              />
+            </div>
+            {form.type === "release" && (
+              <div className="space-y-1">
+                <label className="text-sm font-medium">Data di uscita prevista</label>
+                <Input
+                  type="date"
+                  value={form.releaseDate}
+                  onChange={(e) => setForm(f => ({ ...f, releaseDate: e.target.value }))}
+                />
+              </div>
+            )}
+            <div className="flex gap-3 pt-2">
+              <Button
+                className="flex-1 bg-gradient-to-r from-amber-500 to-orange-600"
+                disabled={!form.title.trim() || createMutation.isPending}
+                onClick={() => createMutation.mutate({
+                  type: form.type,
+                  title: form.title,
+                  content: form.content || null,
+                  releaseDate: form.releaseDate || null,
+                  isPublished: true,
+                })}
+              >
+                {createMutation.isPending && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+                Pubblica
+              </Button>
+              <Button variant="outline" onClick={() => setOpen(false)}>Annulla</Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+}
+
+// ─── Distribution Section ────────────────────────────────────────────────────
+function DistributionSection({ breweryId }: { breweryId: number }) {
+  const { data: pubs = [], isLoading } = useQuery<any[]>({
+    queryKey: ["/api/breweries", breweryId, "distribution"],
+    queryFn: () => apiRequest(`/api/breweries/${breweryId}/distribution`),
+    staleTime: 5 * 60_000,
+  });
+
+  return (
+    <div className="glass-card border-0 rounded-2xl p-6 mb-8">
+      <h2 className="text-2xl font-bold text-gray-900 dark:text-white flex items-center mb-6">
+        <div className="p-2 bg-gradient-to-r from-blue-500 to-indigo-600 rounded-xl mr-3">
+          <Store className="h-6 w-6 text-white" />
+        </div>
+        Dove Siamo in Spina
+        {pubs.length > 0 && (
+          <span className="ml-3 text-base font-normal text-gray-500 dark:text-gray-400">
+            — {pubs.length} {pubs.length === 1 ? "pub" : "pub"} in Italia
+          </span>
+        )}
+      </h2>
+
+      {isLoading ? (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          {[1,2,3].map(i => <div key={i} className="h-24 rounded-xl bg-gray-100 dark:bg-gray-800 animate-pulse" />)}
+        </div>
+      ) : pubs.length === 0 ? (
+        <div className="text-center py-12 text-gray-400">
+          <Store className="w-12 h-12 mx-auto mb-3 opacity-30" />
+          <p className="text-sm">Nessun pub ha ancora le tue birre in tap list.</p>
+          <p className="text-xs mt-1">Quando un Publican aggiunge una tua birra, apparirà qui.</p>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          {pubs.map((pub: any) => (
+            <Link key={pub.id} href={`/pub/${pub.id}`}>
+              <div className="flex items-center gap-3 p-4 rounded-xl border border-gray-200 dark:border-gray-700 bg-white/50 dark:bg-gray-800/50 hover:border-amber-400 dark:hover:border-amber-500 transition-colors cursor-pointer group">
+                {pub.logo_url ? (
+                  <img src={pub.logo_url} alt={pub.name} className="w-10 h-10 rounded-full object-cover flex-shrink-0" />
+                ) : (
+                  <div className="w-10 h-10 rounded-full bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center flex-shrink-0">
+                    <Store className="w-5 h-5 text-white" />
+                  </div>
+                )}
+                <div className="flex-1 min-w-0">
+                  <p className="font-semibold text-sm text-gray-900 dark:text-white truncate group-hover:text-amber-600 dark:group-hover:text-amber-400">{pub.name}</p>
+                  {(pub.city || pub.region) && (
+                    <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
+                      <MapPin className="w-3 h-3 inline mr-0.5" />
+                      {[pub.city, pub.region].filter(Boolean).join(", ")}
+                    </p>
+                  )}
+                  <p className="text-xs text-amber-600 dark:text-amber-400 font-medium mt-0.5">
+                    {pub.beer_count} {Number(pub.beer_count) === 1 ? "birra" : "birre"} in spina
+                  </p>
+                </div>
+              </div>
+            </Link>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
@@ -605,6 +837,12 @@ export default function BreweryDashboard() {
         <div className="glass-card border-0 rounded-2xl p-6 mb-8">
           <BreweryEventsManager breweryId={brewery.id} breweryName={brewery.name} />
         </div>
+
+        {/* ─── Annunci & Release ──────────────────────────────────────────────── */}
+        <AnnouncementsManager breweryId={brewery.id} />
+
+        {/* ─── Mappa Distribuzione ─────────────────────────────────────────────── */}
+        <DistributionSection breweryId={brewery.id} />
 
         {/* Website Link */}
         {brewery.websiteUrl && (

@@ -12,7 +12,7 @@ import { registerAdminRoutes } from "./routes-admin";
 import { sql, eq, and, desc, asc } from "drizzle-orm";
 import { upload, uploadImage, cloudinary } from "./cloudinary";
 import { db, pool } from "./db";
-import { breweries, beers, pubs, users, tapList, bottleList, userBeerTastings, favorites, menuCategories, menuItems, pubSizes, notifications, pushSubscriptions, breweryRequests, pubEvents, breweryEvents, insertBreweryEventSchema, reviewReports, oauthAccounts, userActivities, ratings, publicanRequests, notificationPreferences, staticPages, additionRequests, scanLogs, pubPageViews } from "@shared/schema";
+import { breweries, beers, pubs, users, tapList, bottleList, userBeerTastings, favorites, menuCategories, menuItems, pubSizes, notifications, pushSubscriptions, breweryRequests, pubEvents, breweryEvents, insertBreweryEventSchema, reviewReports, oauthAccounts, userActivities, ratings, publicanRequests, notificationPreferences, staticPages, additionRequests, scanLogs, pubPageViews, breweryAnnouncements, insertBreweryAnnouncementSchema } from "@shared/schema";
 
 import { insertPubSchema, insertTapListSchema, insertBottleListSchema, insertMenuCategorySchema, insertMenuItemSchema, pubRegistrationSchema, insertPubEventSchema } from "@shared/schema";
 import { z } from "zod";
@@ -4815,6 +4815,108 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.error("Analytics error:", err.message);
       res.status(500).json({ message: "Errore nel recupero delle analitiche" });
     }
+  });
+
+  // ─── Brewery Announcements ───────────────────────────────────────────────────
+  // GET public announcements
+  app.get("/api/breweries/:id/announcements", async (req, res) => {
+    try {
+      const breweryId = parseInt(req.params.id);
+      const rows = await db
+        .select()
+        .from(breweryAnnouncements)
+        .where(and(eq(breweryAnnouncements.breweryId, breweryId), eq(breweryAnnouncements.isPublished, true)))
+        .orderBy(desc(breweryAnnouncements.createdAt))
+        .limit(20);
+      res.json(rows);
+    } catch (e: any) { res.status(500).json({ message: e.message }); }
+  });
+
+  // POST create announcement (brewery owner only)
+  app.post("/api/breweries/:id/announcements", isAuthenticated, async (req: any, res) => {
+    try {
+      const breweryId = parseInt(req.params.id);
+      const brewery = await db.select().from(breweries).where(eq(breweries.id, breweryId)).limit(1);
+      if (!brewery[0]) { res.status(404).json({ message: "Birrificio non trovato" }); return; }
+      const isOwner = brewery[0].ownerId === req.user?.id;
+      const isAdmin = req.user?.activeRole === "admin" || req.user?.userType === "admin";
+      if (!isOwner && !isAdmin) { res.status(403).json({ message: "Non autorizzato" }); return; }
+      const parsed = insertBreweryAnnouncementSchema.parse({ ...req.body, breweryId });
+      const [created] = await db.insert(breweryAnnouncements).values(parsed).returning();
+      res.status(201).json(created);
+    } catch (e: any) { res.status(400).json({ message: e.message }); }
+  });
+
+  // DELETE announcement
+  app.delete("/api/breweries/:id/announcements/:annId", isAuthenticated, async (req: any, res) => {
+    try {
+      const breweryId = parseInt(req.params.id);
+      const annId = parseInt(req.params.annId);
+      const brewery = await db.select().from(breweries).where(eq(breweries.id, breweryId)).limit(1);
+      if (!brewery[0]) { res.status(404).json({ message: "Birrificio non trovato" }); return; }
+      const isOwner = brewery[0].ownerId === req.user?.id;
+      const isAdmin = req.user?.activeRole === "admin" || req.user?.userType === "admin";
+      if (!isOwner && !isAdmin) { res.status(403).json({ message: "Non autorizzato" }); return; }
+      await db.delete(breweryAnnouncements).where(and(eq(breweryAnnouncements.id, annId), eq(breweryAnnouncements.breweryId, breweryId)));
+      res.json({ ok: true });
+    } catch (e: any) { res.status(500).json({ message: e.message }); }
+  });
+
+  // ─── Brewery Distribution ────────────────────────────────────────────────────
+  // GET pubs that have at least one beer from this brewery on their taplist
+  app.get("/api/breweries/:id/distribution", async (req, res) => {
+    try {
+      const breweryId = parseInt(req.params.id);
+      const rows = await db.execute(sql`
+        SELECT DISTINCT
+          p.id, p.name, p.address, p.city, p.region,
+          p.latitude, p.longitude, p.logo_url,
+          COUNT(DISTINCT tl.beer_id)::int AS beer_count
+        FROM tap_list tl
+        JOIN beers b ON b.id = tl.beer_id AND b.brewery_id = ${breweryId}
+        JOIN pubs p ON p.id = tl.pub_id AND p.is_active = true
+        WHERE tl.is_active = true
+        GROUP BY p.id, p.name, p.address, p.city, p.region, p.latitude, p.longitude, p.logo_url
+        ORDER BY beer_count DESC, p.name ASC
+        LIMIT 100
+      `);
+      res.json((rows as any).rows ?? rows);
+    } catch (e: any) { res.status(500).json({ message: e.message }); }
+  });
+
+  // ─── Beer Passport ───────────────────────────────────────────────────────────
+  // GET: for authenticated user, returns regions of tasted beers (with brewery region)
+  app.get("/api/users/me/beer-passport", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user?.id;
+      // From tastings → beer → brewery → region
+      const tastingRows = await db.execute(sql`
+        SELECT DISTINCT
+          br.region,
+          br.location,
+          COUNT(DISTINCT ubt.beer_id)::int AS beers_tasted,
+          COUNT(DISTINCT br.id)::int AS breweries_tasted
+        FROM user_beer_tastings ubt
+        JOIN beers b ON b.id = ubt.beer_id
+        JOIN breweries br ON br.id = b.brewery_id
+        WHERE ubt.user_id = ${userId}
+          AND br.region IS NOT NULL AND br.region != ''
+        GROUP BY br.region, br.location
+        ORDER BY beers_tasted DESC
+      `);
+      // Also count total unique beers tasted
+      const totalRows = await db.execute(sql`
+        SELECT COUNT(DISTINCT beer_id)::int AS total_beers,
+               COUNT(DISTINCT (SELECT brewery_id FROM beers WHERE id = beer_id))::int AS total_breweries
+        FROM user_beer_tastings WHERE user_id = ${userId}
+      `);
+      const total = ((totalRows as any).rows ?? totalRows)[0] ?? { total_beers: 0, total_breweries: 0 };
+      res.json({
+        regions: (tastingRows as any).rows ?? tastingRows,
+        totalBeers: Number(total.total_beers),
+        totalBreweries: Number(total.total_breweries),
+      });
+    } catch (e: any) { res.status(500).json({ message: e.message }); }
   });
 
   // ─── Sitemap ────────────────────────────────────────────────────────────────

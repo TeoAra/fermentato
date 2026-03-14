@@ -834,6 +834,22 @@ export const scanLogs = pgTable("scan_logs", {
 });
 
 // Analytics: page views per pub (aggregated per day)
+// ─── Brewery Announcements (news + release limitate) ─────────────────────────
+export const breweryAnnouncements = pgTable("brewery_announcements", {
+  id: serial("id").primaryKey(),
+  breweryId: integer("brewery_id").references(() => breweries.id, { onDelete: "cascade" }).notNull(),
+  type: varchar("type", { length: 20 }).notNull().default("news"), // 'news' | 'release' | 'collab'
+  title: varchar("title", { length: 255 }).notNull(),
+  content: text("content"),
+  imageUrl: text("image_url"),
+  releaseDate: date("release_date"),
+  isPublished: boolean("is_published").notNull().default(true),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+export const insertBreweryAnnouncementSchema = createInsertSchema(breweryAnnouncements).omit({ id: true, createdAt: true });
+export type InsertBreweryAnnouncement = z.infer<typeof insertBreweryAnnouncementSchema>;
+export type BreweryAnnouncement = typeof breweryAnnouncements.$inferSelect;
+
 export const pubPageViews = pgTable("pub_page_views", {
   pubId: integer("pub_id").references(() => pubs.id, { onDelete: "cascade" }).notNull(),
   viewDate: date("view_date").notNull().default(sql`CURRENT_DATE`),
