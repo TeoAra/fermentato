@@ -1,4 +1,4 @@
-import { Menu, X, LogOut, LogIn, User, Store, Beer, Shield, Search, ChevronRight, MapPin, Home, Bell } from "lucide-react";
+import { Menu, X, LogOut, LogIn, User, Store, Beer, Shield, Search, ChevronRight, MapPin, Home, Bell, Activity } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import { useAuth } from "@/hooks/useAuth";
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
@@ -206,7 +206,7 @@ export function MobileHeader({ onMenuToggle, isMenuOpen }: MobileHeaderProps) {
                 </div>
                 <MenuItem href="/dashboard" icon={User} label="Il mio profilo" />
                 {isAuthenticated && (
-                  <MenuItem href="/activity" icon={Bell} label="Attività" />
+                  <MenuItem href="/activity" icon={Activity} label="Attività" />
                 )}
                 {isAuthenticated && (
                   <MenuItem href="/notifications" icon={Bell} label="Notifiche" />
