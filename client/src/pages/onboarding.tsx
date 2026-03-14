@@ -11,14 +11,14 @@ import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { Beer, Store, Factory, User, ChevronRight, ChevronLeft, Check, Search } from "lucide-react";
-import { AddressAutocomplete } from "@/components/AddressAutocomplete";
+import { AddressAutocomplete, type AddressDetails } from "@/components/AddressAutocomplete";
 import type { Brewery } from "@shared/schema";
 
 type Role = "customer" | "pub_owner" | "brewery_owner";
 
 const pubSchema = z.object({
   pubName: z.string().min(2, "Nome locale richiesto"),
-  pubAddress: z.string().min(5, "Seleziona un indirizzo"),
+  pubAddress: z.string().min(5, "Seleziona un indirizzo dalla lista"),
   pubCity: z.string().min(2, "Città richiesta"),
   pubRegion: z.string().optional(),
   vatNumber: z.string().optional(),
@@ -56,11 +56,13 @@ export default function Onboarding() {
 
   const pubForm = useForm<PubForm>({
     resolver: zodResolver(pubSchema),
+    mode: "onSubmit",
     defaultValues: { pubName: "", pubAddress: "", pubCity: "", pubRegion: "", vatNumber: "", phone: "", description: "" },
   });
 
   const breweryForm = useForm<BreweryForm>({
     resolver: zodResolver(brewerySchema),
+    mode: "onSubmit",
     defaultValues: { breweryName: "", breweryLocation: "", breweryRegion: "", breweryCountry: "Italia", breweryVatNumber: "", breweryPhone: "", breweryDescription: "", breweryWebsite: "" },
   });
 
@@ -82,7 +84,6 @@ export default function Onboarding() {
     onSuccess: async (data: any) => {
       await queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
       if (data?.redirectTo) {
-        // Pub: go straight to Stripe checkout
         navigate(data.redirectTo);
       } else {
         setStep("done");
@@ -117,35 +118,35 @@ export default function Onboarding() {
 
   if (step === "done") {
     return (
-      <div className="min-h-screen bg-gray-950 flex items-center justify-center p-4">
+      <div className="min-h-screen bg-background flex items-center justify-center p-4">
         <div className="text-center">
           <div className="w-20 h-20 rounded-full bg-green-500/20 flex items-center justify-center mx-auto mb-6">
-            <Check className="w-10 h-10 text-green-400" />
+            <Check className="w-10 h-10 text-green-500" />
           </div>
-          <h1 className="text-3xl font-bold text-white mb-3">Benvenuto su Fermenta.to!</h1>
-          <p className="text-gray-400 text-lg">Il tuo profilo è pronto. Redirezione in corso...</p>
+          <h1 className="text-3xl font-bold text-foreground mb-3">Benvenuto su Fermenta.to!</h1>
+          <p className="text-muted-foreground text-lg">Il tuo profilo è pronto. Redirezione in corso...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-950 flex flex-col items-center justify-center p-4">
+    <div className="min-h-screen bg-background flex flex-col items-center justify-center p-4">
       <div className="w-full max-w-lg">
         {/* Logo */}
         <div className="text-center mb-10">
           <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-amber-400 to-orange-600 flex items-center justify-center mx-auto mb-4">
             <Beer className="w-8 h-8 text-white" />
           </div>
-          <h1 className="text-3xl font-bold text-white">Fermenta.to</h1>
-          <p className="text-gray-400 mt-2">Completa il tuo profilo</p>
+          <h1 className="text-3xl font-bold text-foreground">Fermenta.to</h1>
+          <p className="text-muted-foreground mt-2">Completa il tuo profilo</p>
         </div>
 
         {/* Step: Role Selection */}
         {step === "role" && (
           <div>
-            <h2 className="text-xl font-semibold text-white text-center mb-2">Come utilizzerai la piattaforma?</h2>
-            <p className="text-gray-400 text-center text-sm mb-8">Scegli il tuo ruolo per personalizzare l'esperienza</p>
+            <h2 className="text-xl font-semibold text-foreground text-center mb-2">Come utilizzerai la piattaforma?</h2>
+            <p className="text-muted-foreground text-center text-sm mb-8">Scegli il tuo ruolo per personalizzare l'esperienza</p>
 
             <div className="space-y-4">
               <RoleCard
@@ -172,7 +173,7 @@ export default function Onboarding() {
               />
             </div>
 
-            <p className="text-center text-xs text-gray-500 mt-6">
+            <p className="text-center text-xs text-muted-foreground mt-6">
               Puoi cambiare ruolo in qualsiasi momento dalle impostazioni
             </p>
           </div>
@@ -181,7 +182,7 @@ export default function Onboarding() {
         {/* Step: Pub Details */}
         {step === "details" && selectedRole === "pub_owner" && (
           <div>
-            <button onClick={() => setStep("role")} className="flex items-center gap-1 text-gray-400 hover:text-white mb-6 text-sm transition-colors">
+            <button onClick={() => setStep("role")} className="flex items-center gap-1 text-muted-foreground hover:text-foreground mb-6 text-sm transition-colors">
               <ChevronLeft className="w-4 h-4" /> Indietro
             </button>
             <div className="flex items-center gap-3 mb-2">
@@ -189,11 +190,11 @@ export default function Onboarding() {
                 <Store className="w-5 h-5 text-white" />
               </div>
               <div>
-                <h2 className="text-xl font-bold text-white">Il tuo pub</h2>
-                <p className="text-sm text-gray-400">Inserisci i dati del tuo locale</p>
+                <h2 className="text-xl font-bold text-foreground">Il tuo pub</h2>
+                <p className="text-sm text-muted-foreground">Inserisci i dati del tuo locale</p>
               </div>
             </div>
-            <p className="text-xs text-amber-400/80 bg-amber-400/10 rounded-lg px-3 py-2 mb-6">
+            <p className="text-xs text-amber-600 dark:text-amber-400 bg-amber-500/10 rounded-lg px-3 py-2 mb-6">
               Dopo il salvataggio, completerai l'attivazione con Stripe — 15 giorni gratuiti, poi €65/anno IVA inclusa.
             </p>
 
@@ -201,25 +202,25 @@ export default function Onboarding() {
               <form onSubmit={pubForm.handleSubmit(handlePubSubmit)} className="space-y-4">
                 <FormField control={pubForm.control} name="pubName" render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="text-gray-300">Nome del locale *</FormLabel>
-                    <FormControl><Input placeholder="es. The Craft Beer Bar" {...field} className="bg-gray-800 border-gray-700 text-white" /></FormControl>
+                    <FormLabel>Nome del locale *</FormLabel>
+                    <FormControl><Input placeholder="es. The Craft Beer Bar" {...field} /></FormControl>
                     <FormMessage />
                   </FormItem>
                 )} />
 
                 <FormField control={pubForm.control} name="pubAddress" render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="text-gray-300">Indirizzo *</FormLabel>
+                    <FormLabel>Indirizzo *</FormLabel>
                     <FormControl>
                       <AddressAutocomplete
                         value={field.value}
-                        onChange={(address, city, region) => {
-                          field.onChange(address);
-                          if (city) pubForm.setValue("pubCity", city);
-                          if (region) pubForm.setValue("pubRegion", region);
+                        onAddressSelect={(details: AddressDetails) => {
+                          field.onChange(details.formattedAddress);
+                          pubForm.setValue("pubCity", details.city, { shouldValidate: false });
+                          pubForm.setValue("pubRegion", details.region, { shouldValidate: false });
+                          pubForm.clearErrors("pubAddress");
                         }}
                         placeholder="Cerca indirizzo..."
-                        className="bg-gray-800 border-gray-700 text-white"
                       />
                     </FormControl>
                     <FormMessage />
@@ -229,15 +230,15 @@ export default function Onboarding() {
                 <div className="grid grid-cols-2 gap-3">
                   <FormField control={pubForm.control} name="pubCity" render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="text-gray-300">Città *</FormLabel>
-                      <FormControl><Input placeholder="Roma" {...field} className="bg-gray-800 border-gray-700 text-white" /></FormControl>
+                      <FormLabel>Città *</FormLabel>
+                      <FormControl><Input placeholder="Roma" {...field} /></FormControl>
                       <FormMessage />
                     </FormItem>
                   )} />
                   <FormField control={pubForm.control} name="pubRegion" render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="text-gray-300">Regione</FormLabel>
-                      <FormControl><Input placeholder="Lazio" {...field} className="bg-gray-800 border-gray-700 text-white" /></FormControl>
+                      <FormLabel>Regione</FormLabel>
+                      <FormControl><Input placeholder="Lazio" {...field} /></FormControl>
                       <FormMessage />
                     </FormItem>
                   )} />
@@ -246,15 +247,15 @@ export default function Onboarding() {
                 <div className="grid grid-cols-2 gap-3">
                   <FormField control={pubForm.control} name="vatNumber" render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="text-gray-300">P.IVA</FormLabel>
-                      <FormControl><Input placeholder="IT00000000000" {...field} className="bg-gray-800 border-gray-700 text-white" /></FormControl>
+                      <FormLabel>P.IVA</FormLabel>
+                      <FormControl><Input placeholder="IT00000000000" {...field} /></FormControl>
                       <FormMessage />
                     </FormItem>
                   )} />
                   <FormField control={pubForm.control} name="phone" render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="text-gray-300">Telefono</FormLabel>
-                      <FormControl><Input placeholder="+39 06 12345678" {...field} className="bg-gray-800 border-gray-700 text-white" /></FormControl>
+                      <FormLabel>Telefono</FormLabel>
+                      <FormControl><Input placeholder="+39 06 12345678" {...field} /></FormControl>
                       <FormMessage />
                     </FormItem>
                   )} />
@@ -262,8 +263,8 @@ export default function Onboarding() {
 
                 <FormField control={pubForm.control} name="description" render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="text-gray-300">Descrizione</FormLabel>
-                    <FormControl><Textarea placeholder="Descrivi il tuo locale..." rows={3} {...field} className="bg-gray-800 border-gray-700 text-white resize-none" /></FormControl>
+                    <FormLabel>Descrizione</FormLabel>
+                    <FormControl><Textarea placeholder="Descrivi il tuo locale..." rows={3} {...field} className="resize-none" /></FormControl>
                     <FormMessage />
                   </FormItem>
                 )} />
@@ -280,7 +281,7 @@ export default function Onboarding() {
         {/* Step: Brewery Details */}
         {step === "details" && selectedRole === "brewery_owner" && (
           <div>
-            <button onClick={() => setStep("role")} className="flex items-center gap-1 text-gray-400 hover:text-white mb-6 text-sm transition-colors">
+            <button onClick={() => setStep("role")} className="flex items-center gap-1 text-muted-foreground hover:text-foreground mb-6 text-sm transition-colors">
               <ChevronLeft className="w-4 h-4" /> Indietro
             </button>
             <div className="flex items-center gap-3 mb-2">
@@ -288,42 +289,42 @@ export default function Onboarding() {
                 <Factory className="w-5 h-5 text-white" />
               </div>
               <div>
-                <h2 className="text-xl font-bold text-white">Il tuo birrificio</h2>
-                <p className="text-sm text-gray-400">Cerca il tuo birrificio o aggiungine uno nuovo</p>
+                <h2 className="text-xl font-bold text-foreground">Il tuo birrificio</h2>
+                <p className="text-sm text-muted-foreground">Cerca il tuo birrificio o aggiungine uno nuovo</p>
               </div>
             </div>
-            <p className="text-xs text-emerald-400/80 bg-emerald-400/10 rounded-lg px-3 py-2 mb-6">
+            <p className="text-xs text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 rounded-lg px-3 py-2 mb-6">
               La richiesta di associazione al birrificio verrà verificata dal nostro team (di solito entro 24-48 ore).
             </p>
 
             {/* Search existing brewery */}
             {!newBrewery && (
               <div className="mb-5">
-                <label className="text-sm text-gray-300 block mb-2">Cerca il tuo birrificio</label>
+                <label className="text-sm text-foreground block mb-2">Cerca il tuo birrificio</label>
                 <div className="relative">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                   <Input
                     placeholder="Cerca per nome..."
                     value={brewerySearch}
                     onChange={e => { setBrewerySearch(e.target.value); setSelectedBrewery(null); }}
-                    className="bg-gray-800 border-gray-700 text-white pl-10"
+                    className="pl-10"
                   />
                 </div>
                 {breweryResults.length > 0 && !selectedBrewery && (
-                  <div className="mt-2 bg-gray-800 border border-gray-700 rounded-lg overflow-hidden max-h-48 overflow-y-auto">
+                  <div className="mt-2 bg-card border border-border rounded-lg overflow-hidden max-h-48 overflow-y-auto">
                     {breweryResults.map((b: Brewery) => (
                       <button key={b.id} onClick={() => { setSelectedBrewery(b); setBrewerySearch(b.name); }}
-                        className="w-full text-left px-4 py-3 hover:bg-gray-700 flex items-center gap-3 transition-colors">
+                        className="w-full text-left px-4 py-3 hover:bg-accent flex items-center gap-3 transition-colors">
                         {b.logoUrl ? (
                           <img src={b.logoUrl} alt={b.name} className="w-8 h-8 rounded-full object-cover" />
                         ) : (
                           <div className="w-8 h-8 rounded-full bg-emerald-500/20 flex items-center justify-center">
-                            <Factory className="w-4 h-4 text-emerald-400" />
+                            <Factory className="w-4 h-4 text-emerald-500" />
                           </div>
                         )}
                         <div>
-                          <div className="text-white text-sm font-medium">{b.name}</div>
-                          <div className="text-gray-400 text-xs">{b.location}, {b.region}</div>
+                          <div className="text-foreground text-sm font-medium">{b.name}</div>
+                          <div className="text-muted-foreground text-xs">{b.location}, {b.region}</div>
                         </div>
                       </button>
                     ))}
@@ -335,19 +336,19 @@ export default function Onboarding() {
                       <img src={selectedBrewery.logoUrl} alt={selectedBrewery.name} className="w-9 h-9 rounded-full object-cover" />
                     ) : (
                       <div className="w-9 h-9 rounded-full bg-emerald-500/20 flex items-center justify-center">
-                        <Factory className="w-4 h-4 text-emerald-400" />
+                        <Factory className="w-4 h-4 text-emerald-500" />
                       </div>
                     )}
                     <div className="flex-1">
-                      <div className="text-white font-medium">{selectedBrewery.name}</div>
-                      <div className="text-gray-400 text-xs">{selectedBrewery.location}, {selectedBrewery.region}</div>
+                      <div className="text-foreground font-medium">{selectedBrewery.name}</div>
+                      <div className="text-muted-foreground text-xs">{selectedBrewery.location}, {selectedBrewery.region}</div>
                     </div>
-                    <Check className="w-5 h-5 text-emerald-400" />
+                    <Check className="w-5 h-5 text-emerald-500" />
                   </div>
                 )}
                 <div className="mt-3 text-center">
                   <button onClick={() => { setNewBrewery(true); setSelectedBrewery(null); setBrewerySearch(""); }}
-                    className="text-emerald-400 text-sm hover:underline">
+                    className="text-emerald-600 dark:text-emerald-400 text-sm hover:underline">
                     Non trovi il tuo birrificio? Aggiungilo
                   </button>
                 </div>
@@ -358,30 +359,30 @@ export default function Onboarding() {
             {newBrewery && (
               <div className="mb-4">
                 <button onClick={() => { setNewBrewery(false); setSelectedBrewery(null); }}
-                  className="text-gray-400 text-sm hover:text-white mb-4 flex items-center gap-1 transition-colors">
+                  className="text-muted-foreground text-sm hover:text-foreground mb-4 flex items-center gap-1 transition-colors">
                   <ChevronLeft className="w-4 h-4" /> Cerca birrificio esistente
                 </button>
                 <Form {...breweryForm}>
                   <form id="brewery-form" onSubmit={breweryForm.handleSubmit(handleBrewerySubmit)} className="space-y-3">
                     <FormField control={breweryForm.control} name="breweryName" render={({ field }) => (
                       <FormItem>
-                        <FormLabel className="text-gray-300">Nome birrificio *</FormLabel>
-                        <FormControl><Input placeholder="es. Birrificio Italiano" {...field} className="bg-gray-800 border-gray-700 text-white" /></FormControl>
+                        <FormLabel>Nome birrificio *</FormLabel>
+                        <FormControl><Input placeholder="es. Birrificio Italiano" {...field} /></FormControl>
                         <FormMessage />
                       </FormItem>
                     )} />
                     <div className="grid grid-cols-2 gap-3">
                       <FormField control={breweryForm.control} name="breweryLocation" render={({ field }) => (
                         <FormItem>
-                          <FormLabel className="text-gray-300">Città</FormLabel>
-                          <FormControl><Input placeholder="Milano" {...field} className="bg-gray-800 border-gray-700 text-white" /></FormControl>
+                          <FormLabel>Città</FormLabel>
+                          <FormControl><Input placeholder="Milano" {...field} /></FormControl>
                           <FormMessage />
                         </FormItem>
                       )} />
                       <FormField control={breweryForm.control} name="breweryRegion" render={({ field }) => (
                         <FormItem>
-                          <FormLabel className="text-gray-300">Regione</FormLabel>
-                          <FormControl><Input placeholder="Lombardia" {...field} className="bg-gray-800 border-gray-700 text-white" /></FormControl>
+                          <FormLabel>Regione</FormLabel>
+                          <FormControl><Input placeholder="Lombardia" {...field} /></FormControl>
                           <FormMessage />
                         </FormItem>
                       )} />
@@ -389,30 +390,30 @@ export default function Onboarding() {
                     <div className="grid grid-cols-2 gap-3">
                       <FormField control={breweryForm.control} name="breweryVatNumber" render={({ field }) => (
                         <FormItem>
-                          <FormLabel className="text-gray-300">P.IVA</FormLabel>
-                          <FormControl><Input placeholder="IT00000000000" {...field} className="bg-gray-800 border-gray-700 text-white" /></FormControl>
+                          <FormLabel>P.IVA</FormLabel>
+                          <FormControl><Input placeholder="IT00000000000" {...field} /></FormControl>
                           <FormMessage />
                         </FormItem>
                       )} />
                       <FormField control={breweryForm.control} name="breweryPhone" render={({ field }) => (
                         <FormItem>
-                          <FormLabel className="text-gray-300">Telefono</FormLabel>
-                          <FormControl><Input placeholder="+39 02 12345678" {...field} className="bg-gray-800 border-gray-700 text-white" /></FormControl>
+                          <FormLabel>Telefono</FormLabel>
+                          <FormControl><Input placeholder="+39 02 12345678" {...field} /></FormControl>
                           <FormMessage />
                         </FormItem>
                       )} />
                     </div>
                     <FormField control={breweryForm.control} name="breweryWebsite" render={({ field }) => (
                       <FormItem>
-                        <FormLabel className="text-gray-300">Sito web</FormLabel>
-                        <FormControl><Input placeholder="https://www.miobirrificio.it" {...field} className="bg-gray-800 border-gray-700 text-white" /></FormControl>
+                        <FormLabel>Sito web</FormLabel>
+                        <FormControl><Input placeholder="https://www.miobirrificio.it" {...field} /></FormControl>
                         <FormMessage />
                       </FormItem>
                     )} />
                     <FormField control={breweryForm.control} name="breweryDescription" render={({ field }) => (
                       <FormItem>
-                        <FormLabel className="text-gray-300">Descrizione</FormLabel>
-                        <FormControl><Textarea placeholder="Racconta la storia del tuo birrificio..." rows={3} {...field} className="bg-gray-800 border-gray-700 text-white resize-none" /></FormControl>
+                        <FormLabel>Descrizione</FormLabel>
+                        <FormControl><Textarea placeholder="Racconta la storia del tuo birrificio..." rows={3} {...field} className="resize-none" /></FormControl>
                         <FormMessage />
                       </FormItem>
                     )} />
@@ -450,19 +451,19 @@ function RoleCard({ icon, title, description, color, onClick, loading }: {
     <button
       onClick={onClick}
       disabled={loading}
-      className="w-full flex items-center gap-4 p-5 rounded-2xl border border-gray-800 bg-gray-900 hover:bg-gray-800 hover:border-gray-600 transition-all text-left group"
+      className="w-full flex items-center gap-4 p-5 rounded-2xl border border-border bg-card hover:bg-accent hover:border-border/80 transition-all text-left group"
     >
       <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${color} flex items-center justify-center text-white flex-shrink-0 group-hover:scale-105 transition-transform`}>
         {icon}
       </div>
       <div className="flex-1">
-        <div className="text-white font-semibold">{title}</div>
-        <div className="text-gray-400 text-sm">{description}</div>
+        <div className="text-foreground font-semibold">{title}</div>
+        <div className="text-muted-foreground text-sm">{description}</div>
       </div>
       {loading ? (
-        <div className="w-5 h-5 border-2 border-gray-500 border-t-white rounded-full animate-spin" />
+        <div className="w-5 h-5 border-2 border-muted-foreground border-t-foreground rounded-full animate-spin" />
       ) : (
-        <ChevronRight className="w-5 h-5 text-gray-600 group-hover:text-gray-300 group-hover:translate-x-0.5 transition-all" />
+        <ChevronRight className="w-5 h-5 text-muted-foreground group-hover:text-foreground group-hover:translate-x-0.5 transition-all" />
       )}
     </button>
   );
