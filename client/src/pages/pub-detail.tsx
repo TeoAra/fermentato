@@ -508,7 +508,7 @@ export default function PubDetail() {
       
       {/* Modern Hero Section */}
       <div className="relative">
-        <div className="relative h-[480px] md:h-[560px] overflow-hidden">
+        <div className="relative h-[440px] md:h-[520px] overflow-hidden">
           <img
             src={(pub as any)?.coverImageUrl || "https://images.unsplash.com/photo-1514933651103-005eec06c04b?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&h=600"}
             alt={`${(pub as any)?.name} - Copertina`}
@@ -517,11 +517,11 @@ export default function PubDetail() {
           <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-black/10"></div>
           
           {/* Hero Content */}
-          <div className="absolute inset-0 flex items-end">
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full pb-12">
-              <div className="glass-card rounded-2xl p-8 backdrop-blur-md bg-white/10 border border-white/20">
-                <div className="flex flex-col md:flex-row items-center md:items-center justify-between gap-8">
-                  <div className="flex flex-col md:flex-row items-center space-y-4 md:space-y-0 md:space-x-6 w-full md:w-auto justify-center md:justify-start">
+          <div className="absolute inset-0 flex items-center">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
+              <div className="glass-card rounded-2xl p-5 sm:p-8 backdrop-blur-md bg-white/10 border border-white/20">
+                <div className="flex flex-col md:flex-row items-center md:items-center justify-between gap-5 sm:gap-8">
+                  <div className="flex flex-col md:flex-row items-center space-y-3 md:space-y-0 md:space-x-6 w-full md:w-auto justify-center md:justify-start">
                     {/* Logo con bordo colorato per stato apertura */}
                     <div className="relative flex-shrink-0">
                       <Avatar className={`h-20 w-20 ring-4 ${openStatus.borderColor} flex-shrink-0 bg-white`}>
