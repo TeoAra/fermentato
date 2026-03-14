@@ -10,8 +10,10 @@ import {
   decimal,
   integer,
   unique,
+  date,
+  primaryKey,
 } from "drizzle-orm/pg-core";
-import { relations } from "drizzle-orm";
+import { relations, sql } from "drizzle-orm";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -830,6 +832,15 @@ export const scanLogs = pgTable("scan_logs", {
   latencyMs: integer("latency_ms"),
   createdAt: timestamp("created_at").defaultNow(),
 });
+
+// Analytics: page views per pub (aggregated per day)
+export const pubPageViews = pgTable("pub_page_views", {
+  pubId: integer("pub_id").references(() => pubs.id, { onDelete: "cascade" }).notNull(),
+  viewDate: date("view_date").notNull().default(sql`CURRENT_DATE`),
+  viewCount: integer("view_count").notNull().default(1),
+}, (t) => ({ pk: primaryKey({ columns: [t.pubId, t.viewDate] }) }));
+
+export type PubPageView = typeof pubPageViews.$inferSelect;
 
 export const pubRegistrationSchema = insertPubSchema.extend({
   vatNumber: z.string().min(11, "P.IVA deve essere di almeno 11 caratteri"),

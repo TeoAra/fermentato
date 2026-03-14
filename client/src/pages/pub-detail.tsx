@@ -1,4 +1,5 @@
 import React from "react";
+import { Helmet } from "react-helmet-async";
 import { useParams, Link } from "wouter";
 import { GlutenFreeSmallBadge, AlcoholFreeBadge } from "@/components/beer-badges";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -215,6 +216,16 @@ export default function PubDetail() {
   const [activeTab, setActiveTab] = useState("taplist");
   const [showOpeningHours, setShowOpeningHours] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState<any>(null);
+
+  // Fire-and-forget: track pub page view for analytics
+  useEffect(() => {
+    if (!id) return;
+    fetch("/api/analytics/pub-view", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ pubId: id }),
+    }).catch(() => {});
+  }, [id]);
   
   const { data: pub, isLoading: pubLoading } = useQuery({
     queryKey: ["/api/pubs", id],
@@ -509,8 +520,42 @@ export default function PubDetail() {
   };
 
 
+  const pubData = pub as any;
+  const seoTitle = pubData?.name ? `${pubData.name} — Taplist & Birre Artigianali | Fermenta.to` : "Fermenta.to";
+  const seoDesc = pubData?.description
+    ? pubData.description.slice(0, 155)
+    : pubData?.name
+    ? `Scopri la taplist aggiornata di ${pubData.name}, le birre artigianali alla spina, il menù e gli orari di apertura su Fermenta.to.`
+    : "Fermenta.to — La piattaforma italiana per la birra artigianale.";
+  const seoImage = pubData?.coverImageUrl || pubData?.logoUrl;
+  const seoUrl = `https://fermenta.to/pub/${id}`;
+
   return (
     <div className="min-h-screen bg-[hsl(38,14%,97%)] dark:bg-[hsl(25,14%,7%)]">
+      <Helmet>
+        <title>{seoTitle}</title>
+        <meta name="description" content={seoDesc} />
+        <meta property="og:title" content={seoTitle} />
+        <meta property="og:description" content={seoDesc} />
+        <meta property="og:url" content={seoUrl} />
+        <meta property="og:type" content="website" />
+        <meta property="og:site_name" content="Fermenta.to" />
+        {seoImage && <meta property="og:image" content={seoImage} />}
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content={seoTitle} />
+        <meta name="twitter:description" content={seoDesc} />
+        {seoImage && <meta name="twitter:image" content={seoImage} />}
+        <script type="application/ld+json">{JSON.stringify({
+          "@context": "https://schema.org",
+          "@type": "BarOrPub",
+          "name": pubData?.name,
+          "description": pubData?.description,
+          "url": seoUrl,
+          "image": seoImage,
+          "address": pubData?.address ? { "@type": "PostalAddress", "streetAddress": pubData.address, "addressCountry": "IT" } : undefined,
+          "telephone": pubData?.phone,
+        })}</script>
+      </Helmet>
       
       {/* Modern Hero Section */}
       <div className="relative">

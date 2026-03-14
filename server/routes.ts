@@ -12,7 +12,7 @@ import { registerAdminRoutes } from "./routes-admin";
 import { sql, eq, and, desc, asc } from "drizzle-orm";
 import { upload, uploadImage, cloudinary } from "./cloudinary";
 import { db, pool } from "./db";
-import { breweries, beers, pubs, users, tapList, bottleList, userBeerTastings, favorites, menuCategories, menuItems, pubSizes, notifications, pushSubscriptions, breweryRequests, pubEvents, breweryEvents, insertBreweryEventSchema, reviewReports, oauthAccounts, userActivities, ratings, publicanRequests, notificationPreferences, staticPages, additionRequests, scanLogs } from "@shared/schema";
+import { breweries, beers, pubs, users, tapList, bottleList, userBeerTastings, favorites, menuCategories, menuItems, pubSizes, notifications, pushSubscriptions, breweryRequests, pubEvents, breweryEvents, insertBreweryEventSchema, reviewReports, oauthAccounts, userActivities, ratings, publicanRequests, notificationPreferences, staticPages, additionRequests, scanLogs, pubPageViews } from "@shared/schema";
 
 import { insertPubSchema, insertTapListSchema, insertBottleListSchema, insertMenuCategorySchema, insertMenuItemSchema, pubRegistrationSchema, insertPubEventSchema } from "@shared/schema";
 import { z } from "zod";
@@ -4755,6 +4755,159 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.error("Stripe checkout error:", error.message);
       res.status(500).json({ message: "Errore nella creazione del pagamento: " + error.message });
     }
+  });
+
+  // ─── Analytics: track pub page view (anonymous, fire-and-forget) ───────────
+  app.post("/api/analytics/pub-view", async (req, res) => {
+    try {
+      const { pubId } = req.body;
+      if (!pubId || isNaN(parseInt(pubId))) { res.json({ ok: true }); return; }
+      await db.execute(
+        sql`INSERT INTO pub_page_views (pub_id, view_date, view_count)
+            VALUES (${parseInt(pubId)}, CURRENT_DATE, 1)
+            ON CONFLICT (pub_id, view_date)
+            DO UPDATE SET view_count = pub_page_views.view_count + 1`
+      );
+      res.json({ ok: true });
+    } catch { res.json({ ok: true }); }
+  });
+
+  // ─── Analytics: pub analytics for owner dashboard ───────────────────────────
+  app.get("/api/pubs/:id/analytics", isAuthenticated, async (req: any, res) => {
+    try {
+      const pubId = parseInt(req.params.id);
+      const userId = req.user?.id;
+      const pub = await storage.getPub(pubId);
+      if (!pub) { res.status(404).json({ message: "Pub non trovato" }); return; }
+      const isOwner = pub.ownerId === userId;
+      const isAdminUser = req.user?.activeRole === "admin" || req.user?.userType === "admin";
+      if (!isOwner && !isAdminUser) { res.status(403).json({ message: "Non autorizzato" }); return; }
+
+      // Last 30 days of views
+      const rows = await db.execute(
+        sql`SELECT view_date::text as view_date, view_count
+            FROM pub_page_views
+            WHERE pub_id = ${pubId}
+              AND view_date >= CURRENT_DATE - INTERVAL '30 days'
+            ORDER BY view_date ASC`
+      );
+
+      // Build a complete 30-day series (fill missing days with 0)
+      const map: Record<string, number> = {};
+      for (const row of (rows as any).rows ?? rows) {
+        map[row.view_date] = Number(row.view_count);
+      }
+      const series: { date: string; views: number }[] = [];
+      for (let i = 29; i >= 0; i--) {
+        const d = new Date();
+        d.setDate(d.getDate() - i);
+        const key = d.toISOString().split("T")[0];
+        series.push({ date: key, views: map[key] ?? 0 });
+      }
+
+      const today = series[series.length - 1]?.views ?? 0;
+      const yesterday = series[series.length - 2]?.views ?? 0;
+      const last7 = series.slice(-7).reduce((s, d) => s + d.views, 0);
+      const last30 = series.reduce((s, d) => s + d.views, 0);
+
+      res.json({ today, yesterday, last7, last30, series });
+    } catch (err: any) {
+      console.error("Analytics error:", err.message);
+      res.status(500).json({ message: "Errore nel recupero delle analitiche" });
+    }
+  });
+
+  // ─── Sitemap ────────────────────────────────────────────────────────────────
+  app.get("/sitemap.xml", async (_req, res) => {
+    try {
+      const [allPubs, allBreweries, allBeers] = await Promise.all([
+        db.select({ id: pubs.id, updatedAt: pubs.updatedAt }).from(pubs).where(eq(pubs.isActive, true)).limit(5000),
+        db.select({ id: breweries.id }).from(breweries).limit(5000),
+        db.select({ id: beers.id }).from(beers).limit(10000),
+      ]);
+      const base = "https://fermenta.to";
+      const url = (loc: string, priority: string, freq: string) =>
+        `  <url><loc>${loc}</loc><changefreq>${freq}</changefreq><priority>${priority}</priority></url>`;
+      const lines = [
+        `<?xml version="1.0" encoding="UTF-8"?>`,
+        `<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">`,
+        url(base + "/", "1.0", "daily"),
+        url(base + "/explore/pubs", "0.9", "daily"),
+        url(base + "/explore/breweries", "0.9", "weekly"),
+        url(base + "/explore/beers", "0.9", "weekly"),
+        ...allPubs.map(p => url(`${base}/pub/${p.id}`, "0.8", "daily")),
+        ...allBreweries.map(b => url(`${base}/brewery/${b.id}`, "0.7", "weekly")),
+        ...allBeers.map(b => url(`${base}/beer/${b.id}`, "0.6", "monthly")),
+        `</urlset>`,
+      ];
+      res.setHeader("Content-Type", "application/xml");
+      res.setHeader("Cache-Control", "public, max-age=3600");
+      res.send(lines.join("\n"));
+    } catch (err: any) {
+      console.error("Sitemap error:", err.message);
+      res.status(500).send("Errore generazione sitemap");
+    }
+  });
+
+  // ─── Social crawler OG tag injection ────────────────────────────────────────
+  const SOCIAL_BOTS = /whatsapp|telegram|twitterbot|facebookexternalhit|linkedinbot|slackbot|discordbot|pinterest|googlebot|bingbot/i;
+
+  const ogHtml = (meta: { title: string; description: string; image?: string; url: string; type?: string }) => `<!DOCTYPE html>
+<html lang="it"><head>
+<meta charset="UTF-8">
+<title>${meta.title}</title>
+<meta name="description" content="${meta.description}">
+<meta property="og:title" content="${meta.title}">
+<meta property="og:description" content="${meta.description}">
+<meta property="og:url" content="${meta.url}">
+<meta property="og:type" content="${meta.type ?? "website"}">
+<meta property="og:site_name" content="Fermenta.to">
+${meta.image ? `<meta property="og:image" content="${meta.image}">` : ""}
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="${meta.title}">
+<meta name="twitter:description" content="${meta.description}">
+${meta.image ? `<meta name="twitter:image" content="${meta.image}">` : ""}
+</head><body></body></html>`;
+
+  app.get(["/pub/:id", "/brewery/:id", "/beer/:id"], async (req, res, next) => {
+    const ua = req.headers["user-agent"] || "";
+    if (!SOCIAL_BOTS.test(ua)) return next();
+    try {
+      const base = "https://fermenta.to";
+      const id = parseInt(req.params.id);
+      if (req.path.startsWith("/pub/")) {
+        const pub = await storage.getPub(id);
+        if (!pub) return next();
+        const p = pub as any;
+        res.send(ogHtml({
+          title: `${p.name} — Birre artigianali | Fermenta.to`,
+          description: p.description ? p.description.slice(0, 155) : `Scopri la taplist di ${p.name} su Fermenta.to`,
+          image: p.coverImageUrl || p.logoUrl,
+          url: `${base}/pub/${id}`,
+          type: "website",
+        }));
+      } else if (req.path.startsWith("/brewery/")) {
+        const br = await storage.getBrewery(id);
+        if (!br) return next();
+        const b = br as any;
+        res.send(ogHtml({
+          title: `${b.name} — Birrificio artigianale | Fermenta.to`,
+          description: b.description ? b.description.slice(0, 155) : `Scopri le birre di ${b.name} su Fermenta.to`,
+          image: b.coverImageUrl || b.logoUrl,
+          url: `${base}/brewery/${id}`,
+        }));
+      } else {
+        const beer = await storage.getBeer(id);
+        if (!beer) return next();
+        const beerData = beer as any;
+        res.send(ogHtml({
+          title: `${beerData.name} — ${beerData.style ?? "Birra artigianale"} | Fermenta.to`,
+          description: beerData.description ? beerData.description.slice(0, 155) : `Scopri ${beerData.name} su Fermenta.to`,
+          image: beerData.imageUrl,
+          url: `${base}/beer/${id}`,
+        }));
+      }
+    } catch { next(); }
   });
 
   const httpServer = createServer(app);

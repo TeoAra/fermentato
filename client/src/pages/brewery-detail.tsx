@@ -1,3 +1,4 @@
+import { Helmet } from "react-helmet-async";
 import { useParams, Link } from "wouter";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { 
@@ -301,8 +302,36 @@ export default function BreweryDetail() {
 
   const displayedBeers = showAllBeers ? beers : beers.slice(0, 6);
 
+  const seoTitle = brewery?.name ? `${brewery.name} — Birrificio Artigianale | Fermenta.to` : "Fermenta.to";
+  const seoDesc = (brewery as any)?.description
+    ? (brewery as any).description.slice(0, 155)
+    : brewery?.name
+    ? `Scopri tutte le birre artigianali di ${brewery.name} su Fermenta.to: stili, ABV, dove trovarle.`
+    : "Fermenta.to — La piattaforma italiana per la birra artigianale.";
+  const seoImage = brewery?.coverImageUrl || brewery?.logoUrl;
+  const seoUrl = `https://fermenta.to/brewery/${id}`;
+
   return (
     <div className="min-h-screen bg-[hsl(38,14%,97%)] dark:bg-[hsl(25,14%,7%)]">
+      <Helmet>
+        <title>{seoTitle}</title>
+        <meta name="description" content={seoDesc} />
+        <meta property="og:title" content={seoTitle} />
+        <meta property="og:description" content={seoDesc} />
+        <meta property="og:url" content={seoUrl} />
+        <meta property="og:type" content="website" />
+        <meta property="og:site_name" content="Fermenta.to" />
+        {seoImage && <meta property="og:image" content={seoImage} />}
+        <meta name="twitter:card" content="summary_large_image" />
+        <script type="application/ld+json">{JSON.stringify({
+          "@context": "https://schema.org",
+          "@type": "Brewery",
+          "name": brewery?.name,
+          "description": (brewery as any)?.description,
+          "url": seoUrl,
+          "image": seoImage,
+        })}</script>
+      </Helmet>
       
       {/* Modern Hero Section */}
       <div className="relative">

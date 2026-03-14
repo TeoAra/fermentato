@@ -1,4 +1,5 @@
 import { useState, useMemo } from "react";
+import { Helmet } from "react-helmet-async";
 import { getBadgeForCount } from "@/lib/badges";
 import { useParams, Link } from "wouter";
 import { GlutenFreeIcon } from "@/components/beer-badges";
@@ -384,8 +385,37 @@ export default function BeerDetail() {
   const bottleLocations = availability?.bottleLocations || [];
   const totalLocations = tapLocations.length + bottleLocations.length;
 
+  const seoTitle = beer?.name ? `${beer.name} — ${beer.style ?? "Birra Artigianale"} | Fermenta.to` : "Fermenta.to";
+  const seoDesc = (beer as any)?.description
+    ? (beer as any).description.slice(0, 155)
+    : beer?.name
+    ? `Scopri ${beer.name}${beer.style ? `, una ${beer.style}` : ""} di ${(beer as any)?.brewery?.name ?? "birrificio artigianale"} su Fermenta.to.`
+    : "Fermenta.to — La piattaforma italiana per la birra artigianale.";
+  const seoImage = beer?.imageUrl || (beer as any)?.bottleImageUrl;
+  const seoUrl = `https://fermenta.to/beer/${id}`;
+
   return (
     <div className="min-h-screen bg-[hsl(38,14%,97%)] dark:bg-[hsl(25,14%,7%)]">
+      <Helmet>
+        <title>{seoTitle}</title>
+        <meta name="description" content={seoDesc} />
+        <meta property="og:title" content={seoTitle} />
+        <meta property="og:description" content={seoDesc} />
+        <meta property="og:url" content={seoUrl} />
+        <meta property="og:type" content="website" />
+        <meta property="og:site_name" content="Fermenta.to" />
+        {seoImage && <meta property="og:image" content={seoImage} />}
+        <meta name="twitter:card" content="summary_large_image" />
+        <script type="application/ld+json">{JSON.stringify({
+          "@context": "https://schema.org",
+          "@type": "Product",
+          "name": beer?.name,
+          "description": (beer as any)?.description,
+          "url": seoUrl,
+          "image": seoImage,
+          "brand": { "@type": "Brand", "name": (beer as any)?.brewery?.name },
+        })}</script>
+      </Helmet>
       
       {/* Modern Hero Section */}
       <div className="relative">

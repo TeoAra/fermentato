@@ -3,6 +3,7 @@ import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { HelmetProvider } from "react-helmet-async";
 import { useAuth } from "@/hooks/useAuth";
 import { useState, useEffect } from "react";
 import { initGA } from "./lib/analytics";
@@ -191,18 +192,20 @@ function App() {
   }
 
   return (
-    <ThemeProvider>
-      <QueryClientProvider client={queryClient}>
-        <TooltipProvider>
-          <Toaster />
-          <Router />
-          <AutoPushSubscriber />
-          <PwaInstallPrompt />
-          <PushNotificationPrompt />
-          <CookieBanner />
-        </TooltipProvider>
-      </QueryClientProvider>
-    </ThemeProvider>
+    <HelmetProvider>
+      <ThemeProvider>
+        <QueryClientProvider client={queryClient}>
+          <TooltipProvider>
+            <Toaster />
+            <Router />
+            <AutoPushSubscriber />
+            <PwaInstallPrompt />
+            <PushNotificationPrompt />
+            <CookieBanner />
+          </TooltipProvider>
+        </QueryClientProvider>
+      </ThemeProvider>
+    </HelmetProvider>
   );
 }
 

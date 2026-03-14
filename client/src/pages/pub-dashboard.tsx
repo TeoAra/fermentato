@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from "recharts";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -21,7 +22,8 @@ import { useToast } from "@/hooks/use-toast";
 import { isUnauthorizedError } from "@/lib/authUtils";
 import { 
   Beer, Wine, Utensils, Building2, Plus, AlertCircle, LogIn,
-  Facebook, Instagram, X as Twitter, Music, Clock, MapPin, Phone, Globe, Camera
+  Facebook, Instagram, X as Twitter, Music, Clock, MapPin, Phone, Globe, Camera,
+  TrendingUp, Eye, CalendarDays
 } from "lucide-react";
 import { SiFacebook, SiInstagram, SiX, SiTiktok } from "react-icons/si";
 
@@ -476,7 +478,7 @@ export default function PubDashboard() {
 
           {/* Tabs per gestione */}
           <Tabs defaultValue="taplist" className="space-y-6">
-            <TabsList className="grid w-full grid-cols-3 sm:grid-cols-5 h-auto gap-1">
+            <TabsList className="grid w-full grid-cols-3 sm:grid-cols-6 h-auto gap-1">
               <TabsTrigger value="info" className="flex items-center gap-1 text-xs sm:text-sm px-1 sm:px-3 py-2">
                 <Building2 className="w-3 h-3 sm:w-4 sm:h-4" />
                 <span className="hidden sm:inline">Info Pub</span>
@@ -501,6 +503,11 @@ export default function PubDashboard() {
                 <Clock className="w-3 h-3 sm:w-4 sm:h-4" />
                 <span className="hidden sm:inline">Orari</span>
                 <span className="sm:hidden">Orari</span>
+              </TabsTrigger>
+              <TabsTrigger value="analytics" className="flex items-center gap-1 text-xs sm:text-sm px-1 sm:px-3 py-2">
+                <TrendingUp className="w-3 h-3 sm:w-4 sm:h-4" />
+                <span className="hidden sm:inline">Analitiche</span>
+                <span className="sm:hidden">Stats</span>
               </TabsTrigger>
             </TabsList>
 
@@ -528,6 +535,11 @@ export default function PubDashboard() {
             <TabsContent value="orari">
               <OpeningHoursManager pub={selectedPub} />
             </TabsContent>
+
+            {/* Analitiche */}
+            <TabsContent value="analytics">
+              <PubAnalyticsTab pubId={selectedPub.id} />
+            </TabsContent>
           </Tabs>
         </div>
       )}
@@ -536,6 +548,88 @@ export default function PubDashboard() {
 }
 
 // Componente per gestire le informazioni del pub
+function PubAnalyticsTab({ pubId }: { pubId: number }) {
+  const { data, isLoading } = useQuery<{
+    today: number; yesterday: number; last7: number; last30: number;
+    series: { date: string; views: number }[];
+  }>({
+    queryKey: ["/api/pubs", pubId, "analytics"],
+    queryFn: () => apiRequest(`/api/pubs/${pubId}/analytics`),
+    staleTime: 5 * 60_000,
+  });
+
+  const chartData = (data?.series ?? []).map(d => ({
+    day: new Date(d.date).toLocaleDateString("it-IT", { day: "2-digit", month: "2-digit" }),
+    Visite: d.views,
+  }));
+
+  const kpis = [
+    { label: "Oggi", value: data?.today ?? 0, icon: Eye },
+    { label: "Ieri", value: data?.yesterday ?? 0, icon: CalendarDays },
+    { label: "Ultimi 7 giorni", value: data?.last7 ?? 0, icon: TrendingUp },
+    { label: "Ultimi 30 giorni", value: data?.last30 ?? 0, icon: TrendingUp },
+  ];
+
+  if (isLoading) {
+    return (
+      <div className="space-y-4">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+          {[1,2,3,4].map(i => <div key={i} className="h-24 rounded-xl bg-gray-100 dark:bg-gray-800 animate-pulse" />)}
+        </div>
+        <div className="h-64 rounded-xl bg-gray-100 dark:bg-gray-800 animate-pulse" />
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-6">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+        {kpis.map(({ label, value, icon: Icon }) => (
+          <Card key={label}>
+            <CardContent className="pt-5 pb-4">
+              <div className="flex items-center gap-2 mb-1">
+                <Icon className="w-4 h-4 text-amber-600 dark:text-amber-400" />
+                <span className="text-xs font-medium text-gray-500 dark:text-gray-400">{label}</span>
+              </div>
+              <p className="text-3xl font-bold text-gray-900 dark:text-white">{value.toLocaleString("it-IT")}</p>
+              <p className="text-xs text-gray-400 mt-0.5">visite alla pagina</p>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+
+      <Card>
+        <CardHeader className="pb-2">
+          <CardTitle className="text-base">Visite giornaliere — ultimi 30 giorni</CardTitle>
+          <CardDescription>Numero di volte che la pagina del pub è stata aperta</CardDescription>
+        </CardHeader>
+        <CardContent>
+          {data?.last30 === 0 ? (
+            <div className="flex flex-col items-center justify-center py-12 text-gray-400">
+              <TrendingUp className="w-12 h-12 mb-3 opacity-30" />
+              <p className="text-sm">Nessuna visita registrata ancora.</p>
+              <p className="text-xs mt-1">I dati vengono raccolti a partire da oggi.</p>
+            </div>
+          ) : (
+            <ResponsiveContainer width="100%" height={220}>
+              <BarChart data={chartData} margin={{ top: 4, right: 4, left: -20, bottom: 0 }}>
+                <CartesianGrid strokeDasharray="3 3" className="stroke-gray-200 dark:stroke-gray-700" />
+                <XAxis dataKey="day" tick={{ fontSize: 10 }} interval={4} />
+                <YAxis tick={{ fontSize: 10 }} allowDecimals={false} />
+                <Tooltip
+                  contentStyle={{ borderRadius: "0.5rem", fontSize: "0.8rem", border: "none", boxShadow: "0 4px 12px rgba(0,0,0,.12)" }}
+                  formatter={(v: number) => [v, "Visite"]}
+                />
+                <Bar dataKey="Visite" fill="hsl(35,90%,42%)" radius={[4, 4, 0, 0]} maxBarSize={32} />
+              </BarChart>
+            </ResponsiveContainer>
+          )}
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
 function PubInfoTab({ pub }: { pub: Pub }) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
