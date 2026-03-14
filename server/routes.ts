@@ -4817,6 +4817,58 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // ─── Home: recenti aggiunte alla taplist ─────────────────────────────────────
+  app.get("/api/home/taplist-activity", async (_req, res) => {
+    try {
+      const rows = await db.execute(sql`
+        SELECT
+          tl.id,
+          p.id  AS pub_id,
+          p.name AS pub_name,
+          p.logo_url AS pub_logo,
+          p.cover_image_url AS pub_cover,
+          p.city AS pub_city,
+          b.id   AS beer_id,
+          b.name AS beer_name,
+          b.style AS beer_style,
+          b.abv,
+          b.image_url AS beer_image,
+          tl.tap_type
+        FROM tap_list tl
+        JOIN pubs  p ON p.id = tl.pub_id  AND p.is_active = true
+        JOIN beers b ON b.id = tl.beer_id
+        WHERE tl.is_active = true
+        ORDER BY tl.id DESC
+        LIMIT 20
+      `);
+      res.json((rows as any).rows ?? rows);
+    } catch (e: any) { res.status(500).json({ message: e.message }); }
+  });
+
+  // ─── Home: recent brewery announcements (all breweries, for home page feed) ──
+  app.get("/api/home/announcements", async (_req, res) => {
+    try {
+      const rows = await db
+        .select({
+          id: breweryAnnouncements.id,
+          type: breweryAnnouncements.type,
+          title: breweryAnnouncements.title,
+          content: breweryAnnouncements.content,
+          releaseDate: breweryAnnouncements.releaseDate,
+          createdAt: breweryAnnouncements.createdAt,
+          breweryId: breweryAnnouncements.breweryId,
+          breweryName: breweries.name,
+          breweryLogo: breweries.logoUrl,
+        })
+        .from(breweryAnnouncements)
+        .innerJoin(breweries, eq(breweries.id, breweryAnnouncements.breweryId))
+        .where(eq(breweryAnnouncements.isPublished, true))
+        .orderBy(desc(breweryAnnouncements.createdAt))
+        .limit(8);
+      res.json(rows);
+    } catch (e: any) { res.status(500).json({ message: e.message }); }
+  });
+
   // ─── Brewery Announcements ───────────────────────────────────────────────────
   // GET public announcements
   app.get("/api/breweries/:id/announcements", async (req, res) => {

@@ -2,7 +2,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "wouter";
 import { useState, useEffect, useMemo } from "react";
-import { Beer, MapPin, Heart, Store, TrendingUp, Navigation, Building2, ChevronRight, Zap, List, CalendarDays, Settings2 } from "lucide-react";
+import { Beer, MapPin, Heart, Store, TrendingUp, Navigation, Building2, ChevronRight, Zap, List, CalendarDays, Settings2, Megaphone, Newspaper, Rocket, Users, Droplets } from "lucide-react";
 import Footer from "@/components/footer";
 import PubCard from "@/components/pub-card";
 import HomepageMap from "@/components/homepage-map";
@@ -63,10 +63,20 @@ export default function Home() {
     queryFn: () => fetch("/api/breweries?random=true&limit=40").then(res => res.json()),
     staleTime: 5 * 60 * 1000,
   });
-  // Only show breweries with a logo for the discovery section
+  // Show all breweries (with or without logo) for the discovery section
   const breweries = Array.isArray(breweriesRaw)
-    ? breweriesRaw.filter((b: any) => b.logoUrl || b.coverImageUrl).slice(0, 8)
+    ? breweriesRaw.slice(0, 12)
     : [];
+
+  const { data: taplistActivity = [] } = useQuery<any[]>({
+    queryKey: ["/api/home/taplist-activity"],
+    staleTime: 2 * 60 * 1000,
+  });
+
+  const { data: homeAnnouncements = [] } = useQuery<any[]>({
+    queryKey: ["/api/home/announcements"],
+    staleTime: 5 * 60 * 1000,
+  });
 
   const { data: popularStyles } = useQuery<{ style: string; count: number }[]>({
     queryKey: ["/api/beers/popular-styles"],
@@ -346,29 +356,142 @@ export default function Home() {
           </section>
         )}
 
-        {/* Birrifici da Scoprire */}
-        {isAuthenticated && breweries.length > 0 && (user as any)?.userType !== 'pub_owner' && (
+        {/* ─── In Spina Adesso ─────────────────────────────────────────────── */}
+        {taplistActivity.length > 0 && (user as any)?.userType !== 'pub_owner' && (
           <section className="mb-8">
-            <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center justify-between mb-3">
+              <h2 className="text-lg font-semibold text-[hsl(28,18%,13%)] dark:text-[hsl(40,12%,92%)] flex items-center gap-2 tracking-tight">
+                <Droplets className="h-4 w-4 text-[hsl(35,90%,42%)] dark:text-[hsl(38,88%,58%)]" />
+                In Spina Adesso
+              </h2>
+              <Link href="/explore/pubs">
+                <Button variant="ghost" size="sm" className="text-amber-600 hover:text-amber-700 dark:text-amber-400 font-semibold text-sm">Vedi tutti →</Button>
+              </Link>
+            </div>
+            {/* horizontal scroll */}
+            <div className="flex gap-3 overflow-x-auto pb-2 -mx-1 px-1" style={{ scrollbarWidth: "none" }}>
+              {taplistActivity.map((item: any) => (
+                <Link key={item.id} href={`/pub/${item.pub_id}`}>
+                  <div className="group flex-shrink-0 w-[148px] cursor-pointer">
+                    {/* Beer image area */}
+                    <div className="relative h-[96px] rounded-xl overflow-hidden mb-2 shadow-sm group-hover:shadow-md transition-shadow">
+                      {item.beer_image ? (
+                        <img src={item.beer_image} alt={item.beer_name} className="w-full h-full object-cover" />
+                      ) : (
+                        <div className="w-full h-full bg-gradient-to-br from-amber-400 to-orange-600 flex items-center justify-center">
+                          <Beer className="w-8 h-8 text-white opacity-70" />
+                        </div>
+                      )}
+                      {/* tap type badge */}
+                      <span className={`absolute top-1.5 left-1.5 text-[10px] font-bold px-1.5 py-0.5 rounded-full ${item.tap_type === 'pompa' ? 'bg-violet-600 text-white' : 'bg-amber-500 text-white'}`}>
+                        {item.tap_type === 'pompa' ? 'Pompa' : 'Spina'}
+                      </span>
+                    </div>
+                    <p className="text-xs font-semibold text-gray-900 dark:text-white line-clamp-1 group-hover:text-amber-600 dark:group-hover:text-amber-400 transition-colors">{item.beer_name}</p>
+                    {item.beer_style && <p className="text-[10px] text-gray-500 dark:text-gray-400 line-clamp-1 mt-0.5">{item.beer_style}</p>}
+                    <div className="flex items-center gap-1 mt-1">
+                      {item.pub_logo ? (
+                        <img src={item.pub_logo} alt={item.pub_name} className="w-4 h-4 rounded-full object-cover flex-shrink-0" />
+                      ) : (
+                        <Store className="w-3 h-3 text-gray-400 flex-shrink-0" />
+                      )}
+                      <p className="text-[10px] text-gray-500 dark:text-gray-400 truncate">{item.pub_name}</p>
+                    </div>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          </section>
+        )}
+
+        {/* ─── Birrifici da Scoprire — horizontal scroll redesigned ────────── */}
+        {breweries.length > 0 && (user as any)?.userType !== 'pub_owner' && (
+          <section className="mb-8">
+            <div className="flex items-center justify-between mb-3">
               <h2 className="text-lg font-semibold text-[hsl(28,18%,13%)] dark:text-[hsl(40,12%,92%)] flex items-center gap-2 tracking-tight">
                 <Building2 className="h-4 w-4 text-[hsl(35,90%,42%)] dark:text-[hsl(38,88%,58%)]" />
                 Birrifici da Scoprire
               </h2>
-              <Link href="/explore">
+              <Link href="/explore/breweries">
                 <Button variant="ghost" size="sm" className="text-amber-600 hover:text-amber-700 dark:text-amber-400 font-semibold text-sm">Vedi tutti →</Button>
               </Link>
             </div>
-            <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-3">
-              {breweries.map((brewery: any) => (
-                <Link key={brewery.id} href={`/brewery/${brewery.id}`}>
-                  <div className="group flex flex-col items-center text-center gap-2 cursor-pointer">
-                    <div className="w-14 h-14 rounded-2xl overflow-hidden bg-amber-50 dark:bg-amber-900/20 flex items-center justify-center shadow-sm group-hover:shadow-md group-hover:scale-105 transition-[shadow,transform]">
-                      <img src={brewery.logoUrl || brewery.coverImageUrl} alt={brewery.name} className="w-14 h-14 object-contain p-1" />
+            <div className="flex gap-3 overflow-x-auto pb-2 -mx-1 px-1" style={{ scrollbarWidth: "none" }}>
+              {breweries.map((brewery: any) => {
+                const bg = brewery.coverImageUrl || brewery.logoUrl;
+                const initial = brewery.name?.[0]?.toUpperCase() ?? "B";
+                return (
+                  <Link key={brewery.id} href={`/brewery/${brewery.id}`}>
+                    <div className="group flex-shrink-0 w-[148px] cursor-pointer">
+                      {/* Cover card */}
+                      <div className="relative h-[96px] rounded-xl overflow-hidden mb-2 shadow-sm group-hover:shadow-md transition-shadow">
+                        {bg ? (
+                          <img src={bg} alt={brewery.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
+                        ) : (
+                          <div className="w-full h-full bg-gradient-to-br from-amber-400 via-orange-500 to-amber-700 flex items-center justify-center">
+                            <span className="text-3xl font-bold text-white/80">{initial}</span>
+                          </div>
+                        )}
+                        {/* Dark overlay bottom */}
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
+                        {/* Location badge */}
+                        {(brewery.location || brewery.region) && (
+                          <span className="absolute bottom-1.5 left-2 text-[10px] text-white/90 font-medium truncate max-w-[120px] flex items-center gap-0.5">
+                            <MapPin className="w-2.5 h-2.5 flex-shrink-0" />
+                            {brewery.city || brewery.location || brewery.region}
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-xs font-semibold text-gray-900 dark:text-white line-clamp-2 leading-tight group-hover:text-amber-600 dark:group-hover:text-amber-400 transition-colors">{brewery.name}</p>
                     </div>
-                    <p className="text-xs font-medium text-gray-700 dark:text-gray-300 line-clamp-2 leading-tight group-hover:text-amber-600 dark:group-hover:text-amber-400 transition-colors">{brewery.name}</p>
-                  </div>
-                </Link>
-              ))}
+                  </Link>
+                );
+              })}
+            </div>
+          </section>
+        )}
+
+        {/* ─── Ultime dai Birrifici ─────────────────────────────────────────── */}
+        {homeAnnouncements.length > 0 && (
+          <section className="mb-8">
+            <div className="flex items-center justify-between mb-3">
+              <h2 className="text-lg font-semibold text-[hsl(28,18%,13%)] dark:text-[hsl(40,12%,92%)] flex items-center gap-2 tracking-tight">
+                <Megaphone className="h-4 w-4 text-[hsl(35,90%,42%)] dark:text-[hsl(38,88%,58%)]" />
+                Ultime dai Birrifici
+              </h2>
+            </div>
+            <div className="flex gap-3 overflow-x-auto pb-2 -mx-1 px-1" style={{ scrollbarWidth: "none" }}>
+              {homeAnnouncements.map((ann: any) => {
+                const typeMap: Record<string, { label: string; color: string; Icon: any }> = {
+                  news:    { label: "Novità",         color: "bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300",     Icon: Newspaper },
+                  release: { label: "Nuova Birra",    color: "bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300", Icon: Rocket },
+                  collab:  { label: "Collab",         color: "bg-purple-100 text-purple-700 dark:bg-purple-900/40 dark:text-purple-300", Icon: Users },
+                };
+                const t = typeMap[ann.type] ?? typeMap.news;
+                return (
+                  <Link key={ann.id} href={`/brewery/${ann.breweryId}`}>
+                    <div className="group flex-shrink-0 w-[200px] p-3 rounded-xl border border-[hsl(36,14%,87%)] dark:border-[hsl(25,12%,17%)] bg-white dark:bg-[hsl(25,12%,11%)] hover:border-amber-300 dark:hover:border-amber-700 transition-colors cursor-pointer shadow-sm hover:shadow-md">
+                      <div className="flex items-center gap-2 mb-2">
+                        {ann.breweryLogo ? (
+                          <img src={ann.breweryLogo} alt={ann.breweryName} className="w-8 h-8 rounded-full object-contain bg-amber-50 dark:bg-amber-900/20 flex-shrink-0 p-0.5" />
+                        ) : (
+                          <div className="w-8 h-8 rounded-full bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center flex-shrink-0">
+                            <span className="text-xs font-bold text-white">{ann.breweryName?.[0]}</span>
+                          </div>
+                        )}
+                        <p className="text-[11px] font-semibold text-gray-700 dark:text-gray-300 truncate">{ann.breweryName}</p>
+                      </div>
+                      <span className={`inline-flex items-center gap-1 text-[10px] font-bold px-1.5 py-0.5 rounded-full mb-1.5 ${t.color}`}>
+                        <t.Icon className="w-2.5 h-2.5" />{t.label}
+                      </span>
+                      <p className="text-xs font-semibold text-gray-900 dark:text-white line-clamp-2 leading-tight">{ann.title}</p>
+                      {ann.releaseDate && (
+                        <p className="text-[10px] text-gray-400 mt-1">Uscita: {new Date(ann.releaseDate).toLocaleDateString("it-IT")}</p>
+                      )}
+                    </div>
+                  </Link>
+                );
+              })}
             </div>
           </section>
         )}
