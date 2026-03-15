@@ -41,16 +41,15 @@ export default function Landing() {
 
   const { data: pubs, isLoading: pubsLoading } = useQuery({ queryKey: ["/api/pubs"] });
 
-  // Fallback: random breweries when no location
+  // Always load random breweries as baseline/fallback
   const { data: breweriesFallback, isLoading: breweriesFallbackLoading } = useQuery({
     queryKey: ["/api/breweries", "landing-fallback"],
     queryFn: () => fetch("/api/breweries?random=true&limit=4").then(r => r.json()),
-    enabled: locationStatus === 'denied' || locationStatus === 'idle',
     staleTime: 0,
     gcTime: 2 * 60 * 1000,
   });
 
-  // Primary: nearest breweries fetched server-side when location is known
+  // When location known: fetch nearest breweries server-side
   const { data: breweriesNearby, isLoading: breweriesNearbyLoading } = useQuery({
     queryKey: ["/api/breweries/nearby", userLocation?.lat, userLocation?.lng],
     queryFn: () =>
@@ -59,7 +58,11 @@ export default function Landing() {
     staleTime: 5 * 60 * 1000,
   });
 
+  // Show loading spinner only while actively fetching the relevant source
   const breweriesLoading = userLocation ? breweriesNearbyLoading : breweriesFallbackLoading;
+
+  // Use nearby if available and non-empty; fall back to random
+  const nearbyHasResults = Array.isArray(breweriesNearby) && breweriesNearby.length > 0;
 
   const { data: globalStats } = useQuery<any>({ queryKey: ["/api/stats/global"] });
 
@@ -78,13 +81,11 @@ export default function Landing() {
       .slice(0, 3);
   }, [pubs, userLocation]);
 
-  // Server already sorted by distance — just use directly
+  // Nearby takes priority; fall back to random when empty or still loading
   const sortedBreweries = useMemo(() => {
-    if (userLocation) {
-      return Array.isArray(breweriesNearby) ? breweriesNearby : [];
-    }
+    if (userLocation && nearbyHasResults) return breweriesNearby as any[];
     return Array.isArray(breweriesFallback) ? breweriesFallback : [];
-  }, [userLocation, breweriesNearby, breweriesFallback]);
+  }, [userLocation, nearbyHasResults, breweriesNearby, breweriesFallback]);
 
   const handleRequestLocation = () => {
     if (!navigator.geolocation) return;
@@ -367,7 +368,7 @@ export default function Landing() {
               <div className="p-2 bg-gradient-to-r from-amber-500 to-orange-600 rounded-xl mr-3">
                 <Beer className="h-6 w-6 text-white" />
               </div>
-              {userLocation ? 'Birrifici Vicini' : 'Birrifici in Evidenza'}
+              {nearbyHasResults ? 'Birrifici Vicini' : 'Birrifici in Evidenza'}
             </h2>
             <Link href="/explore/breweries">
               <Button variant="ghost" className="text-amber-600 hover:text-amber-700 dark:text-amber-400 font-semibold">
@@ -382,7 +383,7 @@ export default function Landing() {
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
               {sortedBreweries.map((brewery: any) => (
-                <BreweryCard key={brewery.id} brewery={brewery} distance={userLocation && brewery._distance !== Infinity ? brewery._distance : undefined} />
+                <BreweryCard key={brewery.id} brewery={brewery} distance={nearbyHasResults && brewery._distance != null && isFinite(brewery._distance) ? brewery._distance : undefined} />
               ))}
             </div>
           )}
