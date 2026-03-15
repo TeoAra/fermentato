@@ -169,12 +169,18 @@ export default function HomepageMap({ pubs, breweries, userLocation, isLoading }
             </div>
           )}
 
+          {!isVisible && (
+            <div className="w-full h-[400px] md:h-[500px] bg-slate-100 dark:bg-slate-700 flex items-center justify-center">
+              <Loader2 className="w-8 h-8 animate-spin text-amber-500 opacity-60" />
+            </div>
+          )}
+
           {isVisible && (
-            <div className="w-full h-[400px] md:h-[500px]">
+            <div className="w-full h-[400px] md:h-[500px]" style={{ background: "#e8e4dc" }}>
             <MapContainer
               center={center}
               zoom={zoom}
-              style={{ width: "100%", height: "100%" }}
+              style={{ width: "100%", height: "100%", background: "#e8e4dc" }}
               zoomControl={true}
               scrollWheelZoom={false}
             >

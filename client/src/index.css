@@ -349,4 +349,10 @@
 .leaflet-top,
 .leaflet-bottom       { z-index: 5 !important; }
 .leaflet-control      { z-index: 5 !important; }
+
+/* Prevent Leaflet container from showing a black void before tiles load */
+.leaflet-container {
+  background: #e8e4dc !important;
+}
+
 .dark .pac-item-query { color: hsl(40, 14%, 92%); }

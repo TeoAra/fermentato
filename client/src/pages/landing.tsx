@@ -310,7 +310,7 @@ export default function Landing() {
           <section>
             <HomepageMap
               pubs={Array.isArray(pubs) ? pubs : []}
-              breweries={Array.isArray(breweries) ? breweries : []}
+              breweries={Array.isArray(breweriesNearby) ? breweriesNearby : (Array.isArray(breweriesFallback) ? breweriesFallback : [])}
               userLocation={userLocation}
               isLoading={pubsLoading || breweriesLoading}
               onLocate={(loc) => {
