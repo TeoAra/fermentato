@@ -704,7 +704,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const random = req.query.random === 'true';
       const limit = req.query.limit ? parseInt(req.query.limit as string) : undefined;
       const result = await storage.getBreweriesWithBeerCount(limit, random);
-      res.setHeader('Cache-Control', 'public, max-age=300, stale-while-revalidate=60');
+      if (random) {
+        res.setHeader('Cache-Control', 'no-store');
+      } else {
+        res.setHeader('Cache-Control', 'public, max-age=300, stale-while-revalidate=60');
+      }
       res.json(result);
     } catch (error) {
       console.error("Error fetching breweries:", error);

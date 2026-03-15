@@ -61,12 +61,18 @@ export default function Home() {
   const { data: breweriesRaw, isLoading: breweriesLoading } = useQuery({
     queryKey: ["/api/breweries"],
     queryFn: () => fetch("/api/breweries?random=true&limit=40").then(res => res.json()),
-    staleTime: 5 * 60 * 1000,
+    staleTime: 0,           // always re-fetch on mount for fresh random results
+    gcTime: 2 * 60 * 1000, // keep in cache max 2 min between navigations
+    refetchOnMount: true,
+    refetchOnWindowFocus: false,
   });
-  // Show all breweries (with or without logo) for the discovery section
-  const breweries = Array.isArray(breweriesRaw)
-    ? breweriesRaw.slice(0, 12)
-    : [];
+  // Shuffle client-side for additional randomness, pick 12
+  const breweries = useMemo(() => {
+    if (!Array.isArray(breweriesRaw) || breweriesRaw.length === 0) return [];
+    return [...breweriesRaw]
+      .sort(() => Math.random() - 0.5)
+      .slice(0, 12);
+  }, [breweriesRaw]);
 
   const { data: taplistActivity = [] } = useQuery<any[]>({
     queryKey: ["/api/home/taplist-activity"],
