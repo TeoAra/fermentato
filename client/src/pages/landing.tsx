@@ -49,11 +49,20 @@ export default function Landing() {
     gcTime: 2 * 60 * 1000,
   });
 
-  // When location known: fetch nearest breweries server-side
+  // When location known: fetch nearest breweries server-side (4 for cards)
   const { data: breweriesNearby, isLoading: breweriesNearbyLoading } = useQuery({
     queryKey: ["/api/breweries/nearby", userLocation?.lat, userLocation?.lng],
     queryFn: () =>
       fetch(`/api/breweries/nearby?lat=${userLocation!.lat}&lng=${userLocation!.lng}&limit=4`).then(r => r.json()),
+    enabled: !!userLocation,
+    staleTime: 5 * 60 * 1000,
+  });
+
+  // Larger set for the map (up to 80 nearest when location available, otherwise all)
+  const { data: breweriesForMap } = useQuery({
+    queryKey: ["/api/breweries/nearby", userLocation?.lat, userLocation?.lng, "map"],
+    queryFn: () =>
+      fetch(`/api/breweries/nearby?lat=${userLocation!.lat}&lng=${userLocation!.lng}&limit=80`).then(r => r.json()),
     enabled: !!userLocation,
     staleTime: 5 * 60 * 1000,
   });
@@ -311,7 +320,7 @@ export default function Landing() {
           <section>
             <HomepageMap
               pubs={Array.isArray(pubs) ? pubs : []}
-              breweries={Array.isArray(breweriesNearby) ? breweriesNearby : (Array.isArray(breweriesFallback) ? breweriesFallback : [])}
+              breweries={Array.isArray(breweriesForMap) && breweriesForMap.length > 0 ? breweriesForMap : (Array.isArray(breweriesFallback) ? breweriesFallback : [])}
               userLocation={userLocation}
               isLoading={pubsLoading || breweriesLoading}
               onLocate={(loc) => {
