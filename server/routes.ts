@@ -717,6 +717,54 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
 
+  // Nearest breweries sorted by haversine distance (server-side)
+  app.get("/api/breweries/nearby", async (req, res) => {
+    try {
+      const lat = parseFloat(req.query.lat as string);
+      const lng = parseFloat(req.query.lng as string);
+      const limit = Math.min(parseInt(req.query.limit as string) || 4, 20);
+
+      if (isNaN(lat) || isNaN(lng)) {
+        return res.status(400).json({ message: "lat e lng sono obbligatori" });
+      }
+
+      // Haversine formula in PostgreSQL — only consider breweries with valid coordinates
+      const result = await db.execute(sql`
+        SELECT
+          b.id, b.name, b.location, b.region, b.country,
+          b.description, b.logo_url AS "logoUrl",
+          b.cover_image_url AS "coverImageUrl",
+          b.website_url AS "websiteUrl",
+          b.latitude, b.longitude,
+          COUNT(beer.id)::int AS "beerCount",
+          (6371 * acos(
+            LEAST(1.0,
+              cos(radians(${lat})) * cos(radians(b.latitude::float))
+              * cos(radians(b.longitude::float) - radians(${lng}))
+              + sin(radians(${lat})) * sin(radians(b.latitude::float))
+            )
+          )) AS "_distance"
+        FROM breweries b
+        LEFT JOIN beers beer ON beer.brewery_id = b.id
+        WHERE b.latitude IS NOT NULL
+          AND b.longitude IS NOT NULL
+          AND b.latitude::text != '0'
+          AND b.longitude::text != '0'
+          AND b.latitude::text != ''
+          AND b.longitude::text != ''
+        GROUP BY b.id
+        ORDER BY "_distance" ASC
+        LIMIT ${limit}
+      `);
+
+      res.setHeader('Cache-Control', 'no-store');
+      res.json(result.rows);
+    } catch (error: any) {
+      console.error("Error fetching nearby breweries:", error.message);
+      res.status(500).json({ message: "Errore nel recupero dei birrifici vicini" });
+    }
+  });
+
   // Beer routes
   app.get('/api/beers', async (req, res) => {
     try {

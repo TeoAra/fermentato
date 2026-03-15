@@ -41,10 +41,25 @@ export default function Landing() {
 
   const { data: pubs, isLoading: pubsLoading } = useQuery({ queryKey: ["/api/pubs"] });
 
-  const { data: breweries, isLoading: breweriesLoading } = useQuery({
-    queryKey: ["/api/breweries", "landing"],
-    queryFn: () => fetch("/api/breweries?limit=80").then(r => r.json()),
+  // Fallback: random breweries when no location
+  const { data: breweriesFallback, isLoading: breweriesFallbackLoading } = useQuery({
+    queryKey: ["/api/breweries", "landing-fallback"],
+    queryFn: () => fetch("/api/breweries?random=true&limit=4").then(r => r.json()),
+    enabled: locationStatus === 'denied' || locationStatus === 'idle',
+    staleTime: 0,
+    gcTime: 2 * 60 * 1000,
   });
+
+  // Primary: nearest breweries fetched server-side when location is known
+  const { data: breweriesNearby, isLoading: breweriesNearbyLoading } = useQuery({
+    queryKey: ["/api/breweries/nearby", userLocation?.lat, userLocation?.lng],
+    queryFn: () =>
+      fetch(`/api/breweries/nearby?lat=${userLocation!.lat}&lng=${userLocation!.lng}&limit=4`).then(r => r.json()),
+    enabled: !!userLocation,
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const breweriesLoading = userLocation ? breweriesNearbyLoading : breweriesFallbackLoading;
 
   const { data: globalStats } = useQuery<any>({ queryKey: ["/api/stats/global"] });
 
@@ -63,23 +78,13 @@ export default function Landing() {
       .slice(0, 3);
   }, [pubs, userLocation]);
 
+  // Server already sorted by distance — just use directly
   const sortedBreweries = useMemo(() => {
-    if (!Array.isArray(breweries)) return [];
-    if (!userLocation) {
-      const shuffled = [...breweries].sort(() => Math.random() - 0.5);
-      return shuffled.slice(0, 4);
+    if (userLocation) {
+      return Array.isArray(breweriesNearby) ? breweriesNearby : [];
     }
-    return [...breweries]
-      .map((b: any) => ({
-        ...b,
-        _distance: b.latitude && b.longitude &&
-          parseFloat(b.latitude) !== 0 && parseFloat(b.longitude) !== 0
-          ? haversineDistance(userLocation.lat, userLocation.lng, parseFloat(b.latitude), parseFloat(b.longitude))
-          : Infinity,
-      }))
-      .sort((a, b) => a._distance - b._distance)
-      .slice(0, 4);
-  }, [breweries, userLocation]);
+    return Array.isArray(breweriesFallback) ? breweriesFallback : [];
+  }, [userLocation, breweriesNearby, breweriesFallback]);
 
   const handleRequestLocation = () => {
     if (!navigator.geolocation) return;
