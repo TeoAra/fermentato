@@ -1,12 +1,19 @@
 {
-  "name": "Fermenta.to - Birra Artigianale Italiana",
+  "id": "to.fermenta.app",
+  "name": "Fermenta.to - Birra Artigianale",
   "short_name": "Fermenta.to",
-  "description": "Scopri pub, birrifici e birre artigianali italiane",
-  "start_url": "/",
+  "description": "Scopri pub, birrifici e birre artigianali. La community italiana del craft beer.",
+  "start_url": "/?utm_source=pwa",
+  "scope": "/",
   "display": "standalone",
+  "display_override": ["window-controls-overlay", "standalone"],
   "background_color": "#FFF7ED",
-  "theme_color": "#D97706",
+  "theme_color": "#C47A1E",
   "orientation": "portrait-primary",
+  "prefer_related_applications": false,
+  "lang": "it",
+  "dir": "ltr",
+  "categories": ["food", "lifestyle", "entertainment"],
   "icons": [
     {
       "src": "/icons/icon-192.png",
@@ -33,7 +40,36 @@
       "purpose": "maskable"
     }
   ],
-  "categories": ["food", "lifestyle"],
-  "lang": "it",
-  "dir": "ltr"
+  "shortcuts": [
+    {
+      "name": "Trova pub vicini",
+      "short_name": "Pub",
+      "description": "Cerca pub nella tua zona",
+      "url": "/explore/pubs?utm_source=pwa_shortcut",
+      "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Esplora birrifici",
+      "short_name": "Birrifici",
+      "description": "Scopri birrifici artigianali",
+      "url": "/explore/breweries?utm_source=pwa_shortcut",
+      "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Cerca birre",
+      "short_name": "Cerca",
+      "description": "Cerca birre artigianali",
+      "url": "/search?utm_source=pwa_shortcut",
+      "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192" }]
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "Fermenta.to - Home"
+    }
+  ]
 }
