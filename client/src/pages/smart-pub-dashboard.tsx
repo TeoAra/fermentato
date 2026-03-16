@@ -594,6 +594,8 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
       );
     }
 
+    if (status === 'gifted') return null;
+
     if (status === 'active') {
       return (
         <div className="mb-6 flex items-center justify-between gap-4 rounded-xl border border-blue-300 dark:border-blue-700 bg-blue-50 dark:bg-blue-900/20 px-4 py-3">
@@ -686,7 +688,11 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
         let icon = <Gift className="w-5 h-5 text-amber-500" />;
         let badgeEl = <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-amber-100 dark:bg-amber-900 text-amber-800 dark:text-amber-200">Prova gratuita</span>;
 
-        if (status === 'active') {
+        if (status === 'gifted') {
+          bgColor = 'bg-violet-50 dark:bg-violet-900/20 border-violet-200 dark:border-violet-800';
+          icon = <Crown className="w-5 h-5 text-violet-500" />;
+          badgeEl = <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-violet-100 dark:bg-violet-900 text-violet-800 dark:text-violet-200">Accesso fondatore ✦</span>;
+        } else if (status === 'active') {
           bgColor = 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800';
           icon = <BadgeCheck className="w-5 h-5 text-green-500" />;
           badgeEl = <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200">Abbonato ✓</span>;
@@ -716,6 +722,20 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
                     {badgeEl}
                   </div>
                   <div className="space-y-1 text-xs text-gray-600 dark:text-gray-400">
+                    {status === 'gifted' && (
+                      <>
+                        <div className="flex items-center gap-1.5">
+                          <Crown className="w-3.5 h-3.5 text-violet-500" />
+                          <span className="text-violet-700 dark:text-violet-300 font-medium">Accesso completo senza scadenza</span>
+                        </div>
+                        {expiresAt && expiresAt.getFullYear() < 2099 && (
+                          <div className="flex items-center gap-1.5">
+                            <CalendarDays className="w-3.5 h-3.5" />
+                            <span>Valido fino al <strong className="text-gray-800 dark:text-gray-200">{fmt(expiresAt)}</strong></span>
+                          </div>
+                        )}
+                      </>
+                    )}
                     {status === 'trial' && trialStartedAt && trialEndsAt && (
                       <>
                         <div className="flex items-center gap-1.5">
