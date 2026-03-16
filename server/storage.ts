@@ -842,13 +842,15 @@ export class DatabaseStorage implements IStorage {
     const categories = await db
       .select()
       .from(menuCategories)
-      .where(eq(menuCategories.pubId, pubId));
+      .where(eq(menuCategories.pubId, pubId))
+      .orderBy(asc(menuCategories.orderIndex), asc(menuCategories.id));
 
     const items = await db
       .select()
       .from(menuItems)
       .leftJoin(menuCategories, eq(menuItems.categoryId, menuCategories.id))
-      .where(eq(menuCategories.pubId, pubId));
+      .where(eq(menuCategories.pubId, pubId))
+      .orderBy(asc(menuItems.orderIndex), asc(menuItems.id));
 
     return categories.map(category => ({
       ...category,

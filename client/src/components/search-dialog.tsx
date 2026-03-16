@@ -55,9 +55,6 @@ export default function SearchDialog({ isOpen, onClose }: SearchDialogProps) {
       setDebouncedSearch("");
       setSelectedIndex(-1);
       setExpandedSections({});
-    } else {
-      // Focus input when dialog opens
-      setTimeout(() => inputRef.current?.focus(), 100);
     }
   }, [isOpen]);
 
