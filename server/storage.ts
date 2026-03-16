@@ -2087,6 +2087,13 @@ class StorageWrapper implements IStorage {
     );
   }
 
+  async removeBeerTasting(userId: string, beerId: number): Promise<void> {
+    return this.dbCall(
+      () => this.databaseStorage.removeBeerTasting(userId, beerId),
+      async () => { }
+    );
+  }
+
   async updateUserType(userId: string, userType: string): Promise<User> {
     return this.dbCall(
       () => this.databaseStorage.updateUserType(userId, userType),
