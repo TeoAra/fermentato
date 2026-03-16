@@ -7,8 +7,9 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Star, Edit3, Beer, Calendar, ChevronLeft, ChevronRight, Filter, X } from "lucide-react";
+import { Star, Edit3, Trash2, Beer, Calendar, ChevronLeft, ChevronRight, Filter, X } from "lucide-react";
 import { PubAutocomplete } from "./PubAutocomplete";
 import { Link } from "wouter";
 
@@ -24,6 +25,7 @@ export default function BeerTastingsEditor({ beerTastings }: BeerTastingsEditorP
   const [editRating, setEditRating] = useState(5);
   const [editFormat, setEditFormat] = useState("");
   const [selectedPubId, setSelectedPubId] = useState<number | undefined>();
+  const [deletingTasting, setDeletingTasting] = useState<any>(null);
 
   const [currentPage, setCurrentPage] = useState(1);
   const [perPage, setPerPage] = useState(5);
@@ -53,6 +55,21 @@ export default function BeerTastingsEditor({ beerTastings }: BeerTastingsEditorP
     },
     onError: () => {
       toast({ title: "Errore", description: "Errore durante l'aggiornamento", variant: "destructive" });
+    },
+  });
+
+  const deleteTastingMutation = useMutation({
+    mutationFn: async (beerId: number) =>
+      apiRequest(`/api/user/beer-tastings/${beerId}`, { method: "DELETE" }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/user/beer-tastings"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/user/stats"] });
+      setDeletingTasting(null);
+      setEditingTasting(null);
+      toast({ title: "Eliminata", description: "Degustazione rimossa dal tuo profilo" });
+    },
+    onError: () => {
+      toast({ title: "Errore", description: "Impossibile eliminare la degustazione", variant: "destructive" });
     },
   });
 
@@ -224,8 +241,8 @@ export default function BeerTastingsEditor({ beerTastings }: BeerTastingsEditorP
                       )}
                     </div>
                   </div>
-                  <div className="flex items-center gap-2 flex-shrink-0 ml-2">
-                    <div className="flex items-center">
+                  <div className="flex items-center gap-1 flex-shrink-0 ml-2">
+                    <div className="flex items-center mr-1">
                       {[1, 2, 3, 4, 5].map((star) => (
                         <Star
                           key={star}
@@ -241,8 +258,18 @@ export default function BeerTastingsEditor({ beerTastings }: BeerTastingsEditorP
                       size="sm"
                       variant="ghost"
                       onClick={() => openEditDialog(tasting)}
+                      title="Modifica"
                     >
                       <Edit3 className="w-4 h-4" />
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => setDeletingTasting(tasting)}
+                      title="Elimina"
+                      className="text-red-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20"
+                    >
+                      <Trash2 className="w-4 h-4" />
                     </Button>
                   </div>
                 </div>
@@ -284,6 +311,29 @@ export default function BeerTastingsEditor({ beerTastings }: BeerTastingsEditorP
           )}
         </CardContent>
       </Card>
+
+      {/* Delete confirmation dialog */}
+      <AlertDialog open={!!deletingTasting} onOpenChange={(open) => !open && setDeletingTasting(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Eliminare la degustazione?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Stai per rimuovere <strong>{deletingTasting?.beer?.name || 'questa birra'}</strong> dalle tue birre assaggiate.
+              L'operazione non è reversibile.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Annulla</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-red-600 hover:bg-red-700 text-white"
+              onClick={() => deletingTasting && deleteTastingMutation.mutate(deletingTasting.beerId || deletingTasting.beer?.id)}
+              disabled={deleteTastingMutation.isPending}
+            >
+              {deleteTastingMutation.isPending ? "Eliminando..." : "Elimina"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       {/* Edit Dialog */}
       <Dialog open={!!editingTasting} onOpenChange={() => setEditingTasting(null)}>
@@ -373,6 +423,17 @@ export default function BeerTastingsEditor({ beerTastings }: BeerTastingsEditorP
                     className="flex-1"
                   >
                     Annulla
+                  </Button>
+                </div>
+                <div className="pt-2 border-t">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="w-full text-red-500 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/20"
+                    onClick={() => setDeletingTasting(editingTasting)}
+                  >
+                    <Trash2 className="w-4 h-4 mr-2" />
+                    Elimina questa degustazione
                   </Button>
                 </div>
               </>
