@@ -841,21 +841,21 @@ export default function PubDetail() {
                 </TabsContent>
 
                 {/* Menu Tab */}
-                <TabsContent value="menu" className="space-y-6">
+                <TabsContent value="menu" className="space-y-3">
                   <div className="flex items-center justify-between">
-                    <h3 className="text-display-lg text-gray-900 dark:text-white flex items-center">
-                      <span className="mr-3 text-2xl">🍽️</span>
+                    <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 flex items-center gap-1.5">
+                      <span>🍽️</span>
                       Menu
                     </h3>
-                    <Badge variant="outline" className="bg-blue-50 dark:bg-blue-950 text-blue-800 dark:text-blue-200">
+                    <Badge variant="outline" className="text-xs bg-blue-50 dark:bg-blue-950 text-blue-700 dark:text-blue-300">
                       {Array.isArray(menu) ? menu.length : 0} categorie
                     </Badge>
                   </div>
                   
                   {menuLoading ? (
-                    <div className="space-y-4">
+                    <div className="space-y-2">
                       {[...Array(3)].map((_, i) => (
-                        <div key={i} className="skeleton rounded-2xl h-32"></div>
+                        <div key={i} className="skeleton rounded-xl h-12"></div>
                       ))}
                     </div>
                   ) : (

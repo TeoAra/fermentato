@@ -1,7 +1,6 @@
-import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
-import { ChefHat, Clock, Info } from "lucide-react";
+import { ChefHat, Info } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 
 interface LuppolinoMenuProps {
@@ -26,11 +25,9 @@ interface LuppolinoMenuProps {
 
 function InfoBoxCard({ text }: { text: string }) {
   return (
-    <div className="rounded-xl border-2 border-amber-300 dark:border-amber-600 bg-amber-50/80 dark:bg-amber-950/40 p-4 flex gap-3 items-start">
-      <div className="p-1.5 bg-amber-200 dark:bg-amber-800 rounded-lg flex-shrink-0 mt-0.5">
-        <Info className="w-4 h-4 text-amber-700 dark:text-amber-300" />
-      </div>
-      <p className="text-sm text-amber-900 dark:text-amber-200 leading-relaxed whitespace-pre-line">
+    <div className="rounded-lg border border-amber-200 dark:border-amber-700 bg-amber-50/80 dark:bg-amber-950/40 px-3 py-2 flex gap-2 items-start">
+      <Info className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400 flex-shrink-0 mt-0.5" />
+      <p className="text-xs text-amber-900 dark:text-amber-200 leading-relaxed whitespace-pre-line">
         {text}
       </p>
     </div>
@@ -44,158 +41,121 @@ export default function LuppolinoMenu({ menu, menuInfoBox }: LuppolinoMenuProps)
 
   if (!menu || menu.length === 0) {
     return (
-      <div className="text-center py-16">
-        <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-blue-500 to-indigo-600 mx-auto flex items-center justify-center mb-6">
-          <ChefHat className="w-8 h-8 text-white" />
-        </div>
-        <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">Menu in Preparazione</h3>
-        <p className="text-gray-600 dark:text-gray-400 max-w-sm mx-auto">
-          Il nostro team sta preparando un menu delizioso per te. Torna presto per scoprire le nostre specialità!
-        </p>
+      <div className="text-center py-8">
+        <ChefHat className="w-8 h-8 text-gray-400 mx-auto mb-3" />
+        <p className="text-sm text-gray-500 dark:text-gray-400">Menu in preparazione</p>
       </div>
     );
   }
 
   const formatAllergens = (allergenIds: string[] | null) => {
     if (!allergenIds || allergenIds.length === 0 || !Array.isArray(allergens)) return null;
-    
     const allergenMap = allergens.reduce((acc: any, allergen: any) => {
       acc[allergen.id.toString()] = allergen;
       return acc;
     }, {});
-    
     return allergenIds
       .map(id => allergenMap[id])
       .filter(Boolean)
-      .map((allergen: any) => ({
-        emoji: allergen.emoji || "⚠️",
-        label: allergen.name
-      }));
+      .map((allergen: any) => ({ emoji: allergen.emoji || "⚠️", label: allergen.name }));
   };
 
   return (
-    <div className="space-y-6">
-      {menuInfoBox && (
-        <InfoBoxCard text={menuInfoBox} />
-      )}
+    <div className="space-y-2">
+      {menuInfoBox && <InfoBoxCard text={menuInfoBox} />}
 
-      <Accordion type="multiple" className="space-y-4">
+      <Accordion type="multiple" className="space-y-1.5">
         {menu.map((category) => {
           const regularItems = category.items?.filter(item => !item.isInfoBox) || [];
           const infoBoxItems = category.items?.filter(item => item.isInfoBox) || [];
-          const hasItems = regularItems.length > 0;
 
           return (
-            <AccordionItem 
-              key={category.id} 
+            <AccordionItem
+              key={category.id}
               value={`category-${category.id}`}
-              className="glass-card rounded-2xl border border-gray-200 dark:border-gray-700 overflow-hidden"
+              className="rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden"
               data-testid={`menu-category-${category.id}`}
             >
-              <AccordionTrigger className="px-6 py-4 hover:no-underline hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
-                <div className="flex items-center justify-between w-full">
-                  <div className="text-left">
-                    <h3 className="text-xl md:text-2xl font-bold text-gray-900 dark:text-white mb-1">
-                      {category.name}
-                    </h3>
-                    {category.description && (
-                      <p className="text-sm text-gray-600 dark:text-gray-400 italic font-normal">
-                        {category.description}
-                      </p>
-                    )}
-                  </div>
-                  
+              <AccordionTrigger className="px-4 py-2.5 hover:no-underline hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
+                <div className="text-left">
+                  <span className="text-sm font-semibold text-gray-900 dark:text-white">
+                    {category.name}
+                  </span>
+                  {category.description && (
+                    <span className="text-xs text-gray-500 dark:text-gray-400 italic font-normal ml-2">
+                      {category.description}
+                    </span>
+                  )}
                 </div>
               </AccordionTrigger>
 
-              <AccordionContent className="px-6 pb-6">
-                <div className="grid gap-4 pt-4">
-                  {category.infoBox && (
-                    <InfoBoxCard text={category.infoBox} />
-                  )}
-
+              <AccordionContent className="px-3 pb-3">
+                <div className="space-y-1.5 pt-1.5">
+                  {category.infoBox && <InfoBoxCard text={category.infoBox} />}
                   {infoBoxItems.map((item) => (
                     <InfoBoxCard key={item.id} text={item.description || item.name} />
                   ))}
 
-                  {hasItems ? (
-                    <>
-                      {regularItems.map((item) => {
-                        const formattedAllergens = formatAllergens(item.allergens);
-                        
-                        return (
-                          <Card 
-                            key={item.id} 
-                            className="p-6 hover:shadow-lg transition-all duration-300 border-l-4 border-l-blue-500 bg-white dark:bg-gray-800"
-                            data-testid={`menu-item-${item.id}`}
-                          >
-                            <div className="flex flex-col md:flex-row gap-4">
-                              {item.imageUrl && (
-                                <div className="flex-shrink-0">
-                                  <img 
-                                    src={item.imageUrl} 
-                                    alt={item.name}
-                                    className="w-20 h-20 md:w-24 md:h-24 object-cover rounded-xl border-2 border-gray-200 dark:border-gray-700"
-                                  />
-                                </div>
-                              )}
-                              
-                              <div className="flex-1 space-y-3">
-                                <div className="flex justify-between items-start">
-                                  <h4 className="text-lg md:text-xl font-bold text-gray-900 dark:text-white">
-                                    {item.name}
-                                  </h4>
-                                  <div className="text-right">
-                                    <span className="text-lg md:text-xl font-bold text-blue-600 dark:text-blue-400">
-                                      €{typeof item.price === 'string' ? parseFloat(item.price).toFixed(2) : item.price}
-                                    </span>
-                                    {!item.isAvailable && (
-                                      <Badge variant="destructive" className="ml-2">
-                                        <Clock className="w-3 h-3 mr-1" />
-                                        Non Disponibile
-                                      </Badge>
-                                    )}
-                                  </div>
-                                </div>
-                                
-                                {item.description && (
-                                  <p className="text-gray-600 dark:text-gray-400 leading-relaxed text-sm md:text-base">
-                                    {item.description}
-                                  </p>
-                                )}
-                                
-                                {formattedAllergens && formattedAllergens.length > 0 && (
-                                  <div className="flex flex-wrap gap-2 pt-3 border-t border-gray-100 dark:border-gray-700">
-                                    <span className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mr-2">
-                                      Allergeni:
-                                    </span>
-                                    {formattedAllergens.map(({ emoji, label }, index) => (
-                                      <span 
-                                        key={index} 
-                                        className="inline-flex items-center gap-1 px-2 py-1 bg-yellow-50 dark:bg-yellow-950 text-yellow-800 dark:text-yellow-200 rounded-full text-xs font-medium border border-yellow-200 dark:border-yellow-800"
-                                        title={label}
-                                      >
-                                        <span className="text-sm">{emoji}</span>
-                                        <span className="hidden sm:inline">{label}</span>
-                                      </span>
-                                    ))}
-                                  </div>
+                  {regularItems.length > 0 ? (
+                    regularItems.map((item) => {
+                      const formattedAllergens = formatAllergens(item.allergens);
+                      return (
+                        <div
+                          key={item.id}
+                          className={`flex gap-3 px-2 py-2 rounded-lg border-l-2 border-l-amber-400 bg-white dark:bg-gray-800/50 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors ${!item.isAvailable ? 'opacity-50' : ''}`}
+                          data-testid={`menu-item-${item.id}`}
+                        >
+                          {item.imageUrl && (
+                            <img
+                              src={item.imageUrl}
+                              alt={item.name}
+                              className="w-12 h-12 object-cover rounded-lg flex-shrink-0"
+                            />
+                          )}
+                          <div className="flex-1 min-w-0">
+                            <div className="flex justify-between items-start gap-2">
+                              <div className="min-w-0">
+                                <span className="text-sm font-semibold text-gray-900 dark:text-white leading-tight">
+                                  {item.name}
+                                </span>
+                                {!item.isAvailable && (
+                                  <Badge variant="destructive" className="ml-1.5 text-[10px] px-1 py-0 h-4">
+                                    N/D
+                                  </Badge>
                                 )}
                               </div>
+                              <span className="text-sm font-bold text-amber-600 dark:text-amber-400 flex-shrink-0">
+                                €{typeof item.price === 'string' ? parseFloat(item.price).toFixed(2) : item.price}
+                              </span>
                             </div>
-                          </Card>
-                        );
-                      })}
-                    </>
+                            {item.description && (
+                              <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5 leading-snug">
+                                {item.description}
+                              </p>
+                            )}
+                            {formattedAllergens && formattedAllergens.length > 0 && (
+                              <div className="flex flex-wrap items-center gap-1 mt-1">
+                                <span className="text-[10px] font-medium text-gray-400 uppercase tracking-wide">
+                                  Allergeni:
+                                </span>
+                                {formattedAllergens.map(({ emoji, label }, index) => (
+                                  <span
+                                    key={index}
+                                    className="inline-flex items-center gap-0.5 px-1.5 py-0.5 bg-amber-50 dark:bg-amber-950/50 text-amber-800 dark:text-amber-200 rounded text-[10px] font-medium border border-amber-200 dark:border-amber-800"
+                                    title={label}
+                                  >
+                                    <span>{emoji}</span>
+                                    <span className="hidden sm:inline">{label}</span>
+                                  </span>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })
                   ) : infoBoxItems.length === 0 && !category.infoBox ? (
-                    <div className="text-center py-8">
-                      <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-gray-400 to-gray-500 mx-auto flex items-center justify-center mb-4">
-                        <ChefHat className="w-6 h-6 text-white" />
-                      </div>
-                      <p className="text-gray-500 dark:text-gray-400 italic">
-                        Categoria in allestimento
-                      </p>
-                    </div>
+                    <p className="text-xs text-gray-400 italic text-center py-3">Categoria in allestimento</p>
                   ) : null}
                 </div>
               </AccordionContent>
@@ -204,11 +164,9 @@ export default function LuppolinoMenu({ menu, menuInfoBox }: LuppolinoMenuProps)
         })}
       </Accordion>
 
-      <div className="text-center mt-8 pt-6 border-t border-gray-200 dark:border-gray-700">
-        <p className="text-xs text-gray-500 dark:text-gray-400">
-          Menu aggiornato regolarmente • Informazioni dettagliate sugli allergeni disponibili su richiesta
-        </p>
-      </div>
+      <p className="text-[10px] text-gray-400 dark:text-gray-500 text-center pt-2">
+        Informazioni dettagliate sugli allergeni disponibili su richiesta
+      </p>
     </div>
   );
 }
