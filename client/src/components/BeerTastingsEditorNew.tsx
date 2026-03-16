@@ -51,7 +51,7 @@ export default function BeerTastingsEditor({ beerTastings }: BeerTastingsEditorP
       queryClient.invalidateQueries({ queryKey: ["/api/user/beer-tastings"] });
       setEditingTasting(null);
       setSelectedPubId(undefined);
-      toast({ title: "Successo", description: "Degustazione aggiornata" });
+      toast({ title: "Successo", description: "Recensione aggiornata" });
     },
     onError: () => {
       toast({ title: "Errore", description: "Errore durante l'aggiornamento", variant: "destructive" });
@@ -66,10 +66,10 @@ export default function BeerTastingsEditor({ beerTastings }: BeerTastingsEditorP
       queryClient.invalidateQueries({ queryKey: ["/api/user/stats"] });
       setDeletingTasting(null);
       setEditingTasting(null);
-      toast({ title: "Eliminata", description: "Degustazione rimossa dal tuo profilo" });
+      toast({ title: "Eliminata", description: "Recensione rimossa dal tuo profilo" });
     },
     onError: () => {
-      toast({ title: "Errore", description: "Impossibile eliminare la degustazione", variant: "destructive" });
+      toast({ title: "Errore", description: "Impossibile eliminare la recensione", variant: "destructive" });
     },
   });
 
@@ -144,7 +144,7 @@ export default function BeerTastingsEditor({ beerTastings }: BeerTastingsEditorP
           <div className="flex flex-wrap items-center gap-2">
             <CardTitle className="flex items-center gap-2 flex-1 min-w-0">
               <Beer className="w-5 h-5 flex-shrink-0" />
-              <span className="truncate">Birre Assaggiate ({beerTastings?.length || 0})</span>
+              <span className="truncate">Recensioni ({beerTastings?.length || 0})</span>
             </CardTitle>
             <div className="flex items-center gap-2 flex-shrink-0">
               <Button
@@ -277,7 +277,7 @@ export default function BeerTastingsEditor({ beerTastings }: BeerTastingsEditorP
             </div>
           ) : (
             <p className="text-gray-500 dark:text-gray-400 text-center py-4">
-              {hasActiveFilters ? 'Nessuna birra trovata con questi filtri.' : 'Nessuna birra ancora assaggiata. Inizia a esplorare!'}
+              {hasActiveFilters ? 'Nessuna recensione trovata con questi filtri.' : 'Nessuna recensione ancora. Inizia a esplorare!'}
             </p>
           )}
 
@@ -316,9 +316,9 @@ export default function BeerTastingsEditor({ beerTastings }: BeerTastingsEditorP
       <AlertDialog open={!!deletingTasting} onOpenChange={(open) => !open && setDeletingTasting(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Eliminare la degustazione?</AlertDialogTitle>
+            <AlertDialogTitle>Eliminare la recensione?</AlertDialogTitle>
             <AlertDialogDescription>
-              Stai per rimuovere <strong>{deletingTasting?.beer?.name || 'questa birra'}</strong> dalle tue birre assaggiate.
+              Stai per rimuovere la recensione di <strong>{deletingTasting?.beer?.name || 'questa birra'}</strong>.
               L'operazione non è reversibile.
             </AlertDialogDescription>
           </AlertDialogHeader>
@@ -339,7 +339,7 @@ export default function BeerTastingsEditor({ beerTastings }: BeerTastingsEditorP
       <Dialog open={!!editingTasting} onOpenChange={() => setEditingTasting(null)}>
         <DialogContent className="max-w-md">
           <DialogHeader>
-            <DialogTitle>Modifica Degustazione</DialogTitle>
+            <DialogTitle>Modifica Recensione</DialogTitle>
           </DialogHeader>
           <div className="space-y-4 py-4">
             {editingTasting && (
@@ -433,7 +433,7 @@ export default function BeerTastingsEditor({ beerTastings }: BeerTastingsEditorP
                     onClick={() => setDeletingTasting(editingTasting)}
                   >
                     <Trash2 className="w-4 h-4 mr-2" />
-                    Elimina questa degustazione
+                    Elimina questa recensione
                   </Button>
                 </div>
               </>
