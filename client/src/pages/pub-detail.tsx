@@ -526,7 +526,7 @@ export default function PubDetail() {
     ? pubData.description.slice(0, 155)
     : pubData?.name
     ? `Scopri la taplist aggiornata di ${pubData.name}, le birre artigianali alla spina, il menù e gli orari di apertura su Fermenta.to.`
-    : "Fermenta.to — La piattaforma italiana per la birra artigianale.";
+    : "Fermenta.to — La piattaforma per gli amanti della birra artigianale.";
   const seoImage = pubData?.coverImageUrl || pubData?.logoUrl;
   const seoUrl = `https://fermenta.to/pub/${id}`;
 

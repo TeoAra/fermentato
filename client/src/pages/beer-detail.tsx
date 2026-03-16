@@ -390,7 +390,7 @@ export default function BeerDetail() {
     ? (beer as any).description.slice(0, 155)
     : beer?.name
     ? `Scopri ${beer.name}${beer.style ? `, una ${beer.style}` : ""} di ${(beer as any)?.brewery?.name ?? "birrificio artigianale"} su Fermenta.to.`
-    : "Fermenta.to — La piattaforma italiana per la birra artigianale.";
+    : "Fermenta.to — La piattaforma per gli amanti della birra artigianale.";
   const seoImage = beer?.imageUrl || (beer as any)?.bottleImageUrl;
   const seoUrl = `https://fermenta.to/beer/${id}`;
 

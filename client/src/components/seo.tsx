@@ -10,8 +10,8 @@ interface SEOProps {
 }
 
 export function SEO({ title, description, image, url, type = "website", noindex = false }: SEOProps) {
-  const defaultTitle = "Fermenta.to — Birra Artigianale Italiana";
-  const defaultDescription = "Scopri pub, birrifici e birre artigianali italiane. La piattaforma per gli amanti della birra craft.";
+  const defaultTitle = "Fermenta.to — Birra Artigianale";
+  const defaultDescription = "Scopri pub, birrifici e birre artigianali. La piattaforma per gli amanti della birra craft.";
   const defaultImage = "https://fermenta.to/og-image.jpg";
   const defaultUrl = "https://fermenta.to";
 

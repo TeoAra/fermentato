@@ -324,7 +324,7 @@ export default function BreweryDetail() {
     ? (brewery as any).description.slice(0, 155)
     : brewery?.name
     ? `Scopri tutte le birre artigianali di ${brewery.name} su Fermenta.to: stili, ABV, dove trovarle.`
-    : "Fermenta.to — La piattaforma italiana per la birra artigianale.";
+    : "Fermenta.to — La piattaforma per gli amanti della birra artigianale.";
   const seoImage = brewery?.coverImageUrl || brewery?.logoUrl;
   const seoUrl = `https://fermenta.to/brewery/${id}`;
 

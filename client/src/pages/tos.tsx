@@ -27,7 +27,7 @@ export default function TermsOfService() {
 
             <h2>2. Descrizione del Servizio</h2>
             <p>
-              Fermenta.to è una piattaforma dedicata alla scoperta di birre artigianali italiane, pub e birrifici. 
+              Fermenta.to è una piattaforma dedicata alla scoperta di birre artigianali, pub e birrifici. 
               Il Servizio consente agli utenti di:
             </p>
             <ul>

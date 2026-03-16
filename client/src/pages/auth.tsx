@@ -304,7 +304,7 @@ export default function AuthPage() {
               Fermenta.to
             </CardTitle>
             <CardDescription className="text-gray-600 dark:text-gray-400">
-              Scopri la birra artigianale italiana
+              Scopri la birra artigianale
             </CardDescription>
           </div>
         </CardHeader>

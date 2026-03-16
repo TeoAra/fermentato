@@ -148,7 +148,7 @@ export default function PubRegistration() {
             <h1 className="text-4xl font-bold text-secondary">Registra il tuo Pub</h1>
           </div>
           <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-            Unisciti a Fermenta.to e porta il tuo pub nel mondo della birra artigianale italiana. 
+            Unisciti a Fermenta.to e porta il tuo pub nel mondo della birra artigianale. 
             Gestisci facilmente la tua tap list e fai scoprire le tue birre agli appassionati.
           </p>
         </div>
