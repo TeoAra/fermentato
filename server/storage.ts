@@ -1313,8 +1313,10 @@ export class DatabaseStorage implements IStorage {
     return [];
   }
 
-  async removeBeerTasting(id: number): Promise<void> {
-    await db.delete(userBeerTastings).where(eq(userBeerTastings.id, id));
+  async removeBeerTasting(userId: string, beerId: number): Promise<void> {
+    await db.delete(userBeerTastings).where(
+      and(eq(userBeerTastings.userId, userId), eq(userBeerTastings.beerId, beerId))
+    );
   }
 
   async updateUserProfile(userId: string, updates: any): Promise<User> {
