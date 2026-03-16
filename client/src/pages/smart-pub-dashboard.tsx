@@ -62,7 +62,10 @@ import {
   ShieldOff,
   RefreshCw,
   AlertTriangle,
-  CheckCircle
+  CheckCircle,
+  CreditCard,
+  CalendarDays,
+  BadgeCheck
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { formatDistanceToNow } from "date-fns";
@@ -667,6 +670,121 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
           </div>
         </div>
       </motion.div>
+
+      {/* Abbonamento */}
+      {!isAdminMode && currentPub && (() => {
+        const status = currentPub.subscriptionStatus as string;
+        const trialEndsAt = currentPub.trialEndsAt ? new Date(currentPub.trialEndsAt) : null;
+        const expiresAt = currentPub.subscriptionExpiresAt ? new Date(currentPub.subscriptionExpiresAt) : null;
+        const now = new Date();
+        const trialStartedAt = trialEndsAt ? new Date(trialEndsAt.getTime() - 15 * 86400000) : null;
+        const daysLeft = trialEndsAt ? Math.max(0, Math.ceil((trialEndsAt.getTime() - now.getTime()) / 86400000)) : 0;
+        const trialExpired = status === 'trial' && trialEndsAt && trialEndsAt < now;
+        const fmt = (d: Date) => d.toLocaleDateString('it-IT', { day: '2-digit', month: 'long', year: 'numeric' });
+
+        let bgColor = 'bg-amber-50 dark:bg-amber-900/20 border-amber-200 dark:border-amber-800';
+        let icon = <Gift className="w-5 h-5 text-amber-500" />;
+        let badgeEl = <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-amber-100 dark:bg-amber-900 text-amber-800 dark:text-amber-200">Prova gratuita</span>;
+
+        if (status === 'active') {
+          bgColor = 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800';
+          icon = <BadgeCheck className="w-5 h-5 text-green-500" />;
+          badgeEl = <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200">Abbonato ✓</span>;
+        } else if (trialExpired) {
+          bgColor = 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800';
+          icon = <AlertTriangle className="w-5 h-5 text-red-500" />;
+          badgeEl = <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-red-100 dark:bg-red-900 text-red-700 dark:text-red-300">Prova scaduta</span>;
+        } else if (status === 'canceled' || status === 'none') {
+          bgColor = 'bg-gray-50 dark:bg-gray-800/50 border-gray-200 dark:border-gray-700';
+          icon = <CreditCard className="w-5 h-5 text-gray-400" />;
+          badgeEl = <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400">Non attivo</span>;
+        }
+
+        return (
+          <motion.div
+            className={`rounded-2xl border p-5 ${bgColor}`}
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.2 }}
+          >
+            <div className="flex items-start justify-between gap-4">
+              <div className="flex items-center gap-3">
+                {icon}
+                <div>
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="font-semibold text-gray-900 dark:text-white text-sm">Abbonamento</span>
+                    {badgeEl}
+                  </div>
+                  <div className="space-y-1 text-xs text-gray-600 dark:text-gray-400">
+                    {status === 'trial' && trialStartedAt && trialEndsAt && (
+                      <>
+                        <div className="flex items-center gap-1.5">
+                          <CalendarDays className="w-3.5 h-3.5" />
+                          <span>Inizio prova: <strong className="text-gray-800 dark:text-gray-200">{fmt(trialStartedAt)}</strong></span>
+                        </div>
+                        <div className="flex items-center gap-1.5">
+                          <CalendarDays className="w-3.5 h-3.5" />
+                          <span>
+                            {trialExpired
+                              ? <>Prova scaduta il <strong className="text-red-600 dark:text-red-400">{fmt(trialEndsAt)}</strong></>
+                              : <>Scade il <strong className="text-gray-800 dark:text-gray-200">{fmt(trialEndsAt)}</strong>
+                                  {daysLeft > 0 && <span className="ml-1 font-semibold text-amber-600 dark:text-amber-400">({daysLeft} {daysLeft === 1 ? 'giorno' : 'giorni'} rimasti)</span>}
+                                </>
+                            }
+                          </span>
+                        </div>
+                      </>
+                    )}
+                    {status === 'active' && expiresAt && (
+                      <>
+                        <div className="flex items-center gap-1.5">
+                          <CreditCard className="w-3.5 h-3.5" />
+                          <span>€65/anno IVA inclusa</span>
+                        </div>
+                        <div className="flex items-center gap-1.5">
+                          <CalendarDays className="w-3.5 h-3.5" />
+                          <span>Prossimo rinnovo: <strong className="text-gray-800 dark:text-gray-200">{fmt(expiresAt)}</strong></span>
+                        </div>
+                      </>
+                    )}
+                    {(status === 'none' || status === 'canceled') && (
+                      <span>Attiva l'abbonamento per rendere il pub visibile su Fermenta.to</span>
+                    )}
+                  </div>
+                </div>
+              </div>
+              <div className="flex flex-col gap-2 shrink-0">
+                {(status === 'trial' && !trialExpired) && (
+                  <>
+                    <Button size="sm" className="bg-amber-500 hover:bg-amber-600 text-white text-xs" onClick={() => window.location.href = '/attiva-pub'}>
+                      Abbonati — €65/anno
+                    </Button>
+                    <button
+                      className="text-xs text-red-500 hover:text-red-700 underline text-right"
+                      onClick={() => setShowCancelDialog(true)}
+                    >
+                      Annulla prova
+                    </button>
+                  </>
+                )}
+                {(trialExpired || status === 'none' || status === 'canceled') && (
+                  <Button size="sm" className="bg-amber-500 hover:bg-amber-600 text-white text-xs" onClick={() => window.location.href = '/attiva-pub'}>
+                    Abbonati — €65/anno
+                  </Button>
+                )}
+                {status === 'active' && (
+                  <button
+                    className="text-xs text-red-500 hover:text-red-700 underline text-right"
+                    onClick={() => setShowCancelDialog(true)}
+                  >
+                    Disdici
+                  </button>
+                )}
+              </div>
+            </div>
+          </motion.div>
+        );
+      })()}
 
       {/* Sharing & Tools */}
       <motion.div
