@@ -176,6 +176,16 @@ export default function Onboarding() {
             <p className="text-center text-xs text-muted-foreground mt-6">
               Puoi cambiare ruolo in qualsiasi momento dalle impostazioni
             </p>
+            <div className="text-center mt-3">
+              <button
+                onClick={() => {
+                  onboardingMutation.mutate({ role: "customer" });
+                }}
+                className="text-xs text-muted-foreground hover:text-foreground underline underline-offset-2 transition-colors"
+              >
+                Salta e vai al profilo
+              </button>
+            </div>
           </div>
         )}
 

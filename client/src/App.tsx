@@ -82,12 +82,7 @@ function Router() {
   // Track page views when routes change
   useAnalytics();
 
-  // Redirect to onboarding if needed (after social login)
-  useEffect(() => {
-    if (!isLoading && isAuthenticated && typedUser?.needsOnboarding && location !== "/onboarding") {
-      navigate("/onboarding");
-    }
-  }, [isLoading, isAuthenticated, typedUser?.needsOnboarding, location, navigate]);
+  // Note: Google OAuth new users now go directly to /dashboard (no onboarding redirect)
 
   return (
     <div className="min-h-screen bg-background text-foreground">

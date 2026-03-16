@@ -167,7 +167,7 @@ export async function setupAuth(app: Express) {
           }
           
           if (!user) {
-            // Create new user — flag for onboarding
+            // Create new user — go straight to dashboard, no orphan onboarding page
             const userId = nanoid();
             const [newUser] = await db.insert(users).values({
               id: userId,
@@ -179,7 +179,7 @@ export async function setupAuth(app: Express) {
               roles: ['customer'],
               activeRole: 'customer',
               isEmailVerified: true,
-              needsOnboarding: true,
+              needsOnboarding: false,
             }).returning();
             user = newUser;
           }
@@ -730,10 +730,11 @@ export async function setupAuth(app: Express) {
       passport.authenticate('google', { failureRedirect: '/login?error=google_auth_failed' }),
       (req, res) => {
         const user = req.user as User;
-        if (user?.needsOnboarding) {
-          return res.redirect('/onboarding');
+        const role = user?.activeRole || user?.userType;
+        if (role === 'admin') {
+          return res.redirect('/admin');
         }
-        res.redirect('/');
+        res.redirect('/dashboard');
       }
     );
   }
@@ -870,8 +871,15 @@ export async function setupAuth(app: Express) {
 
       const { hashedPassword: _, ...userOut } = updatedUser;
 
-      // For pub_owner: redirect to Stripe checkout (role is assigned after payment)
-      const redirectTo = role === 'pub_owner' ? '/attiva-pub?direct=1' : null;
+      // For pub_owner: redirect to Stripe checkout; for brewery: pending dashboard; for customer: dashboard
+      let redirectTo: string | null = null;
+      if (role === 'pub_owner') {
+        redirectTo = '/attiva-pub?direct=1';
+      } else if (role === 'brewery_owner') {
+        redirectTo = '/brewery-dashboard?pending=1';
+      } else {
+        redirectTo = '/dashboard';
+      }
       res.json({ user: userOut, message: 'Profilo completato!', redirectTo });
     } catch (error) {
       console.error('complete-onboarding error:', error);
