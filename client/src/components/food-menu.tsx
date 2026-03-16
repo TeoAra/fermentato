@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { AlertTriangle, Wheat, Milk, Egg, ChevronDown, ChevronRight } from "lucide-react";
@@ -21,10 +20,10 @@ interface FoodMenuProps {
 }
 
 const allergenIcons: Record<string, { icon: any; color: string; label: string }> = {
-  glutine: { icon: Wheat, color: "bg-yellow-100 text-yellow-800", label: "Glutine" },
-  lattosio: { icon: Milk, color: "bg-red-100 text-red-800", label: "Lattosio" },
-  uova: { icon: Egg, color: "bg-orange-100 text-orange-800", label: "Uova" },
-  default: { icon: AlertTriangle, color: "bg-gray-100 text-gray-800", label: "Allergeni" },
+  glutine: { icon: Wheat, color: "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300", label: "Glutine" },
+  lattosio: { icon: Milk, color: "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300", label: "Lattosio" },
+  uova: { icon: Egg, color: "bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-300", label: "Uova" },
+  default: { icon: AlertTriangle, color: "bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300", label: "Allergeni" },
 };
 
 export default function FoodMenu({ menu }: FoodMenuProps) {
@@ -32,104 +31,103 @@ export default function FoodMenu({ menu }: FoodMenuProps) {
 
   if (!menu || menu.length === 0) {
     return (
-      <div className="text-center py-8">
-        <p className="text-gray-500">Menu non disponibile</p>
+      <div className="text-center py-4">
+        <p className="text-sm text-gray-500">Menu non disponibile</p>
       </div>
     );
   }
 
-  const getAllergenInfo = (allergen: string) => {
-    return allergenIcons[allergen.toLowerCase()] || allergenIcons.default;
-  };
+  const getAllergenInfo = (allergen: string) =>
+    allergenIcons[allergen.toLowerCase()] || allergenIcons.default;
 
   const toggleCategory = (categoryId: number) => {
-    const newOpenCategories = new Set(openCategories);
-    if (newOpenCategories.has(categoryId)) {
-      newOpenCategories.delete(categoryId);
-    } else {
-      newOpenCategories.add(categoryId);
-    }
-    setOpenCategories(newOpenCategories);
+    const next = new Set(openCategories);
+    next.has(categoryId) ? next.delete(categoryId) : next.add(categoryId);
+    setOpenCategories(next);
   };
 
   return (
-    <div className="space-y-3">
-      <h3 className="text-xl sm:text-2xl font-bold text-secondary mb-4 sm:mb-6">Menu Cibo</h3>
-      
+    <div className="space-y-1.5">
+      <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wide mb-2">
+        Menu Cibo
+      </h3>
+
       {menu.map((category) => {
         const isOpen = openCategories.has(category.id);
         return (
           <Collapsible key={category.id} open={isOpen} onOpenChange={() => toggleCategory(category.id)}>
+            {/* Category header */}
             <CollapsibleTrigger className="w-full">
-              <Card className="cursor-pointer hover:shadow-md transition-shadow">
-                <div className="p-3 sm:p-4 flex items-center justify-between">
-                  <div className="text-left flex-1">
-                    <h4 className="text-lg sm:text-xl font-semibold text-secondary">
-                      {category.name}
-                    </h4>
-                    {category.description && (
-                      <p className="text-gray-600 text-sm mt-1">{category.description}</p>
-                    )}
-                    <p className="text-xs sm:text-sm text-gray-500 mt-1">
-                      {category.items.length} {category.items.length === 1 ? 'piatto' : 'piatti'}
-                    </p>
-                  </div>
-                  <div className="ml-4 flex-shrink-0">
-                    {isOpen ? (
-                      <ChevronDown className="w-5 h-5 text-gray-500" />
-                    ) : (
-                      <ChevronRight className="w-5 h-5 text-gray-500" />
-                    )}
-                  </div>
+              <div className="flex items-center justify-between px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors cursor-pointer">
+                <div className="text-left">
+                  <span className="text-sm font-semibold text-gray-800 dark:text-gray-200">
+                    {category.name}
+                  </span>
+                  {category.description && (
+                    <span className="text-xs text-gray-500 ml-2">{category.description}</span>
+                  )}
                 </div>
-              </Card>
+                <div className="flex items-center gap-2 ml-3 flex-shrink-0">
+                  <span className="text-xs text-gray-400">
+                    {category.items.length} {category.items.length === 1 ? "piatto" : "piatti"}
+                  </span>
+                  {isOpen
+                    ? <ChevronDown className="w-4 h-4 text-gray-400" />
+                    : <ChevronRight className="w-4 h-4 text-gray-400" />}
+                </div>
+              </div>
             </CollapsibleTrigger>
-            
+
+            {/* Items */}
             <CollapsibleContent>
-              <div className="mt-2 space-y-3">
+              <div className="mt-1 space-y-1 ml-2 pl-2 border-l-2 border-gray-200 dark:border-gray-700">
                 {category.items.map((item) => (
-                  <Card key={item.id} className="p-3 sm:p-4 ml-2 sm:ml-4 border-l-4 border-l-primary/20">
-                    <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-2 sm:gap-4">
-                      <div className="flex-1">
-                        <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2 mb-2">
-                          <h5 className="font-semibold text-base sm:text-lg">{item.name}</h5>
-                          {!item.isAvailable && (
-                            <Badge variant="destructive" className="text-xs w-fit">Non Disponibile</Badge>
-                          )}
-                        </div>
-                        
-                        {item.description && (
-                          <p className="text-gray-600 text-sm mb-2">{item.description}</p>
-                        )}
-                        
-                        {item.allergens && item.allergens.length > 0 && (
-                          <div className="flex flex-wrap gap-1 sm:gap-2 mb-2">
-                            {item.allergens.map((allergen) => {
-                              const allergenInfo = getAllergenInfo(allergen);
-                              const Icon = allergenInfo.icon;
-                              
-                              return (
-                                <Badge 
-                                  key={allergen} 
-                                  variant="outline"
-                                  className={`inline-flex items-center px-2 py-1 rounded-full text-xs ${allergenInfo.color}`}
-                                >
-                                  <Icon className="w-3 h-3 mr-1" />
-                                  {allergenInfo.label}
-                                </Badge>
-                              );
-                            })}
-                          </div>
-                        )}
-                      </div>
-                      
-                      <div className="flex-shrink-0 text-right">
-                        <span className="text-lg sm:text-xl font-bold text-primary">
-                          €{item.price}
+                  <div
+                    key={item.id}
+                    className={`flex items-start justify-between gap-2 px-2 py-1.5 rounded-md ${
+                      item.isAvailable
+                        ? "hover:bg-gray-50 dark:hover:bg-gray-800/50"
+                        : "opacity-50"
+                    }`}
+                  >
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        <span className="text-sm font-medium text-gray-800 dark:text-gray-200 leading-tight">
+                          {item.name}
                         </span>
+                        {!item.isAvailable && (
+                          <Badge variant="destructive" className="text-[10px] px-1 py-0 h-4">
+                            N/D
+                          </Badge>
+                        )}
                       </div>
+                      {item.description && (
+                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5 leading-snug">
+                          {item.description}
+                        </p>
+                      )}
+                      {item.allergens && item.allergens.length > 0 && (
+                        <div className="flex flex-wrap gap-1 mt-1">
+                          {item.allergens.map((allergen) => {
+                            const info = getAllergenInfo(allergen);
+                            const Icon = info.icon;
+                            return (
+                              <span
+                                key={allergen}
+                                className={`inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[10px] font-medium ${info.color}`}
+                              >
+                                <Icon className="w-2.5 h-2.5" />
+                                {info.label}
+                              </span>
+                            );
+                          })}
+                        </div>
+                      )}
                     </div>
-                  </Card>
+                    <span className="text-sm font-bold text-amber-600 dark:text-amber-400 flex-shrink-0 mt-0.5">
+                      €{item.price}
+                    </span>
+                  </div>
                 ))}
               </div>
             </CollapsibleContent>
