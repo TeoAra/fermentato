@@ -8,6 +8,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useState, useEffect } from "react";
 import { initGA } from "./lib/analytics";
 import { useAnalytics } from "./hooks/use-analytics";
+import { usePushBadge } from "@/hooks/use-push-badge";
 import Header from "@/components/header";
 import { PwaInstallPrompt, PushNotificationPrompt, AutoPushSubscriber } from "@/components/pwa-prompt";
 
@@ -172,6 +173,9 @@ function Router() {
 }
 
 function App() {
+  // Refresh notification badge immediately when a push arrives
+  usePushBadge();
+
   // Initialize Google Analytics when app loads
   useEffect(() => {
     // Verify required environment variable is present

@@ -120,6 +120,11 @@ self.addEventListener('push', (event) => {
       requireInteraction: false,
       silent: !!data.silent,
       data: { url: data.url || '/' },
+    }).then(() => {
+      // Notify all open tabs so they can refresh the unread badge immediately
+      return self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clients) => {
+        clients.forEach((client) => client.postMessage({ type: 'PUSH_RECEIVED' }));
+      });
     })
   );
 });
