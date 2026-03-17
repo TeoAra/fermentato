@@ -511,8 +511,7 @@ export default function BeerDetail() {
                                 <span key={b.id} className="inline-flex items-center gap-1">
                                   {i > 0 && <span className="text-white/50 text-sm">×</span>}
                                   <Link href={`/brewery/${b.id}`}>
-                                    <span className="inline-flex items-center gap-1 text-purple-300 hover:text-purple-200 transition-colors cursor-pointer text-base font-medium">
-                                      {b.logoUrl && <img src={b.logoUrl} alt="" className="w-5 h-5 rounded-full object-cover" />}
+                                    <span className="text-purple-300 hover:text-purple-200 transition-colors cursor-pointer text-base font-medium">
                                       {b.name}
                                     </span>
                                   </Link>

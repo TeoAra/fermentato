@@ -622,19 +622,10 @@ export default function BreweryDetail() {
                             {beer.collaboratingBreweries.map(b => (
                               <Link key={b.id} href={`/brewery/${b.id}`}>
                                 <span className="inline-flex items-center gap-1 text-xs font-semibold text-purple-700 dark:text-purple-300 hover:underline">
-                                  {b.logoUrl && <img src={b.logoUrl} alt="" className="w-4 h-4 rounded-full object-cover" />}
-                                  <Building2 className="w-3 h-3" />
                                   {b.name}
                                 </span>
                               </Link>
                             ))}
-                          </div>
-                        )}
-                        
-                        {/* If this is a collab beer from another brewery, show origin */}
-                        {beer.isCollabBeer && (
-                          <div className="mt-2 text-xs text-purple-500 dark:text-purple-400 italic">
-                            Birra in collaborazione
                           </div>
                         )}
                         
