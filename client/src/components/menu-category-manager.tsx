@@ -71,7 +71,8 @@ export default function MenuCategoryManager({ pubId, categories }: MenuCategoryM
   const [isAddInfoBoxOpen, setIsAddInfoBoxOpen] = useState(false);
   const [infoBoxCategoryId, setInfoBoxCategoryId] = useState<number | null>(null);
   const [infoBoxText, setInfoBoxText] = useState('');
-  const [selectedCategoryId, setSelectedCategoryId] = useState<number | null>(null);
+  const [selectedCategoryIds, setSelectedCategoryIds] = useState<number[]>([]);
+  const [isSubmittingProduct, setIsSubmittingProduct] = useState(false);
   const [expandedCategories, setExpandedCategories] = useState<Set<number>>(new Set());
   const [editingProduct, setEditingProduct] = useState<any>(null);
   const [isEditProductOpen, setIsEditProductOpen] = useState(false);
@@ -98,7 +99,9 @@ export default function MenuCategoryManager({ pubId, categories }: MenuCategoryM
     description: '',
     price: '',
     isVisible: true,
-    allergens: []
+    allergens: [],
+    isVegetarian: false,
+    isSpicy: false,
   });
 
   // Reset form
@@ -246,8 +249,8 @@ export default function MenuCategoryManager({ pubId, categories }: MenuCategoryM
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/pubs", pubId, "menu"] });
       setIsAddItemOpen(false);
-      setSelectedCategoryId(null);
-      setItemForm({ name: '', description: '', price: '', isVisible: true, allergens: [] });
+      setSelectedCategoryIds([]);
+      setItemForm({ name: '', description: '', price: '', isVisible: true, allergens: [], isVegetarian: false, isSpicy: false });
       toast({ title: "✅ Prodotto aggiunto!" });
     },
     onError: () => {
@@ -860,7 +863,7 @@ export default function MenuCategoryManager({ pubId, categories }: MenuCategoryM
                                   size="sm"
                                   variant="outline"
                                   onClick={() => {
-                                    setSelectedCategoryId(category.id);
+                                    setSelectedCategoryIds([category.id]);
                                     setIsAddItemOpen(true);
                                   }}
                                   className="text-green-600 border-green-200 hover:bg-green-50"
@@ -959,6 +962,31 @@ export default function MenuCategoryManager({ pubId, categories }: MenuCategoryM
                 selectedAllergens={editingProduct.allergens || []}
                 onAllergensChange={(allergens) => setEditingProduct({ ...editingProduct, allergens })}
               />
+              {/* Vegetarian / Spicy toggles */}
+              <div className="flex gap-3">
+                <button
+                  type="button"
+                  onClick={() => setEditingProduct({ ...editingProduct, isVegetarian: !editingProduct.isVegetarian })}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-sm font-medium transition-colors ${
+                    editingProduct.isVegetarian
+                      ? 'bg-green-100 border-green-400 text-green-800 dark:bg-green-900/40 dark:text-green-300'
+                      : 'border-gray-300 text-gray-500 hover:border-green-400 hover:text-green-700'
+                  }`}
+                >
+                  🌿 Vegetariano
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setEditingProduct({ ...editingProduct, isSpicy: !editingProduct.isSpicy })}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-sm font-medium transition-colors ${
+                    editingProduct.isSpicy
+                      ? 'bg-red-100 border-red-400 text-red-800 dark:bg-red-900/40 dark:text-red-300'
+                      : 'border-gray-300 text-gray-500 hover:border-red-400 hover:text-red-700'
+                  }`}
+                >
+                  🌶️ Piccante
+                </button>
+              </div>
               <div className="flex justify-end space-x-2">
                 <Button variant="outline" onClick={() => setIsEditProductOpen(false)}>Annulla</Button>
                 <Button onClick={() => {
@@ -968,7 +996,9 @@ export default function MenuCategoryManager({ pubId, categories }: MenuCategoryM
                       name: editingProduct.name,
                       price: editingProduct.price,
                       description: editingProduct.description,
-                      allergens: editingProduct.allergens
+                      allergens: editingProduct.allergens,
+                      isVegetarian: editingProduct.isVegetarian ?? false,
+                      isSpicy: editingProduct.isSpicy ?? false,
                     }
                   });
                 }}>Salva</Button>
@@ -982,27 +1012,41 @@ export default function MenuCategoryManager({ pubId, categories }: MenuCategoryM
       <Dialog open={isAddItemOpen} onOpenChange={(open) => {
         setIsAddItemOpen(open);
         if (!open) {
-          setSelectedCategoryId(null);
-          setItemForm({ name: '', description: '', price: '', isVisible: true, allergens: [] });
+          setSelectedCategoryIds([]);
+          setItemForm({ name: '', description: '', price: '', isVisible: true, allergens: [], isVegetarian: false, isSpicy: false });
         }
       }}>
         <DialogContent className="sm:max-w-md" onOpenAutoFocus={(e) => e.preventDefault()}>
           <DialogHeader>
             <DialogTitle>Aggiungi Prodotto</DialogTitle>
           </DialogHeader>
-          <div className="space-y-4">
+          <div className="space-y-4 max-h-[70vh] overflow-y-auto pr-1">
+            {/* Multi-category selector */}
             <div>
-              <Label>Categoria</Label>
-              <select
-                className="w-full p-2 border rounded-md"
-                value={selectedCategoryId || ""}
-                onChange={(e) => setSelectedCategoryId(parseInt(e.target.value))}
-              >
-                <option value="">Seleziona categoria...</option>
-                {categories.map((cat) => (
-                  <option key={cat.id} value={cat.id}>{cat.name}</option>
-                ))}
-              </select>
+              <Label className="text-sm font-medium">Categorie <span className="text-gray-400 font-normal">(seleziona una o più)</span></Label>
+              <div className="mt-1.5 border rounded-md divide-y max-h-36 overflow-y-auto">
+                {categories.map((cat) => {
+                  const checked = selectedCategoryIds.includes(cat.id);
+                  return (
+                    <label
+                      key={cat.id}
+                      className={`flex items-center gap-2.5 px-3 py-2 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors ${checked ? 'bg-green-50 dark:bg-green-900/20' : ''}`}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={checked}
+                        onChange={() => {
+                          setSelectedCategoryIds(prev =>
+                            prev.includes(cat.id) ? prev.filter(id => id !== cat.id) : [...prev, cat.id]
+                          );
+                        }}
+                        className="accent-green-600 w-4 h-4"
+                      />
+                      <span className="text-sm text-gray-900 dark:text-white">{cat.name}</span>
+                    </label>
+                  );
+                })}
+              </div>
             </div>
             <div>
               <Label>Nome Prodotto</Label>
@@ -1031,19 +1075,71 @@ export default function MenuCategoryManager({ pubId, categories }: MenuCategoryM
                 rows={3}
               />
             </div>
+            {/* Vegetarian / Spicy toggles */}
+            <div className="flex gap-3">
+              <button
+                type="button"
+                onClick={() => setItemForm({ ...itemForm, isVegetarian: !itemForm.isVegetarian })}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-sm font-medium transition-colors ${
+                  itemForm.isVegetarian
+                    ? 'bg-green-100 border-green-400 text-green-800 dark:bg-green-900/40 dark:text-green-300'
+                    : 'border-gray-300 text-gray-500 hover:border-green-400 hover:text-green-700'
+                }`}
+              >
+                🌿 Vegetariano
+              </button>
+              <button
+                type="button"
+                onClick={() => setItemForm({ ...itemForm, isSpicy: !itemForm.isSpicy })}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-sm font-medium transition-colors ${
+                  itemForm.isSpicy
+                    ? 'bg-red-100 border-red-400 text-red-800 dark:bg-red-900/40 dark:text-red-300'
+                    : 'border-gray-300 text-gray-500 hover:border-red-400 hover:text-red-700'
+                }`}
+              >
+                🌶️ Piccante
+              </button>
+            </div>
             <AllergenSelector
               selectedAllergens={itemForm.allergens}
               onAllergensChange={(allergens) => setItemForm({ ...itemForm, allergens })}
             />
             <div className="flex justify-end space-x-2">
               <Button variant="outline" onClick={() => setIsAddItemOpen(false)}>Annulla</Button>
-              <Button onClick={() => {
-                if (!selectedCategoryId) {
-                  toast({ title: "Seleziona una categoria", variant: "destructive" });
-                  return;
-                }
-                addItemMutation.mutate({ ...itemForm, categoryId: selectedCategoryId });
-              }}>Aggiungi</Button>
+              <Button
+                disabled={isSubmittingProduct}
+                onClick={async () => {
+                  if (selectedCategoryIds.length === 0) {
+                    toast({ title: "Seleziona almeno una categoria", variant: "destructive" });
+                    return;
+                  }
+                  if (!itemForm.name.trim()) {
+                    toast({ title: "Inserisci il nome del prodotto", variant: "destructive" });
+                    return;
+                  }
+                  setIsSubmittingProduct(true);
+                  const snapshot = { ...itemForm };
+                  const catIds = [...selectedCategoryIds];
+                  try {
+                    await Promise.all(
+                      catIds.map(catId =>
+                        apiRequest(`/api/pubs/${pubId}/menu-items`, { method: 'POST' }, { ...snapshot, categoryId: catId })
+                      )
+                    );
+                    queryClient.invalidateQueries({ queryKey: ["/api/pubs", pubId, "menu"] });
+                    setIsAddItemOpen(false);
+                    setSelectedCategoryIds([]);
+                    setItemForm({ name: '', description: '', price: '', isVisible: true, allergens: [], isVegetarian: false, isSpicy: false });
+                    toast({ title: catIds.length > 1 ? `✅ Prodotto aggiunto in ${catIds.length} categorie!` : "✅ Prodotto aggiunto!" });
+                  } catch {
+                    toast({ title: "❌ Errore", description: "Impossibile aggiungere il prodotto", variant: "destructive" });
+                  } finally {
+                    setIsSubmittingProduct(false);
+                  }
+                }}
+              >
+                {isSubmittingProduct ? 'Aggiunta...' : 'Aggiungi'}
+              </Button>
             </div>
           </div>
         </DialogContent>
