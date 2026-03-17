@@ -540,6 +540,34 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Dedicated endpoint to save collaboration breweries for a beer
+  app.put("/api/beers/:id/collaborations", isAuthenticated, async (req: any, res) => {
+    try {
+      const beerId = parseInt(req.params.id);
+      const { breweryIds } = req.body;
+      if (!Array.isArray(breweryIds)) {
+        return res.status(400).json({ message: "breweryIds must be an array" });
+      }
+      await db.delete(beerCollaborations).where(eq(beerCollaborations.beerId, beerId));
+      const ids = breweryIds.map(Number).filter(n => !isNaN(n));
+      console.log(`[PUT /api/beers/${beerId}/collaborations] saving ids:`, ids);
+      for (const brewId of ids) {
+        await db.insert(beerCollaborations).values({ beerId, breweryId: brewId }).onConflictDoNothing();
+      }
+      try {
+        await db.execute(sql`UPDATE beers SET is_collaboration = ${ids.length > 0} WHERE id = ${beerId}`);
+      } catch { /* column may not exist */ }
+      const saved = await db.select({ id: breweries.id, name: breweries.name, logoUrl: breweries.logoUrl })
+        .from(beerCollaborations)
+        .innerJoin(breweries, eq(beerCollaborations.breweryId, breweries.id))
+        .where(eq(beerCollaborations.beerId, beerId));
+      res.json(saved);
+    } catch (error) {
+      console.error("Error saving beer collaborations:", error);
+      res.status(500).json({ message: "Failed to save beer collaborations" });
+    }
+  });
+
   // Get all beers (public endpoint for browsing catalog)
   app.get("/api/beers", async (req, res) => {
     try {
@@ -2802,6 +2830,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (collaborationBreweryIds !== undefined) {
         await db.delete(beerCollaborations).where(eq(beerCollaborations.beerId, beerId));
         const ids = Array.isArray(collaborationBreweryIds) ? collaborationBreweryIds : [];
+        console.log(`[admin/beers PATCH] beer ${beerId} collab ids:`, ids);
         for (const brewId of ids) {
           await db.insert(beerCollaborations).values({ beerId, breweryId: Number(brewId) }).onConflictDoNothing();
         }
@@ -4003,8 +4032,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!user?.breweryId) {
         return res.status(403).json({ message: "Non sei associato a nessun birrificio" });
       }
-      const beerData = { ...req.body, breweryId: user.breweryId };
+      const { collaborationBreweryIds, isCollaboration, ...bodyData } = req.body;
+      const beerData = { ...bodyData, breweryId: user.breweryId };
       const beer = await storage.createBeer(beerData);
+      const collabIds = Array.isArray(collaborationBreweryIds) ? collaborationBreweryIds : [];
+      if (collabIds.length > 0) {
+        for (const brewId of collabIds) {
+          await db.insert(beerCollaborations).values({ beerId: beer.id, breweryId: Number(brewId) }).onConflictDoNothing();
+        }
+        try {
+          await db.execute(sql`UPDATE beers SET is_collaboration = true WHERE id = ${beer.id}`);
+        } catch { /* column may not exist on older DB */ }
+      }
       res.status(201).json(beer);
     } catch (error) {
       console.error("Error creating beer:", error);
@@ -4016,17 +4055,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const userId = (req.user as any).id;
       const user = await storage.getUser(userId);
-      if (!user?.breweryId) {
+      const effectiveRole = user?.activeRole || user?.userType;
+      if (!user?.breweryId && effectiveRole !== 'admin') {
         return res.status(403).json({ message: "Non sei associato a nessun birrificio" });
       }
       const beerId = parseInt(req.params.id);
       const beer = await storage.getBeer(beerId);
-      if (!beer || beer.breweryId !== user.breweryId) {
+      if (!beer || (beer.breweryId !== user?.breweryId && effectiveRole !== 'admin')) {
         return res.status(403).json({ message: "Non puoi modificare questa birra" });
       }
-      const updated = await storage.updateBeer(beerId, req.body);
-      const newImg = req.body.logoUrl || req.body.logo_url || req.body.imageUrl || req.body.image_url;
+      const { collaborationBreweryIds, isCollaboration, ...beerData } = req.body;
+      const updated = await storage.updateBeer(beerId, beerData);
+      const newImg = beerData.logoUrl || beerData.logo_url || beerData.imageUrl || beerData.image_url;
       if (newImg) clipIndexBeer(beerId, newImg);
+      // Handle collaboration breweries
+      if (collaborationBreweryIds !== undefined) {
+        await db.delete(beerCollaborations).where(eq(beerCollaborations.beerId, beerId));
+        const ids = Array.isArray(collaborationBreweryIds) ? collaborationBreweryIds : [];
+        console.log(`[brewery/beers PATCH] beer ${beerId} collab ids:`, ids);
+        for (const brewId of ids) {
+          await db.insert(beerCollaborations).values({ beerId, breweryId: Number(brewId) }).onConflictDoNothing();
+        }
+        try {
+          await db.execute(sql`UPDATE beers SET is_collaboration = ${ids.length > 0} WHERE id = ${beerId}`);
+        } catch { /* column may not exist on older DB */ }
+      }
       res.json(updated);
     } catch (error) {
       console.error("Error updating beer:", error);

@@ -130,6 +130,7 @@ export default function BeerDetail() {
   const [reportDialogReviewId, setReportDialogReviewId] = useState<number | null>(null);
   const [reportReason, setReportReason] = useState("inappropriato");
   const [reportDescription, setReportDescription] = useState("");
+  const [isSavingBeer, setIsSavingBeer] = useState(false);
   const [editForm, setEditForm] = useState({
     name: '',
     style: '',
@@ -171,20 +172,6 @@ export default function BeerDetail() {
     enabled: !!id,
   });
   
-  const updateBeerMutation = useMutation({
-    mutationFn: async (updates: Record<string, any>) => {
-      return apiRequest(`/api/admin/beers/${id}`, { method: 'PATCH' }, updates);
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/beers", id] });
-      queryClient.invalidateQueries({ queryKey: ["/api/beers", id, "collaborations"] });
-      setIsEditDialogOpen(false);
-      toast({ title: "Birra aggiornata con successo" });
-    },
-    onError: (err: any) => {
-      toast({ title: "Errore nell'aggiornamento", description: err?.message, variant: "destructive" });
-    },
-  });
   
   const openEditDialog = async () => {
     if (beer) {
@@ -217,7 +204,10 @@ export default function BeerDetail() {
     }
   };
   
-  const handleSaveEdit = () => {
+
+  const handleSaveEdit = async () => {
+    const collabIds = editForm.isCollaboration ? editCollabBreweries.map(b => b.id) : [];
+    console.log('[BeerEdit] isCollaboration:', editForm.isCollaboration, 'collabBreweries:', editCollabBreweries, 'ids:', collabIds);
     const updates: Record<string, any> = {
       name: editForm.name,
       style: editForm.style,
@@ -229,13 +219,29 @@ export default function BeerDetail() {
       bottleImageUrl: editForm.bottleImageUrl || null,
       isGlutenFree: editForm.isGlutenFree,
       isAlcoholFree: editForm.isAlcoholFree,
-      isCollaboration: editForm.isCollaboration,
-      collaborationBreweryIds: editForm.isCollaboration ? editCollabBreweries.map(b => b.id) : [],
     };
     if (editForm.ibu) {
       updates.ibu = parseInt(editForm.ibu);
     }
-    updateBeerMutation.mutate(updates);
+    setIsSavingBeer(true);
+    try {
+      await Promise.all([
+        apiRequest(`/api/admin/beers/${id}`, { method: 'PATCH' }, updates),
+        apiRequest(`/api/beers/${id}/collaborations`, { method: 'PUT' }, { breweryIds: collabIds }),
+      ]);
+      queryClient.invalidateQueries({ queryKey: ["/api/beers", id] });
+      queryClient.invalidateQueries({ queryKey: ["/api/beers", id, "collaborations"] });
+      collabIds.forEach((bid: number) => {
+        queryClient.invalidateQueries({ queryKey: ["/api/breweries", String(bid)] });
+        queryClient.invalidateQueries({ queryKey: ["/api/breweries", bid] });
+      });
+      setIsEditDialogOpen(false);
+      toast({ title: "Birra aggiornata con successo" });
+    } catch (err: any) {
+      toast({ title: "Errore nell'aggiornamento", description: err?.message, variant: "destructive" });
+    } finally {
+      setIsSavingBeer(false);
+    }
   };
 
   const { data: availability, isLoading: availabilityLoading } = useQuery<BeerAvailability>({
@@ -1163,11 +1169,11 @@ export default function BeerDetail() {
               </Button>
               <Button
                 onClick={handleSaveEdit}
-                disabled={updateBeerMutation.isPending}
+                disabled={isSavingBeer}
                 className="bg-gradient-to-r from-amber-500 to-orange-600 text-white"
               >
                 <Save className="h-4 w-4 mr-2" />
-                {updateBeerMutation.isPending ? 'Salvataggio...' : 'Salva'}
+                {isSavingBeer ? 'Salvataggio...' : 'Salva'}
               </Button>
             </div>
           </div>
