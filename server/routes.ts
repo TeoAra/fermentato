@@ -2791,7 +2791,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.patch('/api/admin/beers/:id', isAuthenticated, isAdmin, async (req: any, res) => {
     try {
       const beerId = parseInt(req.params.id);
-      const { collaborationBreweryIds, ...updates } = req.body;
+      // Extract collab fields before passing to updateBeer to avoid schema column issues
+      const { collaborationBreweryIds, isCollaboration, ...updates } = req.body;
       const beer = await storage.updateBeer(beerId, updates);
       if (updates.logoUrl || updates.imageUrl || updates.logo_url || updates.image_url) {
         clipIndexBeer(beerId, updates.logoUrl || updates.logo_url || updates.imageUrl || updates.image_url);
@@ -2800,11 +2801,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Update collaboration breweries if provided (replace all)
       if (collaborationBreweryIds !== undefined) {
         await db.delete(beerCollaborations).where(eq(beerCollaborations.beerId, beerId));
-        if (Array.isArray(collaborationBreweryIds) && collaborationBreweryIds.length > 0) {
-          for (const brewId of collaborationBreweryIds) {
-            await db.insert(beerCollaborations).values({ beerId, breweryId: brewId }).onConflictDoNothing();
-          }
+        const ids = Array.isArray(collaborationBreweryIds) ? collaborationBreweryIds : [];
+        for (const brewId of ids) {
+          await db.insert(beerCollaborations).values({ beerId, breweryId: Number(brewId) }).onConflictDoNothing();
         }
+        // Auto-derive is_collaboration from the collab list (safe SQL, ignores missing column)
+        try {
+          await db.execute(sql`UPDATE beers SET is_collaboration = ${ids.length > 0} WHERE id = ${beerId}`);
+        } catch { /* column may not exist on older DB, non-blocking */ }
       }
 
       res.json(beer);
@@ -3697,14 +3701,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(403).json({ message: "Admin access required" });
       }
 
-      const { collaborationBreweryIds, ...beerData } = req.body;
+      const { collaborationBreweryIds, isCollaboration, ...beerData } = req.body;
       const beer = await storage.createBeer(beerData);
 
       // Save collaboration breweries if provided
-      if (collaborationBreweryIds && Array.isArray(collaborationBreweryIds) && collaborationBreweryIds.length > 0) {
-        for (const brewId of collaborationBreweryIds) {
-          await db.insert(beerCollaborations).values({ beerId: beer.id, breweryId: brewId }).onConflictDoNothing();
+      const collabIds = Array.isArray(collaborationBreweryIds) ? collaborationBreweryIds : [];
+      if (collabIds.length > 0) {
+        for (const brewId of collabIds) {
+          await db.insert(beerCollaborations).values({ beerId: beer.id, breweryId: Number(brewId) }).onConflictDoNothing();
         }
+        try {
+          await db.execute(sql`UPDATE beers SET is_collaboration = true WHERE id = ${beer.id}`);
+        } catch { /* column may not exist on older DB, non-blocking */ }
       }
 
       res.json(beer);

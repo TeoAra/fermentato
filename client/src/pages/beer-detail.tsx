@@ -177,11 +177,12 @@ export default function BeerDetail() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/beers", id] });
+      queryClient.invalidateQueries({ queryKey: ["/api/beers", id, "collaborations"] });
       setIsEditDialogOpen(false);
       toast({ title: "Birra aggiornata con successo" });
     },
-    onError: () => {
-      toast({ title: "Errore nell'aggiornamento", variant: "destructive" });
+    onError: (err: any) => {
+      toast({ title: "Errore nell'aggiornamento", description: err?.message, variant: "destructive" });
     },
   });
   
@@ -263,7 +264,9 @@ export default function BeerDetail() {
   // Beer collaborations (partner breweries)
   const { data: beerCollabs = [] } = useQuery<{ id: number; name: string; location: string | null; logoUrl: string | null }[]>({
     queryKey: ["/api/beers", id, "collaborations"],
-    queryFn: () => fetch(`/api/beers/${id}/collaborations`).then(r => r.json()),
+    queryFn: () => fetch(`/api/beers/${id}/collaborations`, { credentials: 'include' })
+      .then(r => r.ok ? r.json() : [])
+      .catch(() => []),
     enabled: !!id,
   });
 
