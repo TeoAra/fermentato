@@ -148,9 +148,19 @@ export const beers = pgTable("beers", {
   isBottled: boolean("is_bottled").default(false), // Se disponibile in bottiglia
   isGlutenFree: boolean("is_gluten_free").default(false),
   isAlcoholFree: boolean("is_alcohol_free").default(false),
+  isCollaboration: boolean("is_collaboration").default(false), // Birra in collaborazione
   barcode: varchar("barcode"), // EAN/UPC barcode
   createdAt: timestamp("created_at").defaultNow(),
 });
+
+// Beer collaborations - which extra breweries co-produced a collab beer
+export const beerCollaborations = pgTable("beer_collaborations", {
+  id: serial("id").primaryKey(),
+  beerId: integer("beer_id").references(() => beers.id, { onDelete: "cascade" }).notNull(),
+  breweryId: integer("brewery_id").references(() => breweries.id, { onDelete: "cascade" }).notNull(),
+}, (table) => [
+  unique().on(table.beerId, table.breweryId),
+]);
 
 // Pub sizes - misure personalizzabili per ogni pub
 export const pubSizes = pgTable("pub_sizes", {
@@ -356,6 +366,12 @@ export const beersRelations = relations(beers, ({ one, many }) => ({
   tapList: many(tapList),
   bottleList: many(bottleList),
   favorites: many(favorites),
+  collaborations: many(beerCollaborations),
+}));
+
+export const beerCollaborationsRelations = relations(beerCollaborations, ({ one }) => ({
+  beer: one(beers, { fields: [beerCollaborations.beerId], references: [beers.id] }),
+  brewery: one(breweries, { fields: [beerCollaborations.breweryId], references: [breweries.id] }),
 }));
 
 export const tapListRelations = relations(tapList, ({ one }) => ({
@@ -875,6 +891,8 @@ export const pubPageViews = pgTable("pub_page_views", {
 }, (t) => ({ pk: primaryKey({ columns: [t.pubId, t.viewDate] }) }));
 
 export type PubPageView = typeof pubPageViews.$inferSelect;
+
+export type BeerCollaboration = typeof beerCollaborations.$inferSelect;
 
 export const pubRegistrationSchema = insertPubSchema.extend({
   vatNumber: z.string().min(11, "P.IVA deve essere di almeno 11 caratteri"),

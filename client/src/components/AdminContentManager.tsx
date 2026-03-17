@@ -118,6 +118,76 @@ function BrewerySearchField({ onSelect }: { onSelect: (id: number, name: string)
   );
 }
 
+function CollabBrewerySelector({ selected, onChange, excludeBreweryId }: { selected: { id: number; name: string }[]; onChange: (breweries: { id: number; name: string }[]) => void; excludeBreweryId?: number | null }) {
+  const [query, setQuery] = useState("");
+  const [results, setResults] = useState<any[]>([]);
+  const [showResults, setShowResults] = useState(false);
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const search = useCallback((q: string) => {
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    if (q.length < 2) { setResults([]); return; }
+    debounceRef.current = setTimeout(async () => {
+      try {
+        const res = await fetch(`/api/admin/breweries/search?q=${encodeURIComponent(q)}&limit=10`, { credentials: 'include' });
+        if (!res.ok) return;
+        const data = await res.json();
+        setResults(Array.isArray(data) ? data.filter((b: any) => b.id !== excludeBreweryId && !selected.some(s => s.id === b.id)) : []);
+        setShowResults(true);
+      } catch { setResults([]); }
+    }, 250);
+  }, [excludeBreweryId, selected]);
+
+  const add = (b: { id: number; name: string }) => {
+    onChange([...selected, { id: b.id, name: b.name }]);
+    setQuery("");
+    setResults([]);
+    setShowResults(false);
+  };
+
+  const remove = (id: number) => onChange(selected.filter(s => s.id !== id));
+
+  return (
+    <div className="space-y-2">
+      <Label>Birrifici in Collaborazione</Label>
+      {selected.length > 0 && (
+        <div className="flex flex-wrap gap-2">
+          {selected.map(b => (
+            <span key={b.id} className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-sm font-medium bg-purple-100 text-purple-800 dark:bg-purple-900/40 dark:text-purple-200">
+              <Building2 className="w-3 h-3" />
+              {b.name}
+              <button type="button" onClick={() => remove(b.id)} className="ml-0.5 text-purple-500 hover:text-purple-800 dark:hover:text-purple-100">×</button>
+            </span>
+          ))}
+        </div>
+      )}
+      <div className="relative">
+        <Input
+          value={query}
+          onChange={e => { setQuery(e.target.value); search(e.target.value); }}
+          onBlur={() => setTimeout(() => setShowResults(false), 200)}
+          placeholder="Cerca birrificio partner..."
+          className="mt-1"
+          autoComplete="off"
+        />
+        {showResults && results.length > 0 && (
+          <div className="absolute z-50 w-full mt-1 bg-white dark:bg-gray-800 border rounded-md shadow-xl max-h-48 overflow-y-auto">
+            {results.map((b) => (
+              <button key={b.id} type="button" onMouseDown={e => { e.preventDefault(); add(b); }}
+                className="w-full px-3 py-2 text-left hover:bg-purple-50 dark:hover:bg-purple-900/20 border-b last:border-b-0 flex items-center gap-2 text-sm">
+                {b.logoUrl ? <img src={b.logoUrl} alt="" className="w-6 h-6 rounded-full object-cover" /> : <Building2 className="w-4 h-4 text-purple-400" />}
+                <span>{b.name}</span>
+                <span className="text-xs text-gray-400 ml-auto">{b.location}</span>
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
+      <p className="text-xs text-gray-500">La birra apparirà automaticamente anche nelle pagine dei birrifici partner.</p>
+    </div>
+  );
+}
+
 function BeerForm({ onSubmit, isPending }: { onSubmit: (data: any) => void; isPending: boolean }) {
   const [name, setName] = useState("");
   const [breweryId, setBreweryId] = useState<number | null>(null);
@@ -132,6 +202,8 @@ function BeerForm({ onSubmit, isPending }: { onSubmit: (data: any) => void; isPe
   const [imageUrl, setImageUrl] = useState<string | null>(null);
   const [isGlutenFree, setIsGlutenFree] = useState(false);
   const [isAlcoholFree, setIsAlcoholFree] = useState(false);
+  const [isCollaboration, setIsCollaboration] = useState(false);
+  const [collabBreweries, setCollabBreweries] = useState<{ id: number; name: string }[]>([]);
 
   const filteredStyles = useMemo(() => {
     const q = styleSearch.toLowerCase();
@@ -145,7 +217,18 @@ function BeerForm({ onSubmit, isPending }: { onSubmit: (data: any) => void; isPe
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!breweryId) { alert("Seleziona un birrificio"); return; }
-    onSubmit({ name, breweryId, style, abv: abv ? parseFloat(abv) : null, ibu: ibu ? parseInt(ibu) : null, color: color || null, description: description || null, imageUrl: imageUrl || null, isGlutenFree, isAlcoholFree });
+    if (isCollaboration && collabBreweries.length === 0) { alert("Aggiungi almeno un birrificio partner per la collaborazione"); return; }
+    onSubmit({
+      name, breweryId, style,
+      abv: abv ? parseFloat(abv) : null,
+      ibu: ibu ? parseInt(ibu) : null,
+      color: color || null,
+      description: description || null,
+      imageUrl: imageUrl || null,
+      isGlutenFree, isAlcoholFree,
+      isCollaboration,
+      collaborationBreweryIds: isCollaboration ? collabBreweries.map(b => b.id) : [],
+    });
   };
 
   return (
@@ -175,7 +258,16 @@ function BeerForm({ onSubmit, isPending }: { onSubmit: (data: any) => void; isPe
         <div className="md:col-span-2 flex flex-wrap gap-6 pt-1">
           <label className="flex items-center gap-2 cursor-pointer"><Checkbox checked={isGlutenFree} onCheckedChange={v => setIsGlutenFree(!!v)} /><span className="text-sm font-medium">Senza glutine</span></label>
           <label className="flex items-center gap-2 cursor-pointer"><Checkbox checked={isAlcoholFree} onCheckedChange={v => setIsAlcoholFree(!!v)} /><span className="text-sm font-medium">Analcolica</span></label>
+          <label className="flex items-center gap-2 cursor-pointer">
+            <Checkbox checked={isCollaboration} onCheckedChange={v => { setIsCollaboration(!!v); if (!v) setCollabBreweries([]); }} />
+            <span className="text-sm font-medium text-purple-700 dark:text-purple-400">Birra in Collaborazione</span>
+          </label>
         </div>
+        {isCollaboration && (
+          <div className="md:col-span-2">
+            <CollabBrewerySelector selected={collabBreweries} onChange={setCollabBreweries} excludeBreweryId={breweryId} />
+          </div>
+        )}
         <div>
           <Label>ABV % *</Label>
           <Input value={abv} onChange={e => setAbv(e.target.value)} type="number" step="0.1" min="0" max="99" required className="mt-1" placeholder="Es. 5.5" />

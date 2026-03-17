@@ -27,6 +27,7 @@ import {
   Rocket,
   Users,
   Store,
+  Building2,
 } from "lucide-react";
 import { EventCategoryBadge, EventInterestButton } from "@/components/events-manager";
 import { format, isFuture } from "date-fns";
@@ -71,6 +72,10 @@ interface Beer {
   avgRating?: number | null;
   reviewCount?: number;
   favoriteCount?: number;
+  isCollaboration?: boolean;
+  isCollabBeer?: boolean;
+  breweryId?: number;
+  collaboratingBreweries?: { id: number; name: string; logoUrl: string | null }[];
 }
 
 // Stats Card Component
@@ -557,7 +562,14 @@ export default function BreweryDetail() {
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {displayedBeers.map((beer: Beer) => (
                   <Link key={beer.id} href={`/beer/${beer.id}`}>
-                    <Card className="glass-card border-0 h-full hover:scale-105 transition-all duration-300 group cursor-pointer relative">
+                    <Card className={`glass-card border-0 h-full hover:scale-105 transition-all duration-300 group cursor-pointer relative ${beer.isCollaboration ? 'ring-1 ring-purple-300 dark:ring-purple-700' : ''}`}>
+                      {/* Collaboration badge top-left */}
+                      {beer.isCollaboration && (
+                        <div className="absolute top-3 left-3 z-10 flex items-center gap-1 bg-purple-100 dark:bg-purple-900/70 text-purple-700 dark:text-purple-300 text-xs font-semibold px-2 py-0.5 rounded-full shadow">
+                          <Users className="h-3 w-3" />
+                          Collab
+                        </div>
+                      )}
                       {/* Rating badge top-right */}
                       {beer.avgRating != null && (
                         <div className="absolute top-3 right-3 z-10 flex items-center gap-1 bg-yellow-400/95 dark:bg-yellow-500/95 text-yellow-900 text-xs font-bold px-2 py-0.5 rounded-full shadow">
@@ -569,7 +581,7 @@ export default function BreweryDetail() {
                         </div>
                       )}
                       <CardContent className="p-6">
-                        <div className="flex items-start space-x-4 mb-4">
+                        <div className={`flex items-start space-x-4 mb-4 ${beer.isCollaboration ? 'mt-4' : ''}`}>
                           <ImageWithFallback
                             src={beer?.imageUrl}
                             alt={beer?.name}
@@ -602,6 +614,29 @@ export default function BreweryDetail() {
                             </Badge>
                           )}
                         </div>
+                        
+                        {/* Collaboration partner breweries */}
+                        {beer.isCollaboration && beer.collaboratingBreweries && beer.collaboratingBreweries.length > 0 && (
+                          <div className="mt-3 flex flex-wrap items-center gap-1.5" onClick={e => e.preventDefault()}>
+                            <span className="text-xs text-purple-600 dark:text-purple-400 font-medium">con:</span>
+                            {beer.collaboratingBreweries.map(b => (
+                              <Link key={b.id} href={`/brewery/${b.id}`}>
+                                <span className="inline-flex items-center gap-1 text-xs font-semibold text-purple-700 dark:text-purple-300 hover:underline">
+                                  {b.logoUrl && <img src={b.logoUrl} alt="" className="w-4 h-4 rounded-full object-cover" />}
+                                  <Building2 className="w-3 h-3" />
+                                  {b.name}
+                                </span>
+                              </Link>
+                            ))}
+                          </div>
+                        )}
+                        
+                        {/* If this is a collab beer from another brewery, show origin */}
+                        {beer.isCollabBeer && (
+                          <div className="mt-2 text-xs text-purple-500 dark:text-purple-400 italic">
+                            Birra in collaborazione
+                          </div>
+                        )}
                         
                         {beer.description && (
                           <p className="mt-4 text-sm text-gray-600 dark:text-gray-400 line-clamp-3">

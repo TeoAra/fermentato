@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useRef, useCallback } from "react";
 import { Helmet } from "react-helmet-async";
 import { getBadgeForCount } from "@/lib/badges";
 import { useParams, Link } from "wouter";
@@ -28,7 +28,9 @@ import {
   Filter,
   ArrowUpDown,
   Flag,
-  Lightbulb
+  Lightbulb,
+  Building2,
+  Users
 } from "lucide-react";
 import Footer from "@/components/footer";
 import { Card, CardContent } from "@/components/ui/card";
@@ -140,7 +142,27 @@ export default function BeerDetail() {
     bottleImageUrl: '',
     isGlutenFree: false,
     isAlcoholFree: false,
+    isCollaboration: false,
   });
+  const [editCollabBreweries, setEditCollabBreweries] = useState<{ id: number; name: string }[]>([]);
+  const [collabQuery, setCollabQuery] = useState("");
+  const [collabResults, setCollabResults] = useState<any[]>([]);
+  const [showCollabResults, setShowCollabResults] = useState(false);
+  const collabDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const searchCollabBreweries = useCallback((q: string, excludeBrewId: number, currentSelected: { id: number; name: string }[]) => {
+    if (collabDebounceRef.current) clearTimeout(collabDebounceRef.current);
+    if (q.length < 2) { setCollabResults([]); return; }
+    collabDebounceRef.current = setTimeout(async () => {
+      try {
+        const res = await fetch(`/api/admin/breweries/search?q=${encodeURIComponent(q)}&limit=10`, { credentials: 'include' });
+        if (!res.ok) return;
+        const data = await res.json();
+        setCollabResults(Array.isArray(data) ? data.filter((b: any) => b.id !== excludeBrewId && !currentSelected.some((s: any) => s.id === b.id)) : []);
+        setShowCollabResults(true);
+      } catch { setCollabResults([]); }
+    }, 250);
+  }, []);
   
   const isAdmin = (user as any)?.activeRole === 'admin' || (!((user as any)?.activeRole) && user?.userType === 'admin');
   
@@ -163,7 +185,7 @@ export default function BeerDetail() {
     },
   });
   
-  const openEditDialog = () => {
+  const openEditDialog = async () => {
     if (beer) {
       setEditForm({
         name: beer.name || '',
@@ -177,7 +199,19 @@ export default function BeerDetail() {
         bottleImageUrl: beer.bottleImageUrl || '',
         isGlutenFree: beer.isGlutenFree || false,
         isAlcoholFree: beer.isAlcoholFree || false,
+        isCollaboration: (beer as any).isCollaboration || false,
       });
+      // Fetch existing collaborations
+      try {
+        const res = await fetch(`/api/beers/${beer.id}/collaborations`, { credentials: 'include' });
+        if (res.ok) {
+          const collabs = await res.json();
+          setEditCollabBreweries(collabs.map((b: any) => ({ id: b.id, name: b.name })));
+          if (collabs.length > 0) {
+            setEditForm(prev => ({ ...prev, isCollaboration: true }));
+          }
+        }
+      } catch { setEditCollabBreweries([]); }
       setIsEditDialogOpen(true);
     }
   };
@@ -194,6 +228,8 @@ export default function BeerDetail() {
       bottleImageUrl: editForm.bottleImageUrl || null,
       isGlutenFree: editForm.isGlutenFree,
       isAlcoholFree: editForm.isAlcoholFree,
+      isCollaboration: editForm.isCollaboration,
+      collaborationBreweryIds: editForm.isCollaboration ? editCollabBreweries.map(b => b.id) : [],
     };
     if (editForm.ibu) {
       updates.ibu = parseInt(editForm.ibu);
@@ -223,6 +259,13 @@ export default function BeerDetail() {
     enabled: !!id,
   });
   const beerFavCount = beerFavoritesCount ? parseInt(String(beerFavoritesCount.count)) : 0;
+
+  // Beer collaborations (partner breweries)
+  const { data: beerCollabs = [] } = useQuery<{ id: number; name: string; location: string | null; logoUrl: string | null }[]>({
+    queryKey: ["/api/beers", id, "collaborations"],
+    queryFn: () => fetch(`/api/beers/${id}/collaborations`).then(r => r.json()),
+    enabled: !!id,
+  });
 
   // Check if user has already tasted this beer
   const { data: userTastings = [] } = useQuery<any[]>({
@@ -446,11 +489,32 @@ export default function BeerDetail() {
                         {beer?.name}
                       </h1>
                       {beer?.brewery && (
-                        <Link href={`/brewery/${beer.brewery.id}`}>
-                          <p className="text-white/80 text-base sm:text-lg mb-4 hover:text-emerald-300 transition-colors cursor-pointer font-medium">
-                            {beer.brewery.name}
-                          </p>
-                        </Link>
+                        <div className="mb-4">
+                          <Link href={`/brewery/${beer.brewery.id}`}>
+                            <p className="text-white/80 text-base sm:text-lg hover:text-emerald-300 transition-colors cursor-pointer font-medium inline">
+                              {beer.brewery.name}
+                            </p>
+                          </Link>
+                          {beerCollabs.length > 0 && (
+                            <span className="ml-2 inline-flex flex-wrap items-center gap-1">
+                              <span className="text-white/50 text-sm">×</span>
+                              {beerCollabs.map((b, i) => (
+                                <span key={b.id} className="inline-flex items-center gap-1">
+                                  {i > 0 && <span className="text-white/50 text-sm">×</span>}
+                                  <Link href={`/brewery/${b.id}`}>
+                                    <span className="inline-flex items-center gap-1 text-purple-300 hover:text-purple-200 transition-colors cursor-pointer text-base font-medium">
+                                      {b.logoUrl && <img src={b.logoUrl} alt="" className="w-5 h-5 rounded-full object-cover" />}
+                                      {b.name}
+                                    </span>
+                                  </Link>
+                                </span>
+                              ))}
+                              <span className="ml-1 inline-flex items-center gap-1 text-purple-300/80 text-xs font-semibold bg-purple-500/20 px-1.5 py-0.5 rounded-full border border-purple-400/30">
+                                <Users className="w-3 h-3" />collab
+                              </span>
+                            </span>
+                          )}
+                        </div>
                       )}
                       <div className="flex flex-col sm:flex-row items-center justify-center md:justify-start space-y-3 sm:space-y-0 sm:space-x-4 flex-wrap gap-2">
                         <Link href={`/search?q=${encodeURIComponent(beer?.style || '')}`}>
@@ -994,7 +1058,7 @@ export default function BeerDetail() {
                 rows={4}
               />
             </div>
-            <div className="flex items-center gap-6">
+            <div className="flex items-center gap-6 flex-wrap">
               <label className="flex items-center gap-2 cursor-pointer">
                 <input
                   type="checkbox"
@@ -1016,7 +1080,54 @@ export default function BeerDetail() {
                 />
                 <span className="text-sm font-medium text-blue-700 dark:text-blue-400">0.0% Analcolica</span>
               </label>
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={editForm.isCollaboration}
+                  onChange={(e) => { setEditForm({ ...editForm, isCollaboration: e.target.checked }); if (!e.target.checked) setEditCollabBreweries([]); }}
+                  className="w-4 h-4 rounded border-gray-300 text-purple-600 focus:ring-purple-500"
+                />
+                <span className="text-sm font-medium text-purple-700 dark:text-purple-400 flex items-center gap-1"><Users className="w-3.5 h-3.5" />Birra in Collaborazione</span>
+              </label>
             </div>
+            {editForm.isCollaboration && (
+              <div className="space-y-2 p-3 rounded-lg border border-purple-200 dark:border-purple-800 bg-purple-50/50 dark:bg-purple-900/10">
+                <Label className="text-purple-800 dark:text-purple-300 font-medium flex items-center gap-1.5"><Building2 className="w-4 h-4" />Birrifici Partner</Label>
+                {editCollabBreweries.length > 0 && (
+                  <div className="flex flex-wrap gap-2">
+                    {editCollabBreweries.map(b => (
+                      <span key={b.id} className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-sm font-medium bg-purple-100 text-purple-800 dark:bg-purple-900/40 dark:text-purple-200">
+                        <Building2 className="w-3 h-3" />{b.name}
+                        <button type="button" onClick={() => setEditCollabBreweries(editCollabBreweries.filter(x => x.id !== b.id))} className="ml-0.5 hover:text-purple-900">×</button>
+                      </span>
+                    ))}
+                  </div>
+                )}
+                <div className="relative">
+                  <Input
+                    value={collabQuery}
+                    onChange={e => { setCollabQuery(e.target.value); searchCollabBreweries(e.target.value, (beer as any)?.breweryId, editCollabBreweries); }}
+                    onBlur={() => setTimeout(() => setShowCollabResults(false), 200)}
+                    placeholder="Cerca birrificio partner..."
+                    autoComplete="off"
+                  />
+                  {showCollabResults && collabResults.length > 0 && (
+                    <div className="absolute z-50 w-full mt-1 bg-white dark:bg-gray-800 border rounded-md shadow-xl max-h-40 overflow-y-auto">
+                      {collabResults.map((b: any) => (
+                        <button key={b.id} type="button"
+                          onMouseDown={e => { e.preventDefault(); setEditCollabBreweries([...editCollabBreweries, { id: b.id, name: b.name }]); setCollabQuery(""); setCollabResults([]); setShowCollabResults(false); }}
+                          className="w-full px-3 py-2 text-left hover:bg-purple-50 dark:hover:bg-purple-900/20 border-b last:border-b-0 flex items-center gap-2 text-sm">
+                          {b.logoUrl ? <img src={b.logoUrl} alt="" className="w-5 h-5 rounded-full object-cover" /> : <Building2 className="w-4 h-4 text-purple-400" />}
+                          <span>{b.name}</span>
+                          <span className="text-xs text-gray-400 ml-auto">{b.location}</span>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+                <p className="text-xs text-purple-600 dark:text-purple-400">La birra apparirà nelle pagine di tutti i birrifici partner.</p>
+              </div>
+            )}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <ImageUpload
                 label="Immagine Birra"

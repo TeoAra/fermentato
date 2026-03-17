@@ -12,7 +12,7 @@ import { registerAdminRoutes } from "./routes-admin";
 import { sql, eq, and, desc, asc } from "drizzle-orm";
 import { upload, uploadImage, cloudinary } from "./cloudinary";
 import { db, pool } from "./db";
-import { breweries, beers, pubs, users, tapList, bottleList, userBeerTastings, favorites, menuCategories, menuItems, pubSizes, notifications, pushSubscriptions, breweryRequests, pubEvents, breweryEvents, insertBreweryEventSchema, reviewReports, oauthAccounts, userActivities, ratings, publicanRequests, notificationPreferences, staticPages, additionRequests, scanLogs, pubPageViews, breweryAnnouncements, insertBreweryAnnouncementSchema } from "@shared/schema";
+import { breweries, beers, pubs, users, tapList, bottleList, userBeerTastings, favorites, menuCategories, menuItems, pubSizes, notifications, pushSubscriptions, breweryRequests, pubEvents, breweryEvents, insertBreweryEventSchema, reviewReports, oauthAccounts, userActivities, ratings, publicanRequests, notificationPreferences, staticPages, additionRequests, scanLogs, pubPageViews, breweryAnnouncements, insertBreweryAnnouncementSchema, beerCollaborations } from "@shared/schema";
 
 import { insertPubSchema, insertTapListSchema, insertBottleListSchema, insertMenuCategorySchema, insertMenuItemSchema, pubRegistrationSchema, insertPubEventSchema } from "@shared/schema";
 import { z } from "zod";
@@ -457,11 +457,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Get all beers from a brewery
+  // Get all beers from a brewery (own beers + collaboration beers)
   app.get("/api/breweries/:id/beers", async (req, res) => {
     try {
       const breweryId = parseInt(req.params.id);
-      // Fetch beers with avg rating, review count, and favorite count in one query
+      // Fetch own beers + beers where this brewery is a collaborator
       const beerRows = await db.select({
         id: beers.id,
         name: beers.name,
@@ -474,26 +474,69 @@ export async function registerRoutes(app: Express): Promise<Server> {
         breweryId: beers.breweryId,
         isGlutenFree: beers.isGlutenFree,
         isAlcoholFree: beers.isAlcoholFree,
+        isCollaboration: beers.isCollaboration,
         avgRating: sql<number>`ROUND(AVG(CASE WHEN ${userBeerTastings.rating} IS NOT NULL THEN ${userBeerTastings.rating} END)::numeric, 2)`,
         reviewCount: sql<number>`COUNT(CASE WHEN ${userBeerTastings.rating} IS NOT NULL THEN 1 END)`,
         favoriteCount: sql<number>`(SELECT COUNT(*) FROM favorites f WHERE f.item_type = 'beer' AND f.item_id = ${beers.id})`,
       })
       .from(beers)
       .leftJoin(userBeerTastings, eq(beers.id, userBeerTastings.beerId))
-      .where(eq(beers.breweryId, breweryId))
+      .where(sql`${beers.breweryId} = ${breweryId} OR ${beers.id} IN (SELECT beer_id FROM beer_collaborations WHERE brewery_id = ${breweryId})`)
       .groupBy(beers.id)
       .orderBy(beers.name);
+
+      // Fetch collaboration info for each beer
+      const beerIds = beerRows.map(b => b.id);
+      let collabMap: Record<number, { id: number; name: string; logoUrl: string | null }[]> = {};
+      if (beerIds.length > 0) {
+        const collabRows = await db.select({
+          beerId: beerCollaborations.beerId,
+          breweryId: breweries.id,
+          breweryName: breweries.name,
+          breweryLogo: breweries.logoUrl,
+        })
+        .from(beerCollaborations)
+        .innerJoin(breweries, eq(beerCollaborations.breweryId, breweries.id))
+        .where(sql`${beerCollaborations.beerId} = ANY(ARRAY[${sql.join(beerIds.map(id => sql`${id}`), sql`, `)}]::int[])`);
+
+        for (const row of collabRows) {
+          if (!collabMap[row.beerId]) collabMap[row.beerId] = [];
+          collabMap[row.beerId].push({ id: row.breweryId, name: row.breweryName, logoUrl: row.breweryLogo });
+        }
+      }
 
       const result = beerRows.map(b => ({
         ...b,
         avgRating: b.avgRating ? parseFloat(String(b.avgRating)) : null,
         reviewCount: Number(b.reviewCount || 0),
         favoriteCount: Number(b.favoriteCount || 0),
+        collaboratingBreweries: collabMap[b.id] || [],
+        isCollabBeer: b.breweryId !== breweryId, // true if this is a collab beer (not own)
       }));
       res.json(result);
     } catch (error) {
       console.error("Error fetching brewery beers:", error);
       res.status(500).json({ message: "Failed to fetch brewery beers" });
+    }
+  });
+
+  // Get collaborations for a specific beer
+  app.get("/api/beers/:id/collaborations", async (req, res) => {
+    try {
+      const beerId = parseInt(req.params.id);
+      const collabRows = await db.select({
+        id: breweries.id,
+        name: breweries.name,
+        location: breweries.location,
+        logoUrl: breweries.logoUrl,
+      })
+      .from(beerCollaborations)
+      .innerJoin(breweries, eq(beerCollaborations.breweryId, breweries.id))
+      .where(eq(beerCollaborations.beerId, beerId));
+      res.json(collabRows);
+    } catch (error) {
+      console.error("Error fetching beer collaborations:", error);
+      res.status(500).json({ message: "Failed to fetch beer collaborations" });
     }
   });
 
@@ -2748,11 +2791,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.patch('/api/admin/beers/:id', isAuthenticated, isAdmin, async (req: any, res) => {
     try {
       const beerId = parseInt(req.params.id);
-      const updates = req.body;
+      const { collaborationBreweryIds, ...updates } = req.body;
       const beer = await storage.updateBeer(beerId, updates);
       if (updates.logoUrl || updates.imageUrl || updates.logo_url || updates.image_url) {
         clipIndexBeer(beerId, updates.logoUrl || updates.logo_url || updates.imageUrl || updates.image_url);
       }
+
+      // Update collaboration breweries if provided (replace all)
+      if (collaborationBreweryIds !== undefined) {
+        await db.delete(beerCollaborations).where(eq(beerCollaborations.beerId, beerId));
+        if (Array.isArray(collaborationBreweryIds) && collaborationBreweryIds.length > 0) {
+          for (const brewId of collaborationBreweryIds) {
+            await db.insert(beerCollaborations).values({ beerId, breweryId: brewId }).onConflictDoNothing();
+          }
+        }
+      }
+
       res.json(beer);
     } catch (error) {
       console.error("Error updating beer:", error);
@@ -3643,7 +3697,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(403).json({ message: "Admin access required" });
       }
 
-      const beer = await storage.createBeer(req.body);
+      const { collaborationBreweryIds, ...beerData } = req.body;
+      const beer = await storage.createBeer(beerData);
+
+      // Save collaboration breweries if provided
+      if (collaborationBreweryIds && Array.isArray(collaborationBreweryIds) && collaborationBreweryIds.length > 0) {
+        for (const brewId of collaborationBreweryIds) {
+          await db.insert(beerCollaborations).values({ beerId: beer.id, breweryId: brewId }).onConflictDoNothing();
+        }
+      }
+
       res.json(beer);
     } catch (error) {
       console.error("Error creating beer:", error);
