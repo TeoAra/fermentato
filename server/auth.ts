@@ -444,6 +444,7 @@ export async function setupAuth(app: Express) {
       const {
         nickname, email, password,
         pubName, pubAddress, pubCity, pubRegion, vatNumber, phone, description,
+        pubLat, pubLng,
         isBrewpub,
         breweryId: existingBreweryId, breweryName, breweryLocation, breweryRegion, breweryCountry,
         breweryVatNumber, breweryPhone, breweryDescription, breweryWebsite,
@@ -502,6 +503,8 @@ export async function setupAuth(app: Express) {
         phone: (phone || '').trim() || null,
         description: (description || '').trim() || null,
         vatNumber: (vatNumber || '').trim() || null,
+        latitude: pubLat != null ? String(pubLat) : null,
+        longitude: pubLng != null ? String(pubLng) : null,
         ownerId: userId,
         isVerified: false,
         subscriptionStatus: 'none',
@@ -679,7 +682,7 @@ export async function setupAuth(app: Express) {
         redirectUrl = '/brewery-dashboard?verified=success';
       } else {
         // Pure customer
-        redirectUrl = '/profile?verified=success';
+        redirectUrl = '/dashboard?email_confirmed=1';
       }
 
       // Auto-login the user so they don't need to fill login form + reCAPTCHA
@@ -733,13 +736,16 @@ export async function setupAuth(app: Express) {
 
     app.get('/api/auth/google/callback',
       passport.authenticate('google', { failureRedirect: '/login?error=google_auth_failed' }),
-      (req, res) => {
+      (req: any, res) => {
         const user = req.user as User;
         const role = user?.activeRole || user?.userType;
-        if (role === 'admin') {
-          return res.redirect('/admin');
-        }
-        res.redirect('/dashboard');
+        const target = role === 'admin' ? '/admin' : '/dashboard';
+        // Force session save before redirect to prevent race condition where
+        // the browser follows the redirect before the session is persisted in DB
+        req.session.save((saveErr: any) => {
+          if (saveErr) console.error('Session save error after Google OAuth:', saveErr);
+          res.redirect(target);
+        });
       }
     );
   }

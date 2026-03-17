@@ -31,6 +31,8 @@ const schema = z.object({
   pubAddress: z.string().min(3, "Indirizzo obbligatorio"),
   pubCity: z.string().min(2, "Città obbligatoria"),
   pubRegion: z.string().optional(),
+  pubLat: z.number().optional(),
+  pubLng: z.number().optional(),
   vatNumber: z.string().optional(),
   phone: z.string().optional(),
   description: z.string().optional(),
@@ -127,10 +129,12 @@ export default function RegistraPub() {
     enabled: isBrewpub && brewerySearch.length >= 2 && !selectedBrewery && !creatingNewBrewery,
   });
 
-  const handlePubAddressSelect = useCallback((details: { formattedAddress: string; city: string; region: string; country: string; placeId: string }) => {
+  const handlePubAddressSelect = useCallback((details: { formattedAddress: string; city: string; region: string; country: string; placeId: string; lat?: number; lng?: number }) => {
     form.setValue("pubAddress", details.formattedAddress);
     form.setValue("pubCity", details.city);
     form.setValue("pubRegion", details.region);
+    if (details.lat !== undefined) form.setValue("pubLat", details.lat);
+    if (details.lng !== undefined) form.setValue("pubLng", details.lng);
   }, [form]);
 
   const handleBreweryAddressSelect = useCallback((details: { formattedAddress: string; city: string; region: string; country: string; placeId: string }) => {

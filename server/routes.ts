@@ -5102,7 +5102,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         subscription_data: subscriptionData,
         success_url: `${baseUrl}/attiva-pub?checkout_success=1&session_id={CHECKOUT_SESSION_ID}`,
         cancel_url: `${baseUrl}/attiva-pub`,
-        payment_method_collection: isReactivation ? "always" : "if_required",
+        payment_method_collection: "always",
         locale: "it",
         metadata: { fermenta_user_id: String(userId) },
       });

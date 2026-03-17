@@ -1545,6 +1545,8 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
                   if (details.city) updates.city = details.city;
                   if (details.region) updates.region = details.region;
                   if (details.postalCode) updates.postalCode = details.postalCode;
+                  if (details.lat !== undefined) updates.latitude = String(details.lat);
+                  if (details.lng !== undefined) updates.longitude = String(details.lng);
                   setSettingsData((prev: any) => ({ ...prev, ...updates }));
                   setSettingsChanged(true);
                 }}

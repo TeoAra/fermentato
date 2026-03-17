@@ -11,6 +11,21 @@ export default function Dashboard() {
   const { toast } = useToast();
   const { user, isAuthenticated, isLoading } = useAuth();
 
+  // Show email confirmation toast/banner
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('email_confirmed') === '1') {
+      window.history.replaceState({}, '', '/dashboard');
+      setTimeout(() => {
+        toast({
+          title: "Email confermata!",
+          description: "Il tuo account è attivo. Benvenuto su Fermenta.to!",
+          duration: 6000,
+        });
+      }, 500);
+    }
+  }, []);
+
   // Redirect pub owners immediately - they should never see this dashboard
   useEffect(() => {
     if (user?.userType === 'pub_owner') {
