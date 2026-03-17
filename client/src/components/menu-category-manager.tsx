@@ -1,5 +1,5 @@
 import { useState, useRef } from "react";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -53,6 +53,17 @@ const getCategoryIcon = (categoryName: string) => {
 export default function MenuCategoryManager({ pubId, categories }: MenuCategoryManagerProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
+
+  const { data: allergensList = [] } = useQuery<any[]>({
+    queryKey: ['/api/allergens'],
+  });
+
+  const formatAllergens = (allergenIds: string[] | null) => {
+    if (!allergenIds || allergenIds.length === 0 || !Array.isArray(allergensList)) return [];
+    const map = allergensList.reduce((acc: any, a: any) => { acc[a.id.toString()] = a; return acc; }, {});
+    return allergenIds.map(id => map[id]).filter(Boolean).map((a: any) => ({ emoji: a.emoji || '⚠️', label: a.name }));
+  };
+
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [editingCategory, setEditingCategory] = useState<any>(null);
@@ -761,8 +772,14 @@ export default function MenuCategoryManager({ pubId, categories }: MenuCategoryM
                                       className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
                                     >
                                       <div className="flex-1">
-                                        <div className="flex items-center gap-2">
+                                        <div className="flex items-center gap-2 flex-wrap">
                                           <h4 className="font-medium text-gray-900 dark:text-white">{product.name}</h4>
+                                          {product.isVegetarian && (
+                                            <span title="Vegetariano" className="text-sm">🌿</span>
+                                          )}
+                                          {product.isSpicy && (
+                                            <span title="Piccante" className="text-sm">🌶️</span>
+                                          )}
                                           {!product.isVisible && (
                                             <Badge variant="secondary" className="text-xs">
                                               <EyeOff className="h-3 w-3 mr-1" />
@@ -776,6 +793,23 @@ export default function MenuCategoryManager({ pubId, categories }: MenuCategoryM
                                         {product.price && (
                                           <p className="text-sm font-semibold text-green-600 dark:text-green-400 mt-1">€{product.price}</p>
                                         )}
+                                        {(() => {
+                                          const fa = formatAllergens(product.allergens);
+                                          if (!fa.length) return null;
+                                          return (
+                                            <div className="flex flex-wrap items-center gap-1 mt-1.5">
+                                              <span className="text-[10px] font-medium text-gray-400 uppercase tracking-wide">Allergeni:</span>
+                                              {fa.map(({ emoji, label }: { emoji: string; label: string }, i: number) => (
+                                                <span
+                                                  key={i}
+                                                  className="inline-flex items-center gap-0.5 px-1.5 py-0.5 bg-amber-50 dark:bg-amber-950/50 text-amber-800 dark:text-amber-200 rounded text-[10px] font-medium border border-amber-200 dark:border-amber-800"
+                                                >
+                                                  {emoji} {label}
+                                                </span>
+                                              ))}
+                                            </div>
+                                          );
+                                        })()}
                                       </div>
                                       <div className="flex items-center space-x-1 ml-4">
                                         <Button

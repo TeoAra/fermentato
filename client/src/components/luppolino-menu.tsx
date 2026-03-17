@@ -150,10 +150,9 @@ export default function LuppolinoMenu({ menu, menuInfoBox }: LuppolinoMenuProps)
                                   <span
                                     key={index}
                                     className="inline-flex items-center gap-0.5 px-1.5 py-0.5 bg-amber-50 dark:bg-amber-950/50 text-amber-800 dark:text-amber-200 rounded text-[10px] font-medium border border-amber-200 dark:border-amber-800"
-                                    title={label}
                                   >
                                     <span>{emoji}</span>
-                                    <span className="hidden sm:inline">{label}</span>
+                                    <span>{label}</span>
                                   </span>
                                 ))}
                               </div>
