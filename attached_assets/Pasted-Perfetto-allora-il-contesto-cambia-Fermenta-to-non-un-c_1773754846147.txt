@@ -1,0 +1,114 @@
+Perfetto, allora il contesto cambia: **Fermenta.to non è un clone puro di Vivino**, ma sembra più una piattaforma/community per **birra artigianale**, con discovery di **pub, birrifici e birre vicine**. Questo rende il matching immagini ancora più sensato, perché può diventare una funzione di accesso rapido al catalogo invece che il cuore unico del prodotto. Dal sito emerge proprio questo posizionamento: “trova pub, birrifici e la perfetta birra artigianale vicino a te”, con schede dedicate a singole birre/birrifici. ([fermenta.to][1])
+
+Per **Fermenta.to**, io non farei subito un sistema “full image recognition” pesante. Farei una pipeline a 3 livelli:
+
+**Livello 1 — gratis e semplice**
+
+* foto etichetta/lattina
+* OCR locale o server-side
+* estrai nome birra, birrificio, stile, annata/ABV se presente
+* query sul tuo DB
+
+**Livello 2 — matching immagini gratis**
+
+* embedding immagine con **CLIP open source**
+* ricerca similitudine con **FAISS** oppure **pgvector**
+* recuperi top 5 candidati dal catalogo
+
+**Livello 3 — reranking**
+
+* combini:
+
+  * similarità immagine
+  * testo OCR
+  * brand/birrificio
+  * stile birra
+* mostri il match migliore o 3 possibili match
+
+Per il tuo progetto questa è la scelta migliore perché nel mondo birra hai spesso:
+
+* etichette simili tra edizioni
+* foto scattate male nei pub
+* bottiglie/lattine con riflessi
+* nomi non sempre leggibili bene
+
+Quindi **solo OCR** sbaglia troppo, e **solo image matching** rischia confusione tra birre della stessa linea. Insieme funzionano molto meglio.
+
+### Stack consigliato per Fermenta.to
+
+Per stare quasi a costo zero lato AI:
+
+* **PWA**: camera upload + crop etichetta
+* **Backend**: FastAPI o Node
+* **OCR**: Tesseract / PaddleOCR
+* **Image matching**: CLIP open source
+* **Vector search**: FAISS o pgvector
+* **DB principale**: PostgreSQL sulla tua VPS
+
+### Costo realistico
+
+Se fai tutto self-hosted:
+
+* **AI per matching immagini**: 0€ di licenze
+* **OCR**: 0€
+* **costo reale**: solo VPS
+
+Indicativamente:
+
+* piccolo MVP: **10–25€/mese**
+* con un po’ di traffico e storage immagini: **25–80€/mese**
+* se hai molte immagini e vuoi risposta molto rapida: **80–200€/mese**
+
+Se invece aggiungi GPT per interpretare OCR sporco o normalizzare nomi, il costo resta comunque basso se lo usi solo nei casi ambigui:
+
+* scansioni base: quasi gratis
+* scansioni dubbie: pochi centesimi o meno per richiesta, a seconda del modello usato e del volume. Il billing API OpenAI è separato da ChatGPT Plus. ([fermenta.to][1])
+
+### La cosa più importante
+
+Per un progetto come il tuo, il valore non è “riconoscere qualunque birra del mondo”, ma:
+
+* riconoscere bene **le birre già nel tuo catalogo**
+* far atterrare l’utente su una scheda utile
+* suggerire pub, birrifici, recensioni o alternative
+
+Quindi ti conviene impostarlo come:
+
+**“riconoscimento nel catalogo Fermenta”**
+non come “riconoscimento universale”.
+
+È molto più economico, più preciso e più coerente col prodotto.
+
+### Strategia pratica che farei io
+
+Fase 1:
+
+* upload foto
+* OCR nome brand + birra
+* ricerca DB fuzzy
+
+Fase 2:
+
+* aggiungi embeddings immagini per etichette del catalogo
+* top 5 candidati
+
+Fase 3:
+
+* se nessun match forte:
+
+  * chiedi conferma utente
+  * salvi la foto per migliorare dataset e matching
+
+Così costruisci il dataset mentre il prodotto cresce.
+
+### In sintesi
+
+Per **Fermenta.to** sì, puoi fare il matching immagini **gratis** in modo serio, e anzi nel tuo caso ha molto senso. La soluzione migliore è:
+
+**OCR open source + CLIP + FAISS/pgvector + PostgreSQL sulla VPS**
+
+e come costo iniziale stai facilmente in una fascia **10–80€/mese** finché il traffico non cresce davvero.
+
+Posso buttarti giù subito una **architettura concreta per Fermenta.to**, con endpoint, schema DB e logica di matching “etichetta birra → scheda prodotto”.
+
+[1]: https://fermenta.to/?utm_source=chatgpt.com "Fermenta.to - Birra Artigianale Italiana"
