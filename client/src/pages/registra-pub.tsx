@@ -64,6 +64,7 @@ export default function RegistraPub() {
   const [brewerySearch, setBrewerySearch] = useState("");
   const [selectedBrewery, setSelectedBrewery] = useState<Brewery | null>(null);
   const [creatingNewBrewery, setCreatingNewBrewery] = useState(false);
+  const [sameSiteAsPub, setSameSiteAsPub] = useState(false);
 
   const form = useForm<FormData>({
     resolver: zodResolver(schema),
@@ -525,19 +526,54 @@ export default function RegistraPub() {
                         </FormItem>
                       )} />
 
-                      <FormField control={form.control} name="breweryLocation" render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Sede del Birrificio</FormLabel>
-                          <FormControl>
-                            <AddressAutocomplete
-                              value={field.value}
-                              onAddressSelect={handleBreweryAddressSelect}
-                              placeholder="Cerca la sede del birrificio..."
-                              countryRestriction={null}
-                            />
-                          </FormControl>
-                        </FormItem>
-                      )} />
+                      <div className="flex items-center gap-2 py-1">
+                        <input
+                          type="checkbox"
+                          id="same-site"
+                          checked={sameSiteAsPub}
+                          onChange={e => {
+                            const checked = e.target.checked;
+                            setSameSiteAsPub(checked);
+                            if (checked) {
+                              const pubAddr = form.getValues("pubAddress");
+                              const pubCity = form.getValues("pubCity");
+                              const pubRegion = form.getValues("pubRegion");
+                              form.setValue("breweryLocation", pubAddr || pubCity || "");
+                              form.setValue("breweryRegion", pubRegion || "");
+                              form.setValue("breweryCountry", "Italia");
+                            } else {
+                              form.setValue("breweryLocation", "");
+                              form.setValue("breweryRegion", "");
+                              form.setValue("breweryCountry", "");
+                            }
+                          }}
+                          className="w-4 h-4 accent-orange-500 cursor-pointer"
+                        />
+                        <label htmlFor="same-site" className="text-sm text-gray-700 dark:text-gray-300 cursor-pointer select-none">
+                          Stessa sede del pub
+                        </label>
+                      </div>
+
+                      {!sameSiteAsPub && (
+                        <FormField control={form.control} name="breweryLocation" render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Sede del Birrificio</FormLabel>
+                            <FormControl>
+                              <AddressAutocomplete
+                                value={field.value}
+                                onAddressSelect={handleBreweryAddressSelect}
+                                placeholder="Cerca la sede del birrificio..."
+                                countryRestriction={null}
+                              />
+                            </FormControl>
+                          </FormItem>
+                        )} />
+                      )}
+                      {sameSiteAsPub && (
+                        <div className="text-sm text-gray-500 dark:text-gray-400 bg-orange-50 dark:bg-orange-900/20 rounded-lg px-3 py-2 border border-orange-100 dark:border-orange-800">
+                          Sede: <span className="font-medium text-gray-700 dark:text-gray-300">{form.watch("pubAddress") || form.watch("pubCity")}</span>
+                        </div>
+                      )}
 
                       <div className="grid grid-cols-2 gap-3">
                         <FormField control={form.control} name="breweryVatNumber" render={({ field }) => (

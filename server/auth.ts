@@ -688,7 +688,12 @@ export async function setupAuth(app: Express) {
           console.error('Auto-login after verify failed:', loginErr);
           return res.redirect(redirectUrl);
         }
-        res.redirect(redirectUrl);
+        // Force session save before redirect to avoid race condition where
+        // the browser follows the redirect before the session is persisted
+        req.session.save((saveErr) => {
+          if (saveErr) console.error('Session save error after verify-email login:', saveErr);
+          res.redirect(redirectUrl);
+        });
       });
     } catch (error) {
       console.error('Email verification error:', error);

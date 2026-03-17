@@ -139,6 +139,14 @@ export default function AttivaPub() {
       window.history.replaceState({}, "", "/attiva-pub");
       setStep("checkout");
       setTimeout(() => checkoutMutation.mutate(), 800);
+      return;
+    }
+
+    // ── Case 4: from dashboard "Abbonati" button → skip to Stripe directly ──
+    if (params.get("checkout") === "1" && isAuthenticated) {
+      window.history.replaceState({}, "", "/attiva-pub");
+      setStep("checkout");
+      setTimeout(() => checkoutMutation.mutate({ reactivate: false }), 600);
     }
   }, [isAuthenticated]);
 

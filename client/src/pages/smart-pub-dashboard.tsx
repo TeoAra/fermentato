@@ -776,7 +776,7 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
               <div className="flex flex-col gap-2 shrink-0">
                 {(status === 'trial' && !trialExpired) && (
                   <>
-                    <Button size="sm" className="bg-amber-500 hover:bg-amber-600 text-white text-xs" onClick={() => window.location.href = '/attiva-pub'}>
+                    <Button size="sm" className="bg-amber-500 hover:bg-amber-600 text-white text-xs" onClick={() => window.location.href = '/attiva-pub?checkout=1'}>
                       Abbonati — €65/anno
                     </Button>
                     <button
@@ -788,7 +788,7 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
                   </>
                 )}
                 {(trialExpired || status === 'none' || status === 'canceled') && (
-                  <Button size="sm" className="bg-amber-500 hover:bg-amber-600 text-white text-xs" onClick={() => window.location.href = '/attiva-pub'}>
+                  <Button size="sm" className="bg-amber-500 hover:bg-amber-600 text-white text-xs" onClick={() => window.location.href = '/attiva-pub?checkout=1'}>
                     Abbonati — €65/anno
                   </Button>
                 )}

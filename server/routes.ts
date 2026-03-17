@@ -2141,8 +2141,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
       await db.delete(pushSubscriptions).where(eq(pushSubscriptions.userId, targetId));
       await db.delete(oauthAccounts).where(eq(oauthAccounts.userId, targetId));
 
-      // Disassociate pubs from this owner (don't delete the pub)
-      await db.update(pubs).set({ ownerId: null }).where(eq(pubs.ownerId, targetId));
+      // Delete pubs owned by this user — cascade through all child FK tables first
+      await db.execute(sql`DELETE FROM menu_items WHERE category_id IN (SELECT id FROM menu_categories WHERE pub_id IN (SELECT id FROM pubs WHERE owner_id = ${targetId}))`);
+      await db.execute(sql`DELETE FROM menu_categories WHERE pub_id IN (SELECT id FROM pubs WHERE owner_id = ${targetId})`);
+      await db.execute(sql`DELETE FROM tap_list WHERE pub_id IN (SELECT id FROM pubs WHERE owner_id = ${targetId})`);
+      await db.execute(sql`DELETE FROM bottle_list WHERE pub_id IN (SELECT id FROM pubs WHERE owner_id = ${targetId})`);
+      await db.execute(sql`DELETE FROM pub_sizes WHERE pub_id IN (SELECT id FROM pubs WHERE owner_id = ${targetId})`);
+      await db.execute(sql`DELETE FROM ratings WHERE pub_id IN (SELECT id FROM pubs WHERE owner_id = ${targetId})`);
+      await db.execute(sql`DELETE FROM user_beer_tastings WHERE pub_id IN (SELECT id FROM pubs WHERE owner_id = ${targetId})`);
+      await db.delete(pubs).where(eq(pubs.ownerId, targetId));
+      // Brewery stays in DB (data preserved) — no owner link needed
 
       // Nullify reviewed_by references (admin who reviewed requests)
       await db.update(publicanRequests).set({ reviewedBy: null }).where(eq(publicanRequests.reviewedBy, targetId));
@@ -3271,12 +3279,39 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.delete("/api/user/delete", isAuthenticated, async (req: any, res) => {
     try {
       const userId = (req.user as any).id;
-      
-      await storage.deleteUser(userId);
-      
-      // Destroy session
+
+      // Cascade delete child records in FK-dependency order
+      await db.delete(notifications).where(eq(notifications.userId, userId));
+      await db.delete(notificationPreferences).where(eq(notificationPreferences.userId, userId));
+      await db.delete(favorites).where(eq(favorites.userId, userId));
+      await db.delete(userBeerTastings).where(eq(userBeerTastings.userId, userId));
+      await db.delete(ratings).where(eq(ratings.userId, userId));
+      await db.delete(userActivities).where(eq(userActivities.userId, userId));
+      await db.delete(pushSubscriptions).where(eq(pushSubscriptions.userId, userId));
+      await db.delete(oauthAccounts).where(eq(oauthAccounts.userId, userId));
+
+      // Delete pubs owned by this user — cascade through all child FK tables first
+      await db.execute(sql`DELETE FROM menu_items WHERE category_id IN (SELECT id FROM menu_categories WHERE pub_id IN (SELECT id FROM pubs WHERE owner_id = ${userId}))`);
+      await db.execute(sql`DELETE FROM menu_categories WHERE pub_id IN (SELECT id FROM pubs WHERE owner_id = ${userId})`);
+      await db.execute(sql`DELETE FROM tap_list WHERE pub_id IN (SELECT id FROM pubs WHERE owner_id = ${userId})`);
+      await db.execute(sql`DELETE FROM bottle_list WHERE pub_id IN (SELECT id FROM pubs WHERE owner_id = ${userId})`);
+      await db.execute(sql`DELETE FROM pub_sizes WHERE pub_id IN (SELECT id FROM pubs WHERE owner_id = ${userId})`);
+      await db.execute(sql`DELETE FROM ratings WHERE pub_id IN (SELECT id FROM pubs WHERE owner_id = ${userId})`);
+      await db.execute(sql`DELETE FROM user_beer_tastings WHERE pub_id IN (SELECT id FROM pubs WHERE owner_id = ${userId})`);
+      await db.delete(pubs).where(eq(pubs.ownerId, userId));
+      // Brewery stays in DB (data preserved) — no owner link
+
+      // Delete registration requests
+      await db.delete(publicanRequests).where(eq(publicanRequests.userId, userId));
+      await db.delete(breweryRequests).where(eq(breweryRequests.userId, userId));
+
+      // Delete the user
+      await db.delete(users).where(eq(users.id, userId));
+
       req.logout(() => {
-        res.json({ message: "Account deleted successfully" });
+        req.session.destroy(() => {
+          res.json({ message: "Account deleted successfully" });
+        });
       });
     } catch (error) {
       console.error("Error deleting user:", error);
