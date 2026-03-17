@@ -359,6 +359,13 @@ export default function AdminContentManager({ type }: AdminContentManagerProps) 
       setSearchResults(prev => prev.filter(item => item.id !== deleteTarget?.id));
       setDeleteTarget(null);
       queryClient.invalidateQueries({ queryKey: ["/api/admin/stats"] });
+      if (type === "pubs") {
+        queryClient.invalidateQueries({ queryKey: ["/api/pubs"] });
+        queryClient.invalidateQueries({ queryKey: ["/api/pubs/nearby"] });
+      }
+      if (type === "breweries") {
+        queryClient.invalidateQueries({ queryKey: ["/api/breweries"] });
+      }
     },
     onError: () => { toast({ title: "Errore", description: "Impossibile eliminare", variant: "destructive" }); setDeleteTarget(null); },
   });
@@ -396,6 +403,13 @@ export default function AdminContentManager({ type }: AdminContentManagerProps) 
       setSearchResults(prev => prev.filter(r => !ids.includes(r.id)));
       clearSelection();
       queryClient.invalidateQueries({ queryKey: ["/api/admin/stats"] });
+      if (type === "pubs") {
+        queryClient.invalidateQueries({ queryKey: ["/api/pubs"] });
+        queryClient.invalidateQueries({ queryKey: ["/api/pubs/nearby"] });
+      }
+      if (type === "breweries") {
+        queryClient.invalidateQueries({ queryKey: ["/api/breweries"] });
+      }
     },
     onError: () => toast({ title: "Errore eliminazione", variant: "destructive" }),
   });
