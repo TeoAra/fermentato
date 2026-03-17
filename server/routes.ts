@@ -50,9 +50,32 @@ async function writeTempImage(dataUrl: string): Promise<{ path: string; ext: str
   return { path, ext };
 }
 
-// ── Gemini Vision OCR (primary engine — direct HTTP, handles stylised beer label fonts) ──
-const GEMINI_MODEL = "gemini-2.5-flash";
+// ── Gemini Vision OCR (primary engine) ──────────────────────────────────────
+// Uses gemini-2.0-flash (stable, strong vision). Returns structured JSON so
+// we get: beerName, breweryName AND the full raw text — giving fuzzy search
+// more material to work with even when label interpretation is uncertain.
+const GEMINI_MODEL = "gemini-2.0-flash";
 const GEMINI_API_URL = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent`;
+
+const GEMINI_PROMPT = `You are analyzing an Italian craft beer label, can or bottle.
+
+Your job:
+1. Read ALL text visible in the image, exactly as written (including any partial words).
+2. Identify the BEER NAME (usually the largest or most prominent text, often a proper name or invented word).
+3. Identify the BREWERY NAME (the producer — look for words like "Birrificio", "Brewery", "Birra", or a brand logo name).
+
+Return ONLY a JSON object with this exact shape — no markdown, no explanation:
+{
+  "beerName": "<beer name or empty string>",
+  "breweryName": "<brewery name or empty string>",
+  "allText": "<all text you can read, space-separated, in order of visual prominence>"
+}
+
+Rules:
+- If you cannot distinguish beer name from brewery name, put your best guess in beerName and leave breweryName empty.
+- The allText field must include EVERYTHING readable: beer name, brewery, style, ABV, taglines, batch numbers.
+- Never invent text that is not visible. If the image is too blurry or dark, return empty strings.
+- ABV percentages (e.g. "6.5%") and style words (IPA, Stout, Lager) often appear but are NOT the beer name.`;
 
 async function runGeminiOCR(dataUrl: string): Promise<{ text: string; available: boolean }> {
   const apiKey = process.env.GEMINI_API_KEY;
@@ -66,17 +89,21 @@ async function runGeminiOCR(dataUrl: string): Promise<{ text: string; available:
       contents: [{
         parts: [
           { inline_data: { mime_type: m[1], data: m[3] } },
-          { text: "This is a beer label or bottle. Extract the beer name and brewery name. Return them on separate lines, beer name first, then brewery name. Return ONLY the names — no ABV, no style, no other text, no explanations." },
+          { text: GEMINI_PROMPT },
         ],
       }],
-      generationConfig: { temperature: 0.1, maxOutputTokens: 128 },
+      generationConfig: {
+        temperature: 0,
+        maxOutputTokens: 256,
+        responseMimeType: "application/json",
+      },
     };
 
     const res = await fetch(`${GEMINI_API_URL}?key=${apiKey}`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(body),
-      signal: AbortSignal.timeout(15000),
+      signal: AbortSignal.timeout(18000),
     });
 
     if (!res.ok) {
@@ -86,8 +113,32 @@ async function runGeminiOCR(dataUrl: string): Promise<{ text: string; available:
     }
 
     const data: any = await res.json();
-    const text = data?.candidates?.[0]?.content?.parts?.[0]?.text?.trim() ?? "";
-    return { text, available: true };
+    const raw = data?.candidates?.[0]?.content?.parts?.[0]?.text?.trim() ?? "";
+    if (!raw) return { text: "", available: true };
+
+    // Parse the structured JSON response
+    let parsed: { beerName?: string; breweryName?: string; allText?: string } = {};
+    try {
+      parsed = JSON.parse(raw);
+    } catch {
+      // Gemini sometimes wraps JSON in markdown — strip ```json ... ```
+      const stripped = raw.replace(/^```(?:json)?\s*/i, "").replace(/```\s*$/, "").trim();
+      try { parsed = JSON.parse(stripped); } catch { parsed = {}; }
+    }
+
+    const beerName = (parsed.beerName ?? "").trim();
+    const breweryName = (parsed.breweryName ?? "").trim();
+    const allText = (parsed.allText ?? "").trim();
+
+    // Build a search string: put beerName first (highest weight), then brewery, then full text
+    const combined = [beerName, breweryName, allText]
+      .filter(Boolean)
+      .join(" ")
+      .replace(/\s+/g, " ")
+      .trim();
+
+    console.log(`Gemini OCR → beer="${beerName}" brewery="${breweryName}" allText="${allText.substring(0, 80)}"`);
+    return { text: combined, available: true };
   } catch (e: any) {
     console.error("Gemini OCR error:", e?.message?.substring(0, 120));
     return { text: "", available: true };
