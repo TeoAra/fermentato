@@ -91,7 +91,9 @@ export default function AdminPublicanRequests() {
   const { toast } = useToast();
   const { user, isAuthenticated, isLoading } = useAuth();
   const queryClient = useQueryClient();
-  const [section, setSection] = useState<"pub" | "brewery">("brewery");
+
+  const urlSection = new URLSearchParams(window.location.search).get('section');
+  const [section, setSection] = useState<"pub" | "brewery">(urlSection === 'pub' ? 'pub' : 'brewery');
   const [activeTab, setActiveTab] = useState("pending");
   const [adminNotes, setAdminNotes] = useState("");
   const [dialogAction, setDialogAction] = useState<"approve" | "reject" | null>(null);
@@ -373,62 +375,73 @@ export default function AdminPublicanRequests() {
     </Card>
   );
 
-  const BreweryRequestCard = ({ request, showActions = false }: { request: BreweryRequest; showActions?: boolean }) => (
-    <Card className="mb-4">
-      <CardContent className="pt-6">
-        <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
-          <div className="flex-1 space-y-3">
-            <div className="flex items-center gap-2">
-              <Factory className="h-5 w-5 text-amber-600" />
-              <h3 className="font-semibold text-lg">{request.breweryName}</h3>
-              <Badge 
-                variant={
-                  request.status === 'pending' ? 'secondary' : 
-                  request.status === 'approved' ? 'default' : 
-                  'destructive'
-                }
-              >
-                {request.status === 'pending' ? 'In attesa' : 
-                 request.status === 'approved' ? 'Approvata' : 'Rifiutata'}
-              </Badge>
-              {request.existingBreweryId && (
-                <Badge variant="outline">Birrificio esistente #{request.existingBreweryId}</Badge>
-              )}
-            </div>
+  const BreweryRequestCard = ({ request, showActions = false }: { request: BreweryRequest; showActions?: boolean }) => {
+    const locationParts = [
+      request.breweryLocation,
+      request.breweryRegion ? `(${request.breweryRegion})` : null,
+      request.breweryCountry && request.breweryCountry !== 'Italia' ? request.breweryCountry : null,
+    ].filter(Boolean).join(' ');
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm text-gray-600 dark:text-gray-400">
-              <div className="flex items-center gap-2">
-                <MapPin className="h-4 w-4" />
-                <span>{request.breweryLocation}</span>
-                {request.breweryRegion && <span>({request.breweryRegion})</span>}
-                {request.breweryCountry && <span>- {request.breweryCountry}</span>}
+    return (
+      <Card className="mb-4 overflow-hidden">
+        <CardContent className="pt-5 pb-4">
+          {/* Header row: icon + name + badges */}
+          <div className="flex items-start gap-3 mb-4">
+            <div className="w-9 h-9 rounded-lg bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center shrink-0 mt-0.5">
+              <Factory className="h-4.5 w-4.5 text-amber-600" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <div className="flex flex-wrap items-center gap-2 mb-1">
+                <h3 className="font-semibold text-base text-gray-900 dark:text-white">{request.breweryName}</h3>
+                <Badge
+                  className={`text-xs px-2 py-0.5 ${
+                    request.status === 'pending' ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300 border-amber-200' :
+                    request.status === 'approved' ? 'bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300 border-green-200' :
+                    'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300 border-red-200'
+                  }`}
+                  variant="outline"
+                >
+                  {request.status === 'pending' ? 'In attesa' : request.status === 'approved' ? 'Approvata' : 'Rifiutata'}
+                </Badge>
+                {request.existingBreweryId && (
+                  <Badge variant="outline" className="text-xs">Birrificio esistente #{request.existingBreweryId}</Badge>
+                )}
               </div>
-              
+            </div>
+          </div>
+
+          {/* Info grid */}
+          <div className="space-y-2 text-sm text-gray-600 dark:text-gray-400 ml-12">
+            {locationParts && (
+              <div className="flex items-start gap-2">
+                <MapPin className="h-4 w-4 shrink-0 mt-0.5 text-gray-400" />
+                <span>{locationParts}</span>
+              </div>
+            )}
+
+            <div className="flex flex-wrap gap-x-6 gap-y-1.5">
               {request.phone && (
                 <div className="flex items-center gap-2">
-                  <Phone className="h-4 w-4" />
+                  <Phone className="h-4 w-4 shrink-0 text-gray-400" />
                   <span>{request.phone}</span>
                 </div>
               )}
-              
               {request.email && (
                 <div className="flex items-center gap-2">
-                  <Mail className="h-4 w-4" />
+                  <Mail className="h-4 w-4 shrink-0 text-gray-400" />
                   <span>{request.email}</span>
                 </div>
               )}
-              
               {request.vatNumber && (
                 <div className="flex items-center gap-2">
-                  <Building2 className="h-4 w-4" />
+                  <Building2 className="h-4 w-4 shrink-0 text-gray-400" />
                   <span>P.IVA: {request.vatNumber}</span>
                 </div>
               )}
-
               {request.websiteUrl && (
                 <div className="flex items-center gap-2">
-                  <Globe className="h-4 w-4" />
-                  <a href={request.websiteUrl} target="_blank" rel="noopener noreferrer" className="text-amber-600 hover:underline">
+                  <Globe className="h-4 w-4 shrink-0 text-gray-400" />
+                  <a href={request.websiteUrl} target="_blank" rel="noopener noreferrer" className="text-amber-600 hover:underline truncate max-w-xs">
                     {request.websiteUrl}
                   </a>
                 </div>
@@ -436,66 +449,62 @@ export default function AdminPublicanRequests() {
             </div>
 
             {request.description && (
-              <p className="text-sm text-gray-600 dark:text-gray-400 mt-2">
-                {request.description}
-              </p>
+              <p className="text-sm text-gray-500 dark:text-gray-400 italic">{request.description}</p>
             )}
 
-            <div className="flex items-center gap-4 text-xs text-gray-500 pt-2 border-t">
-              <div className="flex items-center gap-1">
-                <User className="h-3 w-3" />
-                <span>
-                  {request.userFirstName} {request.userLastName} ({request.userEmail})
-                </span>
-              </div>
-              <div className="flex items-center gap-1">
-                <Clock className="h-3 w-3" />
-                <span>
-                  {formatDistanceToNow(new Date(request.createdAt), { addSuffix: true, locale: it })}
-                </span>
-              </div>
-            </div>
-
             {request.adminNotes && (
-              <div className="bg-gray-100 dark:bg-gray-800 p-3 rounded-lg mt-2">
-                <p className="text-sm">
-                  <strong>Note admin:</strong> {request.adminNotes}
-                </p>
+              <div className="bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 p-2.5 rounded-lg">
+                <p className="text-xs font-medium text-gray-700 dark:text-gray-300">Note admin: {request.adminNotes}</p>
                 {request.reviewedAt && (
-                  <p className="text-xs text-gray-500 mt-1">
-                    Rivista il {format(new Date(request.reviewedAt), "dd/MM/yyyy HH:mm", { locale: it })}
+                  <p className="text-xs text-gray-400 mt-0.5">
+                    {format(new Date(request.reviewedAt), "dd/MM/yyyy HH:mm", { locale: it })}
                   </p>
                 )}
               </div>
             )}
           </div>
 
-          {showActions && (
-            <div className="flex gap-2">
-              <Button
-                size="sm"
-                onClick={() => handleBreweryAction(request, "approve")}
-                className="bg-green-600 hover:bg-green-700"
-                data-testid={`button-approve-brewery-${request.id}`}
-              >
-                <CheckCircle className="h-4 w-4 mr-1" />
-                Approva
-              </Button>
-              <Button
-                size="sm"
-                variant="destructive"
-                onClick={() => handleBreweryAction(request, "reject")}
-                data-testid={`button-reject-brewery-${request.id}`}
-              >
-                <XCircle className="h-4 w-4 mr-1" />
-                Rifiuta
-              </Button>
+          {/* Footer: user info + actions */}
+          <div className="flex flex-wrap items-center justify-between gap-3 mt-4 pt-3 border-t border-gray-100 dark:border-gray-800">
+            <div className="flex flex-wrap items-center gap-3 text-xs text-gray-400">
+              <div className="flex items-center gap-1">
+                <User className="h-3 w-3" />
+                <span>{request.userEmail || [request.userFirstName, request.userLastName].filter(Boolean).join(' ') || '—'}</span>
+              </div>
+              <div className="flex items-center gap-1">
+                <Clock className="h-3 w-3" />
+                <span>{formatDistanceToNow(new Date(request.createdAt), { addSuffix: true, locale: it })}</span>
+              </div>
             </div>
-          )}
-        </div>
-      </CardContent>
-    </Card>
-  );
+
+            {showActions && (
+              <div className="flex gap-2">
+                <Button
+                  size="sm"
+                  onClick={() => handleBreweryAction(request, "approve")}
+                  className="bg-green-600 hover:bg-green-700 h-8 px-3 text-xs"
+                  data-testid={`button-approve-brewery-${request.id}`}
+                >
+                  <CheckCircle className="h-3.5 w-3.5 mr-1" />
+                  Approva
+                </Button>
+                <Button
+                  size="sm"
+                  variant="destructive"
+                  onClick={() => handleBreweryAction(request, "reject")}
+                  className="h-8 px-3 text-xs"
+                  data-testid={`button-reject-brewery-${request.id}`}
+                >
+                  <XCircle className="h-3.5 w-3.5 mr-1" />
+                  Rifiuta
+                </Button>
+              </div>
+            )}
+          </div>
+        </CardContent>
+      </Card>
+    );
+  };
 
   return (
     <div className="container mx-auto px-4 py-8 max-w-5xl">

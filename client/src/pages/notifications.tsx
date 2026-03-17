@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { queryClient, apiRequest } from "@/lib/queryClient";
-import { Bell, Beer, Calendar, MapPin, Settings, AlertCircle, CheckCircle2, Trash2, CheckCheck, Loader2, ChevronDown } from "lucide-react";
+import { Bell, Beer, Calendar, MapPin, Settings, AlertCircle, CheckCircle2, Trash2, CheckCheck, Loader2, ChevronDown, Factory, Store } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -137,15 +137,25 @@ export default function Notifications() {
     updatePrefsMutation.mutate({ [key]: value });
   };
 
+  const getNotificationLink = (notification: Notification): string | null => {
+    switch (notification.type) {
+      case 'new_brewery_request':
+        return '/admin/publican-requests?section=brewery';
+      case 'new_pub_request':
+        return '/admin/publican-requests?section=pub';
+      default:
+        if (notification.pubId) return `/pub/${notification.pubId}`;
+        if (notification.breweryId) return `/brewery/${notification.breweryId}`;
+        return null;
+    }
+  };
+
   const handleNotificationClick = (notification: Notification) => {
     if (!notification.isRead) {
       markReadMutation.mutate(notification.id);
     }
-    if (notification.pubId) {
-      setLocation(`/pub/${notification.pubId}`);
-    } else if (notification.breweryId) {
-      setLocation(`/brewery/${notification.breweryId}`);
-    }
+    const link = getNotificationLink(notification);
+    if (link) setLocation(link);
   };
 
   const getNotificationIcon = (type: string) => {
@@ -159,6 +169,10 @@ export default function Notifications() {
         return <Calendar className="h-5 w-5 text-blue-600" />;
       case 'new_pub':
         return <MapPin className="h-5 w-5 text-green-600" />;
+      case 'new_brewery_request':
+        return <Factory className="h-5 w-5 text-amber-600" />;
+      case 'new_pub_request':
+        return <Store className="h-5 w-5 text-amber-600" />;
       default:
         return <Bell className="h-5 w-5 text-gray-600" />;
     }
@@ -364,11 +378,18 @@ export default function Notifications() {
                     )}
                   </div>
                   <p className="text-sm text-gray-600 dark:text-gray-300 mb-1">{notification.message}</p>
-                  <span className="text-xs text-gray-500">
-                    {notification.createdAt
-                      ? formatDistanceToNow(new Date(notification.createdAt), { addSuffix: true, locale: it })
-                      : ''}
-                  </span>
+                  <div className="flex items-center gap-3">
+                    <span className="text-xs text-gray-500">
+                      {notification.createdAt
+                        ? formatDistanceToNow(new Date(notification.createdAt), { addSuffix: true, locale: it })
+                        : ''}
+                    </span>
+                    {getNotificationLink(notification) && (
+                      <span className="text-xs font-medium text-amber-600 dark:text-amber-400">
+                        Vai alla richiesta →
+                      </span>
+                    )}
+                  </div>
                 </div>
                 <Button
                   variant="ghost"

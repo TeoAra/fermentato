@@ -360,7 +360,7 @@ export async function setupAuth(app: Express) {
           await sendPushToAdmins({
             title: 'Nuova richiesta pub',
             body: `${normalizedEmail} ha richiesto di registrare "${trimmedPubName}" (${trimmedPubCity}).`,
-            url: '/admin',
+            url: '/admin/requests',
           });
         } catch (notifError) {
           console.error('Error sending admin notification:', notifError);
@@ -411,7 +411,7 @@ export async function setupAuth(app: Express) {
           await sendPushToAdmins({
             title: 'Nuova richiesta birrificio',
             body: `${normalizedEmail} ha richiesto di registrare il birrificio "${trimmedBreweryName || 'esistente'}".`,
-            url: '/admin',
+            url: '/admin/requests?section=brewery',
           });
         } catch (notifError) {
           console.error('Error sending admin brewery notification:', notifError);
@@ -564,7 +564,7 @@ export async function setupAuth(app: Express) {
         await sendPushToAdmins({
           title: 'Nuovo pub registrato',
           body: `${normalizedEmail} ha registrato "${trimmedPubName}" (${trimmedPubCity}).`,
-          url: '/admin/subscriptions',
+          url: '/admin/publican-requests?section=pub',
         });
       } catch (e) { console.error('Error sending admin notification:', e); }
 
