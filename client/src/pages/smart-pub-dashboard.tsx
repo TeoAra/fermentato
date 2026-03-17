@@ -713,11 +713,11 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: 0.2 }}
           >
-            <div className="flex items-start justify-between gap-4">
-              <div className="flex items-center gap-3">
-                {icon}
-                <div>
-                  <div className="flex items-center gap-2 mb-1">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
+              <div className="flex items-center gap-3 min-w-0">
+                <div className="shrink-0">{icon}</div>
+                <div className="min-w-0">
+                  <div className="flex flex-wrap items-center gap-2 mb-1">
                     <span className="font-semibold text-gray-900 dark:text-white text-sm">Abbonamento</span>
                     {badgeEl}
                   </div>
@@ -725,12 +725,12 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
                     {status === 'gifted' && (
                       <>
                         <div className="flex items-center gap-1.5">
-                          <Crown className="w-3.5 h-3.5 text-violet-500" />
+                          <Crown className="w-3.5 h-3.5 text-violet-500 shrink-0" />
                           <span className="text-violet-700 dark:text-violet-300 font-medium">Accesso completo senza scadenza</span>
                         </div>
                         {expiresAt && expiresAt.getFullYear() < 2099 && (
                           <div className="flex items-center gap-1.5">
-                            <CalendarDays className="w-3.5 h-3.5" />
+                            <CalendarDays className="w-3.5 h-3.5 shrink-0" />
                             <span>Valido fino al <strong className="text-gray-800 dark:text-gray-200">{fmt(expiresAt)}</strong></span>
                           </div>
                         )}
@@ -739,11 +739,11 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
                     {status === 'trial' && trialStartedAt && trialEndsAt && (
                       <>
                         <div className="flex items-center gap-1.5">
-                          <CalendarDays className="w-3.5 h-3.5" />
+                          <CalendarDays className="w-3.5 h-3.5 shrink-0" />
                           <span>Inizio prova: <strong className="text-gray-800 dark:text-gray-200">{fmt(trialStartedAt)}</strong></span>
                         </div>
                         <div className="flex items-center gap-1.5">
-                          <CalendarDays className="w-3.5 h-3.5" />
+                          <CalendarDays className="w-3.5 h-3.5 shrink-0" />
                           <span>
                             {trialExpired
                               ? <>Prova scaduta il <strong className="text-red-600 dark:text-red-400">{fmt(trialEndsAt)}</strong></>
@@ -758,11 +758,11 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
                     {status === 'active' && expiresAt && (
                       <>
                         <div className="flex items-center gap-1.5">
-                          <CreditCard className="w-3.5 h-3.5" />
+                          <CreditCard className="w-3.5 h-3.5 shrink-0" />
                           <span>€65/anno IVA inclusa</span>
                         </div>
                         <div className="flex items-center gap-1.5">
-                          <CalendarDays className="w-3.5 h-3.5" />
+                          <CalendarDays className="w-3.5 h-3.5 shrink-0" />
                           <span>Prossimo rinnovo: <strong className="text-gray-800 dark:text-gray-200">{fmt(expiresAt)}</strong></span>
                         </div>
                       </>
@@ -773,14 +773,14 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
                   </div>
                 </div>
               </div>
-              <div className="flex flex-col gap-2 shrink-0">
+              <div className="flex flex-row sm:flex-col items-center sm:items-end gap-2 shrink-0">
                 {(status === 'trial' && !trialExpired) && (
                   <>
-                    <Button size="sm" className="bg-amber-500 hover:bg-amber-600 text-white text-xs" onClick={() => window.location.href = '/attiva-pub?checkout=1'}>
-                      Abbonati — €65/anno
+                    <Button size="sm" className="bg-amber-500 hover:bg-amber-600 text-white text-xs whitespace-nowrap" onClick={() => window.location.href = '/attiva-pub?checkout=1'}>
+                      Abbonati €65/anno
                     </Button>
                     <button
-                      className="text-xs text-red-500 hover:text-red-700 underline text-right"
+                      className="text-xs text-red-500 hover:text-red-700 underline whitespace-nowrap"
                       onClick={() => setShowCancelDialog(true)}
                     >
                       Annulla prova
@@ -788,13 +788,13 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
                   </>
                 )}
                 {(trialExpired || status === 'none' || status === 'canceled') && (
-                  <Button size="sm" className="bg-amber-500 hover:bg-amber-600 text-white text-xs" onClick={() => window.location.href = '/attiva-pub?checkout=1'}>
-                    Abbonati — €65/anno
+                  <Button size="sm" className="bg-amber-500 hover:bg-amber-600 text-white text-xs whitespace-nowrap" onClick={() => window.location.href = '/attiva-pub?checkout=1'}>
+                    Abbonati €65/anno
                   </Button>
                 )}
                 {status === 'active' && (
                   <button
-                    className="text-xs text-red-500 hover:text-red-700 underline text-right"
+                    className="text-xs text-red-500 hover:text-red-700 underline whitespace-nowrap"
                     onClick={() => setShowCancelDialog(true)}
                   >
                     Disdici
