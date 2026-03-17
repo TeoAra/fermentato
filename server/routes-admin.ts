@@ -1515,10 +1515,34 @@ export function registerAdminRoutes(app: Express) {
       const { months } = req.body;
       const m = parseInt(months) || 12;
 
-      const [existing] = await db.select({ subscriptionExpiresAt: pubs.subscriptionExpiresAt, subscriptionStatus: pubs.subscriptionStatus })
-        .from(pubs).where(eq(pubs.id, pubId));
+      const [existing] = await db.select({
+        subscriptionExpiresAt: pubs.subscriptionExpiresAt,
+        subscriptionStatus: pubs.subscriptionStatus,
+        ownerId: pubs.ownerId,
+      }).from(pubs).where(eq(pubs.id, pubId));
 
       if (!existing) return res.status(404).json({ message: "Pub non trovato" });
+
+      // Cancel any active or trialing Stripe subscription for the pub owner
+      if (existing.ownerId) {
+        try {
+          const [owner] = await db.select({ email: users.email }).from(users).where(eq(users.id, existing.ownerId));
+          if (owner?.email) {
+            const { getUncachableStripeClient } = await import("./stripeClient");
+            const stripe = getUncachableStripeClient();
+            const customers = await stripe.customers.list({ email: owner.email, limit: 1 });
+            if (customers.data.length > 0) {
+              const cid = customers.data[0].id;
+              for (const status of ['trialing', 'active'] as const) {
+                const subs = await stripe.subscriptions.list({ customer: cid, status, limit: 5 });
+                for (const sub of subs.data) await stripe.subscriptions.cancel(sub.id);
+              }
+            }
+          }
+        } catch (stripeErr: any) {
+          console.warn("Gift subscription: Stripe cancel warning:", stripeErr.message);
+        }
+      }
 
       const now = new Date();
       const base = existing.subscriptionExpiresAt && new Date(existing.subscriptionExpiresAt) > now
