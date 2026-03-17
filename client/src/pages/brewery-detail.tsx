@@ -563,11 +563,24 @@ export default function BreweryDetail() {
                 {displayedBeers.map((beer: Beer) => (
                   <Link key={beer.id} href={`/beer/${beer.id}`}>
                     <Card className={`glass-card border-0 h-full hover:scale-105 transition-all duration-300 group cursor-pointer relative ${beer.isCollaboration ? 'ring-1 ring-purple-300 dark:ring-purple-700' : ''}`}>
-                      {/* Collaboration badge top-left */}
+                      {/* Collaboration badge top-left — includes partner name */}
                       {beer.isCollaboration && (
-                        <div className="absolute top-3 left-3 z-10 flex items-center gap-1 bg-purple-100 dark:bg-purple-900/70 text-purple-700 dark:text-purple-300 text-xs font-semibold px-2 py-0.5 rounded-full shadow">
-                          <Users className="h-3 w-3" />
-                          Collab
+                        <div className="absolute top-3 left-3 z-10 flex items-center gap-1 bg-purple-100 dark:bg-purple-900/70 text-purple-700 dark:text-purple-300 text-xs font-semibold px-2 py-0.5 rounded-full shadow" onClick={e => e.preventDefault()}>
+                          <Users className="h-3 w-3 flex-shrink-0" />
+                          <span>Collab</span>
+                          {beer.collaboratingBreweries && beer.collaboratingBreweries.length > 0 && (
+                            <>
+                              <span className="opacity-50 mx-0.5">·</span>
+                              {beer.collaboratingBreweries.map((b, i) => (
+                                <span key={b.id} className="inline-flex items-center gap-0.5">
+                                  {i > 0 && <span className="opacity-50 mx-0.5">×</span>}
+                                  <Link href={`/brewery/${b.id}`}>
+                                    <span className="hover:underline cursor-pointer">{b.name}</span>
+                                  </Link>
+                                </span>
+                              ))}
+                            </>
+                          )}
                         </div>
                       )}
                       {/* Rating badge top-right */}
@@ -615,19 +628,6 @@ export default function BreweryDetail() {
                           )}
                         </div>
                         
-                        {/* Collaboration partner breweries */}
-                        {beer.isCollaboration && beer.collaboratingBreweries && beer.collaboratingBreweries.length > 0 && (
-                          <div className="mt-3 flex flex-wrap items-center gap-1.5" onClick={e => e.preventDefault()}>
-                            <span className="text-xs text-purple-600 dark:text-purple-400 font-medium">con:</span>
-                            {beer.collaboratingBreweries.map(b => (
-                              <Link key={b.id} href={`/brewery/${b.id}`}>
-                                <span className="inline-flex items-center gap-1 text-xs font-semibold text-purple-700 dark:text-purple-300 hover:underline">
-                                  {b.name}
-                                </span>
-                              </Link>
-                            ))}
-                          </div>
-                        )}
                         
                         {beer.description && (
                           <p className="mt-4 text-sm text-gray-600 dark:text-gray-400 line-clamp-3">

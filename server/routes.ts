@@ -472,6 +472,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         description: beers.description,
         imageUrl: beers.imageUrl,
         breweryId: beers.breweryId,
+        primaryBreweryName: sql<string>`(SELECT name FROM breweries pb WHERE pb.id = ${beers.breweryId})`,
+        primaryBreweryLogoUrl: sql<string | null>`(SELECT logo_url FROM breweries pb WHERE pb.id = ${beers.breweryId})`,
         isGlutenFree: beers.isGlutenFree,
         isAlcoholFree: beers.isAlcoholFree,
         isCollaboration: beers.isCollaboration,
@@ -505,14 +507,34 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
 
-      const result = beerRows.map(b => ({
-        ...b,
-        avgRating: b.avgRating ? parseFloat(String(b.avgRating)) : null,
-        reviewCount: Number(b.reviewCount || 0),
-        favoriteCount: Number(b.favoriteCount || 0),
-        collaboratingBreweries: collabMap[b.id] || [],
-        isCollabBeer: b.breweryId !== breweryId, // true if this is a collab beer (not own)
-      }));
+      const result = beerRows.map(b => {
+        const isCollabBeer = b.breweryId !== breweryId;
+        // For partner-brewery beers (collab beers not owned by this brewery),
+        // show the PRIMARY brewery as the "con:" partner.
+        // For own beers, show the collab partner breweries.
+        const collaboratingBreweries = isCollabBeer
+          ? [{ id: b.breweryId, name: b.primaryBreweryName ?? '', logoUrl: b.primaryBreweryLogoUrl ?? null }]
+          : collabMap[b.id] || [];
+        return {
+          id: b.id,
+          name: b.name,
+          style: b.style,
+          abv: b.abv,
+          ibu: b.ibu,
+          color: b.color,
+          description: b.description,
+          imageUrl: b.imageUrl,
+          breweryId: b.breweryId,
+          isGlutenFree: b.isGlutenFree,
+          isAlcoholFree: b.isAlcoholFree,
+          isCollaboration: b.isCollaboration,
+          avgRating: b.avgRating ? parseFloat(String(b.avgRating)) : null,
+          reviewCount: Number(b.reviewCount || 0),
+          favoriteCount: Number(b.favoriteCount || 0),
+          collaboratingBreweries,
+          isCollabBeer,
+        };
+      });
       res.json(result);
     } catch (error) {
       console.error("Error fetching brewery beers:", error);
