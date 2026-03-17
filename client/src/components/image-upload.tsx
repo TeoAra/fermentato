@@ -208,52 +208,51 @@ export function ImageUpload({
           )}
         </div>
 
-        {/* Info + Actions */}
+        {/* Info + Actions (stacked vertically to avoid overflow on mobile) */}
         <div className="flex-1 min-w-0">
           <p className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">{label}</p>
           {description && (
-            <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5 line-clamp-1">{description}</p>
+            <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{description}</p>
           )}
           <p className="text-xs text-gray-400 dark:text-gray-400 mt-0.5">
             Max {maxSize}MB · {acceptedFormats.join(', ')}
             {recommendedDimensions && ` · ${recommendedDimensions}`}
           </p>
           {uploadState === 'error' && error && (
-            <p className="text-xs text-red-500 mt-1 truncate">{error}</p>
+            <p className="text-xs text-red-500 mt-1">{error}</p>
           )}
-        </div>
-
-        {/* Action Buttons */}
-        <div className="flex flex-col gap-1.5 flex-shrink-0">
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            onClick={handleClickUpload}
-            disabled={disabled || uploadState === 'uploading'}
-            className="h-8 px-3 text-xs whitespace-nowrap"
-            data-testid="button-change-image"
-          >
-            {uploadState === 'uploading' ? (
-              <><RefreshCw className="w-3 h-3 mr-1 animate-spin" />{Math.round(uploadProgress)}%</>
-            ) : (
-              <><Upload className="w-3 h-3 mr-1" />{preview ? 'Cambia' : 'Carica'}</>
-            )}
-          </Button>
-          {preview && (
+          {/* Buttons below info text so they don't overflow on narrow screens */}
+          <div className="flex items-center gap-1.5 mt-2 flex-wrap">
             <Button
               type="button"
-              variant="ghost"
+              variant="outline"
               size="sm"
-              onClick={handleRemoveImage}
+              onClick={handleClickUpload}
               disabled={disabled || uploadState === 'uploading'}
-              className="h-8 px-3 text-xs text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/30 whitespace-nowrap"
-              data-testid="button-remove-image"
+              className="h-7 px-2.5 text-xs"
+              data-testid="button-change-image"
             >
-              <X className="w-3 h-3 mr-1" />
-              Rimuovi
+              {uploadState === 'uploading' ? (
+                <><RefreshCw className="w-3 h-3 mr-1 animate-spin" />{Math.round(uploadProgress)}%</>
+              ) : (
+                <><Upload className="w-3 h-3 mr-1" />{preview ? 'Cambia' : 'Carica'}</>
+              )}
             </Button>
-          )}
+            {preview && (
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={handleRemoveImage}
+                disabled={disabled || uploadState === 'uploading'}
+                className="h-7 px-2.5 text-xs text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/30"
+                data-testid="button-remove-image"
+              >
+                <X className="w-3 h-3 mr-1" />
+                Rimuovi
+              </Button>
+            )}
+          </div>
         </div>
       </div>
 
