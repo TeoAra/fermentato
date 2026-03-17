@@ -17,6 +17,8 @@ interface LuppolinoMenuProps {
       allergens: string[] | null;
       isAvailable: boolean;
       isInfoBox?: boolean;
+      isVegetarian?: boolean;
+      isSpicy?: boolean;
       imageUrl?: string | null;
     }>;
   }>;
@@ -118,6 +120,12 @@ export default function LuppolinoMenu({ menu, menuInfoBox }: LuppolinoMenuProps)
                                 <span className="text-sm font-semibold text-gray-900 dark:text-white leading-tight">
                                   {item.name}
                                 </span>
+                                {item.isVegetarian && (
+                                  <span className="ml-1.5 text-sm" title="Vegetariano">🌿</span>
+                                )}
+                                {item.isSpicy && (
+                                  <span className="ml-0.5 text-sm" title="Piccante">🌶️</span>
+                                )}
                                 {!item.isAvailable && (
                                   <Badge variant="destructive" className="ml-1.5 text-[10px] px-1 py-0 h-4">
                                     N/D

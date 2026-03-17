@@ -232,6 +232,8 @@ export const menuItems = pgTable("menu_items", {
   isVisible: boolean("is_visible").default(true),
   isAvailable: boolean("is_available").default(true),
   isInfoBox: boolean("is_info_box").default(false),
+  isVegetarian: boolean("is_vegetarian").default(false),
+  isSpicy: boolean("is_spicy").default(false),
   imageUrl: varchar("image_url"),
   orderIndex: integer("order_index").default(0),
   createdAt: timestamp("created_at").defaultNow(),

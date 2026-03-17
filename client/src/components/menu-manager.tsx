@@ -48,6 +48,8 @@ interface MenuItem {
   allergens: string[];
   isVisible: boolean;
   isAvailable: boolean;
+  isVegetarian?: boolean;
+  isSpicy?: boolean;
   imageUrl?: string;
   orderIndex: number;
 }
@@ -87,6 +89,8 @@ export function MenuManager({ pubId, menu }: MenuManagerProps) {
     allergens: [] as string[],
     isVisible: true,
     isAvailable: true,
+    isVegetarian: false,
+    isSpicy: false,
     imageUrl: "",
   });
 
@@ -233,6 +237,8 @@ export function MenuManager({ pubId, menu }: MenuManagerProps) {
       allergens: [],
       isVisible: true,
       isAvailable: true,
+      isVegetarian: false,
+      isSpicy: false,
       imageUrl: "",
     });
   };
@@ -255,6 +261,8 @@ export function MenuManager({ pubId, menu }: MenuManagerProps) {
       allergens: item.allergens || [],
       isVisible: item.isVisible,
       isAvailable: item.isAvailable,
+      isVegetarian: item.isVegetarian ?? false,
+      isSpicy: item.isSpicy ?? false,
       imageUrl: item.imageUrl || "",
     });
   };
@@ -467,6 +475,31 @@ export function MenuManager({ pubId, menu }: MenuManagerProps) {
                     />
                   </div>
 
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="flex items-center space-x-2 rounded-lg border border-green-200 dark:border-green-800 bg-green-50 dark:bg-green-950/30 px-3 py-2">
+                      <Checkbox
+                        id="item-vegetarian"
+                        checked={itemForm.isVegetarian}
+                        onCheckedChange={(checked) => setItemForm({ ...itemForm, isVegetarian: !!checked })}
+                        className="border-green-500 data-[state=checked]:bg-green-600 data-[state=checked]:border-green-600"
+                      />
+                      <Label htmlFor="item-vegetarian" className="flex items-center gap-1.5 cursor-pointer text-green-800 dark:text-green-300 font-medium">
+                        <span>🌿</span> Vegetariano
+                      </Label>
+                    </div>
+                    <div className="flex items-center space-x-2 rounded-lg border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-950/30 px-3 py-2">
+                      <Checkbox
+                        id="item-spicy"
+                        checked={itemForm.isSpicy}
+                        onCheckedChange={(checked) => setItemForm({ ...itemForm, isSpicy: !!checked })}
+                        className="border-red-500 data-[state=checked]:bg-red-600 data-[state=checked]:border-red-600"
+                      />
+                      <Label htmlFor="item-spicy" className="flex items-center gap-1.5 cursor-pointer text-red-800 dark:text-red-300 font-medium">
+                        <span>🌶️</span> Piccante
+                      </Label>
+                    </div>
+                  </div>
+
                   <div className="grid grid-cols-2 gap-4">
                     <div className="flex items-center space-x-2">
                       <Switch
@@ -617,9 +650,15 @@ export function MenuManager({ pubId, menu }: MenuManagerProps) {
                           >
                             <div className="flex items-start justify-between">
                               <div className="flex-1">
-                                <div className="flex items-center gap-2 mb-1">
+                                <div className="flex items-center gap-2 mb-1 flex-wrap">
                                   <h4 className="font-medium">{item.name}</h4>
                                   <span className="font-semibold text-green-600">€{item.price}</span>
+                                  {item.isVegetarian && (
+                                    <span className="text-sm" title="Vegetariano">🌿</span>
+                                  )}
+                                  {item.isSpicy && (
+                                    <span className="text-sm" title="Piccante">🌶️</span>
+                                  )}
                                   {!item.isVisible && (
                                     <Badge variant="secondary" className="text-xs">
                                       <EyeOff className="w-3 h-3 mr-1" />
