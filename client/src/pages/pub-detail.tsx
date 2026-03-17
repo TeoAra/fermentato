@@ -47,7 +47,7 @@ import OpeningHoursDialog from "@/components/OpeningHoursDialog";
 import ImageWithFallback from "@/components/image-with-fallback";
 import { PubQRCode } from "@/components/pub-qr-code";
 import { MenuPdfDownload } from "@/components/menu-pdf-download";
-import { EventCategoryBadge, EventShareButtons } from "@/components/events-manager";
+import { EventCategoryBadge, EventShareButtons, EventInterestButton } from "@/components/events-manager";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { format, isFuture } from "date-fns";
 import { it as itLocale } from "date-fns/locale";
@@ -904,7 +904,10 @@ export default function PubDetail() {
                               {event.description && (
                                 <p className="text-gray-600 dark:text-gray-400 text-sm mb-3">{event.description}</p>
                               )}
-                              <EventShareButtons event={event} pubId={(pub as any).id} />
+                              <div className="flex items-center gap-2 flex-wrap">
+                                <EventShareButtons event={event} pubId={(pub as any).id} />
+                                <EventInterestButton eventId={event.id} type="pub" />
+                              </div>
                             </div>
                           </div>
                         </CardContent>

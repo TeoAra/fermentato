@@ -4331,6 +4331,66 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // ============================================================
+  // EVENT INTERESTS (pub + brewery events — chi è interessato)
+  // ============================================================
+
+  // GET interest count + user state for a pub event
+  app.get("/api/pub-events/:eventId/interest", async (req: any, res) => {
+    try {
+      const eventId = parseInt(req.params.eventId);
+      if (isNaN(eventId)) return res.status(400).json({ message: "Invalid event ID" });
+      const count = await storage.getPubEventInterestCount(eventId);
+      const userId = req.user?.id;
+      const userInterested = userId ? await storage.getPubEventUserInterest(userId, eventId) : false;
+      res.json({ count, userInterested });
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch interest" });
+    }
+  });
+
+  // POST toggle interest for a pub event (authenticated)
+  app.post("/api/pub-events/:eventId/interest", isAuthenticated, async (req: any, res) => {
+    try {
+      const eventId = parseInt(req.params.eventId);
+      if (isNaN(eventId)) return res.status(400).json({ message: "Invalid event ID" });
+      const userId = (req.user as any).id;
+      const interested = await storage.togglePubEventInterest(userId, eventId);
+      const count = await storage.getPubEventInterestCount(eventId);
+      res.json({ interested, count });
+    } catch (error) {
+      res.status(500).json({ message: "Failed to toggle interest" });
+    }
+  });
+
+  // GET interest count + user state for a brewery event
+  app.get("/api/brewery-events/:eventId/interest", async (req: any, res) => {
+    try {
+      const eventId = parseInt(req.params.eventId);
+      if (isNaN(eventId)) return res.status(400).json({ message: "Invalid event ID" });
+      const count = await storage.getBreweryEventInterestCount(eventId);
+      const userId = req.user?.id;
+      const userInterested = userId ? await storage.getBreweryEventUserInterest(userId, eventId) : false;
+      res.json({ count, userInterested });
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch interest" });
+    }
+  });
+
+  // POST toggle interest for a brewery event (authenticated)
+  app.post("/api/brewery-events/:eventId/interest", isAuthenticated, async (req: any, res) => {
+    try {
+      const eventId = parseInt(req.params.eventId);
+      if (isNaN(eventId)) return res.status(400).json({ message: "Invalid event ID" });
+      const userId = (req.user as any).id;
+      const interested = await storage.toggleBreweryEventInterest(userId, eventId);
+      const count = await storage.getBreweryEventInterestCount(eventId);
+      res.json({ interested, count });
+    } catch (error) {
+      res.status(500).json({ message: "Failed to toggle interest" });
+    }
+  });
+
+  // ============================================================
   // BEER REVIEWS (public tastings with user info)
   // ============================================================
 

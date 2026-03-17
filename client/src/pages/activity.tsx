@@ -9,7 +9,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Link } from "wouter";
 import { formatDistanceToNow, format } from "date-fns";
 import { it } from "date-fns/locale";
-import { EventCategoryBadge, EventShareButtons } from "@/components/events-manager";
+import { EventCategoryBadge, EventShareButtons, EventInterestButton } from "@/components/events-manager";
 
 type OpenStatus = 'open' | 'closing_soon' | 'opening_soon' | 'closed';
 
@@ -411,7 +411,7 @@ export default function Activity() {
                           <Calendar className="h-3 w-3" />
                           <span>{format(new Date(ev.eventDate), "EEE d MMM 'alle' HH:mm", { locale: it })}</span>
                         </div>
-                        <div className="flex items-center gap-2 text-xs text-gray-500 flex-wrap">
+                        <div className="flex items-center gap-2 text-xs text-gray-500 flex-wrap mb-1.5">
                           <Link href={`/pub/${ev.pubId}`} onClick={(e: any) => e.stopPropagation()}>
                             <span className="text-orange-600 hover:underline font-medium cursor-pointer">{ev.pub?.name}</span>
                           </Link>
@@ -420,6 +420,7 @@ export default function Activity() {
                             <span className="font-medium text-blue-600 dark:text-blue-400">{formatDistance(ev.distance)}</span>
                           )}
                         </div>
+                        <EventInterestButton eventId={ev.id} type="pub" />
                       </div>
                     </div>
                   </CardContent>
@@ -575,6 +576,7 @@ export default function Activity() {
                     <span className="text-sm text-gray-500">• {selectedEvent.pub.city}</span>
                   )}
                 </div>
+                <EventInterestButton eventId={selectedEvent.id} type="pub" />
                 <div className="pt-3 border-t flex items-center justify-between">
                   <p className="text-xs text-gray-500">Condividi questo evento</p>
                   <EventShareButtons event={selectedEvent} pubId={selectedEvent.pubId} size="default" />

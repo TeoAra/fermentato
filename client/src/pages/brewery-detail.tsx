@@ -28,7 +28,7 @@ import {
   Users,
   Store,
 } from "lucide-react";
-import { EventCategoryBadge } from "@/components/events-manager";
+import { EventCategoryBadge, EventInterestButton } from "@/components/events-manager";
 import { format, isFuture } from "date-fns";
 import { it as itLocale } from "date-fns/locale";
 import Footer from "@/components/footer";
@@ -661,8 +661,9 @@ export default function BreweryDetail() {
                       </div>
                     )}
                     {event.description && (
-                      <p className="text-sm text-gray-600 dark:text-gray-400 line-clamp-2 mt-1">{event.description}</p>
+                      <p className="text-sm text-gray-600 dark:text-gray-400 line-clamp-2 mt-1 mb-2">{event.description}</p>
                     )}
+                    <EventInterestButton eventId={event.id} type="brewery" />
                   </CardContent>
                 </Card>
               ))}

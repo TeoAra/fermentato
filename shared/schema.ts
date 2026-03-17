@@ -721,6 +721,22 @@ export const insertBreweryEventSchema = createInsertSchema(breweryEvents).omit({
 export type BreweryEvent = typeof breweryEvents.$inferSelect;
 export type InsertBreweryEvent = z.infer<typeof insertBreweryEventSchema>;
 
+// Pub Event Interests — utenti interessati a un evento di pub
+export const pubEventInterests = pgTable("pub_event_interests", {
+  id: serial("id").primaryKey(),
+  userId: varchar("user_id").references(() => users.id, { onDelete: "cascade" }).notNull(),
+  eventId: integer("event_id").references(() => pubEvents.id, { onDelete: "cascade" }).notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+}, (table) => [unique().on(table.userId, table.eventId)]);
+
+// Brewery Event Interests — utenti interessati a un evento di birrificio
+export const breweryEventInterests = pgTable("brewery_event_interests", {
+  id: serial("id").primaryKey(),
+  userId: varchar("user_id").references(() => users.id, { onDelete: "cascade" }).notNull(),
+  eventId: integer("event_id").references(() => breweryEvents.id, { onDelete: "cascade" }).notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+}, (table) => [unique().on(table.userId, table.eventId)]);
+
 // Review Reports table
 export const reviewReports = pgTable("review_reports", {
   id: serial("id").primaryKey(),

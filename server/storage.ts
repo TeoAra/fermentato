@@ -53,6 +53,8 @@ import {
   breweryEvents,
   type BreweryEvent,
   type InsertBreweryEvent,
+  pubEventInterests,
+  breweryEventInterests,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, desc, like, inArray, sql, or, asc, ilike, isNotNull, ne } from "drizzle-orm";
@@ -309,6 +311,14 @@ export interface IStorage {
   markPubEventStartSent(id: number): Promise<void>;
   markBreweryEventStartSent(id: number): Promise<void>;
   getPendingStartNotifications(): Promise<{ pubEvents: any[]; breweryEvents: any[] }>;
+
+  // Event interests
+  togglePubEventInterest(userId: string, eventId: number): Promise<boolean>;
+  getPubEventInterestCount(eventId: number): Promise<number>;
+  getPubEventUserInterest(userId: string, eventId: number): Promise<boolean>;
+  toggleBreweryEventInterest(userId: string, eventId: number): Promise<boolean>;
+  getBreweryEventInterestCount(eventId: number): Promise<number>;
+  getBreweryEventUserInterest(userId: string, eventId: number): Promise<boolean>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -1579,6 +1589,55 @@ export class DatabaseStorage implements IStorage {
 
     return { pubEvents: pendingPubEvents, breweryEvents: pendingBreweryEvents };
   }
+
+  // --- Event Interests ---
+  async togglePubEventInterest(userId: string, eventId: number): Promise<boolean> {
+    const existing = await db.select().from(pubEventInterests)
+      .where(and(eq(pubEventInterests.userId, userId), eq(pubEventInterests.eventId, eventId)));
+    if (existing.length > 0) {
+      await db.delete(pubEventInterests)
+        .where(and(eq(pubEventInterests.userId, userId), eq(pubEventInterests.eventId, eventId)));
+      return false;
+    }
+    await db.insert(pubEventInterests).values({ userId, eventId });
+    return true;
+  }
+
+  async getPubEventInterestCount(eventId: number): Promise<number> {
+    const [row] = await db.select({ count: sql<number>`COUNT(*)` }).from(pubEventInterests)
+      .where(eq(pubEventInterests.eventId, eventId));
+    return Number(row?.count ?? 0);
+  }
+
+  async getPubEventUserInterest(userId: string, eventId: number): Promise<boolean> {
+    const rows = await db.select({ id: pubEventInterests.id }).from(pubEventInterests)
+      .where(and(eq(pubEventInterests.userId, userId), eq(pubEventInterests.eventId, eventId)));
+    return rows.length > 0;
+  }
+
+  async toggleBreweryEventInterest(userId: string, eventId: number): Promise<boolean> {
+    const existing = await db.select().from(breweryEventInterests)
+      .where(and(eq(breweryEventInterests.userId, userId), eq(breweryEventInterests.eventId, eventId)));
+    if (existing.length > 0) {
+      await db.delete(breweryEventInterests)
+        .where(and(eq(breweryEventInterests.userId, userId), eq(breweryEventInterests.eventId, eventId)));
+      return false;
+    }
+    await db.insert(breweryEventInterests).values({ userId, eventId });
+    return true;
+  }
+
+  async getBreweryEventInterestCount(eventId: number): Promise<number> {
+    const [row] = await db.select({ count: sql<number>`COUNT(*)` }).from(breweryEventInterests)
+      .where(eq(breweryEventInterests.eventId, eventId));
+    return Number(row?.count ?? 0);
+  }
+
+  async getBreweryEventUserInterest(userId: string, eventId: number): Promise<boolean> {
+    const rows = await db.select({ id: breweryEventInterests.id }).from(breweryEventInterests)
+      .where(and(eq(breweryEventInterests.userId, userId), eq(breweryEventInterests.eventId, eventId)));
+    return rows.length > 0;
+  }
 }
 
 // Storage wrapper with fallback to in-memory when database is disabled
@@ -2326,6 +2385,25 @@ class StorageWrapper implements IStorage {
       () => this.databaseStorage.getPendingStartNotifications(),
       async () => ({ pubEvents: [], breweryEvents: [] })
     );
+  }
+
+  async togglePubEventInterest(userId: string, eventId: number): Promise<boolean> {
+    return this.dbCall(() => this.databaseStorage.togglePubEventInterest(userId, eventId), async () => false);
+  }
+  async getPubEventInterestCount(eventId: number): Promise<number> {
+    return this.dbCall(() => this.databaseStorage.getPubEventInterestCount(eventId), async () => 0);
+  }
+  async getPubEventUserInterest(userId: string, eventId: number): Promise<boolean> {
+    return this.dbCall(() => this.databaseStorage.getPubEventUserInterest(userId, eventId), async () => false);
+  }
+  async toggleBreweryEventInterest(userId: string, eventId: number): Promise<boolean> {
+    return this.dbCall(() => this.databaseStorage.toggleBreweryEventInterest(userId, eventId), async () => false);
+  }
+  async getBreweryEventInterestCount(eventId: number): Promise<number> {
+    return this.dbCall(() => this.databaseStorage.getBreweryEventInterestCount(eventId), async () => 0);
+  }
+  async getBreweryEventUserInterest(userId: string, eventId: number): Promise<boolean> {
+    return this.dbCall(() => this.databaseStorage.getBreweryEventUserInterest(userId, eventId), async () => false);
   }
 }
 

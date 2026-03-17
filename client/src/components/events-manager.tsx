@@ -14,6 +14,7 @@ import { useToast } from "@/hooks/use-toast";
 import { ImageUpload } from "@/components/image-upload";
 import { format, isPast, isFuture } from "date-fns";
 import { it } from "date-fns/locale";
+import { useAuth } from "@/hooks/useAuth";
 import {
   Calendar,
   Plus,
@@ -29,6 +30,8 @@ import {
   GlassWater,
   Sparkles,
   Tag,
+  Star,
+  Users,
 } from "lucide-react";
 
 export const EVENT_CATEGORIES: Record<string, { label: string; color: string; bg: string; darkBg: string; icon: any }> = {
@@ -108,6 +111,69 @@ export function EventShareButtons({ event, pubId, size = "sm" }: { event: any; p
     <Button variant="ghost" size="icon" className={`${btnSize} text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800`} onClick={handleShare} title="Condividi">
       <Share2 className={iconSize} />
     </Button>
+  );
+}
+
+// ----- EventInterestButton -----
+// readOnly=true → usato nel pannello gestione (mostra solo il contatore)
+// readOnly=false → usato nel pub-detail / activity (bottone interattivo)
+export function EventInterestButton({
+  eventId,
+  type,
+  readOnly = false,
+}: {
+  eventId: number;
+  type: "pub" | "brewery";
+  readOnly?: boolean;
+}) {
+  const { isAuthenticated } = useAuth();
+  const queryClient = useQueryClient();
+  const qKey = [`/api/${type}-events/${eventId}/interest`];
+
+  const { data } = useQuery<{ count: number; userInterested: boolean }>({
+    queryKey: qKey,
+    queryFn: () => apiRequest(`/api/${type}-events/${eventId}/interest`),
+    enabled: !!eventId,
+    staleTime: 60_000,
+  });
+
+  const count = data?.count ?? 0;
+  const interested = data?.userInterested ?? false;
+
+  const mutation = useMutation({
+    mutationFn: () => apiRequest(`/api/${type}-events/${eventId}/interest`, { method: "POST" }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: qKey }),
+  });
+
+  if (readOnly) {
+    return (
+      <div className="flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400">
+        <Users className="h-3.5 w-3.5" />
+        <span>{count} {count === 1 ? "interessato" : "interessati"}</span>
+      </div>
+    );
+  }
+
+  return (
+    <button
+      onClick={(e) => {
+        e.stopPropagation();
+        if (!isAuthenticated) return;
+        mutation.mutate();
+      }}
+      disabled={mutation.isPending || !isAuthenticated}
+      title={isAuthenticated ? (interested ? "Non sono più interessato" : "Sono interessato") : "Accedi per segnare il tuo interesse"}
+      className={`inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-all select-none
+        ${interested
+          ? "bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300 hover:bg-amber-200"
+          : "bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700"
+        }
+        ${!isAuthenticated ? "opacity-60 cursor-default" : "cursor-pointer"}
+      `}
+    >
+      <Star className={`h-3.5 w-3.5 ${interested ? "fill-amber-500 text-amber-500" : ""}`} />
+      <span>{count > 0 ? count : ""} {interested ? "Interessato" : "Interessato?"}</span>
+    </button>
   );
 }
 
@@ -406,7 +472,10 @@ function EventCard({ event, pubId, onEdit, onDelete, isPast }: { event: any; pub
             {event.description && (
               <p className="text-sm text-gray-600 dark:text-gray-400 line-clamp-2 mb-2">{event.description}</p>
             )}
-            <EventShareButtons event={event} pubId={pubId} size="sm" />
+            <div className="flex items-center gap-2 flex-wrap">
+              <EventShareButtons event={event} pubId={pubId} size="sm" />
+              <EventInterestButton eventId={event.id} type="pub" readOnly />
+            </div>
           </div>
           <div className="flex flex-col gap-1 shrink-0">
             <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => onEdit(event)}>
@@ -473,9 +542,12 @@ function BreweryEventCard({ event, breweryId, onEdit, onDelete, isPast }: { even
               </div>
             )}
             {event.description && <p className="text-sm text-gray-600 dark:text-gray-400 line-clamp-2 mb-2">{event.description}</p>}
-            <Button variant="ghost" size="icon" className="h-7 w-7 text-gray-600 dark:text-gray-400" onClick={handleShare} title="Condividi">
-              <Share2 className="h-3.5 w-3.5" />
-            </Button>
+            <div className="flex items-center gap-2 flex-wrap">
+              <Button variant="ghost" size="icon" className="h-7 w-7 text-gray-600 dark:text-gray-400" onClick={handleShare} title="Condividi">
+                <Share2 className="h-3.5 w-3.5" />
+              </Button>
+              <EventInterestButton eventId={event.id} type="brewery" readOnly />
+            </div>
           </div>
           <div className="flex flex-col gap-1 shrink-0">
             <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => onEdit(event)}>
