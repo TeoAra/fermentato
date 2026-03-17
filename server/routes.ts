@@ -4091,7 +4091,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const pubFavUserIds = await storage.getUsersWhoFavoritedPub(pubId);
         for (const favUserId of pubFavUserIds) {
           const prefs = await storage.getNotificationPreferences(favUserId);
-          if (prefs && !prefs.events) continue;
+          if (prefs?.events === false) continue;
           await storage.createNotification({
             userId: favUserId, type: 'event', title: `Nuovo evento da ${pub.name}!`,
             message: `"${event.title}" - Non perderlo!`,
@@ -4251,7 +4251,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           .where(and(eq(favorites.itemType, 'brewery'), eq(favorites.itemId, breweryId)));
         for (const fav of favUsers) {
           const prefs = await storage.getNotificationPreferences(fav.userId);
-          if (prefs && !prefs.events) continue;
+          if (prefs?.events === false) continue;
           await storage.createNotification({
             userId: fav.userId, type: 'event', title: `Nuovo evento da ${brewery?.name || 'birrificio'}!`,
             message: `"${event.title}" - Non perderlo!`,
@@ -4548,7 +4548,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const favUserIds = await storage.getUsersWhoFavoritedPub(event.pubId);
         for (const favUserId of favUserIds) {
           const prefs = await storage.getNotificationPreferences(favUserId);
-          if (prefs && !prefs.events) continue;
+          if (prefs?.events === false) continue;
           await storage.createNotification({
             userId: favUserId, type: 'event',
             title: `L'evento "${event.title}" è iniziato!`,
@@ -4570,7 +4570,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           .where(and(eq(favorites.itemType, 'brewery'), eq(favorites.itemId, event.breweryId)));
         for (const fav of favUsers) {
           const prefs = await storage.getNotificationPreferences(fav.userId);
-          if (prefs && !prefs.events) continue;
+          if (prefs?.events === false) continue;
           await storage.createNotification({
             userId: fav.userId, type: 'event',
             title: `L'evento "${event.title}" è iniziato!`,

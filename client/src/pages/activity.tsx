@@ -187,9 +187,10 @@ export default function Activity() {
           );
           return { ...ev, distance };
         }
-        return { ...ev, distance: 9999 };
+        // Pub without coordinates: include it without distance filter
+        return { ...ev, distance: null };
       })
-      .filter((ev: any) => ev.distance <= parseFloat(radius))
+      .filter((ev: any) => ev.distance === null || ev.distance <= parseFloat(radius))
       .sort((a: any, b: any) => new Date(a.eventDate).getTime() - new Date(b.eventDate).getTime());
   }, [upcomingEvents, userLocation, radius]);
 
@@ -415,7 +416,7 @@ export default function Activity() {
                             <span className="text-orange-600 hover:underline font-medium cursor-pointer">{ev.pub?.name}</span>
                           </Link>
                           {ev.pub?.city && <span>• {ev.pub.city}</span>}
-                          {ev.distance !== undefined && ev.distance !== 9999 && (
+                          {ev.distance !== undefined && ev.distance !== null && (
                             <span className="font-medium text-blue-600 dark:text-blue-400">{formatDistance(ev.distance)}</span>
                           )}
                         </div>

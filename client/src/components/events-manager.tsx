@@ -124,10 +124,16 @@ export function EventsManager({ pubId, pubName }: EventsManagerProps) {
     enabled: !!pubId,
   });
 
+  const invalidatePubEvents = () => {
+    queryClient.invalidateQueries({ queryKey: ["/api/pubs", pubId, "events"] });
+    queryClient.invalidateQueries({ queryKey: [`/api/pubs/${pubId}/events`] });
+    queryClient.invalidateQueries({ queryKey: ["/api/events/upcoming"] });
+  };
+
   const createMutation = useMutation({
     mutationFn: (data: any) => apiRequest(`/api/pubs/${pubId}/events`, { method: "POST" }, data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/pubs", pubId, "events"] });
+      invalidatePubEvents();
       setDialogOpen(false);
       resetForm();
       toast({ title: "Evento creato", description: "L'evento è stato pubblicato" });
@@ -139,7 +145,7 @@ export function EventsManager({ pubId, pubName }: EventsManagerProps) {
     mutationFn: ({ id, data }: { id: number; data: any }) =>
       apiRequest(`/api/pubs/${pubId}/events/${id}`, { method: "PATCH" }, data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/pubs", pubId, "events"] });
+      invalidatePubEvents();
       setDialogOpen(false);
       resetForm();
       toast({ title: "Evento aggiornato" });
@@ -150,7 +156,7 @@ export function EventsManager({ pubId, pubName }: EventsManagerProps) {
   const deleteMutation = useMutation({
     mutationFn: (id: number) => apiRequest(`/api/pubs/${pubId}/events/${id}`, { method: "DELETE" }),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/pubs", pubId, "events"] });
+      invalidatePubEvents();
       toast({ title: "Evento eliminato" });
     },
     onError: () => toast({ title: "Errore", description: "Impossibile eliminare", variant: "destructive" }),
@@ -216,7 +222,7 @@ export function EventsManager({ pubId, pubName }: EventsManagerProps) {
               Nuovo Evento
             </Button>
           </DialogTrigger>
-          <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
+          <DialogContent className="w-[calc(100%-2rem)] sm:max-w-lg max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>{editingId ? "Modifica Evento" : "Crea Nuovo Evento"}</DialogTitle>
             </DialogHeader>
@@ -498,10 +504,16 @@ export function BreweryEventsManager({ breweryId, breweryName }: BreweryEventsMa
     enabled: !!breweryId,
   });
 
+  const invalidateBreweryEvents = () => {
+    queryClient.invalidateQueries({ queryKey: ["/api/breweries", breweryId, "events"] });
+    queryClient.invalidateQueries({ queryKey: [`/api/breweries/${breweryId}/events`] });
+    queryClient.invalidateQueries({ queryKey: ["/api/events/upcoming"] });
+  };
+
   const createMutation = useMutation({
     mutationFn: (data: any) => apiRequest(`/api/breweries/${breweryId}/events`, { method: "POST" }, data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/breweries", breweryId, "events"] });
+      invalidateBreweryEvents();
       setDialogOpen(false);
       resetForm();
       toast({ title: "Evento creato", description: "L'evento è stato pubblicato" });
@@ -513,7 +525,7 @@ export function BreweryEventsManager({ breweryId, breweryName }: BreweryEventsMa
     mutationFn: ({ id, data }: { id: number; data: any }) =>
       apiRequest(`/api/breweries/${breweryId}/events/${id}`, { method: "PATCH" }, data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/breweries", breweryId, "events"] });
+      invalidateBreweryEvents();
       setDialogOpen(false);
       resetForm();
       toast({ title: "Evento aggiornato" });
@@ -524,7 +536,7 @@ export function BreweryEventsManager({ breweryId, breweryName }: BreweryEventsMa
   const deleteMutation = useMutation({
     mutationFn: (id: number) => apiRequest(`/api/breweries/${breweryId}/events/${id}`, { method: "DELETE" }),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/breweries", breweryId, "events"] });
+      invalidateBreweryEvents();
       toast({ title: "Evento eliminato" });
     },
     onError: () => toast({ title: "Errore", description: "Impossibile eliminare", variant: "destructive" }),
@@ -587,7 +599,7 @@ export function BreweryEventsManager({ breweryId, breweryName }: BreweryEventsMa
               Nuovo Evento
             </Button>
           </DialogTrigger>
-          <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
+          <DialogContent className="w-[calc(100%-2rem)] sm:max-w-lg max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>{editingId ? "Modifica Evento" : "Crea Nuovo Evento"}</DialogTitle>
             </DialogHeader>
