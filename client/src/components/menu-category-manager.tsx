@@ -73,6 +73,8 @@ export default function MenuCategoryManager({ pubId, categories }: MenuCategoryM
   const [infoBoxText, setInfoBoxText] = useState('');
   const [selectedCategoryIds, setSelectedCategoryIds] = useState<number[]>([]);
   const [isSubmittingProduct, setIsSubmittingProduct] = useState(false);
+  const [isSubmittingEditProduct, setIsSubmittingEditProduct] = useState(false);
+  const [editCategoryIds, setEditCategoryIds] = useState<number[]>([]);
   const [expandedCategories, setExpandedCategories] = useState<Set<number>>(new Set());
   const [editingProduct, setEditingProduct] = useState<any>(null);
   const [isEditProductOpen, setIsEditProductOpen] = useState(false);
@@ -753,6 +755,7 @@ export default function MenuCategoryManager({ pubId, categories }: MenuCategoryM
                                             variant="ghost"
                                             onClick={() => {
                                               setEditingProduct(product);
+                                              setEditCategoryIds(product.categoryId ? [product.categoryId] : []);
                                               setIsEditProductOpen(true);
                                             }}
                                             className="text-gray-600 hover:text-orange-600 hover:bg-orange-50"
@@ -832,6 +835,7 @@ export default function MenuCategoryManager({ pubId, categories }: MenuCategoryM
                                           variant="ghost"
                                           onClick={() => {
                                             setEditingProduct(product);
+                                            setEditCategoryIds(product.categoryId ? [product.categoryId] : []);
                                             setIsEditProductOpen(true);
                                           }}
                                           className="text-gray-600 hover:text-orange-600 hover:bg-orange-50"
@@ -923,6 +927,7 @@ export default function MenuCategoryManager({ pubId, categories }: MenuCategoryM
         setIsEditProductOpen(open);
         if (!open) {
           setEditingProduct(null);
+          setEditCategoryIds([]);
         }
       }}>
         <DialogContent className="sm:max-w-md" onOpenAutoFocus={(e) => e.preventDefault()}>
@@ -930,7 +935,34 @@ export default function MenuCategoryManager({ pubId, categories }: MenuCategoryM
             <DialogTitle>Modifica Prodotto</DialogTitle>
           </DialogHeader>
           {editingProduct && (
-            <div className="space-y-4">
+            <div className="space-y-4 max-h-[70vh] overflow-y-auto pr-1">
+              {/* Category selector (same as create) */}
+              <div>
+                <Label className="text-sm font-medium">Categorie <span className="text-gray-400 font-normal">(seleziona una o più)</span></Label>
+                <div className="mt-1.5 border rounded-md divide-y max-h-36 overflow-y-auto">
+                  {categories.map((cat) => {
+                    const checked = editCategoryIds.includes(cat.id);
+                    return (
+                      <label
+                        key={cat.id}
+                        className={`flex items-center gap-2.5 px-3 py-2 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors ${checked ? 'bg-green-50 dark:bg-green-900/20' : ''}`}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={checked}
+                          onChange={() => {
+                            setEditCategoryIds(prev =>
+                              prev.includes(cat.id) ? prev.filter(id => id !== cat.id) : [...prev, cat.id]
+                            );
+                          }}
+                          className="accent-green-600 w-4 h-4"
+                        />
+                        <span className="text-sm text-gray-900 dark:text-white">{cat.name}</span>
+                      </label>
+                    );
+                  })}
+                </div>
+              </div>
               <div>
                 <Label>Nome Prodotto</Label>
                 <Input
@@ -958,10 +990,6 @@ export default function MenuCategoryManager({ pubId, categories }: MenuCategoryM
                   rows={3}
                 />
               </div>
-              <AllergenSelector
-                selectedAllergens={editingProduct.allergens || []}
-                onAllergensChange={(allergens) => setEditingProduct({ ...editingProduct, allergens })}
-              />
               {/* Vegetarian / Spicy toggles */}
               <div className="flex gap-3">
                 <button
@@ -987,21 +1015,57 @@ export default function MenuCategoryManager({ pubId, categories }: MenuCategoryM
                   🌶️ Piccante
                 </button>
               </div>
+              <AllergenSelector
+                selectedAllergens={editingProduct.allergens || []}
+                onAllergensChange={(allergens) => setEditingProduct({ ...editingProduct, allergens })}
+              />
               <div className="flex justify-end space-x-2">
                 <Button variant="outline" onClick={() => setIsEditProductOpen(false)}>Annulla</Button>
-                <Button onClick={() => {
-                  updateProductMutation.mutate({
-                    id: editingProduct.id,
-                    data: {
+                <Button
+                  disabled={isSubmittingEditProduct}
+                  onClick={async () => {
+                    if (editCategoryIds.length === 0) {
+                      toast({ title: "Seleziona almeno una categoria", variant: "destructive" });
+                      return;
+                    }
+                    setIsSubmittingEditProduct(true);
+                    const data = {
                       name: editingProduct.name,
                       price: editingProduct.price,
                       description: editingProduct.description,
                       allergens: editingProduct.allergens,
                       isVegetarian: editingProduct.isVegetarian ?? false,
                       isSpicy: editingProduct.isSpicy ?? false,
+                    };
+                    try {
+                      // Update existing product (set to first selected category)
+                      await apiRequest(`/api/pubs/${pubId}/menu-items/${editingProduct.id}`, { method: 'PATCH' }, {
+                        ...data,
+                        categoryId: editCategoryIds[0],
+                      });
+                      // Create copies for any additional categories
+                      const extra = editCategoryIds.slice(1);
+                      if (extra.length > 0) {
+                        await Promise.all(
+                          extra.map(catId =>
+                            apiRequest(`/api/pubs/${pubId}/menu-items`, { method: 'POST' }, { ...data, categoryId: catId })
+                          )
+                        );
+                      }
+                      queryClient.invalidateQueries({ queryKey: ["/api/pubs", pubId, "menu"] });
+                      setIsEditProductOpen(false);
+                      setEditingProduct(null);
+                      setEditCategoryIds([]);
+                      toast({ title: "✅ Prodotto aggiornato!" });
+                    } catch {
+                      toast({ title: "❌ Errore", description: "Impossibile salvare il prodotto", variant: "destructive" });
+                    } finally {
+                      setIsSubmittingEditProduct(false);
                     }
-                  });
-                }}>Salva</Button>
+                  }}
+                >
+                  {isSubmittingEditProduct ? 'Salvataggio...' : 'Salva'}
+                </Button>
               </div>
             </div>
           )}

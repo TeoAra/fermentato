@@ -1482,7 +1482,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(403).json({ message: "This menu item does not belong to your pub" });
       }
 
-      const updates = insertMenuItemSchema.omit({ id: true, categoryId: true, createdAt: true, updatedAt: true }).partial().parse(req.body);
+      const updates = insertMenuItemSchema.omit({ id: true, createdAt: true, updatedAt: true }).partial().parse(req.body);
+      // If categoryId is being changed, verify the new category belongs to this pub
+      if (updates.categoryId && updates.categoryId !== item.categoryId) {
+        const catExists = categories.some(cat => cat.id === updates.categoryId);
+        if (!catExists) {
+          return res.status(400).json({ message: "Category does not belong to this pub" });
+        }
+      }
       const updatedItem = await storage.updateMenuItem(itemId, updates);
       res.json(updatedItem);
     } catch (error) {
