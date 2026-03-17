@@ -65,11 +65,16 @@ export default function MenuCategoryManager({ pubId, categories }: MenuCategoryM
   const [editingProduct, setEditingProduct] = useState<any>(null);
   const [isEditProductOpen, setIsEditProductOpen] = useState(false);
   
-  // Use refs for form inputs to avoid re-renders
+  // Refs for CREATE form
   const nameRef = useRef<HTMLInputElement>(null);
   const descriptionRef = useRef<HTMLTextAreaElement>(null);
   const infoBoxRef = useRef<HTMLTextAreaElement>(null);
   const visibilityRef = useRef<boolean>(true);
+  // Refs for EDIT form (separate to avoid any re-render/remount losing typed text)
+  const editNameRef = useRef<HTMLInputElement>(null);
+  const editDescriptionRef = useRef<HTMLTextAreaElement>(null);
+  const editInfoBoxRef = useRef<HTMLTextAreaElement>(null);
+  const editVisibilityRef = useRef<boolean>(true);
   
   const [formData, setFormData] = useState<any>({
     name: '',
@@ -259,12 +264,15 @@ export default function MenuCategoryManager({ pubId, categories }: MenuCategoryM
   // Handle edit category
   const handleEditCategory = (category: any) => {
     setEditingCategory(category);
+    // Store initial values in formData (used only as defaultValues for refs below)
     setFormData({
       name: category.name,
       description: category.description || '',
       infoBox: category.infoBox || '',
       isVisible: category.isVisible
     });
+    // Initialise edit visibility ref with current value
+    editVisibilityRef.current = category.isVisible ?? true;
     setIsEditDialogOpen(true);
   };
 
@@ -292,7 +300,13 @@ export default function MenuCategoryManager({ pubId, categories }: MenuCategoryM
   };
 
   const handleEditSubmit = () => {
-    if (!formData.name.trim()) {
+    // Read all values directly from refs — avoids stale formData state
+    const name = editNameRef.current?.value?.trim() || '';
+    const description = editDescriptionRef.current?.value?.trim() || '';
+    const infoBox = editInfoBoxRef.current?.value?.trim() || '';
+    const isVisible = editVisibilityRef.current;
+
+    if (!name) {
       toast({ 
         title: "⚠️ Campo richiesto", 
         description: "Il nome della categoria è obbligatorio", 
@@ -300,7 +314,10 @@ export default function MenuCategoryManager({ pubId, categories }: MenuCategoryM
       });
       return;
     }
-    updateCategoryMutation.mutate({ id: editingCategory.id, data: formData });
+    updateCategoryMutation.mutate({
+      id: editingCategory.id,
+      data: { name, description, infoBox: infoBox || null, isVisible },
+    });
   };
 
   // Handle delete with confirmation
@@ -337,7 +354,7 @@ export default function MenuCategoryManager({ pubId, categories }: MenuCategoryM
             Nome Categoria
           </Label>
           <Input 
-            ref={isEdit ? undefined : nameRef}
+            ref={isEdit ? editNameRef : nameRef}
             id="category-name"
             placeholder="Es. Antipasti, Primi Piatti, Dolci..."
             defaultValue={isEdit ? formData.name : ''}
@@ -351,7 +368,7 @@ export default function MenuCategoryManager({ pubId, categories }: MenuCategoryM
             Descrizione (opzionale)
           </Label>
           <Textarea
-            ref={isEdit ? undefined : descriptionRef}
+            ref={isEdit ? editDescriptionRef : descriptionRef}
             id="category-description"
             placeholder="Breve descrizione della categoria..."
             defaultValue={isEdit ? formData.description : ''}
@@ -369,12 +386,10 @@ export default function MenuCategoryManager({ pubId, categories }: MenuCategoryM
             Nota informativa evidenziata nel PDF del menu (es. "Tutti i nostri piatti sono preparati con ingredienti freschi")
           </p>
           <Textarea
-            ref={isEdit ? undefined : infoBoxRef}
+            ref={isEdit ? editInfoBoxRef : infoBoxRef}
             id="category-infobox"
             placeholder="Es. Tutti i nostri piatti sono preparati con ingredienti locali e di stagione..."
             defaultValue={isEdit ? formData.infoBox : ''}
-            value={isEdit ? formData.infoBox : undefined}
-            onChange={isEdit ? (e) => setFormData({ ...formData, infoBox: e.target.value }) : undefined}
             rows={2}
             className="mt-1"
           />
@@ -392,7 +407,10 @@ export default function MenuCategoryManager({ pubId, categories }: MenuCategoryM
           <Switch
             id="category-visible"
             defaultChecked={isEdit ? formData.isVisible : true}
-            onCheckedChange={(checked) => { visibilityRef.current = checked; }}
+            onCheckedChange={(checked) => {
+              if (isEdit) { editVisibilityRef.current = checked; }
+              else { visibilityRef.current = checked; }
+            }}
             data-testid={isEdit ? "switch-edit-category-visible" : "switch-create-category-visible"}
           />
         </div>
