@@ -255,7 +255,7 @@ export default function AuthPage() {
             </div>
             <span className="text-white font-bold text-xl tracking-tight">fermenta.to</span>
           </div>
-          <p className="text-amber-200/50 text-xs mt-1 ml-[52px]">La birra artigianale italiana</p>
+          <p className="text-amber-200/50 text-xs mt-1 ml-[52px]">Bevi Artigianale</p>
         </div>
 
         {/* Central content */}
@@ -264,7 +264,7 @@ export default function AuthPage() {
             <h2 className="text-3xl font-bold text-white leading-tight">
               Scopri il meglio<br />
               <span className="text-amber-400">della birra artigianale</span><br />
-              italiana.
+              italiana e del mondo.
             </h2>
             <p className="mt-4 text-amber-100/50 text-sm leading-relaxed max-w-xs">
               Migliaia di birre, birrifici e locali selezionati. Tieni traccia di quello che assaggi, scopri nuovi posti, condividi le tue esperienze.
@@ -273,9 +273,9 @@ export default function AuthPage() {
 
           <div className="space-y-3">
             {[
-              "Catalogo di oltre 40.000 birre",
+              "Catalogo di oltre 1 milione di birre",
               "Mappa dei pub e birrifici italiani",
-              "Beer Passport — tieni traccia dei tuoi assaggi",
+              "Valutazioni e recensioni dalla community",
             ].map((item) => (
               <div key={item} className="flex items-center gap-3">
                 <div className="w-5 h-5 rounded-full bg-amber-500/20 flex items-center justify-center flex-shrink-0">
