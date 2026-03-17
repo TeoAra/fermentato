@@ -76,15 +76,15 @@ export default function LuppolinoMenu({ menu, menuInfoBox }: LuppolinoMenuProps)
               className="rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden"
               data-testid={`menu-category-${category.id}`}
             >
-              <AccordionTrigger className="px-4 py-2.5 hover:no-underline hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
-                <div className="text-left">
-                  <span className="text-sm font-semibold text-gray-900 dark:text-white">
+              <AccordionTrigger className="px-4 py-3 hover:no-underline hover:bg-amber-50 dark:hover:bg-gray-800/60 transition-colors">
+                <div className="text-left flex-1">
+                  <span className="text-base font-bold text-gray-900 dark:text-white tracking-tight">
                     {category.name}
                   </span>
                   {category.description && (
-                    <span className="text-xs text-gray-500 dark:text-gray-400 italic font-normal ml-2">
+                    <p className="text-xs text-gray-500 dark:text-gray-400 italic font-normal mt-0.5">
                       {category.description}
-                    </span>
+                    </p>
                   )}
                 </div>
               </AccordionTrigger>

@@ -80,7 +80,7 @@ export function BottomNavigation() {
   return (
     <>
       <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-50">
-        <div className="absolute inset-0 bg-white/88 dark:bg-[hsl(25,14%,7%)]/92 backdrop-blur-xl border-t border-[hsl(36,14%,88%)]/70 dark:border-[hsl(25,12%,14%)]/80" />
+        <div className="absolute inset-0 bg-white/97 dark:bg-[hsl(25,14%,7%)] backdrop-blur-xl border-t border-[hsl(36,14%,86%)] dark:border-[hsl(25,12%,14%)]" />
 
         <div className="relative flex items-center justify-around px-1 pt-1.5" style={{ paddingBottom: `max(env(safe-area-inset-bottom), 8px)` }}>
 

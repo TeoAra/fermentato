@@ -842,14 +842,11 @@ export default function PubDetail() {
 
                 {/* Menu Tab */}
                 <TabsContent value="menu" className="space-y-3">
-                  <div className="flex items-center justify-between">
+                  <div className="flex items-center">
                     <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 flex items-center gap-1.5">
                       <span>🍽️</span>
                       Menu
                     </h3>
-                    <Badge variant="outline" className="text-xs bg-blue-50 dark:bg-blue-950 text-blue-700 dark:text-blue-300">
-                      {Array.isArray(menu) ? menu.length : 0} categorie
-                    </Badge>
                   </div>
                   
                   {menuLoading ? (
