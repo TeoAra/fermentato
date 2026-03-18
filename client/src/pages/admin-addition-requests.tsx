@@ -58,9 +58,7 @@ export default function AdminAdditionRequests() {
 
   const approveMutation = useMutation({
     mutationFn: async ({ id, adminNotes }: { id: number; adminNotes: string }) => {
-      const res = await apiRequest("PATCH", `/api/admin/addition-requests/${id}/approve`, { adminNotes });
-      if (!res.ok) { const e = await res.json(); throw new Error(e.message); }
-      return res.json();
+      return await apiRequest(`/api/admin/addition-requests/${id}/approve`, { method: "PATCH" }, { adminNotes });
     },
     onSuccess: (_, { id }) => {
       toast({ title: "Approvata", description: "Richiesta approvata e record creato." });
@@ -73,9 +71,7 @@ export default function AdminAdditionRequests() {
 
   const rejectMutation = useMutation({
     mutationFn: async ({ id, adminNotes }: { id: number; adminNotes: string }) => {
-      const res = await apiRequest("PATCH", `/api/admin/addition-requests/${id}/reject`, { adminNotes });
-      if (!res.ok) { const e = await res.json(); throw new Error(e.message); }
-      return res.json();
+      return await apiRequest(`/api/admin/addition-requests/${id}/reject`, { method: "PATCH" }, { adminNotes });
     },
     onSuccess: () => {
       toast({ title: "Rifiutata", description: "Richiesta rifiutata, utente notificato." });

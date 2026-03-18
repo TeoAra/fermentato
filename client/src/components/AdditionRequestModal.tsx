@@ -175,9 +175,7 @@ export default function AdditionRequestModal({ open, onClose, initialBeerName = 
 
   const mutation = useMutation({
     mutationFn: async (data: Record<string, any>) => {
-      const res = await apiRequest("POST", "/api/addition-requests", data);
-      if (!res.ok) { const e = await res.json(); throw new Error(e.message); }
-      return res.json();
+      return await apiRequest("/api/addition-requests", { method: "POST" }, data);
     },
     onSuccess: () => { setSuccess(true); setCreatedDirect(false); },
     onError: (err: any) => toast({ title: "Errore", description: err.message || "Errore durante l'invio", variant: "destructive" }),
@@ -208,9 +206,7 @@ export default function AdditionRequestModal({ open, onClose, initialBeerName = 
             logoUrl: payload.logoUrl || null,
             coverImageUrl: payload.coverImageUrl || null,
           };
-      const res = await apiRequest("POST", url, body);
-      if (!res.ok) { const e = await res.json(); throw new Error(e.message); }
-      return res.json();
+      return await apiRequest(url, { method: "POST" }, body);
     },
     onSuccess: () => { setSuccess(true); setCreatedDirect(true); },
     onError: (err: any) => toast({ title: "Errore", description: err.message || "Errore durante la creazione", variant: "destructive" }),
