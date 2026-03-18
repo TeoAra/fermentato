@@ -3781,12 +3781,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
       try { await db.execute(sql`UPDATE users SET pub_id = NULL WHERE pub_id = ${pubId}`); } catch (_) {}
       // Null-out any legacy pub_id on sessions table (may exist on VPS schema)
       try { await db.execute(sql`UPDATE sessions SET pub_id = NULL WHERE pub_id = ${pubId}`); } catch (_) {}
+      // pub_page_views may not have ON DELETE CASCADE on older VPS schema — delete explicitly
+      try { await db.delete(pubPageViews).where(eq(pubPageViews.pubId, pubId)); } catch (_) {}
       await storage.deletePub(pubId);
       res.json({ message: `Pub "${pub.name}" eliminato con successo` });
     } catch (error: any) {
       console.error("Error deleting pub:", error);
       const detail = error?.detail || error?.message || "Errore sconosciuto";
-      res.status(500).json({ message: `Impossibile eliminare il pub: ${detail}` });
+      const hint = error?.table ? ` (tabella: ${error.table})` : "";
+      res.status(500).json({ message: `Impossibile eliminare il pub: ${detail}${hint}` });
     }
   });
 
