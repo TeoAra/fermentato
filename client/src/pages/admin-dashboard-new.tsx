@@ -380,7 +380,7 @@ export default function AdminDashboardNew() {
           </Card>
         </Link>
 
-        <Link href="/festival-dashboard">
+        <Link href="/admin/festivals">
           <Card className="hover:shadow-lg transition-all duration-300 cursor-pointer border-l-4 border-l-amber-500 group">
             <CardContent className="p-6">
               <div className="flex items-center justify-between">

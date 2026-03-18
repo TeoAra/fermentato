@@ -1,4 +1,4 @@
-import { useState, useMemo, useRef, useCallback } from "react";
+import { useState, useMemo, useRef, useCallback, useEffect } from "react";
 import { Helmet } from "react-helmet-async";
 import { getBadgeForCount } from "@/lib/badges";
 import { useParams, Link } from "wouter";
@@ -30,7 +30,8 @@ import {
   Flag,
   Lightbulb,
   Building2,
-  Users
+  Users,
+  Loader2
 } from "lucide-react";
 import Footer from "@/components/footer";
 import { Card, CardContent } from "@/components/ui/card";
@@ -150,6 +151,28 @@ export default function BeerDetail() {
   const [collabResults, setCollabResults] = useState<any[]>([]);
   const [showCollabResults, setShowCollabResults] = useState(false);
   const collabDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Auto-translate description for non-Italian users
+  const [translatedDesc, setTranslatedDesc] = useState<string | null>(null);
+  const [translating, setTranslating] = useState(false);
+  const userLang = navigator.language?.slice(0, 2).toLowerCase() ?? "it";
+  useEffect(() => {
+    if (!beer?.description) return;
+    if (userLang === "it") return;
+    let cancelled = false;
+    setTranslating(true);
+    fetch("/api/translate", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ text: beer.description, targetLang: userLang }),
+      credentials: "include",
+    })
+      .then(r => r.json())
+      .then(data => { if (!cancelled && data.translation) setTranslatedDesc(data.translation); })
+      .catch(() => {})
+      .finally(() => { if (!cancelled) setTranslating(false); });
+    return () => { cancelled = true; };
+  }, [beer?.description, userLang]);
 
   const searchCollabBreweries = useCallback((q: string, excludeBrewId: number, currentSelected: { id: number; name: string }[]) => {
     if (collabDebounceRef.current) clearTimeout(collabDebounceRef.current);
@@ -654,10 +677,30 @@ export default function BeerDetail() {
                   <BeerIcon className="h-5 w-5 text-white" />
                 </div>
                 Descrizione
+                {translating && (
+                  <span className="ml-3 text-xs font-normal text-gray-400 flex items-center gap-1">
+                    <Loader2 className="h-3 w-3 animate-spin" />Traduzione…
+                  </span>
+                )}
+                {translatedDesc && !translating && (
+                  <span className="ml-3 text-xs font-normal bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 px-2 py-0.5 rounded-full border border-blue-200 dark:border-blue-700">
+                    Traduzione automatica
+                  </span>
+                )}
               </h2>
               <p className="text-gray-700 dark:text-gray-300 leading-relaxed whitespace-pre-line">
-                {beer.description}
+                {translatedDesc || beer.description}
               </p>
+              {translatedDesc && (
+                <details className="mt-3">
+                  <summary className="text-xs text-gray-400 cursor-pointer hover:text-gray-600 dark:hover:text-gray-300 select-none">
+                    Mostra testo originale
+                  </summary>
+                  <p className="mt-2 text-sm text-gray-500 dark:text-gray-400 leading-relaxed whitespace-pre-line border-t pt-2">
+                    {beer.description}
+                  </p>
+                </details>
+              )}
             </CardContent>
           </Card>
         )}

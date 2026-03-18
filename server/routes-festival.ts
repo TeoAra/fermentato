@@ -4,7 +4,7 @@ import { pool } from "./db";
 import { isAuthenticated, isAdmin } from "./auth";
 import {
   festivals, festivalTaps, festivalFoodItems, festivalRatings,
-  beers, breweries,
+  beers, breweries, users,
 } from "@shared/schema";
 import { eq, and, sql, ilike, or, desc } from "drizzle-orm";
 
@@ -28,6 +28,16 @@ export async function runFestivalMigrations() {
     await pool.query(`ALTER TABLE festival_taps ADD COLUMN IF NOT EXISTS prices jsonb`);
   } catch (e) {
     console.error("[festival_taps] prices migration error:", e);
+  }
+  try {
+    await pool.query(`ALTER TABLE festivals ADD COLUMN IF NOT EXISTS use_tokens boolean DEFAULT false`);
+  } catch (e) {
+    console.error("[festivals] use_tokens migration error:", e);
+  }
+  try {
+    await pool.query(`ALTER TABLE festivals ADD COLUMN IF NOT EXISTS token_name varchar(50) DEFAULT 'token'`);
+  } catch (e) {
+    console.error("[festivals] token_name migration error:", e);
   }
 }
 
@@ -205,8 +215,30 @@ export function registerFestivalRoutes(app: Express) {
       const user = req.user as any;
       const isAdminUser = user.roles?.includes("admin") || user.activeRole === "admin";
       const rows = isAdminUser
-        ? await db.select().from(festivals).orderBy(festivals.createdAt)
-        : await db.select().from(festivals).where(eq(festivals.ownerId, user.id)).orderBy(festivals.createdAt);
+        ? await db.select({
+            id: festivals.id, slug: festivals.slug, name: festivals.name,
+            description: festivals.description, location: festivals.location,
+            startDate: festivals.startDate, endDate: festivals.endDate,
+            isActive: festivals.isActive, showFood: festivals.showFood,
+            ownerId: festivals.ownerId, paidAt: festivals.paidAt,
+            priceEur: festivals.priceEur, logoUrl: festivals.logoUrl,
+            coverImageUrl: festivals.coverImageUrl, createdAt: festivals.createdAt,
+            useTokens: festivals.useTokens, tokenName: festivals.tokenName,
+            ownerEmail: users.email,
+            ownerUsername: users.nickname,
+          }).from(festivals).leftJoin(users, eq(festivals.ownerId, users.id)).orderBy(desc(festivals.createdAt))
+        : await db.select({
+            id: festivals.id, slug: festivals.slug, name: festivals.name,
+            description: festivals.description, location: festivals.location,
+            startDate: festivals.startDate, endDate: festivals.endDate,
+            isActive: festivals.isActive, showFood: festivals.showFood,
+            ownerId: festivals.ownerId, paidAt: festivals.paidAt,
+            priceEur: festivals.priceEur, logoUrl: festivals.logoUrl,
+            coverImageUrl: festivals.coverImageUrl, createdAt: festivals.createdAt,
+            useTokens: festivals.useTokens, tokenName: festivals.tokenName,
+            ownerEmail: users.email,
+            ownerUsername: users.nickname,
+          }).from(festivals).leftJoin(users, eq(festivals.ownerId, users.id)).where(eq(festivals.ownerId, user.id)).orderBy(desc(festivals.createdAt));
       res.json(rows);
     } catch (err) {
       res.status(500).json({ message: "Errore" });
@@ -317,6 +349,7 @@ export function registerFestivalRoutes(app: Express) {
       const {
         name, description, location, startDate, endDate,
         isActive, showFood, logoUrl, coverImageUrl, priceEur, slug, schedule,
+        useTokens, tokenName,
       } = req.body;
       const updateData: Record<string, any> = {};
       if (name !== undefined) updateData.name = name;
@@ -331,6 +364,8 @@ export function registerFestivalRoutes(app: Express) {
       if (priceEur !== undefined) updateData.priceEur = priceEur;
       if (slug !== undefined && slug !== fest.slug) updateData.slug = slug;
       if (schedule !== undefined) updateData.schedule = schedule;
+      if (useTokens !== undefined) updateData.useTokens = useTokens;
+      if (tokenName !== undefined) updateData.tokenName = tokenName || "token";
       const [updated] = await db.update(festivals)
         .set(updateData)
         .where(eq(festivals.id, festId)).returning();
@@ -663,4 +698,38 @@ export function registerFestivalRoutes(app: Express) {
       res.status(500).json({ message: err?.message || "Errore durante l'eliminazione" });
     }
   });
+
+  // ── Admin: transfer festival ownership ────────────────────────────────────────
+  app.put("/api/admin/festivals/:id/transfer", isAuthenticated as any, isAdmin as any, async (req: any, res) => {
+    try {
+      const { newOwnerId } = req.body;
+      if (!newOwnerId) return res.status(400).json({ message: "newOwnerId richiesto" });
+      const [updated] = await db.update(festivals)
+        .set({ ownerId: newOwnerId })
+        .where(eq(festivals.id, parseInt(req.params.id)))
+        .returning();
+      res.json(updated);
+    } catch (err) {
+      res.status(500).json({ message: "Errore" });
+    }
+  });
+
+  // ── Admin: search users for festival management ───────────────────────────────
+  app.get("/api/admin/users/search", isAuthenticated as any, isAdmin as any, async (req: any, res) => {
+    try {
+      const q = (req.query.q as string) || "";
+      const users = await pool.query(
+        `SELECT id, email, username, full_name FROM users
+         WHERE (email ILIKE $1 OR username ILIKE $1 OR full_name ILIKE $1)
+         LIMIT 20`,
+        [`%${q}%`]
+      );
+      res.json(users.rows);
+    } catch (err) {
+      res.status(500).json({ message: "Errore" });
+    }
+  });
+
+  // ── Admin: update festival tokens/misc fields ─────────────────────────────────
+  // The standard PUT /api/admin/festivals/:id already handles this via canManageFestival
 }

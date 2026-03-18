@@ -2281,6 +2281,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // On-demand translate for frontend (device language)
+  app.post('/api/translate', async (req: any, res) => {
+    const { text, targetLang } = req.body;
+    if (!text || !targetLang) return res.status(400).json({ message: "text e targetLang richiesti" });
+    try {
+      const { translateText } = await import("./translate");
+      const result = await translateText(text, targetLang);
+      res.json({ translated: result });
+    } catch (err) {
+      res.status(500).json({ message: "Errore traduzione" });
+    }
+  });
+
   // Batch translate beer descriptions to Italian
   app.post('/api/admin/translate-beers', isAuthenticated, isAdmin, async (req: any, res) => {
     const batchSize = Math.min(parseInt(req.query.batch as string) || 10, 30);

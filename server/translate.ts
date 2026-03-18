@@ -17,50 +17,83 @@ export function looksItalian(text: string): boolean {
 const GEMINI_MODEL = "gemini-2.5-flash";
 const GEMINI_API_URL = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent`;
 
-export async function translateToItalian(text: string): Promise<string | null> {
-  if (!text || text.trim().length < 5) return null;
-  if (looksItalian(text)) return null;
+// In-memory cache: "text|targetLang" → translated text
+const translationCache = new Map<string, string>();
 
+async function callGemini(prompt: string, maxTokens = 512): Promise<string | null> {
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) return null;
 
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 15000);
+
   try {
-    const maxLen = 1200;
-    const truncated = text.length > maxLen ? text.slice(0, maxLen) + '...' : text;
-
-    const prompt = `Traduci in italiano questa descrizione di birra artigianale. Rispondi SOLO con il testo tradotto, senza aggiungere note o spiegazioni. Se il testo è già in italiano, restituiscilo invariato.\n\nTesto:\n${truncated}`;
-
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 15000);
-
     const res = await fetch(`${GEMINI_API_URL}?key=${apiKey}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       signal: controller.signal,
       body: JSON.stringify({
         contents: [{ parts: [{ text: prompt }] }],
-        generationConfig: { temperature: 0.2, maxOutputTokens: 512 },
+        generationConfig: { temperature: 0.2, maxOutputTokens: maxTokens },
       }),
     });
-
     clearTimeout(timeout);
-
     if (!res.ok) {
       console.error('[translate] Gemini HTTP error:', res.status);
       return null;
     }
-
     const data = await res.json() as any;
-    const translated = data?.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
-
-    if (translated && translated.length > 5 && translated !== truncated) {
-      return translated;
-    }
+    return data?.candidates?.[0]?.content?.parts?.[0]?.text?.trim() ?? null;
   } catch (e: any) {
-    if (e.name !== 'AbortError') {
-      console.error('[translate] Gemini error:', e.message);
-    }
+    clearTimeout(timeout);
+    if (e.name !== 'AbortError') console.error('[translate] Gemini error:', e.message);
+    return null;
   }
+}
 
+export async function translateToItalian(text: string): Promise<string | null> {
+  if (!text || text.trim().length < 5) return null;
+  if (looksItalian(text)) return null;
+
+  const cacheKey = `${text.slice(0, 100)}|it`;
+  if (translationCache.has(cacheKey)) return translationCache.get(cacheKey)!;
+
+  const maxLen = 1200;
+  const truncated = text.length > maxLen ? text.slice(0, maxLen) + '...' : text;
+  const prompt = `Traduci in italiano questa descrizione di birra artigianale. Rispondi SOLO con il testo tradotto, senza aggiungere note o spiegazioni. Se il testo è già in italiano, restituiscilo invariato.\n\nTesto:\n${truncated}`;
+
+  const translated = await callGemini(prompt);
+  if (translated && translated.length > 5 && translated !== truncated) {
+    translationCache.set(cacheKey, translated);
+    return translated;
+  }
+  return null;
+}
+
+const LANG_NAMES: Record<string, string> = {
+  en: 'English', de: 'German', fr: 'French', es: 'Spanish', pt: 'Portuguese',
+  nl: 'Dutch', pl: 'Polish', cs: 'Czech', sv: 'Swedish', da: 'Danish',
+  fi: 'Finnish', no: 'Norwegian', ja: 'Japanese', zh: 'Chinese', ko: 'Korean',
+  ru: 'Russian', ar: 'Arabic', tr: 'Turkish', ro: 'Romanian', hu: 'Hungarian',
+};
+
+export async function translateText(text: string, targetLang: string): Promise<string | null> {
+  if (!text || text.trim().length < 5) return null;
+  const lang = targetLang.split('-')[0].toLowerCase();
+  if (lang === 'it') return null;
+
+  const cacheKey = `${text.slice(0, 100)}|${lang}`;
+  if (translationCache.has(cacheKey)) return translationCache.get(cacheKey)!;
+
+  const langName = LANG_NAMES[lang] || lang;
+  const maxLen = 1200;
+  const truncated = text.length > maxLen ? text.slice(0, maxLen) + '...' : text;
+  const prompt = `Translate the following craft beer description into ${langName}. Reply ONLY with the translated text, no notes or explanations.\n\nText:\n${truncated}`;
+
+  const translated = await callGemini(prompt);
+  if (translated && translated.length > 5 && translated !== truncated) {
+    translationCache.set(cacheKey, translated);
+    return translated;
+  }
   return null;
 }

@@ -61,6 +61,7 @@ interface Festival {
   paidAt: string | null; stripeSessionId: string | null; priceEur: number | null;
   logoUrl: string | null; coverImageUrl: string | null;
   schedule: ScheduleSlot[] | null;
+  useTokens: boolean | null; tokenName: string | null;
 }
 
 function festivalStatus(f: Festival): "unpaid" | "active" | "expired" {
@@ -498,6 +499,7 @@ function FestivalForm({
     startDate: string; endDate: string; showFood: boolean;
     logoUrl: string; coverImageUrl: string; priceEur: number;
     schedule: ScheduleSlot[];
+    useTokens: boolean; tokenName: string;
   }>;
   onSubmit: (data: any) => void;
   isPending: boolean;
@@ -515,6 +517,8 @@ function FestivalForm({
     logoUrl: initial.logoUrl || "",
     coverImageUrl: initial.coverImageUrl || "",
     priceEur: initial.priceEur ?? 50,
+    useTokens: initial.useTokens ?? false,
+    tokenName: initial.tokenName || "token",
   });
   const [slugEdited, setSlugEdited] = useState(!!initial.slug);
   const [schedule, setSchedule] = useState<ScheduleSlot[]>(initial.schedule ?? []);
@@ -693,6 +697,33 @@ function FestivalForm({
       <div className="flex items-center gap-3">
         <Switch checked={form.showFood} onCheckedChange={v => setForm(f => ({ ...f, showFood: v }))} />
         <Label>Menu cibo visibile ai visitatori</Label>
+      </div>
+
+      <Separator />
+
+      {/* Token pricing system */}
+      <div className="space-y-3">
+        <div className="flex items-center gap-3">
+          <Switch checked={form.useTokens} onCheckedChange={v => setForm(f => ({ ...f, useTokens: v }))} />
+          <div>
+            <Label className="text-sm font-semibold">Sistema a token</Label>
+            <p className="text-xs text-gray-500">I prezzi saranno espressi in token anziché in €</p>
+          </div>
+        </div>
+        {form.useTokens && (
+          <div>
+            <Label className="text-xs">Nome del token (es. "gettone", "ticket", "birra-coin")</Label>
+            <Input
+              className="mt-1 h-9"
+              value={form.tokenName}
+              onChange={e => setForm(f => ({ ...f, tokenName: e.target.value }))}
+              placeholder="token"
+            />
+            <p className="text-xs text-gray-400 mt-1">
+              Verrà mostrato come: "2 {form.tokenName || 'token'}" invece di "€2.00"
+            </p>
+          </div>
+        )}
       </div>
 
       <Button
@@ -1568,6 +1599,8 @@ export default function FestivalDashboard() {
                             coverImageUrl: selectedFest.coverImageUrl || "",
                             priceEur: selectedFest.priceEur ?? 99,
                             schedule: selectedFest.schedule ?? [],
+                            useTokens: selectedFest.useTokens ?? false,
+                            tokenName: selectedFest.tokenName || "token",
                           }}
                           onSubmit={data => updateFestMutation.mutate(data)}
                           isPending={updateFestMutation.isPending}

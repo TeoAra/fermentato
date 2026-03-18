@@ -33,6 +33,7 @@ interface FestivalData {
     coverImageUrl: string | null; showFood: boolean; isActive: boolean;
     schedule: ScheduleSlot[] | null;
     managerId: string | null;
+    useTokens: boolean | null; tokenName: string | null;
   };
   taps: Array<{
     id: number; tapNumber: number; beerId: number | null;
@@ -134,9 +135,19 @@ function SliderRating({ tapId, slug, current, avg, count }: {
   );
 }
 
+// Format price in token or euro
+function formatPrice(price: number, useTokens: boolean, tokenName: string): string {
+  if (useTokens) {
+    const rounded = Number.isInteger(price) ? price : price.toFixed(1);
+    return `${rounded} ${tokenName}`;
+  }
+  return `€${price.toFixed(2)}`;
+}
+
 // ── Tap Card ─────────────────────────────────────────────────────────────────
-function TapCard({ tap, slug, isAuth, isManager }: {
+function TapCard({ tap, slug, isAuth, isManager, useTokens, tokenName }: {
   tap: FestivalData["taps"][0]; slug: string; isAuth: boolean; isManager: boolean;
+  useTokens: boolean; tokenName: string;
 }) {
   const [expanded, setExpanded] = useState(false);
   const beerName = tap.beerName || tap.customBeerName || `Spina ${tap.tapNumber}`;
@@ -233,7 +244,7 @@ function TapCard({ tap, slug, isAuth, isManager }: {
               )}
               {hasPrices && (
                 <span className="text-xs text-gray-500 dark:text-gray-400">
-                  {Object.entries(tap.prices!).map(([size, price]) => `${size} €${price.toFixed(2)}`).join(" · ")}
+                  {Object.entries(tap.prices!).map(([size, price]) => `${size} ${formatPrice(price, useTokens, tokenName)}`).join(" · ")}
                 </span>
               )}
             </div>
@@ -288,7 +299,7 @@ function TapCard({ tap, slug, isAuth, isManager }: {
               {Object.entries(tap.prices!).map(([size, price]) => (
                 <div key={size} className="bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg px-3 py-1.5 text-center min-w-[60px]">
                   <div className="text-xs text-gray-500 dark:text-gray-400">{size}</div>
-                  <div className="font-bold text-amber-600 text-sm">€{price.toFixed(2)}</div>
+                  <div className="font-bold text-amber-600 text-sm">{formatPrice(price, useTokens, tokenName)}</div>
                 </div>
               ))}
             </div>
@@ -507,6 +518,8 @@ export default function FestivalPublic() {
 
   const { festival, taps, rankings = [] } = data;
   const availableCount = taps.filter(t => t.isAvailable).length;
+  const useTokens = !!(festival.useTokens);
+  const tokenName = festival.tokenName || "token";
 
   const isManager = !!(user && festival.managerId && (user as any).id === festival.managerId) ||
     !!(user && ((user as any).roles?.includes("admin") || (user as any).activeRole === "admin"));
@@ -673,7 +686,7 @@ export default function FestivalPublic() {
               </div>
             ) : (
               filteredTaps.map(tap => (
-                <TapCard key={tap.id} tap={tap} slug={slug!} isAuth={isAuthenticated} isManager={isManager} />
+                <TapCard key={tap.id} tap={tap} slug={slug!} isAuth={isAuthenticated} isManager={isManager} useTokens={useTokens} tokenName={tokenName} />
               ))
             )}
           </TabsContent>
