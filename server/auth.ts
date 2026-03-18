@@ -12,7 +12,7 @@ import { eq, and, sql } from "drizzle-orm";
 import type { User } from "@shared/schema";
 import { storage } from "./storage";
 import { sendPushToAdmins } from "./push-utils";
-import { sendVerificationEmail } from "./email";
+import { sendVerificationEmail, sendPasswordResetEmail } from "./email";
 
 const SALT_ROUNDS = 12;
 
@@ -725,6 +725,56 @@ export async function setupAuth(app: Express) {
     } catch (error) {
       console.error('Resend verification error:', error);
       res.status(500).json({ message: 'Errore durante l\'invio dell\'email' });
+    }
+  });
+
+  // Forgot password — send reset email
+  app.post('/api/auth/forgot-password', async (req, res) => {
+    try {
+      const { email } = req.body;
+      if (!email) return res.status(400).json({ message: 'Email richiesta' });
+      const normalizedEmail = email.toLowerCase().trim();
+      const [user] = await db.select().from(users).where(eq(users.email, normalizedEmail));
+      // Always return success to avoid email enumeration
+      if (!user || !user.hashedPassword) {
+        return res.json({ message: 'Se l\'email è registrata, riceverai un link per reimpostare la password.' });
+      }
+      const resetToken = nanoid(48);
+      const resetExpires = new Date(Date.now() + 60 * 60 * 1000); // 1 hour
+      await db.update(users).set({
+        passwordResetToken: resetToken,
+        passwordResetExpires: resetExpires,
+      }).where(eq(users.id, user.id));
+      await sendPasswordResetEmail(normalizedEmail, resetToken);
+      res.json({ message: 'Se l\'email è registrata, riceverai un link per reimpostare la password.' });
+    } catch (error) {
+      console.error('Forgot password error:', error);
+      res.status(500).json({ message: 'Errore interno. Riprova più tardi.' });
+    }
+  });
+
+  // Reset password — validate token and set new password
+  app.post('/api/auth/reset-password', async (req, res) => {
+    try {
+      const { token, password } = req.body;
+      if (!token || !password) return res.status(400).json({ message: 'Token e password richiesti' });
+      if (password.length < 8) return res.status(400).json({ message: 'La password deve essere di almeno 8 caratteri' });
+      const [user] = await db.select().from(users).where(eq(users.passwordResetToken, token));
+      if (!user) return res.status(400).json({ message: 'Link non valido o già utilizzato' });
+      if (!user.passwordResetExpires || user.passwordResetExpires < new Date()) {
+        return res.status(400).json({ message: 'Link scaduto. Richiedi un nuovo link per reimpostare la password.' });
+      }
+      const hashedPassword = await bcrypt.hash(password, SALT_ROUNDS);
+      await db.update(users).set({
+        hashedPassword,
+        passwordResetToken: null,
+        passwordResetExpires: null,
+        passwordLastUpdated: new Date(),
+      }).where(eq(users.id, user.id));
+      res.json({ message: 'Password aggiornata con successo! Ora puoi accedere con la nuova password.' });
+    } catch (error) {
+      console.error('Reset password error:', error);
+      res.status(500).json({ message: 'Errore interno. Riprova più tardi.' });
     }
   });
 

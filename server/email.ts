@@ -99,6 +99,86 @@ function verificationEmailHtml(verificationUrl: string): string {
 </html>`;
 }
 
+function passwordResetEmailHtml(resetUrl: string): string {
+  return `<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Reimposta la tua password — Fermenta.to</title>
+</head>
+<body style="margin:0;padding:0;background:#fafaf8;font-family:'Segoe UI',Arial,sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background:#fafaf8;padding:40px 20px;">
+    <tr>
+      <td align="center">
+        <table width="560" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:16px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,0.08);">
+          <tr>
+            <td style="background:linear-gradient(135deg,#f59e0b,#ea580c);padding:40px 40px 32px;text-align:center;">
+              <div style="font-size:48px;margin-bottom:8px;">🔐</div>
+              <h1 style="color:#ffffff;font-size:28px;font-weight:700;margin:0 0 8px;">Fermenta.to</h1>
+              <p style="color:rgba(255,255,255,0.9);font-size:15px;margin:0;">La birra artigianale italiana</p>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:40px;">
+              <h2 style="color:#1f2937;font-size:22px;font-weight:600;margin:0 0 16px;">Reimposta la tua password</h2>
+              <p style="color:#4b5563;font-size:16px;line-height:1.6;margin:0 0 24px;">
+                Hai richiesto di reimpostare la password del tuo account Fermenta.to.<br>
+                Clicca sul pulsante qui sotto per scegliere una nuova password.
+              </p>
+              <div style="text-align:center;margin:32px 0;">
+                <a href="${resetUrl}"
+                   style="display:inline-block;background:linear-gradient(135deg,#f59e0b,#ea580c);color:#ffffff;font-size:16px;font-weight:600;text-decoration:none;padding:14px 36px;border-radius:10px;">
+                  🔑 Reimposta password
+                </a>
+              </div>
+              <p style="color:#6b7280;font-size:14px;line-height:1.6;margin:24px 0 0;">
+                Il link è valido per <strong>1 ora</strong>. Se non hai richiesto il cambio password, puoi ignorare questa email — il tuo account è al sicuro.
+              </p>
+              <hr style="border:none;border-top:1px solid #e5e7eb;margin:28px 0;">
+              <p style="color:#9ca3af;font-size:12px;margin:0;">
+                Se il pulsante non funziona, copia e incolla questo link nel browser:<br>
+                <a href="${resetUrl}" style="color:#f59e0b;word-break:break-all;">${resetUrl}</a>
+              </p>
+            </td>
+          </tr>
+          <tr>
+            <td style="background:#f9fafb;padding:20px 40px;text-align:center;border-top:1px solid #e5e7eb;">
+              <p style="color:#9ca3af;font-size:12px;margin:0;">
+                © ${new Date().getFullYear()} Fermenta.to — La birra artigianale italiana<br>
+                <a href="${APP_URL}" style="color:#f59e0b;text-decoration:none;">fermenta.to</a>
+              </p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>`;
+}
+
+export async function sendPasswordResetEmail(toEmail: string, token: string): Promise<void> {
+  const resetUrl = `${APP_URL}/reset-password?token=${token}`;
+  const transport = createTransport();
+
+  if (!transport) {
+    console.log(`[email] RESET PASSWORD → ${toEmail}`);
+    console.log(`[email] Link reset: ${resetUrl}`);
+    return;
+  }
+
+  await transport.sendMail({
+    from: `"Fermenta.to" <${FROM_ADDRESS}>`,
+    to: toEmail,
+    subject: "Reimposta la tua password — Fermenta.to",
+    html: passwordResetEmailHtml(resetUrl),
+    text: `Hai richiesto di reimpostare la password su Fermenta.to.\n\nClicca qui per scegliere una nuova password:\n${resetUrl}\n\nIl link è valido per 1 ora. Se non hai richiesto il cambio password, ignora questa email.`,
+  });
+
+  console.log(`[email] Email reset password inviata a ${toEmail}`);
+}
+
 export async function sendVerificationEmail(toEmail: string, token: string): Promise<void> {
   const verificationUrl = `${APP_URL}/api/auth/verify-email?token=${token}`;
   const transport = createTransport();

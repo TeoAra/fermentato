@@ -71,6 +71,7 @@ import FestivalPublic from "@/pages/festival-public";
 import FestivalDashboard from "@/pages/festival-dashboard";
 import CreaFestival from "@/pages/crea-festival";
 import RegistraFestival from "@/pages/registra-festival";
+import ResetPassword from "@/pages/reset-password";
 import { MobileHeader } from "@/components/mobile-header";
 import { BottomNavigation } from "@/components/bottom-navigation";
 import CookieBanner from "@/components/CookieBanner";
@@ -165,6 +166,7 @@ function Router() {
           <Route path="/festival-dashboard" component={FestivalDashboard} />
           <Route path="/festival" component={CreaFestival} />
           <Route path="/registra-festival" component={RegistraFestival} />
+          <Route path="/reset-password" component={ResetPassword} />
           <Route component={NotFound} />
         </Switch>
       </main>

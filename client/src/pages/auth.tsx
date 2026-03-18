@@ -11,7 +11,7 @@ import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { queryClient, apiRequest } from "@/lib/queryClient";
-import { Beer, Eye, EyeOff, Mail, Lock, User, Store, Phone, Factory, Plus, Search, MailCheck, RefreshCw, CheckCircle2, CheckCircle, XCircle, AlertTriangle, Check, X, QrCode } from "lucide-react";
+import { Beer, Eye, EyeOff, Mail, Lock, User, Store, Phone, Factory, Plus, Search, MailCheck, RefreshCw, CheckCircle2, CheckCircle, XCircle, AlertTriangle, Check, X, QrCode, Loader2 } from "lucide-react";
 import { SiGoogle } from "react-icons/si";
 import { AddressAutocomplete } from "@/components/AddressAutocomplete";
 import ReCAPTCHA from "react-google-recaptcha";
@@ -106,6 +106,9 @@ export default function AuthPage() {
     if (tabParam === "register") setActiveTab("register");
   }, [tabParam]);
 
+  const [showForgotPassword, setShowForgotPassword] = useState(false);
+  const [forgotEmail, setForgotEmail] = useState("");
+  const [forgotSent, setForgotSent] = useState(false);
   const [nicknameAvailable, setNicknameAvailable] = useState<boolean | null>(null);
   const [nicknameChecking, setNicknameChecking] = useState(false);
   const nicknameTimerRef = useRef<any>(null);
@@ -208,6 +211,13 @@ export default function AuthPage() {
       await apiRequest("/api/auth/resend-verification", { method: "POST" }, { email }),
     onSuccess: () => toast({ title: "Email inviata!", description: "Controlla la tua casella di posta e clicca il link di conferma." }),
     onError: () => toast({ title: "Errore", description: "Impossibile inviare l'email. Riprova.", variant: "destructive" }),
+  });
+
+  const forgotPasswordMutation = useMutation({
+    mutationFn: async (email: string) =>
+      await apiRequest("/api/auth/forgot-password", { method: "POST" }, { email }),
+    onSuccess: () => setForgotSent(true),
+    onError: () => setForgotSent(true), // Always show success to avoid email enumeration
   });
 
   const handleGoogleLogin = () => { window.location.href = "/api/auth/google"; };
@@ -432,8 +442,60 @@ export default function AuthPage() {
                     data-testid="button-login">
                     {loginMutation.isPending ? "Accesso in corso..." : "Accedi"}
                   </Button>
+
+                  <div className="text-center">
+                    <button type="button"
+                      onClick={() => { setShowForgotPassword(true); setForgotSent(false); setForgotEmail(""); }}
+                      className="text-sm text-amber-600 hover:underline font-medium">
+                      Password dimenticata?
+                    </button>
+                  </div>
                 </form>
               </Form>
+
+              {/* Forgot password panel */}
+              {showForgotPassword && (
+                <div className="mt-4 p-5 bg-amber-50 dark:bg-amber-900/20 rounded-xl border border-amber-200 dark:border-amber-800 space-y-4">
+                  {forgotSent ? (
+                    <div className="text-center space-y-2">
+                      <MailCheck className="w-8 h-8 text-amber-600 mx-auto" />
+                      <p className="font-semibold text-gray-900 dark:text-white text-sm">Controlla la tua email</p>
+                      <p className="text-xs text-gray-500">Se l'indirizzo è registrato, riceverai un link per reimpostare la password entro pochi minuti.</p>
+                      <button type="button" onClick={() => setShowForgotPassword(false)} className="text-xs text-amber-600 hover:underline">
+                        Torna al login
+                      </button>
+                    </div>
+                  ) : (
+                    <>
+                      <div>
+                        <p className="text-sm font-semibold text-gray-900 dark:text-white mb-1">Reimposta la password</p>
+                        <p className="text-xs text-gray-500">Inserisci la tua email e ti invieremo un link per scegliere una nuova password.</p>
+                      </div>
+                      <div className="relative">
+                        <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                        <Input
+                          type="email"
+                          value={forgotEmail}
+                          onChange={e => setForgotEmail(e.target.value)}
+                          placeholder="tu@esempio.it"
+                          className="pl-10 h-10 rounded-xl"
+                        />
+                      </div>
+                      <div className="flex gap-2">
+                        <Button variant="outline" size="sm" className="flex-1 rounded-xl"
+                          onClick={() => setShowForgotPassword(false)}>
+                          Annulla
+                        </Button>
+                        <Button size="sm" className="flex-1 bg-amber-500 hover:bg-amber-600 text-white rounded-xl"
+                          disabled={!forgotEmail || forgotPasswordMutation.isPending}
+                          onClick={() => forgotPasswordMutation.mutate(forgotEmail)}>
+                          {forgotPasswordMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : "Invia link"}
+                        </Button>
+                      </div>
+                    </>
+                  )}
+                </div>
+              )}
 
               <div className="relative my-2">
                 <div className="absolute inset-0 flex items-center">
