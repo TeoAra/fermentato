@@ -12,7 +12,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
@@ -21,7 +21,7 @@ import {
   Beer, UtensilsCrossed, BarChart3, Settings, Plus, QrCode,
   CheckCircle2, XCircle, Loader2, Pencil, Trash2, ExternalLink,
   Trophy, Users, Droplets, CreditCard, AlertCircle, RefreshCw, Lock, Star,
-  ArrowLeft, Factory, ImagePlus, X, Search, ChevronDown, Clock,
+  ArrowLeft, Factory, ImagePlus, X, Search, ChevronDown, Clock, Monitor, Copy,
 } from "lucide-react";
 import { useLocation } from "wouter";
 
@@ -88,6 +88,44 @@ interface FoodItem {
 interface Stats {
   totalTaps: number; availableTaps: number; totalRatings: number;
   topTaps: { tapNumber: number; beerName: string; avg: number; count: number }[];
+}
+
+// ─── TV Mode button ─────────────────────────────────────────────────────────
+function TVModeButton({ slug }: { slug: string }) {
+  const tvUrl = `${window.location.origin}/festival-tv/${slug}`;
+  const { toast } = useToast();
+  return (
+    <Dialog>
+      <DialogTrigger asChild>
+        <Button size="sm" variant="outline" className="bg-white/20 border-white/30 text-white hover:bg-white/30">
+          <Monitor className="h-4 w-4 mr-1" />TV Mode
+        </Button>
+      </DialogTrigger>
+      <DialogContent className="max-w-sm">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <Monitor className="h-5 w-5 text-amber-600" />TV Mode
+          </DialogTitle>
+        </DialogHeader>
+        <p className="text-sm text-gray-600">
+          Apri questa URL su un TV o monitor per visualizzare la taplist in modalità schermo intero,
+          con aggiornamento automatico ogni 15 secondi.
+        </p>
+        <div className="flex items-center gap-2 bg-gray-50 border rounded-lg p-3">
+          <span className="text-xs text-gray-600 break-all flex-1">{tvUrl}</span>
+          <Button size="sm" variant="outline" className="shrink-0"
+            onClick={() => { navigator.clipboard.writeText(tvUrl); toast({ title: "URL copiato!" }); }}>
+            <Copy className="h-3.5 w-3.5" />
+          </Button>
+        </div>
+        <div className="flex gap-2">
+          <Button className="flex-1" onClick={() => window.open(tvUrl, "_blank")}>
+            <ExternalLink className="h-4 w-4 mr-2" />Apri TV Mode
+          </Button>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
 }
 
 // ─── QR Code modal ──────────────────────────────────────────────────────────
@@ -1472,6 +1510,7 @@ export default function FestivalDashboard() {
                   onClick={() => window.open(`/festival/${selectedFest.slug}`, "_blank")}>
                   <ExternalLink className="h-4 w-4 mr-1" />Anteprima
                 </Button>
+                <TVModeButton slug={selectedFest.slug} />
               </>
             )}
             <Button size="sm" className="bg-white text-amber-700 hover:bg-amber-50"

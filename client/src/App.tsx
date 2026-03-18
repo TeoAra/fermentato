@@ -55,6 +55,7 @@ import BreweryDashboard from "@/pages/brewery-dashboard";
 import TermsOfService from "@/pages/tos";
 import PrivacyPolicy from "@/pages/privacy";
 import TaplistTV from "@/pages/taplist-tv";
+import FestivalTV from "@/pages/festival-tv";
 import Onboarding from "@/pages/onboarding";
 import UserPublicProfile from "@/pages/user-public-profile";
 import SearchPage from "@/pages/search";
@@ -198,6 +199,16 @@ function App() {
       <QueryClientProvider client={queryClient}>
         <Switch>
           <Route path="/tv/:id" component={TaplistTV} />
+        </Switch>
+      </QueryClientProvider>
+    );
+  }
+
+  if (location.startsWith("/festival-tv/")) {
+    return (
+      <QueryClientProvider client={queryClient}>
+        <Switch>
+          <Route path="/festival-tv/:slug" component={FestivalTV} />
         </Switch>
       </QueryClientProvider>
     );

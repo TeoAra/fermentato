@@ -379,6 +379,25 @@ export default function AdminDashboardNew() {
             </CardContent>
           </Card>
         </Link>
+
+        <Link href="/festival-dashboard">
+          <Card className="hover:shadow-lg transition-all duration-300 cursor-pointer border-l-4 border-l-amber-500 group">
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <div className="flex items-center gap-3 mb-2">
+                    <CalendarDays className="w-8 h-8 text-amber-500" />
+                    <h3 className="text-lg font-semibold">Festival</h3>
+                  </div>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">
+                    Gestione festival, taplist e iscrizioni
+                  </p>
+                </div>
+                <ChevronRight className="w-5 h-5 text-gray-400 group-hover:text-amber-500 transition-colors" />
+              </div>
+            </CardContent>
+          </Card>
+        </Link>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
