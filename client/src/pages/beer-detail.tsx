@@ -155,20 +155,25 @@ export default function BeerDetail() {
   // Auto-translate description for non-Italian users
   const [translatedDesc, setTranslatedDesc] = useState<string | null>(null);
   const [translating, setTranslating] = useState(false);
-  const userLang = navigator.language?.slice(0, 2)?.toLowerCase() ?? "it";
+  const userLang = (typeof navigator !== 'undefined' ? navigator.language?.slice(0, 2)?.toLowerCase() : null) ?? "it";
   useEffect(() => {
-    if (!beer?.description) return;
+    const desc = beer?.description;
+    if (!desc || typeof desc !== 'string') return;
     if (userLang === "it") return;
     let cancelled = false;
     setTranslating(true);
     fetch("/api/translate", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ text: beer.description, targetLang: userLang }),
+      body: JSON.stringify({ text: desc, targetLang: userLang }),
       credentials: "include",
     })
-      .then(r => r.json())
-      .then(data => { if (!cancelled && data.translated) setTranslatedDesc(data.translated); })
+      .then(r => r.ok ? r.json() : null)
+      .then(data => {
+        if (!cancelled && data && typeof data.translated === 'string' && data.translated.length > 0) {
+          setTranslatedDesc(data.translated);
+        }
+      })
       .catch(() => {})
       .finally(() => { if (!cancelled) setTranslating(false); });
     return () => { cancelled = true; };
@@ -689,15 +694,15 @@ export default function BeerDetail() {
                 )}
               </h2>
               <p className="text-gray-700 dark:text-gray-300 leading-relaxed whitespace-pre-line">
-                {translatedDesc || beer.description}
+                {String(translatedDesc || beer.description || '')}
               </p>
-              {translatedDesc && (
+              {translatedDesc && beer.description && (
                 <details className="mt-3">
                   <summary className="text-xs text-gray-400 cursor-pointer hover:text-gray-600 dark:hover:text-gray-300 select-none">
                     Mostra testo originale
                   </summary>
                   <p className="mt-2 text-sm text-gray-500 dark:text-gray-400 leading-relaxed whitespace-pre-line border-t pt-2">
-                    {beer.description}
+                    {String(beer.description)}
                   </p>
                 </details>
               )}

@@ -20,12 +20,12 @@ const GEMINI_API_URL = `https://generativelanguage.googleapis.com/v1beta/models/
 // In-memory cache: "text|targetLang" → translated text
 const translationCache = new Map<string, string>();
 
-async function callGemini(prompt: string, maxTokens = 512): Promise<string | null> {
+async function callGemini(prompt: string, maxTokens = 2048): Promise<string | null> {
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) return null;
 
   const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 15000);
+  const timeout = setTimeout(() => controller.abort(), 20000);
 
   try {
     const res = await fetch(`${GEMINI_API_URL}?key=${apiKey}`, {
@@ -43,7 +43,10 @@ async function callGemini(prompt: string, maxTokens = 512): Promise<string | nul
       return null;
     }
     const data = await res.json() as any;
-    return data?.candidates?.[0]?.content?.parts?.[0]?.text?.trim() ?? null;
+    const parts = data?.candidates?.[0]?.content?.parts;
+    if (!parts || !Array.isArray(parts)) return null;
+    const text = parts.map((p: any) => p?.text ?? '').join('').trim();
+    return text || null;
   } catch (e: any) {
     clearTimeout(timeout);
     if (e.name !== 'AbortError') console.error('[translate] Gemini error:', e.message);
@@ -63,9 +66,15 @@ export async function translateToItalian(text: string): Promise<string | null> {
   const prompt = `Traduci in italiano questa descrizione di birra artigianale. Rispondi SOLO con il testo tradotto, senza aggiungere note o spiegazioni. Se il testo è già in italiano, restituiscilo invariato.\n\nTesto:\n${truncated}`;
 
   const translated = await callGemini(prompt);
-  if (translated && translated.length > 5 && translated !== truncated) {
-    translationCache.set(cacheKey, translated);
-    return translated;
+  if (translated && translated.length > 10 && translated !== truncated) {
+    // Only save if the translated text is at least 40% as long as the original
+    // to prevent saving truncated/incomplete translations
+    const minAcceptableLength = Math.max(20, text.length * 0.4);
+    if (translated.length >= minAcceptableLength) {
+      translationCache.set(cacheKey, translated);
+      return translated;
+    }
+    console.warn(`[translate] Skipping short translation (${translated.length}/${text.length} chars) for: ${text.slice(0, 50)}...`);
   }
   return null;
 }
