@@ -905,8 +905,11 @@ export const festivals = pgTable("festivals", {
   endDate: date("end_date"),
   logoUrl: varchar("logo_url"),
   ownerId: varchar("owner_id").references(() => users.id),
-  isActive: boolean("is_active").default(true),
+  isActive: boolean("is_active").default(false),
   showFood: boolean("show_food").default(true),
+  paidAt: timestamp("paid_at"),
+  stripeSessionId: varchar("stripe_session_id", { length: 255 }),
+  priceEur: integer("price_eur").default(99),
   createdAt: timestamp("created_at").defaultNow(),
 });
 export const insertFestivalSchema = createInsertSchema(festivals).omit({ id: true, createdAt: true });

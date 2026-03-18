@@ -16,14 +16,22 @@ import { Separator } from "@/components/ui/separator";
 import {
   Beer, UtensilsCrossed, BarChart3, Settings, Plus, QrCode,
   CheckCircle2, XCircle, Loader2, Pencil, Trash2, ExternalLink,
-  Trophy, Users, Droplets,
+  Trophy, Users, Droplets, CreditCard, AlertCircle, RefreshCw, Lock, Star,
 } from "lucide-react";
 import { useLocation } from "wouter";
+import { useEffect } from "react";
 
 interface Festival {
   id: number; slug: string; name: string; description: string | null;
   location: string | null; startDate: string | null; endDate: string | null;
   isActive: boolean; showFood: boolean; ownerId: string | null;
+  paidAt: string | null; stripeSessionId: string | null; priceEur: number | null;
+}
+
+function festivalStatus(f: Festival): "unpaid" | "active" | "expired" {
+  if (!f.paidAt && !f.isActive) return "unpaid";
+  if (f.endDate && new Date(f.endDate) < new Date()) return "expired";
+  return "active";
 }
 
 interface FestivalTap {
@@ -341,6 +349,45 @@ export default function FestivalDashboard() {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["/api/admin/festivals", festId, "food"] }),
   });
 
+  // Stripe: checkout per festival
+  const checkoutMutation = useMutation({
+    mutationFn: ({ festivalId, isRenewal }: { festivalId: number; isRenewal?: boolean }) =>
+      apiRequest("/api/stripe/festival-checkout", { method: "POST" }, { festivalId, isRenewal }),
+    onSuccess: (data: any) => {
+      if (data?.url) window.location.href = data.url;
+    },
+    onError: () => toast({ title: "Errore nel pagamento", variant: "destructive" }),
+  });
+
+  // Stripe: attivazione post-pagamento
+  const activateMutation = useMutation({
+    mutationFn: ({ sessionId, festivalId }: { sessionId: string; festivalId: number }) =>
+      apiRequest("/api/stripe/activate-festival", { method: "POST" }, { sessionId, festivalId }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/festivals"] });
+      toast({ title: "Festival attivato!", description: "Il pagamento è andato a buon fine." });
+      // Clean URL
+      window.history.replaceState({}, "", "/festival-dashboard" + (festId ? `?festival_id=${festId}` : ""));
+    },
+    onError: () => toast({ title: "Errore nell'attivazione", variant: "destructive" }),
+  });
+
+  // Handle checkout_success redirect
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const success = params.get("checkout_success");
+    const sessionId = params.get("session_id");
+    const paramFestId = params.get("festival_id");
+    if (success === "1" && sessionId && paramFestId) {
+      activateMutation.mutate({ sessionId, festivalId: parseInt(paramFestId) });
+      if (paramFestId) setSelectedFestId(parseInt(paramFestId));
+    } else if (paramFestId) {
+      setSelectedFestId(parseInt(paramFestId));
+    }
+  }, []);
+
+  const status = selectedFest ? festivalStatus(selectedFest) : null;
+
   if (!isAuthenticated) return (
     <div className="min-h-screen flex items-center justify-center">
       <div className="text-center">
@@ -399,24 +446,80 @@ export default function FestivalDashboard() {
           <>
             {/* Festival tabs selector */}
             <div className="flex gap-2 flex-wrap">
-              {festList.map(f => (
-                <button
-                  key={f.id}
-                  onClick={() => setSelectedFestId(f.id)}
-                  className={`px-4 py-2 rounded-xl text-sm font-medium transition-all ${
-                    (selectedFest?.id === f.id)
-                      ? "bg-amber-500 text-white shadow"
-                      : "bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-amber-50"
-                  }`}
-                >
-                  {f.name}
-                  {!f.isActive && <span className="ml-1 text-xs opacity-60">(inattivo)</span>}
-                </button>
-              ))}
+              {festList.map(f => {
+                const s = festivalStatus(f);
+                return (
+                  <button
+                    key={f.id}
+                    onClick={() => setSelectedFestId(f.id)}
+                    className={`px-4 py-2 rounded-xl text-sm font-medium transition-all flex items-center gap-1.5 ${
+                      (selectedFest?.id === f.id)
+                        ? "bg-amber-500 text-white shadow"
+                        : "bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-amber-50"
+                    }`}
+                  >
+                    {f.name}
+                    {s === "unpaid" && <Lock className="h-3 w-3 opacity-70" />}
+                    {s === "expired" && <AlertCircle className="h-3 w-3 opacity-70" />}
+                  </button>
+                );
+              })}
             </div>
 
             {selectedFest && (
               <>
+                {/* Payment banner for unpaid festivals */}
+                {status === "unpaid" && (
+                  <Card className="border-amber-200 bg-amber-50 dark:bg-amber-950/30">
+                    <CardContent className="py-6 text-center space-y-3">
+                      <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-amber-100 dark:bg-amber-900/40">
+                        <CreditCard className="h-6 w-6 text-amber-600" />
+                      </div>
+                      <div>
+                        <h3 className="font-semibold text-gray-900 dark:text-gray-100">Attiva il festival con il pagamento</h3>
+                        <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                          Per rendere il taplist pubblico e raccogliere valutazioni è necessario il pagamento una tantum.
+                        </p>
+                      </div>
+                      <div className="text-3xl font-bold text-amber-600">€{selectedFest.priceEur ?? 99}</div>
+                      <div className="text-xs text-gray-500">Pagamento unico · accesso per tutta la durata del festival</div>
+                      <Button
+                        size="lg"
+                        className="bg-amber-500 hover:bg-amber-600 text-white"
+                        onClick={() => checkoutMutation.mutate({ festivalId: selectedFest.id })}
+                        disabled={checkoutMutation.isPending}
+                      >
+                        {checkoutMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <CreditCard className="h-4 w-4 mr-2" />}
+                        Paga e attiva
+                      </Button>
+                      <p className="text-xs text-gray-400">Puoi configurare spine e menu anche ora, ma il QR sarà pubblico solo dopo il pagamento.</p>
+                    </CardContent>
+                  </Card>
+                )}
+
+                {/* Expired banner */}
+                {status === "expired" && (
+                  <Card className="border-red-200 bg-red-50 dark:bg-red-950/30">
+                    <CardContent className="py-5 flex items-center justify-between gap-4 flex-wrap">
+                      <div className="flex items-center gap-3">
+                        <AlertCircle className="h-8 w-8 text-red-400 flex-shrink-0" />
+                        <div>
+                          <h3 className="font-semibold text-gray-900 dark:text-gray-100">Festival terminato</h3>
+                          <p className="text-sm text-gray-500">Il festival è scaduto il {selectedFest.endDate ? new Date(selectedFest.endDate).toLocaleDateString("it-IT") : "—"}. Rinnova per riattivarlo.</p>
+                        </div>
+                      </div>
+                      <Button
+                        className="bg-amber-500 hover:bg-amber-600 text-white flex-shrink-0"
+                        onClick={() => checkoutMutation.mutate({ festivalId: selectedFest.id, isRenewal: true })}
+                        disabled={checkoutMutation.isPending}
+                      >
+                        {checkoutMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <RefreshCw className="h-4 w-4 mr-2" />}
+                        Rinnova · €{selectedFest.priceEur ?? 99}
+                      </Button>
+                    </CardContent>
+                  </Card>
+                )}
+
                 {/* Stats bar */}
                 <div className="grid grid-cols-3 gap-3">
                   {[
@@ -444,7 +547,15 @@ export default function FestivalDashboard() {
 
                   {/* TAPS tab */}
                   <TabsContent value="taps" className="space-y-4">
-                    {taps.length === 0 ? (
+                    {status === "expired" ? (
+                      <Card className="border-dashed">
+                        <CardContent className="py-8 text-center text-gray-500 space-y-2">
+                          <Lock className="h-8 w-8 mx-auto text-gray-300" />
+                          <p className="font-medium">Festival terminato</p>
+                          <p className="text-sm">Le spine non sono più modificabili. Rinnova il festival per riattivarlo.</p>
+                        </CardContent>
+                      </Card>
+                    ) : taps.length === 0 ? (
                       <Card>
                         <CardContent className="py-8 text-center space-y-3">
                           <Beer className="h-8 w-8 text-gray-300 mx-auto" />
@@ -491,6 +602,16 @@ export default function FestivalDashboard() {
 
                   {/* FOOD tab */}
                   <TabsContent value="food" className="space-y-4">
+                    {status === "expired" ? (
+                      <Card className="border-dashed">
+                        <CardContent className="py-8 text-center text-gray-500 space-y-2">
+                          <Lock className="h-8 w-8 mx-auto text-gray-300" />
+                          <p className="font-medium">Festival terminato</p>
+                          <p className="text-sm">Il menu non è più modificabile. Rinnova il festival per riattivarlo.</p>
+                        </CardContent>
+                      </Card>
+                    ) : (
+                    <>
                     {/* Add food form */}
                     <Card>
                       <CardHeader className="pb-3">
@@ -547,6 +668,8 @@ export default function FestivalDashboard() {
                         </div>
                       ))}
                     </div>
+                    </>
+                    )}
                   </TabsContent>
 
                   {/* STATS tab */}

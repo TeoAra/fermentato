@@ -29,6 +29,7 @@ export function registerFestivalRoutes(app: Express) {
       const [festival] = await db.select().from(festivals)
         .where(eq(festivals.slug, req.params.slug)).limit(1);
       if (!festival) return res.status(404).json({ message: "Festival non trovato" });
+      if (!festival.isActive) return res.status(403).json({ message: "Festival non ancora attivato" });
 
       const taps = await db.select({
         id: festivalTaps.id,
@@ -143,12 +144,14 @@ export function registerFestivalRoutes(app: Express) {
       if (!isAdminUser) return res.status(403).json({ message: "Non autorizzato" });
       const { name, slug, description, location, startDate, endDate, showFood, ownerId } = req.body;
       if (!name || !slug) return res.status(400).json({ message: "Nome e slug obbligatori" });
+      const { priceEur } = req.body;
       const [fest] = await db.insert(festivals).values({
         name, slug, description, location,
         startDate, endDate,
         showFood: showFood ?? true,
         ownerId: ownerId || user.id,
-        isActive: true,
+        priceEur: priceEur ? parseInt(priceEur) : 99,
+        isActive: false, // attivato dopo il pagamento
       }).returning();
       res.json(fest);
     } catch (err: any) {
@@ -320,6 +323,117 @@ export function registerFestivalRoutes(app: Express) {
       });
     } catch (err) {
       console.error("Stats error:", err);
+      res.status(500).json({ message: "Errore" });
+    }
+  });
+
+  // ── Stripe: create one-time checkout for festival ────────────────────────────
+  app.post("/api/stripe/festival-checkout", isAuthenticated as any, async (req: any, res) => {
+    try {
+      const { festivalId, isRenewal } = req.body;
+      if (!festivalId) return res.status(400).json({ message: "festivalId obbligatorio" });
+
+      const [fest] = await db.select().from(festivals).where(eq(festivals.id, parseInt(festivalId))).limit(1);
+      if (!fest) return res.status(404).json({ message: "Festival non trovato" });
+      if (!canManageFestival(req, fest)) return res.status(403).json({ message: "Non autorizzato" });
+
+      const { getUncachableStripeClient } = await import("./stripeClient");
+      const stripe = await getUncachableStripeClient();
+
+      const domain = process.env.REPLIT_DOMAINS?.split(",")[0] || "fermenta.to";
+      const baseUrl = `https://${domain}`;
+      const priceEur = fest.priceEur ?? 99;
+
+      const userEmail = req.user?.email;
+      const userName = req.user?.firstName || req.user?.username || "";
+
+      const existingCustomers = await stripe.customers.list({ email: userEmail, limit: 1 });
+      let customerId: string;
+      if (existingCustomers.data.length > 0) {
+        customerId = existingCustomers.data[0].id;
+      } else {
+        const customer = await stripe.customers.create({
+          email: userEmail,
+          name: userName,
+          metadata: { fermenta_user_id: String(req.user.id) },
+        });
+        customerId = customer.id;
+      }
+
+      const session = await stripe.checkout.sessions.create({
+        mode: "payment",
+        customer: customerId,
+        line_items: [{
+          quantity: 1,
+          price_data: {
+            currency: "eur",
+            unit_amount: priceEur * 100,
+            product_data: {
+              name: `${isRenewal ? "Rinnovo" : "Attivazione"} Festival — ${fest.name}`,
+              description: `Fermenta.to Festival Mode — accesso completo per la durata dell'evento`,
+              metadata: { festivalId: String(fest.id), fermenta_type: "festival" },
+            },
+          },
+        }],
+        success_url: `${baseUrl}/festival-dashboard?checkout_success=1&festival_id=${fest.id}&session_id={CHECKOUT_SESSION_ID}`,
+        cancel_url: `${baseUrl}/festival-dashboard?festival_id=${fest.id}`,
+        locale: "it",
+        metadata: {
+          fermenta_user_id: String(req.user.id),
+          festival_id: String(fest.id),
+          fermenta_type: "festival",
+        },
+      });
+
+      res.json({ url: session.url, sessionId: session.id });
+    } catch (err: any) {
+      console.error("Festival checkout error:", err.message);
+      res.status(500).json({ message: "Errore nel pagamento: " + err.message });
+    }
+  });
+
+  // ── Stripe: activate festival after successful payment ───────────────────────
+  app.post("/api/stripe/activate-festival", isAuthenticated as any, async (req: any, res) => {
+    try {
+      const { sessionId, festivalId } = req.body;
+      if (!sessionId || !festivalId) return res.status(400).json({ message: "Dati mancanti" });
+
+      const { getUncachableStripeClient } = await import("./stripeClient");
+      const stripe = await getUncachableStripeClient();
+      const session = await stripe.checkout.sessions.retrieve(sessionId);
+
+      if (session.payment_status !== "paid") {
+        return res.status(400).json({ message: "Pagamento non completato" });
+      }
+
+      const festId = parseInt(festivalId);
+      const [fest] = await db.select().from(festivals).where(eq(festivals.id, festId)).limit(1);
+      if (!fest || !canManageFestival(req, fest)) return res.status(403).json({ message: "Non autorizzato" });
+
+      const [updated] = await db.update(festivals)
+        .set({ isActive: true, paidAt: new Date(), stripeSessionId: sessionId })
+        .where(eq(festivals.id, festId))
+        .returning();
+
+      res.json(updated);
+    } catch (err: any) {
+      console.error("Festival activation error:", err.message);
+      res.status(500).json({ message: "Errore nell'attivazione: " + err.message });
+    }
+  });
+
+  // ── Admin: manually activate festival (gifted/test) ─────────────────────────
+  app.post("/api/admin/festivals/:id/activate", isAuthenticated as any, async (req: any, res) => {
+    try {
+      const user = req.user as any;
+      const isAdminUser = user.roles?.includes("admin") || user.activeRole === "admin";
+      if (!isAdminUser) return res.status(403).json({ message: "Non autorizzato" });
+      const [updated] = await db.update(festivals)
+        .set({ isActive: true, paidAt: new Date() })
+        .where(eq(festivals.id, parseInt(req.params.id)))
+        .returning();
+      res.json(updated);
+    } catch (err) {
       res.status(500).json({ message: "Errore" });
     }
   });

@@ -166,10 +166,20 @@ export default function FestivalPublic() {
   const [search, setSearch] = useState("");
   const [showUnavailable, setShowUnavailable] = useState(true);
 
-  const { data, isLoading, isError } = useQuery<FestivalData>({
+  const { data, isLoading, isError, error } = useQuery<FestivalData, { status: number; message: string }>({
     queryKey: ["/api/festivals", slug],
-    queryFn: () => fetch(`/api/festivals/${slug}`, { credentials: "include" }).then(r => r.json()),
+    queryFn: async () => {
+      const r = await fetch(`/api/festivals/${slug}`, { credentials: "include" });
+      if (!r.ok) {
+        const body = await r.json().catch(() => ({}));
+        const err: any = new Error(body.message || "Errore");
+        err.status = r.status;
+        throw err;
+      }
+      return r.json();
+    },
     refetchInterval: 30000,
+    retry: false,
   });
 
   const filteredTaps = useMemo(() => {
@@ -206,12 +216,23 @@ export default function FestivalPublic() {
     </div>
   );
 
+  const isNotActive = isError && (error as any)?.status === 403;
+
   if (isError || !data?.festival) return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-amber-50 to-orange-50">
-      <div className="text-center space-y-3">
+      <div className="text-center space-y-3 max-w-xs px-4">
         <Beer className="h-12 w-12 text-gray-300 mx-auto" />
-        <h2 className="text-xl font-bold text-gray-700">Festival non trovato</h2>
-        <p className="text-gray-500">Controlla il QR code e riprova.</p>
+        {isNotActive ? (
+          <>
+            <h2 className="text-xl font-bold text-gray-700">Festival non ancora attivo</h2>
+            <p className="text-gray-500">Il taplist digitale di questo festival non è ancora disponibile. Riprova a breve!</p>
+          </>
+        ) : (
+          <>
+            <h2 className="text-xl font-bold text-gray-700">Festival non trovato</h2>
+            <p className="text-gray-500">Controlla il QR code e riprova.</p>
+          </>
+        )}
       </div>
     </div>
   );
