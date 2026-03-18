@@ -176,13 +176,14 @@ function TapEditDialog({ festivalId, tapNumber, existing, onClose }: {
 
   // Selected beer from DB (or pre-populated from existing)
   const [selectedBeer, setSelectedBeer] = useState<{
-    id: number; name: string; breweryName: string; style: string; abv: string;
+    id: number; name: string; breweryName: string; style: string; abv: string; imageUrl: string;
   } | null>(existing?.beerId ? {
     id: existing.beerId,
     name: existing.customBeerName || "",
     breweryName: existing.customBreweryName || "",
     style: existing.style || "",
     abv: existing.abv || "",
+    imageUrl: existing.beerImageUrl || "",
   } : null);
 
   // Create beer/brewery
@@ -297,7 +298,7 @@ function TapEditDialog({ festivalId, tapNumber, existing, onClose }: {
     onSuccess: (beer: any) => {
       toast({ title: "Birra creata!" });
       const bName = beer.brewery?.name || newBeerData.breweryName;
-      setSelectedBeer({ id: beer.id, name: beer.name, breweryName: bName, style: beer.style || "", abv: beer.abv || "" });
+      setSelectedBeer({ id: beer.id, name: beer.name, breweryName: bName, style: beer.style || "", abv: beer.abv || "", imageUrl: beer.imageUrl || "" });
       setForm(f => ({ ...f, customBeerName: beer.name, customBreweryName: bName, style: beer.style || f.style, abv: beer.abv ? String(beer.abv) : f.abv }));
       setCreatingBeer(false);
       setSearchTerm("");
@@ -340,12 +341,21 @@ function TapEditDialog({ festivalId, tapNumber, existing, onClose }: {
           {/* ── Beer selected ── */}
           {selectedBeer && !creatingBeer ? (
             <div className="p-3 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700 rounded-xl">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="font-semibold text-sm">{selectedBeer.name}</p>
-                  <p className="text-xs text-gray-500 mt-0.5">
-                    {selectedBeer.breweryName}{selectedBeer.style ? ` · ${selectedBeer.style}` : ""}{selectedBeer.abv ? ` · ${selectedBeer.abv}% ABV` : ""}
-                  </p>
+              <div className="flex items-center justify-between gap-3">
+                <div className="flex items-center gap-3">
+                  {selectedBeer.imageUrl ? (
+                    <img src={selectedBeer.imageUrl} alt={selectedBeer.name} className="w-12 h-12 rounded-lg object-cover shrink-0 border border-amber-200" />
+                  ) : (
+                    <div className="w-12 h-12 rounded-lg bg-amber-100 dark:bg-amber-900/40 flex items-center justify-center shrink-0">
+                      <Beer className="h-6 w-6 text-amber-500" />
+                    </div>
+                  )}
+                  <div>
+                    <p className="font-semibold text-sm">{selectedBeer.name}</p>
+                    <p className="text-xs text-gray-500 mt-0.5">
+                      {selectedBeer.breweryName}{selectedBeer.style ? ` · ${selectedBeer.style}` : ""}{selectedBeer.abv ? ` · ${selectedBeer.abv}% ABV` : ""}
+                    </p>
+                  </div>
                 </div>
                 <Button size="sm" variant="outline" onClick={() => { setSelectedBeer(null); setSearchTerm(""); }}>Cambia</Button>
               </div>
@@ -372,16 +382,25 @@ function TapEditDialog({ festivalId, tapNumber, existing, onClose }: {
                       {searchResults.beers.map((beer: any) => (
                         <div
                           key={beer.id}
-                          className="px-3 py-2 hover:bg-amber-50 dark:hover:bg-amber-900/20 cursor-pointer border-b last:border-b-0 transition-colors"
+                          className="flex items-center gap-2.5 px-3 py-2 hover:bg-amber-50 dark:hover:bg-amber-900/20 cursor-pointer border-b last:border-b-0 transition-colors"
                           onClick={() => {
                             const bName = beer.brewery?.name || "";
-                            setSelectedBeer({ id: beer.id, name: beer.name, breweryName: bName, style: beer.style || "", abv: beer.abv || "" });
+                            setSelectedBeer({ id: beer.id, name: beer.name, breweryName: bName, style: beer.style || "", abv: beer.abv || "", imageUrl: beer.imageUrl || "" });
                             setForm(f => ({ ...f, customBeerName: beer.name, customBreweryName: bName, style: beer.style || f.style, abv: beer.abv ? String(beer.abv) : f.abv }));
                             setSearchTerm("");
                           }}
                         >
-                          <p className="text-sm font-medium">{beer.name}</p>
-                          <p className="text-xs text-gray-500">{beer.brewery?.name || "Birrificio sconosciuto"}{beer.style ? ` · ${beer.style}` : ""}{beer.abv ? ` · ${beer.abv}% ABV` : ""}</p>
+                          {beer.imageUrl ? (
+                            <img src={beer.imageUrl} alt={beer.name} className="w-9 h-9 rounded-md object-cover shrink-0" />
+                          ) : (
+                            <div className="w-9 h-9 rounded-md bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center shrink-0">
+                              <Beer className="h-4 w-4 text-amber-400" />
+                            </div>
+                          )}
+                          <div className="min-w-0">
+                            <p className="text-sm font-medium truncate">{beer.name}</p>
+                            <p className="text-xs text-gray-500 truncate">{beer.brewery?.name || "Birrificio sconosciuto"}{beer.style ? ` · ${beer.style}` : ""}{beer.abv ? ` · ${beer.abv}% ABV` : ""}</p>
+                          </div>
                         </div>
                       ))}
                     </div>
@@ -707,6 +726,35 @@ function FestivalForm({
   const [slugEdited, setSlugEdited] = useState(!!initial.slug);
   const [schedule, setSchedule] = useState<ScheduleSlot[]>(initial.schedule ?? []);
 
+  // Auto-fill schedule when startDate/endDate change
+  useEffect(() => {
+    if (!form.startDate || !form.endDate) return;
+    const start = new Date(form.startDate + "T00:00:00");
+    const end = new Date(form.endDate + "T00:00:00");
+    if (isNaN(start.getTime()) || isNaN(end.getTime()) || start > end) return;
+    // Preserve existing hours by date
+    const byDate: Record<string, { openFrom: string; openTo: string }> = {};
+    for (const s of schedule) {
+      if (s.date) byDate[s.date] = { openFrom: s.openFrom, openTo: s.openTo };
+    }
+    // Manual slots (no date) stay at the bottom
+    const manual = schedule.filter(s => !s.date);
+    const auto: ScheduleSlot[] = [];
+    const d = new Date(start);
+    let count = 0;
+    while (d <= end && count < 14) {
+      const dateStr = d.toISOString().split("T")[0];
+      const raw = d.toLocaleDateString("it-IT", { weekday: "long", day: "numeric", month: "short" });
+      const label = raw.charAt(0).toUpperCase() + raw.slice(1);
+      const prev = byDate[dateStr];
+      auto.push({ label, date: dateStr, openFrom: prev?.openFrom ?? "16:00", openTo: prev?.openTo ?? "23:00" });
+      d.setDate(d.getDate() + 1);
+      count++;
+    }
+    setSchedule([...auto, ...manual]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [form.startDate, form.endDate]);
+
   const addSlot = () => setSchedule(s => [...s, { label: "", openFrom: "16:00", openTo: "23:00" }]);
   const removeSlot = (i: number) => setSchedule(s => s.filter((_, idx) => idx !== i));
   const updateSlot = (i: number, patch: Partial<ScheduleSlot>) =>
@@ -812,59 +860,47 @@ function FestivalForm({
           <p className="text-xs text-gray-400 italic py-2">Nessun orario aggiunto. Verranno mostrati sul taplist pubblico.</p>
         )}
         <div className="space-y-2">
-          {schedule.map((slot, i) => (
-            <div key={i} className="flex items-center gap-2 bg-gray-50 dark:bg-gray-800 rounded-xl p-2">
-              <div className="flex-1 space-y-1.5">
-                <Input
-                  className="h-8 text-sm"
-                  placeholder="Es. Venerdì, Sabato, Ogni giorno…"
-                  value={slot.label}
-                  onChange={e => updateSlot(i, { label: e.target.value })}
-                />
-                <Input
-                  className="h-8 text-sm"
-                  type="date"
-                  value={slot.date || ""}
-                  onChange={e => updateSlot(i, { date: e.target.value || undefined })}
-                  placeholder="Data specifica (opzionale)"
-                />
-              </div>
-              <div className="flex flex-col gap-1.5">
-                <div className="flex items-center gap-1">
-                  <span className="text-xs text-gray-500 w-10">Apertura</span>
-                  <Input type="time" className="h-8 w-28 text-sm" value={slot.openFrom} onChange={e => updateSlot(i, { openFrom: e.target.value })} />
+          {schedule.map((slot, i) => {
+            const isAuto = !!slot.date;
+            return (
+              <div key={i} className="flex items-center gap-2 bg-gray-50 dark:bg-gray-800 rounded-xl p-2">
+                <div className="flex-1 min-w-0">
+                  {isAuto ? (
+                    <p className="text-sm font-medium text-gray-700 dark:text-gray-300 truncate px-1">{slot.label}</p>
+                  ) : (
+                    <Input
+                      className="h-8 text-sm"
+                      placeholder="Es. Ogni giorno, Weekend…"
+                      value={slot.label}
+                      onChange={e => updateSlot(i, { label: e.target.value })}
+                    />
+                  )}
                 </div>
-                <div className="flex items-center gap-1">
-                  <span className="text-xs text-gray-500 w-10">Chiusura</span>
-                  <Input type="time" className="h-8 w-28 text-sm" value={slot.openTo} onChange={e => updateSlot(i, { openTo: e.target.value })} />
+                <div className="flex flex-col gap-1.5">
+                  <div className="flex items-center gap-1">
+                    <span className="text-xs text-gray-500 w-10">Apertura</span>
+                    <Input type="time" className="h-8 w-28 text-sm" value={slot.openFrom} onChange={e => updateSlot(i, { openFrom: e.target.value })} />
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <span className="text-xs text-gray-500 w-10">Chiusura</span>
+                    <Input type="time" className="h-8 w-28 text-sm" value={slot.openTo} onChange={e => updateSlot(i, { openTo: e.target.value })} />
+                  </div>
                 </div>
+                <button type="button" onClick={() => removeSlot(i)} className="text-gray-400 hover:text-red-500 transition-colors p-1">
+                  <X className="h-4 w-4" />
+                </button>
               </div>
-              <button type="button" onClick={() => removeSlot(i)} className="text-gray-400 hover:text-red-500 transition-colors p-1">
-                <X className="h-4 w-4" />
-              </button>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </div>
 
       <Separator />
 
-      {/* Admin: prezzo + food */}
       <div className="flex items-center gap-3">
         <Switch checked={form.showFood} onCheckedChange={v => setForm(f => ({ ...f, showFood: v }))} />
         <Label>Menu cibo visibile ai visitatori</Label>
       </div>
-      {isAdmin && (
-        <div>
-          <Label>Prezzo attivazione (€)</Label>
-          <Input
-            className="mt-1"
-            type="number" min="0" step="1"
-            value={form.priceEur}
-            onChange={e => setForm(f => ({ ...f, priceEur: parseInt(e.target.value) || 0 }))}
-          />
-        </div>
-      )}
 
       <Button
         className="w-full bg-amber-500 hover:bg-amber-600 text-white"

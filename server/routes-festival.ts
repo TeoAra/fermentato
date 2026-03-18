@@ -234,7 +234,7 @@ export function registerFestivalRoutes(app: Express) {
       const user = req.user as any;
       const isAdminUser = user.roles?.includes("admin") || user.activeRole === "admin";
       if (!isAdminUser) return res.status(403).json({ message: "Non autorizzato" });
-      const { name, slug, description, location, startDate, endDate, showFood, ownerId, logoUrl, coverImageUrl, priceEur } = req.body;
+      const { name, slug, description, location, startDate, endDate, showFood, ownerId, logoUrl, coverImageUrl, priceEur, schedule } = req.body;
       if (!name || !slug) return res.status(400).json({ message: "Nome e slug obbligatori" });
       const [fest] = await db.insert(festivals).values({
         name, slug,
@@ -247,7 +247,8 @@ export function registerFestivalRoutes(app: Express) {
         logoUrl: logoUrl || null,
         coverImageUrl: coverImageUrl || null,
         priceEur: priceEur ? parseInt(priceEur) : 50,
-        isActive: false, // attivato dopo il pagamento
+        isActive: false,
+        ...(schedule !== undefined ? { schedule } : {}),
       }).returning();
       res.json(fest);
     } catch (err: any) {
