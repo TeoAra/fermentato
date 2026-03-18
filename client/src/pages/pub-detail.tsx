@@ -280,16 +280,18 @@ export default function PubDetail() {
     }
   }, [pubEvents]);
 
+  const pubNumericId = (pub as any)?.id;
+
   const { data: favoritesCountData, isLoading: favoritesCountLoading } = useQuery({
-    queryKey: ["/api/favorites", "pub", id, "count"],
-    enabled: !!id,
+    queryKey: ["/api/favorites", "pub", pubNumericId, "count"],
+    enabled: !!pubNumericId,
     staleTime: 60_000,
   });
 
   // Check if current pub is in user's favorites
   const { data: isFavoriteData } = useQuery({
-    queryKey: ["/api/favorites", "pub", id, "check"],
-    enabled: !!id && isAuthenticated,
+    queryKey: ["/api/favorites", "pub", pubNumericId, "check"],
+    enabled: !!pubNumericId && isAuthenticated,
     staleTime: 60_000,
   });
 
@@ -299,18 +301,18 @@ export default function PubDetail() {
   const toggleFavoriteMutation = useMutation({
     mutationFn: async () => {
       if (isFavorite) {
-        return apiRequest(`/api/favorites/pub/${id}`, { method: "DELETE" });
+        return apiRequest(`/api/favorites/pub/${pubNumericId}`, { method: "DELETE" });
       } else {
         return apiRequest("/api/favorites", { method: "POST" }, { 
           itemType: "pub", 
-          itemId: parseInt(id as string) 
+          itemId: pubNumericId,
         });
       }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/favorites"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/favorites", "pub", id, "check"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/favorites", "pub", id, "count"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/favorites", "pub", pubNumericId, "check"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/favorites", "pub", pubNumericId, "count"] });
       
       toast({
         title: isFavorite ? "Rimosso dai preferiti" : "Aggiunto ai preferiti",
