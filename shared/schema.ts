@@ -913,6 +913,7 @@ export const festivals = pgTable("festivals", {
   stripeSessionId: varchar("stripe_session_id", { length: 255 }),
   priceEur: integer("price_eur").default(99),
   createdAt: timestamp("created_at").defaultNow(),
+  schedule: jsonb("schedule").$type<Array<{ label: string; date?: string; openFrom: string; openTo: string }>>(),
 });
 export const insertFestivalSchema = createInsertSchema(festivals).omit({ id: true, createdAt: true });
 export type InsertFestival = z.infer<typeof insertFestivalSchema>;

@@ -11,7 +11,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Droplets, Search, Star, UtensilsCrossed, Beer, ChevronDown, ChevronUp,
-  MapPin, CheckCircle2, XCircle, Loader2,
+  MapPin, CheckCircle2, XCircle, Loader2, Clock, Calendar,
 } from "lucide-react";
 
 const ALLERGEN_LABELS: Record<string, string> = {
@@ -21,11 +21,14 @@ const ALLERGEN_LABELS: Record<string, string> = {
   sesamo: "Sesamo", solfiti: "Solfiti", lupini: "Lupini", molluschi: "Molluschi",
 };
 
+type ScheduleSlot = { label: string; date?: string; openFrom: string; openTo: string };
+
 interface FestivalData {
   festival: {
     id: number; name: string; description: string | null; location: string | null;
     startDate: string | null; endDate: string | null; logoUrl: string | null;
     coverImageUrl: string | null; showFood: boolean; isActive: boolean;
+    schedule: ScheduleSlot[] | null;
   };
   taps: Array<{
     id: number; tapNumber: number; beerId: number | null;
@@ -371,17 +374,52 @@ export default function FestivalPublic() {
             <div className="flex-1 min-w-0">
               <h1 className="text-2xl font-bold leading-tight">{festival.name}</h1>
               {festival.location && (
-                <p className="text-amber-100 text-sm flex items-center gap-1 mt-0.5">
-                  <MapPin className="h-3.5 w-3.5" />{festival.location}
+                <a
+                  href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(festival.location)}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-amber-100 text-sm flex items-center gap-1 mt-0.5 hover:text-white transition-colors underline-offset-2 hover:underline"
+                >
+                  <MapPin className="h-3.5 w-3.5 flex-shrink-0" />
+                  <span className="truncate">{festival.location}</span>
+                </a>
+              )}
+              {/* Dates */}
+              {(festival.startDate || festival.endDate) && (
+                <p className="text-amber-100/80 text-xs flex items-center gap-1 mt-0.5">
+                  <Calendar className="h-3 w-3 flex-shrink-0" />
+                  {festival.startDate && new Date(festival.startDate).toLocaleDateString("it-IT", { day: "numeric", month: "short", year: "numeric" })}
+                  {festival.startDate && festival.endDate && festival.startDate !== festival.endDate && " — "}
+                  {festival.endDate && festival.startDate !== festival.endDate && new Date(festival.endDate).toLocaleDateString("it-IT", { day: "numeric", month: "short", year: "numeric" })}
                 </p>
               )}
               {festival.description && (
-                <p className="text-amber-100 text-xs mt-1 line-clamp-2">{festival.description}</p>
+                <p className="text-amber-100/80 text-xs mt-1 line-clamp-2">{festival.description}</p>
               )}
             </div>
           </div>
+
+          {/* Schedule */}
+          {festival.schedule && festival.schedule.length > 0 && (
+            <div className="mt-3 bg-white/15 backdrop-blur-sm rounded-xl px-4 py-3 space-y-1.5">
+              <div className="flex items-center gap-1.5 text-amber-100 text-xs font-semibold uppercase tracking-wide mb-1">
+                <Clock className="h-3.5 w-3.5" />Orari
+              </div>
+              {festival.schedule.map((slot, i) => (
+                <div key={i} className="flex items-center justify-between text-sm">
+                  <span className="text-amber-100 font-medium">
+                    {slot.date
+                      ? new Date(slot.date).toLocaleDateString("it-IT", { weekday: "short", day: "numeric", month: "short" })
+                      : slot.label}
+                  </span>
+                  <span className="text-white font-bold">{slot.openFrom} – {slot.openTo}</span>
+                </div>
+              ))}
+            </div>
+          )}
+
           {/* Stats */}
-          <div className="flex gap-4 mt-4">
+          <div className="flex gap-3 mt-4">
             <div className="bg-white/20 backdrop-blur-sm rounded-xl px-4 py-2 text-center">
               <div className="text-2xl font-bold">{availableCount}</div>
               <div className="text-xs text-amber-100">spine disponibili</div>

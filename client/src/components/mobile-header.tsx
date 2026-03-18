@@ -66,6 +66,7 @@ export function MobileHeader({ onMenuToggle, isMenuOpen }: MobileHeaderProps) {
     { icon: Beer, label: "Esplora Birre", href: "/search", desc: "Oltre 1 milione di birre" },
     { icon: Building2Icon, label: "Birrifici", href: "/explore/breweries", desc: "Scopri i birrifici" },
     { icon: MapPin, label: "Pub & Locali", href: "/explore/pubs", desc: "Trova dove berla" },
+    { icon: QrCode, label: "Festival", href: "/festival", desc: "Festival di birra artigianale" },
   ];
 
   const activeRole = (typedUser as any)?.activeRole || typedUser?.userType || 'customer';
@@ -203,6 +204,7 @@ export function MobileHeader({ onMenuToggle, isMenuOpen }: MobileHeaderProps) {
             <MenuItem href="/search" icon={Search} label="Ricerca avanzata" desc="Database di oltre 1M di birre" />
             <MenuItem href="/explore/breweries" icon={Building2Icon} label="Birrifici" desc="Artigianali italiani e internazionali" />
             <MenuItem href="/explore/pubs" icon={MapPin} label="Pub & Locali" desc="Dove bere artigianale in Italia" />
+            <MenuItem href="/festival" icon={QrCode} label="Festival" desc="Festival di birra artigianale" />
 
             {isAuthenticated && (
               <>

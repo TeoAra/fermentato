@@ -21,7 +21,7 @@ import {
   Beer, UtensilsCrossed, BarChart3, Settings, Plus, QrCode,
   CheckCircle2, XCircle, Loader2, Pencil, Trash2, ExternalLink,
   Trophy, Users, Droplets, CreditCard, AlertCircle, RefreshCw, Lock, Star,
-  ArrowLeft, Factory, ImagePlus, X, Search, ChevronDown,
+  ArrowLeft, Factory, ImagePlus, X, Search, ChevronDown, Clock,
 } from "lucide-react";
 import { useLocation } from "wouter";
 
@@ -52,12 +52,15 @@ const BEER_STYLES = [
   "Smoked Beer", "Pumpkin Ale", "Italian Grape Ale", "Italian Pilsner",
 ];
 
+type ScheduleSlot = { label: string; date?: string; openFrom: string; openTo: string };
+
 interface Festival {
   id: number; slug: string; name: string; description: string | null;
   location: string | null; startDate: string | null; endDate: string | null;
   isActive: boolean; showFood: boolean; ownerId: string | null;
   paidAt: string | null; stripeSessionId: string | null; priceEur: number | null;
   logoUrl: string | null; coverImageUrl: string | null;
+  schedule: ScheduleSlot[] | null;
 }
 
 function festivalStatus(f: Festival): "unpaid" | "active" | "expired" {
@@ -682,6 +685,7 @@ function FestivalForm({
     name: string; slug: string; description: string; location: string;
     startDate: string; endDate: string; showFood: boolean;
     logoUrl: string; coverImageUrl: string; priceEur: number;
+    schedule: ScheduleSlot[];
   }>;
   onSubmit: (data: any) => void;
   isPending: boolean;
@@ -701,6 +705,12 @@ function FestivalForm({
     priceEur: initial.priceEur ?? 50,
   });
   const [slugEdited, setSlugEdited] = useState(!!initial.slug);
+  const [schedule, setSchedule] = useState<ScheduleSlot[]>(initial.schedule ?? []);
+
+  const addSlot = () => setSchedule(s => [...s, { label: "", openFrom: "16:00", openTo: "23:00" }]);
+  const removeSlot = (i: number) => setSchedule(s => s.filter((_, idx) => idx !== i));
+  const updateSlot = (i: number, patch: Partial<ScheduleSlot>) =>
+    setSchedule(s => s.map((slot, idx) => idx === i ? { ...slot, ...patch } : slot));
 
   const suggestSlug = (name: string) =>
     name.toLowerCase().replace(/[^a-z0-9]/g, "-").replace(/-+/g, "-").replace(/^-|-$/g, "");
@@ -789,6 +799,56 @@ function FestivalForm({
         <Textarea className="mt-1" value={form.description} onChange={e => setForm(f => ({ ...f, description: e.target.value }))} rows={2} placeholder="Breve descrizione mostrata sul taplist pubblico" />
       </div>
 
+      {/* Orari */}
+      <Separator />
+      <div>
+        <div className="flex items-center justify-between mb-2">
+          <Label className="flex items-center gap-1.5"><Clock className="h-4 w-4" />Orari apertura</Label>
+          <Button size="sm" variant="outline" className="h-7 text-xs" type="button" onClick={addSlot}>
+            <Plus className="h-3 w-3 mr-1" />Aggiungi fascia
+          </Button>
+        </div>
+        {schedule.length === 0 && (
+          <p className="text-xs text-gray-400 italic py-2">Nessun orario aggiunto. Verranno mostrati sul taplist pubblico.</p>
+        )}
+        <div className="space-y-2">
+          {schedule.map((slot, i) => (
+            <div key={i} className="flex items-center gap-2 bg-gray-50 dark:bg-gray-800 rounded-xl p-2">
+              <div className="flex-1 space-y-1.5">
+                <Input
+                  className="h-8 text-sm"
+                  placeholder="Es. Venerdì, Sabato, Ogni giorno…"
+                  value={slot.label}
+                  onChange={e => updateSlot(i, { label: e.target.value })}
+                />
+                <Input
+                  className="h-8 text-sm"
+                  type="date"
+                  value={slot.date || ""}
+                  onChange={e => updateSlot(i, { date: e.target.value || undefined })}
+                  placeholder="Data specifica (opzionale)"
+                />
+              </div>
+              <div className="flex flex-col gap-1.5">
+                <div className="flex items-center gap-1">
+                  <span className="text-xs text-gray-500 w-10">Apertura</span>
+                  <Input type="time" className="h-8 w-28 text-sm" value={slot.openFrom} onChange={e => updateSlot(i, { openFrom: e.target.value })} />
+                </div>
+                <div className="flex items-center gap-1">
+                  <span className="text-xs text-gray-500 w-10">Chiusura</span>
+                  <Input type="time" className="h-8 w-28 text-sm" value={slot.openTo} onChange={e => updateSlot(i, { openTo: e.target.value })} />
+                </div>
+              </div>
+              <button type="button" onClick={() => removeSlot(i)} className="text-gray-400 hover:text-red-500 transition-colors p-1">
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <Separator />
+
       {/* Admin: prezzo + food */}
       <div className="flex items-center gap-3">
         <Switch checked={form.showFood} onCheckedChange={v => setForm(f => ({ ...f, showFood: v }))} />
@@ -808,7 +868,7 @@ function FestivalForm({
 
       <Button
         className="w-full bg-amber-500 hover:bg-amber-600 text-white"
-        onClick={() => onSubmit(form)}
+        onClick={() => onSubmit({ ...form, schedule })}
         disabled={isPending || !form.name || !form.slug}
       >
         {isPending ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
@@ -1687,6 +1747,7 @@ export default function FestivalDashboard() {
                             logoUrl: selectedFest.logoUrl || "",
                             coverImageUrl: selectedFest.coverImageUrl || "",
                             priceEur: selectedFest.priceEur ?? 99,
+                            schedule: selectedFest.schedule ?? [],
                           }}
                           onSubmit={data => updateFestMutation.mutate(data)}
                           isPending={updateFestMutation.isPending}

@@ -238,6 +238,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   })();
 
+  // Startup: ensure festivals has schedule column
+  (async () => {
+    try {
+      await pool.query(`ALTER TABLE festivals ADD COLUMN IF NOT EXISTS schedule jsonb`);
+    } catch (e) {
+      console.error("[festivals] schedule migration error:", e);
+    }
+  })();
+
   // Startup: ensure pubs have slug column + auto-generate slugs
   (async () => {
     try {

@@ -265,7 +265,7 @@ export function registerFestivalRoutes(app: Express) {
       if (!canManageFestival(req, fest)) return res.status(403).json({ message: "Non autorizzato" });
       const {
         name, description, location, startDate, endDate,
-        isActive, showFood, logoUrl, coverImageUrl, priceEur, slug,
+        isActive, showFood, logoUrl, coverImageUrl, priceEur, slug, schedule,
       } = req.body;
       const updateData: Record<string, any> = {};
       if (name !== undefined) updateData.name = name;
@@ -279,6 +279,7 @@ export function registerFestivalRoutes(app: Express) {
       if (coverImageUrl !== undefined) updateData.coverImageUrl = coverImageUrl || null;
       if (priceEur !== undefined) updateData.priceEur = priceEur;
       if (slug !== undefined && slug !== fest.slug) updateData.slug = slug;
+      if (schedule !== undefined) updateData.schedule = schedule;
       const [updated] = await db.update(festivals)
         .set(updateData)
         .where(eq(festivals.id, festId)).returning();
