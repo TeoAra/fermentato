@@ -336,8 +336,8 @@ export default function PubDetail() {
     const currentUrl = window.location.href;
     
     const shareData = {
-      title: `${pubName} - Fermenta`,
-      text: `Scopri ${pubName} su Fermenta - Birre alla spina, cantina e menu`,
+      title: `${pubName} - Fermenta.to`,
+      text: `Scopri ${pubName} su Fermenta.to - Birre alla spina, cantina e menu`,
       url: currentUrl,
     };
 

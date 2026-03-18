@@ -392,8 +392,8 @@ export default function BeerDetail() {
     const currentUrl = window.location.href;
     
     const shareData = {
-      title: `${beerName} - Fermenta`,
-      text: `Scopri ${beerName} su Fermenta`,
+      title: `${beerName} - Fermenta.to`,
+      text: `Scopri ${beerName} su Fermenta.to`,
       url: currentUrl,
     };
 

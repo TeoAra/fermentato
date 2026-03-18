@@ -392,7 +392,7 @@ export default function Landing() {
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
               {sortedBreweries.map((brewery: any) => (
-                <BreweryCard key={brewery.id} brewery={brewery} distance={nearbyHasResults && brewery._distance != null && isFinite(brewery._distance) ? brewery._distance : undefined} />
+                <BreweryCard key={brewery.id} brewery={brewery} beerCount={brewery.beerCount ?? 0} distance={nearbyHasResults && brewery._distance != null && isFinite(brewery._distance) ? brewery._distance : undefined} />
               ))}
             </div>
           )}
