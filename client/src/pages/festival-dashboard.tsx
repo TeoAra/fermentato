@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { ImageUpload } from "@/components/image-upload";
+import { RichTextEditor } from "@/components/RichTextEditor";
 import { AddressAutocomplete } from "@/components/AddressAutocomplete";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
@@ -673,8 +674,12 @@ function FestivalForm({
 
       {/* Descrizione */}
       <div>
-        <Label>Descrizione</Label>
-        <Textarea className="mt-1" value={form.description} onChange={e => setForm(f => ({ ...f, description: e.target.value }))} rows={2} placeholder="Breve descrizione mostrata sul taplist pubblico" />
+        <Label className="mb-2 block">Descrizione</Label>
+        <RichTextEditor
+          value={form.description}
+          onChange={html => setForm(f => ({ ...f, description: html }))}
+          placeholder="Descrivi il festival: programma, artisti, info pratiche…"
+        />
       </div>
 
       {/* Orari */}

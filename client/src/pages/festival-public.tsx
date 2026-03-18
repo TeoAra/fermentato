@@ -629,21 +629,31 @@ export default function FestivalPublic() {
           </CardContent>
         </Card>
 
-        {/* Description – separate expandable card */}
+        {/* Informazioni – expandable card */}
         {festival.description && (
-          <div className="mt-3">
+          <div className="mt-3 rounded-2xl overflow-hidden border border-amber-200 dark:border-amber-800/50 shadow-sm">
             <button
-              className="w-full bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 px-4 py-3 flex items-center justify-between text-left shadow-sm hover:border-amber-300 transition-colors"
+              className="w-full bg-amber-50 dark:bg-amber-900/20 px-4 py-3 flex items-center justify-between text-left hover:bg-amber-100/60 dark:hover:bg-amber-900/30 transition-colors"
               onClick={() => setDescExpanded(v => !v)}
             >
-              <span className="text-sm font-semibold text-gray-700 dark:text-gray-300 flex items-center gap-1.5">
-                <Info className="h-4 w-4 text-amber-500" />Sul festival
+              <span className="text-sm font-semibold text-amber-800 dark:text-amber-300 flex items-center gap-2">
+                <Info className="h-4 w-4" />
+                Informazioni
               </span>
-              {descExpanded ? <ChevronUp className="h-4 w-4 text-gray-400" /> : <ChevronDown className="h-4 w-4 text-gray-400" />}
+              {descExpanded
+                ? <ChevronUp className="h-4 w-4 text-amber-500" />
+                : <ChevronDown className="h-4 w-4 text-amber-500" />}
             </button>
             {descExpanded && (
-              <div className="bg-white dark:bg-gray-800 rounded-b-2xl border border-t-0 border-gray-200 dark:border-gray-700 px-4 pb-4">
-                <p className="text-sm text-gray-600 dark:text-gray-300 leading-relaxed">{festival.description}</p>
+              <div className="bg-white dark:bg-gray-900 px-5 py-4 border-t border-amber-100 dark:border-amber-800/40">
+                <div
+                  className="prose prose-sm dark:prose-invert max-w-none text-gray-700 dark:text-gray-300
+                    prose-headings:text-gray-800 dark:prose-headings:text-gray-200
+                    prose-a:text-amber-600 dark:prose-a:text-amber-400
+                    prose-strong:text-gray-800 dark:prose-strong:text-gray-200
+                    prose-blockquote:border-amber-400 prose-blockquote:text-gray-600 dark:prose-blockquote:text-gray-400"
+                  dangerouslySetInnerHTML={{ __html: festival.description }}
+                />
               </div>
             )}
           </div>
