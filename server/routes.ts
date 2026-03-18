@@ -260,6 +260,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Startup: ensure pubs have slug column + auto-generate slugs
   (async () => {
     try {
+      // Ensure pub_page_views table exists (may be missing on older VPS schemas)
+      await pool.query(`
+        CREATE TABLE IF NOT EXISTS pub_page_views (
+          pub_id integer NOT NULL REFERENCES pubs(id) ON DELETE CASCADE,
+          view_date date NOT NULL DEFAULT CURRENT_DATE,
+          view_count integer NOT NULL DEFAULT 1,
+          PRIMARY KEY (pub_id, view_date)
+        )
+      `);
+    } catch (e) {
+      console.error("[pub_page_views] table creation error:", e);
+    }
+    try {
       await pool.query(`ALTER TABLE pubs ADD COLUMN IF NOT EXISTS slug varchar(150) UNIQUE`);
       const { rows } = await pool.query(`SELECT id, name FROM pubs WHERE slug IS NULL`);
       for (const row of rows) {
