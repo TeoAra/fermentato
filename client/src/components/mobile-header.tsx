@@ -1,4 +1,4 @@
-import { Menu, X, LogOut, LogIn, User, Store, Beer, Shield, Search, ChevronRight, MapPin, Home, Bell, Activity } from "lucide-react";
+import { Menu, X, LogOut, LogIn, User, Store, Beer, Shield, Search, ChevronRight, MapPin, Home, Bell, Activity, QrCode, Building2 } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import { useAuth } from "@/hooks/useAuth";
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
@@ -43,6 +43,11 @@ export function MobileHeader({ onMenuToggle, isMenuOpen }: MobileHeaderProps) {
     queryKey: ['/api/notifications/unread-count'],
     enabled: isAuthenticated,
     refetchInterval: 120000,
+  });
+
+  const { data: myFestivals } = useQuery<any[]>({
+    queryKey: ['/api/admin/festivals'],
+    enabled: isAuthenticated,
   });
 
   const switchRoleMutation = useMutation({
@@ -213,6 +218,19 @@ export function MobileHeader({ onMenuToggle, isMenuOpen }: MobileHeaderProps) {
                 )}
                 {((user as any)?.activeRole === 'admin' || (!(user as any)?.activeRole && (user as any)?.userType === 'admin')) && (
                   <MenuItem href="/admin" icon={Shield} label="Admin Panel" />
+                )}
+
+                {/* Festival Mode section */}
+                <div className="px-4 pt-3 pb-1">
+                  <span className="text-[11px] font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500">Festival</span>
+                </div>
+                {myFestivals && myFestivals.length > 0 ? (
+                  <>
+                    <MenuItem href="/festival-dashboard" icon={QrCode} label="Festival Dashboard" desc={`${myFestivals.length} festival${myFestivals.length > 1 ? '' : ''} attiv${myFestivals.length > 1 ? 'i' : 'o'}`} />
+                    <MenuItem href="/crea-festival" icon={Building2} label="Crea un nuovo festival" />
+                  </>
+                ) : (
+                  <MenuItem href="/crea-festival" icon={QrCode} label="Festival Mode" desc="Crea il tuo festival birra" />
                 )}
               </>
             )}
