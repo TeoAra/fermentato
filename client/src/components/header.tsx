@@ -90,7 +90,7 @@ export default function Header() {
     <>
       <header className="sticky top-0 z-50 hidden lg:block">
         {/* Frosted background */}
-        <div className="absolute inset-0 bg-white/90 dark:bg-[hsl(25,14%,7%)]/92 backdrop-blur-xl border-b border-[hsl(36,14%,87%)] dark:border-[hsl(25,12%,14%)]" />
+        <div className="absolute inset-0 bg-white/90 dark:bg-[hsla(25,14%,7%,0.95)] backdrop-blur-xl border-b border-[hsl(36,14%,87%)] dark:border-[hsl(25,12%,14%)]" />
         
         <div className="relative max-w-7xl mx-auto px-6 lg:px-8">
           <div className="flex items-center h-[68px] gap-8">
