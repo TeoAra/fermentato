@@ -20,66 +20,45 @@ export function FestivalLikeButton({ festivalId, className, size = "sm", showLab
   const checkKey = ["/api/favorites", "festival", festivalId, "check"];
   const countKey = ["/api/favorites", "festival", festivalId, "count"];
 
-  const { data: checkData, isLoading: checkLoading } = useQuery<{ isFavorite: boolean }>({
+  const { data: checkData } = useQuery<{ isFavorite: boolean }>({
     queryKey: checkKey,
-    queryFn: async () => {
-      const r = await fetch(`/api/favorites/festival/${festivalId}/check`, { credentials: "include" });
-      if (!r.ok) return { isFavorite: false };
-      return r.json();
-    },
-    enabled: isAuthenticated,
-    staleTime: 0,
+    enabled: isAuthenticated && !!festivalId,
+    staleTime: 60_000,
   });
 
   const { data: countData } = useQuery<{ count: number | string }>({
     queryKey: countKey,
-    queryFn: async () => {
-      const r = await fetch(`/api/favorites/festival/${festivalId}/count`);
-      if (!r.ok) return { count: 0 };
-      return r.json();
-    },
-    staleTime: 30_000,
+    enabled: !!festivalId,
+    staleTime: 60_000,
   });
 
   const liked = checkData?.isFavorite ?? false;
   const count = Number(countData?.count ?? 0);
 
   const toggleMutation = useMutation({
-    mutationFn: async (currentlyLiked: boolean) => {
-      if (currentlyLiked) {
-        await apiRequest(`/api/favorites/festival/${festivalId}`, { method: "DELETE" });
+    mutationFn: async () => {
+      if (liked) {
+        return apiRequest(`/api/favorites/festival/${festivalId}`, { method: "DELETE" });
       } else {
-        await apiRequest("/api/favorites", { method: "POST" }, { itemType: "festival", itemId: festivalId });
+        return apiRequest("/api/favorites", { method: "POST" }, { itemType: "festival", itemId: festivalId });
       }
     },
-    onMutate: async (currentlyLiked: boolean) => {
-      await queryClient.cancelQueries({ queryKey: checkKey });
-      await queryClient.cancelQueries({ queryKey: countKey });
-
-      const prevCheck = queryClient.getQueryData<{ isFavorite: boolean }>(checkKey);
-      const prevCount = queryClient.getQueryData<{ count: number | string }>(countKey);
-
-      queryClient.setQueryData(checkKey, { isFavorite: !currentlyLiked });
-      queryClient.setQueryData(countKey, { count: (Number(prevCount?.count) || 0) + (currentlyLiked ? -1 : 1) });
-
-      return { prevCheck, prevCount };
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: checkKey });
+      queryClient.invalidateQueries({ queryKey: countKey });
+      toast({
+        title: liked ? "Rimosso dai preferiti" : "Aggiunto ai preferiti",
+        description: liked
+          ? "Il festival è stato rimosso dai tuoi preferiti"
+          : "Il festival è stato aggiunto ai tuoi preferiti",
+      });
     },
-    onError: (err: any, _vars, context) => {
-      if (context?.prevCheck !== undefined) queryClient.setQueryData(checkKey, context.prevCheck);
-      if (context?.prevCount !== undefined) queryClient.setQueryData(countKey, context.prevCount);
-
-      if (err?.status === 401 || err?.message?.includes("401") || err?.message?.includes("Unauthorized") || err?.message?.includes("autenticato")) {
-        toast({
-          title: "Accedi per mettere Mi Piace",
-          description: "Effettua il login per salvare i festival preferiti.",
-        });
+    onError: (err: any) => {
+      if (err?.status === 401) {
+        toast({ title: "Accedi per mettere Mi Piace", description: "Effettua il login per salvare i festival preferiti." });
       } else {
         toast({ title: "Errore", description: "Riprova tra poco.", variant: "destructive" });
       }
-    },
-    onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: checkKey });
-      queryClient.invalidateQueries({ queryKey: countKey });
     },
   });
 
@@ -92,7 +71,7 @@ export function FestivalLikeButton({ festivalId, className, size = "sm", showLab
       return;
     }
     if (toggleMutation.isPending) return;
-    toggleMutation.mutate(liked);
+    toggleMutation.mutate();
   };
 
   return (
@@ -100,7 +79,7 @@ export function FestivalLikeButton({ festivalId, className, size = "sm", showLab
       variant={liked ? "default" : "outline"}
       size={size}
       onClick={handleClick}
-      disabled={checkLoading}
+      disabled={toggleMutation.isPending}
       className={`gap-1.5 transition-all ${
         liked
           ? "bg-red-500 hover:bg-red-600 border-red-500 text-white"
