@@ -73,6 +73,7 @@ interface FestivalTap {
   id: number; tapNumber: number; beerId: number | null;
   customBeerName: string | null; customBreweryName: string | null;
   style: string | null; abv: string | null; notes: string | null; isAvailable: boolean;
+  tapType: string | null;
   beerName: string | null; beerStyle: string | null; beerAbv: string | null;
   beerImageUrl: string | null; breweryId: number | null; breweryName: string | null;
   breweryLogoUrl: string | null;
@@ -139,9 +140,14 @@ function TapRow({ tap, festivalId, onToggle }: {
       )}
 
       <div className="flex-1 min-w-0">
-        <p className={`text-sm font-semibold truncate ${!tap.isAvailable ? "line-through text-gray-400" : ""}`}>
-          {beerName}
-        </p>
+        <div className="flex items-center gap-1.5">
+          <p className={`text-sm font-semibold truncate ${!tap.isAvailable ? "line-through text-gray-400" : ""}`}>
+            {beerName}
+          </p>
+          {tap.tapType === "pompa" && (
+            <span className="text-xs bg-blue-50 text-blue-600 border border-blue-200 px-1.5 py-0 rounded-full shrink-0">pompa</span>
+          )}
+        </div>
         <div className="flex items-center gap-2 flex-wrap">
           {brewName && <span className="text-xs text-amber-600 dark:text-amber-400 truncate max-w-[120px]">{brewName}</span>}
           {style && <Badge variant="secondary" className="text-xs py-0">{style}</Badge>}
@@ -218,6 +224,7 @@ function TapEditDialog({ festivalId, tapNumber, existing, onClose }: {
     abv: existing?.abv || "",
     notes: existing?.notes || "",
     isAvailable: existing?.isAvailable ?? true,
+    tapType: existing?.tapType || "spina",
   });
 
   const filteredStyles = useMemo(() => {
@@ -320,6 +327,7 @@ function TapEditDialog({ festivalId, tapNumber, existing, onClose }: {
         abv: form.abv || null,
         notes: form.notes || null,
         isAvailable: form.isAvailable,
+        tapType: form.tapType,
       }
     ),
     onSuccess: () => {
@@ -670,6 +678,25 @@ function TapEditDialog({ festivalId, tapNumber, existing, onClose }: {
               <div>
                 <Label className="text-xs">Note</Label>
                 <Textarea className="mt-1" value={form.notes} onChange={e => setForm(f => ({ ...f, notes: e.target.value }))} placeholder="Note aggiuntive…" rows={2} />
+              </div>
+              <div>
+                <Label className="text-xs mb-1 block">Tipo erogazione</Label>
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setForm(f => ({ ...f, tapType: "spina" }))}
+                    className={`flex-1 py-1.5 px-3 rounded-lg border text-sm font-medium transition-colors ${form.tapType === "spina" ? "bg-amber-500 border-amber-500 text-white" : "border-gray-200 text-gray-600 hover:border-amber-300"}`}
+                  >
+                    🍺 In spina
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setForm(f => ({ ...f, tapType: "pompa" }))}
+                    className={`flex-1 py-1.5 px-3 rounded-lg border text-sm font-medium transition-colors ${form.tapType === "pompa" ? "bg-amber-500 border-amber-500 text-white" : "border-gray-200 text-gray-600 hover:border-amber-300"}`}
+                  >
+                    🍵 In pompa
+                  </button>
+                </div>
               </div>
               <div className="flex items-center gap-3">
                 <Switch checked={form.isAvailable} onCheckedChange={v => setForm(f => ({ ...f, isAvailable: v }))} />

@@ -930,6 +930,7 @@ export const festivalTaps = pgTable("festival_taps", {
   abv: varchar("abv", { length: 10 }),
   notes: text("notes"),
   isAvailable: boolean("is_available").default(true),
+  tapType: varchar("tap_type", { length: 20 }).default("spina"),
   updatedAt: timestamp("updated_at").defaultNow(),
 }, (t) => [unique().on(t.festivalId, t.tapNumber)]);
 export const insertFestivalTapSchema = createInsertSchema(festivalTaps).omit({ id: true, updatedAt: true });

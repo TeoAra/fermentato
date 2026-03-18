@@ -66,6 +66,7 @@ export function registerFestivalRoutes(app: Express) {
         abv: festivalTaps.abv,
         notes: festivalTaps.notes,
         isAvailable: festivalTaps.isAvailable,
+        tapType: festivalTaps.tapType,
         updatedAt: festivalTaps.updatedAt,
         beerName: beers.name,
         beerStyle: beers.style,
@@ -300,7 +301,7 @@ export function registerFestivalRoutes(app: Express) {
       const tapNumber = parseInt(req.params.tapNumber);
       const [fest] = await db.select().from(festivals).where(eq(festivals.id, festId)).limit(1);
       if (!fest || !canManageFestival(req, fest)) return res.status(403).json({ message: "Non autorizzato" });
-      const { beerId, customBeerName, customBreweryName, style, abv, notes, isAvailable } = req.body;
+      const { beerId, customBeerName, customBreweryName, style, abv, notes, isAvailable, tapType } = req.body;
       const [tap] = await db.insert(festivalTaps).values({
         festivalId: festId,
         tapNumber,
@@ -311,10 +312,11 @@ export function registerFestivalRoutes(app: Express) {
         abv: abv || null,
         notes: notes || null,
         isAvailable: isAvailable ?? true,
+        tapType: tapType || "spina",
       })
       .onConflictDoUpdate({
         target: [festivalTaps.festivalId, festivalTaps.tapNumber],
-        set: { beerId: beerId || null, customBeerName, customBreweryName, style, abv, notes, isAvailable, updatedAt: new Date() },
+        set: { beerId: beerId || null, customBeerName, customBreweryName, style, abv, notes, isAvailable, tapType: tapType || "spina", updatedAt: new Date() },
       })
       .returning();
       res.json(tap);

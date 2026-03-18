@@ -179,8 +179,8 @@ function FestivalCard({ fest }: { fest: any }) {
   const formatDate = (d: string) =>
     new Date(d).toLocaleDateString("it-IT", { day: "numeric", month: "short", year: "numeric" });
 
-  return (
-    <Card className={`overflow-hidden transition-shadow hover:shadow-md ${isPast ? "opacity-70" : ""}`}>
+  const cardContent = (
+    <Card className={`overflow-hidden transition-all hover:shadow-md ${isPast ? "opacity-70" : ""} ${fest.isActive ? "cursor-pointer" : ""}`}>
       {fest.coverImageUrl && (
         <div className="h-28 relative">
           <img src={fest.coverImageUrl} alt="" className="w-full h-full object-cover" />
@@ -225,16 +225,18 @@ function FestivalCard({ fest }: { fest: any }) {
           <p className="text-xs text-gray-500 line-clamp-2">{fest.description}</p>
         )}
         {fest.isActive && (
-          <Link href={`/festival/${fest.slug}`}>
-            <Button size="sm" variant="outline" className="w-full mt-1 text-xs h-7">
-              <ExternalLink className="h-3 w-3 mr-1" />
-              Vedi taplist
-            </Button>
-          </Link>
+          <div className="flex items-center gap-1 text-xs text-amber-600 font-medium mt-1">
+            <ExternalLink className="h-3 w-3" />
+            Vedi taplist →
+          </div>
         )}
       </CardContent>
     </Card>
   );
+
+  return fest.isActive ? (
+    <Link href={`/festival/${fest.slug}`}>{cardContent}</Link>
+  ) : cardContent;
 }
 
 export default function CreaFestival() {

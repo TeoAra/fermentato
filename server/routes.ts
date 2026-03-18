@@ -247,6 +247,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   })();
 
+  // Startup: ensure festival_taps has tap_type column
+  (async () => {
+    try {
+      await pool.query(`ALTER TABLE festival_taps ADD COLUMN IF NOT EXISTS tap_type varchar(20) DEFAULT 'spina'`);
+    } catch (e) {
+      console.error("[festival_taps] tap_type migration error:", e);
+    }
+  })();
+
   // Startup: ensure pubs have slug column + auto-generate slugs
   (async () => {
     try {

@@ -34,7 +34,8 @@ interface FestivalData {
     id: number; tapNumber: number; beerId: number | null;
     customBeerName: string | null; customBreweryName: string | null;
     style: string | null; abv: string | null; notes: string | null;
-    isAvailable: boolean; beerName: string | null; beerStyle: string | null;
+    isAvailable: boolean; tapType: string | null;
+    beerName: string | null; beerStyle: string | null;
     beerAbv: string | null; beerImageUrl: string | null;
     breweryId: number | null; breweryName: string | null; breweryLogoUrl: string | null;
     avgRating: number | null; ratingCount: number; userRating: number | null;
@@ -103,102 +104,136 @@ function TapCard({ tap, slug, isAuth }: { tap: FestivalData["taps"][0]; slug: st
   const breweryName = tap.breweryName || tap.customBreweryName;
   const style = tap.beerStyle || tap.style;
   const abv = tap.beerAbv || tap.abv;
+  const imageUrl = tap.beerImageUrl;
+  const isPompa = tap.tapType === "pompa";
 
   return (
-    <Card className={`border transition-all ${tap.isAvailable ? "border-gray-200 dark:border-gray-700" : "border-gray-100 dark:border-gray-800 opacity-60"}`}>
-      <CardContent className="p-4">
-        <div className="flex items-start gap-3">
+    <div className={`bg-white dark:bg-gray-800 rounded-2xl border transition-all ${
+      tap.isAvailable
+        ? "border-gray-200 dark:border-gray-700"
+        : "border-gray-100 dark:border-gray-800 opacity-60"
+    }`}>
+      {/* Collapsed row — always visible */}
+      <button
+        className="w-full text-left p-4"
+        onClick={() => setExpanded(e => !e)}
+      >
+        <div className="flex items-center gap-3">
           {/* Tap number badge */}
           <div className={`w-10 h-10 flex-shrink-0 rounded-xl flex items-center justify-center font-bold text-sm ${
-            tap.isAvailable ? "bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300" : "bg-gray-100 dark:bg-gray-800 text-gray-400"
+            tap.isAvailable
+              ? "bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300"
+              : "bg-gray-100 dark:bg-gray-800 text-gray-400"
           }`}>
             {tap.tapNumber}
           </div>
 
+          {/* Beer image */}
+          {imageUrl ? (
+            <img
+              src={imageUrl}
+              alt={beerName}
+              className="w-10 h-10 rounded-xl object-cover flex-shrink-0"
+            />
+          ) : (
+            <div className="w-10 h-10 rounded-xl bg-gray-100 dark:bg-gray-700 flex items-center justify-center flex-shrink-0">
+              <Beer className="h-5 w-5 text-gray-300" />
+            </div>
+          )}
+
+          {/* Info */}
           <div className="flex-1 min-w-0">
-            <div className="flex items-start justify-between gap-2">
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2 flex-wrap">
-                  {tap.beerId ? (
-                    <Link href={`/beer/${tap.beerId}`}>
-                      <span className={`font-semibold text-sm hover:underline cursor-pointer ${tap.isAvailable ? "text-gray-900 dark:text-white" : "text-gray-400 line-through"}`}>
-                        {beerName}
-                      </span>
-                    </Link>
-                  ) : (
-                    <span className={`font-semibold text-sm ${tap.isAvailable ? "text-gray-900 dark:text-white" : "text-gray-400 line-through"}`}>
-                      {beerName}
-                    </span>
-                  )}
-                  {!tap.isAvailable && (
-                    <Badge variant="outline" className="text-xs text-red-500 border-red-200 py-0">Finita</Badge>
-                  )}
-                </div>
-
-                {/* Brewery row with logo */}
-                {(breweryName || tap.breweryLogoUrl) && (
-                  <div className="flex items-center gap-1.5 mt-0.5">
-                    {tap.breweryLogoUrl && (
-                      <img src={tap.breweryLogoUrl} alt="" className="w-4 h-4 rounded-full object-cover flex-shrink-0" />
-                    )}
-                    {tap.breweryId ? (
-                      <Link href={`/brewery/${tap.breweryId}`}>
-                        <span className="text-xs text-amber-600 dark:text-amber-400 font-medium hover:underline cursor-pointer">{breweryName}</span>
-                      </Link>
-                    ) : (
-                      <span className="text-xs text-amber-600 dark:text-amber-400 font-medium">{breweryName}</span>
-                    )}
-                  </div>
-                )}
-
-                <div className="flex flex-wrap items-center gap-1.5 mt-1">
-                  {style && <Badge variant="secondary" className="text-xs py-0">{style}</Badge>}
-                  {abv && (
-                    <span className="text-xs text-gray-500 dark:text-gray-400 flex items-center gap-0.5">
-                      <Droplets className="h-3 w-3" />{abv}% ABV
-                    </span>
-                  )}
-                  {tap.avgRating !== null && tap.ratingCount > 0 && (
-                    <span className="text-xs text-amber-600 dark:text-amber-400 flex items-center gap-0.5">
-                      <Star className="h-3 w-3 fill-current" />{tap.avgRating?.toFixed(1)}
-                      <span className="text-gray-400">({tap.ratingCount})</span>
-                    </span>
-                  )}
-                </div>
-              </div>
-
-              {tap.isAvailable && isAuth && (
-                <button
-                  onClick={() => setExpanded(e => !e)}
-                  className="flex-shrink-0 text-amber-500 hover:text-amber-600 transition-colors"
-                >
-                  {expanded ? <ChevronUp className="h-5 w-5" /> : <ChevronDown className="h-5 w-5" />}
-                </button>
+            <div className="flex items-center gap-1.5 flex-wrap">
+              {tap.beerId ? (
+                <Link href={`/beer/${tap.beerId}`} onClick={e => e.stopPropagation()}>
+                  <span className={`font-semibold text-sm hover:underline cursor-pointer ${
+                    tap.isAvailable ? "text-gray-900 dark:text-white" : "text-gray-400 line-through"
+                  }`}>
+                    {beerName}
+                  </span>
+                </Link>
+              ) : (
+                <span className={`font-semibold text-sm ${
+                  tap.isAvailable ? "text-gray-900 dark:text-white" : "text-gray-400 line-through"
+                }`}>
+                  {beerName}
+                </span>
+              )}
+              {!tap.isAvailable && (
+                <Badge variant="outline" className="text-xs text-red-500 border-red-200 py-0">Finita</Badge>
+              )}
+              {isPompa && (
+                <span className="text-xs bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-700 px-1.5 py-0 rounded-full">
+                  In pompa
+                </span>
               )}
             </div>
 
-            {/* Beer image (shown when expanded) */}
-            {expanded && tap.beerImageUrl && (
-              <div className="mt-2">
-                <img src={tap.beerImageUrl} alt={beerName} className="h-24 w-24 object-cover rounded-xl" />
+            {/* Brewery */}
+            {(breweryName || tap.breweryLogoUrl) && (
+              <div className="flex items-center gap-1 mt-0.5">
+                {tap.breweryLogoUrl && (
+                  <img src={tap.breweryLogoUrl} alt="" className="w-3.5 h-3.5 rounded-full object-cover flex-shrink-0" />
+                )}
+                {tap.breweryId ? (
+                  <Link href={`/brewery/${tap.breweryId}`} onClick={e => e.stopPropagation()}>
+                    <span className="text-xs text-amber-600 dark:text-amber-400 font-medium hover:underline cursor-pointer">{breweryName}</span>
+                  </Link>
+                ) : (
+                  <span className="text-xs text-amber-600 dark:text-amber-400 font-medium">{breweryName}</span>
+                )}
               </div>
             )}
 
-            {tap.notes && !expanded && (
-              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 line-clamp-1">{tap.notes}</p>
-            )}
-
-            {expanded && tap.isAvailable && isAuth && (
-              <div className="mt-3 border-t pt-3 dark:border-gray-700">
-                {tap.notes && <p className="text-xs text-gray-600 dark:text-gray-400 mb-2">{tap.notes}</p>}
-                <p className="text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">Il tuo voto (1–10):</p>
-                <StarRating tapId={tap.id} slug={slug} current={tap.userRating} avg={tap.avgRating} count={tap.ratingCount} />
-              </div>
-            )}
+            <div className="flex flex-wrap items-center gap-1.5 mt-0.5">
+              {style && <Badge variant="secondary" className="text-xs py-0">{style}</Badge>}
+              {abv && (
+                <span className="text-xs text-gray-500 dark:text-gray-400 flex items-center gap-0.5">
+                  <Droplets className="h-3 w-3" />{abv}% ABV
+                </span>
+              )}
+              {tap.avgRating !== null && tap.ratingCount > 0 && (
+                <span className="text-xs text-amber-600 dark:text-amber-400 flex items-center gap-0.5">
+                  <Star className="h-3 w-3 fill-current" />{tap.avgRating?.toFixed(1)}
+                  <span className="text-gray-400">({tap.ratingCount})</span>
+                </span>
+              )}
+            </div>
           </div>
+
+          {/* Chevron */}
+          {tap.isAvailable && (
+            <div className="flex-shrink-0 text-amber-500">
+              {expanded ? <ChevronUp className="h-5 w-5" /> : <ChevronDown className="h-5 w-5" />}
+            </div>
+          )}
         </div>
-      </CardContent>
-    </Card>
+
+        {/* Notes preview when collapsed */}
+        {!expanded && tap.notes && (
+          <p className="text-xs text-gray-400 dark:text-gray-500 mt-1.5 ml-[92px] line-clamp-1">{tap.notes}</p>
+        )}
+      </button>
+
+      {/* Expanded content */}
+      {expanded && tap.isAvailable && (
+        <div className="px-4 pb-4 border-t border-gray-100 dark:border-gray-700 pt-3 ml-[52px]">
+          {tap.notes && (
+            <p className="text-xs text-gray-500 dark:text-gray-400 mb-3">{tap.notes}</p>
+          )}
+          {isAuth ? (
+            <>
+              <p className="text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">Il tuo voto (1–10):</p>
+              <StarRating tapId={tap.id} slug={slug} current={tap.userRating} avg={tap.avgRating} count={tap.ratingCount} />
+            </>
+          ) : (
+            <p className="text-xs text-gray-500">
+              <a href="/api/login" className="text-amber-600 font-medium hover:underline">Accedi</a> per votare questa birra
+            </p>
+          )}
+        </div>
+      )}
+    </div>
   );
 }
 
@@ -206,7 +241,7 @@ function FoodCategoryBlock({ category, items }: {
   category: string;
   items: FestivalData["food"];
 }) {
-  const [expanded, setExpanded] = useState(true);
+  const [expanded, setExpanded] = useState(false);
   const available = items.filter(i => i.isAvailable).length;
 
   return (
@@ -343,102 +378,106 @@ export default function FestivalPublic() {
   const { festival, taps } = data;
   const availableCount = taps.filter(t => t.isAvailable).length;
 
+  const formatDate = (d: string) =>
+    new Date(d).toLocaleDateString("it-IT", { day: "numeric", month: "short", year: "numeric" });
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-amber-50 via-orange-50 to-red-50 dark:from-gray-900 dark:via-gray-900 dark:to-gray-800">
-      {/* Header */}
-      <div
-        className="relative text-white overflow-hidden"
-        style={festival.coverImageUrl ? {
-          background: "linear-gradient(to right, rgba(180,83,9,0.88), rgba(234,88,12,0.85))",
-        } : undefined}
-      >
-        {festival.coverImageUrl && (
-          <div
-            className="absolute inset-0 -z-10"
-            style={{
-              backgroundImage: `url(${festival.coverImageUrl})`,
-              backgroundSize: "cover",
-              backgroundPosition: "center",
-              filter: "brightness(0.45)",
-            }}
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+      {/* Cover image banner */}
+      {festival.coverImageUrl ? (
+        <div className="relative w-full h-52 overflow-hidden">
+          <img
+            src={festival.coverImageUrl}
+            alt={festival.name}
+            className="w-full h-full object-cover"
           />
-        )}
-        {!festival.coverImageUrl && (
-          <div className="absolute inset-0 -z-10 bg-gradient-to-r from-amber-600 to-orange-600" />
-        )}
-        <div className="max-w-2xl mx-auto px-4 py-6">
-          <div className="flex items-center gap-4">
-            {festival.logoUrl && (
-              <img src={festival.logoUrl} alt="" className="w-14 h-14 rounded-2xl object-cover shadow-lg flex-shrink-0" />
-            )}
-            <div className="flex-1 min-w-0">
-              <h1 className="text-2xl font-bold leading-tight">{festival.name}</h1>
-              {festival.location && (
-                <a
-                  href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(festival.location)}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-amber-100 text-sm flex items-center gap-1 mt-0.5 hover:text-white transition-colors underline-offset-2 hover:underline"
-                >
-                  <MapPin className="h-3.5 w-3.5 flex-shrink-0" />
-                  <span className="truncate">{festival.location}</span>
-                </a>
-              )}
-              {/* Dates */}
-              {(festival.startDate || festival.endDate) && (
-                <p className="text-amber-100/80 text-xs flex items-center gap-1 mt-0.5">
-                  <Calendar className="h-3 w-3 flex-shrink-0" />
-                  {festival.startDate && new Date(festival.startDate).toLocaleDateString("it-IT", { day: "numeric", month: "short", year: "numeric" })}
-                  {festival.startDate && festival.endDate && festival.startDate !== festival.endDate && " — "}
-                  {festival.endDate && festival.startDate !== festival.endDate && new Date(festival.endDate).toLocaleDateString("it-IT", { day: "numeric", month: "short", year: "numeric" })}
-                </p>
-              )}
-              {festival.description && (
-                <p className="text-amber-100/80 text-xs mt-1 line-clamp-2">{festival.description}</p>
-              )}
-            </div>
-          </div>
-
-          {/* Schedule */}
-          {festival.schedule && festival.schedule.length > 0 && (
-            <div className="mt-3 bg-white/15 backdrop-blur-sm rounded-xl px-4 py-3 space-y-1.5">
-              <div className="flex items-center gap-1.5 text-amber-100 text-xs font-semibold uppercase tracking-wide mb-1">
-                <Clock className="h-3.5 w-3.5" />Orari
-              </div>
-              {festival.schedule.map((slot, i) => (
-                <div key={i} className="flex items-center justify-between text-sm">
-                  <span className="text-amber-100 font-medium">
-                    {slot.date
-                      ? new Date(slot.date).toLocaleDateString("it-IT", { weekday: "short", day: "numeric", month: "short" })
-                      : slot.label}
-                  </span>
-                  <span className="text-white font-bold">{slot.openFrom} – {slot.openTo}</span>
-                </div>
-              ))}
-            </div>
-          )}
-
-          {/* Stats */}
-          <div className="flex gap-3 mt-4">
-            <div className="bg-white/20 backdrop-blur-sm rounded-xl px-4 py-2 text-center">
-              <div className="text-2xl font-bold">{availableCount}</div>
-              <div className="text-xs text-amber-100">spine disponibili</div>
-            </div>
-            <div className="bg-white/20 backdrop-blur-sm rounded-xl px-4 py-2 text-center">
-              <div className="text-2xl font-bold">{taps.length}</div>
-              <div className="text-xs text-amber-100">spine totali</div>
-            </div>
-            {!isAuthenticated && (
-              <div className="bg-white/20 backdrop-blur-sm rounded-xl px-4 py-2 text-center flex-1">
-                <div className="text-xs text-amber-100 mb-1">Per votare le birre</div>
-                <a href="/api/login" className="text-xs font-bold underline">Accedi →</a>
-              </div>
-            )}
-          </div>
+          <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
         </div>
+      ) : (
+        <div className="w-full h-24 bg-gradient-to-r from-amber-600 to-orange-600" />
+      )}
+
+      {/* Info card */}
+      <div className="max-w-2xl mx-auto px-4 -mt-8 relative z-10">
+        <Card className="shadow-lg border-0">
+          <CardContent className="p-4">
+            <div className="flex items-start gap-4">
+              {festival.logoUrl && (
+                <img
+                  src={festival.logoUrl}
+                  alt=""
+                  className="w-16 h-16 rounded-2xl object-cover shadow-md flex-shrink-0 border-2 border-white"
+                />
+              )}
+              <div className="flex-1 min-w-0">
+                <h1 className="text-xl font-bold text-gray-900 dark:text-white leading-tight">{festival.name}</h1>
+                {festival.location && (
+                  <a
+                    href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(festival.location)}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-gray-500 text-sm flex items-center gap-1 mt-1 hover:text-amber-600 transition-colors"
+                  >
+                    <MapPin className="h-3.5 w-3.5 flex-shrink-0" />
+                    <span className="truncate">{festival.location}</span>
+                  </a>
+                )}
+                {(festival.startDate || festival.endDate) && (
+                  <p className="text-gray-500 text-xs flex items-center gap-1 mt-0.5">
+                    <Calendar className="h-3 w-3 flex-shrink-0" />
+                    {festival.startDate && formatDate(festival.startDate)}
+                    {festival.startDate && festival.endDate && festival.startDate !== festival.endDate && " — "}
+                    {festival.endDate && festival.startDate !== festival.endDate && formatDate(festival.endDate)}
+                  </p>
+                )}
+                {festival.description && (
+                  <p className="text-gray-500 text-xs mt-1 line-clamp-2">{festival.description}</p>
+                )}
+              </div>
+            </div>
+
+            {/* Schedule */}
+            {festival.schedule && festival.schedule.length > 0 && (
+              <div className="mt-3 bg-amber-50 dark:bg-amber-900/20 rounded-xl px-4 py-3 space-y-1.5">
+                <div className="flex items-center gap-1.5 text-amber-700 dark:text-amber-400 text-xs font-semibold uppercase tracking-wide mb-1">
+                  <Clock className="h-3.5 w-3.5" />Orari
+                </div>
+                {festival.schedule.map((slot, i) => (
+                  <div key={i} className="flex items-center justify-between text-sm">
+                    <span className="text-gray-700 dark:text-gray-300 font-medium">
+                      {slot.date
+                        ? new Date(slot.date + "T00:00:00").toLocaleDateString("it-IT", { weekday: "short", day: "numeric", month: "short" })
+                        : slot.label}
+                    </span>
+                    <span className="text-amber-700 dark:text-amber-400 font-bold">{slot.openFrom} – {slot.openTo}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* Stats row */}
+            <div className="flex gap-3 mt-3">
+              <div className="flex-1 bg-amber-50 dark:bg-amber-900/20 rounded-xl px-4 py-2 text-center">
+                <div className="text-xl font-bold text-amber-700 dark:text-amber-400">{availableCount}</div>
+                <div className="text-xs text-gray-500">spine disponibili</div>
+              </div>
+              <div className="flex-1 bg-amber-50 dark:bg-amber-900/20 rounded-xl px-4 py-2 text-center">
+                <div className="text-xl font-bold text-amber-700 dark:text-amber-400">{taps.length}</div>
+                <div className="text-xs text-gray-500">spine totali</div>
+              </div>
+              {!isAuthenticated && (
+                <div className="flex-1 bg-gray-50 dark:bg-gray-700 rounded-xl px-3 py-2 text-center">
+                  <div className="text-xs text-gray-500 mb-1">Per votare</div>
+                  <a href="/api/login" className="text-xs font-bold text-amber-600 hover:underline">Accedi →</a>
+                </div>
+              )}
+            </div>
+          </CardContent>
+        </Card>
       </div>
 
-      <div className="max-w-2xl mx-auto px-4 py-4">
+      {/* Content tabs */}
+      <div className="max-w-2xl mx-auto px-4 py-4 mt-2">
         <Tabs defaultValue="taps">
           <TabsList className="w-full mb-4">
             <TabsTrigger value="taps" className="flex-1 gap-1.5">
@@ -453,7 +492,7 @@ export default function FestivalPublic() {
             )}
           </TabsList>
 
-          <TabsContent value="taps" className="space-y-3">
+          <TabsContent value="taps" className="space-y-2">
             {/* Search + filter */}
             <div className="flex gap-2">
               <div className="relative flex-1">
