@@ -23,6 +23,7 @@ export function ShareButton({
 
   const shareUrl = url || window.location.href;
   const shareText = text || title;
+  const canNativeShare = typeof navigator !== "undefined" && !!navigator.share;
 
   const copyToClipboard = async () => {
     try {
@@ -45,6 +46,23 @@ export function ShareButton({
     window.open(`https://t.me/share/url?url=${encodeURIComponent(shareUrl)}&text=${encodeURIComponent(shareText)}`, "_blank");
     setOpen(false);
   };
+
+  const handleNativeShare = async () => {
+    try {
+      await navigator.share({ title, text: shareText, url: shareUrl });
+    } catch {
+      // User cancelled or error — silently ignore
+    }
+  };
+
+  if (canNativeShare) {
+    return (
+      <Button variant={variant} size={size} className={className} title="Condividi" onClick={handleNativeShare}>
+        <Share2 className="h-4 w-4" />
+        {label && <span className="ml-1.5">{label}</span>}
+      </Button>
+    );
+  }
 
   return (
     <Popover open={open} onOpenChange={setOpen}>

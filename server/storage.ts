@@ -1023,16 +1023,34 @@ export class DatabaseStorage implements IStorage {
   }
 
   async addFavorite(favoriteData: InsertFavorite): Promise<Favorite> {
-    await this.addUserActivity({
-      userId: favoriteData.userId,
-      activityType: 'favorite_added',
-      itemType: favoriteData.itemType,
-      itemId: favoriteData.itemId,
-      description: `Aggiunto ${favoriteData.itemType} ai preferiti`,
-    });
+    const [inserted] = await db
+      .insert(favorites)
+      .values(favoriteData)
+      .onConflictDoNothing()
+      .returning();
 
-    const [favorite] = await db.insert(favorites).values(favoriteData).returning();
-    return favorite;
+    if (inserted) {
+      await this.addUserActivity({
+        userId: favoriteData.userId,
+        activityType: 'favorite_added',
+        itemType: favoriteData.itemType,
+        itemId: favoriteData.itemId,
+        description: `Aggiunto ${favoriteData.itemType} ai preferiti`,
+      });
+      return inserted;
+    }
+
+    const [existing] = await db
+      .select()
+      .from(favorites)
+      .where(
+        and(
+          eq(favorites.userId, favoriteData.userId),
+          eq(favorites.itemType, favoriteData.itemType),
+          eq(favorites.itemId, favoriteData.itemId)
+        )
+      );
+    return existing;
   }
 
   async removeFavorite(userId: string, itemType: 'pub' | 'brewery' | 'beer', itemId: number): Promise<void> {

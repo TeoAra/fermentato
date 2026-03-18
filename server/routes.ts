@@ -2341,6 +2341,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.get('/api/admin/users/search', isAuthenticated, isAdmin, async (req: any, res) => {
+    try {
+      const q = String(req.query.q || '').trim();
+      if (q.length < 2) return res.json([]);
+      const pattern = `%${q}%`;
+      const rows = await db
+        .select({
+          id: users.id,
+          email: users.email,
+          username: users.nickname,
+          full_name: sql<string | null>`NULLIF(TRIM(COALESCE(${users.firstName}, '') || ' ' || COALESCE(${users.lastName}, '')), '')`,
+        })
+        .from(users)
+        .where(
+          sql`(${users.email} ILIKE ${pattern} OR ${users.nickname} ILIKE ${pattern} OR ${users.firstName} ILIKE ${pattern} OR ${users.lastName} ILIKE ${pattern})`
+        )
+        .limit(10);
+      res.json(rows);
+    } catch (error) {
+      console.error("Error searching users:", error);
+      res.status(500).json({ message: "Failed to search users" });
+    }
+  });
+
   app.patch('/api/admin/users/:id', isAuthenticated, isAdmin, async (req: any, res) => {
     try {
       const targetId = req.params.id;
