@@ -5,12 +5,45 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { HelmetProvider } from "react-helmet-async";
 import { useAuth } from "@/hooks/useAuth";
-import { useState, useEffect } from "react";
+import { useState, useEffect, Component, ReactNode } from "react";
 import { initGA } from "./lib/analytics";
 import { useAnalytics } from "./hooks/use-analytics";
 import { usePushBadge } from "@/hooks/use-push-badge";
 import Header from "@/components/header";
 import { PwaInstallPrompt, PushNotificationPrompt, AutoPushSubscriber } from "@/components/pwa-prompt";
+
+class RouteErrorBoundary extends Component<{ children: ReactNode }, { hasError: boolean; error: Error | null }> {
+  constructor(props: { children: ReactNode }) {
+    super(props);
+    this.state = { hasError: false, error: null };
+  }
+  static getDerivedStateFromError(error: Error) {
+    return { hasError: true, error };
+  }
+  componentDidCatch(error: Error) {
+    console.error("[RouteErrorBoundary]", error);
+  }
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="min-h-screen flex items-center justify-center bg-amber-50 dark:bg-gray-900 p-6">
+          <div className="text-center max-w-sm space-y-3">
+            <p className="text-4xl">🍺</p>
+            <h2 className="text-xl font-bold text-gray-800 dark:text-white">Qualcosa è andato storto</h2>
+            <p className="text-sm text-gray-500 dark:text-gray-400">{this.state.error?.message}</p>
+            <button
+              className="mt-4 px-4 py-2 bg-amber-500 text-white rounded-lg text-sm font-medium hover:bg-amber-600"
+              onClick={() => { this.setState({ hasError: false, error: null }); window.history.back(); }}
+            >
+              Torna indietro
+            </button>
+          </div>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
 
 // Component to scroll to top on route change
 function ScrollToTop() {
@@ -109,6 +142,7 @@ function Router() {
       
       {/* Main Content */}
       <main className="lg:pt-0 pt-16 pb-16 lg:pb-0">
+        <RouteErrorBoundary>
         <Switch>
           <Route path="/" component={isLoading || !isAuthenticated ? Landing : Home} />
           <Route path="/login" component={AuthPage} />
@@ -172,6 +206,7 @@ function Router() {
           <Route path="/reset-password" component={ResetPassword} />
           <Route component={NotFound} />
         </Switch>
+        </RouteErrorBoundary>
       </main>
 
       {/* Bottom Navigation */}

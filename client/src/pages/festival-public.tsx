@@ -66,6 +66,8 @@ function SliderRating({ tapId, slug, current, avg, count }: {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
+  const hasVoted = current !== null;
+
   const rateMutation = useMutation({
     mutationFn: (rating: number) =>
       apiRequest(`/api/festivals/${slug}/taps/${tapId}/rate`, { method: "POST" }, { rating }),
@@ -88,6 +90,23 @@ function SliderRating({ tapId, slug, current, avg, count }: {
 
   const displayVal = isDragging ? localValue : (current ?? localValue);
   const pct = ((displayVal - 1) / 9) * 100;
+
+  if (hasVoted) {
+    return (
+      <div className="mt-3 flex items-center gap-2 p-3 bg-green-50 dark:bg-green-900/20 rounded-xl border border-green-200 dark:border-green-800">
+        <Star className="h-4 w-4 fill-amber-400 text-amber-400 flex-shrink-0" />
+        <span className="text-sm font-semibold text-green-700 dark:text-green-400">
+          Hai votato: {current}/10
+        </span>
+        {avg !== null && count > 0 && (
+          <span className="ml-auto text-xs text-gray-500 dark:text-gray-400">
+            Media: <span className="font-bold text-amber-600">{avg.toFixed(1)}</span>
+            <span className="opacity-60 ml-1">({count} vot{count === 1 ? "o" : "i"})</span>
+          </span>
+        )}
+      </div>
+    );
+  }
 
   return (
     <div className="mt-3">
@@ -128,7 +147,6 @@ function SliderRating({ tapId, slug, current, avg, count }: {
           <Star className="h-3 w-3 fill-amber-400 text-amber-400" />
           <span className="font-bold text-amber-600">{avg.toFixed(1)}</span>
           <span className="opacity-60">({count} vot{count === 1 ? "o" : "i"})</span>
-          {current && <span className="text-green-600 font-medium ml-1">· Tuo: {current}</span>}
         </div>
       )}
     </div>
@@ -214,11 +232,8 @@ function TapCard({ tap, slug, isAuth, isManager, useTokens, tokenName }: {
               )}
             </div>
 
-            {(breweryName || tap.breweryLogoUrl) && (
+            {breweryName && (
               <div className="flex items-center gap-1 mt-0.5">
-                {tap.breweryLogoUrl && (
-                  <img src={tap.breweryLogoUrl} alt="" className="w-3.5 h-3.5 rounded-full object-cover flex-shrink-0" />
-                )}
                 {tap.breweryId ? (
                   <Link href={`/brewery/${tap.breweryId}`} onClick={e => e.stopPropagation()}>
                     <span className="text-xs text-amber-600 dark:text-amber-400 font-medium hover:underline cursor-pointer">{breweryName}</span>
@@ -295,12 +310,11 @@ function TapCard({ tap, slug, isAuth, isManager, useTokens, tokenName }: {
 
           {/* Prices (multiple sizes) */}
           {hasPrices && (
-            <div className="mb-3 flex flex-wrap gap-2">
+            <div className="mb-3 flex flex-wrap gap-x-3 gap-y-1">
               {Object.entries(tap.prices!).map(([size, price]) => (
-                <div key={size} className="bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg px-3 py-1.5 text-center min-w-[60px]">
-                  <div className="text-xs text-gray-500 dark:text-gray-400">{size}</div>
-                  <div className="font-bold text-amber-600 text-sm">{formatPrice(price, useTokens, tokenName)}</div>
-                </div>
+                <span key={size} className="text-sm text-gray-600 dark:text-gray-300">
+                  {size} <span className="font-bold text-amber-600">{formatPrice(price, useTokens, tokenName)}</span>
+                </span>
               ))}
             </div>
           )}
