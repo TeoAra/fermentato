@@ -1138,14 +1138,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Helper: generate a unique slug for a pub given its name and id
-  async function generatePubSlug(name: string, id: number): Promise<string> {
-    const base = name
-      .toLowerCase()
-      .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
-      .replace(/[^a-z0-9]+/g, "-")
-      .replace(/^-+|-+$/g, "")
-      .slice(0, 100);
+  // Helper: generate a unique slug for a pub. Uses userSlug if provided, else derives from name.
+  async function generatePubSlug(name: string, id: number, userSlug?: string): Promise<string> {
+    const base = userSlug?.trim()
+      ? userSlug.trim().toLowerCase().replace(/[^a-z0-9-]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 100)
+      : name.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 100);
     let slug = base;
     let counter = 2;
     while (true) {
@@ -1171,7 +1168,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const pub = await storage.createPub(pubData);
 
       // Generate and assign unique slug immediately after creation
-      const slug = await generatePubSlug(pub.name, pub.id);
+      const slug = await generatePubSlug(pub.name, pub.id, pubData.slug || undefined);
       await pool.query(`UPDATE pubs SET slug = $1 WHERE id = $2`, [slug, pub.id]);
       pub.slug = slug;
       

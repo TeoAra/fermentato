@@ -971,4 +971,9 @@ export const pubRegistrationSchema = insertPubSchema.extend({
   phone: z.string().nullable().optional(),
   email: z.string().email("Email non valida").nullable().optional(),
   websiteUrl: z.string().url("URL non valido").nullable().optional(),
+  slug: z.string()
+    .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, "Solo lettere minuscole, numeri e trattini (es. il-mio-pub)")
+    .max(100)
+    .optional()
+    .or(z.literal("")),
 });

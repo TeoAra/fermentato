@@ -58,6 +58,7 @@ export default function PubRegistration() {
     resolver: zodResolver(pubRegistrationSchema),
     defaultValues: {
       name: "",
+      slug: "",
       address: "",
       city: "",
       region: "",
@@ -74,8 +75,7 @@ export default function PubRegistration() {
 
   const registrationMutation = useMutation({
     mutationFn: async (data: PubRegistrationForm) => {
-      const response = await apiRequest("/api/pubs", "POST", data);
-      return response.json();
+      return apiRequest("/api/pubs", { method: "POST" }, data);
     },
     onSuccess: (pub) => {
       queryClient.invalidateQueries({ queryKey: ["/api/my-pubs"] });
@@ -272,6 +272,31 @@ export default function PubRegistration() {
                         </FormControl>
                         <FormDescription>
                           Il nome con cui è conosciuto il tuo pub
+                        </FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="slug"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Slug URL</FormLabel>
+                        <FormControl>
+                          <div className="flex items-center gap-1">
+                            <span className="text-sm text-muted-foreground whitespace-nowrap">fermenta.to/pub/</span>
+                            <Input
+                              placeholder="il-mio-pub"
+                              {...field}
+                              value={field.value || ""}
+                              onChange={e => field.onChange(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ""))}
+                            />
+                          </div>
+                        </FormControl>
+                        <FormDescription>
+                          L'indirizzo web del tuo pub. Lascia vuoto per generarlo automaticamente dal nome.
                         </FormDescription>
                         <FormMessage />
                       </FormItem>
