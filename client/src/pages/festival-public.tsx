@@ -11,7 +11,8 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Droplets, Search, Star, UtensilsCrossed, Beer, ChevronDown, ChevronUp,
-  MapPin, CheckCircle2, XCircle, Loader2, Clock, Calendar,
+  MapPin, CheckCircle2, XCircle, Loader2, Clock, Calendar, Trophy, Info,
+  Pencil, ExternalLink,
 } from "lucide-react";
 import { FestivalLikeButton } from "@/components/festival-like-button";
 import { ShareButton } from "@/components/share-button";
@@ -31,6 +32,7 @@ interface FestivalData {
     startDate: string | null; endDate: string | null; logoUrl: string | null;
     coverImageUrl: string | null; showFood: boolean; isActive: boolean;
     schedule: ScheduleSlot[] | null;
+    managerId: string | null;
   };
   taps: Array<{
     id: number; tapNumber: number; beerId: number | null;
@@ -39,20 +41,27 @@ interface FestivalData {
     isAvailable: boolean; tapType: string | null;
     beerName: string | null; beerStyle: string | null;
     beerAbv: string | null; beerImageUrl: string | null;
+    beerDescription: string | null;
     breweryId: number | null; breweryName: string | null; breweryLogoUrl: string | null;
     avgRating: number | null; ratingCount: number; userRating: number | null;
+    prices: Record<string, number> | null;
   }>;
   food: Array<{
     id: number; name: string; description: string | null; price: string | null;
     category: string | null; isAvailable: boolean; allergens: string[] | null;
   }>;
+  rankings: Array<{
+    tapNumber: number; beerName: string; beerImageUrl: string | null;
+    breweryName: string | null; avg: number; count: number;
+  }>;
 }
 
-function StarRating({ tapId, slug, current, avg, count }: {
+// ── Slider Rating ────────────────────────────────────────────────────────────
+function SliderRating({ tapId, slug, current, avg, count }: {
   tapId: number; slug: string; current: number | null; avg: number | null; count: number;
 }) {
-  const [hovered, setHovered] = useState<number | null>(null);
-  const [selected, setSelected] = useState<number | null>(current);
+  const [localValue, setLocalValue] = useState<number>(current ?? 5);
+  const [isDragging, setIsDragging] = useState(false);
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -60,47 +69,75 @@ function StarRating({ tapId, slug, current, avg, count }: {
     mutationFn: (rating: number) =>
       apiRequest(`/api/festivals/${slug}/taps/${tapId}/rate`, { method: "POST" }, { rating }),
     onSuccess: (data: any) => {
-      setSelected(data.userRating);
+      setLocalValue(data.userRating);
       queryClient.invalidateQueries({ queryKey: ["/api/festivals", slug] });
     },
     onError: () => toast({ title: "Errore nel voto", variant: "destructive" }),
   });
 
-  const display = hovered ?? selected;
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setLocalValue(parseInt(e.target.value));
+    setIsDragging(true);
+  };
+
+  const handleRelease = () => {
+    setIsDragging(false);
+    rateMutation.mutate(localValue);
+  };
+
+  const displayVal = isDragging ? localValue : (current ?? localValue);
+  const pct = ((displayVal - 1) / 9) * 100;
 
   return (
     <div className="mt-3">
-      <div className="flex items-center gap-1 flex-wrap">
-        {Array.from({ length: 10 }, (_, i) => i + 1).map(n => (
-          <button
-            key={n}
-            className={`w-7 h-7 rounded-full text-xs font-bold transition-all ${
-              (display ?? 0) >= n
-                ? "bg-amber-500 text-white scale-110"
-                : "bg-gray-100 dark:bg-gray-700 text-gray-400 hover:bg-amber-200"
-            }`}
-            onMouseEnter={() => setHovered(n)}
-            onMouseLeave={() => setHovered(null)}
-            onClick={() => rateMutation.mutate(n)}
-            disabled={rateMutation.isPending}
-          >
-            {n}
-          </button>
-        ))}
-        {rateMutation.isPending && <Loader2 className="h-4 w-4 animate-spin text-amber-500" />}
+      <div className="flex items-center justify-between mb-1">
+        <span className="text-xs font-semibold text-gray-600 dark:text-gray-400">Il tuo voto:</span>
+        <span className={`text-lg font-bold ${
+          displayVal >= 8 ? "text-green-600" : displayVal >= 5 ? "text-amber-500" : "text-red-500"
+        }`}>{displayVal}/10</span>
       </div>
+      <div className="relative">
+        <input
+          type="range"
+          min={1}
+          max={10}
+          step={1}
+          value={displayVal}
+          onChange={handleChange}
+          onMouseUp={handleRelease}
+          onTouchEnd={handleRelease}
+          disabled={rateMutation.isPending}
+          className="w-full h-2 rounded-lg appearance-none cursor-pointer accent-amber-500"
+          style={{
+            background: `linear-gradient(to right, #f59e0b ${pct}%, #e5e7eb ${pct}%)`,
+          }}
+        />
+        <div className="flex justify-between text-[10px] text-gray-400 mt-0.5 px-0.5">
+          <span>1</span><span>5</span><span>10</span>
+        </div>
+      </div>
+      {rateMutation.isPending && (
+        <div className="flex items-center gap-1.5 mt-1">
+          <Loader2 className="h-3 w-3 animate-spin text-amber-500" />
+          <span className="text-xs text-gray-400">Salvataggio…</span>
+        </div>
+      )}
       {(avg !== null && count > 0) && (
-        <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-          Media: <span className="font-bold text-amber-600">{avg.toFixed(1)}</span>
-          <span className="ml-1 opacity-60">({count} vot{count === 1 ? "o" : "i"})</span>
-          {selected && <span className="ml-2 text-green-600 font-medium">Il tuo voto: {selected}</span>}
-        </p>
+        <div className="flex items-center gap-1.5 mt-1.5 text-xs text-gray-500">
+          <Star className="h-3 w-3 fill-amber-400 text-amber-400" />
+          <span className="font-bold text-amber-600">{avg.toFixed(1)}</span>
+          <span className="opacity-60">({count} vot{count === 1 ? "o" : "i"})</span>
+          {current && <span className="text-green-600 font-medium ml-1">· Tuo: {current}</span>}
+        </div>
       )}
     </div>
   );
 }
 
-function TapCard({ tap, slug, isAuth }: { tap: FestivalData["taps"][0]; slug: string; isAuth: boolean }) {
+// ── Tap Card ─────────────────────────────────────────────────────────────────
+function TapCard({ tap, slug, isAuth, isManager }: {
+  tap: FestivalData["taps"][0]; slug: string; isAuth: boolean; isManager: boolean;
+}) {
   const [expanded, setExpanded] = useState(false);
   const beerName = tap.beerName || tap.customBeerName || `Spina ${tap.tapNumber}`;
   const breweryName = tap.breweryName || tap.customBreweryName;
@@ -108,6 +145,9 @@ function TapCard({ tap, slug, isAuth }: { tap: FestivalData["taps"][0]; slug: st
   const abv = tap.beerAbv || tap.abv;
   const imageUrl = tap.beerImageUrl;
   const isPompa = tap.tapType === "pompa";
+  const hasPrices = tap.prices && Object.keys(tap.prices).length > 0;
+  const hasDescription = !!tap.beerDescription;
+  const descriptionMissing = tap.beerId && !hasDescription && isManager;
 
   return (
     <div className={`bg-white dark:bg-gray-800 rounded-2xl border transition-all ${
@@ -115,7 +155,7 @@ function TapCard({ tap, slug, isAuth }: { tap: FestivalData["taps"][0]; slug: st
         ? "border-gray-200 dark:border-gray-700"
         : "border-gray-100 dark:border-gray-800 opacity-60"
     }`}>
-      {/* Collapsed row — always visible */}
+      {/* Collapsed row */}
       <button
         className="w-full text-left p-4"
         onClick={() => setExpanded(e => !e)}
@@ -132,11 +172,7 @@ function TapCard({ tap, slug, isAuth }: { tap: FestivalData["taps"][0]; slug: st
 
           {/* Beer image */}
           {imageUrl ? (
-            <img
-              src={imageUrl}
-              alt={beerName}
-              className="w-10 h-10 rounded-xl object-cover flex-shrink-0"
-            />
+            <img src={imageUrl} alt={beerName} className="w-10 h-10 rounded-xl object-cover flex-shrink-0" />
           ) : (
             <div className="w-10 h-10 rounded-xl bg-gray-100 dark:bg-gray-700 flex items-center justify-center flex-shrink-0">
               <Beer className="h-5 w-5 text-gray-300" />
@@ -150,16 +186,12 @@ function TapCard({ tap, slug, isAuth }: { tap: FestivalData["taps"][0]; slug: st
                 <Link href={`/beer/${tap.beerId}`} onClick={e => e.stopPropagation()}>
                   <span className={`font-semibold text-sm hover:underline cursor-pointer ${
                     tap.isAvailable ? "text-gray-900 dark:text-white" : "text-gray-400 line-through"
-                  }`}>
-                    {beerName}
-                  </span>
+                  }`}>{beerName}</span>
                 </Link>
               ) : (
                 <span className={`font-semibold text-sm ${
                   tap.isAvailable ? "text-gray-900 dark:text-white" : "text-gray-400 line-through"
-                }`}>
-                  {beerName}
-                </span>
+                }`}>{beerName}</span>
               )}
               {!tap.isAvailable && (
                 <Badge variant="outline" className="text-xs text-red-500 border-red-200 py-0">Finita</Badge>
@@ -171,7 +203,6 @@ function TapCard({ tap, slug, isAuth }: { tap: FestivalData["taps"][0]; slug: st
               )}
             </div>
 
-            {/* Brewery */}
             {(breweryName || tap.breweryLogoUrl) && (
               <div className="flex items-center gap-1 mt-0.5">
                 {tap.breweryLogoUrl && (
@@ -200,6 +231,11 @@ function TapCard({ tap, slug, isAuth }: { tap: FestivalData["taps"][0]; slug: st
                   <span className="text-gray-400">({tap.ratingCount})</span>
                 </span>
               )}
+              {hasPrices && (
+                <span className="text-xs text-gray-500 dark:text-gray-400">
+                  {Object.entries(tap.prices!).map(([size, price]) => `${size} €${price.toFixed(2)}`).join(" · ")}
+                </span>
+              )}
             </div>
           </div>
 
@@ -211,7 +247,6 @@ function TapCard({ tap, slug, isAuth }: { tap: FestivalData["taps"][0]; slug: st
           )}
         </div>
 
-        {/* Notes preview when collapsed */}
         {!expanded && tap.notes && (
           <p className="text-xs text-gray-400 dark:text-gray-500 mt-1.5 ml-[92px] line-clamp-1">{tap.notes}</p>
         )}
@@ -219,19 +254,62 @@ function TapCard({ tap, slug, isAuth }: { tap: FestivalData["taps"][0]; slug: st
 
       {/* Expanded content */}
       {expanded && tap.isAvailable && (
-        <div className="px-4 pb-4 border-t border-gray-100 dark:border-gray-700 pt-3 ml-[52px]">
+        <div className="px-4 pb-4 border-t border-gray-100 dark:border-gray-700 pt-3">
+          {/* Notes */}
           {tap.notes && (
             <p className="text-xs text-gray-500 dark:text-gray-400 mb-3">{tap.notes}</p>
           )}
+
+          {/* Beer description */}
+          {hasDescription && (
+            <div className="mb-3 bg-amber-50 dark:bg-amber-900/10 rounded-xl p-3">
+              <p className="text-xs font-semibold text-amber-700 dark:text-amber-400 mb-1 flex items-center gap-1">
+                <Info className="h-3.5 w-3.5" />Descrizione
+              </p>
+              <p className="text-xs text-gray-600 dark:text-gray-300 leading-relaxed">{tap.beerDescription}</p>
+            </div>
+          )}
+
+          {/* Manager edit link when description is missing */}
+          {descriptionMissing && (
+            <div className="mb-3 border border-dashed border-amber-300 dark:border-amber-700 rounded-xl p-3 text-center">
+              <p className="text-xs text-gray-500 mb-2">Descrizione birra mancante</p>
+              <Link href={`/beer/${tap.beerId}`}>
+                <Button size="sm" variant="outline" className="text-xs h-7 gap-1">
+                  <Pencil className="h-3 w-3" />Modifica birra
+                </Button>
+              </Link>
+            </div>
+          )}
+
+          {/* Prices (multiple sizes) */}
+          {hasPrices && (
+            <div className="mb-3 flex flex-wrap gap-2">
+              {Object.entries(tap.prices!).map(([size, price]) => (
+                <div key={size} className="bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg px-3 py-1.5 text-center min-w-[60px]">
+                  <div className="text-xs text-gray-500 dark:text-gray-400">{size}</div>
+                  <div className="font-bold text-amber-600 text-sm">€{price.toFixed(2)}</div>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* Rating */}
           {isAuth ? (
-            <>
-              <p className="text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">Il tuo voto (1–10):</p>
-              <StarRating tapId={tap.id} slug={slug} current={tap.userRating} avg={tap.avgRating} count={tap.ratingCount} />
-            </>
+            <SliderRating tapId={tap.id} slug={slug} current={tap.userRating} avg={tap.avgRating} count={tap.ratingCount} />
           ) : (
-            <p className="text-xs text-gray-500">
-              <a href="/api/login" className="text-amber-600 font-medium hover:underline">Accedi</a> per votare questa birra
-            </p>
+            <div className="flex items-center gap-2 p-3 bg-gray-50 dark:bg-gray-700/50 rounded-xl">
+              {tap.avgRating !== null && tap.ratingCount > 0 && (
+                <div className="flex items-center gap-1 text-xs text-amber-600">
+                  <Star className="h-3.5 w-3.5 fill-current" />
+                  <span className="font-bold">{tap.avgRating.toFixed(1)}</span>
+                  <span className="text-gray-400">({tap.ratingCount} vot{tap.ratingCount === 1 ? "o" : "i"})</span>
+                </div>
+              )}
+              <a href="/api/login" className="ml-auto text-xs text-amber-600 font-medium hover:underline">
+                Accedi per votare →
+              </a>
+            </div>
           )}
         </div>
       )}
@@ -239,10 +317,8 @@ function TapCard({ tap, slug, isAuth }: { tap: FestivalData["taps"][0]; slug: st
   );
 }
 
-function FoodCategoryBlock({ category, items }: {
-  category: string;
-  items: FestivalData["food"];
-}) {
+// ── Food Category Block ───────────────────────────────────────────────────────
+function FoodCategoryBlock({ category, items }: { category: string; items: FestivalData["food"] }) {
   const [expanded, setExpanded] = useState(false);
   const available = items.filter(i => i.isAvailable).length;
 
@@ -300,11 +376,63 @@ function FoodCategoryBlock({ category, items }: {
   );
 }
 
+// ── Rankings Tab ─────────────────────────────────────────────────────────────
+function RankingsTab({ rankings }: { rankings: FestivalData["rankings"] }) {
+  if (rankings.length === 0) return (
+    <div className="text-center py-10 text-gray-400">
+      <Trophy className="h-8 w-8 mx-auto mb-2 opacity-30" />
+      <p>Ancora nessun voto</p>
+      <p className="text-xs mt-1">Espandi le birre per votarle!</p>
+    </div>
+  );
+
+  return (
+    <div className="space-y-2">
+      {rankings.map((t, i) => (
+        <div key={t.tapNumber} className="flex items-center gap-3 bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 p-3">
+          <div className={`w-8 h-8 flex items-center justify-center rounded-xl text-sm font-bold flex-shrink-0 ${
+            i === 0 ? "bg-yellow-100 text-yellow-700" :
+            i === 1 ? "bg-gray-200 text-gray-600" :
+            i === 2 ? "bg-orange-100 text-orange-600" :
+            "bg-gray-50 dark:bg-gray-700 text-gray-500"
+          }`}>
+            {i + 1}
+          </div>
+          {t.beerImageUrl ? (
+            <img src={t.beerImageUrl} alt={t.beerName} className="w-10 h-10 rounded-xl object-cover flex-shrink-0" />
+          ) : (
+            <div className="w-10 h-10 rounded-xl bg-amber-50 dark:bg-amber-900/20 flex items-center justify-center flex-shrink-0">
+              <Beer className="h-5 w-5 text-amber-300" />
+            </div>
+          )}
+          <div className="flex-1 min-w-0">
+            <p className="font-semibold text-sm text-gray-900 dark:text-white truncate">{t.beerName}</p>
+            {t.breweryName && (
+              <p className="text-xs text-amber-600 dark:text-amber-400 truncate">{t.breweryName}</p>
+            )}
+            <p className="text-xs text-gray-400">Spina #{t.tapNumber} · {t.count} vot{t.count === 1 ? "o" : "i"}</p>
+          </div>
+          <div className="text-right flex-shrink-0">
+            <div className="text-xl font-bold text-amber-600">{t.avg.toFixed(1)}</div>
+            <div className="flex items-center gap-0.5 justify-end">
+              {[1, 2, 3, 4, 5].map(s => (
+                <Star key={s} className={`h-2.5 w-2.5 ${s <= Math.round(t.avg / 2) ? "fill-amber-400 text-amber-400" : "text-gray-300"}`} />
+              ))}
+            </div>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// ── Main Page ─────────────────────────────────────────────────────────────────
 export default function FestivalPublic() {
   const { slug } = useParams<{ slug: string }>();
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, user } = useAuth();
   const [search, setSearch] = useState("");
   const [showUnavailable, setShowUnavailable] = useState(true);
+  const [descExpanded, setDescExpanded] = useState(false);
 
   const { data, isLoading, isError, error } = useQuery<FestivalData, { status: number; message: string }>({
     queryKey: ["/api/festivals", slug],
@@ -377,8 +505,11 @@ export default function FestivalPublic() {
     </div>
   );
 
-  const { festival, taps } = data;
+  const { festival, taps, rankings = [] } = data;
   const availableCount = taps.filter(t => t.isAvailable).length;
+
+  const isManager = !!(user && festival.managerId && (user as any).id === festival.managerId) ||
+    !!(user && ((user as any).roles?.includes("admin") || (user as any).activeRole === "admin"));
 
   const formatDate = (d: string) =>
     new Date(d).toLocaleDateString("it-IT", { day: "numeric", month: "short", year: "numeric" });
@@ -388,11 +519,7 @@ export default function FestivalPublic() {
       {/* Cover image banner */}
       {festival.coverImageUrl ? (
         <div className="relative w-full h-52 overflow-hidden">
-          <img
-            src={festival.coverImageUrl}
-            alt={festival.name}
-            className="w-full h-full object-cover"
-          />
+          <img src={festival.coverImageUrl} alt={festival.name} className="w-full h-full object-cover" />
           <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
         </div>
       ) : (
@@ -432,9 +559,6 @@ export default function FestivalPublic() {
                     {festival.endDate && festival.startDate !== festival.endDate && formatDate(festival.endDate)}
                   </p>
                 )}
-                {festival.description && (
-                  <p className="text-gray-500 text-xs mt-1 line-clamp-2">{festival.description}</p>
-                )}
               </div>
             </div>
 
@@ -457,19 +581,7 @@ export default function FestivalPublic() {
               </div>
             )}
 
-            {/* Stats row */}
-            <div className="flex gap-3 mt-3">
-              <div className="flex-1 bg-amber-50 dark:bg-amber-900/20 rounded-xl px-4 py-2 text-center">
-                <div className="text-xl font-bold text-amber-700 dark:text-amber-400">{availableCount}</div>
-                <div className="text-xs text-gray-500">spine disponibili</div>
-              </div>
-              <div className="flex-1 bg-amber-50 dark:bg-amber-900/20 rounded-xl px-4 py-2 text-center">
-                <div className="text-xl font-bold text-amber-700 dark:text-amber-400">{taps.length}</div>
-                <div className="text-xs text-gray-500">spine totali</div>
-              </div>
-            </div>
-
-            {/* Like + Share + Login */}
+            {/* Like + Share */}
             <div className="flex items-center gap-2 mt-3 pt-3 border-t border-gray-100 dark:border-gray-700">
               <FestivalLikeButton festivalId={festival.id} className="flex-1" />
               <ShareButton
@@ -489,6 +601,26 @@ export default function FestivalPublic() {
             </div>
           </CardContent>
         </Card>
+
+        {/* Description – separate expandable card */}
+        {festival.description && (
+          <div className="mt-3">
+            <button
+              className="w-full bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 px-4 py-3 flex items-center justify-between text-left shadow-sm hover:border-amber-300 transition-colors"
+              onClick={() => setDescExpanded(v => !v)}
+            >
+              <span className="text-sm font-semibold text-gray-700 dark:text-gray-300 flex items-center gap-1.5">
+                <Info className="h-4 w-4 text-amber-500" />Sul festival
+              </span>
+              {descExpanded ? <ChevronUp className="h-4 w-4 text-gray-400" /> : <ChevronDown className="h-4 w-4 text-gray-400" />}
+            </button>
+            {descExpanded && (
+              <div className="bg-white dark:bg-gray-800 rounded-b-2xl border border-t-0 border-gray-200 dark:border-gray-700 px-4 pb-4">
+                <p className="text-sm text-gray-600 dark:text-gray-300 leading-relaxed">{festival.description}</p>
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Content tabs */}
@@ -505,6 +637,10 @@ export default function FestivalPublic() {
                 Cibo ({data.food.filter(f => f.isAvailable).length})
               </TabsTrigger>
             )}
+            <TabsTrigger value="rankings" className="flex-1 gap-1.5">
+              <Trophy className="h-4 w-4" />
+              Classifica
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="taps" className="space-y-2">
@@ -513,7 +649,7 @@ export default function FestivalPublic() {
               <div className="relative flex-1">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
                 <Input
-                  placeholder="Cerca per nome, birrificio, stile, n. spina..."
+                  placeholder="Cerca per nome, birrificio, stile…"
                   value={search}
                   onChange={e => setSearch(e.target.value)}
                   className="pl-9 bg-white dark:bg-gray-800"
@@ -537,7 +673,7 @@ export default function FestivalPublic() {
               </div>
             ) : (
               filteredTaps.map(tap => (
-                <TapCard key={tap.id} tap={tap} slug={slug!} isAuth={isAuthenticated} />
+                <TapCard key={tap.id} tap={tap} slug={slug!} isAuth={isAuthenticated} isManager={isManager} />
               ))
             )}
           </TabsContent>
@@ -559,6 +695,10 @@ export default function FestivalPublic() {
               </p>
             </TabsContent>
           )}
+
+          <TabsContent value="rankings" className="space-y-2">
+            <RankingsTab rankings={rankings} />
+          </TabsContent>
         </Tabs>
       </div>
 

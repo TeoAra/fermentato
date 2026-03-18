@@ -1,11 +1,12 @@
 import type { Express } from "express";
 import { db } from "./db";
+import { pool } from "./db";
 import { isAuthenticated, isAdmin } from "./auth";
 import {
   festivals, festivalTaps, festivalFoodItems, festivalRatings,
   beers, breweries,
 } from "@shared/schema";
-import { eq, and, sql, ilike, or } from "drizzle-orm";
+import { eq, and, sql, ilike, or, desc } from "drizzle-orm";
 
 function isFestivalManager(req: any): boolean {
   if (!req.isAuthenticated()) return false;
@@ -20,6 +21,14 @@ function canManageFestival(req: any, festival: any): boolean {
   if (user.roles?.includes("admin") || user.activeRole === "admin") return true;
   if (festival.ownerId && festival.ownerId === user.id) return true;
   return false;
+}
+
+export async function runFestivalMigrations() {
+  try {
+    await pool.query(`ALTER TABLE festival_taps ADD COLUMN IF NOT EXISTS prices jsonb`);
+  } catch (e) {
+    console.error("[festival_taps] prices migration error:", e);
+  }
 }
 
 export function registerFestivalRoutes(app: Express) {
@@ -56,7 +65,7 @@ export function registerFestivalRoutes(app: Express) {
       if (!festival) return res.status(404).json({ message: "Festival non trovato" });
       if (!festival.isActive) return res.status(403).json({ message: "Festival non ancora attivato" });
 
-      const taps = await db.select({
+      const rawTaps = await db.select({
         id: festivalTaps.id,
         tapNumber: festivalTaps.tapNumber,
         beerId: festivalTaps.beerId,
@@ -72,6 +81,7 @@ export function registerFestivalRoutes(app: Express) {
         beerStyle: beers.style,
         beerAbv: beers.abv,
         beerImageUrl: beers.imageUrl,
+        beerDescription: beers.description,
         breweryId: breweries.id,
         breweryName: breweries.name,
         breweryLogoUrl: breweries.logoUrl,
@@ -83,8 +93,18 @@ export function registerFestivalRoutes(app: Express) {
       .leftJoin(breweries, eq(beers.breweryId, breweries.id))
       .leftJoin(festivalRatings, eq(festivalTaps.id, festivalRatings.tapId))
       .where(eq(festivalTaps.festivalId, festival.id))
-      .groupBy(festivalTaps.id, beers.name, beers.style, beers.abv, beers.imageUrl, breweries.id, breweries.name, breweries.logoUrl)
+      .groupBy(festivalTaps.id, beers.name, beers.style, beers.abv, beers.imageUrl, beers.description, breweries.id, breweries.name, breweries.logoUrl)
       .orderBy(festivalTaps.tapNumber);
+
+      // Fetch prices separately via raw query (column added via migration)
+      const pricesResult = await pool.query(
+        `SELECT id, prices FROM festival_taps WHERE festival_id = $1`,
+        [festival.id]
+      );
+      const pricesMap: Record<number, Record<string, number>> = {};
+      pricesResult.rows.forEach((r: any) => {
+        if (r.prices) pricesMap[r.id] = r.prices;
+      });
 
       const food = festival.showFood
         ? await db.select().from(festivalFoodItems).where(eq(festivalFoodItems.festivalId, festival.id))
@@ -100,15 +120,44 @@ export function registerFestivalRoutes(app: Express) {
         ur.forEach(r => { userRatings[r.tapId] = r.rating; });
       }
 
+      // Rankings (public)
+      const topTaps = await db.select({
+        tapId: festivalRatings.tapId,
+        tapNumber: festivalTaps.tapNumber,
+        customBeerName: festivalTaps.customBeerName,
+        beerName: beers.name,
+        beerImageUrl: beers.imageUrl,
+        breweryName: breweries.name,
+        avg: sql<number>`ROUND(AVG(${festivalRatings.rating})::numeric, 1)`,
+        count: sql<number>`COUNT(*)`,
+      })
+      .from(festivalRatings)
+      .innerJoin(festivalTaps, eq(festivalRatings.tapId, festivalTaps.id))
+      .leftJoin(beers, eq(festivalTaps.beerId, beers.id))
+      .leftJoin(breweries, eq(beers.breweryId, breweries.id))
+      .where(eq(festivalRatings.festivalId, festival.id))
+      .groupBy(festivalRatings.tapId, festivalTaps.tapNumber, festivalTaps.customBeerName, beers.name, beers.imageUrl, breweries.name)
+      .orderBy(sql`AVG(${festivalRatings.rating}) DESC`)
+      .limit(20);
+
       res.json({
-        festival,
-        taps: taps.map(t => ({
+        festival: { ...festival, managerId: festival.ownerId },
+        taps: rawTaps.map(t => ({
           ...t,
           avgRating: t.avgRating ? parseFloat(String(t.avgRating)) : null,
           ratingCount: Number(t.ratingCount || 0),
           userRating: userRatings[t.id] ?? null,
+          prices: pricesMap[t.id] ?? null,
         })),
         food,
+        rankings: topTaps.map(t => ({
+          tapNumber: t.tapNumber,
+          beerName: t.beerName || t.customBeerName || `Spina ${t.tapNumber}`,
+          beerImageUrl: t.beerImageUrl,
+          breweryName: t.breweryName,
+          avg: parseFloat(String(t.avg)),
+          count: Number(t.count),
+        })),
       });
     } catch (err) {
       console.error("Error fetching festival:", err);
@@ -301,7 +350,22 @@ export function registerFestivalRoutes(app: Express) {
       const tapNumber = parseInt(req.params.tapNumber);
       const [fest] = await db.select().from(festivals).where(eq(festivals.id, festId)).limit(1);
       if (!fest || !canManageFestival(req, fest)) return res.status(403).json({ message: "Non autorizzato" });
-      const { beerId, customBeerName, customBreweryName, style, abv, notes, isAvailable, tapType } = req.body;
+      const { beerId, customBeerName, customBreweryName, style, abv, notes, isAvailable, tapType, prices } = req.body;
+
+      // Build prices object from array [{size, price}] or pass-through if already object
+      let pricesObj: Record<string, number> | null = null;
+      if (Array.isArray(prices) && prices.length > 0) {
+        pricesObj = prices.reduce((acc: any, p: any) => {
+          if (p.size && p.price !== "" && p.price !== null && p.price !== undefined) {
+            acc[p.size] = parseFloat(p.price);
+          }
+          return acc;
+        }, {});
+        if (Object.keys(pricesObj!).length === 0) pricesObj = null;
+      } else if (prices && typeof prices === "object" && !Array.isArray(prices)) {
+        pricesObj = prices;
+      }
+
       const [tap] = await db.insert(festivalTaps).values({
         festivalId: festId,
         tapNumber,
@@ -319,9 +383,33 @@ export function registerFestivalRoutes(app: Express) {
         set: { beerId: beerId || null, customBeerName, customBreweryName, style, abv, notes, isAvailable, tapType: tapType || "spina", updatedAt: new Date() },
       })
       .returning();
-      res.json(tap);
+
+      // Save prices via raw query
+      if (pricesObj !== null) {
+        await pool.query(`UPDATE festival_taps SET prices = $1 WHERE id = $2`, [JSON.stringify(pricesObj), tap.id]);
+      } else {
+        await pool.query(`UPDATE festival_taps SET prices = NULL WHERE id = $1`, [tap.id]);
+      }
+
+      res.json({ ...tap, prices: pricesObj });
     } catch (err) {
       console.error("upsert tap error:", err);
+      res.status(500).json({ message: "Errore" });
+    }
+  });
+
+  // ── Manager: delete tap ──────────────────────────────────────────────────────
+  app.delete("/api/admin/festivals/:id/taps/:tapId", isAuthenticated as any, async (req: any, res) => {
+    try {
+      const tapId = parseInt(req.params.tapId);
+      const [tap] = await db.select().from(festivalTaps).where(eq(festivalTaps.id, tapId)).limit(1);
+      if (!tap) return res.status(404).json({ message: "Spina non trovata" });
+      const [fest] = await db.select().from(festivals).where(eq(festivals.id, tap.festivalId)).limit(1);
+      if (!canManageFestival(req, fest)) return res.status(403).json({ message: "Non autorizzato" });
+      await db.delete(festivalRatings).where(eq(festivalRatings.tapId, tapId));
+      await db.delete(festivalTaps).where(eq(festivalTaps.id, tapId));
+      res.json({ ok: true });
+    } catch (err) {
       res.status(500).json({ message: "Errore" });
     }
   });

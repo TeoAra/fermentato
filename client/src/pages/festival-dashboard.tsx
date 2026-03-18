@@ -21,7 +21,7 @@ import {
   Beer, UtensilsCrossed, BarChart3, Settings, Plus, QrCode,
   CheckCircle2, XCircle, Loader2, Pencil, Trash2, ExternalLink,
   Trophy, Users, Droplets, CreditCard, AlertCircle, RefreshCw, Lock, Star,
-  ArrowLeft, Factory, ImagePlus, X, Search, ChevronDown, Clock, Monitor, Copy,
+  X, Search, ChevronDown, Clock, Monitor, Copy,
 } from "lucide-react";
 import { useLocation } from "wouter";
 
@@ -76,7 +76,7 @@ interface FestivalTap {
   tapType: string | null;
   beerName: string | null; beerStyle: string | null; beerAbv: string | null;
   beerImageUrl: string | null; breweryId: number | null; breweryName: string | null;
-  breweryLogoUrl: string | null;
+  breweryLogoUrl: string | null; prices: Record<string, number> | null;
 }
 
 interface FoodItem {
@@ -154,8 +154,11 @@ function QRModal({ slug, name, onClose }: { slug: string; name: string; onClose:
 }
 
 // ─── Tap row ────────────────────────────────────────────────────────────────
-function TapRow({ tap, festivalId, onToggle }: {
-  tap: FestivalTap; festivalId: number; onToggle: (tap: FestivalTap) => void;
+function TapRow({ tap, festivalId, onToggle, onDelete, onEdit }: {
+  tap: FestivalTap; festivalId: number;
+  onToggle: (tap: FestivalTap) => void;
+  onDelete: (tap: FestivalTap) => void;
+  onEdit: (tap: FestivalTap) => void;
 }) {
   const beerName = tap.beerName || tap.customBeerName || `Spina ${tap.tapNumber}`;
   const brewName = tap.breweryName || tap.customBreweryName;
@@ -172,9 +175,9 @@ function TapRow({ tap, festivalId, onToggle }: {
         {tap.tapNumber}
       </div>
 
-      {/* Brewery logo */}
-      {tap.breweryLogoUrl && (
-        <img src={tap.breweryLogoUrl} alt="" className="w-8 h-8 rounded-lg object-cover flex-shrink-0 border border-gray-100 dark:border-gray-700" />
+      {/* Beer image or brewery logo */}
+      {(tap.beerImageUrl || tap.breweryLogoUrl) && (
+        <img src={tap.beerImageUrl || tap.breweryLogoUrl!} alt="" className="w-8 h-8 rounded-lg object-cover flex-shrink-0 border border-gray-100 dark:border-gray-700" />
       )}
 
       <div className="flex-1 min-w-0">
@@ -192,17 +195,91 @@ function TapRow({ tap, festivalId, onToggle }: {
           {abv && <span className="text-xs text-gray-500">{abv}%</span>}
         </div>
       </div>
-      <button
-        onClick={() => onToggle(tap)}
-        className={`flex-shrink-0 p-1.5 rounded-lg transition-colors ${
-          tap.isAvailable
-            ? "text-green-600 hover:bg-green-50 dark:hover:bg-green-900/20"
-            : "text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20"
-        }`}
-        title={tap.isAvailable ? "Segna come finita" : "Ripristina"}
-      >
-        {tap.isAvailable ? <CheckCircle2 className="h-5 w-5" /> : <XCircle className="h-5 w-5" />}
-      </button>
+      <div className="flex items-center gap-1 flex-shrink-0">
+        <button
+          onClick={() => onEdit(tap)}
+          className="p-1.5 rounded-lg text-gray-400 hover:text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-900/20 transition-colors"
+          title="Modifica spina"
+        >
+          <Pencil className="h-4 w-4" />
+        </button>
+        <button
+          onClick={() => onToggle(tap)}
+          className={`p-1.5 rounded-lg transition-colors ${
+            tap.isAvailable
+              ? "text-green-600 hover:bg-green-50 dark:hover:bg-green-900/20"
+              : "text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20"
+          }`}
+          title={tap.isAvailable ? "Segna come finita" : "Ripristina"}
+        >
+          {tap.isAvailable ? <CheckCircle2 className="h-4 w-4" /> : <XCircle className="h-4 w-4" />}
+        </button>
+        <button
+          onClick={() => onDelete(tap)}
+          className="p-1.5 rounded-lg text-gray-300 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+          title="Elimina spina"
+        >
+          <Trash2 className="h-4 w-4" />
+        </button>
+      </div>
+    </div>
+  );
+}
+
+
+// ─── Price row for multiple sizes ────────────────────────────────────────────
+const PRESET_SIZES = ["20cl", "33cl", "40cl", "50cl", "Pompino", "Pinta", "Bottiglia"];
+
+type PriceRow = { size: string; price: string };
+
+function PriceRowsEditor({ rows, onChange }: { rows: PriceRow[]; onChange: (r: PriceRow[]) => void }) {
+  const addRow = () => onChange([...rows, { size: "", price: "" }]);
+  const removeRow = (i: number) => onChange(rows.filter((_, idx) => idx !== i));
+  const updateRow = (i: number, patch: Partial<PriceRow>) =>
+    onChange(rows.map((r, idx) => idx === i ? { ...r, ...patch } : r));
+
+  return (
+    <div className="space-y-2">
+      <div className="flex items-center justify-between">
+        <Label className="text-xs">Prezzi per misura</Label>
+        <Button type="button" size="sm" variant="outline" className="h-6 text-xs px-2" onClick={addRow}>
+          <Plus className="h-3 w-3 mr-1" />Aggiungi
+        </Button>
+      </div>
+      {rows.length === 0 && (
+        <p className="text-xs text-gray-400">Nessun prezzo impostato</p>
+      )}
+      {rows.map((row, i) => (
+        <div key={i} className="flex gap-2 items-center">
+          <div className="relative flex-1">
+            <Input
+              className="h-8 text-sm"
+              placeholder="Misura (es. 40cl)"
+              value={row.size}
+              onChange={e => updateRow(i, { size: e.target.value })}
+              list={`sizes-${i}`}
+            />
+            <datalist id={`sizes-${i}`}>
+              {PRESET_SIZES.map(s => <option key={s} value={s} />)}
+            </datalist>
+          </div>
+          <div className="flex items-center gap-1">
+            <span className="text-sm text-gray-500">€</span>
+            <Input
+              className="h-8 text-sm w-20"
+              type="number"
+              step="0.50"
+              min="0"
+              placeholder="0.00"
+              value={row.price}
+              onChange={e => updateRow(i, { price: e.target.value })}
+            />
+          </div>
+          <button type="button" onClick={() => removeRow(i)} className="text-gray-400 hover:text-red-500 p-1">
+            <X className="h-3.5 w-3.5" />
+          </button>
+        </div>
+      ))}
     </div>
   );
 }
@@ -214,63 +291,31 @@ function TapEditDialog({ festivalId, tapNumber, existing, onClose }: {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  // Beer search
   const [searchTerm, setSearchTerm] = useState("");
   const debouncedSearch = useDebounce(searchTerm, 300);
 
-  // Selected beer from DB (or pre-populated from existing)
   const [selectedBeer, setSelectedBeer] = useState<{
     id: number; name: string; breweryName: string; style: string; abv: string; imageUrl: string;
   } | null>(existing?.beerId ? {
     id: existing.beerId,
-    name: existing.customBeerName || "",
-    breweryName: existing.customBreweryName || "",
-    style: existing.style || "",
-    abv: existing.abv || "",
+    name: existing.beerName || existing.customBeerName || "",
+    breweryName: existing.breweryName || existing.customBreweryName || "",
+    style: existing.beerStyle || existing.style || "",
+    abv: existing.beerAbv || existing.abv || "",
     imageUrl: existing.beerImageUrl || "",
   } : null);
 
-  // Create beer/brewery
-  const [creatingBeer, setCreatingBeer] = useState(false);
-  const [creatingBrewery, setCreatingBrewery] = useState(false);
-  const [brewerySearchTerm, setBrewerySearchTerm] = useState("");
-  const debouncedBrewerySearch = useDebounce(brewerySearchTerm, 300);
-  const [styleSearchTerm, setStyleSearchTerm] = useState("");
-  const [styleDropdownOpen, setStyleDropdownOpen] = useState(false);
-  const [beerImageFile, setBeerImageFile] = useState<File | null>(null);
-  const [beerImagePreview, setBeerImagePreview] = useState("");
-  const [uploadingBeerImage, setUploadingBeerImage] = useState(false);
-  const [uploadingBreweryImages, setUploadingBreweryImages] = useState(false);
-  const [breweryLogoFile, setBreweryLogoFile] = useState<File | null>(null);
-  const [breweryLogoPreview, setBreweryLogoPreview] = useState("");
-  const [breweryCoverFile, setBreweryCoverFile] = useState<File | null>(null);
-  const [breweryCoverPreview, setBreweryCoverPreview] = useState("");
-
-  const [newBeerData, setNewBeerData] = useState({
-    name: "", style: "", abv: "", ibu: "", description: "",
-    breweryId: "", breweryName: "", imageUrl: "", isGlutenFree: false, isAlcoholFree: false,
-  });
-  const [newBreweryData, setNewBreweryData] = useState({
-    name: "", location: "", region: "", description: "",
-  });
-
-  // Tap details
   const [form, setForm] = useState({
-    customBeerName: existing?.customBeerName || "",
-    customBreweryName: existing?.customBreweryName || "",
-    style: existing?.style || "",
-    abv: existing?.abv || "",
     notes: existing?.notes || "",
     isAvailable: existing?.isAvailable ?? true,
     tapType: existing?.tapType || "spina",
   });
 
-  const filteredStyles = useMemo(() => {
-    if (!styleSearchTerm) return BEER_STYLES;
-    return BEER_STYLES.filter(s => s.toLowerCase().includes(styleSearchTerm.toLowerCase()));
-  }, [styleSearchTerm]);
+  const existingPrices: PriceRow[] = existing?.prices && typeof existing.prices === "object"
+    ? Object.entries(existing.prices as Record<string, number>).map(([size, price]) => ({ size, price: String(price) }))
+    : [];
+  const [priceRows, setPriceRows] = useState<PriceRow[]>(existingPrices);
 
-  // Beer global search
   const { data: searchResults, isLoading: isSearching } = useQuery({
     queryKey: ["/api/search", debouncedSearch],
     queryFn: async () => {
@@ -283,89 +328,20 @@ function TapEditDialog({ festivalId, tapNumber, existing, onClose }: {
     staleTime: 1000 * 60 * 5,
   });
 
-  // Brewery search
-  const { data: breweryResults } = useQuery({
-    queryKey: ["/api/owner/breweries/search", debouncedBrewerySearch],
-    queryFn: async () => {
-      if (debouncedBrewerySearch.length < 2) return [];
-      const r = await fetch(`/api/owner/breweries/search?q=${encodeURIComponent(debouncedBrewerySearch)}`, { credentials: "include" });
-      if (!r.ok) return [];
-      return r.json();
-    },
-    enabled: creatingBeer && debouncedBrewerySearch.length >= 2,
-  });
-
-  const uploadFile = async (file: File, folder: string): Promise<string> => {
-    const fd = new FormData();
-    fd.append("image", file);
-    fd.append("folder", folder);
-    const r = await fetch("/api/upload/image", { method: "POST", credentials: "include", body: fd });
-    if (!r.ok) throw new Error("Upload fallito");
-    const d = await r.json();
-    if (!d.url) throw new Error("URL non ricevuto");
-    return d.url;
-  };
-
-  const createBreweryMutation = useMutation({
-    mutationFn: async (data: typeof newBreweryData) => {
-      setUploadingBreweryImages(true);
-      try {
-        let logoUrl: string | undefined;
-        let coverImageUrl: string | undefined;
-        if (breweryLogoFile) logoUrl = await uploadFile(breweryLogoFile, "brewery-logos");
-        if (breweryCoverFile) coverImageUrl = await uploadFile(breweryCoverFile, "brewery-covers");
-        return apiRequest("/api/owner/breweries", { method: "POST" }, { ...data, region: data.region || data.location, logoUrl, coverImageUrl });
-      } finally {
-        setUploadingBreweryImages(false);
-      }
-    },
-    onSuccess: (brewery: any) => {
-      toast({ title: "Birrificio creato!" });
-      setNewBeerData(prev => ({ ...prev, breweryId: brewery.id.toString(), breweryName: brewery.name }));
-      setCreatingBrewery(false);
-      setBrewerySearchTerm("");
-      setBreweryLogoFile(null); setBreweryLogoPreview("");
-      setBreweryCoverFile(null); setBreweryCoverPreview("");
-    },
-    onError: (err: Error) => toast({ title: "Errore", description: err.message, variant: "destructive" }),
-  });
-
-  const createBeerMutation = useMutation({
-    mutationFn: async (data: typeof newBeerData) => {
-      let imageUrl = data.imageUrl;
-      if (beerImageFile) {
-        setUploadingBeerImage(true);
-        try { imageUrl = await uploadFile(beerImageFile, "beer-images"); }
-        finally { setUploadingBeerImage(false); }
-      }
-      return apiRequest("/api/owner/beers", { method: "POST" }, { ...data, imageUrl });
-    },
-    onSuccess: (beer: any) => {
-      toast({ title: "Birra creata!" });
-      const bName = beer.brewery?.name || newBeerData.breweryName;
-      setSelectedBeer({ id: beer.id, name: beer.name, breweryName: bName, style: beer.style || "", abv: beer.abv || "", imageUrl: beer.imageUrl || "" });
-      setForm(f => ({ ...f, customBeerName: beer.name, customBreweryName: bName, style: beer.style || f.style, abv: beer.abv ? String(beer.abv) : f.abv }));
-      setCreatingBeer(false);
-      setSearchTerm("");
-      setBeerImageFile(null); setBeerImagePreview("");
-      queryClient.invalidateQueries({ queryKey: ["/api/search"] });
-    },
-    onError: (err: Error) => toast({ title: "Errore", description: err.message, variant: "destructive" }),
-  });
-
   const saveMutation = useMutation({
     mutationFn: () => apiRequest(
       `/api/admin/festivals/${festivalId}/taps/${tapNumber}`,
       { method: "PUT" },
       {
         beerId: selectedBeer && selectedBeer.id > 0 ? selectedBeer.id : null,
-        customBeerName: form.customBeerName || null,
-        customBreweryName: form.customBreweryName || null,
-        style: form.style || null,
-        abv: form.abv || null,
+        customBeerName: selectedBeer?.name || null,
+        customBreweryName: selectedBeer?.breweryName || null,
+        style: selectedBeer?.style || null,
+        abv: selectedBeer?.abv || null,
         notes: form.notes || null,
         isAvailable: form.isAvailable,
         tapType: form.tapType,
+        prices: priceRows,
       }
     ),
     onSuccess: () => {
@@ -384,8 +360,8 @@ function TapEditDialog({ festivalId, tapNumber, existing, onClose }: {
         </DialogHeader>
         <div className="space-y-4">
 
-          {/* ── Beer selected ── */}
-          {selectedBeer && !creatingBeer ? (
+          {/* Beer selected */}
+          {selectedBeer ? (
             <div className="p-3 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700 rounded-xl">
               <div className="flex items-center justify-between gap-3">
                 <div className="flex items-center gap-3">
@@ -406,10 +382,10 @@ function TapEditDialog({ festivalId, tapNumber, existing, onClose }: {
                 <Button size="sm" variant="outline" onClick={() => { setSelectedBeer(null); setSearchTerm(""); }}>Cambia</Button>
               </div>
             </div>
-          ) : !creatingBeer ? (
-            /* ── Beer search ── */
+          ) : (
+            /* Beer search */
             <div className="space-y-2">
-              <Label className="text-sm font-medium">Seleziona birra</Label>
+              <Label className="text-sm font-medium">Cerca birra nel database</Label>
               <div className="relative">
                 {isSearching
                   ? <Loader2 className="absolute left-3 top-3 h-4 w-4 text-gray-400 animate-spin" />
@@ -424,7 +400,7 @@ function TapEditDialog({ festivalId, tapNumber, existing, onClose }: {
               {debouncedSearch.length >= 2 && !isSearching && (
                 <>
                   {searchResults?.beers && searchResults.beers.length > 0 && (
-                    <div className="max-h-44 overflow-y-auto border rounded-xl bg-white dark:bg-gray-900">
+                    <div className="max-h-52 overflow-y-auto border rounded-xl bg-white dark:bg-gray-900">
                       {searchResults.beers.map((beer: any) => (
                         <div
                           key={beer.id}
@@ -432,7 +408,6 @@ function TapEditDialog({ festivalId, tapNumber, existing, onClose }: {
                           onClick={() => {
                             const bName = beer.brewery?.name || "";
                             setSelectedBeer({ id: beer.id, name: beer.name, breweryName: bName, style: beer.style || "", abv: beer.abv || "", imageUrl: beer.imageUrl || "" });
-                            setForm(f => ({ ...f, customBeerName: beer.name, customBreweryName: bName, style: beer.style || f.style, abv: beer.abv ? String(beer.abv) : f.abv }));
                             setSearchTerm("");
                           }}
                         >
@@ -451,311 +426,64 @@ function TapEditDialog({ festivalId, tapNumber, existing, onClose }: {
                       ))}
                     </div>
                   )}
-                  <div className="border border-dashed rounded-xl p-3 text-center">
-                    {searchResults?.beers?.length === 0 && (
-                      <p className="text-xs text-gray-500 mb-2">Nessuna birra trovata per "{debouncedSearch}"</p>
-                    )}
-                    {(!searchResults?.beers || searchResults.beers.length > 0) && (
-                      <p className="text-xs text-gray-500 mb-2">Non trovi quella che cerchi?</p>
-                    )}
-                    <Button size="sm" variant="outline" onClick={() => { setCreatingBeer(true); setNewBeerData(p => ({ ...p, name: debouncedSearch })); }}>
-                      <Plus className="h-3.5 w-3.5 mr-1" />Crea nuova birra
-                    </Button>
-                  </div>
+                  {searchResults?.beers?.length === 0 && (
+                    <div className="border border-dashed rounded-xl p-3 text-center space-y-1.5">
+                      <p className="text-xs text-gray-500">Nessuna birra trovata per "{debouncedSearch}"</p>
+                      <p className="text-xs text-gray-400">Se la birra non è ancora nel database, aggiungila prima dalla sezione birrificio.</p>
+                    </div>
+                  )}
                 </>
               )}
-
-              {/* Manual entry hint */}
-              {debouncedSearch.length < 2 && !existing?.customBeerName && (
-                <p className="text-xs text-gray-400">Oppure compila manualmente i campi sottostanti senza selezionare dal database.</p>
+              {debouncedSearch.length < 2 && (
+                <p className="text-xs text-gray-400">Digita almeno 2 caratteri per cercare</p>
               )}
             </div>
-          ) : null}
+          )}
 
-          {/* ── Create beer form ── */}
-          {creatingBeer && !creatingBrewery && (
-            <div className="border rounded-xl p-4 bg-amber-50/50 dark:bg-amber-900/10 space-y-3">
-              <div className="flex items-center gap-2">
-                <Button variant="ghost" size="sm" className="h-7 w-7 p-0" onClick={() => setCreatingBeer(false)}>
-                  <ArrowLeft className="h-4 w-4" />
-                </Button>
-                <h4 className="font-semibold text-sm">Crea nuova birra</h4>
-              </div>
+          <Separator />
 
-              <div>
-                <Label className="text-xs">Nome birra *</Label>
-                <Input value={newBeerData.name} onChange={e => setNewBeerData(p => ({ ...p, name: e.target.value }))} placeholder="Es. Hazy IPA" className="h-9" />
-              </div>
+          {/* Note */}
+          <div>
+            <Label className="text-xs">Note</Label>
+            <Textarea className="mt-1" value={form.notes} onChange={e => setForm(f => ({ ...f, notes: e.target.value }))} placeholder="Note aggiuntive visibili sul taplist…" rows={2} />
+          </div>
 
-              <div>
-                <Label className="text-xs">Birrificio *</Label>
-                {newBeerData.breweryId ? (
-                  <div className="flex items-center justify-between p-2 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg">
-                    <div className="flex items-center gap-2">
-                      <Factory className="h-4 w-4 text-green-600" />
-                      <span className="text-sm font-medium">{newBeerData.breweryName}</span>
-                    </div>
-                    <Button variant="ghost" size="sm" className="h-7 text-xs" onClick={() => setNewBeerData(p => ({ ...p, breweryId: "", breweryName: "" }))}>Cambia</Button>
-                  </div>
-                ) : (
-                  <div className="space-y-2 mt-1">
-                    <div className="relative">
-                      <Search className="absolute left-2.5 top-2.5 h-3.5 w-3.5 text-gray-400" />
-                      <Input value={brewerySearchTerm} onChange={e => setBrewerySearchTerm(e.target.value)} placeholder="Cerca birrificio…" className="h-9 pl-8 text-sm" />
-                    </div>
-                    {Array.isArray(breweryResults) && breweryResults.length > 0 && (
-                      <div className="max-h-32 overflow-y-auto border rounded-lg bg-white dark:bg-gray-900">
-                        {(breweryResults as any[]).map((b: any) => (
-                          <div key={b.id} className="p-2 hover:bg-gray-50 dark:hover:bg-gray-800 cursor-pointer border-b last:border-b-0 text-sm"
-                            onClick={() => { setNewBeerData(p => ({ ...p, breweryId: b.id.toString(), breweryName: b.name })); setBrewerySearchTerm(""); }}>
-                            <span className="font-medium">{b.name}</span>
-                            <span className="text-gray-500 ml-1">· {b.location}</span>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                    {debouncedBrewerySearch.length >= 2 && Array.isArray(breweryResults) && (breweryResults as any[]).length === 0 && (
-                      <Button type="button" variant="outline" size="sm" className="w-full text-xs"
-                        onClick={() => { setCreatingBrewery(true); setNewBreweryData(p => ({ ...p, name: brewerySearchTerm })); }}>
-                        <Plus className="w-3 h-3 mr-1" />Crea "{brewerySearchTerm}"
-                      </Button>
-                    )}
-                  </div>
-                )}
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                <div className="relative">
-                  <Label className="text-xs">Stile *</Label>
-                  <Input
-                    value={styleDropdownOpen ? styleSearchTerm : newBeerData.style}
-                    onChange={e => { setStyleSearchTerm(e.target.value); setNewBeerData(p => ({ ...p, style: e.target.value })); setStyleDropdownOpen(true); }}
-                    onFocus={() => { setStyleSearchTerm(newBeerData.style); setStyleDropdownOpen(true); }}
-                    onBlur={() => setTimeout(() => setStyleDropdownOpen(false), 200)}
-                    placeholder="Es. IPA" className="h-9" autoComplete="off"
-                  />
-                  {styleDropdownOpen && filteredStyles.length > 0 && (
-                    <div className="absolute z-50 w-full mt-1 max-h-40 overflow-y-auto border rounded-lg bg-white dark:bg-gray-900 shadow-lg">
-                      {filteredStyles.slice(0, 15).map(style => (
-                        <div key={style} className="px-3 py-1.5 text-sm hover:bg-amber-50 dark:hover:bg-amber-900/20 cursor-pointer"
-                          onMouseDown={e => { e.preventDefault(); setNewBeerData(p => ({ ...p, style })); setStyleSearchTerm(style); setStyleDropdownOpen(false); }}>
-                          {style}
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-                <div>
-                  <Label className="text-xs">ABV %</Label>
-                  <Input type="number" step="0.1" min="0" max="30" value={newBeerData.abv} onChange={e => setNewBeerData(p => ({ ...p, abv: e.target.value }))} placeholder="5.5" className="h-9" />
-                </div>
-              </div>
-
-              <div>
-                <Label className="text-xs">Descrizione</Label>
-                <Textarea value={newBeerData.description} onChange={e => setNewBeerData(p => ({ ...p, description: e.target.value }))} placeholder="Aromi, sapore…" className="min-h-[50px] text-sm" />
-              </div>
-
-              <div className="flex items-center gap-4 text-xs">
-                <label className="flex items-center gap-2 cursor-pointer">
-                  <input type="checkbox" checked={newBeerData.isGlutenFree} onChange={e => setNewBeerData(p => ({ ...p, isGlutenFree: e.target.checked }))} className="rounded" />
-                  <span className="text-green-700 dark:text-green-400 font-medium">Gluten Free</span>
-                </label>
-                <label className="flex items-center gap-2 cursor-pointer">
-                  <input type="checkbox" checked={newBeerData.isAlcoholFree} onChange={e => setNewBeerData(p => ({ ...p, isAlcoholFree: e.target.checked }))} className="rounded" />
-                  <span className="text-blue-700 dark:text-blue-400 font-medium">0.0% Analcolica</span>
-                </label>
-              </div>
-
-              <div>
-                <Label className="text-xs">Immagine birra</Label>
-                {beerImagePreview ? (
-                  <div className="relative w-16 h-16 mt-1">
-                    <img src={beerImagePreview} alt="Anteprima" className="w-16 h-16 object-cover rounded-lg border" />
-                    <button type="button" onClick={() => { setBeerImageFile(null); setBeerImagePreview(""); }}
-                      className="absolute -top-1.5 -right-1.5 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center">
-                      <X className="h-3 w-3" />
-                    </button>
-                  </div>
-                ) : (
-                  <label className="flex items-center gap-2 mt-1 px-3 py-2 border border-dashed rounded-lg cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800">
-                    <ImagePlus className="h-4 w-4 text-gray-400" />
-                    <span className="text-xs text-gray-500">Carica immagine</span>
-                    <input type="file" accept="image/*" className="hidden" onChange={e => {
-                      const f = e.target.files?.[0];
-                      if (f) { setBeerImageFile(f); const r = new FileReader(); r.onload = ev => setBeerImagePreview(ev.target?.result as string); r.readAsDataURL(f); }
-                    }} />
-                  </label>
-                )}
-              </div>
-
-              <div className="flex justify-end gap-2 pt-1">
-                <Button variant="outline" size="sm" onClick={() => setCreatingBeer(false)}>Annulla</Button>
-                <Button size="sm"
-                  disabled={!newBeerData.name || !newBeerData.breweryId || !newBeerData.style || createBeerMutation.isPending || uploadingBeerImage}
-                  onClick={() => createBeerMutation.mutate(newBeerData)}>
-                  {(createBeerMutation.isPending || uploadingBeerImage) ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : <Plus className="h-4 w-4 mr-1" />}
-                  {uploadingBeerImage ? "Caricamento…" : "Crea birra"}
-                </Button>
-              </div>
+          {/* Tipo erogazione */}
+          <div>
+            <Label className="text-xs mb-1 block">Tipo erogazione</Label>
+            <div className="flex gap-2">
+              <button type="button" onClick={() => setForm(f => ({ ...f, tapType: "spina" }))}
+                className={`flex-1 py-1.5 px-3 rounded-lg border text-sm font-medium transition-colors ${form.tapType === "spina" ? "bg-amber-500 border-amber-500 text-white" : "border-gray-200 text-gray-600 hover:border-amber-300"}`}>
+                🍺 In spina
+              </button>
+              <button type="button" onClick={() => setForm(f => ({ ...f, tapType: "pompa" }))}
+                className={`flex-1 py-1.5 px-3 rounded-lg border text-sm font-medium transition-colors ${form.tapType === "pompa" ? "bg-amber-500 border-amber-500 text-white" : "border-gray-200 text-gray-600 hover:border-amber-300"}`}>
+                🍵 In pompa
+              </button>
             </div>
-          )}
+          </div>
 
-          {/* ── Create brewery form ── */}
-          {creatingBrewery && (
-            <div className="border rounded-xl p-4 bg-blue-50/50 dark:bg-blue-900/10 space-y-3">
-              <div className="flex items-center gap-2">
-                <Button variant="ghost" size="sm" className="h-7 w-7 p-0" onClick={() => setCreatingBrewery(false)}>
-                  <ArrowLeft className="h-4 w-4" />
-                </Button>
-                <h4 className="font-semibold text-sm">Crea nuovo birrificio</h4>
-              </div>
-              <div>
-                <Label className="text-xs">Nome *</Label>
-                <Input value={newBreweryData.name} onChange={e => setNewBreweryData(p => ({ ...p, name: e.target.value }))} placeholder="Es. Birrificio Artigianale XYZ" className="h-9" />
-              </div>
-              <div>
-                <Label className="text-xs">Località *</Label>
-                <AddressAutocomplete
-                  value={newBreweryData.location}
-                  onAddressSelect={d => setNewBreweryData(p => ({ ...p, location: d.formattedAddress || d.city || "", region: d.region || "" }))}
-                  placeholder="Cerca località…"
-                  countryRestriction={null}
-                />
-              </div>
-              <div>
-                <Label className="text-xs">Descrizione</Label>
-                <Textarea value={newBreweryData.description} onChange={e => setNewBreweryData(p => ({ ...p, description: e.target.value }))} placeholder="Breve descrizione…" className="min-h-[50px] text-sm" />
-              </div>
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <Label className="text-xs">Logo</Label>
-                  {breweryLogoPreview ? (
-                    <div className="relative w-14 h-14 mt-1">
-                      <img src={breweryLogoPreview} alt="Logo" className="w-14 h-14 object-cover rounded-lg border" />
-                      <button type="button" onClick={() => { setBreweryLogoFile(null); setBreweryLogoPreview(""); }}
-                        className="absolute -top-1.5 -right-1.5 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center">
-                        <X className="h-3 w-3" />
-                      </button>
-                    </div>
-                  ) : (
-                    <label className="flex items-center gap-2 mt-1 px-3 py-2 border border-dashed rounded-lg cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800">
-                      <ImagePlus className="h-4 w-4 text-gray-400" />
-                      <span className="text-xs text-gray-500">Logo</span>
-                      <input type="file" accept="image/*" className="hidden" onChange={e => {
-                        const f = e.target.files?.[0];
-                        if (f) { setBreweryLogoFile(f); const r = new FileReader(); r.onload = ev => setBreweryLogoPreview(ev.target?.result as string); r.readAsDataURL(f); }
-                      }} />
-                    </label>
-                  )}
-                </div>
-                <div>
-                  <Label className="text-xs">Copertina</Label>
-                  {breweryCoverPreview ? (
-                    <div className="relative w-full h-14 mt-1">
-                      <img src={breweryCoverPreview} alt="Cover" className="w-full h-14 object-cover rounded-lg border" />
-                      <button type="button" onClick={() => { setBreweryCoverFile(null); setBreweryCoverPreview(""); }}
-                        className="absolute -top-1.5 -right-1.5 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center">
-                        <X className="h-3 w-3" />
-                      </button>
-                    </div>
-                  ) : (
-                    <label className="flex items-center gap-2 mt-1 px-3 py-2 border border-dashed rounded-lg cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800">
-                      <ImagePlus className="h-4 w-4 text-gray-400" />
-                      <span className="text-xs text-gray-500">Copertina</span>
-                      <input type="file" accept="image/*" className="hidden" onChange={e => {
-                        const f = e.target.files?.[0];
-                        if (f) { setBreweryCoverFile(f); const r = new FileReader(); r.onload = ev => setBreweryCoverPreview(ev.target?.result as string); r.readAsDataURL(f); }
-                      }} />
-                    </label>
-                  )}
-                </div>
-              </div>
-              <div className="flex justify-end gap-2 pt-1">
-                <Button variant="outline" size="sm" onClick={() => setCreatingBrewery(false)}>Annulla</Button>
-                <Button size="sm"
-                  disabled={!newBreweryData.name || !newBreweryData.location || createBreweryMutation.isPending || uploadingBreweryImages}
-                  onClick={() => createBreweryMutation.mutate(newBreweryData)}>
-                  {(createBreweryMutation.isPending || uploadingBreweryImages) ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : null}
-                  Crea birrificio
-                </Button>
-              </div>
-            </div>
-          )}
+          {/* Prices */}
+          <PriceRowsEditor rows={priceRows} onChange={setPriceRows} />
 
-          {/* ── Manual / extra tap fields ── */}
-          {!creatingBeer && !creatingBrewery && (
-            <>
-              <Separator />
-              {!selectedBeer && (
-                <>
-                  <div>
-                    <Label className="text-xs">Nome birra</Label>
-                    <Input className="mt-1 h-9" value={form.customBeerName} placeholder="Es. Hazy IPA"
-                      onChange={e => setForm(f => ({ ...f, customBeerName: e.target.value }))}
-                    />
-                  </div>
-                  <div>
-                    <Label className="text-xs">Birrificio</Label>
-                    <Input className="mt-1 h-9" value={form.customBreweryName} placeholder="Es. Birrificio Pinco"
-                      onChange={e => setForm(f => ({ ...f, customBreweryName: e.target.value }))}
-                    />
-                  </div>
-                </>
-              )}
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <Label className="text-xs">Stile</Label>
-                  <Input className="mt-1 h-9" value={form.style} onChange={e => setForm(f => ({ ...f, style: e.target.value }))} placeholder={selectedBeer?.style || "Es. IPA"} />
-                </div>
-                <div>
-                  <Label className="text-xs">ABV %</Label>
-                  <Input className="mt-1 h-9" value={form.abv} onChange={e => setForm(f => ({ ...f, abv: e.target.value }))} placeholder={selectedBeer?.abv || "Es. 6.2"} />
-                </div>
-              </div>
-              <div>
-                <Label className="text-xs">Note</Label>
-                <Textarea className="mt-1" value={form.notes} onChange={e => setForm(f => ({ ...f, notes: e.target.value }))} placeholder="Note aggiuntive…" rows={2} />
-              </div>
-              <div>
-                <Label className="text-xs mb-1 block">Tipo erogazione</Label>
-                <div className="flex gap-2">
-                  <button
-                    type="button"
-                    onClick={() => setForm(f => ({ ...f, tapType: "spina" }))}
-                    className={`flex-1 py-1.5 px-3 rounded-lg border text-sm font-medium transition-colors ${form.tapType === "spina" ? "bg-amber-500 border-amber-500 text-white" : "border-gray-200 text-gray-600 hover:border-amber-300"}`}
-                  >
-                    🍺 In spina
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setForm(f => ({ ...f, tapType: "pompa" }))}
-                    className={`flex-1 py-1.5 px-3 rounded-lg border text-sm font-medium transition-colors ${form.tapType === "pompa" ? "bg-amber-500 border-amber-500 text-white" : "border-gray-200 text-gray-600 hover:border-amber-300"}`}
-                  >
-                    🍵 In pompa
-                  </button>
-                </div>
-              </div>
-              <div className="flex items-center gap-3">
-                <Switch checked={form.isAvailable} onCheckedChange={v => setForm(f => ({ ...f, isAvailable: v }))} />
-                <Label className="text-sm">{form.isAvailable ? "Disponibile" : "Non disponibile / Finita"}</Label>
-              </div>
-            </>
-          )}
+          {/* Disponibilità */}
+          <div className="flex items-center gap-3">
+            <Switch checked={form.isAvailable} onCheckedChange={v => setForm(f => ({ ...f, isAvailable: v }))} />
+            <Label className="text-sm">{form.isAvailable ? "Disponibile" : "Non disponibile / Finita"}</Label>
+          </div>
         </div>
 
-        {!creatingBeer && !creatingBrewery && (
-          <div className="flex gap-2 justify-end mt-4 pt-2 border-t">
-            <Button variant="outline" onClick={onClose}>Annulla</Button>
-            <Button className="bg-amber-500 hover:bg-amber-600 text-white" onClick={() => saveMutation.mutate()} disabled={saveMutation.isPending}>
-              {saveMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : "Salva spina"}
-            </Button>
-          </div>
-        )}
+        <div className="flex gap-2 justify-end mt-4 pt-2 border-t">
+          <Button variant="outline" onClick={onClose}>Annulla</Button>
+          <Button className="bg-amber-500 hover:bg-amber-600 text-white" onClick={() => saveMutation.mutate()} disabled={saveMutation.isPending}>
+            {saveMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : "Salva spina"}
+          </Button>
+        </div>
       </DialogContent>
     </Dialog>
   );
 }
+
 
 // ─── Create festival dialog ──────────────────────────────────────────────────
 function FestivalForm({
@@ -1360,7 +1088,6 @@ export default function FestivalDashboard() {
   const [showQR, setShowQR] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [editingTap, setEditingTap] = useState<{ tapNumber: number; existing?: FestivalTap } | null>(null);
-  const [bulkCount, setBulkCount] = useState("20");
   const [activeTab, setActiveTab] = useState("taps");
 
   // List of managed festivals
@@ -1398,14 +1125,14 @@ export default function FestivalDashboard() {
     onError: () => toast({ title: "Errore", variant: "destructive" }),
   });
 
-  // Bulk create taps
-  const bulkMutation = useMutation({
-    mutationFn: () => apiRequest(`/api/admin/festivals/${festId}/taps/bulk`, { method: "POST" }, { count: parseInt(bulkCount) }),
+  // Delete tap
+  const deleteTapMutation = useMutation({
+    mutationFn: (tap: FestivalTap) => apiRequest(`/api/admin/festivals/${festId}/taps/${tap.id}`, { method: "DELETE" }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/admin/festivals", festId, "taps"] });
-      toast({ title: `${bulkCount} spine create` });
+      toast({ title: "Spina eliminata" });
     },
-    onError: () => toast({ title: "Errore", variant: "destructive" }),
+    onError: () => toast({ title: "Errore nell'eliminazione", variant: "destructive" }),
   });
 
   // Update festival info
@@ -1708,17 +1435,9 @@ export default function FestivalDashboard() {
                         <CardContent className="py-8 text-center space-y-3">
                           <Beer className="h-8 w-8 text-gray-300 mx-auto" />
                           <p className="text-gray-500">Nessuna spina configurata</p>
-                          <div className="flex items-center justify-center gap-2">
-                            <Input
-                              type="number" value={bulkCount} min="1" max="200"
-                              onChange={e => setBulkCount(e.target.value)}
-                              className="w-20 text-center"
-                            />
-                            <Button onClick={() => bulkMutation.mutate()} disabled={bulkMutation.isPending}>
-                              {bulkMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4 mr-1" />}
-                              Crea {bulkCount} spine
-                            </Button>
-                          </div>
+                          <Button onClick={() => setEditingTap({ tapNumber: 1 })}>
+                            <Plus className="h-4 w-4 mr-1" />Aggiungi prima spina
+                          </Button>
                         </CardContent>
                       </Card>
                     ) : (
@@ -1733,15 +1452,14 @@ export default function FestivalDashboard() {
                         </div>
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                           {taps.map(tap => (
-                            <div key={tap.id} className="relative group">
-                              <TapRow tap={tap} festivalId={festId!} onToggle={t => toggleMutation.mutate(t)} />
-                              <button
-                                onClick={() => setEditingTap({ tapNumber: tap.tapNumber, existing: tap })}
-                                className="absolute top-2 right-10 opacity-0 group-hover:opacity-100 transition-opacity p-1 rounded text-gray-400 hover:text-amber-600"
-                              >
-                                <Pencil className="h-3.5 w-3.5" />
-                              </button>
-                            </div>
+                            <TapRow
+                              key={tap.id}
+                              tap={tap}
+                              festivalId={festId!}
+                              onToggle={t => toggleMutation.mutate(t)}
+                              onDelete={t => deleteTapMutation.mutate(t)}
+                              onEdit={t => setEditingTap({ tapNumber: t.tapNumber, existing: t })}
+                            />
                           ))}
                         </div>
                       </>
