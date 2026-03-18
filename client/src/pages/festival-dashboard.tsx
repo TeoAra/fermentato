@@ -1131,14 +1131,11 @@ export default function FestivalDashboard() {
   const selectedFest = festList.find(f => f.id === selectedFestId) ?? festList[0] ?? null;
   const festId = selectedFest?.id ?? null;
 
-  // Taps for selected festival
+  // Taps for selected festival (uses admin endpoint to bypass isActive requirement)
   const { data: taps = [], isLoading: tapsLoading } = useQuery<FestivalTap[]>({
     queryKey: ["/api/admin/festivals", festId, "taps"],
-    queryFn: async () => {
-      const data = await fetch(`/api/festivals/${selectedFest!.slug}`, { credentials: "include" }).then(r => r.json());
-      return data.taps || [];
-    },
-    enabled: !!selectedFest,
+    queryFn: () => apiRequest(`/api/admin/festivals/${festId}/taps`),
+    enabled: !!festId,
   });
 
   // Stats

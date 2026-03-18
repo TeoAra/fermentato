@@ -378,6 +378,49 @@ export function registerFestivalRoutes(app: Express) {
   app.patch("/api/admin/festivals/:id", isAuthenticated as any, handleUpdateFestival);
   app.put("/api/admin/festivals/:id", isAuthenticated as any, handleUpdateFestival);
 
+  // ── Manager: list taps (bypasses isActive check for dashboard) ───────────────
+  app.get("/api/admin/festivals/:id/taps", isAuthenticated as any, async (req: any, res) => {
+    try {
+      const festId = parseInt(req.params.id);
+      const [fest] = await db.select().from(festivals).where(eq(festivals.id, festId)).limit(1);
+      if (!fest || !canManageFestival(req, fest)) return res.status(403).json({ message: "Non autorizzato" });
+      const rows = await db.select({
+        id: festivalTaps.id,
+        tapNumber: festivalTaps.tapNumber,
+        beerId: festivalTaps.beerId,
+        customBeerName: festivalTaps.customBeerName,
+        customBreweryName: festivalTaps.customBreweryName,
+        style: festivalTaps.style,
+        abv: festivalTaps.abv,
+        notes: festivalTaps.notes,
+        isAvailable: festivalTaps.isAvailable,
+        tapType: festivalTaps.tapType,
+        beerName: beers.name,
+        beerStyle: beers.style,
+        beerAbv: beers.abv,
+        beerImageUrl: beers.imageUrl,
+        breweryName: breweries.name,
+      })
+      .from(festivalTaps)
+      .leftJoin(beers, eq(festivalTaps.beerId, beers.id))
+      .leftJoin(breweries, eq(beers.breweryId, breweries.id))
+      .where(eq(festivalTaps.festivalId, festId))
+      .orderBy(festivalTaps.tapNumber);
+
+      // Fetch prices via raw SQL (jsonb column added via migration)
+      const tapsWithPrices = await Promise.all(rows.map(async (tap) => {
+        try {
+          const priceRes = await pool.query("SELECT prices FROM festival_taps WHERE id = $1", [tap.id]);
+          return { ...tap, prices: priceRes.rows[0]?.prices ?? null };
+        } catch { return { ...tap, prices: null }; }
+      }));
+      res.json(tapsWithPrices);
+    } catch (err) {
+      console.error("Error fetching admin taps:", err);
+      res.status(500).json({ message: "Errore nel caricamento spine" });
+    }
+  });
+
   // ── Manager: upsert tap ──────────────────────────────────────────────────────
   app.put("/api/admin/festivals/:id/taps/:tapNumber", isAuthenticated as any, async (req: any, res) => {
     try {
