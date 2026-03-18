@@ -11,7 +11,7 @@ import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { queryClient, apiRequest } from "@/lib/queryClient";
-import { Beer, Eye, EyeOff, Mail, Lock, User, Store, Phone, Factory, Plus, Search, MailCheck, RefreshCw, CheckCircle2, CheckCircle, XCircle, AlertTriangle, Check, X } from "lucide-react";
+import { Beer, Eye, EyeOff, Mail, Lock, User, Store, Phone, Factory, Plus, Search, MailCheck, RefreshCw, CheckCircle2, CheckCircle, XCircle, AlertTriangle, Check, X, QrCode } from "lucide-react";
 import { SiGoogle } from "react-icons/si";
 import { AddressAutocomplete } from "@/components/AddressAutocomplete";
 import ReCAPTCHA from "react-google-recaptcha";
@@ -98,6 +98,13 @@ export default function AuthPage() {
 
   const verifiedParam = typeof window !== "undefined" ? new URLSearchParams(window.location.search).get("verified") : null;
   const verifiedEmailParam = typeof window !== "undefined" ? new URLSearchParams(window.location.search).get("email") : null;
+  const tabParam = typeof window !== "undefined" ? new URLSearchParams(window.location.search).get("tab") : null;
+  const returnToParam = typeof window !== "undefined" ? new URLSearchParams(window.location.search).get("returnTo") : null;
+
+  // Auto-select tab from URL
+  useEffect(() => {
+    if (tabParam === "register") setActiveTab("register");
+  }, [tabParam]);
 
   const [nicknameAvailable, setNicknameAvailable] = useState<boolean | null>(null);
   const [nicknameChecking, setNicknameChecking] = useState(false);
@@ -163,7 +170,7 @@ export default function AuthPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
       toast({ title: "Benvenuto!", description: "Login effettuato con successo" });
-      setLocation("/");
+      setLocation(returnToParam || "/");
     },
     onError: (error: any) => {
       if (error.emailNotVerified) {
@@ -187,7 +194,7 @@ export default function AuthPage() {
       if (data?.pendingVerification) { setPendingVerificationEmail(data.email); return; }
       queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
       toast({ title: "Registrazione completata!", description: "Benvenuto su Fermenta.to" });
-      setLocation("/");
+      setLocation(returnToParam || "/");
     },
     onError: (error: any) => {
       registerRecaptchaRef.current?.reset();
@@ -303,7 +310,7 @@ export default function AuthPage() {
           </div>
 
           {/* Tab switcher */}
-          <div className="mb-8">
+          <div className="mb-6">
             <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-5">
               {activeTab === "login" ? "Bentornato" : "Crea un account"}
             </h1>
@@ -323,6 +330,21 @@ export default function AuthPage() {
               ))}
             </div>
           </div>
+
+          {/* Festival Mode callout */}
+          <a
+            href="/crea-festival"
+            className="flex items-center gap-3 mb-6 p-3 rounded-xl bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 hover:bg-amber-100 dark:hover:bg-amber-900/40 transition-colors group"
+          >
+            <div className="w-9 h-9 rounded-lg bg-amber-500 flex items-center justify-center flex-shrink-0">
+              <QrCode className="w-4.5 h-4.5 text-white" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-semibold text-amber-800 dark:text-amber-200 leading-tight">Festival Mode</p>
+              <p className="text-xs text-amber-600 dark:text-amber-400 mt-0.5">Taplist QR digitale per il tuo festival · €50</p>
+            </div>
+            <span className="text-amber-400 group-hover:translate-x-0.5 transition-transform text-xs font-medium">→</span>
+          </a>
 
           {/* ── LOGIN FORM ── */}
           {activeTab === "login" && (

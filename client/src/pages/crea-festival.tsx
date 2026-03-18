@@ -252,7 +252,7 @@ export default function CreaFestival() {
 
   const handleStartCreate = () => {
     if (!isAuthenticated) {
-      window.location.href = `/api/login?returnTo=${encodeURIComponent("/crea-festival?open=1")}`;
+      navigate(`/login?tab=register&returnTo=${encodeURIComponent("/crea-festival?open=1")}`);
       return;
     }
     setShowForm(true);
