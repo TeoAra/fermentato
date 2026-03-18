@@ -259,12 +259,12 @@ export interface IStorage {
 
   // Favorites operations
   getUserFavorites(userId: string): Promise<any[]>;
-  getFavoritesByType(userId: string, itemType: 'pub' | 'brewery' | 'beer'): Promise<Favorite[]>;
-  getFavoritesCount(itemType: 'pub' | 'brewery' | 'beer', itemId: number): Promise<number>;
+  getFavoritesByType(userId: string, itemType: 'pub' | 'brewery' | 'beer' | 'festival'): Promise<Favorite[]>;
+  getFavoritesCount(itemType: 'pub' | 'brewery' | 'beer' | 'festival', itemId: number): Promise<number>;
   addFavorite(favorite: InsertFavorite): Promise<Favorite>;
-  removeFavorite(userId: string, itemType: 'pub' | 'brewery' | 'beer', itemId: number): Promise<void>;
+  removeFavorite(userId: string, itemType: 'pub' | 'brewery' | 'beer' | 'festival', itemId: number): Promise<void>;
   removeFavoriteById(userId: string, favoriteId: number): Promise<void>;
-  isFavorite(userId: string, itemType: 'pub' | 'brewery' | 'beer', itemId: number): Promise<boolean>;
+  isFavorite(userId: string, itemType: 'pub' | 'brewery' | 'beer' | 'festival', itemId: number): Promise<boolean>;
 
   // User activities operations
   getUserActivities(userId: string, limit?: number): Promise<UserActivity[]>;
@@ -1014,7 +1014,7 @@ export class DatabaseStorage implements IStorage {
     return enrichedFavorites;
   }
 
-  async getFavoritesByType(userId: string, itemType: 'pub' | 'brewery' | 'beer'): Promise<Favorite[]> {
+  async getFavoritesByType(userId: string, itemType: 'pub' | 'brewery' | 'beer' | 'festival'): Promise<Favorite[]> {
     return await db
       .select()
       .from(favorites)
@@ -1053,7 +1053,7 @@ export class DatabaseStorage implements IStorage {
     return existing;
   }
 
-  async removeFavorite(userId: string, itemType: 'pub' | 'brewery' | 'beer', itemId: number): Promise<void> {
+  async removeFavorite(userId: string, itemType: 'pub' | 'brewery' | 'beer' | 'festival', itemId: number): Promise<void> {
     await db
       .delete(favorites)
       .where(
@@ -1065,7 +1065,7 @@ export class DatabaseStorage implements IStorage {
       );
   }
 
-  async isFavorite(userId: string, itemType: 'pub' | 'brewery' | 'beer', itemId: number): Promise<boolean> {
+  async isFavorite(userId: string, itemType: 'pub' | 'brewery' | 'beer' | 'festival', itemId: number): Promise<boolean> {
     const [favorite] = await db
       .select()
       .from(favorites)
@@ -1088,7 +1088,7 @@ export class DatabaseStorage implements IStorage {
     );
   }
 
-  async getFavoritesCount(itemType: 'pub' | 'brewery' | 'beer', itemId: number): Promise<number> {
+  async getFavoritesCount(itemType: 'pub' | 'brewery' | 'beer' | 'festival', itemId: number): Promise<number> {
     const result = await db
       .select({ count: sql<number>`count(*)` })
       .from(favorites)
@@ -2109,7 +2109,7 @@ class StorageWrapper implements IStorage {
     );
   }
 
-  async removeFavorite(userId: string, itemType: 'pub' | 'brewery' | 'beer', itemId: number): Promise<void> {
+  async removeFavorite(userId: string, itemType: 'pub' | 'brewery' | 'beer' | 'festival', itemId: number): Promise<void> {
     return this.dbCall(
       () => this.databaseStorage.removeFavorite(userId, itemType, itemId),
       async () => { }
@@ -2123,14 +2123,14 @@ class StorageWrapper implements IStorage {
     );
   }
 
-  async isFavorite(userId: string, itemType: 'pub' | 'brewery' | 'beer', itemId: number): Promise<boolean> {
+  async isFavorite(userId: string, itemType: 'pub' | 'brewery' | 'beer' | 'festival', itemId: number): Promise<boolean> {
     return this.dbCall(
       () => this.databaseStorage.isFavorite(userId, itemType, itemId),
       async () => { return false; }
     );
   }
 
-  async getFavoritesCount(itemType: 'pub' | 'brewery' | 'beer', itemId: number): Promise<number> {
+  async getFavoritesCount(itemType: 'pub' | 'brewery' | 'beer' | 'festival', itemId: number): Promise<number> {
     return this.dbCall(
       () => this.databaseStorage.getFavoritesCount(itemType, itemId),
       async () => { return 0; }
@@ -2235,7 +2235,7 @@ class StorageWrapper implements IStorage {
     );
   }
 
-  async getFavoritesByType(userId: string, itemType: 'pub' | 'brewery' | 'beer'): Promise<Favorite[]> {
+  async getFavoritesByType(userId: string, itemType: 'pub' | 'brewery' | 'beer' | 'festival'): Promise<Favorite[]> {
     return this.dbCall(
       () => this.databaseStorage.getFavoritesByType(userId, itemType),
       async () => { return []; }

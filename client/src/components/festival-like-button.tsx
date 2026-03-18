@@ -31,7 +31,7 @@ export function FestivalLikeButton({ festivalId, className, size = "sm", showLab
     staleTime: 0,
   });
 
-  const { data: countData } = useQuery<{ count: number }>({
+  const { data: countData } = useQuery<{ count: number | string }>({
     queryKey: countKey,
     queryFn: async () => {
       const r = await fetch(`/api/favorites/festival/${festivalId}/count`);
@@ -42,7 +42,7 @@ export function FestivalLikeButton({ festivalId, className, size = "sm", showLab
   });
 
   const liked = checkData?.isFavorite ?? false;
-  const count = countData?.count ?? 0;
+  const count = Number(countData?.count ?? 0);
 
   const toggleMutation = useMutation({
     mutationFn: async (currentlyLiked: boolean) => {
@@ -57,17 +57,25 @@ export function FestivalLikeButton({ festivalId, className, size = "sm", showLab
       await queryClient.cancelQueries({ queryKey: countKey });
 
       const prevCheck = queryClient.getQueryData<{ isFavorite: boolean }>(checkKey);
-      const prevCount = queryClient.getQueryData<{ count: number }>(countKey);
+      const prevCount = queryClient.getQueryData<{ count: number | string }>(countKey);
 
       queryClient.setQueryData(checkKey, { isFavorite: !currentlyLiked });
-      queryClient.setQueryData(countKey, { count: (prevCount?.count ?? 0) + (currentlyLiked ? -1 : 1) });
+      queryClient.setQueryData(countKey, { count: (Number(prevCount?.count) || 0) + (currentlyLiked ? -1 : 1) });
 
       return { prevCheck, prevCount };
     },
-    onError: (_err, _vars, context) => {
+    onError: (err: any, _vars, context) => {
       if (context?.prevCheck !== undefined) queryClient.setQueryData(checkKey, context.prevCheck);
       if (context?.prevCount !== undefined) queryClient.setQueryData(countKey, context.prevCount);
-      toast({ title: "Errore", description: "Riprova tra poco.", variant: "destructive" });
+
+      if (err?.status === 401 || err?.message?.includes("401") || err?.message?.includes("Unauthorized") || err?.message?.includes("autenticato")) {
+        toast({
+          title: "Accedi per mettere Mi Piace",
+          description: "Effettua il login per salvare i festival preferiti.",
+        });
+      } else {
+        toast({ title: "Errore", description: "Riprova tra poco.", variant: "destructive" });
+      }
     },
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: checkKey });

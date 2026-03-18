@@ -5,12 +5,14 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { HelmetProvider } from "react-helmet-async";
 import { useAuth } from "@/hooks/useAuth";
-import { useState, useEffect, Component, ReactNode } from "react";
+import { useState, useEffect, Component, ReactNode, lazy, Suspense } from "react";
 import { initGA } from "./lib/analytics";
 import { useAnalytics } from "./hooks/use-analytics";
 import { usePushBadge } from "@/hooks/use-push-badge";
 import Header from "@/components/header";
 import { PwaInstallPrompt, PushNotificationPrompt, AutoPushSubscriber } from "@/components/pwa-prompt";
+
+const BeerDetailLazy = lazy(() => import("@/pages/beer-detail"));
 
 class RouteErrorBoundary extends Component<{ children: ReactNode }, { hasError: boolean; error: Error | null }> {
   constructor(props: { children: ReactNode }) {
@@ -78,7 +80,6 @@ import Landing from "@/pages/landing";
 import Home from "@/pages/home";
 import PubDetail from "@/pages/pub-detail";
 import BreweryDetail from "@/pages/brewery-detail";
-import BeerDetail from "@/pages/beer-detail";
 import PubDashboard from "@/pages/pub-dashboard";
 import SmartPubDashboard from "@/pages/smart-pub-dashboard";
 import PubRegistration from "@/pages/pub-registration";
@@ -168,7 +169,13 @@ function Router() {
           <Route path="/demo-login" component={DemoLoginPage} />
           <Route path="/pub/:id" component={PubDetail} />
           <Route path="/brewery/:id" component={BreweryDetail} />
-          <Route path="/beer/:id" component={BeerDetail} />
+          <Route path="/beer/:id">
+            {() => (
+              <Suspense fallback={<div className="min-h-screen flex items-center justify-center"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-amber-500" /></div>}>
+                <BeerDetailLazy />
+              </Suspense>
+            )}
+          </Route>
           <Route path="/explore/pubs" component={ExplorePubs} />
           <Route path="/explore/breweries" component={ExploreBreweries} />
           <Route path="/explore/beers" component={ExploreBeers} />

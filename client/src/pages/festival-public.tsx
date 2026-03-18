@@ -308,16 +308,6 @@ function TapCard({ tap, slug, isAuth, isManager, useTokens, tokenName }: {
             </div>
           )}
 
-          {/* Prices (multiple sizes) */}
-          {hasPrices && (
-            <div className="mb-3 flex flex-wrap gap-x-3 gap-y-1">
-              {Object.entries(tap.prices!).map(([size, price]) => (
-                <span key={size} className="text-sm text-gray-600 dark:text-gray-300">
-                  {size} <span className="font-bold text-amber-600">{formatPrice(price, useTokens, tokenName)}</span>
-                </span>
-              ))}
-            </div>
-          )}
 
           {/* Rating */}
           {isAuth ? (

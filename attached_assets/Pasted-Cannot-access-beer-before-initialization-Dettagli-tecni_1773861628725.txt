@@ -1,0 +1,14 @@
+Cannot access 'beer' before initialization
+
+Dettagli tecnici
+ReferenceError: Cannot access 'beer' before initialization
+    at BeerDetail (https://a6edd2f3-686d-4141-9e3a-b24bcd86da12-00-2439azj7gzddv.picard.replit.dev/src/pages/beer-detail.tsx:159:7)
+    at renderWithHooks (https://a6edd2f3-686d-4141-9e3a-b24bcd86da12-00-2439azj7gzddv.picard.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-RPCDYKBN.js?v=66bdff5f:11548:26)
+    at mountIndeterminateComponent (https://a6edd2f3-686d-4141-9e3a-b24bcd86da12-00-2439azj7gzddv.picard.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-RPCDYKBN.js?v=66bdff5f:14926:21)
+    at beginWork (https://a6edd2f3-686d-4141-9e3a-b24bcd86da12-00-2439azj7gzddv.picard.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-RPCDYKBN.js?v=66bdff5f:15914:22)
+    at beginWork$1 (https://a6edd2f3-686d-4141-9e3a-b24bcd86da12-00-2439azj7gzddv.picard.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-RPCDYKBN.js?v=66bdff5f:19753:22)
+    at performUnitOfWork (https://a6edd2f3-686d-4141-9e3a-b24bcd86da12-00-2439azj7gzddv.picard.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-RPCDYKBN.js?v=66bdff5f:19198:20)
+    at workLoopSync (https://a6edd2f3-686d-4141-9e3a-b24bcd86da12-00-2439azj7gzddv.picard.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-RPCDYKBN.js?v=66bdff5f:19137:13)
+    at renderRootSync (https://a6edd2f3-686d-4141-9e3a-b24bcd86da12-00-2439azj7gzddv.picard.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-RPCDYKBN.js?v=66bdff5f:19116:15)
+    at recoverFromConcurrentError (https://a6edd2f3-686d-4141-9e3a-b24bcd86da12-00-2439azj7gzddv.picard.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-RPCDYKBN.js?v=66bdff5f:18736:28)
+    at performSyncWorkOnRoot (https://a6edd2f3-686d-4141-9e3a-b24bcd86da12-00-2439azj7gzddv.picard.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-RPCDYKBN.js?v=66bdff5f:18879:28)
