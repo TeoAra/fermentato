@@ -1,20 +1,53 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useLocation, Link } from "wouter";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Separator } from "@/components/ui/separator";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { ImageUpload } from "@/components/image-upload";
-import { Beer, Loader2, QrCode, ArrowRight, Eye, EyeOff, CheckCircle2 } from "lucide-react";
+import { Beer, Loader2, QrCode, ArrowRight, Eye, EyeOff, CheckCircle2, Mail, Lock, CheckCircle, XCircle, Check, X, MailCheck } from "lucide-react";
 import { AddressAutocomplete } from "@/components/AddressAutocomplete";
+import ReCAPTCHA from "react-google-recaptcha";
 
 const PRICE = 50;
+
+const RECAPTCHA_SITE_KEY = (import.meta.env.VITE_RECAPTCHA_SITE_KEY as string | undefined) ||
+  (import.meta.env.PROD ? "6LcDuIEsAAAAAAPwdAQ2rAKZvA_ae_FmyRlft11z" : undefined);
+
+const PASSWORD_REQUIREMENTS = [
+  { label: "8+ caratteri", test: (p: string) => p.length >= 8 },
+  { label: "Maiuscola", test: (p: string) => /[A-Z]/.test(p) },
+  { label: "Numero", test: (p: string) => /[0-9]/.test(p) },
+  { label: "Spec. (@!#...)", test: (p: string) => /[^A-Za-z0-9]/.test(p) },
+];
+
+const registerSchema = z.object({
+  nickname: z.string()
+    .min(3, "Username: minimo 3 caratteri")
+    .max(30, "Username: massimo 30 caratteri")
+    .regex(/^[a-zA-Z0-9_.]+$/, "Solo lettere, numeri, punti e underscore"),
+  email: z.string().email("Email non valida"),
+  password: z.string()
+    .min(8, "Minimo 8 caratteri")
+    .regex(/[A-Z]/, "Serve almeno una lettera maiuscola")
+    .regex(/[0-9]/, "Serve almeno un numero")
+    .regex(/[^A-Za-z0-9]/, "Serve almeno un carattere speciale (@, #, !, ...)"),
+  confirmPassword: z.string(),
+}).refine((d) => d.password === d.confirmPassword, {
+  message: "Le password non corrispondono",
+  path: ["confirmPassword"],
+});
+type RegisterData = z.infer<typeof registerSchema>;
 
 const suggestSlug = (name: string) =>
   name.toLowerCase().replace(/[^a-z0-9]/g, "-").replace(/-+/g, "-").replace(/^-|-$/g, "");
@@ -47,89 +80,209 @@ function StepAccount({ onDone }: { onDone: () => void }) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [showPass, setShowPass] = useState(false);
-  const [form, setForm] = useState({ nickname: "", email: "", password: "" });
+  const [showConfirmPass, setShowConfirmPass] = useState(false);
+  const [passwordValue, setPasswordValue] = useState("");
+  const [nicknameAvailable, setNicknameAvailable] = useState<boolean | null>(null);
+  const [nicknameChecking, setNicknameChecking] = useState(false);
+  const nicknameTimerRef = useRef<any>(null);
+  const [recaptchaToken, setRecaptchaToken] = useState<string | null>(null);
+  const recaptchaRef = useRef<any>(null);
+  const [pendingVerification, setPendingVerification] = useState<string | null>(null);
+
+  const form = useForm<RegisterData>({
+    resolver: zodResolver(registerSchema),
+    defaultValues: { nickname: "", email: "", password: "", confirmPassword: "" },
+  });
+
+  const checkNickname = useCallback(async (value: string) => {
+    if (!value || value.length < 3) { setNicknameAvailable(null); return; }
+    setNicknameChecking(true);
+    try {
+      const res = await fetch(`/api/auth/check-nickname?nickname=${encodeURIComponent(value)}`, { credentials: "include" });
+      const data = await res.json();
+      setNicknameAvailable(data.available);
+    } catch { setNicknameAvailable(null); }
+    finally { setNicknameChecking(false); }
+  }, []);
+
+  const passReqs = PASSWORD_REQUIREMENTS.map(r => ({ ...r, passed: r.test(passwordValue) }));
+  const passStrength = passReqs.filter(r => r.passed).length;
 
   const registerMutation = useMutation({
-    mutationFn: (data: any) =>
-      apiRequest("/api/auth/register", { method: "POST" }, data),
+    mutationFn: (data: RegisterData) => {
+      const { confirmPassword, ...rest } = data;
+      return apiRequest("/api/auth/register", { method: "POST" }, { ...rest, recaptchaToken });
+    },
     onSuccess: (data: any) => {
       if (data?.pendingVerification) {
-        toast({ title: "Controlla la tua email per verificare l'account, poi torna qui." });
+        setPendingVerification(data.email);
         return;
       }
       queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
       onDone();
     },
-    onError: (err: any) =>
-      toast({ title: err?.message || "Errore nella registrazione", variant: "destructive" }),
+    onError: (err: any) => {
+      recaptchaRef.current?.reset();
+      setRecaptchaToken(null);
+      toast({ title: err?.message || "Errore nella registrazione", variant: "destructive" });
+    },
   });
 
-  return (
-    <div className="space-y-4">
-      <div>
-        <Label htmlFor="nickname">Username *</Label>
-        <Input
-          id="nickname"
-          value={form.nickname}
-          onChange={e => setForm(f => ({ ...f, nickname: e.target.value }))}
-          placeholder="il_tuo_username"
-          autoComplete="username"
-          className="mt-1"
-        />
-      </div>
-      <div>
-        <Label htmlFor="email">Email *</Label>
-        <Input
-          id="email"
-          type="email"
-          value={form.email}
-          onChange={e => setForm(f => ({ ...f, email: e.target.value }))}
-          placeholder="tua@email.it"
-          autoComplete="email"
-          className="mt-1"
-        />
-      </div>
-      <div>
-        <Label htmlFor="password">Password *</Label>
-        <div className="relative mt-1">
-          <Input
-            id="password"
-            type={showPass ? "text" : "password"}
-            value={form.password}
-            onChange={e => setForm(f => ({ ...f, password: e.target.value }))}
-            placeholder="Crea una password sicura"
-            autoComplete="new-password"
-            className="pr-10"
-          />
-          <button
-            type="button"
-            onClick={() => setShowPass(v => !v)}
-            className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
-          >
-            {showPass ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-          </button>
+  if (pendingVerification) {
+    return (
+      <div className="text-center space-y-4 py-6">
+        <div className="w-14 h-14 rounded-full bg-amber-100 flex items-center justify-center mx-auto">
+          <MailCheck className="w-7 h-7 text-amber-600" />
         </div>
+        <h2 className="text-lg font-bold text-gray-900 dark:text-white">Verifica la tua email</h2>
+        <p className="text-sm text-gray-500">
+          Abbiamo inviato un link di conferma a <strong>{pendingVerification}</strong>.<br />
+          Clicca il link nell'email per attivare l'account e tornare qui.
+        </p>
       </div>
+    );
+  }
 
-      <Button
-        className="w-full bg-amber-500 hover:bg-amber-600 text-white font-semibold mt-2"
-        size="lg"
-        disabled={registerMutation.isPending || !form.nickname || !form.email || !form.password}
-        onClick={() => registerMutation.mutate(form)}
-      >
-        {registerMutation.isPending
-          ? <Loader2 className="h-4 w-4 animate-spin mr-2" />
-          : <ArrowRight className="h-4 w-4 mr-2" />}
-        Crea account e continua
-      </Button>
+  return (
+    <Form {...form}>
+      <form onSubmit={form.handleSubmit((data) => registerMutation.mutate(data))} className="space-y-4">
 
-      <p className="text-center text-sm text-gray-500">
-        Hai già un account?{" "}
-        <Link href="/login?returnTo=/registra-festival" className="text-amber-600 hover:underline font-medium">
-          Accedi
-        </Link>
-      </p>
-    </div>
+        {/* Username */}
+        <FormField control={form.control} name="nickname" render={({ field }) => (
+          <FormItem>
+            <FormLabel className="text-sm font-medium">Username</FormLabel>
+            <FormControl>
+              <div className="relative">
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 font-medium text-sm">@</span>
+                <Input {...field} placeholder="il_tuo_username"
+                  className={`pl-7 pr-8 h-11 rounded-xl ${
+                    nicknameAvailable === true ? "border-green-500 focus-visible:ring-green-500" :
+                    nicknameAvailable === false ? "border-red-500 focus-visible:ring-red-500" : ""
+                  }`}
+                  autoComplete="username"
+                  onChange={(e) => {
+                    field.onChange(e);
+                    setNicknameAvailable(null);
+                    if (nicknameTimerRef.current) clearTimeout(nicknameTimerRef.current);
+                    nicknameTimerRef.current = setTimeout(() => checkNickname(e.target.value), 500);
+                  }} />
+                {nicknameChecking && <div className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 border-2 border-amber-400 border-t-transparent rounded-full animate-spin" />}
+                {!nicknameChecking && nicknameAvailable === true && <CheckCircle className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-green-500" />}
+                {!nicknameChecking && nicknameAvailable === false && <XCircle className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-red-500" />}
+              </div>
+            </FormControl>
+            {nicknameAvailable === true && <p className="text-xs text-green-600">Username disponibile!</p>}
+            {nicknameAvailable === false && <p className="text-xs text-red-500">Username già in uso</p>}
+            <FormMessage />
+          </FormItem>
+        )} />
+
+        {/* Email */}
+        <FormField control={form.control} name="email" render={({ field }) => (
+          <FormItem>
+            <FormLabel className="text-sm font-medium">Email</FormLabel>
+            <FormControl>
+              <div className="relative">
+                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                <Input {...field} type="email" placeholder="tu@esempio.it"
+                  className="pl-10 h-11 rounded-xl" autoComplete="email" />
+              </div>
+            </FormControl>
+            <FormMessage />
+          </FormItem>
+        )} />
+
+        {/* Password */}
+        <FormField control={form.control} name="password" render={({ field }) => (
+          <FormItem>
+            <FormLabel className="text-sm font-medium">Password</FormLabel>
+            <FormControl>
+              <div className="relative">
+                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                <Input {...field} type={showPass ? "text" : "password"} placeholder="Crea una password sicura"
+                  className="pl-10 pr-10 h-11 rounded-xl" autoComplete="new-password"
+                  onChange={(e) => { field.onChange(e); setPasswordValue(e.target.value); }} />
+                <button type="button" onClick={() => setShowPass(v => !v)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
+                  {showPass ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                </button>
+              </div>
+            </FormControl>
+            {passwordValue.length > 0 && (
+              <div className="mt-2 space-y-2">
+                <div className="flex gap-1">
+                  {[0, 1, 2, 3].map((i) => (
+                    <div key={i} className={`h-1 flex-1 rounded-full transition-colors ${
+                      i < passStrength
+                        ? passStrength <= 1 ? "bg-red-400"
+                        : passStrength <= 2 ? "bg-orange-400"
+                        : passStrength <= 3 ? "bg-amber-400"
+                        : "bg-green-500"
+                        : "bg-gray-200 dark:bg-gray-700"
+                    }`} />
+                  ))}
+                </div>
+                <div className="flex flex-wrap gap-x-3 gap-y-1">
+                  {passReqs.map((req) => (
+                    <span key={req.label} className={`flex items-center gap-1 text-xs transition-colors ${req.passed ? "text-green-600 dark:text-green-400" : "text-gray-400"}`}>
+                      {req.passed ? <Check className="w-3 h-3" /> : <X className="w-3 h-3" />}
+                      {req.label}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+            <FormMessage />
+          </FormItem>
+        )} />
+
+        {/* Confirm password */}
+        <FormField control={form.control} name="confirmPassword" render={({ field }) => (
+          <FormItem>
+            <FormLabel className="text-sm font-medium">Conferma Password</FormLabel>
+            <FormControl>
+              <div className="relative">
+                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                <Input {...field} type={showConfirmPass ? "text" : "password"} placeholder="Ripeti la password"
+                  className="pl-10 pr-10 h-11 rounded-xl" autoComplete="new-password" />
+                <button type="button" onClick={() => setShowConfirmPass(v => !v)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
+                  {showConfirmPass ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                </button>
+              </div>
+            </FormControl>
+            <FormMessage />
+          </FormItem>
+        )} />
+
+        {/* reCAPTCHA */}
+        {RECAPTCHA_SITE_KEY && (
+          <div className="flex justify-center">
+            <ReCAPTCHA ref={recaptchaRef} sitekey={RECAPTCHA_SITE_KEY}
+              onChange={(token) => setRecaptchaToken(token)}
+              onExpired={() => setRecaptchaToken(null)}
+              theme="light" hl="it" />
+          </div>
+        )}
+
+        <Button type="submit"
+          className="w-full bg-amber-500 hover:bg-amber-600 text-white font-semibold h-11"
+          disabled={registerMutation.isPending || (!!RECAPTCHA_SITE_KEY && !recaptchaToken)}
+        >
+          {registerMutation.isPending
+            ? <Loader2 className="h-4 w-4 animate-spin mr-2" />
+            : <ArrowRight className="h-4 w-4 mr-2" />}
+          Crea account e continua
+        </Button>
+
+        <p className="text-center text-sm text-gray-500">
+          Hai già un account?{" "}
+          <Link href="/login?returnTo=/registra-festival" className="text-amber-600 hover:underline font-medium">
+            Accedi
+          </Link>
+        </p>
+      </form>
+    </Form>
   );
 }
 
