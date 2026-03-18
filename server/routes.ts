@@ -270,15 +270,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
           .replace(/^-+|-+$/g, "")
           .slice(0, 100);
         let slug = base;
-        let attempt = 0;
+        let counter = 2;
         while (true) {
-          try {
+          const { rows: taken } = await pool.query(`SELECT id FROM pubs WHERE slug = $1 AND id != $2 LIMIT 1`, [slug, row.id]);
+          if (taken.length === 0) {
             await pool.query(`UPDATE pubs SET slug = $1 WHERE id = $2`, [slug, row.id]);
             break;
-          } catch {
-            attempt++;
-            slug = `${base}-${row.id}${attempt > 1 ? `-${attempt}` : ""}`;
           }
+          slug = `${base}-${counter}`;
+          counter++;
         }
       }
     } catch (e) {
@@ -1147,12 +1147,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       .replace(/^-+|-+$/g, "")
       .slice(0, 100);
     let slug = base;
-    let attempt = 0;
+    let counter = 2;
     while (true) {
       const { rows } = await pool.query(`SELECT id FROM pubs WHERE slug = $1 AND id != $2 LIMIT 1`, [slug, id]);
       if (rows.length === 0) return slug;
-      attempt++;
-      slug = `${base}-${id}${attempt > 1 ? `-${attempt}` : ""}`;
+      slug = `${base}-${counter}`;
+      counter++;
     }
   }
 
