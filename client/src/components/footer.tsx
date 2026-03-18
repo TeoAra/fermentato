@@ -1,4 +1,4 @@
-import { Beer, Facebook, Instagram } from "lucide-react";
+import { Facebook, Instagram } from "lucide-react";
 import { Link } from "wouter";
 import { CookieSettingsButton } from "@/components/CookieBanner";
 
@@ -9,8 +9,8 @@ export default function Footer() {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           <div className="col-span-1 md:col-span-2">
             <div className="flex items-center mb-4">
-              <Beer className="text-amber-500 text-2xl mr-2" />
-              <span className="text-2xl font-bold text-[hsl(28,18%,13%)] dark:text-[hsl(40,12%,94%)] tracking-tight">Fermenta.to</span>
+              <img src="/logo-full.png" alt="Fermenta.to" className="h-10 w-auto block dark:hidden" />
+              <img src="/logo-dark-mode.png" alt="Fermenta.to" className="h-10 w-auto hidden dark:block" />
             </div>
             <p className="text-[hsl(28,8%,48%)] dark:text-[hsl(35,8%,52%)] mb-4 text-sm leading-relaxed">
               La piattaforma definitiva per scoprire le migliori birre artigianali nei pub e birrifici d'Italia.
