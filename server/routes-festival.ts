@@ -549,4 +549,22 @@ export function registerFestivalRoutes(app: Express) {
       res.status(500).json({ message: "Errore" });
     }
   });
+
+  // ── Delete festival (owner or admin) ─────────────────────────────────────────
+  app.delete("/api/festivals/:id", isAuthenticated as any, async (req: any, res) => {
+    try {
+      const festId = parseInt(req.params.id);
+      const [fest] = await db.select().from(festivals).where(eq(festivals.id, festId));
+      if (!fest) return res.status(404).json({ message: "Festival non trovato" });
+      if (!canManageFestival(req, fest)) return res.status(403).json({ message: "Non autorizzato" });
+      await db.delete(festivalRatings).where(eq(festivalRatings.festivalId, festId));
+      await db.delete(festivalFoodItems).where(eq(festivalFoodItems.festivalId, festId));
+      await db.delete(festivalTaps).where(eq(festivalTaps.festivalId, festId));
+      await db.delete(festivals).where(eq(festivals.id, festId));
+      res.json({ message: `Festival "${fest.name}" eliminato con successo` });
+    } catch (err: any) {
+      console.error("Error deleting festival:", err);
+      res.status(500).json({ message: err?.message || "Errore durante l'eliminazione" });
+    }
+  });
 }

@@ -13,6 +13,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -432,6 +433,7 @@ export default function FestivalDashboard() {
   const [selectedFestId, setSelectedFestId] = useState<number | null>(null);
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [showQR, setShowQR] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [editingTap, setEditingTap] = useState<{ tapNumber: number; existing?: FestivalTap } | null>(null);
   const [bulkCount, setBulkCount] = useState("20");
   const [newFood, setNewFood] = useState({ name: "", description: "", price: "", category: "Cibo" });
@@ -542,6 +544,17 @@ export default function FestivalDashboard() {
     onError: () => toast({ title: "Errore nell'attivazione", variant: "destructive" }),
   });
 
+  // Delete festival
+  const deleteFestMutation = useMutation({
+    mutationFn: (id: number) => apiRequest(`/api/festivals/${id}`, { method: "DELETE" }),
+    onSuccess: (data: any) => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/festivals"] });
+      toast({ title: data?.message || "Festival eliminato" });
+      setSelectedFestId(null);
+    },
+    onError: (err: any) => toast({ title: err?.message || "Errore nell'eliminazione", variant: "destructive" }),
+  });
+
   // Stripe: attivazione post-pagamento
   const activateMutation = useMutation({
     mutationFn: ({ sessionId, festivalId }: { sessionId: string; festivalId: number }) =>
@@ -637,26 +650,60 @@ export default function FestivalDashboard() {
         ) : (
           <>
             {/* Festival tabs selector */}
-            <div className="flex gap-2 flex-wrap">
-              {festList.map(f => {
-                const s = festivalStatus(f);
-                return (
-                  <button
-                    key={f.id}
-                    onClick={() => setSelectedFestId(f.id)}
-                    className={`px-4 py-2 rounded-xl text-sm font-medium transition-all flex items-center gap-1.5 ${
-                      (selectedFest?.id === f.id)
-                        ? "bg-amber-500 text-white shadow"
-                        : "bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-amber-50"
-                    }`}
-                  >
-                    {f.name}
-                    {s === "unpaid" && <Lock className="h-3 w-3 opacity-70" />}
-                    {s === "expired" && <AlertCircle className="h-3 w-3 opacity-70" />}
-                  </button>
-                );
-              })}
+            <div className="flex items-center gap-2 flex-wrap">
+              <div className="flex gap-2 flex-wrap flex-1">
+                {festList.map(f => {
+                  const s = festivalStatus(f);
+                  return (
+                    <button
+                      key={f.id}
+                      onClick={() => setSelectedFestId(f.id)}
+                      className={`px-4 py-2 rounded-xl text-sm font-medium transition-all flex items-center gap-1.5 ${
+                        (selectedFest?.id === f.id)
+                          ? "bg-amber-500 text-white shadow"
+                          : "bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-amber-50"
+                      }`}
+                    >
+                      {f.name}
+                      {s === "unpaid" && <Lock className="h-3 w-3 opacity-70" />}
+                      {s === "expired" && <AlertCircle className="h-3 w-3 opacity-70" />}
+                    </button>
+                  );
+                })}
+              </div>
+              {selectedFest && (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="border-red-300 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 shrink-0"
+                  onClick={() => setShowDeleteConfirm(true)}
+                  disabled={deleteFestMutation.isPending}
+                >
+                  <Trash2 className="h-4 w-4 mr-1" />Elimina
+                </Button>
+              )}
             </div>
+
+            {/* Delete confirmation dialog */}
+            <AlertDialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Eliminare il festival?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    Stai per eliminare <strong>{selectedFest?.name}</strong>. Verranno eliminati definitivamente tutte le spine, il menu cibo e le valutazioni. Questa azione è irreversibile.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Annulla</AlertDialogCancel>
+                  <AlertDialogAction
+                    className="bg-red-600 hover:bg-red-700 text-white"
+                    onClick={() => { if (selectedFest) deleteFestMutation.mutate(selectedFest.id); }}
+                  >
+                    Elimina definitivamente
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
 
             {selectedFest && (
               <>

@@ -13,7 +13,7 @@ import { registerFestivalRoutes } from "./routes-festival";
 import { sql, eq, and, desc, asc } from "drizzle-orm";
 import { upload, uploadImage, cloudinary } from "./cloudinary";
 import { db, pool } from "./db";
-import { breweries, beers, pubs, users, tapList, bottleList, userBeerTastings, favorites, menuCategories, menuItems, pubSizes, notifications, pushSubscriptions, breweryRequests, pubEvents, breweryEvents, insertBreweryEventSchema, reviewReports, oauthAccounts, userActivities, ratings, publicanRequests, notificationPreferences, staticPages, additionRequests, scanLogs, pubPageViews, breweryAnnouncements, insertBreweryAnnouncementSchema, beerCollaborations } from "@shared/schema";
+import { breweries, beers, pubs, users, tapList, bottleList, userBeerTastings, favorites, menuCategories, menuItems, pubSizes, notifications, pushSubscriptions, breweryRequests, pubEvents, breweryEvents, insertBreweryEventSchema, reviewReports, oauthAccounts, userActivities, ratings, publicanRequests, notificationPreferences, staticPages, additionRequests, scanLogs, pubPageViews, breweryAnnouncements, insertBreweryAnnouncementSchema, beerCollaborations, festivals } from "@shared/schema";
 
 import { insertPubSchema, insertTapListSchema, insertBottleListSchema, insertMenuCategorySchema, insertMenuItemSchema, pubRegistrationSchema, insertPubEventSchema } from "@shared/schema";
 import { z } from "zod";
@@ -2176,6 +2176,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const [pubCountResult] = await db.select({ count: sql<number>`COUNT(*)` }).from(pubs);
       const [breweryCountResult] = await db.select({ count: sql<number>`COUNT(*)` }).from(breweries);
       const [beerCountResult] = await db.select({ count: sql<number>`COUNT(*)` }).from(beers);
+      const [festivalCountResult] = await db.select({ count: sql<number>`COUNT(*)` }).from(festivals);
 
       const stats = {
         totalUsers: Number(userCountResult?.count || 0),
@@ -2185,6 +2186,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         totalReviews: Number(reviewCountResult?.count || 0),
         totalTastings: Number(tastingCountResult?.count || 0),
         totalEvents: Number(pubEventCountResult?.count || 0) + Number(breweryEventCountResult?.count || 0),
+        totalFestivals: Number(festivalCountResult?.count || 0),
         lastUpdated: new Date().toISOString(),
       };
       res.json(stats);
@@ -3654,11 +3656,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Null-out FK references with NO ACTION
       await db.execute(sql`UPDATE notifications SET pub_id = NULL WHERE pub_id = ${pubId}`);
       await db.execute(sql`UPDATE user_beer_tastings SET pub_id = NULL WHERE pub_id = ${pubId}`);
+      // Null-out any legacy pub_id on users table (may exist on VPS schema)
+      try { await db.execute(sql`UPDATE users SET pub_id = NULL WHERE pub_id = ${pubId}`); } catch (_) {}
+      // Null-out any legacy pub_id on sessions table (may exist on VPS schema)
+      try { await db.execute(sql`UPDATE sessions SET pub_id = NULL WHERE pub_id = ${pubId}`); } catch (_) {}
       await storage.deletePub(pubId);
       res.json({ message: `Pub "${pub.name}" eliminato con successo` });
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error deleting pub:", error);
-      res.status(500).json({ message: "Errore durante l'eliminazione del pub" });
+      const detail = error?.detail || error?.message || "Errore sconosciuto";
+      res.status(500).json({ message: `Impossibile eliminare il pub: ${detail}` });
     }
   });
 
@@ -3877,6 +3884,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
           .from(breweryEvents).orderBy(desc(breweryEvents.createdAt)).limit(perType);
         for (const e of recentBreweryEvents) {
           activities.push({ type: 'event', action: 'Nuovo evento birrificio', name: e.title, time: e.createdAt, icon: 'event', itemId: e.breweryId, link: `/brewery/${e.breweryId}` });
+        }
+      }
+
+      if (fetchAll || typeFilter === 'festival') {
+        const recentFestivals = await db.select({ id: festivals.id, name: festivals.name, slug: festivals.slug, isActive: festivals.isActive, createdAt: festivals.paidAt })
+          .from(festivals).orderBy(desc(festivals.id)).limit(perType);
+        for (const f of recentFestivals) {
+          activities.push({ type: 'festival', action: f.isActive ? 'Festival attivato' : 'Festival creato', name: f.name, time: f.createdAt, icon: 'festival', link: `/festival-dashboard` });
         }
       }
 

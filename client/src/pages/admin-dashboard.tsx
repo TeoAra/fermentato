@@ -39,7 +39,8 @@ import {
   Lightbulb,
   ChevronRight,
   Server,
-  Wifi
+  Wifi,
+  QrCode
 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { it } from "date-fns/locale";
@@ -187,7 +188,7 @@ export default function AdminDashboard() {
       </div>
 
       {/* Stats Row */}
-      <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3">
+      <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-3">
         {[
           { label: "Utenti", value: adminStats?.totalUsers ?? allUsers.length, icon: Users, color: "text-blue-500", border: "border-l-blue-500" },
           { label: "Pub", value: adminStats?.totalPubs ?? 0, icon: Store, color: "text-orange-500", border: "border-l-orange-500" },
@@ -195,6 +196,7 @@ export default function AdminDashboard() {
           { label: "Birre", value: (adminStats?.totalBeers || globalStats?.totalBeers || 0).toLocaleString("it-IT"), icon: Beer, color: "text-green-500", border: "border-l-green-500" },
           { label: "Recensioni", value: adminStats?.totalReviews ?? 0, icon: Star, color: "text-yellow-500", border: "border-l-yellow-500" },
           { label: "Eventi", value: adminStats?.totalEvents ?? 0, icon: CalendarDays, color: "text-purple-500", border: "border-l-purple-500" },
+          { label: "Festival", value: adminStats?.totalFestivals ?? 0, icon: QrCode, color: "text-pink-500", border: "border-l-pink-500" },
         ].map(({ label, value, icon: Icon, color, border }) => (
           <Card key={label} className={`border-l-4 ${border}`}>
             <CardContent className="p-3">
@@ -228,6 +230,7 @@ export default function AdminDashboard() {
                     { key: "review", label: "Recensioni" },
                     { key: "pub", label: "Pub" },
                     { key: "brewery", label: "Birrifici" },
+                    { key: "festival", label: "Festival" },
                   ].map(({ key, label }) => (
                     <button
                       key={key}
@@ -255,7 +258,7 @@ export default function AdminDashboard() {
               <div className="space-y-1 max-h-72 overflow-y-auto">
                 {recentActivity.map((item: any, i: number) => {
                   const IconMap: Record<string, any> = {
-                    user: Users, pub: Store, brewery: Building2, review: Star, event: CalendarDays,
+                    user: Users, pub: Store, brewery: Building2, review: Star, event: CalendarDays, festival: QrCode,
                   };
                   const ColorMap: Record<string, string> = {
                     user: "text-blue-500 bg-blue-50 dark:bg-blue-900/20",
@@ -263,6 +266,7 @@ export default function AdminDashboard() {
                     brewery: "text-amber-500 bg-amber-50 dark:bg-amber-900/20",
                     review: "text-yellow-500 bg-yellow-50 dark:bg-yellow-900/20",
                     event: "text-purple-500 bg-purple-50 dark:bg-purple-900/20",
+                    festival: "text-pink-500 bg-pink-50 dark:bg-pink-900/20",
                   };
                   const Icon = IconMap[item.type] || Activity;
                   const colorClass = ColorMap[item.type] || "text-gray-500 bg-gray-50";
@@ -304,6 +308,7 @@ export default function AdminDashboard() {
                 { href: "/admin", icon: BarChart3, label: "Dashboard Admin" },
                 { href: "/admin/content", icon: Database, label: "Gestione Contenuti" },
                 { href: "/admin/analytics", icon: TrendingUp, label: "Analytics" },
+                { href: "/festival-dashboard", icon: QrCode, label: "Festival Mode" },
                 { href: "/admin/suggestions", icon: Lightbulb, label: "Suggerimenti" },
                 { href: "/admin/addition-requests", icon: Flag, label: "Richieste Aggiunta" },
                 { href: "/admin/pages", icon: FileText, label: "Pagine Statiche" },

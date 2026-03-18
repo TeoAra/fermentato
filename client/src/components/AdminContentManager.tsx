@@ -459,7 +459,7 @@ export default function AdminContentManager({ type }: AdminContentManagerProps) 
         queryClient.invalidateQueries({ queryKey: ["/api/breweries"] });
       }
     },
-    onError: () => { toast({ title: "Errore", description: "Impossibile eliminare", variant: "destructive" }); setDeleteTarget(null); },
+    onError: (err: any) => { toast({ title: "Errore", description: err?.message || "Impossibile eliminare", variant: "destructive" }); setDeleteTarget(null); },
   });
 
   const createMutation = useMutation({
