@@ -131,8 +131,8 @@ function BreweryCard({ brewery }: { brewery: any }) {
   const favMut = useMutation({
     mutationFn: ({ action }: { action: "add" | "remove" }) =>
       action === "add"
-        ? apiRequest("/api/favorites", "POST", { itemType: "brewery", itemId: brewery.id })
-        : apiRequest(`/api/favorites/brewery/${brewery.id}`, "DELETE"),
+        ? apiRequest("/api/favorites", { method: "POST" }, { itemType: "brewery", itemId: brewery.id })
+        : apiRequest(`/api/favorites/brewery/${brewery.id}`, { method: "DELETE" }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/favorites"] });
       toast({ title: isFav ? "Rimosso dai preferiti" : "Aggiunto ai preferiti" });

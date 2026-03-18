@@ -8,11 +8,14 @@ async function throwIfResNotOk(res: Response) {
       if (json) {
         const error = new Error(json.message || res.statusText) as any;
         Object.assign(error, json);
+        error.status = res.status;
         throw error;
       }
     }
     const text = (await res.text()) || res.statusText;
-    throw new Error(`${res.status}: ${text}`);
+    const error = new Error(`${res.status}: ${text}`) as any;
+    error.status = res.status;
+    throw error;
   }
 }
 

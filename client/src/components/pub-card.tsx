@@ -102,12 +102,12 @@ export default function PubCard({ pub, distance }: PubCardProps) {
           : "Il pub è stato aggiunto ai tuoi preferiti",
       });
     },
-    onError: () => {
-      toast({
-        title: "Errore",
-        description: "Impossibile aggiornare i preferiti",
-        variant: "destructive",
-      });
+    onError: (err: any) => {
+      if (err?.status === 401 || err?.message?.includes("401") || err?.message?.includes("autenticato")) {
+        toast({ title: "Accedi per salvare", description: "Effettua il login per gestire i preferiti." });
+      } else {
+        toast({ title: "Errore", description: "Impossibile aggiornare i preferiti", variant: "destructive" });
+      }
     },
   });
 
