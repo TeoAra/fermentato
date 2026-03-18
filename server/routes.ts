@@ -1138,6 +1138,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Helper: generate a unique slug for a pub given its name and id
+  async function generatePubSlug(name: string, id: number): Promise<string> {
+    const base = name
+      .toLowerCase()
+      .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-+|-+$/g, "")
+      .slice(0, 100);
+    let slug = base;
+    let attempt = 0;
+    while (true) {
+      const { rows } = await pool.query(`SELECT id FROM pubs WHERE slug = $1 AND id != $2 LIMIT 1`, [slug, id]);
+      if (rows.length === 0) return slug;
+      attempt++;
+      slug = `${base}-${id}${attempt > 1 ? `-${attempt}` : ""}`;
+    }
+  }
+
   // Register a new pub (one per user)
   app.post("/api/pubs", isAuthenticated, async (req: any, res) => {
     try {
@@ -1151,6 +1169,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       const pubData = pubRegistrationSchema.parse({ ...req.body, ownerId: userId });
       const pub = await storage.createPub(pubData);
+
+      // Generate and assign unique slug immediately after creation
+      const slug = await generatePubSlug(pub.name, pub.id);
+      await pool.query(`UPDATE pubs SET slug = $1 WHERE id = $2`, [slug, pub.id]);
+      pub.slug = slug;
       
       // Update user type to pub_owner
       await storage.updateUserType(userId, 'pub_owner');
