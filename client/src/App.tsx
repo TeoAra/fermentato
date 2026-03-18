@@ -69,6 +69,7 @@ import AttivaPub from "@/pages/attiva-pub";
 import { ContattiPage, ChiSiamoPage, SupportoPage } from "@/pages/static-page";
 import FestivalPublic from "@/pages/festival-public";
 import FestivalDashboard from "@/pages/festival-dashboard";
+import CreaFestival from "@/pages/crea-festival";
 import { MobileHeader } from "@/components/mobile-header";
 import { BottomNavigation } from "@/components/bottom-navigation";
 import CookieBanner from "@/components/CookieBanner";
@@ -161,6 +162,7 @@ function Router() {
           <Route path="/supporto" component={SupportoPage} />
           <Route path="/festival/:slug" component={FestivalPublic} />
           <Route path="/festival-dashboard" component={FestivalDashboard} />
+          <Route path="/crea-festival" component={CreaFestival} />
           <Route component={NotFound} />
         </Switch>
       </main>

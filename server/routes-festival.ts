@@ -136,6 +136,33 @@ export function registerFestivalRoutes(app: Express) {
     }
   });
 
+  // ── Public: register a festival (any authenticated user) ────────────────────
+  app.post("/api/festivals/register", isAuthenticated as any, async (req: any, res) => {
+    try {
+      const user = req.user as any;
+      const { name, slug, description, location, startDate, endDate, showFood, logoUrl, coverImageUrl, priceEur } = req.body;
+      if (!name || !slug) return res.status(400).json({ message: "Nome e slug obbligatori" });
+      const [fest] = await db.insert(festivals).values({
+        name, slug,
+        description: description || null,
+        location: location || null,
+        startDate: startDate || null,
+        endDate: endDate || null,
+        showFood: showFood ?? true,
+        ownerId: user.id,
+        logoUrl: logoUrl || null,
+        coverImageUrl: coverImageUrl || null,
+        priceEur: priceEur ? parseInt(priceEur) : 99,
+        isActive: false,
+      }).returning();
+      res.json(fest);
+    } catch (err: any) {
+      if (err.code === "23505") return res.status(400).json({ message: "Slug già in uso, scegliene un altro" });
+      console.error("Error registering festival:", err);
+      res.status(500).json({ message: "Errore nella creazione" });
+    }
+  });
+
   // ── Manager: create festival ─────────────────────────────────────────────────
   app.post("/api/admin/festivals", isAuthenticated as any, async (req: any, res) => {
     try {

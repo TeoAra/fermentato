@@ -540,10 +540,19 @@ export default function FestivalDashboard() {
           <div className="flex items-center gap-2 text-gray-500"><Loader2 className="h-4 w-4 animate-spin" />Caricamento...</div>
         ) : festList.length === 0 ? (
           <Card>
-            <CardContent className="py-10 text-center">
-              <Beer className="h-10 w-10 text-gray-300 mx-auto mb-3" />
-              <p className="text-gray-600 mb-4">Nessun festival creato</p>
-              <Button onClick={() => setShowCreateDialog(true)}><Plus className="h-4 w-4 mr-1" />Crea il primo festival</Button>
+            <CardContent className="py-10 text-center space-y-3">
+              <Beer className="h-10 w-10 text-gray-300 mx-auto" />
+              <p className="text-gray-600">Nessun festival ancora</p>
+              <div className="flex flex-col sm:flex-row gap-2 justify-center">
+                <Button asChild className="bg-amber-500 hover:bg-amber-600 text-white">
+                  <a href="/crea-festival"><Plus className="h-4 w-4 mr-1" />Crea il tuo festival</a>
+                </Button>
+                {user?.userType === 'admin' && (
+                  <Button variant="outline" onClick={() => setShowCreateDialog(true)}>
+                    <Plus className="h-4 w-4 mr-1" />Crea (admin)
+                  </Button>
+                )}
+              </div>
             </CardContent>
           </Card>
         ) : (
