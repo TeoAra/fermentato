@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { ImageUpload } from "@/components/image-upload";
 import { AddressAutocomplete } from "@/components/AddressAutocomplete";
@@ -21,8 +21,36 @@ import {
   Beer, UtensilsCrossed, BarChart3, Settings, Plus, QrCode,
   CheckCircle2, XCircle, Loader2, Pencil, Trash2, ExternalLink,
   Trophy, Users, Droplets, CreditCard, AlertCircle, RefreshCw, Lock, Star,
+  ArrowLeft, Factory, ImagePlus, X, Search,
 } from "lucide-react";
 import { useLocation } from "wouter";
+
+function useDebounce<T>(value: T, delay: number): T {
+  const [debouncedValue, setDebouncedValue] = useState<T>(value);
+  useEffect(() => {
+    const handler = setTimeout(() => setDebouncedValue(value), delay);
+    return () => clearTimeout(handler);
+  }, [value, delay]);
+  return debouncedValue;
+}
+
+const BEER_STYLES = [
+  "IPA", "APA", "NEIPA", "Double IPA", "Triple IPA", "Session IPA", "West Coast IPA",
+  "Lager", "Pilsner", "Helles", "Märzen", "Bock", "Doppelbock", "Dunkel",
+  "Weiss", "Hefeweizen", "Weizenbock", "Kristallweizen",
+  "Stout", "Imperial Stout", "Milk Stout", "Oatmeal Stout", "Dry Stout",
+  "Porter", "Baltic Porter", "Robust Porter",
+  "Saison", "Farmhouse Ale", "Grisette",
+  "Belgian Ale", "Blanche", "Witbier", "Dubbel", "Tripel", "Quadrupel", "Belgian Strong",
+  "Pale Ale", "Amber Ale", "Red Ale", "Golden Ale", "Blonde Ale", "Cream Ale",
+  "Bitter", "ESB", "Mild",
+  "Barley Wine", "English Barley Wine",
+  "Sour", "Gose", "Berliner Weisse", "Lambic", "Gueuze", "Flanders Red", "Kriek",
+  "Kölsch", "Altbier", "Rauchbier", "Schwarzbier",
+  "Scottish Ale", "Scotch Ale", "Brown Ale", "English Brown Ale",
+  "Wheat Beer", "American Wheat", "Fruit Beer", "Spiced Beer", "Honey Beer",
+  "Smoked Beer", "Pumpkin Ale", "Italian Grape Ale", "Italian Pilsner",
+];
 
 interface Festival {
   id: number; slug: string; name: string; description: string | null;
@@ -126,8 +154,47 @@ function TapEditDialog({ festivalId, tapNumber, existing, onClose }: {
 }) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const [beerQuery, setBeerQuery] = useState("");
-  const [showBeerDropdown, setShowBeerDropdown] = useState(false);
+
+  // Beer search
+  const [searchTerm, setSearchTerm] = useState("");
+  const debouncedSearch = useDebounce(searchTerm, 300);
+
+  // Selected beer from DB (or pre-populated from existing)
+  const [selectedBeer, setSelectedBeer] = useState<{
+    id: number; name: string; breweryName: string; style: string; abv: string;
+  } | null>(existing?.beerId ? {
+    id: existing.beerId,
+    name: existing.customBeerName || "",
+    breweryName: existing.customBreweryName || "",
+    style: existing.style || "",
+    abv: existing.abv || "",
+  } : null);
+
+  // Create beer/brewery
+  const [creatingBeer, setCreatingBeer] = useState(false);
+  const [creatingBrewery, setCreatingBrewery] = useState(false);
+  const [brewerySearchTerm, setBrewerySearchTerm] = useState("");
+  const debouncedBrewerySearch = useDebounce(brewerySearchTerm, 300);
+  const [styleSearchTerm, setStyleSearchTerm] = useState("");
+  const [styleDropdownOpen, setStyleDropdownOpen] = useState(false);
+  const [beerImageFile, setBeerImageFile] = useState<File | null>(null);
+  const [beerImagePreview, setBeerImagePreview] = useState("");
+  const [uploadingBeerImage, setUploadingBeerImage] = useState(false);
+  const [uploadingBreweryImages, setUploadingBreweryImages] = useState(false);
+  const [breweryLogoFile, setBreweryLogoFile] = useState<File | null>(null);
+  const [breweryLogoPreview, setBreweryLogoPreview] = useState("");
+  const [breweryCoverFile, setBreweryCoverFile] = useState<File | null>(null);
+  const [breweryCoverPreview, setBreweryCoverPreview] = useState("");
+
+  const [newBeerData, setNewBeerData] = useState({
+    name: "", style: "", abv: "", ibu: "", description: "",
+    breweryId: "", breweryName: "", imageUrl: "", isGlutenFree: false, isAlcoholFree: false,
+  });
+  const [newBreweryData, setNewBreweryData] = useState({
+    name: "", location: "", region: "", description: "",
+  });
+
+  // Tap details
   const [form, setForm] = useState({
     customBeerName: existing?.customBeerName || "",
     customBreweryName: existing?.customBreweryName || "",
@@ -135,32 +202,109 @@ function TapEditDialog({ festivalId, tapNumber, existing, onClose }: {
     abv: existing?.abv || "",
     notes: existing?.notes || "",
     isAvailable: existing?.isAvailable ?? true,
-    beerId: existing?.beerId ?? null as number | null,
   });
 
-  const { data: beerResults = [] } = useQuery<any[]>({
-    queryKey: [`/api/festival-beers/search?q=${encodeURIComponent(beerQuery)}`],
-    enabled: beerQuery.length >= 2,
+  const filteredStyles = useMemo(() => {
+    if (!styleSearchTerm) return BEER_STYLES;
+    return BEER_STYLES.filter(s => s.toLowerCase().includes(styleSearchTerm.toLowerCase()));
+  }, [styleSearchTerm]);
+
+  // Beer global search
+  const { data: searchResults, isLoading: isSearching } = useQuery({
+    queryKey: ["/api/search", debouncedSearch],
+    queryFn: async () => {
+      if (debouncedSearch.length < 2) return null;
+      const r = await fetch(`/api/search?q=${encodeURIComponent(debouncedSearch)}`, { credentials: "include" });
+      if (!r.ok) throw new Error("Search failed");
+      return r.json();
+    },
+    enabled: debouncedSearch.length >= 2,
+    staleTime: 1000 * 60 * 5,
   });
 
-  const selectBeer = (beer: any) => {
-    setForm(f => ({
-      ...f,
-      beerId: beer.id,
-      customBeerName: beer.name,
-      customBreweryName: beer.breweryName || "",
-      style: beer.style || f.style,
-      abv: beer.abv != null ? String(beer.abv) : f.abv,
-    }));
-    setBeerQuery(beer.name);
-    setShowBeerDropdown(false);
+  // Brewery search
+  const { data: breweryResults } = useQuery({
+    queryKey: ["/api/owner/breweries/search", debouncedBrewerySearch],
+    queryFn: async () => {
+      if (debouncedBrewerySearch.length < 2) return [];
+      const r = await fetch(`/api/owner/breweries/search?q=${encodeURIComponent(debouncedBrewerySearch)}`, { credentials: "include" });
+      if (!r.ok) return [];
+      return r.json();
+    },
+    enabled: creatingBeer && debouncedBrewerySearch.length >= 2,
+  });
+
+  const uploadFile = async (file: File, folder: string): Promise<string> => {
+    const fd = new FormData();
+    fd.append("image", file);
+    fd.append("folder", folder);
+    const r = await fetch("/api/upload/image", { method: "POST", credentials: "include", body: fd });
+    if (!r.ok) throw new Error("Upload fallito");
+    const d = await r.json();
+    if (!d.url) throw new Error("URL non ricevuto");
+    return d.url;
   };
+
+  const createBreweryMutation = useMutation({
+    mutationFn: async (data: typeof newBreweryData) => {
+      setUploadingBreweryImages(true);
+      try {
+        let logoUrl: string | undefined;
+        let coverImageUrl: string | undefined;
+        if (breweryLogoFile) logoUrl = await uploadFile(breweryLogoFile, "brewery-logos");
+        if (breweryCoverFile) coverImageUrl = await uploadFile(breweryCoverFile, "brewery-covers");
+        return apiRequest("/api/owner/breweries", { method: "POST" }, { ...data, region: data.region || data.location, logoUrl, coverImageUrl });
+      } finally {
+        setUploadingBreweryImages(false);
+      }
+    },
+    onSuccess: (brewery: any) => {
+      toast({ title: "Birrificio creato!" });
+      setNewBeerData(prev => ({ ...prev, breweryId: brewery.id.toString(), breweryName: brewery.name }));
+      setCreatingBrewery(false);
+      setBrewerySearchTerm("");
+      setBreweryLogoFile(null); setBreweryLogoPreview("");
+      setBreweryCoverFile(null); setBreweryCoverPreview("");
+    },
+    onError: (err: Error) => toast({ title: "Errore", description: err.message, variant: "destructive" }),
+  });
+
+  const createBeerMutation = useMutation({
+    mutationFn: async (data: typeof newBeerData) => {
+      let imageUrl = data.imageUrl;
+      if (beerImageFile) {
+        setUploadingBeerImage(true);
+        try { imageUrl = await uploadFile(beerImageFile, "beer-images"); }
+        finally { setUploadingBeerImage(false); }
+      }
+      return apiRequest("/api/owner/beers", { method: "POST" }, { ...data, imageUrl });
+    },
+    onSuccess: (beer: any) => {
+      toast({ title: "Birra creata!" });
+      const bName = beer.brewery?.name || newBeerData.breweryName;
+      setSelectedBeer({ id: beer.id, name: beer.name, breweryName: bName, style: beer.style || "", abv: beer.abv || "" });
+      setForm(f => ({ ...f, customBeerName: beer.name, customBreweryName: bName, style: beer.style || f.style, abv: beer.abv ? String(beer.abv) : f.abv }));
+      setCreatingBeer(false);
+      setSearchTerm("");
+      setBeerImageFile(null); setBeerImagePreview("");
+      queryClient.invalidateQueries({ queryKey: ["/api/search"] });
+    },
+    onError: (err: Error) => toast({ title: "Errore", description: err.message, variant: "destructive" }),
+  });
 
   const saveMutation = useMutation({
     mutationFn: () => apiRequest(
       `/api/admin/festivals/${festivalId}/taps/${tapNumber}`,
       { method: "PUT" },
-      form
+      {
+        beerId: selectedBeer && selectedBeer.id > 0 ? selectedBeer.id : null,
+        customBeerName: form.customBeerName || null,
+        customBreweryName: form.customBreweryName || null,
+        style: form.style || null,
+        abv: form.abv || null,
+        notes: form.notes || null,
+        isAvailable: form.isAvailable,
+      }
     ),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/admin/festivals", festivalId, "taps"] });
@@ -172,73 +316,343 @@ function TapEditDialog({ festivalId, tapNumber, existing, onClose }: {
 
   return (
     <Dialog open onOpenChange={onClose}>
-      <DialogContent className="max-w-md">
+      <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Spina #{tapNumber}</DialogTitle>
         </DialogHeader>
-        <div className="space-y-3">
-          {/* Beer search */}
-          <div>
-            <Label>Cerca birra nel database</Label>
-            <div className="relative mt-1">
-              <Input
-                value={beerQuery}
-                onChange={e => { setBeerQuery(e.target.value); setShowBeerDropdown(true); }}
-                onFocus={() => setShowBeerDropdown(true)}
-                placeholder="Cerca per nome o birrificio…"
-              />
-              {showBeerDropdown && beerResults.length > 0 && (
-                <div className="absolute z-50 w-full mt-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl shadow-lg max-h-48 overflow-y-auto">
-                  {beerResults.map((b: any) => (
-                    <button
-                      key={b.id}
-                      className="w-full text-left px-3 py-2 hover:bg-amber-50 dark:hover:bg-amber-900/20 transition-colors"
-                      onClick={() => selectBeer(b)}
-                    >
-                      <p className="text-sm font-medium text-gray-900 dark:text-gray-100">{b.name}</p>
-                      <p className="text-xs text-gray-500">{b.breweryName}{b.style ? ` · ${b.style}` : ""}{b.abv != null ? ` · ${b.abv}%` : ""}</p>
-                    </button>
-                  ))}
+        <div className="space-y-4">
+
+          {/* ── Beer selected ── */}
+          {selectedBeer && !creatingBeer ? (
+            <div className="p-3 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700 rounded-xl">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="font-semibold text-sm">{selectedBeer.name}</p>
+                  <p className="text-xs text-gray-500 mt-0.5">
+                    {selectedBeer.breweryName}{selectedBeer.style ? ` · ${selectedBeer.style}` : ""}{selectedBeer.abv ? ` · ${selectedBeer.abv}% ABV` : ""}
+                  </p>
                 </div>
+                <Button size="sm" variant="outline" onClick={() => { setSelectedBeer(null); setSearchTerm(""); }}>Cambia</Button>
+              </div>
+            </div>
+          ) : !creatingBeer ? (
+            /* ── Beer search ── */
+            <div className="space-y-2">
+              <Label className="text-sm font-medium">Seleziona birra</Label>
+              <div className="relative">
+                {isSearching
+                  ? <Loader2 className="absolute left-3 top-3 h-4 w-4 text-gray-400 animate-spin" />
+                  : <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />}
+                <Input
+                  className="pl-10"
+                  placeholder="Cerca per nome o birrificio…"
+                  value={searchTerm}
+                  onChange={e => setSearchTerm(e.target.value)}
+                />
+              </div>
+              {debouncedSearch.length >= 2 && !isSearching && (
+                <>
+                  {searchResults?.beers && searchResults.beers.length > 0 && (
+                    <div className="max-h-44 overflow-y-auto border rounded-xl bg-white dark:bg-gray-900">
+                      {searchResults.beers.map((beer: any) => (
+                        <div
+                          key={beer.id}
+                          className="px-3 py-2 hover:bg-amber-50 dark:hover:bg-amber-900/20 cursor-pointer border-b last:border-b-0 transition-colors"
+                          onClick={() => {
+                            const bName = beer.brewery?.name || "";
+                            setSelectedBeer({ id: beer.id, name: beer.name, breweryName: bName, style: beer.style || "", abv: beer.abv || "" });
+                            setForm(f => ({ ...f, customBeerName: beer.name, customBreweryName: bName, style: beer.style || f.style, abv: beer.abv ? String(beer.abv) : f.abv }));
+                            setSearchTerm("");
+                          }}
+                        >
+                          <p className="text-sm font-medium">{beer.name}</p>
+                          <p className="text-xs text-gray-500">{beer.brewery?.name || "Birrificio sconosciuto"}{beer.style ? ` · ${beer.style}` : ""}{beer.abv ? ` · ${beer.abv}% ABV` : ""}</p>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                  <div className="border border-dashed rounded-xl p-3 text-center">
+                    {searchResults?.beers?.length === 0 && (
+                      <p className="text-xs text-gray-500 mb-2">Nessuna birra trovata per "{debouncedSearch}"</p>
+                    )}
+                    {(!searchResults?.beers || searchResults.beers.length > 0) && (
+                      <p className="text-xs text-gray-500 mb-2">Non trovi quella che cerchi?</p>
+                    )}
+                    <Button size="sm" variant="outline" onClick={() => { setCreatingBeer(true); setNewBeerData(p => ({ ...p, name: debouncedSearch })); }}>
+                      <Plus className="h-3.5 w-3.5 mr-1" />Crea nuova birra
+                    </Button>
+                  </div>
+                </>
+              )}
+
+              {/* Manual entry hint */}
+              {debouncedSearch.length < 2 && !existing?.customBeerName && (
+                <p className="text-xs text-gray-400">Oppure compila manualmente i campi sottostanti senza selezionare dal database.</p>
               )}
             </div>
-          </div>
+          ) : null}
 
-          <Separator />
+          {/* ── Create beer form ── */}
+          {creatingBeer && !creatingBrewery && (
+            <div className="border rounded-xl p-4 bg-amber-50/50 dark:bg-amber-900/10 space-y-3">
+              <div className="flex items-center gap-2">
+                <Button variant="ghost" size="sm" className="h-7 w-7 p-0" onClick={() => setCreatingBeer(false)}>
+                  <ArrowLeft className="h-4 w-4" />
+                </Button>
+                <h4 className="font-semibold text-sm">Crea nuova birra</h4>
+              </div>
 
-          <div>
-            <Label>Nome birra</Label>
-            <Input className="mt-1" value={form.customBeerName} onChange={e => setForm(f => ({ ...f, customBeerName: e.target.value, beerId: null }))} placeholder="Es. Hazy IPA" />
-          </div>
-          <div>
-            <Label>Birrificio</Label>
-            <Input className="mt-1" value={form.customBreweryName} onChange={e => setForm(f => ({ ...f, customBreweryName: e.target.value }))} placeholder="Es. Birrificio Pinco" />
-          </div>
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <Label>Stile</Label>
-              <Input className="mt-1" value={form.style} onChange={e => setForm(f => ({ ...f, style: e.target.value }))} placeholder="Es. IPA" />
+              <div>
+                <Label className="text-xs">Nome birra *</Label>
+                <Input value={newBeerData.name} onChange={e => setNewBeerData(p => ({ ...p, name: e.target.value }))} placeholder="Es. Hazy IPA" className="h-9" />
+              </div>
+
+              <div>
+                <Label className="text-xs">Birrificio *</Label>
+                {newBeerData.breweryId ? (
+                  <div className="flex items-center justify-between p-2 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg">
+                    <div className="flex items-center gap-2">
+                      <Factory className="h-4 w-4 text-green-600" />
+                      <span className="text-sm font-medium">{newBeerData.breweryName}</span>
+                    </div>
+                    <Button variant="ghost" size="sm" className="h-7 text-xs" onClick={() => setNewBeerData(p => ({ ...p, breweryId: "", breweryName: "" }))}>Cambia</Button>
+                  </div>
+                ) : (
+                  <div className="space-y-2 mt-1">
+                    <div className="relative">
+                      <Search className="absolute left-2.5 top-2.5 h-3.5 w-3.5 text-gray-400" />
+                      <Input value={brewerySearchTerm} onChange={e => setBrewerySearchTerm(e.target.value)} placeholder="Cerca birrificio…" className="h-9 pl-8 text-sm" />
+                    </div>
+                    {Array.isArray(breweryResults) && breweryResults.length > 0 && (
+                      <div className="max-h-32 overflow-y-auto border rounded-lg bg-white dark:bg-gray-900">
+                        {(breweryResults as any[]).map((b: any) => (
+                          <div key={b.id} className="p-2 hover:bg-gray-50 dark:hover:bg-gray-800 cursor-pointer border-b last:border-b-0 text-sm"
+                            onClick={() => { setNewBeerData(p => ({ ...p, breweryId: b.id.toString(), breweryName: b.name })); setBrewerySearchTerm(""); }}>
+                            <span className="font-medium">{b.name}</span>
+                            <span className="text-gray-500 ml-1">· {b.location}</span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                    {debouncedBrewerySearch.length >= 2 && Array.isArray(breweryResults) && (breweryResults as any[]).length === 0 && (
+                      <Button type="button" variant="outline" size="sm" className="w-full text-xs"
+                        onClick={() => { setCreatingBrewery(true); setNewBreweryData(p => ({ ...p, name: brewerySearchTerm })); }}>
+                        <Plus className="w-3 h-3 mr-1" />Crea "{brewerySearchTerm}"
+                      </Button>
+                    )}
+                  </div>
+                )}
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div className="relative">
+                  <Label className="text-xs">Stile *</Label>
+                  <Input
+                    value={styleDropdownOpen ? styleSearchTerm : newBeerData.style}
+                    onChange={e => { setStyleSearchTerm(e.target.value); setNewBeerData(p => ({ ...p, style: e.target.value })); setStyleDropdownOpen(true); }}
+                    onFocus={() => { setStyleSearchTerm(newBeerData.style); setStyleDropdownOpen(true); }}
+                    onBlur={() => setTimeout(() => setStyleDropdownOpen(false), 200)}
+                    placeholder="Es. IPA" className="h-9" autoComplete="off"
+                  />
+                  {styleDropdownOpen && filteredStyles.length > 0 && (
+                    <div className="absolute z-50 w-full mt-1 max-h-40 overflow-y-auto border rounded-lg bg-white dark:bg-gray-900 shadow-lg">
+                      {filteredStyles.slice(0, 15).map(style => (
+                        <div key={style} className="px-3 py-1.5 text-sm hover:bg-amber-50 dark:hover:bg-amber-900/20 cursor-pointer"
+                          onMouseDown={e => { e.preventDefault(); setNewBeerData(p => ({ ...p, style })); setStyleSearchTerm(style); setStyleDropdownOpen(false); }}>
+                          {style}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+                <div>
+                  <Label className="text-xs">ABV %</Label>
+                  <Input type="number" step="0.1" min="0" max="30" value={newBeerData.abv} onChange={e => setNewBeerData(p => ({ ...p, abv: e.target.value }))} placeholder="5.5" className="h-9" />
+                </div>
+              </div>
+
+              <div>
+                <Label className="text-xs">Descrizione</Label>
+                <Textarea value={newBeerData.description} onChange={e => setNewBeerData(p => ({ ...p, description: e.target.value }))} placeholder="Aromi, sapore…" className="min-h-[50px] text-sm" />
+              </div>
+
+              <div className="flex items-center gap-4 text-xs">
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input type="checkbox" checked={newBeerData.isGlutenFree} onChange={e => setNewBeerData(p => ({ ...p, isGlutenFree: e.target.checked }))} className="rounded" />
+                  <span className="text-green-700 dark:text-green-400 font-medium">Gluten Free</span>
+                </label>
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input type="checkbox" checked={newBeerData.isAlcoholFree} onChange={e => setNewBeerData(p => ({ ...p, isAlcoholFree: e.target.checked }))} className="rounded" />
+                  <span className="text-blue-700 dark:text-blue-400 font-medium">0.0% Analcolica</span>
+                </label>
+              </div>
+
+              <div>
+                <Label className="text-xs">Immagine birra</Label>
+                {beerImagePreview ? (
+                  <div className="relative w-16 h-16 mt-1">
+                    <img src={beerImagePreview} alt="Anteprima" className="w-16 h-16 object-cover rounded-lg border" />
+                    <button type="button" onClick={() => { setBeerImageFile(null); setBeerImagePreview(""); }}
+                      className="absolute -top-1.5 -right-1.5 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center">
+                      <X className="h-3 w-3" />
+                    </button>
+                  </div>
+                ) : (
+                  <label className="flex items-center gap-2 mt-1 px-3 py-2 border border-dashed rounded-lg cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800">
+                    <ImagePlus className="h-4 w-4 text-gray-400" />
+                    <span className="text-xs text-gray-500">Carica immagine</span>
+                    <input type="file" accept="image/*" className="hidden" onChange={e => {
+                      const f = e.target.files?.[0];
+                      if (f) { setBeerImageFile(f); const r = new FileReader(); r.onload = ev => setBeerImagePreview(ev.target?.result as string); r.readAsDataURL(f); }
+                    }} />
+                  </label>
+                )}
+              </div>
+
+              <div className="flex justify-end gap-2 pt-1">
+                <Button variant="outline" size="sm" onClick={() => setCreatingBeer(false)}>Annulla</Button>
+                <Button size="sm"
+                  disabled={!newBeerData.name || !newBeerData.breweryId || !newBeerData.style || createBeerMutation.isPending || uploadingBeerImage}
+                  onClick={() => createBeerMutation.mutate(newBeerData)}>
+                  {(createBeerMutation.isPending || uploadingBeerImage) ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : <Plus className="h-4 w-4 mr-1" />}
+                  {uploadingBeerImage ? "Caricamento…" : "Crea birra"}
+                </Button>
+              </div>
             </div>
-            <div>
-              <Label>ABV %</Label>
-              <Input className="mt-1" value={form.abv} onChange={e => setForm(f => ({ ...f, abv: e.target.value }))} placeholder="Es. 6.2" />
+          )}
+
+          {/* ── Create brewery form ── */}
+          {creatingBrewery && (
+            <div className="border rounded-xl p-4 bg-blue-50/50 dark:bg-blue-900/10 space-y-3">
+              <div className="flex items-center gap-2">
+                <Button variant="ghost" size="sm" className="h-7 w-7 p-0" onClick={() => setCreatingBrewery(false)}>
+                  <ArrowLeft className="h-4 w-4" />
+                </Button>
+                <h4 className="font-semibold text-sm">Crea nuovo birrificio</h4>
+              </div>
+              <div>
+                <Label className="text-xs">Nome *</Label>
+                <Input value={newBreweryData.name} onChange={e => setNewBreweryData(p => ({ ...p, name: e.target.value }))} placeholder="Es. Birrificio Artigianale XYZ" className="h-9" />
+              </div>
+              <div>
+                <Label className="text-xs">Località *</Label>
+                <AddressAutocomplete
+                  value={newBreweryData.location}
+                  onAddressSelect={d => setNewBreweryData(p => ({ ...p, location: d.formattedAddress || d.city || "", region: d.region || "" }))}
+                  placeholder="Cerca località…"
+                  countryRestriction={null}
+                />
+              </div>
+              <div>
+                <Label className="text-xs">Descrizione</Label>
+                <Textarea value={newBreweryData.description} onChange={e => setNewBreweryData(p => ({ ...p, description: e.target.value }))} placeholder="Breve descrizione…" className="min-h-[50px] text-sm" />
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <Label className="text-xs">Logo</Label>
+                  {breweryLogoPreview ? (
+                    <div className="relative w-14 h-14 mt-1">
+                      <img src={breweryLogoPreview} alt="Logo" className="w-14 h-14 object-cover rounded-lg border" />
+                      <button type="button" onClick={() => { setBreweryLogoFile(null); setBreweryLogoPreview(""); }}
+                        className="absolute -top-1.5 -right-1.5 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center">
+                        <X className="h-3 w-3" />
+                      </button>
+                    </div>
+                  ) : (
+                    <label className="flex items-center gap-2 mt-1 px-3 py-2 border border-dashed rounded-lg cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800">
+                      <ImagePlus className="h-4 w-4 text-gray-400" />
+                      <span className="text-xs text-gray-500">Logo</span>
+                      <input type="file" accept="image/*" className="hidden" onChange={e => {
+                        const f = e.target.files?.[0];
+                        if (f) { setBreweryLogoFile(f); const r = new FileReader(); r.onload = ev => setBreweryLogoPreview(ev.target?.result as string); r.readAsDataURL(f); }
+                      }} />
+                    </label>
+                  )}
+                </div>
+                <div>
+                  <Label className="text-xs">Copertina</Label>
+                  {breweryCoverPreview ? (
+                    <div className="relative w-full h-14 mt-1">
+                      <img src={breweryCoverPreview} alt="Cover" className="w-full h-14 object-cover rounded-lg border" />
+                      <button type="button" onClick={() => { setBreweryCoverFile(null); setBreweryCoverPreview(""); }}
+                        className="absolute -top-1.5 -right-1.5 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center">
+                        <X className="h-3 w-3" />
+                      </button>
+                    </div>
+                  ) : (
+                    <label className="flex items-center gap-2 mt-1 px-3 py-2 border border-dashed rounded-lg cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800">
+                      <ImagePlus className="h-4 w-4 text-gray-400" />
+                      <span className="text-xs text-gray-500">Copertina</span>
+                      <input type="file" accept="image/*" className="hidden" onChange={e => {
+                        const f = e.target.files?.[0];
+                        if (f) { setBreweryCoverFile(f); const r = new FileReader(); r.onload = ev => setBreweryCoverPreview(ev.target?.result as string); r.readAsDataURL(f); }
+                      }} />
+                    </label>
+                  )}
+                </div>
+              </div>
+              <div className="flex justify-end gap-2 pt-1">
+                <Button variant="outline" size="sm" onClick={() => setCreatingBrewery(false)}>Annulla</Button>
+                <Button size="sm"
+                  disabled={!newBreweryData.name || !newBreweryData.location || createBreweryMutation.isPending || uploadingBreweryImages}
+                  onClick={() => createBreweryMutation.mutate(newBreweryData)}>
+                  {(createBreweryMutation.isPending || uploadingBreweryImages) ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : null}
+                  Crea birrificio
+                </Button>
+              </div>
             </div>
-          </div>
-          <div>
-            <Label>Note</Label>
-            <Textarea className="mt-1" value={form.notes} onChange={e => setForm(f => ({ ...f, notes: e.target.value }))} placeholder="Note aggiuntive..." rows={2} />
-          </div>
-          <div className="flex items-center gap-3">
-            <Switch checked={form.isAvailable} onCheckedChange={v => setForm(f => ({ ...f, isAvailable: v }))} />
-            <Label>{form.isAvailable ? "Disponibile" : "Non disponibile / Finita"}</Label>
-          </div>
+          )}
+
+          {/* ── Manual / extra tap fields ── */}
+          {!creatingBeer && !creatingBrewery && (
+            <>
+              <Separator />
+              {!selectedBeer && (
+                <>
+                  <div>
+                    <Label className="text-xs">Nome birra</Label>
+                    <Input className="mt-1 h-9" value={form.customBeerName} placeholder="Es. Hazy IPA"
+                      onChange={e => setForm(f => ({ ...f, customBeerName: e.target.value }))}
+                    />
+                  </div>
+                  <div>
+                    <Label className="text-xs">Birrificio</Label>
+                    <Input className="mt-1 h-9" value={form.customBreweryName} placeholder="Es. Birrificio Pinco"
+                      onChange={e => setForm(f => ({ ...f, customBreweryName: e.target.value }))}
+                    />
+                  </div>
+                </>
+              )}
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <Label className="text-xs">Stile</Label>
+                  <Input className="mt-1 h-9" value={form.style} onChange={e => setForm(f => ({ ...f, style: e.target.value }))} placeholder={selectedBeer?.style || "Es. IPA"} />
+                </div>
+                <div>
+                  <Label className="text-xs">ABV %</Label>
+                  <Input className="mt-1 h-9" value={form.abv} onChange={e => setForm(f => ({ ...f, abv: e.target.value }))} placeholder={selectedBeer?.abv || "Es. 6.2"} />
+                </div>
+              </div>
+              <div>
+                <Label className="text-xs">Note</Label>
+                <Textarea className="mt-1" value={form.notes} onChange={e => setForm(f => ({ ...f, notes: e.target.value }))} placeholder="Note aggiuntive…" rows={2} />
+              </div>
+              <div className="flex items-center gap-3">
+                <Switch checked={form.isAvailable} onCheckedChange={v => setForm(f => ({ ...f, isAvailable: v }))} />
+                <Label className="text-sm">{form.isAvailable ? "Disponibile" : "Non disponibile / Finita"}</Label>
+              </div>
+            </>
+          )}
         </div>
-        <div className="flex gap-2 justify-end mt-4">
-          <Button variant="outline" onClick={onClose}>Annulla</Button>
-          <Button className="bg-amber-500 hover:bg-amber-600 text-white" onClick={() => saveMutation.mutate()} disabled={saveMutation.isPending}>
-            {saveMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : "Salva"}
-          </Button>
-        </div>
+
+        {!creatingBeer && !creatingBrewery && (
+          <div className="flex gap-2 justify-end mt-4 pt-2 border-t">
+            <Button variant="outline" onClick={onClose}>Annulla</Button>
+            <Button className="bg-amber-500 hover:bg-amber-600 text-white" onClick={() => saveMutation.mutate()} disabled={saveMutation.isPending}>
+              {saveMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : "Salva spina"}
+            </Button>
+          </div>
+        )}
       </DialogContent>
     </Dialog>
   );
@@ -392,6 +806,299 @@ function FestivalForm({
   );
 }
 
+// ─── Festival food manager ───────────────────────────────────────────────────
+function FestivalFoodManager({ festId }: { festId: number }) {
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+
+  const { data: food = [] } = useQuery<FoodItem[]>({
+    queryKey: ["/api/admin/festivals", festId, "food"],
+    queryFn: () => apiRequest(`/api/admin/festivals/${festId}/food`),
+    enabled: !!festId,
+  });
+
+  // Derive unique categories from items + any locally added ones
+  const [extraCategories, setExtraCategories] = useState<string[]>([]);
+  const categories = useMemo(() => {
+    const fromItems = food.map(i => i.category || "Altro");
+    const all = [...new Set([...fromItems, ...extraCategories])].filter(Boolean);
+    return all.length > 0 ? all : [];
+  }, [food, extraCategories]);
+
+  const [newCategoryName, setNewCategoryName] = useState("");
+  const [showNewCategory, setShowNewCategory] = useState(false);
+  const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set());
+
+  // Add item dialog state
+  const [addingToCategory, setAddingToCategory] = useState<string | null>(null);
+  const [editingItem, setEditingItem] = useState<FoodItem | null>(null);
+  const [itemForm, setItemForm] = useState({ name: "", description: "", price: "", isAvailable: true });
+
+  const toggleCategory = (cat: string) => {
+    setExpandedCategories(prev => {
+      const next = new Set(prev);
+      if (next.has(cat)) next.delete(cat); else next.add(cat);
+      return next;
+    });
+  };
+
+  const openAddItem = (category: string) => {
+    setItemForm({ name: "", description: "", price: "", isAvailable: true });
+    setAddingToCategory(category);
+    setEditingItem(null);
+  };
+
+  const openEditItem = (item: FoodItem) => {
+    setItemForm({ name: item.name, description: item.description || "", price: item.price || "", isAvailable: item.isAvailable });
+    setEditingItem(item);
+    setAddingToCategory(null);
+  };
+
+  const addFoodMutation = useMutation({
+    mutationFn: (data: { name: string; description: string; price: string; category: string; isAvailable: boolean }) =>
+      apiRequest(`/api/admin/festivals/${festId}/food`, { method: "POST" }, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/festivals", festId, "food"] });
+      setAddingToCategory(null);
+      toast({ title: "Voce aggiunta" });
+    },
+    onError: () => toast({ title: "Errore", variant: "destructive" }),
+  });
+
+  const editFoodMutation = useMutation({
+    mutationFn: ({ id, data }: { id: number; data: any }) =>
+      apiRequest(`/api/admin/festivals/food/${id}`, { method: "PATCH" }, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/festivals", festId, "food"] });
+      setEditingItem(null);
+      toast({ title: "Voce aggiornata" });
+    },
+    onError: () => toast({ title: "Errore", variant: "destructive" }),
+  });
+
+  const toggleFoodMutation = useMutation({
+    mutationFn: (item: FoodItem) => apiRequest(`/api/admin/festivals/food/${item.id}`, { method: "PATCH" }, { isAvailable: !item.isAvailable }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["/api/admin/festivals", festId, "food"] }),
+  });
+
+  const deleteFoodMutation = useMutation({
+    mutationFn: (id: number) => apiRequest(`/api/admin/festivals/food/${id}`, { method: "DELETE" }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["/api/admin/festivals", festId, "food"] }),
+    onError: () => toast({ title: "Errore", variant: "destructive" }),
+  });
+
+  const getCategoryIcon = (cat: string) => {
+    const c = cat.toLowerCase();
+    if (c.includes("dolc") || c.includes("dessert")) return "🍰";
+    if (c.includes("bevand") || c.includes("bibite") || c.includes("drink")) return "🥤";
+    if (c.includes("panin") || c.includes("sandwich") || c.includes("burger")) return "🥪";
+    if (c.includes("pizza")) return "🍕";
+    if (c.includes("snack") || c.includes("patatine")) return "🍟";
+    if (c.includes("vino") || c.includes("cocktail")) return "🍷";
+    return "🍽️";
+  };
+
+  return (
+    <div className="space-y-4">
+      {/* Add category */}
+      <div className="flex items-center justify-between">
+        <p className="text-sm text-gray-600 dark:text-gray-400">{categories.length} categorie · {food.length} voci</p>
+        <Button size="sm" variant="outline" onClick={() => setShowNewCategory(true)}>
+          <Plus className="h-4 w-4 mr-1" />Nuova categoria
+        </Button>
+      </div>
+
+      {/* New category dialog */}
+      {showNewCategory && (
+        <Card className="border-dashed border-amber-300 dark:border-amber-700 bg-amber-50/30 dark:bg-amber-900/10">
+          <CardContent className="p-3 space-y-2">
+            <Label className="text-sm font-medium">Nome categoria</Label>
+            <div className="flex gap-2">
+              <Input
+                value={newCategoryName}
+                onChange={e => setNewCategoryName(e.target.value)}
+                placeholder="Es. Panini, Dolci, Bevande…"
+                className="h-8 text-sm"
+                onKeyDown={e => {
+                  if (e.key === "Enter" && newCategoryName.trim()) {
+                    setExtraCategories(prev => [...prev, newCategoryName.trim()]);
+                    setExpandedCategories(prev => new Set([...prev, newCategoryName.trim()]));
+                    setNewCategoryName("");
+                    setShowNewCategory(false);
+                  }
+                }}
+              />
+              <Button size="sm" className="h-8 bg-amber-500 hover:bg-amber-600 text-white"
+                disabled={!newCategoryName.trim()}
+                onClick={() => {
+                  if (newCategoryName.trim()) {
+                    setExtraCategories(prev => [...prev, newCategoryName.trim()]);
+                    setExpandedCategories(prev => new Set([...prev, newCategoryName.trim()]));
+                    setNewCategoryName("");
+                    setShowNewCategory(false);
+                  }
+                }}>
+                Crea
+              </Button>
+              <Button size="sm" variant="ghost" className="h-8" onClick={() => setShowNewCategory(false)}>
+                <X className="h-4 w-4" />
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Empty state */}
+      {categories.length === 0 && (
+        <Card>
+          <CardContent className="py-10 text-center space-y-3">
+            <UtensilsCrossed className="h-8 w-8 text-gray-300 mx-auto" />
+            <p className="text-gray-500 text-sm">Nessuna categoria ancora</p>
+            <p className="text-xs text-gray-400">Crea una categoria per iniziare ad aggiungere voci al menu</p>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Categories */}
+      {categories.map(cat => {
+        const items = food.filter(i => (i.category || "Altro") === cat);
+        const isExpanded = expandedCategories.has(cat);
+        return (
+          <Card key={cat} className="overflow-hidden">
+            <CardHeader className="p-0">
+              <button
+                className="w-full flex items-center justify-between p-4 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors text-left"
+                onClick={() => toggleCategory(cat)}
+              >
+                <div className="flex items-center gap-3">
+                  <span className="text-xl">{getCategoryIcon(cat)}</span>
+                  <div>
+                    <p className="font-semibold text-sm">{cat}</p>
+                    <p className="text-xs text-gray-500">{items.length} voc{items.length === 1 ? "e" : "i"}</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Button size="sm" variant="outline" className="h-7 text-xs" onClick={e => { e.stopPropagation(); openAddItem(cat); }}>
+                    <Plus className="h-3 w-3 mr-1" />Aggiungi
+                  </Button>
+                  <span className="text-gray-400 text-xs">{isExpanded ? "▲" : "▼"}</span>
+                </div>
+              </button>
+            </CardHeader>
+
+            {isExpanded && (
+              <CardContent className="p-0">
+                {items.length === 0 ? (
+                  <div className="px-4 pb-4 text-center text-sm text-gray-400">
+                    Nessuna voce in questa categoria.{" "}
+                    <button className="text-amber-600 hover:underline" onClick={() => openAddItem(cat)}>Aggiungine una</button>
+                  </div>
+                ) : (
+                  <div className="divide-y dark:divide-gray-700">
+                    {items.map(item => (
+                      <div key={item.id} className={`flex items-center gap-3 px-4 py-3 ${!item.isAvailable ? "opacity-60" : ""}`}>
+                        <div className="flex-1 min-w-0">
+                          <p className={`text-sm font-medium ${!item.isAvailable ? "line-through text-gray-400" : ""}`}>{item.name}</p>
+                          {item.description && <p className="text-xs text-gray-500 truncate">{item.description}</p>}
+                        </div>
+                        {item.price && <span className="font-bold text-amber-600 text-sm shrink-0">€{parseFloat(item.price).toFixed(2)}</span>}
+                        <button onClick={() => openEditItem(item)} className="p-1 rounded text-gray-400 hover:text-amber-600 transition-colors shrink-0">
+                          <Pencil className="h-4 w-4" />
+                        </button>
+                        <button onClick={() => toggleFoodMutation.mutate(item)} className="p-1 rounded shrink-0 transition-colors"
+                          title={item.isAvailable ? "Segna come non disponibile" : "Ripristina"}>
+                          {item.isAvailable
+                            ? <CheckCircle2 className="h-5 w-5 text-green-500" />
+                            : <XCircle className="h-5 w-5 text-red-400" />}
+                        </button>
+                        <button onClick={() => deleteFoodMutation.mutate(item.id)} className="p-1 rounded text-gray-300 hover:text-red-500 transition-colors shrink-0">
+                          <Trash2 className="h-4 w-4" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            )}
+          </Card>
+        );
+      })}
+
+      {/* Add item dialog */}
+      {addingToCategory && (
+        <Dialog open onOpenChange={() => setAddingToCategory(null)}>
+          <DialogContent className="max-w-sm">
+            <DialogHeader><DialogTitle>Aggiungi voce — {addingToCategory}</DialogTitle></DialogHeader>
+            <div className="space-y-3">
+              <div>
+                <Label className="text-xs">Nome *</Label>
+                <Input value={itemForm.name} onChange={e => setItemForm(f => ({ ...f, name: e.target.value }))} placeholder="Es. Panino al pulled pork" className="mt-1 h-9" />
+              </div>
+              <div>
+                <Label className="text-xs">Descrizione</Label>
+                <Textarea value={itemForm.description} onChange={e => setItemForm(f => ({ ...f, description: e.target.value }))} placeholder="Ingredienti, allergeni…" rows={2} className="mt-1 text-sm" />
+              </div>
+              <div>
+                <Label className="text-xs">Prezzo (€)</Label>
+                <Input type="number" step="0.50" min="0" value={itemForm.price} onChange={e => setItemForm(f => ({ ...f, price: e.target.value }))} placeholder="8.00" className="mt-1 h-9" />
+              </div>
+              <div className="flex items-center gap-3">
+                <Switch checked={itemForm.isAvailable} onCheckedChange={v => setItemForm(f => ({ ...f, isAvailable: v }))} />
+                <Label className="text-sm">{itemForm.isAvailable ? "Disponibile" : "Non disponibile"}</Label>
+              </div>
+            </div>
+            <div className="flex justify-end gap-2 pt-2">
+              <Button variant="outline" size="sm" onClick={() => setAddingToCategory(null)}>Annulla</Button>
+              <Button size="sm" className="bg-amber-500 hover:bg-amber-600 text-white"
+                disabled={!itemForm.name || addFoodMutation.isPending}
+                onClick={() => addFoodMutation.mutate({ ...itemForm, category: addingToCategory })}>
+                {addFoodMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4 mr-1" />}
+                Aggiungi
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
+      )}
+
+      {/* Edit item dialog */}
+      {editingItem && (
+        <Dialog open onOpenChange={() => setEditingItem(null)}>
+          <DialogContent className="max-w-sm">
+            <DialogHeader><DialogTitle>Modifica voce</DialogTitle></DialogHeader>
+            <div className="space-y-3">
+              <div>
+                <Label className="text-xs">Nome *</Label>
+                <Input value={itemForm.name} onChange={e => setItemForm(f => ({ ...f, name: e.target.value }))} className="mt-1 h-9" />
+              </div>
+              <div>
+                <Label className="text-xs">Descrizione</Label>
+                <Textarea value={itemForm.description} onChange={e => setItemForm(f => ({ ...f, description: e.target.value }))} rows={2} className="mt-1 text-sm" />
+              </div>
+              <div>
+                <Label className="text-xs">Prezzo (€)</Label>
+                <Input type="number" step="0.50" min="0" value={itemForm.price} onChange={e => setItemForm(f => ({ ...f, price: e.target.value }))} className="mt-1 h-9" />
+              </div>
+              <div className="flex items-center gap-3">
+                <Switch checked={itemForm.isAvailable} onCheckedChange={v => setItemForm(f => ({ ...f, isAvailable: v }))} />
+                <Label className="text-sm">{itemForm.isAvailable ? "Disponibile" : "Non disponibile"}</Label>
+              </div>
+            </div>
+            <div className="flex justify-end gap-2 pt-2">
+              <Button variant="outline" size="sm" onClick={() => setEditingItem(null)}>Annulla</Button>
+              <Button size="sm" className="bg-amber-500 hover:bg-amber-600 text-white"
+                disabled={!itemForm.name || editFoodMutation.isPending}
+                onClick={() => editFoodMutation.mutate({ id: editingItem.id, data: itemForm })}>
+                {editFoodMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
+                Salva
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
+      )}
+    </div>
+  );
+}
+
 function CreateFestivalDialog({ onClose, onCreated }: { onClose: () => void; onCreated: (f: Festival) => void }) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -436,7 +1143,6 @@ export default function FestivalDashboard() {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [editingTap, setEditingTap] = useState<{ tapNumber: number; existing?: FestivalTap } | null>(null);
   const [bulkCount, setBulkCount] = useState("20");
-  const [newFood, setNewFood] = useState({ name: "", description: "", price: "", category: "Cibo" });
   const [activeTab, setActiveTab] = useState("taps");
 
   // List of managed festivals
@@ -457,13 +1163,6 @@ export default function FestivalDashboard() {
       return data.taps || [];
     },
     enabled: !!selectedFest,
-  });
-
-  // Food for selected festival
-  const { data: food = [] } = useQuery<FoodItem[]>({
-    queryKey: ["/api/admin/festivals", festId, "food"],
-    queryFn: () => apiRequest(`/api/admin/festivals/${festId}/food`),
-    enabled: !!festId,
   });
 
   // Stats
@@ -489,29 +1188,6 @@ export default function FestivalDashboard() {
       toast({ title: `${bulkCount} spine create` });
     },
     onError: () => toast({ title: "Errore", variant: "destructive" }),
-  });
-
-  // Add food item
-  const addFoodMutation = useMutation({
-    mutationFn: () => apiRequest(`/api/admin/festivals/${festId}/food`, { method: "POST" }, newFood),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/admin/festivals", festId, "food"] });
-      setNewFood({ name: "", description: "", price: "", category: "Cibo" });
-      toast({ title: "Voce aggiunta" });
-    },
-    onError: () => toast({ title: "Errore", variant: "destructive" }),
-  });
-
-  // Toggle food availability
-  const toggleFoodMutation = useMutation({
-    mutationFn: (item: FoodItem) => apiRequest(`/api/admin/festivals/food/${item.id}`, { method: "PATCH" }, { isAvailable: !item.isAvailable }),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["/api/admin/festivals", festId, "food"] }),
-  });
-
-  // Delete food item
-  const deleteFoodMutation = useMutation({
-    mutationFn: (id: number) => apiRequest(`/api/admin/festivals/food/${id}`, { method: "DELETE" }),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["/api/admin/festivals", festId, "food"] }),
   });
 
   // Update festival info
@@ -864,74 +1540,7 @@ export default function FestivalDashboard() {
                         </CardContent>
                       </Card>
                     ) : (
-                    <>
-                    {/* Add food form */}
-                    <Card>
-                      <CardHeader className="pb-3">
-                        <CardTitle className="text-sm">Aggiungi voce menu</CardTitle>
-                      </CardHeader>
-                      <CardContent className="space-y-3">
-                        <div className="grid grid-cols-2 gap-3">
-                          <div>
-                            <Label>Nome *</Label>
-                            <Input value={newFood.name} onChange={e => setNewFood(f => ({ ...f, name: e.target.value }))} placeholder="Es. Panino al pulled pork" />
-                          </div>
-                          <div>
-                            <Label>Categoria</Label>
-                            <Select value={newFood.category} onValueChange={v => setNewFood(f => ({ ...f, category: v }))}>
-                              <SelectTrigger><SelectValue /></SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value="Cibo">Cibo</SelectItem>
-                                <SelectItem value="Bevande">Bevande</SelectItem>
-                                <SelectItem value="Dolci">Dolci</SelectItem>
-                                <SelectItem value="Snack">Snack</SelectItem>
-                                <SelectItem value="Panini">Panini</SelectItem>
-                                <SelectItem value="Altro">Altro</SelectItem>
-                              </SelectContent>
-                            </Select>
-                          </div>
-                        </div>
-                        <div className="grid grid-cols-2 gap-3">
-                          <div>
-                            <Label>Descrizione</Label>
-                            <Input value={newFood.description} onChange={e => setNewFood(f => ({ ...f, description: e.target.value }))} />
-                          </div>
-                          <div>
-                            <Label>Prezzo (€)</Label>
-                            <Input type="number" step="0.50" value={newFood.price} onChange={e => setNewFood(f => ({ ...f, price: e.target.value }))} placeholder="8.00" />
-                          </div>
-                        </div>
-                        <Button onClick={() => addFoodMutation.mutate()} disabled={!newFood.name || addFoodMutation.isPending} size="sm">
-                          {addFoodMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4 mr-1" />}
-                          Aggiungi
-                        </Button>
-                      </CardContent>
-                    </Card>
-
-                    {/* Food list */}
-                    <div className="space-y-2">
-                      {food.length === 0 ? (
-                        <p className="text-center text-gray-500 py-6">Nessuna voce nel menu</p>
-                      ) : food.map(item => (
-                        <div key={item.id} className={`flex items-center gap-3 p-3 rounded-xl bg-white dark:bg-gray-800 border ${item.isAvailable ? "border-gray-200 dark:border-gray-700" : "border-gray-100 opacity-60"}`}>
-                          <div className="flex-1">
-                            <div className="flex items-center gap-2">
-                              <span className={`font-medium text-sm ${!item.isAvailable ? "line-through text-gray-400" : ""}`}>{item.name}</span>
-                              {item.category && <Badge variant="secondary" className="text-xs py-0">{item.category}</Badge>}
-                            </div>
-                            {item.description && <p className="text-xs text-gray-500 mt-0.5">{item.description}</p>}
-                          </div>
-                          {item.price && <span className="font-bold text-amber-600 text-sm">€{parseFloat(item.price).toFixed(2)}</span>}
-                          <button onClick={() => toggleFoodMutation.mutate(item)} className="p-1 rounded text-gray-400 hover:text-amber-600 transition-colors">
-                            {item.isAvailable ? <CheckCircle2 className="h-5 w-5 text-green-500" /> : <XCircle className="h-5 w-5 text-red-400" />}
-                          </button>
-                          <button onClick={() => deleteFoodMutation.mutate(item.id)} className="p-1 rounded text-gray-300 hover:text-red-500 transition-colors">
-                            <Trash2 className="h-4 w-4" />
-                          </button>
-                        </div>
-                      ))}
-                    </div>
-                    </>
+                      <FestivalFoodManager festId={festId!} />
                     )}
                   </TabsContent>
 
