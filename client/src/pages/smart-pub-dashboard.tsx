@@ -674,7 +674,7 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
       </motion.div>
 
       {/* Festival Mode CTA */}
-      <Link href="/crea-festival">
+      <Link href="/festival">
         <div className="glass-card rounded-2xl border border-amber-200 dark:border-amber-800 bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-900/20 dark:to-orange-900/20 p-5 mb-6 flex items-center justify-between gap-4 cursor-pointer hover:shadow-md transition-shadow">
           <div className="flex items-center gap-4 min-w-0">
             <div className="p-3 bg-amber-500 rounded-xl shrink-0">

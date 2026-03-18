@@ -64,7 +64,7 @@ export default function Header() {
     { label: "Home", href: "/", isActive: location === "/", requiresAuth: false },
     { label: "Birrifici", href: "/explore/breweries", isActive: location.startsWith("/explore/breweries"), requiresAuth: false },
     { label: "Pub & Locali", href: "/explore/pubs", isActive: location.startsWith("/explore/pubs"), requiresAuth: false },
-    { label: "Festival", href: "/crea-festival", isActive: location.startsWith("/crea-festival") || location.startsWith("/festival-dashboard"), requiresAuth: false },
+    { label: "Festival", href: "/festival", isActive: location.startsWith("/festival") && !location.startsWith("/festival-dashboard") && !location.startsWith("/festival/"), requiresAuth: false },
     { label: "Attività", href: "/activity", isActive: location.startsWith("/activity"), requiresAuth: true, badge: undefined as number | undefined },
     { label: "Notifiche", href: "/notifications", isActive: location.startsWith("/notifications"), requiresAuth: true, badge: (unreadData?.count && unreadData.count > 0) ? unreadData.count : undefined },
     { label: "Dashboard", href: "/dashboard", isActive: location.startsWith("/dashboard"), requiresAuth: true, badge: undefined as number | undefined },

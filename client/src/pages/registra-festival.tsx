@@ -289,7 +289,7 @@ export default function RegistraFestivalPage() {
           </div>
           <span className="font-bold text-gray-900 dark:text-white tracking-tight">fermenta.to</span>
         </Link>
-        <Link href="/crea-festival" className="flex items-center gap-1.5 text-xs text-amber-600 dark:text-amber-400 hover:underline font-medium">
+        <Link href="/festival" className="flex items-center gap-1.5 text-xs text-amber-600 dark:text-amber-400 hover:underline font-medium">
           <QrCode className="w-3.5 h-3.5" />
           Scopri Festival Mode
         </Link>

@@ -42,7 +42,7 @@ const statiItaliani = [
 
 function PubSquareCard({ pub }: { pub: any }) {
   return (
-    <Link href={`/pub/${pub.id}`}>
+    <Link href={`/pub/${pub.slug || pub.id}`}>
       <Card className="overflow-hidden hover:shadow-lg transition-all duration-200 cursor-pointer group h-48 border border-gray-100 dark:border-slate-700 bg-white dark:bg-slate-800">
         <CardContent className="p-4 h-full flex flex-col">
           <div className="relative w-full h-24 mb-3 rounded-lg overflow-hidden bg-gray-100 dark:bg-slate-700">

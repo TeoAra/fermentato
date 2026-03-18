@@ -637,7 +637,7 @@ export default function FestivalDashboard() {
               <p className="text-gray-600">Nessun festival ancora</p>
               <div className="flex flex-col sm:flex-row gap-2 justify-center">
                 <Button asChild className="bg-amber-500 hover:bg-amber-600 text-white">
-                  <a href="/crea-festival"><Plus className="h-4 w-4 mr-1" />Crea il tuo festival</a>
+                  <a href="/festival"><Plus className="h-4 w-4 mr-1" />Crea il tuo festival</a>
                 </Button>
                 {user?.userType === 'admin' && (
                   <Button variant="outline" onClick={() => setShowCreateDialog(true)}>

@@ -189,6 +189,7 @@ export interface IStorage {
   // Pub operations
   getPubs(): Promise<Pub[]>;
   getPub(id: number): Promise<Pub | undefined>;
+  getPubBySlug(slug: string): Promise<Pub | undefined>;
   createPub(pub: InsertPub): Promise<Pub>;
   updatePub(id: number, updates: Partial<InsertPub>): Promise<Pub>;
   deletePub(id: number): Promise<void>;
@@ -392,6 +393,11 @@ export class DatabaseStorage implements IStorage {
 
   async getPub(id: number): Promise<Pub | undefined> {
     const [pub] = await db.select().from(pubs).where(eq(pubs.id, id));
+    return pub;
+  }
+
+  async getPubBySlug(slug: string): Promise<Pub | undefined> {
+    const [pub] = await db.select().from(pubs).where(eq(pubs.slug, slug));
     return pub;
   }
 
@@ -1709,6 +1715,13 @@ class StorageWrapper implements IStorage {
     return this.dbCall(
       () => this.databaseStorage.getPub(id),
       () => memoryStorageInstance.getPub(id)
+    );
+  }
+
+  async getPubBySlug(slug: string): Promise<Pub | undefined> {
+    return this.dbCall(
+      () => this.databaseStorage.getPubBySlug(slug),
+      () => memoryStorageInstance.getPubBySlug(slug)
     );
   }
 

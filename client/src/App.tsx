@@ -163,7 +163,7 @@ function Router() {
           <Route path="/supporto" component={SupportoPage} />
           <Route path="/festival/:slug" component={FestivalPublic} />
           <Route path="/festival-dashboard" component={FestivalDashboard} />
-          <Route path="/crea-festival" component={CreaFestival} />
+          <Route path="/festival" component={CreaFestival} />
           <Route path="/registra-festival" component={RegistraFestival} />
           <Route component={NotFound} />
         </Switch>

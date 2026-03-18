@@ -64,7 +64,7 @@ export default function SearchResults({ query, onClose }: SearchResultsProps) {
           <ul>
             {results.pubs.slice(0, 4).map((pub) => (
               <li key={`pub-${pub.id}`}>
-                <Link href={`/pub/${pub.id}`}>
+                <Link href={`/pub/${pub.slug || pub.id}`}>
                   <div className="flex items-center gap-3 px-4 py-2.5 hover:bg-amber-50 dark:hover:bg-slate-800 transition-colors cursor-pointer group" onClick={onClose}>
                     <div className="w-10 h-10 rounded-xl bg-orange-100 dark:bg-orange-900/30 flex items-center justify-center flex-shrink-0 overflow-hidden">
                       {(pub.logoUrl || pub.coverImageUrl || pub.imageUrl) ? (

@@ -249,7 +249,7 @@ export default function CreaFestival() {
     const params = new URLSearchParams(window.location.search);
     if (params.get("open") === "1" && isAuthenticated) {
       setShowForm(true);
-      window.history.replaceState({}, "", "/crea-festival");
+      window.history.replaceState({}, "", "/festival");
     }
   }, [isAuthenticated]);
 
@@ -380,42 +380,47 @@ export default function CreaFestival() {
           </Card>
         )}
 
-        {/* Festival listing */}
+        {/* Festival showcase carousel */}
         {publicFests.length > 0 && (
           <div className="space-y-8">
-            {liveFests.length > 0 && (
+
+            {/* Active + upcoming: big horizontal scroll carousel */}
+            {(liveFests.length > 0 || futureFests.length > 0) && (
               <div>
-                <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-4 flex items-center gap-2">
-                  <span className="w-2 h-2 rounded-full bg-green-500 inline-block" />
-                  Festival in corso
-                </h2>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {liveFests.map(f => <FestivalCard key={f.id} fest={f} />)}
+                <div className="flex items-center gap-2 mb-4">
+                  <span className="w-2.5 h-2.5 rounded-full bg-green-500 animate-pulse inline-block" />
+                  <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100">
+                    Festival in corso e in arrivo
+                  </h2>
+                  <span className="ml-auto text-xs text-gray-400">scorri →</span>
+                </div>
+                <div className="flex gap-4 overflow-x-auto pb-3 snap-x snap-mandatory scroll-smooth -mx-4 px-4">
+                  {[...liveFests, ...futureFests].map(f => (
+                    <div key={f.id} className="flex-shrink-0 w-72 snap-start">
+                      <FestivalCard fest={f} />
+                    </div>
+                  ))}
                 </div>
               </div>
             )}
-            {futureFests.length > 0 && (
-              <div>
-                <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-4 flex items-center gap-2">
-                  <span className="w-2 h-2 rounded-full bg-amber-400 inline-block" />
-                  Prossimi festival
-                </h2>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {futureFests.map(f => <FestivalCard key={f.id} fest={f} />)}
-                </div>
-              </div>
-            )}
+
+            {/* Past: compact horizontal scroll */}
             {pastFests.length > 0 && (
               <div>
-                <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-4 flex items-center gap-2">
+                <div className="flex items-center gap-2 mb-3">
                   <span className="w-2 h-2 rounded-full bg-gray-400 inline-block" />
-                  Festival passati
-                </h2>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {pastFests.map(f => <FestivalCard key={f.id} fest={f} />)}
+                  <h2 className="text-base font-semibold text-gray-500 dark:text-gray-400">Festival passati</h2>
+                </div>
+                <div className="flex gap-3 overflow-x-auto pb-3 snap-x snap-mandatory -mx-4 px-4">
+                  {pastFests.map(f => (
+                    <div key={f.id} className="flex-shrink-0 w-60 snap-start">
+                      <FestivalCard fest={f} />
+                    </div>
+                  ))}
                 </div>
               </div>
             )}
+
           </div>
         )}
 

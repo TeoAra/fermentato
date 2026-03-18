@@ -273,7 +273,7 @@ export default function Home() {
                       <Link href="/dashboard">
                         <Button size="sm" className="bg-amber-500 hover:bg-amber-400 text-gray-900 font-medium text-xs px-3">Gestisci</Button>
                       </Link>
-                      <Link href={`/pub/${pub.id}`}>
+                      <Link href={`/pub/${pub.slug || pub.id}`}>
                         <Button size="sm" variant="outline" className="text-xs px-3 w-full">Pagina</Button>
                       </Link>
                     </div>

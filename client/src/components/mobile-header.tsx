@@ -227,10 +227,10 @@ export function MobileHeader({ onMenuToggle, isMenuOpen }: MobileHeaderProps) {
                 {myFestivals && myFestivals.length > 0 ? (
                   <>
                     <MenuItem href="/festival-dashboard" icon={QrCode} label="Festival Dashboard" desc={`${myFestivals.length} festival${myFestivals.length > 1 ? '' : ''} attiv${myFestivals.length > 1 ? 'i' : 'o'}`} />
-                    <MenuItem href="/crea-festival" icon={Building2} label="Crea un nuovo festival" />
+                    <MenuItem href="/festival" icon={Building2} label="Crea un nuovo festival" />
                   </>
                 ) : (
-                  <MenuItem href="/crea-festival" icon={QrCode} label="Festival Mode" desc="Crea il tuo festival birra" />
+                  <MenuItem href="/festival" icon={QrCode} label="Festival Mode" desc="Crea il tuo festival birra" />
                 )}
               </>
             )}

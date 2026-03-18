@@ -444,7 +444,7 @@ export default function SearchPage() {
                 )}
                 <div className="space-y-1.5">
                   {filteredPubs.map((pub: any) => (
-                    <Link key={pub.id} href={`/pub/${pub.id}`}>
+                    <Link key={pub.id} href={`/pub/${pub.slug || pub.id}`}>
                       <div className="flex items-center gap-3 p-3 rounded-xl bg-white dark:bg-slate-800 border border-gray-100 dark:border-slate-700 hover:border-blue-300 dark:hover:border-blue-600 hover:shadow-md transition-all cursor-pointer group">
                         <ImageWithFallback
                           src={pub.logoUrl}

@@ -130,6 +130,7 @@ export const pubs = pgTable("pubs", {
   trialEndsAt: timestamp("trial_ends_at"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
+  slug: varchar("slug", { length: 150 }).unique(),
 });
 
 // Beers table

@@ -229,6 +229,43 @@ export async function registerRoutes(app: Express): Promise<Server> {
   registerAdminRoutes(app);
   registerFestivalRoutes(app);
 
+  // Startup: ensure pubs have slug column + auto-generate slugs
+  (async () => {
+    try {
+      await pool.query(`ALTER TABLE pubs ADD COLUMN IF NOT EXISTS slug varchar(150) UNIQUE`);
+      const { rows } = await pool.query(`SELECT id, name FROM pubs WHERE slug IS NULL`);
+      for (const row of rows) {
+        const base = row.name
+          .toLowerCase()
+          .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+          .replace(/[^a-z0-9]+/g, "-")
+          .replace(/^-+|-+$/g, "")
+          .slice(0, 100);
+        let slug = base;
+        let attempt = 0;
+        while (true) {
+          try {
+            await pool.query(`UPDATE pubs SET slug = $1 WHERE id = $2`, [slug, row.id]);
+            break;
+          } catch {
+            attempt++;
+            slug = `${base}-${row.id}${attempt > 1 ? `-${attempt}` : ""}`;
+          }
+        }
+      }
+    } catch (e) {
+      console.error("[pubs] slug migration error:", e);
+    }
+  })();
+
+  // Helper: resolve pub ID from numeric id or slug
+  async function resolvePubId(param: string): Promise<number | null> {
+    const numId = parseInt(param);
+    if (!isNaN(numId)) return numId;
+    const pub = await storage.getPubBySlug(param);
+    return pub?.id ?? null;
+  }
+
   // Public routes - no authentication required
   
   // Get all pubs
@@ -606,11 +643,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Get pub by ID
   app.get("/api/pubs/:id", async (req, res) => {
     try {
-      const id = parseInt(req.params.id);
-      if (isNaN(id)) {
-        return res.status(400).json({ message: "Invalid pub ID" });
+      const param = req.params.id;
+      const numId = parseInt(param);
+      let pub;
+      if (isNaN(numId)) {
+        pub = await storage.getPubBySlug(param);
+      } else {
+        pub = await storage.getPub(numId);
+        if (!pub && param.length > 0) {
+          pub = await storage.getPubBySlug(param);
+        }
       }
-      const pub = await storage.getPub(id);
       if (!pub) {
         return res.status(404).json({ message: "Pub not found" });
       }
@@ -624,9 +667,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Get tap list for a pub
   app.get("/api/pubs/:id/taplist", async (req, res) => {
     try {
-      const pubId = parseInt(req.params.id);
-      if (isNaN(pubId)) {
-        return res.status(400).json({ message: "Invalid pub ID" });
+      const pubId = await resolvePubId(req.params.id);
+      if (!pubId) {
+        return res.status(404).json({ message: "Pub not found" });
       }
 
       // Check if user is the pub owner (authenticated endpoint)
@@ -809,7 +852,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Get menu for a pub
   app.get("/api/pubs/:id/menu", async (req, res) => {
     try {
-      const pubId = parseInt(req.params.id);
+      const pubId = await resolvePubId(req.params.id);
+      if (!pubId) return res.status(404).json({ message: "Pub not found" });
       const menu = await storage.getMenuByPub(pubId);
       res.json(menu);
     } catch (error) {
@@ -821,8 +865,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Full menu endpoint: categories + all items in a single query (eliminates N+1)
   app.get("/api/pubs/:id/menu/full", async (req, res) => {
     try {
-      const pubId = parseInt(req.params.id);
-      if (isNaN(pubId)) return res.status(400).json({ message: "Invalid pub ID" });
+      const pubId = await resolvePubId(req.params.id);
+      if (!pubId) return res.status(404).json({ message: "Pub not found" });
       const menu = await storage.getMenuByPub(pubId);
       res.setHeader('Cache-Control', 'public, max-age=60, stale-while-revalidate=30');
       res.json(menu);
@@ -835,7 +879,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Get bottle list (cantina) for a pub
   app.get("/api/pubs/:id/bottles", async (req, res) => {
     try {
-      const pubId = parseInt(req.params.id);
+      const pubId = await resolvePubId(req.params.id);
+      if (!pubId) return res.status(404).json({ message: "Pub not found" });
       const bottleList = await storage.getBottleList(pubId);
       res.json(bottleList);
     } catch (error) {

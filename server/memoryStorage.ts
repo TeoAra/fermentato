@@ -145,6 +145,10 @@ export class MemoryStorage {
     return this.pubs.get(id);
   }
 
+  async getPubBySlug(slug: string): Promise<Pub | undefined> {
+    return Array.from(this.pubs.values()).find(p => p.slug === slug);
+  }
+
   async createPub(pub: InsertPub): Promise<Pub> {
     const id = this.idCounters.pub++;
     const newPub: Pub = {

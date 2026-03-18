@@ -329,7 +329,7 @@ export default function AuthPage() {
                 </button>
               ))}
               <a
-                href="/crea-festival"
+                href="/festival"
                 className="pb-3 px-1 ml-auto -mb-px flex items-center gap-1.5 text-sm font-medium border-b-2 border-transparent text-amber-500 hover:text-amber-600 dark:text-amber-400 dark:hover:text-amber-300 transition-colors"
               >
                 <QrCode className="w-3.5 h-3.5" />
