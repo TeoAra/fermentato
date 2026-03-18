@@ -23,6 +23,31 @@ function canManageFestival(req: any, festival: any): boolean {
 }
 
 export function registerFestivalRoutes(app: Express) {
+  // ── Public: list all active/past festivals (directory page) ──────────────────
+  // IMPORTANT: must be registered BEFORE /api/festivals/:slug to avoid "public" being treated as a slug
+  app.get("/api/festivals/public", async (_req, res) => {
+    try {
+      const rows = await db.select({
+        id: festivals.id,
+        name: festivals.name,
+        slug: festivals.slug,
+        description: festivals.description,
+        location: festivals.location,
+        startDate: festivals.startDate,
+        endDate: festivals.endDate,
+        isActive: festivals.isActive,
+        logoUrl: festivals.logoUrl,
+        coverImageUrl: festivals.coverImageUrl,
+      })
+      .from(festivals)
+      .where(eq(festivals.isActive, true))
+      .orderBy(festivals.startDate);
+      res.json(rows);
+    } catch (err) {
+      res.status(500).json({ message: "Errore" });
+    }
+  });
+
   // ── Public: get festival by slug ────────────────────────────────────────────
   app.get("/api/festivals/:slug", async (req, res) => {
     try {
@@ -152,7 +177,7 @@ export function registerFestivalRoutes(app: Express) {
         ownerId: user.id,
         logoUrl: logoUrl || null,
         coverImageUrl: coverImageUrl || null,
-        priceEur: priceEur ? parseInt(priceEur) : 99,
+        priceEur: priceEur ? parseInt(priceEur) : 50,
         isActive: false,
       }).returning();
       res.json(fest);
@@ -181,7 +206,7 @@ export function registerFestivalRoutes(app: Express) {
         ownerId: ownerId || user.id,
         logoUrl: logoUrl || null,
         coverImageUrl: coverImageUrl || null,
-        priceEur: priceEur ? parseInt(priceEur) : 99,
+        priceEur: priceEur ? parseInt(priceEur) : 50,
         isActive: false, // attivato dopo il pagamento
       }).returning();
       res.json(fest);

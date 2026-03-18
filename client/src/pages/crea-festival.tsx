@@ -1,27 +1,26 @@
 import { useState, useEffect } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useLocation, Link } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
-import Footer from "@/components/footer";
-import Header from "@/components/header";
 import { ImageUpload } from "@/components/image-upload";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Separator } from "@/components/ui/separator";
-import { Loader2 } from "lucide-react";
+import { Loader2, MapPin, Calendar, ExternalLink } from "lucide-react";
 import {
   Beer, QrCode, BarChart3, UtensilsCrossed, Star,
-  CreditCard, CheckCircle2, ArrowRight, Smartphone,
-  Zap, Users,
+  CreditCard, CheckCircle2, ArrowRight, Smartphone, Zap,
 } from "lucide-react";
+
+const PRICE = 50;
 
 const FEATURES = [
   { icon: QrCode, title: "Taplist QR digitale", desc: "I visitatori scannerizzano il QR e vedono tutte le birre in tempo reale" },
@@ -38,7 +37,7 @@ function FestivalCreationForm({ onCreated }: { onCreated: (fest: any) => void })
   const [form, setForm] = useState({
     name: "", slug: "", description: "", location: "",
     startDate: "", endDate: "", showFood: true,
-    logoUrl: "", coverImageUrl: "", priceEur: 99,
+    logoUrl: "", coverImageUrl: "", priceEur: PRICE,
   });
 
   const suggestSlug = (name: string) =>
@@ -48,6 +47,7 @@ function FestivalCreationForm({ onCreated }: { onCreated: (fest: any) => void })
     mutationFn: (data: any) => apiRequest("/api/festivals/register", { method: "POST" }, data),
     onSuccess: (data: any) => {
       queryClient.invalidateQueries({ queryKey: ["/api/admin/festivals"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/festivals/public"] });
       toast({ title: "Festival creato! Ora procedi con il pagamento per attivarlo." });
       onCreated(data);
     },
@@ -139,17 +139,87 @@ function FestivalCreationForm({ onCreated }: { onCreated: (fest: any) => void })
         Crea festival e procedi al pagamento
       </Button>
       <p className="text-xs text-center text-gray-400">
-        Pagamento sicuro via Stripe · €99 una tantum · Nessun abbonamento
+        Pagamento sicuro via Stripe · €{PRICE} una tantum · Nessun abbonamento
       </p>
     </div>
   );
 }
 
+function FestivalCard({ fest }: { fest: any }) {
+  const today = new Date();
+  const end = fest.endDate ? new Date(fest.endDate) : null;
+  const start = fest.startDate ? new Date(fest.startDate) : null;
+  const isPast = end && end < today;
+  const isLive = !isPast && start && start <= today;
+  const isFuture = start && start > today;
+
+  const formatDate = (d: string) =>
+    new Date(d).toLocaleDateString("it-IT", { day: "numeric", month: "short", year: "numeric" });
+
+  return (
+    <Card className={`overflow-hidden transition-shadow hover:shadow-md ${isPast ? "opacity-70" : ""}`}>
+      {fest.coverImageUrl && (
+        <div className="h-28 relative">
+          <img src={fest.coverImageUrl} alt="" className="w-full h-full object-cover" />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
+          {fest.logoUrl && (
+            <img src={fest.logoUrl} alt="" className="absolute bottom-2 left-3 w-10 h-10 rounded-xl object-cover shadow-lg border-2 border-white" />
+          )}
+        </div>
+      )}
+      <CardContent className="p-4 space-y-2">
+        <div className="flex items-start justify-between gap-2">
+          <div className="flex items-center gap-2 min-w-0">
+            {!fest.coverImageUrl && fest.logoUrl && (
+              <img src={fest.logoUrl} alt="" className="w-9 h-9 rounded-lg object-cover flex-shrink-0" />
+            )}
+            <h3 className="font-semibold text-gray-900 dark:text-gray-100 leading-tight">{fest.name}</h3>
+          </div>
+          {isPast ? (
+            <Badge variant="secondary" className="text-xs flex-shrink-0">Concluso</Badge>
+          ) : isLive ? (
+            <Badge className="bg-green-100 text-green-700 border-green-200 text-xs flex-shrink-0">In corso</Badge>
+          ) : (
+            <Badge className="bg-amber-100 text-amber-700 border-amber-200 text-xs flex-shrink-0">In arrivo</Badge>
+          )}
+        </div>
+        {fest.location && (
+          <div className="flex items-center gap-1 text-xs text-gray-500">
+            <MapPin className="h-3 w-3" />
+            {fest.location}
+          </div>
+        )}
+        {(fest.startDate || fest.endDate) && (
+          <div className="flex items-center gap-1 text-xs text-gray-500">
+            <Calendar className="h-3 w-3" />
+            {fest.startDate && fest.endDate
+              ? `${formatDate(fest.startDate)} – ${formatDate(fest.endDate)}`
+              : fest.startDate ? `Dal ${formatDate(fest.startDate)}`
+              : `Fino al ${formatDate(fest.endDate)}`}
+          </div>
+        )}
+        {fest.description && (
+          <p className="text-xs text-gray-500 line-clamp-2">{fest.description}</p>
+        )}
+        {fest.isActive && (
+          <Link href={`/festival/${fest.slug}`}>
+            <Button size="sm" variant="outline" className="w-full mt-1 text-xs h-7">
+              <ExternalLink className="h-3 w-3 mr-1" />
+              Vedi taplist
+            </Button>
+          </Link>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
 export default function CreaFestival() {
-  const { isAuthenticated, user } = useAuth();
+  const { isAuthenticated } = useAuth();
   const [, navigate] = useLocation();
   const { toast } = useToast();
   const [showForm, setShowForm] = useState(false);
+  const [createdFest, setCreatedFest] = useState<any>(null);
 
   // Auto-open form if redirected back after login with ?open=1
   useEffect(() => {
@@ -159,7 +229,12 @@ export default function CreaFestival() {
       window.history.replaceState({}, "", "/crea-festival");
     }
   }, [isAuthenticated]);
-  const [createdFest, setCreatedFest] = useState<any>(null);
+
+  // Public festival list (all, including past)
+  const { data: publicFests = [] } = useQuery<any[]>({
+    queryKey: ["/api/festivals/public"],
+    queryFn: () => apiRequest("/api/festivals/public"),
+  });
 
   const checkoutMutation = useMutation({
     mutationFn: ({ festivalId }: { festivalId: number }) =>
@@ -183,13 +258,26 @@ export default function CreaFestival() {
     setShowForm(true);
   };
 
-  return (
-    <div className="min-h-screen bg-[hsl(38,14%,97%)] dark:bg-[hsl(25,14%,7%)]">
-      <Header />
+  const today = new Date();
+  const liveFests = publicFests.filter(f => {
+    const end = f.endDate ? new Date(f.endDate) : null;
+    return f.isActive && (!end || end >= today);
+  });
+  const pastFests = publicFests.filter(f => {
+    const end = f.endDate ? new Date(f.endDate) : null;
+    return end && end < today;
+  });
+  const futureFests = publicFests.filter(f => {
+    const start = f.startDate ? new Date(f.startDate) : null;
+    const end = f.endDate ? new Date(f.endDate) : null;
+    return f.isActive && start && start > today && (!end || end >= today);
+  });
 
+  return (
+    <div className="min-h-screen">
       {/* Hero */}
       <div className="bg-gradient-to-br from-amber-600 via-orange-600 to-amber-700 text-white">
-        <div className="max-w-4xl mx-auto px-4 py-16 text-center">
+        <div className="max-w-4xl mx-auto px-4 py-14 text-center">
           <Badge className="bg-white/20 text-white border-white/30 mb-4">Festival Mode</Badge>
           <h1 className="text-4xl sm:text-5xl font-extrabold leading-tight mb-4">
             Il tuo festival di birra<br />
@@ -211,15 +299,15 @@ export default function CreaFestival() {
             </Button>
             <div className="flex items-center gap-2 text-amber-100">
               <CreditCard className="h-4 w-4" />
-              <span className="text-sm font-medium">€99 una tantum · nessun abbonamento</span>
+              <span className="text-sm font-medium">€{PRICE} una tantum · nessun abbonamento</span>
             </div>
           </div>
         </div>
       </div>
 
-      <div className="max-w-4xl mx-auto px-4 py-12 space-y-12">
+      <div className="max-w-4xl mx-auto px-4 py-10 space-y-12">
 
-        {/* Se il festival è stato creato, mostra il pulsante pagamento */}
+        {/* Post-creation: payment CTA */}
         {createdFest && (
           <Card className="border-amber-200 bg-amber-50 dark:bg-amber-950/30">
             <CardContent className="py-8 text-center space-y-4">
@@ -234,8 +322,8 @@ export default function CreaFestival() {
                   Completa il pagamento per attivare il taplist pubblico.
                 </p>
               </div>
-              <div className="text-4xl font-extrabold text-amber-600">€{createdFest.priceEur ?? 99}</div>
-              <div className="text-sm text-gray-500">Pagamento unico · accesso per tutta la durata dell'evento</div>
+              <div className="text-4xl font-extrabold text-amber-600">€{createdFest.priceEur ?? PRICE}</div>
+              <p className="text-sm text-gray-500">Pagamento unico · accesso per tutta la durata dell'evento</p>
               <div className="flex flex-col sm:flex-row gap-3 justify-center">
                 <Button
                   size="lg"
@@ -261,7 +349,46 @@ export default function CreaFestival() {
           </Card>
         )}
 
-        {/* Features grid */}
+        {/* Festival listing */}
+        {publicFests.length > 0 && (
+          <div className="space-y-8">
+            {liveFests.length > 0 && (
+              <div>
+                <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-4 flex items-center gap-2">
+                  <span className="w-2 h-2 rounded-full bg-green-500 inline-block" />
+                  Festival in corso
+                </h2>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {liveFests.map(f => <FestivalCard key={f.id} fest={f} />)}
+                </div>
+              </div>
+            )}
+            {futureFests.length > 0 && (
+              <div>
+                <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-4 flex items-center gap-2">
+                  <span className="w-2 h-2 rounded-full bg-amber-400 inline-block" />
+                  Prossimi festival
+                </h2>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {futureFests.map(f => <FestivalCard key={f.id} fest={f} />)}
+                </div>
+              </div>
+            )}
+            {pastFests.length > 0 && (
+              <div>
+                <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-4 flex items-center gap-2">
+                  <span className="w-2 h-2 rounded-full bg-gray-400 inline-block" />
+                  Festival passati
+                </h2>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {pastFests.map(f => <FestivalCard key={f.id} fest={f} />)}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Features */}
         <div>
           <h2 className="text-2xl font-bold text-center text-gray-900 dark:text-gray-100 mb-8">
             Tutto quello che ti serve, già incluso
@@ -285,7 +412,7 @@ export default function CreaFestival() {
         <Card className="border-2 border-amber-200 dark:border-amber-800">
           <CardContent className="py-10 text-center space-y-4">
             <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Una tariffa unica. Nessuna sorpresa.</h2>
-            <div className="text-6xl font-extrabold text-amber-600">€99</div>
+            <div className="text-6xl font-extrabold text-amber-600">€{PRICE}</div>
             <p className="text-gray-500">Pagamento unico per tutta la durata del festival</p>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-w-md mx-auto text-sm text-left">
               {[
@@ -332,7 +459,7 @@ export default function CreaFestival() {
             },
             {
               q: "Posso usarlo per più edizioni dello stesso festival?",
-              a: "Sì, ogni edizione è un festival separato. Il rinnovo costa €99 per ogni nuova edizione."
+              a: `Sì, ogni edizione è un festival separato. Il rinnovo costa €${PRICE} per ogni nuova edizione.`
             },
           ].map(({ q, a }) => (
             <div key={q} className="bg-white dark:bg-gray-800 rounded-xl p-5 border border-gray-100 dark:border-gray-700">
@@ -342,8 +469,8 @@ export default function CreaFestival() {
           ))}
         </div>
 
-        {/* CTA bottom */}
-        <div className="text-center py-6">
+        {/* Bottom CTA */}
+        <div className="text-center py-4 border-t border-gray-100 dark:border-gray-800">
           <p className="text-gray-600 dark:text-gray-400 mb-4">
             Hai già un festival su Fermenta?{" "}
             <Link href="/festival-dashboard" className="text-amber-600 font-semibold hover:underline">
@@ -360,8 +487,6 @@ export default function CreaFestival() {
           </Button>
         </div>
       </div>
-
-      <Footer />
 
       {/* Creation form dialog */}
       <Dialog open={showForm} onOpenChange={setShowForm}>
