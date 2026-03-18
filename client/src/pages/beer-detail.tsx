@@ -155,7 +155,7 @@ export default function BeerDetail() {
   // Auto-translate description for non-Italian users
   const [translatedDesc, setTranslatedDesc] = useState<string | null>(null);
   const [translating, setTranslating] = useState(false);
-  const userLang = navigator.language?.slice(0, 2).toLowerCase() ?? "it";
+  const userLang = navigator.language?.slice(0, 2)?.toLowerCase() ?? "it";
   useEffect(() => {
     if (!beer?.description) return;
     if (userLang === "it") return;
@@ -168,7 +168,7 @@ export default function BeerDetail() {
       credentials: "include",
     })
       .then(r => r.json())
-      .then(data => { if (!cancelled && data.translation) setTranslatedDesc(data.translation); })
+      .then(data => { if (!cancelled && data.translated) setTranslatedDesc(data.translated); })
       .catch(() => {})
       .finally(() => { if (!cancelled) setTranslating(false); });
     return () => { cancelled = true; };
