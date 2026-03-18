@@ -39,6 +39,13 @@ export async function runFestivalMigrations() {
   } catch (e) {
     console.error("[festivals] token_name migration error:", e);
   }
+  // Ensure favorites.item_type check constraint includes 'festival'
+  try {
+    await pool.query(`ALTER TABLE favorites DROP CONSTRAINT IF EXISTS favorites_item_type_check`);
+    await pool.query(`ALTER TABLE favorites ADD CONSTRAINT favorites_item_type_check CHECK (item_type IN ('pub', 'brewery', 'beer', 'festival'))`);
+  } catch (e) {
+    // Constraint may already exist with correct definition — safe to ignore
+  }
 }
 
 export function registerFestivalRoutes(app: Express) {
