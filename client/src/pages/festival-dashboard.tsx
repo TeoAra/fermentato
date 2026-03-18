@@ -95,6 +95,36 @@ interface Stats {
 function TVModeButton({ slug }: { slug: string }) {
   const tvUrl = `${window.location.origin}/festival-tv/${slug}`;
   const { toast } = useToast();
+
+  const handleCast = async () => {
+    const w = window as any;
+    const castFramework = w.cast?.framework;
+    if (!castFramework) {
+      window.open(tvUrl, "_blank");
+      toast({ title: "Pagina TV aperta", description: "Usa il menu di Chrome per trasmettere" });
+      return;
+    }
+    try {
+      const ctx = castFramework.CastContext.getInstance();
+      ctx.setOptions({
+        receiverApplicationId: "6666EC62",
+        autoJoinPolicy: w.chrome?.cast?.AutoJoinPolicy?.ORIGIN_SCOPED ?? "origin_scoped",
+      });
+      toast({ title: "Connessione alla TV...", description: "Seleziona il dispositivo" });
+      await ctx.requestSession();
+      const session = ctx.getCurrentSession();
+      if (!session) { toast({ title: "Sessione non creata", description: "Riprova", variant: "destructive" }); return; }
+      toast({ title: "Connesso!", description: "Invio taplist live..." });
+      const castUrl = `https://fermenta.to/festival-tv/${slug}`;
+      await session.sendMessage("urn:x-cast:fermenta.to", { url: castUrl });
+      toast({ title: "Festival LIVE sulla TV!", description: "Si aggiorna in tempo reale" });
+    } catch (err: any) {
+      if (err?.code === "cancel" || err?.message === "cancel") return;
+      window.open(tvUrl, "_blank");
+      toast({ title: "Pagina TV aperta", description: "Usa Cast di Chrome per trasmetterla" });
+    }
+  };
+
   return (
     <Dialog>
       <DialogTrigger asChild>
@@ -120,8 +150,11 @@ function TVModeButton({ slug }: { slug: string }) {
           </Button>
         </div>
         <div className="flex gap-2">
-          <Button className="flex-1" onClick={() => window.open(tvUrl, "_blank")}>
-            <ExternalLink className="h-4 w-4 mr-2" />Apri TV Mode
+          <Button className="flex-1 bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 text-white gap-2" onClick={handleCast}>
+            <Monitor className="h-4 w-4" />Trasmetti su TV
+          </Button>
+          <Button variant="outline" onClick={() => window.open(tvUrl, "_blank")}>
+            <ExternalLink className="h-4 w-4" />
           </Button>
         </div>
       </DialogContent>
