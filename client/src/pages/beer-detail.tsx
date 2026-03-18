@@ -156,6 +156,29 @@ export default function BeerDetail() {
   const [translatedDesc, setTranslatedDesc] = useState<string | null>(null);
   const [translating, setTranslating] = useState(false);
   const userLang = (typeof navigator !== 'undefined' ? navigator.language?.slice(0, 2)?.toLowerCase() : null) ?? "it";
+
+  const searchCollabBreweries = useCallback((q: string, excludeBrewId: number, currentSelected: { id: number; name: string }[]) => {
+    if (collabDebounceRef.current) clearTimeout(collabDebounceRef.current);
+    if (q.length < 2) { setCollabResults([]); return; }
+    collabDebounceRef.current = setTimeout(async () => {
+      try {
+        const res = await fetch(`/api/admin/breweries/search?q=${encodeURIComponent(q)}&limit=10`, { credentials: 'include' });
+        if (!res.ok) return;
+        const data = await res.json();
+        setCollabResults(Array.isArray(data) ? data.filter((b: any) => b.id !== excludeBrewId && !currentSelected.some((s: any) => s.id === b.id)) : []);
+        setShowCollabResults(true);
+      } catch { setCollabResults([]); }
+    }, 250);
+  }, []);
+  
+  const isAdmin = (user as any)?.activeRole === 'admin' || (!((user as any)?.activeRole) && user?.userType === 'admin');
+  
+  const { data: beer, isLoading: beerLoading } = useQuery<Beer>({
+    queryKey: ["/api/beers", id],
+    enabled: !!id,
+  });
+
+  // Auto-translate: placed here (AFTER beer declaration) to avoid TDZ error
   useEffect(() => {
     const desc = beer?.description;
     if (!desc || typeof desc !== 'string') return;
@@ -179,28 +202,6 @@ export default function BeerDetail() {
     return () => { cancelled = true; };
   }, [beer?.description, userLang]);
 
-  const searchCollabBreweries = useCallback((q: string, excludeBrewId: number, currentSelected: { id: number; name: string }[]) => {
-    if (collabDebounceRef.current) clearTimeout(collabDebounceRef.current);
-    if (q.length < 2) { setCollabResults([]); return; }
-    collabDebounceRef.current = setTimeout(async () => {
-      try {
-        const res = await fetch(`/api/admin/breweries/search?q=${encodeURIComponent(q)}&limit=10`, { credentials: 'include' });
-        if (!res.ok) return;
-        const data = await res.json();
-        setCollabResults(Array.isArray(data) ? data.filter((b: any) => b.id !== excludeBrewId && !currentSelected.some((s: any) => s.id === b.id)) : []);
-        setShowCollabResults(true);
-      } catch { setCollabResults([]); }
-    }, 250);
-  }, []);
-  
-  const isAdmin = (user as any)?.activeRole === 'admin' || (!((user as any)?.activeRole) && user?.userType === 'admin');
-  
-  const { data: beer, isLoading: beerLoading } = useQuery<Beer>({
-    queryKey: ["/api/beers", id],
-    enabled: !!id,
-  });
-  
-  
   const openEditDialog = async () => {
     if (beer) {
       setEditForm({
