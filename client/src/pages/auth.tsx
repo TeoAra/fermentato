@@ -310,11 +310,11 @@ export default function AuthPage() {
           </div>
 
           {/* Tab switcher */}
-          <div className="mb-6">
+          <div className="mb-8">
             <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-5">
               {activeTab === "login" ? "Bentornato" : "Crea un account"}
             </h1>
-            <div className="flex border-b border-gray-200 dark:border-gray-800">
+            <div className="flex items-end border-b border-gray-200 dark:border-gray-800">
               {(["login", "register"] as const).map((tab) => (
                 <button
                   key={tab}
@@ -328,23 +328,15 @@ export default function AuthPage() {
                   {tab === "login" ? "Accedi" : "Registrati"}
                 </button>
               ))}
+              <a
+                href="/crea-festival"
+                className="pb-3 px-1 ml-auto -mb-px flex items-center gap-1.5 text-sm font-medium border-b-2 border-transparent text-amber-500 hover:text-amber-600 dark:text-amber-400 dark:hover:text-amber-300 transition-colors"
+              >
+                <QrCode className="w-3.5 h-3.5" />
+                Festival Mode
+              </a>
             </div>
           </div>
-
-          {/* Festival Mode callout */}
-          <a
-            href="/crea-festival"
-            className="flex items-center gap-3 mb-6 p-3 rounded-xl bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 hover:bg-amber-100 dark:hover:bg-amber-900/40 transition-colors group"
-          >
-            <div className="w-9 h-9 rounded-lg bg-amber-500 flex items-center justify-center flex-shrink-0">
-              <QrCode className="w-4.5 h-4.5 text-white" />
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-semibold text-amber-800 dark:text-amber-200 leading-tight">Festival Mode</p>
-              <p className="text-xs text-amber-600 dark:text-amber-400 mt-0.5">Taplist QR digitale per il tuo festival · €50</p>
-            </div>
-            <span className="text-amber-400 group-hover:translate-x-0.5 transition-transform text-xs font-medium">→</span>
-          </a>
 
           {/* ── LOGIN FORM ── */}
           {activeTab === "login" && (
