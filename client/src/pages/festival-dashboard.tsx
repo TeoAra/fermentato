@@ -21,7 +21,7 @@ import {
   Beer, UtensilsCrossed, BarChart3, Settings, Plus, QrCode,
   CheckCircle2, XCircle, Loader2, Pencil, Trash2, ExternalLink,
   Trophy, Users, Droplets, CreditCard, AlertCircle, RefreshCw, Lock, Star,
-  X, Search, ChevronDown, Clock, Monitor, Copy,
+  X, Search, ChevronDown, Clock, Monitor, Copy, Heart,
 } from "lucide-react";
 import { useLocation } from "wouter";
 
@@ -1179,6 +1179,18 @@ export default function FestivalDashboard() {
     refetchInterval: 60000,
   });
 
+  const { data: likeCountData } = useQuery<{ count: number }>({
+    queryKey: ["/api/favorites", "festival", festId, "count"],
+    queryFn: async () => {
+      const r = await fetch(`/api/favorites/festival/${festId}/count`);
+      if (!r.ok) return { count: 0 };
+      return r.json();
+    },
+    enabled: !!festId,
+    staleTime: 60_000,
+  });
+  const festivalLikeCount = likeCountData?.count ?? 0;
+
   // Toggle tap availability
   const toggleMutation = useMutation({
     mutationFn: (tap: FestivalTap) => apiRequest(`/api/admin/festivals/${festId}/taps/${tap.id}/toggle`, { method: "PATCH" }),
@@ -1457,16 +1469,18 @@ export default function FestivalDashboard() {
                 )}
 
                 {/* Stats bar */}
-                <div className="grid grid-cols-3 gap-3">
+                <div className="grid grid-cols-4 gap-2">
                   {[
-                    { label: "Spine totali", value: taps.length, icon: Beer },
-                    { label: "Disponibili", value: taps.filter(t => t.isAvailable).length, icon: CheckCircle2 },
-                    { label: "Voti ricevuti", icon: Star, value: stats?.totalRatings ?? "—" },
-                  ].map(({ label, value, icon: Icon }) => (
+                    { label: "Spine", value: taps.length, icon: Beer, color: "text-amber-600" },
+                    { label: "Disponibili", value: taps.filter(t => t.isAvailable).length, icon: CheckCircle2, color: "text-green-600" },
+                    { label: "Voti", value: stats?.totalRatings ?? 0, icon: Star, color: "text-yellow-500" },
+                    { label: "Mi piace", value: festivalLikeCount, icon: Heart, color: "text-red-500" },
+                  ].map(({ label, value, icon: Icon, color }) => (
                     <Card key={label}>
-                      <CardContent className="p-4 text-center">
-                        <div className="text-2xl font-bold text-amber-600">{value}</div>
-                        <div className="text-xs text-gray-500 mt-0.5">{label}</div>
+                      <CardContent className="p-3 text-center">
+                        <Icon className={`h-4 w-4 mx-auto mb-0.5 ${color}`} />
+                        <div className={`text-xl font-bold ${color}`}>{value}</div>
+                        <div className="text-xs text-gray-500">{label}</div>
                       </CardContent>
                     </Card>
                   ))}

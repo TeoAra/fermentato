@@ -1,6 +1,7 @@
 import { useState } from "react";
-import { Share2, Copy, Check } from "lucide-react";
+import { Share2, Copy, Check, MessageCircle, Send } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { useToast } from "@/hooks/use-toast";
 
 interface ShareButtonProps {
@@ -18,32 +19,64 @@ export function ShareButton({
 }: ShareButtonProps) {
   const { toast } = useToast();
   const [copied, setCopied] = useState(false);
+  const [open, setOpen] = useState(false);
 
-  const handleShare = async () => {
-    const shareUrl = url || window.location.href;
+  const shareUrl = url || window.location.href;
+  const shareText = text || title;
 
-    if (navigator.share) {
-      try {
-        await navigator.share({ title, text: text || title, url: shareUrl });
-        return;
-      } catch (e: any) {
-        if (e?.name === "AbortError") return;
-      }
-    }
+  const copyToClipboard = async () => {
     try {
       await navigator.clipboard.writeText(shareUrl);
       setCopied(true);
-      toast({ title: "Link copiato!", description: "Condividi il link come preferisci." });
+      toast({ title: "Link copiato!", description: "Incolla il link dove vuoi condividerlo." });
       setTimeout(() => setCopied(false), 2500);
     } catch {
       toast({ title: "Copia questo link", description: shareUrl });
     }
+    setOpen(false);
+  };
+
+  const shareOnWhatsApp = () => {
+    window.open(`https://wa.me/?text=${encodeURIComponent(`${shareText} ${shareUrl}`)}`, "_blank");
+    setOpen(false);
+  };
+
+  const shareOnTelegram = () => {
+    window.open(`https://t.me/share/url?url=${encodeURIComponent(shareUrl)}&text=${encodeURIComponent(shareText)}`, "_blank");
+    setOpen(false);
   };
 
   return (
-    <Button variant={variant} size={size} onClick={handleShare} className={className} title="Condividi">
-      {copied ? <Check className="h-4 w-4" /> : <Share2 className="h-4 w-4" />}
-      {label && <span className="ml-1.5">{copied ? "Copiato!" : label}</span>}
-    </Button>
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <Button variant={variant} size={size} className={className} title="Condividi">
+          {copied ? <Check className="h-4 w-4" /> : <Share2 className="h-4 w-4" />}
+          {label && <span className="ml-1.5">{copied ? "Copiato!" : label}</span>}
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent className="w-52 p-2 space-y-1" align="center">
+        <button
+          className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 text-sm transition-colors"
+          onClick={copyToClipboard}
+        >
+          <Copy className="h-4 w-4 text-gray-500 flex-shrink-0" />
+          <span>Copia link</span>
+        </button>
+        <button
+          className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg hover:bg-green-50 dark:hover:bg-green-900/20 text-sm transition-colors"
+          onClick={shareOnWhatsApp}
+        >
+          <MessageCircle className="h-4 w-4 text-green-600 flex-shrink-0" />
+          <span>WhatsApp</span>
+        </button>
+        <button
+          className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg hover:bg-blue-50 dark:hover:bg-blue-900/20 text-sm transition-colors"
+          onClick={shareOnTelegram}
+        >
+          <Send className="h-4 w-4 text-blue-500 flex-shrink-0" />
+          <span>Telegram</span>
+        </button>
+      </PopoverContent>
+    </Popover>
   );
 }

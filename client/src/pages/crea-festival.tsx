@@ -318,8 +318,9 @@ export default function CreaFestival() {
 
   const today = new Date();
   const liveFests = publicFests.filter(f => {
+    const start = f.startDate ? new Date(f.startDate) : null;
     const end = f.endDate ? new Date(f.endDate) : null;
-    return f.isActive && (!end || end >= today);
+    return f.isActive && (!start || start <= today) && (!end || end >= today);
   });
   const pastFests = publicFests.filter(f => {
     const end = f.endDate ? new Date(f.endDate) : null;
