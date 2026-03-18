@@ -238,7 +238,7 @@ function FestivalCard({ fest }: { fest: any }) {
 }
 
 export default function CreaFestival() {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, user } = useAuth();
   const [, navigate] = useLocation();
   const { toast } = useToast();
   const [showForm, setShowForm] = useState(false);
@@ -507,20 +507,12 @@ export default function CreaFestival() {
 
         {/* Bottom CTA */}
         <div className="text-center py-4 border-t border-gray-100 dark:border-gray-800">
-          <p className="text-gray-600 dark:text-gray-400 mb-4">
+          <p className="text-gray-600 dark:text-gray-400">
             Hai già un festival su Fermenta?{" "}
             <Link href="/festival-dashboard" className="text-amber-600 font-semibold hover:underline">
               Vai alla dashboard
             </Link>
           </p>
-          <Button
-            size="lg"
-            className="bg-amber-500 hover:bg-amber-600 text-white font-bold px-10"
-            onClick={handleStartCreate}
-          >
-            <Beer className="h-5 w-5 mr-2" />
-            Crea il tuo festival digitale
-          </Button>
         </div>
       </div>
 
