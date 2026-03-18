@@ -904,6 +904,7 @@ export const festivals = pgTable("festivals", {
   startDate: date("start_date"),
   endDate: date("end_date"),
   logoUrl: varchar("logo_url"),
+  coverImageUrl: varchar("cover_image_url", { length: 500 }),
   ownerId: varchar("owner_id").references(() => users.id),
   isActive: boolean("is_active").default(false),
   showFood: boolean("show_food").default(true),

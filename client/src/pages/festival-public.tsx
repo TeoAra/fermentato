@@ -18,7 +18,7 @@ interface FestivalData {
   festival: {
     id: number; name: string; description: string | null; location: string | null;
     startDate: string | null; endDate: string | null; logoUrl: string | null;
-    showFood: boolean; isActive: boolean;
+    coverImageUrl: string | null; showFood: boolean; isActive: boolean;
   };
   taps: Array<{
     id: number; tapNumber: number; beerId: number | null;
@@ -243,11 +243,30 @@ export default function FestivalPublic() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-amber-50 via-orange-50 to-red-50 dark:from-gray-900 dark:via-gray-900 dark:to-gray-800">
       {/* Header */}
-      <div className="bg-gradient-to-r from-amber-600 to-orange-600 text-white">
+      <div
+        className="relative text-white overflow-hidden"
+        style={festival.coverImageUrl ? {
+          background: "linear-gradient(to right, rgba(180,83,9,0.88), rgba(234,88,12,0.85))",
+        } : undefined}
+      >
+        {festival.coverImageUrl && (
+          <div
+            className="absolute inset-0 -z-10"
+            style={{
+              backgroundImage: `url(${festival.coverImageUrl})`,
+              backgroundSize: "cover",
+              backgroundPosition: "center",
+              filter: "brightness(0.45)",
+            }}
+          />
+        )}
+        {!festival.coverImageUrl && (
+          <div className="absolute inset-0 -z-10 bg-gradient-to-r from-amber-600 to-orange-600" />
+        )}
         <div className="max-w-2xl mx-auto px-4 py-6">
           <div className="flex items-center gap-4">
             {festival.logoUrl && (
-              <img src={festival.logoUrl} alt="" className="w-14 h-14 rounded-2xl object-cover shadow-lg" />
+              <img src={festival.logoUrl} alt="" className="w-14 h-14 rounded-2xl object-cover shadow-lg flex-shrink-0" />
             )}
             <div className="flex-1 min-w-0">
               <h1 className="text-2xl font-bold leading-tight">{festival.name}</h1>

@@ -1,5 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { ImageUpload } from "@/components/image-upload";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
@@ -19,13 +20,13 @@ import {
   Trophy, Users, Droplets, CreditCard, AlertCircle, RefreshCw, Lock, Star,
 } from "lucide-react";
 import { useLocation } from "wouter";
-import { useEffect } from "react";
 
 interface Festival {
   id: number; slug: string; name: string; description: string | null;
   location: string | null; startDate: string | null; endDate: string | null;
   isActive: boolean; showFood: boolean; ownerId: string | null;
   paidAt: string | null; stripeSessionId: string | null; priceEur: number | null;
+  logoUrl: string | null; coverImageUrl: string | null;
 }
 
 function festivalStatus(f: Festival): "unpaid" | "active" | "expired" {
@@ -191,69 +192,162 @@ function TapEditDialog({ festivalId, tapNumber, existing, onClose }: {
 }
 
 // ─── Create festival dialog ──────────────────────────────────────────────────
+function FestivalForm({
+  initial,
+  onSubmit,
+  isPending,
+  submitLabel,
+}: {
+  initial: Partial<{
+    name: string; slug: string; description: string; location: string;
+    startDate: string; endDate: string; showFood: boolean;
+    logoUrl: string; coverImageUrl: string; priceEur: number;
+  }>;
+  onSubmit: (data: any) => void;
+  isPending: boolean;
+  submitLabel: string;
+}) {
+  const [form, setForm] = useState({
+    name: initial.name || "",
+    slug: initial.slug || "",
+    description: initial.description || "",
+    location: initial.location || "",
+    startDate: initial.startDate || "",
+    endDate: initial.endDate || "",
+    showFood: initial.showFood ?? true,
+    logoUrl: initial.logoUrl || "",
+    coverImageUrl: initial.coverImageUrl || "",
+    priceEur: initial.priceEur ?? 99,
+  });
+
+  const suggestSlug = (name: string) =>
+    name.toLowerCase().replace(/[^a-z0-9]/g, "-").replace(/-+/g, "-").replace(/^-|-$/g, "");
+
+  return (
+    <div className="space-y-4">
+      {/* Logo + Copertina */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <ImageUpload
+          label="Logo festival"
+          description="Icona quadrata (es. 400×400px)"
+          currentImageUrl={form.logoUrl || undefined}
+          onImageChange={url => setForm(f => ({ ...f, logoUrl: url || "" }))}
+          folder="festivals/logos"
+          aspectRatio="square"
+          recommendedDimensions="400×400px"
+        />
+        <ImageUpload
+          label="Immagine di copertina"
+          description="Banner orizzontale (es. 1200×400px)"
+          currentImageUrl={form.coverImageUrl || undefined}
+          onImageChange={url => setForm(f => ({ ...f, coverImageUrl: url || "" }))}
+          folder="festivals/covers"
+          aspectRatio="landscape"
+          recommendedDimensions="1200×400px"
+        />
+      </div>
+
+      <Separator />
+
+      {/* Nome e slug */}
+      <div>
+        <Label>Nome *</Label>
+        <Input
+          value={form.name}
+          onChange={e => setForm(f => ({ ...f, name: e.target.value, slug: f.slug || suggestSlug(e.target.value) }))}
+          placeholder="Es. Roma Beer Fest 2026"
+        />
+      </div>
+      <div>
+        <Label>Slug URL *</Label>
+        <div className="flex items-center gap-1">
+          <span className="text-xs text-gray-400 whitespace-nowrap">/festival/</span>
+          <Input
+            value={form.slug}
+            onChange={e => setForm(f => ({ ...f, slug: e.target.value }))}
+            placeholder="roma-beer-fest-2026"
+          />
+        </div>
+        <p className="text-xs text-gray-400 mt-0.5">URL pubblico del taplist QR</p>
+      </div>
+
+      {/* Location */}
+      <div>
+        <Label>Location</Label>
+        <Input value={form.location} onChange={e => setForm(f => ({ ...f, location: e.target.value }))} placeholder="Es. Parco della Musica, Roma" />
+      </div>
+
+      {/* Date */}
+      <div className="grid grid-cols-2 gap-3">
+        <div>
+          <Label>Data inizio</Label>
+          <Input type="date" value={form.startDate} onChange={e => setForm(f => ({ ...f, startDate: e.target.value }))} />
+        </div>
+        <div>
+          <Label>Data fine</Label>
+          <Input type="date" value={form.endDate} onChange={e => setForm(f => ({ ...f, endDate: e.target.value }))} />
+        </div>
+      </div>
+
+      {/* Descrizione */}
+      <div>
+        <Label>Descrizione</Label>
+        <Textarea value={form.description} onChange={e => setForm(f => ({ ...f, description: e.target.value }))} rows={2} placeholder="Breve descrizione mostrata sul taplist pubblico" />
+      </div>
+
+      {/* Prezzo e food */}
+      <div className="grid grid-cols-2 gap-3 items-center">
+        <div>
+          <Label>Prezzo attivazione (€)</Label>
+          <Input
+            type="number" min="0" step="1"
+            value={form.priceEur}
+            onChange={e => setForm(f => ({ ...f, priceEur: parseInt(e.target.value) || 0 }))}
+          />
+        </div>
+        <div className="flex items-center gap-3 pt-5">
+          <Switch checked={form.showFood} onCheckedChange={v => setForm(f => ({ ...f, showFood: v }))} />
+          <Label>Menu cibo</Label>
+        </div>
+      </div>
+
+      <Button
+        className="w-full"
+        onClick={() => onSubmit(form)}
+        disabled={isPending || !form.name || !form.slug}
+      >
+        {isPending ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+        {submitLabel}
+      </Button>
+    </div>
+  );
+}
+
 function CreateFestivalDialog({ onClose, onCreated }: { onClose: () => void; onCreated: (f: Festival) => void }) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const [form, setForm] = useState({ name: "", slug: "", description: "", location: "", showFood: true });
 
   const createMutation = useMutation({
-    mutationFn: () => apiRequest("/api/admin/festivals", { method: "POST" }, form),
+    mutationFn: (data: any) => apiRequest("/api/admin/festivals", { method: "POST" }, data),
     onSuccess: (data: any) => {
       queryClient.invalidateQueries({ queryKey: ["/api/admin/festivals"] });
-      toast({ title: "Festival creato!" });
+      toast({ title: "Festival creato! Ora completa il pagamento per attivarlo." });
       onCreated(data);
       onClose();
     },
     onError: (err: any) => toast({ title: err?.message || "Errore", variant: "destructive" }),
   });
 
-  const suggestSlug = (name: string) => {
-    return name.toLowerCase().replace(/[^a-z0-9]/g, "-").replace(/-+/g, "-").replace(/^-|-$/g, "");
-  };
-
   return (
     <Dialog open onOpenChange={onClose}>
-      <DialogContent className="max-w-md">
+      <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
         <DialogHeader><DialogTitle>Crea nuovo festival</DialogTitle></DialogHeader>
-        <div className="space-y-3">
-          <div>
-            <Label>Nome *</Label>
-            <Input
-              value={form.name}
-              onChange={e => setForm(f => ({ ...f, name: e.target.value, slug: f.slug || suggestSlug(e.target.value) }))}
-              placeholder="Es. Roma Beer Fest 2026"
-            />
-          </div>
-          <div>
-            <Label>Slug URL *</Label>
-            <div className="flex items-center gap-1">
-              <span className="text-xs text-gray-400 whitespace-nowrap">/festival/</span>
-              <Input
-                value={form.slug}
-                onChange={e => setForm(f => ({ ...f, slug: e.target.value }))}
-                placeholder="roma-beer-fest-2026"
-              />
-            </div>
-          </div>
-          <div>
-            <Label>Location</Label>
-            <Input value={form.location} onChange={e => setForm(f => ({ ...f, location: e.target.value }))} placeholder="Es. Parco della Musica, Roma" />
-          </div>
-          <div>
-            <Label>Descrizione</Label>
-            <Textarea value={form.description} onChange={e => setForm(f => ({ ...f, description: e.target.value }))} rows={2} />
-          </div>
-          <div className="flex items-center gap-3">
-            <Switch checked={form.showFood} onCheckedChange={v => setForm(f => ({ ...f, showFood: v }))} />
-            <Label>Mostra menu cibo</Label>
-          </div>
-        </div>
-        <div className="flex gap-2 justify-end mt-4">
-          <Button variant="outline" onClick={onClose}>Annulla</Button>
-          <Button onClick={() => createMutation.mutate()} disabled={createMutation.isPending || !form.name || !form.slug}>
-            {createMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : "Crea festival"}
-          </Button>
-        </div>
+        <FestivalForm
+          initial={{}}
+          onSubmit={data => createMutation.mutate(data)}
+          isPending={createMutation.isPending}
+          submitLabel="Crea festival"
+        />
       </DialogContent>
     </Dialog>
   );
@@ -347,6 +441,16 @@ export default function FestivalDashboard() {
   const deleteFoodMutation = useMutation({
     mutationFn: (id: number) => apiRequest(`/api/admin/festivals/food/${id}`, { method: "DELETE" }),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["/api/admin/festivals", festId, "food"] }),
+  });
+
+  // Update festival info
+  const updateFestMutation = useMutation({
+    mutationFn: (data: any) => apiRequest(`/api/admin/festivals/${festId}`, { method: "PUT" }, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/festivals"] });
+      toast({ title: "Festival aggiornato!" });
+    },
+    onError: (err: any) => toast({ title: err?.message || "Errore nel salvataggio", variant: "destructive" }),
   });
 
   // Stripe: checkout per festival
@@ -722,34 +826,47 @@ export default function FestivalDashboard() {
                   </TabsContent>
 
                   {/* SETTINGS tab */}
-                  <TabsContent value="settings">
+                  <TabsContent value="settings" className="space-y-4">
+                    {/* Quick info + links */}
                     <Card>
-                      <CardContent className="p-4 space-y-2">
-                        <div className="flex items-center gap-2 text-sm">
-                          <span className="text-gray-500">Slug:</span>
-                          <code className="bg-gray-100 dark:bg-gray-800 px-2 py-0.5 rounded text-xs">/festival/{selectedFest.slug}</code>
-                        </div>
-                        <div className="flex items-center gap-2 text-sm">
-                          <span className="text-gray-500">Stato:</span>
-                          <Badge variant={selectedFest.isActive ? "default" : "secondary"}>{selectedFest.isActive ? "Attivo" : "Inattivo"}</Badge>
-                        </div>
-                        <div className="flex items-center gap-2 text-sm">
-                          <span className="text-gray-500">Menu cibo:</span>
-                          <Badge variant={selectedFest.showFood ? "default" : "outline"}>{selectedFest.showFood ? "Visibile" : "Nascosto"}</Badge>
-                        </div>
-                        {selectedFest.location && (
-                          <div className="flex items-center gap-2 text-sm">
-                            <span className="text-gray-500">Location:</span>
-                            <span>{selectedFest.location}</span>
-                          </div>
-                        )}
-                        <Separator className="my-3" />
+                      <CardContent className="p-4 flex flex-wrap gap-2 items-center">
+                        <Badge variant={selectedFest.isActive ? "default" : "secondary"}>
+                          {status === "unpaid" ? "Non pagato" : status === "expired" ? "Scaduto" : "Attivo"}
+                        </Badge>
                         <Button size="sm" variant="outline" onClick={() => window.open(`/festival/${selectedFest.slug}`, "_blank")}>
-                          <ExternalLink className="h-4 w-4 mr-1" />Apri pagina pubblica
+                          <ExternalLink className="h-4 w-4 mr-1" />Pagina pubblica
                         </Button>
                         <Button size="sm" variant="outline" onClick={() => setShowQR(true)}>
-                          <QrCode className="h-4 w-4 mr-1" />Genera QR Code
+                          <QrCode className="h-4 w-4 mr-1" />QR Code
                         </Button>
+                        <code className="text-xs text-gray-400 ml-auto">/festival/{selectedFest.slug}</code>
+                      </CardContent>
+                    </Card>
+
+                    {/* Edit form */}
+                    <Card>
+                      <CardHeader className="pb-2">
+                        <CardTitle className="text-sm">Modifica festival</CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <FestivalForm
+                          key={selectedFest.id}
+                          initial={{
+                            name: selectedFest.name,
+                            slug: selectedFest.slug,
+                            description: selectedFest.description || "",
+                            location: selectedFest.location || "",
+                            startDate: selectedFest.startDate || "",
+                            endDate: selectedFest.endDate || "",
+                            showFood: selectedFest.showFood,
+                            logoUrl: selectedFest.logoUrl || "",
+                            coverImageUrl: selectedFest.coverImageUrl || "",
+                            priceEur: selectedFest.priceEur ?? 99,
+                          }}
+                          onSubmit={data => updateFestMutation.mutate(data)}
+                          isPending={updateFestMutation.isPending}
+                          submitLabel="Salva modifiche"
+                        />
                       </CardContent>
                     </Card>
                   </TabsContent>

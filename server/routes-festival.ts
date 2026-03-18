@@ -142,14 +142,18 @@ export function registerFestivalRoutes(app: Express) {
       const user = req.user as any;
       const isAdminUser = user.roles?.includes("admin") || user.activeRole === "admin";
       if (!isAdminUser) return res.status(403).json({ message: "Non autorizzato" });
-      const { name, slug, description, location, startDate, endDate, showFood, ownerId } = req.body;
+      const { name, slug, description, location, startDate, endDate, showFood, ownerId, logoUrl, coverImageUrl, priceEur } = req.body;
       if (!name || !slug) return res.status(400).json({ message: "Nome e slug obbligatori" });
-      const { priceEur } = req.body;
       const [fest] = await db.insert(festivals).values({
-        name, slug, description, location,
-        startDate, endDate,
+        name, slug,
+        description: description || null,
+        location: location || null,
+        startDate: startDate || null,
+        endDate: endDate || null,
         showFood: showFood ?? true,
         ownerId: ownerId || user.id,
+        logoUrl: logoUrl || null,
+        coverImageUrl: coverImageUrl || null,
         priceEur: priceEur ? parseInt(priceEur) : 99,
         isActive: false, // attivato dopo il pagamento
       }).returning();
@@ -160,22 +164,40 @@ export function registerFestivalRoutes(app: Express) {
     }
   });
 
-  // ── Manager: update festival meta ───────────────────────────────────────────
-  app.patch("/api/admin/festivals/:id", isAuthenticated as any, async (req: any, res) => {
+  // ── Manager: update festival meta (PATCH + PUT) ──────────────────────────────
+  async function handleUpdateFestival(req: any, res: any) {
     try {
       const festId = parseInt(req.params.id);
       const [fest] = await db.select().from(festivals).where(eq(festivals.id, festId)).limit(1);
       if (!fest) return res.status(404).json({ message: "Festival non trovato" });
       if (!canManageFestival(req, fest)) return res.status(403).json({ message: "Non autorizzato" });
-      const { name, description, location, startDate, endDate, isActive, showFood } = req.body;
+      const {
+        name, description, location, startDate, endDate,
+        isActive, showFood, logoUrl, coverImageUrl, priceEur, slug,
+      } = req.body;
+      const updateData: Record<string, any> = {};
+      if (name !== undefined) updateData.name = name;
+      if (description !== undefined) updateData.description = description;
+      if (location !== undefined) updateData.location = location;
+      if (startDate !== undefined) updateData.startDate = startDate || null;
+      if (endDate !== undefined) updateData.endDate = endDate || null;
+      if (isActive !== undefined) updateData.isActive = isActive;
+      if (showFood !== undefined) updateData.showFood = showFood;
+      if (logoUrl !== undefined) updateData.logoUrl = logoUrl || null;
+      if (coverImageUrl !== undefined) updateData.coverImageUrl = coverImageUrl || null;
+      if (priceEur !== undefined) updateData.priceEur = priceEur;
+      if (slug !== undefined && slug !== fest.slug) updateData.slug = slug;
       const [updated] = await db.update(festivals)
-        .set({ name, description, location, startDate, endDate, isActive, showFood })
+        .set(updateData)
         .where(eq(festivals.id, festId)).returning();
       res.json(updated);
-    } catch (err) {
-      res.status(500).json({ message: "Errore" });
+    } catch (err: any) {
+      if (err.code === "23505") return res.status(400).json({ message: "Slug già in uso" });
+      res.status(500).json({ message: "Errore nel salvataggio" });
     }
-  });
+  }
+  app.patch("/api/admin/festivals/:id", isAuthenticated as any, handleUpdateFestival);
+  app.put("/api/admin/festivals/:id", isAuthenticated as any, handleUpdateFestival);
 
   // ── Manager: upsert tap ──────────────────────────────────────────────────────
   app.put("/api/admin/festivals/:id/taps/:tapNumber", isAuthenticated as any, async (req: any, res) => {
