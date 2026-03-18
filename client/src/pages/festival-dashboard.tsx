@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { ImageUpload } from "@/components/image-upload";
+import { AddressAutocomplete } from "@/components/AddressAutocomplete";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
@@ -14,6 +15,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
   Beer, UtensilsCrossed, BarChart3, Settings, Plus, QrCode,
   CheckCircle2, XCircle, Loader2, Pencil, Trash2, ExternalLink,
@@ -123,6 +125,8 @@ function TapEditDialog({ festivalId, tapNumber, existing, onClose }: {
 }) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const [beerQuery, setBeerQuery] = useState("");
+  const [showBeerDropdown, setShowBeerDropdown] = useState(false);
   const [form, setForm] = useState({
     customBeerName: existing?.customBeerName || "",
     customBreweryName: existing?.customBreweryName || "",
@@ -130,13 +134,32 @@ function TapEditDialog({ festivalId, tapNumber, existing, onClose }: {
     abv: existing?.abv || "",
     notes: existing?.notes || "",
     isAvailable: existing?.isAvailable ?? true,
+    beerId: existing?.beerId ?? null as number | null,
   });
+
+  const { data: beerResults = [] } = useQuery<any[]>({
+    queryKey: [`/api/festival-beers/search?q=${encodeURIComponent(beerQuery)}`],
+    enabled: beerQuery.length >= 2,
+  });
+
+  const selectBeer = (beer: any) => {
+    setForm(f => ({
+      ...f,
+      beerId: beer.id,
+      customBeerName: beer.name,
+      customBreweryName: beer.breweryName || "",
+      style: beer.style || f.style,
+      abv: beer.abv != null ? String(beer.abv) : f.abv,
+    }));
+    setBeerQuery(beer.name);
+    setShowBeerDropdown(false);
+  };
 
   const saveMutation = useMutation({
     mutationFn: () => apiRequest(
       `/api/admin/festivals/${festivalId}/taps/${tapNumber}`,
       { method: "PUT" },
-      { ...form, isAvailable: form.isAvailable }
+      form
     ),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/admin/festivals", festivalId, "taps"] });
@@ -153,27 +176,56 @@ function TapEditDialog({ festivalId, tapNumber, existing, onClose }: {
           <DialogTitle>Spina #{tapNumber}</DialogTitle>
         </DialogHeader>
         <div className="space-y-3">
+          {/* Beer search */}
+          <div>
+            <Label>Cerca birra nel database</Label>
+            <div className="relative mt-1">
+              <Input
+                value={beerQuery}
+                onChange={e => { setBeerQuery(e.target.value); setShowBeerDropdown(true); }}
+                onFocus={() => setShowBeerDropdown(true)}
+                placeholder="Cerca per nome o birrificio…"
+              />
+              {showBeerDropdown && beerResults.length > 0 && (
+                <div className="absolute z-50 w-full mt-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl shadow-lg max-h-48 overflow-y-auto">
+                  {beerResults.map((b: any) => (
+                    <button
+                      key={b.id}
+                      className="w-full text-left px-3 py-2 hover:bg-amber-50 dark:hover:bg-amber-900/20 transition-colors"
+                      onClick={() => selectBeer(b)}
+                    >
+                      <p className="text-sm font-medium text-gray-900 dark:text-gray-100">{b.name}</p>
+                      <p className="text-xs text-gray-500">{b.breweryName}{b.style ? ` · ${b.style}` : ""}{b.abv != null ? ` · ${b.abv}%` : ""}</p>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+
+          <Separator />
+
           <div>
             <Label>Nome birra</Label>
-            <Input value={form.customBeerName} onChange={e => setForm(f => ({ ...f, customBeerName: e.target.value }))} placeholder="Es. Hazy IPA" />
+            <Input className="mt-1" value={form.customBeerName} onChange={e => setForm(f => ({ ...f, customBeerName: e.target.value, beerId: null }))} placeholder="Es. Hazy IPA" />
           </div>
           <div>
             <Label>Birrificio</Label>
-            <Input value={form.customBreweryName} onChange={e => setForm(f => ({ ...f, customBreweryName: e.target.value }))} placeholder="Es. Birrificio Pinco" />
+            <Input className="mt-1" value={form.customBreweryName} onChange={e => setForm(f => ({ ...f, customBreweryName: e.target.value }))} placeholder="Es. Birrificio Pinco" />
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div>
               <Label>Stile</Label>
-              <Input value={form.style} onChange={e => setForm(f => ({ ...f, style: e.target.value }))} placeholder="Es. IPA" />
+              <Input className="mt-1" value={form.style} onChange={e => setForm(f => ({ ...f, style: e.target.value }))} placeholder="Es. IPA" />
             </div>
             <div>
               <Label>ABV %</Label>
-              <Input value={form.abv} onChange={e => setForm(f => ({ ...f, abv: e.target.value }))} placeholder="Es. 6.2" />
+              <Input className="mt-1" value={form.abv} onChange={e => setForm(f => ({ ...f, abv: e.target.value }))} placeholder="Es. 6.2" />
             </div>
           </div>
           <div>
             <Label>Note</Label>
-            <Textarea value={form.notes} onChange={e => setForm(f => ({ ...f, notes: e.target.value }))} placeholder="Note aggiuntive..." rows={2} />
+            <Textarea className="mt-1" value={form.notes} onChange={e => setForm(f => ({ ...f, notes: e.target.value }))} placeholder="Note aggiuntive..." rows={2} />
           </div>
           <div className="flex items-center gap-3">
             <Switch checked={form.isAvailable} onCheckedChange={v => setForm(f => ({ ...f, isAvailable: v }))} />
@@ -182,7 +234,7 @@ function TapEditDialog({ festivalId, tapNumber, existing, onClose }: {
         </div>
         <div className="flex gap-2 justify-end mt-4">
           <Button variant="outline" onClick={onClose}>Annulla</Button>
-          <Button onClick={() => saveMutation.mutate()} disabled={saveMutation.isPending}>
+          <Button className="bg-amber-500 hover:bg-amber-600 text-white" onClick={() => saveMutation.mutate()} disabled={saveMutation.isPending}>
             {saveMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : "Salva"}
           </Button>
         </div>
@@ -197,6 +249,7 @@ function FestivalForm({
   onSubmit,
   isPending,
   submitLabel,
+  isAdmin = false,
 }: {
   initial: Partial<{
     name: string; slug: string; description: string; location: string;
@@ -206,6 +259,7 @@ function FestivalForm({
   onSubmit: (data: any) => void;
   isPending: boolean;
   submitLabel: string;
+  isAdmin?: boolean;
 }) {
   const [form, setForm] = useState({
     name: initial.name || "",
@@ -217,102 +271,116 @@ function FestivalForm({
     showFood: initial.showFood ?? true,
     logoUrl: initial.logoUrl || "",
     coverImageUrl: initial.coverImageUrl || "",
-    priceEur: initial.priceEur ?? 99,
+    priceEur: initial.priceEur ?? 50,
   });
+  const [slugEdited, setSlugEdited] = useState(!!initial.slug);
 
   const suggestSlug = (name: string) =>
     name.toLowerCase().replace(/[^a-z0-9]/g, "-").replace(/-+/g, "-").replace(/^-|-$/g, "");
 
   return (
     <div className="space-y-4">
-      {/* Logo + Copertina */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-        <ImageUpload
-          label="Logo festival"
-          description="Icona quadrata (es. 400×400px)"
-          currentImageUrl={form.logoUrl || undefined}
-          onImageChange={url => setForm(f => ({ ...f, logoUrl: url || "" }))}
-          folder="festivals/logos"
-          aspectRatio="square"
-          recommendedDimensions="400×400px"
-        />
-        <ImageUpload
-          label="Immagine di copertina"
-          description="Banner orizzontale (es. 1200×400px)"
-          currentImageUrl={form.coverImageUrl || undefined}
-          onImageChange={url => setForm(f => ({ ...f, coverImageUrl: url || "" }))}
-          folder="festivals/covers"
-          aspectRatio="landscape"
-          recommendedDimensions="1200×400px"
-        />
-      </div>
+      {/* Logo */}
+      <ImageUpload
+        label="Logo festival"
+        description="Icona quadrata (400×400px)"
+        currentImageUrl={form.logoUrl || undefined}
+        onImageChange={url => setForm(f => ({ ...f, logoUrl: url || "" }))}
+        folder="festivals/logos"
+        aspectRatio="square"
+        recommendedDimensions="400×400px"
+      />
+      {/* Copertina */}
+      <ImageUpload
+        label="Immagine di copertina"
+        description="Banner orizzontale (1200×400px)"
+        currentImageUrl={form.coverImageUrl || undefined}
+        onImageChange={url => setForm(f => ({ ...f, coverImageUrl: url || "" }))}
+        folder="festivals/covers"
+        aspectRatio="landscape"
+        recommendedDimensions="1200×400px"
+      />
 
       <Separator />
 
-      {/* Nome e slug */}
+      {/* Nome */}
       <div>
         <Label>Nome *</Label>
         <Input
+          className="mt-1"
           value={form.name}
-          onChange={e => setForm(f => ({ ...f, name: e.target.value, slug: f.slug || suggestSlug(e.target.value) }))}
+          onChange={e => {
+            const name = e.target.value;
+            setForm(f => ({ ...f, name, slug: slugEdited ? f.slug : suggestSlug(name) }));
+          }}
           placeholder="Es. Roma Beer Fest 2026"
         />
       </div>
+
+      {/* Slug */}
       <div>
-        <Label>Slug URL *</Label>
-        <div className="flex items-center gap-1">
+        <Label>URL pubblico (slug) *</Label>
+        <div className="flex items-center gap-1 mt-1">
           <span className="text-xs text-gray-400 whitespace-nowrap">/festival/</span>
           <Input
             value={form.slug}
-            onChange={e => setForm(f => ({ ...f, slug: e.target.value }))}
+            onChange={e => { setSlugEdited(true); setForm(f => ({ ...f, slug: e.target.value })); }}
             placeholder="roma-beer-fest-2026"
           />
         </div>
         <p className="text-xs text-gray-400 mt-0.5">URL pubblico del taplist QR</p>
       </div>
 
-      {/* Location */}
+      {/* Location con Google */}
       <div>
         <Label>Location</Label>
-        <Input value={form.location} onChange={e => setForm(f => ({ ...f, location: e.target.value }))} placeholder="Es. Parco della Musica, Roma" />
+        <div className="mt-1">
+          <AddressAutocomplete
+            value={form.location}
+            onAddressSelect={d => setForm(f => ({ ...f, location: d.formattedAddress }))}
+            placeholder="Es. Parco della Musica, Roma"
+            countryRestriction={null}
+          />
+        </div>
       </div>
 
       {/* Date */}
       <div className="grid grid-cols-2 gap-3">
         <div>
           <Label>Data inizio</Label>
-          <Input type="date" value={form.startDate} onChange={e => setForm(f => ({ ...f, startDate: e.target.value }))} />
+          <Input className="mt-1" type="date" value={form.startDate} onChange={e => setForm(f => ({ ...f, startDate: e.target.value }))} />
         </div>
         <div>
           <Label>Data fine</Label>
-          <Input type="date" value={form.endDate} onChange={e => setForm(f => ({ ...f, endDate: e.target.value }))} />
+          <Input className="mt-1" type="date" value={form.endDate} onChange={e => setForm(f => ({ ...f, endDate: e.target.value }))} />
         </div>
       </div>
 
       {/* Descrizione */}
       <div>
         <Label>Descrizione</Label>
-        <Textarea value={form.description} onChange={e => setForm(f => ({ ...f, description: e.target.value }))} rows={2} placeholder="Breve descrizione mostrata sul taplist pubblico" />
+        <Textarea className="mt-1" value={form.description} onChange={e => setForm(f => ({ ...f, description: e.target.value }))} rows={2} placeholder="Breve descrizione mostrata sul taplist pubblico" />
       </div>
 
-      {/* Prezzo e food */}
-      <div className="grid grid-cols-2 gap-3 items-center">
+      {/* Admin: prezzo + food */}
+      <div className="flex items-center gap-3">
+        <Switch checked={form.showFood} onCheckedChange={v => setForm(f => ({ ...f, showFood: v }))} />
+        <Label>Menu cibo visibile ai visitatori</Label>
+      </div>
+      {isAdmin && (
         <div>
           <Label>Prezzo attivazione (€)</Label>
           <Input
+            className="mt-1"
             type="number" min="0" step="1"
             value={form.priceEur}
             onChange={e => setForm(f => ({ ...f, priceEur: parseInt(e.target.value) || 0 }))}
           />
         </div>
-        <div className="flex items-center gap-3 pt-5">
-          <Switch checked={form.showFood} onCheckedChange={v => setForm(f => ({ ...f, showFood: v }))} />
-          <Label>Menu cibo</Label>
-        </div>
-      </div>
+      )}
 
       <Button
-        className="w-full"
+        className="w-full bg-amber-500 hover:bg-amber-600 text-white"
         onClick={() => onSubmit(form)}
         disabled={isPending || !form.name || !form.slug}
       >
@@ -347,6 +415,7 @@ function CreateFestivalDialog({ onClose, onCreated }: { onClose: () => void; onC
           onSubmit={data => createMutation.mutate(data)}
           isPending={createMutation.isPending}
           submitLabel="Crea festival"
+          isAdmin={true}
         />
       </DialogContent>
     </Dialog>
@@ -461,6 +530,16 @@ export default function FestivalDashboard() {
       if (data?.url) window.location.href = data.url;
     },
     onError: () => toast({ title: "Errore nel pagamento", variant: "destructive" }),
+  });
+
+  // Admin: attivazione gratuita
+  const adminActivateMutation = useMutation({
+    mutationFn: (id: number) => apiRequest(`/api/admin/festivals/${id}/activate-free`, { method: "POST" }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/festivals"] });
+      toast({ title: "Festival attivato gratuitamente!" });
+    },
+    onError: () => toast({ title: "Errore nell'attivazione", variant: "destructive" }),
   });
 
   // Stripe: attivazione post-pagamento
@@ -596,15 +675,29 @@ export default function FestivalDashboard() {
                       </div>
                       <div className="text-3xl font-bold text-amber-600">€{selectedFest.priceEur ?? 99}</div>
                       <div className="text-xs text-gray-500">Pagamento unico · accesso per tutta la durata del festival</div>
-                      <Button
-                        size="lg"
-                        className="bg-amber-500 hover:bg-amber-600 text-white"
-                        onClick={() => checkoutMutation.mutate({ festivalId: selectedFest.id })}
-                        disabled={checkoutMutation.isPending}
-                      >
-                        {checkoutMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <CreditCard className="h-4 w-4 mr-2" />}
-                        Paga e attiva
-                      </Button>
+                      <div className="flex flex-col sm:flex-row gap-2 justify-center">
+                        <Button
+                          size="lg"
+                          className="bg-amber-500 hover:bg-amber-600 text-white"
+                          onClick={() => checkoutMutation.mutate({ festivalId: selectedFest.id })}
+                          disabled={checkoutMutation.isPending}
+                        >
+                          {checkoutMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <CreditCard className="h-4 w-4 mr-2" />}
+                          Paga e attiva · €{selectedFest.priceEur ?? 50}
+                        </Button>
+                        {user?.userType === "admin" && (
+                          <Button
+                            size="lg"
+                            variant="outline"
+                            className="border-green-400 text-green-700 hover:bg-green-50"
+                            onClick={() => adminActivateMutation.mutate(selectedFest.id)}
+                            disabled={adminActivateMutation.isPending}
+                          >
+                            {adminActivateMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <CheckCircle2 className="h-4 w-4 mr-2" />}
+                            Attiva gratis (admin)
+                          </Button>
+                        )}
+                      </div>
                       <p className="text-xs text-gray-400">Puoi configurare spine e menu anche ora, ma il QR sarà pubblico solo dopo il pagamento.</p>
                     </CardContent>
                   </Card>
@@ -738,7 +831,17 @@ export default function FestivalDashboard() {
                           </div>
                           <div>
                             <Label>Categoria</Label>
-                            <Input value={newFood.category} onChange={e => setNewFood(f => ({ ...f, category: e.target.value }))} />
+                            <Select value={newFood.category} onValueChange={v => setNewFood(f => ({ ...f, category: v }))}>
+                              <SelectTrigger><SelectValue /></SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="Cibo">Cibo</SelectItem>
+                                <SelectItem value="Bevande">Bevande</SelectItem>
+                                <SelectItem value="Dolci">Dolci</SelectItem>
+                                <SelectItem value="Snack">Snack</SelectItem>
+                                <SelectItem value="Panini">Panini</SelectItem>
+                                <SelectItem value="Altro">Altro</SelectItem>
+                              </SelectContent>
+                            </Select>
                           </div>
                         </div>
                         <div className="grid grid-cols-2 gap-3">

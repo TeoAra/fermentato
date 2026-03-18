@@ -12,6 +12,7 @@ import { Switch } from "@/components/ui/switch";
 import { Separator } from "@/components/ui/separator";
 import { ImageUpload } from "@/components/image-upload";
 import { Beer, Loader2, QrCode, ArrowRight, Eye, EyeOff, CheckCircle2 } from "lucide-react";
+import { AddressAutocomplete } from "@/components/AddressAutocomplete";
 
 const PRICE = 50;
 
@@ -137,6 +138,7 @@ function StepFestival() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [, navigate] = useLocation();
+  const [slugEdited, setSlugEdited] = useState(false);
   const [form, setForm] = useState({
     name: "", slug: "", description: "", location: "",
     startDate: "", endDate: "", showFood: true,
@@ -149,7 +151,7 @@ function StepFestival() {
       queryClient.invalidateQueries({ queryKey: ["/api/festivals/public"] });
       queryClient.invalidateQueries({ queryKey: ["/api/admin/festivals"] });
       toast({ title: "Festival creato! Ora procedi con il pagamento per attivarlo." });
-      navigate(`/festival-dashboard?checkout_pending=1&festival_id=${data.id}`);
+      navigate(`/festival-dashboard?festival_id=${data.id}`);
     },
     onError: (err: any) =>
       toast({ title: err?.message || "Errore nella creazione", variant: "destructive" }),
@@ -157,51 +159,58 @@ function StepFestival() {
 
   return (
     <div className="space-y-5">
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-        <ImageUpload
-          label="Logo festival"
-          description="Icona quadrata (400×400px)"
-          currentImageUrl={form.logoUrl || undefined}
-          onImageChange={url => setForm(f => ({ ...f, logoUrl: url || "" }))}
-          folder="festivals/logos"
-          aspectRatio="square"
-          recommendedDimensions="400×400px"
-        />
-        <ImageUpload
-          label="Immagine di copertina"
-          description="Banner orizzontale (1200×400px)"
-          currentImageUrl={form.coverImageUrl || undefined}
-          onImageChange={url => setForm(f => ({ ...f, coverImageUrl: url || "" }))}
-          folder="festivals/covers"
-          aspectRatio="landscape"
-          recommendedDimensions="1200×400px"
-        />
-      </div>
+      {/* Immagini — stacked */}
+      <ImageUpload
+        label="Logo festival"
+        description="Icona quadrata (400×400px)"
+        currentImageUrl={form.logoUrl || undefined}
+        onImageChange={url => setForm(f => ({ ...f, logoUrl: url || "" }))}
+        folder="festivals/logos"
+        aspectRatio="square"
+        recommendedDimensions="400×400px"
+      />
+      <ImageUpload
+        label="Immagine di copertina"
+        description="Banner orizzontale (1200×400px)"
+        currentImageUrl={form.coverImageUrl || undefined}
+        onImageChange={url => setForm(f => ({ ...f, coverImageUrl: url || "" }))}
+        folder="festivals/covers"
+        aspectRatio="landscape"
+        recommendedDimensions="1200×400px"
+      />
 
       <Separator />
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-        <div className="sm:col-span-2">
-          <Label>Nome del festival *</Label>
+      {/* Nome */}
+      <div>
+        <Label>Nome del festival *</Label>
+        <Input
+          className="mt-1"
+          value={form.name}
+          onChange={e => {
+            const name = e.target.value;
+            setForm(f => ({ ...f, name, slug: slugEdited ? f.slug : suggestSlug(name) }));
+          }}
+          placeholder="Es. Roma Beer Fest 2026"
+        />
+      </div>
+
+      {/* Slug */}
+      <div>
+        <Label>URL pubblico (slug) *</Label>
+        <div className="flex items-center gap-1 mt-1">
+          <span className="text-xs text-gray-400 whitespace-nowrap">/festival/</span>
           <Input
-            className="mt-1"
-            value={form.name}
-            onChange={e => setForm(f => ({ ...f, name: e.target.value, slug: f.slug || suggestSlug(e.target.value) }))}
-            placeholder="Es. Roma Beer Fest 2026"
+            value={form.slug}
+            onChange={e => { setSlugEdited(true); setForm(f => ({ ...f, slug: e.target.value })); }}
+            placeholder="roma-beer-fest-2026"
           />
         </div>
-        <div className="sm:col-span-2">
-          <Label>URL pubblico (slug) *</Label>
-          <div className="flex items-center gap-1 mt-1">
-            <span className="text-xs text-gray-400 whitespace-nowrap">/festival/</span>
-            <Input
-              value={form.slug}
-              onChange={e => setForm(f => ({ ...f, slug: e.target.value }))}
-              placeholder="roma-beer-fest-2026"
-            />
-          </div>
-          <p className="text-xs text-gray-400 mt-0.5">Questo sarà il link del vostro taplist QR</p>
-        </div>
+        <p className="text-xs text-gray-400 mt-0.5">Questo sarà il link del vostro taplist QR</p>
+      </div>
+
+      {/* Date */}
+      <div className="grid grid-cols-2 gap-3">
         <div>
           <Label>Data inizio</Label>
           <Input className="mt-1" type="date" value={form.startDate} onChange={e => setForm(f => ({ ...f, startDate: e.target.value }))} />
@@ -210,24 +219,36 @@ function StepFestival() {
           <Label>Data fine</Label>
           <Input className="mt-1" type="date" value={form.endDate} onChange={e => setForm(f => ({ ...f, endDate: e.target.value }))} />
         </div>
-        <div className="sm:col-span-2">
-          <Label>Location</Label>
-          <Input className="mt-1" value={form.location} onChange={e => setForm(f => ({ ...f, location: e.target.value }))} placeholder="Es. Parco della Musica, Roma" />
-        </div>
-        <div className="sm:col-span-2">
-          <Label>Descrizione breve</Label>
-          <Textarea
-            className="mt-1"
-            value={form.description}
-            onChange={e => setForm(f => ({ ...f, description: e.target.value }))}
-            rows={2}
-            placeholder="Descrivi il tuo festival in 1-2 righe"
+      </div>
+
+      {/* Location con Google */}
+      <div>
+        <Label>Location</Label>
+        <div className="mt-1">
+          <AddressAutocomplete
+            value={form.location}
+            onAddressSelect={d => setForm(f => ({ ...f, location: d.formattedAddress }))}
+            placeholder="Es. Parco della Musica, Roma"
+            countryRestriction={null}
           />
         </div>
-        <div className="flex items-center gap-3 sm:col-span-2">
-          <Switch checked={form.showFood} onCheckedChange={v => setForm(f => ({ ...f, showFood: v }))} />
-          <Label>Mostra sezione menu cibo</Label>
-        </div>
+      </div>
+
+      {/* Descrizione */}
+      <div>
+        <Label>Descrizione breve</Label>
+        <Textarea
+          className="mt-1"
+          value={form.description}
+          onChange={e => setForm(f => ({ ...f, description: e.target.value }))}
+          rows={2}
+          placeholder="Descrivi il tuo festival in 1-2 righe"
+        />
+      </div>
+
+      <div className="flex items-center gap-3">
+        <Switch checked={form.showFood} onCheckedChange={v => setForm(f => ({ ...f, showFood: v }))} />
+        <Label>Mostra sezione menu cibo</Label>
       </div>
 
       <Button

@@ -23,7 +23,7 @@ import {
   Beer as BeerIcon, Plus, Pencil, Trash2, Factory, MapPin, Loader2,
   Globe, Phone, FileText, Camera, Clock, AlertTriangle, Building,
   Target, Sparkles, Save, X, Share2, ExternalLink,
-  Megaphone, Store, Newspaper, Rocket, Users
+  Megaphone, Store, Newspaper, Rocket, Users, QrCode
 } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { BreweryEventsManager } from "@/components/events-manager";
@@ -675,6 +675,22 @@ export default function BreweryDashboard() {
             />
           </a>
         </div>
+
+        {/* Festival Mode CTA */}
+        <Link href="/crea-festival">
+          <div className="glass-card rounded-2xl border border-amber-200 dark:border-amber-800 bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-900/20 dark:to-orange-900/20 p-5 mb-8 flex items-center justify-between gap-4 cursor-pointer hover:shadow-md transition-shadow">
+            <div className="flex items-center gap-4 min-w-0">
+              <div className="p-3 bg-amber-500 rounded-xl shrink-0">
+                <QrCode className="h-6 w-6 text-white" />
+              </div>
+              <div className="min-w-0">
+                <p className="font-semibold text-gray-900 dark:text-white">Festival Mode</p>
+                <p className="text-sm text-gray-600 dark:text-gray-400 truncate">Crea il taplist QR per il tuo prossimo festival birra</p>
+              </div>
+            </div>
+            <ExternalLink className="h-5 w-5 text-amber-500 shrink-0" />
+          </div>
+        </Link>
 
         {/* Description */}
         {brewery.description && (

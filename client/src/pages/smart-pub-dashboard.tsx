@@ -80,7 +80,7 @@ import { ImageUpload } from "@/components/image-upload";
 import { EventsManager } from "@/components/events-manager";
 import { PubQRCode } from "@/components/pub-qr-code";
 import { MenuPdfDownload } from "@/components/menu-pdf-download";
-import { Cast, Share2, Link as LinkIcon, Tv, Info } from "lucide-react";
+import { Cast, Share2, Link as LinkIcon, Tv, Info, QrCode } from "lucide-react";
 import { AddressAutocomplete } from "@/components/AddressAutocomplete";
 import { SiFacebook, SiInstagram, SiX, SiTiktok } from "react-icons/si";
 import { RoleSwitcherBanner } from "@/components/role-switcher-banner";
@@ -672,6 +672,22 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
           </div>
         </div>
       </motion.div>
+
+      {/* Festival Mode CTA */}
+      <Link href="/crea-festival">
+        <div className="glass-card rounded-2xl border border-amber-200 dark:border-amber-800 bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-900/20 dark:to-orange-900/20 p-5 mb-6 flex items-center justify-between gap-4 cursor-pointer hover:shadow-md transition-shadow">
+          <div className="flex items-center gap-4 min-w-0">
+            <div className="p-3 bg-amber-500 rounded-xl shrink-0">
+              <QrCode className="h-6 w-6 text-white" />
+            </div>
+            <div className="min-w-0">
+              <p className="font-semibold text-gray-900 dark:text-white">Festival Mode</p>
+              <p className="text-sm text-gray-600 dark:text-gray-400 truncate">Crea il taplist QR per il tuo prossimo festival birra</p>
+            </div>
+          </div>
+          <LinkIcon className="h-5 w-5 text-amber-500 shrink-0" />
+        </div>
+      </Link>
 
       {/* Abbonamento */}
       {!isAdminMode && currentPub && (() => {

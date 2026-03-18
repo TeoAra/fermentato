@@ -5,7 +5,7 @@ import {
   festivals, festivalTaps, festivalFoodItems, festivalRatings,
   beers, breweries,
 } from "@shared/schema";
-import { eq, and, sql } from "drizzle-orm";
+import { eq, and, sql, ilike, or } from "drizzle-orm";
 
 function isFestivalManager(req: any): boolean {
   if (!req.isAuthenticated()) return false;
@@ -185,6 +185,44 @@ export function registerFestivalRoutes(app: Express) {
       if (err.code === "23505") return res.status(400).json({ message: "Slug già in uso, scegliene un altro" });
       console.error("Error registering festival:", err);
       res.status(500).json({ message: "Errore nella creazione" });
+    }
+  });
+
+  // ── Beer search for festival tap editing (authenticated) ─────────────────────
+  app.get("/api/festival-beers/search", isAuthenticated as any, async (req: any, res) => {
+    try {
+      const { q, limit = 20 } = req.query;
+      if (!q || String(q).trim().length < 2) return res.json([]);
+      const pattern = `%${q}%`;
+      const results = await db.select({
+        id: beers.id,
+        name: beers.name,
+        style: beers.style,
+        abv: beers.abv,
+        breweryName: breweries.name,
+      })
+      .from(beers)
+      .leftJoin(breweries, eq(beers.breweryId, breweries.id))
+      .where(or(ilike(beers.name, pattern), ilike(breweries.name, pattern)))
+      .limit(parseInt(String(limit)));
+      res.json(results);
+    } catch (err) {
+      res.status(500).json({ message: "Errore nella ricerca" });
+    }
+  });
+
+  // ── Manager: admin-free festival activation ───────────────────────────────────
+  app.post("/api/admin/festivals/:id/activate-free", isAuthenticated as any, isAdmin as any, async (req: any, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const [updated] = await db.update(festivals)
+        .set({ isActive: true, paidAt: new Date(), priceEur: 0 })
+        .where(eq(festivals.id, id))
+        .returning();
+      if (!updated) return res.status(404).json({ message: "Festival non trovato" });
+      res.json(updated);
+    } catch (err) {
+      res.status(500).json({ message: "Errore nell'attivazione" });
     }
   });
 
