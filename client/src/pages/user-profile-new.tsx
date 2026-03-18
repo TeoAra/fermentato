@@ -39,11 +39,15 @@ import {
   ChevronDown,
   TrendingUp,
   Camera,
+  CalendarDays,
+  MapPin,
 } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import type { User as UserType } from "@shared/schema";
 import UserFavoritesSection from "@/components/UserFavoritesSection";
+import { FestivalLikeButton } from "@/components/festival-like-button";
+import { ShareButton } from "@/components/share-button";
 import BeerTastingsEditor from "@/components/BeerTastingsEditorNew";
 import { getBadgeForCount, getNextBadge, getProgressToNextBadge } from "@/lib/badges";
 import { RoleSwitcherBanner } from "@/components/role-switcher-banner";
@@ -234,6 +238,16 @@ export default function UserProfile() {
 
   const { data: enrichedFavorites = [] } = useQuery({
     queryKey: ["/api/favorites"],
+    enabled: isAuthenticated,
+  });
+
+  const { data: festivalFavorites = [] } = useQuery<any[]>({
+    queryKey: ["/api/favorites", "festival"],
+    queryFn: async () => {
+      const r = await fetch("/api/favorites/festival", { credentials: "include" });
+      if (!r.ok) return [];
+      return r.json();
+    },
     enabled: isAuthenticated,
   });
 
@@ -657,7 +671,86 @@ export default function UserProfile() {
             <BeerTastingsEditor beerTastings={beerTastings} />
           </TabsContent>
 
-          <TabsContent value="favorites">
+          <TabsContent value="favorites" className="space-y-4">
+            {/* Festival preferiti */}
+            {Array.isArray(festivalFavorites) && festivalFavorites.length > 0 && (
+              <Card className="border-0 shadow-lg bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2 text-gray-900 dark:text-white text-base">
+                    <div className="p-2 bg-amber-100 dark:bg-amber-900/30 rounded-lg">
+                      <CalendarDays className="w-4 h-4 text-amber-600" />
+                    </div>
+                    Festival preferiti ({festivalFavorites.length})
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    {festivalFavorites.map((fav: any) => {
+                      const fest = fav.festival || fav;
+                      const name = fest.name || fav.itemName || `Festival #${fav.itemId}`;
+                      const slug = fest.slug;
+                      const location = fest.location;
+                      const coverUrl = fest.coverImageUrl;
+                      const logoUrl = fest.logoUrl;
+                      const startDate = fest.startDate
+                        ? new Date(fest.startDate).toLocaleDateString("it-IT", { day: "numeric", month: "short", year: "numeric" })
+                        : null;
+                      return (
+                        <div key={fav.id || fav.itemId} className="flex flex-col rounded-xl overflow-hidden border border-gray-100 dark:border-gray-700 bg-white dark:bg-gray-800 hover:shadow-md transition-all">
+                          {coverUrl && (
+                            <div className="h-20 relative overflow-hidden">
+                              <img src={coverUrl} alt={name} className="w-full h-full object-cover" />
+                              <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
+                            </div>
+                          )}
+                          <div className="p-3 flex-1">
+                            <div className="flex items-start gap-2">
+                              {logoUrl && (
+                                <img src={logoUrl} alt="" className="w-7 h-7 rounded-lg object-cover flex-shrink-0 border border-gray-100" />
+                              )}
+                              <div className="flex-1 min-w-0">
+                                <p className="font-semibold text-sm text-gray-900 dark:text-white truncate">{name}</p>
+                                {location && (
+                                  <p className="text-xs text-gray-500 flex items-center gap-1 mt-0.5">
+                                    <MapPin className="h-3 w-3 flex-shrink-0" />{location}
+                                  </p>
+                                )}
+                                {startDate && (
+                                  <p className="text-xs text-amber-600 flex items-center gap-1 mt-0.5">
+                                    <CalendarDays className="h-3 w-3 flex-shrink-0" />{startDate}
+                                  </p>
+                                )}
+                              </div>
+                            </div>
+                            <div className="flex gap-2 mt-2">
+                              {slug && (
+                                <a href={`/festival/${slug}`} className="flex-1">
+                                  <button className="w-full text-xs font-medium text-amber-600 border border-amber-200 rounded-md px-2 py-1 hover:bg-amber-50 transition-colors">
+                                    Taplist →
+                                  </button>
+                                </a>
+                              )}
+                              <FestivalLikeButton festivalId={fav.itemId || fest.id} showLabel={false} />
+                              {slug && (
+                                <ShareButton
+                                  title={name}
+                                  text={`Scopri le birre al festival ${name}!`}
+                                  url={`${window.location.origin}/festival/${slug}`}
+                                  size="sm"
+                                  variant="outline"
+                                />
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Preferiti pub/birrificio/birra */}
             <Card className="border-0 shadow-lg bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2 text-gray-900 dark:text-white">

@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { queryClient, apiRequest } from "@/lib/queryClient";
-import { Bell, Beer, Calendar, MapPin, Settings, AlertCircle, CheckCircle2, Trash2, CheckCheck, Loader2, ChevronDown, Factory, Store } from "lucide-react";
+import { Bell, Beer, Calendar, MapPin, Settings, AlertCircle, CheckCircle2, Trash2, CheckCheck, Loader2, ChevronDown, Factory, Store, CalendarDays, Heart, Share2 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -173,6 +173,10 @@ export default function Notifications() {
         return <Factory className="h-5 w-5 text-amber-600" />;
       case 'new_pub_request':
         return <Store className="h-5 w-5 text-amber-600" />;
+      case 'festival':
+      case 'festival_interest':
+      case 'festival_update':
+        return <CalendarDays className="h-5 w-5 text-amber-500" />;
       default:
         return <Bell className="h-5 w-5 text-gray-600" />;
     }
@@ -330,7 +334,30 @@ export default function Notifications() {
               />
             </div>
 
-            <div className="pt-3 border-t border-gray-100 dark:border-gray-700 flex flex-wrap gap-2">
+            <div className="border-t border-gray-100 dark:border-gray-700 pt-3">
+              <div className="flex items-center gap-2 mb-1">
+                <CalendarDays className="h-4 w-4 text-amber-500" />
+                <span className="text-sm font-medium">Festival</span>
+              </div>
+              <p className="text-xs text-gray-500 mb-2">
+                Metti "Mi Piace" ai festival che ti interessano direttamente dalla loro taplist.
+                Trovi i festival attivi nella sezione <strong>Attività</strong>.
+              </p>
+              <div className="flex gap-2">
+                <a href="/attivita" className="flex-1">
+                  <Button size="sm" variant="outline" className="w-full text-xs gap-1.5 text-amber-600 border-amber-200 hover:bg-amber-50">
+                    <CalendarDays className="h-3.5 w-3.5" />Vedi festival
+                  </Button>
+                </a>
+                <a href="/festival" className="flex-1">
+                  <Button size="sm" variant="outline" className="w-full text-xs gap-1.5">
+                    <Heart className="h-3.5 w-3.5 text-red-500" />I miei preferiti
+                  </Button>
+                </a>
+              </div>
+            </div>
+
+            <div className="border-t border-gray-100 dark:border-gray-700 pt-3 flex flex-wrap gap-2">
               {pushStatus?.subscribed && (
                 <Button
                   size="sm"

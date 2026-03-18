@@ -19,6 +19,8 @@ import {
   Beer, QrCode, BarChart3, UtensilsCrossed, Star,
   CreditCard, CheckCircle2, ArrowRight, Smartphone, Zap,
 } from "lucide-react";
+import { FestivalLikeButton } from "@/components/festival-like-button";
+import { ShareButton } from "@/components/share-button";
 import { AddressAutocomplete } from "@/components/AddressAutocomplete";
 
 const PRICE = 50;
@@ -230,6 +232,29 @@ function FestivalCard({ fest }: { fest: any }) {
             Vedi taplist →
           </div>
         )}
+        {/* Like + Share buttons — always visible, stop propagation so they don't trigger Link */}
+        <div className="flex gap-2 mt-3 pt-2 border-t border-gray-100 dark:border-gray-700" onClick={e => e.stopPropagation()}>
+          <FestivalLikeButton festivalId={fest.id} showLabel={false} className="flex-none" />
+          <ShareButton
+            title={fest.name}
+            text={`Scopri le birre al festival ${fest.name}!`}
+            url={`${window.location.origin}/festival/${fest.slug}`}
+            size="sm"
+            variant="outline"
+            className="flex-none"
+          />
+          {fest.isActive && (
+            <a
+              href={`/festival/${fest.slug}`}
+              className="flex-1"
+              onClick={e => e.stopPropagation()}
+            >
+              <button className="w-full text-xs font-medium text-amber-600 border border-amber-200 rounded-md px-2 py-1.5 hover:bg-amber-50 transition-colors">
+                Taplist →
+              </button>
+            </a>
+          )}
+        </div>
       </CardContent>
     </Card>
   );

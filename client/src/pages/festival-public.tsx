@@ -13,6 +13,8 @@ import {
   Droplets, Search, Star, UtensilsCrossed, Beer, ChevronDown, ChevronUp,
   MapPin, CheckCircle2, XCircle, Loader2, Clock, Calendar,
 } from "lucide-react";
+import { FestivalLikeButton } from "@/components/festival-like-button";
+import { ShareButton } from "@/components/share-button";
 
 const ALLERGEN_LABELS: Record<string, string> = {
   glutine: "Glutine", crostacei: "Crostacei", uova: "Uova", pesce: "Pesce",
@@ -465,11 +467,24 @@ export default function FestivalPublic() {
                 <div className="text-xl font-bold text-amber-700 dark:text-amber-400">{taps.length}</div>
                 <div className="text-xs text-gray-500">spine totali</div>
               </div>
+            </div>
+
+            {/* Like + Share + Login */}
+            <div className="flex items-center gap-2 mt-3 pt-3 border-t border-gray-100 dark:border-gray-700">
+              <FestivalLikeButton festivalId={festival.id} className="flex-1" />
+              <ShareButton
+                title={festival.name}
+                text={`Scopri le birre al festival ${festival.name}!`}
+                url={window.location.href}
+                label="Condividi"
+                className="flex-1"
+              />
               {!isAuthenticated && (
-                <div className="flex-1 bg-gray-50 dark:bg-gray-700 rounded-xl px-3 py-2 text-center">
-                  <div className="text-xs text-gray-500 mb-1">Per votare</div>
-                  <a href="/api/login" className="text-xs font-bold text-amber-600 hover:underline">Accedi →</a>
-                </div>
+                <a href="/api/login" className="flex-1">
+                  <button className="w-full text-xs font-bold text-amber-600 border border-amber-200 rounded-md px-3 py-2 hover:bg-amber-50 transition-colors">
+                    Accedi per votare →
+                  </button>
+                </a>
               )}
             </div>
           </CardContent>

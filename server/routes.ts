@@ -1788,12 +1788,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/favorites/:itemType", isAuthenticated, async (req: any, res) => {
     try {
       const userId = (req.user as any).id;
-      const itemType = req.params.itemType as 'pub' | 'brewery' | 'beer';
-      if (!['pub', 'brewery', 'beer'].includes(itemType)) {
+      const itemType = req.params.itemType as 'pub' | 'brewery' | 'beer' | 'festival';
+      if (!['pub', 'brewery', 'beer', 'festival'].includes(itemType)) {
         return res.status(400).json({ message: "Invalid item type" });
       }
-      const favorites = await storage.getFavoritesByType(userId, itemType);
-      res.json(favorites);
+      if (itemType === 'festival') {
+        const favs = await db.select({
+          id: favorites.id, itemId: favorites.itemId, itemType: favorites.itemType, createdAt: favorites.createdAt,
+          name: festivals.name, slug: festivals.slug, location: festivals.location,
+          startDate: festivals.startDate, endDate: festivals.endDate,
+          logoUrl: festivals.logoUrl, coverImageUrl: festivals.coverImageUrl,
+        })
+          .from(favorites)
+          .leftJoin(festivals, eq(festivals.id, favorites.itemId))
+          .where(and(eq(favorites.userId, userId), eq(favorites.itemType, 'festival')));
+        return res.json(favs);
+      }
+      const favData = await storage.getFavoritesByType(userId, itemType);
+      res.json(favData);
     } catch (error) {
       console.error("Error fetching favorites by type:", error);
       res.status(500).json({ message: "Failed to fetch favorites" });
@@ -1805,7 +1817,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userId = (req.user as any).id;
       const { itemType, itemId } = req.body;
       
-      if (!['pub', 'brewery', 'beer'].includes(itemType)) {
+      if (!['pub', 'brewery', 'beer', 'festival'].includes(itemType)) {
         return res.status(400).json({ message: "Invalid item type" });
       }
       
@@ -1820,10 +1832,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.delete("/api/favorites/:itemType/:itemId", isAuthenticated, async (req: any, res) => {
     try {
       const userId = (req.user as any).id;
-      const itemType = req.params.itemType as 'pub' | 'brewery' | 'beer';
+      const itemType = req.params.itemType as 'pub' | 'brewery' | 'beer' | 'festival';
       const itemId = parseInt(req.params.itemId);
       
-      if (!['pub', 'brewery', 'beer'].includes(itemType)) {
+      if (!['pub', 'brewery', 'beer', 'festival'].includes(itemType)) {
         return res.status(400).json({ message: "Invalid item type" });
       }
       
@@ -1876,10 +1888,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/favorites/:itemType/:itemId/check", isAuthenticated, async (req: any, res) => {
     try {
       const userId = (req.user as any).id;
-      const itemType = req.params.itemType as 'pub' | 'brewery' | 'beer';
+      const itemType = req.params.itemType as 'pub' | 'brewery' | 'beer' | 'festival';
       const itemId = parseInt(req.params.itemId);
       
-      if (!['pub', 'brewery', 'beer'].includes(itemType)) {
+      if (!['pub', 'brewery', 'beer', 'festival'].includes(itemType)) {
         return res.status(400).json({ message: "Invalid item type" });
       }
       
@@ -1894,10 +1906,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Get favorites count for any item (public endpoint)
   app.get("/api/favorites/:itemType/:itemId/count", async (req, res) => {
     try {
-      const itemType = req.params.itemType as 'pub' | 'brewery' | 'beer';
+      const itemType = req.params.itemType as 'pub' | 'brewery' | 'beer' | 'festival';
       const itemId = parseInt(req.params.itemId);
       
-      if (!['pub', 'brewery', 'beer'].includes(itemType)) {
+      if (!['pub', 'brewery', 'beer', 'festival'].includes(itemType)) {
         return res.status(400).json({ message: "Invalid item type" });
       }
       

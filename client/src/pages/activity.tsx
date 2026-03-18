@@ -10,6 +10,8 @@ import { Link } from "wouter";
 import { formatDistanceToNow, format } from "date-fns";
 import { it } from "date-fns/locale";
 import { EventCategoryBadge, EventShareButtons, EventInterestButton } from "@/components/events-manager";
+import { FestivalLikeButton } from "@/components/festival-like-button";
+import { ShareButton } from "@/components/share-button";
 
 type OpenStatus = 'open' | 'closing_soon' | 'opening_soon' | 'closed';
 
@@ -151,6 +153,10 @@ export default function Activity() {
 
   const { data: upcomingEvents = [], isLoading: loadingEvents } = useQuery<any[]>({
     queryKey: ["/api/events/upcoming"],
+  });
+
+  const { data: activeFestivals = [], isLoading: loadingFestivals } = useQuery<any[]>({
+    queryKey: ["/api/festivals/public"],
   });
 
   const nearbyPubs = userLocation && Array.isArray(allPubs)
@@ -430,7 +436,89 @@ export default function Activity() {
           )}
         </section>
 
-        {/* SECTION 3: Birre in Zona */}
+        {/* SECTION 3: Festival in Evidenza */}
+        <section>
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+            <CalendarDays className="h-5 w-5 text-amber-600" />
+            Festival in Evidenza
+            {Array.isArray(activeFestivals) && activeFestivals.length > 0 && (
+              <Badge className="ml-1 bg-amber-600 text-white text-xs px-1.5 py-0">{activeFestivals.length}</Badge>
+            )}
+          </h2>
+          {loadingFestivals ? (
+            <div className="flex items-center justify-center py-8">
+              <Loader2 className="h-8 w-8 animate-spin text-amber-600" />
+            </div>
+          ) : !Array.isArray(activeFestivals) || activeFestivals.length === 0 ? (
+            <div className="text-center py-8 bg-gray-50 dark:bg-gray-800/50 rounded-xl">
+              <CalendarDays className="h-10 w-10 text-gray-400 mx-auto mb-3" />
+              <p className="text-sm text-gray-500 dark:text-gray-400">Nessun festival attivo al momento</p>
+              <Link href="/festival">
+                <Button variant="link" size="sm">Scopri i festival →</Button>
+              </Link>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {activeFestivals.map((fest: any) => {
+                const startDate = fest.startDate
+                  ? new Date(fest.startDate).toLocaleDateString("it-IT", { day: "numeric", month: "short", year: "numeric" })
+                  : null;
+                const endDate = fest.endDate
+                  ? new Date(fest.endDate).toLocaleDateString("it-IT", { day: "numeric", month: "short", year: "numeric" })
+                  : null;
+                const festUrl = `${window.location.origin}/festival/${fest.slug}`;
+                return (
+                  <Card key={fest.id} className="hover:shadow-lg transition-all duration-200 overflow-hidden">
+                    {fest.coverImageUrl && (
+                      <div className="relative h-28 overflow-hidden">
+                        <img src={fest.coverImageUrl} alt={fest.name} className="w-full h-full object-cover" />
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
+                      </div>
+                    )}
+                    <CardContent className="p-4">
+                      <div className="flex items-start gap-3">
+                        {fest.logoUrl && (
+                          <img src={fest.logoUrl} alt="" className="w-10 h-10 rounded-xl object-cover flex-shrink-0 border border-gray-100 dark:border-gray-700" />
+                        )}
+                        <div className="flex-1 min-w-0">
+                          <h3 className="font-semibold text-sm truncate">{fest.name}</h3>
+                          {fest.location && (
+                            <p className="text-xs text-gray-500 flex items-center gap-1 mt-0.5">
+                              <MapPin className="w-3 h-3 flex-shrink-0" />{fest.location}
+                            </p>
+                          )}
+                          {(startDate || endDate) && (
+                            <p className="text-xs text-amber-600 flex items-center gap-1 mt-0.5">
+                              <Calendar className="w-3 h-3 flex-shrink-0" />
+                              {startDate}{startDate && endDate && startDate !== endDate ? ` — ${endDate}` : ""}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                      <div className="flex gap-2 mt-3">
+                        <Link href={`/festival/${fest.slug}`} className="flex-1">
+                          <Button size="sm" className="w-full bg-amber-500 hover:bg-amber-600 text-white text-xs">
+                            Vedi taplist
+                          </Button>
+                        </Link>
+                        <FestivalLikeButton festivalId={fest.id} showLabel={false} />
+                        <ShareButton
+                          title={fest.name}
+                          text={`Scopri le birre al festival ${fest.name}!`}
+                          url={festUrl}
+                          size="sm"
+                          variant="outline"
+                        />
+                      </div>
+                    </CardContent>
+                  </Card>
+                );
+              })}
+            </div>
+          )}
+        </section>
+
+        {/* SECTION 4: Birre in Zona */}
         <section>
           <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
             <Beer className="h-5 w-5 text-amber-600" />
