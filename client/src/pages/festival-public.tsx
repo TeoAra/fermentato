@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import { useParams } from "wouter";
+import { useParams, Link } from "wouter";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
@@ -14,6 +14,13 @@ import {
   MapPin, CheckCircle2, XCircle, Loader2,
 } from "lucide-react";
 
+const ALLERGEN_LABELS: Record<string, string> = {
+  glutine: "Glutine", crostacei: "Crostacei", uova: "Uova", pesce: "Pesce",
+  arachidi: "Arachidi", soia: "Soia", latte: "Latte",
+  "frutta a guscio": "Frutta a guscio", sedano: "Sedano", senape: "Senape",
+  sesamo: "Sesamo", solfiti: "Solfiti", lupini: "Lupini", molluschi: "Molluschi",
+};
+
 interface FestivalData {
   festival: {
     id: number; name: string; description: string | null; location: string | null;
@@ -25,12 +32,13 @@ interface FestivalData {
     customBeerName: string | null; customBreweryName: string | null;
     style: string | null; abv: string | null; notes: string | null;
     isAvailable: boolean; beerName: string | null; beerStyle: string | null;
-    beerAbv: string | null; beerImageUrl: string | null; breweryName: string | null;
+    beerAbv: string | null; beerImageUrl: string | null;
+    breweryId: number | null; breweryName: string | null; breweryLogoUrl: string | null;
     avgRating: number | null; ratingCount: number; userRating: number | null;
   }>;
   food: Array<{
     id: number; name: string; description: string | null; price: string | null;
-    category: string | null; isAvailable: boolean;
+    category: string | null; isAvailable: boolean; allergens: string[] | null;
   }>;
 }
 
@@ -97,7 +105,7 @@ function TapCard({ tap, slug, isAuth }: { tap: FestivalData["taps"][0]; slug: st
     <Card className={`border transition-all ${tap.isAvailable ? "border-gray-200 dark:border-gray-700" : "border-gray-100 dark:border-gray-800 opacity-60"}`}>
       <CardContent className="p-4">
         <div className="flex items-start gap-3">
-          {/* Tap number */}
+          {/* Tap number badge */}
           <div className={`w-10 h-10 flex-shrink-0 rounded-xl flex items-center justify-center font-bold text-sm ${
             tap.isAvailable ? "bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300" : "bg-gray-100 dark:bg-gray-800 text-gray-400"
           }`}>
@@ -106,18 +114,40 @@ function TapCard({ tap, slug, isAuth }: { tap: FestivalData["taps"][0]; slug: st
 
           <div className="flex-1 min-w-0">
             <div className="flex items-start justify-between gap-2">
-              <div className="flex-1">
+              <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 flex-wrap">
-                  <span className={`font-semibold text-sm ${tap.isAvailable ? "text-gray-900 dark:text-white" : "text-gray-400 line-through"}`}>
-                    {beerName}
-                  </span>
+                  {tap.beerId ? (
+                    <Link href={`/beer/${tap.beerId}`}>
+                      <span className={`font-semibold text-sm hover:underline cursor-pointer ${tap.isAvailable ? "text-gray-900 dark:text-white" : "text-gray-400 line-through"}`}>
+                        {beerName}
+                      </span>
+                    </Link>
+                  ) : (
+                    <span className={`font-semibold text-sm ${tap.isAvailable ? "text-gray-900 dark:text-white" : "text-gray-400 line-through"}`}>
+                      {beerName}
+                    </span>
+                  )}
                   {!tap.isAvailable && (
                     <Badge variant="outline" className="text-xs text-red-500 border-red-200 py-0">Finita</Badge>
                   )}
                 </div>
-                {breweryName && (
-                  <p className="text-xs text-amber-600 dark:text-amber-400 font-medium mt-0.5">{breweryName}</p>
+
+                {/* Brewery row with logo */}
+                {(breweryName || tap.breweryLogoUrl) && (
+                  <div className="flex items-center gap-1.5 mt-0.5">
+                    {tap.breweryLogoUrl && (
+                      <img src={tap.breweryLogoUrl} alt="" className="w-4 h-4 rounded-full object-cover flex-shrink-0" />
+                    )}
+                    {tap.breweryId ? (
+                      <Link href={`/brewery/${tap.breweryId}`}>
+                        <span className="text-xs text-amber-600 dark:text-amber-400 font-medium hover:underline cursor-pointer">{breweryName}</span>
+                      </Link>
+                    ) : (
+                      <span className="text-xs text-amber-600 dark:text-amber-400 font-medium">{breweryName}</span>
+                    )}
+                  </div>
                 )}
+
                 <div className="flex flex-wrap items-center gap-1.5 mt-1">
                   {style && <Badge variant="secondary" className="text-xs py-0">{style}</Badge>}
                   {abv && (
@@ -128,10 +158,12 @@ function TapCard({ tap, slug, isAuth }: { tap: FestivalData["taps"][0]; slug: st
                   {tap.avgRating !== null && tap.ratingCount > 0 && (
                     <span className="text-xs text-amber-600 dark:text-amber-400 flex items-center gap-0.5">
                       <Star className="h-3 w-3 fill-current" />{tap.avgRating?.toFixed(1)}
+                      <span className="text-gray-400">({tap.ratingCount})</span>
                     </span>
                   )}
                 </div>
               </div>
+
               {tap.isAvailable && isAuth && (
                 <button
                   onClick={() => setExpanded(e => !e)}
@@ -141,6 +173,13 @@ function TapCard({ tap, slug, isAuth }: { tap: FestivalData["taps"][0]; slug: st
                 </button>
               )}
             </div>
+
+            {/* Beer image (shown when expanded) */}
+            {expanded && tap.beerImageUrl && (
+              <div className="mt-2">
+                <img src={tap.beerImageUrl} alt={beerName} className="h-24 w-24 object-cover rounded-xl" />
+              </div>
+            )}
 
             {tap.notes && !expanded && (
               <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 line-clamp-1">{tap.notes}</p>
@@ -160,9 +199,70 @@ function TapCard({ tap, slug, isAuth }: { tap: FestivalData["taps"][0]; slug: st
   );
 }
 
+function FoodCategoryBlock({ category, items }: {
+  category: string;
+  items: FestivalData["food"];
+}) {
+  const [expanded, setExpanded] = useState(true);
+  const available = items.filter(i => i.isAvailable).length;
+
+  return (
+    <div className="overflow-hidden rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
+      <button
+        className="w-full flex items-center justify-between px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors text-left"
+        onClick={() => setExpanded(e => !e)}
+      >
+        <div className="flex items-center gap-2">
+          <span className="font-semibold text-sm text-gray-900 dark:text-white">{category}</span>
+          <span className="text-xs text-gray-400 bg-gray-100 dark:bg-gray-700 px-1.5 py-0.5 rounded-full">
+            {available}/{items.length}
+          </span>
+        </div>
+        {expanded ? <ChevronUp className="h-4 w-4 text-gray-400" /> : <ChevronDown className="h-4 w-4 text-gray-400" />}
+      </button>
+
+      {expanded && (
+        <div className="divide-y divide-gray-100 dark:divide-gray-700">
+          {items.map(item => (
+            <div key={item.id} className={`px-4 py-3 ${!item.isAvailable ? "opacity-50" : ""}`}>
+              <div className="flex items-start justify-between gap-3">
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className={`font-medium text-sm ${!item.isAvailable ? "line-through text-gray-400" : "text-gray-900 dark:text-white"}`}>
+                      {item.name}
+                    </span>
+                    {!item.isAvailable && (
+                      <Badge variant="outline" className="text-xs text-red-500 border-red-200 py-0">Esaurito</Badge>
+                    )}
+                  </div>
+                  {item.description && (
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{item.description}</p>
+                  )}
+                  {item.allergens && item.allergens.length > 0 && (
+                    <div className="flex flex-wrap gap-1 mt-1.5">
+                      {item.allergens.map(a => (
+                        <span key={a} className="text-xs bg-orange-50 dark:bg-orange-900/30 text-orange-700 dark:text-orange-300 border border-orange-200 dark:border-orange-700 px-1.5 py-0.5 rounded-full">
+                          {ALLERGEN_LABELS[a.toLowerCase()] ?? a}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                </div>
+                {item.price && (
+                  <span className="font-bold text-amber-600 text-sm whitespace-nowrap">€{parseFloat(item.price).toFixed(2)}</span>
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function FestivalPublic() {
   const { slug } = useParams<{ slug: string }>();
-  const { user, isAuthenticated } = useAuth();
+  const { isAuthenticated } = useAuth();
   const [search, setSearch] = useState("");
   const [showUnavailable, setShowUnavailable] = useState(true);
 
@@ -351,36 +451,20 @@ export default function FestivalPublic() {
           </TabsContent>
 
           {festival.showFood && (
-            <TabsContent value="food" className="space-y-4">
-              {Object.entries(foodByCategory).map(([category, items]) => (
-                <div key={category}>
-                  <h3 className="font-bold text-sm text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2">{category}</h3>
-                  <div className="space-y-2">
-                    {items.map(item => (
-                      <Card key={item.id} className={`border ${item.isAvailable ? "" : "opacity-50"}`}>
-                        <CardContent className="p-3 flex items-start justify-between gap-3">
-                          <div className="flex-1">
-                            <div className="flex items-center gap-2">
-                              <span className={`font-medium text-sm ${!item.isAvailable ? "line-through text-gray-400" : ""}`}>
-                                {item.name}
-                              </span>
-                              {!item.isAvailable && (
-                                <Badge variant="outline" className="text-xs text-red-500 border-red-200 py-0">Esaurito</Badge>
-                              )}
-                            </div>
-                            {item.description && (
-                              <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{item.description}</p>
-                            )}
-                          </div>
-                          {item.price && (
-                            <span className="font-bold text-amber-600 text-sm whitespace-nowrap">€{parseFloat(item.price).toFixed(2)}</span>
-                          )}
-                        </CardContent>
-                      </Card>
-                    ))}
-                  </div>
+            <TabsContent value="food" className="space-y-3">
+              {Object.keys(foodByCategory).length === 0 ? (
+                <div className="text-center py-10 text-gray-400">
+                  <UtensilsCrossed className="h-8 w-8 mx-auto mb-2 opacity-30" />
+                  <p>Nessuna voce nel menu</p>
                 </div>
-              ))}
+              ) : (
+                Object.entries(foodByCategory).map(([category, items]) => (
+                  <FoodCategoryBlock key={category} category={category} items={items} />
+                ))
+              )}
+              <p className="text-xs text-center text-gray-400 pt-2">
+                I prezzi includono IVA · Informare il personale di eventuali allergie
+              </p>
             </TabsContent>
           )}
         </Tabs>

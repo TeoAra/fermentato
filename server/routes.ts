@@ -229,6 +229,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
   registerAdminRoutes(app);
   registerFestivalRoutes(app);
 
+  // Startup: ensure festival_food_items has allergens column
+  (async () => {
+    try {
+      await pool.query(`ALTER TABLE festival_food_items ADD COLUMN IF NOT EXISTS allergens jsonb`);
+    } catch (e) {
+      console.error("[festival_food_items] allergens migration error:", e);
+    }
+  })();
+
   // Startup: ensure pubs have slug column + auto-generate slugs
   (async () => {
     try {

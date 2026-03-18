@@ -21,7 +21,7 @@ import {
   Beer, UtensilsCrossed, BarChart3, Settings, Plus, QrCode,
   CheckCircle2, XCircle, Loader2, Pencil, Trash2, ExternalLink,
   Trophy, Users, Droplets, CreditCard, AlertCircle, RefreshCw, Lock, Star,
-  ArrowLeft, Factory, ImagePlus, X, Search,
+  ArrowLeft, Factory, ImagePlus, X, Search, ChevronDown,
 } from "lucide-react";
 import { useLocation } from "wouter";
 
@@ -70,11 +70,15 @@ interface FestivalTap {
   id: number; tapNumber: number; beerId: number | null;
   customBeerName: string | null; customBreweryName: string | null;
   style: string | null; abv: string | null; notes: string | null; isAvailable: boolean;
+  beerName: string | null; beerStyle: string | null; beerAbv: string | null;
+  beerImageUrl: string | null; breweryId: number | null; breweryName: string | null;
+  breweryLogoUrl: string | null;
 }
 
 interface FoodItem {
   id: number; name: string; description: string | null;
   price: string | null; category: string | null; isAvailable: boolean;
+  allergens: string[] | null;
 }
 
 interface Stats {
@@ -111,8 +115,10 @@ function QRModal({ slug, name, onClose }: { slug: string; name: string; onClose:
 function TapRow({ tap, festivalId, onToggle }: {
   tap: FestivalTap; festivalId: number; onToggle: (tap: FestivalTap) => void;
 }) {
-  const beerName = tap.customBeerName || `Spina ${tap.tapNumber}`;
-  const brewName = tap.customBreweryName;
+  const beerName = tap.beerName || tap.customBeerName || `Spina ${tap.tapNumber}`;
+  const brewName = tap.breweryName || tap.customBreweryName;
+  const style = tap.beerStyle || tap.style;
+  const abv = tap.beerAbv || tap.abv;
 
   return (
     <div className={`flex items-center gap-3 p-3 rounded-xl border transition-all ${
@@ -123,14 +129,20 @@ function TapRow({ tap, festivalId, onToggle }: {
       }`}>
         {tap.tapNumber}
       </div>
+
+      {/* Brewery logo */}
+      {tap.breweryLogoUrl && (
+        <img src={tap.breweryLogoUrl} alt="" className="w-8 h-8 rounded-lg object-cover flex-shrink-0 border border-gray-100 dark:border-gray-700" />
+      )}
+
       <div className="flex-1 min-w-0">
         <p className={`text-sm font-semibold truncate ${!tap.isAvailable ? "line-through text-gray-400" : ""}`}>
           {beerName}
         </p>
         <div className="flex items-center gap-2 flex-wrap">
-          {brewName && <span className="text-xs text-amber-600">{brewName}</span>}
-          {tap.style && <Badge variant="secondary" className="text-xs py-0">{tap.style}</Badge>}
-          {tap.abv && <span className="text-xs text-gray-500">{tap.abv}% ABV</span>}
+          {brewName && <span className="text-xs text-amber-600 dark:text-amber-400 truncate max-w-[120px]">{brewName}</span>}
+          {style && <Badge variant="secondary" className="text-xs py-0">{style}</Badge>}
+          {abv && <span className="text-xs text-gray-500">{abv}%</span>}
         </div>
       </div>
       <button
@@ -832,7 +844,7 @@ function FestivalFoodManager({ festId }: { festId: number }) {
   // Add item dialog state
   const [addingToCategory, setAddingToCategory] = useState<string | null>(null);
   const [editingItem, setEditingItem] = useState<FoodItem | null>(null);
-  const [itemForm, setItemForm] = useState({ name: "", description: "", price: "", isAvailable: true });
+  const [itemForm, setItemForm] = useState({ name: "", description: "", price: "", isAvailable: true, allergens: [] as string[] });
 
   const toggleCategory = (cat: string) => {
     setExpandedCategories(prev => {
@@ -843,19 +855,19 @@ function FestivalFoodManager({ festId }: { festId: number }) {
   };
 
   const openAddItem = (category: string) => {
-    setItemForm({ name: "", description: "", price: "", isAvailable: true });
+    setItemForm({ name: "", description: "", price: "", isAvailable: true, allergens: [] });
     setAddingToCategory(category);
     setEditingItem(null);
   };
 
   const openEditItem = (item: FoodItem) => {
-    setItemForm({ name: item.name, description: item.description || "", price: item.price || "", isAvailable: item.isAvailable });
+    setItemForm({ name: item.name, description: item.description || "", price: item.price || "", isAvailable: item.isAvailable, allergens: item.allergens ?? [] });
     setEditingItem(item);
     setAddingToCategory(null);
   };
 
   const addFoodMutation = useMutation({
-    mutationFn: (data: { name: string; description: string; price: string; category: string; isAvailable: boolean }) =>
+    mutationFn: (data: { name: string; description: string; price: string; category: string; isAvailable: boolean; allergens: string[] }) =>
       apiRequest(`/api/admin/festivals/${festId}/food`, { method: "POST" }, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/admin/festivals", festId, "food"] });
@@ -887,16 +899,45 @@ function FestivalFoodManager({ festId }: { festId: number }) {
     onError: () => toast({ title: "Errore", variant: "destructive" }),
   });
 
-  const getCategoryIcon = (cat: string) => {
-    const c = cat.toLowerCase();
-    if (c.includes("dolc") || c.includes("dessert")) return "🍰";
-    if (c.includes("bevand") || c.includes("bibite") || c.includes("drink")) return "🥤";
-    if (c.includes("panin") || c.includes("sandwich") || c.includes("burger")) return "🥪";
-    if (c.includes("pizza")) return "🍕";
-    if (c.includes("snack") || c.includes("patatine")) return "🍟";
-    if (c.includes("vino") || c.includes("cocktail")) return "🍷";
-    return "🍽️";
+  const ALLERGENS_LIST = [
+    "glutine", "crostacei", "uova", "pesce", "arachidi", "soia",
+    "latte", "frutta a guscio", "sedano", "senape", "sesamo",
+    "solfiti", "lupini", "molluschi",
+  ];
+  const ALLERGEN_LABELS: Record<string, string> = {
+    glutine: "Glutine", crostacei: "Crostacei", uova: "Uova", pesce: "Pesce",
+    arachidi: "Arachidi", soia: "Soia", latte: "Latte",
+    "frutta a guscio": "Frutta a guscio", sedano: "Sedano", senape: "Senape",
+    sesamo: "Sesamo", solfiti: "Solfiti", lupini: "Lupini", molluschi: "Molluschi",
   };
+  const toggleAllergen = (a: string) => {
+    setItemForm(f => ({
+      ...f,
+      allergens: f.allergens.includes(a) ? f.allergens.filter(x => x !== a) : [...f.allergens, a],
+    }));
+  };
+
+  const AllergenSelector = () => (
+    <div>
+      <Label className="text-xs">Allergeni</Label>
+      <div className="flex flex-wrap gap-1.5 mt-1.5">
+        {ALLERGENS_LIST.map(a => (
+          <button
+            key={a}
+            type="button"
+            onClick={() => toggleAllergen(a)}
+            className={`text-xs px-2 py-1 rounded-full border transition-colors ${
+              itemForm.allergens.includes(a)
+                ? "bg-orange-500 text-white border-orange-500"
+                : "bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-400 border-gray-200 dark:border-gray-600 hover:border-orange-300"
+            }`}
+          >
+            {ALLERGEN_LABELS[a]}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
 
   return (
     <div className="space-y-4">
@@ -967,11 +1008,13 @@ function FestivalFoodManager({ festId }: { festId: number }) {
           <Card key={cat} className="overflow-hidden">
             <CardHeader className="p-0">
               <button
-                className="w-full flex items-center justify-between p-4 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors text-left"
+                className="w-full flex items-center justify-between px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors text-left"
                 onClick={() => toggleCategory(cat)}
               >
                 <div className="flex items-center gap-3">
-                  <span className="text-xl">{getCategoryIcon(cat)}</span>
+                  <div className="w-8 h-8 rounded-lg bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center flex-shrink-0">
+                    <UtensilsCrossed className="h-4 w-4 text-amber-600 dark:text-amber-400" />
+                  </div>
                   <div>
                     <p className="font-semibold text-sm">{cat}</p>
                     <p className="text-xs text-gray-500">{items.length} voc{items.length === 1 ? "e" : "i"}</p>
@@ -981,37 +1024,49 @@ function FestivalFoodManager({ festId }: { festId: number }) {
                   <Button size="sm" variant="outline" className="h-7 text-xs" onClick={e => { e.stopPropagation(); openAddItem(cat); }}>
                     <Plus className="h-3 w-3 mr-1" />Aggiungi
                   </Button>
-                  <span className="text-gray-400 text-xs">{isExpanded ? "▲" : "▼"}</span>
+                  <ChevronDown className={`h-4 w-4 text-gray-400 transition-transform ${isExpanded ? "rotate-180" : ""}`} />
                 </div>
               </button>
             </CardHeader>
 
             {isExpanded && (
-              <CardContent className="p-0">
+              <CardContent className="p-0 border-t dark:border-gray-700">
                 {items.length === 0 ? (
-                  <div className="px-4 pb-4 text-center text-sm text-gray-400">
+                  <div className="px-4 py-5 text-center text-sm text-gray-400">
                     Nessuna voce in questa categoria.{" "}
                     <button className="text-amber-600 hover:underline" onClick={() => openAddItem(cat)}>Aggiungine una</button>
                   </div>
                 ) : (
                   <div className="divide-y dark:divide-gray-700">
                     {items.map(item => (
-                      <div key={item.id} className={`flex items-center gap-3 px-4 py-3 ${!item.isAvailable ? "opacity-60" : ""}`}>
+                      <div key={item.id} className={`flex items-start gap-3 px-4 py-3 ${!item.isAvailable ? "opacity-60" : ""}`}>
                         <div className="flex-1 min-w-0">
-                          <p className={`text-sm font-medium ${!item.isAvailable ? "line-through text-gray-400" : ""}`}>{item.name}</p>
-                          {item.description && <p className="text-xs text-gray-500 truncate">{item.description}</p>}
+                          <div className="flex items-center gap-2">
+                            <p className={`text-sm font-medium ${!item.isAvailable ? "line-through text-gray-400" : ""}`}>{item.name}</p>
+                            {!item.isAvailable && <span className="text-xs text-red-400 bg-red-50 dark:bg-red-900/20 px-1.5 py-0.5 rounded-full">Esaurito</span>}
+                          </div>
+                          {item.description && <p className="text-xs text-gray-500 truncate mt-0.5">{item.description}</p>}
+                          {item.allergens && item.allergens.length > 0 && (
+                            <div className="flex flex-wrap gap-1 mt-1">
+                              {item.allergens.map(a => (
+                                <span key={a} className="text-xs bg-orange-50 dark:bg-orange-900/20 text-orange-600 dark:text-orange-400 border border-orange-200 dark:border-orange-700 px-1.5 py-0.5 rounded-full">
+                                  {ALLERGEN_LABELS[a.toLowerCase()] ?? a}
+                                </span>
+                              ))}
+                            </div>
+                          )}
                         </div>
-                        {item.price && <span className="font-bold text-amber-600 text-sm shrink-0">€{parseFloat(item.price).toFixed(2)}</span>}
-                        <button onClick={() => openEditItem(item)} className="p-1 rounded text-gray-400 hover:text-amber-600 transition-colors shrink-0">
+                        {item.price && <span className="font-bold text-amber-600 text-sm shrink-0 pt-0.5">€{parseFloat(item.price).toFixed(2)}</span>}
+                        <button onClick={() => openEditItem(item)} className="p-1 rounded text-gray-400 hover:text-amber-600 transition-colors shrink-0 mt-0.5">
                           <Pencil className="h-4 w-4" />
                         </button>
-                        <button onClick={() => toggleFoodMutation.mutate(item)} className="p-1 rounded shrink-0 transition-colors"
+                        <button onClick={() => toggleFoodMutation.mutate(item)} className="p-1 rounded shrink-0 transition-colors mt-0.5"
                           title={item.isAvailable ? "Segna come non disponibile" : "Ripristina"}>
                           {item.isAvailable
                             ? <CheckCircle2 className="h-5 w-5 text-green-500" />
                             : <XCircle className="h-5 w-5 text-red-400" />}
                         </button>
-                        <button onClick={() => deleteFoodMutation.mutate(item.id)} className="p-1 rounded text-gray-300 hover:text-red-500 transition-colors shrink-0">
+                        <button onClick={() => deleteFoodMutation.mutate(item.id)} className="p-1 rounded text-gray-300 hover:text-red-500 transition-colors shrink-0 mt-0.5">
                           <Trash2 className="h-4 w-4" />
                         </button>
                       </div>
@@ -1027,7 +1082,7 @@ function FestivalFoodManager({ festId }: { festId: number }) {
       {/* Add item dialog */}
       {addingToCategory && (
         <Dialog open onOpenChange={() => setAddingToCategory(null)}>
-          <DialogContent className="max-w-sm">
+          <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
             <DialogHeader><DialogTitle>Aggiungi voce — {addingToCategory}</DialogTitle></DialogHeader>
             <div className="space-y-3">
               <div>
@@ -1036,13 +1091,14 @@ function FestivalFoodManager({ festId }: { festId: number }) {
               </div>
               <div>
                 <Label className="text-xs">Descrizione</Label>
-                <Textarea value={itemForm.description} onChange={e => setItemForm(f => ({ ...f, description: e.target.value }))} placeholder="Ingredienti, allergeni…" rows={2} className="mt-1 text-sm" />
+                <Textarea value={itemForm.description} onChange={e => setItemForm(f => ({ ...f, description: e.target.value }))} placeholder="Ingredienti, note…" rows={2} className="mt-1 text-sm" />
               </div>
               <div>
                 <Label className="text-xs">Prezzo (€)</Label>
                 <Input type="number" step="0.50" min="0" value={itemForm.price} onChange={e => setItemForm(f => ({ ...f, price: e.target.value }))} placeholder="8.00" className="mt-1 h-9" />
               </div>
-              <div className="flex items-center gap-3">
+              <AllergenSelector />
+              <div className="flex items-center gap-3 pt-1">
                 <Switch checked={itemForm.isAvailable} onCheckedChange={v => setItemForm(f => ({ ...f, isAvailable: v }))} />
                 <Label className="text-sm">{itemForm.isAvailable ? "Disponibile" : "Non disponibile"}</Label>
               </div>
@@ -1063,7 +1119,7 @@ function FestivalFoodManager({ festId }: { festId: number }) {
       {/* Edit item dialog */}
       {editingItem && (
         <Dialog open onOpenChange={() => setEditingItem(null)}>
-          <DialogContent className="max-w-sm">
+          <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
             <DialogHeader><DialogTitle>Modifica voce</DialogTitle></DialogHeader>
             <div className="space-y-3">
               <div>
@@ -1078,7 +1134,8 @@ function FestivalFoodManager({ festId }: { festId: number }) {
                 <Label className="text-xs">Prezzo (€)</Label>
                 <Input type="number" step="0.50" min="0" value={itemForm.price} onChange={e => setItemForm(f => ({ ...f, price: e.target.value }))} className="mt-1 h-9" />
               </div>
-              <div className="flex items-center gap-3">
+              <AllergenSelector />
+              <div className="flex items-center gap-3 pt-1">
                 <Switch checked={itemForm.isAvailable} onCheckedChange={v => setItemForm(f => ({ ...f, isAvailable: v }))} />
                 <Label className="text-sm">{itemForm.isAvailable ? "Disponibile" : "Non disponibile"}</Label>
               </div>

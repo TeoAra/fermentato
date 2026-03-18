@@ -943,6 +943,7 @@ export const festivalFoodItems = pgTable("festival_food_items", {
   price: decimal("price", { precision: 8, scale: 2 }),
   category: varchar("category", { length: 100 }),
   isAvailable: boolean("is_available").default(true),
+  allergens: jsonb("allergens").$type<string[]>(),
 });
 export const insertFestivalFoodItemSchema = createInsertSchema(festivalFoodItems).omit({ id: true });
 export type InsertFestivalFoodItem = z.infer<typeof insertFestivalFoodItemSchema>;

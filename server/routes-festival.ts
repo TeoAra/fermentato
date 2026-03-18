@@ -71,7 +71,9 @@ export function registerFestivalRoutes(app: Express) {
         beerStyle: beers.style,
         beerAbv: beers.abv,
         beerImageUrl: beers.imageUrl,
+        breweryId: breweries.id,
         breweryName: breweries.name,
+        breweryLogoUrl: breweries.logoUrl,
         avgRating: sql<number | null>`ROUND(AVG(${festivalRatings.rating})::numeric, 1)`,
         ratingCount: sql<number>`COUNT(${festivalRatings.id})`,
       })
@@ -80,7 +82,7 @@ export function registerFestivalRoutes(app: Express) {
       .leftJoin(breweries, eq(beers.breweryId, breweries.id))
       .leftJoin(festivalRatings, eq(festivalTaps.id, festivalRatings.tapId))
       .where(eq(festivalTaps.festivalId, festival.id))
-      .groupBy(festivalTaps.id, beers.name, beers.style, beers.abv, beers.imageUrl, breweries.name)
+      .groupBy(festivalTaps.id, beers.name, beers.style, beers.abv, beers.imageUrl, breweries.id, breweries.name, breweries.logoUrl)
       .orderBy(festivalTaps.tapNumber);
 
       const food = festival.showFood
@@ -370,8 +372,8 @@ export function registerFestivalRoutes(app: Express) {
       const festId = parseInt(req.params.id);
       const [fest] = await db.select().from(festivals).where(eq(festivals.id, festId)).limit(1);
       if (!fest || !canManageFestival(req, fest)) return res.status(403).json({ message: "Non autorizzato" });
-      const { name, description, price, category } = req.body;
-      const [item] = await db.insert(festivalFoodItems).values({ festivalId: festId, name, description, price, category }).returning();
+      const { name, description, price, category, allergens } = req.body;
+      const [item] = await db.insert(festivalFoodItems).values({ festivalId: festId, name, description, price, category, allergens: allergens ?? null }).returning();
       res.json(item);
     } catch (err) { res.status(500).json({ message: "Errore" }); }
   });
@@ -379,8 +381,10 @@ export function registerFestivalRoutes(app: Express) {
   app.patch("/api/admin/festivals/food/:itemId", isAuthenticated as any, async (req: any, res) => {
     try {
       const itemId = parseInt(req.params.itemId);
-      const { name, description, price, category, isAvailable } = req.body;
-      const [item] = await db.update(festivalFoodItems).set({ name, description, price, category, isAvailable })
+      const { name, description, price, category, isAvailable, allergens } = req.body;
+      const updateData: any = { name, description, price, category, isAvailable };
+      if (allergens !== undefined) updateData.allergens = allergens;
+      const [item] = await db.update(festivalFoodItems).set(updateData)
         .where(eq(festivalFoodItems.id, itemId)).returning();
       res.json(item);
     } catch (err) { res.status(500).json({ message: "Errore" }); }
