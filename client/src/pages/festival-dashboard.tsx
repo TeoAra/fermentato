@@ -1,0 +1,657 @@
+import { useState } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useAuth } from "@/hooks/useAuth";
+import { useToast } from "@/hooks/use-toast";
+import { apiRequest } from "@/lib/queryClient";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Switch } from "@/components/ui/switch";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Separator } from "@/components/ui/separator";
+import {
+  Beer, UtensilsCrossed, BarChart3, Settings, Plus, QrCode,
+  CheckCircle2, XCircle, Loader2, Pencil, Trash2, ExternalLink,
+  Trophy, Users, Droplets,
+} from "lucide-react";
+import { useLocation } from "wouter";
+
+interface Festival {
+  id: number; slug: string; name: string; description: string | null;
+  location: string | null; startDate: string | null; endDate: string | null;
+  isActive: boolean; showFood: boolean; ownerId: string | null;
+}
+
+interface FestivalTap {
+  id: number; tapNumber: number; beerId: number | null;
+  customBeerName: string | null; customBreweryName: string | null;
+  style: string | null; abv: string | null; notes: string | null; isAvailable: boolean;
+}
+
+interface FoodItem {
+  id: number; name: string; description: string | null;
+  price: string | null; category: string | null; isAvailable: boolean;
+}
+
+interface Stats {
+  totalTaps: number; availableTaps: number; totalRatings: number;
+  topTaps: { tapNumber: number; beerName: string; avg: number; count: number }[];
+}
+
+// ─── QR Code modal ──────────────────────────────────────────────────────────
+function QRModal({ slug, name, onClose }: { slug: string; name: string; onClose: () => void }) {
+  const url = `${window.location.origin}/festival/${slug}`;
+  const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(url)}`;
+  return (
+    <Dialog open onOpenChange={onClose}>
+      <DialogContent className="max-w-sm text-center">
+        <DialogHeader>
+          <DialogTitle>QR Code — {name}</DialogTitle>
+        </DialogHeader>
+        <img src={qrUrl} alt="QR Code festival" className="mx-auto rounded-xl" />
+        <p className="text-xs text-gray-500 break-all">{url}</p>
+        <div className="flex gap-2 justify-center mt-2">
+          <Button size="sm" variant="outline" onClick={() => window.open(qrUrl, "_blank")}>
+            Scarica QR
+          </Button>
+          <Button size="sm" onClick={() => window.open(url, "_blank")}>
+            <ExternalLink className="h-4 w-4 mr-1" />Anteprima
+          </Button>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+// ─── Tap row ────────────────────────────────────────────────────────────────
+function TapRow({ tap, festivalId, onToggle }: {
+  tap: FestivalTap; festivalId: number; onToggle: (tap: FestivalTap) => void;
+}) {
+  const beerName = tap.customBeerName || `Spina ${tap.tapNumber}`;
+  const brewName = tap.customBreweryName;
+
+  return (
+    <div className={`flex items-center gap-3 p-3 rounded-xl border transition-all ${
+      tap.isAvailable ? "bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700" : "bg-gray-50 dark:bg-gray-900 border-gray-100 dark:border-gray-800 opacity-70"
+    }`}>
+      <div className={`w-9 h-9 flex-shrink-0 rounded-xl flex items-center justify-center text-xs font-bold ${
+        tap.isAvailable ? "bg-amber-100 text-amber-700" : "bg-gray-200 text-gray-400"
+      }`}>
+        {tap.tapNumber}
+      </div>
+      <div className="flex-1 min-w-0">
+        <p className={`text-sm font-semibold truncate ${!tap.isAvailable ? "line-through text-gray-400" : ""}`}>
+          {beerName}
+        </p>
+        <div className="flex items-center gap-2 flex-wrap">
+          {brewName && <span className="text-xs text-amber-600">{brewName}</span>}
+          {tap.style && <Badge variant="secondary" className="text-xs py-0">{tap.style}</Badge>}
+          {tap.abv && <span className="text-xs text-gray-500">{tap.abv}% ABV</span>}
+        </div>
+      </div>
+      <button
+        onClick={() => onToggle(tap)}
+        className={`flex-shrink-0 p-1.5 rounded-lg transition-colors ${
+          tap.isAvailable
+            ? "text-green-600 hover:bg-green-50 dark:hover:bg-green-900/20"
+            : "text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20"
+        }`}
+        title={tap.isAvailable ? "Segna come finita" : "Ripristina"}
+      >
+        {tap.isAvailable ? <CheckCircle2 className="h-5 w-5" /> : <XCircle className="h-5 w-5" />}
+      </button>
+    </div>
+  );
+}
+
+// ─── Tap edit dialog ─────────────────────────────────────────────────────────
+function TapEditDialog({ festivalId, tapNumber, existing, onClose }: {
+  festivalId: number; tapNumber: number; existing?: FestivalTap; onClose: () => void;
+}) {
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+  const [form, setForm] = useState({
+    customBeerName: existing?.customBeerName || "",
+    customBreweryName: existing?.customBreweryName || "",
+    style: existing?.style || "",
+    abv: existing?.abv || "",
+    notes: existing?.notes || "",
+    isAvailable: existing?.isAvailable ?? true,
+  });
+
+  const saveMutation = useMutation({
+    mutationFn: () => apiRequest(
+      `/api/admin/festivals/${festivalId}/taps/${tapNumber}`,
+      { method: "PUT" },
+      { ...form, isAvailable: form.isAvailable }
+    ),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/festivals", festivalId, "taps"] });
+      toast({ title: `Spina ${tapNumber} salvata` });
+      onClose();
+    },
+    onError: () => toast({ title: "Errore nel salvataggio", variant: "destructive" }),
+  });
+
+  return (
+    <Dialog open onOpenChange={onClose}>
+      <DialogContent className="max-w-md">
+        <DialogHeader>
+          <DialogTitle>Spina #{tapNumber}</DialogTitle>
+        </DialogHeader>
+        <div className="space-y-3">
+          <div>
+            <Label>Nome birra</Label>
+            <Input value={form.customBeerName} onChange={e => setForm(f => ({ ...f, customBeerName: e.target.value }))} placeholder="Es. Hazy IPA" />
+          </div>
+          <div>
+            <Label>Birrificio</Label>
+            <Input value={form.customBreweryName} onChange={e => setForm(f => ({ ...f, customBreweryName: e.target.value }))} placeholder="Es. Birrificio Pinco" />
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <Label>Stile</Label>
+              <Input value={form.style} onChange={e => setForm(f => ({ ...f, style: e.target.value }))} placeholder="Es. IPA" />
+            </div>
+            <div>
+              <Label>ABV %</Label>
+              <Input value={form.abv} onChange={e => setForm(f => ({ ...f, abv: e.target.value }))} placeholder="Es. 6.2" />
+            </div>
+          </div>
+          <div>
+            <Label>Note</Label>
+            <Textarea value={form.notes} onChange={e => setForm(f => ({ ...f, notes: e.target.value }))} placeholder="Note aggiuntive..." rows={2} />
+          </div>
+          <div className="flex items-center gap-3">
+            <Switch checked={form.isAvailable} onCheckedChange={v => setForm(f => ({ ...f, isAvailable: v }))} />
+            <Label>{form.isAvailable ? "Disponibile" : "Non disponibile / Finita"}</Label>
+          </div>
+        </div>
+        <div className="flex gap-2 justify-end mt-4">
+          <Button variant="outline" onClick={onClose}>Annulla</Button>
+          <Button onClick={() => saveMutation.mutate()} disabled={saveMutation.isPending}>
+            {saveMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : "Salva"}
+          </Button>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+// ─── Create festival dialog ──────────────────────────────────────────────────
+function CreateFestivalDialog({ onClose, onCreated }: { onClose: () => void; onCreated: (f: Festival) => void }) {
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+  const [form, setForm] = useState({ name: "", slug: "", description: "", location: "", showFood: true });
+
+  const createMutation = useMutation({
+    mutationFn: () => apiRequest("/api/admin/festivals", { method: "POST" }, form),
+    onSuccess: (data: any) => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/festivals"] });
+      toast({ title: "Festival creato!" });
+      onCreated(data);
+      onClose();
+    },
+    onError: (err: any) => toast({ title: err?.message || "Errore", variant: "destructive" }),
+  });
+
+  const suggestSlug = (name: string) => {
+    return name.toLowerCase().replace(/[^a-z0-9]/g, "-").replace(/-+/g, "-").replace(/^-|-$/g, "");
+  };
+
+  return (
+    <Dialog open onOpenChange={onClose}>
+      <DialogContent className="max-w-md">
+        <DialogHeader><DialogTitle>Crea nuovo festival</DialogTitle></DialogHeader>
+        <div className="space-y-3">
+          <div>
+            <Label>Nome *</Label>
+            <Input
+              value={form.name}
+              onChange={e => setForm(f => ({ ...f, name: e.target.value, slug: f.slug || suggestSlug(e.target.value) }))}
+              placeholder="Es. Roma Beer Fest 2026"
+            />
+          </div>
+          <div>
+            <Label>Slug URL *</Label>
+            <div className="flex items-center gap-1">
+              <span className="text-xs text-gray-400 whitespace-nowrap">/festival/</span>
+              <Input
+                value={form.slug}
+                onChange={e => setForm(f => ({ ...f, slug: e.target.value }))}
+                placeholder="roma-beer-fest-2026"
+              />
+            </div>
+          </div>
+          <div>
+            <Label>Location</Label>
+            <Input value={form.location} onChange={e => setForm(f => ({ ...f, location: e.target.value }))} placeholder="Es. Parco della Musica, Roma" />
+          </div>
+          <div>
+            <Label>Descrizione</Label>
+            <Textarea value={form.description} onChange={e => setForm(f => ({ ...f, description: e.target.value }))} rows={2} />
+          </div>
+          <div className="flex items-center gap-3">
+            <Switch checked={form.showFood} onCheckedChange={v => setForm(f => ({ ...f, showFood: v }))} />
+            <Label>Mostra menu cibo</Label>
+          </div>
+        </div>
+        <div className="flex gap-2 justify-end mt-4">
+          <Button variant="outline" onClick={onClose}>Annulla</Button>
+          <Button onClick={() => createMutation.mutate()} disabled={createMutation.isPending || !form.name || !form.slug}>
+            {createMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : "Crea festival"}
+          </Button>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+// ─── Main dashboard ──────────────────────────────────────────────────────────
+export default function FestivalDashboard() {
+  const { user, isAuthenticated } = useAuth();
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+  const [, navigate] = useLocation();
+
+  const [selectedFestId, setSelectedFestId] = useState<number | null>(null);
+  const [showCreateDialog, setShowCreateDialog] = useState(false);
+  const [showQR, setShowQR] = useState(false);
+  const [editingTap, setEditingTap] = useState<{ tapNumber: number; existing?: FestivalTap } | null>(null);
+  const [bulkCount, setBulkCount] = useState("20");
+  const [newFood, setNewFood] = useState({ name: "", description: "", price: "", category: "Cibo" });
+  const [activeTab, setActiveTab] = useState("taps");
+
+  // List of managed festivals
+  const { data: festList = [], isLoading: listLoading } = useQuery<Festival[]>({
+    queryKey: ["/api/admin/festivals"],
+    queryFn: () => apiRequest("/api/admin/festivals"),
+    enabled: isAuthenticated,
+  });
+
+  const selectedFest = festList.find(f => f.id === selectedFestId) ?? festList[0] ?? null;
+  const festId = selectedFest?.id ?? null;
+
+  // Taps for selected festival
+  const { data: taps = [], isLoading: tapsLoading } = useQuery<FestivalTap[]>({
+    queryKey: ["/api/admin/festivals", festId, "taps"],
+    queryFn: async () => {
+      const data = await fetch(`/api/festivals/${selectedFest!.slug}`, { credentials: "include" }).then(r => r.json());
+      return data.taps || [];
+    },
+    enabled: !!selectedFest,
+  });
+
+  // Food for selected festival
+  const { data: food = [] } = useQuery<FoodItem[]>({
+    queryKey: ["/api/admin/festivals", festId, "food"],
+    queryFn: () => apiRequest(`/api/admin/festivals/${festId}/food`),
+    enabled: !!festId,
+  });
+
+  // Stats
+  const { data: stats } = useQuery<Stats>({
+    queryKey: ["/api/admin/festivals", festId, "stats"],
+    queryFn: () => apiRequest(`/api/admin/festivals/${festId}/stats`),
+    enabled: !!festId && activeTab === "stats",
+    refetchInterval: 60000,
+  });
+
+  // Toggle tap availability
+  const toggleMutation = useMutation({
+    mutationFn: (tap: FestivalTap) => apiRequest(`/api/admin/festivals/${festId}/taps/${tap.id}/toggle`, { method: "PATCH" }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["/api/admin/festivals", festId, "taps"] }),
+    onError: () => toast({ title: "Errore", variant: "destructive" }),
+  });
+
+  // Bulk create taps
+  const bulkMutation = useMutation({
+    mutationFn: () => apiRequest(`/api/admin/festivals/${festId}/taps/bulk`, { method: "POST" }, { count: parseInt(bulkCount) }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/festivals", festId, "taps"] });
+      toast({ title: `${bulkCount} spine create` });
+    },
+    onError: () => toast({ title: "Errore", variant: "destructive" }),
+  });
+
+  // Add food item
+  const addFoodMutation = useMutation({
+    mutationFn: () => apiRequest(`/api/admin/festivals/${festId}/food`, { method: "POST" }, newFood),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/festivals", festId, "food"] });
+      setNewFood({ name: "", description: "", price: "", category: "Cibo" });
+      toast({ title: "Voce aggiunta" });
+    },
+    onError: () => toast({ title: "Errore", variant: "destructive" }),
+  });
+
+  // Toggle food availability
+  const toggleFoodMutation = useMutation({
+    mutationFn: (item: FoodItem) => apiRequest(`/api/admin/festivals/food/${item.id}`, { method: "PATCH" }, { isAvailable: !item.isAvailable }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["/api/admin/festivals", festId, "food"] }),
+  });
+
+  // Delete food item
+  const deleteFoodMutation = useMutation({
+    mutationFn: (id: number) => apiRequest(`/api/admin/festivals/food/${id}`, { method: "DELETE" }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["/api/admin/festivals", festId, "food"] }),
+  });
+
+  if (!isAuthenticated) return (
+    <div className="min-h-screen flex items-center justify-center">
+      <div className="text-center">
+        <Beer className="h-10 w-10 text-gray-300 mx-auto mb-3" />
+        <p className="text-gray-600">Accedi per gestire i festival</p>
+        <Button className="mt-3" onClick={() => navigate("/")}>Vai alla home</Button>
+      </div>
+    </div>
+  );
+
+  return (
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+      {/* Header */}
+      <div className="bg-gradient-to-r from-amber-600 to-orange-600 text-white px-4 py-4">
+        <div className="max-w-5xl mx-auto flex items-center justify-between gap-4 flex-wrap">
+          <div>
+            <h1 className="text-xl font-bold flex items-center gap-2">
+              <Beer className="h-6 w-6" />Festival Dashboard
+            </h1>
+            <p className="text-amber-100 text-sm">Gestisci spine, cibo e valutazioni in tempo reale</p>
+          </div>
+          <div className="flex items-center gap-2 flex-wrap">
+            {selectedFest && (
+              <>
+                <Button size="sm" variant="outline" className="bg-white/20 border-white/30 text-white hover:bg-white/30"
+                  onClick={() => setShowQR(true)}>
+                  <QrCode className="h-4 w-4 mr-1" />QR Code
+                </Button>
+                <Button size="sm" variant="outline" className="bg-white/20 border-white/30 text-white hover:bg-white/30"
+                  onClick={() => window.open(`/festival/${selectedFest.slug}`, "_blank")}>
+                  <ExternalLink className="h-4 w-4 mr-1" />Anteprima
+                </Button>
+              </>
+            )}
+            <Button size="sm" className="bg-white text-amber-700 hover:bg-amber-50"
+              onClick={() => setShowCreateDialog(true)}>
+              <Plus className="h-4 w-4 mr-1" />Nuovo festival
+            </Button>
+          </div>
+        </div>
+      </div>
+
+      <div className="max-w-5xl mx-auto px-4 py-6 space-y-6">
+        {/* Festival selector */}
+        {listLoading ? (
+          <div className="flex items-center gap-2 text-gray-500"><Loader2 className="h-4 w-4 animate-spin" />Caricamento...</div>
+        ) : festList.length === 0 ? (
+          <Card>
+            <CardContent className="py-10 text-center">
+              <Beer className="h-10 w-10 text-gray-300 mx-auto mb-3" />
+              <p className="text-gray-600 mb-4">Nessun festival creato</p>
+              <Button onClick={() => setShowCreateDialog(true)}><Plus className="h-4 w-4 mr-1" />Crea il primo festival</Button>
+            </CardContent>
+          </Card>
+        ) : (
+          <>
+            {/* Festival tabs selector */}
+            <div className="flex gap-2 flex-wrap">
+              {festList.map(f => (
+                <button
+                  key={f.id}
+                  onClick={() => setSelectedFestId(f.id)}
+                  className={`px-4 py-2 rounded-xl text-sm font-medium transition-all ${
+                    (selectedFest?.id === f.id)
+                      ? "bg-amber-500 text-white shadow"
+                      : "bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-amber-50"
+                  }`}
+                >
+                  {f.name}
+                  {!f.isActive && <span className="ml-1 text-xs opacity-60">(inattivo)</span>}
+                </button>
+              ))}
+            </div>
+
+            {selectedFest && (
+              <>
+                {/* Stats bar */}
+                <div className="grid grid-cols-3 gap-3">
+                  {[
+                    { label: "Spine totali", value: taps.length, icon: Beer },
+                    { label: "Disponibili", value: taps.filter(t => t.isAvailable).length, icon: CheckCircle2 },
+                    { label: "Voti ricevuti", icon: Star, value: stats?.totalRatings ?? "—" },
+                  ].map(({ label, value, icon: Icon }) => (
+                    <Card key={label}>
+                      <CardContent className="p-4 text-center">
+                        <div className="text-2xl font-bold text-amber-600">{value}</div>
+                        <div className="text-xs text-gray-500 mt-0.5">{label}</div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+
+                {/* Main tabs */}
+                <Tabs value={activeTab} onValueChange={setActiveTab}>
+                  <TabsList className="w-full">
+                    <TabsTrigger value="taps" className="flex-1 gap-1"><Beer className="h-4 w-4" />Spine</TabsTrigger>
+                    <TabsTrigger value="food" className="flex-1 gap-1"><UtensilsCrossed className="h-4 w-4" />Cibo</TabsTrigger>
+                    <TabsTrigger value="stats" className="flex-1 gap-1"><BarChart3 className="h-4 w-4" />Classifiche</TabsTrigger>
+                    <TabsTrigger value="settings" className="flex-1 gap-1"><Settings className="h-4 w-4" />Info</TabsTrigger>
+                  </TabsList>
+
+                  {/* TAPS tab */}
+                  <TabsContent value="taps" className="space-y-4">
+                    {taps.length === 0 ? (
+                      <Card>
+                        <CardContent className="py-8 text-center space-y-3">
+                          <Beer className="h-8 w-8 text-gray-300 mx-auto" />
+                          <p className="text-gray-500">Nessuna spina configurata</p>
+                          <div className="flex items-center justify-center gap-2">
+                            <Input
+                              type="number" value={bulkCount} min="1" max="200"
+                              onChange={e => setBulkCount(e.target.value)}
+                              className="w-20 text-center"
+                            />
+                            <Button onClick={() => bulkMutation.mutate()} disabled={bulkMutation.isPending}>
+                              {bulkMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4 mr-1" />}
+                              Crea {bulkCount} spine
+                            </Button>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ) : (
+                      <>
+                        <div className="flex items-center justify-between gap-3 flex-wrap">
+                          <p className="text-sm text-gray-600 dark:text-gray-400">
+                            {taps.filter(t => t.isAvailable).length} di {taps.length} disponibili
+                          </p>
+                          <Button size="sm" variant="outline" onClick={() => setEditingTap({ tapNumber: taps.length + 1 })}>
+                            <Plus className="h-4 w-4 mr-1" />Aggiungi spina
+                          </Button>
+                        </div>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                          {taps.map(tap => (
+                            <div key={tap.id} className="relative group">
+                              <TapRow tap={tap} festivalId={festId!} onToggle={t => toggleMutation.mutate(t)} />
+                              <button
+                                onClick={() => setEditingTap({ tapNumber: tap.tapNumber, existing: tap })}
+                                className="absolute top-2 right-10 opacity-0 group-hover:opacity-100 transition-opacity p-1 rounded text-gray-400 hover:text-amber-600"
+                              >
+                                <Pencil className="h-3.5 w-3.5" />
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                      </>
+                    )}
+                  </TabsContent>
+
+                  {/* FOOD tab */}
+                  <TabsContent value="food" className="space-y-4">
+                    {/* Add food form */}
+                    <Card>
+                      <CardHeader className="pb-3">
+                        <CardTitle className="text-sm">Aggiungi voce menu</CardTitle>
+                      </CardHeader>
+                      <CardContent className="space-y-3">
+                        <div className="grid grid-cols-2 gap-3">
+                          <div>
+                            <Label>Nome *</Label>
+                            <Input value={newFood.name} onChange={e => setNewFood(f => ({ ...f, name: e.target.value }))} placeholder="Es. Panino al pulled pork" />
+                          </div>
+                          <div>
+                            <Label>Categoria</Label>
+                            <Input value={newFood.category} onChange={e => setNewFood(f => ({ ...f, category: e.target.value }))} />
+                          </div>
+                        </div>
+                        <div className="grid grid-cols-2 gap-3">
+                          <div>
+                            <Label>Descrizione</Label>
+                            <Input value={newFood.description} onChange={e => setNewFood(f => ({ ...f, description: e.target.value }))} />
+                          </div>
+                          <div>
+                            <Label>Prezzo (€)</Label>
+                            <Input type="number" step="0.50" value={newFood.price} onChange={e => setNewFood(f => ({ ...f, price: e.target.value }))} placeholder="8.00" />
+                          </div>
+                        </div>
+                        <Button onClick={() => addFoodMutation.mutate()} disabled={!newFood.name || addFoodMutation.isPending} size="sm">
+                          {addFoodMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4 mr-1" />}
+                          Aggiungi
+                        </Button>
+                      </CardContent>
+                    </Card>
+
+                    {/* Food list */}
+                    <div className="space-y-2">
+                      {food.length === 0 ? (
+                        <p className="text-center text-gray-500 py-6">Nessuna voce nel menu</p>
+                      ) : food.map(item => (
+                        <div key={item.id} className={`flex items-center gap-3 p-3 rounded-xl bg-white dark:bg-gray-800 border ${item.isAvailable ? "border-gray-200 dark:border-gray-700" : "border-gray-100 opacity-60"}`}>
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2">
+                              <span className={`font-medium text-sm ${!item.isAvailable ? "line-through text-gray-400" : ""}`}>{item.name}</span>
+                              {item.category && <Badge variant="secondary" className="text-xs py-0">{item.category}</Badge>}
+                            </div>
+                            {item.description && <p className="text-xs text-gray-500 mt-0.5">{item.description}</p>}
+                          </div>
+                          {item.price && <span className="font-bold text-amber-600 text-sm">€{parseFloat(item.price).toFixed(2)}</span>}
+                          <button onClick={() => toggleFoodMutation.mutate(item)} className="p-1 rounded text-gray-400 hover:text-amber-600 transition-colors">
+                            {item.isAvailable ? <CheckCircle2 className="h-5 w-5 text-green-500" /> : <XCircle className="h-5 w-5 text-red-400" />}
+                          </button>
+                          <button onClick={() => deleteFoodMutation.mutate(item.id)} className="p-1 rounded text-gray-300 hover:text-red-500 transition-colors">
+                            <Trash2 className="h-4 w-4" />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  </TabsContent>
+
+                  {/* STATS tab */}
+                  <TabsContent value="stats" className="space-y-4">
+                    {!stats ? (
+                      <div className="text-center py-10"><Loader2 className="h-8 w-8 animate-spin text-amber-500 mx-auto" /></div>
+                    ) : (
+                      <>
+                        <div className="grid grid-cols-3 gap-3">
+                          <Card><CardContent className="p-4 text-center">
+                            <div className="text-2xl font-bold text-amber-600">{stats.availableTaps}/{stats.totalTaps}</div>
+                            <div className="text-xs text-gray-500">Spine disponibili</div>
+                          </CardContent></Card>
+                          <Card><CardContent className="p-4 text-center">
+                            <div className="text-2xl font-bold text-amber-600">{stats.totalRatings}</div>
+                            <div className="text-xs text-gray-500">Voti totali</div>
+                          </CardContent></Card>
+                          <Card><CardContent className="p-4 text-center">
+                            <div className="text-2xl font-bold text-amber-600">
+                              {stats.topTaps[0]?.avg.toFixed(1) ?? "—"}
+                            </div>
+                            <div className="text-xs text-gray-500">Miglior media</div>
+                          </CardContent></Card>
+                        </div>
+
+                        <Card>
+                          <CardHeader><CardTitle className="flex items-center gap-2 text-sm"><Trophy className="h-4 w-4 text-amber-500" />Top 10 birre più votate</CardTitle></CardHeader>
+                          <CardContent className="space-y-2">
+                            {stats.topTaps.length === 0 ? (
+                              <p className="text-gray-500 text-sm text-center py-4">Ancora nessun voto</p>
+                            ) : stats.topTaps.map((t, i) => (
+                              <div key={t.tapNumber} className="flex items-center gap-3">
+                                <span className={`w-7 h-7 flex items-center justify-center rounded-full text-xs font-bold ${
+                                  i === 0 ? "bg-yellow-100 text-yellow-700" : i === 1 ? "bg-gray-100 text-gray-600" : i === 2 ? "bg-orange-100 text-orange-600" : "bg-gray-50 text-gray-500"
+                                }`}>{i + 1}</span>
+                                <div className="flex-1">
+                                  <span className="text-sm font-medium">{t.beerName}</span>
+                                  <span className="text-xs text-gray-500 ml-1">(spina #{t.tapNumber})</span>
+                                </div>
+                                <div className="text-right">
+                                  <div className="font-bold text-amber-600">{t.avg.toFixed(1)}</div>
+                                  <div className="text-xs text-gray-400">{t.count} vot{t.count === 1 ? "o" : "i"}</div>
+                                </div>
+                              </div>
+                            ))}
+                          </CardContent>
+                        </Card>
+                      </>
+                    )}
+                  </TabsContent>
+
+                  {/* SETTINGS tab */}
+                  <TabsContent value="settings">
+                    <Card>
+                      <CardContent className="p-4 space-y-2">
+                        <div className="flex items-center gap-2 text-sm">
+                          <span className="text-gray-500">Slug:</span>
+                          <code className="bg-gray-100 dark:bg-gray-800 px-2 py-0.5 rounded text-xs">/festival/{selectedFest.slug}</code>
+                        </div>
+                        <div className="flex items-center gap-2 text-sm">
+                          <span className="text-gray-500">Stato:</span>
+                          <Badge variant={selectedFest.isActive ? "default" : "secondary"}>{selectedFest.isActive ? "Attivo" : "Inattivo"}</Badge>
+                        </div>
+                        <div className="flex items-center gap-2 text-sm">
+                          <span className="text-gray-500">Menu cibo:</span>
+                          <Badge variant={selectedFest.showFood ? "default" : "outline"}>{selectedFest.showFood ? "Visibile" : "Nascosto"}</Badge>
+                        </div>
+                        {selectedFest.location && (
+                          <div className="flex items-center gap-2 text-sm">
+                            <span className="text-gray-500">Location:</span>
+                            <span>{selectedFest.location}</span>
+                          </div>
+                        )}
+                        <Separator className="my-3" />
+                        <Button size="sm" variant="outline" onClick={() => window.open(`/festival/${selectedFest.slug}`, "_blank")}>
+                          <ExternalLink className="h-4 w-4 mr-1" />Apri pagina pubblica
+                        </Button>
+                        <Button size="sm" variant="outline" onClick={() => setShowQR(true)}>
+                          <QrCode className="h-4 w-4 mr-1" />Genera QR Code
+                        </Button>
+                      </CardContent>
+                    </Card>
+                  </TabsContent>
+                </Tabs>
+              </>
+            )}
+          </>
+        )}
+      </div>
+
+      {/* Modals */}
+      {showCreateDialog && (
+        <CreateFestivalDialog onClose={() => setShowCreateDialog(false)} onCreated={f => setSelectedFestId(f.id)} />
+      )}
+      {showQR && selectedFest && (
+        <QRModal slug={selectedFest.slug} name={selectedFest.name} onClose={() => setShowQR(false)} />
+      )}
+      {editingTap && festId && (
+        <TapEditDialog
+          festivalId={festId}
+          tapNumber={editingTap.tapNumber}
+          existing={editingTap.existing}
+          onClose={() => setEditingTap(null)}
+        />
+      )}
+    </div>
+  );
+}

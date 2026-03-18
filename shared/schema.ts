@@ -894,6 +894,65 @@ export type PubPageView = typeof pubPageViews.$inferSelect;
 
 export type BeerCollaboration = typeof beerCollaborations.$inferSelect;
 
+// ─── Festival Mode ────────────────────────────────────────────────────────────
+export const festivals = pgTable("festivals", {
+  id: serial("id").primaryKey(),
+  slug: varchar("slug", { length: 100 }).unique().notNull(),
+  name: varchar("name", { length: 255 }).notNull(),
+  description: text("description"),
+  location: varchar("location", { length: 255 }),
+  startDate: date("start_date"),
+  endDate: date("end_date"),
+  logoUrl: varchar("logo_url"),
+  ownerId: varchar("owner_id").references(() => users.id),
+  isActive: boolean("is_active").default(true),
+  showFood: boolean("show_food").default(true),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+export const insertFestivalSchema = createInsertSchema(festivals).omit({ id: true, createdAt: true });
+export type InsertFestival = z.infer<typeof insertFestivalSchema>;
+export type Festival = typeof festivals.$inferSelect;
+
+export const festivalTaps = pgTable("festival_taps", {
+  id: serial("id").primaryKey(),
+  festivalId: integer("festival_id").references(() => festivals.id, { onDelete: "cascade" }).notNull(),
+  tapNumber: integer("tap_number").notNull(),
+  beerId: integer("beer_id").references(() => beers.id, { onDelete: "set null" }),
+  customBeerName: varchar("custom_beer_name", { length: 255 }),
+  customBreweryName: varchar("custom_brewery_name", { length: 255 }),
+  style: varchar("style", { length: 100 }),
+  abv: varchar("abv", { length: 10 }),
+  notes: text("notes"),
+  isAvailable: boolean("is_available").default(true),
+  updatedAt: timestamp("updated_at").defaultNow(),
+}, (t) => [unique().on(t.festivalId, t.tapNumber)]);
+export const insertFestivalTapSchema = createInsertSchema(festivalTaps).omit({ id: true, updatedAt: true });
+export type InsertFestivalTap = z.infer<typeof insertFestivalTapSchema>;
+export type FestivalTap = typeof festivalTaps.$inferSelect;
+
+export const festivalFoodItems = pgTable("festival_food_items", {
+  id: serial("id").primaryKey(),
+  festivalId: integer("festival_id").references(() => festivals.id, { onDelete: "cascade" }).notNull(),
+  name: varchar("name", { length: 255 }).notNull(),
+  description: text("description"),
+  price: decimal("price", { precision: 8, scale: 2 }),
+  category: varchar("category", { length: 100 }),
+  isAvailable: boolean("is_available").default(true),
+});
+export const insertFestivalFoodItemSchema = createInsertSchema(festivalFoodItems).omit({ id: true });
+export type InsertFestivalFoodItem = z.infer<typeof insertFestivalFoodItemSchema>;
+export type FestivalFoodItem = typeof festivalFoodItems.$inferSelect;
+
+export const festivalRatings = pgTable("festival_ratings", {
+  id: serial("id").primaryKey(),
+  festivalId: integer("festival_id").references(() => festivals.id, { onDelete: "cascade" }).notNull(),
+  tapId: integer("tap_id").references(() => festivalTaps.id, { onDelete: "cascade" }).notNull(),
+  userId: varchar("user_id").references(() => users.id, { onDelete: "cascade" }).notNull(),
+  rating: integer("rating").notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+}, (t) => [unique().on(t.tapId, t.userId)]);
+export type FestivalRating = typeof festivalRatings.$inferSelect;
+
 export const pubRegistrationSchema = insertPubSchema.extend({
   vatNumber: z.string().min(11, "P.IVA deve essere di almeno 11 caratteri"),
   businessName: z.string().min(1, "Ragione sociale è obbligatoria"),

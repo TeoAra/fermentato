@@ -9,6 +9,7 @@ const execFileAsync = promisify(execFile);
 import { storage } from "./storage";
 import { setupAuth, isAuthenticated, isAdmin } from "./auth";
 import { registerAdminRoutes } from "./routes-admin";
+import { registerFestivalRoutes } from "./routes-festival";
 import { sql, eq, and, desc, asc } from "drizzle-orm";
 import { upload, uploadImage, cloudinary } from "./cloudinary";
 import { db, pool } from "./db";
@@ -226,6 +227,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Register admin routes
   registerAdminRoutes(app);
+  registerFestivalRoutes(app);
 
   // Public routes - no authentication required
   
