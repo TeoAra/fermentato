@@ -2,7 +2,7 @@ import { Link, useLocation } from "wouter";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Beer, Search, Bell, MapPin, Home, User, LogOut, Shield, Store, Building2, Activity } from "lucide-react";
+import { Beer, Search, Bell, Home, User, LogOut, Shield, Store, Building2, Activity, LayoutDashboard, CalendarDays } from "lucide-react";
 import type { User as UserType } from "@shared/schema";
 import { useState, useRef, useEffect } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
@@ -61,13 +61,13 @@ export default function Header() {
   });
 
   const allNavItems = [
-    { label: "Home", href: "/", isActive: location === "/", requiresAuth: false },
-    { label: "Birrifici", href: "/explore/breweries", isActive: location.startsWith("/explore/breweries"), requiresAuth: false },
-    { label: "Pub & Locali", href: "/explore/pubs", isActive: location.startsWith("/explore/pubs"), requiresAuth: false },
-    { label: "Festival", href: "/festival", isActive: location.startsWith("/festival") && !location.startsWith("/festival-dashboard") && !location.startsWith("/festival/"), requiresAuth: false },
-    { label: "Attività", href: "/activity", isActive: location.startsWith("/activity"), requiresAuth: true, badge: undefined as number | undefined },
-    { label: "Notifiche", href: "/notifications", isActive: location.startsWith("/notifications"), requiresAuth: true, badge: (unreadData?.count && unreadData.count > 0) ? unreadData.count : undefined },
-    { label: "Dashboard", href: "/dashboard", isActive: location.startsWith("/dashboard"), requiresAuth: true, badge: undefined as number | undefined },
+    { label: "Home", href: "/", isActive: location === "/", requiresAuth: false, icon: Home, compact: false },
+    { label: "Birrifici", href: "/explore/breweries", isActive: location.startsWith("/explore/breweries"), requiresAuth: false, icon: Building2, compact: false },
+    { label: "Pub & Locali", href: "/explore/pubs", isActive: location.startsWith("/explore/pubs"), requiresAuth: false, icon: Store, compact: false },
+    { label: "Festival", href: "/festival", isActive: location.startsWith("/festival") && !location.startsWith("/festival-dashboard") && !location.startsWith("/festival/"), requiresAuth: false, icon: CalendarDays, compact: false },
+    { label: "Attività", href: "/activity", isActive: location.startsWith("/activity"), requiresAuth: true, icon: Activity, compact: true, badge: undefined as number | undefined },
+    { label: "Notifiche", href: "/notifications", isActive: location.startsWith("/notifications"), requiresAuth: true, icon: Bell, compact: true, badge: (unreadData?.count && unreadData.count > 0) ? unreadData.count : undefined },
+    { label: "Dashboard", href: "/dashboard", isActive: location.startsWith("/dashboard"), requiresAuth: true, icon: LayoutDashboard, compact: true, badge: undefined as number | undefined },
   ];
 
   const navItems = allNavItems.filter(item => isAuthenticated || !item.requiresAuth);
@@ -104,15 +104,24 @@ export default function Header() {
             <nav className="flex items-center gap-0.5 flex-1">
               {navItems.map((item) => {
                 const isActive = item.isActive;
+                const Icon = item.icon;
                 const content = (
-                  <span className={`relative flex items-center gap-0 px-3.5 py-1 text-[13px] font-medium tracking-wide transition-colors duration-200 ${
+                  <span title={item.compact ? item.label : undefined} className={`relative flex items-center gap-1.5 px-2.5 xl:px-3.5 py-1 text-[13px] font-medium tracking-wide transition-colors duration-200 ${
                     isActive
                       ? "text-[hsl(35,90%,38%)] dark:text-[hsl(38,92%,56%)]"
                       : "text-[hsl(28,10%,44%)] dark:text-[hsl(35,8%,58%)] hover:text-[hsl(28,18%,13%)] dark:hover:text-[hsl(40,12%,90%)]"
                   }`}>
-                    {item.label}
+                    {/* compact items: icon always visible, text only on xl */}
+                    {item.compact ? (
+                      <>
+                        <Icon className="h-4 w-4 flex-shrink-0" />
+                        <span className="hidden xl:inline">{item.label}</span>
+                      </>
+                    ) : (
+                      <span>{item.label}</span>
+                    )}
                     {item.badge && item.badge > 0 ? (
-                      <span className="ml-1.5 inline-flex items-center justify-center w-4 h-4 text-[10px] font-bold bg-red-500 text-white rounded-full">
+                      <span className="inline-flex items-center justify-center w-4 h-4 text-[10px] font-bold bg-red-500 text-white rounded-full">
                         {item.badge > 99 ? '99+' : item.badge}
                       </span>
                     ) : null}
@@ -131,7 +140,7 @@ export default function Header() {
             </nav>
 
             {/* Search Bar */}
-            <div className="w-52 flex-shrink-0" ref={searchRef}>
+            <div className="w-36 xl:w-52 flex-shrink-0" ref={searchRef}>
               <div className="relative">
                 <form onSubmit={handleSearch} className="relative">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-[hsl(30,8%,58%)] h-3.5 w-3.5" />
