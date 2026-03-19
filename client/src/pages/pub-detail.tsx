@@ -597,9 +597,8 @@ export default function PubDetail() {
                           {(pub as any)?.name}
                         </h1>
                         {(pub as any)?.isVerified && (
-                          <div className="flex items-center gap-1.5 bg-emerald-600 border border-emerald-500 rounded-full px-3 py-1 mt-1 md:mt-0 self-center md:self-auto shadow-sm">
+                          <div title="Pub Verificato" className="flex items-center justify-center bg-emerald-600 border border-emerald-500 rounded-full w-7 h-7 mt-1 md:mt-0 self-center md:self-auto shadow-sm flex-shrink-0">
                             <ShieldCheck className="h-4 w-4 text-white" />
-                            <span className="text-xs font-semibold text-white">Pub Verificato</span>
                           </div>
                         )}
                         {/* Preferiti inline su desktop */}
@@ -640,7 +639,7 @@ export default function PubDetail() {
                   </div>
                   
                   {/* Centered action buttons on mobile, right-aligned on desktop */}
-                  <div className="flex items-center justify-center md:justify-end space-x-2 sm:space-x-3 w-full md:w-auto">
+                  <div className="flex items-center justify-center md:justify-end gap-2 w-full md:w-auto flex-wrap">
                     <Button 
                       variant="outline" 
                       size="sm" 
@@ -651,8 +650,8 @@ export default function PubDetail() {
                       }`}
                       data-testid="button-save"
                     >
-                      <Heart className={`h-4 w-4 sm:mr-2 ${isFavorite ? 'fill-current' : ''}`} />
-                      <span className="hidden sm:inline">{isFavorite ? 'Salvato' : 'Salva'}</span>
+                      <Heart className={`h-4 w-4 lg:mr-2 ${isFavorite ? 'fill-current' : ''}`} />
+                      <span className="hidden lg:inline">{isFavorite ? 'Salvato' : 'Salva'}</span>
                     </Button>
                     <Button 
                       variant="outline" 
@@ -661,8 +660,8 @@ export default function PubDetail() {
                       className="backdrop-blur-md bg-white/20 border-white/40 text-white hover:bg-white/30 hover:border-white/60 transition-all duration-300 font-medium shadow-lg min-h-[44px] min-w-[44px]"
                       data-testid="button-share"
                     >
-                      <Share2 className="h-4 w-4 sm:mr-2" />
-                      <span className="hidden sm:inline">Condividi</span>
+                      <Share2 className="h-4 w-4 lg:mr-2" />
+                      <span className="hidden lg:inline">Condividi</span>
                     </Button>
                     {((pub as any)?.latitude && (pub as any)?.longitude) || (pub as any)?.address ? (
                       <a
@@ -675,8 +674,8 @@ export default function PubDetail() {
                           size="sm"
                           className="backdrop-blur-md bg-blue-500/40 border-blue-300/60 text-white hover:bg-blue-500/60 transition-all duration-300 font-medium shadow-lg min-h-[44px] min-w-[44px]"
                         >
-                          <Navigation className="h-4 w-4 sm:mr-2" />
-                          <span className="hidden sm:inline">Mappa</span>
+                          <Navigation className="h-4 w-4 lg:mr-2" />
+                          <span className="hidden lg:inline">Mappa</span>
                         </Button>
                       </a>
                     ) : null}
@@ -684,10 +683,10 @@ export default function PubDetail() {
                       <Link href={isAdmin ? `/admin/edit-pub/${id}` : "/dashboard"}>
                         <Button 
                           className="bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 shadow-lg min-h-[44px] min-w-[44px]"
+                          title="Gestisci pub"
                           data-testid="button-manage"
                         >
-                          <Settings className="w-4 h-4 sm:mr-2" />
-                          <span className="hidden sm:inline">Gestisci</span>
+                          <Settings className="w-4 h-4" />
                         </Button>
                       </Link>
                     )}
