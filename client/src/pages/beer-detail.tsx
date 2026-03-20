@@ -319,6 +319,20 @@ export default function BeerDetail() {
   const existingTasting = userTastings.find((tasting: any) => tasting.beerId === parseInt(id || '0'));
   const hasTasted = !!existingTasting;
 
+  // Beers from the same brewery (for "Potrebbe piacerti")
+  const { data: breweryBeers = [] } = useQuery<any[]>({
+    queryKey: ["/api/breweries", beer?.brewery?.id, "beers"],
+    enabled: !!beer?.brewery?.id,
+    staleTime: 5 * 60_000,
+  });
+
+  const suggestedBeers = useMemo(() => {
+    const currentId = parseInt(id || '0');
+    const sameStyle = breweryBeers.filter((b: any) => b.id !== currentId && b.style && b.style === beer?.style);
+    const otherBrewery = breweryBeers.filter((b: any) => b.id !== currentId && b.style !== beer?.style);
+    return [...sameStyle, ...otherBrewery].slice(0, 4);
+  }, [breweryBeers, id, beer?.style]);
+
   // Community reviews (public)
   const { data: reviewsData } = useQuery<{ reviews: any[]; avgRating: number | null; reviewCount: number; distribution: Record<number,number> }>({
     queryKey: ["/api/beers", id, "reviews"],
@@ -802,6 +816,40 @@ export default function BeerDetail() {
                   </div>
                 </div>
               </Link>
+            )}
+
+            {/* Potrebbe piacerti */}
+            {suggestedBeers.length > 0 && (
+              <div className="bg-white dark:bg-[hsl(25,14%,10%)] rounded-xl p-5 border border-gray-100 dark:border-gray-800">
+                <h3 className="text-sm font-bold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+                  <Sparkles className="h-4 w-4 text-amber-500" />
+                  Potrebbe piacerti
+                </h3>
+                <div className="space-y-3">
+                  {suggestedBeers.map((sb: any) => (
+                    <Link key={sb.id} href={`/beer/${sb.id}`}>
+                      <div className="flex items-center gap-3 p-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800/60 transition-colors group">
+                        <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-amber-100 to-orange-100 dark:from-amber-900/30 dark:to-orange-900/30 flex items-center justify-center flex-shrink-0 overflow-hidden">
+                          {sb.imageUrl
+                            ? <img src={sb.imageUrl} alt={sb.name} className="w-full h-full object-cover rounded-lg" />
+                            : <Beer className="h-5 w-5 text-amber-500" />
+                          }
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-semibold text-gray-900 dark:text-white group-hover:text-amber-600 dark:group-hover:text-amber-400 truncate">{sb.name}</p>
+                          {sb.style && <p className="text-xs text-gray-500 dark:text-gray-400 truncate">{sb.style}{sb.abv ? ` · ${sb.abv}% ABV` : ''}</p>}
+                        </div>
+                        {sb.avgRating != null && (
+                          <div className="flex items-center gap-1 text-xs font-bold text-yellow-600 dark:text-yellow-400 flex-shrink-0">
+                            <Star className="h-3 w-3 fill-current" />
+                            {sb.avgRating.toFixed(1)}
+                          </div>
+                        )}
+                      </div>
+                    </Link>
+                  ))}
+                </div>
+              </div>
             )}
           </TabsContent>
 

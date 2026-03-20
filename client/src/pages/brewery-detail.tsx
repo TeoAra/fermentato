@@ -28,6 +28,7 @@ import {
   Users,
   Store,
   Building2,
+  CheckCircle,
 } from "lucide-react";
 import { EventCategoryBadge, EventInterestButton } from "@/components/events-manager";
 import { format, isFuture } from "date-fns";
@@ -44,7 +45,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
-import { useState, useRef, useEffect, useCallback } from "react";
+import { useState, useRef, useEffect, useCallback, useMemo } from "react";
 import ImageWithFallback from "@/components/image-with-fallback";
 import { ImageUpload } from "@/components/image-upload";
 import SuggestChangeDialog from "@/components/SuggestChangeDialog";
@@ -102,6 +103,7 @@ export default function BreweryDetail() {
   const [activeTab, setActiveTab] = useState("birre");
   const [visibleCount, setVisibleCount] = useState(9);
   const sentinelRef = useRef<HTMLDivElement>(null);
+  const [activeStyleFilter, setActiveStyleFilter] = useState<string>("");
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isSuggestDialogOpen, setIsSuggestDialogOpen] = useState(false);
   const [editForm, setEditForm] = useState({
@@ -180,6 +182,20 @@ export default function BreweryDetail() {
     queryKey: ["/api/breweries", id, "beers"],
     enabled: !!id,
   });
+
+  const { data: userTastings = [] } = useQuery<any[]>({
+    queryKey: ["/api/user/beer-tastings"],
+    enabled: isAuthenticated,
+  });
+
+  const isBeerTasted = useCallback((beerId: number) =>
+    Array.isArray(userTastings) && userTastings.some((t: any) => t.beerId === beerId),
+  [userTastings]);
+
+  const beerStyles = useMemo(() => {
+    const styles = Array.from(new Set(beers.map((b: Beer) => b.style).filter(Boolean)));
+    return styles.slice(0, 10);
+  }, [beers]);
 
   const { data: breweryEvents = [] } = useQuery<any[]>({
     queryKey: ["/api/breweries", id, "events"],
@@ -354,7 +370,8 @@ export default function BreweryDetail() {
     );
   }
 
-  const displayedBeers = beers.slice(0, visibleCount);
+  const filteredBeers = activeStyleFilter ? beers.filter((b: Beer) => b.style === activeStyleFilter) : beers;
+  const displayedBeers = filteredBeers.slice(0, visibleCount);
 
   const seoTitle = brewery?.name ? `${brewery.name} — Birrificio Artigianale | Fermenta.to` : "Fermenta.to";
   const seoDesc = (brewery as any)?.description
@@ -596,6 +613,25 @@ export default function BreweryDetail() {
             </div>
           ) : (
             <>
+              {beerStyles.length > 1 && (
+                <div className="flex flex-wrap gap-2 mb-5">
+                  <button
+                    onClick={() => { setActiveStyleFilter(""); setVisibleCount(9); }}
+                    className={`px-3 py-1 rounded-full text-xs font-medium transition-all ${activeStyleFilter === "" ? "bg-amber-500 text-white shadow" : "bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-amber-100 dark:hover:bg-amber-900/40"}`}
+                  >
+                    Tutte
+                  </button>
+                  {beerStyles.map(style => (
+                    <button
+                      key={style}
+                      onClick={() => { setActiveStyleFilter(style!); setVisibleCount(9); }}
+                      className={`px-3 py-1 rounded-full text-xs font-medium transition-all ${activeStyleFilter === style ? "bg-amber-500 text-white shadow" : "bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-amber-100 dark:hover:bg-amber-900/40"}`}
+                    >
+                      {style}
+                    </button>
+                  ))}
+                </div>
+              )}
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {displayedBeers.map((beer: Beer) => (
                   <Link key={beer.id} href={`/beer/${beer.id}`}>
@@ -618,6 +654,13 @@ export default function BreweryDetail() {
                               ))}
                             </>
                           )}
+                        </div>
+                      )}
+                      {/* "Già assaggiata" badge — bottom-left to avoid collab overlap */}
+                      {isBeerTasted(beer.id) && (
+                        <div className="absolute bottom-3 left-3 z-20 flex items-center gap-1 bg-emerald-500/90 text-white text-xs font-semibold px-2 py-0.5 rounded-full shadow">
+                          <CheckCircle className="h-3 w-3" />
+                          Assaggiata
                         </div>
                       )}
                       {/* Rating badge top-right */}
