@@ -232,25 +232,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // ── Cleanup expired event/festival interests ──────────────────────────────
   async function cleanupExpiredInterests() {
+    let pubCount = 0, brewCount = 0, festCount = 0;
     try {
-      // Remove likes from pub events that have ended (endDate or eventDate + 12h in the past)
-      const pubRes = await pool.query(`
+      const r = await pool.query(`
         DELETE FROM pub_event_interests
         WHERE event_id IN (
           SELECT id FROM pub_events
           WHERE COALESCE(end_date, event_date) + INTERVAL '12 hours' < NOW()
         )
       `);
-      // Remove likes from brewery events that have ended
-      const brewRes = await pool.query(`
+      pubCount = r.rowCount || 0;
+    } catch (_) {}
+    try {
+      const r = await pool.query(`
         DELETE FROM brewery_event_interests
         WHERE event_id IN (
           SELECT id FROM brewery_events
           WHERE COALESCE(end_date, event_date) + INTERVAL '12 hours' < NOW()
         )
       `);
-      // Remove festival favorites where the festival has ended
-      const festRes = await pool.query(`
+      brewCount = r.rowCount || 0;
+    } catch (_) {}
+    try {
+      const r = await pool.query(`
         DELETE FROM favorites
         WHERE item_type = 'festival'
           AND item_id IN (
@@ -258,12 +262,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
             WHERE end_date IS NOT NULL AND end_date::timestamp < NOW()
           )
       `);
-      const total = (pubRes.rowCount || 0) + (brewRes.rowCount || 0) + (festRes.rowCount || 0);
-      if (total > 0) {
-        console.log(`[cleanup] Removed ${pubRes.rowCount} pub event, ${brewRes.rowCount} brewery event, ${festRes.rowCount} festival interests (expired)`);
-      }
-    } catch (e) {
-      console.error("[cleanup] Error removing expired interests:", e);
+      festCount = r.rowCount || 0;
+    } catch (_) {}
+    const total = pubCount + brewCount + festCount;
+    if (total > 0) {
+      console.log(`[cleanup] Removed ${pubCount} pub event, ${brewCount} brewery event, ${festCount} festival interests (expired)`);
     }
   }
   // Run at startup and every hour

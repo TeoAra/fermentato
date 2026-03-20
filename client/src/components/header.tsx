@@ -2,7 +2,7 @@ import { Link, useLocation } from "wouter";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Beer, Search, Bell, Home, User, LogOut, Shield, Store, Building2, Activity, LayoutDashboard, CalendarDays } from "lucide-react";
+import { Beer, Search, Bell, User, LogOut, Shield, Store, Activity } from "lucide-react";
 import type { User as UserType } from "@shared/schema";
 import { useState, useRef, useEffect } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
@@ -61,13 +61,10 @@ export default function Header() {
   });
 
   const allNavItems = [
-    { label: "Home", href: "/", isActive: location === "/", requiresAuth: false, icon: Home, compact: false },
-    { label: "Birrifici", href: "/explore/breweries", isActive: location.startsWith("/explore/breweries"), requiresAuth: false, icon: Building2, compact: false },
-    { label: "Pub & Locali", href: "/explore/pubs", isActive: location.startsWith("/explore/pubs"), requiresAuth: false, icon: Store, compact: false },
-    { label: "Festival", href: "/festival", isActive: location.startsWith("/festival") && !location.startsWith("/festival-dashboard") && !location.startsWith("/festival/"), requiresAuth: false, icon: CalendarDays, compact: false },
-    { label: "Attività", href: "/activity", isActive: location.startsWith("/activity"), requiresAuth: true, icon: Activity, compact: true, badge: undefined as number | undefined },
-    { label: "Notifiche", href: "/notifications", isActive: location.startsWith("/notifications"), requiresAuth: true, icon: Bell, compact: true, badge: (unreadData?.count && unreadData.count > 0) ? unreadData.count : undefined },
-    { label: "Dashboard", href: "/dashboard", isActive: location.startsWith("/dashboard"), requiresAuth: true, icon: LayoutDashboard, compact: true, badge: undefined as number | undefined },
+    { label: "Home", href: "/", isActive: location === "/", requiresAuth: false },
+    { label: "Birrifici", href: "/explore/breweries", isActive: location.startsWith("/explore/breweries"), requiresAuth: false },
+    { label: "Pub & Locali", href: "/explore/pubs", isActive: location.startsWith("/explore/pubs"), requiresAuth: false },
+    { label: "Festival", href: "/festival", isActive: location.startsWith("/festival") && !location.startsWith("/festival-dashboard") && !location.startsWith("/festival/"), requiresAuth: false },
   ];
 
   const navItems = allNavItems.filter(item => isAuthenticated || !item.requiresAuth);
@@ -102,41 +99,20 @@ export default function Header() {
 
             {/* Main Navigation */}
             <nav className="flex items-center gap-0.5 flex-1">
-              {navItems.map((item) => {
-                const isActive = item.isActive;
-                const Icon = item.icon;
-                const content = (
-                  <span title={item.compact ? item.label : undefined} className={`relative flex items-center gap-1.5 px-2.5 xl:px-3.5 py-1 text-[13px] font-medium tracking-wide transition-colors duration-200 ${
-                    isActive
+              {navItems.map((item) => (
+                <Link key={item.label} href={item.href}>
+                  <span className={`relative flex items-center px-3 xl:px-4 py-1 text-[13px] font-medium tracking-wide transition-colors duration-200 ${
+                    item.isActive
                       ? "text-[hsl(35,90%,38%)] dark:text-[hsl(38,92%,56%)]"
                       : "text-[hsl(28,10%,44%)] dark:text-[hsl(35,8%,58%)] hover:text-[hsl(28,18%,13%)] dark:hover:text-[hsl(40,12%,90%)]"
                   }`}>
-                    {/* compact items: icon always visible, text only on xl */}
-                    {item.compact ? (
-                      <>
-                        <Icon className="h-4 w-4 flex-shrink-0" />
-                        <span className="hidden xl:inline">{item.label}</span>
-                      </>
-                    ) : (
-                      <span>{item.label}</span>
-                    )}
-                    {item.badge && item.badge > 0 ? (
-                      <span className="inline-flex items-center justify-center w-4 h-4 text-[10px] font-bold bg-red-500 text-white rounded-full">
-                        {item.badge > 99 ? '99+' : item.badge}
-                      </span>
-                    ) : null}
-                    {/* Active underline */}
-                    {isActive && (
+                    {item.label}
+                    {item.isActive && (
                       <span className="absolute -bottom-[22px] left-0 right-0 h-[2px] rounded-full bg-[hsl(35,90%,42%)] dark:bg-[hsl(38,92%,52%)]" />
                     )}
                   </span>
-                );
-
-                if (item.href.startsWith('/api/')) {
-                  return <a key={item.label} href={item.href}>{content}</a>;
-                }
-                return <Link key={item.label} href={item.href}>{content}</Link>;
-              })}
+                </Link>
+              ))}
             </nav>
 
             {/* Search Bar */}
@@ -174,6 +150,28 @@ export default function Header() {
             {/* User Section */}
             <div className="flex items-center gap-1.5 flex-shrink-0">
               <ThemeToggle />
+
+              {/* Notification bell – authenticated only */}
+              {isAuthenticated && (
+                <Link href="/notifications">
+                  <button
+                    className={`relative p-2 rounded-lg transition-colors ${
+                      location.startsWith("/notifications")
+                        ? "bg-[hsl(38,80%,92%)] dark:bg-[hsl(35,30%,16%)] text-[hsl(35,90%,38%)] dark:text-[hsl(38,88%,56%)]"
+                        : "text-[hsl(28,8%,52%)] dark:text-[hsl(35,8%,52%)] hover:bg-[hsl(38,14%,93%)] dark:hover:bg-[hsl(25,12%,14%)] hover:text-[hsl(28,18%,20%)] dark:hover:text-[hsl(40,12%,88%)]"
+                    }`}
+                    title="Notifiche"
+                  >
+                    <Bell className="h-4 w-4" />
+                    {(unreadData?.count ?? 0) > 0 && (
+                      <span className="absolute top-1 right-1 min-w-[14px] h-[14px] px-0.5 bg-red-500 text-white text-[9px] font-bold rounded-full flex items-center justify-center leading-none">
+                        {(unreadData?.count ?? 0) > 9 ? '9+' : unreadData?.count}
+                      </span>
+                    )}
+                  </button>
+                </Link>
+              )}
+
               {isAuthenticated && typedUser ? (
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
@@ -210,6 +208,12 @@ export default function Header() {
                       <Link href="/dashboard" className="flex items-center gap-2 cursor-pointer text-[13px]">
                         {(() => { const activeRole = rolesData?.activeRole || typedUser.activeRole || 'customer'; const Icon = roleIcons[activeRole] || User; return <Icon className="h-3.5 w-3.5" />; })()}
                         {rolesData?.activeRole === 'customer' ? 'Il mio profilo' : rolesData?.activeRole === 'pub_owner' ? 'Pannello pub' : rolesData?.activeRole === 'brewery_owner' ? 'Pannello birrificio' : 'Dashboard'}
+                      </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem asChild>
+                      <Link href="/activity" className="flex items-center gap-2 cursor-pointer text-[13px]">
+                        <Activity className="h-3.5 w-3.5" />
+                        Attività
                       </Link>
                     </DropdownMenuItem>
 
