@@ -605,9 +605,9 @@ export default function BeerDetail() {
               </span>
             )}
             {beer?.style && (
-              <Link href={`/search?q=${encodeURIComponent(beer.style)}`}>
-                <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-semibold bg-indigo-50 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800 hover:bg-indigo-100 dark:hover:bg-indigo-900 transition-colors cursor-pointer">
-                  <Sparkles className="h-3.5 w-3.5" />
+              <Link href={`/search?q=${encodeURIComponent(beer.style)}`} className="max-w-full">
+                <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-semibold bg-indigo-50 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800 hover:bg-indigo-100 dark:hover:bg-indigo-900 transition-colors cursor-pointer whitespace-normal text-center">
+                  <Sparkles className="h-3.5 w-3.5 flex-shrink-0" />
                   {beer.style}
                 </span>
               </Link>
@@ -755,7 +755,7 @@ export default function BeerDetail() {
               </div>
               <div className="bg-white dark:bg-[hsl(25,14%,10%)] rounded-xl p-3 border border-gray-100 dark:border-gray-800 flex items-center gap-2">
                 <Sparkles className="h-4 w-4 text-indigo-500 flex-shrink-0" />
-                <div><p className="text-xs text-gray-500 dark:text-gray-400">Stile</p><p className="text-sm font-bold text-gray-900 dark:text-white truncate">{beer?.style || 'N/D'}</p></div>
+                <div className="min-w-0"><p className="text-xs text-gray-500 dark:text-gray-400">Stile</p><p className="text-sm font-bold text-gray-900 dark:text-white break-words leading-tight">{beer?.style || 'N/D'}</p></div>
               </div>
               {beer?.color && (
                 <div className="bg-white dark:bg-[hsl(25,14%,10%)] rounded-xl p-3 border border-gray-100 dark:border-gray-800 flex items-center gap-2">
