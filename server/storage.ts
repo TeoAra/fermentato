@@ -1005,7 +1005,16 @@ export class DatabaseStorage implements IStorage {
         if (fest) {
           itemName = fest.name;
           itemImageUrl = fest.logoUrl;
+        } else {
+          // Festival deleted — skip orphaned favorite
+          continue;
         }
+      }
+
+      // Skip orphaned pub/brewery/beer favorites (item was deleted)
+      if (['pub', 'brewery', 'beer'].includes(favorite.itemType) && itemName === `${favorite.itemType} #${favorite.itemId}`) {
+        // itemName was never updated → item not found in DB, skip
+        continue;
       }
       
       enrichedFavorites.push({

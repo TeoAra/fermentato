@@ -586,11 +586,10 @@ export default function Home() {
               </Link>
             </div>
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
-              {favorites.slice(0, 12).map((favorite: any) => {
+              {(favorites as any[]).filter((f: any) => ['pub', 'brewery', 'beer'].includes(f.itemType) && f.itemName).slice(0, 12).map((favorite: any) => {
                 const href = favorite.itemType === 'pub' ? `/pub/${favorite.itemId}` 
                   : favorite.itemType === 'brewery' ? `/brewery/${favorite.itemId}` 
                   : `/beer/${favorite.itemId}`;
-                const typeLabel = favorite.itemType === 'pub' ? 'Pub' : favorite.itemType === 'brewery' ? 'Birrificio' : 'Birra';
                 const typeColor = favorite.itemType === 'pub' ? 'bg-blue-500' : favorite.itemType === 'brewery' ? 'bg-amber-500' : 'bg-green-500';
                 const TypeIcon = favorite.itemType === 'pub' ? Store : Beer;
                 
