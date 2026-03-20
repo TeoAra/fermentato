@@ -230,6 +230,46 @@ export async function registerRoutes(app: Express): Promise<Server> {
   registerFestivalRoutes(app);
   runFestivalMigrations();
 
+  // ── Cleanup expired event/festival interests ──────────────────────────────
+  async function cleanupExpiredInterests() {
+    try {
+      // Remove likes from pub events that have ended (endDate or eventDate + 12h in the past)
+      const pubRes = await pool.query(`
+        DELETE FROM pub_event_interests
+        WHERE event_id IN (
+          SELECT id FROM pub_events
+          WHERE COALESCE(end_date, event_date) + INTERVAL '12 hours' < NOW()
+        )
+      `);
+      // Remove likes from brewery events that have ended
+      const brewRes = await pool.query(`
+        DELETE FROM brewery_event_interests
+        WHERE event_id IN (
+          SELECT id FROM brewery_events
+          WHERE COALESCE(end_date, event_date) + INTERVAL '12 hours' < NOW()
+        )
+      `);
+      // Remove festival favorites where the festival has ended
+      const festRes = await pool.query(`
+        DELETE FROM favorites
+        WHERE item_type = 'festival'
+          AND item_id IN (
+            SELECT id FROM festivals
+            WHERE end_date IS NOT NULL AND end_date::timestamp < NOW()
+          )
+      `);
+      const total = (pubRes.rowCount || 0) + (brewRes.rowCount || 0) + (festRes.rowCount || 0);
+      if (total > 0) {
+        console.log(`[cleanup] Removed ${pubRes.rowCount} pub event, ${brewRes.rowCount} brewery event, ${festRes.rowCount} festival interests (expired)`);
+      }
+    } catch (e) {
+      console.error("[cleanup] Error removing expired interests:", e);
+    }
+  }
+  // Run at startup and every hour
+  cleanupExpiredInterests();
+  setInterval(cleanupExpiredInterests, 60 * 60 * 1000);
+
   // Startup: ensure festival_food_items has allergens column
   (async () => {
     try {
