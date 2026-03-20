@@ -832,7 +832,7 @@ export default function BeerDetail() {
                         <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-amber-100 to-orange-100 dark:from-amber-900/30 dark:to-orange-900/30 flex items-center justify-center flex-shrink-0 overflow-hidden">
                           {sb.imageUrl
                             ? <img src={sb.imageUrl} alt={sb.name} className="w-full h-full object-cover rounded-lg" />
-                            : <Beer className="h-5 w-5 text-amber-500" />
+                            : <BeerIcon className="h-5 w-5 text-amber-500" />
                           }
                         </div>
                         <div className="flex-1 min-w-0">
