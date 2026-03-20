@@ -649,13 +649,13 @@ export default function PubDetail() {
             </button>
 
             {/* Tap count pill */}
-            {Array.isArray(tapList) && tapList.filter((t: any) => t.isActive).length > 0 && (
+            {Array.isArray(tapList) && tapList.filter((t: any) => t.isActive && t.isVisible !== false).length > 0 && (
               <button
                 onClick={() => setActiveTab('taplist')}
                 className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-semibold bg-amber-50 dark:bg-amber-950 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-800 hover:bg-amber-100 dark:hover:bg-amber-900 transition-colors"
               >
                 <Wine className="h-3.5 w-3.5" />
-                {tapList.filter((t: any) => t.isActive).length} alla spina
+                {tapList.filter((t: any) => t.isActive && t.isVisible !== false).length} alla spina
               </button>
             )}
           </div>
@@ -738,9 +738,9 @@ export default function PubDetail() {
                   >
                     <Wine className="h-3.5 w-3.5 flex-shrink-0" />
                     Spina
-                    {Array.isArray(tapList) && tapList.filter((t: any) => t.isActive).length > 0 && (
+                    {Array.isArray(tapList) && tapList.filter((t: any) => t.isActive && t.isVisible !== false).length > 0 && (
                       <span className="text-[10px] font-bold opacity-60">
-                        {tapList.filter((t: any) => t.isActive).length}
+                        {tapList.filter((t: any) => t.isActive && t.isVisible !== false).length}
                       </span>
                     )}
                   </TabsTrigger>

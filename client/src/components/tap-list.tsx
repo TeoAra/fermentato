@@ -2,7 +2,7 @@ import { useMemo } from "react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Link } from "wouter";
-import { Wine } from "lucide-react";
+import { Wine, EyeOff } from "lucide-react";
 import ImageWithFallback from "@/components/image-with-fallback";
 import { GlutenFreeSmallBadge, AlcoholFreeBadge } from "@/components/beer-badges";
 
@@ -37,6 +37,7 @@ interface TapListProps {
     tapNumber: number | null;
     tapType?: string | null;
     description?: string | null;
+    isVisible?: boolean | null;
   }>;
 }
 
@@ -72,7 +73,7 @@ export default function TapList({ tapList }: TapListProps) {
   const pompaItems = sorted.filter(t => t.tapType === "pompa");
 
   const renderCard = (tap: typeof sorted[0]) => (
-    <Card key={tap.id} className={`overflow-hidden hover:shadow-lg transition-shadow border-l-4 ${tap.tapType === "pompa" ? "border-l-violet-500" : "border-l-amber-500"} bg-white dark:bg-gray-800`}>
+    <Card key={tap.id} className={`overflow-hidden hover:shadow-lg transition-shadow border-l-4 ${tap.tapType === "pompa" ? "border-l-violet-500" : "border-l-amber-500"} bg-white dark:bg-gray-800 ${tap.isVisible === false ? 'opacity-60' : ''}`}>
       <div className="flex gap-3 p-4">
         <ImageWithFallback
           src={tap.beer.imageUrl || tap.beer.brewery.logoUrl}
@@ -85,11 +86,19 @@ export default function TapList({ tapList }: TapListProps) {
 
         <div className="flex-1 min-w-0 flex gap-2 justify-between">
           <div className="flex-1 min-w-0">
-            <Link href={`/beer/${tap.beer.id}`}>
-              <h3 className="font-bold text-base leading-snug line-clamp-1 hover:text-amber-600 dark:hover:text-amber-400 cursor-pointer transition-colors text-gray-900 dark:text-white">
-                {tap.beer.name}
-              </h3>
-            </Link>
+            <div className="flex items-center gap-2">
+              <Link href={`/beer/${tap.beer.id}`}>
+                <h3 className="font-bold text-base leading-snug line-clamp-1 hover:text-amber-600 dark:hover:text-amber-400 cursor-pointer transition-colors text-gray-900 dark:text-white">
+                  {tap.beer.name}
+                </h3>
+              </Link>
+              {tap.isVisible === false && (
+                <span className="inline-flex items-center gap-1 bg-gray-200 dark:bg-gray-700 text-gray-500 dark:text-gray-400 text-xs font-semibold px-1.5 py-0.5 rounded-full flex-shrink-0">
+                  <EyeOff className="h-3 w-3" />
+                  Nascosta
+                </span>
+              )}
+            </div>
 
             <Link href={`/brewery/${tap.beer.brewery.id}`}>
               <p className="text-xs text-amber-600 dark:text-amber-400 hover:text-amber-700 dark:hover:text-amber-300 cursor-pointer transition-colors truncate leading-snug mt-0.5">
