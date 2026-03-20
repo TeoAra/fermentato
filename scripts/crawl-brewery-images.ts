@@ -62,10 +62,26 @@ function urlSlug(url: string): string {
   } catch { return ""; }
 }
 
+// ─── Site relevance check ──────────────────────────────────────────────────
+
+/** Keywords that indicate a brewery/beer site */
+const BEER_SITE_KEYWORDS = ["birra", "beer", "bier", "brewery", "birrificio", "birreria", "craft", "ale", "ipa", "lager", "stout", "porter", "weizen", "pilsner", "luppolо", "malto", "taproom", "brewpub", "microbirrificio"];
+/** Keywords that indicate the domain has been taken over by an unrelated business */
+const OFFSITE_KEYWORDS = ["trading", "forex", "investiment", "broker", "finanz", "crypto", "bitcoin", "casino", "slot", "scommess", "betting", "assicuraz", "mutuo", "prestito", "loan", "immobili", "real estate", "seo agency", "marketing agency", "купить", "продать"];
+
+function isBeerSite(html: string): boolean {
+  const lower = html.toLowerCase().slice(0, 50000); // Check first 50KB
+  const beerScore = BEER_SITE_KEYWORDS.filter(k => lower.includes(k)).length;
+  const offScore = OFFSITE_KEYWORDS.filter(k => lower.includes(k)).length;
+  // Must have at least 2 beer signals; reject if offsite signals dominate
+  if (offScore >= 3 && beerScore < 2) return false;
+  return beerScore >= 2;
+}
+
 // ─── Image filters ─────────────────────────────────────────────────────────
 
 // Only reject images with these patterns when no positive signal compensates
-const HARD_BAD = ["favicon", "sprite", "flag", "map", "facebook", "instagram", "twitter", "arrow", "cart", "basket", "hamburger", "menu-icon", "checkout", "paypal", "visa", "mastercard"];
+const HARD_BAD = ["favicon", "sprite", "flag", "map", "facebook", "instagram", "twitter", "arrow", "cart", "basket", "hamburger", "menu-icon", "checkout", "paypal", "visa", "mastercard", "trading", "forex", "broker", "crypto", "casino", "slot", "bitcoin", "invest"];
 // Soft bad — only reject if no good signal present
 const SOFT_BAD = ["header", "banner", "background", "bg-", "placeholder", "placeholder"];
 const GOOD_PATTERNS = ["birra", "beer", "bier", "label", "etichett", "bottl", "lager", "ale", "ipa", "stout", "porter", "product", "prodott", "craft", "can", "lattina", "fusto"];
@@ -105,6 +121,70 @@ function resolveUrl(base: string, href: string): string | null {
 
 function stripTags(html: string): string {
   return html.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
+}
+
+/** Extract real cover/hero photos from brewery homepage (landscape, large-format) */
+function extractBreweryCoverCandidates(baseUrl: string, html: string): string[] {
+  const candidates: string[] = [];
+  const seen = new Set<string>();
+  const add = (raw: string) => {
+    const u = resolveUrl(baseUrl, raw);
+    if (!u || seen.has(u) || u.includes("data:")) return;
+    // Skip obvious non-photos
+    const ul = u.toLowerCase();
+    if (HARD_BAD.some(k => ul.includes(k))) return;
+    if (/favicon|sprite|icon|logo|\.svg($|\?)/i.test(ul)) return;
+    if (!/\.(jpg|jpeg|png|webp|avif)($|\?)/i.test(ul) && !ul.includes("cdn") && !ul.includes("cloudinary") && !ul.includes("wp-content")) return;
+    seen.add(u);
+    candidates.push(u);
+  };
+
+  // 1. og:image / twitter:image — often the best hero photo
+  const og = html.match(/<meta[^>]+property=["']og:image["'][^>]+content=["']([^"']+)["']/i)?.[1]
+    ?? html.match(/<meta[^>]+content=["']([^"']+)["'][^>]+property=["']og:image["']/i)?.[1];
+  if (og) add(og);
+  const tw = html.match(/<meta[^>]+name=["']twitter:image["'][^>]+content=["']([^"']+)["']/i)?.[1]
+    ?? html.match(/<meta[^>]+content=["']([^"']+)["'][^>]+name=["']twitter:image["']/i)?.[1];
+  if (tw) add(tw);
+
+  // 2. CSS background-image in style attributes (hero/banner sections)
+  const bgRe = /style=["'][^"']*background(?:-image)?\s*:\s*url\(['"]?([^'")\s]+)['"]?\)/gi;
+  let m: RegExpExecArray | null;
+  while ((m = bgRe.exec(html)) !== null) add(m[1]);
+
+  // 3. data-bg / data-background attributes (lazy-loaded hero images)
+  const dataBgRe = /data-(?:bg|background|hero|slide-bg)=["']([^"']+)["']/gi;
+  while ((m = dataBgRe.exec(html)) !== null) add(m[1]);
+
+  // 4. Large imgs inside hero/banner/slider sections
+  const sectionRe = /<(?:section|div|header)[^>]+class=["'][^"']*(?:hero|banner|slider|carousel|cover|jumbotron|showcase|intro|splash|masthead)[^"']*["'][^>]*>([\s\S]{0,8000}?)<\/(?:section|div|header)>/gi;
+  while ((m = sectionRe.exec(html)) !== null) {
+    const inner = m[1];
+    for (const imgM of inner.matchAll(/<img[^>]+>/gi)) {
+      const tag = normalizeImgTag(imgM[0]);
+      const src = tag.match(/\bsrc=["']([^"']+)["']/i)?.[1];
+      if (src) add(src);
+      // Also check srcset for largest image
+      const srcset = tag.match(/\bsrcset=["']([^"']+)["']/i)?.[1];
+      if (srcset) {
+        const best = srcset.split(",").map(s => s.trim().split(/\s+/)).reduce((a, b) => parseInt(b[1]??'0') > parseInt(a[1]??'0') ? b : a);
+        if (best[0]) add(best[0]);
+      }
+    }
+  }
+
+  // 5. Images with large explicit dimensions (width >= 600)
+  const imgRe = /<img[^>]+>/gi;
+  while ((m = imgRe.exec(html)) !== null) {
+    const tag = normalizeImgTag(m[0]);
+    const wMatch = tag.match(/\bwidth=["']?(\d+)["']?/i);
+    if (wMatch && parseInt(wMatch[1]) >= 600) {
+      const src = tag.match(/\bsrc=["']([^"']+)["']/i)?.[1];
+      if (src) add(src);
+    }
+  }
+
+  return candidates.slice(0, 6);
 }
 
 /** Extract og:image, first header image, or logo as brewery logo candidate */
@@ -419,7 +499,7 @@ function saveDone(done: Set<number>): void {
 async function main() {
   const done = RESUME ? loadDone() : new Set<number>();
 
-  let query = `SELECT id, name, country, website_url, logo_url FROM breweries WHERE website_url IS NOT NULL AND website_url != ''`;
+  let query = `SELECT id, name, country, website_url, logo_url, cover_image_url FROM breweries WHERE website_url IS NOT NULL AND website_url != ''`;
   const params: any[] = [];
   if (COUNTRY !== "all") { query += " AND country = $1"; params.push(COUNTRY); }
   query += ` ORDER BY id LIMIT ${LIMIT}`;
@@ -427,7 +507,7 @@ async function main() {
   const { rows: breweries } = await DB.query(query, params);
   console.log(`\nCrawling ${breweries.length} breweries (country=${COUNTRY}, logos-only=${LOGOS_ONLY})\n`);
 
-  const stats = { breweries: 0, pages: 0, beerImages: 0, breweryLogos: 0, errors: 0, skipped: 0 };
+  const stats = { breweries: 0, pages: 0, beerImages: 0, breweryLogos: 0, breweryCovers: 0, offsite: 0, errors: 0, skipped: 0 };
 
   for (const brewery of breweries) {
     if (done.has(brewery.id)) { stats.skipped++; continue; }
@@ -445,6 +525,14 @@ async function main() {
     }
     stats.pages++;
 
+    // ── Offsite / domain-hijack detection ─────────────────────────────────
+    if (!isBeerSite(homeHtml)) {
+      console.log(`  ⚠️  Not a beer site (trading/forex/other) — skipping`);
+      stats.offsite++;
+      done.add(brewery.id);
+      continue;
+    }
+
     // ── Brewery logo ──────────────────────────────────────────────────────
     if (!brewery.logo_url) {
       const logoCandidates = extractBreweryLogoCandidates(brewery.website_url, homeHtml);
@@ -459,6 +547,36 @@ async function main() {
           );
           stats.breweryLogos++;
           console.log(`  🏭 Logo: ${cloudUrl}`);
+          break;
+        }
+      }
+    }
+
+    // ── Brewery cover photo ───────────────────────────────────────────────
+    if (!brewery.cover_image_url) {
+      const coverCandidates = extractBreweryCoverCandidates(brewery.website_url, homeHtml);
+      for (const coverUrl of coverCandidates) {
+        const buf = await downloadImage(coverUrl, brewery.website_url);
+        if (!buf || buf.byteLength < 20000) continue; // Skip tiny images (< 20KB — likely not a real photo)
+        const cloudUrl = await uploadToCloudinary(buf, brewery.id, "fermenta/brewery-covers", `brewery_cover_${brewery.id}`);
+        if (cloudUrl) {
+          await DB.query(
+            "UPDATE breweries SET cover_image_url = $1 WHERE id = $2 AND (cover_image_url IS NULL OR cover_image_url = '')",
+            [cloudUrl, brewery.id]
+          );
+          stats.breweryCovers++;
+          console.log(`  🖼️  Cover: ${cloudUrl}`);
+          break;
+        }
+        // Fallback: let Cloudinary fetch it directly
+        const cloudUrl2 = await uploadUrlToCloudinary(coverUrl, brewery.id, "fermenta/brewery-covers", `brewery_cover_${brewery.id}`);
+        if (cloudUrl2) {
+          await DB.query(
+            "UPDATE breweries SET cover_image_url = $1 WHERE id = $2 AND (cover_image_url IS NULL OR cover_image_url = '')",
+            [cloudUrl2, brewery.id]
+          );
+          stats.breweryCovers++;
+          console.log(`  🖼️  Cover (via Cloudinary fetch): ${cloudUrl2}`);
           break;
         }
       }
