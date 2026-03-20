@@ -102,7 +102,16 @@ export default function BreweryDetail() {
   const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState("birre");
   const [visibleCount, setVisibleCount] = useState(9);
-  const sentinelRef = useRef<HTMLDivElement>(null);
+  const observerRef = useRef<IntersectionObserver | null>(null);
+  const sentinelRef = useCallback((node: HTMLDivElement | null) => {
+    observerRef.current?.disconnect();
+    if (!node) return;
+    observerRef.current = new IntersectionObserver(
+      entries => { if (entries[0].isIntersecting) setVisibleCount(c => c + 9); },
+      { rootMargin: '200px' }
+    );
+    observerRef.current.observe(node);
+  }, []);
   const [activeStyleFilter, setActiveStyleFilter] = useState<string>("");
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isSuggestDialogOpen, setIsSuggestDialogOpen] = useState(false);
@@ -118,14 +127,6 @@ export default function BreweryDetail() {
   
   const isAdmin = (user as any)?.activeRole === 'admin' || (!((user as any)?.activeRole) && user?.userType === 'admin');
 
-  useEffect(() => {
-    if (!sentinelRef.current) return;
-    const observer = new IntersectionObserver(entries => {
-      if (entries[0].isIntersecting) setVisibleCount(c => c + 9);
-    }, { rootMargin: '200px' });
-    observer.observe(sentinelRef.current);
-    return () => observer.disconnect();
-  }, [sentinelRef.current]);
   
   const { data: brewery, isLoading: breweryLoading } = useQuery<Brewery>({
     queryKey: ["/api/breweries", id],
