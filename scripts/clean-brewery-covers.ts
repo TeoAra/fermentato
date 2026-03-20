@@ -1,32 +1,46 @@
 #!/usr/bin/env npx tsx
 /**
  * clean-brewery-covers.ts
- * Clears brewery cover_image_url that come from external (non-Cloudinary) sources.
+ * Clears brewery cover_image_url AND logo_url that come from external (non-Cloudinary/non-fermenta) sources.
  * These were imported from old data exports and may point to hijacked/trading domains.
  *
  * Modes:
- *   --dry-run       Show what would be cleared without touching the DB (default)
- *   --execute       Actually clear the bad cover URLs
- *   --check-sites   Also verify each URL is still a beer site (slower, more accurate)
+ *   (default)       Dry run — show what would be cleared without touching the DB
+ *   --execute       Actually clear the bad URLs
+ *   --check-sites   Also verify each brewery website is still a beer site (slower)
  *
  * Run: DATABASE_URL=... npx tsx scripts/clean-brewery-covers.ts [--execute] [--check-sites]
  */
 
-import { Pool, neonConfig } from "@neondatabase/serverless";
-import ws from "ws";
-
-neonConfig.webSocketConstructor = ws;
-
-const DB = new Pool({ connectionString: process.env.DATABASE_URL! });
+import pg from 'pg';
 
 const args = process.argv.slice(2);
 const DRY_RUN = !args.includes("--execute");
 const CHECK_SITES = args.includes("--check-sites");
 
-const BEER_SITE_KEYWORDS = ["birra", "beer", "bier", "brewery", "birrificio", "birreria", "craft", "ale", "ipa", "lager", "stout", "porter", "weizen", "pilsner", "malto", "taproom", "brewpub", "microbirrificio"];
-const OFFSITE_KEYWORDS   = ["trading", "forex", "investiment", "broker", "finanz", "crypto", "bitcoin", "casino", "slot", "scommess", "betting", "assicuraz", "mutuo", "prestito", "loan", "immobili", "real estate"];
+const pool = new pg.Pool({ connectionString: process.env.DATABASE_URL! });
 
-async function isBeerSite(url: string): Promise<boolean> {
+const BEER_KEYWORDS    = ["birra", "beer", "bier", "brewery", "birrificio", "birreria", "craft", "ale", "ipa", "lager", "stout", "porter", "weizen", "pilsner", "malto", "taproom", "brewpub"];
+const OFFSITE_KEYWORDS = ["trading", "forex", "investiment", "broker", "finanz", "crypto", "bitcoin", "casino", "slot", "scommess", "betting", "assicuraz", "mutuo", "prestito", "loan"];
+
+/** Always-clear: generic stock photo placeholders (not real brewery images) */
+function isPlaceholderUrl(url: string): boolean {
+  return url.includes("unsplash.com") || url.includes("placeholder.com") || url.includes("placehold");
+}
+
+/** Trusted: stored on our own CDN — never clear */
+function isTrustedUrl(url: string | null): boolean {
+  if (!url) return true; // null/empty = nothing to clean
+  return url.includes("cloudinary.com") || url.includes("fermenta");
+}
+
+/** External URL that is neither trusted nor a placeholder — check site before clearing */
+function isExternalUrl(url: string | null): boolean {
+  if (!url) return false;
+  return !isTrustedUrl(url) && !isPlaceholderUrl(url);
+}
+
+async function checkSite(url: string): Promise<boolean> {
   try {
     const r = await fetch(url, {
       signal: AbortSignal.timeout(10000),
@@ -35,7 +49,7 @@ async function isBeerSite(url: string): Promise<boolean> {
     });
     if (!r.ok) return false;
     const html = (await r.text()).toLowerCase().slice(0, 50000);
-    const beerScore = BEER_SITE_KEYWORDS.filter(k => html.includes(k)).length;
+    const beerScore = BEER_KEYWORDS.filter(k => html.includes(k)).length;
     const offScore  = OFFSITE_KEYWORDS.filter(k => html.includes(k)).length;
     if (offScore >= 3 && beerScore < 2) return false;
     return beerScore >= 2;
@@ -46,75 +60,114 @@ async function isBeerSite(url: string): Promise<boolean> {
 
 async function main() {
   console.log(`\n${"=".repeat(60)}`);
-  console.log(` Brewery Cover Cleaner  [${DRY_RUN ? "DRY RUN" : "EXECUTE"}${CHECK_SITES ? " + check-sites" : ""}]`);
+  console.log(` Brewery Image Cleaner  [${DRY_RUN ? "DRY RUN" : "EXECUTE"}${CHECK_SITES ? " + check-sites" : ""}]`);
   console.log("=".repeat(60));
 
-  const { rows } = await DB.query<{ id: number; name: string; cover_image_url: string; website_url: string }>(
-    `SELECT id, name, cover_image_url, website_url
+  const { rows } = await pool.query<{
+    id: number; name: string;
+    logo_url: string | null;
+    cover_image_url: string | null;
+    website_url: string | null;
+  }>(
+    `SELECT id, name, logo_url, cover_image_url, website_url
      FROM breweries
-     WHERE cover_image_url IS NOT NULL AND cover_image_url != ''
+     WHERE (logo_url IS NOT NULL AND logo_url != '')
+        OR (cover_image_url IS NOT NULL AND cover_image_url != '')
      ORDER BY id`
   );
 
-  console.log(`\nFound ${rows.length} breweries with cover_image_url\n`);
+  console.log(`\nFound ${rows.length} breweries with at least one image field\n`);
 
-  const stats = { total: rows.length, trusted: 0, cleared: 0, ok: 0, errors: 0 };
+  const stats = { checked: 0, clearLogo: 0, clearCover: 0, trusted: 0, errors: 0 };
 
   for (const row of rows) {
-    const isTrusted = row.cover_image_url.includes("cloudinary.com") || row.cover_image_url.includes("fermenta");
+    let logoShouldClear  = false;
+    let coverShouldClear = false;
+    let logoReason  = "";
+    let coverReason = "";
 
-    if (isTrusted) {
-      stats.trusted++;
-      continue;
-    }
-
-    // External URL — suspect (from old import)
-    let shouldClear = true;
-    let reason = "external (non-Cloudinary) URL from old import";
-
-    if (CHECK_SITES && row.website_url) {
-      const ok = await isBeerSite(row.website_url);
-      if (ok) {
-        shouldClear = false;
-        reason = "site still valid beer site";
-        stats.ok++;
-      } else {
-        reason = "site is not a beer site (hijacked/offline)";
+    // ── Logo URL ──────────────────────────────────────────────────────────
+    if (row.logo_url) {
+      if (isTrustedUrl(row.logo_url)) {
+        stats.trusted++;
+      } else if (isPlaceholderUrl(row.logo_url)) {
+        // Generic stock photo — always remove
+        logoShouldClear = true;
+        logoReason = "generic stock photo (Unsplash placeholder)";
+      } else if (isExternalUrl(row.logo_url)) {
+        // Real external URL — only remove if we can confirm the site is bad
+        if (CHECK_SITES && row.website_url) {
+          const ok = await checkSite(row.website_url);
+          if (!ok) {
+            logoShouldClear = true;
+            logoReason = "site is not a beer site (hijacked/trading/offline)";
+          }
+        }
+        // Without --check-sites, leave external logos alone
       }
     }
 
-    if (shouldClear) {
-      console.log(`  ${DRY_RUN ? "[would clear]" : "[clearing]"} #${row.id} ${row.name}`);
-      console.log(`    cover: ${row.cover_image_url.slice(0, 80)}...`);
-      console.log(`    reason: ${reason}`);
-
-      if (!DRY_RUN) {
-        try {
-          await DB.query("UPDATE breweries SET cover_image_url = NULL WHERE id = $1", [row.id]);
-          stats.cleared++;
-        } catch (e) {
-          console.log(`    ✗ Error: ${e}`);
-          stats.errors++;
+    // ── Cover URL ─────────────────────────────────────────────────────────
+    if (row.cover_image_url) {
+      if (isTrustedUrl(row.cover_image_url)) {
+        // Already counted trusted above
+      } else if (isPlaceholderUrl(row.cover_image_url)) {
+        coverShouldClear = true;
+        coverReason = "generic stock photo (Unsplash placeholder)";
+      } else if (isExternalUrl(row.cover_image_url)) {
+        if (CHECK_SITES && row.website_url) {
+          const ok = await checkSite(row.website_url);
+          if (!ok) {
+            coverShouldClear = true;
+            coverReason = "site is not a beer site (hijacked/trading/offline)";
+          }
         }
-      } else {
-        stats.cleared++;
+      }
+    }
+
+    if (!logoShouldClear && !coverShouldClear) continue;
+
+    stats.checked++;
+    console.log(`\n  #${row.id} ${row.name}`);
+    if (logoShouldClear && row.logo_url) {
+      console.log(`    logo_url    : ${row.logo_url.slice(0, 100)}`);
+      console.log(`    → ${DRY_RUN ? "would clear" : "clearing"} — ${logoReason}`);
+    }
+    if (coverShouldClear && row.cover_image_url) {
+      console.log(`    cover_image : ${row.cover_image_url.slice(0, 100)}`);
+      console.log(`    → ${DRY_RUN ? "would clear" : "clearing"} — ${coverReason}`);
+    }
+
+    if (!DRY_RUN) {
+      try {
+        const updates: string[] = [];
+        if (logoShouldClear)  updates.push("logo_url = NULL");
+        if (coverShouldClear) updates.push("cover_image_url = NULL");
+        if (updates.length) {
+          await pool.query(`UPDATE breweries SET ${updates.join(", ")} WHERE id = $1`, [row.id]);
+          if (logoShouldClear)  stats.clearLogo++;
+          if (coverShouldClear) stats.clearCover++;
+        }
+      } catch (e) {
+        console.log(`    ✗ Error: ${e}`);
+        stats.errors++;
       }
     } else {
-      console.log(`  [keep] #${row.id} ${row.name} — ${reason}`);
+      if (logoShouldClear)  stats.clearLogo++;
+      if (coverShouldClear) stats.clearCover++;
     }
   }
 
   console.log(`\n${"=".repeat(60)}`);
   console.log(` Stats:`);
-  console.log(`   Total covers found : ${stats.total}`);
-  console.log(`   Trusted (Cloudinary): ${stats.trusted}`);
-  console.log(`   ${DRY_RUN ? "Would clear" : "Cleared"}         : ${stats.cleared}`);
-  if (CHECK_SITES) console.log(`   Still valid beer   : ${stats.ok}`);
-  if (!DRY_RUN) console.log(`   Errors             : ${stats.errors}`);
-  if (DRY_RUN) console.log(`\n  ⚠️  DRY RUN — run with --execute to apply changes`);
+  console.log(`   Trusted (Cloudinary/fermenta) : ${stats.trusted}`);
+  console.log(`   External logos ${DRY_RUN ? "to clear" : "cleared"}      : ${stats.clearLogo}`);
+  console.log(`   External covers ${DRY_RUN ? "to clear" : "cleared"}     : ${stats.clearCover}`);
+  if (!DRY_RUN) console.log(`   Errors                        : ${stats.errors}`);
+  if (DRY_RUN)  console.log(`\n  ⚠️  DRY RUN — run with --execute to apply changes`);
   console.log("=".repeat(60) + "\n");
 
-  await DB.end();
+  await pool.end();
 }
 
 main().catch(e => { console.error(e); process.exit(1); });

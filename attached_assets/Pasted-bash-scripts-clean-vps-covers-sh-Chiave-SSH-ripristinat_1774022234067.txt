@@ -1,0 +1,81 @@
+bash scripts/clean-vps-covers.sh
+✓ Chiave SSH ripristinata correttamente
+
+================================================
+ Clean Brewery Covers sul VPS  [--dry-run]
+================================================
+Warning: Permanently added '45.134.39.247' (ED25519) to the list of known hosts.
+clean-brewery-covers.ts                                                                             100% 4493    37.2KB/s   00:00    
+✓ Script copiato
+npm warn config init.module Use `--init-module` instead.
+
+============================================================
+ Brewery Cover Cleaner  [DRY RUN]
+============================================================
+ErrorEvent {
+  [Symbol(kTarget)]: WebSocket {
+    _events: [Object: null prototype] {
+      error: [Function],
+      message: [Function],
+      close: [Function],
+      open: [Function]
+    },
+    _eventsCount: 4,
+    _maxListeners: undefined,
+    _binaryType: 'arraybuffer',
+    _closeCode: 1006,
+    _closeFrameReceived: false,
+    _closeFrameSent: false,
+    _closeMessage: <Buffer >,
+    _closeTimer: null,
+    _errorEmitted: true,
+    _extensions: {},
+    _paused: false,
+    _protocol: '',
+    _readyState: 3,
+    _receiver: null,
+    _sender: null,
+    _socket: null,
+    _bufferedAmount: 0,
+    _isServer: false,
+    _redirects: 0,
+    _autoPong: true,
+    _url: 'wss://127.0.0.1/v2',
+    _req: null,
+    [Symbol(shapeMode)]: false,
+    [Symbol(kCapture)]: false
+  },
+  [Symbol(kType)]: 'error',
+  [Symbol(kError)]: Error [ERR_TLS_CERT_ALTNAME_INVALID]: Hostname/IP does not match certificate's altnames: IP: 127.0.0.1 is not in the cert's list: 
+      at Object.checkServerIdentity (node:tls:316:12)
+      at TLSSocket.onConnectSecure (node:_tls_wrap:1705:27)
+      at TLSSocket.emit (node:events:524:28)
+      at TLSSocket._finishInit (node:_tls_wrap:1093:8)
+      at ssl.onhandshakedone (node:_tls_wrap:879:12) {
+    code: 'ERR_TLS_CERT_ALTNAME_INVALID',
+    reason: "IP: 127.0.0.1 is not in the cert's list: ",
+    host: '127.0.0.1',
+    cert: {
+      subject: [Object: null prototype],
+      issuer: [Object: null prototype],
+      subjectaltname: 'DNS:fermenta.to',
+      infoAccess: [Object: null prototype],
+      ca: false,
+      modulus: 'C3224050F9DB70D58AA2CB9563A9F5EC7E8288862FE175485A5909005B25C6A4390C013AB39BE44046B26812D46AAE16D2A2EBFBEF7228246E303B47EC51A731DC9D825FEFD6A662D25913B6AC3178C1B4B28CD24A74639429DA76C2D441DFABCE9C959C7BCA33E92400E78EE8F227E3914237338F5F8BAAA6B502C10FF919455931E6DB1FDDFE03390DE495D31F8571B777DA2AF3E7051AB1BCD9E0634A2EE66EE8DEB99ACE49DB1C6AE55865E2B210955AE598F392F1D4B98F53521446238E69D804173CD662413648E6EB5DCB72D08E65E226971E17163F0E9305A76CD306FBA4EA89DE6A9F41A5EC90575724163269B7240D041996FACF69262C116792E1',
+      bits: 2048,
+      exponent: '0x10001',
+      pubkey: <Buffer 30 82 01 22 30 0d 06 09 2a 86 48 86 f7 0d 01 01 01 05 00 03 82 01 0f 00 30 82 01 0a 02 82 01 01 00 c3 22 40 50 f9 db 70 d5 8a a2 cb 95 63 a9 f5 ec 7e ... 244 more bytes>,
+      valid_from: 'Feb 21 02:00:43 2026 GMT',
+      valid_to: 'May 22 02:00:42 2026 GMT',
+      fingerprint: 'DD:75:C0:F8:A6:D3:23:CD:5C:F7:1C:56:74:7A:5D:95:37:BF:90:7E',
+      fingerprint256: '92:0B:B9:21:3F:11:FB:CD:11:EC:45:C1:F2:22:F8:F4:76:A7:54:23:BA:D2:0B:71:49:69:62:DB:DB:81:0A:3C',
+      fingerprint512: '1C:E2:FE:37:61:F9:A1:8A:59:33:5D:C3:5D:C3:ED:7A:33:04:6A:EF:C2:81:7B:B7:C2:1D:1D:B6:D9:07:D5:4E:28:7F:E0:68:EF:5C:37:BC:3F:A2:02:37:E6:59:4F:F5:32:1F:DE:50:11:BE:B2:7D:96:70:55:6A:6A:C0:BC:4F',
+      ext_key_usage: [Array],
+      serialNumber: '06C5066F82209456A11BD8145FF9616CAB8A',
+      raw: <Buffer 30 82 04 f0 30 82 03 d8 a0 03 02 01 02 02 12 06 c5 06 6f 82 20 94 56 a1 1b d8 14 5f f9 61 6c ab 8a 30 0d 06 09 2a 86 48 86 f7 0d 01 01 0b 05 00 30 33 ... 1218 more bytes>,
+      issuerCertificate: [Object]
+    }
+  },
+  [Symbol(kMessage)]: "Hostname/IP does not match certificate's altnames: IP: 127.0.0.1 is not in the cert's list: "
+}
+~/workspace$ 
