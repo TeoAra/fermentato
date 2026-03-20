@@ -1,4 +1,4 @@
-import { Search, User, Home, CalendarDays, Compass } from "lucide-react";
+import { Search, User, Home, Activity, Compass } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import { useAuth } from "@/hooks/useAuth";
 import { useQuery } from "@tanstack/react-query";
@@ -51,11 +51,11 @@ export function BottomNavigation() {
       badge: undefined as number | undefined,
     },
     {
-      key: "festival",
-      icon: CalendarDays,
-      label: "Festival",
-      href: "/festival",
-      isActive: location.startsWith("/festival") && !location.startsWith("/festival-tv"),
+      key: "attivita",
+      icon: Activity,
+      label: "Attività",
+      href: "/activity",
+      isActive: location.startsWith("/activity"),
       badge: undefined as number | undefined,
     },
     {

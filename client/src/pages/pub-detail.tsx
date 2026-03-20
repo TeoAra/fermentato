@@ -585,6 +585,12 @@ export default function PubDetail() {
                   <ShieldCheck className="h-3.5 w-3.5 text-white" />
                 </div>
               )}
+              {(favoritesCountData as any)?.count > 0 && (
+                <div className="flex items-center gap-1 bg-white/20 backdrop-blur-sm border border-white/30 rounded-full px-2 py-0.5 flex-shrink-0">
+                  <Heart className="h-3 w-3 text-red-300 fill-current" />
+                  <span className="text-white text-xs font-semibold leading-none">{(favoritesCountData as any).count}</span>
+                </div>
+              )}
             </div>
             {(pub as any)?.city && (
               <p className="text-white/80 text-sm mt-0.5 flex items-center gap-1">
@@ -598,9 +604,9 @@ export default function PubDetail() {
 
       {/* ── INFO BAR ── the most important info, always visible */}
       <div className="bg-white dark:bg-[hsl(25,14%,10%)] border-b border-gray-100 dark:border-gray-800 px-4 py-3">
-        <div className="max-w-7xl mx-auto flex items-center justify-between gap-3 flex-wrap">
-          {/* Left: open status + tap count */}
-          <div className="flex items-center gap-3 flex-wrap">
+        <div className="max-w-7xl mx-auto flex flex-col items-center gap-3">
+          {/* Status pills row */}
+          <div className="flex items-center gap-2 flex-wrap justify-center">
             {/* Open status pill */}
             <button
               onClick={handleShowOpeningHours}
@@ -638,18 +644,10 @@ export default function PubDetail() {
                 {tapList.filter((t: any) => t.isActive).length} alla spina
               </button>
             )}
-
-            {/* Favorites count */}
-            {(favoritesCountData as any)?.count > 0 && (
-              <span className="inline-flex items-center gap-1 text-sm text-gray-500 dark:text-gray-400">
-                <Heart className="h-3.5 w-3.5 text-red-400 fill-current" />
-                {(favoritesCountData as any).count}
-              </span>
-            )}
           </div>
 
-          {/* Right: action buttons */}
-          <div className="flex items-center gap-1.5 flex-shrink-0">
+          {/* Action buttons – centered */}
+          <div className="flex items-center gap-2 justify-center">
             <button
               onClick={handleSave}
               disabled={toggleFavoriteMutation.isPending}
@@ -715,59 +713,57 @@ export default function PubDetail() {
         <div className="grid grid-cols-1 lg:grid-cols-4">
           {/* Main Content */}
           <div className="lg:col-span-3">
-            {/* ── TABS ── sticky, named for humans, counts visible */}
+            {/* ── TABS ── sticky, underline style, clean */}
             <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-                <div className="sticky top-16 lg:top-[68px] z-30 bg-[hsl(38,14%,97%)] dark:bg-[hsl(25,14%,7%)] pt-3 pb-2 px-4 lg:px-0 border-b border-gray-100 dark:border-gray-800">
-                <TabsList className={`grid w-full h-auto bg-white dark:bg-gray-900 rounded-xl p-1 shadow-sm border border-gray-200 dark:border-gray-700 ${
-                  (Array.isArray(pubEvents) && pubEvents.length > 0) ? 'grid-cols-5 lg:grid-cols-4' : 'grid-cols-4 lg:grid-cols-3'
-                }`}>
+                <div className="sticky top-16 lg:top-[68px] z-30 bg-[hsl(38,14%,97%)] dark:bg-[hsl(25,14%,7%)] border-b border-gray-200 dark:border-gray-800">
+                <TabsList className="flex w-full h-auto bg-transparent p-0 rounded-none shadow-none border-none overflow-x-auto scrollbar-hide">
                   <TabsTrigger 
                     value="taplist" 
                     data-testid="tab-taplist"
-                    className="rounded-lg transition-all duration-200 text-xs sm:text-sm font-medium text-gray-500 dark:text-gray-400 data-[state=active]:bg-amber-500 data-[state=active]:text-white data-[state=active]:shadow-sm py-2 px-1 sm:px-2 min-w-0 flex items-center justify-center gap-1"
+                    className="relative flex items-center gap-1.5 px-4 py-3 text-sm font-medium whitespace-nowrap rounded-none bg-transparent border-none shadow-none transition-colors text-gray-400 dark:text-gray-500 data-[state=active]:text-[hsl(35,90%,40%)] dark:data-[state=active]:text-[hsl(38,88%,56%)] data-[state=active]:shadow-none data-[state=active]:bg-transparent after:absolute after:bottom-0 after:left-0 after:right-0 after:h-[2px] after:rounded-full after:bg-[hsl(35,90%,42%)] after:opacity-0 data-[state=active]:after:opacity-100 after:transition-opacity"
                   >
-                    <Wine className="flex-shrink-0 h-3.5 w-3.5" />
-                    <span className="truncate">Spina</span>
+                    <Wine className="h-3.5 w-3.5 flex-shrink-0" />
+                    Spina
                     {Array.isArray(tapList) && tapList.filter((t: any) => t.isActive).length > 0 && (
-                      <span className="hidden sm:inline text-[10px] font-bold opacity-80">
-                        ({tapList.filter((t: any) => t.isActive).length})
+                      <span className="text-[10px] font-bold opacity-60">
+                        {tapList.filter((t: any) => t.isActive).length}
                       </span>
                     )}
                   </TabsTrigger>
                   <TabsTrigger 
                     value="bottles" 
                     data-testid="tab-bottles"
-                    className="rounded-lg transition-all duration-200 text-xs sm:text-sm font-medium text-gray-500 dark:text-gray-400 data-[state=active]:bg-emerald-500 data-[state=active]:text-white data-[state=active]:shadow-sm py-2 px-1 sm:px-2 min-w-0 flex items-center justify-center gap-1"
+                    className="relative flex items-center gap-1.5 px-4 py-3 text-sm font-medium whitespace-nowrap rounded-none bg-transparent border-none shadow-none transition-colors text-gray-400 dark:text-gray-500 data-[state=active]:text-[hsl(35,90%,40%)] dark:data-[state=active]:text-[hsl(38,88%,56%)] data-[state=active]:shadow-none data-[state=active]:bg-transparent after:absolute after:bottom-0 after:left-0 after:right-0 after:h-[2px] after:rounded-full after:bg-[hsl(35,90%,42%)] after:opacity-0 data-[state=active]:after:opacity-100 after:transition-opacity"
                   >
-                    <Sparkles className="flex-shrink-0 h-3.5 w-3.5" />
-                    <span className="truncate">Cantina</span>
+                    <Sparkles className="h-3.5 w-3.5 flex-shrink-0" />
+                    Cantina
                   </TabsTrigger>
                   <TabsTrigger 
                     value="menu" 
                     data-testid="tab-menu"
-                    className="rounded-lg transition-all duration-200 text-xs sm:text-sm font-medium text-gray-500 dark:text-gray-400 data-[state=active]:bg-blue-500 data-[state=active]:text-white data-[state=active]:shadow-sm py-2 px-1 sm:px-2 min-w-0 flex items-center justify-center gap-1"
+                    className="relative flex items-center gap-1.5 px-4 py-3 text-sm font-medium whitespace-nowrap rounded-none bg-transparent border-none shadow-none transition-colors text-gray-400 dark:text-gray-500 data-[state=active]:text-[hsl(35,90%,40%)] dark:data-[state=active]:text-[hsl(38,88%,56%)] data-[state=active]:shadow-none data-[state=active]:bg-transparent after:absolute after:bottom-0 after:left-0 after:right-0 after:h-[2px] after:rounded-full after:bg-[hsl(35,90%,42%)] after:opacity-0 data-[state=active]:after:opacity-100 after:transition-opacity"
                   >
-                    <span className="text-sm flex-shrink-0">🍽️</span>
-                    <span className="truncate">Menù</span>
+                    <span className="flex-shrink-0 leading-none">🍽️</span>
+                    Menù
                   </TabsTrigger>
                   {Array.isArray(pubEvents) && pubEvents.length > 0 && (
                     <TabsTrigger 
                       value="events" 
                       data-testid="tab-events"
-                      className="rounded-lg transition-all duration-200 text-xs sm:text-sm font-medium text-gray-500 dark:text-gray-400 data-[state=active]:bg-pink-500 data-[state=active]:text-white data-[state=active]:shadow-sm py-2 px-1 sm:px-2 min-w-0 flex items-center justify-center gap-1"
+                      className="relative flex items-center gap-1.5 px-4 py-3 text-sm font-medium whitespace-nowrap rounded-none bg-transparent border-none shadow-none transition-colors text-gray-400 dark:text-gray-500 data-[state=active]:text-[hsl(35,90%,40%)] dark:data-[state=active]:text-[hsl(38,88%,56%)] data-[state=active]:shadow-none data-[state=active]:bg-transparent after:absolute after:bottom-0 after:left-0 after:right-0 after:h-[2px] after:rounded-full after:bg-[hsl(35,90%,42%)] after:opacity-0 data-[state=active]:after:opacity-100 after:transition-opacity"
                     >
-                      <Calendar className="flex-shrink-0 h-3.5 w-3.5" />
-                      <span className="truncate">Serate</span>
+                      <Calendar className="h-3.5 w-3.5 flex-shrink-0" />
+                      Serate
                     </TabsTrigger>
                   )}
-                  {/* Info tab: visible on mobile, hidden on desktop (sidebar is there) */}
+                  {/* Info tab: mobile only */}
                   <TabsTrigger 
                     value="info" 
                     data-testid="tab-info"
-                    className="lg:hidden rounded-lg transition-all duration-200 text-xs sm:text-sm font-medium text-gray-500 dark:text-gray-400 data-[state=active]:bg-gray-700 data-[state=active]:text-white data-[state=active]:shadow-sm py-2 px-1 sm:px-2 min-w-0 flex items-center justify-center gap-1"
+                    className="lg:hidden relative flex items-center gap-1.5 px-4 py-3 text-sm font-medium whitespace-nowrap rounded-none bg-transparent border-none shadow-none transition-colors text-gray-400 dark:text-gray-500 data-[state=active]:text-[hsl(35,90%,40%)] dark:data-[state=active]:text-[hsl(38,88%,56%)] data-[state=active]:shadow-none data-[state=active]:bg-transparent after:absolute after:bottom-0 after:left-0 after:right-0 after:h-[2px] after:rounded-full after:bg-[hsl(35,90%,42%)] after:opacity-0 data-[state=active]:after:opacity-100 after:transition-opacity"
                   >
-                    <Info className="flex-shrink-0 h-3.5 w-3.5" />
-                    <span className="truncate">Info</span>
+                    <Info className="h-3.5 w-3.5 flex-shrink-0" />
+                    Info
                   </TabsTrigger>
                 </TabsList>
                 </div>
