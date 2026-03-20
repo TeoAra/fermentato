@@ -1,5 +1,5 @@
 import { useState, useRef } from "react";
-import { QRCodeSVG } from "qrcode.react";
+import { QRCodeSVG, QRCodeCanvas } from "qrcode.react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { QrCode, Download, Share2 } from "lucide-react";
@@ -13,45 +13,42 @@ interface PubQRCodeProps {
 
 export function PubQRCode({ pubId, pubName, compact }: PubQRCodeProps) {
   const { toast } = useToast();
-  const svgRef = useRef<HTMLDivElement>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
   const [open, setOpen] = useState(false);
 
-  const pubUrl = `${window.location.origin}/pub/${pubId}`;
+  const appBase = import.meta.env.VITE_APP_URL || "https://fermenta.to";
+  const pubUrl = `${appBase}/pub/${pubId}`;
 
   const downloadQR = () => {
-    const svg = svgRef.current?.querySelector("svg");
-    if (!svg) return;
+    const qrCanvas = canvasRef.current;
+    if (!qrCanvas) return;
 
-    const canvas = document.createElement("canvas");
-    const ctx = canvas.getContext("2d");
+    const padding = 60;
+    const labelHeight = 50;
+    const size = 1024;
+
+    const out = document.createElement("canvas");
+    out.width = size + padding * 2;
+    out.height = size + padding * 2 + labelHeight;
+    const ctx = out.getContext("2d");
     if (!ctx) return;
 
-    const size = 1024;
-    const padding = 80;
-    canvas.width = size + padding * 2;
-    canvas.height = size + padding * 2 + 60;
-
     ctx.fillStyle = "#ffffff";
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.fillRect(0, 0, out.width, out.height);
 
-    const svgData = new XMLSerializer().serializeToString(svg);
-    const img = new Image();
-    img.onload = () => {
-      ctx.drawImage(img, padding, padding, size, size);
+    ctx.imageSmoothingEnabled = false;
+    ctx.drawImage(qrCanvas, padding, padding, size, size);
 
-      ctx.fillStyle = "#1a1a1a";
-      ctx.font = "bold 28px system-ui, sans-serif";
-      ctx.textAlign = "center";
-      ctx.fillText(pubName, canvas.width / 2, size + padding + 45);
+    ctx.fillStyle = "#1a1a1a";
+    ctx.font = "bold 30px system-ui, sans-serif";
+    ctx.textAlign = "center";
+    ctx.fillText(pubName, out.width / 2, size + padding + 38);
 
-      const link = document.createElement("a");
-      link.download = `qr-${pubName.toLowerCase().replace(/\s+/g, "-")}.png`;
-      link.href = canvas.toDataURL("image/png");
-      link.click();
-
-      toast({ title: "QR code scaricato!" });
-    };
-    img.src = "data:image/svg+xml;base64," + btoa(unescape(encodeURIComponent(svgData)));
+    const link = document.createElement("a");
+    link.download = `qr-${pubName.toLowerCase().replace(/\s+/g, "-")}.png`;
+    link.href = out.toDataURL("image/png");
+    link.click();
+    toast({ title: "QR code scaricato!" });
   };
 
   const shareQR = async () => {
@@ -85,10 +82,21 @@ export function PubQRCode({ pubId, pubName, compact }: PubQRCodeProps) {
           <DialogTitle className="text-center">QR Code - {pubName}</DialogTitle>
         </DialogHeader>
         <div className="flex flex-col items-center gap-6 py-4">
-          <div ref={svgRef} className="bg-white p-6 rounded-2xl shadow-inner">
+          <div className="bg-white p-6 rounded-2xl shadow-inner">
             <QRCodeSVG
               value={pubUrl}
               size={220}
+              level="H"
+              includeMargin={false}
+              fgColor="#1a1a1a"
+              bgColor="#ffffff"
+            />
+          </div>
+          <div className="hidden">
+            <QRCodeCanvas
+              ref={canvasRef}
+              value={pubUrl}
+              size={1024}
               level="H"
               includeMargin={false}
               fgColor="#1a1a1a"

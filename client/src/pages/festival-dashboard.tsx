@@ -165,7 +165,8 @@ function TVModeButton({ slug }: { slug: string }) {
 
 // ─── QR Code modal ──────────────────────────────────────────────────────────
 function QRModal({ slug, name, onClose }: { slug: string; name: string; onClose: () => void }) {
-  const url = `${window.location.origin}/festival/${slug}`;
+  const appBase = import.meta.env.VITE_APP_URL || "https://fermenta.to";
+  const url = `${appBase}/festival/${slug}`;
   const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(url)}`;
   return (
     <Dialog open onOpenChange={onClose}>
