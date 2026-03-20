@@ -118,10 +118,6 @@ export default function BreweryDetail() {
   
   const isAdmin = (user as any)?.activeRole === 'admin' || (!((user as any)?.activeRole) && user?.userType === 'admin');
 
-  const isBeerFavorited = useCallback((beerId: number) =>
-    Array.isArray(favorites) && favorites.some((f: any) => f.itemType === 'beer' && f.itemId === beerId),
-  [favorites]);
-
   useEffect(() => {
     if (!sentinelRef.current) return;
     const observer = new IntersectionObserver(entries => {
@@ -236,6 +232,10 @@ export default function BreweryDetail() {
   const isBreweryFavorited = Array.isArray(favorites) && favorites.some((fav: any) => 
     fav.itemType === 'brewery' && fav.itemId === parseInt(id || '0')
   );
+
+  const isBeerFavorited = useCallback((beerId: number) =>
+    Array.isArray(favorites) && favorites.some((f: any) => f.itemType === 'beer' && f.itemId === beerId),
+  [favorites]);
 
   // Favorite mutation with optimistic UI + undo toast
   const favoriteMutation = useMutation({
