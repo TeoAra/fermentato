@@ -12,11 +12,11 @@ VPS_APP="/www/nodeapps/fermenta"
 SSH="ssh -i ${HOME}/.ssh/id_replit_sync -o StrictHostKeyChecking=no"
 SCP="scp -i ${HOME}/.ssh/id_replit_sync -o StrictHostKeyChecking=no"
 
-MODE="${1:---dry-run}"
+ARGS="${@:---dry-run}"
 
 echo ""
 echo "================================================"
-echo " Clean Brewery Covers sul VPS  [$MODE]"
+echo " Clean Brewery Covers sul VPS  [$ARGS]"
 echo "================================================"
 
 # Copia lo script sul VPS
@@ -24,7 +24,7 @@ $SCP scripts/clean-brewery-covers.ts "$VPS_HOST":"$VPS_APP"/scripts/
 echo "✓ Script copiato"
 
 # Esegui sul VPS
-$SSH "$VPS_HOST" "cd '$VPS_APP' && DATABASE_URL='$VPS_DB' npx tsx scripts/clean-brewery-covers.ts $MODE 2>&1"
+$SSH "$VPS_HOST" "cd '$VPS_APP' && DATABASE_URL='$VPS_DB' npx tsx scripts/clean-brewery-covers.ts $ARGS 2>&1"
 
 echo ""
 echo "================================================"

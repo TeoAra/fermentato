@@ -109,19 +109,19 @@ async function main() {
 
     // ── Cover URL ─────────────────────────────────────────────────────────
     if (row.cover_image_url) {
-      if (isTrustedUrl(row.cover_image_url)) {
-        // Already counted trusted above
-      } else if (isPlaceholderUrl(row.cover_image_url)) {
+      if (isPlaceholderUrl(row.cover_image_url)) {
         coverShouldClear = true;
         coverReason = "generic stock photo (Unsplash placeholder)";
-      } else if (isExternalUrl(row.cover_image_url)) {
-        if (CHECK_SITES && row.website_url) {
-          const ok = await checkSite(row.website_url);
-          if (!ok) {
-            coverShouldClear = true;
-            coverReason = "site is not a beer site (hijacked/trading/offline)";
-          }
+      } else if (CHECK_SITES && row.website_url) {
+        // Check the brewery website regardless of whether the image is on Cloudinary —
+        // the old crawler may have scraped a trading site image and uploaded it to Cloudinary.
+        const ok = await checkSite(row.website_url);
+        if (!ok) {
+          coverShouldClear = true;
+          coverReason = "brewery website is not a beer site (hijacked/trading/offline) — image likely scraped from wrong site";
         }
+      } else if (isExternalUrl(row.cover_image_url)) {
+        // External non-Cloudinary without --check-sites: flag for review but don't clear
       }
     }
 
