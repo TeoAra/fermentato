@@ -29,6 +29,8 @@ import {
   Store,
   Building2,
   CheckCircle,
+  Eye,
+  EyeOff,
 } from "lucide-react";
 import { EventCategoryBadge, EventInterestButton } from "@/components/events-manager";
 import { format, isFuture } from "date-fns";
@@ -276,6 +278,23 @@ export default function BreweryDetail() {
     onError: (_err, _vars, ctx) => {
       if (ctx?.prev) queryClient.setQueryData(["/api/favorites"], ctx.prev);
       toast({ title: "Errore", description: "Non è stato possibile aggiornare i favoriti", variant: "destructive" });
+    },
+  });
+
+  const hideBeerMutation = useMutation({
+    mutationFn: async (beerId: number) =>
+      apiRequest(`/api/admin/beers/${beerId}/toggle-visibility`, { method: 'PATCH' }),
+    onSuccess: (data: any) => {
+      queryClient.invalidateQueries({ queryKey: [`/api/breweries/${id}/beers`] });
+      toast({
+        title: data.isHidden ? "Birra nascosta" : "Birra visibile",
+        description: data.isHidden
+          ? "La birra non è più visibile al pubblico"
+          : "La birra è ora visibile al pubblico",
+      });
+    },
+    onError: () => {
+      toast({ title: "Errore", description: "Impossibile cambiare la visibilità", variant: "destructive" });
     },
   });
 
@@ -640,10 +659,35 @@ export default function BreweryDetail() {
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {displayedBeers.map((beer: Beer) => (
                   <Link key={beer.id} href={`/beer/${beer.id}`}>
-                    <Card className={`glass-card border-0 h-full hover:scale-105 transition-all duration-300 group cursor-pointer relative ${beer.isCollaboration ? 'ring-1 ring-purple-300 dark:ring-purple-700' : ''}`}>
+                    <Card className={`glass-card border-0 h-full hover:scale-105 transition-all duration-300 group cursor-pointer relative ${beer.isCollaboration ? 'ring-1 ring-purple-300 dark:ring-purple-700' : ''} ${(beer as any).isHidden ? 'opacity-50 grayscale' : ''}`}>
+                      {/* Admin: nascondi/mostra birra */}
+                      {isAdmin && (
+                        <button
+                          onClick={e => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            hideBeerMutation.mutate(beer.id);
+                          }}
+                          disabled={hideBeerMutation.isPending}
+                          title={(beer as any).isHidden ? "Rendi visibile" : "Nascondi birra"}
+                          className={`absolute top-3 left-3 z-20 h-7 w-7 flex items-center justify-center rounded-full shadow border transition-all hover:scale-110 ${(beer as any).isHidden ? 'bg-gray-800 border-gray-600 text-gray-300' : 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-600 text-gray-500 dark:text-gray-400'}`}
+                        >
+                          {(beer as any).isHidden
+                            ? <Eye className="h-3.5 w-3.5" />
+                            : <EyeOff className="h-3.5 w-3.5" />
+                          }
+                        </button>
+                      )}
+                      {/* Admin hidden label */}
+                      {isAdmin && (beer as any).isHidden && (
+                        <div className="absolute top-3 left-12 z-20 flex items-center gap-1 bg-gray-800/90 text-gray-300 text-xs font-semibold px-2 py-0.5 rounded-full shadow">
+                          <EyeOff className="h-3 w-3" />
+                          Nascosta
+                        </div>
+                      )}
                       {/* Collaboration badge top-left — includes partner name */}
                       {beer.isCollaboration && (
-                        <div className="absolute top-3 left-3 z-10 flex items-center gap-1 bg-purple-100 dark:bg-purple-900/70 text-purple-700 dark:text-purple-300 text-xs font-semibold px-2 py-0.5 rounded-full shadow" onClick={e => e.preventDefault()}>
+                        <div className={`absolute top-3 z-10 flex items-center gap-1 bg-purple-100 dark:bg-purple-900/70 text-purple-700 dark:text-purple-300 text-xs font-semibold px-2 py-0.5 rounded-full shadow ${isAdmin ? 'left-12' : 'left-3'}`} onClick={e => e.preventDefault()}>
                           <Users className="h-3 w-3 flex-shrink-0" />
                           <span>Collab</span>
                           {beer.collaboratingBreweries && beer.collaboratingBreweries.length > 0 && (

@@ -629,9 +629,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Get all beers from a brewery (own beers + collaboration beers)
-  app.get("/api/breweries/:id/beers", async (req, res) => {
+  app.get("/api/breweries/:id/beers", async (req: any, res) => {
     try {
       const breweryId = parseInt(req.params.id);
+      const reqUser = req.user;
+      const adminView = reqUser?.userType === 'admin' || reqUser?.activeRole === 'admin';
+
       // Fetch own beers + beers where this brewery is a collaborator
       const beerRows = await db.select({
         id: beers.id,
@@ -648,13 +651,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         isGlutenFree: beers.isGlutenFree,
         isAlcoholFree: beers.isAlcoholFree,
         isCollaboration: beers.isCollaboration,
+        isHidden: beers.isHidden,
         avgRating: sql<number>`ROUND(AVG(CASE WHEN ${userBeerTastings.rating} IS NOT NULL THEN ${userBeerTastings.rating} END)::numeric, 2)`,
         reviewCount: sql<number>`COUNT(CASE WHEN ${userBeerTastings.rating} IS NOT NULL THEN 1 END)`,
         favoriteCount: sql<number>`(SELECT COUNT(*) FROM favorites f WHERE f.item_type = 'beer' AND f.item_id = ${beers.id})`,
       })
       .from(beers)
       .leftJoin(userBeerTastings, eq(beers.id, userBeerTastings.beerId))
-      .where(sql`${beers.breweryId} = ${breweryId} OR ${beers.id} IN (SELECT beer_id FROM beer_collaborations WHERE brewery_id = ${breweryId})`)
+      .where(sql`(${beers.breweryId} = ${breweryId} OR ${beers.id} IN (SELECT beer_id FROM beer_collaborations WHERE brewery_id = ${breweryId}))${adminView ? sql`` : sql` AND COALESCE(${beers.isHidden}, false) = false`}`)
       .groupBy(beers.id)
       .orderBy(beers.name);
 
@@ -3036,6 +3040,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Mass update pubs error:", error);
       res.status(500).json({ message: "Failed to mass update pubs" });
+    }
+  });
+
+  // Toggle beer hidden status
+  app.patch('/api/admin/beers/:id/toggle-visibility', isAuthenticated, isAdmin, async (req: any, res) => {
+    try {
+      const beerId = parseInt(req.params.id);
+      const [current] = await db.select({ isHidden: beers.isHidden }).from(beers).where(eq(beers.id, beerId));
+      if (!current) return res.status(404).json({ message: "Beer not found" });
+      const newHidden = !current.isHidden;
+      await db.update(beers).set({ isHidden: newHidden }).where(eq(beers.id, beerId));
+      res.json({ id: beerId, isHidden: newHidden });
+    } catch (error) {
+      console.error("Error toggling beer visibility:", error);
+      res.status(500).json({ message: "Failed to toggle visibility" });
     }
   });
 

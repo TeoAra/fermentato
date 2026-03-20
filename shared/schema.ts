@@ -150,6 +150,7 @@ export const beers = pgTable("beers", {
   isGlutenFree: boolean("is_gluten_free").default(false),
   isAlcoholFree: boolean("is_alcohol_free").default(false),
   isCollaboration: boolean("is_collaboration").default(false), // Birra in collaborazione
+  isHidden: boolean("is_hidden").default(false), // Nascosta dalla pagina pubblica
   barcode: varchar("barcode"), // EAN/UPC barcode
   createdAt: timestamp("created_at").defaultNow(),
 });
