@@ -50,6 +50,7 @@ import BeerTastingForm from "@/components/BeerTastingForm";
 import ImageWithFallback from "@/components/image-with-fallback";
 import { ImageUpload } from "@/components/image-upload";
 import SuggestChangeDialog from "@/components/SuggestChangeDialog";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 interface Beer {
   id: number;
@@ -122,6 +123,7 @@ export default function BeerDetail() {
   const { user, isAuthenticated } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const [activeTab, setActiveTab] = useState("scheda");
   const [showTastingForm, setShowTastingForm] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isSuggestDialogOpen, setIsSuggestDialogOpen] = useState(false);
@@ -498,242 +500,349 @@ export default function BeerDetail() {
         })}</script>
       </Helmet>
       
-      {/* Modern Hero Section */}
-      <div className="relative">
-        <div className="relative h-[440px] md:h-[520px] overflow-hidden">
+      {/* ── HERO ── compact, image-first */}
+      <div className="relative h-[220px] sm:h-[280px] md:h-[340px] overflow-hidden">
+        {(beer?.imageUrl || beer?.bottleImageUrl) ? (
           <img
-            src={beer?.imageUrl || beer?.bottleImageUrl || "https://images.unsplash.com/photo-1608270586620-248524c67de9?w=1200&h=600&fit=crop"}
+            src={beer.imageUrl || beer.bottleImageUrl}
             alt={`${beer?.name} - Immagine`}
             className="w-full h-full object-cover"
           />
-          <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-black/10"></div>
-          
-          {/* Hero Content */}
-          <div className="absolute inset-0 flex items-center">
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
-              <div className="glass-card rounded-2xl p-5 sm:p-8 backdrop-blur-md bg-white/10 border border-white/20">
-                <div className="flex flex-col md:flex-row items-center md:items-center justify-between gap-5 sm:gap-8">
-                  <div className="flex flex-col md:flex-row items-center space-y-3 md:space-y-0 md:space-x-6 w-full md:w-auto justify-center md:justify-start">
-                    <ImageWithFallback
-                      src={beer?.imageUrl || beer?.bottleImageUrl}
-                      alt={beer?.name}
-                      imageType="beer"
-                      containerClassName="h-20 w-20 ring-4 ring-white/30 flex-shrink-0 rounded-xl"
-                      className="h-20 w-20 object-cover rounded-xl"
-                      iconSize="lg"
-                    />
-                    <div className="text-center md:text-left">
-                      <h1 className="text-2xl sm:text-3xl md:text-4xl text-white mb-2 font-bold leading-tight">
-                        {beer?.name}
-                      </h1>
-                      {beer?.brewery && (
-                        <div className="mb-4">
-                          <Link href={`/brewery/${beer.brewery.id}`}>
-                            <p className="text-white/80 text-base sm:text-lg hover:text-emerald-300 transition-colors cursor-pointer font-medium inline">
-                              {beer.brewery.name}
-                            </p>
-                          </Link>
-                          {beerCollabs.length > 0 && (
-                            <span className="ml-2 inline-flex flex-wrap items-center gap-1">
-                              <span className="text-white/50 text-sm">×</span>
-                              {beerCollabs.map((b, i) => (
-                                <span key={b.id} className="inline-flex items-center gap-1">
-                                  {i > 0 && <span className="text-white/50 text-sm">×</span>}
-                                  <Link href={`/brewery/${b.id}`}>
-                                    <span className="text-purple-300 hover:text-purple-200 transition-colors cursor-pointer text-base font-medium">
-                                      {b.name}
-                                    </span>
-                                  </Link>
-                                </span>
-                              ))}
-                              <span className="ml-1 inline-flex items-center gap-1 text-purple-300/80 text-xs font-semibold bg-purple-500/20 px-1.5 py-0.5 rounded-full border border-purple-400/30">
-                                <Users className="w-3 h-3" />collab
-                              </span>
-                            </span>
-                          )}
-                        </div>
-                      )}
-                      <div className="flex flex-col sm:flex-row items-center justify-center md:justify-start space-y-3 sm:space-y-0 sm:space-x-4 flex-wrap gap-2">
-                        <Link href={`/search?q=${encodeURIComponent(beer?.style || '')}`}>
-                          <Badge className="bg-gradient-to-r from-blue-500/20 to-indigo-500/20 text-blue-100 border-blue-300/30 backdrop-blur-sm px-3 py-2 cursor-pointer hover:bg-blue-500/30 transition-colors">
-                            <Sparkles className="h-4 w-4 mr-2" />
-                            {beer?.style}
-                          </Badge>
-                        </Link>
-                        {beer?.isGlutenFree && (
-                          <Badge className="bg-gradient-to-r from-green-500/20 to-emerald-500/20 text-green-100 border-green-300/30 backdrop-blur-sm px-3 py-2 gap-1.5">
-                            <GlutenFreeIcon size={18} className="text-green-200" />
-                            Senza Glutine
-                          </Badge>
-                        )}
-                        {beer?.isAlcoholFree && (
-                          <Badge className="bg-gradient-to-r from-sky-500/20 to-blue-500/20 text-sky-100 border-sky-300/30 backdrop-blur-sm px-3 py-2">
-                            0.0% Analcolica
-                          </Badge>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                  
-                  {/* Rating + Action buttons inline */}
-                  <div className="flex items-center justify-center md:justify-end gap-2 w-full md:w-auto flex-wrap">
-                    {reviewsData?.avgRating != null && (
-                      <div className="flex items-center gap-1.5 backdrop-blur-md bg-yellow-400/20 border border-yellow-300/40 text-white font-semibold px-3 py-1.5 rounded-full shadow-lg text-sm min-h-[44px]">
-                        <Star className="h-4 w-4 fill-yellow-300 text-yellow-300" />
-                        <span className="text-yellow-100">{Number(reviewsData.avgRating).toFixed(1)}</span>
-                        {reviewsData.reviewCount > 0 && (
-                          <span className="text-yellow-200/70 font-normal text-xs">({reviewsData.reviewCount})</span>
-                        )}
-                      </div>
-                    )}
-                    {isAdmin && (
-                      <Button 
-                        variant="outline" 
-                        size="sm" 
-                        onClick={openEditDialog}
-                        className="backdrop-blur-md bg-amber-500/30 border-amber-300/50 text-white hover:bg-amber-500/50 hover:border-amber-300/70 transition-all duration-300 font-medium shadow-lg min-h-[44px] min-w-[44px]"
-                        data-testid="button-admin-edit-beer"
-                      >
-                        <Pencil className="h-4 w-4 sm:mr-2" />
-                        <span className="hidden sm:inline">Modifica</span>
-                      </Button>
-                    )}
-                    <Button 
-                      variant="outline" 
-                      size="sm" 
-                      onClick={handleFavoriteToggle}
-                      disabled={favoriteMutation.isPending}
-                      className={`backdrop-blur-md border-white/40 text-white hover:bg-white/30 hover:border-white/60 transition-all duration-300 font-medium shadow-lg min-h-[44px] min-w-[44px] ${
-                        isBeerFavorited ? 'bg-red-500/30 border-red-300/50' : 'bg-white/20'
-                      }`}
-                      data-testid="button-favorite"
-                    >
-                      <Heart className={`h-4 w-4 sm:mr-2 ${isBeerFavorited ? 'fill-current' : ''}`} />
-                      <span className="hidden sm:inline">
-                        {isBeerFavorited ? 'Salvata' : 'Salva'}
-                        {beerFavCount > 0 && <span className="ml-1.5 opacity-80">· {beerFavCount}</span>}
-                      </span>
-                      {beerFavCount > 0 && <span className="sm:hidden ml-1 text-xs opacity-80">{beerFavCount}</span>}
-                    </Button>
-                    <Button 
-                      variant="outline" 
-                      size="sm" 
-                      onClick={handleShare}
-                      className="backdrop-blur-md bg-white/20 border-white/40 text-white hover:bg-white/30 hover:border-white/60 transition-all duration-300 font-medium shadow-lg min-h-[44px] min-w-[44px]"
-                      data-testid="button-share"
-                    >
-                      <Share2 className="h-4 w-4 sm:mr-2" />
-                      <span className="hidden sm:inline">Condividi</span>
-                    </Button>
-                    {isAuthenticated && !isAdmin && (
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => setIsSuggestDialogOpen(true)}
-                        className="backdrop-blur-md bg-white/10 border-white/30 text-white hover:bg-amber-500/30 hover:border-amber-300/50 transition-all duration-300 font-medium shadow-lg min-h-[44px] min-w-[44px]"
-                        data-testid="button-suggest-change"
-                      >
-                        <Lightbulb className="h-4 w-4 sm:mr-2" />
-                        <span className="hidden sm:inline">Suggerisci modifica</span>
-                      </Button>
-                    )}
-                  </div>
+        ) : (
+          <div className="w-full h-full bg-gradient-to-br from-amber-600 via-orange-500 to-red-600" />
+        )}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/30 to-transparent" />
+        <div className="absolute bottom-0 left-0 right-0 px-4 pb-4 flex items-end gap-3">
+          <div className="h-14 w-14 sm:h-16 sm:w-16 rounded-xl ring-2 ring-white/40 bg-white/10 backdrop-blur-sm flex-shrink-0 overflow-hidden shadow-lg">
+            <ImageWithFallback
+              src={beer?.imageUrl || beer?.bottleImageUrl}
+              alt={beer?.name}
+              imageType="beer"
+              containerClassName="w-full h-full"
+              className="w-full h-full object-cover"
+              iconSize="lg"
+            />
+          </div>
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2 flex-wrap">
+              <h1 className="text-xl sm:text-2xl md:text-3xl text-white font-bold leading-tight drop-shadow-md">
+                {beer?.name}
+              </h1>
+              {beerFavCount > 0 && (
+                <div className="flex items-center gap-1 bg-white/20 backdrop-blur-sm border border-white/30 rounded-full px-2 py-0.5 flex-shrink-0">
+                  <Heart className="h-3 w-3 text-red-300 fill-current" />
+                  <span className="text-white text-xs font-semibold leading-none">{beerFavCount}</span>
                 </div>
-              </div>
+              )}
+            </div>
+            <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
+              {beer?.brewery && (
+                <Link href={`/brewery/${beer.brewery.id}`}>
+                  <span className="text-white/80 text-sm hover:text-amber-300 transition-colors font-medium">{beer.brewery.name}</span>
+                </Link>
+              )}
+              {beerCollabs.length > 0 && (
+                <>
+                  <span className="text-white/40 text-xs">×</span>
+                  {beerCollabs.map((b, i) => (
+                    <span key={b.id} className="inline-flex items-center gap-1">
+                      {i > 0 && <span className="text-white/40 text-xs">×</span>}
+                      <Link href={`/brewery/${b.id}`}>
+                        <span className="text-purple-300 hover:text-purple-200 text-sm font-medium">{b.name}</span>
+                      </Link>
+                    </span>
+                  ))}
+                  <span className="text-purple-300/80 text-[10px] font-bold bg-purple-500/25 px-1.5 py-0.5 rounded-full border border-purple-400/30">collab</span>
+                </>
+              )}
             </div>
           </div>
         </div>
       </div>
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Quick Stats */}
-        <div className="flex gap-3 mb-8 overflow-x-auto pb-2 -mx-4 px-4 sm:mx-0 sm:px-0 sm:grid sm:grid-cols-4 sm:overflow-visible" style={{ WebkitOverflowScrolling: 'touch' }}>
-          <BeerStatsCard 
-            icon={Target}
-            label="ABV"
-            value={beer?.abv ? `${beer.abv}%` : 'N/D'}
-            gradient="from-blue-500 to-indigo-600"
-          />
-          <BeerStatsCard 
-            icon={Droplets}
-            label="Colore"
-            value={beer?.color || 'N/D'}
-            gradient="from-blue-500 to-indigo-600"
-          />
-          <BeerStatsCard 
-            icon={Sparkles}
-            label="Stile"
-            value={beer?.style || 'N/D'}
-            gradient="from-purple-500 to-pink-600"
-          />
-          <BeerStatsCard 
-            icon={Store}
-            label="Locali"
-            value={totalLocations}
-            gradient="from-green-500 to-emerald-600"
-          />
+      {/* ── INFO BAR ── */}
+      <div className="bg-white dark:bg-[hsl(25,14%,10%)] border-b border-gray-100 dark:border-gray-800 px-4 py-3">
+        <div className="max-w-7xl mx-auto flex flex-col items-center gap-3">
+          {/* Info pills */}
+          <div className="flex items-center gap-2 flex-wrap justify-center">
+            {beer?.abv && (
+              <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-semibold bg-orange-50 dark:bg-orange-950 text-orange-700 dark:text-orange-300 border border-orange-200 dark:border-orange-800">
+                <Target className="h-3.5 w-3.5" />
+                {beer.abv}% ABV
+              </span>
+            )}
+            {beer?.style && (
+              <Link href={`/search?q=${encodeURIComponent(beer.style)}`}>
+                <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-semibold bg-indigo-50 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800 hover:bg-indigo-100 dark:hover:bg-indigo-900 transition-colors cursor-pointer">
+                  <Sparkles className="h-3.5 w-3.5" />
+                  {beer.style}
+                </span>
+              </Link>
+            )}
+            {reviewsData?.avgRating != null && (
+              <button onClick={() => setActiveTab('recensioni')} className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-semibold bg-yellow-50 dark:bg-yellow-950 text-yellow-700 dark:text-yellow-300 border border-yellow-200 dark:border-yellow-800 hover:bg-yellow-100 dark:hover:bg-yellow-900 transition-colors">
+                <Star className="h-3.5 w-3.5 fill-current" />
+                {Number(reviewsData.avgRating).toFixed(1)}
+                <span className="font-normal opacity-70 text-xs">({reviewsData.reviewCount})</span>
+              </button>
+            )}
+            {totalLocations > 0 && (
+              <button onClick={() => setActiveTab('dove')} className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-semibold bg-green-50 dark:bg-green-950 text-green-700 dark:text-green-300 border border-green-200 dark:border-green-800 hover:bg-green-100 dark:hover:bg-green-900 transition-colors">
+                <MapPin className="h-3.5 w-3.5" />
+                {totalLocations} {totalLocations === 1 ? 'locale' : 'locali'}
+              </button>
+            )}
+            {beer?.isGlutenFree && (
+              <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-semibold bg-green-50 dark:bg-green-950 text-green-700 dark:text-green-300 border border-green-200 dark:border-green-800">
+                <GlutenFreeIcon size={14} className="text-green-600" />
+                Gluten Free
+              </span>
+            )}
+            {beer?.isAlcoholFree && (
+              <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-semibold bg-sky-50 dark:bg-sky-950 text-sky-700 dark:text-sky-300 border border-sky-200 dark:border-sky-800">
+                0.0% Analcolica
+              </span>
+            )}
+          </div>
+          {/* Action buttons – centered */}
+          <div className="flex items-center gap-2 justify-center">
+            <button
+              onClick={handleFavoriteToggle}
+              disabled={favoriteMutation.isPending}
+              title={isBeerFavorited ? 'Rimuovi dai preferiti' : 'Aggiungi ai preferiti'}
+              data-testid="button-favorite"
+              className={`h-9 w-9 flex items-center justify-center rounded-full border transition-all ${
+                isBeerFavorited
+                  ? 'bg-red-50 dark:bg-red-950 border-red-200 dark:border-red-800 text-red-500'
+                  : 'bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700 text-gray-500 dark:text-gray-400 hover:border-red-200 hover:text-red-400'
+              }`}
+            >
+              <Heart className={`h-4 w-4 ${isBeerFavorited ? 'fill-current' : ''}`} />
+            </button>
+            <button
+              onClick={handleShare}
+              title="Condividi"
+              data-testid="button-share"
+              className="h-9 w-9 flex items-center justify-center rounded-full border bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700 text-gray-500 dark:text-gray-400 hover:border-gray-300 transition-colors"
+            >
+              <Share2 className="h-4 w-4" />
+            </button>
+            {isAdmin && (
+              <button
+                onClick={openEditDialog}
+                title="Modifica birra"
+                data-testid="button-admin-edit-beer"
+                className="h-9 w-9 flex items-center justify-center rounded-full border bg-amber-50 dark:bg-amber-950 border-amber-200 dark:border-amber-800 text-amber-600 dark:text-amber-400 hover:bg-amber-100 dark:hover:bg-amber-900 transition-colors"
+              >
+                <Pencil className="h-4 w-4" />
+              </button>
+            )}
+            {isAuthenticated && !isAdmin && (
+              <button
+                onClick={() => setIsSuggestDialogOpen(true)}
+                title="Suggerisci modifica"
+                data-testid="button-suggest-change"
+                className="h-9 w-9 flex items-center justify-center rounded-full border bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700 text-gray-500 dark:text-gray-400 hover:border-gray-300 transition-colors"
+              >
+                <Lightbulb className="h-4 w-4" />
+              </button>
+            )}
+          </div>
         </div>
+      </div>
 
-        {/* Description */}
-        {beer?.description && (
-          <Card className="glass-card border-0 mb-8">
-            <CardContent className="p-6">
-              <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4 flex items-center">
-                <div className="p-2 bg-gradient-to-r from-amber-500 to-orange-600 rounded-lg mr-3">
-                  <BeerIcon className="h-5 w-5 text-white" />
+      <main className="max-w-7xl mx-auto pb-12">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+          <div className="sticky top-16 lg:top-[68px] z-30 bg-[hsl(38,14%,97%)] dark:bg-[hsl(25,14%,7%)] border-b border-gray-200 dark:border-gray-800">
+            <TabsList className="flex w-full h-auto bg-transparent p-0 rounded-none shadow-none border-none overflow-x-auto scrollbar-hide">
+              <TabsTrigger
+                value="scheda"
+                className="relative flex items-center gap-1.5 px-4 py-3 text-sm font-medium whitespace-nowrap rounded-none bg-transparent border-none shadow-none transition-colors text-gray-400 dark:text-gray-500 data-[state=active]:text-[hsl(35,90%,40%)] dark:data-[state=active]:text-[hsl(38,88%,56%)] data-[state=active]:shadow-none data-[state=active]:bg-transparent after:absolute after:bottom-0 after:left-0 after:right-0 after:h-[2px] after:rounded-full after:bg-[hsl(35,90%,42%)] after:opacity-0 data-[state=active]:after:opacity-100 after:transition-opacity"
+              >
+                <BeerIcon className="h-3.5 w-3.5 flex-shrink-0" />
+                Scheda
+              </TabsTrigger>
+              <TabsTrigger
+                value="dove"
+                className="relative flex items-center gap-1.5 px-4 py-3 text-sm font-medium whitespace-nowrap rounded-none bg-transparent border-none shadow-none transition-colors text-gray-400 dark:text-gray-500 data-[state=active]:text-[hsl(35,90%,40%)] dark:data-[state=active]:text-[hsl(38,88%,56%)] data-[state=active]:shadow-none data-[state=active]:bg-transparent after:absolute after:bottom-0 after:left-0 after:right-0 after:h-[2px] after:rounded-full after:bg-[hsl(35,90%,42%)] after:opacity-0 data-[state=active]:after:opacity-100 after:transition-opacity"
+              >
+                <MapPin className="h-3.5 w-3.5 flex-shrink-0" />
+                Dove trovarla
+                {totalLocations > 0 && <span className="text-[10px] font-bold opacity-60">{totalLocations}</span>}
+              </TabsTrigger>
+              <TabsTrigger
+                value="recensioni"
+                className="relative flex items-center gap-1.5 px-4 py-3 text-sm font-medium whitespace-nowrap rounded-none bg-transparent border-none shadow-none transition-colors text-gray-400 dark:text-gray-500 data-[state=active]:text-[hsl(35,90%,40%)] dark:data-[state=active]:text-[hsl(38,88%,56%)] data-[state=active]:shadow-none data-[state=active]:bg-transparent after:absolute after:bottom-0 after:left-0 after:right-0 after:h-[2px] after:rounded-full after:bg-[hsl(35,90%,42%)] after:opacity-0 data-[state=active]:after:opacity-100 after:transition-opacity"
+              >
+                <Star className="h-3.5 w-3.5 flex-shrink-0" />
+                Recensioni
+                {(reviewsData?.reviewCount ?? 0) > 0 && <span className="text-[10px] font-bold opacity-60">{reviewsData?.reviewCount}</span>}
+              </TabsTrigger>
+            </TabsList>
+          </div>
+
+          {/* ── TAB: SCHEDA ── */}
+          <TabsContent value="scheda" className="px-4 lg:px-6 pt-6 pb-8 space-y-4">
+
+            {/* Specs grid */}
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+              <div className="bg-white dark:bg-[hsl(25,14%,10%)] rounded-xl p-3 border border-gray-100 dark:border-gray-800 flex items-center gap-2">
+                <Target className="h-4 w-4 text-orange-500 flex-shrink-0" />
+                <div><p className="text-xs text-gray-500 dark:text-gray-400">ABV</p><p className="text-sm font-bold text-gray-900 dark:text-white">{beer?.abv ? `${beer.abv}%` : 'N/D'}</p></div>
+              </div>
+              <div className="bg-white dark:bg-[hsl(25,14%,10%)] rounded-xl p-3 border border-gray-100 dark:border-gray-800 flex items-center gap-2">
+                <Sparkles className="h-4 w-4 text-indigo-500 flex-shrink-0" />
+                <div><p className="text-xs text-gray-500 dark:text-gray-400">Stile</p><p className="text-sm font-bold text-gray-900 dark:text-white truncate">{beer?.style || 'N/D'}</p></div>
+              </div>
+              {beer?.color && (
+                <div className="bg-white dark:bg-[hsl(25,14%,10%)] rounded-xl p-3 border border-gray-100 dark:border-gray-800 flex items-center gap-2">
+                  <Droplets className="h-4 w-4 text-blue-500 flex-shrink-0" />
+                  <div><p className="text-xs text-gray-500 dark:text-gray-400">Colore</p><p className="text-sm font-bold text-gray-900 dark:text-white truncate">{beer.color}</p></div>
                 </div>
-                Descrizione
-                {translating && (
-                  <span className="ml-3 text-xs font-normal text-gray-400 flex items-center gap-1">
-                    <Loader2 className="h-3 w-3 animate-spin" />Traduzione…
-                  </span>
-                )}
-                {translatedDesc && !translating && (
-                  <span className="ml-3 text-xs font-normal bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 px-2 py-0.5 rounded-full border border-blue-200 dark:border-blue-700">
-                    Traduzione automatica
-                  </span>
-                )}
-              </h2>
-              <p className="text-gray-700 dark:text-gray-300 leading-relaxed whitespace-pre-line">
-                {String(translatedDesc || beer.description || '')}
-              </p>
-              {translatedDesc && beer.description && (
-                <details className="mt-3">
-                  <summary className="text-xs text-gray-400 cursor-pointer hover:text-gray-600 dark:hover:text-gray-300 select-none">
-                    Mostra testo originale
-                  </summary>
-                  <p className="mt-2 text-sm text-gray-500 dark:text-gray-400 leading-relaxed whitespace-pre-line border-t pt-2">
-                    {String(beer.description)}
-                  </p>
-                </details>
               )}
-            </CardContent>
-          </Card>
-        )}
+              {beer?.ibu && (
+                <div className="bg-white dark:bg-[hsl(25,14%,10%)] rounded-xl p-3 border border-gray-100 dark:border-gray-800 flex items-center gap-2">
+                  <Wheat className="h-4 w-4 text-amber-500 flex-shrink-0" />
+                  <div><p className="text-xs text-gray-500 dark:text-gray-400">IBU</p><p className="text-sm font-bold text-gray-900 dark:text-white">{beer.ibu}</p></div>
+                </div>
+              )}
+            </div>
 
-        {/* Tasting Notes */}
-        {isAuthenticated && (
-          <Card className="glass-card border-0 mb-8">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="text-xl font-bold text-gray-900 dark:text-white flex items-center">
-                  <div className="p-2 bg-gradient-to-r from-purple-500 to-pink-600 rounded-lg mr-3">
-                    <Star className="h-5 w-5 text-white" />
-                  </div>
-                  Note di Degustazione
+            {/* Description */}
+            {beer?.description && (
+              <div className="bg-white dark:bg-[hsl(25,14%,10%)] rounded-xl p-5 border border-gray-100 dark:border-gray-800">
+                <h2 className="text-base font-bold text-gray-900 dark:text-white mb-3 flex items-center gap-2">
+                  <BeerIcon className="h-4 w-4 text-amber-600 dark:text-amber-400" />
+                  Descrizione
+                  {translating && (
+                    <span className="text-xs font-normal text-gray-400 flex items-center gap-1">
+                      <Loader2 className="h-3 w-3 animate-spin" />Traduzione…
+                    </span>
+                  )}
+                  {translatedDesc && !translating && (
+                    <span className="text-xs font-normal bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 px-2 py-0.5 rounded-full border border-blue-200 dark:border-blue-700">
+                      Traduzione automatica
+                    </span>
+                  )}
                 </h2>
-                {hasTasted && !showTastingForm && (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setShowTastingForm(true)}
-                    className="bg-white/60 dark:bg-gray-800/60"
-                    data-testid="button-edit-tasting"
-                  >
-                    Modifica
-                  </Button>
+                <p className="text-gray-700 dark:text-gray-300 leading-relaxed whitespace-pre-line text-sm">
+                  {String(translatedDesc || beer.description || '')}
+                </p>
+                {translatedDesc && beer.description && (
+                  <details className="mt-3">
+                    <summary className="text-xs text-gray-400 cursor-pointer hover:text-gray-600 dark:hover:text-gray-300 select-none">
+                      Mostra testo originale
+                    </summary>
+                    <p className="mt-2 text-sm text-gray-500 dark:text-gray-400 leading-relaxed whitespace-pre-line border-t pt-2">
+                      {String(beer.description)}
+                    </p>
+                  </details>
                 )}
               </div>
+            )}
+
+            {/* Brewery info */}
+            {beer?.brewery && (
+              <Link href={`/brewery/${beer.brewery.id}`}>
+                <div className="bg-white dark:bg-[hsl(25,14%,10%)] rounded-xl p-4 border border-gray-100 dark:border-gray-800 flex items-center gap-3 hover:border-amber-200 dark:hover:border-amber-800 transition-colors group">
+                  <Building2 className="h-5 w-5 text-amber-500 flex-shrink-0" />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs text-gray-500 dark:text-gray-400">Birrificio</p>
+                    <p className="text-sm font-bold text-gray-900 dark:text-white group-hover:text-amber-600 dark:group-hover:text-amber-400 truncate">{beer.brewery.name}</p>
+                    {beer.brewery.location && <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{beer.brewery.location}</p>}
+                  </div>
+                </div>
+              </Link>
+            )}
+          </TabsContent>
+
+          {/* ── TAB: DOVE TROVARLA ── */}
+          <TabsContent value="dove" className="px-4 lg:px-6 pt-6 pb-8">
+            {availabilityLoading ? (
+              <div className="space-y-3">
+                {[...Array(3)].map((_, i) => <div key={i} className="skeleton h-20 rounded-xl" />)}
+              </div>
+            ) : totalLocations === 0 ? (
+              <div className="text-center py-16">
+                <div className="w-14 h-14 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <MapPin className="h-7 w-7 text-gray-400" />
+                </div>
+                <p className="text-gray-600 dark:text-gray-400 text-sm">Questa birra non è disponibile in nessun locale al momento.</p>
+              </div>
+            ) : (
+              <div className="space-y-6">
+                {tapLocations.length > 0 && (
+                  <div>
+                    <h3 className="text-sm font-bold text-gray-700 dark:text-gray-300 mb-3 flex items-center gap-2">
+                      <Wine className="h-4 w-4 text-amber-500" />
+                      Alla Spina ({tapLocations.length})
+                    </h3>
+                    <div className="space-y-2">
+                      {tapLocations.map((location: any, idx: number) => (
+                        <Link key={idx} href={`/pub/${location.pub.id}`}>
+                          <div className="bg-white dark:bg-[hsl(25,14%,10%)] rounded-xl p-4 border border-gray-100 dark:border-gray-800 hover:border-amber-200 dark:hover:border-amber-800 transition-colors flex items-center justify-between group">
+                            <div>
+                              <h4 className="font-semibold text-sm text-gray-900 dark:text-white group-hover:text-amber-600 dark:group-hover:text-amber-400 transition-colors">{location.pub.name}</h4>
+                              <p className="text-xs text-gray-500 dark:text-gray-400">{location.pub.address}, {location.pub.city}</p>
+                            </div>
+                            {location.tapItem.price && (
+                              <Badge className="bg-green-50 dark:bg-green-950 text-green-700 dark:text-green-300 border-green-200 dark:border-green-800 border text-xs font-semibold">€{location.tapItem.price}</Badge>
+                            )}
+                          </div>
+                        </Link>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                {bottleLocations.length > 0 && (
+                  <div>
+                    <h3 className="text-sm font-bold text-gray-700 dark:text-gray-300 mb-3 flex items-center gap-2">
+                      <BeerIcon className="h-4 w-4 text-blue-500" />
+                      In Bottiglia ({bottleLocations.length})
+                    </h3>
+                    <div className="space-y-2">
+                      {bottleLocations.map((location: any, idx: number) => (
+                        <Link key={idx} href={`/pub/${location.pub.id}`}>
+                          <div className="bg-white dark:bg-[hsl(25,14%,10%)] rounded-xl p-4 border border-gray-100 dark:border-gray-800 hover:border-blue-200 dark:hover:border-blue-800 transition-colors flex items-center justify-between group">
+                            <div>
+                              <h4 className="font-semibold text-sm text-gray-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">{location.pub.name}</h4>
+                              <p className="text-xs text-gray-500 dark:text-gray-400">{location.pub.address}, {location.pub.city}</p>
+                            </div>
+                            {location.bottleItem.price && (
+                              <Badge className="bg-blue-50 dark:bg-blue-950 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-800 border text-xs font-semibold">€{location.bottleItem.price}</Badge>
+                            )}
+                          </div>
+                        </Link>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+          </TabsContent>
+
+          {/* ── TAB: RECENSIONI ── */}
+          <TabsContent value="recensioni" className="px-4 lg:px-6 pt-6 pb-8 space-y-6">
+            {/* My tasting note */}
+            {isAuthenticated && (
+              <div className="bg-white dark:bg-[hsl(25,14%,10%)] rounded-xl p-5 border border-gray-100 dark:border-gray-800">
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className="text-base font-bold text-gray-900 dark:text-white flex items-center gap-2">
+                    <Star className="h-4 w-4 text-amber-500" />
+                    La mia nota
+                  </h2>
+                  {hasTasted && !showTastingForm && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setShowTastingForm(true)}
+                      className="bg-white/60 dark:bg-gray-800/60 h-8 text-xs"
+                      data-testid="button-edit-tasting"
+                    >
+                      Modifica
+                    </Button>
+                  )}
+                </div>
 
               {showTastingForm || !hasTasted ? (
                 <BeerTastingForm
@@ -747,50 +856,42 @@ export default function BeerDetail() {
                 />
               ) : (
                 <div className="space-y-3">
-                  <div className="flex items-center space-x-2">
-                    <Star className="h-5 w-5 text-yellow-500" />
-                    <span className="text-lg font-semibold text-gray-900 dark:text-white">
-                      {existingTasting.rating}/5
-                    </span>
+                  <div className="flex items-center gap-2">
+                    {[1,2,3,4,5].map(s => <Star key={s} className={`h-4 w-4 ${s <= existingTasting.rating ? 'text-yellow-500 fill-yellow-500' : 'text-gray-300'}`} />)}
+                    <span className="text-sm font-semibold text-gray-900 dark:text-white">{existingTasting.rating}/5</span>
                   </div>
                   {(existingTasting.personalNotes || existingTasting.notes) && (
-                    <p className="text-gray-700 dark:text-gray-300 italic">
-                      "{existingTasting.personalNotes || existingTasting.notes}"
-                    </p>
+                    <p className="text-gray-700 dark:text-gray-300 italic text-sm">"{existingTasting.personalNotes || existingTasting.notes}"</p>
                   )}
-                  <p className="text-sm text-gray-500 dark:text-gray-400">
+                  <p className="text-xs text-gray-500 dark:text-gray-400">
                     Degustata il {new Date(existingTasting.tastedAt).toLocaleDateString('it-IT')}
                     {existingTasting.format ? ` in ${existingTasting.format}` : ''}
                     {existingTasting.pubName ? ` presso ${existingTasting.pubName}` : ''}
                   </p>
                 </div>
               )}
-            </CardContent>
-          </Card>
-        )}
-
-        {/* Community Reviews */}
-        {reviewsData && reviewsData.reviewCount > 0 && (
-          <Card className="glass-card border-0 mb-8">
-            <CardContent className="p-6">
-              {/* Header with avg rating */}
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="text-xl font-bold text-gray-900 dark:text-white flex items-center">
-                  <div className="p-2 bg-gradient-to-r from-yellow-500 to-amber-600 rounded-lg mr-3">
-                    <Star className="h-5 w-5 text-white fill-white" />
-                  </div>
-                  Recensioni Community
-                </h2>
-                <div className="flex items-center gap-2">
-                  <div className="flex items-center gap-1">
-                    {[1,2,3,4,5].map(s => (
-                      <Star key={s} className={`h-4 w-4 ${s <= Math.round(reviewsData.avgRating || 0) ? 'text-yellow-500 fill-yellow-500' : 'text-gray-300 dark:text-gray-400'}`} />
-                    ))}
-                  </div>
-                  <span className="text-lg font-bold text-gray-900 dark:text-white">{reviewsData.avgRating?.toFixed(1)}</span>
-                  <span className="text-sm text-gray-500 hidden sm:inline">({reviewsData.reviewCount} {reviewsData.reviewCount === 1 ? 'recensione' : 'recensioni'})</span>
-                </div>
               </div>
+            )}
+
+            {/* Community Reviews */}
+            {reviewsData && reviewsData.reviewCount > 0 && (
+              <div className="bg-white dark:bg-[hsl(25,14%,10%)] rounded-xl p-5 border border-gray-100 dark:border-gray-800">
+                {/* Header with avg rating */}
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className="text-base font-bold text-gray-900 dark:text-white flex items-center gap-2">
+                    <Star className="h-4 w-4 text-yellow-500 fill-yellow-500" />
+                    Recensioni Community
+                    <span className="text-sm font-normal text-gray-500">({reviewsData.reviewCount})</span>
+                  </h2>
+                  {reviewsData.avgRating && (
+                    <div className="flex items-center gap-1">
+                      {[1,2,3,4,5].map(s => (
+                        <Star key={s} className={`h-3.5 w-3.5 ${s <= Math.round(reviewsData.avgRating || 0) ? 'text-yellow-500 fill-yellow-500' : 'text-gray-300 dark:text-gray-400'}`} />
+                      ))}
+                      <span className="ml-1 text-sm font-bold text-gray-900 dark:text-white">{reviewsData.avgRating?.toFixed(1)}</span>
+                    </div>
+                  )}
+                </div>
 
               {/* Rating Distribution Histogram */}
               {reviewsData.distribution && (
@@ -943,106 +1044,11 @@ export default function BeerDetail() {
                   <button onClick={() => setReviewFilterRating(null)} className="text-xs text-amber-600 mt-1 hover:underline">Rimuovi filtro</button>
                 </div>
               )}
-            </CardContent>
-          </Card>
-        )}
-
-        {/* Availability */}
-        <Card className="glass-card border-0 mb-8">
-          <CardContent className="p-6">
-            <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-6 flex items-center">
-              <div className="p-2 bg-gradient-to-r from-green-500 to-emerald-600 rounded-lg mr-3">
-                <MapPin className="h-5 w-5 text-white" />
-              </div>
-              Dove Trovarla ({totalLocations} {totalLocations === 1 ? 'locale' : 'locali'})
-            </h2>
-
-            {availabilityLoading ? (
-              <div className="space-y-4">
-                {[...Array(3)].map((_, i) => (
-                  <div key={i} className="skeleton h-24 rounded-lg"></div>
-                ))}
-              </div>
-            ) : totalLocations === 0 ? (
-              <div className="text-center py-12">
-                <div className="w-16 h-16 bg-gradient-to-r from-gray-200 to-gray-300 dark:from-gray-700 dark:to-gray-600 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <MapPin className="h-8 w-8 text-gray-400 dark:text-gray-400" />
-                </div>
-                <p className="text-gray-600 dark:text-gray-400">
-                  Questa birra non è al momento disponibile in nessun locale.
-                </p>
-              </div>
-            ) : (
-              <div className="space-y-6">
-                {/* Tap Locations */}
-                {tapLocations.length > 0 && (
-                  <div>
-                    <h3 className="font-semibold text-gray-900 dark:text-white mb-3 flex items-center">
-                      <Wine className="h-5 w-5 mr-2 text-amber-600" />
-                      Alla Spina ({tapLocations.length})
-                    </h3>
-                    <div className="space-y-3">
-                      {tapLocations.map((location: any, idx: number) => (
-                        <Link key={idx} href={`/pub/${location.pub.id}`}>
-                          <div className="glass-card border-0 p-4 hover:scale-102 transition-all duration-300 cursor-pointer">
-                            <div className="flex items-center justify-between">
-                              <div>
-                                <h4 className="font-semibold text-gray-900 dark:text-white hover:text-amber-600 dark:hover:text-amber-400 transition-colors">
-                                  {location.pub.name}
-                                </h4>
-                                <p className="text-sm text-gray-600 dark:text-gray-400">
-                                  {location.pub.address}, {location.pub.city}
-                                </p>
-                              </div>
-                              {location.tapItem.price && (
-                                <Badge className="bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-950 dark:to-emerald-950 text-green-800 dark:text-green-200 border-green-200">
-                                  €{location.tapItem.price}
-                                </Badge>
-                              )}
-                            </div>
-                          </div>
-                        </Link>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {/* Bottle Locations */}
-                {bottleLocations.length > 0 && (
-                  <div>
-                    <h3 className="font-semibold text-gray-900 dark:text-white mb-3 flex items-center">
-                      <BeerIcon className="h-5 w-5 mr-2 text-blue-600" />
-                      In Bottiglia ({bottleLocations.length})
-                    </h3>
-                    <div className="space-y-3">
-                      {bottleLocations.map((location: any, idx: number) => (
-                        <Link key={idx} href={`/pub/${location.pub.id}`}>
-                          <div className="glass-card border-0 p-4 hover:scale-102 transition-all duration-300 cursor-pointer">
-                            <div className="flex items-center justify-between">
-                              <div>
-                                <h4 className="font-semibold text-gray-900 dark:text-white hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
-                                  {location.pub.name}
-                                </h4>
-                                <p className="text-sm text-gray-600 dark:text-gray-400">
-                                  {location.pub.address}, {location.pub.city}
-                                </p>
-                              </div>
-                              {location.bottleItem.price && (
-                                <Badge className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-950 dark:to-indigo-950 text-blue-800 dark:text-blue-200 border-blue-200">
-                                  €{location.bottleItem.price}
-                                </Badge>
-                              )}
-                            </div>
-                          </div>
-                        </Link>
-                      ))}
-                    </div>
-                  </div>
-                )}
               </div>
             )}
-          </CardContent>
-        </Card>
+          </TabsContent>
+
+        </Tabs>
       </main>
 
       {/* Admin Edit Dialog */}
