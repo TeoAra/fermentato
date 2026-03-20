@@ -193,7 +193,7 @@ export default function BreweryDetail() {
   [userTastings]);
 
   const beerStyles = useMemo(() => {
-    const styles = Array.from(new Set(beers.map((b: Beer) => b.style).filter(Boolean)));
+    const styles = Array.from(new Set((beers as any[]).map((b: any) => b.style).filter(Boolean))) as string[];
     return styles.slice(0, 10);
   }, [beers]);
 
@@ -370,7 +370,7 @@ export default function BreweryDetail() {
     );
   }
 
-  const filteredBeers = activeStyleFilter ? beers.filter((b: Beer) => b.style === activeStyleFilter) : beers;
+  const filteredBeers = activeStyleFilter ? (beers as any[]).filter((b: any) => b.style === activeStyleFilter) : (beers as any[]);
   const displayedBeers = filteredBeers.slice(0, visibleCount);
 
   const seoTitle = brewery?.name ? `${brewery.name} — Birrificio Artigianale | Fermenta.to` : "Fermenta.to";
@@ -735,7 +735,7 @@ export default function BreweryDetail() {
                 ))}
               </div>
               
-              {visibleCount < beers.length && (
+              {visibleCount < filteredBeers.length && (
                 <div ref={sentinelRef} className="flex justify-center items-center py-8 mt-2">
                   <div className="flex gap-1.5">
                     {[0, 1, 2].map(i => (

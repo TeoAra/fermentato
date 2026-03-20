@@ -695,6 +695,7 @@ export default function UserProfile() {
                       const startDate = fest.startDate
                         ? new Date(fest.startDate).toLocaleDateString("it-IT", { day: "numeric", month: "short", year: "numeric" })
                         : null;
+                      const festLink = slug ? `/festival/${slug}` : null;
                       return (
                         <div key={fav.id || fav.itemId} className="flex flex-col rounded-xl overflow-hidden border border-gray-100 dark:border-gray-700 bg-white dark:bg-gray-800 hover:shadow-md transition-all">
                           {coverUrl && (
@@ -723,19 +724,21 @@ export default function UserProfile() {
                               </div>
                             </div>
                             <div className="flex gap-2 mt-2">
-                              {slug && (
-                                <a href={`/festival/${slug}`} className="flex-1">
+                              {festLink ? (
+                                <a href={festLink} className="flex-1">
                                   <button className="w-full text-xs font-medium text-amber-600 border border-amber-200 rounded-md px-2 py-1 hover:bg-amber-50 transition-colors">
                                     Taplist →
                                   </button>
                                 </a>
+                              ) : (
+                                <span className="flex-1 text-xs text-gray-400 italic self-center">Festival non più disponibile</span>
                               )}
                               <FestivalLikeButton festivalId={fav.itemId || fest.id} showLabel={false} />
-                              {slug && (
+                              {festLink && (
                                 <ShareButton
                                   title={name}
                                   text={`Scopri le birre al festival ${name}!`}
-                                  url={`${window.location.origin}/festival/${slug}`}
+                                  url={`${window.location.origin}${festLink}`}
                                   size="sm"
                                   variant="outline"
                                 />

@@ -10,6 +10,7 @@ import {
   menuItems,
   allergens,
   favorites,
+  festivals,
   userActivities,
   userBeerTastings,
   notifications,
@@ -969,8 +970,6 @@ export class DatabaseStorage implements IStorage {
 
   // Favorites operations
   async getUserFavorites(userId: string): Promise<any[]> {
-    console.log("Raw favorites from DB:", await db.select().from(favorites).where(eq(favorites.userId, userId)));
-    
     const userFavorites = await db
       .select()
       .from(favorites)
@@ -1001,6 +1000,12 @@ export class DatabaseStorage implements IStorage {
           itemName = beer.name;
           itemImageUrl = beer.imageUrl || beer.logoUrl;
         }
+      } else if (favorite.itemType === 'festival') {
+        const [fest] = await db.select({ name: festivals.name, logoUrl: festivals.logoUrl, slug: festivals.slug }).from(festivals).where(eq(festivals.id, favorite.itemId));
+        if (fest) {
+          itemName = fest.name;
+          itemImageUrl = fest.logoUrl;
+        }
       }
       
       enrichedFavorites.push({
@@ -1010,7 +1015,6 @@ export class DatabaseStorage implements IStorage {
       });
     }
     
-    console.log("Enriched favorites:", enrichedFavorites);
     return enrichedFavorites;
   }
 
