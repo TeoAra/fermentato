@@ -672,6 +672,8 @@ export class DatabaseStorage implements IStorage {
         INNER JOIN beers b ON tl.beer_id = b.id  
         LEFT JOIN breweries br ON b.brewery_id = br.id
         WHERE tl.pub_id = ${pubId}
+          AND COALESCE(tl.is_active, true) = true
+          AND COALESCE(tl.is_visible, true) = true
         ORDER BY tl.tap_number ASC
       `);
       
