@@ -80,8 +80,15 @@ export default function BreweryCard({ brewery, beerCount = 0, distance }: Brewer
     });
   };
 
+  const handlePrefetch = () => {
+    queryClient.prefetchQuery({
+      queryKey: ["/api/breweries", brewery.id],
+      staleTime: 30 * 1000,
+    });
+  };
+
   return (
-    <Link href={`/brewery/${brewery.id}`}>
+    <Link href={`/brewery/${brewery.id}`} onMouseEnter={handlePrefetch} onTouchStart={handlePrefetch}>
       <Card className="overflow-hidden hover:shadow-md transition-all duration-200 border border-gray-100 dark:border-slate-700 cursor-pointer group relative">
         <CardContent className="p-4">
           {/* Mobile-First Layout */}

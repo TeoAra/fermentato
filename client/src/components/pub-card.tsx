@@ -129,8 +129,20 @@ export default function PubCard({ pub, distance }: PubCardProps) {
 
   const open = isOpenNow(pub.openingHours);
 
+  const handlePrefetch = () => {
+    const pubId = (pub as any).slug || String(pub.id);
+    queryClient.prefetchQuery({
+      queryKey: ["/api/pubs", pubId],
+      staleTime: 30 * 1000,
+    });
+    queryClient.prefetchQuery({
+      queryKey: ["/api/pubs", pub.id, "taplist"],
+      staleTime: 30 * 1000,
+    });
+  };
+
   return (
-    <Link href={`/pub/${pub.slug || pub.id}`}>
+    <Link href={`/pub/${(pub as any).slug || pub.id}`} onMouseEnter={handlePrefetch} onTouchStart={handlePrefetch}>
       <Card className="overflow-hidden cursor-pointer group hover:shadow-[0_6px_20px_hsla(28,25%,8%,0.10)] dark:hover:shadow-[0_6px_20px_hsla(0,0%,0%,0.40)] transition-all duration-250 hover:-translate-y-0.5">
         <div className="relative">
           <ImageWithFallback

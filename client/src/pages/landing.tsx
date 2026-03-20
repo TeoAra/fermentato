@@ -45,8 +45,8 @@ export default function Landing() {
   const { data: breweriesFallback, isLoading: breweriesFallbackLoading } = useQuery({
     queryKey: ["/api/breweries", "landing-fallback"],
     queryFn: () => fetch("/api/breweries?random=true&limit=4").then(r => r.json()),
-    staleTime: 0,
-    gcTime: 2 * 60 * 1000,
+    staleTime: 5 * 60 * 1000,
+    gcTime: 10 * 60 * 1000,
   });
 
   // When location known: fetch nearest breweries server-side (4 for cards)

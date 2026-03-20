@@ -10,6 +10,7 @@ import { initGA } from "./lib/analytics";
 import { useAnalytics } from "./hooks/use-analytics";
 import { usePushBadge } from "@/hooks/use-push-badge";
 import Header from "@/components/header";
+import { NavigationProgress } from "@/components/navigation-progress";
 import { PwaInstallPrompt, PushNotificationPrompt, AutoPushSubscriber } from "@/components/pwa-prompt";
 
 const BeerDetailLazy = lazy(() => import("@/pages/beer-detail"));
@@ -147,6 +148,8 @@ function Router() {
     <div className="min-h-screen bg-background text-foreground">
       {/* Scroll to top on route change */}
       <ScrollToTop />
+      {/* Navigation progress bar */}
+      <NavigationProgress />
       
       {/* Desktop Header */}
       <div className="hidden lg:block">
