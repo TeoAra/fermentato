@@ -1,5 +1,6 @@
-import { useState, useEffect, useMemo } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useState, useEffect, useMemo, useCallback } from "react";
+import { usePullToRefresh } from "@/hooks/use-pull-to-refresh";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { MapPin, Loader2, Navigation, Clock, AlertCircle, Beer, Trash2, X, Calendar, CalendarDays, ChevronDown } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -101,6 +102,12 @@ export default function Activity() {
       return stored ? new Set(JSON.parse(stored)) : new Set();
     } catch { return new Set(); }
   });
+
+  const queryClient = useQueryClient();
+  const handleRefresh = useCallback(async () => {
+    await queryClient.invalidateQueries();
+  }, [queryClient]);
+  const { isPulling, isRefreshing, pullProgress } = usePullToRefresh(handleRefresh);
 
   const requestLocation = () => {
     if (!navigator.geolocation) {
@@ -247,6 +254,19 @@ export default function Activity() {
 
   return (
     <div className="container mx-auto px-4 py-6 max-w-4xl pb-24">
+      {/* Pull to refresh indicator */}
+      {(isPulling || isRefreshing) && (
+        <div className="fixed top-16 left-0 right-0 z-40 flex items-center justify-center py-2.5 bg-amber-50 dark:bg-amber-950/90 border-b border-amber-200 dark:border-amber-800 backdrop-blur-sm">
+          {isRefreshing ? (
+            <div className="flex items-center gap-2 text-amber-700 dark:text-amber-300 text-xs font-medium">
+              <Loader2 className="h-3.5 w-3.5 animate-spin" />
+              Aggiornamento in corso...
+            </div>
+          ) : (
+            <div className="text-amber-600 dark:text-amber-400 text-xs font-medium">↓ Rilascia per aggiornare</div>
+          )}
+        </div>
+      )}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6">
         <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Attività in Zona</h1>
         <div className="flex items-center gap-2">
@@ -295,10 +315,25 @@ export default function Activity() {
         </div>
       )}
 
+      {!userLocation && !requestingLocation && !locationError && (
+        <div className="mb-6 p-5 rounded-2xl bg-gradient-to-br from-amber-50 to-orange-50 dark:from-amber-950/40 dark:to-orange-950/40 border border-amber-200 dark:border-amber-800 flex items-center gap-4">
+          <div className="w-12 h-12 rounded-full bg-amber-100 dark:bg-amber-900/60 flex items-center justify-center flex-shrink-0">
+            <Navigation className="h-6 w-6 text-amber-600 dark:text-amber-400" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="font-semibold text-gray-900 dark:text-white text-sm">Attiva la posizione</p>
+            <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Per vedere pub, eventi e birre vicino a te</p>
+          </div>
+          <Button onClick={requestLocation} size="sm" className="bg-amber-500 hover:bg-amber-600 text-white flex-shrink-0">
+            Attiva
+          </Button>
+        </div>
+      )}
+
       {userLocation && (
         <div className="mb-4 text-sm text-gray-500 dark:text-gray-400 flex items-center gap-2">
-          <MapPin className="h-4 w-4" />
-          <span>Posizione rilevata - Mostrando risultati entro {radius} km</span>
+          <MapPin className="h-4 w-4 text-green-500" />
+          <span>Posizione rilevata · Risultati entro <strong>{radius} km</strong></span>
         </div>
       )}
 

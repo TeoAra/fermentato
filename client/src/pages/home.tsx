@@ -1,7 +1,8 @@
 import { useAuth } from "@/hooks/useAuth";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link } from "wouter";
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
+import { usePullToRefresh } from "@/hooks/use-pull-to-refresh";
 import { Beer, MapPin, Heart, Store, TrendingUp, Navigation, Building2, ChevronRight, Zap, List, CalendarDays, Settings2, Megaphone, Newspaper, Rocket, Users, Droplets } from "lucide-react";
 import Footer from "@/components/footer";
 import PubCard from "@/components/pub-card";
@@ -52,6 +53,12 @@ export default function Home() {
       { enableHighAccuracy: true, timeout: 10000 }
     );
   };
+
+  const queryClient = useQueryClient();
+  const handleRefresh = useCallback(async () => {
+    await queryClient.invalidateQueries();
+  }, [queryClient]);
+  const { isPulling, isRefreshing } = usePullToRefresh(handleRefresh);
   
   const { data: pubs, isLoading: pubsLoading } = useQuery({
     queryKey: ["/api/pubs"],
@@ -133,7 +140,20 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-[hsl(38,14%,97%)] dark:bg-[hsl(25,14%,7%)]">
-      
+      {/* Pull to refresh indicator */}
+      {(isPulling || isRefreshing) && (
+        <div className="fixed top-16 left-0 right-0 z-40 flex items-center justify-center py-2.5 bg-amber-50 dark:bg-amber-950/90 border-b border-amber-200 dark:border-amber-800 backdrop-blur-sm">
+          {isRefreshing ? (
+            <div className="flex items-center gap-2 text-amber-700 dark:text-amber-300 text-xs font-medium">
+              <span className="inline-block h-3.5 w-3.5 rounded-full border-2 border-amber-500 border-t-transparent animate-spin" />
+              Aggiornamento in corso...
+            </div>
+          ) : (
+            <div className="text-amber-600 dark:text-amber-400 text-xs font-medium">↓ Rilascia per aggiornare</div>
+          )}
+        </div>
+      )}
+
       {/* Welcome Hero */}
       <section className="relative overflow-hidden bg-gradient-to-br from-[hsl(38,30%,96%)] via-[hsl(40,20%,98%)] to-[hsl(36,14%,94%)] dark:from-[hsl(25,18%,9%)] dark:via-[hsl(28,14%,8%)] dark:to-[hsl(25,14%,7%)]">
         <div className="absolute inset-0">

@@ -14,20 +14,22 @@ interface BeerTastingFormProps {
   beerId: number;
   beerName?: string;
   existingTasting?: any;
+  initialRating?: number;
+  autoOpen?: boolean;
   onSuccess?: () => void;
   onCancel?: () => void;
 }
 
-export default function BeerTastingForm({ beerId, beerName, existingTasting, onSuccess, onCancel }: BeerTastingFormProps) {
+export default function BeerTastingForm({ beerId, beerName, existingTasting, initialRating, autoOpen, onSuccess, onCancel }: BeerTastingFormProps) {
   const { user, isAuthenticated } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const isEditMode = !!existingTasting && !!onCancel;
-  const [showForm, setShowForm] = useState(isEditMode);
+  const [showForm, setShowForm] = useState(isEditMode || !!autoOpen);
   const [selectedPubId, setSelectedPubId] = useState<number | undefined>(existingTasting?.pubId || undefined);
   const [formData, setFormData] = useState({
     format: existingTasting?.format || "",
-    rating: existingTasting?.rating || 5,
+    rating: existingTasting?.rating || initialRating || 5,
     personalNotes: existingTasting?.personalNotes || existingTasting?.notes || "",
   });
 

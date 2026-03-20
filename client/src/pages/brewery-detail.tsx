@@ -44,7 +44,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
-import { useState } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import ImageWithFallback from "@/components/image-with-fallback";
 import { ImageUpload } from "@/components/image-upload";
 import SuggestChangeDialog from "@/components/SuggestChangeDialog";
@@ -100,7 +100,8 @@ export default function BreweryDetail() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState("birre");
-  const [showAllBeers, setShowAllBeers] = useState(false);
+  const [visibleCount, setVisibleCount] = useState(9);
+  const sentinelRef = useRef<HTMLDivElement>(null);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isSuggestDialogOpen, setIsSuggestDialogOpen] = useState(false);
   const [editForm, setEditForm] = useState({
@@ -114,6 +115,19 @@ export default function BreweryDetail() {
   });
   
   const isAdmin = (user as any)?.activeRole === 'admin' || (!((user as any)?.activeRole) && user?.userType === 'admin');
+
+  const isBeerFavorited = useCallback((beerId: number) =>
+    Array.isArray(favorites) && favorites.some((f: any) => f.itemType === 'beer' && f.itemId === beerId),
+  [favorites]);
+
+  useEffect(() => {
+    if (!sentinelRef.current) return;
+    const observer = new IntersectionObserver(entries => {
+      if (entries[0].isIntersecting) setVisibleCount(c => c + 9);
+    }, { rootMargin: '200px' });
+    observer.observe(sentinelRef.current);
+    return () => observer.disconnect();
+  }, [sentinelRef.current]);
   
   const { data: brewery, isLoading: breweryLoading } = useQuery<Brewery>({
     queryKey: ["/api/breweries", id],
@@ -207,7 +221,7 @@ export default function BreweryDetail() {
     fav.itemType === 'brewery' && fav.itemId === parseInt(id || '0')
   );
 
-  // Favorite mutation
+  // Favorite mutation with optimistic UI + undo toast
   const favoriteMutation = useMutation({
     mutationFn: async ({ itemType, itemId, action }: { itemType: string, itemId: number, action: 'add' | 'remove' }) => {
       if (action === 'add') {
@@ -216,19 +230,35 @@ export default function BreweryDetail() {
         return apiRequest(`/api/favorites/${itemType}/${itemId}`, { method: 'DELETE' });
       }
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/favorites"] });
-      toast({
-        title: "✅ Successo",
-        description: isBreweryFavorited ? "Rimosso dai favoriti" : "Aggiunto ai favoriti",
+    onMutate: async ({ itemType, itemId, action }) => {
+      await queryClient.cancelQueries({ queryKey: ["/api/favorites"] });
+      const prev = queryClient.getQueryData(["/api/favorites"]);
+      queryClient.setQueryData(["/api/favorites"], (old: any[]) => {
+        if (action === 'add') return [...(old || []), { itemType, itemId }];
+        return (old || []).filter((f: any) => !(f.itemType === itemType && f.itemId === itemId));
       });
+      return { prev };
     },
-    onError: () => {
-      toast({
-        title: "❌ Errore",
-        description: "Non è stato possibile aggiornare i favoriti",
-        variant: "destructive",
-      });
+    onSuccess: (_, { itemType, itemId, action }) => {
+      queryClient.invalidateQueries({ queryKey: ["/api/favorites"] });
+      if (action === 'add') {
+        toast({
+          title: "Aggiunto ai preferiti",
+          description: "Puoi annullare entro 5 secondi",
+          action: (
+            <button
+              className="text-xs font-semibold text-amber-600 hover:text-amber-700 underline underline-offset-2"
+              onClick={() => favoriteMutation.mutate({ itemType, itemId, action: 'remove' })}
+            >
+              Annulla
+            </button>
+          ) as any,
+        });
+      }
+    },
+    onError: (_err, _vars, ctx) => {
+      if (ctx?.prev) queryClient.setQueryData(["/api/favorites"], ctx.prev);
+      toast({ title: "Errore", description: "Non è stato possibile aggiornare i favoriti", variant: "destructive" });
     },
   });
 
@@ -324,7 +354,7 @@ export default function BreweryDetail() {
     );
   }
 
-  const displayedBeers = showAllBeers ? beers : beers.slice(0, 6);
+  const displayedBeers = beers.slice(0, visibleCount);
 
   const seoTitle = brewery?.name ? `${brewery.name} — Birrificio Artigianale | Fermenta.to` : "Fermenta.to";
   const seoDesc = (brewery as any)?.description
@@ -600,6 +630,21 @@ export default function BreweryDetail() {
                           )}
                         </div>
                       )}
+                      {/* Quick favorite button */}
+                      <button
+                        onClick={e => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          if (!isAuthenticated) {
+                            toast({ title: "Accesso richiesto", description: "Effettua l'accesso per aggiungere ai preferiti", variant: "destructive" });
+                            return;
+                          }
+                          favoriteMutation.mutate({ itemType: 'beer', itemId: beer.id, action: isBeerFavorited(beer.id) ? 'remove' : 'add' });
+                        }}
+                        className={`absolute bottom-3 right-3 z-10 h-8 w-8 flex items-center justify-center rounded-full shadow border transition-all hover:scale-110 ${isBeerFavorited(beer.id) ? 'bg-red-50 border-red-200 dark:bg-red-900/40 dark:border-red-800' : 'bg-white dark:bg-gray-800 border-gray-100 dark:border-gray-700'}`}
+                      >
+                        <Heart className={`h-4 w-4 transition-colors ${isBeerFavorited(beer.id) ? 'fill-red-500 text-red-500' : 'text-gray-300 dark:text-gray-600'}`} />
+                      </button>
                       <CardContent className="p-6">
                         <div className={`flex items-start space-x-4 mb-4 ${beer.isCollaboration ? 'mt-4' : ''}`}>
                           <ImageWithFallback
@@ -647,16 +692,13 @@ export default function BreweryDetail() {
                 ))}
               </div>
               
-              {beers.length > 6 && (
-                <div className="text-center mt-6">
-                  <Button
-                    variant="outline"
-                    onClick={() => setShowAllBeers(!showAllBeers)}
-                    className="bg-white/60 dark:bg-gray-800/60"
-                    data-testid="button-toggle-beers"
-                  >
-                    {showAllBeers ? 'Mostra meno' : `Mostra tutte (${beers.length})`}
-                  </Button>
+              {visibleCount < beers.length && (
+                <div ref={sentinelRef} className="flex justify-center items-center py-8 mt-2">
+                  <div className="flex gap-1.5">
+                    {[0, 1, 2].map(i => (
+                      <div key={i} className="w-2 h-2 rounded-full bg-amber-300 dark:bg-amber-700 animate-bounce" style={{ animationDelay: `${i * 0.15}s` }} />
+                    ))}
+                  </div>
                 </div>
               )}
             </>

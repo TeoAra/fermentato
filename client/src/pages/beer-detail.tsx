@@ -125,6 +125,9 @@ export default function BeerDetail() {
   const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState("scheda");
   const [showTastingForm, setShowTastingForm] = useState(false);
+  const [quickRating, setQuickRating] = useState(0);
+  const [hoverRating, setHoverRating] = useState(0);
+  const tastingRef = useRef<HTMLDivElement>(null);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isSuggestDialogOpen, setIsSuggestDialogOpen] = useState(false);
   const [reviewFilterRating, setReviewFilterRating] = useState<number | null>(null);
@@ -356,19 +359,35 @@ export default function BeerDetail() {
         return apiRequest(`/api/favorites/${itemType}/${itemId}`, { method: 'DELETE' });
       }
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/favorites"] });
-      toast({
-        title: "✅ Successo",
-        description: isBeerFavorited ? "Rimossa dai favoriti" : "Aggiunta ai favoriti",
+    onMutate: async ({ itemType, itemId, action }) => {
+      await queryClient.cancelQueries({ queryKey: ["/api/favorites"] });
+      const prev = queryClient.getQueryData(["/api/favorites"]);
+      queryClient.setQueryData(["/api/favorites"], (old: any[]) => {
+        if (action === 'add') return [...(old || []), { itemType, itemId }];
+        return (old || []).filter((f: any) => !(f.itemType === itemType && f.itemId === itemId));
       });
+      return { prev };
     },
-    onError: () => {
-      toast({
-        title: "❌ Errore",
-        description: "Non è stato possibile aggiornare i favoriti",
-        variant: "destructive",
-      });
+    onSuccess: (_, { itemType, itemId, action }) => {
+      queryClient.invalidateQueries({ queryKey: ["/api/favorites"] });
+      if (action === 'add') {
+        toast({
+          title: "Aggiunta ai preferiti",
+          description: "Puoi annullare entro 5 secondi",
+          action: (
+            <button
+              className="text-xs font-semibold text-amber-600 hover:text-amber-700 underline underline-offset-2"
+              onClick={() => favoriteMutation.mutate({ itemType, itemId, action: 'remove' })}
+            >
+              Annulla
+            </button>
+          ) as any,
+        });
+      }
+    },
+    onError: (_err, _vars, ctx) => {
+      if (ctx?.prev) queryClient.setQueryData(["/api/favorites"], ctx.prev);
+      toast({ title: "Errore", description: "Non è stato possibile aggiornare i favoriti", variant: "destructive" });
     },
   });
 
@@ -604,6 +623,36 @@ export default function BeerDetail() {
               </span>
             )}
           </div>
+          {/* Quick star rating */}
+          {isAuthenticated && (
+            <div className="flex flex-col items-center gap-1">
+              <span className="text-xs text-gray-400 dark:text-gray-500">
+                {hasTasted ? "Il tuo voto" : "Dai un voto rapido"}
+              </span>
+              <div className="flex items-center gap-0.5">
+                {[1, 2, 3, 4, 5].map(s => (
+                  <button
+                    key={s}
+                    onMouseEnter={() => !hasTasted && setHoverRating(s)}
+                    onMouseLeave={() => !hasTasted && setHoverRating(0)}
+                    onClick={() => {
+                      setActiveTab('recensioni');
+                      if (!hasTasted) setQuickRating(s);
+                      setTimeout(() => tastingRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 150);
+                    }}
+                    className="p-0.5 transition-transform hover:scale-110"
+                  >
+                    <Star className={`h-5 w-5 transition-colors ${
+                      s <= (hasTasted ? existingTasting?.rating || 0 : (hoverRating || quickRating))
+                        ? 'fill-yellow-400 text-yellow-400'
+                        : 'text-gray-300 dark:text-gray-600'
+                    }`} />
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
           {/* Action buttons – centered */}
           <div className="flex items-center gap-2 justify-center">
             <button
@@ -844,15 +893,19 @@ export default function BeerDetail() {
                   )}
                 </div>
 
+              <div ref={tastingRef} />
               {showTastingForm || !hasTasted ? (
                 <BeerTastingForm
                   beerId={parseInt(id || '0')}
                   existingTasting={existingTasting}
+                  initialRating={quickRating || undefined}
+                  autoOpen={quickRating > 0}
                   onSuccess={() => {
                     setShowTastingForm(false);
+                    setQuickRating(0);
                     queryClient.invalidateQueries({ queryKey: ["/api/user/beer-tastings"] });
                   }}
-                  onCancel={() => setShowTastingForm(false)}
+                  onCancel={() => { setShowTastingForm(false); setQuickRating(0); }}
                 />
               ) : (
                 <div className="space-y-3">

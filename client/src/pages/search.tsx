@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { useSearch } from "wouter";
 import { Link } from "wouter";
-import { Beer, Building2, MapPin, Search, ArrowLeft, SlidersHorizontal, X, PlusCircle } from "lucide-react";
+import { Beer, Building2, MapPin, Search, ArrowLeft, SlidersHorizontal, X, PlusCircle, Clock } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -37,6 +37,27 @@ export default function SearchPage() {
   const [filterMinIbu, setFilterMinIbu] = useState("");
   const [filterMaxIbu, setFilterMaxIbu] = useState("");
   const [additionModalOpen, setAdditionModalOpen] = useState(false);
+  const [recentSearches, setRecentSearches] = useState<string[]>(() => {
+    try { return JSON.parse(localStorage.getItem('fermentato_recent_searches') || '[]'); }
+    catch { return []; }
+  });
+
+  function addRecentSearch(q: string) {
+    if (!q.trim() || q.length < 2) return;
+    setRecentSearches(prev => {
+      const next = [q, ...prev.filter(s => s !== q)].slice(0, 6);
+      localStorage.setItem('fermentato_recent_searches', JSON.stringify(next));
+      return next;
+    });
+  }
+
+  function removeRecentSearch(q: string) {
+    setRecentSearches(prev => {
+      const next = prev.filter(s => s !== q);
+      localStorage.setItem('fermentato_recent_searches', JSON.stringify(next));
+      return next;
+    });
+  }
 
   useEffect(() => {
     setInputValue(initialQ);
@@ -89,6 +110,7 @@ export default function SearchPage() {
     e.preventDefault();
     setQuery(inputValue);
     setActiveTab("all");
+    addRecentSearch(inputValue);
     window.history.replaceState(null, "", `/search?q=${encodeURIComponent(inputValue)}`);
   };
 
@@ -257,25 +279,56 @@ export default function SearchPage() {
           </div>
         )}
 
-        {/* Empty state */}
+        {/* Empty state / recent searches */}
         {query.length <= 1 && (
-          <div className="flex flex-col items-center justify-center py-16 text-center">
-            <div className="w-20 h-20 rounded-full bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center mb-5">
-              <Search className="h-10 w-10 text-amber-400 dark:text-amber-500" />
-            </div>
-            <p className="text-lg font-semibold text-gray-700 dark:text-slate-200 mb-1">
-              Cosa stai cercando?
-            </p>
-            <p className="text-sm text-gray-400 dark:text-slate-500 max-w-xs">
-              Digita almeno 2 caratteri per cercare tra birre, birrifici e pub
-            </p>
-            <div className="flex items-center gap-4 mt-6 text-xs text-gray-400 dark:text-slate-500">
-              <span className="flex items-center gap-1.5"><Beer className="w-3.5 h-3.5 text-amber-400" /> Birre</span>
-              <span className="text-gray-200 dark:text-slate-700">·</span>
-              <span className="flex items-center gap-1.5"><Building2 className="w-3.5 h-3.5 text-amber-400" /> Birrifici</span>
-              <span className="text-gray-200 dark:text-slate-700">·</span>
-              <span className="flex items-center gap-1.5"><MapPin className="w-3.5 h-3.5 text-blue-400" /> Pub</span>
-            </div>
+          <div>
+            {recentSearches.length > 0 ? (
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-semibold text-gray-500 dark:text-slate-400 flex items-center gap-1.5">
+                    <Clock className="w-4 h-4" />
+                    Ricerche recenti
+                  </span>
+                  <button
+                    onClick={() => { setRecentSearches([]); localStorage.removeItem('fermentato_recent_searches'); }}
+                    className="text-xs text-gray-400 hover:text-red-500 transition-colors"
+                  >
+                    Cancella tutto
+                  </button>
+                </div>
+                <div className="space-y-1.5">
+                  {recentSearches.map(s => (
+                    <div key={s} className="flex items-center gap-2 p-3 rounded-xl bg-white dark:bg-slate-800 border border-gray-100 dark:border-slate-700 group">
+                      <Clock className="w-4 h-4 text-gray-300 dark:text-slate-600 flex-shrink-0" />
+                      <button
+                        className="flex-1 text-left text-sm text-gray-700 dark:text-slate-200 hover:text-amber-600 dark:hover:text-amber-400 transition-colors"
+                        onClick={() => { setInputValue(s); setQuery(s); addRecentSearch(s); window.history.replaceState(null, "", `/search?q=${encodeURIComponent(s)}`); }}
+                      >
+                        {s}
+                      </button>
+                      <button onClick={() => removeRecentSearch(s)} className="opacity-0 group-hover:opacity-100 text-gray-300 hover:text-red-400 transition-all">
+                        <X className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ) : (
+              <div className="flex flex-col items-center justify-center py-16 text-center">
+                <div className="w-20 h-20 rounded-full bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center mb-5">
+                  <Search className="h-10 w-10 text-amber-400 dark:text-amber-500" />
+                </div>
+                <p className="text-lg font-semibold text-gray-700 dark:text-slate-200 mb-1">Cosa stai cercando?</p>
+                <p className="text-sm text-gray-400 dark:text-slate-500 max-w-xs">Digita almeno 2 caratteri per cercare tra birre, birrifici e pub</p>
+                <div className="flex items-center gap-4 mt-6 text-xs text-gray-400 dark:text-slate-500">
+                  <span className="flex items-center gap-1.5"><Beer className="w-3.5 h-3.5 text-amber-400" /> Birre</span>
+                  <span className="text-gray-200 dark:text-slate-700">·</span>
+                  <span className="flex items-center gap-1.5"><Building2 className="w-3.5 h-3.5 text-amber-400" /> Birrifici</span>
+                  <span className="text-gray-200 dark:text-slate-700">·</span>
+                  <span className="flex items-center gap-1.5"><MapPin className="w-3.5 h-3.5 text-blue-400" /> Pub</span>
+                </div>
+              </div>
+            )}
           </div>
         )}
 

@@ -297,7 +297,7 @@ export default function PubDetail() {
 
   const isFavorite = isFavoriteData?.isFavorite || false;
 
-  // Toggle favorite mutation
+  // Toggle favorite mutation with optimistic UI + undo toast
   const toggleFavoriteMutation = useMutation({
     mutationFn: async () => {
       if (isFavorite) {
@@ -309,19 +309,33 @@ export default function PubDetail() {
         });
       }
     },
+    onMutate: async () => {
+      await queryClient.cancelQueries({ queryKey: ["/api/favorites", "pub", pubNumericId, "check"] });
+      const prev = queryClient.getQueryData(["/api/favorites", "pub", pubNumericId, "check"]);
+      queryClient.setQueryData(["/api/favorites", "pub", pubNumericId, "check"], !isFavorite);
+      return { prev };
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/favorites"] });
       queryClient.invalidateQueries({ queryKey: ["/api/favorites", "pub", pubNumericId, "check"] });
       queryClient.invalidateQueries({ queryKey: ["/api/favorites", "pub", pubNumericId, "count"] });
-      
-      toast({
-        title: isFavorite ? "Rimosso dai preferiti" : "Aggiunto ai preferiti",
-        description: isFavorite 
-          ? "Il pub è stato rimosso dai tuoi preferiti" 
-          : "Il pub è stato aggiunto ai tuoi preferiti",
-      });
+      if (!isFavorite) {
+        toast({
+          title: "Pub aggiunto ai preferiti",
+          description: "Puoi annullare entro 5 secondi",
+          action: (
+            <button
+              className="text-xs font-semibold text-amber-600 hover:text-amber-700 underline underline-offset-2"
+              onClick={() => toggleFavoriteMutation.mutate()}
+            >
+              Annulla
+            </button>
+          ) as any,
+        });
+      }
     },
-    onError: (err: any) => {
+    onError: (err: any, _v, ctx) => {
+      if (ctx?.prev !== undefined) queryClient.setQueryData(["/api/favorites", "pub", pubNumericId, "check"], ctx.prev);
       if (err?.status === 401 || err?.message?.includes("401") || err?.message?.includes("autenticato")) {
         toast({ title: "Accedi per salvare", description: "Effettua il login per gestire i preferiti." });
       } else {
