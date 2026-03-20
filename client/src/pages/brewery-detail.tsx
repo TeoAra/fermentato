@@ -493,7 +493,7 @@ export default function BreweryDetail() {
       <main className="max-w-7xl mx-auto pb-12">
         {/* ── TABS ── */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <div className="sticky top-16 lg:top-[68px] z-30 bg-[hsl(38,14%,97%)] dark:bg-[hsl(25,14%,7%)] border-b border-gray-200 dark:border-gray-800">
+          <div className="z-10 bg-[hsl(38,14%,97%)] dark:bg-[hsl(25,14%,7%)] border-b border-gray-200 dark:border-gray-800">
             <TabsList className="flex w-full h-auto bg-transparent p-0 rounded-none shadow-none border-none overflow-x-auto scrollbar-hide">
               <TabsTrigger
                 value="birre"
