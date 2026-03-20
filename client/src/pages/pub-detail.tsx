@@ -559,238 +559,225 @@ export default function PubDetail() {
         })}</script>
       </Helmet>
       
-      {/* Modern Hero Section */}
-      <div className="relative">
-        <div className="relative h-[440px] md:h-[520px] overflow-hidden">
-          <img
-            src={(pub as any)?.coverImageUrl || "https://images.unsplash.com/photo-1514933651103-005eec06c04b?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&h=600"}
-            alt={`${(pub as any)?.name} - Copertina`}
-            className="w-full h-full object-cover"
-          />
-          <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-black/10"></div>
-          
-          {/* Hero Content */}
-          <div className="absolute inset-0 flex items-center">
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
-              <div className="glass-card rounded-2xl p-5 sm:p-8 backdrop-blur-md bg-white/10 border border-white/20">
-                <div className="flex flex-col md:flex-row items-center md:items-center justify-between gap-5 sm:gap-8">
-                  <div className="flex flex-col md:flex-row items-center space-y-3 md:space-y-0 md:space-x-6 w-full md:w-auto justify-center md:justify-start">
-                    {/* Logo con bordo colorato per stato apertura */}
-                    <div className="relative flex-shrink-0">
-                      <Avatar className={`h-20 w-20 ring-4 ${openStatus.borderColor} flex-shrink-0 bg-white`}>
-                        <AvatarImage src={(pub as any)?.logoUrl} alt={`${(pub as any)?.name} - Logo`} className="object-contain p-1" />
-                        <AvatarFallback className="bg-gradient-to-br from-amber-500 to-orange-600 text-white text-2xl">
-                          {(pub as any)?.name?.[0] || 'P'}
-                        </AvatarFallback>
-                      </Avatar>
-                      {/* Indicatore stato piccolo */}
-                      <div className={`absolute -bottom-1 -right-1 w-5 h-5 ${openStatus.bgColor} rounded-full border-2 border-white shadow-lg`} title={
-                        openStatus.status === 'open' ? 'Aperto' :
-                        openStatus.status === 'closing_soon' ? 'Sta per chiudere' :
-                        openStatus.status === 'opening_soon' ? 'Sta per aprire' : 'Chiuso'
-                      }></div>
-                    </div>
-                    <div className="text-center md:text-left">
-                      {/* Nome + preferiti in linea su desktop */}
-                      <div className="flex flex-col md:flex-row md:items-center md:gap-4 mb-2">
-                        <h1 className="text-2xl sm:text-3xl md:text-4xl text-white font-bold leading-tight">
-                          {(pub as any)?.name}
-                        </h1>
-                        {(pub as any)?.isVerified && (
-                          <div title="Pub Verificato" className="flex items-center justify-center bg-emerald-600 border border-emerald-500 rounded-full w-7 h-7 mt-1 md:mt-0 self-center md:self-auto shadow-sm flex-shrink-0">
-                            <ShieldCheck className="h-4 w-4 text-white" />
-                          </div>
-                        )}
-                        {/* Preferiti inline su desktop */}
-                        <div className="hidden md:flex items-center bg-red-500/20 backdrop-blur-sm border border-red-300/30 rounded-full px-3 py-1">
-                          <Heart className="h-4 w-4 mr-1.5 text-red-400 fill-current" />
-                          <span className="text-sm font-bold text-red-100">{favoritesCountData?.count || 0}</span>
-                        </div>
-                      </div>
-                      {/* Mobile: Preferiti sotto il nome */}
-                      <div className="flex md:hidden items-center justify-center mt-2 mb-3">
-                        <div className="flex items-center bg-red-500/20 backdrop-blur-sm border border-red-300/30 rounded-lg px-4 py-2">
-                          <Heart className="h-4 w-4 mr-2 text-red-400 fill-current" />
-                          <span className="text-sm font-bold text-red-100">{favoritesCountData?.count || 0}</span>
-                          <span className="text-xs text-red-200 ml-1">preferiti</span>
-                        </div>
-                      </div>
-                      {/* Badge stato solo su mobile */}
-                      <div className="flex md:hidden items-center justify-center space-x-3">
-                        <Badge 
-                          className={`${
-                            isOpen 
-                              ? 'bg-green-500/20 text-green-100 border-green-300/30' 
-                              : 'bg-red-500/20 text-red-100 border-red-300/30'
-                          } backdrop-blur-sm px-3 py-2`}
-                        >
-                          {openStatus.status === 'open' && <><CheckCircle className="h-4 w-4 mr-2" />Aperto</>}
-                          {openStatus.status === 'closing_soon' && <><Clock className="h-4 w-4 mr-2" />Sta chiudendo</>}
-                          {openStatus.status === 'opening_soon' && <><Clock className="h-4 w-4 mr-2" />Sta aprendo</>}
-                          {openStatus.status === 'closed' && <><XCircle className="h-4 w-4 mr-2" />Chiuso</>}
-                        </Badge>
-                        {!(pub as any)?.isActive && (
-                          <Badge className="bg-orange-500/20 text-orange-100 border-orange-300/30 backdrop-blur-sm px-3 py-2">
-                            Temporaneamente Chiuso
-                          </Badge>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                  
-                  {/* Centered action buttons on mobile, right-aligned on desktop */}
-                  <div className="flex items-center justify-center md:justify-end gap-2 w-full md:w-auto flex-wrap">
-                    <Button 
-                      variant="outline" 
-                      size="sm" 
-                      onClick={handleSave}
-                      disabled={toggleFavoriteMutation.isPending}
-                      className={`backdrop-blur-md border-white/40 text-white hover:bg-white/30 hover:border-white/60 transition-all duration-300 font-medium shadow-lg min-h-[44px] min-w-[44px] ${
-                        isFavorite ? 'bg-red-500/30 border-red-300/50' : 'bg-white/20'
-                      }`}
-                      data-testid="button-save"
-                    >
-                      <Heart className={`h-4 w-4 lg:mr-2 ${isFavorite ? 'fill-current' : ''}`} />
-                      <span className="hidden lg:inline">{isFavorite ? 'Salvato' : 'Salva'}</span>
-                    </Button>
-                    <Button 
-                      variant="outline" 
-                      size="sm" 
-                      onClick={handleShare}
-                      className="backdrop-blur-md bg-white/20 border-white/40 text-white hover:bg-white/30 hover:border-white/60 transition-all duration-300 font-medium shadow-lg min-h-[44px] min-w-[44px]"
-                      data-testid="button-share"
-                    >
-                      <Share2 className="h-4 w-4 lg:mr-2" />
-                      <span className="hidden lg:inline">Condividi</span>
-                    </Button>
-                    {((pub as any)?.latitude && (pub as any)?.longitude) || (pub as any)?.address ? (
-                      <a
-                        href={getMapNavigationUrl((pub as any).name, (pub as any).address)}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                      >
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="backdrop-blur-md bg-blue-500/40 border-blue-300/60 text-white hover:bg-blue-500/60 transition-all duration-300 font-medium shadow-lg min-h-[44px] min-w-[44px]"
-                        >
-                          <Navigation className="h-4 w-4 lg:mr-2" />
-                          <span className="hidden lg:inline">Mappa</span>
-                        </Button>
-                      </a>
-                    ) : null}
-                    {canManage && (
-                      <Link href={isAdmin ? `/admin/edit-pub/${id}` : "/dashboard"}>
-                        <Button 
-                          className="bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 shadow-lg min-h-[44px] min-w-[44px]"
-                          title="Gestisci pub"
-                          data-testid="button-manage"
-                        >
-                          <Settings className="w-4 h-4" />
-                        </Button>
-                      </Link>
-                    )}
-                  </div>
+      {/* ── HERO ── compact, image-first */}
+      <div className="relative h-[220px] sm:h-[280px] md:h-[340px] overflow-hidden">
+        <img
+          src={(pub as any)?.coverImageUrl || "https://images.unsplash.com/photo-1514933651103-005eec06c04b?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&h=600"}
+          alt={`${(pub as any)?.name} - Copertina`}
+          className="w-full h-full object-cover"
+        />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
+        {/* Pub name + logo anchored to bottom-left of image */}
+        <div className="absolute bottom-0 left-0 right-0 px-4 pb-4 flex items-end gap-3">
+          <Avatar className={`h-14 w-14 sm:h-16 sm:w-16 ring-2 ${openStatus.borderColor} flex-shrink-0 bg-white shadow-lg`}>
+            <AvatarImage src={(pub as any)?.logoUrl} alt={(pub as any)?.name} className="object-contain p-1" />
+            <AvatarFallback className="bg-gradient-to-br from-amber-500 to-orange-600 text-white text-xl font-bold">
+              {(pub as any)?.name?.[0] || 'P'}
+            </AvatarFallback>
+          </Avatar>
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2 flex-wrap">
+              <h1 className="text-xl sm:text-2xl md:text-3xl text-white font-bold leading-tight drop-shadow-md">
+                {(pub as any)?.name}
+              </h1>
+              {(pub as any)?.isVerified && (
+                <div title="Pub Verificato" className="flex items-center justify-center bg-emerald-600 border border-emerald-500 rounded-full w-6 h-6 shadow-sm flex-shrink-0">
+                  <ShieldCheck className="h-3.5 w-3.5 text-white" />
                 </div>
-              </div>
+              )}
             </div>
+            {(pub as any)?.city && (
+              <p className="text-white/80 text-sm mt-0.5 flex items-center gap-1">
+                <MapPin className="h-3 w-3 flex-shrink-0" />
+                {(pub as any).city}
+              </p>
+            )}
           </div>
         </div>
       </div>
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Next Event Banner */}
-        {(() => {
-          const upcomingEvents = Array.isArray(pubEvents) 
-            ? pubEvents.filter((e: any) => e.isPublished && isFuture(new Date(e.eventDate))).sort((a: any, b: any) => new Date(a.eventDate).getTime() - new Date(b.eventDate).getTime())
-            : [];
-          const nextEvent = upcomingEvents[0];
-          if (!nextEvent) return null;
-          return (
-            <div 
-              className="mb-8 rounded-2xl overflow-hidden cursor-pointer shadow-lg hover:shadow-xl transition-all duration-300 group relative"
-              onClick={() => setSelectedEvent(nextEvent)}
+      {/* ── INFO BAR ── the most important info, always visible */}
+      <div className="bg-white dark:bg-[hsl(25,14%,10%)] border-b border-gray-100 dark:border-gray-800 px-4 py-3">
+        <div className="max-w-7xl mx-auto flex items-center justify-between gap-3 flex-wrap">
+          {/* Left: open status + tap count */}
+          <div className="flex items-center gap-3 flex-wrap">
+            {/* Open status pill */}
+            <button
+              onClick={handleShowOpeningHours}
+              className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-semibold border transition-colors ${
+                openStatus.status === 'open'
+                  ? 'bg-green-50 dark:bg-green-950 text-green-700 dark:text-green-300 border-green-200 dark:border-green-800'
+                  : openStatus.status === 'closing_soon'
+                  ? 'bg-amber-50 dark:bg-amber-950 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-800'
+                  : openStatus.status === 'opening_soon'
+                  ? 'bg-blue-50 dark:bg-blue-950 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-800'
+                  : 'bg-red-50 dark:bg-red-950 text-red-700 dark:text-red-300 border-red-200 dark:border-red-800'
+              }`}
+              data-testid="button-show-hours"
             >
-              <div className="relative h-48 sm:h-56">
-                <img 
-                  src={nextEvent.imageUrl || "https://images.unsplash.com/photo-1514933651103-005eec06c04b?auto=format&fit=crop&w=1200&h=400"} 
-                  alt={nextEvent.title}
-                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
-                <div className="absolute top-3 left-3">
-                  <EventCategoryBadge category={nextEvent.category} />
-                </div>
-                <div className="absolute bottom-0 left-0 right-0 p-5">
-                  <h3 className="text-xl sm:text-2xl font-bold text-white mb-1">{nextEvent.title}</h3>
-                  <div className="flex items-center text-sm text-white/90 gap-2">
-                    <Calendar className="h-4 w-4" />
-                    <span>{format(new Date(nextEvent.eventDate), "EEEE d MMMM yyyy 'alle' HH:mm", { locale: itLocale })}</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          );
-        })()}
+              <span className={`w-2 h-2 rounded-full flex-shrink-0 ${
+                openStatus.status === 'open' ? 'bg-green-500' :
+                openStatus.status === 'closing_soon' ? 'bg-amber-500' :
+                openStatus.status === 'opening_soon' ? 'bg-blue-500' : 'bg-red-500'
+              }`} />
+              {openStatus.status === 'open' && 'Aperto'}
+              {openStatus.status === 'closing_soon' && 'Sta chiudendo'}
+              {openStatus.status === 'opening_soon' && 'Sta per aprire'}
+              {openStatus.status === 'closed' && 'Chiuso'}
+              {!(pub as any)?.isActive && ' · Temporaneamente chiuso'}
+              <Clock className="h-3 w-3 opacity-60" />
+            </button>
 
+            {/* Tap count pill */}
+            {Array.isArray(tapList) && tapList.filter((t: any) => t.isActive).length > 0 && (
+              <button
+                onClick={() => setActiveTab('taplist')}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-semibold bg-amber-50 dark:bg-amber-950 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-800 hover:bg-amber-100 dark:hover:bg-amber-900 transition-colors"
+              >
+                <Wine className="h-3.5 w-3.5" />
+                {tapList.filter((t: any) => t.isActive).length} alla spina
+              </button>
+            )}
+
+            {/* Favorites count */}
+            {(favoritesCountData as any)?.count > 0 && (
+              <span className="inline-flex items-center gap-1 text-sm text-gray-500 dark:text-gray-400">
+                <Heart className="h-3.5 w-3.5 text-red-400 fill-current" />
+                {(favoritesCountData as any).count}
+              </span>
+            )}
+          </div>
+
+          {/* Right: action buttons */}
+          <div className="flex items-center gap-1.5 flex-shrink-0">
+            <button
+              onClick={handleSave}
+              disabled={toggleFavoriteMutation.isPending}
+              title={isFavorite ? 'Rimuovi dai preferiti' : 'Aggiungi ai preferiti'}
+              data-testid="button-save"
+              className={`h-9 w-9 flex items-center justify-center rounded-full border transition-all ${
+                isFavorite
+                  ? 'bg-red-50 dark:bg-red-950 border-red-200 dark:border-red-800 text-red-500'
+                  : 'bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700 text-gray-500 dark:text-gray-400 hover:border-red-200 hover:text-red-400'
+              }`}
+            >
+              <Heart className={`h-4 w-4 ${isFavorite ? 'fill-current' : ''}`} />
+            </button>
+
+            {(((pub as any)?.latitude && (pub as any)?.longitude) || (pub as any)?.address) && (
+              <a
+                href={getMapNavigationUrl((pub as any).name, (pub as any).address)}
+                target="_blank"
+                rel="noopener noreferrer"
+                title="Avvia navigazione"
+                className="h-9 w-9 flex items-center justify-center rounded-full border bg-blue-50 dark:bg-blue-950 border-blue-200 dark:border-blue-800 text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-900 transition-colors"
+              >
+                <Navigation className="h-4 w-4" />
+              </a>
+            )}
+
+            {(pub as any)?.phone && (
+              <a
+                href={`tel:${(pub as any).phone}`}
+                title="Chiama"
+                className="h-9 w-9 flex items-center justify-center rounded-full border bg-green-50 dark:bg-green-950 border-green-200 dark:border-green-800 text-green-600 dark:text-green-400 hover:bg-green-100 dark:hover:bg-green-900 transition-colors"
+              >
+                <Phone className="h-4 w-4" />
+              </a>
+            )}
+
+            <button
+              onClick={handleShare}
+              title="Condividi"
+              data-testid="button-share"
+              className="h-9 w-9 flex items-center justify-center rounded-full border bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700 text-gray-500 dark:text-gray-400 hover:border-gray-300 transition-colors"
+            >
+              <Share2 className="h-4 w-4" />
+            </button>
+
+            {canManage && (
+              <Link href={isAdmin ? `/admin/edit-pub/${id}` : "/dashboard"}>
+                <button
+                  title="Gestisci pub"
+                  data-testid="button-manage"
+                  className="h-9 w-9 flex items-center justify-center rounded-full border bg-amber-50 dark:bg-amber-950 border-amber-200 dark:border-amber-800 text-amber-600 dark:text-amber-400 hover:bg-amber-100 dark:hover:bg-amber-900 transition-colors"
+                >
+                  <Settings className="h-4 w-4" />
+                </button>
+              </Link>
+            )}
+          </div>
+        </div>
+      </div>
+
+      <main className="max-w-7xl mx-auto pb-12">
         {/* Main Content Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
+        <div className="grid grid-cols-1 lg:grid-cols-4">
           {/* Main Content */}
           <div className="lg:col-span-3">
-            {/* Modern Tabs */}
-            <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full mb-4 md:mb-8">
-                <TabsList className={`grid w-full ${Array.isArray(pubEvents) && pubEvents.length > 0 ? 'grid-cols-4' : 'grid-cols-3'} h-auto mb-3 md:mb-6 bg-white dark:bg-gray-900 rounded-lg sm:rounded-xl md:rounded-2xl p-0.5 sm:p-1 md:p-2 shadow-lg border border-gray-200 dark:border-gray-700`}>
+            {/* ── TABS ── sticky, named for humans, counts visible */}
+            <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+                <div className="sticky top-16 lg:top-[68px] z-30 bg-[hsl(38,14%,97%)] dark:bg-[hsl(25,14%,7%)] pt-3 pb-2 px-4 lg:px-0 border-b border-gray-100 dark:border-gray-800">
+                <TabsList className={`grid w-full h-auto bg-white dark:bg-gray-900 rounded-xl p-1 shadow-sm border border-gray-200 dark:border-gray-700 ${
+                  (Array.isArray(pubEvents) && pubEvents.length > 0) ? 'grid-cols-5 lg:grid-cols-4' : 'grid-cols-4 lg:grid-cols-3'
+                }`}>
                   <TabsTrigger 
                     value="taplist" 
                     data-testid="tab-taplist"
-                    className="rounded-md sm:rounded-lg md:rounded-xl transition-all duration-300 text-xs sm:text-xs md:text-sm font-medium md:font-semibold text-gray-600 dark:text-white hover:text-gray-900 dark:hover:text-white data-[state=active]:bg-gradient-to-r data-[state=active]:from-amber-500 data-[state=active]:to-orange-600 data-[state=active]:text-white data-[state=active]:shadow-lg data-[state=active]:shadow-amber-500/20 data-[state=active]:scale-105 py-1.5 sm:py-2 md:py-3 px-1 sm:px-2 md:px-3 min-w-0 flex items-center justify-center"
+                    className="rounded-lg transition-all duration-200 text-xs sm:text-sm font-medium text-gray-500 dark:text-gray-400 data-[state=active]:bg-amber-500 data-[state=active]:text-white data-[state=active]:shadow-sm py-2 px-1 sm:px-2 min-w-0 flex items-center justify-center gap-1"
                   >
-                    <Wine className="mr-0.5 sm:mr-1 md:mr-2 flex-shrink-0" size={12} />
-                    <span className="truncate">Taplist</span>
+                    <Wine className="flex-shrink-0 h-3.5 w-3.5" />
+                    <span className="truncate">Spina</span>
+                    {Array.isArray(tapList) && tapList.filter((t: any) => t.isActive).length > 0 && (
+                      <span className="hidden sm:inline text-[10px] font-bold opacity-80">
+                        ({tapList.filter((t: any) => t.isActive).length})
+                      </span>
+                    )}
                   </TabsTrigger>
                   <TabsTrigger 
                     value="bottles" 
                     data-testid="tab-bottles"
-                    className="rounded-md sm:rounded-lg md:rounded-xl transition-all duration-300 text-xs sm:text-xs md:text-sm font-medium md:font-semibold text-gray-600 dark:text-white hover:text-gray-900 dark:hover:text-white data-[state=active]:bg-gradient-to-r data-[state=active]:from-emerald-500 data-[state=active]:to-green-600 data-[state=active]:text-white data-[state=active]:shadow-lg data-[state=active]:shadow-emerald-500/20 data-[state=active]:scale-105 py-1.5 sm:py-2 md:py-3 px-1 sm:px-2 md:px-3 min-w-0 flex items-center justify-center"
+                    className="rounded-lg transition-all duration-200 text-xs sm:text-sm font-medium text-gray-500 dark:text-gray-400 data-[state=active]:bg-emerald-500 data-[state=active]:text-white data-[state=active]:shadow-sm py-2 px-1 sm:px-2 min-w-0 flex items-center justify-center gap-1"
                   >
-                    <Sparkles className="mr-0.5 sm:mr-1 md:mr-2 flex-shrink-0" size={12} />
+                    <Sparkles className="flex-shrink-0 h-3.5 w-3.5" />
                     <span className="truncate">Cantina</span>
                   </TabsTrigger>
                   <TabsTrigger 
                     value="menu" 
                     data-testid="tab-menu"
-                    className="rounded-md sm:rounded-lg md:rounded-xl transition-all duration-300 text-xs sm:text-xs md:text-sm font-medium md:font-semibold text-gray-600 dark:text-white hover:text-gray-900 dark:hover:text-white data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-500 data-[state=active]:to-indigo-600 data-[state=active]:text-white data-[state=active]:shadow-lg data-[state=active]:shadow-blue-500/20 data-[state=active]:scale-105 py-1.5 sm:py-2 md:py-3 px-1 sm:px-2 md:px-3 min-w-0 flex items-center justify-center"
+                    className="rounded-lg transition-all duration-200 text-xs sm:text-sm font-medium text-gray-500 dark:text-gray-400 data-[state=active]:bg-blue-500 data-[state=active]:text-white data-[state=active]:shadow-sm py-2 px-1 sm:px-2 min-w-0 flex items-center justify-center gap-1"
                   >
-                    <span className="mr-0.5 sm:mr-1 md:mr-2 text-xs sm:text-sm md:text-lg flex-shrink-0">🍽️</span>
+                    <span className="text-sm flex-shrink-0">🍽️</span>
                     <span className="truncate">Menù</span>
                   </TabsTrigger>
                   {Array.isArray(pubEvents) && pubEvents.length > 0 && (
                     <TabsTrigger 
                       value="events" 
                       data-testid="tab-events"
-                      className="rounded-md sm:rounded-lg md:rounded-xl transition-all duration-300 text-xs sm:text-xs md:text-sm font-medium md:font-semibold text-gray-600 dark:text-white hover:text-gray-900 dark:hover:text-white data-[state=active]:bg-gradient-to-r data-[state=active]:from-pink-500 data-[state=active]:to-rose-600 data-[state=active]:text-white data-[state=active]:shadow-lg data-[state=active]:shadow-pink-500/20 data-[state=active]:scale-105 py-1.5 sm:py-2 md:py-3 px-1 sm:px-2 md:px-3 min-w-0 flex items-center justify-center"
+                      className="rounded-lg transition-all duration-200 text-xs sm:text-sm font-medium text-gray-500 dark:text-gray-400 data-[state=active]:bg-pink-500 data-[state=active]:text-white data-[state=active]:shadow-sm py-2 px-1 sm:px-2 min-w-0 flex items-center justify-center gap-1"
                     >
-                      <Calendar className="mr-0.5 sm:mr-1 md:mr-2 flex-shrink-0" size={12} />
-                      <span className="truncate">Eventi</span>
+                      <Calendar className="flex-shrink-0 h-3.5 w-3.5" />
+                      <span className="truncate">Serate</span>
                     </TabsTrigger>
                   )}
+                  {/* Info tab: visible on mobile, hidden on desktop (sidebar is there) */}
+                  <TabsTrigger 
+                    value="info" 
+                    data-testid="tab-info"
+                    className="lg:hidden rounded-lg transition-all duration-200 text-xs sm:text-sm font-medium text-gray-500 dark:text-gray-400 data-[state=active]:bg-gray-700 data-[state=active]:text-white data-[state=active]:shadow-sm py-2 px-1 sm:px-2 min-w-0 flex items-center justify-center gap-1"
+                  >
+                    <Info className="flex-shrink-0 h-3.5 w-3.5" />
+                    <span className="truncate">Info</span>
+                  </TabsTrigger>
                 </TabsList>
+                </div>
 
                 {/* Taplist Tab */}
-                <TabsContent value="taplist" className="space-y-6">
-                  <div className="flex items-center justify-between">
-                    <h3 className="text-display-lg text-gray-900 dark:text-white flex items-center">
-                      <Wine className="mr-3 h-6 w-6 text-amber-600" />
-                      Taplist
-                    </h3>
-                    <Badge variant="outline" className="bg-amber-50 dark:bg-amber-950 text-amber-800 dark:text-amber-200">
-                      {Array.isArray(tapList) ? tapList.filter((t: any) => t.isActive).length : 0} attive
-                    </Badge>
-                  </div>
+                <TabsContent value="taplist" className="px-4 lg:px-0 pt-4 space-y-4">
                   {tapLoading ? (
-                    <div className="space-y-4">
+                    <div className="space-y-3">
                       {[...Array(3)].map((_, i) => (
-                        <div key={i} className="skeleton rounded-xl h-24"></div>
+                        <div key={i} className="skeleton rounded-xl h-20"></div>
                       ))}
                     </div>
                   ) : (
@@ -801,15 +788,11 @@ export default function PubDetail() {
                 </TabsContent>
 
                 {/* Bottles Tab */}
-                <TabsContent value="bottles" className="space-y-6">
+                <TabsContent value="bottles" className="px-4 lg:px-0 pt-4 space-y-4">
                   <div className="flex items-center justify-between">
-                    <h3 className="text-display-lg text-gray-900 dark:text-white flex items-center">
-                      <Sparkles className="mr-3 h-6 w-6 text-emerald-600" />
-                      Cantina Birre
-                    </h3>
-                    <Badge variant="outline" className="bg-emerald-50 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-200">
-                      {Array.isArray(bottles) ? bottles.length : 0} disponibili
-                    </Badge>
+                    <p className="text-sm text-gray-500 dark:text-gray-400 font-medium">
+                      {Array.isArray(bottles) ? bottles.length : 0} birre disponibili
+                    </p>
                   </div>
                   
                   {bottlesLoading ? (
@@ -842,13 +825,7 @@ export default function PubDetail() {
                 </TabsContent>
 
                 {/* Menu Tab */}
-                <TabsContent value="menu" className="space-y-3">
-                  <div className="flex items-center">
-                    <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 flex items-center gap-1.5">
-                      <span>🍽️</span>
-                      Menu
-                    </h3>
-                  </div>
+                <TabsContent value="menu" className="px-4 lg:px-0 pt-4 space-y-3">
                   
                   {menuLoading ? (
                     <div className="space-y-2">
@@ -865,16 +842,7 @@ export default function PubDetail() {
                 </TabsContent>
 
                 {/* Events Tab */}
-                <TabsContent value="events" className="space-y-6">
-                  <div className="flex items-center justify-between">
-                    <h3 className="text-display-lg text-gray-900 dark:text-white flex items-center">
-                      <Calendar className="mr-3 h-6 w-6 text-pink-600" />
-                      Eventi
-                    </h3>
-                    <Badge variant="outline" className="bg-pink-50 dark:bg-pink-950 text-pink-800 dark:text-pink-200">
-                      {Array.isArray(pubEvents) ? pubEvents.filter((e: any) => isFuture(new Date(e.eventDate))).length : 0} in programma
-                    </Badge>
-                  </div>
+                <TabsContent value="events" className="px-4 lg:px-0 pt-4 space-y-4">
                   <div className="space-y-4">
                     {Array.isArray(pubEvents) && pubEvents.filter((e: any) => isFuture(new Date(e.eventDate))).map((event: any) => (
                       <Card key={event.id} className="overflow-hidden cursor-pointer hover:shadow-md transition-shadow" onClick={() => setSelectedEvent(event)}>
@@ -916,11 +884,101 @@ export default function PubDetail() {
                     ))}
                   </div>
                 </TabsContent>
+
+                {/* Info Tab – only shown on mobile; desktop uses sidebar */}
+                <TabsContent value="info" className="lg:hidden px-4 pt-4 pb-8 space-y-5">
+                  {/* Address */}
+                  {(pub as any)?.address && (
+                    <div className="flex items-start gap-3">
+                      <div className="p-2.5 rounded-xl bg-amber-100 dark:bg-amber-900/40 flex-shrink-0">
+                        <MapPin className="h-4 w-4 text-amber-600 dark:text-amber-400" />
+                      </div>
+                      <div className="flex-1 min-w-0 pt-0.5">
+                        <p className="text-sm font-semibold text-gray-900 dark:text-white">{(pub as any).address}</p>
+                        <a
+                          href={getMapNavigationUrl((pub as any).name, (pub as any).address)}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center mt-2 px-3 py-1.5 rounded-lg bg-blue-500 hover:bg-blue-600 text-white text-xs font-semibold transition-colors gap-1.5"
+                        >
+                          <Navigation className="h-3 w-3" />
+                          Avvia navigazione
+                        </a>
+                      </div>
+                    </div>
+                  )}
+                  {/* Hours */}
+                  <button
+                    onClick={handleShowOpeningHours}
+                    className="w-full flex items-center gap-3 p-3 rounded-xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600 transition-colors text-left"
+                  >
+                    <div className="p-2.5 rounded-xl bg-blue-100 dark:bg-blue-900/40 flex-shrink-0">
+                      <Clock className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-semibold text-gray-900 dark:text-white">Orari di apertura</p>
+                      <p className={`text-xs mt-0.5 font-medium ${openStatus.status === 'open' ? 'text-green-600' : openStatus.status === 'closing_soon' ? 'text-amber-600' : 'text-red-600'}`}>
+                        {openStatus.status === 'open' ? 'Aperto adesso' : openStatus.status === 'closing_soon' ? 'Sta chiudendo' : openStatus.status === 'opening_soon' ? 'Sta per aprire' : 'Chiuso'}
+                      </p>
+                    </div>
+                    <Info className="h-4 w-4 text-gray-400 flex-shrink-0" />
+                  </button>
+                  {/* Phone */}
+                  {(pub as any)?.phone && (
+                    <a href={`tel:${(pub as any).phone}`} className="flex items-center gap-3 p-3 rounded-xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 hover:border-green-300 dark:hover:border-green-700 transition-colors">
+                      <div className="p-2.5 rounded-xl bg-green-100 dark:bg-green-900/40 flex-shrink-0">
+                        <Phone className="h-4 w-4 text-green-600 dark:text-green-400" />
+                      </div>
+                      <span className="text-sm font-semibold text-gray-900 dark:text-white">{(pub as any).phone}</span>
+                    </a>
+                  )}
+                  {/* Website */}
+                  {(pub as any)?.websiteUrl && (
+                    <a href={(pub as any).websiteUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 p-3 rounded-xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 hover:border-purple-300 dark:hover:border-purple-700 transition-colors">
+                      <div className="p-2.5 rounded-xl bg-purple-100 dark:bg-purple-900/40 flex-shrink-0">
+                        <Globe className="h-4 w-4 text-purple-600 dark:text-purple-400" />
+                      </div>
+                      <span className="text-sm font-semibold text-gray-900 dark:text-white">Sito Web</span>
+                    </a>
+                  )}
+                  {/* Email */}
+                  {(pub as any)?.email && (
+                    <a href={`mailto:${(pub as any).email}`} className="flex items-center gap-3 p-3 rounded-xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 hover:border-red-300 dark:hover:border-red-700 transition-colors">
+                      <div className="p-2.5 rounded-xl bg-red-100 dark:bg-red-900/40 flex-shrink-0">
+                        <Mail className="h-4 w-4 text-red-600 dark:text-red-400" />
+                      </div>
+                      <span className="text-sm font-semibold text-gray-900 dark:text-white truncate">{(pub as any).email}</span>
+                    </a>
+                  )}
+                  {/* Social */}
+                  {((pub as any)?.facebookUrl || (pub as any)?.instagramUrl) && (
+                    <div className="flex gap-3">
+                      {(pub as any)?.facebookUrl && (
+                        <a href={(pub as any).facebookUrl} target="_blank" rel="noopener noreferrer"
+                          className="flex-1 flex items-center justify-center gap-2 p-3 rounded-xl bg-blue-500 hover:bg-blue-600 text-white text-sm font-semibold transition-colors">
+                          <Facebook size={16} /> Facebook
+                        </a>
+                      )}
+                      {(pub as any)?.instagramUrl && (
+                        <a href={(pub as any).instagramUrl} target="_blank" rel="noopener noreferrer"
+                          className="flex-1 flex items-center justify-center gap-2 p-3 rounded-xl bg-pink-500 hover:bg-pink-600 text-white text-sm font-semibold transition-colors">
+                          <Instagram size={16} /> Instagram
+                        </a>
+                      )}
+                    </div>
+                  )}
+                  {/* Description */}
+                  {(pub as any)?.description && (
+                    <div className="p-4 rounded-xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700">
+                      <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">{(pub as any).description}</p>
+                    </div>
+                  )}
+                </TabsContent>
               </Tabs>
           </div>
 
-          {/* Sidebar */}
-          <div className="space-y-6">
+          {/* Sidebar – desktop only */}
+          <div className="hidden lg:block space-y-5 pt-4 pl-6 pr-4 sticky top-[136px] self-start">
             {/* Contact Information */}
             <Card className="modern-card rounded-2xl overflow-hidden">
               <CardHeader className="bg-gradient-to-r from-gray-50 to-blue-50 dark:from-gray-800 dark:to-blue-900 border-b">
