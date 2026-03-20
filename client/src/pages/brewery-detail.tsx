@@ -407,11 +407,15 @@ export default function BreweryDetail() {
       
       {/* ── HERO ── compact, image-first */}
       <div className="relative h-[220px] sm:h-[280px] md:h-[340px] overflow-hidden">
-        <img
-          src={brewery?.coverImageUrl || "https://images.unsplash.com/photo-1559526324-593bc073d938?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&h=600"}
-          alt={`${brewery?.name} - Copertina`}
-          className="w-full h-full object-cover"
-        />
+        {brewery?.coverImageUrl ? (
+          <img
+            src={brewery.coverImageUrl}
+            alt={`${brewery?.name} - Copertina`}
+            className="w-full h-full object-cover"
+          />
+        ) : (
+          <div className="w-full h-full bg-gradient-to-br from-amber-700 via-amber-600 to-orange-500 dark:from-amber-900 dark:via-amber-800 dark:to-orange-700" />
+        )}
         <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
         <div className="absolute bottom-0 left-0 right-0 px-4 pb-4 flex items-end gap-3">
           <Avatar className="h-14 w-14 sm:h-16 sm:w-16 ring-2 ring-white/40 flex-shrink-0 bg-white shadow-lg">
