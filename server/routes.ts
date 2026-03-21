@@ -1,5 +1,6 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
+import { addClient, removeClient, broadcastPubUpdate } from "./pubBroadcast";
 import { execFile } from "child_process";
 import { promisify } from "util";
 import { tmpdir } from "os";
@@ -1025,6 +1026,36 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // SSE: real-time pub updates stream
+  app.get("/api/pubs/:id/live", async (req, res) => {
+    try {
+      const pubId = await resolvePubId(req.params.id);
+      if (!pubId) return res.status(404).json({ message: "Pub not found" });
+
+      res.setHeader("Content-Type", "text/event-stream");
+      res.setHeader("Cache-Control", "no-cache");
+      res.setHeader("Connection", "keep-alive");
+      res.setHeader("X-Accel-Buffering", "no");
+      res.flushHeaders();
+
+      res.write(`: connected to pub ${pubId}\n\n`);
+
+      const client = addClient(pubId, res);
+
+      const keepalive = setInterval(() => {
+        try { res.write(`: ping\n\n`); } catch { clearInterval(keepalive); }
+      }, 25000);
+
+      req.on("close", () => {
+        clearInterval(keepalive);
+        removeClient(client);
+      });
+    } catch (error) {
+      console.error("SSE error:", error);
+      res.status(500).end();
+    }
+  });
+
   // Get all breweries
   app.get("/api/breweries", async (req, res) => {
     try {
@@ -1349,6 +1380,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
 
+      broadcastPubUpdate(parseInt(pubId), "taplist");
       res.json(item);
     } catch (error) {
       console.error('Error updating tap list item:', error);
@@ -1369,6 +1401,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       await storage.removeFromTapList(parseInt(id));
 
       console.log('Deleted taplist item:', id);
+      broadcastPubUpdate(parseInt(pubId), "taplist");
       res.status(200).json({ success: true });
     } catch (error) {
       console.error('Error deleting tap list item:', error);
@@ -1427,6 +1460,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         notifyTapListChange(pubId, 'new_beer', beer.name, beer.id);
       }
 
+      broadcastPubUpdate(pubId, "taplist");
       res.status(201).json(tapItem);
     } catch (error) {
       if (error instanceof z.ZodError) {
@@ -1483,6 +1517,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
       
       const bottleItem = await storage.addBeerToBottles(bottleData);
+      broadcastPubUpdate(pubId, "bottles");
       res.status(201).json(bottleItem);
     } catch (error) {
       if (error instanceof z.ZodError) {
@@ -1532,6 +1567,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       const item = await storage.updateBottleItem(parseInt(id), updateData);
       console.log('Updated bottle item:', item);
+      broadcastPubUpdate(parseInt(pubId), "bottles");
       res.json(item);
     } catch (error) {
       console.error('Error updating bottle item:', error);
@@ -1548,6 +1584,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       await storage.removeBottleItem(parseInt(id));
       console.log('Deleted bottle item:', id);
+      broadcastPubUpdate(parseInt(pubId), "bottles");
       res.status(200).json({ success: true });
     } catch (error) {
       console.error('Error deleting bottle item:', error);
@@ -1569,6 +1606,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const categoryData = insertMenuCategorySchema.parse({ ...req.body, pubId });
       const category = await storage.createMenuCategory(categoryData);
+      broadcastPubUpdate(pubId, "menu");
       res.status(201).json(category);
     } catch (error) {
       if (error instanceof z.ZodError) {
@@ -1601,6 +1639,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const updates = insertMenuCategorySchema.omit({ pubId: true, id: true }).partial().parse(req.body);
       const updatedCategory = await storage.updateMenuCategory(categoryId, updates);
+      broadcastPubUpdate(pubId, "menu");
       res.json(updatedCategory);
     } catch (error) {
       if (error instanceof z.ZodError) {
@@ -1632,6 +1671,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       await storage.deleteMenuCategory(categoryId);
+      broadcastPubUpdate(pubId, "menu");
       res.status(204).send();
     } catch (error) {
       console.error("Error deleting menu category:", error);
@@ -1675,6 +1715,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const itemData = insertMenuItemSchema.omit({ id: true, createdAt: true, updatedAt: true }).parse({ ...req.body, categoryId: req.body.categoryId });
       const item = await storage.createMenuItem(itemData);
+      broadcastPubUpdate(pubId, "menu");
       res.status(201).json(item);
     } catch (error) {
       if (error instanceof z.ZodError) {
@@ -1738,6 +1779,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
       const updatedItem = await storage.updateMenuItem(itemId, updates);
+      broadcastPubUpdate(pubId, "menu");
       res.json(updatedItem);
     } catch (error) {
       if (error instanceof z.ZodError) {
@@ -1778,6 +1820,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       await storage.deleteMenuItem(itemId);
+      broadcastPubUpdate(pubId, "menu");
       res.status(204).send();
     } catch (error) {
       console.error("Error deleting menu item:", error);

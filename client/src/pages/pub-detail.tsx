@@ -52,6 +52,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { format, isFuture } from "date-fns";
 import { it as itLocale } from "date-fns/locale";
 import { getMapNavigationUrl } from "@/lib/utils";
+import { usePubLiveUpdates } from "@/hooks/usePubLiveUpdates";
 
 type OpenStatus = 'open' | 'closing_soon' | 'opening_soon' | 'closed';
 
@@ -226,6 +227,9 @@ export default function PubDetail() {
       body: JSON.stringify({ pubId: id }),
     }).catch(() => {});
   }, [id]);
+
+  // Real-time updates: refresh taplist/menu/bottles when the owner makes changes
+  usePubLiveUpdates(id);
   
   const { data: pub, isLoading: pubLoading } = useQuery({
     queryKey: ["/api/pubs", id],
