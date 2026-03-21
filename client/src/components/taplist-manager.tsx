@@ -72,9 +72,10 @@ interface TapItem {
 interface TapListManagerProps {
   pubId: number;
   tapList: TapItem[];
+  bottleList?: any[];
 }
 
-export function TapListManager({ pubId, tapList }: TapListManagerProps) {
+export function TapListManager({ pubId, tapList, bottleList = [] }: TapListManagerProps) {
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<TapItem | null>(null);
   const [isChangingBeer, setIsChangingBeer] = useState(false);
@@ -208,6 +209,39 @@ export function TapListManager({ pubId, tapList }: TapListManagerProps) {
       toast({ title: "Errore di connessione", description: "Non è stato possibile aggiornare la visibilità. Riprova.", variant: "destructive" });
     },
   });
+
+  // Cross-list helpers: sync with bottle list when same beer exists there
+  const findBottleItem = (beerId: number) =>
+    bottleList.find((b: any) => b.beer?.id === beerId || b.beerId === beerId);
+
+  const handleDeleteTapItem = async (item: TapItem) => {
+    if (!confirm('Sei sicuro di voler rimuovere questa birra dalla tap list?')) return;
+    const bottleItem = findBottleItem(item.beer.id);
+    await apiRequest(`/api/pubs/${pubId}/taplist/${item.id}`, { method: "DELETE" });
+    queryClient.invalidateQueries({ queryKey: ["/api/pubs", pubId, "taplist"] });
+    if (bottleItem) {
+      await apiRequest(`/api/pubs/${pubId}/bottles/${bottleItem.id}`, { method: "DELETE" });
+      queryClient.invalidateQueries({ queryKey: ["/api/pubs", pubId, "bottles"] });
+      toast({ title: "Birra rimossa", description: "Rimossa anche dalla cantina" });
+    } else {
+      toast({ title: "Birra rimossa dalla tap list!" });
+    }
+  };
+
+  const handleToggleTapVisibility = async (item: TapItem) => {
+    const newVisible = !item.isVisible;
+    const bottleItem = findBottleItem(item.beer.id);
+    await apiRequest(`/api/pubs/${pubId}/taplist/${item.id}`, { method: "PATCH" }, { isVisible: newVisible });
+    queryClient.invalidateQueries({ queryKey: ["/api/pubs", pubId, "taplist"] });
+    if (bottleItem) {
+      await apiRequest(`/api/pubs/${pubId}/bottles/${bottleItem.id}`, { method: "PATCH" }, { isVisible: newVisible });
+      queryClient.invalidateQueries({ queryKey: ["/api/pubs", pubId, "bottles"] });
+      toast({
+        title: newVisible ? "✅ Birra visibile" : "👁️ Birra nascosta",
+        description: "Applicato anche alla cantina",
+      });
+    }
+  };
 
   const { data: breweryResults } = useQuery({
     queryKey: ["/api/owner/breweries/search", debouncedBrewerySearch],
@@ -1319,6 +1353,11 @@ export function TapListManager({ pubId, tapList }: TapListManagerProps) {
                             Nascosta
                           </Badge>
                         )}
+                        {findBottleItem(item.beer.id) && (
+                          <Badge variant="outline" className="text-xs flex-shrink-0 border-purple-300 text-purple-700 dark:text-purple-400">
+                            anche in cantina
+                          </Badge>
+                        )}
                       </div>
                       <p className="text-sm text-gray-600 dark:text-gray-400">{item.beer.brewery?.name || 'Birrificio sconosciuto'}</p>
                       <div className="flex items-center gap-1.5 flex-wrap">
@@ -1339,12 +1378,7 @@ export function TapListManager({ pubId, tapList }: TapListManagerProps) {
                     <Button
                       variant="ghost"
                       size="sm"
-                      onClick={() => {
-                        toggleVisibilityMutation.mutate({
-                          id: item.id,
-                          isVisible: !item.isVisible
-                        });
-                      }}
+                      onClick={() => handleToggleTapVisibility(item)}
                       className="h-8 w-8 p-0 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
                     >
                       {item.isVisible ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
@@ -1363,11 +1397,7 @@ export function TapListManager({ pubId, tapList }: TapListManagerProps) {
                     <Button
                       variant="ghost"
                       size="sm"
-                      onClick={() => {
-                        if (confirm('Sei sicuro di voler rimuovere questa birra dalla tap list?')) {
-                          deleteTapMutation.mutate(item.id);
-                        }
-                      }}
+                      onClick={() => handleDeleteTapItem(item)}
                       className="h-8 w-8 p-0 text-red-500 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-950"
                     >
                       <Trash2 className="w-4 h-4" />

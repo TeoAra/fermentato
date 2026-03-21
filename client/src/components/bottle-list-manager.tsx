@@ -56,9 +56,10 @@ interface BottleItem {
 interface BottleListManagerProps {
   pubId: number;
   bottleList: BottleItem[];
+  tapList?: any[];
 }
 
-export function BottleListManager({ pubId, bottleList }: BottleListManagerProps) {
+export function BottleListManager({ pubId, bottleList, tapList = [] }: BottleListManagerProps) {
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<BottleItem | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
@@ -161,6 +162,41 @@ export function BottleListManager({ pubId, bottleList }: BottleListManagerProps)
       isVisible: true,
     });
     setSearchTerm("");
+  };
+
+  // Cross-list helpers: sync with taplist when same beer exists there
+  const findTapItem = (beerId: number | null | undefined) => {
+    if (!beerId) return null;
+    return tapList.find((t: any) => t.beer?.id === beerId);
+  };
+
+  const handleDeleteBottleItem = async (item: BottleItem) => {
+    if (!confirm('Sei sicuro di voler rimuovere questa birra dalla cantina?')) return;
+    const tapItem = findTapItem(item.beer?.id);
+    await apiRequest(`/api/pubs/${pubId}/bottles/${item.id}`, { method: "DELETE" });
+    queryClient.invalidateQueries({ queryKey: ["/api/pubs", pubId, "bottles"] });
+    if (tapItem) {
+      await apiRequest(`/api/pubs/${pubId}/taplist/${tapItem.id}`, { method: "DELETE" });
+      queryClient.invalidateQueries({ queryKey: ["/api/pubs", pubId, "taplist"] });
+      toast({ title: "Birra rimossa", description: "Rimossa anche dalla taplist" });
+    } else {
+      toast({ title: "Birra rimossa dalla cantina!" });
+    }
+  };
+
+  const handleToggleBottleVisibility = async (item: BottleItem) => {
+    const newVisible = !item.isVisible;
+    const tapItem = findTapItem(item.beer?.id);
+    await apiRequest(`/api/pubs/${pubId}/bottles/${item.id}`, { method: "PATCH" }, { isVisible: newVisible });
+    queryClient.invalidateQueries({ queryKey: ["/api/pubs", pubId, "bottles"] });
+    if (tapItem) {
+      await apiRequest(`/api/pubs/${pubId}/taplist/${tapItem.id}`, { method: "PATCH" }, { isVisible: newVisible });
+      queryClient.invalidateQueries({ queryKey: ["/api/pubs", pubId, "taplist"] });
+      toast({
+        title: newVisible ? "✅ Birra visibile" : "👁️ Birra nascosta",
+        description: "Applicato anche alla taplist",
+      });
+    }
   };
 
   const startEdit = (item: BottleItem) => {
@@ -517,6 +553,11 @@ export function BottleListManager({ pubId, bottleList }: BottleListManagerProps)
                               Nascosta
                             </Badge>
                           )}
+                          {findTapItem(item.beer?.id) && (
+                            <Badge variant="outline" className="text-xs flex-shrink-0 border-amber-300 text-amber-700 dark:text-amber-400">
+                              anche alla spina
+                            </Badge>
+                          )}
                         </div>
                         <p className="text-sm text-gray-600 dark:text-gray-400">{safeBeer.brewery.name}</p>
                         <div className="flex items-center gap-1.5 flex-wrap">
@@ -537,12 +578,7 @@ export function BottleListManager({ pubId, bottleList }: BottleListManagerProps)
                       <Button
                         variant="ghost"
                         size="sm"
-                        onClick={() => {
-                          toggleVisibilityMutation.mutate({
-                            id: item.id,
-                            isVisible: !safeItem.isVisible
-                          });
-                        }}
+                        onClick={() => handleToggleBottleVisibility(item)}
                         className="h-8 w-8 p-0 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
                       >
                         {safeItem.isVisible ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
@@ -561,11 +597,7 @@ export function BottleListManager({ pubId, bottleList }: BottleListManagerProps)
                       <Button
                         variant="ghost"
                         size="sm"
-                        onClick={() => {
-                          if (confirm('Sei sicuro di voler rimuovere questa birra dalla cantina?')) {
-                            deleteBottleMutation.mutate(item.id);
-                          }
-                        }}
+                        onClick={() => handleDeleteBottleItem(item)}
                         className="h-8 w-8 p-0 text-red-500 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-950"
                       >
                         <Trash2 className="w-4 h-4" />

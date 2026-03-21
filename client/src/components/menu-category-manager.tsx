@@ -336,6 +336,54 @@ export default function MenuCategoryManager({ pubId, categories }: MenuCategoryM
     });
   };
 
+  // Find all items with the same name across all categories (siblings = duplicates created for multi-category)
+  const findAllByName = (name: string, excludeId?: number): any[] => {
+    const results: any[] = [];
+    for (const cat of categories) {
+      if (cat.items) {
+        for (const item of cat.items) {
+          if (item.name === name && item.id !== excludeId) {
+            results.push(item);
+          }
+        }
+      }
+    }
+    return results;
+  };
+
+  // Count how many categories a product with this name appears in
+  const countCategories = (name: string): number => {
+    let count = 0;
+    for (const cat of categories) {
+      if (cat.items?.some((item: any) => item.name === name)) count++;
+    }
+    return count;
+  };
+
+  // Batch visibility toggle: applies to all items with the same name
+  const handleToggleProductVisibility = async (product: any) => {
+    const newVisible = !product.isVisible;
+    const siblings = findAllByName(product.name, product.id);
+    const allIds = [product.id, ...siblings.map((s: any) => s.id)];
+    try {
+      await Promise.all(
+        allIds.map(id =>
+          apiRequest(`/api/pubs/${pubId}/menu-items/${id}`, { method: 'PATCH' }, { isVisible: newVisible })
+        )
+      );
+      queryClient.invalidateQueries({ queryKey: ["/api/pubs", pubId, "menu"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/pubs", pubId, "menu", "all-products"] });
+      if (siblings.length > 0) {
+        toast({
+          title: newVisible ? "✅ Prodotto visibile" : "👁️ Prodotto nascosto",
+          description: `Applicato a ${allIds.length} categorie`,
+        });
+      }
+    } catch {
+      toast({ title: "❌ Errore", description: "Impossibile aggiornare la visibilità", variant: "destructive" });
+    }
+  };
+
   // Handle delete with confirmation
   const handleDeleteCategory = (category: any) => {
     if (confirm(`Sei sicuro di voler eliminare la categoria "${category.name}"? Questa azione non può essere annullata.`)) {
@@ -343,9 +391,28 @@ export default function MenuCategoryManager({ pubId, categories }: MenuCategoryM
     }
   };
 
-  const handleDeleteProduct = (product: any) => {
-    if (confirm(`Sei sicuro di voler eliminare "${product.name}"?`)) {
-      deleteProductMutation.mutate(product.id);
+  const handleDeleteProduct = async (product: any) => {
+    const siblings = findAllByName(product.name, product.id);
+    const total = siblings.length + 1;
+    const label = total > 1
+      ? `"${product.name}" da ${total} categorie`
+      : `"${product.name}"`;
+    if (!confirm(`Sei sicuro di voler eliminare ${label}?`)) return;
+    try {
+      const allIds = [product.id, ...siblings.map((s: any) => s.id)];
+      await Promise.all(
+        allIds.map(id =>
+          apiRequest(`/api/pubs/${pubId}/menu-items/${id}`, { method: 'DELETE' })
+        )
+      );
+      queryClient.invalidateQueries({ queryKey: ["/api/pubs", pubId, "menu"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/pubs", pubId, "menu", "all-products"] });
+      toast({
+        title: "🗑️ Prodotto eliminato",
+        description: total > 1 ? `Rimosso da ${total} categorie` : undefined,
+      });
+    } catch {
+      toast({ title: "❌ Errore", description: "Impossibile eliminare il prodotto", variant: "destructive" });
     }
   };
 
@@ -792,6 +859,11 @@ export default function MenuCategoryManager({ pubId, categories }: MenuCategoryM
                                               Nascosto
                                             </Badge>
                                           )}
+                                          {countCategories(product.name) > 1 && (
+                                            <Badge variant="outline" className="text-xs border-blue-300 text-blue-600 dark:text-blue-400">
+                                              in {countCategories(product.name)} cat.
+                                            </Badge>
+                                          )}
                                         </div>
                                         {product.description && (
                                           <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">{product.description}</p>
@@ -821,10 +893,7 @@ export default function MenuCategoryManager({ pubId, categories }: MenuCategoryM
                                         <Button
                                           size="sm"
                                           variant="ghost"
-                                          onClick={() => toggleProductVisibilityMutation.mutate({ 
-                                            id: product.id, 
-                                            isVisible: !product.isVisible 
-                                          })}
+                                          onClick={() => handleToggleProductVisibility(product)}
                                           className="text-gray-600 hover:text-blue-600 hover:bg-blue-50"
                                           data-testid={`button-toggle-product-visibility-${product.id}`}
                                         >

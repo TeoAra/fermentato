@@ -986,7 +986,8 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
       <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-800">
         <TapListManager 
           pubId={currentPub?.id || 0} 
-          tapList={typedTapList} 
+          tapList={typedTapList}
+          bottleList={typedBottleList}
         />
       </div>
     </div>
@@ -1855,7 +1856,8 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
       <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-800">
         <BottleListManager 
           pubId={currentPub?.id || 0} 
-          bottleList={typedBottleList} 
+          bottleList={typedBottleList}
+          tapList={typedTapList}
         />
       </div>
     </div>
