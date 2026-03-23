@@ -283,6 +283,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   })();
 
+  // Startup: ensure breweries has social/contact columns
+  (async () => {
+    try {
+      await pool.query(`
+        ALTER TABLE breweries ADD COLUMN IF NOT EXISTS email varchar;
+        ALTER TABLE breweries ADD COLUMN IF NOT EXISTS instagram_url varchar;
+        ALTER TABLE breweries ADD COLUMN IF NOT EXISTS facebook_url varchar;
+        ALTER TABLE breweries ADD COLUMN IF NOT EXISTS tiktok_url varchar;
+      `);
+    } catch (e) {
+      console.error("[breweries] social columns migration error:", e);
+    }
+  })();
+
   // Startup: ensure beers has awards column
   (async () => {
     try {
