@@ -1,5 +1,5 @@
 import { Helmet } from "react-helmet-async";
-import { RichTextEditor, RichTextDisplay } from "@/components/rich-text-editor";
+import RichTextEditor, { RichTextDisplay } from "@/components/rich-text-editor";
 import { useParams, Link } from "wouter";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { 

@@ -25,6 +25,7 @@ import {
   Save,
   X,
   ChevronDown,
+  ChevronRight,
   Filter,
   ArrowUpDown,
   Flag,
@@ -759,58 +760,57 @@ export default function BeerDetail() {
           </div>
 
           {/* ── TAB: SCHEDA ── */}
-          <TabsContent value="scheda" className="px-4 lg:px-6 pt-5 pb-8 space-y-3">
+          <TabsContent value="scheda" className="px-4 lg:px-6 pt-5 pb-10 space-y-6">
 
             {/* Specs grid */}
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-              <div className="bg-white dark:bg-[hsl(25,14%,10%)] rounded-xl p-3 border border-gray-100 dark:border-gray-800 flex items-center gap-2">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+              <div className="rounded-xl p-3 bg-orange-50 dark:bg-orange-950/40 border border-orange-100 dark:border-orange-900/50 flex items-center gap-2.5">
                 <Target className="h-4 w-4 text-orange-500 flex-shrink-0" />
-                <div><p className="text-xs text-gray-500 dark:text-gray-400">ABV</p><p className="text-sm font-bold text-gray-900 dark:text-white">{beer?.abv ? `${beer.abv}%` : 'N/D'}</p></div>
+                <div><p className="text-[10px] uppercase tracking-wider font-semibold text-orange-400 dark:text-orange-500">ABV</p><p className="text-sm font-bold text-gray-900 dark:text-white">{beer?.abv ? `${beer.abv}%` : '—'}</p></div>
               </div>
-              <div className="bg-white dark:bg-[hsl(25,14%,10%)] rounded-xl p-3 border border-gray-100 dark:border-gray-800 flex items-center gap-2">
+              <div className="rounded-xl p-3 bg-indigo-50 dark:bg-indigo-950/40 border border-indigo-100 dark:border-indigo-900/50 flex items-center gap-2.5">
                 <Sparkles className="h-4 w-4 text-indigo-500 flex-shrink-0" />
-                <div className="min-w-0"><p className="text-xs text-gray-500 dark:text-gray-400">Stile</p><p className="text-sm font-bold text-gray-900 dark:text-white break-words leading-tight">{beer?.style || 'N/D'}</p></div>
+                <div className="min-w-0"><p className="text-[10px] uppercase tracking-wider font-semibold text-indigo-400 dark:text-indigo-500">Stile</p><p className="text-sm font-bold text-gray-900 dark:text-white leading-tight line-clamp-2">{beer?.style || '—'}</p></div>
               </div>
               {beer?.color && (
-                <div className="bg-white dark:bg-[hsl(25,14%,10%)] rounded-xl p-3 border border-gray-100 dark:border-gray-800 flex items-center gap-2">
+                <div className="rounded-xl p-3 bg-blue-50 dark:bg-blue-950/40 border border-blue-100 dark:border-blue-900/50 flex items-center gap-2.5">
                   <Droplets className="h-4 w-4 text-blue-500 flex-shrink-0" />
-                  <div><p className="text-xs text-gray-500 dark:text-gray-400">Colore</p><p className="text-sm font-bold text-gray-900 dark:text-white truncate">{beer.color}</p></div>
+                  <div><p className="text-[10px] uppercase tracking-wider font-semibold text-blue-400 dark:text-blue-500">Colore</p><p className="text-sm font-bold text-gray-900 dark:text-white truncate">{beer.color}</p></div>
                 </div>
               )}
               {beer?.ibu && (
-                <div className="bg-white dark:bg-[hsl(25,14%,10%)] rounded-xl p-3 border border-gray-100 dark:border-gray-800 flex items-center gap-2">
+                <div className="rounded-xl p-3 bg-amber-50 dark:bg-amber-950/40 border border-amber-100 dark:border-amber-900/50 flex items-center gap-2.5">
                   <Wheat className="h-4 w-4 text-amber-500 flex-shrink-0" />
-                  <div><p className="text-xs text-gray-500 dark:text-gray-400">IBU</p><p className="text-sm font-bold text-gray-900 dark:text-white">{beer.ibu}</p></div>
+                  <div><p className="text-[10px] uppercase tracking-wider font-semibold text-amber-400 dark:text-amber-500">IBU</p><p className="text-sm font-bold text-gray-900 dark:text-white">{beer.ibu}</p></div>
                 </div>
               )}
             </div>
 
             {/* Description */}
             {beer?.description && (
-              <div className="bg-white dark:bg-[hsl(25,14%,10%)] rounded-xl p-5 border border-gray-100 dark:border-gray-800">
-                <h2 className="text-base font-bold text-gray-900 dark:text-white mb-3 flex items-center gap-2">
-                  <BeerIcon className="h-4 w-4 text-amber-600 dark:text-amber-400" />
-                  Descrizione
+              <div>
+                <div className="flex items-center gap-2 mb-3">
+                  <p className="text-xs font-bold uppercase tracking-wider text-gray-400 dark:text-gray-500">Descrizione</p>
                   {translating && (
-                    <span className="text-xs font-normal text-gray-400 flex items-center gap-1">
+                    <span className="text-xs text-gray-400 flex items-center gap-1">
                       <Loader2 className="h-3 w-3 animate-spin" />Traduzione…
                     </span>
                   )}
                   {translatedDesc && !translating && (
-                    <span className="text-xs font-normal bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 px-2 py-0.5 rounded-full border border-blue-200 dark:border-blue-700">
-                      Traduzione automatica
+                    <span className="text-[10px] font-semibold bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 px-2 py-0.5 rounded-full">
+                      Tradotto
                     </span>
                   )}
-                </h2>
+                </div>
                 <p className="text-gray-700 dark:text-gray-300 leading-relaxed whitespace-pre-line text-sm">
                   {String(translatedDesc || beer.description || '')}
                 </p>
                 {translatedDesc && beer.description && (
                   <details className="mt-3">
                     <summary className="text-xs text-gray-400 cursor-pointer hover:text-gray-600 dark:hover:text-gray-300 select-none">
-                      Mostra testo originale
+                      Testo originale
                     </summary>
-                    <p className="mt-2 text-sm text-gray-500 dark:text-gray-400 leading-relaxed whitespace-pre-line border-t pt-2">
+                    <p className="mt-2 text-sm text-gray-500 dark:text-gray-400 leading-relaxed whitespace-pre-line border-t border-gray-100 dark:border-gray-800 pt-2">
                       {String(beer.description)}
                     </p>
                   </details>
@@ -820,50 +820,62 @@ export default function BeerDetail() {
 
             {/* Brewery info */}
             {beer?.brewery && (
-              <Link href={`/brewery/${beer.brewery.id}`}>
-                <div className="bg-white dark:bg-[hsl(25,14%,10%)] rounded-xl p-4 border border-gray-100 dark:border-gray-800 flex items-center gap-3 hover:border-amber-200 dark:hover:border-amber-800 transition-colors group">
-                  <Building2 className="h-5 w-5 text-amber-500 flex-shrink-0" />
-                  <div className="flex-1 min-w-0">
-                    <p className="text-xs text-gray-500 dark:text-gray-400">Birrificio</p>
-                    <p className="text-sm font-bold text-gray-900 dark:text-white group-hover:text-amber-600 dark:group-hover:text-amber-400 truncate">{beer.brewery.name}</p>
-                    {beer.brewery.location && <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{beer.brewery.location}</p>}
+              <>
+                <div className="border-t border-gray-100 dark:border-gray-800" />
+                <Link href={`/brewery/${beer.brewery.id}`}>
+                  <div className="flex items-center gap-4 group cursor-pointer">
+                    <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-amber-50 to-orange-100 dark:from-amber-900/30 dark:to-orange-900/30 border border-amber-100 dark:border-amber-800/40 flex items-center justify-center flex-shrink-0 overflow-hidden">
+                      {(beer.brewery as any).logoUrl
+                        ? <img src={(beer.brewery as any).logoUrl} alt={beer.brewery.name} className="w-full h-full object-contain p-1" />
+                        : <Building2 className="h-6 w-6 text-amber-400 dark:text-amber-500" />
+                      }
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-[10px] uppercase tracking-wider font-bold text-gray-400 dark:text-gray-500 mb-0.5">Birrificio</p>
+                      <p className="text-base font-bold text-gray-900 dark:text-white group-hover:text-amber-600 dark:group-hover:text-amber-400 transition-colors truncate">{beer.brewery.name}</p>
+                      {beer.brewery.location && <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5 flex items-center gap-1"><MapPin className="h-3 w-3" />{beer.brewery.location}</p>}
+                    </div>
+                    <ChevronRight className="h-5 w-5 text-gray-300 dark:text-gray-600 group-hover:text-amber-500 transition-colors flex-shrink-0" />
                   </div>
-                </div>
-              </Link>
+                </Link>
+              </>
             )}
 
             {/* Potrebbe piacerti */}
             {suggestedBeers.length > 0 && (
-              <div className="bg-white dark:bg-[hsl(25,14%,10%)] rounded-xl p-5 border border-gray-100 dark:border-gray-800">
-                <h3 className="text-sm font-bold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
-                  <Sparkles className="h-4 w-4 text-amber-500" />
-                  Potrebbe piacerti
-                </h3>
-                <div className="space-y-3">
-                  {suggestedBeers.map((sb: any) => (
-                    <Link key={sb.id} href={`/beer/${sb.id}`}>
-                      <div className="flex items-center gap-3 p-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800/60 transition-colors group">
-                        <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-amber-100 to-orange-100 dark:from-amber-900/30 dark:to-orange-900/30 flex items-center justify-center flex-shrink-0 overflow-hidden">
-                          {sb.imageUrl
-                            ? <img src={sb.imageUrl} alt={sb.name} className="w-full h-full object-cover rounded-lg" />
-                            : <BeerIcon className="h-5 w-5 text-amber-500" />
-                          }
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm font-semibold text-gray-900 dark:text-white group-hover:text-amber-600 dark:group-hover:text-amber-400 truncate">{sb.name}</p>
-                          {sb.style && <p className="text-xs text-gray-500 dark:text-gray-400 truncate">{sb.style}{sb.abv ? ` · ${sb.abv}% ABV` : ''}</p>}
-                        </div>
-                        {sb.avgRating != null && (
-                          <div className="flex items-center gap-1 text-xs font-bold text-yellow-600 dark:text-yellow-400 flex-shrink-0">
-                            <Star className="h-3 w-3 fill-current" />
-                            {sb.avgRating.toFixed(1)}
+              <>
+                <div className="border-t border-gray-100 dark:border-gray-800" />
+                <div>
+                  <div className="flex items-center gap-2 mb-4">
+                    <Sparkles className="h-4 w-4 text-amber-500" />
+                    <h3 className="text-xs font-bold uppercase tracking-wider text-gray-400 dark:text-gray-500">Potrebbe piacerti</h3>
+                  </div>
+                  <div className="space-y-1">
+                    {suggestedBeers.map((sb: any) => (
+                      <Link key={sb.id} href={`/beer/${sb.id}`}>
+                        <div className="flex items-center gap-3 py-2.5 px-3 -mx-3 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors group">
+                          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-100 to-orange-100 dark:from-amber-900/30 dark:to-orange-900/30 flex items-center justify-center flex-shrink-0 overflow-hidden border border-amber-100 dark:border-amber-900/30">
+                            {sb.imageUrl
+                              ? <img src={sb.imageUrl} alt={sb.name} className="w-full h-full object-cover" />
+                              : <BeerIcon className="h-4 w-4 text-amber-400" />
+                            }
                           </div>
-                        )}
-                      </div>
-                    </Link>
-                  ))}
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-semibold text-gray-900 dark:text-white group-hover:text-amber-600 dark:group-hover:text-amber-400 transition-colors truncate">{sb.name}</p>
+                            {sb.style && <p className="text-xs text-gray-500 dark:text-gray-400 truncate mt-0.5">{sb.style}{sb.abv ? ` · ${sb.abv}%` : ''}</p>}
+                          </div>
+                          {sb.avgRating != null && (
+                            <div className="flex items-center gap-0.5 text-xs font-bold text-amber-600 dark:text-amber-400 flex-shrink-0 bg-amber-50 dark:bg-amber-900/30 px-2 py-0.5 rounded-full">
+                              <Star className="h-3 w-3 fill-current" />
+                              {sb.avgRating.toFixed(1)}
+                            </div>
+                          )}
+                        </div>
+                      </Link>
+                    ))}
+                  </div>
                 </div>
-              </div>
+              </>
             )}
           </TabsContent>
 
