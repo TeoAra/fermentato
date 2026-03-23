@@ -991,7 +991,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const pubId = await resolvePubId(req.params.id);
       if (!pubId) return res.status(404).json({ message: "Pub not found" });
-      const menu = await storage.getMenuByPub(pubId);
+      const menu = await storage.getMenuByPub(pubId, true);
       res.json(menu);
     } catch (error) {
       console.error("Error fetching menu:", error);

@@ -239,7 +239,7 @@ export interface IStorage {
 
   // Menu operations
   getMenuCategories(pubId: number): Promise<MenuCategory[]>;
-  getMenuByPub(pubId: number): Promise<any[]>;
+  getMenuByPub(pubId: number, includeHidden?: boolean): Promise<any[]>;
   createMenuCategory(category: InsertMenuCategory): Promise<MenuCategory>;
   updateMenuCategory(id: number, updates: Partial<InsertMenuCategory>): Promise<MenuCategory>;
   deleteMenuCategory(id: number): Promise<void>;
@@ -857,18 +857,26 @@ export class DatabaseStorage implements IStorage {
       .orderBy(asc(menuCategories.orderIndex));
   }
 
-  async getMenuByPub(pubId: number): Promise<any[]> {
+  async getMenuByPub(pubId: number, includeHidden = false): Promise<any[]> {
+    const categoryWhere = includeHidden
+      ? eq(menuCategories.pubId, pubId)
+      : and(eq(menuCategories.pubId, pubId), eq(menuCategories.isVisible, true));
+
     const categories = await db
       .select()
       .from(menuCategories)
-      .where(eq(menuCategories.pubId, pubId))
+      .where(categoryWhere)
       .orderBy(asc(menuCategories.orderIndex), asc(menuCategories.id));
+
+    const itemWhere = includeHidden
+      ? eq(menuCategories.pubId, pubId)
+      : and(eq(menuCategories.pubId, pubId), eq(menuItems.isVisible, true));
 
     const items = await db
       .select()
       .from(menuItems)
       .leftJoin(menuCategories, eq(menuItems.categoryId, menuCategories.id))
-      .where(eq(menuCategories.pubId, pubId))
+      .where(itemWhere)
       .orderBy(asc(menuItems.orderIndex), asc(menuItems.id));
 
     return categories.map(category => ({
@@ -2110,9 +2118,9 @@ class StorageWrapper implements IStorage {
     );
   }
 
-  async getMenuByPub(pubId: number): Promise<any> {
+  async getMenuByPub(pubId: number, includeHidden = false): Promise<any> {
     return this.dbCall(
-      () => this.databaseStorage.getMenuByPub(pubId),
+      () => this.databaseStorage.getMenuByPub(pubId, includeHidden),
       async () => { return []; }
     );
   }
