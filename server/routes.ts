@@ -421,6 +421,48 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Trending beers (most viewed in last N days)
+  app.get("/api/beers/trending", async (req, res) => {
+    try {
+      const limit = Math.min(20, parseInt(req.query.limit as string) || 10);
+      const days = Math.min(30, parseInt(req.query.days as string) || 7);
+      const results = await storage.getTrendingBeers(limit, days);
+      res.json(results);
+    } catch (error) {
+      console.error("Error fetching trending beers:", error);
+      res.status(500).json({ message: "Failed to fetch trending beers" });
+    }
+  });
+
+  // Similar beers by style
+  app.get("/api/beers/:id/similar", async (req, res) => {
+    try {
+      const beerId = parseInt(req.params.id);
+      if (isNaN(beerId)) return res.status(400).json({ message: "Invalid beer id" });
+      const beer = await storage.getBeer(beerId);
+      if (!beer) return res.status(404).json({ message: "Beer not found" });
+      const results = await storage.getSimilarBeers(beerId, beer.style, 6);
+      res.json(results);
+    } catch (error) {
+      console.error("Error fetching similar beers:", error);
+      res.status(500).json({ message: "Failed to fetch similar beers" });
+    }
+  });
+
+  // Log a beer page view (fire-and-forget, no auth required)
+  app.post("/api/beers/:id/view", async (req, res) => {
+    try {
+      const beerId = parseInt(req.params.id);
+      if (isNaN(beerId)) return res.status(400).json({ message: "Invalid beer id" });
+      const userId = (req.user as any)?.id as string | undefined;
+      await storage.logBeerView(beerId, userId);
+      res.json({ ok: true });
+    } catch (error) {
+      // Non-critical: silently ignore analytics errors
+      res.json({ ok: false });
+    }
+  });
+
   // Browse beers by exact style (case-insensitive)
   app.get("/api/beers/by-style", async (req, res) => {
     try {

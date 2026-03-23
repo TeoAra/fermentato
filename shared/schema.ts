@@ -155,6 +155,14 @@ export const beers = pgTable("beers", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+// Beer analytics — one row per page view (anonymous or logged-in)
+export const beerViews = pgTable("beer_views", {
+  id: serial("id").primaryKey(),
+  beerId: integer("beer_id").references(() => beers.id, { onDelete: "cascade" }).notNull(),
+  userId: varchar("user_id"),
+  viewedAt: timestamp("viewed_at").defaultNow(),
+});
+
 // Beer collaborations - which extra breweries co-produced a collab beer
 export const beerCollaborations = pgTable("beer_collaborations", {
   id: serial("id").primaryKey(),

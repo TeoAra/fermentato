@@ -3,6 +3,7 @@ import {
   pubs,
   breweries,
   beers,
+  beerViews,
   tapList,
   bottleList,
   pubSizes,
@@ -322,6 +323,11 @@ export interface IStorage {
   toggleBreweryEventInterest(userId: string, eventId: number): Promise<boolean>;
   getBreweryEventInterestCount(eventId: number): Promise<number>;
   getBreweryEventUserInterest(userId: string, eventId: number): Promise<boolean>;
+
+  // Beer analytics
+  logBeerView(beerId: number, userId?: string): Promise<void>;
+  getSimilarBeers(beerId: number, style: string, limit?: number): Promise<any[]>;
+  getTrendingBeers(limit?: number, days?: number): Promise<any[]>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -1711,6 +1717,43 @@ export class DatabaseStorage implements IStorage {
       .where(and(eq(breweryEventInterests.userId, userId), eq(breweryEventInterests.eventId, eventId)));
     return rows.length > 0;
   }
+
+  // Beer analytics
+  async logBeerView(beerId: number, userId?: string): Promise<void> {
+    await db.insert(beerViews).values({ beerId, userId: userId ?? null });
+  }
+
+  async getSimilarBeers(beerId: number, style: string, limit = 6): Promise<any[]> {
+    const result = await db.execute(sql`
+      SELECT b.id, b.name, b.style, b.abv, b.image_url as "imageUrl",
+             br.id as "breweryId", br.name as "breweryName", br.logo_url as "breweryLogoUrl"
+      FROM beers b
+      JOIN breweries br ON b.brewery_id = br.id
+      WHERE b.style = ${style}
+        AND b.id != ${beerId}
+        AND b.is_hidden = false
+      ORDER BY RANDOM()
+      LIMIT ${limit}
+    `);
+    return result.rows as any[];
+  }
+
+  async getTrendingBeers(limit = 10, days = 7): Promise<any[]> {
+    const result = await db.execute(sql`
+      SELECT b.id, b.name, b.style, b.abv, b.image_url as "imageUrl",
+             br.id as "breweryId", br.name as "breweryName", br.logo_url as "breweryLogoUrl",
+             COUNT(bv.id)::int as "viewCount"
+      FROM beer_views bv
+      JOIN beers b ON bv.beer_id = b.id
+      JOIN breweries br ON b.brewery_id = br.id
+      WHERE bv.viewed_at > NOW() - (${days} || ' days')::interval
+        AND b.is_hidden = false
+      GROUP BY b.id, b.name, b.style, b.abv, b.image_url, br.id, br.name, br.logo_url
+      ORDER BY "viewCount" DESC
+      LIMIT ${limit}
+    `);
+    return result.rows as any[];
+  }
 }
 
 // Storage wrapper with fallback to in-memory when database is disabled
@@ -2491,6 +2534,17 @@ class StorageWrapper implements IStorage {
   }
   async getBreweryEventUserInterest(userId: string, eventId: number): Promise<boolean> {
     return this.dbCall(() => this.databaseStorage.getBreweryEventUserInterest(userId, eventId), async () => false);
+  }
+
+  // Beer analytics
+  async logBeerView(beerId: number, userId?: string): Promise<void> {
+    return this.dbCall(() => this.databaseStorage.logBeerView(beerId, userId), async () => {});
+  }
+  async getSimilarBeers(beerId: number, style: string, limit?: number): Promise<any[]> {
+    return this.dbCall(() => this.databaseStorage.getSimilarBeers(beerId, style, limit), async () => []);
+  }
+  async getTrendingBeers(limit?: number, days?: number): Promise<any[]> {
+    return this.dbCall(() => this.databaseStorage.getTrendingBeers(limit, days), async () => []);
   }
 }
 

@@ -333,6 +333,20 @@ export default function BeerDetail() {
     return [...sameStyle, ...otherBrewery].slice(0, 4);
   }, [breweryBeers, id, beer?.style]);
 
+  // Similar beers by style from other breweries
+  const { data: similarBeers = [] } = useQuery<any[]>({
+    queryKey: ["/api/beers", id, "similar"],
+    queryFn: () => fetch(`/api/beers/${id}/similar`).then(r => r.ok ? r.json() : []),
+    enabled: !!id && !!beer,
+    staleTime: 10 * 60_000,
+  });
+
+  // Log page view (fire-and-forget)
+  useEffect(() => {
+    if (!id) return;
+    fetch(`/api/beers/${id}/view`, { method: "POST", credentials: "include" }).catch(() => {});
+  }, [id]);
+
   // Community reviews (public)
   const { data: reviewsData } = useQuery<{ reviews: any[]; avgRating: number | null; reviewCount: number; distribution: Record<number,number> }>({
     queryKey: ["/api/beers", id, "reviews"],
@@ -1410,6 +1424,45 @@ export default function BeerDetail() {
             isAlcoholFree: beer.isAlcoholFree ?? false,
           }}
         />
+      )}
+
+      {/* Potrebbero piacerti — same style, other breweries */}
+      {similarBeers.length > 0 && (
+        <div className="bg-[hsl(38,14%,97%)] dark:bg-[hsl(25,14%,8%)] border-t border-gray-100 dark:border-gray-800 py-8">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <h3 className="text-base font-bold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+              <Sparkles className="h-4 w-4 text-amber-500" />
+              Potrebbero piacerti
+              <span className="text-xs font-normal text-gray-400 dark:text-neutral-500 ml-1">· stile {beer?.style}</span>
+            </h3>
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
+              {similarBeers.map((b: any) => (
+                <Link key={b.id} href={`/beer/${b.id}`}>
+                  <div className="group bg-white dark:bg-neutral-800 border border-gray-100 dark:border-neutral-700 rounded-xl p-3 hover:shadow-md hover:border-amber-200 dark:hover:border-amber-800 transition-all cursor-pointer h-full flex flex-col">
+                    <div className="w-10 h-10 rounded-lg flex-shrink-0 bg-amber-50 dark:bg-amber-900/20 flex items-center justify-center overflow-hidden mb-2 mx-auto">
+                      {b.imageUrl ? (
+                        <img src={b.imageUrl} alt={b.name} className="w-10 h-10 object-contain p-0.5" />
+                      ) : b.breweryLogoUrl ? (
+                        <img src={b.breweryLogoUrl} alt={b.breweryName} className="w-8 h-8 object-contain" />
+                      ) : (
+                        <BeerIcon className="w-5 h-5 text-amber-400" />
+                      )}
+                    </div>
+                    <p className="font-semibold text-xs text-gray-900 dark:text-white line-clamp-2 group-hover:text-amber-600 dark:group-hover:text-amber-400 text-center leading-tight">
+                      {b.name}
+                    </p>
+                    <p className="text-[10px] text-gray-400 dark:text-neutral-500 line-clamp-1 text-center mt-0.5">
+                      {b.breweryName}
+                    </p>
+                    {b.abv && (
+                      <p className="text-[10px] font-medium text-amber-600 dark:text-amber-400 text-center mt-1">{b.abv}% ABV</p>
+                    )}
+                  </div>
+                </Link>
+              ))}
+            </div>
+          </div>
+        </div>
       )}
 
       <Footer />
