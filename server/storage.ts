@@ -229,6 +229,7 @@ export interface IStorage {
 
   // Bottle list operations
   getBottleList(pubId: number): Promise<BottleList[]>;
+  getBottleListForOwner(pubId: number): Promise<any[]>;
   addToBottleList(item: InsertBottleList): Promise<BottleList>;
   addBeerToBottles(item: InsertBottleList): Promise<BottleList>;
   updateBottleListItem(id: number, updates: Partial<InsertBottleList>): Promise<BottleList>;
@@ -798,12 +799,37 @@ export class DatabaseStorage implements IStorage {
         INNER JOIN beers b ON bl.beer_id = b.id  
         LEFT JOIN breweries br ON b.brewery_id = br.id
         WHERE bl.pub_id = ${pubId}
+          AND COALESCE(bl.is_active, true) = true
+          AND COALESCE(bl.is_visible, true) = true
         ORDER BY bl.id ASC
       `);
       
       return result.rows.map((row: any) => mapBottleDbRowToDto(row));
     } catch (error) {
       console.error('Error in getBottleList:', error);
+      return [];
+    }
+  }
+
+  async getBottleListForOwner(pubId: number): Promise<any[]> {
+    try {
+      const result = await db.execute(sql`
+        SELECT 
+          bl.id, bl.pub_id, bl.beer_id, bl.is_active, bl.is_visible, bl.price_bottle, bl.bottle_size, bl.quantity,
+          bl.description, bl.added_at, bl.updated_at, bl.prices,
+          b.name as beer_name, b.style as beer_style, b.abv as beer_abv, b.image_url as beer_image_url, b.logo_url as beer_logo_url,
+          b.is_gluten_free as beer_is_gluten_free, b.is_alcohol_free as beer_is_alcohol_free,
+          br.id as brewery_id, br.name as brewery_name, br.logo_url as brewery_logo_url
+        FROM bottle_list bl
+        INNER JOIN beers b ON bl.beer_id = b.id  
+        LEFT JOIN breweries br ON b.brewery_id = br.id
+        WHERE bl.pub_id = ${pubId}
+        ORDER BY bl.id ASC
+      `);
+      
+      return result.rows.map((row: any) => mapBottleDbRowToDto(row));
+    } catch (error) {
+      console.error('Error in getBottleListForOwner:', error);
       return [];
     }
   }
@@ -1965,6 +1991,13 @@ class StorageWrapper implements IStorage {
   async getBottleList(pubId: number): Promise<BottleList[]> {
     return this.dbCall(
       () => this.databaseStorage.getBottleList(pubId),
+      () => memoryStorageInstance.getBottleList(pubId)
+    );
+  }
+
+  async getBottleListForOwner(pubId: number): Promise<any[]> {
+    return this.dbCall(
+      () => this.databaseStorage.getBottleListForOwner(pubId),
       () => memoryStorageInstance.getBottleList(pubId)
     );
   }

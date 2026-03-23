@@ -1018,8 +1018,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const pubId = await resolvePubId(req.params.id);
       if (!pubId) return res.status(404).json({ message: "Pub not found" });
-      const bottleList = await storage.getBottleList(pubId);
-      res.json(bottleList);
+
+      // Check if requesting user is the pub owner (same pattern as taplist)
+      let isOwner = false;
+      try {
+        if ((req.user as any)?.id) {
+          const userId = (req.user as any).id;
+          const userPubs = await storage.getPubsByOwner(userId);
+          isOwner = userPubs.some(pub => pub.id === pubId);
+        }
+      } catch (e) {
+        // Not authenticated or other error, treat as public
+      }
+
+      const bottles = isOwner
+        ? await storage.getBottleListForOwner(pubId)
+        : await storage.getBottleList(pubId);
+
+      res.json(bottles);
     } catch (error) {
       console.error("Error fetching bottle list:", error);
       res.status(500).json({ message: "Failed to fetch bottle list" });
