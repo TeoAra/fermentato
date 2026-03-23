@@ -44,10 +44,18 @@ export default function SearchResults({ query, onClose }: SearchResultsProps) {
   if (!hasResults) {
     return (
       <div className={container}>
-        <div className="p-6 text-center">
-          <Search className="w-8 h-8 text-gray-300 dark:text-neutral-600 mx-auto mb-2" />
-          <p className="text-sm font-medium text-gray-500 dark:text-neutral-400">Nessun risultato per</p>
-          <p className="text-sm font-bold text-gray-800 dark:text-white mt-0.5">"{query}"</p>
+        <div className="p-5 text-center space-y-3">
+          <Search className="w-8 h-8 text-gray-300 dark:text-neutral-600 mx-auto" />
+          <div>
+            <p className="text-sm font-medium text-gray-500 dark:text-neutral-400">Nessun risultato per</p>
+            <p className="text-sm font-bold text-gray-800 dark:text-white mt-0.5">"{query}"</p>
+          </div>
+          <Link href={`/search?q=${encodeURIComponent(query)}`} onClick={onClose}>
+            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-amber-50 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400 text-sm font-semibold hover:bg-amber-100 dark:hover:bg-amber-900/50 transition-colors cursor-pointer border border-amber-200 dark:border-amber-700">
+              <ArrowRight className="w-4 h-4" />
+              Ricerca completa per "{query}"
+            </div>
+          </Link>
         </div>
       </div>
     );
