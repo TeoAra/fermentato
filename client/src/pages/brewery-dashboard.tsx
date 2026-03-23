@@ -23,9 +23,10 @@ import ImageWithFallback from "@/components/image-with-fallback";
 import {
   Beer as BeerIcon, Plus, Pencil, Trash2, Factory, MapPin, Loader2,
   Globe, Phone, FileText, Camera, Clock, AlertTriangle, Building,
-  Target, Sparkles, Save, X, Share2, ExternalLink,
+  Target, Sparkles, Save, X, Share2, ExternalLink, Mail,
   Megaphone, Store, Newspaper, Rocket, Users, QrCode
 } from "lucide-react";
+import { SiInstagram, SiFacebook, SiTiktok } from "react-icons/si";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { BreweryEventsManager } from "@/components/events-manager";
 import { RoleSwitcherBanner } from "@/components/role-switcher-banner";
@@ -385,7 +386,9 @@ export default function BreweryDashboard() {
   const [isEditingImages, setIsEditingImages] = useState(false);
   const [editForm, setEditForm] = useState({
     name: '', description: '', descriptionHtml: '', location: '', region: '', country: '',
-    websiteUrl: '', phone: '', vatNumber: '', latitude: '', longitude: '',
+    websiteUrl: '', email: '', phone: '', vatNumber: '',
+    instagramUrl: '', facebookUrl: '', tiktokUrl: '',
+    latitude: '', longitude: '',
   });
 
   const { data: requestStatus, isLoading: requestLoading } = useQuery<{
@@ -511,7 +514,11 @@ export default function BreweryDashboard() {
         descriptionHtml: (brewery as any).descriptionHtml || brewery.description || '',
         location: brewery.location || '', region: brewery.region || '',
         country: brewery.country || '', websiteUrl: brewery.websiteUrl || '',
+        email: (brewery as any).email || '',
         phone: brewery.phone || '', vatNumber: brewery.vatNumber || '',
+        instagramUrl: (brewery as any).instagramUrl || '',
+        facebookUrl: (brewery as any).facebookUrl || '',
+        tiktokUrl: (brewery as any).tiktokUrl || '',
         latitude: brewery.latitude || '', longitude: brewery.longitude || '',
       });
       setIsEditingProfile(true);
@@ -713,25 +720,49 @@ export default function BreweryDashboard() {
         )}
 
         {/* Info section with contact details */}
-        {(brewery.websiteUrl || brewery.phone || brewery.vatNumber) && (
+        {(brewery.websiteUrl || brewery.phone || (brewery as any).email || (brewery as any).instagramUrl || (brewery as any).facebookUrl || (brewery as any).tiktokUrl || brewery.vatNumber) && (
           <Card className="glass-card border-0 mb-8">
             <CardContent className="p-6">
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <div className="flex flex-wrap gap-3">
                 {brewery.websiteUrl && (
-                  <a href={brewery.websiteUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-sm text-amber-600 hover:underline">
-                    <Globe className="w-4 h-4 text-gray-400 flex-shrink-0" />
-                    <span className="truncate">{brewery.websiteUrl}</span>
+                  <a href={brewery.websiteUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-sm px-3 py-2 rounded-xl bg-indigo-50 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-100 dark:hover:bg-indigo-900/40 transition-colors">
+                    <Globe className="w-4 h-4 flex-shrink-0" />
+                    <span className="truncate max-w-[180px]">{brewery.websiteUrl.replace(/^https?:\/\//, '')}</span>
+                  </a>
+                )}
+                {(brewery as any).email && (
+                  <a href={`mailto:${(brewery as any).email}`} className="flex items-center gap-2 text-sm px-3 py-2 rounded-xl bg-gray-50 dark:bg-gray-800/40 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
+                    <Mail className="w-4 h-4 flex-shrink-0" />
+                    <span>{(brewery as any).email}</span>
                   </a>
                 )}
                 {brewery.phone && (
-                  <div className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
-                    <Phone className="w-4 h-4 text-gray-400 flex-shrink-0" />
+                  <a href={`tel:${brewery.phone}`} className="flex items-center gap-2 text-sm px-3 py-2 rounded-xl bg-gray-50 dark:bg-gray-800/40 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
+                    <Phone className="w-4 h-4 flex-shrink-0" />
                     <span>{brewery.phone}</span>
-                  </div>
+                  </a>
+                )}
+                {(brewery as any).instagramUrl && (
+                  <a href={(brewery as any).instagramUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-sm px-3 py-2 rounded-xl bg-pink-50 dark:bg-pink-950/30 text-pink-600 dark:text-pink-400 hover:bg-pink-100 dark:hover:bg-pink-900/30 transition-colors">
+                    <SiInstagram className="w-4 h-4 flex-shrink-0" />
+                    <span>Instagram</span>
+                  </a>
+                )}
+                {(brewery as any).facebookUrl && (
+                  <a href={(brewery as any).facebookUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-sm px-3 py-2 rounded-xl bg-blue-50 dark:bg-blue-950/30 text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-900/30 transition-colors">
+                    <SiFacebook className="w-4 h-4 flex-shrink-0" />
+                    <span>Facebook</span>
+                  </a>
+                )}
+                {(brewery as any).tiktokUrl && (
+                  <a href={(brewery as any).tiktokUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-sm px-3 py-2 rounded-xl bg-gray-100 dark:bg-gray-800/40 text-gray-800 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-700/40 transition-colors">
+                    <SiTiktok className="w-4 h-4 flex-shrink-0" />
+                    <span>TikTok</span>
+                  </a>
                 )}
                 {brewery.vatNumber && (
-                  <div className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
-                    <FileText className="w-4 h-4 text-gray-400 flex-shrink-0" />
+                  <div className="flex items-center gap-2 text-sm px-3 py-2 rounded-xl bg-gray-50 dark:bg-gray-800/40 text-gray-500 dark:text-gray-400">
+                    <FileText className="w-4 h-4 flex-shrink-0" />
                     <span>P.IVA: {brewery.vatNumber}</span>
                   </div>
                 )}
@@ -971,13 +1002,56 @@ export default function BreweryDashboard() {
                 />
               </div>
             </div>
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Partita IVA</label>
-              <Input
-                value={editForm.vatNumber}
-                onChange={(e) => setEditForm({ ...editForm, vatNumber: e.target.value })}
-                placeholder="IT..."
-              />
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Email pubblica</label>
+                <Input
+                  value={editForm.email}
+                  onChange={(e) => setEditForm({ ...editForm, email: e.target.value })}
+                  placeholder="info@birrificio.it"
+                  type="email"
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Partita IVA</label>
+                <Input
+                  value={editForm.vatNumber}
+                  onChange={(e) => setEditForm({ ...editForm, vatNumber: e.target.value })}
+                  placeholder="IT..."
+                />
+              </div>
+            </div>
+            <div>
+              <p className="text-sm font-semibold mb-3 flex items-center gap-2">
+                <SiInstagram className="h-4 w-4 text-pink-500" />
+                Social Media
+              </p>
+              <div className="grid grid-cols-1 gap-3">
+                <div className="flex items-center gap-2">
+                  <SiInstagram className="h-4 w-4 text-pink-500 flex-shrink-0" />
+                  <Input
+                    value={editForm.instagramUrl}
+                    onChange={(e) => setEditForm({ ...editForm, instagramUrl: e.target.value })}
+                    placeholder="https://instagram.com/tuobirrificio"
+                  />
+                </div>
+                <div className="flex items-center gap-2">
+                  <SiFacebook className="h-4 w-4 text-blue-600 flex-shrink-0" />
+                  <Input
+                    value={editForm.facebookUrl}
+                    onChange={(e) => setEditForm({ ...editForm, facebookUrl: e.target.value })}
+                    placeholder="https://facebook.com/tuobirrificio"
+                  />
+                </div>
+                <div className="flex items-center gap-2">
+                  <SiTiktok className="h-4 w-4 text-gray-800 dark:text-white flex-shrink-0" />
+                  <Input
+                    value={editForm.tiktokUrl}
+                    onChange={(e) => setEditForm({ ...editForm, tiktokUrl: e.target.value })}
+                    placeholder="https://tiktok.com/@tuobirrificio"
+                  />
+                </div>
+              </div>
             </div>
             <div className="flex gap-3 pt-2">
               <Button
