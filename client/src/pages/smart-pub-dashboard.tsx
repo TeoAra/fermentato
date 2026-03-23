@@ -476,7 +476,7 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
     { id: 'menu', name: 'Menu', icon: Utensils, gradient: 'from-green-500 to-emerald-600' },
     { id: 'events', name: 'Eventi', icon: Calendar, gradient: 'from-pink-500 to-rose-600' },
     { id: 'analytics', name: 'Analytics', icon: BarChart3, gradient: 'from-indigo-500 to-blue-600' },
-    { id: 'settings', name: 'Impostazioni', icon: Settings, gradient: 'from-gray-500 to-slate-600' },
+    { id: 'settings', name: 'Impostazioni', icon: Settings, gradient: 'from-gray-500 to-neutral-600' },
     { id: 'profile', name: 'Profilo', icon: Users, gradient: 'from-rose-500 to-pink-600' },
   ];
 
@@ -1722,7 +1722,7 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
               else if (val) { iconColor = 'text-blue-500'; }
               return (
                 <div key={field} className="relative">
-                  <div className={`absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none z-10 ${iconColor}`}>
+                  <div className={`absolute left-3 top-1/2 -tranneutral-y-1/2 pointer-events-none z-10 ${iconColor}`}>
                     {rowIcon}
                   </div>
                   <Input

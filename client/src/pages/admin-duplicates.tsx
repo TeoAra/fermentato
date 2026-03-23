@@ -29,15 +29,15 @@ function BreweryCard({ id, name, country, region, logo, beers, isKept, isDeleted
       } ${
         isKept ? 'border-green-500 bg-green-50 dark:bg-green-900/20' :
         isDeleted ? 'border-red-400 bg-red-50 dark:bg-red-900/20 opacity-60' :
-        selectable ? 'border-gray-200 dark:border-slate-700 hover:border-amber-400 dark:hover:border-amber-500' :
-        'border-gray-200 dark:border-slate-700'
+        selectable ? 'border-gray-200 dark:border-neutral-700 hover:border-amber-400 dark:hover:border-amber-500' :
+        'border-gray-200 dark:border-neutral-700'
       }`}
     >
       <div className="flex items-start gap-3">
         {logo ? (
           <img src={logo} alt={name} className="w-12 h-12 rounded-lg object-cover flex-shrink-0 bg-gray-100" />
         ) : (
-          <div className="w-12 h-12 rounded-lg bg-gray-100 dark:bg-slate-700 flex items-center justify-center flex-shrink-0">
+          <div className="w-12 h-12 rounded-lg bg-gray-100 dark:bg-neutral-700 flex items-center justify-center flex-shrink-0">
             <Beer className="h-6 w-6 text-gray-400" />
           </div>
         )}
@@ -154,9 +154,9 @@ export default function AdminDuplicates() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-slate-900 pb-20">
+    <div className="min-h-screen bg-gray-50 dark:bg-neutral-900 pb-20">
       {/* Header */}
-      <div className="sticky top-0 z-10 bg-white dark:bg-slate-900 border-b border-gray-200 dark:border-slate-700 px-4 py-3 flex items-center gap-3">
+      <div className="sticky top-0 z-10 bg-white dark:bg-neutral-900 border-b border-gray-200 dark:border-neutral-700 px-4 py-3 flex items-center gap-3">
         <Link href="/admin/content">
           <Button variant="ghost" size="sm" className="p-1.5">
             <ArrowLeft className="h-4 w-4" />
@@ -170,7 +170,7 @@ export default function AdminDuplicates() {
 
       <div className="max-w-4xl mx-auto px-4 py-6 space-y-6">
         {/* Search controls */}
-        <div className="bg-white dark:bg-slate-800 rounded-2xl border border-gray-200 dark:border-slate-700 p-5 space-y-4">
+        <div className="bg-white dark:bg-neutral-800 rounded-2xl border border-gray-200 dark:border-neutral-700 p-5 space-y-4">
           <div className="flex items-center gap-2 text-sm font-semibold text-gray-700 dark:text-gray-300">
             <SlidersHorizontal className="h-4 w-4 text-amber-500" />
             Parametri di ricerca
@@ -179,7 +179,7 @@ export default function AdminDuplicates() {
             <div>
               <label className="text-xs font-medium text-gray-500 dark:text-gray-400 block mb-1">Soglia similarità</label>
               <Select value={threshold} onValueChange={setThreshold}>
-                <SelectTrigger className="bg-gray-50 dark:bg-slate-700">
+                <SelectTrigger className="bg-gray-50 dark:bg-neutral-700">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -195,7 +195,7 @@ export default function AdminDuplicates() {
             <div>
               <label className="text-xs font-medium text-gray-500 dark:text-gray-400 block mb-1">Paese (opzionale)</label>
               <Select value={country} onValueChange={setCountry}>
-                <SelectTrigger className="bg-gray-50 dark:bg-slate-700">
+                <SelectTrigger className="bg-gray-50 dark:bg-neutral-700">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -211,7 +211,7 @@ export default function AdminDuplicates() {
             <div>
               <label className="text-xs font-medium text-gray-500 dark:text-gray-400 block mb-1">Max risultati</label>
               <Select value={limit} onValueChange={setLimit}>
-                <SelectTrigger className="bg-gray-50 dark:bg-slate-700">
+                <SelectTrigger className="bg-gray-50 dark:bg-neutral-700">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -260,7 +260,7 @@ export default function AdminDuplicates() {
             {visiblePairs.map((pair) => {
               const key = `${Math.min(pair.id1, pair.id2)}_${Math.max(pair.id1, pair.id2)}`;
               return (
-                <div key={key} className="bg-white dark:bg-slate-800 rounded-2xl border border-gray-200 dark:border-slate-700 p-4 space-y-3">
+                <div key={key} className="bg-white dark:bg-neutral-800 rounded-2xl border border-gray-200 dark:border-neutral-700 p-4 space-y-3">
                   {/* Similarity badge */}
                   <div className="flex items-center justify-between">
                     <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${simColor(pair.sim)}`}>

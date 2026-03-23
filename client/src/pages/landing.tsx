@@ -110,17 +110,17 @@ export default function Landing() {
   };
 
   return (
-    <div className="min-h-screen bg-white dark:bg-slate-950">
+    <div className="min-h-screen bg-white dark:bg-neutral-950">
 
       {/* ===== HERO ===== */}
-      <section className="relative overflow-hidden bg-gradient-to-br from-amber-50 via-white to-slate-100 dark:from-gray-900 dark:via-slate-800 dark:to-gray-900 min-h-[520px] lg:min-h-[580px]">
+      <section className="relative overflow-hidden bg-gradient-to-br from-amber-50 via-white to-neutral-100 dark:from-gray-900 dark:via-neutral-800 dark:to-gray-900 min-h-[520px] lg:min-h-[580px]">
         <div className="absolute inset-0">
           <img
             src="/hero-beer.jpg"
             alt="Craft beer"
             className="w-full h-full object-cover opacity-10 dark:opacity-20"
           />
-          <div className="absolute inset-0 bg-gradient-to-r from-white/95 via-amber-50/70 to-transparent dark:from-gray-900/95 dark:via-slate-900/80 dark:to-transparent"></div>
+          <div className="absolute inset-0 bg-gradient-to-r from-white/95 via-amber-50/70 to-transparent dark:from-gray-900/95 dark:via-neutral-900/80 dark:to-transparent"></div>
         </div>
 
         <div className="absolute top-0 right-0 w-96 h-96 bg-amber-400/8 dark:bg-amber-500/10 rounded-full blur-3xl pointer-events-none"></div>
@@ -195,7 +195,7 @@ export default function Landing() {
 
       {/* ===== STATS BANNER ===== */}
       {globalStats && (
-        <section className="bg-amber-50 dark:bg-gradient-to-r dark:from-slate-800 dark:to-gray-800 py-7 border-y border-amber-100 dark:border-white/5">
+        <section className="bg-amber-50 dark:bg-gradient-to-r dark:from-neutral-800 dark:to-gray-800 py-7 border-y border-amber-100 dark:border-white/5">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="grid grid-cols-2 md:grid-cols-4 gap-6 text-center">
               {[
@@ -221,7 +221,7 @@ export default function Landing() {
         <section>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <Link href="/explore/pubs">
-              <div className="bg-white dark:bg-slate-800 border border-gray-100 dark:border-slate-700 rounded-xl p-8 text-center group hover:scale-105 hover:shadow-md dark:hover:shadow-slate-700/30 transition-all duration-300 cursor-pointer shadow-sm">
+              <div className="bg-white dark:bg-neutral-800 border border-gray-100 dark:border-neutral-700 rounded-xl p-8 text-center group hover:scale-105 hover:shadow-md dark:hover:shadow-neutral-700/30 transition-all duration-300 cursor-pointer shadow-sm">
                 <div className="p-4 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl inline-flex mb-4 group-hover:scale-110 transition-transform">
                   <MapPin className="h-8 w-8 text-white" />
                 </div>
@@ -230,7 +230,7 @@ export default function Landing() {
               </div>
             </Link>
             <Link href="/explore/breweries">
-              <div className="bg-white dark:bg-slate-800 border border-gray-100 dark:border-slate-700 rounded-xl p-8 text-center group hover:scale-105 hover:shadow-md dark:hover:shadow-slate-700/30 transition-all duration-300 cursor-pointer shadow-sm">
+              <div className="bg-white dark:bg-neutral-800 border border-gray-100 dark:border-neutral-700 rounded-xl p-8 text-center group hover:scale-105 hover:shadow-md dark:hover:shadow-neutral-700/30 transition-all duration-300 cursor-pointer shadow-sm">
                 <div className="p-4 bg-gradient-to-br from-amber-500 to-orange-600 rounded-xl inline-flex mb-4 group-hover:scale-110 transition-transform">
                   <Beer className="h-8 w-8 text-white" />
                 </div>
@@ -239,7 +239,7 @@ export default function Landing() {
               </div>
             </Link>
             <a href="/api/login">
-              <div className="bg-white dark:bg-slate-800 border border-gray-100 dark:border-slate-700 rounded-xl p-8 text-center group hover:scale-105 hover:shadow-md dark:hover:shadow-slate-700/30 transition-all duration-300 cursor-pointer shadow-sm">
+              <div className="bg-white dark:bg-neutral-800 border border-gray-100 dark:border-neutral-700 rounded-xl p-8 text-center group hover:scale-105 hover:shadow-md dark:hover:shadow-neutral-700/30 transition-all duration-300 cursor-pointer shadow-sm">
                 <div className="p-4 bg-gradient-to-br from-red-500 to-pink-600 rounded-xl inline-flex mb-4 group-hover:scale-110 transition-transform">
                   <Heart className="h-8 w-8 text-white" />
                 </div>
@@ -280,8 +280,8 @@ export default function Landing() {
                 color: "from-purple-500 to-pink-500",
               },
             ].map(({ step, icon: Icon, title, desc, color }) => (
-              <div key={step} className="relative bg-white dark:bg-slate-800 rounded-2xl p-8 border border-gray-100 dark:border-slate-700 shadow-sm hover:shadow-md dark:hover:shadow-slate-700/30 transition-shadow">
-                <div className="absolute -top-4 -left-2 text-6xl font-black text-gray-100 dark:text-slate-700 select-none leading-none">{step}</div>
+              <div key={step} className="relative bg-white dark:bg-neutral-800 rounded-2xl p-8 border border-gray-100 dark:border-neutral-700 shadow-sm hover:shadow-md dark:hover:shadow-neutral-700/30 transition-shadow">
+                <div className="absolute -top-4 -left-2 text-6xl font-black text-gray-100 dark:text-neutral-700 select-none leading-none">{step}</div>
                 <div className={`relative p-3 bg-gradient-to-br ${color} rounded-xl inline-flex mb-5`}>
                   <Icon className="w-6 h-6 text-white" />
                 </div>
@@ -330,8 +330,8 @@ export default function Landing() {
             />
           </section>
         ) : locationStatus !== 'denied' && (
-          <section className="rounded-2xl border border-dashed border-gray-200 dark:border-slate-700 bg-gray-50 dark:bg-slate-800/50 p-8 text-center">
-            <MapPin className="w-10 h-10 text-gray-300 dark:text-slate-600 mx-auto mb-3" />
+          <section className="rounded-2xl border border-dashed border-gray-200 dark:border-neutral-700 bg-gray-50 dark:bg-neutral-800/50 p-8 text-center">
+            <MapPin className="w-10 h-10 text-gray-300 dark:text-neutral-600 mx-auto mb-3" />
             <p className="text-gray-500 dark:text-gray-400 font-medium mb-3">
               Attiva la posizione per vedere pub e birrifici sulla mappa
             </p>
@@ -359,7 +359,7 @@ export default function Landing() {
           </div>
           {pubsLoading ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {[...Array(3)].map((_, i) => <div key={i} className="bg-gray-100 dark:bg-slate-800 rounded-xl h-80 animate-pulse" />)}
+              {[...Array(3)].map((_, i) => <div key={i} className="bg-gray-100 dark:bg-neutral-800 rounded-xl h-80 animate-pulse" />)}
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -387,7 +387,7 @@ export default function Landing() {
           </div>
           {breweriesLoading ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-              {[...Array(4)].map((_, i) => <div key={i} className="bg-gray-100 dark:bg-slate-800 rounded-xl h-72 animate-pulse" />)}
+              {[...Array(4)].map((_, i) => <div key={i} className="bg-gray-100 dark:bg-neutral-800 rounded-xl h-72 animate-pulse" />)}
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -437,7 +437,7 @@ export default function Landing() {
             </div>
 
             {/* Brewery plan teaser */}
-            <div className="bg-gradient-to-br from-slate-800 to-gray-900 dark:from-slate-700 dark:to-gray-800 rounded-2xl p-6 text-white shadow-xl border border-slate-700">
+            <div className="bg-gradient-to-br from-neutral-800 to-gray-900 dark:from-neutral-700 dark:to-gray-800 rounded-2xl p-6 text-white shadow-xl border border-neutral-700">
               <div className="flex items-center gap-3 mb-4">
                 <div className="w-10 h-10 bg-white/10 rounded-xl flex items-center justify-center">
                   <Shield className="w-5 h-5 text-orange-400" />
@@ -478,10 +478,10 @@ export default function Landing() {
 
         {/* ===== CTA ISCRIZIONE ===== */}
         <section>
-          <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-amber-50 via-white to-slate-100 dark:from-slate-800 dark:via-gray-900 dark:to-slate-900 p-10 lg:p-16 text-center border border-amber-100 dark:border-white/5">
+          <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-amber-50 via-white to-neutral-100 dark:from-neutral-800 dark:via-gray-900 dark:to-neutral-900 p-10 lg:p-16 text-center border border-amber-100 dark:border-white/5">
             <div className="absolute top-0 left-0 w-72 h-72 bg-amber-400/15 dark:bg-amber-500/15 rounded-full blur-3xl pointer-events-none"></div>
             <div className="absolute bottom-0 right-0 w-72 h-72 bg-teal-400/15 dark:bg-teal-500/15 rounded-full blur-3xl pointer-events-none"></div>
-            <div className="absolute top-1/2 left-1/2 w-48 h-48 bg-purple-400/10 dark:bg-purple-500/10 rounded-full blur-2xl pointer-events-none -translate-x-1/2 -translate-y-1/2"></div>
+            <div className="absolute top-1/2 left-1/2 w-48 h-48 bg-purple-400/10 dark:bg-purple-500/10 rounded-full blur-2xl pointer-events-none -tranneutral-x-1/2 -tranneutral-y-1/2"></div>
             <div className="relative">
               <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-amber-500/10 dark:bg-amber-500/20 text-amber-700 dark:text-amber-300 text-sm font-medium mb-6 border border-amber-500/20 dark:border-amber-500/30">
                 <Globe className="w-3.5 h-3.5" />

@@ -75,8 +75,8 @@ export function MobileHeader({ onMenuToggle, isMenuOpen }: MobileHeaderProps) {
     const isActive = location === href || (href !== '/' && location.startsWith(href));
     return (
       <Link href={href} onClick={() => { onMenuToggle(); onClick?.(); }}>
-        <div className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-colors ${isActive ? 'bg-amber-50 dark:bg-amber-900/20' : 'hover:bg-gray-50 dark:hover:bg-slate-800'}`}>
-          <div className={`flex items-center justify-center w-10 h-10 rounded-xl ${isActive ? 'bg-amber-500 text-white' : 'bg-gray-100 dark:bg-slate-700 text-gray-500 dark:text-gray-400'}`}>
+        <div className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-colors ${isActive ? 'bg-amber-50 dark:bg-amber-900/20' : 'hover:bg-gray-50 dark:hover:bg-neutral-800'}`}>
+          <div className={`flex items-center justify-center w-10 h-10 rounded-xl ${isActive ? 'bg-amber-500 text-white' : 'bg-gray-100 dark:bg-neutral-700 text-gray-500 dark:text-gray-400'}`}>
             <Icon className="h-5 w-5" />
           </div>
           <div className="flex-1 min-w-0">
@@ -147,10 +147,10 @@ export function MobileHeader({ onMenuToggle, isMenuOpen }: MobileHeaderProps) {
       </header>
 
       <Sheet open={isMenuOpen} onOpenChange={(open) => { if (!open) onMenuToggle(); }}>
-        <SheetContent side="right" className="w-[300px] p-0 flex flex-col bg-white dark:bg-slate-900 border-l border-gray-100 dark:border-slate-800">
+        <SheetContent side="right" className="w-[300px] p-0 flex flex-col bg-white dark:bg-neutral-900 border-l border-gray-100 dark:border-neutral-800">
           <SheetTitle className="sr-only">Menu di navigazione</SheetTitle>
           {/* User Profile Header */}
-          <div className="px-5 pt-6 pb-4 border-b border-gray-100 dark:border-slate-800">
+          <div className="px-5 pt-6 pb-4 border-b border-gray-100 dark:border-neutral-800">
             {isAuthenticated && typedUser ? (
               <Link href="/dashboard" onClick={onMenuToggle}>
                 <div className="flex items-center gap-3">
@@ -177,7 +177,7 @@ export function MobileHeader({ onMenuToggle, isMenuOpen }: MobileHeaderProps) {
               </Link>
             ) : (
               <div className="flex items-center gap-3">
-                <div className="flex items-center justify-center w-12 h-12 rounded-full bg-gray-100 dark:bg-slate-800">
+                <div className="flex items-center justify-center w-12 h-12 rounded-full bg-gray-100 dark:bg-neutral-800">
                   <User className="h-6 w-6 text-gray-400" />
                 </div>
                 <div>
@@ -250,9 +250,9 @@ export function MobileHeader({ onMenuToggle, isMenuOpen }: MobileHeaderProps) {
                       key={role}
                       onClick={() => switchRoleMutation.mutate(role)}
                       disabled={switchRoleMutation.isPending}
-                      className="w-full flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-gray-50 dark:hover:bg-slate-800 transition-colors"
+                      className="w-full flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-gray-50 dark:hover:bg-neutral-800 transition-colors"
                     >
-                      <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-gray-100 dark:bg-slate-700 text-gray-500 dark:text-gray-400">
+                      <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-gray-100 dark:bg-neutral-700 text-gray-500 dark:text-gray-400">
                         <Icon className="h-5 w-5" />
                       </div>
                       <span className="text-sm font-semibold text-gray-900 dark:text-white">Passa a {roleLabels[role]}</span>
@@ -264,7 +264,7 @@ export function MobileHeader({ onMenuToggle, isMenuOpen }: MobileHeaderProps) {
           </div>
 
           {/* Bottom actions */}
-          <div className="px-3 py-4 border-t border-gray-100 dark:border-slate-800 space-y-1">
+          <div className="px-3 py-4 border-t border-gray-100 dark:border-neutral-800 space-y-1">
             <div className="flex items-center justify-between px-4 py-2">
               <span className="text-sm text-gray-500 dark:text-gray-400">Tema</span>
               <ThemeToggle />

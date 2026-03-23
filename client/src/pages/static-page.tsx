@@ -82,7 +82,7 @@ function StaticPageView({ slug }: StaticPageViewProps) {
           prose-headings:font-bold prose-headings:text-gray-900 dark:prose-headings:text-white
           prose-a:text-amber-600 dark:prose-a:text-amber-400 prose-a:no-underline hover:prose-a:underline
           prose-img:rounded-xl prose-img:shadow-md
-          prose-hr:border-gray-200 dark:prose-hr:border-slate-700"
+          prose-hr:border-gray-200 dark:prose-hr:border-neutral-700"
         dangerouslySetInnerHTML={{ __html: page.content }}
       />
     </div>
@@ -91,7 +91,7 @@ function StaticPageView({ slug }: StaticPageViewProps) {
 
 export function ContattiPage() {
   return (
-    <div className="min-h-screen bg-white dark:bg-slate-950 pt-20">
+    <div className="min-h-screen bg-white dark:bg-neutral-950 pt-20">
       <StaticPageView slug="contatti" />
       <Footer />
     </div>
@@ -100,7 +100,7 @@ export function ContattiPage() {
 
 export function ChiSiamoPage() {
   return (
-    <div className="min-h-screen bg-white dark:bg-slate-950 pt-20">
+    <div className="min-h-screen bg-white dark:bg-neutral-950 pt-20">
       <StaticPageView slug="chi-siamo" />
       <Footer />
     </div>
@@ -109,7 +109,7 @@ export function ChiSiamoPage() {
 
 export function PrezziPage() {
   return (
-    <div className="min-h-screen bg-white dark:bg-slate-950 pt-20">
+    <div className="min-h-screen bg-white dark:bg-neutral-950 pt-20">
       <StaticPageView slug="prezzi" />
       <Footer />
     </div>
@@ -118,7 +118,7 @@ export function PrezziPage() {
 
 export function SupportoPage() {
   return (
-    <div className="min-h-screen bg-white dark:bg-slate-950 pt-20">
+    <div className="min-h-screen bg-white dark:bg-neutral-950 pt-20">
       <StaticPageView slug="supporto" />
       <Footer />
     </div>

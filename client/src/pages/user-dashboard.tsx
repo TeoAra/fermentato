@@ -71,7 +71,7 @@ export default function UserDashboard() {
     { id: 'favorites', name: 'Preferiti', icon: Heart, gradient: 'from-rose-500 to-pink-600' },
     { id: 'activity', name: 'Attività', icon: Activity, gradient: 'from-orange-500 to-red-600' },
     { id: 'profile', name: 'Profilo', icon: User, gradient: 'from-indigo-500 to-purple-600' },
-    { id: 'settings', name: 'Impostazioni', icon: Settings, gradient: 'from-gray-500 to-slate-600' },
+    { id: 'settings', name: 'Impostazioni', icon: Settings, gradient: 'from-gray-500 to-neutral-600' },
   ];
 
   // Modern User Stats KPI Card

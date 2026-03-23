@@ -571,14 +571,14 @@ export default function AdminContentManager({ type }: AdminContentManagerProps) 
           <CardContent className="space-y-3">
             {/* Search */}
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+              <Search className="absolute left-3 top-1/2 -tranneutral-y-1/2 w-4 h-4 text-gray-400" />
               <Input
                 placeholder={type === 'beers' ? 'Cerca per nome birra o birrificio...' : type === 'breweries' ? 'Cerca per nome o paese...' : 'Cerca per nome, città o indirizzo...'}
                 value={searchQuery}
                 onChange={(e) => handleSearchInput(e.target.value)}
                 className="pl-10 pr-10"
               />
-              {isSearching && <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 animate-spin text-gray-400" />}
+              {isSearching && <Loader2 className="absolute right-3 top-1/2 -tranneutral-y-1/2 w-4 h-4 animate-spin text-gray-400" />}
             </div>
 
             {/* Select all bar */}

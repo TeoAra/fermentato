@@ -335,7 +335,7 @@ export default function AdditionRequestModal({ open, onClose, initialBeerName = 
                   <div className="relative">
                     <Label htmlFor="beerBrewery">Birrificio</Label>
                     <div className="relative mt-1">
-                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                      <Search className="absolute left-3 top-1/2 -tranneutral-y-1/2 h-4 w-4 text-gray-400" />
                       <Input
                         id="beerBrewery"
                         value={selectedBrewery ? selectedBrewery.name : beerBreweryQuery}
@@ -353,7 +353,7 @@ export default function AdditionRequestModal({ open, onClose, initialBeerName = 
                         <button
                           type="button"
                           onClick={() => { setSelectedBrewery(null); setBeerBreweryQuery(""); }}
-                          className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                          className="absolute right-3 top-1/2 -tranneutral-y-1/2 text-gray-400 hover:text-gray-600"
                         >
                           <X className="h-4 w-4" />
                         </button>

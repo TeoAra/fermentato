@@ -138,7 +138,7 @@ export default function SearchPage() {
 
   return (
     <>
-    <div className="min-h-screen bg-gray-50 dark:bg-slate-900">
+    <div className="min-h-screen bg-gray-50 dark:bg-neutral-900">
 
       {/* Gradient header */}
       <div className="relative bg-gradient-to-br from-amber-500 via-amber-500 to-orange-500 dark:from-amber-700 dark:via-amber-700 dark:to-orange-700 overflow-hidden">
@@ -159,18 +159,18 @@ export default function SearchPage() {
 
           <form onSubmit={handleSearch} className="flex gap-2">
             <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+              <Search className="absolute left-3 top-1/2 -tranneutral-y-1/2 h-4 w-4 text-gray-400" />
               <Input
                 value={inputValue}
                 onChange={e => setInputValue(e.target.value)}
                 placeholder="Cerca birre, stili, birrifici, pub..."
-                className="pl-10 pr-10 h-11 rounded-xl border-0 bg-white dark:bg-slate-800 shadow-md focus-visible:ring-amber-300"
+                className="pl-10 pr-10 h-11 rounded-xl border-0 bg-white dark:bg-neutral-800 shadow-md focus-visible:ring-amber-300"
               />
               {inputValue && (
                 <button
                   type="button"
                   onClick={() => { setInputValue(""); setQuery(""); }}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                  className="absolute right-3 top-1/2 -tranneutral-y-1/2 text-gray-400 hover:text-gray-600"
                 >
                   <X className="h-4 w-4" />
                 </button>
@@ -203,9 +203,9 @@ export default function SearchPage() {
 
         {/* Advanced filters panel */}
         {showFilters && (
-          <div className="mb-4 p-4 rounded-xl bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 shadow-sm space-y-3">
+          <div className="mb-4 p-4 rounded-xl bg-white dark:bg-neutral-800 border border-gray-200 dark:border-neutral-700 shadow-sm space-y-3">
             <div className="flex items-center justify-between">
-              <span className="text-sm font-semibold text-gray-700 dark:text-slate-200 flex items-center gap-1.5">
+              <span className="text-sm font-semibold text-gray-700 dark:text-neutral-200 flex items-center gap-1.5">
                 <SlidersHorizontal className="w-4 h-4 text-amber-500" />
                 Filtri
               </span>
@@ -218,11 +218,11 @@ export default function SearchPage() {
 
             <div className="flex flex-wrap gap-1.5">
               <button onClick={() => setFilterGlutenFree(f => !f)}
-                className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-all ${filterGlutenFree ? "bg-green-500 text-white border-green-500" : "border-gray-200 dark:border-slate-600 text-gray-600 dark:text-slate-300 hover:border-green-400"}`}>
+                className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-all ${filterGlutenFree ? "bg-green-500 text-white border-green-500" : "border-gray-200 dark:border-neutral-600 text-gray-600 dark:text-neutral-300 hover:border-green-400"}`}>
                 🌾 Senza glutine
               </button>
               <button onClick={() => setFilterAlcoholFree(f => !f)}
-                className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-all ${filterAlcoholFree ? "bg-blue-500 text-white border-blue-500" : "border-gray-200 dark:border-slate-600 text-gray-600 dark:text-slate-300 hover:border-blue-400"}`}>
+                className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-all ${filterAlcoholFree ? "bg-blue-500 text-white border-blue-500" : "border-gray-200 dark:border-neutral-600 text-gray-600 dark:text-neutral-300 hover:border-blue-400"}`}>
                 💧 Analcolica
               </button>
 
@@ -230,7 +230,7 @@ export default function SearchPage() {
               {([["🍺 Light <5%", "", "4.9"], ["⚡ Strong >7%", "7", ""], ["💥 Imperial >9%", "9", ""]] as [string,string,string][]).map(([label, min, max]) => (
                 <button key={label}
                   onClick={() => { setFilterMinAbv(filterMinAbv === min && filterMaxAbv === max ? "" : min); setFilterMaxAbv(filterMinAbv === min && filterMaxAbv === max ? "" : max); }}
-                  className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-all ${filterMinAbv === min && filterMaxAbv === max ? "bg-orange-500 text-white border-orange-500" : "border-gray-200 dark:border-slate-600 text-gray-600 dark:text-slate-300 hover:border-orange-400"}`}>
+                  className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-all ${filterMinAbv === min && filterMaxAbv === max ? "bg-orange-500 text-white border-orange-500" : "border-gray-200 dark:border-neutral-600 text-gray-600 dark:text-neutral-300 hover:border-orange-400"}`}>
                   {label}
                 </button>
               ))}
@@ -239,14 +239,14 @@ export default function SearchPage() {
               {([["😌 Dolce", "", "19"], ["⚖️ Bilanciata", "20", "50"], ["🌿 Amara", "60", ""]] as [string,string,string][]).map(([label, min, max]) => (
                 <button key={label}
                   onClick={() => { setFilterMinIbu(filterMinIbu === min && filterMaxIbu === max ? "" : min); setFilterMaxIbu(filterMinIbu === min && filterMaxIbu === max ? "" : max); }}
-                  className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-all ${filterMinIbu === min && filterMaxIbu === max ? "bg-green-600 text-white border-green-600" : "border-gray-200 dark:border-slate-600 text-gray-600 dark:text-slate-300 hover:border-green-400"}`}>
+                  className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-all ${filterMinIbu === min && filterMaxIbu === max ? "bg-green-600 text-white border-green-600" : "border-gray-200 dark:border-neutral-600 text-gray-600 dark:text-neutral-300 hover:border-green-400"}`}>
                   {label}
                 </button>
               ))}
             </div>
 
             {popularStyles && popularStyles.length > 0 && (
-              <div className="flex flex-wrap gap-1.5 pt-1 border-t border-gray-100 dark:border-slate-700">
+              <div className="flex flex-wrap gap-1.5 pt-1 border-t border-gray-100 dark:border-neutral-700">
                 <span className="self-center text-xs text-gray-400 mr-1">Stile:</span>
                 {filterStyle && (
                   <button onClick={() => setFilterStyle("")}
@@ -257,7 +257,7 @@ export default function SearchPage() {
                 {popularStyles.slice(0, 12).filter(({ style }) => style !== filterStyle).map(({ style }) => (
                   <button key={style}
                     onClick={() => setFilterStyle(style)}
-                    className="px-2.5 py-1 rounded-full text-xs font-medium border border-gray-200 dark:border-slate-600 text-gray-600 dark:text-slate-300 hover:border-amber-400 hover:text-amber-600 transition-all bg-white dark:bg-slate-700">
+                    className="px-2.5 py-1 rounded-full text-xs font-medium border border-gray-200 dark:border-neutral-600 text-gray-600 dark:text-neutral-300 hover:border-amber-400 hover:text-amber-600 transition-all bg-white dark:bg-neutral-700">
                     {style}
                   </button>
                 ))}
@@ -265,12 +265,12 @@ export default function SearchPage() {
             )}
 
             {(activeTab === "all" || activeTab === "breweries") && (
-              <div className="flex flex-wrap gap-1.5 pt-1 border-t border-gray-100 dark:border-slate-700">
+              <div className="flex flex-wrap gap-1.5 pt-1 border-t border-gray-100 dark:border-neutral-700">
                 <span className="self-center text-xs text-gray-400 mr-1">Paese:</span>
                 {["Italia", "Germany", "Belgium", "USA", "UK", "France"].map(c => (
                   <button key={c}
                     onClick={() => setFilterCountry(filterCountry === c ? "" : c)}
-                    className={`px-2.5 py-1 rounded-full text-xs font-medium border transition-all ${filterCountry === c ? "bg-orange-500 text-white border-orange-500" : "border-gray-200 dark:border-slate-600 text-gray-600 dark:text-slate-300 hover:border-orange-400"}`}>
+                    className={`px-2.5 py-1 rounded-full text-xs font-medium border transition-all ${filterCountry === c ? "bg-orange-500 text-white border-orange-500" : "border-gray-200 dark:border-neutral-600 text-gray-600 dark:text-neutral-300 hover:border-orange-400"}`}>
                     {c}
                   </button>
                 ))}
@@ -285,7 +285,7 @@ export default function SearchPage() {
             {recentSearches.length > 0 ? (
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
-                  <span className="text-sm font-semibold text-gray-500 dark:text-slate-400 flex items-center gap-1.5">
+                  <span className="text-sm font-semibold text-gray-500 dark:text-neutral-400 flex items-center gap-1.5">
                     <Clock className="w-4 h-4" />
                     Ricerche recenti
                   </span>
@@ -298,10 +298,10 @@ export default function SearchPage() {
                 </div>
                 <div className="space-y-1.5">
                   {recentSearches.map(s => (
-                    <div key={s} className="flex items-center gap-2 p-3 rounded-xl bg-white dark:bg-slate-800 border border-gray-100 dark:border-slate-700 group">
-                      <Clock className="w-4 h-4 text-gray-300 dark:text-slate-600 flex-shrink-0" />
+                    <div key={s} className="flex items-center gap-2 p-3 rounded-xl bg-white dark:bg-neutral-800 border border-gray-100 dark:border-neutral-700 group">
+                      <Clock className="w-4 h-4 text-gray-300 dark:text-neutral-600 flex-shrink-0" />
                       <button
-                        className="flex-1 text-left text-sm text-gray-700 dark:text-slate-200 hover:text-amber-600 dark:hover:text-amber-400 transition-colors"
+                        className="flex-1 text-left text-sm text-gray-700 dark:text-neutral-200 hover:text-amber-600 dark:hover:text-amber-400 transition-colors"
                         onClick={() => { setInputValue(s); setQuery(s); addRecentSearch(s); window.history.replaceState(null, "", `/search?q=${encodeURIComponent(s)}`); }}
                       >
                         {s}
@@ -318,13 +318,13 @@ export default function SearchPage() {
                 <div className="w-20 h-20 rounded-full bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center mb-5">
                   <Search className="h-10 w-10 text-amber-400 dark:text-amber-500" />
                 </div>
-                <p className="text-lg font-semibold text-gray-700 dark:text-slate-200 mb-1">Cosa stai cercando?</p>
-                <p className="text-sm text-gray-400 dark:text-slate-500 max-w-xs">Digita almeno 2 caratteri per cercare tra birre, birrifici e pub</p>
-                <div className="flex items-center gap-4 mt-6 text-xs text-gray-400 dark:text-slate-500">
+                <p className="text-lg font-semibold text-gray-700 dark:text-neutral-200 mb-1">Cosa stai cercando?</p>
+                <p className="text-sm text-gray-400 dark:text-neutral-500 max-w-xs">Digita almeno 2 caratteri per cercare tra birre, birrifici e pub</p>
+                <div className="flex items-center gap-4 mt-6 text-xs text-gray-400 dark:text-neutral-500">
                   <span className="flex items-center gap-1.5"><Beer className="w-3.5 h-3.5 text-amber-400" /> Birre</span>
-                  <span className="text-gray-200 dark:text-slate-700">·</span>
+                  <span className="text-gray-200 dark:text-neutral-700">·</span>
                   <span className="flex items-center gap-1.5"><Building2 className="w-3.5 h-3.5 text-amber-400" /> Birrifici</span>
-                  <span className="text-gray-200 dark:text-slate-700">·</span>
+                  <span className="text-gray-200 dark:text-neutral-700">·</span>
                   <span className="flex items-center gap-1.5"><MapPin className="w-3.5 h-3.5 text-blue-400" /> Pub</span>
                 </div>
               </div>
@@ -336,7 +336,7 @@ export default function SearchPage() {
         {isLoading && (
           <div className="space-y-2.5 mt-2">
             {[...Array(5)].map((_, i) => (
-              <div key={i} className="h-16 rounded-xl bg-gray-100 dark:bg-slate-800 animate-pulse" />
+              <div key={i} className="h-16 rounded-xl bg-gray-100 dark:bg-neutral-800 animate-pulse" />
             ))}
           </div>
         )}
@@ -345,7 +345,7 @@ export default function SearchPage() {
         {!isLoading && results && query.length > 1 && (
           <div className="space-y-4">
             {/* Tab bar */}
-            <div className="flex gap-1 p-1 bg-white dark:bg-slate-800 rounded-xl border border-gray-200 dark:border-slate-700 shadow-sm">
+            <div className="flex gap-1 p-1 bg-white dark:bg-neutral-800 rounded-xl border border-gray-200 dark:border-neutral-700 shadow-sm">
               {tabs.map(tab => {
                 const count = tabCounts[tab.id];
                 const Icon = tab.icon;
@@ -356,14 +356,14 @@ export default function SearchPage() {
                     className={`flex-1 flex items-center justify-center gap-1.5 py-2 px-2 rounded-lg text-sm font-medium transition-all ${
                       activeTab === tab.id
                         ? "bg-amber-500 text-white shadow-sm"
-                        : "text-gray-500 dark:text-slate-400 hover:text-gray-700 dark:hover:text-slate-200"
+                        : "text-gray-500 dark:text-neutral-400 hover:text-gray-700 dark:hover:text-neutral-200"
                     }`}
                   >
                     <Icon className="h-3.5 w-3.5" />
                     <span className="hidden sm:inline">{tab.label}</span>
                     {count > 0 && (
                       <span className={`text-xs rounded-full px-1.5 py-0.5 min-w-5 text-center ${
-                        activeTab === tab.id ? "bg-amber-400 text-white" : "bg-gray-100 dark:bg-slate-700 text-gray-600 dark:text-slate-300"
+                        activeTab === tab.id ? "bg-amber-400 text-white" : "bg-gray-100 dark:bg-neutral-700 text-gray-600 dark:text-neutral-300"
                       }`}>
                         {count > 99 ? "99+" : count}
                       </span>
@@ -375,7 +375,7 @@ export default function SearchPage() {
 
             {/* Results summary */}
             <div className="flex items-center justify-between">
-              <p className="text-xs text-gray-500 dark:text-slate-400">
+              <p className="text-xs text-gray-500 dark:text-neutral-400">
                 {tabCounts.all > 0
                   ? `${tabCounts.all} risultat${tabCounts.all === 1 ? "o" : "i"} per "${query}"`
                   : `Nessun risultato per "${query}"`}
@@ -411,7 +411,7 @@ export default function SearchPage() {
                 <div className="space-y-1.5">
                   {filteredBeers.map((beer: any) => (
                     <Link key={beer.id} href={`/beer/${beer.id}`}>
-                      <div className="flex items-center gap-3 p-3 rounded-xl bg-white dark:bg-slate-800 border border-gray-100 dark:border-slate-700 hover:border-amber-300 dark:hover:border-amber-600 hover:shadow-md transition-all cursor-pointer group">
+                      <div className="flex items-center gap-3 p-3 rounded-xl bg-white dark:bg-neutral-800 border border-gray-100 dark:border-neutral-700 hover:border-amber-300 dark:hover:border-amber-600 hover:shadow-md transition-all cursor-pointer group">
                         <ImageWithFallback
                           src={beer.imageUrl}
                           alt={beer.name}
@@ -430,7 +430,7 @@ export default function SearchPage() {
                               </span>
                             )}
                             {beer.style && (
-                              <Badge variant="outline" className="text-xs py-0 px-1.5 h-4 border-gray-200 dark:border-slate-600">{beer.style}</Badge>
+                              <Badge variant="outline" className="text-xs py-0 px-1.5 h-4 border-gray-200 dark:border-neutral-600">{beer.style}</Badge>
                             )}
                             {beer.abv != null && (
                               <span className="text-xs text-gray-400">{beer.abv}%</span>
@@ -462,7 +462,7 @@ export default function SearchPage() {
                 <div className="space-y-1.5">
                   {filteredBreweries.map((brewery: any) => (
                     <Link key={brewery.id} href={`/brewery/${brewery.id}`}>
-                      <div className="flex items-center gap-3 p-3 rounded-xl bg-white dark:bg-slate-800 border border-gray-100 dark:border-slate-700 hover:border-amber-300 dark:hover:border-amber-600 hover:shadow-md transition-all cursor-pointer group">
+                      <div className="flex items-center gap-3 p-3 rounded-xl bg-white dark:bg-neutral-800 border border-gray-100 dark:border-neutral-700 hover:border-amber-300 dark:hover:border-amber-600 hover:shadow-md transition-all cursor-pointer group">
                         <ImageWithFallback
                           src={brewery.logoUrl}
                           alt={brewery.name}
@@ -474,7 +474,7 @@ export default function SearchPage() {
                           <div className="font-semibold text-sm text-gray-900 dark:text-white truncate group-hover:text-amber-600 dark:group-hover:text-amber-400 transition-colors">
                             {brewery.name}
                           </div>
-                          <div className="text-xs text-gray-500 dark:text-slate-400 truncate">
+                          <div className="text-xs text-gray-500 dark:text-neutral-400 truncate">
                             {brewery.location}{brewery.country ? `, ${brewery.country}` : ""}
                           </div>
                         </div>
@@ -498,7 +498,7 @@ export default function SearchPage() {
                 <div className="space-y-1.5">
                   {filteredPubs.map((pub: any) => (
                     <Link key={pub.id} href={`/pub/${pub.slug || pub.id}`}>
-                      <div className="flex items-center gap-3 p-3 rounded-xl bg-white dark:bg-slate-800 border border-gray-100 dark:border-slate-700 hover:border-blue-300 dark:hover:border-blue-600 hover:shadow-md transition-all cursor-pointer group">
+                      <div className="flex items-center gap-3 p-3 rounded-xl bg-white dark:bg-neutral-800 border border-gray-100 dark:border-neutral-700 hover:border-blue-300 dark:hover:border-blue-600 hover:shadow-md transition-all cursor-pointer group">
                         <ImageWithFallback
                           src={pub.logoUrl}
                           alt={pub.name}
@@ -510,7 +510,7 @@ export default function SearchPage() {
                           <div className="font-semibold text-sm text-gray-900 dark:text-white truncate group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
                             {pub.name}
                           </div>
-                          <div className="text-xs text-gray-500 dark:text-slate-400 truncate">
+                          <div className="text-xs text-gray-500 dark:text-neutral-400 truncate">
                             {pub.city}{pub.address ? ` · ${pub.address}` : ""}
                           </div>
                         </div>
@@ -525,11 +525,11 @@ export default function SearchPage() {
             {/* No results */}
             {tabCounts.all === 0 && (
               <div className="text-center py-14">
-                <div className="w-16 h-16 rounded-full bg-gray-100 dark:bg-slate-800 flex items-center justify-center mx-auto mb-4">
-                  <Search className="h-8 w-8 text-gray-300 dark:text-slate-600" />
+                <div className="w-16 h-16 rounded-full bg-gray-100 dark:bg-neutral-800 flex items-center justify-center mx-auto mb-4">
+                  <Search className="h-8 w-8 text-gray-300 dark:text-neutral-600" />
                 </div>
-                <p className="font-semibold text-gray-600 dark:text-slate-300">Nessun risultato per "{query}"</p>
-                <p className="text-sm text-gray-400 dark:text-slate-500 mt-1">Prova con termini diversi o rimuovi i filtri</p>
+                <p className="font-semibold text-gray-600 dark:text-neutral-300">Nessun risultato per "{query}"</p>
+                <p className="text-sm text-gray-400 dark:text-neutral-500 mt-1">Prova con termini diversi o rimuovi i filtri</p>
                 <div className="flex items-center justify-center gap-3 mt-4 flex-wrap">
                   {hasActiveFilters && (
                     <Button variant="outline" size="sm" onClick={clearFilters}>

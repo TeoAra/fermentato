@@ -197,7 +197,7 @@ export default function Home() {
               
               {((user as any)?.activeRole === 'admin' || (!((user as any)?.activeRole) && (user as any)?.userType === 'admin')) && (
                 <Link href="/admin">
-                  <Button className="bg-slate-700 hover:bg-slate-600 dark:bg-slate-600 dark:hover:bg-slate-500 text-white font-semibold shadow-md border-0">
+                  <Button className="bg-neutral-700 hover:bg-neutral-600 dark:bg-neutral-600 dark:hover:bg-neutral-500 text-white font-semibold shadow-md border-0">
                     <TrendingUp className="mr-2 h-4 w-4" />
                     Admin Panel
                   </Button>
@@ -263,12 +263,12 @@ export default function Home() {
               </Link>
             </div>
             {pubsLoading ? (
-              <div className="h-24 bg-gray-100 dark:bg-slate-800 rounded-2xl animate-pulse" />
+              <div className="h-24 bg-gray-100 dark:bg-neutral-800 rounded-2xl animate-pulse" />
             ) : Array.isArray(myPubs) && myPubs.length > 0 ? (
               <div className="space-y-3">
                 {myPubs.map((pub: any) => (
                   <div key={pub.id} className="bg-[hsl(40,14%,99%)] dark:bg-[hsl(25,12%,12%)] border border-[hsl(36,14%,88%)] dark:border-[hsl(25,12%,17%)] rounded-2xl p-4 flex items-center gap-4 shadow-[0_1px_3px_hsla(28,16%,8%,0.06)]">
-                    <div className="w-16 h-16 rounded-xl overflow-hidden flex-shrink-0 bg-gray-100 dark:bg-slate-700 flex items-center justify-center">
+                    <div className="w-16 h-16 rounded-xl overflow-hidden flex-shrink-0 bg-gray-100 dark:bg-neutral-700 flex items-center justify-center">
                       {(pub.logoUrl || pub.coverImageUrl || pub.imageUrl) ? (
                         <img src={pub.logoUrl || pub.coverImageUrl || pub.imageUrl} alt={pub.name} className="w-16 h-16 object-cover" />
                       ) : (
@@ -282,7 +282,7 @@ export default function Home() {
                           <span className="text-[10px] font-bold text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-900/20 px-1.5 py-0.5 rounded-full flex-shrink-0">✓ Verificato</span>
                         )}
                       </div>
-                      <p className="text-xs text-gray-500 dark:text-slate-400 truncate">{pub.address}</p>
+                      <p className="text-xs text-gray-500 dark:text-neutral-400 truncate">{pub.address}</p>
                       {pub.subscriptionStatus && pub.subscriptionStatus !== 'none' && (
                         <span className="inline-block mt-1 text-[10px] font-semibold text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-900/20 px-2 py-0.5 rounded-full capitalize">
                           {pub.subscriptionStatus === 'trial' ? '⏱ Prova attiva' : pub.subscriptionStatus === 'active' ? '✓ Piano attivo' : pub.subscriptionStatus === 'gifted' ? '🎁 Piano gifted' : pub.subscriptionStatus}
@@ -301,8 +301,8 @@ export default function Home() {
                 ))}
               </div>
             ) : (
-              <div className="bg-gray-50 dark:bg-slate-800/50 rounded-2xl p-6 text-center">
-                <p className="text-gray-500 dark:text-slate-400 text-sm mb-3">Non hai ancora registrato nessun pub</p>
+              <div className="bg-gray-50 dark:bg-neutral-800/50 rounded-2xl p-6 text-center">
+                <p className="text-gray-500 dark:text-neutral-400 text-sm mb-3">Non hai ancora registrato nessun pub</p>
                 <Link href="/registra-pub"><Button size="sm">Registra il tuo pub</Button></Link>
               </div>
             )}
@@ -355,7 +355,7 @@ export default function Home() {
                 <Button size="sm" variant="ghost" className="text-amber-600 dark:text-amber-400 font-semibold text-sm">Gestisci →</Button>
               </Link>
             </div>
-            <div className="bg-white dark:bg-slate-800 border border-gray-100 dark:border-slate-700 rounded-2xl p-4 flex items-center gap-4 shadow-sm">
+            <div className="bg-white dark:bg-neutral-800 border border-gray-100 dark:border-neutral-700 rounded-2xl p-4 flex items-center gap-4 shadow-sm">
               <div className="w-16 h-16 rounded-xl overflow-hidden flex-shrink-0 bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center">
                 {myBreweryData.brewery.logoUrl ? (
                   <img src={myBreweryData.brewery.logoUrl} alt={myBreweryData.brewery.name} className="w-16 h-16 object-contain" />
@@ -365,7 +365,7 @@ export default function Home() {
               </div>
               <div className="flex-1 min-w-0">
                 <p className="font-bold text-gray-900 dark:text-white truncate">{myBreweryData.brewery.name}</p>
-                <p className="text-xs text-gray-500 dark:text-slate-400 flex items-center gap-1 mt-0.5">
+                <p className="text-xs text-gray-500 dark:text-neutral-400 flex items-center gap-1 mt-0.5">
                   <MapPin className="w-3 h-3" />{myBreweryData.brewery.location}
                 </p>
                 <p className="text-xs text-amber-600 dark:text-amber-400 mt-1">{myBreweryData.beers?.length ?? 0} birre nel catalogo</p>
@@ -595,7 +595,7 @@ export default function Home() {
                 
                 return (
                   <Link key={favorite.id} href={href}>
-                    <div className="group relative bg-white dark:bg-slate-800 border border-gray-100 dark:border-slate-700 rounded-xl p-3 hover:shadow-lg hover:scale-[1.03] transition-[shadow,transform] duration-200 cursor-pointer h-full">
+                    <div className="group relative bg-white dark:bg-neutral-800 border border-gray-100 dark:border-neutral-700 rounded-xl p-3 hover:shadow-lg hover:scale-[1.03] transition-[shadow,transform] duration-200 cursor-pointer h-full">
                       <div className={`absolute top-2 right-2 ${typeColor} rounded-full p-1`}>
                         <TypeIcon className="w-3 h-3 text-white" />
                       </div>

@@ -129,14 +129,14 @@ export function RichTextEditor({ value, onChange, placeholder = "Scrivi il conte
       onClick={onClick}
       className={`p-1.5 rounded transition-colors ${active
         ? "bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-400"
-        : "text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-slate-600"
+        : "text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-neutral-600"
       }`}
     >
       {children}
     </button>
   );
 
-  const Sep = () => <div className="w-px h-5 bg-gray-300 dark:bg-slate-600 mx-0.5 self-center shrink-0" />;
+  const Sep = () => <div className="w-px h-5 bg-gray-300 dark:bg-neutral-600 mx-0.5 self-center shrink-0" />;
 
   const addImage = () => {
     const url = prompt("URL immagine:");
@@ -152,14 +152,14 @@ export function RichTextEditor({ value, onChange, placeholder = "Scrivi il conte
   };
 
   const containerCls = isFullscreen
-    ? "fixed inset-0 z-50 flex flex-col bg-white dark:bg-slate-900 shadow-2xl"
-    : `border border-gray-200 dark:border-slate-700 rounded-xl overflow-hidden ${className}`;
+    ? "fixed inset-0 z-50 flex flex-col bg-white dark:bg-neutral-900 shadow-2xl"
+    : `border border-gray-200 dark:border-neutral-700 rounded-xl overflow-hidden ${className}`;
 
   return (
     <div className={containerCls}>
       {/* ── TOOLBAR ── */}
       <div
-        className="flex flex-wrap items-center gap-0.5 px-2 py-1.5 bg-gray-50 dark:bg-slate-800 border-b border-gray-200 dark:border-slate-700 select-none"
+        className="flex flex-wrap items-center gap-0.5 px-2 py-1.5 bg-gray-50 dark:bg-neutral-800 border-b border-gray-200 dark:border-neutral-700 select-none"
         onClick={() => { setShowHighlightPicker(false); setShowTablePicker(false); }}
       >
         {/* History */}
@@ -193,7 +193,7 @@ export function RichTextEditor({ value, onChange, placeholder = "Scrivi il conte
             onChange={(e) => editor.chain().focus().setColor(e.target.value).run()}
           />
           <div
-            className="w-7 h-7 rounded border border-gray-300 dark:border-slate-500 flex items-center justify-center cursor-pointer hover:bg-gray-200 dark:hover:bg-slate-600 transition-colors"
+            className="w-7 h-7 rounded border border-gray-300 dark:border-neutral-500 flex items-center justify-center cursor-pointer hover:bg-gray-200 dark:hover:bg-neutral-600 transition-colors"
             onClick={(e) => { e.stopPropagation(); colorRef.current?.click(); }}
           >
             <span className="text-xs font-bold" style={{ color: editor.getAttributes("textStyle").color || "currentColor" }}>A</span>
@@ -211,7 +211,7 @@ export function RichTextEditor({ value, onChange, placeholder = "Scrivi il conte
           </Btn>
           {showHighlightPicker && (
             <div
-              className="absolute top-full left-0 mt-1 z-30 bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-600 rounded-lg p-2 shadow-xl flex gap-1.5 items-center"
+              className="absolute top-full left-0 mt-1 z-30 bg-white dark:bg-neutral-800 border border-gray-200 dark:border-neutral-600 rounded-lg p-2 shadow-xl flex gap-1.5 items-center"
               onClick={(e) => e.stopPropagation()}
             >
               {HIGHLIGHT_COLORS.map(({ color, label }) => (
@@ -228,7 +228,7 @@ export function RichTextEditor({ value, onChange, placeholder = "Scrivi il conte
                 type="button"
                 title="Rimuovi sfondo"
                 onClick={() => { editor.chain().focus().unsetHighlight().run(); setShowHighlightPicker(false); }}
-                className="w-6 h-6 rounded border border-gray-300 dark:border-slate-500 hover:bg-gray-100 dark:hover:bg-slate-700 text-gray-400 text-xs flex items-center justify-center"
+                className="w-6 h-6 rounded border border-gray-300 dark:border-neutral-500 hover:bg-gray-100 dark:hover:bg-neutral-700 text-gray-400 text-xs flex items-center justify-center"
               >✕</button>
             </div>
           )}
@@ -237,7 +237,7 @@ export function RichTextEditor({ value, onChange, placeholder = "Scrivi il conte
 
         {/* Font family */}
         <select
-          className="text-xs border border-gray-300 dark:border-slate-600 rounded px-1 py-1 bg-white dark:bg-slate-700 text-gray-700 dark:text-gray-300 max-w-[88px]"
+          className="text-xs border border-gray-300 dark:border-neutral-600 rounded px-1 py-1 bg-white dark:bg-neutral-700 text-gray-700 dark:text-gray-300 max-w-[88px]"
           title="Carattere"
           onChange={(e) => e.target.value
             ? editor.chain().focus().setFontFamily(e.target.value).run()
@@ -249,7 +249,7 @@ export function RichTextEditor({ value, onChange, placeholder = "Scrivi il conte
 
         {/* Font size */}
         <select
-          className="text-xs border border-gray-300 dark:border-slate-600 rounded px-1 py-1 bg-white dark:bg-slate-700 text-gray-700 dark:text-gray-300 w-16"
+          className="text-xs border border-gray-300 dark:border-neutral-600 rounded px-1 py-1 bg-white dark:bg-neutral-700 text-gray-700 dark:text-gray-300 w-16"
           title="Dimensione"
           defaultValue=""
           onChange={(e) => e.target.value
@@ -287,7 +287,7 @@ export function RichTextEditor({ value, onChange, placeholder = "Scrivi il conte
           </Btn>
           {showTablePicker && (
             <div
-              className="absolute top-full left-0 mt-1 z-30 bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-600 rounded-xl p-3 shadow-xl min-w-[200px]"
+              className="absolute top-full left-0 mt-1 z-30 bg-white dark:bg-neutral-800 border border-gray-200 dark:border-neutral-600 rounded-xl p-3 shadow-xl min-w-[200px]"
               onClick={(e) => e.stopPropagation()}
             >
               <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 mb-2">
@@ -305,20 +305,20 @@ export function RichTextEditor({ value, onChange, placeholder = "Scrivi il conte
                       onMouseEnter={() => setHoveredCell({ r, c })}
                       onMouseLeave={() => setHoveredCell(null)}
                       onClick={() => { editor.chain().focus().insertTable({ rows: r, cols: c, withHeaderRow: true }).run(); setShowTablePicker(false); }}
-                      className={`w-6 h-6 border rounded transition-colors ${isHovered ? "bg-amber-200 border-amber-400 dark:bg-amber-800 dark:border-amber-500" : "border-gray-200 dark:border-slate-600 hover:bg-gray-100 dark:hover:bg-slate-700"}`}
+                      className={`w-6 h-6 border rounded transition-colors ${isHovered ? "bg-amber-200 border-amber-400 dark:bg-amber-800 dark:border-amber-500" : "border-gray-200 dark:border-neutral-600 hover:bg-gray-100 dark:hover:bg-neutral-700"}`}
                     />
                   );
                 })}
               </div>
               {editor.isActive("table") && (
-                <div className="mt-3 pt-2 border-t border-gray-200 dark:border-slate-600 grid grid-cols-2 gap-1">
+                <div className="mt-3 pt-2 border-t border-gray-200 dark:border-neutral-600 grid grid-cols-2 gap-1">
                   {[
                     { label: "+ Col. sinistra", fn: () => editor.chain().focus().addColumnBefore().run() },
                     { label: "+ Col. destra", fn: () => editor.chain().focus().addColumnAfter().run() },
                     { label: "+ Riga sopra", fn: () => editor.chain().focus().addRowBefore().run() },
                     { label: "+ Riga sotto", fn: () => editor.chain().focus().addRowAfter().run() },
                   ].map(({ label, fn }) => (
-                    <button key={label} type="button" onClick={fn} className="text-xs px-2 py-1 bg-gray-50 dark:bg-slate-700 hover:bg-gray-100 dark:hover:bg-slate-600 rounded text-left">
+                    <button key={label} type="button" onClick={fn} className="text-xs px-2 py-1 bg-gray-50 dark:bg-neutral-700 hover:bg-gray-100 dark:hover:bg-neutral-600 rounded text-left">
                       {label}
                     </button>
                   ))}
@@ -353,13 +353,13 @@ export function RichTextEditor({ value, onChange, placeholder = "Scrivi il conte
       <EditorContent
         editor={editor}
         className={`
-          prose prose-sm dark:prose-invert max-w-none p-6 bg-white dark:bg-slate-900 overflow-auto
+          prose prose-sm dark:prose-invert max-w-none p-6 bg-white dark:bg-neutral-900 overflow-auto
           focus-within:outline-none
           [&_.ProseMirror]:outline-none
           [&_.ProseMirror]:min-h-[300px]
           [&_.ProseMirror_table]:border-collapse [&_.ProseMirror_table]:w-full [&_.ProseMirror_table]:my-4
-          [&_.ProseMirror_th]:border [&_.ProseMirror_th]:border-gray-300 [&_.ProseMirror_th]:dark:border-slate-600 [&_.ProseMirror_th]:p-2 [&_.ProseMirror_th]:bg-gray-50 [&_.ProseMirror_th]:dark:bg-slate-800 [&_.ProseMirror_th]:font-semibold [&_.ProseMirror_th]:text-left
-          [&_.ProseMirror_td]:border [&_.ProseMirror_td]:border-gray-300 [&_.ProseMirror_td]:dark:border-slate-600 [&_.ProseMirror_td]:p-2
+          [&_.ProseMirror_th]:border [&_.ProseMirror_th]:border-gray-300 [&_.ProseMirror_th]:dark:border-neutral-600 [&_.ProseMirror_th]:p-2 [&_.ProseMirror_th]:bg-gray-50 [&_.ProseMirror_th]:dark:bg-neutral-800 [&_.ProseMirror_th]:font-semibold [&_.ProseMirror_th]:text-left
+          [&_.ProseMirror_td]:border [&_.ProseMirror_td]:border-gray-300 [&_.ProseMirror_td]:dark:border-neutral-600 [&_.ProseMirror_td]:p-2
           [&_.ProseMirror_blockquote]:border-l-4 [&_.ProseMirror_blockquote]:border-amber-400 [&_.ProseMirror_blockquote]:pl-4 [&_.ProseMirror_blockquote]:italic [&_.ProseMirror_blockquote]:text-gray-600 [&_.ProseMirror_blockquote]:dark:text-gray-400
           [&_.ProseMirror_.is-editor-empty:first-child::before]:content-[attr(data-placeholder)] [&_.ProseMirror_.is-editor-empty:first-child::before]:text-gray-400 [&_.ProseMirror_.is-editor-empty:first-child::before]:float-left [&_.ProseMirror_.is-editor-empty:first-child::before]:pointer-events-none [&_.ProseMirror_.is-editor-empty:first-child::before]:h-0
           ${isFullscreen ? "flex-1 min-h-0 h-[calc(100vh-100px)]" : "min-h-[340px] max-h-[640px]"}
@@ -367,7 +367,7 @@ export function RichTextEditor({ value, onChange, placeholder = "Scrivi il conte
       />
 
       {/* ── FOOTER ── */}
-      <div className="flex items-center justify-between px-4 py-1.5 bg-gray-50 dark:bg-slate-800 border-t border-gray-200 dark:border-slate-700 text-xs text-gray-400">
+      <div className="flex items-center justify-between px-4 py-1.5 bg-gray-50 dark:bg-neutral-800 border-t border-gray-200 dark:border-neutral-700 text-xs text-gray-400">
         <span>{wordCount} {wordCount === 1 ? "parola" : "parole"} · {charCount} caratteri</span>
         {isFullscreen && (
           <button type="button" onClick={() => setIsFullscreen(false)} className="text-amber-600 hover:underline text-xs">

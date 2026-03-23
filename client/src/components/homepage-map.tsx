@@ -134,7 +134,7 @@ export default function HomepageMap({ pubs, breweries, userLocation, isLoading }
 
   return (
     <section ref={sectionRef} className="mb-16 lg:mb-20">
-      <div className="bg-white dark:bg-slate-800 border border-gray-100 dark:border-slate-700 rounded-2xl overflow-hidden shadow-xl">
+      <div className="bg-white dark:bg-neutral-800 border border-gray-100 dark:border-neutral-700 rounded-2xl overflow-hidden shadow-xl">
         <div className="bg-gradient-to-r from-amber-600 via-orange-500 to-amber-600 px-6 py-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
           <div className="flex items-center gap-3">
             <div className="p-2 bg-white/20 rounded-lg backdrop-blur-sm">
@@ -170,7 +170,7 @@ export default function HomepageMap({ pubs, breweries, userLocation, isLoading }
           )}
 
           {!isVisible && (
-            <div className="w-full h-[400px] md:h-[500px] bg-slate-100 dark:bg-slate-700 flex items-center justify-center">
+            <div className="w-full h-[400px] md:h-[500px] bg-neutral-100 dark:bg-neutral-700 flex items-center justify-center">
               <Loader2 className="w-8 h-8 animate-spin text-amber-500 opacity-60" />
             </div>
           )}

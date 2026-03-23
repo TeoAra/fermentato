@@ -49,13 +49,13 @@ export function RoleSwitcherBanner({ currentView }: RoleSwitcherBannerProps) {
   }
 
   const bgClass = {
-    profile:  "bg-slate-50 dark:bg-slate-800/50 border-slate-200 dark:border-slate-700/60",
+    profile:  "bg-neutral-50 dark:bg-neutral-800/50 border-neutral-200 dark:border-neutral-700/60",
     pub:      "bg-amber-50 dark:bg-amber-900/20 border-amber-200 dark:border-amber-800/40",
     brewery:  "bg-orange-50 dark:bg-orange-900/20 border-orange-200 dark:border-orange-800/40",
   }[currentView];
 
   const textClass = {
-    profile:  "text-slate-600 dark:text-slate-300",
+    profile:  "text-neutral-600 dark:text-neutral-300",
     pub:      "text-amber-800 dark:text-amber-200",
     brewery:  "text-orange-800 dark:text-orange-200",
   }[currentView];

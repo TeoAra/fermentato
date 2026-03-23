@@ -151,7 +151,7 @@ export function AddressAutocomplete({
   return (
     <div className={`relative ${className}`}>
       <div className="relative">
-        <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+        <MapPin className="absolute left-3 top-1/2 -tranneutral-y-1/2 h-4 w-4 text-muted-foreground" />
         <Input
           ref={inputRef}
           type="text"
@@ -163,7 +163,7 @@ export function AddressAutocomplete({
           data-testid="input-address-autocomplete"
         />
         {isLoading && (
-          <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 animate-spin text-muted-foreground" />
+          <Loader2 className="absolute right-3 top-1/2 -tranneutral-y-1/2 h-4 w-4 animate-spin text-muted-foreground" />
         )}
       </div>
       {error && (

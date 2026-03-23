@@ -153,7 +153,7 @@ function StepAccount({ onDone }: { onDone: () => void }) {
             <FormLabel className="text-sm font-medium">Username</FormLabel>
             <FormControl>
               <div className="relative">
-                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 font-medium text-sm">@</span>
+                <span className="absolute left-3 top-1/2 -tranneutral-y-1/2 text-gray-400 font-medium text-sm">@</span>
                 <Input {...field} placeholder="il_tuo_username"
                   className={`pl-7 pr-8 h-11 rounded-xl ${
                     nicknameAvailable === true ? "border-green-500 focus-visible:ring-green-500" :
@@ -166,9 +166,9 @@ function StepAccount({ onDone }: { onDone: () => void }) {
                     if (nicknameTimerRef.current) clearTimeout(nicknameTimerRef.current);
                     nicknameTimerRef.current = setTimeout(() => checkNickname(e.target.value), 500);
                   }} />
-                {nicknameChecking && <div className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 border-2 border-amber-400 border-t-transparent rounded-full animate-spin" />}
-                {!nicknameChecking && nicknameAvailable === true && <CheckCircle className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-green-500" />}
-                {!nicknameChecking && nicknameAvailable === false && <XCircle className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-red-500" />}
+                {nicknameChecking && <div className="absolute right-3 top-1/2 -tranneutral-y-1/2 w-4 h-4 border-2 border-amber-400 border-t-transparent rounded-full animate-spin" />}
+                {!nicknameChecking && nicknameAvailable === true && <CheckCircle className="absolute right-3 top-1/2 -tranneutral-y-1/2 w-4 h-4 text-green-500" />}
+                {!nicknameChecking && nicknameAvailable === false && <XCircle className="absolute right-3 top-1/2 -tranneutral-y-1/2 w-4 h-4 text-red-500" />}
               </div>
             </FormControl>
             {nicknameAvailable === true && <p className="text-xs text-green-600">Username disponibile!</p>}
@@ -183,7 +183,7 @@ function StepAccount({ onDone }: { onDone: () => void }) {
             <FormLabel className="text-sm font-medium">Email</FormLabel>
             <FormControl>
               <div className="relative">
-                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                <Mail className="absolute left-3 top-1/2 -tranneutral-y-1/2 w-4 h-4 text-gray-400" />
                 <Input {...field} type="email" placeholder="tu@esempio.it"
                   className="pl-10 h-11 rounded-xl" autoComplete="email" />
               </div>
@@ -198,12 +198,12 @@ function StepAccount({ onDone }: { onDone: () => void }) {
             <FormLabel className="text-sm font-medium">Password</FormLabel>
             <FormControl>
               <div className="relative">
-                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                <Lock className="absolute left-3 top-1/2 -tranneutral-y-1/2 w-4 h-4 text-gray-400" />
                 <Input {...field} type={showPass ? "text" : "password"} placeholder="Crea una password sicura"
                   className="pl-10 pr-10 h-11 rounded-xl" autoComplete="new-password"
                   onChange={(e) => { field.onChange(e); setPasswordValue(e.target.value); }} />
                 <button type="button" onClick={() => setShowPass(v => !v)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
+                  className="absolute right-3 top-1/2 -tranneutral-y-1/2 text-gray-400 hover:text-gray-600">
                   {showPass ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                 </button>
               </div>
@@ -242,11 +242,11 @@ function StepAccount({ onDone }: { onDone: () => void }) {
             <FormLabel className="text-sm font-medium">Conferma Password</FormLabel>
             <FormControl>
               <div className="relative">
-                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                <Lock className="absolute left-3 top-1/2 -tranneutral-y-1/2 w-4 h-4 text-gray-400" />
                 <Input {...field} type={showConfirmPass ? "text" : "password"} placeholder="Ripeti la password"
                   className="pl-10 pr-10 h-11 rounded-xl" autoComplete="new-password" />
                 <button type="button" onClick={() => setShowConfirmPass(v => !v)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
+                  className="absolute right-3 top-1/2 -tranneutral-y-1/2 text-gray-400 hover:text-gray-600">
                   {showConfirmPass ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                 </button>
               </div>

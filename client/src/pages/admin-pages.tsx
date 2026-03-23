@@ -52,7 +52,7 @@ export default function AdminPages() {
   if (editing) {
     const meta = PAGE_META[editing.slug];
     return (
-      <div className="min-h-screen bg-gray-50 dark:bg-slate-950">
+      <div className="min-h-screen bg-gray-50 dark:bg-neutral-950">
         <div className="max-w-4xl mx-auto px-4 py-8">
           <div className="flex items-center gap-3 mb-6">
             <Button variant="outline" size="sm" onClick={() => setEditing(null)}>
@@ -66,7 +66,7 @@ export default function AdminPages() {
             </div>
           </div>
 
-          <div className="bg-white dark:bg-slate-900 rounded-2xl border border-gray-200 dark:border-slate-700 p-6 space-y-5">
+          <div className="bg-white dark:bg-neutral-900 rounded-2xl border border-gray-200 dark:border-neutral-700 p-6 space-y-5">
             <div className="space-y-1.5">
               <Label>Titolo della pagina</Label>
               <Input
@@ -86,7 +86,7 @@ export default function AdminPages() {
               />
             </div>
 
-            <div className="flex items-center justify-between pt-2 border-t border-gray-100 dark:border-slate-800">
+            <div className="flex items-center justify-between pt-2 border-t border-gray-100 dark:border-neutral-800">
               <p className="text-xs text-gray-400 dark:text-gray-500">
                 URL pubblica: <span className="font-mono">/{editing.slug}</span>
               </p>
@@ -108,7 +108,7 @@ export default function AdminPages() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-slate-950">
+    <div className="min-h-screen bg-gray-50 dark:bg-neutral-950">
       <div className="max-w-3xl mx-auto px-4 py-8">
         <div className="flex items-center gap-3 mb-8">
           <Link href="/admin">
@@ -125,7 +125,7 @@ export default function AdminPages() {
         {isLoading ? (
           <div className="space-y-3">
             {[1, 2, 3, 4].map(i => (
-              <div key={i} className="h-20 bg-gray-200 dark:bg-slate-800 rounded-2xl animate-pulse" />
+              <div key={i} className="h-20 bg-gray-200 dark:bg-neutral-800 rounded-2xl animate-pulse" />
             ))}
           </div>
         ) : (
@@ -135,7 +135,7 @@ export default function AdminPages() {
               return (
                 <div
                   key={slug}
-                  className="bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-700 rounded-2xl p-5 flex items-center gap-4"
+                  className="bg-white dark:bg-neutral-900 border border-gray-200 dark:border-neutral-700 rounded-2xl p-5 flex items-center gap-4"
                 >
                   <div className="flex items-center justify-center w-12 h-12 rounded-xl bg-amber-50 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400 flex-shrink-0">
                     <FileText className="h-6 w-6" />

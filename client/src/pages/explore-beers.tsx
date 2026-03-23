@@ -70,7 +70,7 @@ export default function ExploreBeers() {
   }
 
   return (
-    <div className="min-h-screen bg-white dark:bg-slate-950">
+    <div className="min-h-screen bg-white dark:bg-neutral-950">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-24 pb-12">
 
         {/* Header */}
@@ -88,7 +88,7 @@ export default function ExploreBeers() {
               Esplora Birre
             </h1>
             {activeStyle && (
-              <p className="text-sm text-gray-500 dark:text-slate-400 mt-0.5">
+              <p className="text-sm text-gray-500 dark:text-neutral-400 mt-0.5">
                 Stile: <span className="font-semibold text-amber-600 dark:text-amber-400">{activeStyle}</span>
                 {Array.isArray(styleBeers) && (
                   <span className="ml-2 text-gray-400">· {styleBeers.length} birre</span>
@@ -101,7 +101,7 @@ export default function ExploreBeers() {
         {/* Search bar */}
         <div className="flex gap-2 mb-5">
           <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+            <Search className="absolute left-3 top-1/2 -tranneutral-y-1/2 w-4 h-4 text-gray-400" />
             <Input
               value={inputValue}
               onChange={e => setInputValue(e.target.value)}
@@ -110,7 +110,7 @@ export default function ExploreBeers() {
               className="pl-9 pr-9"
             />
             {inputValue && (
-              <button onClick={clearAll} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
+              <button onClick={clearAll} className="absolute right-3 top-1/2 -tranneutral-y-1/2 text-gray-400 hover:text-gray-600">
                 <X className="w-4 h-4" />
               </button>
             )}
@@ -133,7 +133,7 @@ export default function ExploreBeers() {
                 className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium border transition-all ${
                   activeStyle === s.style
                     ? "bg-amber-500 text-gray-900 border-amber-500 shadow-md scale-105"
-                    : "bg-white dark:bg-slate-800 text-gray-700 dark:text-gray-300 border-gray-200 dark:border-slate-600 hover:border-amber-400 hover:text-amber-600 dark:hover:text-amber-400"
+                    : "bg-white dark:bg-neutral-800 text-gray-700 dark:text-gray-300 border-gray-200 dark:border-neutral-600 hover:border-amber-400 hover:text-amber-600 dark:hover:text-amber-400"
                 }`}
               >
                 {s.style}
@@ -153,14 +153,14 @@ export default function ExploreBeers() {
         {isLoading ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
             {[...Array(8)].map((_, i) => (
-              <div key={i} className="h-28 bg-gray-100 dark:bg-slate-800 rounded-2xl animate-pulse" />
+              <div key={i} className="h-28 bg-gray-100 dark:bg-neutral-800 rounded-2xl animate-pulse" />
             ))}
           </div>
         ) : beers.length > 0 ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
             {beers.map((beer: any) => (
               <Link key={beer.id} href={`/beer/${beer.id}`}>
-                <div className="group bg-white dark:bg-slate-800 border border-gray-100 dark:border-slate-700 rounded-2xl p-4 hover:shadow-md hover:border-amber-200 dark:hover:border-amber-800 transition-all cursor-pointer h-full">
+                <div className="group bg-white dark:bg-neutral-800 border border-gray-100 dark:border-neutral-700 rounded-2xl p-4 hover:shadow-md hover:border-amber-200 dark:hover:border-amber-800 transition-all cursor-pointer h-full">
                   <div className="flex items-start gap-3">
                     <div className="w-12 h-12 rounded-xl flex-shrink-0 bg-amber-50 dark:bg-amber-900/20 flex items-center justify-center overflow-hidden">
                       {beer.imageUrl ? (
@@ -175,7 +175,7 @@ export default function ExploreBeers() {
                       <p className="font-semibold text-sm text-gray-900 dark:text-white line-clamp-1 group-hover:text-amber-600 dark:group-hover:text-amber-400">
                         {beer.name}
                       </p>
-                      <p className="text-xs text-gray-500 dark:text-slate-400 line-clamp-1 mt-0.5">
+                      <p className="text-xs text-gray-500 dark:text-neutral-400 line-clamp-1 mt-0.5">
                         {beer.breweryName || beer.brewery?.name}
                       </p>
                       <div className="flex items-center gap-2 mt-1.5 flex-wrap">
@@ -183,10 +183,10 @@ export default function ExploreBeers() {
                           <span className="text-[10px] font-semibold text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-900/20 px-2 py-0.5 rounded-full">{beer.style}</span>
                         )}
                         {beer.abv != null && (
-                          <span className="text-[10px] font-medium text-gray-400 dark:text-slate-500">{beer.abv}% ABV</span>
+                          <span className="text-[10px] font-medium text-gray-400 dark:text-neutral-500">{beer.abv}% ABV</span>
                         )}
                         {beer.ibu != null && (
-                          <span className="text-[10px] font-medium text-gray-400 dark:text-slate-500">{beer.ibu} IBU</span>
+                          <span className="text-[10px] font-medium text-gray-400 dark:text-neutral-500">{beer.ibu} IBU</span>
                         )}
                       </div>
                     </div>
@@ -196,13 +196,13 @@ export default function ExploreBeers() {
             ))}
           </div>
         ) : (activeStyle || freeQuery) ? (
-          <div className="text-center py-16 text-gray-400 dark:text-slate-500">
+          <div className="text-center py-16 text-gray-400 dark:text-neutral-500">
             <Beer className="w-12 h-12 mx-auto mb-3 opacity-30" />
             <p className="text-lg font-medium">Nessuna birra trovata</p>
             <p className="text-sm mt-1">Prova con un altro termine o stile</p>
           </div>
         ) : (
-          <div className="text-center py-16 text-gray-400 dark:text-slate-500">
+          <div className="text-center py-16 text-gray-400 dark:text-neutral-500">
             <Beer className="w-14 h-14 mx-auto mb-3 opacity-20" />
             <p className="text-lg font-medium">Seleziona uno stile o cerca una birra</p>
           </div>

@@ -16,18 +16,18 @@ export default function Footer() {
               La piattaforma definitiva per scoprire le migliori birre artigianali nei pub e birrifici d'Italia.
             </p>
             <div className="flex space-x-4">
-              <a href="https://www.facebook.com/fermentato.social" target="_blank" rel="noopener noreferrer" className="text-slate-500 dark:text-slate-400 hover:text-amber-500 dark:hover:text-amber-400 transition-colors">
+              <a href="https://www.facebook.com/fermentato.social" target="_blank" rel="noopener noreferrer" className="text-neutral-500 dark:text-neutral-400 hover:text-amber-500 dark:hover:text-amber-400 transition-colors">
                 <Facebook size={24} />
               </a>
-              <a href="https://www.instagram.com/fermentato.social" target="_blank" rel="noopener noreferrer" className="text-slate-500 dark:text-slate-400 hover:text-amber-500 dark:hover:text-amber-400 transition-colors">
+              <a href="https://www.instagram.com/fermentato.social" target="_blank" rel="noopener noreferrer" className="text-neutral-500 dark:text-neutral-400 hover:text-amber-500 dark:hover:text-amber-400 transition-colors">
                 <Instagram size={24} />
               </a>
             </div>
           </div>
 
           <div>
-            <h3 className="font-semibold mb-4 text-slate-900 dark:text-white">Per i Locali</h3>
-            <ul className="space-y-2 text-slate-500 dark:text-slate-400">
+            <h3 className="font-semibold mb-4 text-neutral-900 dark:text-white">Per i Locali</h3>
+            <ul className="space-y-2 text-neutral-500 dark:text-neutral-400">
               <li>
                 <Link href="/dashboard" className="hover:text-amber-500 dark:hover:text-amber-400 transition-colors">
                   Dashboard Gestione
@@ -43,8 +43,8 @@ export default function Footer() {
           </div>
 
           <div>
-            <h3 className="font-semibold mb-4 text-slate-900 dark:text-white">Informazioni</h3>
-            <ul className="space-y-2 text-slate-500 dark:text-slate-400">
+            <h3 className="font-semibold mb-4 text-neutral-900 dark:text-white">Informazioni</h3>
+            <ul className="space-y-2 text-neutral-500 dark:text-neutral-400">
               <li>
                 <Link href="/chi-siamo" className="hover:text-amber-500 dark:hover:text-amber-400 transition-colors">Chi Siamo</Link>
               </li>

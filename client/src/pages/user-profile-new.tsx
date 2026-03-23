@@ -123,7 +123,7 @@ function StylesPickerOverview({ current, onChange, onSave, isSaving }: {
 
       {/* Search */}
       <div className="relative">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400" />
+        <Search className="absolute left-3 top-1/2 -tranneutral-y-1/2 w-3.5 h-3.5 text-gray-400" />
         <Input
           value={styleSearch}
           onChange={e => { setStyleSearch(e.target.value); setShowAll(false); }}
@@ -131,7 +131,7 @@ function StylesPickerOverview({ current, onChange, onSave, isSaving }: {
           className="pl-9 text-sm border-orange-200 dark:border-gray-600 focus:border-orange-400 h-9"
         />
         {styleSearch && (
-          <button onClick={() => setStyleSearch("")} className="absolute right-2 top-1/2 -translate-y-1/2">
+          <button onClick={() => setStyleSearch("")} className="absolute right-2 top-1/2 -tranneutral-y-1/2">
             <X className="w-3.5 h-3.5 text-gray-400 hover:text-gray-600" />
           </button>
         )}
@@ -460,7 +460,7 @@ export default function UserProfile() {
         <RoleSwitcherBanner currentView="profile" />
 
         {/* Header Card */}
-        <Card className="border-0 shadow-xl bg-gradient-to-br from-amber-600 via-orange-600 to-amber-700 dark:from-slate-900 dark:via-amber-800/50 dark:to-slate-800 text-white overflow-hidden relative">
+        <Card className="border-0 shadow-xl bg-gradient-to-br from-amber-600 via-orange-600 to-amber-700 dark:from-neutral-900 dark:via-amber-800/50 dark:to-neutral-800 text-white overflow-hidden relative">
           <div className="absolute inset-0 bg-gradient-to-tr from-white/5 via-transparent to-white/10" />
           <CardContent className="pt-8 pb-8 relative z-10">
             <div className="flex flex-col md:flex-row items-center gap-6">

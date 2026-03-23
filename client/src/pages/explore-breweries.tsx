@@ -144,7 +144,7 @@ function BreweryCard({ brewery }: { brewery: any }) {
 
   return (
     <Link href={`/brewery/${brewery.id}`}>
-      <div className="group relative rounded-2xl overflow-hidden cursor-pointer bg-white dark:bg-slate-800 shadow-md hover:shadow-xl transition-all duration-300 hover:-translate-y-1 border border-gray-100 dark:border-slate-700">
+      <div className="group relative rounded-2xl overflow-hidden cursor-pointer bg-white dark:bg-neutral-800 shadow-md hover:shadow-xl transition-all duration-300 hover:-tranneutral-y-1 border border-gray-100 dark:border-neutral-700">
         <div className="relative h-44 overflow-hidden bg-gradient-to-br from-amber-100 to-orange-100 dark:from-amber-900/30 dark:to-orange-900/20">
           <img
             src={imgError || !brewery.logoUrl ? BREWERY_FALLBACK : brewery.logoUrl}
@@ -167,12 +167,12 @@ function BreweryCard({ brewery }: { brewery: any }) {
         </div>
 
         <div className="p-3">
-          <div className="flex items-center gap-1.5 text-xs text-gray-500 dark:text-slate-400 mb-2">
+          <div className="flex items-center gap-1.5 text-xs text-gray-500 dark:text-neutral-400 mb-2">
             <span className="text-base leading-none">{flag}</span>
             <span className="truncate">{italianCountry}</span>
             {brewery.location && brewery.location !== brewery.country && (
               <>
-                <span className="text-gray-300 dark:text-slate-600">·</span>
+                <span className="text-gray-300 dark:text-neutral-600">·</span>
                 <span className="truncate">{brewery.location}</span>
               </>
             )}
@@ -249,7 +249,7 @@ export default function ExploreBreweries() {
   const hasFilters = debouncedQ || selectedCountry;
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-slate-900">
+    <div className="min-h-screen bg-gray-50 dark:bg-neutral-900">
       {/* Hero */}
       <div className="relative bg-gradient-to-br from-amber-600 via-amber-500 to-orange-500 dark:from-amber-800 dark:via-amber-700 dark:to-orange-700 overflow-hidden">
         <div className="absolute inset-0 opacity-10" style={{ backgroundImage: "url('/brewery-cover.jpg')", backgroundSize: "cover", backgroundPosition: "center" }} />
@@ -282,17 +282,17 @@ export default function ExploreBreweries() {
 
           {/* Search bar */}
           <div className="max-w-xl mx-auto relative">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 z-10" />
+            <Search className="absolute left-4 top-1/2 -tranneutral-y-1/2 w-5 h-5 text-gray-400 z-10" />
             <Input
               value={searchInput}
               onChange={e => setSearchInput(e.target.value)}
               placeholder="Cerca birrificio per nome..."
-              className="pl-12 pr-12 py-3 h-12 text-base rounded-xl border-0 shadow-lg bg-white dark:bg-slate-800 text-gray-900 dark:text-white focus-visible:ring-2 focus-visible:ring-white"
+              className="pl-12 pr-12 py-3 h-12 text-base rounded-xl border-0 shadow-lg bg-white dark:bg-neutral-800 text-gray-900 dark:text-white focus-visible:ring-2 focus-visible:ring-white"
             />
             {searchInput && (
               <button
                 onClick={() => { setSearchInput(""); setDebouncedQ(""); setPage(1); }}
-                className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                className="absolute right-4 top-1/2 -tranneutral-y-1/2 text-gray-400 hover:text-gray-600"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -302,7 +302,7 @@ export default function ExploreBreweries() {
       </div>
 
       {/* Country pills */}
-      <div className="sticky top-0 z-20 bg-white dark:bg-slate-900 border-b border-gray-200 dark:border-slate-800 shadow-sm">
+      <div className="sticky top-0 z-20 bg-white dark:bg-neutral-900 border-b border-gray-200 dark:border-neutral-800 shadow-sm">
         <div className="max-w-5xl mx-auto px-4 py-3">
           <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
             <button
@@ -310,7 +310,7 @@ export default function ExploreBreweries() {
               className={`flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium transition-all border ${
                 !selectedCountry
                   ? "bg-amber-500 text-white border-amber-500 shadow-sm"
-                  : "bg-white dark:bg-slate-800 text-gray-600 dark:text-slate-300 border-gray-200 dark:border-slate-700 hover:border-amber-300 hover:text-amber-600"
+                  : "bg-white dark:bg-neutral-800 text-gray-600 dark:text-neutral-300 border-gray-200 dark:border-neutral-700 hover:border-amber-300 hover:text-amber-600"
               }`}
             >
               <Globe className="w-3.5 h-3.5" />
@@ -323,7 +323,7 @@ export default function ExploreBreweries() {
                 className={`flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium transition-all border ${
                   selectedCountry === c.country
                     ? "bg-amber-500 text-white border-amber-500 shadow-sm"
-                    : "bg-white dark:bg-slate-800 text-gray-600 dark:text-slate-300 border-gray-200 dark:border-slate-700 hover:border-amber-300 hover:text-amber-600"
+                    : "bg-white dark:bg-neutral-800 text-gray-600 dark:text-neutral-300 border-gray-200 dark:border-neutral-700 hover:border-amber-300 hover:text-amber-600"
                 }`}
               >
                 <span>{getFlag(c.country)}</span>
@@ -341,7 +341,7 @@ export default function ExploreBreweries() {
       <main className="max-w-5xl mx-auto px-4 sm:px-6 py-6">
         {hasFilters && (
           <div className="flex items-center gap-2 mb-4">
-            <span className="text-sm text-gray-500 dark:text-slate-400">Filtri attivi:</span>
+            <span className="text-sm text-gray-500 dark:text-neutral-400">Filtri attivi:</span>
             {debouncedQ && (
               <Badge variant="secondary" className="gap-1">
                 "{debouncedQ}"
@@ -364,18 +364,18 @@ export default function ExploreBreweries() {
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-4 gap-4">
             {[...Array(12)].map((_, i) => (
               <div key={i} className="rounded-2xl overflow-hidden animate-pulse">
-                <div className="h-44 bg-gray-200 dark:bg-slate-700" />
-                <div className="p-3 bg-white dark:bg-slate-800 space-y-2">
-                  <div className="h-3 bg-gray-200 dark:bg-slate-700 rounded w-3/4" />
-                  <div className="h-3 bg-gray-200 dark:bg-slate-700 rounded w-1/2" />
+                <div className="h-44 bg-gray-200 dark:bg-neutral-700" />
+                <div className="p-3 bg-white dark:bg-neutral-800 space-y-2">
+                  <div className="h-3 bg-gray-200 dark:bg-neutral-700 rounded w-3/4" />
+                  <div className="h-3 bg-gray-200 dark:bg-neutral-700 rounded w-1/2" />
                 </div>
               </div>
             ))}
           </div>
         ) : breweries.length === 0 ? (
           <div className="text-center py-20">
-            <Globe className="w-16 h-16 mx-auto mb-4 text-gray-200 dark:text-slate-700" />
-            <p className="font-semibold text-gray-600 dark:text-slate-300 text-lg">Nessun birrificio trovato</p>
+            <Globe className="w-16 h-16 mx-auto mb-4 text-gray-200 dark:text-neutral-700" />
+            <p className="font-semibold text-gray-600 dark:text-neutral-300 text-lg">Nessun birrificio trovato</p>
             <p className="text-gray-400 text-sm mt-1">Prova con un nome diverso o un altro paese</p>
             <Button onClick={clearFilters} variant="outline" className="mt-4 border-amber-300 text-amber-600 hover:bg-amber-50">
               Rimuovi filtri
@@ -402,7 +402,7 @@ export default function ExploreBreweries() {
                   <ChevronLeft className="w-4 h-4 mr-1" />
                   Precedente
                 </Button>
-                <span className="text-sm text-gray-500 dark:text-slate-400 px-2">
+                <span className="text-sm text-gray-500 dark:text-neutral-400 px-2">
                   Pagina <span className="font-semibold text-gray-800 dark:text-white">{page}</span> di{" "}
                   <span className="font-semibold text-gray-800 dark:text-white">{totalPages.toLocaleString("it-IT")}</span>
                 </span>

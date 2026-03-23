@@ -143,7 +143,7 @@ export default function PubCard({ pub, distance }: PubCardProps) {
 
   return (
     <Link href={`/pub/${(pub as any).slug || pub.id}`} onMouseEnter={handlePrefetch} onTouchStart={handlePrefetch}>
-      <Card className="overflow-hidden cursor-pointer group hover:shadow-[0_6px_20px_hsla(28,25%,8%,0.10)] dark:hover:shadow-[0_6px_20px_hsla(0,0%,0%,0.40)] transition-all duration-250 hover:-translate-y-0.5">
+      <Card className="overflow-hidden cursor-pointer group hover:shadow-[0_6px_20px_hsla(28,25%,8%,0.10)] dark:hover:shadow-[0_6px_20px_hsla(0,0%,0%,0.40)] transition-all duration-250 hover:-tranneutral-y-0.5">
         <div className="relative">
           <ImageWithFallback
             src={pub.coverImageUrl}
