@@ -375,7 +375,7 @@ export default function AdminDashboard() {
         <TabsContent value="users" className="space-y-4 mt-4">
           <div className="flex items-center gap-3">
             <div className="relative flex-1 max-w-sm">
-              <Search className="absolute left-3 top-1/2 -tranneutral-y-1/2 w-4 h-4 text-gray-400" />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
               <Input
                 placeholder="Cerca per email, nickname, nome..."
                 value={userSearch}

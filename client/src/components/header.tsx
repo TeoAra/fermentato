@@ -119,7 +119,7 @@ export default function Header() {
             <div className="w-36 xl:w-52 flex-shrink-0" ref={searchRef}>
               <div className="relative">
                 <form onSubmit={handleSearch} className="relative">
-                  <Search className="absolute left-3 top-1/2 -tranneutral-y-1/2 text-[hsl(30,8%,58%)] h-3.5 w-3.5" />
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-[hsl(30,8%,58%)] h-3.5 w-3.5" />
                   <Input
                     type="search"
                     placeholder="Cerca pub, birre…"
@@ -135,7 +135,7 @@ export default function Header() {
                   <Link href={searchQuery.trim() ? `/search?q=${encodeURIComponent(searchQuery.trim())}` : "/search"}>
                     <button
                       type="button"
-                      className="absolute right-2.5 top-1/2 -tranneutral-y-1/2 text-[11px] text-[hsl(35,90%,40%)] dark:text-[hsl(38,88%,58%)] hover:text-[hsl(35,90%,34%)] font-semibold transition-colors"
+                      className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[11px] text-[hsl(35,90%,40%)] dark:text-[hsl(38,88%,58%)] hover:text-[hsl(35,90%,34%)] font-semibold transition-colors"
                     >
                       Tutte
                     </button>

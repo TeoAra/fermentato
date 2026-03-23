@@ -272,12 +272,12 @@ export default function RegistraPub() {
                     <FormLabel>Username *</FormLabel>
                     <FormControl>
                       <div className="relative">
-                        <span className="absolute left-3 top-1/2 -tranneutral-y-1/2 text-gray-400 text-sm">@</span>
+                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">@</span>
                         <Input {...field} placeholder="il_tuo_username" className="pl-8"
                           onChange={e => { field.onChange(e); checkNickname(e.target.value); }} />
-                        {nicknameChecking && <RefreshCw className="absolute right-3 top-1/2 -tranneutral-y-1/2 w-4 h-4 animate-spin text-gray-400" />}
-                        {!nicknameChecking && nicknameAvailable === true && <CheckCircle2 className="absolute right-3 top-1/2 -tranneutral-y-1/2 w-4 h-4 text-green-500" />}
-                        {!nicknameChecking && nicknameAvailable === false && <X className="absolute right-3 top-1/2 -tranneutral-y-1/2 w-4 h-4 text-red-500" />}
+                        {nicknameChecking && <RefreshCw className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 animate-spin text-gray-400" />}
+                        {!nicknameChecking && nicknameAvailable === true && <CheckCircle2 className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-green-500" />}
+                        {!nicknameChecking && nicknameAvailable === false && <X className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-red-500" />}
                       </div>
                     </FormControl>
                     <FormMessage />
@@ -289,7 +289,7 @@ export default function RegistraPub() {
                     <FormLabel>Email *</FormLabel>
                     <FormControl>
                       <div className="relative">
-                        <Mail className="absolute left-3 top-1/2 -tranneutral-y-1/2 w-4 h-4 text-gray-400" />
+                        <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                         <Input {...field} type="email" placeholder="tu@esempio.it" className="pl-10" />
                       </div>
                     </FormControl>
@@ -303,9 +303,9 @@ export default function RegistraPub() {
                       <FormLabel>Password *</FormLabel>
                       <FormControl>
                         <div className="relative">
-                          <Lock className="absolute left-3 top-1/2 -tranneutral-y-1/2 w-4 h-4 text-gray-400" />
+                          <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                           <Input {...field} type={showPassword ? "text" : "password"} placeholder="Minimo 8 caratteri" className="pl-10 pr-10" />
-                          <button type="button" onClick={() => setShowPassword(v => !v)} className="absolute right-3 top-1/2 -tranneutral-y-1/2 text-gray-400 hover:text-gray-600">
+                          <button type="button" onClick={() => setShowPassword(v => !v)} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
                             {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                           </button>
                         </div>
@@ -319,7 +319,7 @@ export default function RegistraPub() {
                       <FormLabel>Conferma Password *</FormLabel>
                       <FormControl>
                         <div className="relative">
-                          <Lock className="absolute left-3 top-1/2 -tranneutral-y-1/2 w-4 h-4 text-gray-400" />
+                          <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                           <Input {...field} type={showPassword ? "text" : "password"} placeholder="Ripeti la password" className="pl-10" />
                         </div>
                       </FormControl>
@@ -344,7 +344,7 @@ export default function RegistraPub() {
                     <FormLabel>Nome del Locale *</FormLabel>
                     <FormControl>
                       <div className="relative">
-                        <Store className="absolute left-3 top-1/2 -tranneutral-y-1/2 w-4 h-4 text-gray-400" />
+                        <Store className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                         <Input {...field} placeholder="Es. The Craft Pub" className="pl-10" />
                       </div>
                     </FormControl>
@@ -395,7 +395,7 @@ export default function RegistraPub() {
                       <FormLabel>Telefono</FormLabel>
                       <FormControl>
                         <div className="relative">
-                          <Phone className="absolute left-3 top-1/2 -tranneutral-y-1/2 w-4 h-4 text-gray-400" />
+                          <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                           <Input {...field} placeholder="+39 06 1234567" className="pl-10" />
                         </div>
                       </FormControl>
@@ -464,7 +464,7 @@ export default function RegistraPub() {
                       <div>
                         <FormLabel className="text-sm">Cerca il tuo birrificio nel database</FormLabel>
                         <div className="relative mt-1">
-                          <Search className="absolute left-3 top-1/2 -tranneutral-y-1/2 w-4 h-4 text-gray-400" />
+                          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                           <Input value={brewerySearch} onChange={e => setBrewerySearch(e.target.value)} placeholder="Nome del birrificio..." className="pl-10" />
                         </div>
                       </div>
@@ -591,7 +591,7 @@ export default function RegistraPub() {
                             <FormLabel>Telefono</FormLabel>
                             <FormControl>
                               <div className="relative">
-                                <Phone className="absolute left-3 top-1/2 -tranneutral-y-1/2 w-4 h-4 text-gray-400" />
+                                <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                                 <Input {...field} placeholder="+39..." className="pl-10" />
                               </div>
                             </FormControl>

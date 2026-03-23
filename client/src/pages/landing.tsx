@@ -481,7 +481,7 @@ export default function Landing() {
           <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-amber-50 via-white to-neutral-100 dark:from-neutral-800 dark:via-gray-900 dark:to-neutral-900 p-10 lg:p-16 text-center border border-amber-100 dark:border-white/5">
             <div className="absolute top-0 left-0 w-72 h-72 bg-amber-400/15 dark:bg-amber-500/15 rounded-full blur-3xl pointer-events-none"></div>
             <div className="absolute bottom-0 right-0 w-72 h-72 bg-teal-400/15 dark:bg-teal-500/15 rounded-full blur-3xl pointer-events-none"></div>
-            <div className="absolute top-1/2 left-1/2 w-48 h-48 bg-purple-400/10 dark:bg-purple-500/10 rounded-full blur-2xl pointer-events-none -tranneutral-x-1/2 -tranneutral-y-1/2"></div>
+            <div className="absolute top-1/2 left-1/2 w-48 h-48 bg-purple-400/10 dark:bg-purple-500/10 rounded-full blur-2xl pointer-events-none -translate-x-1/2 -translate-y-1/2"></div>
             <div className="relative">
               <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-amber-500/10 dark:bg-amber-500/20 text-amber-700 dark:text-amber-300 text-sm font-medium mb-6 border border-amber-500/20 dark:border-amber-500/30">
                 <Globe className="w-3.5 h-3.5" />

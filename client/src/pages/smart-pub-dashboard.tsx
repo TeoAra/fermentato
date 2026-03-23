@@ -1722,7 +1722,7 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
               else if (val) { iconColor = 'text-blue-500'; }
               return (
                 <div key={field} className="relative">
-                  <div className={`absolute left-3 top-1/2 -tranneutral-y-1/2 pointer-events-none z-10 ${iconColor}`}>
+                  <div className={`absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none z-10 ${iconColor}`}>
                     {rowIcon}
                   </div>
                   <Input

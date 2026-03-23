@@ -116,12 +116,12 @@ export default function ResetPasswordPage() {
                       <FormLabel className="text-sm font-medium">Nuova password</FormLabel>
                       <FormControl>
                         <div className="relative">
-                          <Lock className="absolute left-3 top-1/2 -tranneutral-y-1/2 w-4 h-4 text-gray-400" />
+                          <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                           <Input {...field} type={showPass ? "text" : "password"} placeholder="Crea una password sicura"
                             className="pl-10 pr-10 h-11 rounded-xl" autoComplete="new-password"
                             onChange={(e) => { field.onChange(e); setPasswordValue(e.target.value); }} />
                           <button type="button" onClick={() => setShowPass(v => !v)}
-                            className="absolute right-3 top-1/2 -tranneutral-y-1/2 text-gray-400 hover:text-gray-600">
+                            className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
                             {showPass ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                           </button>
                         </div>
@@ -159,11 +159,11 @@ export default function ResetPasswordPage() {
                       <FormLabel className="text-sm font-medium">Conferma password</FormLabel>
                       <FormControl>
                         <div className="relative">
-                          <Lock className="absolute left-3 top-1/2 -tranneutral-y-1/2 w-4 h-4 text-gray-400" />
+                          <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                           <Input {...field} type={showConfirm ? "text" : "password"} placeholder="Ripeti la nuova password"
                             className="pl-10 pr-10 h-11 rounded-xl" autoComplete="new-password" />
                           <button type="button" onClick={() => setShowConfirm(v => !v)}
-                            className="absolute right-3 top-1/2 -tranneutral-y-1/2 text-gray-400 hover:text-gray-600">
+                            className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
                             {showConfirm ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                           </button>
                         </div>

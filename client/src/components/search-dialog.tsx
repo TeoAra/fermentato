@@ -214,7 +214,7 @@ export default function SearchDialog({ isOpen, onClose }: SearchDialogProps) {
                         <span className="flex-1 text-sm text-gray-700 dark:text-gray-300 group-hover:text-gray-900 dark:group-hover:text-white">
                           {search}
                         </span>
-                        <ArrowRight className="h-4 w-4 text-gray-300 group-hover:text-orange-500 opacity-0 group-hover:opacity-100 transform tranneutral-x-1 group-hover:tranneutral-x-0 transition-all duration-200" />
+                        <ArrowRight className="h-4 w-4 text-gray-300 group-hover:text-orange-500 opacity-0 group-hover:opacity-100 transform translate-x-1 group-hover:translate-x-0 transition-all duration-200" />
                       </button>
                     ))}
                   </div>

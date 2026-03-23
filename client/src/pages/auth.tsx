@@ -391,7 +391,7 @@ export default function AuthPage() {
                       <FormLabel className="text-sm font-medium text-gray-700 dark:text-gray-300">Email o Username</FormLabel>
                       <FormControl>
                         <div className="relative">
-                          <User className="absolute left-3 top-1/2 -tranneutral-y-1/2 w-4 h-4 text-gray-400" />
+                          <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                           <Input {...field} placeholder="tu@esempio.it oppure @username" className="pl-10 h-11 bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-700 rounded-xl"
                             data-testid="input-login-email" autoComplete="username" />
                         </div>
@@ -405,12 +405,12 @@ export default function AuthPage() {
                       <FormLabel className="text-sm font-medium text-gray-700 dark:text-gray-300">Password</FormLabel>
                       <FormControl>
                         <div className="relative">
-                          <Lock className="absolute left-3 top-1/2 -tranneutral-y-1/2 w-4 h-4 text-gray-400" />
+                          <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                           <Input {...field} type={showPassword ? "text" : "password"} placeholder="••••••••"
                             className="pl-10 pr-10 h-11 bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-700 rounded-xl"
                             data-testid="input-login-password" />
                           <button type="button" onClick={() => setShowPassword(!showPassword)}
-                            className="absolute right-3 top-1/2 -tranneutral-y-1/2 text-gray-400 hover:text-gray-600">
+                            className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
                             {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                           </button>
                         </div>
@@ -472,7 +472,7 @@ export default function AuthPage() {
                         <p className="text-xs text-gray-500">Inserisci la tua email e ti invieremo un link per scegliere una nuova password.</p>
                       </div>
                       <div className="relative">
-                        <Mail className="absolute left-3 top-1/2 -tranneutral-y-1/2 w-4 h-4 text-gray-400" />
+                        <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                         <Input
                           type="email"
                           value={forgotEmail}
@@ -533,7 +533,7 @@ export default function AuthPage() {
                     <FormLabel className="text-sm font-medium text-gray-700 dark:text-gray-300">Username</FormLabel>
                     <FormControl>
                       <div className="relative">
-                        <span className="absolute left-3 top-1/2 -tranneutral-y-1/2 text-gray-400 font-medium text-sm">@</span>
+                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 font-medium text-sm">@</span>
                         <Input {...field} placeholder="il_tuo_username"
                           className={`pl-7 pr-8 h-11 bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-700 rounded-xl ${
                             nicknameAvailable === true ? "border-green-500 focus-visible:ring-green-500" :
@@ -546,9 +546,9 @@ export default function AuthPage() {
                             if (nicknameTimerRef.current) clearTimeout(nicknameTimerRef.current);
                             nicknameTimerRef.current = setTimeout(() => checkNickname(e.target.value), 500);
                           }} />
-                        {nicknameChecking && <div className="absolute right-3 top-1/2 -tranneutral-y-1/2 w-4 h-4 border-2 border-amber-400 border-t-transparent rounded-full animate-spin" />}
-                        {!nicknameChecking && nicknameAvailable === true && <CheckCircle className="absolute right-3 top-1/2 -tranneutral-y-1/2 w-4 h-4 text-green-500" />}
-                        {!nicknameChecking && nicknameAvailable === false && <XCircle className="absolute right-3 top-1/2 -tranneutral-y-1/2 w-4 h-4 text-red-500" />}
+                        {nicknameChecking && <div className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 border-2 border-amber-400 border-t-transparent rounded-full animate-spin" />}
+                        {!nicknameChecking && nicknameAvailable === true && <CheckCircle className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-green-500" />}
+                        {!nicknameChecking && nicknameAvailable === false && <XCircle className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-red-500" />}
                       </div>
                     </FormControl>
                     {nicknameAvailable === true && <p className="text-xs text-green-600">Username disponibile!</p>}
@@ -563,7 +563,7 @@ export default function AuthPage() {
                     <FormLabel className="text-sm font-medium text-gray-700 dark:text-gray-300">Email</FormLabel>
                     <FormControl>
                       <div className="relative">
-                        <Mail className="absolute left-3 top-1/2 -tranneutral-y-1/2 w-4 h-4 text-gray-400" />
+                        <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                         <Input {...field} type="email" placeholder="tu@esempio.it"
                           className="pl-10 h-11 bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-700 rounded-xl"
                           data-testid="input-register-email" />
@@ -579,13 +579,13 @@ export default function AuthPage() {
                     <FormLabel className="text-sm font-medium text-gray-700 dark:text-gray-300">Password</FormLabel>
                     <FormControl>
                       <div className="relative">
-                        <Lock className="absolute left-3 top-1/2 -tranneutral-y-1/2 w-4 h-4 text-gray-400" />
+                        <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                         <Input {...field} type={showPassword ? "text" : "password"} placeholder="Crea una password sicura"
                           className="pl-10 pr-10 h-11 bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-700 rounded-xl"
                           data-testid="input-register-password"
                           onChange={(e) => { field.onChange(e); setPasswordValue(e.target.value); }} />
                         <button type="button" onClick={() => setShowPassword(!showPassword)}
-                          className="absolute right-3 top-1/2 -tranneutral-y-1/2 text-gray-400 hover:text-gray-600">
+                          className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
                           {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                         </button>
                       </div>
@@ -625,12 +625,12 @@ export default function AuthPage() {
                     <FormLabel className="text-sm font-medium text-gray-700 dark:text-gray-300">Conferma Password</FormLabel>
                     <FormControl>
                       <div className="relative">
-                        <Lock className="absolute left-3 top-1/2 -tranneutral-y-1/2 w-4 h-4 text-gray-400" />
+                        <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                         <Input {...field} type={showConfirmPassword ? "text" : "password"} placeholder="Ripeti la password"
                           className="pl-10 pr-10 h-11 bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-700 rounded-xl"
                           data-testid="input-register-confirm-password" />
                         <button type="button" onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                          className="absolute right-3 top-1/2 -tranneutral-y-1/2 text-gray-400 hover:text-gray-600">
+                          className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
                           {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                         </button>
                       </div>
@@ -727,7 +727,7 @@ export default function AuthPage() {
                     {!selectedBrewery && !creatingNewBrewery && (
                       <>
                         <div className="relative">
-                          <Search className="absolute left-3 top-1/2 -tranneutral-y-1/2 w-4 h-4 text-gray-400" />
+                          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                           <Input value={brewerySearch} onChange={(e) => setBrewerySearch(e.target.value)}
                             placeholder="Cerca il tuo birrificio..." className="pl-10 h-10 rounded-xl" />
                         </div>
@@ -826,7 +826,7 @@ export default function AuthPage() {
                               <FormLabel className="text-sm">Telefono</FormLabel>
                               <FormControl>
                                 <div className="relative">
-                                  <Phone className="absolute left-3 top-1/2 -tranneutral-y-1/2 w-4 h-4 text-gray-400" />
+                                  <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                                   <Input {...field} placeholder="+39 02..." className="pl-10 h-10 rounded-xl" />
                                 </div>
                               </FormControl>

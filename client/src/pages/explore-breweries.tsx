@@ -144,7 +144,7 @@ function BreweryCard({ brewery }: { brewery: any }) {
 
   return (
     <Link href={`/brewery/${brewery.id}`}>
-      <div className="group relative rounded-2xl overflow-hidden cursor-pointer bg-white dark:bg-neutral-800 shadow-md hover:shadow-xl transition-all duration-300 hover:-tranneutral-y-1 border border-gray-100 dark:border-neutral-700">
+      <div className="group relative rounded-2xl overflow-hidden cursor-pointer bg-white dark:bg-neutral-800 shadow-md hover:shadow-xl transition-all duration-300 hover:-translate-y-1 border border-gray-100 dark:border-neutral-700">
         <div className="relative h-44 overflow-hidden bg-gradient-to-br from-amber-100 to-orange-100 dark:from-amber-900/30 dark:to-orange-900/20">
           <img
             src={imgError || !brewery.logoUrl ? BREWERY_FALLBACK : brewery.logoUrl}
@@ -282,7 +282,7 @@ export default function ExploreBreweries() {
 
           {/* Search bar */}
           <div className="max-w-xl mx-auto relative">
-            <Search className="absolute left-4 top-1/2 -tranneutral-y-1/2 w-5 h-5 text-gray-400 z-10" />
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 z-10" />
             <Input
               value={searchInput}
               onChange={e => setSearchInput(e.target.value)}
@@ -292,7 +292,7 @@ export default function ExploreBreweries() {
             {searchInput && (
               <button
                 onClick={() => { setSearchInput(""); setDebouncedQ(""); setPage(1); }}
-                className="absolute right-4 top-1/2 -tranneutral-y-1/2 text-gray-400 hover:text-gray-600"
+                className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
               >
                 <X className="w-4 h-4" />
               </button>
