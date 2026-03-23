@@ -18,6 +18,7 @@ import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { ImageUpload } from "@/components/image-upload";
 import { AddressAutocomplete } from "@/components/AddressAutocomplete";
+import RichTextEditor from "@/components/rich-text-editor";
 import ImageWithFallback from "@/components/image-with-fallback";
 import {
   Beer as BeerIcon, Plus, Pencil, Trash2, Factory, MapPin, Loader2,
@@ -383,7 +384,7 @@ export default function BreweryDashboard() {
   const [isEditingProfile, setIsEditingProfile] = useState(false);
   const [isEditingImages, setIsEditingImages] = useState(false);
   const [editForm, setEditForm] = useState({
-    name: '', description: '', location: '', region: '', country: '',
+    name: '', description: '', descriptionHtml: '', location: '', region: '', country: '',
     websiteUrl: '', phone: '', vatNumber: '', latitude: '', longitude: '',
   });
 
@@ -505,7 +506,9 @@ export default function BreweryDashboard() {
   const openProfileEdit = () => {
     if (brewery) {
       setEditForm({
-        name: brewery.name || '', description: brewery.description || '',
+        name: brewery.name || '',
+        description: brewery.description || '',
+        descriptionHtml: (brewery as any).descriptionHtml || brewery.description || '',
         location: brewery.location || '', region: brewery.region || '',
         country: brewery.country || '', websiteUrl: brewery.websiteUrl || '',
         phone: brewery.phone || '', vatNumber: brewery.vatNumber || '',
@@ -939,12 +942,15 @@ export default function BreweryDashboard() {
               </div>
             </div>
             <div className="space-y-2">
-              <label className="text-sm font-medium">Descrizione</label>
-              <Textarea
-                value={editForm.description}
-                onChange={(e) => setEditForm({ ...editForm, description: e.target.value })}
-                rows={4}
-                placeholder="Racconta la storia del tuo birrificio..."
+              <label className="text-sm font-medium">
+                Descrizione
+                <span className="ml-2 text-xs text-gray-400 font-normal">Editor avanzato — testo, grassetto, elenchi, link e molto altro</span>
+              </label>
+              <RichTextEditor
+                content={editForm.descriptionHtml}
+                onChange={(html) => setEditForm({ ...editForm, descriptionHtml: html })}
+                placeholder="Racconta la storia del tuo birrificio, la filosofia, i premi, le collaborazioni…"
+                maxChars={5000}
               />
             </div>
             <div className="grid grid-cols-2 gap-4">

@@ -1,4 +1,5 @@
 import { Helmet } from "react-helmet-async";
+import { RichTextDisplay } from "@/components/rich-text-editor";
 import { useParams, Link } from "wouter";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { 
@@ -800,15 +801,19 @@ export default function BreweryDetail() {
 
           {/* ── TAB: INFO ── */}
           <TabsContent value="info" className="px-4 lg:px-6 pt-6 pb-8 space-y-6">
-            {brewery?.description && (
+            {((brewery as any)?.descriptionHtml || brewery?.description) && (
               <div className="bg-white dark:bg-[hsl(25,14%,10%)] rounded-xl p-5 border border-gray-100 dark:border-gray-800">
                 <h2 className="text-base font-bold text-gray-900 dark:text-white mb-3 flex items-center gap-2">
                   <Building className="h-4 w-4 text-amber-600 dark:text-amber-400" />
                   Il Birrificio
                 </h2>
-                <p className="text-gray-700 dark:text-gray-300 leading-relaxed whitespace-pre-line text-sm">
-                  {brewery.description}
-                </p>
+                {(brewery as any)?.descriptionHtml ? (
+                  <RichTextDisplay html={(brewery as any).descriptionHtml} />
+                ) : (
+                  <p className="text-gray-700 dark:text-gray-300 leading-relaxed whitespace-pre-line text-sm">
+                    {brewery.description}
+                  </p>
+                )}
               </div>
             )}
             {breweryRating?.avgRating && (

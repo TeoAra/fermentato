@@ -2,6 +2,36 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Tiptap rich text editor */
+.tiptap p.is-editor-empty:first-child::before {
+  color: #9ca3af;
+  content: attr(data-placeholder);
+  float: left;
+  height: 0;
+  pointer-events: none;
+}
+.dark .tiptap p.is-editor-empty:first-child::before {
+  color: #6b7280;
+}
+.tiptap:focus { outline: none; }
+.tiptap blockquote {
+  border-left: 3px solid #f59e0b;
+  padding-left: 1rem;
+  font-style: italic;
+}
+.tiptap hr {
+  border: none;
+  border-top: 1px solid #e5e7eb;
+  margin: 1rem 0;
+}
+.dark .tiptap hr { border-top-color: #374151; }
+.tiptap a {
+  color: #d97706;
+  text-decoration: underline;
+  cursor: pointer;
+}
+.dark .tiptap a { color: #fbbf24; }
+
 /* Mobile-first responsive utilities */
 @layer utilities {
   .safe-area-pb {
