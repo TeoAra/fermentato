@@ -121,6 +121,7 @@ export default function BreweryDetail() {
     websiteUrl: '',
     email: '',
     phone: '',
+    vatNumber: '',
     instagramUrl: '',
     facebookUrl: '',
     tiktokUrl: '',
@@ -161,6 +162,7 @@ export default function BreweryDetail() {
         websiteUrl: brewery.websiteUrl || '',
         email: (brewery as any).email || '',
         phone: (brewery as any).phone || '',
+        vatNumber: (brewery as any).vatNumber || '',
         instagramUrl: (brewery as any).instagramUrl || '',
         facebookUrl: (brewery as any).facebookUrl || '',
         tiktokUrl: (brewery as any).tiktokUrl || '',
@@ -181,6 +183,7 @@ export default function BreweryDetail() {
       websiteUrl: editForm.websiteUrl || null,
       email: editForm.email || null,
       phone: editForm.phone || null,
+      vatNumber: editForm.vatNumber || null,
       instagramUrl: editForm.instagramUrl || null,
       facebookUrl: editForm.facebookUrl || null,
       tiktokUrl: editForm.tiktokUrl || null,
@@ -1078,12 +1081,15 @@ export default function BreweryDetail() {
               </div>
             </div>
             <div className="space-y-2">
-              <Label>Descrizione</Label>
+              <Label>
+                Descrizione
+                <span className="ml-2 text-xs text-muted-foreground font-normal">Editor avanzato — testo, grassetto, elenchi, link e molto altro</span>
+              </Label>
               <RichTextEditor
                 content={editForm.descriptionHtml}
                 onChange={(html) => setEditForm({ ...editForm, descriptionHtml: html })}
-                placeholder="Descrizione del birrificio..."
-                minHeight={160}
+                placeholder="Racconta la storia del birrificio, la filosofia, i premi, le collaborazioni…"
+                maxChars={5000}
               />
             </div>
             <div className="grid grid-cols-2 gap-4">
@@ -1092,14 +1098,18 @@ export default function BreweryDetail() {
                 <Input value={editForm.websiteUrl} onChange={(e) => setEditForm({ ...editForm, websiteUrl: e.target.value })} placeholder="https://..." />
               </div>
               <div className="space-y-2">
-                <Label>Email pubblica</Label>
-                <Input value={editForm.email} onChange={(e) => setEditForm({ ...editForm, email: e.target.value })} placeholder="info@birrificio.it" type="email" />
+                <Label>Telefono</Label>
+                <Input value={editForm.phone} onChange={(e) => setEditForm({ ...editForm, phone: e.target.value })} placeholder="+39..." />
               </div>
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label>Telefono</Label>
-                <Input value={editForm.phone} onChange={(e) => setEditForm({ ...editForm, phone: e.target.value })} placeholder="+39..." />
+                <Label>Email pubblica</Label>
+                <Input value={editForm.email} onChange={(e) => setEditForm({ ...editForm, email: e.target.value })} placeholder="info@birrificio.it" type="email" />
+              </div>
+              <div className="space-y-2">
+                <Label>Partita IVA</Label>
+                <Input value={editForm.vatNumber} onChange={(e) => setEditForm({ ...editForm, vatNumber: e.target.value })} placeholder="IT..." />
               </div>
             </div>
             <div className="space-y-3">
