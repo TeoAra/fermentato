@@ -32,7 +32,9 @@ import {
   Lightbulb,
   Building2,
   Users,
-  Loader2
+  Loader2,
+  Trophy,
+  MessageSquare
 } from "lucide-react";
 import Footer from "@/components/footer";
 import { Card, CardContent } from "@/components/ui/card";
@@ -841,6 +843,30 @@ export default function BeerDetail() {
               </>
             )}
 
+            {/* Awards / Premi */}
+            {(beer as any)?.awards && (beer as any).awards.length > 0 && (
+              <>
+                <div className="border-t border-gray-100 dark:border-gray-800" />
+                <div>
+                  <div className="flex items-center gap-2 mb-3">
+                    <Trophy className="h-4 w-4 text-yellow-500" />
+                    <h3 className="text-xs font-bold uppercase tracking-wider text-gray-400 dark:text-gray-500">Premi e Riconoscimenti</h3>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    {(beer as any).awards.map((award: any, i: number) => (
+                      <div key={i} className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-gradient-to-r from-yellow-50 to-amber-50 dark:from-yellow-950/40 dark:to-amber-950/40 border border-yellow-200 dark:border-yellow-800/50 text-sm">
+                        <Trophy className={`h-3.5 w-3.5 flex-shrink-0 ${award.type === 'gold' ? 'text-yellow-500' : award.type === 'silver' ? 'text-gray-400' : award.type === 'bronze' ? 'text-amber-700' : 'text-blue-500'}`} />
+                        <span className="font-semibold text-gray-900 dark:text-white">{award.name}</span>
+                        <span className="text-gray-500 dark:text-gray-400">·</span>
+                        <span className="text-gray-600 dark:text-gray-400 text-xs">{award.competition}</span>
+                        <span className="text-gray-400 dark:text-gray-500 text-xs">({award.year})</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </>
+            )}
+
             {/* Potrebbe piacerti */}
             {suggestedBeers.length > 0 && (
               <>
@@ -1117,6 +1143,15 @@ export default function BeerDetail() {
                         </div>
                         {review.personalNotes && (
                           <p className="text-sm text-gray-700 dark:text-gray-300 italic mb-1">"{review.personalNotes}"</p>
+                        )}
+                        {review.ownerReply && (
+                          <div className="mt-2 ml-1 pl-3 border-l-2 border-amber-300 dark:border-amber-700/60 rounded-sm">
+                            <div className="flex items-center gap-1 mb-0.5">
+                              <MessageSquare className="h-3 w-3 text-amber-500" />
+                              <span className="text-xs font-semibold text-amber-600 dark:text-amber-400">Risposta del birrificio</span>
+                            </div>
+                            <p className="text-xs text-gray-600 dark:text-gray-400 leading-relaxed">{review.ownerReply}</p>
+                          </div>
                         )}
                         <div className="flex items-center justify-between gap-2 text-xs text-gray-400 flex-wrap">
                           <div className="flex items-center gap-1 flex-wrap">

@@ -157,6 +157,7 @@ export const beers = pgTable("beers", {
   isCollaboration: boolean("is_collaboration").default(false), // Birra in collaborazione
   isHidden: boolean("is_hidden").default(false), // Nascosta dalla pagina pubblica
   barcode: varchar("barcode"), // EAN/UPC barcode
+  awards: jsonb("awards").$type<Array<{name: string; year: number; competition: string; type?: 'gold'|'silver'|'bronze'|'special'}>>(),
   createdAt: timestamp("created_at").defaultNow(),
 });
 
@@ -298,6 +299,8 @@ export const userBeerTastings = pgTable("user_beer_tastings", {
   format: varchar("format", { length: 100 }), // Come l'ha bevuta (es. alla spina, bottiglia, etc.)
   tastedAt: timestamp("tasted_at").defaultNow(),
   pubId: integer("pub_id").references(() => pubs.id), // Dove l'ha assaggiata (opzionale)
+  ownerReply: text("owner_reply"), // Risposta del proprietario del birrificio
+  ownerReplyAt: timestamp("owner_reply_at"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 }, (table) => [

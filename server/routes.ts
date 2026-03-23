@@ -11,10 +11,10 @@ import { storage } from "./storage";
 import { setupAuth, isAuthenticated, isAdmin } from "./auth";
 import { registerAdminRoutes } from "./routes-admin";
 import { registerFestivalRoutes, runFestivalMigrations } from "./routes-festival";
-import { sql, eq, and, desc, asc } from "drizzle-orm";
+import { sql, eq, and, desc, asc, gte, count } from "drizzle-orm";
 import { upload, uploadImage, cloudinary } from "./cloudinary";
 import { db, pool } from "./db";
-import { breweries, beers, pubs, users, tapList, bottleList, userBeerTastings, favorites, menuCategories, menuItems, pubSizes, notifications, pushSubscriptions, breweryRequests, pubEvents, breweryEvents, insertBreweryEventSchema, reviewReports, oauthAccounts, userActivities, ratings, publicanRequests, notificationPreferences, staticPages, additionRequests, scanLogs, pubPageViews, breweryAnnouncements, insertBreweryAnnouncementSchema, beerCollaborations, festivals } from "@shared/schema";
+import { breweries, beers, pubs, users, tapList, bottleList, userBeerTastings, favorites, menuCategories, menuItems, pubSizes, notifications, pushSubscriptions, breweryRequests, pubEvents, breweryEvents, insertBreweryEventSchema, reviewReports, oauthAccounts, userActivities, ratings, publicanRequests, notificationPreferences, staticPages, additionRequests, scanLogs, pubPageViews, breweryAnnouncements, insertBreweryAnnouncementSchema, beerCollaborations, festivals, beerViews } from "@shared/schema";
 
 import { insertPubSchema, insertTapListSchema, insertBottleListSchema, insertMenuCategorySchema, insertMenuItemSchema, pubRegistrationSchema, insertPubEventSchema } from "@shared/schema";
 import { z } from "zod";
@@ -280,6 +280,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
       await pool.query(`ALTER TABLE festival_food_items ADD COLUMN IF NOT EXISTS allergens jsonb`);
     } catch (e) {
       console.error("[festival_food_items] allergens migration error:", e);
+    }
+  })();
+
+  // Startup: ensure beers has awards column
+  (async () => {
+    try {
+      await pool.query(`ALTER TABLE beers ADD COLUMN IF NOT EXISTS awards jsonb`);
+    } catch (e) {
+      console.error("[beers] awards migration error:", e);
+    }
+  })();
+
+  // Startup: ensure user_beer_tastings has owner_reply columns
+  (async () => {
+    try {
+      await pool.query(`ALTER TABLE user_beer_tastings ADD COLUMN IF NOT EXISTS owner_reply text`);
+      await pool.query(`ALTER TABLE user_beer_tastings ADD COLUMN IF NOT EXISTS owner_reply_at timestamp`);
+    } catch (e) {
+      console.error("[user_beer_tastings] owner_reply migration error:", e);
     }
   })();
 
@@ -4384,6 +4403,125 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Brewery stats for the owner dashboard
+  app.get("/api/brewery/stats", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = (req.user as any).id;
+      const user = await storage.getUser(userId);
+      if (!user?.breweryId) return res.status(404).json({ message: "Nessun birrificio" });
+      const breweryId = user.breweryId;
+      const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+      const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+
+      const [viewsWeek, viewsAllTime, topBeerRows, reviewsCount, favoritesCount] = await Promise.all([
+        // Views last 7 days
+        db.select({ total: sql<number>`COUNT(*)::int` })
+          .from(beerViews)
+          .innerJoin(beers, eq(beerViews.beerId, beers.id))
+          .where(and(eq(beers.breweryId, breweryId), gte(beerViews.viewedAt, sevenDaysAgo))),
+        // Views all time
+        db.select({ total: sql<number>`COUNT(*)::int` })
+          .from(beerViews)
+          .innerJoin(beers, eq(beerViews.beerId, beers.id))
+          .where(eq(beers.breweryId, breweryId)),
+        // Top beer by views (last 30 days)
+        db.select({ beerId: beerViews.beerId, beerName: beers.name, views: sql<number>`COUNT(*)::int` })
+          .from(beerViews)
+          .innerJoin(beers, eq(beerViews.beerId, beers.id))
+          .where(and(eq(beers.breweryId, breweryId), gte(beerViews.viewedAt, thirtyDaysAgo)))
+          .groupBy(beerViews.beerId, beers.name)
+          .orderBy(desc(sql`COUNT(*)`))
+          .limit(3),
+        // Total reviews
+        db.select({ total: sql<number>`COUNT(*)::int` })
+          .from(userBeerTastings)
+          .innerJoin(beers, eq(userBeerTastings.beerId, beers.id))
+          .where(and(eq(beers.breweryId, breweryId), sql`${userBeerTastings.rating} IS NOT NULL`)),
+        // Total favorites on brewery's beers
+        db.select({ total: sql<number>`COUNT(*)::int` })
+          .from(favorites)
+          .innerJoin(beers, sql`${favorites.itemId} = ${beers.id} AND ${favorites.itemType} = 'beer'`)
+          .where(eq(beers.breweryId, breweryId)),
+      ]);
+
+      res.json({
+        viewsWeek: viewsWeek[0]?.total || 0,
+        viewsAllTime: viewsAllTime[0]?.total || 0,
+        topBeers: topBeerRows,
+        totalReviews: reviewsCount[0]?.total || 0,
+        totalFavorites: favoritesCount[0]?.total || 0,
+      });
+    } catch (error) {
+      console.error("Error fetching brewery stats:", error);
+      res.status(500).json({ message: "Failed to fetch stats" });
+    }
+  });
+
+  // Recent reviews for brewery owner dashboard
+  app.get("/api/brewery/recent-reviews", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = (req.user as any).id;
+      const user = await storage.getUser(userId);
+      if (!user?.breweryId) return res.status(404).json({ message: "Nessun birrificio" });
+
+      const reviews = await db
+        .select({
+          id: userBeerTastings.id,
+          beerId: userBeerTastings.beerId,
+          beerName: beers.name,
+          rating: userBeerTastings.rating,
+          personalNotes: userBeerTastings.personalNotes,
+          tastedAt: userBeerTastings.tastedAt,
+          userId: userBeerTastings.userId,
+          nickname: users.nickname,
+          firstName: users.firstName,
+          ownerReply: userBeerTastings.ownerReply,
+          ownerReplyAt: userBeerTastings.ownerReplyAt,
+        })
+        .from(userBeerTastings)
+        .innerJoin(beers, and(eq(userBeerTastings.beerId, beers.id), eq(beers.breweryId, user.breweryId)))
+        .leftJoin(users, eq(userBeerTastings.userId, users.id))
+        .where(sql`${userBeerTastings.rating} IS NOT NULL`)
+        .orderBy(desc(userBeerTastings.tastedAt))
+        .limit(20);
+
+      res.json({ reviews });
+    } catch (error) {
+      console.error("Error fetching recent reviews:", error);
+      res.status(500).json({ message: "Failed to fetch reviews" });
+    }
+  });
+
+  // Reply to a review (brewery owner only)
+  app.patch("/api/brewery/reviews/:reviewId/reply", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = (req.user as any).id;
+      const user = await storage.getUser(userId);
+      if (!user?.breweryId) return res.status(403).json({ message: "Non sei un proprietario di birrificio" });
+      const reviewId = parseInt(req.params.reviewId);
+      const { reply } = req.body;
+      if (!reply || typeof reply !== 'string') return res.status(400).json({ message: "Testo risposta richiesto" });
+
+      // Verify the review is for one of this brewery's beers
+      const [review] = await db
+        .select({ id: userBeerTastings.id, beerId: userBeerTastings.beerId })
+        .from(userBeerTastings)
+        .innerJoin(beers, eq(userBeerTastings.beerId, beers.id))
+        .where(and(eq(userBeerTastings.id, reviewId), eq(beers.breweryId, user.breweryId)));
+
+      if (!review) return res.status(403).json({ message: "Recensione non trovata o non di tua pertinenza" });
+
+      await db.update(userBeerTastings)
+        .set({ ownerReply: reply.trim(), ownerReplyAt: new Date() })
+        .where(eq(userBeerTastings.id, reviewId));
+
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error replying to review:", error);
+      res.status(500).json({ message: "Failed to reply" });
+    }
+  });
+
   app.post("/api/brewery/beers", isAuthenticated, async (req: any, res) => {
     try {
       const userId = (req.user as any).id;
@@ -4955,6 +5093,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
           firstName: users.firstName,
           profileImageUrl: users.profileImageUrl,
           isPublic: users.isPublic,
+          ownerReply: userBeerTastings.ownerReply,
+          ownerReplyAt: userBeerTastings.ownerReplyAt,
           userReviewCount: sql<number>`(SELECT COUNT(*) FROM user_beer_tastings ubt WHERE ubt.user_id = ${userBeerTastings.userId} AND ubt.rating IS NOT NULL)`,
         })
         .from(userBeerTastings)

@@ -24,7 +24,8 @@ import {
   Beer as BeerIcon, Plus, Pencil, Trash2, Factory, MapPin, Loader2,
   Globe, Phone, FileText, Camera, Clock, AlertTriangle, Building,
   Target, Sparkles, Save, X, Share2, ExternalLink, Mail,
-  Megaphone, Store, Newspaper, Rocket, Users, QrCode
+  Megaphone, Store, Newspaper, Rocket, Users, QrCode,
+  Trophy, Star, Eye, Heart, MessageSquare, TrendingUp, Send
 } from "lucide-react";
 import { SiInstagram, SiFacebook, SiTiktok } from "react-icons/si";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -407,6 +408,42 @@ export default function BreweryDashboard() {
     enabled: !!user && (user as any)?.breweryId != null,
   });
 
+  const { data: stats } = useQuery<{
+    viewsWeek: number;
+    viewsAllTime: number;
+    topBeers: Array<{ beerId: number; beerName: string; views: number }>;
+    totalReviews: number;
+    totalFavorites: number;
+  }>({
+    queryKey: ["/api/brewery/stats"],
+    enabled: !!user && (user as any)?.breweryId != null,
+  });
+
+  const [showReviewsSection, setShowReviewsSection] = useState(false);
+  const [replyingTo, setReplyingTo] = useState<number | null>(null);
+  const [replyText, setReplyText] = useState("");
+  const [editingAwards, setEditingAwards] = useState<Array<{name: string; year: number; competition: string; type?: string}>>([]);
+  const [newAward, setNewAward] = useState({ name: "", year: new Date().getFullYear(), competition: "", type: "gold" });
+
+  const { data: recentReviewsData } = useQuery<{ reviews: any[] }>({
+    queryKey: ["/api/brewery/recent-reviews"],
+    enabled: showReviewsSection && !!user && (user as any)?.breweryId != null,
+  });
+
+  const replyMutation = useMutation({
+    mutationFn: ({ reviewId, reply }: { reviewId: number; reply: string }) =>
+      apiRequest(`/api/brewery/reviews/${reviewId}/reply`, { method: "PATCH" }, { reply }),
+    onSuccess: () => {
+      toast({ title: "Risposta pubblicata!", description: "La tua risposta è ora visibile nella scheda della birra." });
+      setReplyingTo(null);
+      setReplyText("");
+      queryClient.invalidateQueries({ queryKey: ["/api/brewery/recent-reviews"] });
+    },
+    onError: () => {
+      toast({ title: "Errore", description: "Impossibile pubblicare la risposta", variant: "destructive" });
+    },
+  });
+
   const form = useForm<BeerFormValues>({
     resolver: zodResolver(beerFormSchema),
     defaultValues: {
@@ -484,6 +521,8 @@ export default function BreweryDashboard() {
   const openCreateDialog = () => {
     setEditingBeer(null);
     form.reset({ name: "", style: "", abv: null, ibu: null, description: "", color: "", imageUrl: "" });
+    setEditingAwards([]);
+    setNewAward({ name: "", year: new Date().getFullYear(), competition: "", type: "gold" });
     setDialogOpen(true);
   };
 
@@ -495,14 +534,17 @@ export default function BreweryDashboard() {
       ibu: beer.ibu ?? null, description: beer.description ?? "",
       color: beer.color ?? "", imageUrl: beer.imageUrl ?? "",
     });
+    setEditingAwards((beer as any).awards || []);
+    setNewAward({ name: "", year: new Date().getFullYear(), competition: "", type: "gold" });
     setDialogOpen(true);
   };
 
   const onBeerSubmit = (values: BeerFormValues) => {
+    const payload = { ...values, awards: editingAwards };
     if (editingBeer) {
-      updateBeerMutation.mutate({ id: editingBeer.id, values });
+      updateBeerMutation.mutate({ id: editingBeer.id, values: payload as any });
     } else {
-      createBeerMutation.mutate(values);
+      createBeerMutation.mutate(payload as any);
     }
   };
 
@@ -663,27 +705,59 @@ export default function BreweryDashboard() {
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <RoleSwitcherBanner currentView="brewery" />
 
-        {/* Quick Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
-          <BreweryStatsCard
-            icon={BeerIcon}
-            label="Birre"
-            value={beers.length}
-            gradient="from-amber-500 to-orange-600"
-          />
-          <a
-            href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(brewery.name + ' ' + brewery.location)}`}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="block"
-          >
+        {/* Stats Section */}
+        <div className="mb-8">
+          <div className="flex items-center justify-between mb-3">
+            <h2 className="text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+              <TrendingUp className="h-5 w-5 text-amber-500" />
+              Statistiche
+            </h2>
+          </div>
+          <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
             <BreweryStatsCard
-              icon={MapPin}
-              label="Cerca su Maps"
-              value={brewery.location || 'N/D'}
-              gradient="from-blue-500 to-indigo-600"
+              icon={BeerIcon}
+              label="Birre in catalogo"
+              value={beers.length}
+              gradient="from-amber-500 to-orange-600"
             />
-          </a>
+            <BreweryStatsCard
+              icon={Eye}
+              label="Visite 7 giorni"
+              value={stats?.viewsWeek ?? '—'}
+              gradient="from-sky-500 to-blue-600"
+            />
+            <BreweryStatsCard
+              icon={TrendingUp}
+              label="Visite totali"
+              value={stats?.viewsAllTime ?? '—'}
+              gradient="from-indigo-500 to-purple-600"
+            />
+            <BreweryStatsCard
+              icon={Star}
+              label="Recensioni"
+              value={stats?.totalReviews ?? '—'}
+              gradient="from-yellow-400 to-amber-500"
+              onClick={() => setShowReviewsSection(v => !v)}
+            />
+            <BreweryStatsCard
+              icon={Heart}
+              label="Preferiti"
+              value={stats?.totalFavorites ?? '—'}
+              gradient="from-rose-500 to-pink-600"
+            />
+          </div>
+          {stats?.topBeers && stats.topBeers.length > 0 && (
+            <div className="mt-3 p-3 glass-card rounded-xl flex flex-wrap gap-3 items-center">
+              <span className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">Top 30gg:</span>
+              {stats.topBeers.map((b, i) => (
+                <span key={b.beerId} className="flex items-center gap-1 text-sm text-gray-700 dark:text-gray-300">
+                  <Trophy className={`h-3.5 w-3.5 ${i === 0 ? 'text-yellow-500' : i === 1 ? 'text-gray-400' : 'text-amber-700'}`} />
+                  {b.beerName}
+                  <span className="text-xs text-gray-400">({b.views} views)</span>
+                </span>
+              ))}
+            </div>
+          )}
         </div>
 
         {/* Festival Mode CTA */}
@@ -904,6 +978,102 @@ export default function BreweryDashboard() {
         <div className="glass-card border-0 rounded-2xl p-6 mb-8">
           <BreweryEventsManager breweryId={brewery.id} breweryName={brewery.name} />
         </div>
+
+        {/* Reviews Section */}
+        {showReviewsSection && (
+          <div className="glass-card border-0 rounded-2xl p-6 mb-8">
+            <div className="flex items-center justify-between mb-5">
+              <h2 className="text-xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
+                <div className="p-2 bg-gradient-to-r from-yellow-400 to-amber-500 rounded-xl">
+                  <Star className="h-5 w-5 text-white" />
+                </div>
+                Recensioni recenti
+              </h2>
+              <Button variant="ghost" size="sm" onClick={() => setShowReviewsSection(false)}>
+                <X className="h-4 w-4" />
+              </Button>
+            </div>
+            {!recentReviewsData ? (
+              <div className="flex justify-center py-8">
+                <Loader2 className="h-6 w-6 animate-spin text-amber-500" />
+              </div>
+            ) : recentReviewsData.reviews.length === 0 ? (
+              <p className="text-center text-gray-500 py-8">Nessuna recensione ancora</p>
+            ) : (
+              <div className="space-y-4">
+                {recentReviewsData.reviews.map((review: any) => (
+                  <div key={review.id} className="rounded-xl border border-gray-100 dark:border-gray-800 p-4">
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="flex-1 min-w-0">
+                        <div className="flex flex-wrap items-center gap-2 mb-1">
+                          <span className="font-semibold text-sm text-gray-900 dark:text-white">
+                            {review.nickname || review.firstName || 'Anonimo'}
+                          </span>
+                          <span className="text-xs text-gray-500">su</span>
+                          <Link href={`/beers/${review.beerId}`}>
+                            <span className="text-xs font-medium text-amber-600 hover:underline cursor-pointer">{review.beerName}</span>
+                          </Link>
+                          <div className="flex items-center gap-0.5">
+                            {Array.from({ length: 5 }).map((_, i) => (
+                              <Star key={i} className={`h-3 w-3 ${i < (review.rating || 0) ? 'text-amber-400 fill-amber-400' : 'text-gray-300'}`} />
+                            ))}
+                          </div>
+                        </div>
+                        {review.personalNotes && (
+                          <p className="text-sm text-gray-600 dark:text-gray-400 mt-1 line-clamp-3">{review.personalNotes}</p>
+                        )}
+                        {review.ownerReply && (
+                          <div className="mt-2 pl-3 border-l-2 border-amber-300 dark:border-amber-700">
+                            <p className="text-xs font-semibold text-amber-700 dark:text-amber-400 mb-0.5">La tua risposta</p>
+                            <p className="text-sm text-gray-600 dark:text-gray-400">{review.ownerReply}</p>
+                          </div>
+                        )}
+                        {replyingTo === review.id ? (
+                          <div className="mt-3 space-y-2">
+                            <Textarea
+                              value={replyText}
+                              onChange={(e) => setReplyText(e.target.value)}
+                              placeholder="Scrivi la tua risposta..."
+                              rows={2}
+                              className="text-sm"
+                            />
+                            <div className="flex gap-2">
+                              <Button
+                                size="sm"
+                                className="bg-amber-500 hover:bg-amber-600 text-white"
+                                disabled={!replyText.trim() || replyMutation.isPending}
+                                onClick={() => replyMutation.mutate({ reviewId: review.id, reply: replyText })}
+                              >
+                                {replyMutation.isPending ? <Loader2 className="h-3 w-3 mr-1 animate-spin" /> : <Send className="h-3 w-3 mr-1" />}
+                                Pubblica
+                              </Button>
+                              <Button size="sm" variant="ghost" onClick={() => { setReplyingTo(null); setReplyText(""); }}>
+                                Annulla
+                              </Button>
+                            </div>
+                          </div>
+                        ) : (
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            className="mt-2 text-xs text-amber-600 hover:text-amber-700 h-7 px-2"
+                            onClick={() => { setReplyingTo(review.id); setReplyText(review.ownerReply || ""); }}
+                          >
+                            <MessageSquare className="h-3 w-3 mr-1" />
+                            {review.ownerReply ? 'Modifica risposta' : 'Rispondi'}
+                          </Button>
+                        )}
+                      </div>
+                      <span className="text-xs text-gray-400 flex-shrink-0">
+                        {review.tastedAt ? new Date(review.tastedAt).toLocaleDateString('it-IT') : ''}
+                      </span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
 
         {/* ─── Annunci & Release ──────────────────────────────────────────────── */}
         <AnnouncementsManager breweryId={brewery.id} />
@@ -1200,6 +1370,73 @@ export default function BreweryDashboard() {
                   maxSize={5}
                   recommendedDimensions="400x400px"
                 />
+              </div>
+
+              {/* Awards editor */}
+              <div className="space-y-2">
+                <label className="text-sm font-medium flex items-center gap-2">
+                  <Trophy className="h-4 w-4 text-yellow-500" />
+                  Premi e Riconoscimenti
+                </label>
+                {editingAwards.length > 0 && (
+                  <div className="space-y-1.5 mb-2">
+                    {editingAwards.map((a, i) => (
+                      <div key={i} className="flex items-center gap-2 text-sm bg-amber-50 dark:bg-amber-950/30 rounded-lg px-3 py-2">
+                        <Trophy className={`h-3.5 w-3.5 flex-shrink-0 ${a.type === 'gold' ? 'text-yellow-500' : a.type === 'silver' ? 'text-gray-400' : a.type === 'bronze' ? 'text-amber-700' : 'text-blue-500'}`} />
+                        <span className="flex-1 truncate">{a.name} — {a.competition} ({a.year})</span>
+                        <button type="button" onClick={() => setEditingAwards(prev => prev.filter((_, j) => j !== i))} className="text-gray-400 hover:text-red-500">
+                          <X className="h-3 w-3" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+                <div className="grid grid-cols-2 gap-2">
+                  <Input
+                    placeholder="Nome premio (es. Medaglia d'Oro)"
+                    value={newAward.name}
+                    onChange={(e) => setNewAward(prev => ({ ...prev, name: e.target.value }))}
+                    className="text-sm"
+                  />
+                  <Input
+                    placeholder="Competizione (es. Birra dell'Anno)"
+                    value={newAward.competition}
+                    onChange={(e) => setNewAward(prev => ({ ...prev, competition: e.target.value }))}
+                    className="text-sm"
+                  />
+                  <Input
+                    type="number"
+                    placeholder="Anno"
+                    value={newAward.year}
+                    onChange={(e) => setNewAward(prev => ({ ...prev, year: parseInt(e.target.value) || new Date().getFullYear() }))}
+                    className="text-sm"
+                  />
+                  <Select value={newAward.type} onValueChange={(v) => setNewAward(prev => ({ ...prev, type: v }))}>
+                    <SelectTrigger className="text-sm"><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="gold">Oro</SelectItem>
+                      <SelectItem value="silver">Argento</SelectItem>
+                      <SelectItem value="bronze">Bronzo</SelectItem>
+                      <SelectItem value="special">Speciale</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="w-full"
+                  disabled={!newAward.name.trim() || !newAward.competition.trim()}
+                  onClick={() => {
+                    if (newAward.name.trim() && newAward.competition.trim()) {
+                      setEditingAwards(prev => [...prev, { ...newAward }]);
+                      setNewAward({ name: "", year: new Date().getFullYear(), competition: "", type: "gold" });
+                    }
+                  }}
+                >
+                  <Plus className="h-3 w-3 mr-1" />
+                  Aggiungi premio
+                </Button>
               </div>
               <div className="flex gap-3 pt-2">
                 <Button
