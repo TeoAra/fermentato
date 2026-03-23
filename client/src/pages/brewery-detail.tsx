@@ -48,7 +48,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
-import { useState, useRef, useEffect, useCallback, useMemo } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import ImageWithFallback from "@/components/image-with-fallback";
 import { ImageUpload } from "@/components/image-upload";
 import SuggestChangeDialog from "@/components/SuggestChangeDialog";
@@ -105,16 +105,6 @@ export default function BreweryDetail() {
   const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState("birre");
   const [visibleCount, setVisibleCount] = useState(9);
-  const observerRef = useRef<IntersectionObserver | null>(null);
-  const sentinelRef = useCallback((node: HTMLDivElement | null) => {
-    observerRef.current?.disconnect();
-    if (!node) return;
-    observerRef.current = new IntersectionObserver(
-      entries => { if (entries[0].isIntersecting) setVisibleCount(c => c + 9); },
-      { rootMargin: '200px' }
-    );
-    observerRef.current.observe(node);
-  }, []);
   const [activeStyleFilter, setActiveStyleFilter] = useState<string>("");
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isSuggestDialogOpen, setIsSuggestDialogOpen] = useState(false);
@@ -786,12 +776,13 @@ export default function BreweryDetail() {
               </div>
               
               {visibleCount < filteredBeers.length && (
-                <div ref={sentinelRef} className="flex justify-center items-center py-8 mt-2">
-                  <div className="flex gap-1.5">
-                    {[0, 1, 2].map(i => (
-                      <div key={i} className="w-2 h-2 rounded-full bg-amber-300 dark:bg-amber-700 animate-bounce" style={{ animationDelay: `${i * 0.15}s` }} />
-                    ))}
-                  </div>
+                <div className="flex justify-center pt-6 pb-2">
+                  <button
+                    onClick={() => setVisibleCount(filteredBeers.length)}
+                    className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-semibold bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-800 hover:bg-amber-100 dark:hover:bg-amber-900/60 transition-colors"
+                  >
+                    Mostra tutte le birre ({filteredBeers.length})
+                  </button>
                 </div>
               )}
             </>

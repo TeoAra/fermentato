@@ -759,7 +759,7 @@ export default function BeerDetail() {
           </div>
 
           {/* ── TAB: SCHEDA ── */}
-          <TabsContent value="scheda" className="px-4 lg:px-6 pt-6 pb-8 space-y-4">
+          <TabsContent value="scheda" className="px-4 lg:px-6 pt-5 pb-8 space-y-3">
 
             {/* Specs grid */}
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
