@@ -1,5 +1,5 @@
 import { Helmet } from "react-helmet-async";
-import { RichTextDisplay } from "@/components/rich-text-editor";
+import { RichTextEditor, RichTextDisplay } from "@/components/rich-text-editor";
 import { useParams, Link } from "wouter";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { 
@@ -42,7 +42,6 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useAuth } from "@/hooks/useAuth";
@@ -113,6 +112,7 @@ export default function BreweryDetail() {
     location: '',
     region: '',
     description: '',
+    descriptionHtml: '',
     logoUrl: '',
     coverImageUrl: '',
     websiteUrl: '',
@@ -147,6 +147,7 @@ export default function BreweryDetail() {
         location: brewery.location || '',
         region: brewery.region || '',
         description: brewery.description || '',
+        descriptionHtml: (brewery as any).descriptionHtml || '',
         logoUrl: brewery.logoUrl || '',
         coverImageUrl: brewery.coverImageUrl || '',
         websiteUrl: brewery.websiteUrl || '',
@@ -161,6 +162,7 @@ export default function BreweryDetail() {
       location: editForm.location,
       region: editForm.region || null,
       description: editForm.description || null,
+      descriptionHtml: editForm.descriptionHtml || null,
       logoUrl: editForm.logoUrl || null,
       coverImageUrl: editForm.coverImageUrl || null,
       websiteUrl: editForm.websiteUrl || null,
@@ -1004,13 +1006,12 @@ export default function BreweryDetail() {
               </div>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="edit-description">Descrizione</Label>
-              <Textarea
-                id="edit-description"
-                value={editForm.description}
-                onChange={(e) => setEditForm({ ...editForm, description: e.target.value })}
+              <Label>Descrizione</Label>
+              <RichTextEditor
+                content={editForm.descriptionHtml}
+                onChange={(html) => setEditForm({ ...editForm, descriptionHtml: html })}
                 placeholder="Descrizione del birrificio..."
-                rows={4}
+                minHeight={160}
               />
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
