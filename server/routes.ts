@@ -3235,6 +3235,79 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Admin: stats for any brewery
+  app.get('/api/admin/brewery/:id/stats', isAuthenticated, isAdmin, async (req: any, res) => {
+    try {
+      const breweryId = parseInt(req.params.id);
+      const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+      const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+      const [viewsWeek, viewsAllTime, topBeerRows, reviewsCount, favoritesCount] = await Promise.all([
+        db.select({ total: sql<number>`COUNT(*)::int` }).from(beerViews).innerJoin(beers, eq(beerViews.beerId, beers.id)).where(and(eq(beers.breweryId, breweryId), gte(beerViews.viewedAt, sevenDaysAgo))),
+        db.select({ total: sql<number>`COUNT(*)::int` }).from(beerViews).innerJoin(beers, eq(beerViews.beerId, beers.id)).where(eq(beers.breweryId, breweryId)),
+        db.select({ beerId: beerViews.beerId, beerName: beers.name, views: sql<number>`COUNT(*)::int` }).from(beerViews).innerJoin(beers, eq(beerViews.beerId, beers.id)).where(and(eq(beers.breweryId, breweryId), gte(beerViews.viewedAt, thirtyDaysAgo))).groupBy(beerViews.beerId, beers.name).orderBy(desc(sql`COUNT(*)`)).limit(3),
+        db.select({ total: sql<number>`COUNT(*)::int` }).from(userBeerTastings).innerJoin(beers, eq(userBeerTastings.beerId, beers.id)).where(and(eq(beers.breweryId, breweryId), sql`${userBeerTastings.rating} IS NOT NULL`)),
+        db.select({ total: sql<number>`COUNT(*)::int` }).from(favorites).innerJoin(beers, sql`${favorites.itemId} = ${beers.id} AND ${favorites.itemType} = 'beer'`).where(eq(beers.breweryId, breweryId)),
+      ]);
+      res.json({ viewsWeek: viewsWeek[0]?.total || 0, viewsAllTime: viewsAllTime[0]?.total || 0, topBeers: topBeerRows, totalReviews: reviewsCount[0]?.total || 0, totalFavorites: favoritesCount[0]?.total || 0 });
+    } catch (error) {
+      console.error("Error fetching admin brewery stats:", error);
+      res.status(500).json({ message: "Failed to fetch stats" });
+    }
+  });
+
+  // Admin: recent reviews for any brewery
+  app.get('/api/admin/brewery/:id/recent-reviews', isAuthenticated, isAdmin, async (req: any, res) => {
+    try {
+      const breweryId = parseInt(req.params.id);
+      const reviews = await db
+        .select({ id: userBeerTastings.id, beerId: userBeerTastings.beerId, beerName: beers.name, rating: userBeerTastings.rating, personalNotes: userBeerTastings.personalNotes, tastedAt: userBeerTastings.tastedAt, userId: userBeerTastings.userId, nickname: users.nickname, firstName: users.firstName, ownerReply: userBeerTastings.ownerReply, ownerReplyAt: userBeerTastings.ownerReplyAt })
+        .from(userBeerTastings)
+        .innerJoin(beers, and(eq(userBeerTastings.beerId, beers.id), eq(beers.breweryId, breweryId)))
+        .leftJoin(users, eq(userBeerTastings.userId, users.id))
+        .where(sql`${userBeerTastings.rating} IS NOT NULL`)
+        .orderBy(desc(userBeerTastings.tastedAt))
+        .limit(20);
+      res.json({ reviews });
+    } catch (error) {
+      console.error("Error fetching admin brewery reviews:", error);
+      res.status(500).json({ message: "Failed to fetch reviews" });
+    }
+  });
+
+  // Admin: create beer for any brewery
+  app.post('/api/admin/brewery/:id/beers', isAuthenticated, isAdmin, async (req: any, res) => {
+    try {
+      const breweryId = parseInt(req.params.id);
+      const { collaborationBreweryIds, isCollaboration, ...bodyData } = req.body;
+      const beer = await storage.createBeer({ ...bodyData, breweryId });
+      const collabIds = Array.isArray(collaborationBreweryIds) ? collaborationBreweryIds : [];
+      if (collabIds.length > 0) {
+        for (const brewId of collabIds) {
+          await db.insert(beerCollaborations).values({ beerId: beer.id, breweryId: Number(brewId) }).onConflictDoNothing();
+        }
+        try { await db.execute(sql`UPDATE beers SET is_collaboration = true WHERE id = ${beer.id}`); } catch {}
+      }
+      res.status(201).json(beer);
+    } catch (error) {
+      console.error("Error creating beer (admin):", error);
+      res.status(500).json({ message: "Failed to create beer" });
+    }
+  });
+
+  // Admin: reply to any review
+  app.patch('/api/admin/brewery/reviews/:reviewId/reply', isAuthenticated, isAdmin, async (req: any, res) => {
+    try {
+      const reviewId = parseInt(req.params.reviewId);
+      const { reply } = req.body;
+      if (!reply || typeof reply !== 'string') return res.status(400).json({ message: "Testo risposta richiesto" });
+      await db.update(userBeerTastings).set({ ownerReply: reply.trim(), ownerReplyAt: new Date() }).where(eq(userBeerTastings.id, reviewId));
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error replying to review (admin):", error);
+      res.status(500).json({ message: "Failed to reply" });
+    }
+  });
+
   app.get('/api/admin/reviews/pending', isAuthenticated, isAdmin, async (req: any, res) => {
     try {
       // Mock pending reviews for now

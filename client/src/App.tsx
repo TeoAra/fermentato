@@ -99,6 +99,7 @@ import AdminModeration from "@/pages/admin-moderation";
 import AdminSuggestions from "@/pages/admin-suggestions";
 import AdminAdditionRequests from "@/pages/admin-addition-requests";
 import AdminEditPub from "@/pages/admin-edit-pub";
+import AdminEditBrewery from "@/pages/admin-edit-brewery";
 import ExplorePubs from "@/pages/explore-pubs";
 import ExploreBreweries from "@/pages/explore-breweries";
 import ExploreBeers from "@/pages/explore-beers";
@@ -205,6 +206,7 @@ function Router() {
           <Route path="/admin/publican-requests" component={AdminPublicanRequests} />
           <Route path="/admin/users" component={AdminDashboard} />
           <Route path="/admin/edit-pub/:id" component={AdminEditPub} />
+          <Route path="/admin/edit-brewery/:id" component={AdminEditBrewery} />
           <Route path="/admin/pages" component={AdminPages} />
           <Route path="/admin/subscriptions" component={AdminSubscriptions} />
           <Route path="/admin/festivals" component={AdminFestivals} />

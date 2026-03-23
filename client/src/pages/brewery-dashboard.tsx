@@ -363,12 +363,18 @@ const BreweryStatsCard = ({ icon: Icon, value, label, gradient, onClick }: any) 
   </div>
 );
 
-export default function BreweryDashboard() {
+interface BreweryDashboardProps {
+  adminBreweryId?: number;
+}
+
+export default function BreweryDashboard({ adminBreweryId }: BreweryDashboardProps = {}) {
   const { toast } = useToast();
   const { user, isLoading: authLoading } = useAuth();
+  const isAdminMode = !!adminBreweryId;
   const [dialogOpen, setDialogOpen] = useState(false);
 
   useEffect(() => {
+    if (isAdminMode) return;
     const params = new URLSearchParams(window.location.search);
     if (params.get('verified') === 'success') {
       setTimeout(() => {
@@ -400,13 +406,29 @@ export default function BreweryDashboard() {
     createdAt?: string | null;
   }>({
     queryKey: ["/api/brewery/request-status"],
-    enabled: !!user,
+    enabled: !!user && !isAdminMode,
   });
 
+  // Owner mode: fetch {brewery, beers} from /api/brewery/my
   const { data, isLoading } = useQuery<{ brewery: any; beers: Beer[] }>({
     queryKey: ["/api/brewery/my"],
-    enabled: !!user && (user as any)?.breweryId != null,
+    enabled: !isAdminMode && !!user && (user as any)?.breweryId != null,
   });
+
+  // Admin mode: fetch brewery and beers separately
+  const { data: adminBrewery, isLoading: adminBreweryLoading } = useQuery<any>({
+    queryKey: ["/api/breweries", adminBreweryId],
+    enabled: isAdminMode && !!adminBreweryId,
+  });
+  const { data: adminBeers = [], isLoading: adminBeersLoading } = useQuery<Beer[]>({
+    queryKey: ["/api/breweries", adminBreweryId, "beers"],
+    enabled: isAdminMode && !!adminBreweryId,
+  });
+
+  // Unified brewery + beers for the rest of the component
+  const brewery: any = isAdminMode ? adminBrewery : data?.brewery;
+  const beerList: Beer[] = isAdminMode ? (adminBeers as Beer[]) : (data?.beers ?? []);
+  const isLoading2 = isAdminMode ? (adminBreweryLoading || adminBeersLoading) : isLoading;
 
   const { data: stats } = useQuery<{
     viewsWeek: number;
@@ -415,8 +437,8 @@ export default function BreweryDashboard() {
     totalReviews: number;
     totalFavorites: number;
   }>({
-    queryKey: ["/api/brewery/stats"],
-    enabled: !!user && (user as any)?.breweryId != null,
+    queryKey: isAdminMode ? ["/api/admin/brewery", adminBreweryId, "stats"] : ["/api/brewery/stats"],
+    enabled: isAdminMode ? !!adminBreweryId : (!!user && (user as any)?.breweryId != null),
   });
 
   const [showReviewsSection, setShowReviewsSection] = useState(false);
@@ -425,19 +447,27 @@ export default function BreweryDashboard() {
   const [editingAwards, setEditingAwards] = useState<Array<{name: string; year: number; competition: string; type?: string}>>([]);
   const [newAward, setNewAward] = useState({ name: "", year: new Date().getFullYear(), competition: "", type: "gold" });
 
+  const reviewsQueryKey = isAdminMode
+    ? ["/api/admin/brewery", adminBreweryId, "recent-reviews"]
+    : ["/api/brewery/recent-reviews"];
+
   const { data: recentReviewsData } = useQuery<{ reviews: any[] }>({
-    queryKey: ["/api/brewery/recent-reviews"],
-    enabled: showReviewsSection && !!user && (user as any)?.breweryId != null,
+    queryKey: reviewsQueryKey,
+    enabled: showReviewsSection && (isAdminMode ? !!adminBreweryId : (!!user && (user as any)?.breweryId != null)),
   });
 
   const replyMutation = useMutation({
-    mutationFn: ({ reviewId, reply }: { reviewId: number; reply: string }) =>
-      apiRequest(`/api/brewery/reviews/${reviewId}/reply`, { method: "PATCH" }, { reply }),
+    mutationFn: ({ reviewId, reply }: { reviewId: number; reply: string }) => {
+      const url = isAdminMode
+        ? `/api/admin/brewery/reviews/${reviewId}/reply`
+        : `/api/brewery/reviews/${reviewId}/reply`;
+      return apiRequest(url, { method: "PATCH" }, { reply });
+    },
     onSuccess: () => {
       toast({ title: "Risposta pubblicata!", description: "La tua risposta è ora visibile nella scheda della birra." });
       setReplyingTo(null);
       setReplyText("");
-      queryClient.invalidateQueries({ queryKey: ["/api/brewery/recent-reviews"] });
+      queryClient.invalidateQueries({ queryKey: reviewsQueryKey });
     },
     onError: () => {
       toast({ title: "Errore", description: "Impossibile pubblicare la risposta", variant: "destructive" });
@@ -451,12 +481,20 @@ export default function BreweryDashboard() {
     },
   });
 
+  const breweryQueryKey = isAdminMode
+    ? ["/api/breweries", adminBreweryId]
+    : ["/api/brewery/my"];
+
   const updateProfileMutation = useMutation({
-    mutationFn: (values: any) =>
-      apiRequest("/api/brewery/profile", { method: "PATCH" }, values),
+    mutationFn: (values: any) => {
+      const url = isAdminMode
+        ? `/api/admin/breweries/${adminBreweryId}`
+        : "/api/brewery/profile";
+      return apiRequest(url, { method: "PATCH" }, values);
+    },
     onSuccess: () => {
       toast({ title: "Successo", description: "Profilo birrificio aggiornato" });
-      queryClient.invalidateQueries({ queryKey: ["/api/brewery/my"] });
+      queryClient.invalidateQueries({ queryKey: breweryQueryKey });
       setIsEditingProfile(false);
     },
     onError: () => {
@@ -468,21 +506,29 @@ export default function BreweryDashboard() {
     if (url) {
       try {
         const updateData = type === 'cover' ? { coverImageUrl: url } : { logoUrl: url };
-        await apiRequest("/api/brewery/profile", { method: "PATCH" }, updateData);
-        queryClient.invalidateQueries({ queryKey: ["/api/brewery/my"] });
+        const patchUrl = isAdminMode
+          ? `/api/admin/breweries/${adminBreweryId}`
+          : "/api/brewery/profile";
+        await apiRequest(patchUrl, { method: "PATCH" }, updateData);
+        queryClient.invalidateQueries({ queryKey: breweryQueryKey });
         toast({ title: "Successo", description: `${type === 'cover' ? 'Copertina' : 'Logo'} aggiornato` });
       } catch {
         toast({ title: "Errore", description: "Impossibile salvare l'immagine", variant: "destructive" });
       }
     }
-  }, [toast]);
+  }, [toast, isAdminMode, adminBreweryId]);
 
   const createBeerMutation = useMutation({
-    mutationFn: (values: BeerFormValues) =>
-      apiRequest("/api/brewery/beers", { method: "POST" }, values),
+    mutationFn: (values: BeerFormValues) => {
+      const url = isAdminMode
+        ? `/api/admin/brewery/${adminBreweryId}/beers`
+        : "/api/brewery/beers";
+      return apiRequest(url, { method: "POST" }, values);
+    },
     onSuccess: () => {
       toast({ title: "Successo", description: "Birra aggiunta con successo" });
-      queryClient.invalidateQueries({ queryKey: ["/api/brewery/my"] });
+      queryClient.invalidateQueries({ queryKey: breweryQueryKey });
+      if (isAdminMode) queryClient.invalidateQueries({ queryKey: ["/api/breweries", adminBreweryId, "beers"] });
       setDialogOpen(false);
       form.reset();
     },
@@ -492,11 +538,16 @@ export default function BreweryDashboard() {
   });
 
   const updateBeerMutation = useMutation({
-    mutationFn: ({ id, values }: { id: number; values: BeerFormValues }) =>
-      apiRequest(`/api/brewery/beers/${id}`, { method: "PATCH" }, values),
+    mutationFn: ({ id, values }: { id: number; values: BeerFormValues }) => {
+      const url = isAdminMode
+        ? `/api/admin/beers/${id}`
+        : `/api/brewery/beers/${id}`;
+      return apiRequest(url, { method: "PATCH" }, values);
+    },
     onSuccess: () => {
       toast({ title: "Successo", description: "Birra aggiornata" });
-      queryClient.invalidateQueries({ queryKey: ["/api/brewery/my"] });
+      queryClient.invalidateQueries({ queryKey: breweryQueryKey });
+      if (isAdminMode) queryClient.invalidateQueries({ queryKey: ["/api/breweries", adminBreweryId, "beers"] });
       setDialogOpen(false);
       setEditingBeer(null);
       form.reset();
@@ -507,11 +558,16 @@ export default function BreweryDashboard() {
   });
 
   const deleteBeerMutation = useMutation({
-    mutationFn: (id: number) =>
-      apiRequest(`/api/brewery/beers/${id}`, { method: "DELETE" }),
+    mutationFn: (id: number) => {
+      const url = isAdminMode
+        ? `/api/admin/beers/${id}`
+        : `/api/brewery/beers/${id}`;
+      return apiRequest(url, { method: "DELETE" });
+    },
     onSuccess: () => {
       toast({ title: "Successo", description: "Birra eliminata" });
-      queryClient.invalidateQueries({ queryKey: ["/api/brewery/my"] });
+      queryClient.invalidateQueries({ queryKey: breweryQueryKey });
+      if (isAdminMode) queryClient.invalidateQueries({ queryKey: ["/api/breweries", adminBreweryId, "beers"] });
     },
     onError: () => {
       toast({ title: "Errore", description: "Impossibile eliminare la birra", variant: "destructive" });
@@ -587,7 +643,7 @@ export default function BreweryDashboard() {
     return <RejectedOverlay breweryName={requestStatus.breweryName || ''} adminNotes={requestStatus.adminNotes || null} />;
   }
 
-  if (isLoading) {
+  if (isLoading2) {
     return (
       <div className="flex items-center justify-center h-64">
         <Loader2 className="animate-spin h-12 w-12 text-orange-600" />
@@ -595,8 +651,8 @@ export default function BreweryDashboard() {
     );
   }
 
-  const brewery = data?.brewery;
-  const beers = data?.beers ?? [];
+  // `brewery` and `beerList` are already unified above (admin vs owner mode)
+  const beers = beerList;
 
   if (!brewery) {
     return (

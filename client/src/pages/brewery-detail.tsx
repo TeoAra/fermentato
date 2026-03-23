@@ -34,6 +34,7 @@ import {
   EyeOff,
   Mail,
   Phone,
+  Settings,
 } from "lucide-react";
 import { SiInstagram, SiFacebook, SiTiktok } from "react-icons/si";
 import { EventCategoryBadge, EventInterestButton } from "@/components/events-manager";
@@ -552,14 +553,15 @@ export default function BreweryDetail() {
               <Share2 className="h-4 w-4" />
             </button>
             {isAdmin && (
-              <button
-                onClick={openEditDialog}
-                title="Modifica birrificio"
-                data-testid="button-admin-edit-brewery"
-                className="h-9 w-9 flex items-center justify-center rounded-full border bg-amber-50 dark:bg-amber-950 border-amber-200 dark:border-amber-800 text-amber-600 dark:text-amber-400 hover:bg-amber-100 dark:hover:bg-amber-900 transition-colors"
-              >
-                <Pencil className="h-4 w-4" />
-              </button>
+              <Link href={`/admin/edit-brewery/${id}`}>
+                <button
+                  title="Gestisci birrificio"
+                  data-testid="button-admin-edit-brewery"
+                  className="h-9 w-9 flex items-center justify-center rounded-full border bg-amber-50 dark:bg-amber-950 border-amber-200 dark:border-amber-800 text-amber-600 dark:text-amber-400 hover:bg-amber-100 dark:hover:bg-amber-900 transition-colors"
+                >
+                  <Settings className="h-4 w-4" />
+                </button>
+              </Link>
             )}
             {isAuthenticated && !isAdmin && (
               <button
