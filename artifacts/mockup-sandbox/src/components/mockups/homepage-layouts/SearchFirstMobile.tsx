@@ -1,72 +1,103 @@
-import { Search, MapPin, Star, ChevronRight, Beer, Building2, Users, Bell, Home, Map, Grid, User, Download } from "lucide-react";
+import { Search, MapPin, Star, Beer, Building2, Users, Home, Map, Grid, User, ChevronRight, ArrowRight } from "lucide-react";
 
-const R = "4px";
+// ── Il Catalogo ───────────────────────────────────────────────
+// Concept: Fermenta.to come catalogo editoriale italiano.
+// Layout da rivista di design: grande tipografia brutalista,
+// white space generoso, immagini a tutta larghezza.
+// Ogni birrificio / pub ha la sua "pagina" da sfogliare.
+// ─────────────────────────────────────────────────────────────
 
-const NEARBY_PUBS = [
-  { name: "Luppolino Pub", city: "Milano", dist: "0.4 km", taps: 14, rating: 4.7, open: true, img: "/__mockup/images/pub-interior.png" },
-  { name: "The Brew House", city: "Roma", dist: "1.1 km", taps: 9, rating: 4.5, open: true, img: "/__mockup/images/pub-interior.png" },
-  { name: "Birreria 27", city: "Torino", dist: "2.3 km", taps: 22, rating: 4.8, open: false, img: "/__mockup/images/pub-interior.png" },
-];
+const FEATURED = {
+  name: "CRAK Brewery",
+  tagline: "IPA come non le hai mai bevute",
+  city: "Campagna, Salerno",
+  founded: "2013",
+  beers: 34,
+  img: "/__mockup/images/brewery-interior.png",
+  highlight: "Hop Skin Session IPA — 4.8 ★",
+};
 
-const BREWERIES = [
-  { name: "CRAK Brewery", city: "Campagna", beers: 34, img: "/__mockup/images/brewery-interior.png" },
-  { name: "Del Borgo", city: "Borgorose", beers: 28, img: "/__mockup/images/brewery-interior.png" },
-  { name: "Revelation Cat", city: "Roma", beers: 19, img: "/__mockup/images/brewery-interior.png" },
+const PUBS = [
+  { name: "Luppolino Pub", city: "Navigli, Milano", dist: "0.4 km", taps: 14, rating: 4.7, open: true, img: "/__mockup/images/pub-interior.png" },
+  { name: "The Brew House", city: "Pigneto, Roma", dist: "1.1 km", taps: 9, rating: 4.5, open: true, img: "/__mockup/images/pub-interior.png" },
+  { name: "Birreria 27", city: "San Salvario, TO", dist: "2.3 km", taps: 22, rating: 4.8, open: false, img: "/__mockup/images/pub-interior.png" },
 ];
 
 const BEERS = [
   { name: "Hop Skin IPA", brewery: "CRAK", style: "IPA", abv: "6.5%", rating: 4.8, img: "/__mockup/images/hero-beer.png" },
   { name: "Duna Stout", brewery: "Del Borgo", style: "Stout", abv: "8.1%", rating: 4.7, img: "/__mockup/images/beer-cans.png" },
   { name: "Sour Mango", brewery: "Rev. Cat", style: "Sour", abv: "4.8%", rating: 4.6, img: "/__mockup/images/hero-beer.png" },
-  { name: "Weizen Estate", brewery: "Hop Skin", style: "Weizen", abv: "5.0%", rating: 4.5, img: "/__mockup/images/beer-cans.png" },
 ];
 
 const MODES = [
-  { icon: Users, label: "Appassionato", active: true },
-  { icon: Building2, label: "Birrificio" },
+  { icon: Users, label: "Scopri", active: true },
+  { icon: Building2, label: "Birrifici" },
   { icon: Beer, label: "Pub" },
 ];
 
 export function SearchFirstMobile() {
   return (
-    <div style={{ width: "100%", height: "100%", background: "#f7f4f0", color: "#1a1410", fontFamily: "system-ui,-apple-system,sans-serif", display: "flex", flexDirection: "column", overflowY: "auto" }}>
+    <div style={{
+      width: "100%", height: "100%",
+      background: "#fafaf8",
+      color: "#111009",
+      fontFamily: "'system-ui','-apple-system','Helvetica Neue',sans-serif",
+      display: "flex", flexDirection: "column",
+      overflowY: "auto",
+    }}>
 
-      {/* ── Install prompt ── */}
-      <div style={{ background: "#fef3c7", borderBottom: "1px solid #fcd34d", padding: "8px 14px", display: "flex", alignItems: "center", gap: 8 }}>
-        <Download size={12} color="#92400e" />
-        <span style={{ flex: 1, fontSize: 11, color: "#92400e" }}>Installa l'app — funziona anche offline</span>
-        <button style={{ fontSize: 11, fontWeight: 700, color: "#92400e", background: "transparent", border: "none", cursor: "pointer" }}>Installa</button>
+      {/* ── STATUS BAR simulata ── */}
+      <div style={{ padding: "10px 18px 6px", display: "flex", justifyContent: "space-between", background: "#fafaf8" }}>
+        <span style={{ fontSize: 12, fontWeight: 700, color: "#111009" }}>19:15</span>
+        <div style={{ display: "flex", gap: 5, alignItems: "center" }}>
+          {[3,4,5,5,5].map((h, i) => (
+            <div key={i} style={{ width: 3, height: h, background: i > 2 ? "#111009" : "#d4cfc8", borderRadius: 1 }} />
+          ))}
+          <span style={{ fontSize: 11, color: "#111009" }}>●●●</span>
+        </div>
       </div>
 
-      {/* ── Header ── */}
-      <div style={{ background: "#fff", borderBottom: "1px solid #e5ddd5", padding: "12px 14px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-        <span style={{ fontWeight: 800, fontSize: 17, letterSpacing: "-0.02em" }}>
-          fermenta<span style={{ color: "#d97706" }}>.to</span>
-        </span>
-        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 4, background: "#f7f4f0", border: "1px solid #e5ddd5", borderRadius: R, padding: "4px 8px" }}>
-            <MapPin size={10} color="#d97706" />
-            <span style={{ fontSize: 11, color: "#6b6260" }}>Milano</span>
+      {/* ── HEADER editoriale ── */}
+      <div style={{ padding: "12px 18px 14px", borderBottom: "2px solid #111009", background: "#fafaf8" }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+          <div>
+            <p style={{ fontSize: 10, fontWeight: 800, letterSpacing: "0.2em", textTransform: "uppercase", color: "#c8bdb4", margin: "0 0 2px" }}>
+              La birra artigianale italiana
+            </p>
+            <span style={{ fontSize: 22, fontWeight: 900, letterSpacing: "-0.04em", color: "#111009" }}>
+              fermenta<span style={{ color: "#d97706" }}>.to</span>
+            </span>
           </div>
-          <button style={{ position: "relative", background: "transparent", border: "none", cursor: "pointer", padding: 2 }}>
-            <Bell size={18} color="#9d8e86" />
+          <button style={{ width: 38, height: 38, border: "2px solid #111009", borderRadius: 6, background: "transparent", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", boxShadow: "2px 2px 0 #d97706" }}>
+            <Search size={16} color="#111009" />
           </button>
         </div>
       </div>
 
-      {/* ── Search hero (compact mobile) ── */}
-      <div style={{ background: "#fff", borderBottom: "1px solid #e5ddd5", padding: "16px 14px 14px" }}>
-        <h1 style={{ fontSize: 22, fontWeight: 800, letterSpacing: "-0.03em", color: "#1a1410", margin: "0 0 12px", lineHeight: 1.1 }}>
-          Dove vuoi<br />bere stasera?
+      {/* ── HERO SEARCH ── */}
+      <div style={{ padding: "18px 18px 14px", background: "#fafaf8" }}>
+        <h1 style={{
+          fontSize: 30, fontWeight: 900, letterSpacing: "-0.04em",
+          lineHeight: 1.05, margin: "0 0 14px", color: "#111009"
+        }}>
+          Dove vuoi<br /><span style={{ fontStyle: "italic", color: "#d97706" }}>bere stasera?</span>
         </h1>
 
-        {/* Search bar */}
-        <div style={{ display: "flex", border: "1.5px solid #1a1410", borderRadius: R, overflow: "hidden", boxShadow: "2px 2px 0 #1a1410", marginBottom: 10 }}>
-          <div style={{ flex: 1, display: "flex", alignItems: "center", gap: 8, padding: "0 12px", borderRight: "1px solid #e5ddd5" }}>
-            <Search size={14} color="#9d8e86" />
-            <input placeholder="Birra, pub o birrificio…" style={{ flex: 1, padding: "10px 0", fontSize: 13, border: "none", outline: "none", color: "#1a1410", background: "transparent" }} />
+        {/* Search bar brutalista */}
+        <div style={{
+          display: "flex", border: "2px solid #111009", borderRadius: 8,
+          overflow: "hidden", boxShadow: "3px 3px 0 #111009", marginBottom: 12
+        }}>
+          <div style={{ flex: 1, display: "flex", alignItems: "center", gap: 8, padding: "0 12px" }}>
+            <Search size={15} color="#9d8e86" />
+            <input
+              placeholder="Birra, pub o birrificio…"
+              style={{ flex: 1, padding: "11px 0", fontSize: 14, border: "none", outline: "none", color: "#111009", background: "transparent" }}
+            />
           </div>
-          <button style={{ padding: "0 16px", background: "#1a1410", color: "#fff", border: "none", fontSize: 13, fontWeight: 700, cursor: "pointer" }}>Cerca</button>
+          <button style={{ padding: "0 16px", background: "#111009", color: "#fafaf8", border: "none", fontSize: 13, fontWeight: 800, cursor: "pointer", letterSpacing: "-0.01em" }}>
+            Cerca
+          </button>
         </div>
 
         {/* Mode selector */}
@@ -74,120 +105,142 @@ export function SearchFirstMobile() {
           {MODES.map(({ icon: Icon, label, active }, i) => (
             <button key={i} style={{
               flex: 1, display: "flex", alignItems: "center", justifyContent: "center", gap: 5,
-              padding: "7px 6px", border: `1.5px solid ${active ? "#1a1410" : "#e5ddd5"}`,
-              borderRadius: R, fontSize: 11, fontWeight: active ? 700 : 500,
-              background: active ? "#1a1410" : "#fff",
-              color: active ? "#fff" : "#6b6260",
-              cursor: "pointer",
-              boxShadow: active ? "1.5px 1.5px 0 #d97706" : "none"
+              padding: "8px 6px", fontSize: 12, fontWeight: active ? 800 : 600,
+              background: active ? "#111009" : "#fafaf8",
+              color: active ? "#fafaf8" : "#9d8e86",
+              border: "2px solid #111009",
+              borderRadius: 6, cursor: "pointer",
+              boxShadow: active ? "2px 2px 0 #d97706" : "none"
             }}>
-              <Icon size={12} />{label}
+              <Icon size={13} /> {label}
             </button>
           ))}
         </div>
       </div>
 
-      {/* ── Pub vicini ── */}
-      <div style={{ padding: "14px 14px 0" }}>
-        <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", marginBottom: 10 }}>
+      {/* ── FEATURED BREWERY — carta editoriale ── */}
+      <div style={{ margin: "0 0 0", background: "#111009" }}>
+        <div style={{ position: "relative" }}>
+          <img src={FEATURED.img} alt={FEATURED.name} style={{ width: "100%", height: 200, objectFit: "cover", filter: "brightness(0.45)" }} />
+          <div style={{ position: "absolute", inset: 0, padding: "16px 18px", display: "flex", flexDirection: "column", justifyContent: "flex-end" }}>
+            <p style={{ fontSize: 9, fontWeight: 800, letterSpacing: "0.2em", textTransform: "uppercase", color: "#f59e0b", margin: "0 0 4px" }}>
+              BIRRIFICIO IN EVIDENZA · {FEATURED.city}
+            </p>
+            <h2 style={{ fontSize: 26, fontWeight: 900, letterSpacing: "-0.04em", color: "#fafaf8", margin: "0 0 4px", lineHeight: 1 }}>
+              {FEATURED.name}
+            </h2>
+            <p style={{ fontSize: 13, fontStyle: "italic", color: "#c8bdb4", margin: "0 0 10px" }}>{FEATURED.tagline}</p>
+            <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+              <span style={{ fontSize: 11, color: "#fafaf8" }}>⭐ {FEATURED.highlight}</span>
+              <span style={{ fontSize: 11, color: "#8a7d74" }}>{FEATURED.beers} birre</span>
+            </div>
+          </div>
+        </div>
+        <div style={{ padding: "12px 18px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+          <span style={{ fontSize: 11, color: "#8a7d74" }}>Fondata nel {FEATURED.founded} · {FEATURED.city}</span>
+          <button style={{ display: "flex", alignItems: "center", gap: 5, fontSize: 12, fontWeight: 800, color: "#f59e0b", background: "transparent", border: "none", cursor: "pointer" }}>
+            Scopri <ArrowRight size={14} />
+          </button>
+        </div>
+      </div>
+
+      {/* ── PUB vicini ── */}
+      <div style={{ background: "#fafaf8" }}>
+        <div style={{ padding: "18px 18px 10px", display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
           <div>
-            <p style={{ fontSize: 9, fontWeight: 700, letterSpacing: "0.14em", textTransform: "uppercase", color: "#9d8e86", margin: "0 0 2px" }}>VICINO A TE</p>
-            <h2 style={{ fontSize: 15, fontWeight: 800, color: "#1a1410", margin: 0, letterSpacing: "-0.02em" }}>Pub aperti adesso</h2>
+            <p style={{ fontSize: 9, fontWeight: 800, letterSpacing: "0.2em", textTransform: "uppercase", color: "#9d8e86", margin: "0 0 2px" }}>VICINO A TE</p>
+            <h2 style={{ fontSize: 18, fontWeight: 900, letterSpacing: "-0.03em", color: "#111009", margin: 0 }}>Pub aperti adesso</h2>
           </div>
-          <a style={{ fontSize: 11, color: "#d97706", fontWeight: 600, cursor: "pointer" }}>Mappa →</a>
+          <a style={{ fontSize: 11, fontWeight: 700, color: "#d97706", cursor: "pointer" }}>Mappa →</a>
+        </div>
+
+        <div style={{ display: "flex", flexDirection: "column", gap: 2, padding: "0 0 4px" }}>
+          {PUBS.map((pub, i) => (
+            <div key={i} style={{ display: "flex", gap: 14, padding: "12px 18px", borderTop: "1px solid #e5ddd5", cursor: "pointer" }}>
+              <div style={{ width: 68, height: 68, borderRadius: 6, overflow: "hidden", flexShrink: 0, border: "2px solid #111009" }}>
+                <img src={pub.img} alt={pub.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+              </div>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 2 }}>
+                  <h3 style={{ fontSize: 14, fontWeight: 800, color: "#111009", margin: 0, letterSpacing: "-0.02em" }}>{pub.name}</h3>
+                  <span style={{ fontSize: 12, fontWeight: 800, color: "#f59e0b", flexShrink: 0 }}>★ {pub.rating}</span>
+                </div>
+                <p style={{ fontSize: 11, color: "#9d8e86", margin: "0 0 7px" }}>{pub.city} · {pub.dist}</p>
+                <div style={{ display: "flex", gap: 6 }}>
+                  <span style={{ fontSize: 10, fontWeight: 700, padding: "2px 7px", background: pub.open ? "#ecfdf5" : "#f5f5f4", color: pub.open ? "#059669" : "#9d8e86", border: `1px solid ${pub.open ? "#a7f3d0" : "#e5ddd5"}`, borderRadius: 4 }}>
+                    {pub.open ? "● Aperto" : "● Chiuso"}
+                  </span>
+                  <span style={{ fontSize: 10, fontWeight: 700, padding: "2px 7px", background: "#fef3c7", color: "#92400e", borderRadius: 4 }}>
+                    🍺 {pub.taps} spine
+                  </span>
+                </div>
+              </div>
+            </div>
+          ))}
         </div>
       </div>
 
-      <div style={{ display: "flex", flexDirection: "column", gap: 1, background: "#e5ddd5", margin: "0 0 14px" }}>
-        {NEARBY_PUBS.map((pub, i) => (
-          <div key={i} style={{ background: "#fff", display: "flex", gap: 12, padding: "12px 14px", cursor: "pointer" }}>
-            <div style={{ width: 64, height: 64, borderRadius: R, overflow: "hidden", flexShrink: 0 }}>
-              <img src={pub.img} alt={pub.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-            </div>
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 2 }}>
-                <h3 style={{ fontSize: 14, fontWeight: 700, color: "#1a1410", margin: 0, lineHeight: 1.2 }}>{pub.name}</h3>
-                <span style={{ fontSize: 11, fontWeight: 700, color: "#f59e0b", flexShrink: 0 }}>★ {pub.rating}</span>
-              </div>
-              <p style={{ fontSize: 11, color: "#9d8e86", margin: "0 0 6px" }}>{pub.city} · {pub.dist}</p>
-              <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
-                <span style={{ fontSize: 10, fontWeight: 700, padding: "2px 7px", background: pub.open ? "#ecfdf5" : "#f3f4f6", color: pub.open ? "#059669" : "#6b7280", borderRadius: R }}>
-                  {pub.open ? "● Aperto" : "● Chiuso"}
-                </span>
-                <span style={{ fontSize: 10, fontWeight: 600, padding: "2px 7px", background: "#fef3c7", color: "#92400e", borderRadius: R }}>🍺 {pub.taps} spine</span>
-              </div>
-            </div>
-          </div>
-        ))}
-      </div>
-
-      {/* ── Birrifici scroll ── */}
-      <div style={{ padding: "0 14px 8px" }}>
-        <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", marginBottom: 10 }}>
+      {/* ── BIRRE trending — scroll ── */}
+      <div style={{ background: "#fafaf8", paddingBottom: 14 }}>
+        <div style={{ padding: "18px 18px 12px", display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
           <div>
-            <p style={{ fontSize: 9, fontWeight: 700, letterSpacing: "0.14em", textTransform: "uppercase", color: "#9d8e86", margin: "0 0 2px" }}>BIRRIFICI</p>
-            <h2 style={{ fontSize: 15, fontWeight: 800, color: "#1a1410", margin: 0, letterSpacing: "-0.02em" }}>Produttori italiani</h2>
+            <p style={{ fontSize: 9, fontWeight: 800, letterSpacing: "0.2em", textTransform: "uppercase", color: "#9d8e86", margin: "0 0 2px" }}>TRENDING</p>
+            <h2 style={{ fontSize: 18, fontWeight: 900, letterSpacing: "-0.03em", color: "#111009", margin: 0 }}>Birre della settimana</h2>
           </div>
-          <a style={{ fontSize: 11, color: "#d97706", fontWeight: 600, cursor: "pointer" }}>Tutti →</a>
+          <a style={{ fontSize: 11, fontWeight: 700, color: "#d97706", cursor: "pointer" }}>Tutte →</a>
         </div>
-      </div>
-      <div style={{ display: "flex", gap: 8, overflowX: "auto", padding: "0 14px 14px", scrollbarWidth: "none" }}>
-        {BREWERIES.map((b, i) => (
-          <div key={i} style={{ flexShrink: 0, width: 130, background: "#fff", border: "1px solid #e5ddd5", borderRadius: R, overflow: "hidden", cursor: "pointer" }}>
-            <div style={{ height: 80, overflow: "hidden" }}>
-              <img src={b.img} alt={b.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+        <div style={{ display: "flex", gap: 10, overflowX: "auto", padding: "0 18px", scrollbarWidth: "none" }}>
+          {BEERS.map((beer, i) => (
+            <div key={i} style={{ flexShrink: 0, width: 150, border: "2px solid #111009", borderRadius: 8, overflow: "hidden", cursor: "pointer", boxShadow: "2px 2px 0 #111009" }}>
+              <div style={{ position: "relative", height: 110 }}>
+                <img src={beer.img} alt={beer.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to top, rgba(17,16,9,0.8) 0%, transparent 55%)" }} />
+                <span style={{ position: "absolute", bottom: 8, left: 8, fontSize: 11, fontWeight: 800, color: "#f59e0b" }}>★ {beer.rating}</span>
+              </div>
+              <div style={{ padding: "8px 10px", background: "#fafaf8" }}>
+                <p style={{ fontSize: 9, fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.12em", color: "#d97706", margin: "0 0 2px" }}>{beer.style} · {beer.abv}</p>
+                <p style={{ fontSize: 12, fontWeight: 800, letterSpacing: "-0.02em", color: "#111009", margin: "0 0 1px", lineHeight: 1.2 }}>{beer.name}</p>
+                <p style={{ fontSize: 10, color: "#9d8e86", margin: 0 }}>{beer.brewery}</p>
+              </div>
             </div>
-            <div style={{ padding: "8px 10px" }}>
-              <p style={{ fontSize: 12, fontWeight: 700, color: "#1a1410", margin: "0 0 2px", lineHeight: 1.2 }}>{b.name}</p>
-              <p style={{ fontSize: 10, color: "#9d8e86", margin: 0 }}>{b.city} · {b.beers} birre</p>
-            </div>
-          </div>
-        ))}
-      </div>
-
-      {/* ── Birre scroll ── */}
-      <div style={{ padding: "0 14px 8px" }}>
-        <p style={{ fontSize: 9, fontWeight: 700, letterSpacing: "0.14em", textTransform: "uppercase", color: "#9d8e86", margin: "0 0 2px" }}>TRENDING</p>
-        <h2 style={{ fontSize: 15, fontWeight: 800, color: "#1a1410", margin: "0 0 10px", letterSpacing: "-0.02em" }}>Birre della settimana</h2>
-      </div>
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 1, background: "#e5ddd5", marginBottom: 14 }}>
-        {BEERS.map((beer, i) => (
-          <div key={i} style={{ background: "#fff", cursor: "pointer" }}>
-            <div style={{ position: "relative", height: 100, overflow: "hidden" }}>
-              <img src={beer.img} alt={beer.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-              <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to top, rgba(0,0,0,0.6) 0%, transparent 50%)" }} />
-              <span style={{ position: "absolute", bottom: 7, left: 8, fontSize: 10, fontWeight: 700, color: "#f59e0b" }}>★ {beer.rating}</span>
-            </div>
-            <div style={{ padding: "8px 10px" }}>
-              <p style={{ fontSize: 9, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.1em", color: "#d97706", margin: "0 0 2px" }}>{beer.style} · {beer.abv}</p>
-              <p style={{ fontSize: 12, fontWeight: 700, color: "#1a1410", margin: "0 0 1px", lineHeight: 1.2 }}>{beer.name}</p>
-              <p style={{ fontSize: 10, color: "#9d8e86", margin: 0 }}>{beer.brewery}</p>
-            </div>
-          </div>
-        ))}
-      </div>
-
-      {/* CTA strip */}
-      <div style={{ margin: "0 14px 14px", display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
-        <div style={{ padding: "12px", border: "1.5px solid #1a1410", borderRadius: R, background: "#fff", boxShadow: "2px 2px 0 #1a1410" }}>
-          <p style={{ fontSize: 11, fontWeight: 700, color: "#1a1410", marginBottom: 6 }}>Hai un birrificio?</p>
-          <button style={{ width: "100%", padding: "7px 0", background: "#d97706", color: "#fff", border: "none", borderRadius: R, fontSize: 11, fontWeight: 700, cursor: "pointer" }}>Registrati</button>
-        </div>
-        <div style={{ padding: "12px", border: "1.5px solid #1a1410", borderRadius: R, background: "#fff", boxShadow: "2px 2px 0 #1a1410" }}>
-          <p style={{ fontSize: 11, fontWeight: 700, color: "#1a1410", marginBottom: 6 }}>Gestisci un pub?</p>
-          <button style={{ width: "100%", padding: "7px 0", background: "#1a1410", color: "#fff", border: "none", borderRadius: R, fontSize: 11, fontWeight: 700, cursor: "pointer" }}>Vai al pannello</button>
+          ))}
         </div>
       </div>
 
-      <div style={{ height: 60 }} />
+      {/* ── CTA strip ── */}
+      <div style={{ margin: "0 18px 14px", display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
+        <div style={{ padding: "14px 12px", border: "2px solid #111009", borderRadius: 8, background: "#fafaf8", boxShadow: "2px 2px 0 #111009", cursor: "pointer" }}>
+          <p style={{ fontSize: 11, fontWeight: 800, color: "#111009", margin: "0 0 4px" }}>Sei un birrificio?</p>
+          <p style={{ fontSize: 10, color: "#9d8e86", margin: "0 0 10px" }}>Pubblica e raggiungi migliaia di appassionati.</p>
+          <button style={{ width: "100%", padding: "7px 0", background: "#d97706", color: "#fafaf8", border: "none", borderRadius: 5, fontSize: 11, fontWeight: 800, cursor: "pointer" }}>Registrati →</button>
+        </div>
+        <div style={{ padding: "14px 12px", border: "2px solid #111009", borderRadius: 8, background: "#111009", boxShadow: "2px 2px 0 #d97706", cursor: "pointer" }}>
+          <p style={{ fontSize: 11, fontWeight: 800, color: "#fafaf8", margin: "0 0 4px" }}>Gestisci un pub?</p>
+          <p style={{ fontSize: 10, color: "#8a7d74", margin: "0 0 10px" }}>Taplist live e visibilità aumentata.</p>
+          <button style={{ width: "100%", padding: "7px 0", background: "#d97706", color: "#111009", border: "none", borderRadius: 5, fontSize: 11, fontWeight: 800, cursor: "pointer" }}>Inizia →</button>
+        </div>
+      </div>
 
-      {/* ── Bottom nav ── */}
-      <div style={{ position: "sticky", bottom: 0, background: "#fff", borderTop: "1px solid #e5ddd5", padding: "8px 0 4px" }}>
+      <div style={{ height: 72 }} />
+
+      {/* ── BOTTOM NAV ── */}
+      <div style={{
+        position: "sticky", bottom: 0,
+        background: "#fafaf8",
+        borderTop: "2px solid #111009",
+        padding: "10px 0 16px",
+      }}>
         <div style={{ display: "flex", justifyContent: "space-around" }}>
-          {[{ icon: Home, label: "Home", active: true }, { icon: Map, label: "Mappa" }, { icon: Beer, label: "Birre" }, { icon: Grid, label: "Pub" }, { icon: User, label: "Profilo" }].map(({ icon: Icon, label, active }) => (
-            <button key={label} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 3, background: "none", border: "none", cursor: "pointer", minWidth: 44, padding: "4px 0" }}>
-              <Icon size={19} color={active ? "#d97706" : "#c8bdb4"} />
-              <span style={{ fontSize: 9, fontWeight: 700, color: active ? "#d97706" : "#c8bdb4" }}>{label}</span>
+          {[
+            { icon: Home, label: "Home", active: true },
+            { icon: Map, label: "Mappa" },
+            { icon: Beer, label: "Birre" },
+            { icon: Grid, label: "Pub" },
+            { icon: User, label: "Profilo" },
+          ].map(({ icon: Icon, label, active }) => (
+            <button key={label} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4, background: "none", border: "none", cursor: "pointer", minWidth: 48, padding: "2px 0" }}>
+              <Icon size={20} color={active ? "#d97706" : "#c8bdb4"} strokeWidth={active ? 2.5 : 1.8} />
+              <span style={{ fontSize: 9, fontWeight: active ? 800 : 500, color: active ? "#d97706" : "#c8bdb4", letterSpacing: "0.05em" }}>{label.toUpperCase()}</span>
             </button>
           ))}
         </div>
