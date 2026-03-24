@@ -6,7 +6,6 @@ import { useQuery, useMutation } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import type { User as UserType } from "@shared/schema";
-import { ThemeToggle } from "@/components/theme-toggle";
 import { useState } from "react";
 import SearchDialog from "@/components/search-dialog";
 
@@ -40,20 +39,19 @@ export function MobileHeader({ onMenuToggle, isMenuOpen }: MobileHeaderProps) {
   });
 
   const { data: unreadData } = useQuery<{ count: number }>({
-    queryKey: ['/api/notifications/unread-count'],
+    queryKey: ["/api/notifications/unread-count"],
     enabled: isAuthenticated,
     refetchInterval: 120000,
   });
 
   const { data: myFestivals } = useQuery<any[]>({
-    queryKey: ['/api/admin/festivals'],
+    queryKey: ["/api/admin/festivals"],
     enabled: isAuthenticated,
   });
 
   const switchRoleMutation = useMutation({
-    mutationFn: async (role: string) => {
-      return apiRequest("/api/auth/switch-role", { method: "POST" }, { role });
-    },
+    mutationFn: async (role: string) =>
+      apiRequest("/api/auth/switch-role", { method: "POST" }, { role }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/auth/roles"] });
       queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
@@ -62,28 +60,32 @@ export function MobileHeader({ onMenuToggle, isMenuOpen }: MobileHeaderProps) {
     },
   });
 
-  const exploreItems = [
-    { icon: Beer, label: "Esplora Birre", href: "/search", desc: "Oltre 1 milione di birre" },
-    { icon: Building2Icon, label: "Birrifici", href: "/explore/breweries", desc: "Scopri i birrifici" },
-    { icon: MapPin, label: "Pub & Locali", href: "/explore/pubs", desc: "Trova dove berla" },
-    { icon: QrCode, label: "Festival", href: "/festival", desc: "Festival di birra artigianale" },
-  ];
-
-  const activeRole = (typedUser as any)?.activeRole || typedUser?.userType || 'customer';
+  const activeRole = (typedUser as any)?.activeRole || typedUser?.userType || "customer";
 
   function MenuItem({ href, icon: Icon, label, desc, onClick }: { href: string; icon: any; label: string; desc?: string; onClick?: () => void }) {
-    const isActive = location === href || (href !== '/' && location.startsWith(href));
+    const isActive = location === href || (href !== "/" && location.startsWith(href));
     return (
       <Link href={href} onClick={() => { onMenuToggle(); onClick?.(); }}>
-        <div className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-colors ${isActive ? 'bg-amber-50 dark:bg-amber-900/20' : 'hover:bg-gray-50 dark:hover:bg-neutral-800'}`}>
-          <div className={`flex items-center justify-center w-10 h-10 rounded-xl ${isActive ? 'bg-amber-500 text-white' : 'bg-gray-100 dark:bg-neutral-700 text-gray-500 dark:text-gray-400'}`}>
-            <Icon className="h-5 w-5" />
+        <div style={{
+          display: "flex", alignItems: "center", gap: 12,
+          padding: "10px 16px", borderRadius: 8,
+          background: isActive ? "#fef3c7" : "transparent",
+          border: isActive ? "1.5px solid #d97706" : "1.5px solid transparent",
+          marginBottom: 2,
+        }}>
+          <div style={{
+            display: "flex", alignItems: "center", justifyContent: "center",
+            width: 38, height: 38, borderRadius: 8,
+            background: isActive ? "#d97706" : "#f0ece8",
+            border: "1.5px solid " + (isActive ? "#111009" : "#e5ddd5"),
+          }}>
+            <Icon size={16} color={isActive ? "#fff" : "#9d8e86"} />
           </div>
-          <div className="flex-1 min-w-0">
-            <div className={`text-sm font-semibold ${isActive ? 'text-amber-600 dark:text-amber-400' : 'text-gray-900 dark:text-white'}`}>{label}</div>
-            {desc && <div className="text-xs text-gray-400 dark:text-gray-500 truncate">{desc}</div>}
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ fontSize: 13, fontWeight: isActive ? 800 : 600, color: isActive ? "#111009" : "#3a3530" }}>{label}</div>
+            {desc && <div style={{ fontSize: 11, color: "#9d8e86", marginTop: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{desc}</div>}
           </div>
-          <ChevronRight className="h-4 w-4 text-gray-300 dark:text-gray-600" />
+          <ChevronRight size={13} color="#c5bdb8" />
         </div>
       </Link>
     );
@@ -91,100 +93,121 @@ export function MobileHeader({ onMenuToggle, isMenuOpen }: MobileHeaderProps) {
 
   return (
     <>
-      <header className="lg:hidden fixed top-0 left-0 right-0 z-50 h-16">
-        {/* Frosted background */}
-        <div className="absolute inset-0 bg-white/97 dark:bg-[hsl(25,14%,7%)] backdrop-blur-xl border-b border-[hsl(36,14%,86%)] dark:border-[hsl(25,12%,14%)]" />
-        <div className="relative flex items-center justify-between px-4 h-full">
-          <Link href="/">
-            <img src="/logo-full.png" alt="Fermenta.to" className="h-9 w-auto block dark:hidden" />
-            <img src="/logo-dark-mode.png" alt="Fermenta.to" className="h-9 w-auto hidden dark:block" />
+      {/* ── Mobile top bar — dark brutalista ── */}
+      <header className="lg:hidden" style={{ position: "fixed", top: 0, left: 0, right: 0, zIndex: 50, height: 56 }}>
+        {/* Dark bar */}
+        <div style={{
+          position: "absolute", inset: 0,
+          background: "#111009",
+          borderBottom: "2px solid #d97706",
+        }} />
+
+        <div style={{ position: "relative", display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 16px", height: "100%" }}>
+          {/* Logo */}
+          <Link href="/" style={{ textDecoration: "none", flexShrink: 0 }}>
+            <img src="/logo-dark-mode.png" alt="Fermenta.to" style={{ height: 32, width: "auto" }} />
           </Link>
 
-          <div className="flex items-center gap-0.5">
+          {/* Right icons */}
+          <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
+            {/* Search */}
             <button
               onClick={() => setIsSearchOpen(true)}
-              className="p-2.5 text-[hsl(28,8%,52%)] dark:text-[hsl(35,8%,52%)] hover:text-[hsl(35,90%,42%)] dark:hover:text-[hsl(38,88%,58%)] hover:bg-[hsl(36,14%,93%)] dark:hover:bg-[hsl(25,12%,13%)] rounded-xl transition-colors"
+              style={{ width: 36, height: 36, display: "flex", alignItems: "center", justifyContent: "center", background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 6, cursor: "pointer" }}
               aria-label="Cerca"
             >
-              <Search className="h-5 w-5" />
+              <Search size={16} color="rgba(255,255,255,0.75)" />
             </button>
 
+            {/* Bell */}
             {isAuthenticated && typedUser && (
-              <Link href="/notifications" className="relative p-2.5">
-                <Bell className="h-5 w-5 text-[hsl(28,8%,52%)] dark:text-[hsl(35,8%,52%)] hover:text-[hsl(35,90%,42%)] dark:hover:text-[hsl(38,88%,58%)] transition-colors" />
+              <Link href="/notifications" style={{ position: "relative", width: 36, height: 36, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                <div style={{ width: 36, height: 36, display: "flex", alignItems: "center", justifyContent: "center", background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 6 }}>
+                  <Bell size={16} color="rgba(255,255,255,0.75)" />
+                </div>
                 {(unreadData?.count ?? 0) > 0 && (
-                  <span className="absolute top-1.5 right-1.5 h-4 w-4 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center">
-                    {(unreadData?.count ?? 0) > 9 ? '9+' : unreadData?.count}
+                  <span style={{
+                    position: "absolute", top: 4, right: 4,
+                    minWidth: 14, height: 14, padding: "0 2px",
+                    background: "#ef4444", color: "#fff",
+                    fontSize: 8, fontWeight: 800, borderRadius: "50%",
+                    display: "flex", alignItems: "center", justifyContent: "center", lineHeight: 1,
+                  }}>
+                    {(unreadData?.count ?? 0) > 9 ? "9+" : unreadData?.count}
                   </span>
                 )}
               </Link>
             )}
 
-            {isAuthenticated && typedUser && (
+            {/* Avatar */}
+            {isAuthenticated && typedUser ? (
               <Link href="/dashboard">
-                <Avatar className="h-8 w-8 ring-2 ring-[hsl(38,80%,82%)] dark:ring-[hsl(35,40%,28%)]">
-                  {typedUser.profileImageUrl && (
-                    <AvatarImage src={typedUser.profileImageUrl} alt={typedUser.nickname || 'Profilo'} />
-                  )}
-                  <AvatarFallback className="bg-[hsl(38,80%,93%)] dark:bg-[hsl(35,30%,18%)] text-[hsl(35,90%,38%)] dark:text-[hsl(38,88%,60%)] text-sm font-semibold">
-                    {typedUser.nickname?.[0]?.toUpperCase() || typedUser.firstName?.[0] || 'U'}
+                <Avatar style={{ width: 32, height: 32, border: "2px solid #d97706" }}>
+                  {typedUser.profileImageUrl && <AvatarImage src={typedUser.profileImageUrl} alt={typedUser.nickname || "Profilo"} />}
+                  <AvatarFallback style={{ background: "#d97706", color: "#111009", fontSize: 12, fontWeight: 800 }}>
+                    {typedUser.nickname?.[0]?.toUpperCase() || typedUser.firstName?.[0] || "U"}
                   </AvatarFallback>
                 </Avatar>
               </Link>
+            ) : (
+              <Link href="/login" style={{ textDecoration: "none" }}>
+                <button style={{ padding: "0 12px", height: 32, background: "#d97706", color: "#111009", border: "none", borderRadius: 6, fontSize: 11, fontWeight: 800, cursor: "pointer" }}>
+                  Accedi
+                </button>
+              </Link>
             )}
 
-            <ThemeToggle />
-
+            {/* Hamburger */}
             <button
               onClick={onMenuToggle}
-              className="p-2.5 text-[hsl(28,8%,52%)] dark:text-[hsl(35,8%,52%)] hover:text-[hsl(35,90%,42%)] dark:hover:text-[hsl(38,88%,58%)] hover:bg-[hsl(36,14%,93%)] dark:hover:bg-[hsl(25,12%,13%)] rounded-xl transition-colors"
+              style={{ width: 36, height: 36, display: "flex", alignItems: "center", justifyContent: "center", background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 6, cursor: "pointer" }}
               aria-label={isMenuOpen ? "Chiudi menu" : "Apri menu"}
             >
-              {isMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+              {isMenuOpen ? <X size={16} color="rgba(255,255,255,0.85)" /> : <Menu size={16} color="rgba(255,255,255,0.85)" />}
             </button>
           </div>
         </div>
       </header>
 
+      {/* ── Slide-in menu — cream editorial ── */}
       <Sheet open={isMenuOpen} onOpenChange={(open) => { if (!open) onMenuToggle(); }}>
-        <SheetContent side="right" className="w-[300px] p-0 flex flex-col bg-white dark:bg-neutral-900 border-l border-gray-100 dark:border-neutral-800">
+        <SheetContent side="right" style={{ width: 300, padding: 0, display: "flex", flexDirection: "column", background: "#fafaf8", borderLeft: "2px solid #111009", boxShadow: "-4px 0 0 #111009" }}>
           <SheetTitle className="sr-only">Menu di navigazione</SheetTitle>
-          {/* User Profile Header */}
-          <div className="px-5 pt-6 pb-4 border-b border-gray-100 dark:border-neutral-800">
+
+          {/* User header */}
+          <div style={{ padding: "20px 16px 14px", borderBottom: "2px solid #e5ddd5", background: "#fff" }}>
             {isAuthenticated && typedUser ? (
-              <Link href="/dashboard" onClick={onMenuToggle}>
-                <div className="flex items-center gap-3">
-                  <Avatar className="h-12 w-12 ring-2 ring-amber-200 dark:ring-amber-800">
-                    {typedUser.profileImageUrl && (
-                      <AvatarImage src={typedUser.profileImageUrl} alt={typedUser.nickname || 'Profilo'} />
-                    )}
-                    <AvatarFallback className="bg-amber-100 dark:bg-amber-900 text-amber-600 dark:text-amber-400 text-lg font-bold">
-                      {typedUser.nickname?.[0]?.toUpperCase() || typedUser.firstName?.[0] || 'U'}
+              <Link href="/dashboard" onClick={onMenuToggle} style={{ textDecoration: "none" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                  <Avatar style={{ width: 44, height: 44, border: "2px solid #d97706", borderRadius: 8 }}>
+                    {typedUser.profileImageUrl && <AvatarImage src={typedUser.profileImageUrl} alt={typedUser.nickname || "Profilo"} />}
+                    <AvatarFallback style={{ background: "#d97706", color: "#111009", fontWeight: 800, fontSize: 16 }}>
+                      {typedUser.nickname?.[0]?.toUpperCase() || typedUser.firstName?.[0] || "U"}
                     </AvatarFallback>
                   </Avatar>
-                  <div className="flex-1 min-w-0">
-                    <div className="font-semibold text-gray-900 dark:text-white truncate">
-                      {typedUser.nickname || typedUser.firstName || typedUser.email?.split('@')[0]}
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontSize: 13, fontWeight: 800, color: "#111009", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                      {typedUser.nickname || typedUser.firstName || typedUser.email?.split("@")[0]}
                     </div>
                     {rolesData && (
-                      <div className="text-xs text-amber-600 dark:text-amber-400 font-medium mt-0.5">
+                      <div style={{ fontSize: 10, fontWeight: 700, color: "#d97706", marginTop: 2, textTransform: "uppercase", letterSpacing: "0.06em" }}>
                         {roleLabels[rolesData.activeRole] || rolesData.activeRole}
                       </div>
                     )}
                   </div>
-                  <ChevronRight className="h-4 w-4 text-gray-300" />
+                  <ChevronRight size={14} color="#c5bdb8" />
                 </div>
               </Link>
             ) : (
-              <div className="flex items-center gap-3">
-                <div className="flex items-center justify-center w-12 h-12 rounded-full bg-gray-100 dark:bg-neutral-800">
-                  <User className="h-6 w-6 text-gray-400" />
+              <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                <div style={{ width: 44, height: 44, borderRadius: 8, background: "#f0ece8", border: "2px solid #e5ddd5", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                  <User size={20} color="#9d8e86" />
                 </div>
                 <div>
-                  <div className="font-semibold text-gray-900 dark:text-white">Ospite</div>
+                  <div style={{ fontSize: 13, fontWeight: 800, color: "#111009" }}>Ospite</div>
                   <button
-                    onClick={() => { onMenuToggle(); window.location.href = '/login'; }}
-                    className="text-xs text-amber-600 dark:text-amber-400 font-medium"
+                    onClick={() => { onMenuToggle(); window.location.href = "/login"; }}
+                    style={{ fontSize: 11, color: "#d97706", fontWeight: 700, background: "none", border: "none", padding: 0, cursor: "pointer" }}
                   >
                     Accedi o registrati →
                   </button>
@@ -193,46 +216,38 @@ export function MobileHeader({ onMenuToggle, isMenuOpen }: MobileHeaderProps) {
             )}
           </div>
 
-          <div className="flex-1 overflow-y-auto py-3 px-3 space-y-1">
-            {/* Home */}
+          {/* Nav items */}
+          <div style={{ flex: 1, overflowY: "auto", padding: "10px 10px 0" }}>
             <MenuItem href="/" icon={Home} label="Home" />
 
-            {/* Separator + Esplora */}
-            <div className="px-4 pt-3 pb-1">
-              <span className="text-[11px] font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500">Esplora</span>
+            <div style={{ padding: "12px 6px 6px" }}>
+              <span style={{ fontSize: 9, fontWeight: 800, letterSpacing: "0.18em", textTransform: "uppercase", color: "#9d8e86" }}>Esplora</span>
             </div>
-            <MenuItem href="/search" icon={Search} label="Ricerca avanzata" desc="Database di oltre 1M di birre" />
+            <MenuItem href="/search" icon={Search} label="Ricerca birre" desc="Oltre 1 milione di birre" />
             <MenuItem href="/explore/breweries" icon={Building2Icon} label="Birrifici" desc="Artigianali italiani e internazionali" />
             <MenuItem href="/explore/pubs" icon={MapPin} label="Pub & Locali" desc="Dove bere artigianale in Italia" />
             <MenuItem href="/festival" icon={QrCode} label="Festival" desc="Festival di birra artigianale" />
 
             {isAuthenticated && (
               <>
-                <div className="px-4 pt-3 pb-1">
-                  <span className="text-[11px] font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500">Account</span>
+                <div style={{ padding: "12px 6px 6px" }}>
+                  <span style={{ fontSize: 9, fontWeight: 800, letterSpacing: "0.18em", textTransform: "uppercase", color: "#9d8e86" }}>Account</span>
                 </div>
                 <MenuItem href="/dashboard" icon={User} label="Il mio profilo" />
-                {isAuthenticated && (
-                  <MenuItem href="/activity" icon={Activity} label="Attività" />
-                )}
-                {isAuthenticated && (
-                  <MenuItem href="/notifications" icon={Bell} label="Notifiche" />
-                )}
-                {((user as any)?.activeRole === 'admin' || (!(user as any)?.activeRole && (user as any)?.userType === 'admin')) && (
+                <MenuItem href="/activity" icon={Activity} label="Attività" />
+                <MenuItem href="/notifications" icon={Bell} label="Notifiche" />
+                {((user as any)?.activeRole === "admin" || (!(user as any)?.activeRole && (user as any)?.userType === "admin")) && (
                   <MenuItem href="/admin" icon={Shield} label="Admin Panel" />
                 )}
 
-                {/* Festival Mode section */}
-                <div className="px-4 pt-3 pb-1">
-                  <span className="text-[11px] font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500">Festival</span>
-                </div>
-                {myFestivals && myFestivals.length > 0 ? (
+                {myFestivals && myFestivals.length > 0 && (
                   <>
-                    <MenuItem href="/festival-dashboard" icon={QrCode} label="Festival Dashboard" desc={`${myFestivals.length} festival${myFestivals.length > 1 ? '' : ''} attiv${myFestivals.length > 1 ? 'i' : 'o'}`} />
+                    <div style={{ padding: "12px 6px 6px" }}>
+                      <span style={{ fontSize: 9, fontWeight: 800, letterSpacing: "0.18em", textTransform: "uppercase", color: "#9d8e86" }}>Festival</span>
+                    </div>
+                    <MenuItem href="/festival-dashboard" icon={QrCode} label="Festival Dashboard" desc={`${myFestivals.length} festival attiv${myFestivals.length > 1 ? "i" : "o"}`} />
                     <MenuItem href="/festival" icon={Building2} label="Crea un nuovo festival" />
                   </>
-                ) : (
-                  <MenuItem href="/festival" icon={QrCode} label="Festival Mode" desc="Crea il tuo festival birra" />
                 )}
               </>
             )}
@@ -240,22 +255,22 @@ export function MobileHeader({ onMenuToggle, isMenuOpen }: MobileHeaderProps) {
             {/* Role switcher */}
             {rolesData && rolesData.roles.length > 1 && (
               <>
-                <div className="px-4 pt-3 pb-1">
-                  <span className="text-[11px] font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500">Cambia modalità</span>
+                <div style={{ padding: "12px 6px 6px" }}>
+                  <span style={{ fontSize: 9, fontWeight: 800, letterSpacing: "0.18em", textTransform: "uppercase", color: "#9d8e86" }}>Cambia modalità</span>
                 </div>
-                {rolesData.roles.filter(role => role !== rolesData.activeRole).map(role => {
+                {rolesData.roles.filter(r => r !== rolesData.activeRole).map(role => {
                   const Icon = roleIcons[role] || User;
                   return (
                     <button
                       key={role}
                       onClick={() => switchRoleMutation.mutate(role)}
                       disabled={switchRoleMutation.isPending}
-                      className="w-full flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-gray-50 dark:hover:bg-neutral-800 transition-colors"
+                      style={{ width: "100%", display: "flex", alignItems: "center", gap: 12, padding: "10px 16px", borderRadius: 8, background: "transparent", border: "1.5px solid transparent", cursor: "pointer", marginBottom: 2 }}
                     >
-                      <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-gray-100 dark:bg-neutral-700 text-gray-500 dark:text-gray-400">
-                        <Icon className="h-5 w-5" />
+                      <div style={{ width: 38, height: 38, borderRadius: 8, background: "#f0ece8", border: "1.5px solid #e5ddd5", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                        <Icon size={16} color="#9d8e86" />
                       </div>
-                      <span className="text-sm font-semibold text-gray-900 dark:text-white">Passa a {roleLabels[role]}</span>
+                      <span style={{ fontSize: 13, fontWeight: 600, color: "#3a3530" }}>Passa a {roleLabels[role]}</span>
                     </button>
                   );
                 })}
@@ -263,32 +278,24 @@ export function MobileHeader({ onMenuToggle, isMenuOpen }: MobileHeaderProps) {
             )}
           </div>
 
-          {/* Bottom actions */}
-          <div className="px-3 py-4 border-t border-gray-100 dark:border-neutral-800 space-y-1">
-            <div className="flex items-center justify-between px-4 py-2">
-              <span className="text-sm text-gray-500 dark:text-gray-400">Tema</span>
-              <ThemeToggle />
-            </div>
+          {/* Bottom: logout */}
+          <div style={{ padding: "10px", borderTop: "2px solid #e5ddd5" }}>
             {isAuthenticated ? (
               <button
-                className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
-                onClick={() => {
-                  onMenuToggle();
-                  fetch('/api/auth/logout', { method: 'POST', credentials: 'include' })
-                    .then(() => window.location.href = '/');
-                }}
+                style={{ width: "100%", display: "flex", alignItems: "center", gap: 10, padding: "10px 16px", borderRadius: 8, background: "#fff5f5", border: "1.5px solid #fca5a5", cursor: "pointer", color: "#dc2626" }}
+                onClick={() => { onMenuToggle(); fetch("/api/auth/logout", { method: "POST", credentials: "include" }).then(() => (window.location.href = "/")); }}
                 data-testid="logout-button-mobile"
               >
-                <LogOut className="h-5 w-5" />
-                <span className="text-sm font-semibold">Esci</span>
+                <LogOut size={16} color="#dc2626" />
+                <span style={{ fontSize: 13, fontWeight: 700 }}>Esci</span>
               </button>
             ) : (
               <button
-                className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-900/20 transition-colors"
-                onClick={() => { onMenuToggle(); window.location.href = '/login'; }}
+                style={{ width: "100%", display: "flex", alignItems: "center", gap: 10, padding: "10px 16px", borderRadius: 8, background: "#d97706", border: "2px solid #111009", cursor: "pointer", boxShadow: "2px 2px 0 #111009" }}
+                onClick={() => { onMenuToggle(); window.location.href = "/login"; }}
               >
-                <LogIn className="h-5 w-5" />
-                <span className="text-sm font-semibold">Accedi</span>
+                <LogIn size={16} color="#fff" />
+                <span style={{ fontSize: 13, fontWeight: 800, color: "#fff" }}>Accedi</span>
               </button>
             )}
           </div>

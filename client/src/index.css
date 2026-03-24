@@ -10,50 +10,26 @@
   height: 0;
   pointer-events: none;
 }
-.dark .tiptap p.is-editor-empty:first-child::before {
-  color: #6b7280;
-}
+.dark .tiptap p.is-editor-empty:first-child::before { color: #6b7280; }
 .tiptap:focus { outline: none; }
-.tiptap blockquote {
-  border-left: 3px solid #f59e0b;
-  padding-left: 1rem;
-  font-style: italic;
-}
-.tiptap hr {
-  border: none;
-  border-top: 1px solid #e5e7eb;
-  margin: 1rem 0;
-}
+.tiptap blockquote { border-left: 3px solid #d97706; padding-left: 1rem; font-style: italic; }
+.tiptap hr { border: none; border-top: 1px solid #e5ddd5; margin: 1rem 0; }
 .dark .tiptap hr { border-top-color: #374151; }
-.tiptap a {
-  color: #d97706;
-  text-decoration: underline;
-  cursor: pointer;
-}
-.dark .tiptap a { color: #fbbf24; }
+.tiptap a { color: #d97706; text-decoration: underline; cursor: pointer; }
+.dark .tiptap a { color: #f59e0b; }
 
 /* Mobile-first responsive utilities */
 @layer utilities {
-  .safe-area-pb {
-    padding-bottom: env(safe-area-inset-bottom);
-  }
-  .safe-area-pt {
-    padding-top: env(safe-area-inset-top);
-  }
-  .safe-area-pl {
-    padding-left: env(safe-area-inset-left);
-  }
-  .safe-area-pr {
-    padding-right: env(safe-area-inset-right);
-  }
+  .safe-area-pb { padding-bottom: env(safe-area-inset-bottom); }
+  .safe-area-pt { padding-top: env(safe-area-inset-top); }
+  .safe-area-pl { padding-left: env(safe-area-inset-left); }
+  .safe-area-pr { padding-right: env(safe-area-inset-right); }
 
   .scrollbar-hide {
     -ms-overflow-style: none;
     scrollbar-width: none;
   }
-  .scrollbar-hide::-webkit-scrollbar {
-    display: none;
-  }
+  .scrollbar-hide::-webkit-scrollbar { display: none; }
 
   .scroll-ios {
     -webkit-overflow-scrolling: touch;
@@ -64,136 +40,164 @@
     -webkit-user-select: none;
     user-select: none;
   }
+
+  /* ── Brutalista design helpers ── */
+  .bru-card {
+    border: 2px solid #111009;
+    border-radius: 8px;
+    box-shadow: 2px 2px 0 #111009;
+    background: #fafaf8;
+  }
+  .bru-card-dark {
+    border: 2px solid #111009;
+    border-radius: 8px;
+    box-shadow: 2px 2px 0 #111009;
+    background: #111009;
+    color: #fafaf8;
+  }
+  .bru-btn {
+    border: 2px solid #111009;
+    border-radius: 6px;
+    box-shadow: 2px 2px 0 #111009;
+    font-weight: 800;
+    cursor: pointer;
+    transition: transform 0.1s, box-shadow 0.1s;
+  }
+  .bru-btn:active {
+    transform: translate(2px, 2px);
+    box-shadow: none;
+  }
+  .bru-amber {
+    box-shadow: 2px 2px 0 #d97706 !important;
+  }
+  .bru-section-label {
+    font-size: 9px;
+    font-weight: 800;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: #9d8e86;
+  }
 }
 
 /* ============================
-   LIGHT MODE — COLOUR PALETTE
+   LIGHT MODE — "La Piazza Editoriale"
+   Warm cream editorial aesthetic
    ============================ */
 :root {
-  /* Base surfaces — warm cream, not cold blue-grey */
-  --background: hsl(40, 18%, 97%);
-  --foreground: hsl(28, 18%, 13%);
-  --muted: hsl(38, 14%, 93%);
-  --muted-foreground: hsl(30, 8%, 48%);
+  /* Base surfaces — warm cream editorial (#fafaf8) */
+  --background:    hsl(60, 5%, 98%);
+  --foreground:    hsl(55, 56%, 8%);
+  --muted:         hsl(45, 12%, 94%);
+  --muted-foreground: hsl(30, 10%, 50%);
 
   /* Card / Popover */
-  --popover: hsl(0, 0%, 100%);
-  --popover-foreground: hsl(28, 18%, 13%);
-  --card: hsl(0, 0%, 100%);
-  --card-foreground: hsl(28, 18%, 13%);
+  --popover:           hsl(0, 0%, 100%);
+  --popover-foreground: hsl(55, 56%, 8%);
+  --card:           hsl(0, 0%, 100%);
+  --card-foreground: hsl(55, 56%, 8%);
 
-  /* Borders / Inputs — warm tone */
-  --border: hsl(36, 14%, 87%);
-  --input: hsl(36, 14%, 87%);
+  /* Borders — warm, slightly dark */
+  --border: hsl(40, 15%, 85%);
+  --input:  hsl(40, 15%, 88%);
 
-  /* Primary — golden amber, more saturated and richer */
-  --primary: hsl(35, 90%, 42%);
+  /* Primary — amber brand #d97706 */
+  --primary:            hsl(36, 96%, 43%);
   --primary-foreground: hsl(0, 0%, 100%);
 
-  /* Secondary — warm dark slate */
-  --secondary: hsl(25, 20%, 22%);
+  /* Secondary — near-black editorial #111009 */
+  --secondary:            hsl(55, 56%, 8%);
   --secondary-foreground: hsl(0, 0%, 100%);
 
-  /* Accent — warm amber tint */
-  --accent: hsl(38, 80%, 93%);
+  /* Accent */
+  --accent:            hsl(38, 80%, 93%);
   --accent-foreground: hsl(28, 70%, 28%);
 
   /* Destructive */
-  --destructive: hsl(0, 78%, 55%);
+  --destructive:            hsl(0, 78%, 55%);
   --destructive-foreground: hsl(0, 0%, 100%);
 
   /* Ring */
-  --ring: hsl(35, 90%, 42%);
-  --radius: 0.75rem;
+  --ring:   hsl(36, 96%, 43%);
 
-  /* Glassmorphism */
-  --glass-bg: hsla(0, 0%, 100%, 0.78);
+  /* Radius — brutalista: sharp but not square */
+  --radius: 0.5rem;
+
+  /* Glassmorphism (minimal in brutalista) */
+  --glass-bg:     hsla(0, 0%, 100%, 0.92);
   --glass-border: hsla(0, 0%, 100%, 0.32);
-  --glass-shadow: hsla(28, 20%, 0%, 0.06);
+  --glass-shadow: hsla(55, 30%, 0%, 0.05);
 
   /* Surfaces */
-  --surface-primary: hsl(0, 0%, 100%);
-  --surface-secondary: hsl(40, 14%, 96%);
-  --surface-tertiary: hsl(38, 14%, 92%);
+  --surface-primary:   hsl(60, 5%, 98%);
+  --surface-secondary: hsl(45, 10%, 95%);
+  --surface-tertiary:  hsl(40, 12%, 91%);
 
-  /* Elevations — warm-tinted shadows */
-  --elevation-1: 0 1px 3px hsla(28, 30%, 8%, 0.06), 0 1px 2px hsla(28, 30%, 8%, 0.10);
-  --elevation-2: 0 4px 12px hsla(28, 30%, 8%, 0.08), 0 2px 4px hsla(28, 30%, 8%, 0.06);
-  --elevation-3: 0 12px 32px hsla(28, 30%, 8%, 0.10), 0 4px 8px hsla(28, 30%, 8%, 0.08);
-  --elevation-glass: 0 8px 32px hsla(28, 20%, 0%, 0.05);
+  /* Elevations — brutalista offset shadows */
+  --elevation-1: 1px 1px 0 rgba(17,16,9,0.18);
+  --elevation-2: 2px 2px 0 #111009;
+  --elevation-3: 3px 3px 0 #111009;
+  --elevation-glass: 0 4px 16px hsla(55,20%,0%,0.06);
 
   /* Brand Gradients */
-  --gradient-beer-primary: linear-gradient(135deg, hsl(35, 90%, 42%) 0%, hsl(25, 85%, 46%) 100%);
-  --gradient-beer-secondary: linear-gradient(135deg, hsl(35, 90%, 44%) 0%, hsl(44, 90%, 50%) 100%);
-  --gradient-stats: linear-gradient(135deg, hsl(174, 58%, 38%) 0%, hsl(195, 66%, 42%) 100%);
-  --gradient-success: linear-gradient(135deg, hsl(142, 56%, 40%) 0%, hsl(158, 60%, 42%) 100%);
-  --gradient-warning: linear-gradient(135deg, hsl(35, 90%, 42%) 0%, hsl(44, 90%, 50%) 100%);
-  --gradient-hero: linear-gradient(135deg, hsl(25, 25%, 12%) 0%, hsl(20, 18%, 18%) 100%);
+  --gradient-beer-primary:   linear-gradient(135deg, hsl(36,96%,43%) 0%, hsl(25,85%,46%) 100%);
+  --gradient-beer-secondary: linear-gradient(135deg, hsl(36,96%,44%) 0%, hsl(44,90%,50%) 100%);
+  --gradient-stats:  linear-gradient(135deg, hsl(174,58%,38%) 0%, hsl(195,66%,42%) 100%);
+  --gradient-success: linear-gradient(135deg, hsl(142,56%,40%) 0%, hsl(158,60%,42%) 100%);
+  --gradient-warning: linear-gradient(135deg, hsl(36,96%,43%) 0%, hsl(44,90%,50%) 100%);
+  --gradient-hero:    linear-gradient(135deg, hsl(55,30%,10%) 0%, hsl(40,20%,14%) 100%);
 }
 
 /* ============================
-   DARK MODE — COLOUR PALETTE
+   DARK MODE — warm charcoal
    ============================ */
 .dark {
-  /* Base surfaces — warm charcoal, not cold navy */
-  --background: hsl(25, 14%, 7%);
-  --foreground: hsl(40, 12%, 94%);
-  --muted: hsl(25, 12%, 13%);
+  --background:    hsl(25, 14%, 7%);
+  --foreground:    hsl(40, 12%, 94%);
+  --muted:         hsl(25, 12%, 13%);
   --muted-foreground: hsl(35, 10%, 60%);
 
-  /* Card / Popover */
-  --popover: hsl(25, 14%, 10%);
+  --popover:            hsl(25, 14%, 10%);
   --popover-foreground: hsl(40, 12%, 94%);
-  --card: hsl(25, 14%, 10%);
+  --card:            hsl(25, 14%, 10%);
   --card-foreground: hsl(40, 12%, 94%);
 
-  /* Borders / Inputs — warm dark */
   --border: hsl(25, 12%, 17%);
-  --input: hsl(25, 12%, 17%);
+  --input:  hsl(25, 12%, 17%);
 
-  /* Primary — slightly brighter amber for dark bg */
-  --primary: hsl(38, 92%, 50%);
+  --primary:            hsl(38, 92%, 50%);
   --primary-foreground: hsl(25, 14%, 7%);
 
-  /* Secondary — warm dark */
-  --secondary: hsl(25, 16%, 20%);
+  --secondary:            hsl(25, 16%, 20%);
   --secondary-foreground: hsl(40, 12%, 94%);
 
-  /* Accent — warm amber */
-  --accent: hsl(35, 60%, 20%);
+  --accent:            hsl(35, 60%, 20%);
   --accent-foreground: hsl(38, 90%, 86%);
 
-  /* Destructive */
-  --destructive: hsl(0, 58%, 42%);
+  --destructive:            hsl(0, 58%, 42%);
   --destructive-foreground: hsl(40, 12%, 94%);
 
-  /* Ring */
-  --ring: hsl(38, 92%, 50%);
-  --radius: 0.75rem;
+  --ring:   hsl(38, 92%, 50%);
+  --radius: 0.5rem;
 
-  /* Glassmorphism */
-  --glass-bg: hsla(25, 14%, 10%, 0.82);
+  --glass-bg:     hsla(25, 14%, 10%, 0.82);
   --glass-border: hsla(40, 20%, 100%, 0.07);
   --glass-shadow: hsla(0, 0%, 0%, 0.32);
 
-  /* Surfaces */
-  --surface-primary: hsl(25, 14%, 10%);
+  --surface-primary:   hsl(25, 14%, 10%);
   --surface-secondary: hsl(25, 13%, 12%);
-  --surface-tertiary: hsl(25, 12%, 15%);
+  --surface-tertiary:  hsl(25, 12%, 15%);
 
-  /* Elevations */
-  --elevation-1: 0 1px 3px hsla(0, 0%, 0%, 0.38), 0 1px 2px hsla(0, 0%, 0%, 0.46);
-  --elevation-2: 0 4px 14px hsla(0, 0%, 0%, 0.46), 0 2px 4px hsla(0, 0%, 0%, 0.38);
-  --elevation-3: 0 12px 30px hsla(0, 0%, 0%, 0.56), 0 4px 10px hsla(0, 0%, 0%, 0.44);
-  --elevation-glass: 0 8px 32px hsla(0, 0%, 0%, 0.38);
+  --elevation-1: 0 1px 3px hsla(0,0%,0%,0.38), 0 1px 2px hsla(0,0%,0%,0.46);
+  --elevation-2: 0 4px 14px hsla(0,0%,0%,0.46), 0 2px 4px hsla(0,0%,0%,0.38);
+  --elevation-3: 0 12px 30px hsla(0,0%,0%,0.56), 0 4px 10px hsla(0,0%,0%,0.44);
+  --elevation-glass: 0 8px 32px hsla(0,0%,0%,0.38);
 
-  /* Brand Gradients — Dark */
-  --gradient-beer-primary: linear-gradient(135deg, hsl(38, 88%, 50%) 0%, hsl(25, 82%, 52%) 100%);
-  --gradient-beer-secondary: linear-gradient(135deg, hsl(38, 88%, 50%) 0%, hsl(44, 88%, 54%) 100%);
-  --gradient-stats: linear-gradient(135deg, hsl(174, 54%, 40%) 0%, hsl(195, 62%, 44%) 100%);
-  --gradient-success: linear-gradient(135deg, hsl(142, 52%, 38%) 0%, hsl(158, 56%, 40%) 100%);
-  --gradient-warning: linear-gradient(135deg, hsl(38, 88%, 50%) 0%, hsl(44, 88%, 54%) 100%);
-  --gradient-hero: linear-gradient(135deg, hsl(25, 14%, 7%) 0%, hsl(20, 12%, 11%) 100%);
+  --gradient-beer-primary:   linear-gradient(135deg, hsl(38,88%,50%) 0%, hsl(25,82%,52%) 100%);
+  --gradient-beer-secondary: linear-gradient(135deg, hsl(38,88%,50%) 0%, hsl(44,88%,54%) 100%);
+  --gradient-stats:  linear-gradient(135deg, hsl(174,54%,40%) 0%, hsl(195,62%,44%) 100%);
+  --gradient-success: linear-gradient(135deg, hsl(142,52%,38%) 0%, hsl(158,56%,40%) 100%);
+  --gradient-warning: linear-gradient(135deg, hsl(38,88%,50%) 0%, hsl(44,88%,54%) 100%);
+  --gradient-hero:    linear-gradient(135deg, hsl(25,14%,7%) 0%, hsl(20,12%,11%) 100%);
 }
 
 @layer base {
@@ -209,9 +213,7 @@
     user-select: text;
   }
 
-  html {
-    height: -webkit-fill-available;
-  }
+  html { height: -webkit-fill-available; }
 
   body {
     @apply antialiased bg-background text-foreground;
@@ -236,20 +238,16 @@
   }
 
   @media (min-width: 768px) {
-    input, textarea, select {
-      font-size: inherit;
-    }
+    input, textarea, select { font-size: inherit; }
   }
 
   @media all and (display-mode: standalone) {
-    body {
-      padding-top: env(safe-area-inset-top);
-    }
+    body { padding-top: env(safe-area-inset-top); }
   }
 
-  .text-display-2xl { font-size: 3.2rem; font-weight: 800; letter-spacing: -0.03em; line-height: 1.08; }
-  .text-display-xl  { font-size: 2.5rem; font-weight: 700; letter-spacing: -0.025em; line-height: 1.12; }
-  .text-display-lg  { font-size: 1.875rem; font-weight: 700; letter-spacing: -0.02em; line-height: 1.2; }
+  .text-display-2xl { font-size: 3.2rem; font-weight: 900; letter-spacing: -0.04em; line-height: 1.05; }
+  .text-display-xl  { font-size: 2.5rem; font-weight: 900; letter-spacing: -0.035em; line-height: 1.08; }
+  .text-display-lg  { font-size: 1.875rem; font-weight: 800; letter-spacing: -0.03em; line-height: 1.12; }
   .text-body-large  { font-size: 1.125rem; line-height: 1.65; }
   .text-body-medium { font-size: 1rem; line-height: 1.55; }
   .text-body-small  { font-size: 0.875rem; line-height: 1.45; }
@@ -260,24 +258,40 @@
    COMPONENTS
    ============================ */
 @layer components {
+  /* Brutalista card — the primary card style */
+  .brutalista-card {
+    background: var(--card);
+    border: 2px solid #111009;
+    border-radius: var(--radius);
+    box-shadow: 2px 2px 0 #111009;
+    transition: transform 0.1s, box-shadow 0.1s;
+  }
+  .brutalista-card:hover {
+    transform: translate(-1px, -1px);
+    box-shadow: 3px 3px 0 #111009;
+  }
+  .dark .brutalista-card {
+    border-color: hsl(25, 12%, 22%);
+    box-shadow: 2px 2px 0 hsl(25, 12%, 22%);
+  }
+  .dark .brutalista-card:hover {
+    box-shadow: 3px 3px 0 hsl(25, 12%, 22%);
+  }
+
+  /* Legacy glass card — kept for TV/festival views */
   .glass-card {
     background: var(--glass-bg);
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
     border: 1px solid var(--glass-border);
     box-shadow: var(--elevation-glass);
-    transition: box-shadow 0.25s ease, transform 0.25s ease;
-  }
-  .glass-card:hover {
-    transform: translateY(-2px);
-    box-shadow: var(--elevation-3);
   }
 
   .modern-card {
     background: var(--surface-primary);
     border: 1px solid var(--border);
     box-shadow: var(--elevation-1);
-    transition: box-shadow 0.25s ease, transform 0.25s ease;
+    transition: box-shadow 0.2s ease, transform 0.2s ease;
   }
   .modern-card:hover {
     box-shadow: var(--elevation-2);
@@ -295,11 +309,6 @@
     backdrop-filter: blur(10px);
     -webkit-backdrop-filter: blur(10px);
     border: 1px solid var(--glass-border);
-    transition: background 0.2s ease, transform 0.2s ease;
-  }
-  .btn-glass:hover {
-    background: var(--surface-secondary);
-    transform: translateY(-1px);
   }
 
   .kpi-card { position: relative; overflow: hidden; }
@@ -312,16 +321,16 @@
     z-index: -1;
   }
 
-  .fade-in  { animation: fadeIn  0.5s cubic-bezier(0.22, 1, 0.36, 1); }
-  .slide-up { animation: slideUp 0.5s cubic-bezier(0.22, 1, 0.36, 1); }
-  .scale-in { animation: scaleIn 0.35s cubic-bezier(0.22, 1, 0.36, 1); }
+  .fade-in  { animation: fadeIn  0.4s cubic-bezier(0.22, 1, 0.36, 1); }
+  .slide-up { animation: slideUp 0.4s cubic-bezier(0.22, 1, 0.36, 1); }
+  .scale-in { animation: scaleIn 0.3s cubic-bezier(0.22, 1, 0.36, 1); }
 }
 
 /* ============================
    ANIMATIONS
    ============================ */
 @keyframes fadeIn  { from { opacity: 0; } to { opacity: 1; } }
-@keyframes slideUp { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes slideUp { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
 @keyframes scaleIn { from { opacity: 0; transform: scale(0.96); } to { opacity: 1; transform: scale(1); } }
 @keyframes shimmer {
   0%   { background-position: -200px 0; }
@@ -338,7 +347,6 @@
    LEGACY BEER HELPERS
    ============================ */
 .beer-gradient { background: var(--gradient-beer-primary); }
-
 .tap-handle {
   background: linear-gradient(180deg, #7A3B10 0%, #C2601A 50%, #7A3B10 100%);
   border-radius: 8px 8px 50% 50%;
@@ -351,9 +359,9 @@
   z-index: 10000 !important;
   pointer-events: auto !important;
   background-color: var(--background);
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  box-shadow: var(--elevation-3);
+  border: 2px solid #111009;
+  border-radius: 8px;
+  box-shadow: 3px 3px 0 #111009;
   font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
 }
 .pac-item {
@@ -364,25 +372,21 @@
 }
 .pac-item:first-child { border-top: none; }
 .pac-item:hover { background-color: var(--muted); }
-.pac-item-query { font-weight: 600; color: var(--foreground); }
-.pac-matched { font-weight: 700; }
+.pac-item-query { font-weight: 700; color: var(--foreground); }
+.pac-matched { font-weight: 800; color: #d97706; }
 
 .dark .pac-container {
   background-color: hsl(25, 14%, 10%);
-  border-color: hsl(25, 12%, 17%);
+  border-color: hsl(25, 12%, 22%);
+  box-shadow: 3px 3px 0 hsl(25, 12%, 4%);
 }
 .dark .pac-item       { border-color: hsl(25, 12%, 17%); }
 .dark .pac-item:hover { background-color: hsl(25, 12%, 13%); }
-
-/* Fix Leaflet z-index so modals/dialogs render above the map */
-.leaflet-pane         { z-index: 4 !important; }
-.leaflet-top,
-.leaflet-bottom       { z-index: 5 !important; }
-.leaflet-control      { z-index: 5 !important; }
-
-/* Prevent Leaflet container from showing a black void before tiles load */
-.leaflet-container {
-  background: #e8e4dc !important;
-}
-
 .dark .pac-item-query { color: hsl(40, 14%, 92%); }
+
+/* Fix Leaflet z-index */
+.leaflet-pane          { z-index: 4 !important; }
+.leaflet-top,
+.leaflet-bottom        { z-index: 5 !important; }
+.leaflet-control       { z-index: 5 !important; }
+.leaflet-container     { background: #e8e4dc !important; }
