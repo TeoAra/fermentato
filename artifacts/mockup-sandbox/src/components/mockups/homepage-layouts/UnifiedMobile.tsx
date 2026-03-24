@@ -1,4 +1,4 @@
-import { Search, Navigation, Beer, Star, MapPin, Home, Map, Grid, User, Building2, ChevronRight, ArrowRight, Users } from "lucide-react";
+import { Search, Navigation, Beer, Home, Map, Grid, User, Building2, ChevronRight, ArrowRight, Bell } from "lucide-react";
 
 // ── La Piazza Editoriale ──────────────────────────────────────
 // Unione di B (Il Catalogo) e C (La Piazza).
@@ -50,12 +50,6 @@ const PINS = [
   { x: "79%", y: "61%", type: "pub" },
 ];
 
-const MODES = [
-  { icon: Users, label: "Scopri", active: true },
-  { icon: Building2, label: "Birrificio" },
-  { icon: Beer, label: "Pub" },
-];
-
 const TABS = ["Pub vicini", "In spina", "Birrifici"];
 
 export function UnifiedMobile() {
@@ -77,6 +71,30 @@ export function UnifiedMobile() {
             <div key={i} style={{ width: 3, height: h, background: i > 2 ? "#ede8e1" : "#4a4540", borderRadius: 1 }} />
           ))}
           <span style={{ fontSize: 11, color: "#ede8e1" }}>●●●</span>
+        </div>
+      </div>
+
+      {/* ── TOPBAR — logo fisso ── */}
+      <div style={{
+        padding: "6px 14px 8px",
+        background: "#0f0d0a",
+        borderBottom: "1px solid #1f1d1a",
+        display: "flex", alignItems: "center", justifyContent: "space-between",
+        flexShrink: 0,
+      }}>
+        <div style={{ display: "flex", alignItems: "baseline", gap: 1 }}>
+          <span style={{ fontSize: 22, fontWeight: 900, letterSpacing: "-0.05em", color: "#ede8e1" }}>fermenta</span>
+          <span style={{ fontSize: 22, fontWeight: 900, letterSpacing: "-0.05em", color: "#f59e0b" }}>.to</span>
+        </div>
+        <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
+            <span style={{ width: 6, height: 6, borderRadius: "50%", background: "#34d399" }} />
+            <span style={{ fontSize: 11, fontWeight: 700, color: "#8a7d74" }}>Milano</span>
+          </div>
+          <button style={{ position: "relative", width: 34, height: 34, border: "1px solid #2a2420", borderRadius: 6, background: "#161412", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}>
+            <Bell size={15} color="#8a7d74" />
+            <span style={{ position: "absolute", top: 5, right: 5, width: 6, height: 6, borderRadius: "50%", background: "#f59e0b", border: "1.5px solid #0f0d0a" }} />
+          </button>
         </div>
       </div>
 
@@ -177,33 +195,6 @@ export function UnifiedMobile() {
           SEZIONE EDITORIALE — da B, su bianco
       ═══════════════════════════════════════════════════════ */}
       <div style={{ background: "#fafaf8", flex: 1 }}>
-
-        {/* ── Hero editoriale ── */}
-        <div style={{ padding: "20px 18px 14px", borderBottom: "2px solid #111009" }}>
-          <p style={{ fontSize: 10, fontWeight: 800, letterSpacing: "0.18em", textTransform: "uppercase", color: "#9d8e86", margin: "0 0 6px" }}>
-            fermenta<span style={{ color: "#d97706" }}>.to</span> · Milano
-          </p>
-          <h1 style={{ fontSize: 27, fontWeight: 900, letterSpacing: "-0.04em", lineHeight: 1.05, color: "#111009", margin: "0 0 12px" }}>
-            Dove vuoi<br /><span style={{ fontStyle: "italic", color: "#d97706" }}>bere stasera?</span>
-          </h1>
-
-          {/* Mode selector brutalista */}
-          <div style={{ display: "flex", gap: 6 }}>
-            {MODES.map(({ icon: Icon, label, active }, i) => (
-              <button key={i} style={{
-                flex: 1, display: "flex", alignItems: "center", justifyContent: "center", gap: 5,
-                padding: "8px 6px", fontSize: 11, fontWeight: active ? 800 : 600,
-                background: active ? "#111009" : "#fafaf8",
-                color: active ? "#fafaf8" : "#9d8e86",
-                border: "2px solid #111009",
-                borderRadius: 6, cursor: "pointer",
-                boxShadow: active ? "2px 2px 0 #d97706" : "none",
-              }}>
-                <Icon size={12} /> {label}
-              </button>
-            ))}
-          </div>
-        </div>
 
         {/* ── Live updates (da C) ── */}
         <div style={{ borderBottom: "2px solid #111009" }}>
