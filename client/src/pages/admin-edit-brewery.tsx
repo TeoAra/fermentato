@@ -10,12 +10,12 @@ export default function AdminEditBrewery() {
 
   return (
     <div>
-      <div className="p-4 border-b bg-white dark:bg-gray-900">
+      <div className="p-4 border-b bg-background border-orange-100 dark:border-[hsl(25,12%,16%)]">
         <Button
           variant="ghost"
           size="sm"
           onClick={() => navigate("/admin/content")}
-          className="text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white"
+          className="text-muted-foreground hover:text-primary hover:bg-orange-50 dark:hover:bg-orange-950/20 rounded-xl"
         >
           <ArrowLeft className="w-4 h-4 mr-2" />
           Torna ai contenuti

@@ -111,9 +111,9 @@ function PubMenuInfoBox({ pubId, currentValue }: { pubId: number; currentValue: 
   if (!isEditing && !currentValue) {
     return (
       <Button
-        variant="outline" className="border-orange-100 dark:border-[hsl(25,12%,20%)] hover:bg-orange-50 rounded-xl"
+        variant="outline"
         onClick={() => setIsEditing(true)}
-        className="w-full border-dashed border-orange-100 text-primary hover:bg-orange-50 dark:text-orange-400 dark:hover:bg-orange-950/30"
+        className="w-full border-dashed border-orange-100 dark:border-[hsl(25,12%,20%)] text-primary hover:bg-orange-50 dark:text-orange-400 dark:hover:bg-orange-950/30 rounded-xl"
       >
         <Info className="h-4 w-4 mr-2" />
         Aggiungi Info Box generale (prima di tutto il menu)
@@ -144,7 +144,7 @@ function PubMenuInfoBox({ pubId, currentValue }: { pubId: number; currentValue: 
               <Button size="sm" variant="ghost" className="hover:text-primary rounded-xl" onClick={() => setIsEditing(true)}>
                 <Edit3 className="h-3.5 w-3.5" />
               </Button>
-              <Button size="sm" variant="ghost" className="hover:text-primary rounded-xl" className="text-red-700 hover:text-red-700"
+              <Button size="sm" variant="ghost" className="text-red-600 hover:text-red-700 rounded-xl"
                 onClick={() => { if (confirm('Rimuovere la info box generale?')) saveMutation.mutate(''); }}>
                 <Trash2 className="h-3.5 w-3.5" />
               </Button>
@@ -153,12 +153,12 @@ function PubMenuInfoBox({ pubId, currentValue }: { pubId: number; currentValue: 
         </div>
       </div>
       {isEditing ? (
-        <Textarea className="border-orange-100 dark:border-[hsl(25,12%,20%)] rounded-xl focus-visible:ring-primary/20"
+        <Textarea
+          className="bg-white dark:bg-[hsl(25,14%,10%)] border-orange-100 dark:border-[hsl(25,12%,20%)] rounded-xl focus-visible:ring-primary/20"
           value={text}
           onChange={(e) => setText(e.target.value)}
           placeholder="Nota informativa che apparirà prima di tutto il menu nel PDF..."
           rows={3}
-          className="bg-white dark:bg-[hsl(25,14%,10%)] border-orange-100 dark:border-[hsl(25,12%,20%)]"
         />
       ) : (
         <p className="text-sm text-orange-900 dark:text-orange-100 italic">{currentValue}</p>
@@ -586,8 +586,7 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
               </p>
             </div>
           </div>
-          <Button size="sm" variant="outline" className="border-orange-100 dark:border-[hsl(25,12%,20%)] hover:bg-orange-50 rounded-xl" onClick={() => setShowCancelDialog(true)}
-            className="flex-shrink-0 text-red-700 border-red-100 hover:bg-red-50 dark:hover:bg-red-900/20 text-xs rounded-2xl">
+          <Button size="sm" variant="outline" className="flex-shrink-0 text-red-700 border-red-100 hover:bg-red-50 dark:hover:bg-red-900/20 text-xs rounded-xl" onClick={() => setShowCancelDialog(true)}>
             Disdici
           </Button>
         </div>
@@ -606,8 +605,7 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
               <p className="text-xs text-emerald-700 dark:text-emerald-400">€65/anno IVA inclusa · rinnovo automatico</p>
             </div>
           </div>
-          <Button size="sm" variant="outline" className="border-orange-100 dark:border-[hsl(25,12%,20%)] hover:bg-orange-50 rounded-xl" onClick={() => setShowCancelDialog(true)}
-            className="flex-shrink-0 text-red-700 border-red-100 hover:bg-red-50 dark:hover:bg-red-900/20 text-xs rounded-2xl">
+          <Button size="sm" variant="outline" className="flex-shrink-0 text-red-700 border-red-100 hover:bg-red-50 dark:hover:bg-red-900/20 text-xs rounded-xl" onClick={() => setShowCancelDialog(true)}>
             Disdici
           </Button>
         </div>
@@ -841,9 +839,9 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
         <Dialog>
           <DialogTrigger asChild>
             <Button
-              variant="outline" className="border-orange-100 dark:border-[hsl(25,12%,20%)] hover:bg-orange-50 rounded-xl"
+              variant="outline"
               size="sm"
-              className="gap-2"
+              className="gap-2 border-orange-100 dark:border-[hsl(25,12%,20%)] hover:bg-orange-50 rounded-xl"
             >
               <Cast className="h-4 w-4" />
               TV Mode
@@ -922,16 +920,16 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
 
               <div className="flex gap-2">
                 <Button
-                  variant="outline" className="border-orange-100 dark:border-[hsl(25,12%,20%)] hover:bg-orange-50 rounded-xl"
-                  className="flex-1 gap-2"
+                  variant="outline"
+                  className="flex-1 gap-2 border-orange-100 dark:border-[hsl(25,12%,20%)] hover:bg-orange-50 rounded-xl"
                   onClick={() => window.open(`/tv/${currentPub?.id}`, '_blank')}
                 >
                   <Eye className="h-4 w-4" />
                   Apri Taplist TV
                 </Button>
                 <Button
-                  variant="outline" className="border-orange-100 dark:border-[hsl(25,12%,20%)] hover:bg-orange-50 rounded-xl"
-                  className="flex-1 gap-2"
+                  variant="outline"
+                  className="flex-1 gap-2 border-orange-100 dark:border-[hsl(25,12%,20%)] hover:bg-orange-50 rounded-xl"
                   onClick={() => {
                     navigator.clipboard.writeText(`${window.location.origin}/tv/${currentPub?.id}`);
                     toast({ title: "Link copiato!" });
@@ -960,9 +958,9 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
           </DialogContent>
         </Dialog>
         <Button
-          variant="outline" className="border-orange-100 dark:border-[hsl(25,12%,20%)] hover:bg-orange-50 rounded-xl"
+          variant="outline"
           size="sm"
-          className="gap-2"
+          className="gap-2 border-orange-100 dark:border-[hsl(25,12%,20%)] hover:bg-orange-50 rounded-xl"
           onClick={() => window.open(`/pub/${(currentPub as any)?.slug || currentPub?.id}`, '_blank')}
         >
           <Eye className="h-4 w-4" />
@@ -1349,7 +1347,7 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
                   </div>
                 </div>
                 <div className={`flex items-center gap-2 flex-1 ${isClosed ? 'opacity-40 pointer-events-none' : ''}`}>
-                  <Input className="border-orange-100 dark:border-[hsl(25,12%,20%)] rounded-xl focus-visible:ring-primary/20"
+                  <Input
                     type="time"
                     value={dayHours?.open || "12:00"}
                     onChange={(e) => {
@@ -1360,11 +1358,11 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
                       updateSettingsField('openingHours', newHours);
                     }}
                     disabled={isClosed}
-                    className="flex-1 min-w-0 text-sm"
+                    className="flex-1 min-w-0 text-sm border-orange-100 dark:border-[hsl(25,12%,20%)] rounded-xl focus-visible:ring-primary/20"
                     data-testid={`input-${day.key}-open`}
                   />
                   <span className="text-muted-foreground text-sm font-medium flex-shrink-0">—</span>
-                  <Input className="border-orange-100 dark:border-[hsl(25,12%,20%)] rounded-xl focus-visible:ring-primary/20"
+                  <Input
                     type="time"
                     value={dayHours?.close || "23:00"}
                     onChange={(e) => {
@@ -1375,7 +1373,7 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
                       updateSettingsField('openingHours', newHours);
                     }}
                     disabled={isClosed}
-                    className="flex-1 min-w-0 text-sm"
+                    className="flex-1 min-w-0 text-sm border-orange-100 dark:border-[hsl(25,12%,20%)] rounded-xl focus-visible:ring-primary/20"
                     data-testid={`input-${day.key}-close`}
                   />
                 </div>
@@ -1644,7 +1642,7 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
                     </div>
                   </div>
                   <div className={`flex items-center gap-2 flex-1 ${isClosed ? 'opacity-40 pointer-events-none' : ''}`}>
-                    <Input className="border-orange-100 dark:border-[hsl(25,12%,20%)] rounded-xl focus-visible:ring-primary/20"
+                    <Input
                       type="time"
                       value={dayHours?.open || "12:00"}
                       onChange={(e) => {
@@ -1655,11 +1653,11 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
                         updateSettingsField('openingHours', newHours);
                       }}
                       disabled={isClosed}
-                      className="flex-1 min-w-0 text-sm"
+                      className="flex-1 min-w-0 text-sm border-orange-100 dark:border-[hsl(25,12%,20%)] rounded-xl focus-visible:ring-primary/20"
                       data-testid={`input-${day.key}-open`}
                     />
                     <span className="text-muted-foreground text-sm font-medium flex-shrink-0">—</span>
-                    <Input className="border-orange-100 dark:border-[hsl(25,12%,20%)] rounded-xl focus-visible:ring-primary/20"
+                    <Input
                       type="time"
                       value={dayHours?.close || "23:00"}
                       onChange={(e) => {
@@ -1670,7 +1668,7 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
                         updateSettingsField('openingHours', newHours);
                       }}
                       disabled={isClosed}
-                      className="flex-1 min-w-0 text-sm"
+                      className="flex-1 min-w-0 text-sm border-orange-100 dark:border-[hsl(25,12%,20%)] rounded-xl focus-visible:ring-primary/20"
                       data-testid={`input-${day.key}-close`}
                     />
                   </div>
@@ -1725,11 +1723,11 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
                   <div className={`absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none z-10 ${iconColor}`}>
                     {rowIcon}
                   </div>
-                  <Input className="border-orange-100 dark:border-[hsl(25,12%,20%)] rounded-xl focus-visible:ring-primary/20"
+                  <Input
                     value={val}
                     onChange={(e) => updateSettingsField(field, e.target.value)}
                     placeholder={`${label} — ${placeholder}`}
-                    className="h-10 pl-9 text-sm"
+                    className="h-10 pl-9 text-sm border-orange-100 dark:border-[hsl(25,12%,20%)] rounded-xl focus-visible:ring-primary/20"
                     data-testid={`input-${field}`}
                   />
                 </div>
@@ -1913,10 +1911,10 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
     <div className="lg:hidden bg-white dark:bg-[hsl(25,14%,10%)] border-b p-4 flex items-center gap-3 sticky top-0 z-40">
       {currentSection !== 'overview' && (
         <Button
-          variant="ghost" className="hover:text-primary rounded-xl"
+          variant="ghost"
           size="sm"
           onClick={() => setCurrentSection('overview')}
-          className="text-primary hover:text-primary/80"
+          className="text-primary hover:text-primary/80 rounded-xl"
           data-testid="button-back-overview"
         >
           <ArrowLeft className="h-4 w-4" />

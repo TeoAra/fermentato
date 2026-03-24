@@ -1,7 +1,4 @@
-import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { MapPin, Beer, Heart } from "lucide-react";
+import { MapPin, Beer, Heart, ChevronRight } from "lucide-react";
 import { Link } from "wouter";
 import { useAuth } from "@/hooks/useAuth";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -17,6 +14,8 @@ interface BreweryCardProps {
     region: string | any;
     rating: string | number | null;
     logoUrl?: string | null;
+    coverImageUrl?: string | null;
+    country?: string | null;
   };
   beerCount?: number;
   distance?: number | null;
@@ -27,17 +26,15 @@ export default function BreweryCard({ brewery, beerCount = 0, distance }: Brewer
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  // Check if brewery is favorited
   const { data: favorites = [] } = useQuery({
     queryKey: ["/api/favorites"],
     enabled: isAuthenticated,
   });
 
-  const isBreweryFavorited = Array.isArray(favorites) && favorites.some((fav: any) => 
+  const isBreweryFavorited = Array.isArray(favorites) && favorites.some((fav: any) =>
     fav.itemType === 'brewery' && fav.itemId === brewery.id
   );
 
-  // Favorite mutation
   const favoriteMutation = useMutation({
     mutationFn: async ({ action }: { action: 'add' | 'remove' }) => {
       if (action === 'add') {
@@ -48,118 +45,103 @@ export default function BreweryCard({ brewery, beerCount = 0, distance }: Brewer
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/favorites"] });
-      toast({
-        title: "Successo",
-        description: isBreweryFavorited ? "Rimosso dai favoriti" : "Aggiunto ai favoriti",
-      });
+      toast({ title: isBreweryFavorited ? "Rimosso dai preferiti" : "Aggiunto ai preferiti" });
     },
     onError: () => {
-      toast({
-        title: "Errore",
-        description: "Non è stato possibile aggiornare i favoriti",
-        variant: "destructive",
-      });
+      toast({ title: "Errore", description: "Non è stato possibile aggiornare i preferiti", variant: "destructive" });
     },
   });
 
   const handleFavoriteToggle = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    
     if (!isAuthenticated) {
-      toast({
-        title: "Accesso richiesto",
-        description: "Effettua l'accesso per aggiungere ai favoriti",
-        variant: "destructive",
-      });
+      toast({ title: "Accesso richiesto", description: "Effettua l'accesso per aggiungere ai preferiti", variant: "destructive" });
       return;
     }
-
-    favoriteMutation.mutate({
-      action: isBreweryFavorited ? 'remove' : 'add'
-    });
+    favoriteMutation.mutate({ action: isBreweryFavorited ? 'remove' : 'add' });
   };
 
   const handlePrefetch = () => {
-    queryClient.prefetchQuery({
-      queryKey: ["/api/breweries", brewery.id],
-      staleTime: 30 * 1000,
-    });
+    queryClient.prefetchQuery({ queryKey: ["/api/breweries", brewery.id], staleTime: 30000 });
   };
+
+  const name = typeof brewery.name === 'string' ? brewery.name : brewery.name?.toString() || 'Birrificio';
+  const location = typeof brewery.location === 'string' ? brewery.location : brewery.location?.name || '';
+  const region = typeof brewery.region === 'string' ? brewery.region : brewery.region?.name || '';
+  const locationStr = distance != null ? location : [location, region].filter(Boolean).join(', ');
+  const initial = name[0]?.toUpperCase() ?? 'B';
+  const coverBg = brewery.coverImageUrl || brewery.logoUrl;
 
   return (
     <Link href={`/brewery/${brewery.id}`} onMouseEnter={handlePrefetch} onTouchStart={handlePrefetch}>
-      <Card className="overflow-hidden hover:shadow-md transition-all duration-200 border border-gray-100 dark:border-neutral-700 cursor-pointer group relative">
-        <CardContent className="p-4">
-          {/* Mobile-First Layout */}
-          <div className="flex items-center gap-4">
-            
-            {/* Brewery Logo */}
-            <div className="relative flex-shrink-0">
-              <ImageWithFallback
-                src={brewery.logoUrl}
-                alt={`Logo ${brewery.name}`}
-                imageType="brewery"
-                containerClassName="w-16 h-16 sm:w-20 sm:h-20 rounded-lg shadow-sm group-hover:shadow-md transition-shadow"
-                className="w-16 h-16 sm:w-20 sm:h-20 rounded-lg object-cover shadow-sm group-hover:shadow-md transition-shadow"
-                iconSize="lg"
-              />
+      <div className="group bg-white dark:bg-[hsl(25,14%,10%)] rounded-2xl border border-orange-50 dark:border-[hsl(25,12%,16%)] shadow-sm overflow-hidden cursor-pointer hover:shadow-[0_8px_28px_rgba(247,113,4,0.13)] hover:-translate-y-0.5 transition-all duration-250">
+        
+        {/* Cover / logo strip */}
+        <div className="relative h-28 overflow-hidden">
+          {coverBg ? (
+            <img src={coverBg} alt={name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
+          ) : (
+            <div className="w-full h-full bg-gradient-to-br from-[hsl(24,93%,49%)] via-[hsl(22,92%,46%)] to-[hsl(20,95%,42%)] flex items-center justify-center">
+              <span className="text-4xl font-black text-white/80">{initial}</span>
             </div>
-            
-            {/* Brewery Info */}
-            <div className="flex-1 min-w-0">
-              <h3 className="font-semibold text-base sm:text-lg text-gray-900 dark:text-amber-400 group-hover:text-amber-600 dark:group-hover:text-amber-300 transition-colors truncate mb-1">
-                {typeof brewery.name === 'string' ? brewery.name : brewery.name?.toString() || 'Birrificio'}
-              </h3>
-              
-              <div className="flex items-center gap-1 text-sm text-gray-600 dark:text-neutral-400 mb-2">
-                <MapPin className="w-3 h-3 flex-shrink-0" />
-                <span className="truncate">
-                  {distance != null
-                    ? (typeof brewery.location === 'string' ? brewery.location : brewery.location?.name || 'Località')
-                    : `${typeof brewery.location === 'string' ? brewery.location : brewery.location?.name || 'Località'}, ${typeof brewery.region === 'string' ? brewery.region : brewery.region?.name || 'Regione'}`
-                  }
+          )}
+          <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent" />
+
+          {/* Favorite button */}
+          <button
+            className={`absolute top-2.5 right-2.5 w-8 h-8 rounded-full backdrop-blur-sm flex items-center justify-center transition-all ${
+              isBreweryFavorited ? 'bg-red-500 text-white' : 'bg-black/30 text-white hover:bg-red-500'
+            }`}
+            onClick={handleFavoriteToggle}
+            disabled={favoriteMutation.isPending}
+          >
+            <Heart className={`w-4 h-4 ${isBreweryFavorited ? 'fill-current' : ''}`} />
+          </button>
+
+          {/* Location overlay */}
+          {locationStr && (
+            <div className="absolute bottom-2 left-3 flex items-center gap-1 text-white text-[11px] font-semibold">
+              <MapPin className="w-3 h-3 text-orange-300 flex-shrink-0" />
+              <span className="truncate max-w-[160px] drop-shadow-sm">{locationStr}</span>
+              {distance != null && (
+                <span className="ml-1 font-bold text-orange-300">
+                  {distance < 1 ? `${Math.round(distance * 1000)}m` : `${distance.toFixed(1)}km`}
                 </span>
-                {distance != null && (
-                  <span className="ml-1 text-xs font-medium text-blue-600 dark:text-blue-400 whitespace-nowrap">
-                    {distance < 1 ? `${Math.round(distance * 1000)}m` : `${distance.toFixed(1)}km`}
-                  </span>
-                )}
-              </div>
-              
-              {/* Tags Row */}
-              <div className="flex flex-wrap gap-1 items-center">
-                <Badge variant="outline" className="text-xs px-2 py-0.5 h-auto">
-                  <Beer className="w-3 h-3 mr-1" />
-                  {beerCount} birre
-                </Badge>
-              </div>
-            </div>
-            
-            {/* Favorite Button */}
-            <div className="flex-shrink-0 flex flex-col gap-2">
-              {isAuthenticated && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className={`h-8 w-8 p-0 ${isBreweryFavorited ? 'text-red-600 hover:text-red-700' : 'text-gray-400 hover:text-red-600'}`}
-                  onClick={handleFavoriteToggle}
-                  disabled={favoriteMutation.isPending}
-                >
-                  <Heart className={`w-4 h-4 ${isBreweryFavorited ? 'fill-current' : ''}`} />
-                </Button>
               )}
-              
-              {/* Indicator Arrow */}
-              <div className="text-gray-400 group-hover:text-primary transition-colors">
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                </svg>
-              </div>
             </div>
+          )}
+        </div>
+
+        {/* Info */}
+        <div className="p-3.5 flex items-center gap-3">
+          {/* Logo circle */}
+          <div className="w-12 h-12 rounded-xl border border-orange-50 dark:border-[hsl(25,12%,20%)] overflow-hidden flex-shrink-0 bg-orange-50 dark:bg-orange-950/20 shadow-sm">
+            <ImageWithFallback
+              src={brewery.logoUrl}
+              alt={`Logo ${name}`}
+              imageType="brewery"
+              containerClassName="w-12 h-12"
+              className="w-12 h-12 object-contain"
+              iconSize="md"
+            />
           </div>
-        </CardContent>
-      </Card>
+
+          <div className="flex-1 min-w-0">
+            <h3 className="font-bold text-[14px] text-foreground truncate group-hover:text-primary transition-colors leading-snug">
+              {name}
+            </h3>
+            {beerCount > 0 && (
+              <span className="inline-flex items-center gap-1 mt-1 px-2 py-0.5 rounded-full text-[11px] font-semibold bg-orange-50 dark:bg-orange-950/30 text-primary dark:text-orange-400 border border-orange-100 dark:border-orange-900/30">
+                <Beer className="w-2.5 h-2.5" />
+                {beerCount} birre
+              </span>
+            )}
+          </div>
+
+          <ChevronRight className="w-4 h-4 text-muted-foreground group-hover:text-primary group-hover:translate-x-0.5 transition-all flex-shrink-0" />
+        </div>
+      </div>
     </Link>
   );
 }

@@ -114,8 +114,8 @@ const BeerStatsCard = ({ icon: Icon, value, label, gradient }: any) => (
         <Icon className="h-4 w-4 sm:h-5 sm:w-5 text-white" />
       </div>
       <div className="min-w-0">
-        <p className="text-sm sm:text-base font-bold text-gray-900 dark:text-white truncate">{value}</p>
-        <p className="text-xs text-gray-500 dark:text-gray-400">{label}</p>
+        <p className="text-sm sm:text-base font-bold text-foreground truncate">{value}</p>
+        <p className="text-xs text-muted-foreground">{label}</p>
       </div>
     </div>
   </div>
@@ -497,13 +497,13 @@ export default function BeerDetail() {
 
   if (!beer) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-indigo-50 dark:from-gray-950 dark:via-blue-950 dark:to-indigo-950 flex items-center justify-center">
+      <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center space-y-4">
           <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-red-500 to-pink-600 mx-auto flex items-center justify-center">
             <BeerIcon className="w-8 h-8 text-white" />
           </div>
-          <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Birra non trovata</h2>
-          <p className="text-gray-600 dark:text-gray-400">
+          <h2 className="text-2xl font-bold text-foreground">Birra non trovata</h2>
+          <p className="text-muted-foreground">
             La birra che stai cercando non esiste o è stata rimossa.
           </p>
           <Button asChild>
@@ -598,11 +598,11 @@ export default function BeerDetail() {
                     <span key={b.id} className="inline-flex items-center gap-1">
                       {i > 0 && <span className="text-white/40 text-xs">×</span>}
                       <Link href={`/brewery/${b.id}`}>
-                        <span className="text-purple-300 hover:text-purple-200 text-sm font-medium">{b.name}</span>
+                        <span className="text-primary hover:text-primary/80 text-sm font-medium">{b.name}</span>
                       </Link>
                     </span>
                   ))}
-                  <span className="text-purple-300/80 text-[10px] font-bold bg-purple-500/25 px-1.5 py-0.5 rounded-full border border-purple-400/30">collab</span>
+                  <span className="text-primary/80 text-[10px] font-bold bg-primary/15 px-1.5 py-0.5 rounded-full border border-primary/25">collab</span>
                 </>
               )}
             </div>
@@ -616,14 +616,14 @@ export default function BeerDetail() {
           {/* Info pills */}
           <div className="flex items-center gap-2 flex-wrap justify-center">
             {beer?.abv && (
-              <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-semibold bg-orange-50 dark:bg-orange-950 text-orange-700 dark:text-orange-300 border border-orange-200 dark:border-orange-800">
+              <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-bold bg-orange-50 text-primary">
                 <Target className="h-3.5 w-3.5" />
                 {beer.abv}% ABV
               </span>
             )}
             {beer?.style && (
               <Link href={`/search?q=${encodeURIComponent(beer.style)}`} className="max-w-full">
-                <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-semibold bg-indigo-50 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800 hover:bg-indigo-100 dark:hover:bg-indigo-900 transition-colors cursor-pointer whitespace-normal text-center">
+                <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-bold bg-orange-50 text-primary cursor-pointer whitespace-normal text-center">
                   <Sparkles className="h-3.5 w-3.5 flex-shrink-0" />
                   {beer.style}
                 </span>
@@ -649,7 +649,7 @@ export default function BeerDetail() {
               </span>
             )}
             {beer?.isAlcoholFree && (
-              <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-semibold bg-sky-50 dark:bg-sky-950 text-sky-700 dark:text-sky-300 border border-sky-200 dark:border-sky-800">
+              <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-bold bg-orange-50 text-primary">
                 0.0% Analcolica
               </span>
             )}
@@ -657,30 +657,30 @@ export default function BeerDetail() {
           {/* Quick star rating */}
           {isAuthenticated && (
             <div className="flex flex-col items-center gap-1">
-              <span className="text-xs text-gray-400 dark:text-gray-500">
-                {hasTasted ? "Il tuo voto" : "Dai un voto rapido"}
-              </span>
-              <div className="flex items-center gap-0.5">
-                {[1, 2, 3, 4, 5].map(s => (
-                  <button
-                    key={s}
-                    onMouseEnter={() => !hasTasted && setHoverRating(s)}
-                    onMouseLeave={() => !hasTasted && setHoverRating(0)}
-                    onClick={() => {
-                      setActiveTab('recensioni');
-                      if (!hasTasted) setQuickRating(s);
-                      setTimeout(() => tastingRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 150);
-                    }}
-                    className="p-0.5 transition-transform hover:scale-110"
-                  >
-                    <Star className={`h-5 w-5 transition-colors ${
-                      s <= (hasTasted ? existingTasting?.rating || 0 : (hoverRating || quickRating))
-                        ? 'fill-yellow-400 text-yellow-400'
-                        : 'text-gray-300 dark:text-gray-600'
-                    }`} />
-                  </button>
-                ))}
-              </div>
+                <span className="text-xs text-muted-foreground">
+                  {hasTasted ? "Il tuo voto" : "Dai un voto rapido"}
+                </span>
+                <div className="flex items-center gap-0.5">
+                  {[1, 2, 3, 4, 5].map(s => (
+                    <button
+                      key={s}
+                      onMouseEnter={() => !hasTasted && setHoverRating(s)}
+                      onMouseLeave={() => !hasTasted && setHoverRating(0)}
+                      onClick={() => {
+                        setActiveTab('recensioni');
+                        if (!hasTasted) setQuickRating(s);
+                        setTimeout(() => tastingRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 150);
+                      }}
+                      className="p-0.5 transition-transform hover:scale-110"
+                    >
+                      <Star className={`h-5 w-5 transition-colors ${
+                        s <= (hasTasted ? existingTasting?.rating || 0 : (hoverRating || quickRating))
+                          ? 'text-amber-500 fill-amber-500'
+                          : 'text-gray-300 dark:text-gray-600'
+                      }`} />
+                    </button>
+                  ))}
+                </div>
             </div>
           )}
 
@@ -694,7 +694,7 @@ export default function BeerDetail() {
               className={`h-9 w-9 flex items-center justify-center rounded-full border transition-all ${
                 isBeerFavorited
                   ? 'bg-red-50 dark:bg-red-950 border-red-200 dark:border-red-800 text-red-500'
-                  : 'bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700 text-gray-500 dark:text-gray-400 hover:border-red-200 hover:text-red-400'
+                  : 'bg-white dark:bg-[hsl(25,14%,10%)] border-orange-50 dark:border-[hsl(25,12%,16%)] text-muted-foreground hover:border-primary/20'
               }`}
             >
               <Heart className={`h-4 w-4 ${isBeerFavorited ? 'fill-current' : ''}`} />
@@ -703,7 +703,7 @@ export default function BeerDetail() {
               onClick={handleShare}
               title="Condividi"
               data-testid="button-share"
-              className="h-9 w-9 flex items-center justify-center rounded-full border bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700 text-gray-500 dark:text-gray-400 hover:border-gray-300 transition-colors"
+              className="h-9 w-9 flex items-center justify-center rounded-full border bg-white dark:bg-[hsl(25,14%,10%)] border-orange-50 dark:border-[hsl(25,12%,16%)] text-muted-foreground hover:border-primary/20 transition-colors"
             >
               <Share2 className="h-4 w-4" />
             </button>
@@ -722,7 +722,7 @@ export default function BeerDetail() {
                 onClick={() => setIsSuggestDialogOpen(true)}
                 title="Suggerisci modifica"
                 data-testid="button-suggest-change"
-                className="h-9 w-9 flex items-center justify-center rounded-full border bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700 text-gray-500 dark:text-gray-400 hover:border-gray-300 transition-colors"
+                className="h-9 w-9 flex items-center justify-center rounded-full border bg-white dark:bg-[hsl(25,14%,10%)] border-orange-50 dark:border-[hsl(25,12%,16%)] text-muted-foreground hover:border-primary/20 transition-colors"
               >
                 <Lightbulb className="h-4 w-4" />
               </button>
@@ -737,14 +737,14 @@ export default function BeerDetail() {
             <TabsList className="flex w-full h-auto bg-transparent p-0 rounded-none shadow-none border-none overflow-x-auto scrollbar-hide">
               <TabsTrigger
                 value="scheda"
-                className="relative flex items-center gap-1.5 px-4 py-3 text-sm font-medium whitespace-nowrap rounded-none bg-transparent border-none shadow-none transition-colors text-gray-400 dark:text-gray-500 data-[state=active]:text-[hsl(35,90%,40%)] dark:data-[state=active]:text-[hsl(38,88%,56%)] data-[state=active]:shadow-none data-[state=active]:bg-transparent after:absolute after:bottom-0 after:left-0 after:right-0 after:h-[2px] after:rounded-full after:bg-[hsl(35,90%,42%)] after:opacity-0 data-[state=active]:after:opacity-100 after:transition-opacity"
+                className="relative flex items-center gap-1.5 px-4 py-3 text-sm font-bold whitespace-nowrap rounded-none bg-transparent border-none shadow-none transition-colors text-muted-foreground data-[state=active]:text-primary data-[state=active]:shadow-none data-[state=active]:bg-transparent after:absolute after:bottom-0 after:left-0 after:right-0 after:h-[2px] after:rounded-full after:bg-primary after:opacity-0 data-[state=active]:after:opacity-100 after:transition-opacity"
               >
                 <BeerIcon className="h-3.5 w-3.5 flex-shrink-0" />
                 Scheda
               </TabsTrigger>
               <TabsTrigger
                 value="dove"
-                className="relative flex items-center gap-1.5 px-4 py-3 text-sm font-medium whitespace-nowrap rounded-none bg-transparent border-none shadow-none transition-colors text-gray-400 dark:text-gray-500 data-[state=active]:text-[hsl(35,90%,40%)] dark:data-[state=active]:text-[hsl(38,88%,56%)] data-[state=active]:shadow-none data-[state=active]:bg-transparent after:absolute after:bottom-0 after:left-0 after:right-0 after:h-[2px] after:rounded-full after:bg-[hsl(35,90%,42%)] after:opacity-0 data-[state=active]:after:opacity-100 after:transition-opacity"
+                className="relative flex items-center gap-1.5 px-4 py-3 text-sm font-bold whitespace-nowrap rounded-none bg-transparent border-none shadow-none transition-colors text-muted-foreground data-[state=active]:text-primary data-[state=active]:shadow-none data-[state=active]:bg-transparent after:absolute after:bottom-0 after:left-0 after:right-0 after:h-[2px] after:rounded-full after:bg-primary after:opacity-0 data-[state=active]:after:opacity-100 after:transition-opacity"
               >
                 <MapPin className="h-3.5 w-3.5 flex-shrink-0" />
                 Dove trovarla
@@ -752,7 +752,7 @@ export default function BeerDetail() {
               </TabsTrigger>
               <TabsTrigger
                 value="recensioni"
-                className="relative flex items-center gap-1.5 px-4 py-3 text-sm font-medium whitespace-nowrap rounded-none bg-transparent border-none shadow-none transition-colors text-gray-400 dark:text-gray-500 data-[state=active]:text-[hsl(35,90%,40%)] dark:data-[state=active]:text-[hsl(38,88%,56%)] data-[state=active]:shadow-none data-[state=active]:bg-transparent after:absolute after:bottom-0 after:left-0 after:right-0 after:h-[2px] after:rounded-full after:bg-[hsl(35,90%,42%)] after:opacity-0 data-[state=active]:after:opacity-100 after:transition-opacity"
+                className="relative flex items-center gap-1.5 px-4 py-3 text-sm font-bold whitespace-nowrap rounded-none bg-transparent border-none shadow-none transition-colors text-muted-foreground data-[state=active]:text-primary data-[state=active]:shadow-none data-[state=active]:bg-transparent after:absolute after:bottom-0 after:left-0 after:right-0 after:h-[2px] after:rounded-full after:bg-primary after:opacity-0 data-[state=active]:after:opacity-100 after:transition-opacity"
               >
                 <Star className="h-3.5 w-3.5 flex-shrink-0" />
                 Recensioni
@@ -768,22 +768,22 @@ export default function BeerDetail() {
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
               <div className="rounded-xl p-3 bg-orange-50 dark:bg-orange-950/40 border border-orange-100 dark:border-orange-900/50 flex items-center gap-2.5">
                 <Target className="h-4 w-4 text-orange-500 flex-shrink-0" />
-                <div><p className="text-[10px] uppercase tracking-wider font-semibold text-orange-400 dark:text-orange-500">ABV</p><p className="text-sm font-bold text-gray-900 dark:text-white">{beer?.abv ? `${beer.abv}%` : '—'}</p></div>
+                <div><p className="text-[10px] uppercase tracking-wider font-semibold text-muted-foreground">ABV</p><p className="text-sm font-bold text-foreground">{beer?.abv ? `${beer.abv}%` : '—'}</p></div>
               </div>
-              <div className="rounded-xl p-3 bg-indigo-50 dark:bg-indigo-950/40 border border-indigo-100 dark:border-indigo-900/50 flex items-center gap-2.5">
-                <Sparkles className="h-4 w-4 text-indigo-500 flex-shrink-0" />
-                <div className="min-w-0"><p className="text-[10px] uppercase tracking-wider font-semibold text-indigo-400 dark:text-indigo-500">Stile</p><p className="text-sm font-bold text-gray-900 dark:text-white leading-tight line-clamp-2">{beer?.style || '—'}</p></div>
+              <div className="rounded-xl p-3 bg-orange-50 dark:bg-orange-950/40 border border-orange-100 dark:border-orange-900/50 flex items-center gap-2.5">
+                <Sparkles className="h-4 w-4 text-primary flex-shrink-0" />
+                <div className="min-w-0"><p className="text-[10px] uppercase tracking-wider font-semibold text-muted-foreground">Stile</p><p className="text-sm font-bold text-foreground leading-tight line-clamp-2">{beer?.style || '—'}</p></div>
               </div>
               {beer?.color && (
-                <div className="rounded-xl p-3 bg-blue-50 dark:bg-blue-950/40 border border-blue-100 dark:border-blue-900/50 flex items-center gap-2.5">
-                  <Droplets className="h-4 w-4 text-blue-500 flex-shrink-0" />
-                  <div><p className="text-[10px] uppercase tracking-wider font-semibold text-blue-400 dark:text-blue-500">Colore</p><p className="text-sm font-bold text-gray-900 dark:text-white truncate">{beer.color}</p></div>
+                <div className="rounded-xl p-3 bg-orange-50 dark:bg-orange-950/40 border border-orange-100 dark:border-orange-900/50 flex items-center gap-2.5">
+                  <Droplets className="h-4 w-4 text-primary flex-shrink-0" />
+                  <div><p className="text-[10px] uppercase tracking-wider font-semibold text-muted-foreground">Colore</p><p className="text-sm font-bold text-foreground truncate">{beer.color}</p></div>
                 </div>
               )}
               {beer?.ibu && (
                 <div className="rounded-xl p-3 bg-orange-50 dark:bg-orange-950/20 dark:bg-orange-950/30/40 border border-orange-100 dark:border-orange-900/30 flex items-center gap-2.5">
-                  <Wheat className="h-4 w-4 text-primary dark:text-orange-400 flex-shrink-0" />
-                  <div><p className="text-[10px] uppercase tracking-wider font-semibold text-primary dark:text-orange-400 dark:text-orange-400">IBU</p><p className="text-sm font-bold text-gray-900 dark:text-white">{beer.ibu}</p></div>
+                  <Wheat className="h-4 w-4 text-primary flex-shrink-0" />
+                  <div><p className="text-[10px] uppercase tracking-wider font-semibold text-primary">IBU</p><p className="text-sm font-bold text-foreground">{beer.ibu}</p></div>
                 </div>
               )}
             </div>
@@ -791,28 +791,28 @@ export default function BeerDetail() {
             {/* Description */}
             {beer?.description && (
               <div>
-                <div className="flex items-center gap-2 mb-3">
-                  <p className="text-xs font-bold uppercase tracking-wider text-gray-400 dark:text-gray-500">Descrizione</p>
-                  {translating && (
-                    <span className="text-xs text-gray-400 flex items-center gap-1">
-                      <Loader2 className="h-3 w-3 animate-spin" />Traduzione…
-                    </span>
-                  )}
+            <div className="flex items-center gap-2 mb-3">
+              <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Descrizione</p>
+              {translating && (
+                <span className="text-xs text-muted-foreground flex items-center gap-1">
+                  <Loader2 className="h-3 w-3 animate-spin" />Traduzione…
+                </span>
+              )}
                   {translatedDesc && !translating && (
-                    <span className="text-[10px] font-semibold bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 px-2 py-0.5 rounded-full">
+                    <span className="text-[10px] font-semibold bg-orange-50 text-primary px-2 py-0.5 rounded-full">
                       Tradotto
                     </span>
                   )}
                 </div>
-                <p className="text-gray-700 dark:text-gray-300 leading-relaxed whitespace-pre-line text-sm">
+                <p className="text-foreground leading-relaxed whitespace-pre-line text-sm">
                   {String(translatedDesc || beer.description || '')}
                 </p>
                 {translatedDesc && beer.description && (
                   <details className="mt-3">
-                    <summary className="text-xs text-gray-400 cursor-pointer hover:text-gray-600 dark:hover:text-gray-300 select-none">
+                    <summary className="text-xs text-muted-foreground cursor-pointer hover:text-foreground select-none transition-colors">
                       Testo originale
                     </summary>
-                    <p className="mt-2 text-sm text-gray-500 dark:text-gray-400 leading-relaxed whitespace-pre-line border-t  pt-2">
+                    <p className="mt-2 text-sm text-muted-foreground leading-relaxed whitespace-pre-line border-t border-orange-50 pt-2">
                       {String(beer.description)}
                     </p>
                   </details>
@@ -825,19 +825,19 @@ export default function BeerDetail() {
               <>
                 <div className="border-t " />
                 <Link href={`/brewery/${beer.brewery.id}`}>
-                  <div className="flex items-center gap-4 group cursor-pointer">
-                    <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-orange-50 to-orange-100 dark:from-orange-950/30 dark:to-orange-900/30 border border-orange-100 dark:border-orange-900/30 flex items-center justify-center flex-shrink-0 overflow-hidden">
+                  <div className="bg-white dark:bg-[hsl(25,14%,10%)] rounded-2xl border border-orange-50 dark:border-[hsl(25,12%,16%)] shadow-sm p-4 flex items-center gap-4 group cursor-pointer transition-all hover:border-primary/20">
+                    <div className="w-14 h-14 rounded-2xl bg-orange-50 dark:bg-[hsl(24,93%,15%)] border border-orange-100 dark:border-orange-900/30 flex items-center justify-center flex-shrink-0 overflow-hidden">
                       {(beer.brewery as any).logoUrl
                         ? <img src={(beer.brewery as any).logoUrl} alt={beer.brewery.name} className="w-full h-full object-contain p-1" />
-                        : <Building2 className="h-6 w-6 text-primary dark:text-orange-400 dark:text-orange-400" />
+                        : <Building2 className="h-6 w-6 text-primary" />
                       }
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-[10px] uppercase tracking-wider font-bold text-gray-400 dark:text-gray-500 mb-0.5">Birrificio</p>
-                      <p className="text-base font-bold text-gray-900 dark:text-white group-hover:text-primary dark:text-orange-400 dark:group-hover:text-orange-400 transition-colors truncate">{beer.brewery.name}</p>
-                      {beer.brewery.location && <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5 flex items-center gap-1"><MapPin className="h-3 w-3" />{beer.brewery.location}</p>}
+                      <p className="text-[10px] uppercase tracking-wider font-bold text-muted-foreground mb-0.5">Birrificio</p>
+                      <p className="text-base font-bold text-foreground group-hover:text-primary transition-colors truncate">{beer.brewery.name}</p>
+                      {beer.brewery.location && <p className="text-xs text-muted-foreground mt-0.5 flex items-center gap-1"><MapPin className="h-3 w-3" />{beer.brewery.location}</p>}
                     </div>
-                    <ChevronRight className="h-5 w-5 text-gray-300 dark:text-gray-600 group-hover:text-primary dark:text-orange-400 transition-colors flex-shrink-0" />
+                    <ChevronRight className="h-5 w-5 text-muted-foreground group-hover:text-primary transition-colors flex-shrink-0" />
                   </div>
                 </Link>
               </>
@@ -849,17 +849,17 @@ export default function BeerDetail() {
                 <div className="border-t " />
                 <div>
                   <div className="flex items-center gap-2 mb-3">
-                    <Trophy className="h-4 w-4 text-yellow-500" />
-                    <h3 className="text-xs font-bold uppercase tracking-wider text-gray-400 dark:text-gray-500">Premi e Riconoscimenti</h3>
+                    <Trophy className="h-4 w-4 text-amber-500 fill-amber-500" />
+                    <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Premi e Riconoscimenti</h3>
                   </div>
                   <div className="flex flex-wrap gap-2">
                     {(beer as any).awards.map((award: any, i: number) => (
-                      <div key={i} className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-gradient-to-r from-orange-50 to-orange-50 dark:from-orange-950/20 dark:to-orange-950/20 border border-yellow-200 dark:border-yellow-800/50 text-sm">
-                        <Trophy className={`h-3.5 w-3.5 flex-shrink-0 ${award.type === 'gold' ? 'text-yellow-500' : award.type === 'silver' ? 'text-gray-400' : award.type === 'bronze' ? 'text-primary dark:text-orange-400' : 'text-blue-500'}`} />
-                        <span className="font-semibold text-gray-900 dark:text-white">{award.name}</span>
-                        <span className="text-gray-500 dark:text-gray-400">·</span>
-                        <span className="text-gray-600 dark:text-gray-400 text-xs">{award.competition}</span>
-                        <span className="text-gray-400 dark:text-gray-500 text-xs">({award.year})</span>
+                      <div key={i} className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white dark:bg-[hsl(25,14%,10%)] border border-orange-50 dark:border-orange-900/50 shadow-sm text-sm">
+                        <Trophy className={`h-3.5 w-3.5 flex-shrink-0 ${award.type === 'gold' ? 'text-yellow-500' : award.type === 'silver' ? 'text-muted-foreground' : award.type === 'bronze' ? 'text-primary' : 'text-primary'}`} />
+                        <span className="font-semibold text-foreground">{award.name}</span>
+                        <span className="text-muted-foreground">·</span>
+                        <span className="text-muted-foreground text-xs">{award.competition}</span>
+                        <span className="text-muted-foreground text-xs">({award.year})</span>
                       </div>
                     ))}
                   </div>
@@ -873,25 +873,25 @@ export default function BeerDetail() {
                 <div className="border-t " />
                 <div>
                   <div className="flex items-center gap-2 mb-4">
-                    <Sparkles className="h-4 w-4 text-primary dark:text-orange-400" />
-                    <h3 className="text-xs font-bold uppercase tracking-wider text-gray-400 dark:text-gray-500">Potrebbe piacerti</h3>
+                    <Sparkles className="h-4 w-4 text-primary" />
+                    <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Potrebbe piacerti</h3>
                   </div>
                   <div className="space-y-1">
                     {suggestedBeers.map((sb: any) => (
                       <Link key={sb.id} href={`/beer/${sb.id}`}>
-                        <div className="flex items-center gap-3 py-2.5 px-3 -mx-3 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors group">
-                          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-orange-50 to-orange-100 dark:from-orange-950/30 dark:to-orange-900/30 flex items-center justify-center flex-shrink-0 overflow-hidden border border-orange-100 dark:border-orange-900/30">
+                        <div className="flex items-center gap-3 py-2.5 px-3 -mx-3 rounded-xl hover:bg-orange-50 dark:hover:bg-orange-950/20 transition-colors group">
+                          <div className="w-10 h-10 rounded-xl bg-orange-50 dark:bg-[hsl(24,93%,15%)] flex items-center justify-center flex-shrink-0 overflow-hidden border border-orange-100 dark:border-orange-900/30">
                             {sb.imageUrl
                               ? <img src={sb.imageUrl} alt={sb.name} className="w-full h-full object-cover" />
-                              : <BeerIcon className="h-4 w-4 text-primary dark:text-orange-400" />
+                              : <BeerIcon className="h-4 w-4 text-primary" />
                             }
                           </div>
                           <div className="flex-1 min-w-0">
-                            <p className="text-sm font-semibold text-gray-900 dark:text-white group-hover:text-primary dark:text-orange-400 dark:group-hover:text-orange-400 transition-colors truncate">{sb.name}</p>
-                            {sb.style && <p className="text-xs text-gray-500 dark:text-gray-400 truncate mt-0.5">{sb.style}{sb.abv ? ` · ${sb.abv}%` : ''}</p>}
+                            <p className="text-sm font-bold text-foreground group-hover:text-primary transition-colors truncate">{sb.name}</p>
+                            {sb.style && <p className="text-xs text-muted-foreground truncate mt-0.5">{sb.style}{sb.abv ? ` · ${sb.abv}%` : ''}</p>}
                           </div>
                           {sb.avgRating != null && (
-                            <div className="flex items-center gap-0.5 text-xs font-bold text-primary dark:text-orange-400 dark:text-orange-400 flex-shrink-0 bg-orange-50 dark:bg-orange-950/20 dark:bg-orange-950/30 px-2 py-0.5 rounded-full">
+                            <div className="flex items-center gap-0.5 text-xs font-bold text-primary flex-shrink-0 bg-orange-50 px-2 py-0.5 rounded-full">
                               <Star className="h-3 w-3 fill-current" />
                               {sb.avgRating.toFixed(1)}
                             </div>
@@ -913,29 +913,29 @@ export default function BeerDetail() {
               </div>
             ) : totalLocations === 0 ? (
               <div className="text-center py-16">
-                <div className="w-14 h-14 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <MapPin className="h-7 w-7 text-gray-400" />
+                <div className="w-14 h-14 bg-orange-50 dark:bg-[hsl(24,93%,15%)] rounded-full flex items-center justify-center mx-auto mb-4">
+                  <MapPin className="h-7 w-7 text-primary" />
                 </div>
-                <p className="text-gray-600 dark:text-gray-400 text-sm">Questa birra non è disponibile in nessun locale al momento.</p>
+                <p className="text-muted-foreground text-sm">Questa birra non è disponibile in nessun locale al momento.</p>
               </div>
             ) : (
               <div className="space-y-6">
                 {tapLocations.length > 0 && (
                   <div>
-                    <h3 className="text-sm font-bold text-gray-700 dark:text-gray-300 mb-3 flex items-center gap-2">
-                      <Wine className="h-4 w-4 text-primary dark:text-orange-400" />
+                    <h3 className="text-sm font-bold text-muted-foreground mb-3 flex items-center gap-2">
+                      <Wine className="h-4 w-4 text-primary" />
                       Alla Spina ({tapLocations.length})
                     </h3>
                     <div className="space-y-2">
                       {tapLocations.map((location: any, idx: number) => (
                         <Link key={idx} href={`/pub/${location.pub.id}`}>
-                          <div className="bg-white dark:bg-[hsl(25,14%,10%)] rounded-2xl border border-orange-50 shadow-sm rounded-xl p-4 border  hover:border-orange-100 dark:border-orange-900/30 dark:hover:border-orange-900/30 transition-colors flex items-center justify-between group">
+                          <div className="bg-white dark:bg-[hsl(25,14%,10%)] rounded-2xl border border-orange-50 dark:border-[hsl(25,12%,16%)] shadow-sm p-4 border  hover:border-primary/20 transition-colors flex items-center justify-between group">
                             <div>
-                              <h4 className="font-semibold text-sm text-gray-900 dark:text-white group-hover:text-primary dark:text-orange-400 dark:group-hover:text-orange-400 transition-colors">{location.pub.name}</h4>
-                              <p className="text-xs text-gray-500 dark:text-gray-400">{location.pub.address}, {location.pub.city}</p>
+                              <h4 className="font-bold text-sm text-foreground group-hover:text-primary transition-colors">{location.pub.name}</h4>
+                              <p className="text-xs text-muted-foreground">{location.pub.address}, {location.pub.city}</p>
                             </div>
                             {location.tapItem.price && (
-                              <Badge className="bg-green-50 dark:bg-green-950 text-green-700 dark:text-green-300 border-green-200 dark:border-green-800 border text-xs font-semibold">€{location.tapItem.price}</Badge>
+                              <Badge className="bg-orange-50 text-primary border-orange-100 border text-xs font-bold">€{location.tapItem.price}</Badge>
                             )}
                           </div>
                         </Link>
@@ -945,20 +945,20 @@ export default function BeerDetail() {
                 )}
                 {bottleLocations.length > 0 && (
                   <div>
-                    <h3 className="text-sm font-bold text-gray-700 dark:text-gray-300 mb-3 flex items-center gap-2">
-                      <BeerIcon className="h-4 w-4 text-blue-500" />
+                    <h3 className="text-sm font-bold text-muted-foreground mb-3 flex items-center gap-2">
+                      <BeerIcon className="h-4 w-4 text-primary" />
                       In Bottiglia ({bottleLocations.length})
                     </h3>
                     <div className="space-y-2">
                       {bottleLocations.map((location: any, idx: number) => (
                         <Link key={idx} href={`/pub/${location.pub.id}`}>
-                          <div className="bg-white dark:bg-[hsl(25,14%,10%)] rounded-2xl border border-orange-50 shadow-sm rounded-xl p-4 border  hover:border-blue-200 dark:hover:border-blue-800 transition-colors flex items-center justify-between group">
+                          <div className="bg-white dark:bg-[hsl(25,14%,10%)] rounded-2xl border border-orange-50 dark:border-[hsl(25,12%,16%)] shadow-sm p-4 border  hover:border-primary/20 transition-colors flex items-center justify-between group">
                             <div>
-                              <h4 className="font-semibold text-sm text-gray-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">{location.pub.name}</h4>
-                              <p className="text-xs text-gray-500 dark:text-gray-400">{location.pub.address}, {location.pub.city}</p>
+                              <h4 className="font-bold text-sm text-foreground group-hover:text-primary transition-colors">{location.pub.name}</h4>
+                              <p className="text-xs text-muted-foreground">{location.pub.address}, {location.pub.city}</p>
                             </div>
                             {location.bottleItem.price && (
-                              <Badge className="bg-blue-50 dark:bg-blue-950 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-800 border text-xs font-semibold">€{location.bottleItem.price}</Badge>
+                              <Badge className="bg-orange-50 text-primary border-orange-100 border text-xs font-bold">€{location.bottleItem.price}</Badge>
                             )}
                           </div>
                         </Link>
@@ -974,10 +974,10 @@ export default function BeerDetail() {
           <TabsContent value="recensioni" className="px-4 lg:px-6 pt-6 pb-8 space-y-6">
             {/* My tasting note */}
             {isAuthenticated && (
-              <div className="bg-white dark:bg-[hsl(25,14%,10%)] rounded-2xl border border-orange-50 shadow-sm rounded-xl p-5 border ">
+              <div className="bg-white dark:bg-[hsl(25,14%,10%)] rounded-2xl border border-orange-50 dark:border-[hsl(25,12%,16%)] shadow-sm p-5 border ">
                 <div className="flex items-center justify-between mb-4">
-                  <h2 className="text-base font-bold text-gray-900 dark:text-white flex items-center gap-2">
-                    <Star className="h-4 w-4 text-primary dark:text-orange-400" />
+                  <h2 className="text-base font-bold text-foreground flex items-center gap-2">
+                    <Star className="h-4 w-4 text-primary" />
                     La mia nota
                   </h2>
                   {hasTasted && !showTastingForm && (
@@ -985,7 +985,7 @@ export default function BeerDetail() {
                       variant="outline"
                       size="sm"
                       onClick={() => setShowTastingForm(true)}
-                      className="bg-white/60 dark:bg-gray-800/60 h-8 text-xs"
+                      className="bg-white/60 dark:bg-[hsl(25,14%,12%)]/60 h-8 text-xs"
                       data-testid="button-edit-tasting"
                     >
                       Modifica
@@ -1010,13 +1010,13 @@ export default function BeerDetail() {
               ) : (
                 <div className="space-y-3">
                   <div className="flex items-center gap-2">
-                    {[1,2,3,4,5].map(s => <Star key={s} className={`h-4 w-4 ${s <= existingTasting.rating ? 'text-yellow-500 fill-yellow-500' : 'text-gray-300'}`} />)}
-                    <span className="text-sm font-semibold text-gray-900 dark:text-white">{existingTasting.rating}/5</span>
+                    {[1,2,3,4,5].map(s => <Star key={s} className={`h-4 w-4 ${s <= existingTasting.rating ? 'text-amber-500 fill-amber-500' : 'text-gray-300'}`} />)}
+                    <span className="text-sm font-bold text-foreground">{existingTasting.rating}/5</span>
                   </div>
                   {(existingTasting.personalNotes || existingTasting.notes) && (
-                    <p className="text-gray-700 dark:text-gray-300 italic text-sm">"{existingTasting.personalNotes || existingTasting.notes}"</p>
+                    <p className="text-muted-foreground italic text-sm">"{existingTasting.personalNotes || existingTasting.notes}"</p>
                   )}
-                  <p className="text-xs text-gray-500 dark:text-gray-400">
+                  <p className="text-xs text-muted-foreground">
                     Degustata il {new Date(existingTasting.tastedAt).toLocaleDateString('it-IT')}
                     {existingTasting.format ? ` in ${existingTasting.format}` : ''}
                     {existingTasting.pubName ? ` presso ${existingTasting.pubName}` : ''}
@@ -1028,27 +1028,26 @@ export default function BeerDetail() {
 
             {/* Community Reviews */}
             {reviewsData && reviewsData.reviewCount > 0 && (
-              <div className="bg-white dark:bg-[hsl(25,14%,10%)] rounded-2xl border border-orange-50 shadow-sm rounded-xl p-5 border ">
-                {/* Header with avg rating */}
+              <div className="bg-white dark:bg-[hsl(25,14%,10%)] rounded-2xl border border-orange-50 dark:border-[hsl(25,12%,16%)] shadow-sm p-4 border-b">
                 <div className="flex items-center justify-between mb-4">
-                  <h2 className="text-base font-bold text-gray-900 dark:text-white flex items-center gap-2">
-                    <Star className="h-4 w-4 text-yellow-500 fill-yellow-500" />
+                  <h2 className="text-base font-bold text-foreground flex items-center gap-2">
+                    <Star className="h-4 w-4 text-amber-500 fill-amber-500" />
                     Recensioni Community
-                    <span className="text-sm font-normal text-gray-500">({reviewsData.reviewCount})</span>
+                    <span className="text-sm font-normal text-muted-foreground">({reviewsData.reviewCount})</span>
                   </h2>
                   {reviewsData.avgRating && (
                     <div className="flex items-center gap-1">
                       {[1,2,3,4,5].map(s => (
-                        <Star key={s} className={`h-3.5 w-3.5 ${s <= Math.round(reviewsData.avgRating || 0) ? 'text-yellow-500 fill-yellow-500' : 'text-gray-300 dark:text-gray-400'}`} />
+                        <Star key={s} className={`h-3.5 w-3.5 ${s <= Math.round(reviewsData.avgRating || 0) ? 'text-amber-500 fill-amber-500' : 'text-gray-300 dark:text-gray-400'}`} />
                       ))}
-                      <span className="ml-1 text-sm font-bold text-gray-900 dark:text-white">{reviewsData.avgRating?.toFixed(1)}</span>
+                      <span className="ml-1 text-sm font-bold text-foreground">{reviewsData.avgRating?.toFixed(1)}</span>
                     </div>
                   )}
                 </div>
 
               {/* Rating Distribution Histogram */}
               {reviewsData.distribution && (
-                <div className="mb-4 space-y-1.5 bg-gray-50 dark:bg-gray-800/50 rounded-xl p-3">
+                <div className="mb-4 space-y-1.5 bg-orange-50/50 dark:bg-orange-950/20 rounded-xl p-3">
                   {[5, 4, 3, 2, 1].map(star => {
                     const count = reviewsData.distribution?.[star] || 0;
                     const pct = reviewsData.reviewCount > 0 ? (count / reviewsData.reviewCount) * 100 : 0;
@@ -1057,13 +1056,13 @@ export default function BeerDetail() {
                       <button
                         key={star}
                         onClick={() => { setReviewFilterRating(isActive ? null : star); setShowAllReviews(false); }}
-                        className={`flex items-center gap-3 w-full rounded-lg px-1 py-0.5 transition-colors ${isActive ? 'bg-orange-50 dark:bg-orange-950/20 dark:bg-orange-950/30' : 'hover:bg-gray-100 dark:hover:bg-gray-700/50'}`}
+                        className={`flex items-center gap-3 w-full rounded-lg px-1 py-0.5 transition-colors ${isActive ? 'bg-orange-100 dark:bg-orange-950/30' : 'hover:bg-orange-50 dark:hover:bg-orange-950/20'}`}
                       >
                         <div className="flex items-center gap-1 w-12 flex-shrink-0">
-                          <span className="text-xs font-medium text-gray-600 dark:text-gray-400 w-3">{star}</span>
-                          <Star className="h-3 w-3 text-yellow-400 fill-yellow-400" />
+                          <span className="text-xs font-bold text-muted-foreground w-3">{star}</span>
+                          <Star className="h-3 w-3 text-amber-500 fill-amber-500" />
                         </div>
-                        <div className="flex-1 h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+                        <div className="flex-1 h-2 bg-orange-100 dark:bg-orange-900/30 rounded-full overflow-hidden">
                           <div
                             className={`h-full rounded-full transition-all duration-500 ${isActive ? 'bg-primary' : 'bg-gradient-to-r from-yellow-400 to-orange-500'}`}
                             style={{ width: `${pct}%` }}
@@ -1091,15 +1090,15 @@ export default function BeerDetail() {
                   </button>
                 )}
                 <div className="flex items-center gap-1.5 ml-auto">
-                  <ArrowUpDown className="h-3.5 w-3.5 text-gray-400" />
+                  <ArrowUpDown className="h-3.5 w-3.5 text-muted-foreground" />
                   {(['recent', 'highest', 'lowest'] as const).map(opt => (
                     <button
                       key={opt}
                       onClick={() => { setReviewSortBy(opt); setShowAllReviews(false); }}
-                      className={`text-xs px-2.5 py-1 rounded-full border font-medium transition-colors ${
+                      className={`text-xs px-2.5 py-1 rounded-full border font-bold transition-colors ${
                         reviewSortBy === opt
-                          ? 'bg-gray-800 dark:bg-gray-200 text-white dark:text-gray-900 border-gray-800 dark:border-gray-200'
-                          : 'text-gray-600 dark:text-gray-400 border-gray-200 dark:border-gray-700 hover:border-gray-400'
+                          ? 'bg-primary text-white border-primary'
+                          : 'text-muted-foreground border-orange-50 hover:border-primary/20'
                       }`}
                     >
                       {opt === 'recent' ? 'Recenti' : opt === 'highest' ? '↑ Voto' : '↓ Voto'}
@@ -1116,7 +1115,7 @@ export default function BeerDetail() {
                   const userBadge = getBadgeForCount(Number(review.userReviewCount || 0));
                   const isPublicReviewer = review.isPublic !== false;
                   return (
-                    <div key={review.id} className="flex gap-3 p-3 bg-gray-50 dark:bg-gray-800/50 rounded-xl group">
+                    <div key={review.id} className="flex gap-3 p-3 bg-orange-50/30 dark:bg-orange-950/10 rounded-xl group">
                       <Avatar className="h-9 w-9 flex-shrink-0">
                         {review.profileImageUrl && <AvatarImage src={review.profileImageUrl} />}
                         <AvatarFallback className="bg-gradient-to-br from-[hsl(24,93%,49%)] to-[hsl(20,95%,42%)] text-white font-bold text-sm">
@@ -1128,32 +1127,32 @@ export default function BeerDetail() {
                           <div className="flex items-center gap-1.5 min-w-0">
                             {isPublicReviewer ? (
                               <Link href={`/user/${review.nickname || review.userId}`}>
-                                <span className="font-semibold text-sm text-gray-900 dark:text-white hover:text-primary dark:text-orange-400 dark:hover:text-primary dark:text-orange-400 cursor-pointer transition-colors truncate">{displayName}</span>
+                                <span className="font-bold text-sm text-foreground hover:text-primary cursor-pointer transition-colors truncate">{displayName}</span>
                               </Link>
                             ) : (
-                              <span className="font-semibold text-sm text-gray-900 dark:text-white truncate">{displayName}</span>
+                              <span className="font-bold text-sm text-foreground truncate">{displayName}</span>
                             )}
                             <span className="text-sm flex-shrink-0" title={userBadge.name}>{userBadge.emoji}</span>
                           </div>
                           <div className="flex items-center gap-0.5 flex-shrink-0">
                             {[1,2,3,4,5].map(s => (
-                              <Star key={s} className={`h-3 w-3 ${s <= (review.rating || 0) ? 'text-yellow-500 fill-yellow-500' : 'text-gray-300 dark:text-gray-400'}`} />
+                              <Star key={s} className={`h-3 w-3 ${s <= (review.rating || 0) ? 'text-amber-500 fill-amber-500' : 'text-gray-300 dark:text-gray-400'}`} />
                             ))}
                           </div>
                         </div>
                         {review.personalNotes && (
-                          <p className="text-sm text-gray-700 dark:text-gray-300 italic mb-1">"{review.personalNotes}"</p>
+                          <p className="text-sm text-foreground italic mb-1">"{review.personalNotes}"</p>
                         )}
                         {review.ownerReply && (
-                          <div className="mt-2 ml-1 pl-3 border-l-2 border-orange-100 dark:border-orange-900/30 dark:border-orange-900/30 rounded-sm">
+                          <div className="mt-2 ml-1 pl-3 border-l-2 border-orange-50 dark:border-orange-900/30 rounded-sm">
                             <div className="flex items-center gap-1 mb-0.5">
-                              <MessageSquare className="h-3 w-3 text-primary dark:text-orange-400" />
-                              <span className="text-xs font-semibold text-primary dark:text-orange-400 dark:text-orange-400">Risposta del birrificio</span>
+                              <MessageSquare className="h-3 w-3 text-primary" />
+                              <span className="text-xs font-bold text-primary">Risposta del birrificio</span>
                             </div>
-                            <p className="text-xs text-gray-600 dark:text-gray-400 leading-relaxed">{review.ownerReply}</p>
+                            <p className="text-xs text-muted-foreground leading-relaxed">{review.ownerReply}</p>
                           </div>
                         )}
-                        <div className="flex items-center justify-between gap-2 text-xs text-gray-400 flex-wrap">
+                        <div className="flex items-center justify-between gap-2 text-xs text-muted-foreground flex-wrap">
                           <div className="flex items-center gap-1 flex-wrap">
                             <span>Degustata il {new Date(review.tastedAt).toLocaleDateString('it-IT')}</span>
                             {review.format && <span>in {review.format}</span>}
@@ -1162,7 +1161,7 @@ export default function BeerDetail() {
                                 <span>presso</span>
                                 <a
                                   href={`/pub/${review.pubId}`}
-                                  className="text-primary dark:text-orange-400 hover:text-primary dark:text-orange-400 dark:text-orange-400 hover:underline font-medium"
+                                  className="text-primary hover:text-primary/80 hover:underline font-bold"
                                   onClick={(e) => e.stopPropagation()}
                                 >
                                   {review.pubName}
@@ -1173,7 +1172,7 @@ export default function BeerDetail() {
                           {isAuthenticated && (
                             <button
                               onClick={() => { setReportDialogReviewId(review.id); }}
-                              className="flex items-center gap-1 text-gray-300 dark:text-gray-400 hover:text-red-400 dark:hover:text-red-400 transition-colors"
+                              className="flex items-center gap-1 text-muted-foreground hover:text-destructive transition-colors"
                               title="Segnala recensione"
                             >
                               <Flag className="h-3 w-3" />
@@ -1190,7 +1189,7 @@ export default function BeerDetail() {
               {filteredReviews.length > 5 && (
                 <button
                   onClick={() => setShowAllReviews(!showAllReviews)}
-                  className="w-full mt-4 flex items-center justify-center gap-2 py-2.5 text-sm font-medium text-primary dark:text-orange-400 dark:text-orange-400 hover:text-primary dark:text-orange-400 dark:hover:text-primary border border-dashed border-orange-100 dark:border-orange-900/30 dark:border-amber-700 rounded-xl hover:bg-orange-50 dark:bg-orange-950/20 dark:hover:bg-orange-950/10/10 transition-colors"
+                  className="w-full mt-4 flex items-center justify-center gap-2 py-2.5 text-sm font-bold text-primary hover:text-primary/80 border border-dashed border-orange-100 dark:border-orange-900/30 rounded-xl hover:bg-orange-50 dark:hover:bg-orange-950/10 transition-colors"
                 >
                   <ChevronDown className={`h-4 w-4 transition-transform ${showAllReviews ? 'rotate-180' : ''}`} />
                   {showAllReviews
@@ -1200,10 +1199,10 @@ export default function BeerDetail() {
               )}
 
               {filteredReviews.length === 0 && reviewFilterRating !== null && (
-                <div className="text-center py-6 text-gray-400">
+                <div className="text-center py-6 text-muted-foreground">
                   <Star className="h-8 w-8 mx-auto mb-2 opacity-30" />
                   <p className="text-sm">Nessuna recensione con {reviewFilterRating} stelle</p>
-                  <button onClick={() => setReviewFilterRating(null)} className="text-xs text-primary dark:text-orange-400 mt-1 hover:underline">Rimuovi filtro</button>
+                  <button onClick={() => setReviewFilterRating(null)} className="text-xs text-primary mt-1 hover:underline">Rimuovi filtro</button>
                 </div>
               )}
               </div>
@@ -1301,29 +1300,29 @@ export default function BeerDetail() {
                   type="checkbox"
                   checked={editForm.isAlcoholFree}
                   onChange={(e) => setEditForm({ ...editForm, isAlcoholFree: e.target.checked })}
-                  className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                  className="w-4 h-4 rounded border-orange-50 text-primary focus:ring-primary"
                 />
-                <span className="text-sm font-medium text-blue-700 dark:text-blue-400">0.0% Analcolica</span>
+                <span className="text-sm font-bold text-primary">0.0% Analcolica</span>
               </label>
               <label className="flex items-center gap-2 cursor-pointer">
                 <input
                   type="checkbox"
                   checked={editForm.isCollaboration}
                   onChange={(e) => { setEditForm({ ...editForm, isCollaboration: e.target.checked }); if (!e.target.checked) setEditCollabBreweries([]); }}
-                  className="w-4 h-4 rounded border-gray-300 text-purple-600 focus:ring-purple-500"
+                  className="w-4 h-4 rounded border-orange-50 text-primary focus:ring-primary"
                 />
-                <span className="text-sm font-medium text-purple-700 dark:text-purple-400 flex items-center gap-1"><Users className="w-3.5 h-3.5" />Birra in Collaborazione</span>
+                <span className="text-sm font-bold text-primary flex items-center gap-1"><Users className="w-3.5 h-3.5" />Birra in Collaborazione</span>
               </label>
             </div>
             {editForm.isCollaboration && (
-              <div className="space-y-2 p-3 rounded-lg border border-purple-200 dark:border-purple-800 bg-purple-50/50 dark:bg-purple-900/10">
-                <Label className="text-purple-800 dark:text-purple-300 font-medium flex items-center gap-1.5"><Building2 className="w-4 h-4" />Birrifici Partner</Label>
+              <div className="space-y-2 p-3 rounded-lg border border-orange-100 bg-orange-50 dark:bg-[hsl(24,93%,15%)]">
+                <Label className="text-primary font-bold flex items-center gap-1.5"><Building2 className="w-4 h-4" />Birrifici Partner</Label>
                 {editCollabBreweries.length > 0 && (
                   <div className="flex flex-wrap gap-2">
                     {editCollabBreweries.map(b => (
-                      <span key={b.id} className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-sm font-medium bg-purple-100 text-purple-800 dark:bg-purple-900/40 dark:text-purple-200">
+                      <span key={b.id} className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-sm font-bold bg-white dark:bg-[hsl(25,14%,10%)] border border-orange-50 dark:border-orange-900/30 text-primary">
                         <Building2 className="w-3 h-3" />{b.name}
-                        <button type="button" onClick={() => setEditCollabBreweries(editCollabBreweries.filter(x => x.id !== b.id))} className="ml-0.5 hover:text-purple-900">×</button>
+                        <button type="button" onClick={() => setEditCollabBreweries(editCollabBreweries.filter(x => x.id !== b.id))} className="ml-0.5 hover:text-primary/80 transition-colors">×</button>
                       </span>
                     ))}
                   </div>
@@ -1337,20 +1336,20 @@ export default function BeerDetail() {
                     autoComplete="off"
                   />
                   {showCollabResults && collabResults.length > 0 && (
-                    <div className="absolute z-50 w-full mt-1 bg-white dark:bg-gray-800 border rounded-md shadow-xl max-h-40 overflow-y-auto">
+                    <div className="absolute z-50 w-full mt-1 bg-white dark:bg-[hsl(25,14%,10%)] border border-orange-50 rounded-md shadow-xl max-h-40 overflow-y-auto">
                       {collabResults.map((b: any) => (
                         <button key={b.id} type="button"
                           onMouseDown={e => { e.preventDefault(); setEditCollabBreweries([...editCollabBreweries, { id: b.id, name: b.name }]); setCollabQuery(""); setCollabResults([]); setShowCollabResults(false); }}
-                          className="w-full px-3 py-2 text-left hover:bg-purple-50 dark:hover:bg-purple-900/20 border-b last:border-b-0 flex items-center gap-2 text-sm">
-                          {b.logoUrl ? <img src={b.logoUrl} alt="" className="w-5 h-5 rounded-full object-cover" /> : <Building2 className="w-4 h-4 text-purple-400" />}
+                          className="w-full px-3 py-2 text-left hover:bg-orange-50 dark:hover:bg-orange-950/20 border-b last:border-b-0 flex items-center gap-2 text-sm text-foreground">
+                          {b.logoUrl ? <img src={b.logoUrl} alt="" className="w-5 h-5 rounded-full object-cover" /> : <Building2 className="w-4 h-4 text-primary" />}
                           <span>{b.name}</span>
-                          <span className="text-xs text-gray-400 ml-auto">{b.location}</span>
+                          <span className="text-xs text-muted-foreground ml-auto">{b.location}</span>
                         </button>
                       ))}
                     </div>
                   )}
                 </div>
-                <p className="text-xs text-purple-600 dark:text-purple-400">La birra apparirà nelle pagine di tutti i birrifici partner.</p>
+                <p className="text-xs text-primary font-bold">La birra apparirà nelle pagine di tutti i birrifici partner.</p>
               </div>
             )}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -1402,17 +1401,17 @@ export default function BeerDetail() {
         <DialogContent className="max-w-md">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              <Flag className="w-4 h-4 text-red-500" />
+              <Flag className="w-4 h-4 text-primary" />
               Segnala recensione
             </DialogTitle>
           </DialogHeader>
           <div className="space-y-4 pt-2">
             <div>
-              <label className="text-sm font-medium text-gray-700 dark:text-gray-300 block mb-2">Motivo della segnalazione</label>
+              <label className="text-sm font-bold text-foreground block mb-2">Motivo della segnalazione</label>
               <select
                 value={reportReason}
                 onChange={(e) => setReportReason(e.target.value)}
-                className="w-full border border-gray-300 dark:border-gray-600 rounded-md px-3 py-2 text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+                className="w-full border border-orange-50 dark:border-[hsl(25,12%,16%)] rounded-md px-3 py-2 text-sm bg-white dark:bg-[hsl(25,14%,10%)] text-foreground"
               >
                 <option value="inappropriato">Contenuto inappropriato</option>
                 <option value="spam">Spam o pubblicità</option>
@@ -1422,7 +1421,7 @@ export default function BeerDetail() {
               </select>
             </div>
             <div>
-              <label className="text-sm font-medium text-gray-700 dark:text-gray-300 block mb-2">Descrizione (opzionale)</label>
+              <label className="text-sm font-bold text-foreground block mb-2">Descrizione (opzionale)</label>
               <Textarea
                 value={reportDescription}
                 onChange={(e) => setReportDescription(e.target.value)}
@@ -1436,7 +1435,7 @@ export default function BeerDetail() {
                 Annulla
               </Button>
               <Button
-                className="flex-1 bg-red-500 hover:bg-red-600 text-white"
+                className="flex-1 bg-primary hover:bg-primary/90 text-white font-bold"
                 disabled={reportMutation.isPending}
                 onClick={() => {
                   if (reportDialogReviewId) {
@@ -1477,32 +1476,32 @@ export default function BeerDetail() {
       {similarBeers.length > 0 && (
         <div className="bg-background dark:bg-[hsl(25,14%,8%)] border-t  py-8">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <h3 className="text-base font-bold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
-              <Sparkles className="h-4 w-4 text-primary dark:text-orange-400" />
+            <h3 className="text-base font-bold text-foreground mb-4 flex items-center gap-2">
+              <Sparkles className="h-4 w-4 text-primary" />
               Potrebbero piacerti
-              <span className="text-xs font-normal text-gray-400 dark:text-neutral-500 ml-1">· stile {beer?.style}</span>
+              <span className="text-xs font-normal text-muted-foreground ml-1">· stile {beer?.style}</span>
             </h3>
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
               {similarBeers.map((b: any) => (
                 <Link key={b.id} href={`/beer/${b.id}`}>
-                  <div className="group bg-white dark:bg-neutral-800 border border-gray-100 dark:border-neutral-700 rounded-xl p-3 hover:shadow-md hover:border-orange-100 dark:border-orange-900/30 dark:hover:border-orange-900/30 transition-all cursor-pointer h-full flex flex-col">
-                    <div className="w-10 h-10 rounded-lg flex-shrink-0 bg-orange-50 dark:bg-orange-950/20 dark:bg-amber-900/20 flex items-center justify-center overflow-hidden mb-2 mx-auto">
+                  <div className="group bg-white dark:bg-[hsl(25,14%,10%)] border border-orange-50 dark:border-[hsl(25,12%,16%)] rounded-xl p-3 hover:shadow-md hover:border-primary/20 transition-all cursor-pointer h-full flex flex-col">
+                    <div className="w-10 h-10 rounded-lg flex-shrink-0 bg-orange-50 dark:bg-[hsl(24,93%,15%)] flex items-center justify-center overflow-hidden mb-2 mx-auto">
                       {b.imageUrl ? (
                         <img src={b.imageUrl} alt={b.name} className="w-10 h-10 object-contain p-0.5" />
                       ) : b.breweryLogoUrl ? (
                         <img src={b.breweryLogoUrl} alt={b.breweryName} className="w-8 h-8 object-contain" />
                       ) : (
-                        <BeerIcon className="w-5 h-5 text-primary dark:text-orange-400" />
+                        <BeerIcon className="w-5 h-5 text-primary" />
                       )}
                     </div>
-                    <p className="font-semibold text-xs text-gray-900 dark:text-white line-clamp-2 group-hover:text-primary dark:text-orange-400 dark:group-hover:text-orange-400 text-center leading-tight">
+                    <p className="font-bold text-xs text-foreground line-clamp-2 group-hover:text-primary text-center leading-tight">
                       {b.name}
                     </p>
-                    <p className="text-[10px] text-gray-400 dark:text-neutral-500 line-clamp-1 text-center mt-0.5">
+                    <p className="text-[10px] text-muted-foreground line-clamp-1 text-center mt-0.5">
                       {b.breweryName}
                     </p>
                     {b.abv && (
-                      <p className="text-[10px] font-medium text-primary dark:text-orange-400 dark:text-orange-400 text-center mt-1">{b.abv}% ABV</p>
+                      <p className="text-[10px] font-bold text-primary text-center mt-1">{b.abv}% ABV</p>
                     )}
                   </div>
                 </Link>

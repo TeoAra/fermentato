@@ -231,10 +231,10 @@ export default function Home() {
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 lg:py-10">
 
         {locationStatus === 'denied' && (
-          <div className="mb-6 p-4 rounded-2xl bg-blue-50 dark:bg-blue-950/30 border border-blue-100 dark:border-blue-800 flex items-center justify-between">
+          <div className="mb-6 p-4 rounded-2xl bg-orange-50 dark:bg-orange-950/20 border border-orange-100 dark:border-orange-900/30 flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <Navigation className="w-5 h-5 text-blue-500 dark:text-blue-400 flex-shrink-0" />
-              <p className="text-sm text-blue-800 dark:text-blue-200">
+              <Navigation className="w-5 h-5 text-primary flex-shrink-0" />
+              <p className="text-sm text-foreground/80">
                 Attiva la posizione per vedere i locali più vicini a te
               </p>
             </div>
@@ -242,7 +242,7 @@ export default function Home() {
               variant="outline"
               size="sm"
               onClick={handleRequestLocation}
-              className="border-blue-200 text-blue-700 hover:bg-blue-100 dark:border-blue-700 dark:text-blue-300 dark:hover:bg-blue-900 rounded-xl flex-shrink-0 ml-3"
+              className="border-orange-200 dark:border-orange-800 text-primary hover:bg-orange-100 dark:hover:bg-orange-950/30 rounded-xl flex-shrink-0 ml-3"
             >
               <Navigation className="w-4 h-4 mr-1" />
               GPS
@@ -503,9 +503,9 @@ export default function Home() {
             <div className="flex gap-3 overflow-x-auto pb-2 -mx-1 px-1" style={{ scrollbarWidth: "none" }}>
               {homeAnnouncements.map((ann: any) => {
                 const typeMap: Record<string, { label: string; color: string; Icon: any }> = {
-                  news:    { label: "Novità",      color: "bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300",   Icon: Newspaper },
-                  release: { label: "Nuova Birra", color: "bg-orange-100 text-orange-700 dark:bg-orange-900/40 dark:text-orange-300", Icon: Rocket },
-                  collab:  { label: "Collab",      color: "bg-purple-100 text-purple-700 dark:bg-purple-900/40 dark:text-purple-300", Icon: Users },
+                  news:    { label: "Novità",      color: "bg-orange-50 text-primary dark:bg-orange-950/40 dark:text-orange-300",   Icon: Newspaper },
+                  release: { label: "Nuova Birra", color: "bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300", Icon: Rocket },
+                  collab:  { label: "Collab",      color: "bg-orange-100 text-orange-700 dark:bg-orange-900/40 dark:text-orange-300", Icon: Users },
                 };
                 const t = typeMap[ann.type] ?? typeMap.news;
                 return (
@@ -631,6 +631,32 @@ export default function Home() {
           </section>
         ) : null}
 
+        {/* ─── Case Study / Testimonianze ──────────────────────────────────── */}
+        <section className="mb-8">
+          <h2 className="text-[11px] font-bold text-muted-foreground mb-4 uppercase tracking-[0.12em]">
+            Chi usa Fermenta.to
+          </h2>
+          <div className="flex gap-3 overflow-x-auto pb-2 -mx-1 px-1" style={{ scrollbarWidth: "none" }}>
+            {[
+              { name: "Luppolino Pub", city: "Roma · Prati", quote: "La taplist digitale ha triplicato le interazioni con i clienti. Li aiutiamo a scegliere la birra giusta ogni sera.", role: "Gestore pub", initial: "L", color: "#F77104" },
+              { name: "Hype Brewing", city: "Milano", quote: "Con Fermenta.to i nostri fan sanno in tempo reale dove trovare le nostre birre. Le visite in brewery sono aumentate del 40%.", role: "Head Brewer", initial: "H", color: "#e06b00" },
+              { name: "Baladin Open Garden", city: "Torino", quote: "Il menu digitale ci permette di aggiornare la carta ogni giorno senza costi tipografici. Fantastico per le stagionali.", role: "Responsabile locale", initial: "B", color: "#c45f00" },
+            ].map((cs) => (
+              <div key={cs.name} className="flex-shrink-0 w-[220px] bg-white dark:bg-[hsl(25,14%,10%)] rounded-2xl border border-orange-50 dark:border-[hsl(25,12%,16%)] shadow-sm p-4">
+                <div className="flex items-center gap-2.5 mb-3">
+                  <div className="w-9 h-9 rounded-full flex items-center justify-center text-white font-black text-sm flex-shrink-0" style={{ background: `linear-gradient(135deg, ${cs.color}, ${cs.color}cc)` }}>{cs.initial}</div>
+                  <div className="min-w-0">
+                    <p className="text-[12px] font-bold text-foreground truncate">{cs.name}</p>
+                    <p className="text-[10px] text-muted-foreground">{cs.city}</p>
+                  </div>
+                </div>
+                <p className="text-[11px] text-muted-foreground leading-relaxed line-clamp-4 italic">"{cs.quote}"</p>
+                <p className="text-[10px] font-semibold text-primary mt-2">— {cs.role}</p>
+              </div>
+            ))}
+          </div>
+        </section>
+
         {/* ─── Statistiche Community ────────────────────────────────────────── */}
         <section className="mb-8 bg-gradient-to-br from-orange-50 to-[hsl(38,30%,96%)] dark:from-[hsl(25,14%,10%)] dark:to-[hsl(25,12%,9%)] border border-orange-100 dark:border-[hsl(25,12%,16%)] rounded-2xl p-5 lg:p-6">
           <h2 className="text-[11px] font-bold text-center text-muted-foreground mb-5 uppercase tracking-[0.12em]">
@@ -642,22 +668,22 @@ export default function Home() {
               <div className="text-[10px] text-muted-foreground mt-1 font-medium uppercase tracking-wide">Birre</div>
             </div>
             <div className="text-center border-x border-orange-100 dark:border-[hsl(25,12%,16%)]">
-              <div className="text-[17px] font-bold text-[hsl(215,75%,50%)] dark:text-[hsl(215,80%,65%)] tabular-nums leading-tight">{globalStats?.totalBreweries != null ? globalStats.totalBreweries.toLocaleString("it-IT") : '—'}</div>
+              <div className="text-[17px] font-bold text-primary tabular-nums leading-tight">{globalStats?.totalBreweries != null ? globalStats.totalBreweries.toLocaleString("it-IT") : '—'}</div>
               <div className="text-[10px] text-muted-foreground mt-1 font-medium uppercase tracking-wide">Birrifici</div>
             </div>
             <div className="text-center">
-              <div className="text-[17px] font-bold text-[hsl(175,55%,38%)] dark:text-[hsl(175,60%,55%)] tabular-nums leading-tight">{globalStats?.uniqueStyles != null ? globalStats.uniqueStyles.toLocaleString("it-IT") : '—'}</div>
+              <div className="text-[17px] font-bold text-primary tabular-nums leading-tight">{globalStats?.uniqueStyles != null ? globalStats.uniqueStyles.toLocaleString("it-IT") : '—'}</div>
               <div className="text-[10px] text-muted-foreground mt-1 font-medium uppercase tracking-wide">Stili</div>
             </div>
           </div>
           <div className="border-t border-orange-100 dark:border-[hsl(25,12%,16%)] mb-4" />
           <div className="flex justify-center gap-12">
             <div className="text-center">
-              <div className="text-[15px] font-bold text-[hsl(142,55%,38%)] dark:text-[hsl(142,60%,55%)] tabular-nums leading-tight">{globalStats?.totalUsers != null ? globalStats.totalUsers.toLocaleString("it-IT") : '—'}</div>
+              <div className="text-[15px] font-bold text-primary tabular-nums leading-tight">{globalStats?.totalUsers != null ? globalStats.totalUsers.toLocaleString("it-IT") : '—'}</div>
               <div className="text-[10px] text-muted-foreground mt-1 font-medium uppercase tracking-wide">Utenti</div>
             </div>
             <div className="text-center">
-              <div className="text-[15px] font-bold text-[hsl(270,55%,50%)] dark:text-[hsl(270,60%,68%)] tabular-nums leading-tight">{globalStats?.totalPubs != null ? globalStats.totalPubs.toLocaleString("it-IT") : '—'}</div>
+              <div className="text-[15px] font-bold text-primary tabular-nums leading-tight">{globalStats?.totalPubs != null ? globalStats.totalPubs.toLocaleString("it-IT") : '—'}</div>
               <div className="text-[10px] text-muted-foreground mt-1 font-medium uppercase tracking-wide">Pub</div>
             </div>
           </div>

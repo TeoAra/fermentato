@@ -322,40 +322,45 @@ export function MenuManager({ pubId, menu }: MenuManagerProps) {
   };
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center justify-between">
-          <span>Gestione Menu Cibo</span>
+    <Card className="bg-background border-orange-50 dark:border-[hsl(25,12%,16%)] shadow-sm rounded-2xl overflow-hidden">
+      <CardHeader className="border-b border-orange-50 dark:border-[hsl(25,12%,16%)]">
+        <CardTitle className="flex items-center justify-between font-bold text-foreground">
+          <div className="flex items-center gap-2">
+            <Utensils className="text-primary w-5 h-5" />
+            <span>Gestione Menu Cibo</span>
+          </div>
           <div className="flex gap-2">
             <Dialog open={isAddCategoryOpen} onOpenChange={setIsAddCategoryOpen}>
               <DialogTrigger asChild>
-                <Button variant="outline">
+                <Button variant="outline" className="border-orange-100 text-primary hover:bg-orange-50 rounded-xl font-semibold">
                   <FolderPlus className="w-4 h-4 mr-2" />
                   Categoria
                 </Button>
               </DialogTrigger>
-              <DialogContent>
+              <DialogContent className="rounded-2xl border-orange-50 dark:border-[hsl(25,12%,16%)]">
                 <DialogHeader>
-                  <DialogTitle>
+                  <DialogTitle className="font-bold text-foreground">
                     {editingCategory ? "Modifica Categoria" : "Aggiungi Categoria"}
                   </DialogTitle>
                 </DialogHeader>
                 <div className="space-y-4">
                   <div>
-                    <Label>Nome Categoria</Label>
+                    <Label className="font-semibold text-foreground">Nome Categoria</Label>
                     <Input
                       placeholder="Antipasti, Primi, Secondi..."
                       value={categoryForm.name}
                       onChange={(e) => setCategoryForm({ ...categoryForm, name: e.target.value })}
+                      className="border-orange-100 rounded-xl focus-visible:ring-primary/20"
                     />
                   </div>
                   <div>
-                    <Label>Descrizione (opzionale)</Label>
+                    <Label className="font-semibold text-foreground">Descrizione (opzionale)</Label>
                     <Textarea
                       placeholder="Descrizione della categoria..."
                       value={categoryForm.description}
                       onChange={(e) => setCategoryForm({ ...categoryForm, description: e.target.value })}
                       rows={2}
+                      className="border-orange-100 rounded-xl focus-visible:ring-primary/20"
                     />
                   </div>
                   <div className="flex items-center space-x-2">
@@ -364,11 +369,12 @@ export function MenuManager({ pubId, menu }: MenuManagerProps) {
                       checked={categoryForm.isVisible}
                       onCheckedChange={(checked) => setCategoryForm({ ...categoryForm, isVisible: checked })}
                     />
-                    <Label htmlFor="cat-visible">Visibile al pubblico</Label>
+                    <Label htmlFor="cat-visible" className="text-muted-foreground">Visibile al pubblico</Label>
                   </div>
                   <div className="flex justify-end space-x-2">
                     <Button
                       variant="outline"
+                      className="border-orange-100 text-muted-foreground hover:bg-orange-50 rounded-xl"
                       onClick={() => {
                         setIsAddCategoryOpen(false);
                         setEditingCategory(null);
@@ -377,7 +383,7 @@ export function MenuManager({ pubId, menu }: MenuManagerProps) {
                     >
                       Annulla
                     </Button>
-                    <Button onClick={handleCategorySubmit}>
+                    <Button onClick={handleCategorySubmit} className="bg-primary hover:bg-primary/90 text-white rounded-xl font-semibold">
                       {editingCategory ? "Aggiorna" : "Aggiungi"}
                     </Button>
                   </div>
@@ -387,23 +393,23 @@ export function MenuManager({ pubId, menu }: MenuManagerProps) {
 
             <Dialog open={isAddItemOpen} onOpenChange={setIsAddItemOpen}>
               <DialogTrigger asChild>
-                <Button>
+                <Button className="bg-primary hover:bg-primary/90 text-white rounded-xl font-semibold">
                   <Plus className="w-4 h-4 mr-2" />
                   Prodotto
                 </Button>
               </DialogTrigger>
-              <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+              <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto rounded-2xl border-orange-50 dark:border-[hsl(25,12%,16%)]">
                 <DialogHeader>
-                  <DialogTitle>
+                  <DialogTitle className="font-bold text-foreground">
                     {editingItem ? "Modifica Prodotto" : "Aggiungi Prodotto"}
                   </DialogTitle>
                 </DialogHeader>
                 <div className="space-y-4">
                   {!editingItem && (
                     <div>
-                      <Label>Categoria</Label>
+                      <Label className="font-semibold text-foreground">Categoria</Label>
                       <select
-                        className="w-full p-2 border rounded-md"
+                        className="w-full p-2 border border-orange-100 rounded-xl focus-visible:ring-primary/20 bg-background"
                         value={selectedCategoryId || ""}
                         onChange={(e) => setSelectedCategoryId(parseInt(e.target.value))}
                       >
@@ -419,37 +425,40 @@ export function MenuManager({ pubId, menu }: MenuManagerProps) {
 
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <Label>Nome Prodotto</Label>
+                      <Label className="font-semibold text-foreground">Nome Prodotto</Label>
                       <Input
                         placeholder="Nome del piatto..."
                         value={itemForm.name}
                         onChange={(e) => setItemForm({ ...itemForm, name: e.target.value })}
+                        className="border-orange-100 rounded-xl focus-visible:ring-primary/20"
                       />
                     </div>
                     <div>
-                      <Label>Prezzo (€)</Label>
+                      <Label className="font-semibold text-foreground">Prezzo (€)</Label>
                       <Input
                         type="number"
                         step="0.10"
                         placeholder="12.50"
                         value={itemForm.price}
                         onChange={(e) => setItemForm({ ...itemForm, price: e.target.value })}
+                        className="border-orange-100 rounded-xl focus-visible:ring-primary/20"
                       />
                     </div>
                   </div>
 
                   <div>
-                    <Label>Descrizione</Label>
+                    <Label className="font-semibold text-foreground">Descrizione</Label>
                     <Textarea
                       placeholder="Descrizione del piatto, ingredienti..."
                       value={itemForm.description}
                       onChange={(e) => setItemForm({ ...itemForm, description: e.target.value })}
                       rows={3}
+                      className="border-orange-100 rounded-xl focus-visible:ring-primary/20"
                     />
                   </div>
 
                   <div>
-                    <Label>Allergeni</Label>
+                    <Label className="font-semibold text-foreground">Allergeni</Label>
                     <div className="grid grid-cols-3 gap-2 mt-2">
                       {ALLERGENS_LIST.map((allergen) => (
                         <div key={allergen} className="flex items-center space-x-2">
@@ -458,7 +467,7 @@ export function MenuManager({ pubId, menu }: MenuManagerProps) {
                             checked={itemForm.allergens.includes(allergen)}
                             onCheckedChange={() => handleAllergenToggle(allergen)}
                           />
-                          <Label htmlFor={allergen} className="text-sm capitalize">
+                          <Label htmlFor={allergen} className="text-sm capitalize text-muted-foreground">
                             {allergen}
                           </Label>
                         </div>
@@ -467,34 +476,35 @@ export function MenuManager({ pubId, menu }: MenuManagerProps) {
                   </div>
 
                   <div>
-                    <Label>URL Immagine (opzionale)</Label>
+                    <Label className="font-semibold text-foreground">URL Immagine (opzionale)</Label>
                     <Input
                       placeholder="https://..."
                       value={itemForm.imageUrl}
                       onChange={(e) => setItemForm({ ...itemForm, imageUrl: e.target.value })}
+                      className="border-orange-100 rounded-xl focus-visible:ring-primary/20"
                     />
                   </div>
 
                   <div className="grid grid-cols-2 gap-3">
-                    <div className="flex items-center space-x-2 rounded-lg border border-green-200 dark:border-green-800 bg-green-50 dark:bg-green-950/30 px-3 py-2">
+                    <div className="flex items-center space-x-2 rounded-xl border border-emerald-100 bg-emerald-50/30 dark:bg-emerald-950/20 px-3 py-2">
                       <Checkbox
                         id="item-vegetarian"
                         checked={itemForm.isVegetarian}
                         onCheckedChange={(checked) => setItemForm({ ...itemForm, isVegetarian: !!checked })}
-                        className="border-green-500 data-[state=checked]:bg-green-600 data-[state=checked]:border-green-600"
+                        className="border-emerald-500 data-[state=checked]:bg-emerald-600 data-[state=checked]:border-emerald-600"
                       />
-                      <Label htmlFor="item-vegetarian" className="flex items-center gap-1.5 cursor-pointer text-green-800 dark:text-green-300 font-medium">
+                      <Label htmlFor="item-vegetarian" className="flex items-center gap-1.5 cursor-pointer text-emerald-800 dark:text-emerald-300 font-semibold">
                         <span>🌿</span> Vegetariano
                       </Label>
                     </div>
-                    <div className="flex items-center space-x-2 rounded-lg border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-950/30 px-3 py-2">
+                    <div className="flex items-center space-x-2 rounded-xl border border-red-100 bg-red-50/30 dark:bg-red-950/20 px-3 py-2">
                       <Checkbox
                         id="item-spicy"
                         checked={itemForm.isSpicy}
                         onCheckedChange={(checked) => setItemForm({ ...itemForm, isSpicy: !!checked })}
                         className="border-red-500 data-[state=checked]:bg-red-600 data-[state=checked]:border-red-600"
                       />
-                      <Label htmlFor="item-spicy" className="flex items-center gap-1.5 cursor-pointer text-red-800 dark:text-red-300 font-medium">
+                      <Label htmlFor="item-spicy" className="flex items-center gap-1.5 cursor-pointer text-red-800 dark:text-red-300 font-semibold">
                         <span>🌶️</span> Piccante
                       </Label>
                     </div>
@@ -507,7 +517,7 @@ export function MenuManager({ pubId, menu }: MenuManagerProps) {
                         checked={itemForm.isVisible}
                         onCheckedChange={(checked) => setItemForm({ ...itemForm, isVisible: checked })}
                       />
-                      <Label htmlFor="item-visible">Visibile al pubblico</Label>
+                      <Label htmlFor="item-visible" className="text-muted-foreground">Visibile al pubblico</Label>
                     </div>
                     <div className="flex items-center space-x-2">
                       <Switch
@@ -515,13 +525,14 @@ export function MenuManager({ pubId, menu }: MenuManagerProps) {
                         checked={itemForm.isAvailable}
                         onCheckedChange={(checked) => setItemForm({ ...itemForm, isAvailable: checked })}
                       />
-                      <Label htmlFor="item-available">Disponibile</Label>
+                      <Label htmlFor="item-available" className="text-muted-foreground">Disponibile</Label>
                     </div>
                   </div>
 
                   <div className="flex justify-end space-x-2">
                     <Button
                       variant="outline"
+                      className="border-orange-100 text-muted-foreground hover:bg-orange-50 rounded-xl"
                       onClick={() => {
                         setIsAddItemOpen(false);
                         setEditingItem(null);
@@ -530,7 +541,7 @@ export function MenuManager({ pubId, menu }: MenuManagerProps) {
                     >
                       Annulla
                     </Button>
-                    <Button onClick={handleItemSubmit}>
+                    <Button onClick={handleItemSubmit} className="bg-primary hover:bg-primary/90 text-white rounded-xl font-semibold">
                       {editingItem ? "Aggiorna" : "Aggiungi"}
                     </Button>
                   </div>
@@ -539,207 +550,226 @@ export function MenuManager({ pubId, menu }: MenuManagerProps) {
             </Dialog>
           </div>
         </CardTitle>
-        <CardDescription>
+        <CardDescription className="text-muted-foreground">
           Gestisci le categorie e i prodotti del menu
         </CardDescription>
       </CardHeader>
-      <CardContent>
+      <CardContent className="p-6">
         {menu.length === 0 ? (
-          <div className="text-center py-8 text-gray-500">
-            <Utensils className="w-12 h-12 mx-auto mb-4 text-gray-300" />
-            <p>Nessuna categoria nel menu.</p>
+          <div className="text-center py-12 border-2 border-dashed border-orange-200 rounded-2xl text-muted-foreground">
+            <Utensils className="w-12 h-12 mx-auto mb-4 text-primary opacity-20" />
+            <p className="font-semibold text-foreground">Nessuna categoria nel menu.</p>
             <p className="text-sm">Clicca "Categoria" per iniziare.</p>
           </div>
         ) : (
-          <div className="space-y-4">
+          <div className="space-y-6">
+            <div className="flex flex-wrap gap-2 mb-4">
+              {menu.map((category) => (
+                <button
+                  key={category.id}
+                  onClick={() => toggleCategoryExpanded(category.id)}
+                  className={`px-4 py-1.5 rounded-full transition-colors text-sm ${
+                    expandedCategories.has(category.id)
+                      ? "bg-primary text-white font-semibold shadow-sm shadow-primary/20"
+                      : "text-muted-foreground hover:text-primary hover:bg-orange-50/60"
+                  }`}
+                >
+                  {category.name}
+                </button>
+              ))}
+            </div>
+
             {menu.map((category) => (
               <div
                 key={category.id}
-                className={`border rounded-lg ${!category.isVisible ? 'opacity-60 bg-gray-50' : ''}`}
+                className={`transition-all ${!category.isVisible ? 'opacity-60 grayscale-[0.5]' : ''}`}
               >
-                <div className="p-4 border-b">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => toggleCategoryExpanded(category.id)}
-                      >
-                        {expandedCategories.has(category.id) ? (
-                          <ChevronDown className="w-4 h-4" />
-                        ) : (
-                          <ChevronRight className="w-4 h-4" />
+                <div className="flex items-center justify-between group mb-4">
+                  <div className="flex items-center gap-3">
+                    <div 
+                      className="cursor-pointer"
+                      onClick={() => toggleCategoryExpanded(category.id)}
+                    >
+                      <h3 className="font-bold text-xl text-foreground flex items-center gap-2">
+                        {category.name}
+                        {!category.isVisible && (
+                          <Badge variant="secondary" className="text-[10px] bg-orange-50 text-primary border-none">
+                            <EyeOff className="w-3 h-3 mr-1" />
+                            Nascosta
+                          </Badge>
                         )}
-                      </Button>
-                      <div>
-                        <h3 className="font-semibold text-lg flex items-center gap-2">
-                          {category.name}
-                          {!category.isVisible && (
-                            <Badge variant="secondary" className="text-xs">
-                              <EyeOff className="w-3 h-3 mr-1" />
-                              Nascosta
-                            </Badge>
-                          )}
-                        </h3>
-                        {category.description && (
-                          <p className="text-sm text-gray-600">{category.description}</p>
-                        )}
-                      </div>
+                      </h3>
+                      {category.description && (
+                        <p className="text-sm text-muted-foreground">{category.description}</p>
+                      )}
                     </div>
+                  </div>
 
-                    <div className="flex items-center gap-2">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => {
-                          toggleCategoryVisibilityMutation.mutate({
-                            id: category.id,
-                            isVisible: !category.isVisible
-                          });
-                        }}
-                      >
-                        {category.isVisible ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => {
-                          startEditCategory(category);
-                          setIsAddCategoryOpen(true);
-                        }}
-                      >
-                        <Edit className="w-4 h-4" />
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => {
-                          if (confirm('Sei sicuro di voler eliminare questa categoria e tutti i suoi prodotti?')) {
-                            deleteCategoryMutation.mutate(category.id);
-                          }
-                        }}
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="sm"
+                  <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="text-primary hover:bg-orange-50"
+                      onClick={() => {
+                        toggleCategoryVisibilityMutation.mutate({
+                          id: category.id,
+                          isVisible: !category.isVisible
+                        });
+                      }}
+                    >
+                      {category.isVisible ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="text-primary hover:bg-orange-50"
+                      onClick={() => {
+                        startEditCategory(category);
+                        setIsAddCategoryOpen(true);
+                      }}
+                    >
+                      <Edit className="w-4 h-4" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="text-muted-foreground hover:text-destructive hover:bg-red-50"
+                      onClick={() => {
+                        if (confirm('Sei sicuro di voler eliminare questa categoria e tutti i suoi prodotti?')) {
+                          deleteCategoryMutation.mutate(category.id);
+                        }
+                      }}
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="text-primary hover:bg-orange-50"
+                      onClick={() => {
+                        setSelectedCategoryId(category.id);
+                        setIsAddItemOpen(true);
+                      }}
+                    >
+                      <Plus className="w-4 h-4" />
+                    </Button>
+                  </div>
+                </div>
+
+                {expandedCategories.has(category.id) && (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {category.items.length === 0 ? (
+                      <div 
+                        className="col-span-full py-10 border-2 border-dashed border-orange-200 rounded-2xl flex flex-col items-center justify-center text-muted-foreground hover:bg-orange-50/30 cursor-pointer transition-colors"
                         onClick={() => {
                           setSelectedCategoryId(category.id);
                           setIsAddItemOpen(true);
                         }}
                       >
-                        <Plus className="w-4 h-4" />
-                      </Button>
-                    </div>
-                  </div>
-                </div>
-
-                {expandedCategories.has(category.id) && (
-                  <div className="p-4">
-                    {category.items.length === 0 ? (
-                      <p className="text-gray-500 text-sm">Nessun prodotto in questa categoria.</p>
+                        <Plus className="text-primary w-8 h-8 mb-2 opacity-40" />
+                        <p className="text-sm font-medium">Aggiungi il primo prodotto</p>
+                      </div>
                     ) : (
-                      <div className="space-y-3">
-                        {category.items.map((item) => (
-                          <div
-                            key={item.id}
-                            className={`border rounded-lg p-3 ${
-                              !item.isVisible || !item.isAvailable ? 'opacity-60 bg-gray-50' : ''
-                            }`}
-                          >
-                            <div className="flex items-start justify-between">
-                              <div className="flex-1">
-                                <div className="flex items-center gap-2 mb-1 flex-wrap">
-                                  <h4 className="font-medium">{item.name}</h4>
-                                  <span className="font-semibold text-green-600">€{item.price}</span>
-                                  {item.isVegetarian && (
-                                    <span className="text-sm" title="Vegetariano">🌿</span>
-                                  )}
-                                  {item.isSpicy && (
-                                    <span className="text-sm" title="Piccante">🌶️</span>
-                                  )}
-                                  {!item.isVisible && (
-                                    <Badge variant="secondary" className="text-xs">
-                                      <EyeOff className="w-3 h-3 mr-1" />
-                                      Nascosto
-                                    </Badge>
-                                  )}
-                                  {!item.isAvailable && (
-                                    <Badge variant="destructive" className="text-xs">
-                                      Non disponibile
-                                    </Badge>
-                                  )}
-                                </div>
-                                {item.description && (
-                                  <p className="text-sm text-gray-600 mb-2">{item.description}</p>
-                                )}
-                                {item.allergens.length > 0 && (
-                                  <div className="flex flex-wrap gap-1">
-                                    {item.allergens.map((allergen) => (
-                                      <Badge key={allergen} variant="outline" className="text-xs">
-                                        {allergen}
-                                      </Badge>
-                                    ))}
-                                  </div>
-                                )}
+                      category.items.map((item) => (
+                        <div
+                          key={item.id}
+                          className={`bg-white dark:bg-[hsl(25,14%,10%)] rounded-2xl border border-orange-50 dark:border-[hsl(25,12%,16%)] shadow-sm p-4 relative group transition-all hover:shadow-md ${
+                            !item.isVisible ? 'opacity-60 grayscale-[0.3]' : ''
+                          }`}
+                        >
+                          <div className="flex gap-4">
+                            {item.imageUrl && (
+                              <img 
+                                src={item.imageUrl} 
+                                alt={item.name} 
+                                className="w-16 h-16 rounded-xl object-cover shrink-0 border border-orange-50"
+                              />
+                            )}
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-start justify-between gap-2">
+                                <h4 className="font-bold text-foreground text-lg leading-tight truncate">{item.name}</h4>
+                                <span className="font-black text-primary text-lg shrink-0">€{item.price}</span>
                               </div>
+                              
+                              {item.description && (
+                                <p className="text-sm text-muted-foreground line-clamp-2 mt-1">{item.description}</p>
+                              )}
 
-                              <div className="flex items-center gap-1 ml-4">
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  onClick={() => {
-                                    toggleItemAvailabilityMutation.mutate({
-                                      id: item.id,
-                                      isAvailable: !item.isAvailable
-                                    });
-                                  }}
-                                  title={item.isAvailable ? "Segna come non disponibile" : "Segna come disponibile"}
-                                >
-                                  <div className={`w-3 h-3 rounded-full ${item.isAvailable ? 'bg-green-500' : 'bg-red-500'}`} />
-                                </Button>
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  onClick={() => {
-                                    toggleItemVisibilityMutation.mutate({
-                                      id: item.id,
-                                      isVisible: !item.isVisible
-                                    });
-                                  }}
-                                >
-                                  {item.isVisible ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                                </Button>
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  onClick={() => {
-                                    startEditItem(item);
-                                    setIsAddItemOpen(true);
-                                  }}
-                                >
-                                  <Edit className="w-4 h-4" />
-                                </Button>
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  onClick={() => {
-                                    if (confirm('Sei sicuro di voler eliminare questo prodotto?')) {
-                                      deleteItemMutation.mutate(item.id);
-                                    }
-                                  }}
-                                >
-                                  <Trash2 className="w-4 h-4" />
-                                </Button>
+                              <div className="flex items-center gap-2 mt-2">
+                                {item.isVegetarian && (
+                                  <Badge variant="secondary" className="bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400 border-none text-[10px]">🌿 Veg</Badge>
+                                )}
+                                {item.isSpicy && (
+                                  <Badge variant="secondary" className="bg-red-50 text-red-700 dark:bg-red-950/40 dark:text-red-400 border-none text-[10px]">🌶️ Piccante</Badge>
+                                )}
+                                {!item.isVisible && (
+                                  <Badge variant="secondary" className="bg-orange-50 text-primary border-none text-[10px]">Nascosto</Badge>
+                                )}
+                                {!item.isAvailable && (
+                                  <Badge variant="destructive" className="bg-red-100 text-red-700 dark:bg-red-950/60 dark:text-red-300 border-none text-[10px]">Esaurito</Badge>
+                                )}
                               </div>
                             </div>
                           </div>
-                        ))}
-                      </div>
+
+                          <div className="absolute top-2 right-2 flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity bg-white/80 dark:bg-black/40 backdrop-blur-sm rounded-lg p-1">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className={`h-8 w-8 p-0 rounded-md ${item.isAvailable ? 'text-emerald-600' : 'text-muted-foreground'}`}
+                              onClick={() => {
+                                toggleItemAvailabilityMutation.mutate({
+                                  id: item.id,
+                                  isAvailable: !item.isAvailable
+                                });
+                              }}
+                              title={item.isAvailable ? "Segna come non disponibile" : "Segna come disponibile"}
+                            >
+                              <div className={`w-2.5 h-2.5 rounded-full ${item.isAvailable ? 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]' : 'bg-gray-300'}`} />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-8 w-8 p-0 text-primary hover:bg-orange-50 rounded-md"
+                              onClick={() => {
+                                toggleItemVisibilityMutation.mutate({
+                                  id: item.id,
+                                  isVisible: !item.isVisible
+                                });
+                              }}
+                            >
+                              {item.isVisible ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-8 w-8 p-0 text-primary hover:bg-orange-50 rounded-md"
+                              onClick={() => {
+                                startEditItem(item);
+                                setIsAddItemOpen(true);
+                              }}
+                            >
+                              <Edit className="w-4 h-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-8 w-8 p-0 text-muted-foreground hover:text-destructive hover:bg-red-50 rounded-md"
+                              onClick={() => {
+                                if (confirm('Sei sicuro di voler eliminare questo prodotto?')) {
+                                  deleteItemMutation.mutate(item.id);
+                                }
+                              }}
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </Button>
+                          </div>
+                        </div>
+                      ))
                     )}
                   </div>
                 )}
+                <div className="h-4" />
               </div>
             ))}
           </div>

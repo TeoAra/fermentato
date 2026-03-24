@@ -491,50 +491,62 @@ export function TapListManager({ pubId, tapList, bottleList = [] }: TapListManag
   };
 
   return (
-    <Card>
-      <CardHeader>
+    <Card className="border-orange-100 shadow-sm rounded-2xl overflow-hidden">
+      <CardHeader className="bg-white dark:bg-orange-950/20 border-b border-orange-50">
         <CardTitle className="flex items-center justify-between">
-          <span>Gestione Tap List</span>
+          <span className="text-xl font-bold text-foreground flex items-center gap-2">
+            <Beer className="w-5 h-5 text-primary" />
+            Gestione Tap List
+          </span>
           <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
             <DialogTrigger asChild>
-              <Button variant="outline" size="sm" className="gap-1.5 text-sm font-medium">
-                <Plus className="w-3.5 h-3.5" />
-                Aggiungi
+              <Button size="sm" className="bg-primary hover:bg-primary/90 text-white rounded-xl font-semibold gap-1.5 shadow-sm transition-all hover:scale-[1.02] active:scale-[0.98]">
+                <Plus className="w-4 h-4" />
+                Aggiungi Birra
               </Button>
             </DialogTrigger>
-            <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
+            <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto rounded-3xl border-orange-100">
               <DialogHeader>
-                <DialogTitle>
+                <DialogTitle className="text-xl font-bold text-foreground">
                   {editingItem ? "Modifica Birra" : "Aggiungi Birra alla Tap List"}
                 </DialogTitle>
-                <DialogDescription>
+                <DialogDescription className="text-muted-foreground">
                   {editingItem ? "Modifica i dettagli della birra" : "Cerca e seleziona una birra da aggiungere alla tap list"}
                 </DialogDescription>
               </DialogHeader>
 
-              <div className="space-y-6">
+              <div className="space-y-6 pt-4">
                 {/* Ricerca Birra o Birra Selezionata */}
                 {!editingItem && (
                   <div className="space-y-3">
-                    <Label className="text-sm font-medium">Seleziona Birra</Label>
+                    <Label className="text-sm font-bold text-foreground flex items-center gap-2">
+                      <Search className="w-4 h-4 text-primary" />
+                      Seleziona Birra
+                    </Label>
                     
                     {/* Mostra birra selezionata */}
                     {formData.beerId && searchResults?.beers?.find((b: any) => b.id.toString() === formData.beerId) ? (
-                      <div className="p-4 bg-amber-50 border border-amber-200 rounded-lg">
+                      <div className="p-4 bg-orange-50 border border-orange-100 rounded-2xl">
                         {(() => {
                           const selectedBeer = searchResults.beers.find((b: any) => b.id.toString() === formData.beerId);
                           return (
-                            <div className="flex items-center justify-between">
-                              <div>
-                                <div className="font-semibold text-gray-900">{selectedBeer?.name}</div>
-                                <div className="text-sm text-gray-600 mt-1">
-                                  {selectedBeer?.brewery?.name || 'Birrificio sconosciuto'} • {selectedBeer?.style} • {selectedBeer?.abv}% ABV
+                            <div className="flex items-center justify-between gap-4">
+                              <div className="flex items-center gap-4">
+                                <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center text-primary">
+                                  <Beer className="w-6 h-6" />
+                                </div>
+                                <div>
+                                  <div className="font-bold text-foreground">{selectedBeer?.name}</div>
+                                  <div className="text-xs text-muted-foreground mt-0.5">
+                                    {selectedBeer?.brewery?.name || 'Birrificio sconosciuto'} • {selectedBeer?.style} • {selectedBeer?.abv}% ABV
+                                  </div>
                                 </div>
                               </div>
                               <Button
                                 type="button"
                                 variant="outline"
                                 size="sm"
+                                className="border-orange-100 text-primary hover:bg-orange-50 rounded-xl"
                                 onClick={() => {
                                   setFormData({ ...formData, beerId: '' });
                                   setSearchTerm('');
@@ -550,32 +562,32 @@ export function TapListManager({ pubId, tapList, bottleList = [] }: TapListManag
                       <>
                         <div className="relative">
                           {isSearching ? (
-                            <Loader2 className="absolute left-3 top-3 h-4 w-4 text-gray-400 animate-spin" />
+                            <Loader2 className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-primary animate-spin" />
                           ) : (
-                            <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                           )}
                           <Input
                             placeholder="Cerca per nome o birrificio..."
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
-                            className="pl-10"
+                            className="pl-10 h-11 border-orange-100 rounded-xl focus-visible:ring-primary/20"
                             data-testid="input-beer-search"
                           />
                         </div>
                         {debouncedSearchTerm.length >= 2 && !isSearching && !formData.beerId && !creatingBeer && (
                           <>
                             {searchResults?.beers && searchResults.beers.length > 0 && (
-                              <div className="max-h-48 overflow-y-auto border rounded-lg bg-white dark:bg-gray-900">
+                              <div className="max-h-60 overflow-y-auto border border-orange-100 rounded-2xl bg-white dark:bg-orange-950/20 shadow-sm mt-2 divide-y divide-orange-50">
                                 {searchResults.beers.map((beer: any) => (
                                   <div
                                     key={beer.id}
-                                    className="p-3 hover:bg-gray-50 dark:hover:bg-gray-800 cursor-pointer border-b last:border-b-0 transition-colors"
+                                    className="p-4 hover:bg-orange-50/50 dark:hover:bg-orange-900/10 cursor-pointer transition-colors"
                                     onClick={() => {
                                       setFormData({ ...formData, beerId: beer.id.toString() });
                                     }}
                                   >
-                                    <div className="font-medium text-gray-900 dark:text-white">{beer.name}</div>
-                                    <div className="text-sm text-gray-600 dark:text-gray-400">
+                                    <div className="font-medium text-foreground">{beer.name}</div>
+                                    <div className="text-sm text-muted-foreground">
                                       {beer.brewery?.name || 'Birrificio sconosciuto'} • {beer.style} • {beer.abv}% ABV
                                     </div>
                                   </div>
@@ -654,11 +666,11 @@ export function TapListManager({ pubId, tapList, bottleList = [] }: TapListManag
                             />
                           </div>
                           {Array.isArray(breweryResults) && breweryResults.length > 0 && (
-                            <div className="max-h-32 overflow-y-auto border rounded-lg bg-white dark:bg-gray-900">
+                            <div className="max-h-32 overflow-y-auto border border-orange-100 rounded-xl bg-white dark:bg-[hsl(25,14%,10%)]">
                               {breweryResults.map((b: any) => (
                                 <div
                                   key={b.id}
-                                  className="p-2 hover:bg-gray-50 dark:hover:bg-gray-800 cursor-pointer border-b last:border-b-0 text-sm"
+                                  className="p-2 hover:bg-orange-50 dark:hover:bg-orange-950/20 cursor-pointer border-b border-orange-50 last:border-b-0 text-sm"
                                   onClick={() => {
                                     setNewBeerData({ ...newBeerData, breweryId: b.id.toString(), breweryName: b.name });
                                     setBrewerySearchTerm("");
@@ -709,7 +721,7 @@ export function TapListManager({ pubId, tapList, bottleList = [] }: TapListManag
                           autoComplete="off"
                         />
                         {styleDropdownOpen && filteredStyles.length > 0 && (
-                          <div className="absolute z-50 w-full mt-1 max-h-40 overflow-y-auto border rounded-lg bg-white dark:bg-gray-900 shadow-lg">
+                          <div className="absolute z-50 w-full mt-1 max-h-40 overflow-y-auto border border-orange-100 rounded-xl bg-white dark:bg-[hsl(25,14%,10%)] shadow-lg">
                             {filteredStyles.slice(0, 15).map((style) => (
                               <div
                                 key={style}
@@ -770,9 +782,9 @@ export function TapListManager({ pubId, tapList, bottleList = [] }: TapListManag
                           type="checkbox"
                           checked={newBeerData.isAlcoholFree}
                           onChange={(e) => setNewBeerData({ ...newBeerData, isAlcoholFree: e.target.checked })}
-                          className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                          className="w-4 h-4 rounded border-orange-200 text-primary focus:ring-primary/30"
                         />
-                        <span className="text-xs font-medium text-blue-700 dark:text-blue-400">0.0% Analcolica</span>
+                        <span className="text-xs font-medium text-primary">0.0% Analcolica</span>
                       </label>
                     </div>
 
@@ -790,9 +802,9 @@ export function TapListManager({ pubId, tapList, bottleList = [] }: TapListManag
                           </button>
                         </div>
                       ) : (
-                        <label className="flex items-center gap-2 mt-1 px-3 py-2 border border-dashed rounded-lg cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
-                          <ImagePlus className="h-4 w-4 text-gray-400" />
-                          <span className="text-xs text-gray-500">Carica immagine</span>
+                        <label className="flex items-center gap-2 mt-1 px-3 py-2 border border-dashed border-orange-200 rounded-xl cursor-pointer hover:bg-orange-50 dark:hover:bg-orange-950/20 transition-colors">
+                          <ImagePlus className="h-4 w-4 text-muted-foreground" />
+                          <span className="text-xs text-muted-foreground">Carica immagine</span>
                           <input type="file" accept="image/*" className="hidden" onChange={handleBeerImageChange} />
                         </label>
                       )}
@@ -816,7 +828,7 @@ export function TapListManager({ pubId, tapList, bottleList = [] }: TapListManag
 
                 {/* Form creazione birrificio - condiviso tra aggiunta e modifica */}
                 {creatingBrewery && (
-                  <div className="border rounded-lg p-4 bg-blue-50/50 dark:bg-blue-900/10 space-y-3">
+                  <div className="border border-orange-100 rounded-2xl p-4 bg-orange-50/50 dark:bg-orange-950/10 space-y-3">
                     <div className="flex items-center gap-2 mb-1">
                       <Button variant="ghost" size="sm" className="h-7 w-7 p-0" onClick={() => setCreatingBrewery(false)}>
                         <ArrowLeft className="h-4 w-4" />
@@ -876,9 +888,9 @@ export function TapListManager({ pubId, tapList, bottleList = [] }: TapListManag
                             </button>
                           </div>
                         ) : (
-                          <label className="flex items-center gap-2 mt-1 px-3 py-2 border border-dashed rounded-lg cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
-                            <ImagePlus className="h-4 w-4 text-gray-400" />
-                            <span className="text-xs text-gray-500">Carica logo</span>
+                          <label className="flex items-center gap-2 mt-1 px-3 py-2 border border-dashed border-orange-200 rounded-xl cursor-pointer hover:bg-orange-50 dark:hover:bg-orange-950/20 transition-colors">
+                            <ImagePlus className="h-4 w-4 text-muted-foreground" />
+                            <span className="text-xs text-muted-foreground">Carica logo</span>
                             <input type="file" accept="image/*" className="hidden" onChange={(e) => {
                               const f = e.target.files?.[0];
                               if (f) {
@@ -905,9 +917,9 @@ export function TapListManager({ pubId, tapList, bottleList = [] }: TapListManag
                             </button>
                           </div>
                         ) : (
-                          <label className="flex items-center gap-2 mt-1 px-3 py-2 border border-dashed rounded-lg cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
-                            <ImagePlus className="h-4 w-4 text-gray-400" />
-                            <span className="text-xs text-gray-500">Carica copertina</span>
+                          <label className="flex items-center gap-2 mt-1 px-3 py-2 border border-dashed border-orange-200 rounded-xl cursor-pointer hover:bg-orange-50 dark:hover:bg-orange-950/20 transition-colors">
+                            <ImagePlus className="h-4 w-4 text-muted-foreground" />
+                            <span className="text-xs text-muted-foreground">Carica copertina</span>
                             <input type="file" accept="image/*" className="hidden" onChange={(e) => {
                               const f = e.target.files?.[0];
                               if (f) {
@@ -946,8 +958,8 @@ export function TapListManager({ pubId, tapList, bottleList = [] }: TapListManag
                       <div className="p-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg">
                         <div className="flex items-center justify-between">
                           <div>
-                            <div className="font-semibold text-gray-900 dark:text-white">{selectedNewBeer.name}</div>
-                            <div className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                            <div className="font-semibold text-foreground">{selectedNewBeer.name}</div>
+                            <div className="text-sm text-muted-foreground mt-1">
                               {selectedNewBeer.breweryName} • {selectedNewBeer.style} • {selectedNewBeer.abv}% ABV
                             </div>
                             <div className="text-xs text-green-600 dark:text-green-400 mt-1">Nuova birra selezionata</div>
@@ -982,8 +994,8 @@ export function TapListManager({ pubId, tapList, bottleList = [] }: TapListManag
                       <div className="p-4 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg">
                         <div className="flex items-center justify-between">
                           <div>
-                            <div className="font-semibold text-gray-900 dark:text-white">{editingItem.beer.name}</div>
-                            <div className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                            <div className="font-semibold text-foreground">{editingItem.beer.name}</div>
+                            <div className="text-sm text-muted-foreground mt-1">
                               {editingItem.beer.brewery?.name || 'Birrificio sconosciuto'} • {editingItem.beer.style} • {editingItem.beer.abv}% ABV
                             </div>
                           </div>
@@ -1036,11 +1048,11 @@ export function TapListManager({ pubId, tapList, bottleList = [] }: TapListManag
                     {debouncedSearchTerm.length >= 2 && !isSearching && (
                       <>
                         {searchResults?.beers && searchResults.beers.length > 0 && (
-                          <div className="max-h-48 overflow-y-auto border rounded-lg bg-white dark:bg-gray-900">
+                          <div className="max-h-48 overflow-y-auto border border-orange-100 rounded-xl bg-white dark:bg-[hsl(25,14%,10%)]">
                             {searchResults.beers.map((beer: any) => (
                               <div
                                 key={beer.id}
-                                className={`p-3 hover:bg-gray-50 dark:hover:bg-gray-800 cursor-pointer border-b last:border-b-0 transition-colors ${beer.id === editingItem.beer.id ? 'bg-amber-50 dark:bg-amber-900/20' : ''}`}
+                                className={`p-3 hover:bg-orange-50 dark:hover:bg-orange-950/20 cursor-pointer border-b border-orange-50 last:border-b-0 transition-colors ${beer.id === editingItem.beer.id ? 'bg-amber-50 dark:bg-amber-900/20' : ''}`}
                                 onClick={() => {
                                   if (beer.id === editingItem.beer.id) {
                                     setSelectedNewBeer(null);
@@ -1059,13 +1071,13 @@ export function TapListManager({ pubId, tapList, bottleList = [] }: TapListManag
                                   setSearchTerm('');
                                 }}
                               >
-                                <div className="font-medium text-gray-900 dark:text-white">
+                                <div className="font-medium text-foreground">
                                   {beer.name}
                                   {beer.id === editingItem.beer.id && (
                                     <span className="text-xs text-amber-600 dark:text-amber-400 ml-2">(attuale)</span>
                                   )}
                                 </div>
-                                <div className="text-sm text-gray-600 dark:text-gray-400">
+                                <div className="text-sm text-muted-foreground">
                                   {beer.brewery?.name || 'Birrificio sconosciuto'} • {beer.style} • {beer.abv}% ABV
                                 </div>
                               </div>
@@ -1141,7 +1153,7 @@ export function TapListManager({ pubId, tapList, bottleList = [] }: TapListManag
                   ) : (
                     <div className="space-y-2">
                       {formData.prices.map((p, idx) => (
-                        <div key={idx} className="flex items-center gap-2 p-2 border rounded-lg bg-gray-50 dark:bg-gray-800">
+                        <div key={idx} className="flex items-center gap-2 p-2 border border-orange-100 rounded-xl bg-orange-50/50 dark:bg-orange-950/20">
                           <Input
                             type="text"
                             list="tap-size-options"
@@ -1209,7 +1221,7 @@ export function TapListManager({ pubId, tapList, bottleList = [] }: TapListManag
                       className={`flex items-center justify-center gap-2 rounded-lg border px-4 py-2.5 text-sm font-medium transition-colors ${
                         formData.tapType === "spina"
                           ? "bg-amber-50 border-amber-400 text-amber-800 dark:bg-amber-900/30 dark:border-amber-500 dark:text-amber-300"
-                          : "border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 hover:border-amber-300 dark:hover:border-amber-700"
+                          : "border-orange-100 dark:border-[hsl(25,12%,20%)] text-muted-foreground hover:border-amber-400 dark:hover:border-amber-700"
                       }`}
                     >
                       🍺 In Spina
@@ -1219,8 +1231,8 @@ export function TapListManager({ pubId, tapList, bottleList = [] }: TapListManag
                       onClick={() => setFormData({ ...formData, tapType: "pompa" })}
                       className={`flex items-center justify-center gap-2 rounded-lg border px-4 py-2.5 text-sm font-medium transition-colors ${
                         formData.tapType === "pompa"
-                          ? "bg-violet-50 border-violet-400 text-violet-800 dark:bg-violet-900/30 dark:border-violet-500 dark:text-violet-300"
-                          : "border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 hover:border-violet-300 dark:hover:border-violet-700"
+                          ? "bg-orange-50 border-primary/60 text-primary dark:bg-orange-950/20 dark:border-primary/40"
+                          : "border-orange-100 dark:border-[hsl(25,12%,20%)] text-muted-foreground hover:border-primary/40 dark:hover:border-primary/30"
                       }`}
                     >
                       🪣 In Pompa
@@ -1322,7 +1334,7 @@ export function TapListManager({ pubId, tapList, bottleList = [] }: TapListManag
             {tapList.map((item) => (
               <div
                 key={item.id}
-                className={`border rounded-lg p-4 transition-colors ${!item.isVisible ? 'opacity-60 bg-gray-50 dark:bg-gray-800/50' : 'bg-white dark:bg-gray-900'}`}
+                className={`border border-orange-50 dark:border-[hsl(25,12%,16%)] rounded-2xl p-4 transition-colors ${!item.isVisible ? 'opacity-60 bg-orange-50/30 dark:bg-orange-950/10' : 'bg-white dark:bg-[hsl(25,14%,10%)]'}`}
               >
                 <div className="flex items-start justify-between gap-3">
                   <div className="flex items-center gap-3 flex-1 min-w-0">
@@ -1336,9 +1348,9 @@ export function TapListManager({ pubId, tapList, bottleList = [] }: TapListManag
                     />
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 flex-wrap">
-                        <h3 className="font-semibold text-base text-gray-900 dark:text-white truncate">{item.beer.name}</h3>
+                        <h3 className="font-semibold text-base text-foreground truncate">{item.beer.name}</h3>
                         {item.tapType === "pompa" && (
-                          <Badge variant="outline" className="text-xs flex-shrink-0 border-violet-300 text-violet-700 dark:text-violet-400">
+                          <Badge variant="outline" className="text-xs flex-shrink-0 border-orange-200 text-primary dark:border-orange-800">
                             In Pompa
                           </Badge>
                         )}
@@ -1354,14 +1366,14 @@ export function TapListManager({ pubId, tapList, bottleList = [] }: TapListManag
                           </Badge>
                         )}
                         {findBottleItem(item.beer.id) && (
-                          <Badge variant="outline" className="text-xs flex-shrink-0 border-purple-300 text-purple-700 dark:text-purple-400">
+                          <Badge variant="outline" className="text-xs flex-shrink-0 border-orange-200 text-primary dark:border-orange-800">
                             anche in cantina
                           </Badge>
                         )}
                       </div>
-                      <p className="text-sm text-gray-600 dark:text-gray-400">{item.beer.brewery?.name || 'Birrificio sconosciuto'}</p>
+                      <p className="text-sm text-muted-foreground">{item.beer.brewery?.name || 'Birrificio sconosciuto'}</p>
                       <div className="flex items-center gap-1.5 flex-wrap">
-                        <span className="text-xs text-gray-500 dark:text-gray-400">
+                        <span className="text-xs text-muted-foreground">
                           {item.beer.style} • {item.beer.abv}% ABV
                         </span>
                         {(item.beer as any).isGlutenFree && (
@@ -1379,7 +1391,7 @@ export function TapListManager({ pubId, tapList, bottleList = [] }: TapListManag
                       variant="ghost"
                       size="sm"
                       onClick={() => handleToggleTapVisibility(item)}
-                      className="h-8 w-8 p-0 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+                      className="h-8 w-8 p-0 text-muted-foreground hover:text-primary hover:bg-orange-50 dark:hover:bg-orange-950/20 rounded-lg"
                     >
                       {item.isVisible ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                     </Button>
@@ -1390,7 +1402,7 @@ export function TapListManager({ pubId, tapList, bottleList = [] }: TapListManag
                         startEdit(item);
                         setIsAddDialogOpen(true);
                       }}
-                      className="h-8 w-8 p-0 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+                      className="h-8 w-8 p-0 text-muted-foreground hover:text-primary hover:bg-orange-50 dark:hover:bg-orange-950/20 rounded-lg"
                     >
                       <Edit className="w-4 h-4" />
                     </Button>

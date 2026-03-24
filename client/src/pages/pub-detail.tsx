@@ -90,7 +90,7 @@ function getOpenStatus(openingHours: any): { status: OpenStatus; borderColor: st
     } else {
       const minutesToOpen = openTime - currentTime;
       if (minutesToOpen > 0 && minutesToOpen <= 60) {
-        return { status: 'opening_soon', borderColor: 'ring-blue-500', bgColor: 'bg-blue-500' };
+        return { status: 'opening_soon', borderColor: 'ring-primary', bgColor: 'bg-primary' };
       }
       return { status: 'closed', borderColor: 'ring-red-500', bgColor: 'bg-red-500' };
     }
@@ -124,7 +124,7 @@ const ModernBeerCard = ({ beer, prices, className = "" }: {
       <div className="flex-1 min-w-0 flex gap-2 justify-between">
         <div className="flex-1 min-w-0">
           <Link href={`/beer/${beer?.id}`}>
-            <h3 className="font-bold text-base leading-snug line-clamp-1 hover:text-primary dark:hover:text-orange-400 cursor-pointer transition-colors text-gray-900 dark:text-white">
+            <h3 className="font-bold text-base leading-snug line-clamp-1 hover:text-primary dark:hover:text-orange-400 cursor-pointer transition-colors text-foreground">
               {beer?.name || 'Nome non disponibile'}
             </h3>
           </Link>
@@ -166,7 +166,7 @@ const ModernBeerCard = ({ beer, prices, className = "" }: {
                   <div className="text-xs text-gray-400 dark:text-gray-400">
                     {typeof price === 'object' ? (price as any).size : price}
                   </div>
-                  <div className="text-sm font-bold text-gray-900 dark:text-white">
+                  <div className="text-sm font-bold text-foreground">
                     €{typeof price === 'object' ? parseFloat((price as any).price).toFixed(2) : parseFloat(price).toFixed(2)}
                   </div>
                 </div>
@@ -199,7 +199,7 @@ const PubStatsCard = ({
         <Icon className="h-5 w-5 text-white" />
       </div>
       <div>
-        <p className="text-2xl font-bold text-gray-900 dark:text-white">{value}</p>
+        <p className="text-2xl font-bold text-foreground">{value}</p>
         <p className="text-sm text-gray-600 dark:text-gray-400 font-medium">{label}</p>
         {description && (
           <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{description}</p>
@@ -514,12 +514,12 @@ export default function PubDetail() {
 
   if (!pub) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-indigo-50 dark:from-gray-950 dark:via-blue-950 dark:to-indigo-950 flex items-center justify-center">
+      <div className="min-h-screen bg-[#FFF8F2] dark:bg-background flex items-center justify-center">
         <div className="text-center space-y-4">
           <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-red-500 to-pink-600 mx-auto flex items-center justify-center">
             <XCircle className="w-8 h-8 text-white" />
           </div>
-          <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Pub non trovato</h2>
+          <h2 className="text-2xl font-bold text-foreground">Pub non trovato</h2>
           <p className="text-gray-600 dark:text-gray-400">
             Il pub che stai cercando non esiste o è stato rimosso.
           </p>
@@ -639,7 +639,7 @@ export default function PubDetail() {
                   : openStatus.status === 'closing_soon'
                   ? 'bg-orange-50 dark:bg-orange-950/20 text-primary dark:text-orange-400 border-orange-100 dark:border-orange-900/30'
                   : openStatus.status === 'opening_soon'
-                  ? 'bg-blue-50 dark:bg-blue-950 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-800'
+                  ? 'bg-orange-50 dark:bg-orange-950/20 text-primary dark:text-orange-400 border-orange-100 dark:border-orange-900/30'
                   : 'bg-red-50 dark:bg-red-950 text-red-700 dark:text-red-300 border-red-200 dark:border-red-800'
               }`}
               data-testid="button-show-hours"
@@ -647,7 +647,7 @@ export default function PubDetail() {
               <span className={`w-2 h-2 rounded-full flex-shrink-0 ${
                 openStatus.status === 'open' ? 'bg-green-500' :
                 openStatus.status === 'closing_soon' ? 'bg-primary' :
-                openStatus.status === 'opening_soon' ? 'bg-blue-500' : 'bg-red-500'
+                openStatus.status === 'opening_soon' ? 'bg-primary' : 'bg-red-500'
               }`} />
               {openStatus.status === 'open' && 'Aperto'}
               {openStatus.status === 'closing_soon' && 'Sta chiudendo'}
@@ -691,7 +691,7 @@ export default function PubDetail() {
                 target="_blank"
                 rel="noopener noreferrer"
                 title="Avvia navigazione"
-                className="h-9 w-9 flex items-center justify-center rounded-full border bg-blue-50 dark:bg-blue-950 border-blue-200 dark:border-blue-800 text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-900 transition-colors"
+                className="h-9 w-9 flex items-center justify-center rounded-full border bg-orange-50 dark:bg-orange-950/20 border-orange-100 dark:border-orange-900/30 text-primary dark:text-orange-400 hover:bg-orange-100 dark:hover:bg-orange-950 transition-colors"
               >
                 <Navigation className="h-4 w-4" />
               </a>
@@ -701,7 +701,7 @@ export default function PubDetail() {
               <a
                 href={`tel:${(pub as any).phone}`}
                 title="Chiama"
-                className="h-9 w-9 flex items-center justify-center rounded-full border bg-green-50 dark:bg-green-950 border-green-200 dark:border-green-800 text-green-600 dark:text-green-400 hover:bg-green-100 dark:hover:bg-blue-900 transition-colors"
+                className="h-9 w-9 flex items-center justify-center rounded-full border bg-orange-50 dark:bg-orange-950/20 border-orange-100 dark:border-orange-900/30 text-primary dark:text-orange-400 hover:bg-orange-100 dark:hover:bg-orange-950/30 transition-colors"
               >
                 <Phone className="h-4 w-4" />
               </a>
@@ -743,7 +743,7 @@ export default function PubDetail() {
                   <TabsTrigger 
                     value="taplist" 
                     data-testid="tab-taplist"
-                    className="relative flex items-center gap-1.5 px-4 py-3 text-sm font-medium whitespace-nowrap rounded-none bg-transparent border-none shadow-none transition-colors text-gray-400 dark:text-gray-500 data-[state=active]:text-primary dark:data-[state=active]:text-orange-400 data-[state=active]:shadow-none data-[state=active]:bg-transparent after:absolute after:bottom-0 after:left-0 after:right-0 after:h-[2px] after:rounded-full after:bg-primary after:opacity-0 data-[state=active]:after:opacity-100 after:transition-opacity"
+                    className="relative flex items-center gap-1.5 px-4 py-3 text-sm font-medium whitespace-nowrap rounded-none bg-transparent border-none shadow-none transition-colors text-muted-foreground data-[state=active]:text-primary dark:data-[state=active]:text-orange-400 data-[state=active]:shadow-none data-[state=active]:bg-transparent after:absolute after:bottom-0 after:left-0 after:right-0 after:h-[2px] after:rounded-full after:bg-primary after:opacity-0 data-[state=active]:after:opacity-100 after:transition-opacity hover:text-foreground"
                   >
                     <Wine className="h-3.5 w-3.5 flex-shrink-0" />
                     Spina
@@ -756,7 +756,7 @@ export default function PubDetail() {
                   <TabsTrigger 
                     value="bottles" 
                     data-testid="tab-bottles"
-                    className="relative flex items-center gap-1.5 px-4 py-3 text-sm font-medium whitespace-nowrap rounded-none bg-transparent border-none shadow-none transition-colors text-gray-400 dark:text-gray-500 data-[state=active]:text-primary dark:data-[state=active]:text-orange-400 data-[state=active]:shadow-none data-[state=active]:bg-transparent after:absolute after:bottom-0 after:left-0 after:right-0 after:h-[2px] after:rounded-full after:bg-primary after:opacity-0 data-[state=active]:after:opacity-100 after:transition-opacity"
+                    className="relative flex items-center gap-1.5 px-4 py-3 text-sm font-medium whitespace-nowrap rounded-none bg-transparent border-none shadow-none transition-colors text-muted-foreground data-[state=active]:text-primary dark:data-[state=active]:text-orange-400 data-[state=active]:shadow-none data-[state=active]:bg-transparent after:absolute after:bottom-0 after:left-0 after:right-0 after:h-[2px] after:rounded-full after:bg-primary after:opacity-0 data-[state=active]:after:opacity-100 after:transition-opacity hover:text-foreground"
                   >
                     <Sparkles className="h-3.5 w-3.5 flex-shrink-0" />
                     Cantina
@@ -764,7 +764,7 @@ export default function PubDetail() {
                   <TabsTrigger 
                     value="menu" 
                     data-testid="tab-menu"
-                    className="relative flex items-center gap-1.5 px-4 py-3 text-sm font-medium whitespace-nowrap rounded-none bg-transparent border-none shadow-none transition-colors text-gray-400 dark:text-gray-500 data-[state=active]:text-primary dark:data-[state=active]:text-orange-400 data-[state=active]:shadow-none data-[state=active]:bg-transparent after:absolute after:bottom-0 after:left-0 after:right-0 after:h-[2px] after:rounded-full after:bg-primary after:opacity-0 data-[state=active]:after:opacity-100 after:transition-opacity"
+                    className="relative flex items-center gap-1.5 px-4 py-3 text-sm font-medium whitespace-nowrap rounded-none bg-transparent border-none shadow-none transition-colors text-muted-foreground data-[state=active]:text-primary dark:data-[state=active]:text-orange-400 data-[state=active]:shadow-none data-[state=active]:bg-transparent after:absolute after:bottom-0 after:left-0 after:right-0 after:h-[2px] after:rounded-full after:bg-primary after:opacity-0 data-[state=active]:after:opacity-100 after:transition-opacity hover:text-foreground"
                   >
                     <span className="flex-shrink-0 leading-none">🍽️</span>
                     Menù
@@ -773,7 +773,7 @@ export default function PubDetail() {
                     <TabsTrigger 
                       value="events" 
                       data-testid="tab-events"
-                      className="relative flex items-center gap-1.5 px-4 py-3 text-sm font-medium whitespace-nowrap rounded-none bg-transparent border-none shadow-none transition-colors text-gray-400 dark:text-gray-500 data-[state=active]:text-primary dark:data-[state=active]:text-orange-400 data-[state=active]:shadow-none data-[state=active]:bg-transparent after:absolute after:bottom-0 after:left-0 after:right-0 after:h-[2px] after:rounded-full after:bg-primary after:opacity-0 data-[state=active]:after:opacity-100 after:transition-opacity"
+                      className="relative flex items-center gap-1.5 px-4 py-3 text-sm font-medium whitespace-nowrap rounded-none bg-transparent border-none shadow-none transition-colors text-muted-foreground data-[state=active]:text-primary dark:data-[state=active]:text-orange-400 data-[state=active]:shadow-none data-[state=active]:bg-transparent after:absolute after:bottom-0 after:left-0 after:right-0 after:h-[2px] after:rounded-full after:bg-primary after:opacity-0 data-[state=active]:after:opacity-100 after:transition-opacity hover:text-foreground"
                     >
                       <Calendar className="h-3.5 w-3.5 flex-shrink-0" />
                       Serate
@@ -783,7 +783,7 @@ export default function PubDetail() {
                   <TabsTrigger 
                     value="info" 
                     data-testid="tab-info"
-                    className="lg:hidden relative flex items-center gap-1.5 px-4 py-3 text-sm font-medium whitespace-nowrap rounded-none bg-transparent border-none shadow-none transition-colors text-gray-400 dark:text-gray-500 data-[state=active]:text-primary dark:data-[state=active]:text-orange-400 data-[state=active]:shadow-none data-[state=active]:bg-transparent after:absolute after:bottom-0 after:left-0 after:right-0 after:h-[2px] after:rounded-full after:bg-primary after:opacity-0 data-[state=active]:after:opacity-100 after:transition-opacity"
+                    className="lg:hidden relative flex items-center gap-1.5 px-4 py-3 text-sm font-medium whitespace-nowrap rounded-none bg-transparent border-none shadow-none transition-colors text-muted-foreground data-[state=active]:text-primary dark:data-[state=active]:text-orange-400 data-[state=active]:shadow-none data-[state=active]:bg-transparent after:absolute after:bottom-0 after:left-0 after:right-0 after:h-[2px] after:rounded-full after:bg-primary after:opacity-0 data-[state=active]:after:opacity-100 after:transition-opacity hover:text-foreground"
                   >
                     <Info className="h-3.5 w-3.5 flex-shrink-0" />
                     Info
@@ -833,7 +833,7 @@ export default function PubDetail() {
                   ) : (
                     <div className="text-center py-16">
                       <Sparkles className="h-16 w-16 text-gray-400 mx-auto mb-4" />
-                      <h4 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
+                      <h4 className="text-xl font-semibold text-foreground mb-2">
                         Nessuna birra in cantina
                       </h4>
                       <p className="text-gray-600 dark:text-gray-400">
@@ -877,7 +877,7 @@ export default function PubDetail() {
                             <div className="flex-1 min-w-0">
                               <div className="flex items-center gap-2 mb-2 flex-wrap">
                                 {!event.imageUrl && <EventCategoryBadge category={event.category} />}
-                                <h4 className="text-lg font-bold text-gray-900 dark:text-white">{event.title}</h4>
+                                <h4 className="text-lg font-bold text-foreground">{event.title}</h4>
                               </div>
                               <div className="flex items-center text-sm text-pink-600 dark:text-pink-400 gap-2 mb-2">
                                 <Calendar className="h-4 w-4" />
@@ -913,12 +913,12 @@ export default function PubDetail() {
                         <MapPin className="h-4 w-4 text-primary dark:text-orange-400" />
                       </div>
                       <div className="flex-1 min-w-0 pt-0.5">
-                        <p className="text-sm font-semibold text-gray-900 dark:text-white">{(pub as any).address}</p>
+                        <p className="text-sm font-semibold text-foreground">{(pub as any).address}</p>
                         <a
                           href={getMapNavigationUrl((pub as any).name, (pub as any).address)}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="inline-flex items-center mt-2 px-3 py-1.5 rounded-lg bg-blue-500 hover:bg-blue-600 text-white text-xs font-semibold transition-colors gap-1.5"
+                          className="inline-flex items-center mt-2 px-3 py-1.5 rounded-xl bg-primary hover:bg-primary/90 text-white text-xs font-semibold transition-colors gap-1.5"
                         >
                           <Navigation className="h-3 w-3" />
                           Avvia navigazione
@@ -931,12 +931,12 @@ export default function PubDetail() {
                     onClick={handleShowOpeningHours}
                     className="w-full flex items-center gap-3 p-3 rounded-xl bg-white dark:bg-[hsl(25,14%,10%)] border border-orange-50 dark:border-[hsl(25,12%,16%)] hover:bg-orange-50 dark:hover:bg-orange-950/10 transition-colors text-left shadow-sm"
                   >
-                    <div className="p-2.5 rounded-xl bg-blue-100 dark:bg-blue-900/40 flex-shrink-0">
-                      <Clock className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                    <div className="p-2.5 rounded-xl bg-orange-50 dark:bg-orange-950/20 flex-shrink-0">
+                      <Clock className="h-4 w-4 text-primary" />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-semibold text-gray-900 dark:text-white">Orari di apertura</p>
-                      <p className={`text-xs mt-0.5 font-medium ${openStatus.status === 'open' ? 'text-green-600' : openStatus.status === 'closing_soon' ? 'text-primary' : 'text-red-600'}`}>
+                      <p className="text-sm font-semibold text-foreground">Orari di apertura</p>
+                      <p className={`text-xs mt-0.5 font-medium ${openStatus.status === 'open' ? 'text-emerald-600' : openStatus.status === 'closing_soon' ? 'text-primary' : 'text-red-600'}`}>
                         {openStatus.status === 'open' ? 'Aperto adesso' : openStatus.status === 'closing_soon' ? 'Sta chiudendo' : openStatus.status === 'opening_soon' ? 'Sta per aprire' : 'Chiuso'}
                       </p>
                     </div>
@@ -945,28 +945,28 @@ export default function PubDetail() {
                   {/* Phone */}
                   {(pub as any)?.phone && (
                     <a href={`tel:${(pub as any).phone}`} className="flex items-center gap-3 p-3 rounded-xl bg-white dark:bg-[hsl(25,14%,10%)] border border-orange-50 dark:border-[hsl(25,12%,16%)] hover:bg-orange-50 dark:hover:bg-orange-950/10 transition-colors shadow-sm">
-                      <div className="p-2.5 rounded-xl bg-green-100 dark:bg-green-900/40 flex-shrink-0">
-                        <Phone className="h-4 w-4 text-green-600 dark:text-green-400" />
+                      <div className="p-2.5 rounded-xl bg-orange-50 dark:bg-orange-950/20 flex-shrink-0">
+                        <Phone className="h-4 w-4 text-primary" />
                       </div>
-                      <span className="text-sm font-semibold text-gray-900 dark:text-white">{(pub as any).phone}</span>
+                      <span className="text-sm font-semibold text-foreground">{(pub as any).phone}</span>
                     </a>
                   )}
                   {/* Website */}
                   {(pub as any)?.websiteUrl && (
                     <a href={(pub as any).websiteUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 p-3 rounded-xl bg-white dark:bg-[hsl(25,14%,10%)] border border-orange-50 dark:border-[hsl(25,12%,16%)] hover:bg-orange-50 dark:hover:bg-orange-950/10 transition-colors shadow-sm">
-                      <div className="p-2.5 rounded-xl bg-purple-100 dark:bg-purple-900/40 flex-shrink-0">
-                        <Globe className="h-4 w-4 text-purple-600 dark:text-purple-400" />
+                      <div className="p-2.5 rounded-xl bg-orange-50 dark:bg-orange-950/20 flex-shrink-0">
+                        <Globe className="h-4 w-4 text-primary" />
                       </div>
-                      <span className="text-sm font-semibold text-gray-900 dark:text-white">Sito Web</span>
+                      <span className="text-sm font-semibold text-foreground">Sito Web</span>
                     </a>
                   )}
                   {/* Email */}
                   {(pub as any)?.email && (
                     <a href={`mailto:${(pub as any).email}`} className="flex items-center gap-3 p-3 rounded-xl bg-white dark:bg-[hsl(25,14%,10%)] border border-orange-50 dark:border-[hsl(25,12%,16%)] hover:bg-orange-50 dark:hover:bg-orange-950/10 transition-colors shadow-sm">
-                      <div className="p-2.5 rounded-xl bg-red-100 dark:bg-red-900/40 flex-shrink-0">
-                        <Mail className="h-4 w-4 text-red-600 dark:text-red-400" />
+                      <div className="p-2.5 rounded-xl bg-orange-50 dark:bg-orange-950/20 flex-shrink-0">
+                        <Mail className="h-4 w-4 text-primary" />
                       </div>
-                      <span className="text-sm font-semibold text-gray-900 dark:text-white truncate">{(pub as any).email}</span>
+                      <span className="text-sm font-semibold text-foreground truncate">{(pub as any).email}</span>
                     </a>
                   )}
                   {/* Social */}
@@ -974,7 +974,7 @@ export default function PubDetail() {
                     <div className="flex gap-3">
                       {(pub as any)?.facebookUrl && (
                         <a href={(pub as any).facebookUrl} target="_blank" rel="noopener noreferrer"
-                          className="flex-1 flex items-center justify-center gap-2 p-3 rounded-xl bg-blue-500 hover:bg-blue-600 text-white text-sm font-semibold transition-colors shadow-sm">
+                          className="flex-1 flex items-center justify-center gap-2 p-3 rounded-xl bg-primary hover:bg-primary/90 text-white text-sm font-semibold transition-colors shadow-sm">
                           <Facebook size={16} /> Facebook
                         </a>
                       )}
@@ -1010,19 +1010,19 @@ export default function PubDetail() {
                 {/* Address with Maps button */}
                 {(pub as any)?.address && (
                   <div className="flex items-start space-x-3">
-                    <div className="p-2 rounded-lg bg-orange-50 dark:bg-orange-950/20 flex-shrink-0">
+                    <div className="p-2.5 rounded-xl bg-orange-50 dark:bg-orange-950/20 flex-shrink-0">
                       <MapPin className="h-4 w-4 text-primary dark:text-orange-400" />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="font-medium text-gray-900 dark:text-white text-sm">{(pub as any).address}</p>
+                      <p className="font-medium text-foreground text-sm">{(pub as any).address}</p>
                       <a
                         href={getMapNavigationUrl((pub as any).name, (pub as any).address)}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="inline-flex items-center mt-1.5 px-3 py-1.5 rounded-lg bg-blue-500 hover:bg-blue-600 text-white text-xs font-semibold transition-colors gap-1.5"
+                        className="inline-flex items-center mt-1.5 px-3 py-1.5 rounded-xl bg-primary hover:bg-primary/90 text-white text-xs font-semibold transition-colors gap-1.5"
                       >
                         <Navigation className="h-3 w-3" />
-                        Avvia navigazione
+                        Indicazioni
                       </a>
                     </div>
                   </div>
@@ -1031,12 +1031,12 @@ export default function PubDetail() {
                 {/* Phone */}
                 {(pub as any)?.phone && (
                   <div className="flex items-center space-x-3">
-                    <div className="p-2 rounded-lg bg-green-50 dark:bg-green-950/20">
-                      <Phone className="h-4 w-4 text-green-600 dark:text-green-400" />
+                    <div className="p-2.5 rounded-xl bg-orange-50 dark:bg-orange-950/20">
+                      <Phone className="h-4 w-4 text-primary" />
                     </div>
                     <a 
                       href={`tel:${(pub as any).phone}`} 
-                      className="font-medium text-gray-900 dark:text-white hover:text-primary transition-colors text-sm"
+                      className="font-medium text-foreground hover:text-primary transition-colors text-sm"
                     >
                       {(pub as any).phone}
                     </a>
@@ -1046,14 +1046,14 @@ export default function PubDetail() {
                 {/* Website */}
                 {(pub as any)?.websiteUrl && (
                   <div className="flex items-center space-x-3">
-                    <div className="p-2 rounded-lg bg-purple-50 dark:bg-purple-950/20">
-                      <Globe className="h-4 w-4 text-purple-600 dark:text-purple-400" />
+                    <div className="p-2.5 rounded-xl bg-orange-50 dark:bg-orange-950/20">
+                      <Globe className="h-4 w-4 text-primary" />
                     </div>
                     <a 
                       href={(pub as any).websiteUrl} 
                       target="_blank" 
                       rel="noopener noreferrer"
-                      className="font-medium text-gray-900 dark:text-white hover:text-primary transition-colors text-sm"
+                      className="font-medium text-foreground hover:text-primary transition-colors text-sm"
                     >
                       Visita il Sito Web
                     </a>
@@ -1063,12 +1063,12 @@ export default function PubDetail() {
                 {/* Email */}
                 {(pub as any)?.email && (
                   <div className="flex items-center space-x-3">
-                    <div className="p-2 rounded-lg bg-red-50 dark:bg-red-950/20">
-                      <Mail className="h-4 w-4 text-red-600 dark:text-red-400" />
+                    <div className="p-2.5 rounded-xl bg-orange-50 dark:bg-orange-950/20">
+                      <Mail className="h-4 w-4 text-primary" />
                     </div>
                     <a 
                       href={`mailto:${(pub as any).email}`} 
-                      className="font-medium text-gray-900 dark:text-white hover:text-primary transition-colors break-all text-sm"
+                      className="font-medium text-foreground hover:text-primary transition-colors break-all text-sm"
                     >
                       {(pub as any).email}
                     </a>
@@ -1078,14 +1078,14 @@ export default function PubDetail() {
                 {/* Social Media */}
                 {((pub as any)?.facebookUrl || (pub as any)?.instagramUrl) && (
                   <div className="space-y-3 pt-4 border-t border-orange-50 dark:border-orange-900/30">
-                    <h4 className="font-semibold text-gray-900 dark:text-white text-sm">Seguici</h4>
+                    <h4 className="font-semibold text-foreground text-sm">Seguici</h4>
                     <div className="flex space-x-3">
                       {(pub as any)?.facebookUrl && (
                         <a 
                           href={(pub as any).facebookUrl} 
                           target="_blank" 
                           rel="noopener noreferrer"
-                          className="p-2 rounded-lg bg-blue-500 hover:bg-blue-600 text-white transition-colors"
+                          className="p-2 rounded-xl bg-primary hover:bg-primary/90 text-white transition-colors"
                           title="Facebook"
                         >
                           <Facebook size={16} />
@@ -1160,7 +1160,7 @@ export default function PubDetail() {
                   </div>
                 )}
                 {selectedEvent.description && (
-                  <p className="text-gray-700 dark:text-gray-300 whitespace-pre-wrap">{selectedEvent.description}</p>
+                  <p className="text-foreground whitespace-pre-wrap">{selectedEvent.description}</p>
                 )}
                 <div className="pt-3 border-t">
                   <p className="text-xs text-gray-500 mb-2">Condividi questo evento</p>

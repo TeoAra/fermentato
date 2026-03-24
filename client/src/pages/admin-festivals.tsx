@@ -33,15 +33,15 @@ interface AdminUser {
 
 function StatusBadge({ festival }: { festival: AdminFestival }) {
   if (festival.isActive && !festival.endDate || (festival.isActive && festival.endDate && new Date(festival.endDate) >= new Date())) {
-    return <Badge className="bg-green-100 text-green-700 border-green-200">Attivo</Badge>;
+    return <Badge className="bg-emerald-50 text-emerald-700 border-emerald-100">Attivo</Badge>;
   }
   if (festival.endDate && new Date(festival.endDate) < new Date()) {
-    return <Badge variant="outline" className="text-gray-500">Scaduto</Badge>;
+    return <Badge variant="outline" className="bg-[hsl(38,14%,93%)] text-muted-foreground border-transparent">Scaduto</Badge>;
   }
   if (!festival.paidAt && !festival.isActive) {
-    return <Badge className="bg-yellow-100 text-yellow-700 border-yellow-200">Non pagato</Badge>;
+    return <Badge className="bg-orange-50 text-primary border-orange-100">Non pagato</Badge>;
   }
-  return <Badge variant="secondary">Inattivo</Badge>;
+  return <Badge variant="secondary" className="bg-orange-50 text-primary border-orange-100">Inattivo</Badge>;
 }
 
 // ── User search picker ────────────────────────────────────────────────────────
@@ -59,26 +59,26 @@ function UserSearchPicker({ onSelect }: { onSelect: (user: AdminUser) => void })
   return (
     <div className="space-y-2">
       <div className="relative">
-        {isLoading ? <Loader2 className="absolute left-3 top-3 h-4 w-4 animate-spin text-gray-400" /> : <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />}
-        <Input className="pl-9" placeholder="Cerca per email, username o nome…" value={q} onChange={e => setQ(e.target.value)} />
+        {isLoading ? <Loader2 className="absolute left-3 top-3 h-4 w-4 animate-spin text-muted-foreground" /> : <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />}
+        <Input className="pl-9 border-orange-100 rounded-xl focus-visible:ring-primary/20" placeholder="Cerca per email, username o nome…" value={q} onChange={e => setQ(e.target.value)} />
       </div>
       {users.length > 0 && (
-        <div className="border rounded-xl overflow-hidden bg-white dark:bg-gray-900">
+        <div className="border border-orange-100 rounded-xl overflow-hidden bg-white dark:bg-[hsl(25,14%,10%)]">
           {users.map(u => (
-            <button key={u.id} className="w-full text-left flex items-center gap-3 px-3 py-2 hover:bg-amber-50 dark:hover:bg-amber-900/20 border-b last:border-b-0 transition-colors" onClick={() => { onSelect(u); setQ(""); }}>
-              <div className="w-7 h-7 rounded-full bg-amber-100 dark:bg-amber-900/40 flex items-center justify-center flex-shrink-0">
-                <span className="text-xs font-bold text-amber-700">{(u.username || u.email)[0].toUpperCase()}</span>
+            <button key={u.id} className="w-full text-left flex items-center gap-3 px-3 py-2 hover:bg-orange-50 dark:hover:bg-orange-950/10 border-b border-orange-100 last:border-b-0 transition-colors" onClick={() => { onSelect(u); setQ(""); }}>
+              <div className="w-7 h-7 rounded-full bg-orange-50 dark:bg-orange-900/40 flex items-center justify-center flex-shrink-0">
+                <span className="text-xs font-bold text-primary">{(u.username || u.email)[0].toUpperCase()}</span>
               </div>
               <div className="min-w-0">
-                <p className="text-sm font-medium truncate">{u.full_name || u.username || u.email}</p>
-                <p className="text-xs text-gray-500 truncate">{u.email}</p>
+                <p className="text-sm font-medium truncate text-foreground">{u.full_name || u.username || u.email}</p>
+                <p className="text-xs text-muted-foreground truncate">{u.email}</p>
               </div>
             </button>
           ))}
         </div>
       )}
       {q.length >= 2 && !isLoading && users.length === 0 && (
-        <p className="text-xs text-gray-400 text-center py-2">Nessun utente trovato per "{q}"</p>
+        <p className="text-xs text-muted-foreground text-center py-2">Nessun utente trovato per "{q}"</p>
       )}
     </div>
   );
@@ -102,27 +102,27 @@ function TransferDialog({ festival, onClose }: { festival: AdminFestival; onClos
 
   return (
     <Dialog open onOpenChange={onClose}>
-      <DialogContent className="max-w-md">
+      <DialogContent className="max-w-md bg-white dark:bg-[hsl(25,14%,10%)] border-orange-50 dark:border-[hsl(25,12%,16%)] rounded-2xl">
         <DialogHeader>
-          <DialogTitle>Trasferisci "{festival.name}"</DialogTitle>
+          <DialogTitle className="text-foreground font-bold">Trasferisci "{festival.name}"</DialogTitle>
         </DialogHeader>
         <div className="space-y-4">
-          <p className="text-sm text-gray-500">Cerca e seleziona l'utente a cui assegnare questo festival:</p>
+          <p className="text-sm text-muted-foreground">Cerca e seleziona l'utente a cui assegnare questo festival:</p>
           <UserSearchPicker onSelect={u => setSelectedUser(u)} />
           {selectedUser && (
-            <div className="flex items-center gap-3 p-3 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700 rounded-xl">
-              <UserCheck className="h-5 w-5 text-amber-600 flex-shrink-0" />
+            <div className="flex items-center gap-3 p-3 bg-orange-50 dark:bg-orange-900/20 border border-orange-100 dark:border-orange-800 rounded-xl">
+              <UserCheck className="h-5 w-5 text-primary flex-shrink-0" />
               <div>
-                <p className="text-sm font-semibold">{selectedUser.full_name || selectedUser.username || selectedUser.email}</p>
-                <p className="text-xs text-gray-500">{selectedUser.email}</p>
+                <p className="text-sm font-semibold text-foreground">{selectedUser.full_name || selectedUser.username || selectedUser.email}</p>
+                <p className="text-xs text-muted-foreground">{selectedUser.email}</p>
               </div>
-              <Button size="sm" variant="ghost" className="ml-auto" onClick={() => setSelectedUser(null)}>Cambia</Button>
+              <Button size="sm" variant="ghost" className="ml-auto text-primary hover:bg-orange-50 rounded-xl" onClick={() => setSelectedUser(null)}>Cambia</Button>
             </div>
           )}
-          <div className="flex gap-2 justify-end pt-2 border-t">
-            <Button variant="outline" onClick={onClose}>Annulla</Button>
+          <div className="flex gap-2 justify-end pt-2 border-t border-orange-100">
+            <Button variant="outline" className="border-orange-100 hover:bg-orange-50 rounded-xl text-muted-foreground" onClick={onClose}>Annulla</Button>
             <Button
-              className="bg-amber-500 hover:bg-amber-600 text-white"
+              className="bg-primary hover:bg-primary/90 text-white rounded-xl font-semibold"
               disabled={!selectedUser || transferMutation.isPending}
               onClick={() => transferMutation.mutate()}
             >
@@ -166,18 +166,18 @@ function CreateForUserDialog({ onClose }: { onClose: () => void }) {
 
   return (
     <Dialog open onOpenChange={onClose}>
-      <DialogContent className="max-w-md">
+      <DialogContent className="max-w-md bg-white dark:bg-[hsl(25,14%,10%)] border-orange-50 dark:border-[hsl(25,12%,16%)] rounded-2xl">
         <DialogHeader>
-          <DialogTitle>Crea festival per un utente</DialogTitle>
+          <DialogTitle className="text-foreground font-bold">Crea festival per un utente</DialogTitle>
         </DialogHeader>
         <div className="space-y-4">
           <div>
-            <Label className="text-xs">Assegna a utente</Label>
+            <Label className="text-xs text-muted-foreground uppercase tracking-wide font-semibold">Assegna a utente</Label>
             {selectedUser ? (
-              <div className="flex items-center gap-3 mt-1 p-2 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 rounded-xl">
-                <UserCheck className="h-4 w-4 text-amber-600 flex-shrink-0" />
-                <p className="text-sm font-medium flex-1">{selectedUser.email}</p>
-                <Button size="sm" variant="ghost" onClick={() => setSelectedUser(null)}>Cambia</Button>
+              <div className="flex items-center gap-3 mt-1 p-2 bg-orange-50 dark:bg-orange-900/20 border border-orange-100 rounded-xl">
+                <UserCheck className="h-4 w-4 text-primary flex-shrink-0" />
+                <p className="text-sm font-medium flex-1 text-foreground">{selectedUser.email}</p>
+                <Button size="sm" variant="ghost" className="text-primary hover:bg-orange-50 rounded-xl" onClick={() => setSelectedUser(null)}>Cambia</Button>
               </div>
             ) : (
               <div className="mt-1">
@@ -186,27 +186,27 @@ function CreateForUserDialog({ onClose }: { onClose: () => void }) {
             )}
           </div>
           <div>
-            <Label className="text-xs">Nome festival *</Label>
-            <Input className="mt-1 h-9" value={form.name} onChange={e => {
+            <Label className="text-xs text-muted-foreground uppercase tracking-wide font-semibold">Nome festival *</Label>
+            <Input className="mt-1 h-9 border-orange-100 rounded-xl focus-visible:ring-primary/20" value={form.name} onChange={e => {
               const name = e.target.value;
               setForm(f => ({ ...f, name, slug: suggestSlug(name) }));
             }} placeholder="Es. Birra Loca Fest 2025" />
           </div>
           <div>
-            <Label className="text-xs">Slug URL *</Label>
-            <Input className="mt-1 h-9 font-mono text-sm" value={form.slug} onChange={e => setForm(f => ({ ...f, slug: e.target.value }))} placeholder="birra-loca-fest-2025" />
+            <Label className="text-xs text-muted-foreground uppercase tracking-wide font-semibold">Slug URL *</Label>
+            <Input className="mt-1 h-9 font-mono text-sm border-orange-100 rounded-xl focus-visible:ring-primary/20" value={form.slug} onChange={e => setForm(f => ({ ...f, slug: e.target.value }))} placeholder="birra-loca-fest-2025" />
           </div>
           <div>
-            <Label className="text-xs">Luogo</Label>
-            <Input className="mt-1 h-9" value={form.location} onChange={e => setForm(f => ({ ...f, location: e.target.value }))} placeholder="Es. Milano, Arena Civica" />
+            <Label className="text-xs text-muted-foreground uppercase tracking-wide font-semibold">Luogo</Label>
+            <Input className="mt-1 h-9 border-orange-100 rounded-xl focus-visible:ring-primary/20" value={form.location} onChange={e => setForm(f => ({ ...f, location: e.target.value }))} placeholder="Es. Milano, Arena Civica" />
           </div>
-          <p className="text-xs text-amber-600 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700 rounded-lg px-3 py-2">
+          <p className="text-xs text-primary bg-orange-50 dark:bg-orange-900/20 border border-orange-100 dark:border-orange-800 rounded-lg px-3 py-2">
             Il festival sarà creato come già pagato e attivo (gratuito).
           </p>
-          <div className="flex gap-2 justify-end pt-2 border-t">
-            <Button variant="outline" onClick={onClose}>Annulla</Button>
+          <div className="flex gap-2 justify-end pt-2 border-t border-orange-100">
+            <Button variant="outline" className="border-orange-100 hover:bg-orange-50 rounded-xl text-muted-foreground" onClick={onClose}>Annulla</Button>
             <Button
-              className="bg-amber-500 hover:bg-amber-600 text-white"
+              className="bg-primary hover:bg-primary/90 text-white rounded-xl font-semibold"
               disabled={!selectedUser || !form.name || !form.slug || createMutation.isPending}
               onClick={() => createMutation.mutate()}
             >
@@ -258,69 +258,69 @@ export default function AdminFestivals() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+    <div className="min-h-screen bg-background">
       <div className="max-w-5xl mx-auto px-4 py-6">
         {/* Header */}
-        <div className="flex items-center gap-3 mb-6">
+        <div className="flex items-center gap-3 mb-6 bg-white dark:bg-[hsl(25,14%,10%)] border-b border-orange-100 dark:border-[hsl(25,12%,16%)] p-4 -mx-4 sm:mx-0 rounded-t-2xl">
           <Link href="/admin">
-            <button className="p-2 rounded-xl hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors">
-              <ArrowLeft className="h-5 w-5 text-gray-600" />
+            <button className="p-2 border border-orange-100 hover:bg-orange-50 rounded-xl text-muted-foreground transition-colors">
+              <ArrowLeft className="h-5 w-5" />
             </button>
           </Link>
           <div className="flex-1">
-            <h1 className="text-2xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
-              <QrCode className="h-6 w-6 text-amber-500" />
+            <h1 className="text-2xl font-bold text-foreground flex items-center gap-2">
+              <QrCode className="h-6 w-6 text-primary" />
               Gestione Festival
             </h1>
-            <p className="text-sm text-gray-500 mt-0.5">{allFestivals.length} festival totali</p>
+            <p className="text-sm text-muted-foreground mt-0.5">{allFestivals.length} festival totali</p>
           </div>
-          <Button className="bg-amber-500 hover:bg-amber-600 text-white gap-2" onClick={() => setShowCreate(true)}>
+          <Button className="bg-primary hover:bg-primary/90 text-white rounded-xl font-semibold gap-2" onClick={() => setShowCreate(true)}>
             <Plus className="h-4 w-4" />Crea per utente
           </Button>
         </div>
 
         {/* Search */}
         <div className="relative mb-4">
-          <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-          <Input className="pl-9 bg-white dark:bg-gray-800" placeholder="Cerca per nome, slug, email proprietario…" value={search} onChange={e => setSearch(e.target.value)} />
+          <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+          <Input className="pl-9 bg-white dark:bg-[hsl(25,14%,10%)] border-orange-100 rounded-xl focus-visible:ring-primary/20" placeholder="Cerca per nome, slug, email proprietario…" value={search} onChange={e => setSearch(e.target.value)} />
         </div>
 
         {/* Festival list */}
         {isLoading ? (
           <div className="text-center py-10">
-            <Loader2 className="h-8 w-8 animate-spin text-amber-500 mx-auto mb-2" />
-            <p className="text-gray-500">Caricamento festival…</p>
+            <Loader2 className="h-8 w-8 animate-spin text-primary mx-auto mb-2" />
+            <p className="text-muted-foreground">Caricamento festival…</p>
           </div>
         ) : filteredFestivals.length === 0 ? (
-          <div className="text-center py-10 text-gray-400">
+          <div className="text-center py-10 text-muted-foreground">
             <QrCode className="h-10 w-10 mx-auto mb-2 opacity-30" />
             <p>{search ? `Nessun festival trovato per "${search}"` : "Nessun festival"}</p>
           </div>
         ) : (
           <div className="space-y-3">
             {filteredFestivals.map(fest => (
-              <Card key={fest.id} className="bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700">
+              <Card key={fest.id} className="bg-white dark:bg-[hsl(25,14%,10%)] rounded-2xl border border-orange-50 dark:border-[hsl(25,12%,16%)] shadow-sm">
                 <CardContent className="p-4">
                   <div className="flex items-start gap-4">
                     {/* Logo */}
                     {fest.logoUrl ? (
-                      <img src={fest.logoUrl} alt="" className="w-12 h-12 rounded-xl object-cover flex-shrink-0 border border-gray-200" />
+                      <img src={fest.logoUrl} alt="" className="w-12 h-12 rounded-xl object-cover flex-shrink-0 border border-orange-100" />
                     ) : (
-                      <div className="w-12 h-12 rounded-xl bg-amber-50 dark:bg-amber-900/20 flex items-center justify-center flex-shrink-0">
-                        <QrCode className="h-6 w-6 text-amber-300" />
+                      <div className="w-12 h-12 rounded-xl bg-orange-50 dark:bg-orange-900/20 flex items-center justify-center flex-shrink-0">
+                        <QrCode className="h-6 w-6 text-primary/40" />
                       </div>
                     )}
 
                     {/* Info */}
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 flex-wrap">
-                        <h3 className="font-bold text-gray-900 dark:text-white">{fest.name}</h3>
+                        <h3 className="font-bold text-foreground">{fest.name}</h3>
                         <StatusBadge festival={fest} />
                         {fest.useTokens && (
-                          <Badge className="bg-purple-100 text-purple-700 border-purple-200">Token: {fest.tokenName}</Badge>
+                          <Badge className="bg-primary/10 text-primary border-primary/20">Token: {fest.tokenName}</Badge>
                         )}
                       </div>
-                      <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 mt-0.5 text-xs text-gray-500">
+                      <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 mt-0.5 text-xs text-muted-foreground">
                         <span className="font-mono">{fest.slug}</span>
                         {fest.location && <span>{fest.location}</span>}
                         {fest.startDate && <span>{new Date(fest.startDate).toLocaleDateString("it-IT")}
@@ -328,14 +328,14 @@ export default function AdminFestivals() {
                       </div>
                       {/* Owner */}
                       <div className="flex items-center gap-1 mt-1 text-xs">
-                        <Users className="h-3 w-3 text-gray-400" />
+                        <Users className="h-3 w-3 text-muted-foreground" />
                         {fest.ownerEmail || fest.ownerId ? (
-                          <span className="text-gray-600 dark:text-gray-400">{fest.ownerEmail || fest.ownerId}</span>
+                          <span className="text-muted-foreground">{fest.ownerEmail || fest.ownerId}</span>
                         ) : (
-                          <span className="text-red-400 italic">Nessun proprietario</span>
+                          <span className="text-destructive italic">Nessun proprietario</span>
                         )}
                         {fest.paidAt && (
-                          <span className="ml-2 text-green-600 flex items-center gap-0.5">
+                          <span className="ml-2 text-emerald-600 flex items-center gap-0.5">
                             <CreditCard className="h-3 w-3" />Pagato {new Date(fest.paidAt).toLocaleDateString("it-IT")}
                           </span>
                         )}
@@ -345,19 +345,19 @@ export default function AdminFestivals() {
                     {/* Actions */}
                     <div className="flex flex-col gap-1.5 flex-shrink-0">
                       <Link href={`/festival-dashboard`}>
-                        <Button size="sm" variant="outline" className="gap-1 text-xs w-full">
+                        <Button size="sm" variant="outline" className="border-orange-100 hover:bg-orange-50 text-primary rounded-xl gap-1 text-xs w-full">
                           <Pencil className="h-3 w-3" />Gestisci
                         </Button>
                       </Link>
                       <Link href={`/festival/${fest.slug}`} target="_blank">
-                        <Button size="sm" variant="outline" className="gap-1 text-xs w-full">
+                        <Button size="sm" variant="outline" className="border-orange-100 hover:bg-orange-50 text-primary rounded-xl gap-1 text-xs w-full">
                           <ExternalLink className="h-3 w-3" />Apri
                         </Button>
                       </Link>
                       {!fest.isActive && (
                         <Button
                           size="sm"
-                          className="bg-green-600 hover:bg-green-700 text-white gap-1 text-xs"
+                          className="bg-primary hover:bg-primary/90 text-white rounded-xl font-semibold gap-1 text-xs"
                           onClick={() => activateMutation.mutate(fest.id)}
                           disabled={activateMutation.isPending}
                         >
@@ -365,7 +365,7 @@ export default function AdminFestivals() {
                           Attiva gratis
                         </Button>
                       )}
-                      <Button size="sm" variant="outline" className="gap-1 text-xs" onClick={() => setTransferFest(fest)}>
+                      <Button size="sm" variant="outline" className="border-orange-100 hover:bg-orange-50 text-primary rounded-xl gap-1 text-xs" onClick={() => setTransferFest(fest)}>
                         <UserCheck className="h-3 w-3" />Trasferisci
                       </Button>
                     </div>

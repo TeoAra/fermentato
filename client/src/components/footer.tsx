@@ -16,46 +16,46 @@ export default function Footer() {
               La piattaforma definitiva per scoprire le migliori birre artigianali nei pub e birrifici d'Italia.
             </p>
             <div className="flex space-x-4">
-              <a href="https://www.facebook.com/fermentato.social" target="_blank" rel="noopener noreferrer" className="text-neutral-500 dark:text-neutral-400 hover:text-amber-500 dark:hover:text-amber-400 transition-colors">
+              <a href="https://www.facebook.com/fermentato.social" target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-primary transition-colors">
                 <Facebook size={24} />
               </a>
-              <a href="https://www.instagram.com/fermentato.social" target="_blank" rel="noopener noreferrer" className="text-neutral-500 dark:text-neutral-400 hover:text-amber-500 dark:hover:text-amber-400 transition-colors">
+              <a href="https://www.instagram.com/fermentato.social" target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-primary transition-colors">
                 <Instagram size={24} />
               </a>
             </div>
           </div>
 
           <div>
-            <h3 className="font-semibold mb-4 text-neutral-900 dark:text-white">Per i Locali</h3>
-            <ul className="space-y-2 text-neutral-500 dark:text-neutral-400">
+            <h3 className="font-semibold mb-4 text-foreground">Per i Locali</h3>
+            <ul className="space-y-2 text-muted-foreground">
               <li>
-                <Link href="/dashboard" className="hover:text-amber-500 dark:hover:text-amber-400 transition-colors">
+                <Link href="/dashboard" className="hover:text-primary transition-colors">
                   Dashboard Gestione
                 </Link>
               </li>
               <li>
-                <Link href="/prezzi" className="hover:text-amber-500 dark:hover:text-amber-400 transition-colors">Prezzi e Piani</Link>
+                <Link href="/prezzi" className="hover:text-primary transition-colors">Prezzi e Piani</Link>
               </li>
               <li>
-                <Link href="/supporto" className="hover:text-amber-500 dark:hover:text-amber-400 transition-colors">Supporto</Link>
+                <Link href="/supporto" className="hover:text-primary transition-colors">Supporto</Link>
               </li>
             </ul>
           </div>
 
           <div>
-            <h3 className="font-semibold mb-4 text-neutral-900 dark:text-white">Informazioni</h3>
-            <ul className="space-y-2 text-neutral-500 dark:text-neutral-400">
+            <h3 className="font-semibold mb-4 text-foreground">Informazioni</h3>
+            <ul className="space-y-2 text-muted-foreground">
               <li>
-                <Link href="/chi-siamo" className="hover:text-amber-500 dark:hover:text-amber-400 transition-colors">Chi Siamo</Link>
+                <Link href="/chi-siamo" className="hover:text-primary transition-colors">Chi Siamo</Link>
               </li>
               <li>
-                <Link href="/privacy" className="hover:text-amber-500 dark:hover:text-amber-400 transition-colors">Privacy Policy</Link>
+                <Link href="/privacy" className="hover:text-primary transition-colors">Privacy Policy</Link>
               </li>
               <li>
-                <Link href="/tos" className="hover:text-amber-500 dark:hover:text-amber-400 transition-colors">Termini di Servizio</Link>
+                <Link href="/tos" className="hover:text-primary transition-colors">Termini di Servizio</Link>
               </li>
               <li>
-                <Link href="/contatti" className="hover:text-amber-500 dark:hover:text-amber-400 transition-colors">Contatti</Link>
+                <Link href="/contatti" className="hover:text-primary transition-colors">Contatti</Link>
               </li>
               <li>
                 <CookieSettingsButton />

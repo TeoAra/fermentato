@@ -93,14 +93,14 @@ function SliderRating({ tapId, slug, current, avg, count }: {
 
   if (hasVoted) {
     return (
-      <div className="mt-3 flex items-center gap-2 p-3 bg-green-50 dark:bg-green-900/20 rounded-xl border border-green-200 dark:border-green-800">
-        <Star className="h-4 w-4 fill-amber-400 text-amber-400 flex-shrink-0" />
-        <span className="text-sm font-semibold text-green-700 dark:text-green-400">
+      <div className="mt-3 flex items-center gap-2 p-3 bg-emerald-50 dark:bg-emerald-900/20 rounded-xl border border-emerald-200 dark:border-emerald-800">
+        <Star className="h-4 w-4 fill-primary text-primary flex-shrink-0" />
+        <span className="text-sm font-semibold text-emerald-700 dark:text-emerald-400">
           Hai votato: {current}/10
         </span>
         {avg !== null && count > 0 && (
-          <span className="ml-auto text-xs text-gray-500 dark:text-gray-400">
-            Media: <span className="font-bold text-amber-600">{avg.toFixed(1)}</span>
+          <span className="ml-auto text-xs text-muted-foreground">
+            Media: <span className="font-bold text-primary dark:text-orange-400">{avg.toFixed(1)}</span>
             <span className="opacity-60 ml-1">({count} vot{count === 1 ? "o" : "i"})</span>
           </span>
         )}
@@ -111,9 +111,9 @@ function SliderRating({ tapId, slug, current, avg, count }: {
   return (
     <div className="mt-3">
       <div className="flex items-center justify-between mb-1">
-        <span className="text-xs font-semibold text-gray-600 dark:text-gray-400">Il tuo voto:</span>
+        <span className="text-xs font-semibold text-muted-foreground">Il tuo voto:</span>
         <span className={`text-lg font-bold ${
-          displayVal >= 8 ? "text-green-600" : displayVal >= 5 ? "text-amber-500" : "text-red-500"
+          displayVal >= 8 ? "text-emerald-600" : displayVal >= 5 ? "text-primary" : "text-destructive"
         }`}>{displayVal}/10</span>
       </div>
       <div className="relative">
@@ -127,25 +127,25 @@ function SliderRating({ tapId, slug, current, avg, count }: {
           onMouseUp={handleRelease}
           onTouchEnd={handleRelease}
           disabled={rateMutation.isPending}
-          className="w-full h-2 rounded-lg appearance-none cursor-pointer accent-amber-500"
+          className="w-full h-2 rounded-lg appearance-none cursor-pointer accent-primary"
           style={{
-            background: `linear-gradient(to right, #f59e0b ${pct}%, #e5e7eb ${pct}%)`,
+            background: `linear-gradient(to right, hsl(24,93%,49%) ${pct}%, #e5e7eb ${pct}%)`,
           }}
         />
-        <div className="flex justify-between text-[10px] text-gray-400 mt-0.5 px-0.5">
+        <div className="flex justify-between text-[10px] text-muted-foreground mt-0.5 px-0.5">
           <span>1</span><span>5</span><span>10</span>
         </div>
       </div>
       {rateMutation.isPending && (
         <div className="flex items-center gap-1.5 mt-1">
-          <Loader2 className="h-3 w-3 animate-spin text-amber-500" />
-          <span className="text-xs text-gray-400">Salvataggio…</span>
+          <Loader2 className="h-3 w-3 animate-spin text-primary" />
+          <span className="text-xs text-muted-foreground">Salvataggio…</span>
         </div>
       )}
       {(avg !== null && count > 0) && (
-        <div className="flex items-center gap-1.5 mt-1.5 text-xs text-gray-500">
-          <Star className="h-3 w-3 fill-amber-400 text-amber-400" />
-          <span className="font-bold text-amber-600">{avg.toFixed(1)}</span>
+        <div className="flex items-center gap-1.5 mt-1.5 text-xs text-muted-foreground">
+          <Star className="h-3 w-3 fill-primary text-primary" />
+          <span className="font-bold text-primary dark:text-orange-400">{avg.toFixed(1)}</span>
           <span className="opacity-60">({count} vot{count === 1 ? "o" : "i"})</span>
         </div>
       )}
@@ -179,9 +179,9 @@ function TapCard({ tap, slug, isAuth, isManager, useTokens, tokenName }: {
   const descriptionMissing = tap.beerId && !hasDescription && isManager;
 
   return (
-    <div className={`bg-white dark:bg-gray-800 rounded-2xl border transition-all ${
+    <div className={`bg-white dark:bg-[hsl(25,14%,10%)] rounded-2xl border transition-all ${
       tap.isAvailable
-        ? "border-gray-200 dark:border-gray-700"
+        ? "border-orange-50 dark:border-[hsl(25,12%,16%)] shadow-sm"
         : "border-gray-100 dark:border-gray-800 opacity-60"
     }`}>
       {/* Collapsed row */}
@@ -191,20 +191,20 @@ function TapCard({ tap, slug, isAuth, isManager, useTokens, tokenName }: {
       >
         <div className="flex items-center gap-3">
           {/* Tap number badge */}
-          <div className={`w-10 h-10 flex-shrink-0 rounded-xl flex items-center justify-center font-bold text-sm ${
+          <div className={`w-12 h-12 flex-shrink-0 rounded-2xl flex items-center justify-center font-bold text-sm ${
             tap.isAvailable
-              ? "bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300"
-              : "bg-gray-100 dark:bg-gray-800 text-gray-400"
+              ? "bg-orange-50 text-primary"
+              : "bg-[hsl(38,14%,93%)] dark:bg-[hsl(25,14%,14%)] text-muted-foreground"
           }`}>
             {tap.tapNumber}
           </div>
 
           {/* Beer image */}
           {imageUrl ? (
-            <img src={imageUrl} alt={beerName} className="w-10 h-10 rounded-xl object-cover flex-shrink-0" />
+            <img src={imageUrl} alt={beerName} className="w-12 h-12 rounded-2xl object-cover flex-shrink-0" />
           ) : (
-            <div className="w-10 h-10 rounded-xl bg-gray-100 dark:bg-gray-700 flex items-center justify-center flex-shrink-0">
-              <Beer className="h-5 w-5 text-gray-300" />
+            <div className="w-12 h-12 rounded-2xl bg-orange-50 dark:bg-orange-950/20 flex items-center justify-center flex-shrink-0">
+              <Beer className="h-6 w-6 text-primary" />
             </div>
           )}
 
@@ -213,20 +213,20 @@ function TapCard({ tap, slug, isAuth, isManager, useTokens, tokenName }: {
             <div className="flex items-center gap-1.5 flex-wrap">
               {tap.beerId ? (
                 <Link href={`/beer/${tap.beerId}`} onClick={e => e.stopPropagation()}>
-                  <span className={`font-semibold text-sm hover:underline cursor-pointer ${
-                    tap.isAvailable ? "text-gray-900 dark:text-white" : "text-gray-400 line-through"
+                  <span className={`font-bold text-sm hover:underline cursor-pointer ${
+                    tap.isAvailable ? "text-foreground" : "text-gray-400 line-through"
                   }`}>{beerName}</span>
                 </Link>
               ) : (
-                <span className={`font-semibold text-sm ${
-                  tap.isAvailable ? "text-gray-900 dark:text-white" : "text-gray-400 line-through"
+                <span className={`font-bold text-sm ${
+                  tap.isAvailable ? "text-foreground" : "text-gray-400 line-through"
                 }`}>{beerName}</span>
               )}
               {!tap.isAvailable && (
-                <Badge variant="outline" className="text-xs text-red-500 border-red-200 py-0">Finita</Badge>
+                <Badge variant="outline" className="text-xs text-destructive border-destructive/20 py-0">Finita</Badge>
               )}
               {isPompa && (
-                <span className="text-xs bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-700 px-1.5 py-0 rounded-full">
+                <span className="text-xs bg-primary/10 text-primary border border-primary/20 px-1.5 py-0 rounded-full">
                   In pompa
                 </span>
               )}
@@ -236,29 +236,29 @@ function TapCard({ tap, slug, isAuth, isManager, useTokens, tokenName }: {
               <div className="flex items-center gap-1 mt-0.5">
                 {tap.breweryId ? (
                   <Link href={`/brewery/${tap.breweryId}`} onClick={e => e.stopPropagation()}>
-                    <span className="text-xs text-amber-600 dark:text-amber-400 font-medium hover:underline cursor-pointer">{breweryName}</span>
+                    <span className="text-xs text-primary dark:text-orange-400 font-medium hover:underline cursor-pointer">{breweryName}</span>
                   </Link>
                 ) : (
-                  <span className="text-xs text-amber-600 dark:text-amber-400 font-medium">{breweryName}</span>
+                  <span className="text-xs text-primary dark:text-orange-400 font-medium">{breweryName}</span>
                 )}
               </div>
             )}
 
             <div className="flex flex-wrap items-center gap-1.5 mt-0.5">
-              {style && <Badge variant="secondary" className="text-xs py-0">{style}</Badge>}
+              {style && <Badge variant="secondary" className="text-xs py-0 bg-orange-50 text-primary hover:bg-orange-100">{style}</Badge>}
               {abv && (
-                <span className="text-xs text-gray-500 dark:text-gray-400 flex items-center gap-0.5">
+                <span className="text-xs text-muted-foreground flex items-center gap-0.5">
                   <Droplets className="h-3 w-3" />{abv}% ABV
                 </span>
               )}
               {tap.avgRating !== null && tap.ratingCount > 0 && (
-                <span className="text-xs text-amber-600 dark:text-amber-400 flex items-center gap-0.5">
+                <span className="text-xs text-primary dark:text-orange-400 flex items-center gap-0.5">
                   <Star className="h-3 w-3 fill-current" />{tap.avgRating?.toFixed(1)}
-                  <span className="text-gray-400">({tap.ratingCount})</span>
+                  <span className="text-muted-foreground">({tap.ratingCount})</span>
                 </span>
               )}
               {hasPrices && (
-                <span className="text-xs text-gray-500 dark:text-gray-400">
+                <span className="text-xs bg-orange-50 dark:bg-orange-950/20 text-primary font-bold rounded-full px-2 py-0.5">
                   {Object.entries(tap.prices!).map(([size, price]) => `${size} ${formatPrice(price, useTokens, tokenName)}`).join(" · ")}
                 </span>
               )}
@@ -267,41 +267,41 @@ function TapCard({ tap, slug, isAuth, isManager, useTokens, tokenName }: {
 
           {/* Chevron */}
           {tap.isAvailable && (
-            <div className="flex-shrink-0 text-amber-500">
+            <div className="flex-shrink-0 text-primary">
               {expanded ? <ChevronUp className="h-5 w-5" /> : <ChevronDown className="h-5 w-5" />}
             </div>
           )}
         </div>
 
         {!expanded && tap.notes && (
-          <p className="text-xs text-gray-400 dark:text-gray-500 mt-1.5 ml-[92px] line-clamp-1">{tap.notes}</p>
+          <p className="text-xs text-muted-foreground mt-1.5 ml-15 line-clamp-1">{tap.notes}</p>
         )}
       </button>
 
       {/* Expanded content */}
       {expanded && tap.isAvailable && (
-        <div className="px-4 pb-4 border-t border-gray-100 dark:border-gray-700 pt-3">
+        <div className="px-4 pb-4 border-t border-orange-100 dark:border-[hsl(25,12%,16%)] pt-3">
           {/* Notes */}
           {tap.notes && (
-            <p className="text-xs text-gray-500 dark:text-gray-400 mb-3">{tap.notes}</p>
+            <p className="text-xs text-muted-foreground mb-3">{tap.notes}</p>
           )}
 
           {/* Beer description */}
           {hasDescription && (
-            <div className="mb-3 bg-amber-50 dark:bg-amber-900/10 rounded-xl p-3">
-              <p className="text-xs font-semibold text-amber-700 dark:text-amber-400 mb-1 flex items-center gap-1">
+            <div className="mb-3 bg-orange-50 dark:bg-orange-950/20 rounded-xl p-3 border border-primary/10">
+              <p className="text-xs font-bold text-primary dark:text-orange-400 mb-1 flex items-center gap-1">
                 <Info className="h-3.5 w-3.5" />Descrizione
               </p>
-              <p className="text-xs text-gray-600 dark:text-gray-300 leading-relaxed">{tap.beerDescription}</p>
+              <p className="text-xs text-foreground/80 leading-relaxed">{tap.beerDescription}</p>
             </div>
           )}
 
           {/* Manager edit link when description is missing */}
           {descriptionMissing && (
-            <div className="mb-3 border border-dashed border-amber-300 dark:border-amber-700 rounded-xl p-3 text-center">
-              <p className="text-xs text-gray-500 mb-2">Descrizione birra mancante</p>
+            <div className="mb-3 border border-dashed border-primary/30 rounded-xl p-3 text-center">
+              <p className="text-xs text-muted-foreground mb-2">Descrizione birra mancante</p>
               <Link href={`/beer/${tap.beerId}`}>
-                <Button size="sm" variant="outline" className="text-xs h-7 gap-1">
+                <Button size="sm" variant="outline" className="text-xs h-7 gap-1 border-primary/20 text-primary">
                   <Pencil className="h-3 w-3" />Modifica birra
                 </Button>
               </Link>
@@ -313,15 +313,15 @@ function TapCard({ tap, slug, isAuth, isManager, useTokens, tokenName }: {
           {isAuth ? (
             <SliderRating tapId={tap.id} slug={slug} current={tap.userRating} avg={tap.avgRating} count={tap.ratingCount} />
           ) : (
-            <div className="flex items-center gap-2 p-3 bg-gray-50 dark:bg-gray-700/50 rounded-xl">
+            <div className="flex items-center gap-2 p-3 bg-orange-50 dark:bg-orange-950/20 rounded-xl">
               {tap.avgRating !== null && tap.ratingCount > 0 && (
-                <div className="flex items-center gap-1 text-xs text-amber-600">
+                <div className="flex items-center gap-1 text-xs text-primary dark:text-orange-400">
                   <Star className="h-3.5 w-3.5 fill-current" />
                   <span className="font-bold">{tap.avgRating.toFixed(1)}</span>
-                  <span className="text-gray-400">({tap.ratingCount} vot{tap.ratingCount === 1 ? "o" : "i"})</span>
+                  <span className="text-muted-foreground">({tap.ratingCount} vot{tap.ratingCount === 1 ? "o" : "i"})</span>
                 </div>
               )}
-              <a href="/api/login" className="ml-auto text-xs text-amber-600 font-medium hover:underline">
+              <a href="/api/login" className="ml-auto text-xs text-primary font-bold hover:underline">
                 Accedi per votare →
               </a>
             </div>
@@ -338,41 +338,41 @@ function FoodCategoryBlock({ category, items }: { category: string; items: Festi
   const available = items.filter(i => i.isAvailable).length;
 
   return (
-    <div className="overflow-hidden rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
+    <div className="overflow-hidden rounded-2xl border border-orange-50 dark:border-[hsl(25,12%,16%)] bg-white dark:bg-[hsl(25,14%,10%)] shadow-sm">
       <button
-        className="w-full flex items-center justify-between px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors text-left"
+        className="w-full flex items-center justify-between px-4 py-3 hover:bg-orange-50/50 dark:hover:bg-white/5 transition-colors text-left"
         onClick={() => setExpanded(e => !e)}
       >
         <div className="flex items-center gap-2">
-          <span className="font-semibold text-sm text-gray-900 dark:text-white">{category}</span>
-          <span className="text-xs text-gray-400 bg-gray-100 dark:bg-gray-700 px-1.5 py-0.5 rounded-full">
+          <span className="font-bold text-sm text-foreground">{category}</span>
+          <span className="text-xs text-primary bg-orange-50 dark:bg-orange-950/20 px-1.5 py-0.5 rounded-full font-semibold">
             {available}/{items.length}
           </span>
         </div>
-        {expanded ? <ChevronUp className="h-4 w-4 text-gray-400" /> : <ChevronDown className="h-4 w-4 text-gray-400" />}
+        {expanded ? <ChevronUp className="h-4 w-4 text-primary" /> : <ChevronDown className="h-4 w-4 text-primary" />}
       </button>
 
       {expanded && (
-        <div className="divide-y divide-gray-100 dark:divide-gray-700">
+        <div className="divide-y divide-orange-50 dark:divide-[hsl(25,12%,16%)]">
           {items.map(item => (
             <div key={item.id} className={`px-4 py-3 ${!item.isAvailable ? "opacity-50" : ""}`}>
               <div className="flex items-start justify-between gap-3">
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 flex-wrap">
-                    <span className={`font-medium text-sm ${!item.isAvailable ? "line-through text-gray-400" : "text-gray-900 dark:text-white"}`}>
+                    <span className={`font-bold text-sm ${!item.isAvailable ? "line-through text-muted-foreground" : "text-foreground"}`}>
                       {item.name}
                     </span>
                     {!item.isAvailable && (
-                      <Badge variant="outline" className="text-xs text-red-500 border-red-200 py-0">Esaurito</Badge>
+                      <Badge variant="outline" className="text-xs text-destructive border-destructive/20 py-0">Esaurito</Badge>
                     )}
                   </div>
                   {item.description && (
-                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{item.description}</p>
+                    <p className="text-xs text-muted-foreground mt-0.5">{item.description}</p>
                   )}
                   {item.allergens && item.allergens.length > 0 && (
                     <div className="flex flex-wrap gap-1 mt-1.5">
                       {item.allergens.map(a => (
-                        <span key={a} className="text-xs bg-orange-50 dark:bg-orange-900/30 text-orange-700 dark:text-orange-300 border border-orange-200 dark:border-orange-700 px-1.5 py-0.5 rounded-full">
+                        <span key={a} className="text-xs bg-orange-50 dark:bg-orange-950/20 text-primary border border-primary/20 px-1.5 py-0.5 rounded-full font-medium">
                           {ALLERGEN_LABELS[a.toLowerCase()] ?? a}
                         </span>
                       ))}
@@ -380,7 +380,7 @@ function FoodCategoryBlock({ category, items }: { category: string; items: Festi
                   )}
                 </div>
                 {item.price && (
-                  <span className="font-bold text-amber-600 text-sm whitespace-nowrap">€{parseFloat(item.price).toFixed(2)}</span>
+                  <span className="font-bold text-primary text-sm whitespace-nowrap bg-orange-50 dark:bg-orange-950/20 px-2 py-0.5 rounded-full">€{parseFloat(item.price).toFixed(2)}</span>
                 )}
               </div>
             </div>
@@ -394,7 +394,7 @@ function FoodCategoryBlock({ category, items }: { category: string; items: Festi
 // ── Rankings Tab ─────────────────────────────────────────────────────────────
 function RankingsTab({ rankings }: { rankings: FestivalData["rankings"] }) {
   if (rankings.length === 0) return (
-    <div className="text-center py-10 text-gray-400">
+    <div className="text-center py-10 text-muted-foreground">
       <Trophy className="h-8 w-8 mx-auto mb-2 opacity-30" />
       <p>Ancora nessun voto</p>
       <p className="text-xs mt-1">Espandi le birre per votarle!</p>
@@ -404,34 +404,34 @@ function RankingsTab({ rankings }: { rankings: FestivalData["rankings"] }) {
   return (
     <div className="space-y-2">
       {rankings.map((t, i) => (
-        <div key={t.tapNumber} className="flex items-center gap-3 bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 p-3">
+        <div key={t.tapNumber} className="flex items-center gap-3 bg-white dark:bg-[hsl(25,14%,10%)] rounded-2xl border border-orange-50 dark:border-[hsl(25,12%,16%)] p-3 shadow-sm">
           <div className={`w-8 h-8 flex items-center justify-center rounded-xl text-sm font-bold flex-shrink-0 ${
-            i === 0 ? "bg-yellow-100 text-yellow-700" :
+            i === 0 ? "bg-primary text-white" :
             i === 1 ? "bg-gray-200 text-gray-600" :
             i === 2 ? "bg-orange-100 text-orange-600" :
-            "bg-gray-50 dark:bg-gray-700 text-gray-500"
+            "bg-orange-50 dark:bg-orange-950/20 text-primary"
           }`}>
             {i + 1}
           </div>
           {t.beerImageUrl ? (
             <img src={t.beerImageUrl} alt={t.beerName} className="w-10 h-10 rounded-xl object-cover flex-shrink-0" />
           ) : (
-            <div className="w-10 h-10 rounded-xl bg-amber-50 dark:bg-amber-900/20 flex items-center justify-center flex-shrink-0">
-              <Beer className="h-5 w-5 text-amber-300" />
+            <div className="w-10 h-10 rounded-xl bg-orange-50 dark:bg-orange-950/20 flex items-center justify-center flex-shrink-0">
+              <Beer className="h-5 w-5 text-primary" />
             </div>
           )}
           <div className="flex-1 min-w-0">
-            <p className="font-semibold text-sm text-gray-900 dark:text-white truncate">{t.beerName}</p>
+            <p className="font-bold text-sm text-foreground truncate">{t.beerName}</p>
             {t.breweryName && (
-              <p className="text-xs text-amber-600 dark:text-amber-400 truncate">{t.breweryName}</p>
+              <p className="text-xs text-primary dark:text-orange-400 truncate font-medium">{t.breweryName}</p>
             )}
-            <p className="text-xs text-gray-400">Spina #{t.tapNumber} · {t.count} vot{t.count === 1 ? "o" : "i"}</p>
+            <p className="text-xs text-muted-foreground">Spina #{t.tapNumber} · {t.count} vot{t.count === 1 ? "o" : "i"}</p>
           </div>
           <div className="text-right flex-shrink-0">
-            <div className="text-xl font-bold text-amber-600">{t.avg.toFixed(1)}</div>
+            <div className="text-xl font-bold text-primary">{t.avg.toFixed(1)}</div>
             <div className="flex items-center gap-0.5 justify-end">
               {[1, 2, 3, 4, 5].map(s => (
-                <Star key={s} className={`h-2.5 w-2.5 ${s <= Math.round(t.avg / 2) ? "fill-amber-400 text-amber-400" : "text-gray-300"}`} />
+                <Star key={s} className={`h-2.5 w-2.5 ${s <= Math.round(t.avg / 2) ? "fill-primary text-primary" : "text-muted"}`} />
               ))}
             </div>
           </div>
@@ -491,10 +491,10 @@ export default function FestivalPublic() {
   }, [data?.food]);
 
   if (isLoading) return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-amber-50 to-orange-50">
+    <div className="min-h-screen flex items-center justify-center bg-background">
       <div className="text-center space-y-3">
-        <Loader2 className="h-10 w-10 animate-spin text-amber-500 mx-auto" />
-        <p className="text-gray-600">Caricamento festival...</p>
+        <Loader2 className="h-10 w-10 animate-spin text-primary mx-auto" />
+        <p className="text-muted-foreground">Caricamento festival...</p>
       </div>
     </div>
   );
@@ -502,18 +502,18 @@ export default function FestivalPublic() {
   const isNotActive = isError && (error as any)?.status === 403;
 
   if (isError || !data?.festival) return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-amber-50 to-orange-50">
+    <div className="min-h-screen flex items-center justify-center bg-background">
       <div className="text-center space-y-3 max-w-xs px-4">
-        <Beer className="h-12 w-12 text-gray-300 mx-auto" />
+        <Beer className="h-12 w-12 text-muted-foreground/30 mx-auto" />
         {isNotActive ? (
           <>
-            <h2 className="text-xl font-bold text-gray-700">Festival non ancora attivo</h2>
-            <p className="text-gray-500">Il taplist digitale di questo festival non è ancora disponibile. Riprova a breve!</p>
+            <h2 className="text-xl font-bold text-foreground">Festival non ancora attivo</h2>
+            <p className="text-muted-foreground">Il taplist digitale di questo festival non è ancora disponibile. Riprova a breve!</p>
           </>
         ) : (
           <>
-            <h2 className="text-xl font-bold text-gray-700">Festival non trovato</h2>
-            <p className="text-gray-500">Controlla il QR code e riprova.</p>
+            <h2 className="text-xl font-bold text-foreground">Festival non trovato</h2>
+            <p className="text-muted-foreground">Controlla il QR code e riprova.</p>
           </>
         )}
       </div>
@@ -532,206 +532,219 @@ export default function FestivalPublic() {
     new Date(d).toLocaleDateString("it-IT", { day: "numeric", month: "short", year: "numeric" });
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      {/* Cover image banner */}
-      {festival.coverImageUrl ? (
-        <div className="relative w-full h-52 overflow-hidden">
-          <img src={festival.coverImageUrl} alt={festival.name} className="w-full h-full object-cover" />
-          <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
-        </div>
-      ) : (
-        <div className="w-full h-24 bg-gradient-to-r from-amber-600 to-orange-600" />
-      )}
+    <div className="min-h-screen bg-background">
+      {/* Hero section with gradient and decorative circles */}
+      <div className="relative overflow-hidden bg-gradient-to-br from-[hsl(24,93%,49%)] via-[hsl(22,92%,46%)] to-[hsl(20,95%,42%)] dark:from-[hsl(24,80%,28%)] dark:to-[hsl(20,75%,20%)] pt-12 pb-20 px-4">
+        <div className="absolute -top-20 -right-20 w-72 h-72 rounded-full bg-white/10 blur-3xl" />
+        <div className="absolute -bottom-10 -left-10 w-48 h-48 rounded-full bg-white/5 blur-2xl" />
 
-      {/* Info card */}
-      <div className="max-w-2xl mx-auto px-4 -mt-8 relative z-10">
-        <Card className="shadow-lg border-0">
-          <CardContent className="p-4">
-            <div className="flex items-start gap-4">
-              {festival.logoUrl && (
-                <img
-                  src={festival.logoUrl}
-                  alt=""
-                  className="w-16 h-16 rounded-2xl object-cover shadow-md flex-shrink-0 border-2 border-white"
-                />
-              )}
-              <div className="flex-1 min-w-0">
-                <h1 className="text-xl font-bold text-gray-900 dark:text-white leading-tight">{festival.name}</h1>
+        <div className="max-w-2xl mx-auto relative z-10">
+          <div className="flex items-start gap-5">
+            {festival.logoUrl && (
+              <img
+                src={festival.logoUrl}
+                alt=""
+                className="w-20 h-20 rounded-2xl object-cover shadow-2xl flex-shrink-0 border-2 border-white/20"
+              />
+            )}
+            <div className="flex-1 min-w-0">
+              <h1 className="text-3xl md:text-4xl font-extrabold text-white leading-tight drop-shadow-sm">{festival.name}</h1>
+              <div className="flex flex-wrap items-center gap-2 mt-3">
                 {festival.location && (
                   <a
                     href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(festival.location)}`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-gray-500 text-sm flex items-center gap-1 mt-1 hover:text-amber-600 transition-colors"
+                    className="bg-white/20 backdrop-blur-sm rounded-full px-3 py-1.5 text-white/90 font-semibold text-xs flex items-center gap-1.5 hover:bg-white/30 transition-colors"
                   >
-                    <MapPin className="h-3.5 w-3.5 flex-shrink-0" />
-                    <span className="truncate">{festival.location}</span>
+                    <MapPin className="h-3.5 w-3.5" />
+                    <span className="truncate max-w-[150px]">{festival.location}</span>
                   </a>
                 )}
                 {(festival.startDate || festival.endDate) && (
-                  <p className="text-gray-500 text-xs flex items-center gap-1 mt-0.5">
-                    <Calendar className="h-3 w-3 flex-shrink-0" />
-                    {festival.startDate && formatDate(festival.startDate)}
-                    {festival.startDate && festival.endDate && festival.startDate !== festival.endDate && " — "}
-                    {festival.endDate && festival.startDate !== festival.endDate && formatDate(festival.endDate)}
-                  </p>
+                  <div className="bg-white/20 backdrop-blur-sm rounded-full px-3 py-1.5 text-white/90 font-semibold text-xs flex items-center gap-1.5">
+                    <Calendar className="h-3.5 w-3.5" />
+                    <span>
+                      {festival.startDate && formatDate(festival.startDate)}
+                      {festival.startDate && festival.endDate && festival.startDate !== festival.endDate && " — "}
+                      {festival.endDate && festival.startDate !== festival.endDate && formatDate(festival.endDate)}
+                    </span>
+                  </div>
                 )}
               </div>
             </div>
+          </div>
+        </div>
+      </div>
 
-            {/* Schedule */}
-            {festival.schedule && festival.schedule.length > 0 && (
-              <div className="mt-3 bg-amber-50 dark:bg-amber-900/20 rounded-xl px-4 py-3 space-y-1.5">
-                <div className="flex items-center gap-1.5 text-amber-700 dark:text-amber-400 text-xs font-semibold uppercase tracking-wide mb-1">
-                  <Clock className="h-3.5 w-3.5" />Orari
-                </div>
+      {/* Main content with rounded corners overlap */}
+      <div className="max-w-2xl mx-auto bg-white dark:bg-[hsl(25,14%,10%)] rounded-t-3xl -mt-8 relative z-10 px-4 pt-6 min-h-[calc(100vh-200px)]">
+        {/* Info content */}
+        <div className="space-y-4">
+          {/* Schedule */}
+          {festival.schedule && festival.schedule.length > 0 && (
+            <div className="bg-orange-50 dark:bg-orange-950/20 rounded-2xl border border-primary/10 px-4 py-4 shadow-sm">
+              <div className="flex items-center gap-2 text-primary dark:text-orange-400 text-sm font-bold uppercase tracking-wider mb-3">
+                <Clock className="h-4 w-4" />Orari del festival
+              </div>
+              <div className="grid gap-2">
                 {festival.schedule.map((slot, i) => (
-                  <div key={i} className="flex items-center justify-between text-sm">
-                    <span className="text-gray-700 dark:text-gray-300 font-medium">
+                  <div key={i} className="flex items-center justify-between text-sm py-1 border-b border-primary/5 last:border-0">
+                    <span className="text-foreground/80 font-medium">
                       {slot.date
                         ? new Date(slot.date + "T00:00:00").toLocaleDateString("it-IT", { weekday: "short", day: "numeric", month: "short" })
                         : slot.label}
                     </span>
-                    <span className="text-amber-700 dark:text-amber-400 font-bold">{slot.openFrom} – {slot.openTo}</span>
+                    <span className="text-primary font-bold">{slot.openFrom} – {slot.openTo}</span>
                   </div>
                 ))}
               </div>
-            )}
-
-            {/* Like + Share */}
-            <div className="flex items-center gap-2 mt-3 pt-3 border-t border-gray-100 dark:border-gray-700">
-              <FestivalLikeButton festivalId={festival.id} className="flex-1" />
-              <ShareButton
-                title={festival.name}
-                text={`Scopri le birre al festival ${festival.name}!`}
-                url={window.location.href}
-                label="Condividi"
-                className="flex-1"
-              />
-              {!isAuthenticated && (
-                <a href="/api/login" className="flex-1">
-                  <button className="w-full text-xs font-bold text-amber-600 border border-amber-200 rounded-md px-3 py-2 hover:bg-amber-50 transition-colors">
-                    Accedi per votare →
-                  </button>
-                </a>
-              )}
             </div>
-          </CardContent>
-        </Card>
-
-        {/* Informazioni – expandable card */}
-        {festival.description && (
-          <div className="mt-3 rounded-2xl overflow-hidden border border-amber-200 dark:border-amber-800/50 shadow-sm">
-            <button
-              className="w-full bg-amber-50 dark:bg-amber-900/20 px-4 py-3 flex items-center justify-between text-left hover:bg-amber-100/60 dark:hover:bg-amber-900/30 transition-colors"
-              onClick={() => setDescExpanded(v => !v)}
-            >
-              <span className="text-sm font-semibold text-amber-800 dark:text-amber-300 flex items-center gap-2">
-                <Info className="h-4 w-4" />
-                Informazioni
-              </span>
-              {descExpanded
-                ? <ChevronUp className="h-4 w-4 text-amber-500" />
-                : <ChevronDown className="h-4 w-4 text-amber-500" />}
-            </button>
-            {descExpanded && (
-              <div className="bg-white dark:bg-gray-900 px-5 py-4 border-t border-amber-100 dark:border-amber-800/40">
-                <div
-                  className="prose prose-sm dark:prose-invert max-w-none text-gray-700 dark:text-gray-300
-                    prose-headings:text-gray-800 dark:prose-headings:text-gray-200
-                    prose-a:text-amber-600 dark:prose-a:text-amber-400
-                    prose-strong:text-gray-800 dark:prose-strong:text-gray-200
-                    prose-blockquote:border-amber-400 prose-blockquote:text-gray-600 dark:prose-blockquote:text-gray-400"
-                  dangerouslySetInnerHTML={{ __html: festival.description }}
-                />
-              </div>
-            )}
-          </div>
-        )}
-      </div>
-
-      {/* Content tabs */}
-      <div className="max-w-2xl mx-auto px-4 py-4 mt-2">
-        <Tabs defaultValue="taps">
-          <TabsList className="w-full mb-4">
-            <TabsTrigger value="taps" className="flex-1 gap-1.5">
-              <Beer className="h-4 w-4" />
-              Birre ({availableCount}/{taps.length})
-            </TabsTrigger>
-            {festival.showFood && data.food.length > 0 && (
-              <TabsTrigger value="food" className="flex-1 gap-1.5">
-                <UtensilsCrossed className="h-4 w-4" />
-                Cibo ({data.food.filter(f => f.isAvailable).length})
-              </TabsTrigger>
-            )}
-            <TabsTrigger value="rankings" className="flex-1 gap-1.5">
-              <Trophy className="h-4 w-4" />
-              Classifica
-            </TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="taps" className="space-y-2">
-            {/* Search + filter */}
-            <div className="flex gap-2">
-              <div className="relative flex-1">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-                <Input
-                  placeholder="Cerca per nome, birrificio, stile…"
-                  value={search}
-                  onChange={e => setSearch(e.target.value)}
-                  className="pl-9 bg-white dark:bg-gray-800"
-                />
-              </div>
-              <Button
-                variant={showUnavailable ? "outline" : "default"}
-                size="sm"
-                onClick={() => setShowUnavailable(v => !v)}
-                className="gap-1 whitespace-nowrap text-xs"
-              >
-                {showUnavailable ? <XCircle className="h-3.5 w-3.5" /> : <CheckCircle2 className="h-3.5 w-3.5" />}
-                {showUnavailable ? "Nascondi finite" : "Mostra tutte"}
-              </Button>
-            </div>
-
-            {filteredTaps.length === 0 ? (
-              <div className="text-center py-10 text-gray-500">
-                <Beer className="h-8 w-8 mx-auto mb-2 opacity-30" />
-                <p>Nessuna birra trovata</p>
-              </div>
-            ) : (
-              filteredTaps.map(tap => (
-                <TapCard key={tap.id} tap={tap} slug={slug!} isAuth={isAuthenticated} isManager={isManager} useTokens={useTokens} tokenName={tokenName} />
-              ))
-            )}
-          </TabsContent>
-
-          {festival.showFood && (
-            <TabsContent value="food" className="space-y-3">
-              {Object.keys(foodByCategory).length === 0 ? (
-                <div className="text-center py-10 text-gray-400">
-                  <UtensilsCrossed className="h-8 w-8 mx-auto mb-2 opacity-30" />
-                  <p>Nessuna voce nel menu</p>
-                </div>
-              ) : (
-                Object.entries(foodByCategory).map(([category, items]) => (
-                  <FoodCategoryBlock key={category} category={category} items={items} />
-                ))
-              )}
-              <p className="text-xs text-center text-gray-400 pt-2">
-                I prezzi includono IVA · Informare il personale di eventuali allergie
-              </p>
-            </TabsContent>
           )}
 
-          <TabsContent value="rankings" className="space-y-2">
-            <RankingsTab rankings={rankings} />
-          </TabsContent>
-        </Tabs>
-      </div>
+          {/* Like + Share + Login */}
+          <div className="flex flex-wrap items-center gap-3">
+            <FestivalLikeButton festivalId={festival.id} className="flex-1 min-w-[140px]" />
+            <ShareButton
+              title={festival.name}
+              text={`Scopri le birre al festival ${festival.name}!`}
+              url={window.location.href}
+              label="Condividi"
+              className="flex-1 min-w-[140px]"
+            />
+            {!isAuthenticated && (
+              <a href="/api/login" className="w-full sm:flex-1">
+                <Button variant="outline" className="w-full text-xs font-bold text-primary border-primary/20 hover:bg-orange-50 rounded-xl py-5">
+                  Accedi per votare →
+                </Button>
+              </a>
+            )}
+          </div>
 
-      <div className="text-center py-6 text-xs text-gray-400">
-        <a href="/" className="hover:text-amber-600 transition-colors">Fermenta.to</a>
-        {" · "}Aggiornato ogni 30 secondi
+          {/* Informazioni – expandable card */}
+          {festival.description && (
+            <div className="rounded-2xl overflow-hidden border border-orange-100 dark:border-[hsl(25,12%,16%)] shadow-sm bg-white dark:bg-[hsl(25,14%,10%)]">
+              <button
+                className="w-full px-4 py-3 flex items-center justify-between text-left hover:bg-orange-50/50 dark:hover:bg-white/5 transition-colors"
+                onClick={() => setDescExpanded(v => !v)}
+              >
+                <span className="text-sm font-bold text-foreground flex items-center gap-2">
+                  <Info className="h-4 w-4 text-primary" />
+                  Informazioni sul festival
+                </span>
+                {descExpanded
+                  ? <ChevronUp className="h-4 w-4 text-primary" />
+                  : <ChevronDown className="h-4 w-4 text-primary" />}
+              </button>
+              {descExpanded && (
+                <div className="px-5 py-4 border-t border-orange-50 dark:border-[hsl(25,12%,16%)]">
+                  <div
+                    className="prose prose-sm dark:prose-invert max-w-none text-foreground/80
+                      prose-headings:text-foreground prose-headings:font-bold
+                      prose-a:text-primary prose-a:font-semibold
+                      prose-strong:text-foreground prose-strong:font-bold
+                      prose-blockquote:border-primary prose-blockquote:text-muted-foreground"
+                    dangerouslySetInnerHTML={{ __html: festival.description }}
+                  />
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+
+        {/* Content tabs */}
+        <div className="mt-8">
+          <Tabs defaultValue="taps">
+            <TabsList className="w-full mb-6 bg-orange-50/50 dark:bg-orange-950/10 p-1 rounded-xl h-12">
+              <TabsTrigger value="taps" className="flex-1 gap-2 rounded-lg data-[state=active]:bg-primary data-[state=active]:text-white font-bold h-10">
+                <Beer className="h-4 w-4" />
+                Birre ({availableCount}/{taps.length})
+              </TabsTrigger>
+              {festival.showFood && data.food.length > 0 && (
+                <TabsTrigger value="food" className="flex-1 gap-2 rounded-lg data-[state=active]:bg-primary data-[state=active]:text-white font-bold h-10">
+                  <UtensilsCrossed className="h-4 w-4" />
+                  Menu
+                </TabsTrigger>
+              )}
+              <TabsTrigger value="rankings" className="flex-1 gap-2 rounded-lg data-[state=active]:bg-primary data-[state=active]:text-white font-bold h-10">
+                <Trophy className="h-4 w-4" />
+                Classifica
+              </TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="taps" className="space-y-4">
+              {/* Search + filter */}
+              <div className="flex flex-col sm:flex-row gap-3">
+                <div className="relative flex-1">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    placeholder="Cerca per nome, birrificio, stile…"
+                    value={search}
+                    onChange={e => setSearch(e.target.value)}
+                    className="pl-10 bg-white dark:bg-transparent border-orange-100 dark:border-[hsl(25,12%,16%)] rounded-xl h-11 focus:ring-primary focus:border-primary"
+                  />
+                </div>
+                <Button
+                  variant={showUnavailable ? "outline" : "default"}
+                  size="default"
+                  onClick={() => setShowUnavailable(v => !v)}
+                  className={`gap-2 whitespace-nowrap font-bold rounded-xl h-11 px-4 ${
+                    !showUnavailable ? "bg-primary text-white" : "border-orange-100 text-primary hover:bg-orange-50"
+                  }`}
+                >
+                  {showUnavailable ? <XCircle className="h-4 w-4" /> : <CheckCircle2 className="h-4 w-4" />}
+                  {showUnavailable ? "Nascondi finite" : "Mostra tutte"}
+                </Button>
+              </div>
+
+              {filteredTaps.length === 0 ? (
+                <div className="text-center py-16 bg-orange-50/20 dark:bg-white/5 rounded-3xl border border-dashed border-orange-200 dark:border-[hsl(25,12%,16%)]">
+                  <Beer className="h-10 w-10 mx-auto mb-3 opacity-20 text-primary" />
+                  <p className="font-bold text-foreground">Nessuna birra trovata</p>
+                  <p className="text-sm text-muted-foreground mt-1">Prova a cambiare i termini di ricerca</p>
+                </div>
+              ) : (
+                <div className="grid gap-3">
+                  {filteredTaps.map(tap => (
+                    <TapCard key={tap.id} tap={tap} slug={slug!} isAuth={isAuthenticated} isManager={isManager} useTokens={useTokens} tokenName={tokenName} />
+                  ))}
+                </div>
+              )}
+            </TabsContent>
+
+            {festival.showFood && (
+              <TabsContent value="food" className="space-y-4">
+                {Object.keys(foodByCategory).length === 0 ? (
+                  <div className="text-center py-16 bg-orange-50/20 dark:bg-white/5 rounded-3xl border border-dashed border-orange-200">
+                    <UtensilsCrossed className="h-10 w-10 mx-auto mb-3 opacity-20 text-primary" />
+                    <p className="font-bold text-foreground">Nessuna voce nel menu</p>
+                  </div>
+                ) : (
+                  <div className="grid gap-3">
+                    {Object.entries(foodByCategory).map(([category, items]) => (
+                      <FoodCategoryBlock key={category} category={category} items={items} />
+                    ))}
+                  </div>
+                )}
+                <div className="bg-orange-50/50 dark:bg-orange-950/10 p-4 rounded-2xl text-center">
+                  <p className="text-xs text-muted-foreground">
+                    I prezzi includono IVA · Informare il personale di eventuali allergie
+                  </p>
+                </div>
+              </TabsContent>
+            )}
+
+            <TabsContent value="rankings" className="space-y-4">
+              <RankingsTab rankings={rankings} />
+            </TabsContent>
+          </Tabs>
+        </div>
+
+        <div className="text-center py-12 text-xs text-muted-foreground border-t border-orange-50 dark:border-[hsl(25,12%,16%)] mt-12">
+          <a href="/" className="font-bold text-primary hover:underline transition-colors">Fermenta.to</a>
+          <span className="mx-2">·</span>
+          Aggiornato ogni 30 secondi
+        </div>
       </div>
     </div>
   );
