@@ -58,6 +58,19 @@ import SuggestChangeDialog from "@/components/SuggestChangeDialog";
 import AddressAutocomplete from "@/components/address-autocomplete";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
+function getBeerStyleColor(style: string): { bg: string; text: string } {
+  const s = style?.toLowerCase() || '';
+  if (s.includes('stout') || s.includes('porter')) return { bg: 'rgba(92,61,30,0.12)', text: '#7B4A1E' };
+  if (s.includes('sour') || s.includes('gose') || s.includes('lambic') || s.includes('berliner')) return { bg: 'rgba(212,168,56,0.14)', text: '#A8840A' };
+  if (s.includes('saison') || s.includes('farmhouse') || s.includes('bière de garde')) return { bg: 'rgba(100,160,70,0.12)', text: '#4E8A28' };
+  if (s.includes('wit') || s.includes('weiss') || s.includes('weizen') || s.includes('wheat') || s.includes('farro')) return { bg: 'rgba(210,165,65,0.13)', text: '#9A7820' };
+  if (s.includes('lager') || s.includes('pilsner') || s.includes('pils') || s.includes('märzen') || s.includes('marzen') || s.includes('bock')) return { bg: 'rgba(205,165,100,0.13)', text: '#8A6A10' };
+  if (s.includes('red') || s.includes('amber') || s.includes('rossa') || s.includes('ambrata')) return { bg: 'rgba(185,60,30,0.12)', text: '#B04020' };
+  if (s.includes('barley wine') || s.includes('barleywine') || s.includes('rye wine') || s.includes('imperial') || s.includes('wee heavy')) return { bg: 'rgba(130,30,80,0.11)', text: '#8A1E55' };
+  if (s.includes('bitter') || s.includes('apa') || s.includes('pale ale') || s.includes('session')) return { bg: 'rgba(232,140,30,0.12)', text: '#C07010' };
+  return { bg: 'rgba(247,113,4,0.11)', text: '#F77104' };
+}
+
 interface Brewery {
   id: number;
   name: string;
@@ -440,7 +453,7 @@ export default function BreweryDetail() {
       </Helmet>
       
       {/* ── HERO ── image with dark gradient overlay */}
-        <div className="relative h-[220px] sm:h-[280px] md:h-[340px] overflow-hidden">
+        <div className="relative h-[260px] sm:h-[320px] md:h-[380px] overflow-hidden">
           {brewery?.coverImageUrl ? (
             <img
               src={brewery.coverImageUrl}
@@ -448,10 +461,21 @@ export default function BreweryDetail() {
               className="w-full h-full object-cover"
             />
           ) : (
-            <div className="w-full h-full bg-gradient-to-br from-[hsl(24,93%,49%)] to-[hsl(20,95%,42%)]" />
+            <div className="w-full h-full" style={{ background: 'linear-gradient(135deg, #b45309 0%, #d97706 40%, #f59e0b 70%, #fbbf24 100%)' }} />
           )}
           {/* Dark gradient overlay */}
-          <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent" />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent" />
+          {/* Brewery name in hero */}
+          <div className="absolute bottom-16 left-4 right-4 z-10">
+            <h1 className="text-white font-extrabold text-xl sm:text-2xl leading-tight drop-shadow-lg line-clamp-2">
+              {brewery?.name}
+            </h1>
+            {brewery?.location && (
+              <p className="text-white/80 text-sm mt-0.5 drop-shadow">
+                {brewery.location}{brewery.region ? ` · ${brewery.region}` : ''}
+              </p>
+            )}
+          </div>
           
           {/* Brewery logo bottom-left overlapping */}
           <div className="absolute bottom-4 left-4 z-20">
@@ -506,19 +530,19 @@ export default function BreweryDetail() {
 
                   <div className="flex items-center gap-2 flex-wrap">
                     {brewery?.location && (
-                      <div className="bg-orange-50 dark:bg-orange-950/30 text-primary rounded-full text-xs font-semibold px-3 py-1.5 flex items-center gap-1.5">
+                      <div className="bg-blue-50 dark:bg-blue-950/30 text-blue-700 dark:text-blue-400 rounded-full text-xs font-semibold px-3 py-1.5 flex items-center gap-1.5">
                         <MapPin className="h-3.5 w-3.5" />
                         {brewery.location}{brewery.region ? ` (${brewery.region})` : ''}
                       </div>
                     )}
                     {beers.length > 0 && (
-                      <div className="bg-orange-50 dark:bg-orange-950/30 text-primary rounded-full text-xs font-semibold px-3 py-1.5 flex items-center gap-1.5">
+                      <div className="bg-amber-50 dark:bg-amber-950/30 text-amber-700 dark:text-amber-400 rounded-full text-xs font-semibold px-3 py-1.5 flex items-center gap-1.5">
                         <Beer className="h-3.5 w-3.5" />
                         {beers.length} {beers.length === 1 ? 'Birra' : 'Birre'}
                       </div>
                     )}
                     {breweryRating?.avgRating && (
-                      <div className="bg-orange-50 dark:bg-orange-950/30 text-primary rounded-full text-xs font-semibold px-3 py-1.5 flex items-center gap-1.5">
+                      <div className="bg-yellow-50 dark:bg-yellow-950/30 text-yellow-700 dark:text-yellow-400 rounded-full text-xs font-semibold px-3 py-1.5 flex items-center gap-1.5">
                         <Star className="h-3.5 w-3.5 fill-current" />
                         {breweryRating.avgRating.toFixed(1)}
                         <span className="opacity-60 font-normal">({breweryRating.reviewCount})</span>
@@ -594,19 +618,26 @@ export default function BreweryDetail() {
                       <div className="flex flex-wrap gap-2">
                         <button
                           onClick={() => { setActiveStyleFilter(""); setVisibleCount(9); }}
-                          className={`px-3 py-1.5 rounded-full text-xs font-bold transition-all ${activeStyleFilter === "" ? "bg-primary text-white shadow-md" : "bg-orange-50 dark:bg-orange-950/20 text-primary hover:bg-orange-100"}`}
+                          className={`px-3 py-1.5 rounded-full text-xs font-bold transition-all ${activeStyleFilter === "" ? "bg-foreground text-background shadow-md" : "bg-gray-100 dark:bg-gray-800 text-muted-foreground hover:bg-gray-200 dark:hover:bg-gray-700"}`}
                         >
                           Tutte le birre
                         </button>
-                        {beerStyles.map(style => (
-                          <button
-                            key={style}
-                            onClick={() => { setActiveStyleFilter(style!); setVisibleCount(9); }}
-                            className={`px-3 py-1.5 rounded-full text-xs font-bold transition-all ${activeStyleFilter === style ? "bg-primary text-white shadow-md" : "bg-orange-50 dark:bg-orange-950/20 text-primary hover:bg-orange-100"}`}
-                          >
-                            {style}
-                          </button>
-                        ))}
+                        {beerStyles.map(style => {
+                          const sc = getBeerStyleColor(style || '');
+                          const isActive = activeStyleFilter === style;
+                          return (
+                            <button
+                              key={style}
+                              onClick={() => { setActiveStyleFilter(style!); setVisibleCount(9); }}
+                              className="px-3 py-1.5 rounded-full text-xs font-bold transition-all shadow-sm"
+                              style={isActive
+                                ? { background: sc.text, color: '#fff', boxShadow: `0 2px 8px ${sc.text}50` }
+                                : { background: sc.bg, color: sc.text }}
+                            >
+                              {style}
+                            </button>
+                          );
+                        })}
                       </div>
                     )}
 
@@ -664,17 +695,22 @@ export default function BreweryDetail() {
                                     )}
                                   </div>
                                   
-                                  <div className="flex items-center gap-2 mt-1">
-                                    <span className="bg-orange-50 dark:bg-orange-950/30 text-primary text-[10px] font-bold px-2 py-0.5 rounded-full uppercase truncate">
-                                      {beer.style}
-                                    </span>
+                                  <div className="flex items-center gap-2 mt-1 flex-wrap">
+                                    {(() => {
+                                      const sc = getBeerStyleColor(beer.style);
+                                      return (
+                                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-full uppercase truncate max-w-[120px]" style={{ background: sc.bg, color: sc.text }}>
+                                          {beer.style}
+                                        </span>
+                                      );
+                                    })()}
                                     {beer.abv && (
-                                      <span className="bg-[#FFF3E0] dark:bg-orange-900/20 text-primary text-[10px] font-bold px-2 py-0.5 rounded-full uppercase">
+                                      <span className="bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-400 text-[10px] font-bold px-2 py-0.5 rounded-full">
                                         {beer.abv}%
                                       </span>
                                     )}
                                     {beer.isCollaboration && (
-                                      <div className="flex items-center gap-1 text-[10px] font-bold text-primary px-2 py-0.5 bg-orange-50 dark:bg-orange-900/20 rounded-full">
+                                      <div className="flex items-center gap-1 text-[10px] font-bold text-violet-700 dark:text-violet-400 px-2 py-0.5 bg-violet-50 dark:bg-violet-900/20 rounded-full">
                                         <Users className="h-2.5 w-2.5" />
                                         COLLAB
                                       </div>
