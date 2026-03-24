@@ -829,7 +829,7 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6, delay: 0.45 }}
       >
-        <PubQRCode pubId={currentPub?.id} pubName={currentPub?.name || ""} compact />
+        <PubQRCode pubId={currentPub?.id} pubName={currentPub?.name || ""} pubSlug={(currentPub as any)?.slug} compact />
         <MenuPdfDownload
           pubName={currentPub?.name || ""}
           tapList={typedTapList}
@@ -963,7 +963,7 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
           variant="outline"
           size="sm"
           className="gap-2"
-          onClick={() => window.open(`/pub/${currentPub?.id}`, '_blank')}
+          onClick={() => window.open(`/pub/${(currentPub as any)?.slug || currentPub?.id}`, '_blank')}
         >
           <Eye className="h-4 w-4" />
           Pagina Pub

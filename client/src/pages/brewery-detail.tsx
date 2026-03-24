@@ -1000,7 +1000,7 @@ export default function BreweryDetail() {
             <TabsContent value="distribuzione" className="px-4 lg:px-6 pt-6 pb-8">
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                 {distribution.map((pub: any) => (
-                  <Link key={pub.id} href={`/pub/${pub.id}`}>
+                  <Link key={pub.id} href={`/pub/${pub.slug || pub.id}`}>
                     <div className="flex items-center gap-3 p-4 rounded-xl border border-gray-100 dark:border-gray-800 bg-white dark:bg-[hsl(25,14%,10%)] hover:border-amber-300 dark:hover:border-amber-700 transition-colors cursor-pointer group">
                       {pub.logo_url ? (
                         <img src={pub.logo_url} alt={pub.name} className="w-10 h-10 rounded-full object-cover flex-shrink-0" />

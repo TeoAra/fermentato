@@ -316,7 +316,7 @@ function DistributionSection({ breweryId }: { breweryId: number }) {
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {pubs.map((pub: any) => (
-            <Link key={pub.id} href={`/pub/${pub.id}`}>
+            <Link key={pub.id} href={`/pub/${pub.slug || pub.id}`}>
               <div className="flex items-center gap-3 p-4 rounded-xl border border-gray-200 dark:border-gray-700 bg-white/50 dark:bg-gray-800/50 hover:border-amber-400 dark:hover:border-amber-500 transition-colors cursor-pointer group">
                 {pub.logo_url ? (
                   <img src={pub.logo_url} alt={pub.name} className="w-10 h-10 rounded-full object-cover flex-shrink-0" />

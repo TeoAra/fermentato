@@ -208,7 +208,7 @@ export default function HomepageMap({ pubs, breweries, userLocation, isLoading }
                         </div>
                       </div>
                       {pub.city && <div style={{ fontSize: "12px", color: "#6B7280", marginBottom: "8px" }}>📍 {pub.city}</div>}
-                      <a href={`/pub/${pub.id}`} style={{ display: "inline-block", padding: "4px 12px", background: PUB_COLOR, color: "white", borderRadius: "6px", textDecoration: "none", fontSize: "12px", fontWeight: 500 }}>
+                      <a href={`/pub/${pub.slug || pub.id}`} style={{ display: "inline-block", padding: "4px 12px", background: PUB_COLOR, color: "white", borderRadius: "6px", textDecoration: "none", fontSize: "12px", fontWeight: 500 }}>
                         Vai al pub →
                       </a>
                     </div>

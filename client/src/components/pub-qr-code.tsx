@@ -8,16 +8,17 @@ import { useToast } from "@/hooks/use-toast";
 interface PubQRCodeProps {
   pubId: number;
   pubName: string;
+  pubSlug?: string | null;
   compact?: boolean;
 }
 
-export function PubQRCode({ pubId, pubName, compact }: PubQRCodeProps) {
+export function PubQRCode({ pubId, pubName, pubSlug, compact }: PubQRCodeProps) {
   const { toast } = useToast();
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [open, setOpen] = useState(false);
 
   const appBase = import.meta.env.VITE_APP_URL || "https://fermenta.to";
-  const pubUrl = `${appBase}/pub/${pubId}`;
+  const pubUrl = `${appBase}/pub/${pubSlug || pubId}`;
 
   const downloadQR = () => {
     const qrCanvas = canvasRef.current;
