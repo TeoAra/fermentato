@@ -4,7 +4,10 @@ export const modules: ModuleMap = {
   "./components/mockups/homepage-layouts/AppFeed.tsx": () => import("../components/mockups/homepage-layouts/AppFeed.tsx"),
   "./components/mockups/homepage-layouts/CenteredCinematic.tsx": () => import("../components/mockups/homepage-layouts/CenteredCinematic.tsx"),
   "./components/mockups/homepage-layouts/FeedDark.tsx": () => import("../components/mockups/homepage-layouts/FeedDark.tsx"),
+  "./components/mockups/homepage-layouts/FeedDarkMobile.tsx": () => import("../components/mockups/homepage-layouts/FeedDarkMobile.tsx"),
   "./components/mockups/homepage-layouts/MapFirst.tsx": () => import("../components/mockups/homepage-layouts/MapFirst.tsx"),
+  "./components/mockups/homepage-layouts/MapFirstMobile.tsx": () => import("../components/mockups/homepage-layouts/MapFirstMobile.tsx"),
   "./components/mockups/homepage-layouts/SearchFirst.tsx": () => import("../components/mockups/homepage-layouts/SearchFirst.tsx"),
+  "./components/mockups/homepage-layouts/SearchFirstMobile.tsx": () => import("../components/mockups/homepage-layouts/SearchFirstMobile.tsx"),
   "./components/mockups/homepage-layouts/SplitEditorial.tsx": () => import("../components/mockups/homepage-layouts/SplitEditorial.tsx")
 };
