@@ -103,12 +103,12 @@ export default function Header() {
                 <Link key={item.label} href={item.href}>
                   <span className={`relative flex items-center px-3 xl:px-4 py-1 text-[13px] font-medium tracking-wide transition-colors duration-200 ${
                     item.isActive
-                      ? "text-[hsl(35,90%,38%)] dark:text-[hsl(38,92%,56%)]"
+                      ? "text-[hsl(24,93%,44%)] dark:text-[hsl(24,93%,58%)]"
                       : "text-[hsl(28,10%,44%)] dark:text-[hsl(35,8%,58%)] hover:text-[hsl(28,18%,13%)] dark:hover:text-[hsl(40,12%,90%)]"
                   }`}>
                     {item.label}
                     {item.isActive && (
-                      <span className="absolute -bottom-[22px] left-0 right-0 h-[2px] rounded-full bg-[hsl(35,90%,42%)] dark:bg-[hsl(38,92%,52%)]" />
+                      <span className="absolute -bottom-[22px] left-0 right-0 h-[2px] rounded-full bg-[hsl(24,93%,49%)] dark:bg-[hsl(24,93%,55%)]" />
                     )}
                   </span>
                 </Link>
@@ -129,13 +129,13 @@ export default function Header() {
                       setShowResults(e.target.value.length > 2);
                     }}
                     onFocus={() => setShowResults(searchQuery.length > 2)}
-                    className="pl-8 pr-16 h-8 text-[13px] bg-[hsl(40,14%,94%)] dark:bg-[hsl(25,12%,13%)] border-transparent focus:border-[hsl(35,90%,42%)] dark:focus:border-[hsl(38,92%,52%)] focus:ring-0 focus:bg-white dark:focus:bg-[hsl(25,14%,10%)] transition-all duration-200 placeholder:text-[hsl(30,8%,60%)] dark:placeholder:text-[hsl(35,8%,50%)]"
+                    className="pl-8 pr-16 h-8 text-[13px] bg-[hsl(40,14%,94%)] dark:bg-[hsl(25,12%,13%)] border-transparent focus:border-[hsl(24,93%,49%)] dark:focus:border-[hsl(24,93%,55%)] focus:ring-0 focus:bg-white dark:focus:bg-[hsl(25,14%,10%)] transition-all duration-200 placeholder:text-[hsl(30,8%,60%)] dark:placeholder:text-[hsl(35,8%,50%)]"
                     data-testid="search-input-desktop"
                   />
                   <Link href={searchQuery.trim() ? `/search?q=${encodeURIComponent(searchQuery.trim())}` : "/search"}>
                     <button
                       type="button"
-                      className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[11px] text-[hsl(35,90%,40%)] dark:text-[hsl(38,88%,58%)] hover:text-[hsl(35,90%,34%)] font-semibold transition-colors"
+                      className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[11px] text-[hsl(24,93%,46%)] dark:text-[hsl(24,93%,58%)] hover:text-[hsl(24,93%,38%)] font-semibold transition-colors"
                     >
                       Tutte
                     </button>
@@ -157,7 +157,7 @@ export default function Header() {
                   <button
                     className={`relative p-2 rounded-lg transition-colors ${
                       location.startsWith("/notifications")
-                        ? "bg-[hsl(38,80%,92%)] dark:bg-[hsl(35,30%,16%)] text-[hsl(35,90%,38%)] dark:text-[hsl(38,88%,56%)]"
+                        ? "bg-[hsl(24,90%,93%)] dark:bg-[hsl(35,30%,16%)] text-[hsl(24,93%,44%)] dark:text-[hsl(24,93%,56%)]"
                         : "text-[hsl(28,8%,52%)] dark:text-[hsl(35,8%,52%)] hover:bg-[hsl(38,14%,93%)] dark:hover:bg-[hsl(25,12%,14%)] hover:text-[hsl(28,18%,20%)] dark:hover:text-[hsl(40,12%,88%)]"
                     }`}
                     title="Notifiche"
@@ -176,7 +176,7 @@ export default function Header() {
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <button className="flex items-center gap-2 px-1.5 py-1 rounded-lg hover:bg-[hsl(38,14%,93%)] dark:hover:bg-[hsl(25,12%,14%)] transition-colors" data-testid="user-menu-button">
-                      <Avatar className="h-7 w-7 ring-2 ring-[hsl(35,90%,42%)]/20 dark:ring-[hsl(38,92%,52%)]/20">
+                      <Avatar className="h-7 w-7 ring-2 ring-[hsl(24,93%,49%)]/20 dark:ring-[hsl(24,93%,55%)]/20">
                         {typedUser.profileImageUrl && (
                           <AvatarImage src={typedUser.profileImageUrl} alt={typedUser.nickname || 'Profilo'} />
                         )}
@@ -196,8 +196,8 @@ export default function Header() {
                       </div>
                       {rolesData && (
                         <div className="flex items-center gap-1.5 mt-0.5">
-                          {(() => { const Icon = roleIcons[rolesData.activeRole] || User; return <Icon className="h-3 w-3 text-[hsl(35,90%,42%)] dark:text-[hsl(38,92%,52%)]" />; })()}
-                          <span className="text-xs text-[hsl(35,90%,40%)] dark:text-[hsl(38,88%,58%)] font-medium">
+                          {(() => { const Icon = roleIcons[rolesData.activeRole] || User; return <Icon className="h-3 w-3 text-[hsl(24,93%,49%)] dark:text-[hsl(24,93%,55%)]" />; })()}
+                          <span className="text-xs text-[hsl(24,93%,46%)] dark:text-[hsl(24,93%,58%)] font-medium">
                             {roleLabels[rolesData.activeRole] || rolesData.activeRole}
                           </span>
                         </div>
@@ -256,7 +256,7 @@ export default function Header() {
                   </DropdownMenuContent>
                 </DropdownMenu>
               ) : (
-                <Button asChild size="sm" className="h-8 px-4 text-[13px] font-semibold tracking-wide bg-[hsl(35,90%,42%)] hover:bg-[hsl(35,90%,38%)] text-white shadow-none">
+                <Button asChild size="sm" className="h-8 px-4 text-[13px] font-semibold tracking-wide bg-[hsl(24,93%,49%)] hover:bg-[hsl(24,93%,44%)] text-white shadow-none">
                   <Link href="/login" data-testid="login-button">Accedi</Link>
                 </Button>
               )}

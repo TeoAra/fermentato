@@ -86,25 +86,25 @@
   --border: hsl(36, 14%, 87%);
   --input: hsl(36, 14%, 87%);
 
-  /* Primary — golden amber, more saturated and richer */
-  --primary: hsl(35, 90%, 42%);
+  /* Primary — vibrant orange, Fermenta design system */
+  --primary: hsl(24, 93%, 49%);
   --primary-foreground: hsl(0, 0%, 100%);
 
   /* Secondary — warm dark slate */
   --secondary: hsl(25, 20%, 22%);
   --secondary-foreground: hsl(0, 0%, 100%);
 
-  /* Accent — warm amber tint */
-  --accent: hsl(38, 80%, 93%);
-  --accent-foreground: hsl(28, 70%, 28%);
+  /* Accent — warm orange tint */
+  --accent: hsl(30, 90%, 93%);
+  --accent-foreground: hsl(24, 70%, 28%);
 
   /* Destructive */
   --destructive: hsl(0, 78%, 55%);
   --destructive-foreground: hsl(0, 0%, 100%);
 
   /* Ring */
-  --ring: hsl(35, 90%, 42%);
-  --radius: 0.75rem;
+  --ring: hsl(24, 93%, 49%);
+  --radius: 1rem;
 
   /* Glassmorphism */
   --glass-bg: hsla(0, 0%, 100%, 0.78);
@@ -151,25 +151,25 @@
   --border: hsl(25, 12%, 17%);
   --input: hsl(25, 12%, 17%);
 
-  /* Primary — slightly brighter amber for dark bg */
-  --primary: hsl(38, 92%, 50%);
-  --primary-foreground: hsl(25, 14%, 7%);
+  /* Primary — vibrant orange for dark bg */
+  --primary: hsl(24, 93%, 55%);
+  --primary-foreground: hsl(0, 0%, 100%);
 
   /* Secondary — warm dark */
   --secondary: hsl(25, 16%, 20%);
   --secondary-foreground: hsl(40, 12%, 94%);
 
-  /* Accent — warm amber */
-  --accent: hsl(35, 60%, 20%);
-  --accent-foreground: hsl(38, 90%, 86%);
+  /* Accent — warm orange */
+  --accent: hsl(24, 60%, 20%);
+  --accent-foreground: hsl(30, 90%, 86%);
 
   /* Destructive */
   --destructive: hsl(0, 58%, 42%);
   --destructive-foreground: hsl(40, 12%, 94%);
 
   /* Ring */
-  --ring: hsl(38, 92%, 50%);
-  --radius: 0.75rem;
+  --ring: hsl(24, 93%, 55%);
+  --radius: 1rem;
 
   /* Glassmorphism */
   --glass-bg: hsla(25, 14%, 10%, 0.82);

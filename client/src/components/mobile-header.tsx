@@ -103,7 +103,7 @@ export function MobileHeader({ onMenuToggle, isMenuOpen }: MobileHeaderProps) {
           <div className="flex items-center gap-0.5">
             <button
               onClick={() => setIsSearchOpen(true)}
-              className="p-2.5 text-[hsl(28,8%,52%)] dark:text-[hsl(35,8%,52%)] hover:text-[hsl(35,90%,42%)] dark:hover:text-[hsl(38,88%,58%)] hover:bg-[hsl(36,14%,93%)] dark:hover:bg-[hsl(25,12%,13%)] rounded-xl transition-colors"
+              className="p-2.5 text-[hsl(28,8%,52%)] dark:text-[hsl(35,8%,52%)] hover:text-[hsl(24,93%,49%)] dark:hover:text-[hsl(24,93%,58%)] hover:bg-[hsl(36,14%,93%)] dark:hover:bg-[hsl(25,12%,13%)] rounded-xl transition-colors"
               aria-label="Cerca"
             >
               <Search className="h-5 w-5" />
@@ -111,7 +111,7 @@ export function MobileHeader({ onMenuToggle, isMenuOpen }: MobileHeaderProps) {
 
             {isAuthenticated && typedUser && (
               <Link href="/notifications" className="relative p-2.5">
-                <Bell className="h-5 w-5 text-[hsl(28,8%,52%)] dark:text-[hsl(35,8%,52%)] hover:text-[hsl(35,90%,42%)] dark:hover:text-[hsl(38,88%,58%)] transition-colors" />
+                <Bell className="h-5 w-5 text-[hsl(28,8%,52%)] dark:text-[hsl(35,8%,52%)] hover:text-[hsl(24,93%,49%)] dark:hover:text-[hsl(24,93%,58%)] transition-colors" />
                 {(unreadData?.count ?? 0) > 0 && (
                   <span className="absolute top-1.5 right-1.5 h-4 w-4 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center">
                     {(unreadData?.count ?? 0) > 9 ? '9+' : unreadData?.count}
@@ -126,7 +126,7 @@ export function MobileHeader({ onMenuToggle, isMenuOpen }: MobileHeaderProps) {
                   {typedUser.profileImageUrl && (
                     <AvatarImage src={typedUser.profileImageUrl} alt={typedUser.nickname || 'Profilo'} />
                   )}
-                  <AvatarFallback className="bg-[hsl(38,80%,93%)] dark:bg-[hsl(35,30%,18%)] text-[hsl(35,90%,38%)] dark:text-[hsl(38,88%,60%)] text-sm font-semibold">
+                  <AvatarFallback className="bg-[hsl(38,80%,93%)] dark:bg-[hsl(35,30%,18%)] text-[hsl(24,93%,44%)] dark:text-[hsl(38,88%,60%)] text-sm font-semibold">
                     {typedUser.nickname?.[0]?.toUpperCase() || typedUser.firstName?.[0] || 'U'}
                   </AvatarFallback>
                 </Avatar>
@@ -137,7 +137,7 @@ export function MobileHeader({ onMenuToggle, isMenuOpen }: MobileHeaderProps) {
 
             <button
               onClick={onMenuToggle}
-              className="p-2.5 text-[hsl(28,8%,52%)] dark:text-[hsl(35,8%,52%)] hover:text-[hsl(35,90%,42%)] dark:hover:text-[hsl(38,88%,58%)] hover:bg-[hsl(36,14%,93%)] dark:hover:bg-[hsl(25,12%,13%)] rounded-xl transition-colors"
+              className="p-2.5 text-[hsl(28,8%,52%)] dark:text-[hsl(35,8%,52%)] hover:text-[hsl(24,93%,49%)] dark:hover:text-[hsl(24,93%,58%)] hover:bg-[hsl(36,14%,93%)] dark:hover:bg-[hsl(25,12%,13%)] rounded-xl transition-colors"
               aria-label={isMenuOpen ? "Chiudi menu" : "Apri menu"}
             >
               {isMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}

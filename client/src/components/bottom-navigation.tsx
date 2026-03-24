@@ -14,7 +14,6 @@ export function BottomNavigation() {
   });
   const unread = unreadData?.count && unreadData.count > 0 ? unreadData.count : undefined;
 
-  // Hide on TV routes
   if (location.startsWith("/tv/") || location.startsWith("/festival-tv/")) return null;
 
   const typedUser = user as any;
@@ -66,7 +65,6 @@ export function BottomNavigation() {
       isActive:
         location.startsWith("/dashboard") ||
         location.startsWith("/profile") ||
-        location.startsWith("/activity") ||
         location.startsWith("/notifications") ||
         location === "/login",
       badge: unread,
@@ -74,27 +72,22 @@ export function BottomNavigation() {
   ];
 
   return (
-    <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-50">
-      {/* Frosted background */}
-      <div className="absolute inset-0 bg-white/97 dark:bg-[hsl(25,14%,7%)] backdrop-blur-xl border-t border-[hsl(36,14%,86%)] dark:border-[hsl(25,12%,14%)]" />
-      <div
-        className="relative flex items-stretch"
-        style={{ paddingBottom: `max(env(safe-area-inset-bottom), 4px)`, height: `calc(56px + max(env(safe-area-inset-bottom), 4px))` }}
-      >
+    <nav
+      className="lg:hidden fixed bottom-0 left-0 right-0 z-50 flex justify-center px-4"
+      style={{ paddingBottom: "max(12px, env(safe-area-inset-bottom))" }}
+    >
+      <div className="flex items-center gap-0.5 bg-white/95 dark:bg-[hsl(25,14%,9%)]/95 backdrop-blur-xl rounded-full px-2 py-1.5 border border-[hsl(36,14%,88%)] dark:border-[hsl(25,12%,18%)]"
+        style={{ boxShadow: "0 8px 32px rgba(247, 113, 4, 0.14), 0 2px 8px rgba(0,0,0,0.07)" }}>
         {tabs.map(({ key, icon: Icon, label, href, isActive, badge }) => (
-          <Link key={key} href={href} className="flex-1 flex active:opacity-70 transition-opacity">
-            <div className={`flex flex-col items-center justify-center gap-[3px] flex-1 py-2 px-1 transition-colors relative ${
+          <Link key={key} href={href} className="flex active:opacity-70 transition-opacity">
+            <div className={`flex flex-col items-center gap-0.5 px-3 py-1.5 rounded-full transition-all duration-200 ${
               isActive
-                ? "text-[hsl(35,90%,40%)] dark:text-[hsl(38,88%,56%)]"
-                : "text-[hsl(28,8%,52%)] dark:text-[hsl(35,8%,52%)]"
+                ? "bg-[hsl(24,93%,49%)] dark:bg-[hsl(24,93%,55%)] text-white"
+                : "text-[hsl(28,8%,52%)] dark:text-[hsl(35,8%,52%)] hover:text-[hsl(24,93%,49%)]"
             }`}>
-              {/* Top active indicator */}
-              {isActive && (
-                <span className="absolute top-0 inset-x-0 mx-auto w-8 h-[2.5px] rounded-b-full bg-[hsl(35,90%,42%)] dark:bg-[hsl(38,88%,56%)]" />
-              )}
               <div className="relative">
                 <Icon
-                  className={`h-[22px] w-[22px] transition-all duration-150 ${isActive ? 'scale-110' : ''}`}
+                  className={`h-[20px] w-[20px] transition-all duration-150 ${isActive ? 'scale-110' : ''}`}
                   strokeWidth={isActive ? 2.2 : 1.8}
                 />
                 {badge && badge > 0 ? (
@@ -103,7 +96,7 @@ export function BottomNavigation() {
                   </span>
                 ) : null}
               </div>
-              <span className={`text-[10px] leading-none ${isActive ? 'font-semibold' : 'font-medium'}`}>
+              <span className={`text-[10px] leading-none ${isActive ? 'font-bold' : 'font-medium'}`}>
                 {label}
               </span>
             </div>
