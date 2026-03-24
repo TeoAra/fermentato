@@ -9,5 +9,6 @@ export const modules: ModuleMap = {
   "./components/mockups/homepage-layouts/MapFirstMobile.tsx": () => import("../components/mockups/homepage-layouts/MapFirstMobile.tsx"),
   "./components/mockups/homepage-layouts/SearchFirst.tsx": () => import("../components/mockups/homepage-layouts/SearchFirst.tsx"),
   "./components/mockups/homepage-layouts/SearchFirstMobile.tsx": () => import("../components/mockups/homepage-layouts/SearchFirstMobile.tsx"),
-  "./components/mockups/homepage-layouts/SplitEditorial.tsx": () => import("../components/mockups/homepage-layouts/SplitEditorial.tsx")
+  "./components/mockups/homepage-layouts/SplitEditorial.tsx": () => import("../components/mockups/homepage-layouts/SplitEditorial.tsx"),
+  "./components/mockups/homepage-layouts/UnifiedMobile.tsx": () => import("../components/mockups/homepage-layouts/UnifiedMobile.tsx")
 };
