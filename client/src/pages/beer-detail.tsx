@@ -55,6 +55,19 @@ import { ImageUpload } from "@/components/image-upload";
 import SuggestChangeDialog from "@/components/SuggestChangeDialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
+function getBeerStyleColor(style: string): { bg: string; text: string } {
+  const s = style?.toLowerCase() || '';
+  if (s.includes('stout') || s.includes('porter')) return { bg: 'rgba(92,61,30,0.12)', text: '#7B4A1E' };
+  if (s.includes('sour') || s.includes('gose') || s.includes('lambic') || s.includes('berliner')) return { bg: 'rgba(212,168,56,0.13)', text: '#A8840A' };
+  if (s.includes('saison') || s.includes('farmhouse') || s.includes('bière de garde')) return { bg: 'rgba(100,160,70,0.12)', text: '#4E8A28' };
+  if (s.includes('wit') || s.includes('weiss') || s.includes('weizen') || s.includes('wheat') || s.includes('farro')) return { bg: 'rgba(212,168,67,0.13)', text: '#9A7820' };
+  if (s.includes('lager') || s.includes('pilsner') || s.includes('pils') || s.includes('märzen') || s.includes('marzen') || s.includes('bock')) return { bg: 'rgba(207,168,101,0.13)', text: '#8A6A10' };
+  if (s.includes('red') || s.includes('amber') || s.includes('rossa') || s.includes('ambrata')) return { bg: 'rgba(185,60,30,0.12)', text: '#B04020' };
+  if (s.includes('barley wine') || s.includes('barleywine') || s.includes('imperial') || s.includes('wee heavy')) return { bg: 'rgba(130,30,80,0.11)', text: '#8A1E55' };
+  if (s.includes('apa') || s.includes('pale ale') || s.includes('session')) return { bg: 'rgba(232,140,30,0.12)', text: '#C07010' };
+  return { bg: 'rgba(247,113,4,0.11)', text: '#F77104' };
+}
+
 interface Beer {
   id: number;
   name: string;
@@ -621,14 +634,17 @@ export default function BeerDetail() {
                 {beer.abv}% ABV
               </span>
             )}
-            {beer?.style && (
-              <Link href={`/search?q=${encodeURIComponent(beer.style)}`} className="max-w-full">
-                <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-bold bg-gradient-to-r from-orange-50 to-amber-50 dark:from-orange-950/50 dark:to-amber-950/30 text-primary cursor-pointer whitespace-normal text-center border border-orange-100 dark:border-orange-900/30 hover:from-orange-100 hover:to-amber-100 transition-colors">
-                  <Sparkles className="h-3.5 w-3.5 flex-shrink-0" />
-                  {beer.style}
-                </span>
-              </Link>
-            )}
+            {beer?.style && (() => {
+              const sc = getBeerStyleColor(beer.style);
+              return (
+                <Link href={`/search?q=${encodeURIComponent(beer.style)}`} className="max-w-full">
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-bold cursor-pointer whitespace-normal text-center border transition-colors" style={{ background: sc.bg, color: sc.text, borderColor: `${sc.text}30` }}>
+                    <Sparkles className="h-3.5 w-3.5 flex-shrink-0" />
+                    {beer.style}
+                  </span>
+                </Link>
+              );
+            })()}
             {reviewsData?.avgRating != null && (
               <button onClick={() => setActiveTab('recensioni')} className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-semibold bg-yellow-50 dark:bg-yellow-950 text-yellow-700 dark:text-yellow-300 border border-yellow-200 dark:border-yellow-800 hover:bg-yellow-100 dark:hover:bg-yellow-900 transition-colors">
                 <Star className="h-3.5 w-3.5 fill-current" />

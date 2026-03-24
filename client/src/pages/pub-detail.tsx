@@ -104,6 +104,21 @@ function isOpenNow(openingHours: any) {
   return status.status === 'open' || status.status === 'closing_soon';
 }
 
+// Beer style → color mapping (more variety, less monochromatic orange)
+function getBeerStyleColor(style: string): { bg: string; text: string } {
+  const s = style?.toLowerCase() || '';
+  if (s.includes('stout') || s.includes('porter')) return { bg: 'rgba(92,61,30,0.14)', text: '#7B4A1E' };
+  if (s.includes('sour') || s.includes('gose') || s.includes('lambic') || s.includes('berliner')) return { bg: 'rgba(212,168,56,0.15)', text: '#A8840A' };
+  if (s.includes('saison') || s.includes('farmhouse') || s.includes('bière de garde')) return { bg: 'rgba(100,160,70,0.15)', text: '#4E8A28' };
+  if (s.includes('wit') || s.includes('weiss') || s.includes('weizen') || s.includes('wheat') || s.includes('farro')) return { bg: 'rgba(212,168,67,0.15)', text: '#9A7820' };
+  if (s.includes('lager') || s.includes('pilsner') || s.includes('pils') || s.includes('märzen') || s.includes('marzen') || s.includes('bock')) return { bg: 'rgba(207,168,101,0.15)', text: '#8A6A10' };
+  if (s.includes('red') || s.includes('amber') || s.includes('rossa') || s.includes('ambrata')) return { bg: 'rgba(185,60,30,0.14)', text: '#B04020' };
+  if (s.includes('barley wine') || s.includes('barleywine') || s.includes('imperial') || s.includes('wee heavy')) return { bg: 'rgba(130,30,80,0.13)', text: '#8A1E55' };
+  if (s.includes('apa') || s.includes('pale ale') || s.includes('session')) return { bg: 'rgba(232,140,30,0.14)', text: '#C07010' };
+  // IPA and default orange
+  return { bg: 'rgba(247,113,4,0.13)', text: '#F77104' };
+}
+
 // Modern Beer Card Component
 const ModernBeerCard = ({ beer, prices, className = "" }: { 
   beer: any; 
@@ -144,11 +159,14 @@ const ModernBeerCard = ({ beer, prices, className = "" }: {
           ) : null}
 
           <div className="flex items-center gap-1.5 mt-1.5 flex-wrap">
-            {beer?.style && (
-              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full" style={{ background: 'linear-gradient(135deg, rgba(247,113,4,0.12) 0%, rgba(249,138,14,0.12) 100%)', color: '#F77104' }}>
-                {beer.style}
-              </span>
-            )}
+            {beer?.style && (() => {
+              const styleColor = getBeerStyleColor(beer.style);
+              return (
+                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full" style={{ background: styleColor.bg, color: styleColor.text }}>
+                  {beer.style}
+                </span>
+              );
+            })()}
             <span className="text-[10px] font-medium text-muted-foreground">
               {beer?.isAlcoholFree ? '0.0% ABV' : `${beer?.abv || '0'}% ABV`}
             </span>
@@ -736,59 +754,58 @@ export default function PubDetail() {
         <div className="grid grid-cols-1 lg:grid-cols-4">
           {/* Main Content */}
           <div className="lg:col-span-3">
-            {/* ── TABS ── sticky, underline style, clean */}
+            {/* ── TABS ── pill-container style (come da mockup) */}
             <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-                <div className="z-10 bg-background border-b border-orange-50 dark:border-orange-900/30">
-                <TabsList className="flex w-full h-auto bg-transparent p-0 rounded-none shadow-none border-none overflow-x-auto scrollbar-hide">
-                  <TabsTrigger 
-                    value="taplist" 
-                    data-testid="tab-taplist"
-                    className="relative flex items-center gap-1.5 px-4 py-3 text-sm font-medium whitespace-nowrap rounded-none bg-transparent border-none shadow-none transition-colors text-muted-foreground data-[state=active]:text-primary dark:data-[state=active]:text-orange-400 data-[state=active]:shadow-none data-[state=active]:bg-transparent after:absolute after:bottom-0 after:left-0 after:right-0 after:h-[2px] after:rounded-full after:bg-primary after:opacity-0 data-[state=active]:after:opacity-100 after:transition-opacity hover:text-foreground"
-                  >
-                    <Wine className="h-3.5 w-3.5 flex-shrink-0" />
-                    Spina
-                    {Array.isArray(tapList) && tapList.filter((t: any) => t.isActive && t.isVisible !== false).length > 0 && (
-                      <span className="text-[10px] font-bold opacity-60">
-                        {tapList.filter((t: any) => t.isActive && t.isVisible !== false).length}
-                      </span>
-                    )}
-                  </TabsTrigger>
-                  <TabsTrigger 
-                    value="bottles" 
-                    data-testid="tab-bottles"
-                    className="relative flex items-center gap-1.5 px-4 py-3 text-sm font-medium whitespace-nowrap rounded-none bg-transparent border-none shadow-none transition-colors text-muted-foreground data-[state=active]:text-primary dark:data-[state=active]:text-orange-400 data-[state=active]:shadow-none data-[state=active]:bg-transparent after:absolute after:bottom-0 after:left-0 after:right-0 after:h-[2px] after:rounded-full after:bg-primary after:opacity-0 data-[state=active]:after:opacity-100 after:transition-opacity hover:text-foreground"
-                  >
-                    <Sparkles className="h-3.5 w-3.5 flex-shrink-0" />
-                    Cantina
-                  </TabsTrigger>
-                  <TabsTrigger 
-                    value="menu" 
-                    data-testid="tab-menu"
-                    className="relative flex items-center gap-1.5 px-4 py-3 text-sm font-medium whitespace-nowrap rounded-none bg-transparent border-none shadow-none transition-colors text-muted-foreground data-[state=active]:text-primary dark:data-[state=active]:text-orange-400 data-[state=active]:shadow-none data-[state=active]:bg-transparent after:absolute after:bottom-0 after:left-0 after:right-0 after:h-[2px] after:rounded-full after:bg-primary after:opacity-0 data-[state=active]:after:opacity-100 after:transition-opacity hover:text-foreground"
-                  >
-                    <span className="flex-shrink-0 leading-none">🍽️</span>
-                    Menù
-                  </TabsTrigger>
-                  {Array.isArray(pubEvents) && pubEvents.length > 0 && (
-                    <TabsTrigger 
-                      value="events" 
-                      data-testid="tab-events"
-                      className="relative flex items-center gap-1.5 px-4 py-3 text-sm font-medium whitespace-nowrap rounded-none bg-transparent border-none shadow-none transition-colors text-muted-foreground data-[state=active]:text-primary dark:data-[state=active]:text-orange-400 data-[state=active]:shadow-none data-[state=active]:bg-transparent after:absolute after:bottom-0 after:left-0 after:right-0 after:h-[2px] after:rounded-full after:bg-primary after:opacity-0 data-[state=active]:after:opacity-100 after:transition-opacity hover:text-foreground"
+                <div className="z-10 px-4 py-3 bg-background border-b border-orange-50 dark:border-orange-900/30">
+                  <div className="flex gap-1 bg-[#FFF8F2] dark:bg-[hsl(25,14%,12%)] rounded-2xl p-1 overflow-x-auto scrollbar-hide">
+                    <button
+                      data-testid="tab-taplist"
+                      onClick={() => setActiveTab('taplist')}
+                      className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm font-bold whitespace-nowrap transition-all flex-1 justify-center ${activeTab === 'taplist' ? 'bg-white dark:bg-[hsl(25,14%,10%)] text-primary dark:text-orange-400 shadow-sm' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'}`}
                     >
-                      <Calendar className="h-3.5 w-3.5 flex-shrink-0" />
-                      Serate
-                    </TabsTrigger>
-                  )}
-                  {/* Info tab: mobile only */}
-                  <TabsTrigger 
-                    value="info" 
-                    data-testid="tab-info"
-                    className="lg:hidden relative flex items-center gap-1.5 px-4 py-3 text-sm font-medium whitespace-nowrap rounded-none bg-transparent border-none shadow-none transition-colors text-muted-foreground data-[state=active]:text-primary dark:data-[state=active]:text-orange-400 data-[state=active]:shadow-none data-[state=active]:bg-transparent after:absolute after:bottom-0 after:left-0 after:right-0 after:h-[2px] after:rounded-full after:bg-primary after:opacity-0 data-[state=active]:after:opacity-100 after:transition-opacity hover:text-foreground"
-                  >
-                    <Info className="h-3.5 w-3.5 flex-shrink-0" />
-                    Info
-                  </TabsTrigger>
-                </TabsList>
+                      <Wine className="h-3.5 w-3.5 flex-shrink-0" />
+                      Spina
+                      {Array.isArray(tapList) && tapList.filter((t: any) => t.isActive && t.isVisible !== false).length > 0 && (
+                        <span className={`text-[10px] font-black px-1 rounded-full ${activeTab === 'taplist' ? 'text-primary/70 dark:text-orange-400/70' : 'text-slate-400'}`}>
+                          {tapList.filter((t: any) => t.isActive && t.isVisible !== false).length}
+                        </span>
+                      )}
+                    </button>
+                    <button
+                      data-testid="tab-bottles"
+                      onClick={() => setActiveTab('bottles')}
+                      className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm font-bold whitespace-nowrap transition-all flex-1 justify-center ${activeTab === 'bottles' ? 'bg-white dark:bg-[hsl(25,14%,10%)] text-violet-600 dark:text-violet-400 shadow-sm' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'}`}
+                    >
+                      <Sparkles className="h-3.5 w-3.5 flex-shrink-0" />
+                      Cantina
+                    </button>
+                    <button
+                      data-testid="tab-menu"
+                      onClick={() => setActiveTab('menu')}
+                      className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm font-bold whitespace-nowrap transition-all flex-1 justify-center ${activeTab === 'menu' ? 'bg-white dark:bg-[hsl(25,14%,10%)] text-emerald-600 dark:text-emerald-400 shadow-sm' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'}`}
+                    >
+                      <span className="flex-shrink-0 leading-none text-base">🍽️</span>
+                      Menù
+                    </button>
+                    {Array.isArray(pubEvents) && pubEvents.length > 0 && (
+                      <button
+                        data-testid="tab-events"
+                        onClick={() => setActiveTab('events')}
+                        className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm font-bold whitespace-nowrap transition-all flex-1 justify-center ${activeTab === 'events' ? 'bg-white dark:bg-[hsl(25,14%,10%)] text-pink-600 dark:text-pink-400 shadow-sm' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'}`}
+                      >
+                        <Calendar className="h-3.5 w-3.5 flex-shrink-0" />
+                        Serate
+                      </button>
+                    )}
+                    <button
+                      data-testid="tab-info"
+                      onClick={() => setActiveTab('info')}
+                      className={`lg:hidden flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm font-bold whitespace-nowrap transition-all flex-1 justify-center ${activeTab === 'info' ? 'bg-white dark:bg-[hsl(25,14%,10%)] text-blue-600 dark:text-blue-400 shadow-sm' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'}`}
+                    >
+                      <Info className="h-3.5 w-3.5 flex-shrink-0" />
+                      Info
+                    </button>
+                  </div>
                 </div>
 
                 {/* Taplist Tab */}
@@ -909,8 +926,8 @@ export default function PubDetail() {
                   {/* Address */}
                   {(pub as any)?.address && (
                     <div className="flex items-start gap-3">
-                      <div className="p-2.5 rounded-xl bg-orange-50 dark:bg-orange-950/20 flex-shrink-0">
-                        <MapPin className="h-4 w-4 text-primary dark:text-orange-400" />
+                      <div className="p-2.5 rounded-xl bg-blue-50 dark:bg-blue-950/30 flex-shrink-0">
+                        <MapPin className="h-4 w-4 text-blue-600 dark:text-blue-400" />
                       </div>
                       <div className="flex-1 min-w-0 pt-0.5">
                         <p className="text-sm font-semibold text-foreground">{(pub as any).address}</p>
@@ -918,8 +935,7 @@ export default function PubDetail() {
                           href={getMapNavigationUrl((pub as any).name, (pub as any).address)}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="inline-flex items-center mt-2 px-3 py-1.5 rounded-xl text-white text-xs font-semibold transition-all gap-1.5 hover:opacity-90"
-                          style={{ background: 'linear-gradient(135deg, #F77104 0%, #f98a0e 50%, #f5a623 100%)' }}
+                          className="inline-flex items-center mt-2 px-3 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold transition-colors gap-1.5"
                         >
                           <Navigation className="h-3 w-3" />
                           Avvia navigazione
@@ -930,14 +946,14 @@ export default function PubDetail() {
                   {/* Hours */}
                   <button
                     onClick={handleShowOpeningHours}
-                    className="w-full flex items-center gap-3 p-3 rounded-xl bg-white dark:bg-[hsl(25,14%,10%)] border border-orange-50 dark:border-[hsl(25,12%,16%)] hover:bg-orange-50 dark:hover:bg-orange-950/10 transition-colors text-left shadow-sm"
+                    className="w-full flex items-center gap-3 p-3 rounded-xl bg-white dark:bg-[hsl(25,14%,10%)] border border-orange-50 dark:border-[hsl(25,12%,16%)] hover:bg-amber-50 dark:hover:bg-amber-950/10 transition-colors text-left shadow-sm"
                   >
-                    <div className="p-2.5 rounded-xl bg-orange-50 dark:bg-orange-950/20 flex-shrink-0">
-                      <Clock className="h-4 w-4 text-primary" />
+                    <div className="p-2.5 rounded-xl bg-amber-50 dark:bg-amber-950/30 flex-shrink-0">
+                      <Clock className="h-4 w-4 text-amber-600 dark:text-amber-400" />
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-semibold text-foreground">Orari di apertura</p>
-                      <p className={`text-xs mt-0.5 font-medium ${openStatus.status === 'open' ? 'text-emerald-600' : openStatus.status === 'closing_soon' ? 'text-primary' : 'text-red-600'}`}>
+                      <p className={`text-xs mt-0.5 font-medium ${openStatus.status === 'open' ? 'text-emerald-600' : openStatus.status === 'closing_soon' ? 'text-amber-600' : 'text-red-600'}`}>
                         {openStatus.status === 'open' ? 'Aperto adesso' : openStatus.status === 'closing_soon' ? 'Sta chiudendo' : openStatus.status === 'opening_soon' ? 'Sta per aprire' : 'Chiuso'}
                       </p>
                     </div>
@@ -945,27 +961,27 @@ export default function PubDetail() {
                   </button>
                   {/* Phone */}
                   {(pub as any)?.phone && (
-                    <a href={`tel:${(pub as any).phone}`} className="flex items-center gap-3 p-3 rounded-xl bg-white dark:bg-[hsl(25,14%,10%)] border border-orange-50 dark:border-[hsl(25,12%,16%)] hover:bg-orange-50 dark:hover:bg-orange-950/10 transition-colors shadow-sm">
-                      <div className="p-2.5 rounded-xl bg-orange-50 dark:bg-orange-950/20 flex-shrink-0">
-                        <Phone className="h-4 w-4 text-primary" />
+                    <a href={`tel:${(pub as any).phone}`} className="flex items-center gap-3 p-3 rounded-xl bg-white dark:bg-[hsl(25,14%,10%)] border border-orange-50 dark:border-[hsl(25,12%,16%)] hover:bg-emerald-50 dark:hover:bg-emerald-950/10 transition-colors shadow-sm">
+                      <div className="p-2.5 rounded-xl bg-emerald-50 dark:bg-emerald-950/30 flex-shrink-0">
+                        <Phone className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
                       </div>
                       <span className="text-sm font-semibold text-foreground">{(pub as any).phone}</span>
                     </a>
                   )}
                   {/* Website */}
                   {(pub as any)?.websiteUrl && (
-                    <a href={(pub as any).websiteUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 p-3 rounded-xl bg-white dark:bg-[hsl(25,14%,10%)] border border-orange-50 dark:border-[hsl(25,12%,16%)] hover:bg-orange-50 dark:hover:bg-orange-950/10 transition-colors shadow-sm">
-                      <div className="p-2.5 rounded-xl bg-orange-50 dark:bg-orange-950/20 flex-shrink-0">
-                        <Globe className="h-4 w-4 text-primary" />
+                    <a href={(pub as any).websiteUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 p-3 rounded-xl bg-white dark:bg-[hsl(25,14%,10%)] border border-orange-50 dark:border-[hsl(25,12%,16%)] hover:bg-violet-50 dark:hover:bg-violet-950/10 transition-colors shadow-sm">
+                      <div className="p-2.5 rounded-xl bg-violet-50 dark:bg-violet-950/30 flex-shrink-0">
+                        <Globe className="h-4 w-4 text-violet-600 dark:text-violet-400" />
                       </div>
                       <span className="text-sm font-semibold text-foreground">Sito Web</span>
                     </a>
                   )}
                   {/* Email */}
                   {(pub as any)?.email && (
-                    <a href={`mailto:${(pub as any).email}`} className="flex items-center gap-3 p-3 rounded-xl bg-white dark:bg-[hsl(25,14%,10%)] border border-orange-50 dark:border-[hsl(25,12%,16%)] hover:bg-orange-50 dark:hover:bg-orange-950/10 transition-colors shadow-sm">
-                      <div className="p-2.5 rounded-xl bg-orange-50 dark:bg-orange-950/20 flex-shrink-0">
-                        <Mail className="h-4 w-4 text-primary" />
+                    <a href={`mailto:${(pub as any).email}`} className="flex items-center gap-3 p-3 rounded-xl bg-white dark:bg-[hsl(25,14%,10%)] border border-orange-50 dark:border-[hsl(25,12%,16%)] hover:bg-blue-50 dark:hover:bg-blue-950/10 transition-colors shadow-sm">
+                      <div className="p-2.5 rounded-xl bg-blue-50 dark:bg-blue-950/30 flex-shrink-0">
+                        <Mail className="h-4 w-4 text-blue-600 dark:text-blue-400" />
                       </div>
                       <span className="text-sm font-semibold text-foreground truncate">{(pub as any).email}</span>
                     </a>
@@ -1011,8 +1027,8 @@ export default function PubDetail() {
                 {/* Address with Maps button */}
                 {(pub as any)?.address && (
                   <div className="flex items-start space-x-3">
-                    <div className="p-2.5 rounded-xl bg-orange-50 dark:bg-orange-950/20 flex-shrink-0">
-                      <MapPin className="h-4 w-4 text-primary dark:text-orange-400" />
+                    <div className="p-2.5 rounded-xl bg-blue-50 dark:bg-blue-950/30 flex-shrink-0">
+                      <MapPin className="h-4 w-4 text-blue-600 dark:text-blue-400" />
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="font-medium text-foreground text-sm">{(pub as any).address}</p>
@@ -1020,8 +1036,7 @@ export default function PubDetail() {
                         href={getMapNavigationUrl((pub as any).name, (pub as any).address)}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="inline-flex items-center mt-1.5 px-3 py-1.5 rounded-xl text-white text-xs font-semibold transition-all gap-1.5 hover:opacity-90"
-                        style={{ background: 'linear-gradient(135deg, #F77104 0%, #f98a0e 50%, #f5a623 100%)' }}
+                        className="inline-flex items-center mt-1.5 px-3 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold transition-colors gap-1.5"
                       >
                         <Navigation className="h-3 w-3" />
                         Indicazioni
@@ -1033,12 +1048,12 @@ export default function PubDetail() {
                 {/* Phone */}
                 {(pub as any)?.phone && (
                   <div className="flex items-center space-x-3">
-                    <div className="p-2.5 rounded-xl bg-orange-50 dark:bg-orange-950/20">
-                      <Phone className="h-4 w-4 text-primary" />
+                    <div className="p-2.5 rounded-xl bg-emerald-50 dark:bg-emerald-950/30">
+                      <Phone className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
                     </div>
                     <a 
                       href={`tel:${(pub as any).phone}`} 
-                      className="font-medium text-foreground hover:text-primary transition-colors text-sm"
+                      className="font-medium text-foreground hover:text-emerald-600 transition-colors text-sm"
                     >
                       {(pub as any).phone}
                     </a>
@@ -1048,14 +1063,14 @@ export default function PubDetail() {
                 {/* Website */}
                 {(pub as any)?.websiteUrl && (
                   <div className="flex items-center space-x-3">
-                    <div className="p-2.5 rounded-xl bg-orange-50 dark:bg-orange-950/20">
-                      <Globe className="h-4 w-4 text-primary" />
+                    <div className="p-2.5 rounded-xl bg-violet-50 dark:bg-violet-950/30">
+                      <Globe className="h-4 w-4 text-violet-600 dark:text-violet-400" />
                     </div>
                     <a 
                       href={(pub as any).websiteUrl} 
                       target="_blank" 
                       rel="noopener noreferrer"
-                      className="font-medium text-foreground hover:text-primary transition-colors text-sm"
+                      className="font-medium text-foreground hover:text-violet-600 transition-colors text-sm"
                     >
                       Visita il Sito Web
                     </a>
@@ -1065,12 +1080,12 @@ export default function PubDetail() {
                 {/* Email */}
                 {(pub as any)?.email && (
                   <div className="flex items-center space-x-3">
-                    <div className="p-2.5 rounded-xl bg-orange-50 dark:bg-orange-950/20">
-                      <Mail className="h-4 w-4 text-primary" />
+                    <div className="p-2.5 rounded-xl bg-blue-50 dark:bg-blue-950/30">
+                      <Mail className="h-4 w-4 text-blue-600 dark:text-blue-400" />
                     </div>
                     <a 
                       href={`mailto:${(pub as any).email}`} 
-                      className="font-medium text-foreground hover:text-primary transition-colors break-all text-sm"
+                      className="font-medium text-foreground hover:text-blue-600 transition-colors break-all text-sm"
                     >
                       {(pub as any).email}
                     </a>

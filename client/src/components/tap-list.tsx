@@ -4,6 +4,19 @@ import { Wine, EyeOff } from "lucide-react";
 import ImageWithFallback from "@/components/image-with-fallback";
 import { GlutenFreeSmallBadge, AlcoholFreeBadge } from "@/components/beer-badges";
 
+function getBeerStyleColor(style: string): { bg: string; text: string } {
+  const s = style?.toLowerCase() || '';
+  if (s.includes('stout') || s.includes('porter')) return { bg: 'rgba(92,61,30,0.14)', text: '#7B4A1E' };
+  if (s.includes('sour') || s.includes('gose') || s.includes('lambic') || s.includes('berliner')) return { bg: 'rgba(212,168,56,0.15)', text: '#A8840A' };
+  if (s.includes('saison') || s.includes('farmhouse') || s.includes('bière de garde')) return { bg: 'rgba(100,160,70,0.15)', text: '#4E8A28' };
+  if (s.includes('wit') || s.includes('weiss') || s.includes('weizen') || s.includes('wheat') || s.includes('farro')) return { bg: 'rgba(212,168,67,0.15)', text: '#9A7820' };
+  if (s.includes('lager') || s.includes('pilsner') || s.includes('pils') || s.includes('märzen') || s.includes('marzen') || s.includes('bock')) return { bg: 'rgba(207,168,101,0.15)', text: '#8A6A10' };
+  if (s.includes('red') || s.includes('amber') || s.includes('rossa') || s.includes('ambrata')) return { bg: 'rgba(185,60,30,0.14)', text: '#B04020' };
+  if (s.includes('barley wine') || s.includes('barleywine') || s.includes('imperial') || s.includes('wee heavy')) return { bg: 'rgba(130,30,80,0.13)', text: '#8A1E55' };
+  if (s.includes('apa') || s.includes('pale ale') || s.includes('session')) return { bg: 'rgba(232,140,30,0.14)', text: '#C07010' };
+  return { bg: 'rgba(247,113,4,0.13)', text: '#F77104' };
+}
+
 interface PriceItem {
   size: string;
   price: string;
@@ -109,11 +122,14 @@ export default function TapList({ tapList }: TapListProps) {
             </Link>
 
             <div className="flex items-center gap-1.5 mt-1.5 flex-wrap">
-              {tap.beer.style && (
-                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full" style={{ background: 'linear-gradient(135deg, rgba(247,113,4,0.12) 0%, rgba(249,138,14,0.12) 100%)', color: '#F77104' }}>
-                  {tap.beer.style}
-                </span>
-              )}
+              {tap.beer.style && (() => {
+                const sc = getBeerStyleColor(tap.beer.style);
+                return (
+                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-full" style={{ background: sc.bg, color: sc.text }}>
+                    {tap.beer.style}
+                  </span>
+                );
+              })()}
               <span className="text-[10px] font-medium text-muted-foreground">
                 {tap.beer.isAlcoholFree ? '0.0% ABV' : `${tap.beer.abv || '0'}% ABV`}
               </span>
