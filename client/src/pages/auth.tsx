@@ -227,26 +227,26 @@ export default function AuthPage() {
 
   if (pendingVerificationEmail) {
     return (
-      <div className="min-h-screen bg-[hsl(38,14%,97%)] dark:bg-gray-950 flex items-center justify-center p-4">
-        <div className="w-full max-w-sm bg-white dark:bg-gray-900 rounded-2xl shadow-lg p-8 text-center space-y-6">
-          <div className="mx-auto w-16 h-16 bg-amber-100 dark:bg-amber-900/30 rounded-2xl flex items-center justify-center">
-            <MailCheck className="w-8 h-8 text-amber-600" />
+      <div className="min-h-screen bg-background flex items-center justify-center p-4">
+        <div className="w-full max-w-sm bg-white dark:bg-[hsl(25,14%,10%)] rounded-2xl border border-orange-50 dark:border-[hsl(25,12%,16%)] shadow-sm p-8 text-center space-y-6">
+          <div className="mx-auto w-16 h-16 bg-emerald-50 dark:bg-emerald-950/20 rounded-2xl flex items-center justify-center">
+            <MailCheck className="w-8 h-8 text-emerald-600 dark:text-emerald-400" />
           </div>
           <div>
-            <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-2">Controlla la tua email</h2>
-            <p className="text-sm text-gray-500 dark:text-gray-400 leading-relaxed">
+            <h2 className="text-xl font-bold text-foreground mb-2">Controlla la tua email</h2>
+            <p className="text-sm text-muted-foreground leading-relaxed">
               Abbiamo inviato un link di conferma a
             </p>
-            <p className="font-semibold text-amber-600 mt-1 text-sm">{pendingVerificationEmail}</p>
-            <p className="text-xs text-gray-400 dark:text-gray-500 mt-3">
+            <p className="font-semibold text-primary dark:text-orange-400 mt-1 text-sm">{pendingVerificationEmail}</p>
+            <p className="text-xs text-muted-foreground mt-3">
               Clicca il link nell'email per attivare il tuo account. Il link scade in 24 ore.
             </p>
           </div>
           <div className="space-y-2">
-            <Button variant="outline" className="w-full text-sm" onClick={() => resendMutation.mutate(pendingVerificationEmail)} disabled={resendMutation.isPending}>
+            <Button variant="outline" className="w-full text-sm border-orange-100 dark:border-[hsl(25,12%,20%)] hover:bg-orange-50 dark:hover:bg-orange-950/20 text-foreground" onClick={() => resendMutation.mutate(pendingVerificationEmail)} disabled={resendMutation.isPending}>
               {resendMutation.isPending ? <><RefreshCw className="w-3.5 h-3.5 mr-2 animate-spin" />Invio...</> : <><RefreshCw className="w-3.5 h-3.5 mr-2" />Reinvia email</>}
             </Button>
-            <Button variant="ghost" className="w-full text-sm text-gray-400" onClick={() => { setPendingVerificationEmail(null); setActiveTab("login"); }}>
+            <Button variant="ghost" className="w-full text-sm text-muted-foreground" onClick={() => { setPendingVerificationEmail(null); setActiveTab("login"); }}>
               Torna al login
             </Button>
           </div>
@@ -256,23 +256,23 @@ export default function AuthPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[hsl(38,14%,97%)] dark:bg-gray-950 flex">
+    <div className="min-h-screen bg-background flex">
       {/* Left branding panel — hidden on mobile */}
       <div className="hidden lg:flex lg:w-[420px] xl:w-[480px] flex-shrink-0 bg-[hsl(25,30%,12%)] dark:bg-[hsl(25,30%,8%)] flex-col justify-between p-10 relative overflow-hidden">
         {/* Decorative circles */}
-        <div className="absolute -top-24 -right-24 w-72 h-72 rounded-full bg-amber-700/10 pointer-events-none" />
-        <div className="absolute bottom-10 -left-16 w-56 h-56 rounded-full bg-amber-700/10 pointer-events-none" />
-        <div className="absolute top-1/2 right-8 w-32 h-32 rounded-full bg-amber-600/5 pointer-events-none" />
+        <div className="absolute -top-24 -right-24 w-72 h-72 rounded-full bg-primary/10 pointer-events-none" />
+        <div className="absolute bottom-10 -left-16 w-56 h-56 rounded-full bg-primary/10 pointer-events-none" />
+        <div className="absolute top-1/2 right-8 w-32 h-32 rounded-full bg-primary/5 pointer-events-none" />
 
         {/* Logo */}
         <div>
           <div className="flex items-center gap-3 mb-2">
-            <div className="w-10 h-10 bg-amber-600 rounded-xl flex items-center justify-center flex-shrink-0">
+            <div className="w-10 h-10 bg-gradient-to-br from-[hsl(24,93%,49%)] to-[hsl(20,95%,42%)] rounded-xl flex items-center justify-center flex-shrink-0">
               <Beer className="w-5 h-5 text-white" />
             </div>
             <span className="text-white font-bold text-xl tracking-tight">fermenta.to</span>
           </div>
-          <p className="text-amber-200/50 text-xs mt-1 ml-[52px]">Bevi Artigianale</p>
+          <p className="text-orange-100/50 text-xs mt-1 ml-[52px]">Bevi Artigianale</p>
         </div>
 
         {/* Central content */}
@@ -280,10 +280,10 @@ export default function AuthPage() {
           <div>
             <h2 className="text-3xl font-bold text-white leading-tight">
               Scopri il meglio<br />
-              <span className="text-amber-400">della birra artigianale</span><br />
+              <span className="text-primary dark:text-orange-400">della birra artigianale</span><br />
               italiana e del mondo.
             </h2>
-            <p className="mt-4 text-amber-100/50 text-sm leading-relaxed max-w-xs">
+            <p className="mt-4 text-orange-100/50 text-sm leading-relaxed max-w-xs">
               Migliaia di birre, birrifici e locali selezionati. Tieni traccia di quello che assaggi, scopri nuovi posti, condividi le tue esperienze.
             </p>
           </div>
@@ -295,52 +295,54 @@ export default function AuthPage() {
               "Valutazioni e recensioni dalla community",
             ].map((item) => (
               <div key={item} className="flex items-center gap-3">
-                <div className="w-5 h-5 rounded-full bg-amber-500/20 flex items-center justify-center flex-shrink-0">
-                  <Check className="w-3 h-3 text-amber-400" />
+                <div className="w-5 h-5 rounded-full bg-primary/20 flex items-center justify-center flex-shrink-0">
+                  <Check className="w-3 h-3 text-primary dark:text-orange-400" />
                 </div>
-                <span className="text-amber-100/70 text-sm">{item}</span>
+                <span className="text-orange-100/70 text-sm">{item}</span>
               </div>
             ))}
           </div>
         </div>
 
         {/* Bottom tagline */}
-        <p className="text-amber-100/30 text-xs">© {new Date().getFullYear()} Fermenta.to</p>
+        <p className="text-orange-100/30 text-xs">© {new Date().getFullYear()} Fermenta.to</p>
       </div>
 
       {/* Right form panel */}
       <div className="flex-1 flex items-center justify-center p-4 sm:p-8 overflow-y-auto">
-        <div className="w-full max-w-md">
+        <div className="w-full max-w-md bg-white dark:bg-[hsl(25,14%,10%)] rounded-2xl border border-orange-50 dark:border-[hsl(25,12%,16%)] shadow-sm p-6 md:p-8">
           {/* Mobile logo */}
           <div className="flex items-center gap-2.5 mb-8 lg:hidden">
-            <div className="w-9 h-9 bg-amber-600 rounded-xl flex items-center justify-center">
+            <div className="w-9 h-9 bg-gradient-to-br from-[hsl(24,93%,49%)] to-[hsl(20,95%,42%)] rounded-xl flex items-center justify-center">
               <Beer className="w-4.5 h-4.5 text-white" />
             </div>
-            <span className="font-bold text-lg text-gray-900 dark:text-white tracking-tight">fermenta.to</span>
+            <span className="font-bold text-lg text-foreground tracking-tight">fermenta.to</span>
           </div>
 
           {/* Tab switcher */}
           <div className="mb-8">
-            <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-5">
+            <h1 className="text-2xl font-bold text-foreground mb-5">
               {activeTab === "login" ? "Bentornato" : "Crea un account"}
             </h1>
-            <div className="flex items-end border-b border-gray-200 dark:border-gray-800">
+            <div className="flex items-center p-1 bg-orange-50 dark:bg-orange-950/20 rounded-full border border-orange-100 dark:border-[hsl(25,12%,16%)]">
               {(["login", "register"] as const).map((tab) => (
                 <button
                   key={tab}
                   onClick={() => setActiveTab(tab)}
-                  className={`pb-3 px-1 mr-6 text-sm font-medium border-b-2 -mb-px transition-colors ${
+                  className={`flex-1 py-2 px-4 text-sm font-semibold rounded-full transition-all ${
                     activeTab === tab
-                      ? "border-amber-500 text-amber-600 dark:text-amber-400"
-                      : "border-transparent text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                      ? "bg-primary text-white shadow-sm"
+                      : "text-muted-foreground hover:text-foreground"
                   }`}
                 >
                   {tab === "login" ? "Accedi" : "Registrati"}
                 </button>
               ))}
+            </div>
+            <div className="mt-4 flex justify-end">
               <a
                 href="/festival"
-                className="pb-3 px-1 ml-auto -mb-px flex items-center gap-1.5 text-sm font-medium border-b-2 border-transparent text-amber-500 hover:text-amber-600 dark:text-amber-400 dark:hover:text-amber-300 transition-colors"
+                className="flex items-center gap-1.5 text-sm font-medium text-primary dark:text-orange-400 hover:text-primary/80 transition-colors"
               >
                 <QrCode className="w-3.5 h-3.5" />
                 Festival Mode
@@ -352,18 +354,18 @@ export default function AuthPage() {
           {activeTab === "login" && (
             <div className="space-y-5">
               {verifiedParam === "success" && (
-                <div className="flex items-center gap-3 p-3.5 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-xl">
-                  <CheckCircle2 className="w-4.5 h-4.5 text-green-600 flex-shrink-0" />
-                  <p className="text-sm text-green-800 dark:text-green-200 font-medium">Email verificata! Ora puoi accedere.</p>
+                <div className="flex items-center gap-3 p-3.5 bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-100 dark:border-emerald-900/30 rounded-xl">
+                  <CheckCircle2 className="w-4.5 h-4.5 text-emerald-600 dark:text-emerald-400 flex-shrink-0" />
+                  <p className="text-sm text-emerald-600 dark:text-emerald-400 font-medium">Email verificata! Ora puoi accedere.</p>
                 </div>
               )}
               {verifiedParam === "expired" && (
-                <div className="flex items-start gap-3 p-3.5 bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800 rounded-xl">
-                  <AlertTriangle className="w-4.5 h-4.5 text-orange-600 flex-shrink-0 mt-0.5" />
+                <div className="flex items-start gap-3 p-3.5 bg-orange-50 dark:bg-orange-950/20 border border-orange-100 dark:border-orange-900/30 rounded-xl">
+                  <AlertTriangle className="w-4.5 h-4.5 text-primary dark:text-orange-400 flex-shrink-0 mt-0.5" />
                   <div>
-                    <p className="text-sm text-orange-800 dark:text-orange-200 font-medium">Link scaduto.</p>
+                    <p className="text-sm text-primary dark:text-orange-400 font-medium">Link scaduto.</p>
                     {verifiedEmailParam && (
-                      <button className="text-xs text-amber-600 underline mt-1" onClick={() => resendMutation.mutate(verifiedEmailParam)}>
+                      <button className="text-xs text-primary dark:text-orange-400 underline mt-1" onClick={() => resendMutation.mutate(verifiedEmailParam)}>
                         Richiedi un nuovo link
                       </button>
                     )}
@@ -371,12 +373,12 @@ export default function AuthPage() {
                 </div>
               )}
               {emailNotVerified && (
-                <div className="flex items-start gap-3 p-3.5 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700 rounded-xl">
-                  <Mail className="w-4.5 h-4.5 text-amber-600 flex-shrink-0 mt-0.5" />
+                <div className="flex items-start gap-3 p-3.5 bg-orange-50 dark:bg-orange-950/20 border border-orange-100 dark:border-orange-900/30 rounded-xl">
+                  <Mail className="w-4.5 h-4.5 text-primary dark:text-orange-400 flex-shrink-0 mt-0.5" />
                   <div className="flex-1">
-                    <p className="text-sm text-amber-800 dark:text-amber-200 font-medium">Email non verificata.</p>
-                    <p className="text-xs text-amber-700 dark:text-amber-300 mt-0.5">Controlla la tua casella di posta.</p>
-                    <button className="text-xs text-amber-600 dark:text-amber-400 underline mt-1 disabled:opacity-50"
+                    <p className="text-sm text-primary dark:text-orange-400 font-medium">Email non verificata.</p>
+                    <p className="text-xs text-muted-foreground mt-0.5">Controlla la tua casella di posta.</p>
+                    <button className="text-xs text-primary dark:text-orange-400 underline mt-1 disabled:opacity-50"
                       onClick={() => resendMutation.mutate(emailNotVerified)} disabled={resendMutation.isPending}>
                       {resendMutation.isPending ? "Invio..." : "Reinvia email di conferma"}
                     </button>
@@ -388,11 +390,11 @@ export default function AuthPage() {
                 <form onSubmit={loginForm.handleSubmit((data) => loginMutation.mutate(data))} className="space-y-4">
                   <FormField control={loginForm.control} name="emailOrUsername" render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="text-sm font-medium text-gray-700 dark:text-gray-300">Email o Username</FormLabel>
+                      <FormLabel className="text-sm font-medium text-foreground">Email o Username</FormLabel>
                       <FormControl>
                         <div className="relative">
-                          <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                          <Input {...field} placeholder="tu@esempio.it oppure @username" className="pl-10 h-11 bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-700 rounded-xl"
+                          <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                          <Input {...field} placeholder="tu@esempio.it oppure @username" className="pl-10 h-11 bg-white dark:bg-[hsl(25,14%,10%)] border-orange-100 dark:border-[hsl(25,12%,20%)] focus-visible:ring-primary/20 rounded-xl"
                             data-testid="input-login-email" autoComplete="username" />
                         </div>
                       </FormControl>
@@ -402,15 +404,15 @@ export default function AuthPage() {
 
                   <FormField control={loginForm.control} name="password" render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="text-sm font-medium text-gray-700 dark:text-gray-300">Password</FormLabel>
+                      <FormLabel className="text-sm font-medium text-foreground">Password</FormLabel>
                       <FormControl>
                         <div className="relative">
-                          <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                          <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                           <Input {...field} type={showPassword ? "text" : "password"} placeholder="••••••••"
-                            className="pl-10 pr-10 h-11 bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-700 rounded-xl"
+                            className="pl-10 pr-10 h-11 bg-white dark:bg-[hsl(25,14%,10%)] border-orange-100 dark:border-[hsl(25,12%,20%)] focus-visible:ring-primary/20 rounded-xl"
                             data-testid="input-login-password" />
                           <button type="button" onClick={() => setShowPassword(!showPassword)}
-                            className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
+                            className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground">
                             {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                           </button>
                         </div>
@@ -423,9 +425,9 @@ export default function AuthPage() {
                     <FormItem className="flex flex-row items-center space-x-2 space-y-0">
                       <FormControl>
                         <input type="checkbox" checked={field.value} onChange={field.onChange}
-                          className="h-4 w-4 rounded border-gray-300 text-amber-600 focus:ring-amber-500 cursor-pointer accent-amber-600" />
+                          className="h-4 w-4 rounded border-orange-100 text-primary focus:ring-primary/20 cursor-pointer accent-primary" />
                       </FormControl>
-                      <FormLabel className="text-sm font-normal text-gray-500 dark:text-gray-400 cursor-pointer">Ricordami</FormLabel>
+                      <FormLabel className="text-sm font-normal text-muted-foreground cursor-pointer">Ricordami</FormLabel>
                     </FormItem>
                   )} />
 
@@ -437,7 +439,7 @@ export default function AuthPage() {
                   )}
 
                   <Button type="submit"
-                    className="w-full h-11 bg-amber-600 hover:bg-amber-700 text-white font-medium rounded-xl transition-colors"
+                    className="w-full h-11 bg-primary hover:bg-primary/90 text-white font-semibold rounded-xl transition-colors"
                     disabled={loginMutation.isPending || (!!RECAPTCHA_SITE_KEY && !loginRecaptchaToken)}
                     data-testid="button-login">
                     {loginMutation.isPending ? "Accesso in corso..." : "Accedi"}
@@ -446,7 +448,7 @@ export default function AuthPage() {
                   <div className="text-center">
                     <button type="button"
                       onClick={() => { setShowForgotPassword(true); setForgotSent(false); setForgotEmail(""); }}
-                      className="text-sm text-amber-600 hover:underline font-medium">
+                      className="text-sm text-primary dark:text-orange-400 hover:underline font-medium">
                       Password dimenticata?
                     </button>
                   </div>
@@ -455,450 +457,340 @@ export default function AuthPage() {
 
               {/* Forgot password panel */}
               {showForgotPassword && (
-                <div className="mt-4 p-5 bg-amber-50 dark:bg-amber-900/20 rounded-xl border border-amber-200 dark:border-amber-800 space-y-4">
+                <div className="mt-4 p-5 bg-orange-50 dark:bg-orange-950/20 rounded-xl border border-orange-100 dark:border-orange-900/30 space-y-4">
                   {forgotSent ? (
                     <div className="text-center space-y-2">
-                      <MailCheck className="w-8 h-8 text-amber-600 mx-auto" />
-                      <p className="font-semibold text-gray-900 dark:text-white text-sm">Controlla la tua email</p>
-                      <p className="text-xs text-gray-500">Se l'indirizzo è registrato, riceverai un link per reimpostare la password entro pochi minuti.</p>
-                      <button type="button" onClick={() => setShowForgotPassword(false)} className="text-xs text-amber-600 hover:underline">
-                        Torna al login
-                      </button>
+                      <MailCheck className="w-8 h-8 text-primary dark:text-orange-400 mx-auto" />
+                      <p className="font-semibold text-foreground text-sm">Controlla la tua email</p>
+                      <p className="text-xs text-muted-foreground">Se l'indirizzo è registrato, riceverai un link per resettare la password.</p>
+                      <Button variant="ghost" className="text-xs text-primary dark:text-orange-400" onClick={() => setShowForgotPassword(false)}>Chiudi</Button>
                     </div>
                   ) : (
-                    <>
-                      <div>
-                        <p className="text-sm font-semibold text-gray-900 dark:text-white mb-1">Reimposta la password</p>
-                        <p className="text-xs text-gray-500">Inserisci la tua email e ti invieremo un link per scegliere una nuova password.</p>
+                    <div className="space-y-3">
+                      <p className="text-sm font-medium text-foreground">Recupero password</p>
+                      <div className="space-y-2">
+                        <Input placeholder="Inserisci la tua email" value={forgotEmail} onChange={(e) => setForgotEmail(e.target.value)}
+                          className="h-10 bg-white dark:bg-[hsl(25,14%,12%)] border-orange-100 dark:border-[hsl(25,12%,20%)] rounded-xl" />
+                        <div className="flex gap-2">
+                          <Button className="flex-1 bg-primary hover:bg-primary/90 text-white rounded-xl h-10" onClick={() => forgotPasswordMutation.mutate(forgotEmail)}
+                            disabled={forgotPasswordMutation.isPending || !forgotEmail.includes("@")}>
+                            Invia link
+                          </Button>
+                          <Button variant="ghost" className="text-muted-foreground h-10" onClick={() => setShowForgotPassword(false)}>Annulla</Button>
+                        </div>
                       </div>
-                      <div className="relative">
-                        <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                        <Input
-                          type="email"
-                          value={forgotEmail}
-                          onChange={e => setForgotEmail(e.target.value)}
-                          placeholder="tu@esempio.it"
-                          className="pl-10 h-10 rounded-xl"
-                        />
-                      </div>
-                      <div className="flex gap-2">
-                        <Button variant="outline" size="sm" className="flex-1 rounded-xl"
-                          onClick={() => setShowForgotPassword(false)}>
-                          Annulla
-                        </Button>
-                        <Button size="sm" className="flex-1 bg-amber-500 hover:bg-amber-600 text-white rounded-xl"
-                          disabled={!forgotEmail || forgotPasswordMutation.isPending}
-                          onClick={() => forgotPasswordMutation.mutate(forgotEmail)}>
-                          {forgotPasswordMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : "Invia link"}
-                        </Button>
-                      </div>
-                    </>
+                    </div>
                   )}
                 </div>
               )}
 
-              <div className="relative my-2">
-                <div className="absolute inset-0 flex items-center">
-                  <span className="w-full border-t border-gray-200 dark:border-gray-800" />
-                </div>
-                <div className="relative flex justify-center text-xs">
-                  <span className="bg-[hsl(38,14%,97%)] dark:bg-gray-950 px-3 text-gray-400">oppure</span>
-                </div>
+              <div className="relative my-8">
+                <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-orange-100 dark:border-[hsl(25,12%,16%)]"></div></div>
+                <div className="relative flex justify-center text-xs uppercase"><span className="bg-white dark:bg-[hsl(25,14%,10%)] px-2 text-muted-foreground">Oppure continua con</span></div>
               </div>
 
-              <Button type="button" variant="outline"
-                className="w-full h-11 rounded-xl border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 font-medium hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
-                onClick={handleGoogleLogin} data-testid="button-google-login">
+              <Button type="button" variant="outline" onClick={handleGoogleLogin}
+                className="w-full h-11 bg-white dark:bg-[hsl(25,14%,12%)] border border-orange-100 dark:border-[hsl(25,12%,20%)] text-foreground rounded-xl font-medium hover:bg-orange-50 dark:hover:bg-orange-950/20">
                 <SiGoogle className="w-4 h-4 mr-2" />
-                Continua con Google
+                Google
               </Button>
-
-              <p className="text-center text-sm text-gray-400">
-                Non hai un account?{" "}
-                <button onClick={() => setActiveTab("register")} className="text-amber-600 font-medium hover:underline">
-                  Registrati
-                </button>
-              </p>
             </div>
           )}
 
-          {/* ── REGISTER FORM ── */}
+          {/* ── REGISTRATION FORM ── */}
           {activeTab === "register" && (
             <Form {...registerForm}>
-              <form onSubmit={registerForm.handleSubmit((data) => registerMutation.mutate(data))} className="space-y-4">
-
-                {/* Username */}
-                <FormField control={registerForm.control} name="nickname" render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="text-sm font-medium text-gray-700 dark:text-gray-300">Username</FormLabel>
-                    <FormControl>
-                      <div className="relative">
-                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 font-medium text-sm">@</span>
-                        <Input {...field} placeholder="il_tuo_username"
-                          className={`pl-7 pr-8 h-11 bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-700 rounded-xl ${
-                            nicknameAvailable === true ? "border-green-500 focus-visible:ring-green-500" :
-                            nicknameAvailable === false ? "border-red-500 focus-visible:ring-red-500" : ""
-                          }`}
-                          data-testid="input-register-nickname" autoComplete="username"
-                          onChange={(e) => {
-                            field.onChange(e);
-                            setNicknameAvailable(null);
-                            if (nicknameTimerRef.current) clearTimeout(nicknameTimerRef.current);
-                            nicknameTimerRef.current = setTimeout(() => checkNickname(e.target.value), 500);
-                          }} />
-                        {nicknameChecking && <div className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 border-2 border-amber-400 border-t-transparent rounded-full animate-spin" />}
-                        {!nicknameChecking && nicknameAvailable === true && <CheckCircle className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-green-500" />}
-                        {!nicknameChecking && nicknameAvailable === false && <XCircle className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-red-500" />}
-                      </div>
-                    </FormControl>
-                    {nicknameAvailable === true && <p className="text-xs text-green-600">Username disponibile!</p>}
-                    {nicknameAvailable === false && <p className="text-xs text-red-500">Username già in uso</p>}
-                    <FormMessage />
-                  </FormItem>
-                )} />
-
-                {/* Email */}
-                <FormField control={registerForm.control} name="email" render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="text-sm font-medium text-gray-700 dark:text-gray-300">Email</FormLabel>
-                    <FormControl>
-                      <div className="relative">
-                        <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                        <Input {...field} type="email" placeholder="tu@esempio.it"
-                          className="pl-10 h-11 bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-700 rounded-xl"
-                          data-testid="input-register-email" />
-                      </div>
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )} />
-
-                {/* Password + strength meter */}
-                <FormField control={registerForm.control} name="password" render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="text-sm font-medium text-gray-700 dark:text-gray-300">Password</FormLabel>
-                    <FormControl>
-                      <div className="relative">
-                        <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                        <Input {...field} type={showPassword ? "text" : "password"} placeholder="Crea una password sicura"
-                          className="pl-10 pr-10 h-11 bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-700 rounded-xl"
-                          data-testid="input-register-password"
-                          onChange={(e) => { field.onChange(e); setPasswordValue(e.target.value); }} />
-                        <button type="button" onClick={() => setShowPassword(!showPassword)}
-                          className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
-                          {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                        </button>
-                      </div>
-                    </FormControl>
-                    {/* Strength bar */}
-                    {passwordValue.length > 0 && (
-                      <div className="mt-2 space-y-2">
-                        <div className="flex gap-1">
-                          {[0, 1, 2, 3].map((i) => (
-                            <div key={i} className={`h-1 flex-1 rounded-full transition-colors ${
-                              i < passStrength
-                                ? passStrength <= 1 ? "bg-red-400"
-                                : passStrength <= 2 ? "bg-orange-400"
-                                : passStrength <= 3 ? "bg-amber-400"
-                                : "bg-green-500"
-                                : "bg-gray-200 dark:bg-gray-700"
-                            }`} />
-                          ))}
-                        </div>
-                        <div className="flex flex-wrap gap-x-3 gap-y-1">
-                          {passReqs.map((req) => (
-                            <span key={req.label} className={`flex items-center gap-1 text-xs transition-colors ${req.passed ? "text-green-600 dark:text-green-400" : "text-gray-400 dark:text-gray-500"}`}>
-                              {req.passed ? <Check className="w-3 h-3" /> : <X className="w-3 h-3" />}
-                              {req.label}
-                            </span>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-                    <FormMessage />
-                  </FormItem>
-                )} />
-
-                {/* Confirm password */}
-                <FormField control={registerForm.control} name="confirmPassword" render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="text-sm font-medium text-gray-700 dark:text-gray-300">Conferma Password</FormLabel>
-                    <FormControl>
-                      <div className="relative">
-                        <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                        <Input {...field} type={showConfirmPassword ? "text" : "password"} placeholder="Ripeti la password"
-                          className="pl-10 pr-10 h-11 bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-700 rounded-xl"
-                          data-testid="input-register-confirm-password" />
-                        <button type="button" onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                          className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
-                          {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                        </button>
-                      </div>
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )} />
-
-                {/* Role toggles */}
-                <div className="space-y-2 pt-1">
-                  <p className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">Tipo di account</p>
-
-                  {/* Pub toggle */}
-                  <div className={`p-3.5 rounded-xl border transition-colors ${isPublican ? "bg-amber-50 dark:bg-amber-900/20 border-amber-200 dark:border-amber-800" : "bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-700"}`}>
-                    <FormField control={registerForm.control} name="isPublican" render={({ field }) => (
-                      <FormItem className="flex flex-row items-center justify-between">
-                        <div className="flex items-center gap-3">
-                          <div className={`p-1.5 rounded-lg ${isPublican ? "bg-amber-100 dark:bg-amber-800/40" : "bg-gray-100 dark:bg-gray-800"}`}>
-                            <Store className={`w-4 h-4 ${isPublican ? "text-amber-600" : "text-gray-400"}`} />
-                          </div>
-                          <div>
-                            <FormLabel className={`text-sm font-medium ${isPublican ? "text-amber-900 dark:text-amber-100" : "text-gray-700 dark:text-gray-300"}`}>
-                              Gestore di pub
-                            </FormLabel>
-                            <FormDescription className="text-xs text-gray-400 dark:text-gray-500">
-                              Registra il tuo locale
-                            </FormDescription>
+              <form onSubmit={registerForm.handleSubmit((data) => registerMutation.mutate(data))} className="space-y-5">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <FormField control={registerForm.control} name="nickname" render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-sm font-medium text-foreground">Username</FormLabel>
+                      <FormControl>
+                        <div className="relative">
+                          <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                          <Input {...field} placeholder="Il tuo nome" className="pl-10 h-11 bg-white dark:bg-[hsl(25,14%,10%)] border-orange-100 dark:border-[hsl(25,12%,20%)] focus-visible:ring-primary/20 rounded-xl"
+                            onChange={(e) => {
+                              const val = e.target.value.toLowerCase().replace(/[^a-z0-9_.]/g, "");
+                              field.onChange(val);
+                              if (nicknameTimerRef.current) clearTimeout(nicknameTimerRef.current);
+                              nicknameTimerRef.current = setTimeout(() => checkNickname(val), 500);
+                            }} />
+                          <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                            {nicknameChecking && <RefreshCw className="w-3 h-3 animate-spin text-muted-foreground" />}
+                            {!nicknameChecking && nicknameAvailable === true && <CheckCircle className="w-4 h-4 text-emerald-600" />}
+                            {!nicknameChecking && nicknameAvailable === false && <XCircle className="w-4 h-4 text-destructive" />}
                           </div>
                         </div>
-                        <FormControl>
-                          <Switch checked={field.value} onCheckedChange={field.onChange} data-testid="switch-is-publican" />
-                        </FormControl>
-                      </FormItem>
-                    )} />
-                  </div>
+                      </FormControl>
+                      {nicknameAvailable === false && <p className="text-[11px] text-destructive mt-1 font-medium">Username già in uso</p>}
+                      <FormMessage />
+                    </FormItem>
+                  )} />
 
-                  {/* Brewery toggle */}
-                  <div className={`p-3.5 rounded-xl border transition-colors ${isBrewery ? "bg-orange-50 dark:bg-orange-900/20 border-orange-200 dark:border-orange-800" : "bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-700"}`}>
-                    <FormField control={registerForm.control} name="isBrewery" render={({ field }) => (
-                      <FormItem className="flex flex-row items-center justify-between">
-                        <div className="flex items-center gap-3">
-                          <div className={`p-1.5 rounded-lg ${isBrewery ? "bg-orange-100 dark:bg-orange-800/40" : "bg-gray-100 dark:bg-gray-800"}`}>
-                            <Factory className={`w-4 h-4 ${isBrewery ? "text-orange-600" : "text-gray-400"}`} />
-                          </div>
-                          <div>
-                            <FormLabel className={`text-sm font-medium ${isBrewery ? "text-orange-900 dark:text-orange-100" : "text-gray-700 dark:text-gray-300"}`}>
-                              Birrificio
-                            </FormLabel>
-                            <FormDescription className="text-xs text-gray-400 dark:text-gray-500">
-                              Gestisci birrificio e birre
-                            </FormDescription>
-                          </div>
+                  <FormField control={registerForm.control} name="email" render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-sm font-medium text-foreground">Email</FormLabel>
+                      <FormControl>
+                        <div className="relative">
+                          <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                          <Input {...field} type="email" placeholder="tu@esempio.it" className="pl-10 h-11 bg-white dark:bg-[hsl(25,14%,10%)] border-orange-100 dark:border-[hsl(25,12%,20%)] focus-visible:ring-primary/20 rounded-xl" />
                         </div>
-                        <FormControl>
-                          <Switch checked={field.value} onCheckedChange={(checked) => {
-                            field.onChange(checked);
-                            if (!checked) { setSelectedBrewery(null); setCreatingNewBrewery(false); setBrewerySearch(""); registerForm.setValue("breweryId", undefined); registerForm.setValue("breweryName", ""); }
-                          }} />
-                        </FormControl>
-                      </FormItem>
-                    )} />
-                  </div>
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )} />
                 </div>
 
-                {/* Pub info box */}
-                {isPublican && (
-                  <div className="p-4 bg-amber-50 dark:bg-amber-900/20 rounded-xl border border-amber-200 dark:border-amber-800 space-y-2">
-                    <div className="flex items-start gap-2.5">
-                      <Store className="w-4 h-4 text-amber-600 flex-shrink-0 mt-0.5" />
-                      <div>
-                        <p className="font-medium text-amber-900 dark:text-amber-100 text-sm">Registrazione pub dedicata</p>
-                        <p className="text-xs text-amber-700/70 dark:text-amber-300/70 mt-0.5">
-                          Completa la registrazione nella pagina dedicata per il tuo locale.
-                        </p>
-                      </div>
-                    </div>
-                    <ul className="text-xs text-amber-700 dark:text-amber-300 space-y-1 pl-1">
-                      {["15 giorni di prova gratuita", "Poi solo €65/anno (IVA inclusa)", "Puoi annullare in qualsiasi momento", "Supporto brewpub"].map(item => (
-                        <li key={item} className="flex items-center gap-1.5">
-                          <Check className="w-3 h-3 text-green-600 flex-shrink-0" />{item}
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
-
-                {/* Brewery section */}
-                {isBrewery && (
-                  <div className="space-y-3 p-4 bg-gray-50 dark:bg-gray-800/50 rounded-xl border border-gray-200 dark:border-gray-700">
-                    <h3 className="font-medium text-gray-900 dark:text-gray-100 text-sm flex items-center gap-2">
-                      <Factory className="w-4 h-4" />Dati del Birrificio
-                    </h3>
-
-                    {!selectedBrewery && !creatingNewBrewery && (
-                      <>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <FormField control={registerForm.control} name="password" render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-sm font-medium text-foreground">Password</FormLabel>
+                      <FormControl>
                         <div className="relative">
-                          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                          <Input value={brewerySearch} onChange={(e) => setBrewerySearch(e.target.value)}
-                            placeholder="Cerca il tuo birrificio..." className="pl-10 h-10 rounded-xl" />
+                          <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                          <Input {...field} type={showPassword ? "text" : "password"} placeholder="••••••••"
+                            className="pl-10 pr-10 h-11 bg-white dark:bg-[hsl(25,14%,10%)] border-orange-100 dark:border-[hsl(25,12%,20%)] focus-visible:ring-primary/20 rounded-xl"
+                            onChange={(e) => { field.onChange(e); setPasswordValue(e.target.value); }} />
+                          <button type="button" onClick={() => setShowPassword(!showPassword)}
+                            className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground">
+                            {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                          </button>
                         </div>
-
-                        {searchedBreweries && searchedBreweries.length > 0 && (
-                          <div className="max-h-40 overflow-y-auto space-y-1 border rounded-xl p-2 bg-white dark:bg-gray-900">
-                            {searchedBreweries.map((b) => (
-                              <button key={b.id} type="button" onClick={() => {
-                                setSelectedBrewery(b);
-                                registerForm.setValue("breweryId", b.id);
-                                registerForm.setValue("breweryName", b.name);
-                                registerForm.setValue("breweryLocation", b.location || "");
-                                registerForm.setValue("breweryRegion", b.region || "");
-                                registerForm.setValue("breweryCountry", (b as any).country || "");
-                                setBrewerySearch("");
-                              }} className="w-full text-left p-2 rounded-lg hover:bg-amber-50 dark:hover:bg-amber-900/20 transition-colors">
-                                <div className="font-medium text-sm text-gray-900 dark:text-white">{b.name}</div>
-                                <div className="text-xs text-gray-500">{b.location} {b.region ? `• ${b.region}` : ''}</div>
-                              </button>
+                      </FormControl>
+                      {passwordValue && (
+                        <div className="mt-2.5 p-3 bg-orange-50/50 dark:bg-orange-950/10 rounded-xl border border-orange-100 dark:border-[hsl(25,12%,16%)]">
+                          <div className="flex gap-1 mb-2">
+                            {[1, 2, 3, 4].map(idx => (
+                              <div key={idx} className={`h-1 flex-1 rounded-full transition-colors ${
+                                idx <= passStrength
+                                  ? passStrength <= 1 ? "bg-destructive" : passStrength <= 3 ? "bg-yellow-500" : "bg-emerald-600"
+                                  : "bg-orange-100 dark:bg-orange-900/30"
+                              }`} />
                             ))}
                           </div>
-                        )}
-                        {brewerySearch.length >= 2 && searchedBreweries && searchedBreweries.length === 0 && (
-                          <p className="text-sm text-gray-500 text-center py-2">Nessun birrificio trovato</p>
-                        )}
-                        <Button type="button" variant="outline" size="sm" className="w-full rounded-xl"
-                          onClick={() => { setCreatingNewBrewery(true); if (brewerySearch) registerForm.setValue("breweryName", brewerySearch); }}>
-                          <Plus className="w-4 h-4 mr-1" />Crea nuovo birrificio
-                        </Button>
-                      </>
-                    )}
-
-                    {selectedBrewery && (
-                      <div className="space-y-3">
-                        <div className="flex items-center justify-between p-3 bg-amber-50 dark:bg-amber-900/20 rounded-xl border border-amber-200 dark:border-amber-800">
-                          <p className="font-medium text-amber-900 dark:text-amber-100 text-sm">{selectedBrewery.name}</p>
-                          <Button type="button" variant="ghost" size="sm" className="text-xs h-7 px-2"
-                            onClick={() => { setSelectedBrewery(null); registerForm.setValue("breweryId", undefined); registerForm.setValue("breweryName", ""); registerForm.setValue("breweryLocation", ""); registerForm.setValue("breweryRegion", ""); registerForm.setValue("breweryCountry", ""); }}>
-                            Cambia
-                          </Button>
+                          <div className="grid grid-cols-2 gap-x-3 gap-y-1.5">
+                            {passReqs.map(req => (
+                              <div key={req.label} className="flex items-center gap-1.5">
+                                {req.passed ? <Check className="w-3 h-3 text-emerald-600" /> : <X className="w-3 h-3 text-muted-foreground" />}
+                                <span className={`text-[10px] uppercase tracking-wider font-semibold ${req.passed ? "text-emerald-600" : "text-muted-foreground"}`}>{req.label}</span>
+                              </div>
+                            ))}
+                          </div>
                         </div>
-                        <FormField control={registerForm.control} name="breweryLocation" render={({ field }) => (
-                          <FormItem>
-                            <FormLabel className="text-sm">Sede</FormLabel>
-                            <FormControl>
-                              <AddressAutocomplete value={field.value} onAddressSelect={handleBreweryAddressSelect}
-                                placeholder="Cerca la sede del birrificio..." countryRestriction={null} />
-                            </FormControl>
-                            <FormDescription className="text-xs">Regione e nazione compilati automaticamente.</FormDescription>
-                          </FormItem>
-                        )} />
-                      </div>
-                    )}
+                      )}
+                      <FormMessage />
+                    </FormItem>
+                  )} />
 
-                    {creatingNewBrewery && (
-                      <div className="space-y-3">
-                        <div className="flex items-center justify-between">
-                          <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Nuovo birrificio</p>
-                          <Button type="button" variant="ghost" size="sm" className="text-xs h-7 px-2"
-                            onClick={() => { setCreatingNewBrewery(false); registerForm.setValue("breweryName", ""); }}>
-                            Annulla
-                          </Button>
+                  <FormField control={registerForm.control} name="confirmPassword" render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-sm font-medium text-foreground">Conferma Password</FormLabel>
+                      <FormControl>
+                        <div className="relative">
+                          <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                          <Input {...field} type={showConfirmPassword ? "text" : "password"} placeholder="••••••••"
+                            className="pl-10 pr-10 h-11 bg-white dark:bg-[hsl(25,14%,10%)] border-orange-100 dark:border-[hsl(25,12%,20%)] focus-visible:ring-primary/20 rounded-xl" />
+                          <button type="button" onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                            className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground">
+                            {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                          </button>
                         </div>
-                        <FormField control={registerForm.control} name="breweryName" render={({ field }) => (
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )} />
+                </div>
+
+                {/* Role Toggles */}
+                <div className="space-y-4 pt-2">
+                  <div className={`p-4 rounded-xl border transition-all duration-300 ${isPublican ? "bg-orange-50 dark:bg-orange-950/20 border-orange-200 dark:border-orange-800" : "bg-orange-50/50 dark:bg-orange-950/10 border-orange-100 dark:border-orange-900/30"}`}>
+                    <FormField control={registerForm.control} name="isPublican" render={({ field }) => (
+                      <FormItem className="flex items-center justify-between space-y-0">
+                        <div className="flex items-center gap-3">
+                          <div className={`w-10 h-10 rounded-xl flex items-center justify-center transition-colors ${field.value ? "bg-primary text-white" : "bg-white dark:bg-[hsl(25,14%,12%)] text-muted-foreground"}`}>
+                            <Store className="w-5 h-5" />
+                          </div>
+                          <div>
+                            <FormLabel className="text-sm font-bold block">Registra un Locale</FormLabel>
+                            <span className="text-[11px] text-muted-foreground">Sei il proprietario di un pub o un bar?</span>
+                          </div>
+                        </div>
+                        <FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl>
+                      </FormItem>
+                    )} />
+
+                    {isPublican && (
+                      <div className="mt-4 pt-4 border-t border-orange-100 dark:border-orange-900/30 space-y-4 animate-in fade-in slide-in-from-top-2 duration-300">
+                        <FormField control={registerForm.control} name="pubName" render={({ field }) => (
                           <FormItem>
-                            <FormLabel className="text-sm">Nome Birrificio *</FormLabel>
-                            <FormControl><Input {...field} placeholder="Es. Birrificio Italiano" className="h-10 rounded-xl" /></FormControl>
+                            <FormLabel className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Nome Locale *</FormLabel>
+                            <FormControl><Input {...field} placeholder="Es: Il Luppolino Felice" className="h-10 bg-white dark:bg-[hsl(25,14%,12%)] border-orange-100 dark:border-[hsl(25,12%,20%)] rounded-xl" /></FormControl>
                             <FormMessage />
                           </FormItem>
                         )} />
-                        <FormField control={registerForm.control} name="breweryLocation" render={({ field }) => (
+
+                        <FormField control={registerForm.control} name="pubAddress" render={({ field }) => (
                           <FormItem>
-                            <FormLabel className="text-sm">Sede</FormLabel>
+                            <FormLabel className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Indirizzo Locale *</FormLabel>
                             <FormControl>
-                              <AddressAutocomplete value={field.value} onAddressSelect={handleBreweryAddressSelect}
-                                placeholder="Cerca la sede..." countryRestriction={null} />
+                              <AddressAutocomplete onAddressSelect={handleAddressSelect} defaultValue={field.value} placeholder="Cerca indirizzo..." className="h-10 bg-white dark:bg-[hsl(25,14%,12%)] border-orange-100 dark:border-[hsl(25,12%,20%)] rounded-xl" />
                             </FormControl>
-                            <FormDescription className="text-xs">Regione e nazione compilati automaticamente.</FormDescription>
+                            <FormDescription className="text-[10px]">Seleziona l'indirizzo dai suggerimenti per una geolocalizzazione precisa.</FormDescription>
+                            <FormMessage />
                           </FormItem>
                         )} />
-                      </div>
-                    )}
 
-                    {(selectedBrewery || creatingNewBrewery) && (
-                      <div className="space-y-3 pt-2 border-t border-gray-200 dark:border-gray-700">
-                        <p className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">Dati aziendali</p>
-                        <div className="grid grid-cols-2 gap-3">
-                          <FormField control={registerForm.control} name="breweryVatNumber" render={({ field }) => (
+                        <div className="grid grid-cols-2 gap-4">
+                          <FormField control={registerForm.control} name="vatNumber" render={({ field }) => (
                             <FormItem>
-                              <FormLabel className="text-sm">P.IVA</FormLabel>
-                              <FormControl><Input {...field} placeholder="IT12345678901" className="h-10 rounded-xl" /></FormControl>
+                              <FormLabel className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Partita IVA</FormLabel>
+                              <FormControl><Input {...field} placeholder="IT12345678901" className="h-10 bg-white dark:bg-[hsl(25,14%,12%)] border-orange-100 dark:border-[hsl(25,12%,20%)] rounded-xl" /></FormControl>
+                              <FormMessage />
                             </FormItem>
                           )} />
-                          <FormField control={registerForm.control} name="breweryPhone" render={({ field }) => (
+                          <FormField control={registerForm.control} name="phone" render={({ field }) => (
                             <FormItem>
-                              <FormLabel className="text-sm">Telefono</FormLabel>
-                              <FormControl>
-                                <div className="relative">
-                                  <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                                  <Input {...field} placeholder="+39 02..." className="pl-10 h-10 rounded-xl" />
-                                </div>
-                              </FormControl>
+                              <FormLabel className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Telefono</FormLabel>
+                              <FormControl><Input {...field} placeholder="+39 012 3456789" className="h-10 bg-white dark:bg-[hsl(25,14%,12%)] border-orange-100 dark:border-[hsl(25,12%,20%)] rounded-xl" /></FormControl>
+                              <FormMessage />
                             </FormItem>
                           )} />
                         </div>
-                        <FormField control={registerForm.control} name="breweryWebsite" render={({ field }) => (
-                          <FormItem>
-                            <FormLabel className="text-sm">Sito Web</FormLabel>
-                            <FormControl><Input {...field} placeholder="https://www.birrificio.it" className="h-10 rounded-xl" /></FormControl>
-                          </FormItem>
-                        )} />
-                        <FormField control={registerForm.control} name="breweryDescription" render={({ field }) => (
-                          <FormItem>
-                            <FormLabel className="text-sm">Descrizione</FormLabel>
-                            <FormControl><Textarea {...field} placeholder="Racconta del tuo birrificio..." className="resize-none rounded-xl" rows={2} /></FormControl>
-                          </FormItem>
-                        )} />
                       </div>
                     )}
                   </div>
-                )}
 
-                {RECAPTCHA_SITE_KEY && !isPublican && (
-                  <div className="flex justify-center">
+                  <div className={`p-4 rounded-xl border transition-all duration-300 ${isBrewery ? "bg-orange-50 dark:bg-orange-950/20 border-orange-200 dark:border-orange-800" : "bg-orange-50/50 dark:bg-orange-950/10 border-orange-100 dark:border-orange-900/30"}`}>
+                    <FormField control={registerForm.control} name="isBrewery" render={({ field }) => (
+                      <FormItem className="flex items-center justify-between space-y-0">
+                        <div className="flex items-center gap-3">
+                          <div className={`w-10 h-10 rounded-xl flex items-center justify-center transition-colors ${field.value ? "bg-primary text-white" : "bg-white dark:bg-[hsl(25,14%,12%)] text-muted-foreground"}`}>
+                            <Factory className="w-5 h-5" />
+                          </div>
+                          <div>
+                            <FormLabel className="text-sm font-bold block">Sei un Birrificio?</FormLabel>
+                            <span className="text-[11px] text-muted-foreground">Gestisci la pagina del tuo birrificio.</span>
+                          </div>
+                        </div>
+                        <FormControl><Switch checked={field.value} onCheckedChange={(val) => { field.onChange(val); if (!val) { setSelectedBrewery(null); setCreatingNewBrewery(false); registerForm.setValue("breweryId", undefined); } }} /></FormControl>
+                      </FormItem>
+                    )} />
+
+                    {isBrewery && (
+                      <div className="mt-4 pt-4 border-t border-orange-100 dark:border-orange-900/30 space-y-4 animate-in fade-in slide-in-from-top-2 duration-300">
+                        {!selectedBrewery && !creatingNewBrewery && (
+                          <div className="space-y-4">
+                            <FormItem>
+                              <FormLabel className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Cerca Birrificio Esistente</FormLabel>
+                              <div className="relative">
+                                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                                <Input value={brewerySearch} onChange={(e) => setBrewerySearch(e.target.value)} placeholder="Inserisci il nome..." className="pl-10 h-10 bg-white dark:bg-[hsl(25,14%,12%)] border-orange-100 dark:border-[hsl(25,12%,20%)] rounded-xl" />
+                              </div>
+                            </FormItem>
+
+                            {searchedBreweries && searchedBreweries.length > 0 && (
+                              <div className="space-y-2 max-h-48 overflow-y-auto pr-1">
+                                {searchedBreweries.map(b => (
+                                  <button key={b.id} type="button" onClick={() => { setSelectedBrewery(b); registerForm.setValue("breweryId", b.id); }} className="w-full p-2.5 flex items-center gap-3 rounded-lg border border-orange-100 dark:border-[hsl(25,12%,20%)] bg-white dark:bg-[hsl(25,14%,12%)] hover:bg-orange-50 dark:hover:bg-orange-950/20 text-left transition-colors">
+                                    <div className="w-8 h-8 rounded bg-orange-50 dark:bg-orange-950/20 flex items-center justify-center flex-shrink-0 text-primary dark:text-orange-400"><Factory className="w-4 h-4" /></div>
+                                    <div><p className="text-sm font-bold leading-none">{b.name}</p><p className="text-[10px] text-muted-foreground mt-1">{b.location}</p></div>
+                                  </button>
+                                ))}
+                              </div>
+                            )}
+
+                            <div className="relative py-2">
+                              <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-orange-100 dark:border-[hsl(25,12%,16%)]"></div></div>
+                              <div className="relative flex justify-center text-[10px] uppercase"><span className="bg-orange-50 dark:bg-[hsl(25,14%,10%)] px-2 text-muted-foreground font-semibold">Oppure</span></div>
+                            </div>
+
+                            <Button type="button" variant="outline" onClick={() => setCreatingNewBrewery(true)} className="w-full h-10 border-orange-100 dark:border-[hsl(25,12%,20%)] rounded-xl hover:bg-orange-50 dark:hover:bg-orange-950/20">
+                              <Plus className="w-4 h-4 mr-2" /> Registra Nuovo Birrificio
+                            </Button>
+                          </div>
+                        )}
+
+                        {selectedBrewery && (
+                          <div className="p-3 bg-white dark:bg-[hsl(25,14%,12%)] rounded-xl border border-primary/20 dark:border-orange-400/20 flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                              <div className="w-8 h-8 rounded bg-primary text-white flex items-center justify-center"><Check className="w-4 h-4" /></div>
+                              <div><p className="text-sm font-bold leading-none">{selectedBrewery.name}</p><p className="text-[10px] text-muted-foreground mt-1">Birrificio selezionato</p></div>
+                            </div>
+                            <Button type="button" variant="ghost" size="sm" onClick={() => { setSelectedBrewery(null); registerForm.setValue("breweryId", undefined); }} className="text-xs text-muted-foreground">Cambia</Button>
+                          </div>
+                        )}
+
+                        {creatingNewBrewery && (
+                          <div className="space-y-4 animate-in fade-in duration-300">
+                            <div className="flex items-center justify-between">
+                              <p className="text-xs font-bold text-primary dark:text-orange-400 uppercase tracking-widest">Nuovo Birrificio</p>
+                              <Button type="button" variant="ghost" size="sm" onClick={() => setCreatingNewBrewery(false)} className="h-6 px-2 text-[10px] text-muted-foreground">Annulla</Button>
+                            </div>
+
+                            <FormField control={registerForm.control} name="breweryName" render={({ field }) => (
+                              <FormItem>
+                                <FormLabel className="text-[10px] font-semibold uppercase text-muted-foreground">Nome Birrificio *</FormLabel>
+                                <FormControl><Input {...field} placeholder="Es: Birrificio dell'Eremo" className="h-10 bg-white dark:bg-[hsl(25,14%,12%)] border-orange-100 dark:border-[hsl(25,12%,20%)] rounded-xl" /></FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )} />
+
+                            <FormField control={registerForm.control} name="breweryLocation" render={({ field }) => (
+                              <FormItem>
+                                <FormLabel className="text-[10px] font-semibold uppercase text-muted-foreground">Sede Birrificio *</FormLabel>
+                                <FormControl>
+                                  <AddressAutocomplete onAddressSelect={handleBreweryAddressSelect} defaultValue={field.value} placeholder="Indirizzo sede..." className="h-10 bg-white dark:bg-[hsl(25,14%,12%)] border-orange-100 dark:border-[hsl(25,12%,20%)] rounded-xl" />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )} />
+
+                            <div className="grid grid-cols-2 gap-4">
+                              <FormField control={registerForm.control} name="breweryVatNumber" render={({ field }) => (
+                                <FormItem>
+                                  <FormLabel className="text-[10px] font-semibold uppercase text-muted-foreground">P. IVA</FormLabel>
+                                  <FormControl><Input {...field} placeholder="IT..." className="h-10 bg-white dark:bg-[hsl(25,14%,12%)] border-orange-100 dark:border-[hsl(25,12%,20%)] rounded-xl" /></FormControl>
+                                  <FormMessage />
+                                </FormItem>
+                              )} />
+                              <FormField control={registerForm.control} name="breweryPhone" render={({ field }) => (
+                                <FormItem>
+                                  <FormLabel className="text-[10px] font-semibold uppercase text-muted-foreground">Telefono</FormLabel>
+                                  <FormControl><Input {...field} placeholder="+39..." className="h-10 bg-white dark:bg-[hsl(25,14%,12%)] border-orange-100 dark:border-[hsl(25,12%,20%)] rounded-xl" /></FormControl>
+                                  <FormMessage />
+                                </FormItem>
+                              )} />
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {RECAPTCHA_SITE_KEY && (
+                  <div className="flex justify-center pt-2">
                     <ReCAPTCHA ref={registerRecaptchaRef} sitekey={RECAPTCHA_SITE_KEY}
                       onChange={(token) => setRegisterRecaptchaToken(token)} onExpired={() => setRegisterRecaptchaToken(null)} theme="light" hl="it" />
                   </div>
                 )}
 
-                {isPublican ? (
-                  <Button type="button"
-                    className="w-full h-11 bg-amber-600 hover:bg-amber-700 text-white font-medium rounded-xl transition-colors"
-                    onClick={() => {
-                      const vals = registerForm.getValues();
-                      if (vals.nickname || vals.email || vals.password) {
-                        sessionStorage.setItem('pub_reg_basic', JSON.stringify({
-                          nickname: vals.nickname, email: vals.email,
-                          password: vals.password, confirmPassword: vals.confirmPassword,
-                        }));
-                      }
-                      if (vals.isBrewery) {
-                        sessionStorage.setItem('pub_reg_brewery', JSON.stringify({
-                          isBrewpub: true, breweryId: vals.breweryId, breweryName: vals.breweryName,
-                          breweryLocation: vals.breweryLocation, breweryRegion: vals.breweryRegion,
-                          breweryCountry: vals.breweryCountry, breweryVatNumber: vals.breweryVatNumber,
-                          breweryPhone: vals.breweryPhone, breweryDescription: vals.breweryDescription,
-                          breweryWebsite: vals.breweryWebsite,
-                        }));
-                      }
-                      setLocation("/registra-pub");
-                    }}>
-                    Continua con la registrazione pub →
-                  </Button>
-                ) : (
-                  <Button type="submit"
-                    className="w-full h-11 bg-amber-600 hover:bg-amber-700 text-white font-medium rounded-xl transition-colors"
-                    disabled={registerMutation.isPending || (!!RECAPTCHA_SITE_KEY && !registerRecaptchaToken)}
-                    data-testid="button-register">
-                    {registerMutation.isPending ? "Registrazione in corso..." : "Crea account"}
-                  </Button>
-                )}
-
-                <p className="text-center text-sm text-gray-400">
-                  Hai già un account?{" "}
-                  <button type="button" onClick={() => setActiveTab("login")} className="text-amber-600 font-medium hover:underline">
-                    Accedi
-                  </button>
-                </p>
+                <Button type="submit"
+                  className="w-full h-12 bg-primary hover:bg-primary/90 text-white font-bold rounded-xl shadow-lg shadow-primary/20 transition-all active:scale-[0.98]"
+                  disabled={registerMutation.isPending || (!!RECAPTCHA_SITE_KEY && !registerRecaptchaToken)}>
+                  {registerMutation.isPending ? <><Loader2 className="w-5 h-5 mr-2 animate-spin" /> Creazione in corso...</> : "Crea Account"}
+                </Button>
               </form>
             </Form>
           )}
+
+          <div className="mt-8 text-center">
+            <p className="text-xs text-muted-foreground leading-relaxed">
+              Continuando, accetti i nostri{" "}
+              <a href="/tos" className="text-primary dark:text-orange-400 font-semibold hover:underline">Termini di Servizio</a> e la{" "}
+              <a href="/privacy" className="text-primary dark:text-orange-400 font-semibold hover:underline">Privacy Policy</a>.
+            </p>
+          </div>
         </div>
       </div>
     </div>

@@ -47,31 +47,31 @@ type BeerFormValues = z.infer<typeof beerFormSchema>;
 function PendingApprovalOverlay({ breweryName, createdAt }: { breweryName: string; createdAt: string | null }) {
   return (
     <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
-      <Card className="max-w-md w-full backdrop-blur-lg bg-white/95 dark:bg-gray-800/95 border-amber-300 shadow-2xl">
+      <Card className="max-w-md w-full bg-white dark:bg-[hsl(25,14%,10%)] border border-orange-100 dark:border-[hsl(25,12%,16%)] rounded-2xl shadow-2xl">
         <CardContent className="pt-8 pb-8 text-center space-y-6">
-          <div className="w-20 h-20 mx-auto rounded-full bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center">
-            <Clock className="w-10 h-10 text-amber-600" />
+          <div className="w-20 h-20 mx-auto rounded-full bg-orange-50 dark:bg-orange-950/30 flex items-center justify-center">
+            <Clock className="w-10 h-10 text-primary" />
           </div>
           <div>
-            <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
+            <h2 className="text-2xl font-bold text-foreground mb-2">
               Richiesta in Attesa
             </h2>
-            <p className="text-gray-600 dark:text-gray-300 text-sm">
+            <p className="text-muted-foreground text-sm">
               La tua richiesta per il birrificio <strong>"{breweryName}"</strong> è in attesa di approvazione da parte dell'amministratore.
             </p>
           </div>
-          <div className="bg-amber-50 dark:bg-amber-900/20 rounded-lg p-4 text-sm text-amber-800 dark:text-amber-200">
+          <div className="bg-orange-50 dark:bg-orange-900/20 rounded-xl p-4 text-sm text-orange-700 dark:text-orange-200">
             <AlertTriangle className="w-5 h-5 inline-block mr-2" />
             Non puoi accedere alla dashboard del birrificio fino all'approvazione. Riceverai una notifica quando la tua richiesta verrà gestita.
           </div>
           {createdAt && (
-            <p className="text-xs text-gray-500">
+            <p className="text-xs text-muted-foreground">
               Richiesta inviata il {new Date(createdAt).toLocaleDateString('it-IT', { day: 'numeric', month: 'long', year: 'numeric' })}
             </p>
           )}
           <Button
             variant="outline"
-            className="w-full"
+            className="w-full border-orange-100 dark:border-[hsl(25,12%,20%)] hover:bg-orange-50 rounded-xl"
             onClick={() => window.location.href = '/'}
           >
             Torna alla Home
@@ -85,27 +85,27 @@ function PendingApprovalOverlay({ breweryName, createdAt }: { breweryName: strin
 function RejectedOverlay({ breweryName, adminNotes }: { breweryName: string; adminNotes: string | null }) {
   return (
     <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
-      <Card className="max-w-md w-full backdrop-blur-lg bg-white/95 dark:bg-gray-800/95 border-red-300 shadow-2xl">
+      <Card className="max-w-md w-full bg-white dark:bg-[hsl(25,14%,10%)] border border-red-100 dark:border-red-900/30 rounded-2xl shadow-2xl">
         <CardContent className="pt-8 pb-8 text-center space-y-6">
-          <div className="w-20 h-20 mx-auto rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center">
+          <div className="w-20 h-20 mx-auto rounded-full bg-red-50 dark:bg-red-900/30 flex items-center justify-center">
             <AlertTriangle className="w-10 h-10 text-red-600" />
           </div>
           <div>
-            <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
+            <h2 className="text-2xl font-bold text-foreground mb-2">
               Richiesta Rifiutata
             </h2>
-            <p className="text-gray-600 dark:text-gray-300 text-sm">
+            <p className="text-muted-foreground text-sm">
               La tua richiesta per il birrificio <strong>"{breweryName}"</strong> è stata rifiutata.
             </p>
           </div>
           {adminNotes && (
-            <div className="bg-red-50 dark:bg-red-900/20 rounded-lg p-4 text-sm text-red-800 dark:text-red-200 text-left">
+            <div className="bg-red-50 dark:bg-red-900/20 rounded-xl p-4 text-sm text-red-800 dark:text-red-200 text-left">
               <strong>Motivazione:</strong> {adminNotes}
             </div>
           )}
           <Button
             variant="outline"
-            className="w-full"
+            className="w-full border-orange-100 dark:border-[hsl(25,12%,20%)] hover:bg-orange-50 rounded-xl"
             onClick={() => window.location.href = '/'}
           >
             Torna alla Home
@@ -146,23 +146,23 @@ function AnnouncementsManager({ breweryId }: { breweryId: number }) {
   });
 
   const typeLabel: Record<string, { label: string; color: string; icon: any }> = {
-    news: { label: "Novità", color: "bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300", icon: Newspaper },
-    release: { label: "Nuova Birra", color: "bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300", icon: Rocket },
-    collab: { label: "Collaborazione", color: "bg-purple-100 text-purple-700 dark:bg-purple-900/40 dark:text-purple-300", icon: Users },
+    news: { label: "Novità", color: "bg-blue-50 text-blue-700 border-blue-100 dark:bg-blue-950/30 dark:text-blue-300", icon: Newspaper },
+    release: { label: "Nuova Birra", color: "bg-orange-50 text-primary border-orange-100 dark:bg-orange-950/30 dark:text-orange-400", icon: Rocket },
+    collab: { label: "Collaborazione", color: "bg-purple-50 text-purple-700 border-purple-100 dark:bg-purple-950/30 dark:text-purple-300", icon: Users },
   };
 
   return (
-    <div className="glass-card border-0 rounded-2xl p-6 mb-8">
+    <div className="bg-white dark:bg-[hsl(25,14%,10%)] border border-orange-50 dark:border-[hsl(25,12%,16%)] rounded-2xl shadow-sm p-6 mb-8">
       <div className="flex items-center justify-between mb-6">
-        <h2 className="text-2xl font-bold text-gray-900 dark:text-white flex items-center">
-          <div className="p-2 bg-gradient-to-r from-amber-500 to-orange-600 rounded-xl mr-3">
+        <h2 className="text-2xl font-bold text-foreground flex items-center">
+          <div className="p-2 bg-primary rounded-xl mr-3 shadow-sm">
             <Megaphone className="h-6 w-6 text-white" />
           </div>
           Annunci & Uscite
         </h2>
         <Button
           onClick={() => setOpen(true)}
-          className="bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700"
+          className="bg-primary hover:bg-primary/90 text-white rounded-xl font-semibold shadow-sm"
         >
           <Plus className="w-4 h-4 mr-2" />
           Nuovo Annuncio
@@ -170,11 +170,11 @@ function AnnouncementsManager({ breweryId }: { breweryId: number }) {
       </div>
 
       {isLoading ? (
-        <div className="space-y-3">{[1,2].map(i => <div key={i} className="h-20 rounded-xl bg-gray-100 dark:bg-gray-800 animate-pulse" />)}</div>
+        <div className="space-y-3">{[1,2].map(i => <div key={i} className="h-20 rounded-xl bg-orange-50/20 animate-pulse" />)}</div>
       ) : announcements.length === 0 ? (
-        <div className="text-center py-12 text-gray-400">
-          <Megaphone className="w-12 h-12 mx-auto mb-3 opacity-30" />
-          <p className="text-sm">Nessun annuncio ancora. Pubblica una nuova birra, un evento o una collaborazione!</p>
+        <div className="text-center py-12 text-muted-foreground">
+          <Megaphone className="w-12 h-12 mx-auto mb-3 opacity-30 text-primary" />
+          <p className="text-sm text-left sm:text-center">Nessun annuncio ancora. Pubblica una nuova birra, un evento o una collaborazione!</p>
         </div>
       ) : (
         <div className="space-y-4">
@@ -182,27 +182,27 @@ function AnnouncementsManager({ breweryId }: { breweryId: number }) {
             const t = typeLabel[ann.type] ?? typeLabel.news;
             const TIcon = t.icon;
             return (
-              <div key={ann.id} className="flex gap-4 p-4 rounded-xl border border-gray-200 dark:border-gray-700 bg-white/50 dark:bg-gray-800/50">
-                <div className="flex-1 min-w-0">
+              <div key={ann.id} className="flex gap-4 p-4 rounded-xl border border-orange-50 dark:border-[hsl(25,12%,16%)] bg-white dark:bg-[hsl(25,14%,10%)] hover:bg-orange-50/50 dark:hover:bg-orange-950/10 transition-colors">
+                <div className="flex-1 min-w-0 text-left">
                   <div className="flex items-center gap-2 mb-1 flex-wrap">
-                    <span className={`inline-flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-full ${t.color}`}>
+                    <span className={`inline-flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-full border ${t.color}`}>
                       <TIcon className="w-3 h-3" />{t.label}
                     </span>
                     {ann.releaseDate && (
-                      <span className="text-xs text-gray-500">
+                      <span className="text-xs text-muted-foreground">
                         Data uscita: {new Date(ann.releaseDate).toLocaleDateString("it-IT")}
                       </span>
                     )}
-                    <span className="text-xs text-gray-400 ml-auto">
+                    <span className="text-xs text-muted-foreground ml-auto">
                       {new Date(ann.createdAt).toLocaleDateString("it-IT")}
                     </span>
                   </div>
-                  <p className="font-semibold text-gray-900 dark:text-white text-sm">{ann.title}</p>
-                  {ann.content && <p className="text-xs text-gray-600 dark:text-gray-400 mt-1 line-clamp-2">{ann.content}</p>}
+                  <p className="font-semibold text-foreground text-sm">{ann.title}</p>
+                  {ann.content && <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{ann.content}</p>}
                 </div>
                 <button
                   onClick={() => deleteMutation.mutate(ann.id)}
-                  className="text-gray-400 hover:text-red-500 transition-colors flex-shrink-0 mt-1"
+                  className="text-muted-foreground hover:text-destructive transition-colors flex-shrink-0 mt-1"
                 >
                   <Trash2 className="w-4 h-4" />
                 </button>
@@ -214,52 +214,55 @@ function AnnouncementsManager({ breweryId }: { breweryId: number }) {
 
       {/* Create dialog */}
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="max-w-md">
+        <DialogContent className="max-w-md rounded-2xl border-orange-50 dark:border-[hsl(25,12%,16%)]">
           <DialogHeader>
             <DialogTitle>Nuovo Annuncio</DialogTitle>
           </DialogHeader>
           <div className="space-y-4 pt-2">
-            <div className="space-y-1">
+            <div className="space-y-1 text-left">
               <label className="text-sm font-medium">Tipo</label>
               <Select value={form.type} onValueChange={(v) => setForm(f => ({ ...f, type: v }))}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
+                <SelectTrigger className="border-orange-100 rounded-xl focus:ring-primary/20"><SelectValue /></SelectTrigger>
+                <SelectContent className="rounded-xl border-orange-100">
                   <SelectItem value="news">Novità / News</SelectItem>
                   <SelectItem value="release">Nuova Birra / Uscita Limitata</SelectItem>
                   <SelectItem value="collab">Collaborazione</SelectItem>
                 </SelectContent>
               </Select>
             </div>
-            <div className="space-y-1">
+            <div className="space-y-1 text-left">
               <label className="text-sm font-medium">Titolo *</label>
               <Input
                 placeholder="Es. Nuova IPA estiva in arrivo!"
                 value={form.title}
                 onChange={(e) => setForm(f => ({ ...f, title: e.target.value }))}
+                className="border-orange-100 dark:border-[hsl(25,12%,20%)] rounded-xl focus-visible:ring-primary/20"
               />
             </div>
-            <div className="space-y-1">
+            <div className="space-y-1 text-left">
               <label className="text-sm font-medium">Descrizione</label>
               <Textarea
                 placeholder="Racconta qualcosa di più..."
                 rows={3}
                 value={form.content}
                 onChange={(e) => setForm(f => ({ ...f, content: e.target.value }))}
+                className="border-orange-100 dark:border-[hsl(25,12%,20%)] rounded-xl focus-visible:ring-primary/20"
               />
             </div>
             {form.type === "release" && (
-              <div className="space-y-1">
+              <div className="space-y-1 text-left">
                 <label className="text-sm font-medium">Data di uscita prevista</label>
                 <Input
                   type="date"
                   value={form.releaseDate}
                   onChange={(e) => setForm(f => ({ ...f, releaseDate: e.target.value }))}
+                  className="border-orange-100 dark:border-[hsl(25,12%,20%)] rounded-xl focus-visible:ring-primary/20"
                 />
               </div>
             )}
             <div className="flex gap-3 pt-2">
               <Button
-                className="flex-1 bg-gradient-to-r from-amber-500 to-orange-600"
+                className="flex-1 bg-primary hover:bg-primary/90 text-white rounded-xl font-semibold shadow-sm"
                 disabled={!form.title.trim() || createMutation.isPending}
                 onClick={() => createMutation.mutate({
                   type: form.type,
@@ -272,7 +275,13 @@ function AnnouncementsManager({ breweryId }: { breweryId: number }) {
                 {createMutation.isPending && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
                 Pubblica
               </Button>
-              <Button variant="outline" onClick={() => setOpen(false)}>Annulla</Button>
+              <Button 
+                variant="outline" 
+                onClick={() => setOpen(false)}
+                className="border-orange-100 dark:border-[hsl(25,12%,20%)] hover:bg-orange-50 rounded-xl"
+              >
+                Annulla
+              </Button>
             </div>
           </div>
         </DialogContent>
@@ -290,14 +299,14 @@ function DistributionSection({ breweryId }: { breweryId: number }) {
   });
 
   return (
-    <div className="glass-card border-0 rounded-2xl p-6 mb-8">
-      <h2 className="text-2xl font-bold text-gray-900 dark:text-white flex items-center mb-6">
-        <div className="p-2 bg-gradient-to-r from-blue-500 to-indigo-600 rounded-xl mr-3">
+    <div className="bg-white dark:bg-[hsl(25,14%,10%)] border border-orange-50 dark:border-[hsl(25,12%,16%)] rounded-2xl shadow-sm p-6 mb-8">
+      <h2 className="text-2xl font-bold text-foreground flex items-center mb-6">
+        <div className="p-2 bg-primary rounded-xl mr-3 shadow-sm">
           <Store className="h-6 w-6 text-white" />
         </div>
         Dove Siamo in Spina
         {pubs.length > 0 && (
-          <span className="ml-3 text-base font-normal text-gray-500 dark:text-gray-400">
+          <span className="ml-3 text-base font-normal text-muted-foreground">
             — {pubs.length} {pubs.length === 1 ? "pub" : "pub"} in Italia
           </span>
         )}
@@ -305,11 +314,11 @@ function DistributionSection({ breweryId }: { breweryId: number }) {
 
       {isLoading ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {[1,2,3].map(i => <div key={i} className="h-24 rounded-xl bg-gray-100 dark:bg-gray-800 animate-pulse" />)}
+          {[1,2,3].map(i => <div key={i} className="h-24 rounded-xl bg-orange-50/20 animate-pulse" />)}
         </div>
       ) : pubs.length === 0 ? (
-        <div className="text-center py-12 text-gray-400">
-          <Store className="w-12 h-12 mx-auto mb-3 opacity-30" />
+        <div className="text-center py-12 text-muted-foreground">
+          <Store className="w-12 h-12 mx-auto mb-3 opacity-30 text-primary" />
           <p className="text-sm">Nessun pub ha ancora le tue birre in tap list.</p>
           <p className="text-xs mt-1">Quando un Publican aggiunge una tua birra, apparirà qui.</p>
         </div>
@@ -317,23 +326,23 @@ function DistributionSection({ breweryId }: { breweryId: number }) {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {pubs.map((pub: any) => (
             <Link key={pub.id} href={`/pub/${pub.slug || pub.id}`}>
-              <div className="flex items-center gap-3 p-4 rounded-xl border border-gray-200 dark:border-gray-700 bg-white/50 dark:bg-gray-800/50 hover:border-amber-400 dark:hover:border-amber-500 transition-colors cursor-pointer group">
+              <div className="flex items-center gap-3 p-4 rounded-xl border border-orange-50 dark:border-[hsl(25,12%,16%)] bg-white dark:bg-[hsl(25,14%,10%)] hover:bg-orange-50/50 dark:hover:bg-orange-950/10 transition-colors cursor-pointer group">
                 {pub.logo_url ? (
-                  <img src={pub.logo_url} alt={pub.name} className="w-10 h-10 rounded-full object-cover flex-shrink-0" />
+                  <img src={pub.logo_url} alt={pub.name} className="w-10 h-10 rounded-full object-cover flex-shrink-0 border border-orange-100 dark:border-[hsl(25,12%,20%)]" />
                 ) : (
-                  <div className="w-10 h-10 rounded-full bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center flex-shrink-0">
+                  <div className="w-10 h-10 rounded-full bg-primary flex items-center justify-center flex-shrink-0">
                     <Store className="w-5 h-5 text-white" />
                   </div>
                 )}
-                <div className="flex-1 min-w-0">
-                  <p className="font-semibold text-sm text-gray-900 dark:text-white truncate group-hover:text-amber-600 dark:group-hover:text-amber-400">{pub.name}</p>
+                <div className="flex-1 min-w-0 text-left">
+                  <p className="font-semibold text-sm text-foreground truncate group-hover:text-primary dark:group-hover:text-orange-400">{pub.name}</p>
                   {(pub.city || pub.region) && (
-                    <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
-                      <MapPin className="w-3 h-3 inline mr-0.5" />
+                    <p className="text-xs text-muted-foreground truncate">
+                      <MapPin className="w-3 h-3 inline mr-0.5 text-primary" />
                       {[pub.city, pub.region].filter(Boolean).join(", ")}
                     </p>
                   )}
-                  <p className="text-xs text-amber-600 dark:text-amber-400 font-medium mt-0.5">
+                  <p className="text-xs text-primary dark:text-orange-400 font-medium mt-0.5">
                     {pub.beer_count} {Number(pub.beer_count) === 1 ? "birra" : "birre"} in spina
                   </p>
                 </div>
@@ -346,18 +355,18 @@ function DistributionSection({ breweryId }: { breweryId: number }) {
   );
 }
 
-const BreweryStatsCard = ({ icon: Icon, value, label, gradient, onClick }: any) => (
+const BreweryStatsCard = ({ icon: Icon, value, label, colorClass, onClick }: any) => (
   <div
-    className={`glass-card rounded-xl p-4 hover:scale-105 transition-all duration-300 group ${onClick ? 'cursor-pointer' : ''}`}
+    className={`bg-white dark:bg-[hsl(25,14%,10%)] border border-orange-50 dark:border-[hsl(25,12%,16%)] rounded-2xl shadow-sm p-4 hover:scale-[1.02] transition-all duration-300 group ${onClick ? 'cursor-pointer' : ''}`}
     onClick={onClick}
   >
     <div className="flex items-center space-x-3">
-      <div className={`p-3 rounded-lg bg-gradient-to-br ${gradient} group-hover:scale-110 transition-transform duration-300`}>
-        <Icon className="h-5 w-5 text-white" />
+      <div className={`p-3 rounded-xl bg-orange-50 dark:bg-orange-950/30 group-hover:scale-110 transition-transform duration-300`}>
+        <Icon className={`h-5 w-5 ${colorClass || 'text-primary'}`} />
       </div>
-      <div>
-        <p className="text-2xl font-bold text-gray-900 dark:text-white">{value}</p>
-        <p className="text-sm text-gray-600 dark:text-gray-400 font-medium">{label}</p>
+      <div className="text-left">
+        <p className="text-2xl font-bold text-primary dark:text-orange-400">{value}</p>
+        <p className="text-sm text-muted-foreground font-medium">{label}</p>
       </div>
     </div>
   </div>
@@ -513,20 +522,20 @@ export default function BreweryDashboard({ adminBreweryId }: BreweryDashboardPro
         queryClient.invalidateQueries({ queryKey: breweryQueryKey });
         toast({ title: "Successo", description: `${type === 'cover' ? 'Copertina' : 'Logo'} aggiornato` });
       } catch {
-        toast({ title: "Errore", description: "Impossibile salvare l'immagine", variant: "destructive" });
+        toast({ title: "Errore", description: "Impossibile aggiornare l'immagine", variant: "destructive" });
       }
     }
-  }, [toast, isAdminMode, adminBreweryId]);
+  }, [breweryQueryKey, adminBreweryId, isAdminMode, toast]);
 
   const createBeerMutation = useMutation({
     mutationFn: (values: BeerFormValues) => {
       const url = isAdminMode
-        ? `/api/admin/brewery/${adminBreweryId}/beers`
+        ? `/api/admin/breweries/${adminBreweryId}/beers`
         : "/api/brewery/beers";
       return apiRequest(url, { method: "POST" }, values);
     },
     onSuccess: () => {
-      toast({ title: "Successo", description: "Birra aggiunta con successo" });
+      toast({ title: "Successo", description: "Birra aggiunta al catalogo" });
       queryClient.invalidateQueries({ queryKey: breweryQueryKey });
       if (isAdminMode) queryClient.invalidateQueries({ queryKey: ["/api/breweries", adminBreweryId, "beers"] });
       setDialogOpen(false);
@@ -629,8 +638,8 @@ export default function BreweryDashboard({ adminBreweryId }: BreweryDashboardPro
 
   if (authLoading || requestLoading) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <Loader2 className="animate-spin h-12 w-12 text-orange-600" />
+      <div className="flex items-center justify-center min-h-screen bg-background">
+        <Loader2 className="animate-spin h-12 w-12 text-primary" />
       </div>
     );
   }
@@ -645,8 +654,8 @@ export default function BreweryDashboard({ adminBreweryId }: BreweryDashboardPro
 
   if (isLoading2) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <Loader2 className="animate-spin h-12 w-12 text-orange-600" />
+      <div className="flex items-center justify-center min-h-screen bg-background">
+        <Loader2 className="animate-spin h-12 w-12 text-primary" />
       </div>
     );
   }
@@ -656,14 +665,22 @@ export default function BreweryDashboard({ adminBreweryId }: BreweryDashboardPro
 
   if (!brewery) {
     return (
-      <div className="max-w-2xl mx-auto mt-8 p-6">
-        <Card className="backdrop-blur-lg bg-white/80 dark:bg-gray-800/80 border-orange-200/50">
-          <CardContent className="pt-6 text-center">
-            <Factory className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-            <h2 className="text-2xl font-bold mb-2">Nessun Birrificio Associato</h2>
-            <p className="text-gray-600 dark:text-gray-300">
+      <div className="min-h-screen bg-background flex items-center justify-center p-6">
+        <Card className="max-w-md w-full bg-white dark:bg-[hsl(25,14%,10%)] border border-orange-100 dark:border-[hsl(25,12%,16%)] rounded-2xl shadow-sm">
+          <CardContent className="pt-8 pb-8 text-center">
+            <div className="w-20 h-20 mx-auto rounded-full bg-orange-50 dark:bg-orange-950/30 flex items-center justify-center mb-6">
+              <Factory className="w-10 h-10 text-primary" />
+            </div>
+            <h2 className="text-2xl font-bold text-foreground mb-2">Nessun Birrificio Associato</h2>
+            <p className="text-muted-foreground text-sm">
               Non hai ancora un birrificio associato al tuo account.
             </p>
+            <Button
+              className="mt-6 w-full bg-primary hover:bg-primary/90 text-white rounded-xl font-semibold shadow-sm"
+              onClick={() => window.location.href = '/'}
+            >
+              Torna alla Home
+            </Button>
           </CardContent>
         </Card>
       </div>
@@ -673,246 +690,255 @@ export default function BreweryDashboard({ adminBreweryId }: BreweryDashboardPro
   const displayedBeers = showAllBeers ? beers : beers.slice(0, 6);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-amber-50 to-orange-50 dark:from-gray-950 dark:via-amber-950 dark:to-orange-950">
-
-      {/* Hero Section - same as public page */}
-      <div className="relative">
-        <div className="relative h-96 md:h-[500px] overflow-hidden">
-          <img
-            src={brewery.coverImageUrl || "/brewery-cover.jpg"}
-            alt={`${brewery.name} - Copertina`}
-            className="w-full h-full object-cover"
-          />
-          <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-black/10"></div>
-
-          {/* Edit cover button */}
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setIsEditingImages(true)}
-            className="absolute top-4 right-4 backdrop-blur-md bg-white/20 border-white/40 text-white hover:bg-white/30 z-10"
-          >
-            <Camera className="h-4 w-4 mr-2" />
-            Modifica Immagini
-          </Button>
-
-          {/* Hero Content */}
-          <div className="absolute inset-0 flex items-end">
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full pb-12">
-              <div className="glass-card rounded-2xl p-8 backdrop-blur-md bg-white/10 border border-white/20">
-                <div className="flex flex-col md:flex-row items-center md:items-center justify-between gap-8">
-                  <div className="flex flex-col md:flex-row items-center space-y-4 md:space-y-0 md:space-x-6 w-full md:w-auto justify-center md:justify-start">
-                    {brewery.logoUrl ? (
-                      <Avatar className="h-20 w-20 ring-4 ring-white/30 flex-shrink-0">
-                        <AvatarImage src={brewery.logoUrl} alt={`${brewery.name} - Logo`} />
-                        <AvatarFallback className="bg-gradient-to-br from-amber-500 to-orange-600 text-white text-2xl">
-                          {brewery.name?.[0] || 'B'}
-                        </AvatarFallback>
-                      </Avatar>
-                    ) : (
-                      <div className="h-20 w-20 rounded-full ring-4 ring-white/30 bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center flex-shrink-0">
-                        <Factory className="h-10 w-10 text-white" />
-                      </div>
-                    )}
-                    <div className="text-center md:text-left">
-                      <h1 className="text-2xl sm:text-3xl md:text-4xl text-white mb-4 font-bold leading-tight">
-                        {brewery.name}
-                      </h1>
-                      <div className="flex flex-col sm:flex-row items-center justify-center md:justify-start space-y-3 sm:space-y-0 sm:space-x-4">
-                        {brewery.location && (
-                          <div className="flex items-center text-white/90 backdrop-blur-sm bg-white/10 rounded-lg px-4 py-2">
-                            <MapPin className="h-4 w-4 mr-2" />
-                            <span className="text-sm font-medium">{brewery.location} {brewery.region && `(${brewery.region})`}</span>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Owner action buttons */}
-                  <div className="flex items-center justify-center md:justify-end space-x-2 sm:space-x-3 w-full md:w-auto">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={openProfileEdit}
-                      className="backdrop-blur-md bg-amber-500/30 border-amber-300/50 text-white hover:bg-amber-500/50 hover:border-amber-300/70 transition-all duration-300 font-medium shadow-lg min-h-[44px]"
-                    >
-                      <Pencil className="h-4 w-4 sm:mr-2" />
-                      <span className="hidden sm:inline">Modifica Profilo</span>
-                    </Button>
-                    <Link href={`/brewery/${brewery.id}`}>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="backdrop-blur-md bg-white/20 border-white/40 text-white hover:bg-white/30 hover:border-white/60 transition-all duration-300 font-medium shadow-lg min-h-[44px]"
-                      >
-                        <ExternalLink className="h-4 w-4 sm:mr-2" />
-                        <span className="hidden sm:inline">Vedi Pagina Pubblica</span>
-                      </Button>
-                    </Link>
-                  </div>
-                </div>
+    <div className="min-h-screen bg-background pb-12">
+      {!isAdminMode && <RoleSwitcherBanner />}
+      
+      {/* Header Bar */}
+      <header className="sticky top-0 z-30 bg-white dark:bg-[hsl(25,14%,10%)] border-b border-orange-50 dark:border-[hsl(25,12%,16%)] shadow-sm">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <Link href="/">
+              <div className="p-2 bg-orange-50 dark:bg-orange-950/30 rounded-xl cursor-pointer hover:scale-105 transition-transform">
+                <BeerIcon className="h-6 w-6 text-primary" />
               </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <RoleSwitcherBanner currentView="brewery" />
-
-        {/* Stats Section */}
-        <div className="mb-8">
-          <div className="flex items-center justify-between mb-3">
-            <h2 className="text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-2">
-              <TrendingUp className="h-5 w-5 text-amber-500" />
-              Statistiche
-            </h2>
-          </div>
-          <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
-            <BreweryStatsCard
-              icon={BeerIcon}
-              label="Birre in catalogo"
-              value={beers.length}
-              gradient="from-amber-500 to-orange-600"
-            />
-            <BreweryStatsCard
-              icon={Eye}
-              label="Visite 7 giorni"
-              value={stats?.viewsWeek ?? '—'}
-              gradient="from-sky-500 to-blue-600"
-            />
-            <BreweryStatsCard
-              icon={TrendingUp}
-              label="Visite totali"
-              value={stats?.viewsAllTime ?? '—'}
-              gradient="from-indigo-500 to-purple-600"
-            />
-            <BreweryStatsCard
-              icon={Star}
-              label="Recensioni"
-              value={stats?.totalReviews ?? '—'}
-              gradient="from-yellow-400 to-amber-500"
-              onClick={() => setShowReviewsSection(v => !v)}
-            />
-            <BreweryStatsCard
-              icon={Heart}
-              label="Preferiti"
-              value={stats?.totalFavorites ?? '—'}
-              gradient="from-rose-500 to-pink-600"
-            />
-          </div>
-          {stats?.topBeers && stats.topBeers.length > 0 && (
-            <div className="mt-3 p-3 glass-card rounded-xl flex flex-wrap gap-3 items-center">
-              <span className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">Top 30gg:</span>
-              {stats.topBeers.map((b, i) => (
-                <span key={b.beerId} className="flex items-center gap-1 text-sm text-gray-700 dark:text-gray-300">
-                  <Trophy className={`h-3.5 w-3.5 ${i === 0 ? 'text-yellow-500' : i === 1 ? 'text-gray-400' : 'text-amber-700'}`} />
-                  {b.beerName}
-                  <span className="text-xs text-gray-400">({b.views} views)</span>
-                </span>
-              ))}
-            </div>
-          )}
-        </div>
-
-        {/* Festival Mode CTA */}
-        <Link href="/festival">
-          <div className="glass-card rounded-2xl border border-amber-200 dark:border-amber-800 bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-900/20 dark:to-orange-900/20 p-5 mb-8 flex items-center justify-between gap-4 cursor-pointer hover:shadow-md transition-shadow">
-            <div className="flex items-center gap-4 min-w-0">
-              <div className="p-3 bg-amber-500 rounded-xl shrink-0">
-                <QrCode className="h-6 w-6 text-white" />
-              </div>
-              <div className="min-w-0">
-                <p className="font-semibold text-gray-900 dark:text-white">Festival Mode</p>
-                <p className="text-sm text-gray-600 dark:text-gray-400 truncate">Crea il taplist QR per il tuo prossimo festival birra</p>
-              </div>
-            </div>
-            <ExternalLink className="h-5 w-5 text-amber-500 shrink-0" />
-          </div>
-        </Link>
-
-        {/* Description */}
-        {brewery.description && (
-          <Card className="glass-card border-0 mb-8">
-            <CardContent className="p-6">
-              <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4 flex items-center">
-                <div className="p-2 bg-gradient-to-r from-amber-500 to-orange-600 rounded-lg mr-3">
-                  <Building className="h-5 w-5 text-white" />
-                </div>
-                Il Birrificio
-              </h2>
-              <p className="text-gray-700 dark:text-gray-300 leading-relaxed whitespace-pre-line">
-                {brewery.description}
+            </Link>
+            <div>
+              <h1 className="text-lg font-bold text-foreground leading-tight text-left">Dashboard Birrificio</h1>
+              <p className="text-xs text-muted-foreground font-medium flex items-center gap-1">
+                {brewery.name}
               </p>
-            </CardContent>
-          </Card>
-        )}
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2">
+            {!isAdminMode && (
+              <Button
+                variant="outline"
+                size="sm"
+                className="hidden sm:flex border-orange-100 dark:border-[hsl(25,12%,20%)] hover:bg-orange-50 rounded-xl h-9"
+                onClick={() => window.location.href = `/brewery/${brewery.slug || brewery.id}`}
+              >
+                <Eye className="w-4 h-4 mr-2" />
+                Vedi Pubblico
+              </Button>
+            )}
+            <Button
+              variant="outline"
+              size="sm"
+              className="border-orange-100 dark:border-[hsl(25,12%,20%)] hover:bg-orange-50 rounded-xl h-9"
+              onClick={() => {
+                const url = `${window.location.origin}/brewery/${brewery.slug || brewery.id}`;
+                if (navigator.share) {
+                  navigator.share({ title: brewery.name, url });
+                } else {
+                  navigator.clipboard.writeText(url);
+                  toast({ title: "Link copiato!" });
+                }
+              }}
+            >
+              <Share2 className="w-4 h-4" />
+            </Button>
+          </div>
+        </div>
+      </header>
+
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6">
+        {/* Hero / Cover Section */}
+        <div className="relative h-48 sm:h-64 rounded-2xl overflow-hidden mb-8 border border-orange-50 dark:border-[hsl(25,12%,16%)] shadow-sm group">
+          <ImageWithFallback
+            src={brewery.coverImageUrl || "/brewery-cover.jpg"}
+            alt={brewery.name}
+            className="w-full h-full object-cover"
+            fallbackType="brewery"
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
+          
+          <div className="absolute bottom-4 left-4 right-4 flex items-end justify-between">
+            <div className="flex items-center gap-4">
+              <div className="relative">
+                <Avatar className="h-16 w-16 sm:h-20 sm:w-20 border-4 border-white dark:border-[hsl(25,14%,10%)] shadow-lg rounded-2xl">
+                  <AvatarImage src={brewery.logoUrl} className="object-cover" />
+                  <AvatarFallback className="bg-primary text-white text-xl rounded-2xl">
+                    {brewery.name.substring(0, 2).toUpperCase()}
+                  </AvatarFallback>
+                </Avatar>
+              </div>
+              <div className="mb-1 text-left">
+                <h2 className="text-xl sm:text-2xl font-bold text-white drop-shadow-md">{brewery.name}</h2>
+                <div className="flex items-center gap-2 text-white/90 text-sm">
+                  <MapPin className="h-3.5 w-3.5" />
+                  {brewery.city || brewery.location || 'Posizione non impostata'}
+                </div>
+              </div>
+            </div>
+            
+            <div className="flex gap-2 mb-1">
+              <Button 
+                size="sm" 
+                className="bg-white/20 hover:bg-white/30 backdrop-blur-md text-white border-white/20 rounded-xl h-9"
+                onClick={() => setIsEditingImages(true)}
+              >
+                <Camera className="w-4 h-4 sm:mr-2" />
+                <span className="hidden sm:inline">Foto</span>
+              </Button>
+              <Button 
+                size="sm" 
+                className="bg-white/20 hover:bg-white/30 backdrop-blur-md text-white border-white/20 rounded-xl h-9"
+                onClick={openProfileEdit}
+              >
+                <Pencil className="w-4 h-4 sm:mr-2" />
+                <span className="hidden sm:inline">Profilo</span>
+              </Button>
+            </div>
+          </div>
+        </div>
+
+        {/* Stats Grid */}
+        <div className="grid grid-cols-2 lg:grid-cols-5 gap-3 mb-8">
+          <BreweryStatsCard
+            icon={BeerIcon}
+            value={beers.length}
+            label="Birre"
+            colorClass="text-primary"
+          />
+          <BreweryStatsCard
+            icon={Eye}
+            value={stats?.viewsWeek ?? '—'}
+            label="Visite 7g"
+            colorClass="text-primary"
+          />
+          <BreweryStatsCard
+            icon={TrendingUp}
+            value={stats?.viewsAllTime ?? '—'}
+            label="Visite Totali"
+            colorClass="text-primary"
+          />
+          <BreweryStatsCard
+            icon={Star}
+            value={stats?.totalReviews ?? '—'}
+            label="Recensioni"
+            colorClass="text-primary"
+            onClick={() => setShowReviewsSection(v => !v)}
+          />
+          <BreweryStatsCard
+            icon={Heart}
+            value={stats?.totalFavorites ?? '—'}
+            label="Preferiti"
+            colorClass="text-primary"
+          />
+        </div>
 
         {/* Info section with contact details */}
-        {(brewery.websiteUrl || brewery.phone || (brewery as any).email || (brewery as any).instagramUrl || (brewery as any).facebookUrl || (brewery as any).tiktokUrl || brewery.vatNumber) && (
-          <Card className="glass-card border-0 mb-8">
-            <CardContent className="p-6">
-              <div className="flex flex-wrap gap-3">
-                {brewery.websiteUrl && (
-                  <a href={brewery.websiteUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-sm px-3 py-2 rounded-xl bg-indigo-50 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-100 dark:hover:bg-indigo-900/40 transition-colors">
-                    <Globe className="w-4 h-4 flex-shrink-0" />
-                    <span className="truncate max-w-[180px]">{brewery.websiteUrl.replace(/^https?:\/\//, '')}</span>
-                  </a>
-                )}
-                {(brewery as any).email && (
-                  <a href={`mailto:${(brewery as any).email}`} className="flex items-center gap-2 text-sm px-3 py-2 rounded-xl bg-gray-50 dark:bg-gray-800/40 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
-                    <Mail className="w-4 h-4 flex-shrink-0" />
-                    <span>{(brewery as any).email}</span>
-                  </a>
-                )}
-                {brewery.phone && (
-                  <a href={`tel:${brewery.phone}`} className="flex items-center gap-2 text-sm px-3 py-2 rounded-xl bg-gray-50 dark:bg-gray-800/40 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
-                    <Phone className="w-4 h-4 flex-shrink-0" />
-                    <span>{brewery.phone}</span>
-                  </a>
-                )}
+        <div className="bg-white dark:bg-[hsl(25,14%,10%)] border border-orange-50 dark:border-[hsl(25,12%,16%)] rounded-2xl shadow-sm p-6 mb-8">
+          <div className="flex items-center gap-2 mb-4">
+            <Building className="h-5 w-5 text-primary" />
+            <h3 className="text-lg font-bold text-foreground">Il Birrificio</h3>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="md:col-span-2 text-left">
+              <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-2">Descrizione</p>
+              {brewery.descriptionHtml ? (
+                <div 
+                  className="text-sm text-muted-foreground prose prose-sm dark:prose-invert max-w-none"
+                  dangerouslySetInnerHTML={{ __html: brewery.descriptionHtml }}
+                />
+              ) : brewery.description ? (
+                <p className="text-sm text-muted-foreground whitespace-pre-line">{brewery.description}</p>
+              ) : (
+                <p className="text-sm text-muted-foreground italic">Nessuna descrizione impostata.</p>
+              )}
+
+              <div className="flex gap-4 mt-6">
                 {(brewery as any).instagramUrl && (
-                  <a href={(brewery as any).instagramUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-sm px-3 py-2 rounded-xl bg-pink-50 dark:bg-pink-950/30 text-pink-600 dark:text-pink-400 hover:bg-pink-100 dark:hover:bg-pink-900/30 transition-colors">
-                    <SiInstagram className="w-4 h-4 flex-shrink-0" />
-                    <span>Instagram</span>
+                  <a href={(brewery as any).instagramUrl} target="_blank" rel="noopener" className="p-2 bg-orange-50 dark:bg-orange-950/30 rounded-xl text-primary hover:scale-110 transition-transform">
+                    <SiInstagram className="h-5 w-5" />
                   </a>
                 )}
                 {(brewery as any).facebookUrl && (
-                  <a href={(brewery as any).facebookUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-sm px-3 py-2 rounded-xl bg-blue-50 dark:bg-blue-950/30 text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-900/30 transition-colors">
-                    <SiFacebook className="w-4 h-4 flex-shrink-0" />
-                    <span>Facebook</span>
+                  <a href={(brewery as any).facebookUrl} target="_blank" rel="noopener" className="p-2 bg-orange-50 dark:bg-orange-950/30 rounded-xl text-primary hover:scale-110 transition-transform">
+                    <SiFacebook className="h-5 w-5" />
                   </a>
                 )}
                 {(brewery as any).tiktokUrl && (
-                  <a href={(brewery as any).tiktokUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-sm px-3 py-2 rounded-xl bg-gray-100 dark:bg-gray-800/40 text-gray-800 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-700/40 transition-colors">
-                    <SiTiktok className="w-4 h-4 flex-shrink-0" />
-                    <span>TikTok</span>
+                  <a href={(brewery as any).tiktokUrl} target="_blank" rel="noopener" className="p-2 bg-orange-50 dark:bg-orange-950/30 rounded-xl text-primary hover:scale-110 transition-transform">
+                    <SiTiktok className="h-5 w-5" />
+                  </a>
+                )}
+              </div>
+            </div>
+
+            <div className="space-y-4 text-left">
+              <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-2">Contatti</p>
+              <div className="space-y-3">
+                {brewery.websiteUrl && (
+                  <a href={brewery.websiteUrl} target="_blank" rel="noopener" className="flex items-center gap-3 text-sm text-foreground hover:text-primary transition-colors group">
+                    <div className="p-2 bg-orange-50 dark:bg-orange-950/30 rounded-lg group-hover:bg-primary/10">
+                      <Globe className="h-4 w-4 text-primary" />
+                    </div>
+                    <span className="truncate">{brewery.websiteUrl.replace(/^https?:\/\//, '')}</span>
+                  </a>
+                )}
+                {(brewery as any).email && (
+                  <a href={`mailto:${(brewery as any).email}`} className="flex items-center gap-3 text-sm text-foreground hover:text-primary transition-colors group">
+                    <div className="p-2 bg-orange-50 dark:bg-orange-950/30 rounded-lg group-hover:bg-primary/10">
+                      <Mail className="h-4 w-4 text-primary" />
+                    </div>
+                    <span className="truncate">{(brewery as any).email}</span>
+                  </a>
+                )}
+                {brewery.phone && (
+                  <a href={`tel:${brewery.phone}`} className="flex items-center gap-3 text-sm text-foreground hover:text-primary transition-colors group">
+                    <div className="p-2 bg-orange-50 dark:bg-orange-950/30 rounded-lg group-hover:bg-primary/10">
+                      <Phone className="h-4 w-4 text-primary" />
+                    </div>
+                    <span>{brewery.phone}</span>
                   </a>
                 )}
                 {brewery.vatNumber && (
-                  <div className="flex items-center gap-2 text-sm px-3 py-2 rounded-xl bg-gray-50 dark:bg-gray-800/40 text-gray-500 dark:text-gray-400">
-                    <FileText className="w-4 h-4 flex-shrink-0" />
+                  <div className="flex items-center gap-3 text-sm text-muted-foreground">
+                    <div className="p-2 bg-orange-50 dark:bg-orange-950/30 rounded-lg">
+                      <FileText className="h-4 w-4 text-primary" />
+                    </div>
                     <span>P.IVA: {brewery.vatNumber}</span>
                   </div>
                 )}
               </div>
-            </CardContent>
-          </Card>
-        )}
+            </div>
+          </div>
+        </div>
 
-        {/* Beers Section - same layout as public page, with edit buttons */}
-        <div className="glass-card border-0 rounded-2xl p-6 mb-8">
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="text-2xl font-bold text-gray-900 dark:text-white flex items-center">
-              <div className="p-2 bg-gradient-to-r from-amber-500 to-orange-600 rounded-xl mr-3">
-                <BeerIcon className="h-6 w-6 text-white" />
+        {/* Festival Mode CTA */}
+        <Link href="/festival">
+          <div className="bg-white dark:bg-[hsl(25,14%,10%)] border border-primary/20 dark:border-primary/20 bg-gradient-to-r from-orange-50 to-white dark:from-orange-950/10 dark:to-[hsl(25,14%,10%)] rounded-2xl p-5 mb-8 flex items-center justify-between gap-4 cursor-pointer hover:shadow-md transition-all group">
+            <div className="flex items-center gap-4 min-w-0">
+              <div className="p-3 bg-primary rounded-xl shrink-0 shadow-sm group-hover:scale-110 transition-transform">
+                <QrCode className="h-6 w-6 text-white" />
               </div>
-              Birre ({beers.length})
-            </h2>
+              <div className="min-w-0 text-left">
+                <p className="font-bold text-foreground">Festival Mode</p>
+                <p className="text-sm text-muted-foreground truncate">Crea il taplist QR per il tuo prossimo festival birra</p>
+              </div>
+            </div>
+            <ExternalLink className="h-5 w-5 text-primary shrink-0 opacity-50 group-hover:opacity-100 transition-opacity" />
+          </div>
+        </Link>
+
+        {/* Beers Section */}
+        <div className="bg-white dark:bg-[hsl(25,14%,10%)] border border-orange-50 dark:border-[hsl(25,12%,16%)] rounded-2xl shadow-sm p-6 mb-8">
+          <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center gap-2">
+              <div className="p-2 bg-primary rounded-xl shadow-sm">
+                <BeerIcon className="h-5 w-5 text-white" />
+              </div>
+              <h2 className="text-xl font-bold text-foreground">Catalogo Birre</h2>
+              <Badge variant="secondary" className="bg-orange-50 text-orange-700 border-orange-100 ml-2">
+                {beers.length}
+              </Badge>
+            </div>
             <Button
               onClick={openCreateDialog}
-              className="bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700"
+              className="bg-primary hover:bg-primary/90 text-white rounded-xl font-semibold shadow-sm"
             >
               <Plus className="w-4 h-4 mr-2" />
               Aggiungi Birra
@@ -920,80 +946,68 @@ export default function BreweryDashboard({ adminBreweryId }: BreweryDashboardPro
           </div>
 
           {beers.length === 0 ? (
-            <div className="text-center py-16">
-              <div className="w-20 h-20 bg-gradient-to-r from-gray-200 to-gray-300 dark:from-gray-700 dark:to-gray-600 rounded-full flex items-center justify-center mx-auto mb-6">
-                <BeerIcon className="h-10 w-10 text-gray-400 dark:text-gray-400" />
+            <div className="text-center py-16 border-2 border-dashed border-orange-100 dark:border-orange-900/30 rounded-3xl">
+              <div className="w-20 h-20 bg-orange-50 dark:bg-orange-950/30 rounded-full flex items-center justify-center mx-auto mb-4">
+                <BeerIcon className="h-10 w-10 text-primary opacity-20" />
               </div>
-              <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
-                Nessuna birra ancora
-              </h3>
-              <p className="text-gray-600 dark:text-gray-400 mb-4">
-                Aggiungi la prima birra al tuo catalogo!
-              </p>
-              <Button onClick={openCreateDialog} className="bg-gradient-to-r from-amber-500 to-orange-600">
-                <Plus className="w-4 h-4 mr-2" /> Aggiungi la prima birra
+              <h3 className="text-xl font-bold text-foreground mb-2">Nessuna birra ancora</h3>
+              <p className="text-muted-foreground mb-6">Aggiungi la prima birra al tuo catalogo!</p>
+              <Button onClick={openCreateDialog} className="bg-primary hover:bg-primary/90 text-white rounded-xl px-8">
+                <Plus className="w-4 h-4 mr-2" /> Inizia Ora
               </Button>
             </div>
           ) : (
             <>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                 {displayedBeers.map((beer: Beer) => (
-                  <Card key={beer.id} className="glass-card border-0 h-full hover:scale-[1.02] transition-all duration-300 group relative">
-                    <CardContent className="p-6">
-                      <div className="flex items-start space-x-4 mb-4">
+                  <Card key={beer.id} className="bg-white dark:bg-[hsl(25,14%,10%)] border border-orange-50 dark:border-[hsl(25,12%,16%)] hover:border-primary/30 transition-all duration-300 rounded-2xl shadow-sm group overflow-hidden">
+                    <CardContent className="p-5">
+                      <div className="flex items-start gap-4 mb-4 text-left">
                         <ImageWithFallback
                           src={beer?.imageUrl}
                           alt={beer?.name}
                           imageType="beer"
-                          containerClassName="w-16 h-16 rounded-xl"
-                          className="w-16 h-16 object-cover rounded-xl"
+                          containerClassName="w-16 h-16 rounded-xl border border-orange-100 dark:border-orange-900/30"
+                          className="w-16 h-16 object-cover rounded-xl group-hover:scale-110 transition-transform duration-500"
                           iconSize="lg"
                         />
                         <div className="flex-1 min-w-0">
-                          <h3 className="font-bold text-gray-900 dark:text-white mb-1">
+                          <h3 className="font-bold text-foreground group-hover:text-primary transition-colors line-clamp-1">
                             {beer.name}
                           </h3>
-                          <p className="text-sm text-gray-600 dark:text-gray-400">
+                          <p className="text-xs font-medium text-primary dark:text-orange-400">
                             {beer.style}
                           </p>
+                          <div className="flex flex-wrap gap-2 mt-2">
+                            {beer.abv && (
+                              <span className="text-[10px] font-bold bg-orange-50 text-orange-700 px-1.5 py-0.5 rounded border border-orange-100">
+                                {beer.abv}% ABV
+                              </span>
+                            )}
+                            {beer.ibu && (
+                              <span className="text-[10px] font-bold bg-blue-50 text-blue-700 px-1.5 py-0.5 rounded border border-blue-100">
+                                {beer.ibu} IBU
+                              </span>
+                            )}
+                          </div>
                         </div>
                       </div>
 
-                      <div className="flex flex-wrap items-center gap-2">
-                        {beer.abv && (
-                          <Badge variant="outline" className="bg-gradient-to-r from-orange-50 to-red-50 dark:from-orange-950 dark:to-red-950 border-orange-200 text-orange-800 dark:text-orange-200">
-                            <Target className="h-3 w-3 mr-1" />
-                            {beer.abv}% ABV
-                          </Badge>
-                        )}
-                        {beer.ibu && (
-                          <Badge variant="outline" className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-950 dark:to-indigo-950 border-blue-200 text-blue-800 dark:text-blue-200">
-                            <Sparkles className="h-3 w-3 mr-1" />
-                            {beer.ibu} IBU
-                          </Badge>
-                        )}
-                        {beer.isBottled && (
-                          <Badge variant="outline" className="bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-950 dark:to-emerald-950 border-green-200 text-green-800 dark:text-green-200">
-                            In bottiglia
-                          </Badge>
-                        )}
-                      </div>
-
                       {beer.description && (
-                        <p className="mt-4 text-sm text-gray-600 dark:text-gray-400 line-clamp-3">
+                        <p className="text-xs text-muted-foreground line-clamp-2 min-h-[2.5rem] mb-4 text-left">
                           {beer.description}
                         </p>
                       )}
 
                       {/* Edit/Delete buttons */}
-                      <div className="flex items-center gap-2 mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+                      <div className="flex items-center gap-2 pt-4 border-t border-orange-50 dark:border-orange-900/30">
                         <Button
                           variant="outline"
                           size="sm"
                           onClick={() => openEditBeerDialog(beer)}
-                          className="flex-1"
+                          className="flex-1 border-orange-100 dark:border-[hsl(25,12%,20%)] hover:bg-orange-50 rounded-xl"
                         >
-                          <Pencil className="w-3 h-3 mr-2" />
+                          <Pencil className="w-3.5 h-3.5 mr-2" />
                           Modifica
                         </Button>
                         <Button
@@ -1004,10 +1018,10 @@ export default function BreweryDashboard({ adminBreweryId }: BreweryDashboardPro
                               deleteBeerMutation.mutate(beer.id);
                             }
                           }}
-                          className="text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-950"
+                          className="text-destructive hover:text-destructive hover:bg-red-50 dark:hover:bg-red-950 border-orange-100 dark:border-[hsl(25,12%,20%)] rounded-xl"
                           disabled={deleteBeerMutation.isPending}
                         >
-                          <Trash2 className="w-3 h-3" />
+                          <Trash2 className="w-3.5 h-3.5" />
                         </Button>
                       </div>
                     </CardContent>
@@ -1016,13 +1030,13 @@ export default function BreweryDashboard({ adminBreweryId }: BreweryDashboardPro
               </div>
 
               {beers.length > 6 && (
-                <div className="text-center mt-6">
+                <div className="text-center mt-8">
                   <Button
                     variant="outline"
                     onClick={() => setShowAllBeers(!showAllBeers)}
-                    className="bg-white/60 dark:bg-gray-800/60"
+                    className="border-orange-100 dark:border-[hsl(25,12%,20%)] hover:bg-orange-50 rounded-xl bg-white dark:bg-transparent"
                   >
-                    {showAllBeers ? 'Mostra meno' : `Mostra tutte (${beers.length})`}
+                    {showAllBeers ? 'Mostra Meno' : `Mostra Tutte (${beers.length})`}
                   </Button>
                 </div>
               )}
@@ -1031,79 +1045,82 @@ export default function BreweryDashboard({ adminBreweryId }: BreweryDashboardPro
         </div>
 
         {/* Events Section */}
-        <div className="glass-card border-0 rounded-2xl p-6 mb-8">
+        <div className="bg-white dark:bg-[hsl(25,14%,10%)] border border-orange-50 dark:border-[hsl(25,12%,16%)] rounded-2xl shadow-sm p-6 mb-8">
           <BreweryEventsManager breweryId={brewery.id} breweryName={brewery.name} />
         </div>
 
         {/* Reviews Section */}
         {showReviewsSection && (
-          <div className="glass-card border-0 rounded-2xl p-6 mb-8">
-            <div className="flex items-center justify-between mb-5">
-              <h2 className="text-xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
-                <div className="p-2 bg-gradient-to-r from-yellow-400 to-amber-500 rounded-xl">
+          <div className="bg-white dark:bg-[hsl(25,14%,10%)] border border-orange-50 dark:border-[hsl(25,12%,16%)] rounded-2xl shadow-sm p-6 mb-8">
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-xl font-bold text-foreground flex items-center gap-2">
+                <div className="p-2 bg-primary rounded-xl shadow-sm">
                   <Star className="h-5 w-5 text-white" />
                 </div>
                 Recensioni recenti
               </h2>
-              <Button variant="ghost" size="sm" onClick={() => setShowReviewsSection(false)}>
+              <Button variant="ghost" size="sm" onClick={() => setShowReviewsSection(false)} className="rounded-xl">
                 <X className="h-4 w-4" />
               </Button>
             </div>
             {!recentReviewsData ? (
-              <div className="flex justify-center py-8">
-                <Loader2 className="h-6 w-6 animate-spin text-amber-500" />
+              <div className="flex justify-center py-12">
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
               </div>
             ) : recentReviewsData.reviews.length === 0 ? (
-              <p className="text-center text-gray-500 py-8">Nessuna recensione ancora</p>
+              <div className="text-center py-12 text-muted-foreground bg-orange-50/20 rounded-2xl">
+                <MessageSquare className="w-12 h-12 mx-auto mb-3 opacity-20" />
+                <p>Nessuna recensione ricevuta ancora.</p>
+              </div>
             ) : (
               <div className="space-y-4">
                 {recentReviewsData.reviews.map((review: any) => (
-                  <div key={review.id} className="rounded-xl border border-gray-100 dark:border-gray-800 p-4">
-                    <div className="flex items-start justify-between gap-3">
+                  <div key={review.id} className="rounded-2xl border border-orange-50 dark:border-[hsl(25,12%,16%)] p-5 hover:bg-orange-50/30 transition-colors">
+                    <div className="flex items-start justify-between gap-4 text-left">
                       <div className="flex-1 min-w-0">
-                        <div className="flex flex-wrap items-center gap-2 mb-1">
-                          <span className="font-semibold text-sm text-gray-900 dark:text-white">
-                            {review.nickname || review.firstName || 'Anonimo'}
+                        <div className="flex flex-wrap items-center gap-2 mb-2">
+                          <span className="font-bold text-foreground">
+                            {review.nickname || review.firstName || 'Appassionato Anonimo'}
                           </span>
-                          <span className="text-xs text-gray-500">su</span>
+                          <span className="text-xs text-muted-foreground font-medium">su</span>
                           <Link href={`/beers/${review.beerId}`}>
-                            <span className="text-xs font-medium text-amber-600 hover:underline cursor-pointer">{review.beerName}</span>
+                            <span className="text-xs font-bold text-primary hover:underline cursor-pointer">{review.beerName}</span>
                           </Link>
-                          <div className="flex items-center gap-0.5">
+                          <div className="flex items-center gap-0.5 ml-1">
                             {Array.from({ length: 5 }).map((_, i) => (
-                              <Star key={i} className={`h-3 w-3 ${i < (review.rating || 0) ? 'text-amber-400 fill-amber-400' : 'text-gray-300'}`} />
+                              <Star key={i} className={`h-3.5 w-3.5 ${i < (review.rating || 0) ? 'text-primary fill-primary' : 'text-orange-100 dark:text-gray-800'}`} />
                             ))}
                           </div>
                         </div>
                         {review.personalNotes && (
-                          <p className="text-sm text-gray-600 dark:text-gray-400 mt-1 line-clamp-3">{review.personalNotes}</p>
+                          <p className="text-sm text-muted-foreground leading-relaxed italic border-l-2 border-orange-100 pl-3 mb-3">"{review.personalNotes}"</p>
                         )}
                         {review.ownerReply && (
-                          <div className="mt-2 pl-3 border-l-2 border-amber-300 dark:border-amber-700">
-                            <p className="text-xs font-semibold text-amber-700 dark:text-amber-400 mb-0.5">La tua risposta</p>
-                            <p className="text-sm text-gray-600 dark:text-gray-400">{review.ownerReply}</p>
+                          <div className="mt-3 bg-orange-50 dark:bg-orange-950/20 p-4 rounded-xl border border-orange-100 dark:border-orange-900/30">
+                            <p className="text-xs font-bold text-primary uppercase tracking-wider mb-1">La tua risposta</p>
+                            <p className="text-sm text-foreground">{review.ownerReply}</p>
                           </div>
                         )}
                         {replyingTo === review.id ? (
-                          <div className="mt-3 space-y-2">
+                          <div className="mt-4 space-y-3">
                             <Textarea
                               value={replyText}
                               onChange={(e) => setReplyText(e.target.value)}
-                              placeholder="Scrivi la tua risposta..."
-                              rows={2}
-                              className="text-sm"
+                              placeholder="Ringrazia l'utente o commenta la recensione..."
+                              rows={3}
+                              className="text-sm border-orange-100 dark:border-[hsl(25,12%,20%)] rounded-xl focus-visible:ring-primary/20"
                             />
                             <div className="flex gap-2">
                               <Button
                                 size="sm"
-                                className="bg-amber-500 hover:bg-amber-600 text-white"
+                                className="bg-primary hover:bg-primary/90 text-white rounded-xl font-semibold"
                                 disabled={!replyText.trim() || replyMutation.isPending}
                                 onClick={() => replyMutation.mutate({ reviewId: review.id, reply: replyText })}
                               >
                                 {replyMutation.isPending ? <Loader2 className="h-3 w-3 mr-1 animate-spin" /> : <Send className="h-3 w-3 mr-1" />}
-                                Pubblica
+                                Pubblica Risposta
                               </Button>
-                              <Button size="sm" variant="ghost" onClick={() => { setReplyingTo(null); setReplyText(""); }}>
+                              <Button size="sm" variant="ghost" className="rounded-xl" onClick={() => { setReplyingTo(null); setReplyText(""); }}>
                                 Annulla
                               </Button>
                             </div>
@@ -1112,15 +1129,15 @@ export default function BreweryDashboard({ adminBreweryId }: BreweryDashboardPro
                           <Button
                             size="sm"
                             variant="ghost"
-                            className="mt-2 text-xs text-amber-600 hover:text-amber-700 h-7 px-2"
+                            className="mt-3 text-xs text-primary hover:text-primary hover:bg-orange-50 rounded-xl h-8 px-3"
                             onClick={() => { setReplyingTo(review.id); setReplyText(review.ownerReply || ""); }}
                           >
-                            <MessageSquare className="h-3 w-3 mr-1" />
-                            {review.ownerReply ? 'Modifica risposta' : 'Rispondi'}
+                            <MessageSquare className="h-3.5 w-3.5 mr-1.5" />
+                            {review.ownerReply ? 'Modifica risposta' : 'Rispondi alla recensione'}
                           </Button>
                         )}
                       </div>
-                      <span className="text-xs text-gray-400 flex-shrink-0">
+                      <span className="text-xs text-muted-foreground font-medium flex-shrink-0">
                         {review.tastedAt ? new Date(review.tastedAt).toLocaleDateString('it-IT') : ''}
                       </span>
                     </div>
@@ -1139,15 +1156,15 @@ export default function BreweryDashboard({ adminBreweryId }: BreweryDashboardPro
 
         {/* Website Link */}
         {brewery.websiteUrl && (
-          <div className="glass-card border-0 rounded-xl p-6 text-center">
+          <div className="bg-white dark:bg-[hsl(25,14%,10%)] border border-orange-50 dark:border-[hsl(25,12%,16%)] rounded-2xl shadow-sm p-6 text-center">
             <a
               href={brewery.websiteUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center justify-center px-6 py-3 bg-gradient-to-r from-amber-500 to-orange-600 text-white rounded-lg hover:from-amber-600 hover:to-orange-700 transition-all duration-300 font-medium"
+              className="inline-flex items-center justify-center px-8 py-3 bg-primary text-white rounded-xl hover:bg-primary/90 transition-all duration-300 font-bold shadow-md hover:shadow-lg active:scale-95"
             >
               <Globe className="h-5 w-5 mr-2" />
-              Visita il sito web
+              Visita il Sito Web Ufficiale
             </a>
           </div>
         )}
@@ -1156,7 +1173,7 @@ export default function BreweryDashboard({ adminBreweryId }: BreweryDashboardPro
       {/* Profile Edit Dialog */}
       <Dialog open={isEditingProfile} onOpenChange={setIsEditingProfile} modal={false}>
         <DialogContent
-          className="max-w-2xl max-h-[90vh] overflow-y-auto"
+          className="max-w-2xl max-h-[90vh] overflow-y-auto rounded-3xl border-orange-100 shadow-2xl"
           onPointerDownOutside={(e) => {
             const target = e.target as HTMLElement;
             if (target.closest('.pac-container')) e.preventDefault();
@@ -1167,26 +1184,29 @@ export default function BreweryDashboard({ adminBreweryId }: BreweryDashboardPro
           }}
         >
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <Pencil className="h-5 w-5" />
+            <DialogTitle className="flex items-center gap-2 text-xl">
+              <div className="p-2 bg-primary rounded-xl">
+                <Pencil className="h-5 w-5 text-white" />
+              </div>
               Modifica Profilo Birrificio
             </DialogTitle>
           </DialogHeader>
-          <div className="space-y-4 py-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Nome Birrificio</label>
+          <div className="space-y-6 py-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="space-y-2 text-left">
+                <label className="text-sm font-bold text-foreground">Nome Birrificio</label>
                 <Input
                   value={editForm.name}
                   onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
+                  className="border-orange-100 rounded-xl focus-visible:ring-primary/20 h-11"
                 />
               </div>
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Posizione</label>
+              <div className="space-y-2 text-left">
+                <label className="text-sm font-bold text-foreground">Posizione</label>
                 <AddressAutocomplete
                   value={editForm.location}
                   countryRestriction={null}
-                  placeholder="Cerca indirizzo..."
+                  placeholder="Indirizzo del birrificio..."
                   onAddressSelect={(details) => {
                     setEditForm({
                       ...editForm,
@@ -1195,13 +1215,14 @@ export default function BreweryDashboard({ adminBreweryId }: BreweryDashboardPro
                       country: details.country,
                     });
                   }}
+                  className="border-orange-100 rounded-xl focus-visible:ring-primary/20 h-11"
                 />
               </div>
             </div>
-            <div className="space-y-2">
-              <label className="text-sm font-medium">
-                Descrizione
-                <span className="ml-2 text-xs text-gray-400 font-normal">Editor avanzato — testo, grassetto, elenchi, link e molto altro</span>
+            <div className="space-y-2 text-left">
+              <label className="text-sm font-bold text-foreground flex items-center justify-between">
+                <span>Storia e Filosofia</span>
+                <span className="text-[10px] text-muted-foreground font-medium uppercase tracking-tighter bg-orange-50 px-2 py-0.5 rounded-full border border-orange-100">Editor Avanzato</span>
               </label>
               <RichTextEditor
                 content={editForm.descriptionHtml}
@@ -1210,87 +1231,103 @@ export default function BreweryDashboard({ adminBreweryId }: BreweryDashboardPro
                 maxChars={5000}
               />
             </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Sito Web</label>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="space-y-2 text-left">
+                <label className="text-sm font-bold text-foreground">Sito Web</label>
                 <Input
                   value={editForm.websiteUrl}
                   onChange={(e) => setEditForm({ ...editForm, websiteUrl: e.target.value })}
-                  placeholder="https://..."
+                  placeholder="https://www.esempio.it"
+                  className="border-orange-100 rounded-xl focus-visible:ring-primary/20 h-11"
                 />
               </div>
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Telefono</label>
+              <div className="space-y-2 text-left">
+                <label className="text-sm font-bold text-foreground">Telefono</label>
                 <Input
                   value={editForm.phone}
                   onChange={(e) => setEditForm({ ...editForm, phone: e.target.value })}
-                  placeholder="+39..."
+                  placeholder="+39 012 3456789"
+                  className="border-orange-100 rounded-xl focus-visible:ring-primary/20 h-11"
                 />
               </div>
             </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Email pubblica</label>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="space-y-2 text-left">
+                <label className="text-sm font-bold text-foreground">Email Pubblica</label>
                 <Input
                   value={editForm.email}
                   onChange={(e) => setEditForm({ ...editForm, email: e.target.value })}
                   placeholder="info@birrificio.it"
                   type="email"
+                  className="border-orange-100 rounded-xl focus-visible:ring-primary/20 h-11"
                 />
               </div>
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Partita IVA</label>
+              <div className="space-y-2 text-left">
+                <label className="text-sm font-bold text-foreground">Partita IVA</label>
                 <Input
                   value={editForm.vatNumber}
                   onChange={(e) => setEditForm({ ...editForm, vatNumber: e.target.value })}
-                  placeholder="IT..."
+                  placeholder="IT01234567890"
+                  className="border-orange-100 rounded-xl focus-visible:ring-primary/20 h-11"
                 />
               </div>
             </div>
-            <div>
-              <p className="text-sm font-semibold mb-3 flex items-center gap-2">
-                <SiInstagram className="h-4 w-4 text-pink-500" />
-                Social Media
+            <div className="bg-orange-50/50 dark:bg-orange-950/10 p-5 rounded-3xl border border-orange-100 dark:border-orange-900/30">
+              <p className="text-sm font-bold mb-4 flex items-center gap-2 text-foreground text-left">
+                <SiInstagram className="h-4 w-4 text-primary" />
+                Presenza Social
               </p>
-              <div className="grid grid-cols-1 gap-3">
-                <div className="flex items-center gap-2">
-                  <SiInstagram className="h-4 w-4 text-pink-500 flex-shrink-0" />
+              <div className="grid grid-cols-1 gap-4">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-white dark:bg-black rounded-xl border border-orange-100 flex-shrink-0">
+                    <SiInstagram className="h-5 w-5 text-pink-600" />
+                  </div>
                   <Input
                     value={editForm.instagramUrl}
                     onChange={(e) => setEditForm({ ...editForm, instagramUrl: e.target.value })}
-                    placeholder="https://instagram.com/tuobirrificio"
+                    placeholder="URL Instagram"
+                    className="border-orange-100 rounded-xl focus-visible:ring-primary/20 h-11"
                   />
                 </div>
-                <div className="flex items-center gap-2">
-                  <SiFacebook className="h-4 w-4 text-blue-600 flex-shrink-0" />
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-white dark:bg-black rounded-xl border border-orange-100 flex-shrink-0">
+                    <SiFacebook className="h-5 w-5 text-blue-700" />
+                  </div>
                   <Input
                     value={editForm.facebookUrl}
                     onChange={(e) => setEditForm({ ...editForm, facebookUrl: e.target.value })}
-                    placeholder="https://facebook.com/tuobirrificio"
+                    placeholder="URL Facebook"
+                    className="border-orange-100 rounded-xl focus-visible:ring-primary/20 h-11"
                   />
                 </div>
-                <div className="flex items-center gap-2">
-                  <SiTiktok className="h-4 w-4 text-gray-800 dark:text-white flex-shrink-0" />
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-white dark:bg-black rounded-xl border border-orange-100 flex-shrink-0">
+                    <SiTiktok className="h-5 w-5 text-foreground" />
+                  </div>
                   <Input
                     value={editForm.tiktokUrl}
                     onChange={(e) => setEditForm({ ...editForm, tiktokUrl: e.target.value })}
-                    placeholder="https://tiktok.com/@tuobirrificio"
+                    placeholder="URL TikTok"
+                    className="border-orange-100 rounded-xl focus-visible:ring-primary/20 h-11"
                   />
                 </div>
               </div>
             </div>
-            <div className="flex gap-3 pt-2">
+            <div className="flex gap-3 pt-4 border-t border-orange-50">
               <Button
                 onClick={handleSaveProfile}
-                className="bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700"
+                className="flex-1 bg-primary hover:bg-primary/90 text-white rounded-xl font-bold h-12 shadow-md"
                 disabled={updateProfileMutation.isPending}
               >
                 {updateProfileMutation.isPending && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
                 <Save className="w-4 h-4 mr-2" />
-                Salva Modifiche
+                Salva Profilo
               </Button>
-              <Button variant="outline" onClick={() => setIsEditingProfile(false)}>
-                <X className="w-4 h-4 mr-2" />
+              <Button 
+                variant="outline" 
+                onClick={() => setIsEditingProfile(false)}
+                className="px-6 border-orange-100 hover:bg-orange-50 rounded-xl h-12"
+              >
                 Annulla
               </Button>
             </div>
@@ -1300,78 +1337,93 @@ export default function BreweryDashboard({ adminBreweryId }: BreweryDashboardPro
 
       {/* Image Edit Dialog */}
       <Dialog open={isEditingImages} onOpenChange={setIsEditingImages}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto rounded-3xl border-orange-100 shadow-2xl">
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <Camera className="h-5 w-5" />
-              Modifica Immagini
+            <DialogTitle className="flex items-center gap-2 text-xl">
+              <div className="p-2 bg-primary rounded-xl">
+                <Camera className="h-5 w-5 text-white" />
+              </div>
+              Asset Visuali
             </DialogTitle>
           </DialogHeader>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 py-4">
-            <ImageUpload
-              label="Logo Birrificio"
-              description="Immagine quadrata consigliata"
-              currentImageUrl={brewery?.logoUrl}
-              onImageChange={(url) => handleImageUpload(url, 'logo')}
-              folder="brewery-logos"
-              aspectRatio="square"
-              recommendedDimensions="400x400px"
-            />
-            <ImageUpload
-              label="Immagine di Copertina"
-              description="Formato orizzontale consigliato"
-              currentImageUrl={brewery?.coverImageUrl}
-              onImageChange={(url) => handleImageUpload(url, 'cover')}
-              folder="brewery-covers"
-              aspectRatio="landscape"
-              recommendedDimensions="1200x400px"
-            />
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 py-6">
+            <div className="space-y-2 text-left">
+              <label className="text-sm font-bold text-foreground">Logo Brand</label>
+              <ImageUpload
+                label="Logo Birrificio"
+                description="Formato quadrato raccomandato"
+                currentImageUrl={brewery?.logoUrl}
+                onImageChange={(url) => handleImageUpload(url, 'logo')}
+                folder="brewery-logos"
+                aspectRatio="square"
+                recommendedDimensions="400x400px"
+              />
+            </div>
+            <div className="space-y-2 text-left">
+              <label className="text-sm font-bold text-foreground">Foto Copertina</label>
+              <ImageUpload
+                label="Immagine di Copertina"
+                description="Formato orizzontale raccomandato"
+                currentImageUrl={brewery?.coverImageUrl}
+                onImageChange={(url) => handleImageUpload(url, 'cover')}
+                folder="brewery-covers"
+                aspectRatio="landscape"
+                recommendedDimensions="1200x400px"
+              />
+            </div>
           </div>
         </DialogContent>
       </Dialog>
 
       {/* Beer Create/Edit Dialog */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto rounded-3xl border-orange-100 shadow-2xl">
           <DialogHeader>
-            <DialogTitle>
-              {editingBeer ? "Modifica Birra" : "Nuova Birra"}
+            <DialogTitle className="flex items-center gap-2 text-xl">
+              <div className="p-2 bg-primary rounded-xl">
+                <BeerIcon className="h-5 w-5 text-white" />
+              </div>
+              {editingBeer ? "Modifica Birra" : "Nuova Birra in Gamma"}
             </DialogTitle>
           </DialogHeader>
           <Form {...form}>
-            <form onSubmit={form.handleSubmit(onBeerSubmit)} className="space-y-4">
-              <FormField
-                control={form.control}
-                name="name"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Nome *</FormLabel>
-                    <FormControl><Input placeholder="Nome della birra" {...field} /></FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="style"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Stile *</FormLabel>
-                    <FormControl><Input placeholder="Es. IPA, Lager, Stout..." {...field} /></FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+            <form onSubmit={form.handleSubmit(onBeerSubmit)} className="space-y-6 pt-4 text-left">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <FormField
+                  control={form.control}
+                  name="name"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="font-bold">Nome Birra *</FormLabel>
+                      <FormControl><Input placeholder="Es. Luppolina" {...field} className="border-orange-100 rounded-xl focus-visible:ring-primary/20 h-11" /></FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="style"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="font-bold">Stile *</FormLabel>
+                      <FormControl><Input placeholder="Es. American IPA" {...field} className="border-orange-100 rounded-xl focus-visible:ring-primary/20 h-11" /></FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+              
               <div className="grid grid-cols-2 gap-4">
                 <FormField
                   control={form.control}
                   name="abv"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>ABV (%)</FormLabel>
+                      <FormLabel className="font-bold">Grado Alc. (ABV %)</FormLabel>
                       <FormControl>
-                        <Input type="number" step="0.1" placeholder="5.0"
-                          {...field} value={field.value ?? ""} onChange={(e) => field.onChange(e.target.value === "" ? null : parseFloat(e.target.value))} />
+                        <Input type="number" step="0.1" placeholder="5.2"
+                          {...field} value={field.value ?? ""} onChange={(e) => field.onChange(e.target.value === "" ? null : parseFloat(e.target.value))} 
+                          className="border-orange-100 rounded-xl focus-visible:ring-primary/20 h-11" />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -1382,43 +1434,47 @@ export default function BreweryDashboard({ adminBreweryId }: BreweryDashboardPro
                   name="ibu"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>IBU</FormLabel>
+                      <FormLabel className="font-bold">IBU (Amaro)</FormLabel>
                       <FormControl>
-                        <Input type="number" placeholder="40"
-                          {...field} value={field.value ?? ""} onChange={(e) => field.onChange(e.target.value === "" ? null : parseInt(e.target.value))} />
+                        <Input type="number" placeholder="45"
+                          {...field} value={field.value ?? ""} onChange={(e) => field.onChange(e.target.value === "" ? null : parseInt(e.target.value))} 
+                          className="border-orange-100 rounded-xl focus-visible:ring-primary/20 h-11" />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
               </div>
+              
               <FormField
                 control={form.control}
                 name="color"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Colore</FormLabel>
-                    <FormControl><Input placeholder="Es. Dorata, Ambrata, Scura..." {...field} value={field.value ?? ""} /></FormControl>
+                    <FormLabel className="font-bold">Colore</FormLabel>
+                    <FormControl><Input placeholder="Es. Giallo Paglierino, Mogano..." {...field} value={field.value ?? ""} className="border-orange-100 rounded-xl focus-visible:ring-primary/20 h-11" /></FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
+              
               <FormField
                 control={form.control}
                 name="description"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Descrizione</FormLabel>
-                    <FormControl><Textarea placeholder="Descrivi la birra..." rows={3} {...field} value={field.value ?? ""} /></FormControl>
+                    <FormLabel className="font-bold">Descrizione Organolettica</FormLabel>
+                    <FormControl><Textarea placeholder="Note di degustazione, malti e luppoli utilizzati..." rows={3} {...field} value={field.value ?? ""} className="border-orange-100 rounded-xl focus-visible:ring-primary/20" /></FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
+              
               <div className="space-y-2">
-                <label className="text-sm font-medium">Immagine Birra</label>
+                <label className="text-sm font-bold text-foreground">Immagine Prodotto</label>
                 <ImageUpload
                   label="Immagine Birra"
-                  description="Immagine principale della birra"
+                  description="Carica una foto della bottiglia o del bicchiere"
                   currentImageUrl={form.watch("imageUrl") || undefined}
                   onImageChange={(url) => form.setValue("imageUrl", url || "")}
                   folder="beer-images"
@@ -1429,47 +1485,47 @@ export default function BreweryDashboard({ adminBreweryId }: BreweryDashboardPro
               </div>
 
               {/* Awards editor */}
-              <div className="space-y-2">
-                <label className="text-sm font-medium flex items-center gap-2">
-                  <Trophy className="h-4 w-4 text-yellow-500" />
-                  Premi e Riconoscimenti
+              <div className="bg-orange-50/50 dark:bg-orange-950/10 p-5 rounded-3xl border border-orange-100 dark:border-orange-900/30 space-y-4">
+                <label className="text-sm font-bold flex items-center gap-2 text-foreground uppercase tracking-wider">
+                  <Trophy className="h-4 w-4 text-primary" />
+                  Hall of Fame (Premi)
                 </label>
                 {editingAwards.length > 0 && (
-                  <div className="space-y-1.5 mb-2">
+                  <div className="space-y-2 mb-4">
                     {editingAwards.map((a, i) => (
-                      <div key={i} className="flex items-center gap-2 text-sm bg-amber-50 dark:bg-amber-950/30 rounded-lg px-3 py-2">
-                        <Trophy className={`h-3.5 w-3.5 flex-shrink-0 ${a.type === 'gold' ? 'text-yellow-500' : a.type === 'silver' ? 'text-gray-400' : a.type === 'bronze' ? 'text-amber-700' : 'text-blue-500'}`} />
-                        <span className="flex-1 truncate">{a.name} — {a.competition} ({a.year})</span>
-                        <button type="button" onClick={() => setEditingAwards(prev => prev.filter((_, j) => j !== i))} className="text-gray-400 hover:text-red-500">
-                          <X className="h-3 w-3" />
+                      <div key={i} className="flex items-center gap-3 text-sm bg-white dark:bg-black/40 rounded-xl px-3 py-2 border border-orange-100/50">
+                        <Trophy className={`h-4 w-4 flex-shrink-0 ${a.type === 'gold' ? 'text-yellow-500' : a.type === 'silver' ? 'text-gray-300' : a.type === 'bronze' ? 'text-orange-700' : 'text-primary'}`} />
+                        <span className="flex-1 truncate font-medium">{a.name} — {a.competition} ({a.year})</span>
+                        <button type="button" onClick={() => setEditingAwards(prev => prev.filter((_, j) => j !== i))} className="text-muted-foreground hover:text-destructive p-1">
+                          <X className="h-3.5 w-3.5" />
                         </button>
                       </div>
                     ))}
                   </div>
                 )}
-                <div className="grid grid-cols-2 gap-2">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <Input
-                    placeholder="Nome premio (es. Medaglia d'Oro)"
+                    placeholder="Nome premio (es. Oro)"
                     value={newAward.name}
                     onChange={(e) => setNewAward(prev => ({ ...prev, name: e.target.value }))}
-                    className="text-sm"
+                    className="text-sm border-orange-100 rounded-xl h-10"
                   />
                   <Input
-                    placeholder="Competizione (es. Birra dell'Anno)"
+                    placeholder="Competizione (es. BdA)"
                     value={newAward.competition}
                     onChange={(e) => setNewAward(prev => ({ ...prev, competition: e.target.value }))}
-                    className="text-sm"
+                    className="text-sm border-orange-100 rounded-xl h-10"
                   />
                   <Input
                     type="number"
                     placeholder="Anno"
                     value={newAward.year}
                     onChange={(e) => setNewAward(prev => ({ ...prev, year: parseInt(e.target.value) || new Date().getFullYear() }))}
-                    className="text-sm"
+                    className="text-sm border-orange-100 rounded-xl h-10"
                   />
                   <Select value={newAward.type} onValueChange={(v) => setNewAward(prev => ({ ...prev, type: v }))}>
-                    <SelectTrigger className="text-sm"><SelectValue /></SelectTrigger>
-                    <SelectContent>
+                    <SelectTrigger className="text-sm border-orange-100 rounded-xl h-10"><SelectValue /></SelectTrigger>
+                    <SelectContent className="rounded-xl">
                       <SelectItem value="gold">Oro</SelectItem>
                       <SelectItem value="silver">Argento</SelectItem>
                       <SelectItem value="bronze">Bronzo</SelectItem>
@@ -1481,7 +1537,7 @@ export default function BreweryDashboard({ adminBreweryId }: BreweryDashboardPro
                   type="button"
                   variant="outline"
                   size="sm"
-                  className="w-full"
+                  className="w-full border-orange-100 hover:bg-orange-50 rounded-xl font-bold py-5"
                   disabled={!newAward.name.trim() || !newAward.competition.trim()}
                   onClick={() => {
                     if (newAward.name.trim() && newAward.competition.trim()) {
@@ -1490,20 +1546,25 @@ export default function BreweryDashboard({ adminBreweryId }: BreweryDashboardPro
                     }
                   }}
                 >
-                  <Plus className="h-3 w-3 mr-1" />
-                  Aggiungi premio
+                  <Plus className="h-4 w-4 mr-2 text-primary" />
+                  Aggiungi Riconoscimento
                 </Button>
               </div>
-              <div className="flex gap-3 pt-2">
+
+              <div className="flex gap-3 pt-4 border-t border-orange-50">
                 <Button
                   type="submit"
-                  className="flex-1 bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700"
+                  className="flex-1 bg-primary hover:bg-primary/90 text-white rounded-xl font-bold h-12 shadow-md"
                   disabled={createBeerMutation.isPending || updateBeerMutation.isPending}
                 >
-                  {(createBeerMutation.isPending || updateBeerMutation.isPending) && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-                  {editingBeer ? "Salva Modifiche" : "Aggiungi Birra"}
+                  {createBeerMutation.isPending || updateBeerMutation.isPending ? (
+                    <Loader2 className="w-5 h-5 animate-spin" />
+                  ) : (
+                    <Save className="w-5 h-5 mr-2" />
+                  )}
+                  {editingBeer ? "Aggiorna Birra" : "Salva Birra"}
                 </Button>
-                <Button type="button" variant="outline" onClick={() => setDialogOpen(false)}>
+                <Button variant="outline" type="button" onClick={() => setDialogOpen(false)} className="px-6 border-orange-100 rounded-xl h-12">
                   Annulla
                 </Button>
               </div>

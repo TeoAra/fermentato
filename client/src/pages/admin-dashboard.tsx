@@ -176,340 +176,346 @@ export default function AdminDashboard() {
   });
 
   return (
-    <div className="container mx-auto px-4 py-6 max-w-7xl space-y-6">
-      <div className="flex items-center gap-4">
-        <Link href="/admin">
-          <Button variant="outline" size="sm">
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            Dashboard Admin
-          </Button>
-        </Link>
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Gestione Piattaforma</h1>
-      </div>
-
-      {/* Stats Row */}
-      <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-3">
-        {[
-          { label: "Utenti", value: adminStats?.totalUsers ?? allUsers.length, icon: Users, color: "text-blue-500", border: "border-l-blue-500" },
-          { label: "Pub", value: adminStats?.totalPubs ?? 0, icon: Store, color: "text-orange-500", border: "border-l-orange-500" },
-          { label: "Birrifici", value: (adminStats?.totalBreweries || globalStats?.totalBreweries || 0).toLocaleString("it-IT"), icon: Building2, color: "text-amber-500", border: "border-l-amber-500" },
-          { label: "Birre", value: (adminStats?.totalBeers || globalStats?.totalBeers || 0).toLocaleString("it-IT"), icon: Beer, color: "text-green-500", border: "border-l-green-500" },
-          { label: "Recensioni", value: adminStats?.totalReviews ?? 0, icon: Star, color: "text-yellow-500", border: "border-l-yellow-500" },
-          { label: "Eventi", value: adminStats?.totalEvents ?? 0, icon: CalendarDays, color: "text-purple-500", border: "border-l-purple-500" },
-          { label: "Festival", value: adminStats?.totalFestivals ?? 0, icon: QrCode, color: "text-pink-500", border: "border-l-pink-500" },
-        ].map(({ label, value, icon: Icon, color, border }) => (
-          <Card key={label} className={`border-l-4 ${border}`}>
-            <CardContent className="p-3">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-xs font-medium text-gray-500">{label}</p>
-                  <p className="text-xl font-bold">{value}</p>
-                </div>
-                <Icon className={`w-5 h-5 ${color} opacity-70`} />
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
-
-      {/* ===== RECENT ACTIVITY + QUICK LINKS ===== */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-        {/* Recent Activity */}
-        <Card className="lg:col-span-2">
-          <CardHeader className="pb-3">
-            <div className="flex items-center justify-between">
-              <CardTitle className="flex items-center gap-2 text-base">
-                <Activity className="w-4 h-4 text-amber-500" />
-                Attività Recente
-              </CardTitle>
-              <div className="flex items-center gap-2">
-                <div className="flex gap-1 flex-wrap">
-                  {[
-                    { key: "all", label: "Tutto" },
-                    { key: "user", label: "Utenti" },
-                    { key: "review", label: "Recensioni" },
-                    { key: "pub", label: "Pub" },
-                    { key: "brewery", label: "Birrifici" },
-                    { key: "festival", label: "Festival" },
-                  ].map(({ key, label }) => (
-                    <button
-                      key={key}
-                      onClick={() => setActivityFilter(key)}
-                      className={`text-xs px-2 py-0.5 rounded-full border transition-colors ${activityFilter === key ? "bg-amber-500 text-white border-amber-500" : "border-gray-200 dark:border-gray-700 text-gray-500 hover:border-amber-400"}`}
-                    >
-                      {label}
-                    </button>
-                  ))}
-                </div>
-                <button onClick={() => refetchActivity()} className="text-gray-400 hover:text-amber-500 transition-colors" title="Aggiorna">
-                  <RefreshCw className="w-3.5 h-3.5" />
-                </button>
-              </div>
-            </div>
-          </CardHeader>
-          <CardContent className="pt-0">
-            {activityLoading ? (
-              <div className="flex items-center justify-center py-8">
-                <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-amber-500" />
-              </div>
-            ) : recentActivity.length === 0 ? (
-              <p className="text-sm text-gray-400 text-center py-6">Nessuna attività recente</p>
-            ) : (
-              <div className="space-y-1 max-h-72 overflow-y-auto">
-                {recentActivity.map((item: any, i: number) => {
-                  const IconMap: Record<string, any> = {
-                    user: Users, pub: Store, brewery: Building2, review: Star, event: CalendarDays, festival: QrCode,
-                  };
-                  const ColorMap: Record<string, string> = {
-                    user: "text-blue-500 bg-blue-50 dark:bg-blue-900/20",
-                    pub: "text-orange-500 bg-orange-50 dark:bg-orange-900/20",
-                    brewery: "text-amber-500 bg-amber-50 dark:bg-amber-900/20",
-                    review: "text-yellow-500 bg-yellow-50 dark:bg-yellow-900/20",
-                    event: "text-purple-500 bg-purple-50 dark:bg-purple-900/20",
-                    festival: "text-pink-500 bg-pink-50 dark:bg-pink-900/20",
-                  };
-                  const Icon = IconMap[item.type] || Activity;
-                  const colorClass = ColorMap[item.type] || "text-gray-500 bg-gray-50";
-                  const content = (
-                    <div key={i} className="flex items-center gap-3 p-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
-                      <div className={`w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 ${colorClass}`}>
-                        <Icon className="w-3.5 h-3.5" />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-xs font-medium text-gray-700 dark:text-gray-200 truncate">{item.action}</p>
-                        <p className="text-xs text-gray-500 truncate">{item.name}{item.detail ? ` · ${item.detail}` : ""}</p>
-                      </div>
-                      <div className="flex items-center gap-1 text-xs text-gray-400 flex-shrink-0">
-                        <Clock className="w-3 h-3" />
-                        {item.time ? formatDistanceToNow(new Date(item.time), { addSuffix: true, locale: it }) : "—"}
-                      </div>
-                    </div>
-                  );
-                  return item.link ? (
-                    <Link key={i} href={item.link}>{content}</Link>
-                  ) : content;
-                })}
-              </div>
-            )}
-          </CardContent>
-        </Card>
-
-        {/* Quick Links + System Status */}
-        <div className="space-y-4">
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm flex items-center gap-2">
-                <ChevronRight className="w-4 h-4 text-amber-500" />
-                Accesso Rapido
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="pt-0 space-y-1">
-              {[
-                { href: "/admin", icon: BarChart3, label: "Dashboard Admin" },
-                { href: "/admin/content", icon: Database, label: "Gestione Contenuti" },
-                { href: "/admin/analytics", icon: TrendingUp, label: "Analytics" },
-                { href: "/festival-dashboard", icon: QrCode, label: "Festival Mode" },
-                { href: "/admin/suggestions", icon: Lightbulb, label: "Suggerimenti" },
-                { href: "/admin/addition-requests", icon: Flag, label: "Richieste Aggiunta" },
-                { href: "/admin/pages", icon: FileText, label: "Pagine Statiche" },
-              ].map(({ href, icon: Icon, label }) => (
-                <Link key={href} href={href}>
-                  <div className="flex items-center gap-2.5 px-2 py-1.5 rounded-md hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors cursor-pointer group">
-                    <Icon className="w-3.5 h-3.5 text-gray-400 group-hover:text-amber-500 transition-colors" />
-                    <span className="text-sm text-gray-600 dark:text-gray-300 group-hover:text-gray-900 dark:group-hover:text-white transition-colors">{label}</span>
-                    <ChevronRight className="w-3 h-3 text-gray-300 group-hover:text-amber-500 ml-auto transition-colors" />
-                  </div>
-                </Link>
-              ))}
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm flex items-center gap-2">
-                <Server className="w-4 h-4 text-green-500" />
-                Stato Sistema
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="pt-0 space-y-2">
-              {[
-                { label: "Database", status: adminStats ? "online" : "checking", icon: Database },
-                { label: "API Server", status: "online", icon: Wifi },
-                { label: "Ultimo aggiorn.", status: adminStats?.lastUpdated ? formatDistanceToNow(new Date(adminStats.lastUpdated), { addSuffix: true, locale: it }) : "—", icon: Clock, isInfo: true },
-              ].map(({ label, status, icon: Icon, isInfo }) => (
-                <div key={label} className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <Icon className="w-3.5 h-3.5 text-gray-400" />
-                    <span className="text-xs text-gray-600 dark:text-gray-300">{label}</span>
-                  </div>
-                  {isInfo ? (
-                    <span className="text-xs text-gray-400">{status}</span>
-                  ) : (
-                    <div className="flex items-center gap-1">
-                      <div className={`w-1.5 h-1.5 rounded-full ${status === "online" ? "bg-green-500" : "bg-yellow-500 animate-pulse"}`} />
-                      <span className={`text-xs font-medium ${status === "online" ? "text-green-600" : "text-yellow-600"}`}>
-                        {status === "online" ? "Online" : "Verifica..."}
-                      </span>
-                    </div>
-                  )}
-                </div>
-              ))}
-            </CardContent>
-          </Card>
+    <div className="min-h-screen bg-background">
+      <div className="container mx-auto px-4 py-6 max-w-7xl space-y-6">
+        <div className="flex items-center gap-4">
+          <Link href="/admin">
+            <Button variant="outline" size="sm" className="border-orange-100 dark:border-[hsl(25,12%,20%)] hover:bg-orange-50 rounded-xl">
+              <ArrowLeft className="w-4 h-4 mr-2" />
+              Dashboard Admin
+            </Button>
+          </Link>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Gestione Piattaforma</h1>
         </div>
-      </div>
 
-      <Tabs defaultValue="users" className="w-full">
-        <TabsList className="grid w-full max-w-xs grid-cols-2">
-          <TabsTrigger value="users" className="gap-2">
-            <Users className="w-4 h-4" />
-            Utenti
-          </TabsTrigger>
-          <TabsTrigger value="analytics" className="gap-2">
-            <TrendingUp className="w-4 h-4" />
-            Analytics
-          </TabsTrigger>
-        </TabsList>
+        {/* Stats Row */}
+        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-3">
+          {[
+            { label: "Utenti", value: adminStats?.totalUsers ?? allUsers.length, icon: Users, color: "text-blue-600", border: "border-orange-50 dark:border-[hsl(25,12%,16%)]" },
+            { label: "Pub", value: adminStats?.totalPubs ?? 0, icon: Store, color: "text-primary", border: "border-orange-50 dark:border-[hsl(25,12%,16%)]" },
+            { label: "Birrifici", value: (adminStats?.totalBreweries || globalStats?.totalBreweries || 0).toLocaleString("it-IT"), icon: Building2, color: "text-primary", border: "border-orange-50 dark:border-[hsl(25,12%,16%)]" },
+            { label: "Birre", value: (adminStats?.totalBeers || globalStats?.totalBeers || 0).toLocaleString("it-IT"), icon: Beer, color: "text-emerald-600", border: "border-orange-50 dark:border-[hsl(25,12%,16%)]" },
+            { label: "Recensioni", value: adminStats?.totalReviews ?? 0, icon: Star, color: "text-amber-500", border: "border-orange-50 dark:border-[hsl(25,12%,16%)]" },
+            { label: "Eventi", value: adminStats?.totalEvents ?? 0, icon: CalendarDays, color: "text-purple-500", border: "border-orange-50 dark:border-[hsl(25,12%,16%)]" },
+            { label: "Festival", value: adminStats?.totalFestivals ?? 0, icon: QrCode, color: "text-pink-500", border: "border-orange-50 dark:border-[hsl(25,12%,16%)]" },
+          ].map(({ label, value, icon: Icon, color, border }) => (
+            <Card key={label} className={`bg-white dark:bg-[hsl(25,14%,10%)] border border-orange-50 dark:border-[hsl(25,12%,16%)] rounded-2xl shadow-sm p-0 overflow-hidden`}>
+              <CardContent className="p-3">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-xs font-medium text-muted-foreground">{label}</p>
+                    <p className={`text-xl font-bold ${color}`}>{value}</p>
+                  </div>
+                  <Icon className={`w-5 h-5 ${color} opacity-70`} />
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
 
-        {/* ===== USERS TAB ===== */}
-        <TabsContent value="users" className="space-y-4 mt-4">
-          <div className="flex items-center gap-3">
-            <div className="relative flex-1 max-w-sm">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-              <Input
-                placeholder="Cerca per email, nickname, nome..."
-                value={userSearch}
-                onChange={(e) => setUserSearch(e.target.value)}
-                className="pl-9"
-              />
-            </div>
-            <span className="text-sm text-gray-500">{filteredUsers.length} utenti</span>
-          </div>
-
-          <Card>
-            <CardContent className="p-0">
-              <div className="overflow-x-auto">
-                <table className="w-full">
-                  <thead className="bg-gray-50 dark:bg-gray-800 border-b">
-                    <tr>
-                      <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Utente</th>
-                      <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Ruolo</th>
-                      <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider hidden md:table-cell">Iscritto</th>
-                      <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Azioni</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
-                    {usersLoading ? (
-                      <tr>
-                        <td colSpan={4} className="px-4 py-8 text-center text-gray-500">
-                          <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary mx-auto mb-2"></div>
-                          Caricamento utenti...
-                        </td>
-                      </tr>
-                    ) : filteredUsers.length === 0 ? (
-                      <tr>
-                        <td colSpan={4} className="px-4 py-8 text-center text-gray-400">
-                          Nessun utente trovato
-                        </td>
-                      </tr>
-                    ) : (
-                      filteredUsers.map((u: any) => {
-                        const isBanned = u.userType === "banned";
-                        const isSelf = u.id === (user as any)?.id;
-                        return (
-                          <tr key={u.id} className={`hover:bg-gray-50 dark:hover:bg-gray-800/50 ${isBanned ? "opacity-60" : ""}`}>
-                            <td className="px-4 py-3">
-                              <div className="flex items-center gap-3">
-                                <Avatar className="w-8 h-8 flex-shrink-0">
-                                  <AvatarImage src={u.profileImageUrl} />
-                                  <AvatarFallback className="text-xs">
-                                    {(u.nickname?.[0] || u.firstName?.[0] || u.email?.[0] || "U").toUpperCase()}
-                                  </AvatarFallback>
-                                </Avatar>
-                                <div className="min-w-0">
-                                  <div className="flex items-center gap-1.5">
-                                    <span className="font-medium text-sm truncate max-w-[120px]">
-                                      {u.nickname || u.firstName || "Utente"}
-                                    </span>
-                                    {isSelf && <Crown className="w-3 h-3 text-amber-500 flex-shrink-0" />}
-                                  </div>
-                                  <p className="text-xs text-gray-400 truncate max-w-[150px]">{u.email}</p>
-                                </div>
-                              </div>
-                            </td>
-                            <td className="px-4 py-3">
-                              <Badge
-                                variant={isBanned ? "destructive" : ROLE_BADGE_VARIANTS[u.userType] || "secondary"}
-                                className="text-xs whitespace-nowrap"
-                              >
-                                {isBanned ? "🚫 Bannato" : ROLE_LABELS[u.userType] || u.userType}
-                              </Badge>
-                            </td>
-                            <td className="px-4 py-3 text-xs text-gray-400 hidden md:table-cell whitespace-nowrap">
-                              {u.createdAt ? formatDistanceToNow(new Date(u.createdAt), { addSuffix: true, locale: it }) : "—"}
-                            </td>
-                            <td className="px-4 py-3">
-                              <div className="flex items-center gap-1.5">
-                                <Link href={`/user/${u.nickname || u.id}`}>
-                                  <Button size="sm" variant="ghost" className="h-7 w-7 p-0" title="Vedi profilo">
-                                    <ExternalLink className="w-3.5 h-3.5" />
-                                  </Button>
-                                </Link>
-                                {!isSelf && (
-                                  <>
-                                    <Button
-                                      size="sm"
-                                      variant="ghost"
-                                      className="h-7 w-7 p-0 hover:bg-blue-50 dark:hover:bg-blue-900/20 hover:text-blue-600"
-                                      title="Modifica ruolo"
-                                      onClick={() => { setEditTarget(u); setEditRole(isBanned ? "customer" : u.userType); }}
-                                    >
-                                      <Edit3 className="w-3.5 h-3.5" />
-                                    </Button>
-                                    {isBanned ? (
-                                      <Button
-                                        size="sm"
-                                        variant="ghost"
-                                        className="h-7 w-7 p-0 hover:bg-green-50 dark:hover:bg-green-900/20 hover:text-green-600"
-                                        title="Sbanna utente"
-                                        onClick={() => setUnbanTarget(u)}
-                                      >
-                                        <CheckCircle className="w-3.5 h-3.5" />
-                                      </Button>
-                                    ) : (
-                                      <Button
-                                        size="sm"
-                                        variant="ghost"
-                                        className="h-7 w-7 p-0 hover:bg-red-50 dark:hover:bg-red-900/20 hover:text-red-600"
-                                        title="Banna utente"
-                                        onClick={() => setBanTarget(u)}
-                                      >
-                                        <Ban className="w-3.5 h-3.5" />
-                                      </Button>
-                                    )}
-                                    <Button
-                                      size="sm"
-                                      variant="ghost"
-                                      className="h-7 w-7 p-0 hover:bg-red-100 dark:hover:bg-red-900/30 hover:text-red-700"
-                                      title="Elimina utente"
-                                      onClick={() => setDeleteTarget(u)}
-                                    >
-                                      <Trash2 className="w-3.5 h-3.5" />
-                                    </Button>
-                                  </>
-                                )}
-                              </div>
-                            </td>
-                          </tr>
-                        );
-                      })
-                    )}
-                  </tbody>
-                </table>
+        {/* ===== RECENT ACTIVITY + QUICK LINKS ===== */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+          {/* Recent Activity */}
+          <Card className="lg:col-span-2 bg-white dark:bg-[hsl(25,14%,10%)] border border-orange-50 dark:border-[hsl(25,12%,16%)] rounded-2xl shadow-sm">
+            <CardHeader className="pb-3">
+              <div className="flex items-center justify-between">
+                <CardTitle className="flex items-center gap-2 text-base">
+                  <Activity className="w-4 h-4 text-primary" />
+                  Attività Recente
+                </CardTitle>
+                <div className="flex items-center gap-2">
+                  <div className="flex gap-1 flex-wrap">
+                    {[
+                      { key: "all", label: "Tutto" },
+                      { key: "user", label: "Utenti" },
+                      { key: "review", label: "Recensioni" },
+                      { key: "pub", label: "Pub" },
+                      { key: "brewery", label: "Birrifici" },
+                      { key: "festival", label: "Festival" },
+                    ].map(({ key, label }) => (
+                      <button
+                        key={key}
+                        onClick={() => setActivityFilter(key)}
+                        className={`text-xs px-2 py-0.5 rounded-full border transition-colors ${activityFilter === key ? "bg-primary text-white border-primary" : "border-orange-100 dark:border-[hsl(25,12%,20%)] text-muted-foreground hover:bg-orange-50/60"}`}
+                      >
+                        {label}
+                      </button>
+                    ))}
+                  </div>
+                  <button onClick={() => refetchActivity()} className="text-muted-foreground hover:text-primary transition-colors" title="Aggiorna">
+                    <RefreshCw className="w-3.5 h-3.5" />
+                  </button>
+                </div>
               </div>
+            </CardHeader>
+            <CardContent className="pt-0">
+              {activityLoading ? (
+                <div className="flex items-center justify-center py-8">
+                  <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary" />
+                </div>
+              ) : recentActivity.length === 0 ? (
+                <p className="text-sm text-muted-foreground text-center py-6">Nessuna attività recente</p>
+              ) : (
+                <div className="space-y-1 max-h-72 overflow-y-auto">
+                  {recentActivity.map((item: any, i: number) => {
+                    const IconMap: Record<string, any> = {
+                      user: Users, pub: Store, brewery: Building2, review: Star, event: CalendarDays, festival: QrCode,
+                    };
+                    const ColorMap: Record<string, string> = {
+                      user: "text-blue-600 bg-blue-50 dark:bg-blue-900/20",
+                      pub: "text-primary bg-orange-50 dark:bg-orange-950/20",
+                      brewery: "text-primary bg-orange-50 dark:bg-orange-950/20",
+                      review: "text-yellow-500 bg-yellow-50 dark:bg-yellow-900/20",
+                      event: "text-purple-500 bg-purple-50 dark:bg-purple-900/20",
+                      festival: "text-pink-500 bg-pink-50 dark:bg-pink-900/20",
+                    };
+                    const Icon = IconMap[item.type] || Activity;
+                    const colorClass = ColorMap[item.type] || "text-muted-foreground bg-orange-50/60";
+                    const content = (
+                      <div key={i} className="flex items-center gap-3 p-2 rounded-lg hover:bg-orange-50/30 dark:hover:bg-orange-950/10 transition-colors">
+                        <div className={`w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 ${colorClass}`}>
+                          <Icon className="w-3.5 h-3.5" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-xs font-medium text-foreground truncate">{item.action}</p>
+                          <p className="text-xs text-muted-foreground truncate">{item.name}{item.detail ? ` · ${item.detail}` : ""}</p>
+                        </div>
+                        <div className="flex items-center gap-1 text-xs text-muted-foreground flex-shrink-0">
+                          <Clock className="w-3 h-3" />
+                          {item.time ? formatDistanceToNow(new Date(item.time), { addSuffix: true, locale: it }) : "—"}
+                        </div>
+                      </div>
+                    );
+                    return item.link ? (
+                      <Link key={i} href={item.link}>{content}</Link>
+                    ) : content;
+                  })}
+                </div>
+              )}
             </CardContent>
           </Card>
-        </TabsContent>
+
+          {/* Quick Links + System Status */}
+          <div className="space-y-4">
+            <Card className="bg-white dark:bg-[hsl(25,14%,10%)] border border-orange-50 dark:border-[hsl(25,12%,16%)] rounded-2xl shadow-sm">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm flex items-center gap-2">
+                  <ChevronRight className="w-4 h-4 text-primary" />
+                  Accesso Rapido
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="pt-0 space-y-1">
+                {[
+                  { href: "/admin", icon: BarChart3, label: "Dashboard Admin" },
+                  { href: "/admin/content", icon: Database, label: "Gestione Contenuti" },
+                  { href: "/admin/analytics", icon: TrendingUp, label: "Analytics" },
+                  { href: "/festival-dashboard", icon: QrCode, label: "Festival Mode" },
+                  { href: "/admin/suggestions", icon: Lightbulb, label: "Suggerimenti" },
+                  { href: "/admin/addition-requests", icon: Flag, label: "Richieste Aggiunta" },
+                  { href: "/admin/pages", icon: FileText, label: "Pagine Statiche" },
+                ].map(({ href, icon: Icon, label }) => (
+                  <Link key={href} href={href}>
+                    <div className="flex items-center gap-2.5 px-2 py-1.5 rounded-md hover:bg-orange-50/60 dark:hover:bg-orange-950/20 transition-colors cursor-pointer group">
+                      <Icon className="w-3.5 h-3.5 text-muted-foreground group-hover:text-primary transition-colors" />
+                      <span className="text-sm text-muted-foreground group-hover:text-foreground transition-colors">{label}</span>
+                      <ChevronRight className="w-3 h-3 text-orange-100 group-hover:text-primary ml-auto transition-colors" />
+                    </div>
+                  </Link>
+                ))}
+              </CardContent>
+            </Card>
+
+            <Card className="bg-white dark:bg-[hsl(25,14%,10%)] border border-orange-50 dark:border-[hsl(25,12%,16%)] rounded-2xl shadow-sm">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm flex items-center gap-2">
+                  <Server className="w-4 h-4 text-emerald-500" />
+                  Stato Sistema
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="pt-0 space-y-2">
+                {[
+                  { label: "Database", status: adminStats ? "online" : "checking", icon: Database },
+                  { label: "API Server", status: "online", icon: Wifi },
+                  { label: "Ultimo aggiorn.", status: adminStats?.lastUpdated ? formatDistanceToNow(new Date(adminStats.lastUpdated), { addSuffix: true, locale: it }) : "—", icon: Clock, isInfo: true },
+                ].map(({ label, status, icon: Icon, isInfo }) => (
+                  <div key={label} className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <Icon className="w-3.5 h-3.5 text-muted-foreground" />
+                      <span className="text-xs text-muted-foreground">{label}</span>
+                    </div>
+                    {isInfo ? (
+                      <span className="text-xs text-muted-foreground">{status}</span>
+                    ) : (
+                      <div className="flex items-center gap-1">
+                        <div className={`w-1.5 h-1.5 rounded-full ${status === "online" ? "bg-emerald-500" : "bg-yellow-500 animate-pulse"}`} />
+                        <span className={`text-xs font-medium ${status === "online" ? "text-emerald-600" : "text-yellow-600"}`}>
+                          {status === "online" ? "Online" : "Verifica..."}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+
+        <Tabs defaultValue="users" className="w-full">
+          <TabsList className="grid w-full max-w-xs grid-cols-2 bg-orange-50/60 dark:bg-orange-950/20">
+            <TabsTrigger value="users" className="gap-2 data-[state=active]:bg-white dark:data-[state=active]:bg-[hsl(25,14%,10%)] data-[state=active]:text-primary">
+              <Users className="w-4 h-4" />
+              Utenti
+            </TabsTrigger>
+            <TabsTrigger value="analytics" className="gap-2 data-[state=active]:bg-white dark:data-[state=active]:bg-[hsl(25,14%,10%)] data-[state=active]:text-primary">
+              <TrendingUp className="w-4 h-4" />
+              Analytics
+            </TabsTrigger>
+          </TabsList>
+
+          {/* ===== USERS TAB ===== */}
+          <TabsContent value="users" className="space-y-4 mt-4">
+            <div className="flex items-center gap-3">
+              <div className="relative flex-1 max-w-sm">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                <Input
+                  placeholder="Cerca per email, nickname, nome..."
+                  value={userSearch}
+                  onChange={(e) => setUserSearch(e.target.value)}
+                  className="pl-9 border-orange-100 dark:border-[hsl(25,12%,20%)] focus-visible:ring-primary"
+                />
+              </div>
+              <span className="text-sm text-muted-foreground">{filteredUsers.length} utenti</span>
+            </div>
+
+            <Card className="bg-white dark:bg-[hsl(25,14%,10%)] border border-orange-50 dark:border-[hsl(25,12%,16%)] rounded-2xl shadow-sm overflow-hidden">
+              <CardContent className="p-0">
+                <div className="overflow-x-auto">
+                  <table className="w-full">
+                    <thead className="bg-orange-50/40 dark:bg-orange-950/10 border-b border-orange-50 dark:border-[hsl(25,12%,16%)]">
+                      <tr>
+                        <th className="px-4 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">Utente</th>
+                        <th className="px-4 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">Ruolo</th>
+                        <th className="px-4 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider hidden md:table-cell">Iscritto</th>
+                        <th className="px-4 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">Azioni</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-orange-50 dark:divide-[hsl(25,12%,16%)]">
+                      {usersLoading ? (
+                        <tr>
+                          <td colSpan={4} className="px-4 py-8 text-center text-muted-foreground">
+                            <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary mx-auto mb-2"></div>
+                            Caricamento utenti...
+                          </td>
+                        </tr>
+                      ) : filteredUsers.length === 0 ? (
+                        <tr>
+                          <td colSpan={4} className="px-4 py-8 text-center text-muted-foreground">
+                            Nessun utente trovato
+                          </td>
+                        </tr>
+                      ) : (
+                        filteredUsers.map((u: any) => {
+                          const isBanned = u.userType === "banned";
+                          const isSelf = u.id === (user as any)?.id;
+                          return (
+                            <tr key={u.id} className={`hover:bg-orange-50/30 dark:hover:bg-orange-950/10 ${isBanned ? "opacity-60" : ""}`}>
+                              <td className="px-4 py-3">
+                                <div className="flex items-center gap-3">
+                                  <Avatar className="w-8 h-8 flex-shrink-0">
+                                    <AvatarImage src={u.profileImageUrl} />
+                                    <AvatarFallback className="text-xs bg-orange-100 dark:bg-orange-900/40 text-primary">
+                                      {(u.nickname?.[0] || u.firstName?.[0] || u.email?.[0] || "U").toUpperCase()}
+                                    </AvatarFallback>
+                                  </Avatar>
+                                  <div className="min-w-0">
+                                    <div className="flex items-center gap-1.5">
+                                      <span className="font-medium text-sm truncate max-w-[120px]">
+                                        {u.nickname || u.firstName || "Utente"}
+                                      </span>
+                                      {isSelf && <Crown className="w-3 h-3 text-primary flex-shrink-0" />}
+                                    </div>
+                                    <p className="text-xs text-muted-foreground truncate max-w-[150px]">{u.email}</p>
+                                  </div>
+                                </div>
+                              </td>
+                              <td className="px-4 py-3">
+                                <Badge
+                                  className={`text-xs whitespace-nowrap ${
+                                    u.userType === "admin" ? "bg-purple-100 text-purple-700 hover:bg-purple-100/80" :
+                                    u.userType === "pub_owner" ? "bg-orange-50 text-primary hover:bg-orange-50/80" :
+                                    u.userType === "brewery_owner" ? "bg-blue-50 text-blue-700 hover:bg-blue-50/80" :
+                                    u.userType === "banned" ? "bg-red-100 text-red-700 hover:bg-red-100/80" :
+                                    "bg-orange-50/60 text-muted-foreground hover:bg-orange-50/80"
+                                  }`}
+                                >
+                                  {isBanned ? "🚫 Bannato" : ROLE_LABELS[u.userType] || u.userType}
+                                </Badge>
+                              </td>
+                              <td className="px-4 py-3 text-xs text-muted-foreground hidden md:table-cell whitespace-nowrap">
+                                {u.createdAt ? formatDistanceToNow(new Date(u.createdAt), { addSuffix: true, locale: it }) : "—"}
+                              </td>
+                              <td className="px-4 py-3">
+                                <div className="flex items-center gap-1.5">
+                                  <Link href={`/user/${u.nickname || u.id}`}>
+                                    <Button size="sm" variant="ghost" className="h-7 w-7 p-0 hover:bg-orange-50 dark:hover:bg-orange-950/20 text-muted-foreground" title="Vedi profilo">
+                                      <ExternalLink className="w-3.5 h-3.5" />
+                                    </Button>
+                                  </Link>
+                                  {!isSelf && (
+                                    <>
+                                      <Button
+                                        size="sm"
+                                        variant="ghost"
+                                        className="h-7 w-7 p-0 hover:bg-orange-50 dark:hover:bg-orange-950/20 hover:text-primary text-muted-foreground"
+                                        title="Modifica ruolo"
+                                        onClick={() => { setEditTarget(u); setEditRole(isBanned ? "customer" : u.userType); }}
+                                      >
+                                        <Edit3 className="w-3.5 h-3.5" />
+                                      </Button>
+                                      {isBanned ? (
+                                        <Button
+                                          size="sm"
+                                          variant="ghost"
+                                          className="h-7 w-7 p-0 hover:bg-emerald-50 dark:hover:bg-emerald-950/20 hover:text-emerald-600 text-muted-foreground"
+                                          title="Sbanna utente"
+                                          onClick={() => setUnbanTarget(u)}
+                                        >
+                                          <CheckCircle className="w-3.5 h-3.5" />
+                                        </Button>
+                                      ) : (
+                                        <Button
+                                          size="sm"
+                                          variant="ghost"
+                                          className="h-7 w-7 p-0 hover:bg-red-50 dark:hover:bg-red-950/20 hover:text-red-600 text-muted-foreground"
+                                          title="Banna utente"
+                                          onClick={() => setBanTarget(u)}
+                                        >
+                                          <Ban className="w-3.5 h-3.5" />
+                                        </Button>
+                                      )}
+                                      <Button
+                                        size="sm"
+                                        variant="ghost"
+                                        className="h-7 w-7 p-0 hover:bg-red-50 dark:hover:bg-red-950/20 hover:text-red-600 text-muted-foreground"
+                                        title="Elimina utente"
+                                        onClick={() => setDeleteTarget(u)}
+                                      >
+                                        <Trash2 className="w-3.5 h-3.5" />
+                                      </Button>
+                                    </>
+                                  )}
+                                </div>
+                              </td>
+                            </tr>
+                          );
+                        })
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
 
         {/* ===== ANALYTICS TAB ===== */}
         <TabsContent value="analytics" className="space-y-6 mt-4">
@@ -626,6 +632,7 @@ export default function AdminDashboard() {
           )}
         </TabsContent>
       </Tabs>
+      </div>
 
       {/* ===== EDIT ROLE DIALOG ===== */}
       <Dialog open={!!editTarget} onOpenChange={(open) => { if (!open) setEditTarget(null); }}>

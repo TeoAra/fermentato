@@ -111,9 +111,9 @@ function PubMenuInfoBox({ pubId, currentValue }: { pubId: number; currentValue: 
   if (!isEditing && !currentValue) {
     return (
       <Button
-        variant="outline"
+        variant="outline" className="border-orange-100 dark:border-[hsl(25,12%,20%)] hover:bg-orange-50 rounded-xl"
         onClick={() => setIsEditing(true)}
-        className="w-full border-dashed border-amber-300 text-amber-700 hover:bg-amber-50 dark:text-amber-300 dark:hover:bg-amber-900/30"
+        className="w-full border-dashed border-orange-100 text-primary hover:bg-orange-50 dark:text-orange-400 dark:hover:bg-orange-950/30"
       >
         <Info className="h-4 w-4 mr-2" />
         Aggiungi Info Box generale (prima di tutto il menu)
@@ -122,29 +122,29 @@ function PubMenuInfoBox({ pubId, currentValue }: { pubId: number; currentValue: 
   }
 
   return (
-    <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700 rounded-xl p-4">
+    <div className="bg-orange-50 dark:bg-orange-950/20 border border-orange-100 dark:border-orange-900/50 rounded-2xl p-4">
       <div className="flex items-center justify-between mb-2">
         <div className="flex items-center gap-2">
-          <Info className="h-4 w-4 text-amber-600" />
-          <span className="text-sm font-medium text-amber-800 dark:text-amber-200">Info Box Generale Menu</span>
+          <Info className="h-4 w-4 text-primary" />
+          <span className="text-sm font-medium text-orange-800 dark:text-orange-200">Info Box Generale Menu</span>
         </div>
         <div className="flex gap-1">
           {isEditing ? (
             <>
-              <Button size="sm" variant="ghost" onClick={() => { setText(currentValue); setIsEditing(false); }}>
+              <Button size="sm" variant="ghost" className="hover:text-primary rounded-xl" onClick={() => { setText(currentValue); setIsEditing(false); }}>
                 <X className="h-3.5 w-3.5" />
               </Button>
-              <Button size="sm" className="bg-amber-600 hover:bg-amber-700 text-white" disabled={saveMutation.isPending}
+              <Button size="sm" className="bg-primary hover:bg-primary/90 text-white" disabled={saveMutation.isPending}
                 onClick={() => saveMutation.mutate(text)}>
                 <Save className="h-3.5 w-3.5 mr-1" />{saveMutation.isPending ? '...' : 'Salva'}
               </Button>
             </>
           ) : (
             <>
-              <Button size="sm" variant="ghost" onClick={() => setIsEditing(true)}>
+              <Button size="sm" variant="ghost" className="hover:text-primary rounded-xl" onClick={() => setIsEditing(true)}>
                 <Edit3 className="h-3.5 w-3.5" />
               </Button>
-              <Button size="sm" variant="ghost" className="text-red-500 hover:text-red-700"
+              <Button size="sm" variant="ghost" className="hover:text-primary rounded-xl" className="text-red-700 hover:text-red-700"
                 onClick={() => { if (confirm('Rimuovere la info box generale?')) saveMutation.mutate(''); }}>
                 <Trash2 className="h-3.5 w-3.5" />
               </Button>
@@ -153,15 +153,15 @@ function PubMenuInfoBox({ pubId, currentValue }: { pubId: number; currentValue: 
         </div>
       </div>
       {isEditing ? (
-        <Textarea
+        <Textarea className="border-orange-100 dark:border-[hsl(25,12%,20%)] rounded-xl focus-visible:ring-primary/20"
           value={text}
           onChange={(e) => setText(e.target.value)}
           placeholder="Nota informativa che apparirà prima di tutto il menu nel PDF..."
           rows={3}
-          className="bg-white dark:bg-gray-800"
+          className="bg-white dark:bg-[hsl(25,14%,10%)] border-orange-100 dark:border-[hsl(25,12%,20%)]"
         />
       ) : (
-        <p className="text-sm text-amber-900 dark:text-amber-100 italic">{currentValue}</p>
+        <p className="text-sm text-orange-900 dark:text-orange-100 italic">{currentValue}</p>
       )}
     </div>
   );
@@ -304,14 +304,14 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
   });
 
   // Fetch menu data
-  const { data: menuData = [] } = useQuery({
+  const { data: menuData = [] } = useQuery<any[]>({
     queryKey: ["/api/pubs", currentPub?.id, "menu"],
     enabled: !!currentPub?.id,
   });
 
   // Fetch all products for all categories in a single query
   const { data: allCategoryProducts, isLoading: productsLoading } = useQuery({
-    queryKey: ["/api/pubs", currentPub?.id, "menu", "all-products", menuData?.map((c: any) => c.id).join(',')],
+    queryKey: ["/api/pubs", currentPub?.id, "menu", "all-products", Array.isArray(menuData) ? menuData.map((c: any) => c.id).join(',') : ''],
     queryFn: async () => {
       if (!currentPub?.id || !Array.isArray(menuData) || menuData.length === 0) return {};
       
@@ -470,12 +470,12 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
 
   // Smart dashboard sections configuration
   const sections = [
-    { id: 'overview', name: 'Dashboard', icon: Home, gradient: 'from-blue-500 to-purple-600' },
-    { id: 'taplist', name: 'Taplist', icon: Beer, gradient: 'from-amber-500 to-orange-600' },
+    { id: 'overview', name: 'Dashboard', icon: Home, gradient: 'from-orange-400 to-primary' },
+    { id: 'taplist', name: 'Taplist', icon: Beer, gradient: 'from-orange-500 to-primary' },
     { id: 'bottles', name: 'Cantina', icon: Wine, gradient: 'from-purple-500 to-violet-600' },
-    { id: 'menu', name: 'Menu', icon: Utensils, gradient: 'from-green-500 to-emerald-600' },
+    { id: 'menu', name: 'Menu', icon: Utensils, gradient: 'from-emerald-500 to-teal-600' },
     { id: 'events', name: 'Eventi', icon: Calendar, gradient: 'from-pink-500 to-rose-600' },
-    { id: 'analytics', name: 'Analytics', icon: BarChart3, gradient: 'from-indigo-500 to-blue-600' },
+    { id: 'analytics', name: 'Analytics', icon: BarChart3, gradient: 'from-blue-500 to-indigo-600' },
     { id: 'settings', name: 'Impostazioni', icon: Settings, gradient: 'from-gray-500 to-neutral-600' },
     { id: 'profile', name: 'Profilo', icon: Users, gradient: 'from-rose-500 to-pink-600' },
   ];
@@ -501,7 +501,7 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
     delay?: number;
   }) => (
     <motion.div 
-      className="glass-card rounded-xl p-4 group relative overflow-hidden"
+      className="bg-white dark:bg-[hsl(25,14%,10%)] border border-orange-50 dark:border-[hsl(25,12%,16%)] rounded-2xl shadow-sm p-4 group relative overflow-hidden"
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5, delay }}
@@ -519,11 +519,11 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
       {/* Content */}
       <div className="relative z-10">
         <div className="flex items-center justify-between mb-2">
-          <div className={`p-2 rounded-lg bg-gradient-to-br ${gradient} bg-opacity-10`}>
-            <Icon className={`h-5 w-5 bg-gradient-to-br ${gradient} bg-clip-text text-transparent`} />
+          <div className={`p-2 rounded-xl bg-orange-50 dark:bg-orange-950/30`}>
+            <Icon className={`h-5 w-5 text-primary`} />
           </div>
           {trend && trendValue && (
-            <div className={`flex items-center text-sm ${trend === 'up' ? 'text-green-600' : 'text-red-600'}`}>
+            <div className={`flex items-center text-sm ${trend === 'up' ? 'text-emerald-600' : 'text-red-700'}`}>
               {trend === 'up' ? <ArrowUp className="h-4 w-4" /> : <ArrowDown className="h-4 w-4" />}
               <span className="ml-1">{trendValue}</span>
             </div>
@@ -531,16 +531,16 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
         </div>
         
         <div className="space-y-1">
-          <h3 className="text-xl font-bold text-gray-900 dark:text-white">
+          <h3 className="text-xl font-bold text-primary">
             {value}
           </h3>
-          <p className="text-xs font-medium text-gray-600 dark:text-gray-400">
+          <p className="text-xs font-medium text-muted-foreground">
             {title}
           </p>
           <AnimatePresence>
             {description && (
               <motion.p 
-                className="text-xs text-gray-500 dark:text-gray-400"
+                className="text-xs text-muted-foreground"
                 initial={{ opacity: 0, height: 0 }}
                 whileHover={{ opacity: 1, height: 'auto' }}
                 exit={{ opacity: 0, height: 0 }}
@@ -555,7 +555,7 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
       
       {/* Hover Effect */}
       <motion.div 
-        className={`absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r ${gradient}`}
+        className={`absolute bottom-0 left-0 right-0 h-1 bg-primary`}
         initial={{ scaleX: 0 }}
         whileHover={{ scaleX: 1 }}
         transition={{ duration: 0.3 }}
@@ -574,20 +574,20 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
 
     if (status === 'trial' && trialEndsAt) {
       return (
-        <div className={`mb-6 flex items-center justify-between gap-4 rounded-xl border px-4 py-3 ${isTrialExpiringSoon ? 'bg-orange-50 dark:bg-orange-900/20 border-orange-300 dark:border-orange-700' : 'bg-green-50 dark:bg-green-900/20 border-green-300 dark:border-green-700'}`}>
+        <div className={`mb-6 flex items-center justify-between gap-4 rounded-2xl border px-4 py-3 ${isTrialExpiringSoon ? 'bg-orange-50 dark:bg-orange-950/20 border-primary/30' : 'bg-emerald-50 dark:bg-emerald-950/20 border-emerald-100 dark:border-emerald-900/30'}`}>
           <div className="flex items-center gap-3 min-w-0">
-            <Gift className={`w-5 h-5 flex-shrink-0 ${isTrialExpiringSoon ? 'text-orange-500' : 'text-green-500'}`} />
+            <Gift className={`w-5 h-5 flex-shrink-0 ${isTrialExpiringSoon ? 'text-primary' : 'text-emerald-600'}`} />
             <div className="min-w-0">
-              <p className={`font-semibold text-sm ${isTrialExpiringSoon ? 'text-orange-800 dark:text-orange-200' : 'text-green-800 dark:text-green-200'}`}>
+              <p className={`font-semibold text-sm ${isTrialExpiringSoon ? 'text-orange-900 dark:text-orange-100' : 'text-emerald-900 dark:text-emerald-100'}`}>
                 {daysLeft > 0 ? `Prova gratuita · ${daysLeft} giorn${daysLeft === 1 ? 'o' : 'i'} rimanent${daysLeft === 1 ? 'e' : 'i'}` : 'Prova scaduta'}
               </p>
-              <p className={`text-xs ${isTrialExpiringSoon ? 'text-orange-600 dark:text-orange-400' : 'text-green-600 dark:text-green-400'}`}>
+              <p className={`text-xs ${isTrialExpiringSoon ? 'text-orange-700 dark:text-orange-300' : 'text-emerald-700 dark:text-emerald-400'}`}>
                 {daysLeft > 0 ? `Poi €65/anno IVA inclusa · ${trialEndsAt.toLocaleDateString('it-IT')}` : 'Il tuo abbonamento si rinnoverà automaticamente'}
               </p>
             </div>
           </div>
-          <Button size="sm" variant="outline" onClick={() => setShowCancelDialog(true)}
-            className="flex-shrink-0 text-red-600 border-red-300 hover:bg-red-50 dark:hover:bg-red-900/20 text-xs">
+          <Button size="sm" variant="outline" className="border-orange-100 dark:border-[hsl(25,12%,20%)] hover:bg-orange-50 rounded-xl" onClick={() => setShowCancelDialog(true)}
+            className="flex-shrink-0 text-red-700 border-red-100 hover:bg-red-50 dark:hover:bg-red-900/20 text-xs rounded-2xl">
             Disdici
           </Button>
         </div>
@@ -598,16 +598,16 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
 
     if (status === 'active') {
       return (
-        <div className="mb-6 flex items-center justify-between gap-4 rounded-xl border border-blue-300 dark:border-blue-700 bg-blue-50 dark:bg-blue-900/20 px-4 py-3">
+        <div className="mb-6 flex items-center justify-between gap-4 rounded-2xl border border-emerald-100 dark:border-emerald-900/30 bg-emerald-50 dark:bg-emerald-950/20 px-4 py-3">
           <div className="flex items-center gap-3 min-w-0">
-            <CheckCircle className="w-5 h-5 flex-shrink-0 text-blue-500" />
+            <CheckCircle className="w-5 h-5 flex-shrink-0 text-emerald-600" />
             <div className="min-w-0">
-              <p className="font-semibold text-sm text-blue-800 dark:text-blue-200">Piano Pub Pro — Attivo</p>
-              <p className="text-xs text-blue-600 dark:text-blue-400">€65/anno IVA inclusa · rinnovo automatico</p>
+              <p className="font-semibold text-sm text-emerald-900 dark:text-emerald-100">Piano Pub Pro — Attivo</p>
+              <p className="text-xs text-emerald-700 dark:text-emerald-400">€65/anno IVA inclusa · rinnovo automatico</p>
             </div>
           </div>
-          <Button size="sm" variant="outline" onClick={() => setShowCancelDialog(true)}
-            className="flex-shrink-0 text-red-600 border-red-300 hover:bg-red-50 dark:hover:bg-red-900/20 text-xs">
+          <Button size="sm" variant="outline" className="border-orange-100 dark:border-[hsl(25,12%,20%)] hover:bg-orange-50 rounded-xl" onClick={() => setShowCancelDialog(true)}
+            className="flex-shrink-0 text-red-700 border-red-100 hover:bg-red-50 dark:hover:bg-red-900/20 text-xs rounded-2xl">
             Disdici
           </Button>
         </div>
@@ -617,16 +617,16 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
     // Hibernated / no subscription
     if (!currentPub.isActive || status === 'none' || status === 'cancelled' || status === 'expired') {
       return (
-        <div className="mb-6 flex items-center justify-between gap-4 rounded-xl border border-red-300 dark:border-red-700 bg-red-50 dark:bg-red-900/20 px-4 py-3">
+        <div className="mb-6 flex items-center justify-between gap-4 rounded-2xl border border-orange-100 dark:border-orange-900/30 bg-orange-50 dark:bg-orange-950/20 px-4 py-3">
           <div className="flex items-center gap-3 min-w-0">
-            <ShieldOff className="w-5 h-5 flex-shrink-0 text-red-500" />
+            <ShieldOff className="w-5 h-5 flex-shrink-0 text-primary" />
             <div className="min-w-0">
-              <p className="font-semibold text-sm text-red-800 dark:text-red-200">Pub ibernato</p>
-              <p className="text-xs text-red-600 dark:text-red-400">Il profilo non è visibile. Riattiva l'abbonamento per riprendere.</p>
+              <p className="font-semibold text-sm text-orange-900 dark:text-orange-100">Pub ibernato</p>
+              <p className="text-xs text-orange-700 dark:text-orange-300">Il profilo non è visibile. Riattiva l'abbonamento per riprendere.</p>
             </div>
           </div>
           <Link href="/attiva-pub">
-            <Button size="sm" className="flex-shrink-0 bg-amber-500 hover:bg-amber-600 text-white text-xs">
+            <Button size="sm" className="flex-shrink-0 bg-primary hover:bg-primary/90 text-white text-xs rounded-2xl font-bold">
               Riattiva
             </Button>
           </Link>
@@ -648,25 +648,25 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
 
       {/* Hero Section */}
       <motion.div 
-        className="glass-card rounded-2xl p-8 mb-8 relative overflow-hidden"
+        className="bg-white dark:bg-[hsl(25,14%,10%)] border border-orange-50 dark:border-[hsl(25,12%,16%)] rounded-2xl shadow-sm p-8 mb-8 relative overflow-hidden"
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6 }}
       >
-        <div className="absolute inset-0 gradient-bg-primary opacity-10"></div>
+        <div className="absolute inset-0 bg-primary opacity-5"></div>
         <div className="relative z-10">
           <div className="flex items-center justify-between mb-6">
             <div>
-              <h1 className="text-display-xl text-gray-900 dark:text-white mb-2">
+              <h1 className="text-display-xl text-foreground mb-2 font-bold">
                 {currentPub?.name}
               </h1>
-              <div className="flex items-center text-gray-600 dark:text-gray-400 text-body-medium">
-                <MapPin className="h-4 w-4 mr-2" />
+              <div className="flex items-center text-muted-foreground text-body-medium">
+                <MapPin className="h-4 w-4 mr-2 text-primary" />
                 {currentPub?.address}
               </div>
             </div>
-            <Badge variant="secondary" className="bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200 px-3 py-1">
-              <div className="w-2 h-2 bg-green-500 rounded-full mr-2"></div>
+            <Badge variant="secondary" className="bg-emerald-50 dark:bg-emerald-950/20 text-emerald-700 dark:text-emerald-400 border-emerald-100 px-3 py-1">
+              <div className="w-2 h-2 bg-emerald-500 rounded-full mr-2"></div>
               Attivo
             </Badge>
           </div>
@@ -675,17 +675,17 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
 
       {/* Festival Mode CTA */}
       <Link href="/festival">
-        <div className="glass-card rounded-2xl border border-amber-200 dark:border-amber-800 bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-900/20 dark:to-orange-900/20 p-5 mb-6 flex items-center justify-between gap-4 cursor-pointer hover:shadow-md transition-shadow">
+        <div className="bg-white dark:bg-[hsl(25,14%,10%)] border border-orange-100 dark:border-orange-900/30 bg-gradient-to-r from-orange-50 to-orange-50/30 dark:from-orange-950/20 dark:to-orange-900/10 rounded-2xl p-5 mb-6 flex items-center justify-between gap-4 cursor-pointer hover:shadow-md transition-shadow">
           <div className="flex items-center gap-4 min-w-0">
-            <div className="p-3 bg-amber-500 rounded-xl shrink-0">
+            <div className="p-3 bg-primary rounded-2xl shrink-0">
               <QrCode className="h-6 w-6 text-white" />
             </div>
             <div className="min-w-0">
-              <p className="font-semibold text-gray-900 dark:text-white">Festival Mode</p>
-              <p className="text-sm text-gray-600 dark:text-gray-400 truncate">Crea il taplist QR per il tuo prossimo festival birra</p>
+              <p className="font-semibold text-foreground">Festival Mode</p>
+              <p className="text-sm text-muted-foreground truncate">Crea il taplist QR per il tuo prossimo festival birra</p>
             </div>
           </div>
-          <LinkIcon className="h-5 w-5 text-amber-500 shrink-0" />
+          <LinkIcon className="h-5 w-5 text-primary shrink-0" />
         </div>
       </Link>
 
@@ -700,26 +700,26 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
         const trialExpired = status === 'trial' && trialEndsAt && trialEndsAt < now;
         const fmt = (d: Date) => d.toLocaleDateString('it-IT', { day: '2-digit', month: 'long', year: 'numeric' });
 
-        let bgColor = 'bg-amber-50 dark:bg-amber-900/20 border-amber-200 dark:border-amber-800';
-        let icon = <Gift className="w-5 h-5 text-amber-500" />;
-        let badgeEl = <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-amber-100 dark:bg-amber-900 text-amber-800 dark:text-amber-200">Prova gratuita</span>;
+        let bgColor = 'bg-orange-50 dark:bg-orange-950/20 border-orange-100 dark:border-orange-900/30';
+        let icon = <Gift className="w-5 h-5 text-primary" />;
+        let badgeEl = <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-orange-100 dark:bg-orange-900/50 text-primary dark:text-orange-300">Prova gratuita</span>;
 
         if (status === 'gifted') {
-          bgColor = 'bg-violet-50 dark:bg-violet-900/20 border-violet-200 dark:border-violet-800';
-          icon = <Crown className="w-5 h-5 text-violet-500" />;
-          badgeEl = <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-violet-100 dark:bg-violet-900 text-violet-800 dark:text-violet-200">Accesso fondatore ✦</span>;
+          bgColor = 'bg-purple-50 dark:bg-purple-950/20 border-purple-100 dark:border-purple-900/30';
+          icon = <Crown className="w-5 h-5 text-purple-600" />;
+          badgeEl = <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-purple-100 dark:bg-purple-900/50 text-purple-700 dark:text-purple-300">Accesso fondatore ✦</span>;
         } else if (status === 'active') {
-          bgColor = 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800';
-          icon = <BadgeCheck className="w-5 h-5 text-green-500" />;
-          badgeEl = <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200">Abbonato ✓</span>;
+          bgColor = 'bg-emerald-50 dark:bg-emerald-950/20 border-emerald-100 dark:border-emerald-900/30';
+          icon = <BadgeCheck className="w-5 h-5 text-emerald-600" />;
+          badgeEl = <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-900/50 text-emerald-700 dark:text-emerald-300">Abbonato ✓</span>;
         } else if (trialExpired) {
-          bgColor = 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800';
-          icon = <AlertTriangle className="w-5 h-5 text-red-500" />;
-          badgeEl = <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-red-100 dark:bg-red-900 text-red-700 dark:text-red-300">Prova scaduta</span>;
+          bgColor = 'bg-red-50 dark:bg-red-950/20 border-red-100 dark:border-red-900/30';
+          icon = <AlertTriangle className="w-5 h-5 text-red-700" />;
+          badgeEl = <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-red-50 dark:bg-red-950/20/50 text-red-700 dark:text-red-300">Prova scaduta</span>;
         } else if (status === 'canceled' || status === 'none') {
-          bgColor = 'bg-gray-50 dark:bg-gray-800/50 border-gray-200 dark:border-gray-700';
-          icon = <CreditCard className="w-5 h-5 text-gray-400" />;
-          badgeEl = <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400">Non attivo</span>;
+          bgColor = 'bg-muted/50 dark:bg-muted/20 border-border';
+          icon = <CreditCard className="w-5 h-5 text-muted-foreground" />;
+          badgeEl = <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-muted text-muted-foreground">Non attivo</span>;
         }
 
         return (
@@ -734,10 +734,10 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
                 <div className="shrink-0">{icon}</div>
                 <div className="min-w-0">
                   <div className="flex flex-wrap items-center gap-2 mb-1">
-                    <span className="font-semibold text-gray-900 dark:text-white text-sm">Abbonamento</span>
+                    <span className="font-semibold text-foreground text-sm">Abbonamento</span>
                     {badgeEl}
                   </div>
-                  <div className="space-y-1 text-xs text-gray-600 dark:text-gray-400">
+                  <div className="space-y-1 text-xs text-muted-foreground dark:text-muted-foreground">
                     {status === 'gifted' && (
                       <>
                         <div className="flex items-center gap-1.5">
@@ -762,9 +762,9 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
                           <CalendarDays className="w-3.5 h-3.5 shrink-0" />
                           <span>
                             {trialExpired
-                              ? <>Prova scaduta il <strong className="text-red-600 dark:text-red-400">{fmt(trialEndsAt)}</strong></>
+                              ? <>Prova scaduta il <strong className="text-red-700 dark:text-red-400">{fmt(trialEndsAt)}</strong></>
                               : <>Scade il <strong className="text-gray-800 dark:text-gray-200">{fmt(trialEndsAt)}</strong>
-                                  {daysLeft > 0 && <span className="ml-1 font-semibold text-amber-600 dark:text-amber-400">({daysLeft} {daysLeft === 1 ? 'giorno' : 'giorni'} rimasti)</span>}
+                                  {daysLeft > 0 && <span className="ml-1 font-semibold text-primary dark:text-orange-400">({daysLeft} {daysLeft === 1 ? 'giorno' : 'giorni'} rimasti)</span>}
                                 </>
                             }
                           </span>
@@ -792,11 +792,11 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
               <div className="flex flex-row sm:flex-col items-center sm:items-end gap-2 shrink-0">
                 {(status === 'trial' && !trialExpired) && (
                   <>
-                    <Button size="sm" className="bg-amber-500 hover:bg-amber-600 text-white text-xs whitespace-nowrap" onClick={() => window.location.href = '/attiva-pub?checkout=1'}>
+                    <Button size="sm" className="bg-orange-500 hover:bg-primary text-white text-xs whitespace-nowrap" onClick={() => window.location.href = '/attiva-pub?checkout=1'}>
                       Abbonati €65/anno
                     </Button>
                     <button
-                      className="text-xs text-red-500 hover:text-red-700 underline whitespace-nowrap"
+                      className="text-xs text-red-700 hover:text-red-700 underline whitespace-nowrap"
                       onClick={() => setShowCancelDialog(true)}
                     >
                       Annulla prova
@@ -804,13 +804,13 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
                   </>
                 )}
                 {(trialExpired || status === 'none' || status === 'canceled') && (
-                  <Button size="sm" className="bg-amber-500 hover:bg-amber-600 text-white text-xs whitespace-nowrap" onClick={() => window.location.href = '/attiva-pub?checkout=1'}>
+                  <Button size="sm" className="bg-orange-500 hover:bg-primary text-white text-xs whitespace-nowrap" onClick={() => window.location.href = '/attiva-pub?checkout=1'}>
                     Abbonati €65/anno
                   </Button>
                 )}
                 {status === 'active' && (
                   <button
-                    className="text-xs text-red-500 hover:text-red-700 underline whitespace-nowrap"
+                    className="text-xs text-red-700 hover:text-red-700 underline whitespace-nowrap"
                     onClick={() => setShowCancelDialog(true)}
                   >
                     Disdici
@@ -841,7 +841,7 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
         <Dialog>
           <DialogTrigger asChild>
             <Button
-              variant="outline"
+              variant="outline" className="border-orange-100 dark:border-[hsl(25,12%,20%)] hover:bg-orange-50 rounded-xl"
               size="sm"
               className="gap-2"
             >
@@ -857,22 +857,22 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
               </DialogTitle>
             </DialogHeader>
             <div className="space-y-4">
-              <p className="text-sm text-gray-600 dark:text-gray-400">
+              <p className="text-sm text-muted-foreground dark:text-muted-foreground">
                 Apri questo indirizzo nel browser della tua Smart TV:
               </p>
 
               <div
-                className="bg-gray-100 dark:bg-gray-800 rounded-lg p-3 flex items-center justify-between gap-2 cursor-pointer hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+                className="bg-gray-100 dark:bg-[hsl(25,14%,10%)] rounded-xl p-3 flex items-center justify-between gap-2 cursor-pointer hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
                 onClick={() => {
                   navigator.clipboard?.writeText(`${window.location.origin}/tv/${currentPub?.id}`)
                     .catch(() => {});
                   toast({ title: "Link copiato!" });
                 }}
               >
-                <code className="text-sm font-mono font-bold text-amber-600 dark:text-amber-400 break-all">
+                <code className="text-sm font-mono font-bold text-primary dark:text-orange-400 break-all">
                   {window.location.origin}/tv/{currentPub?.id}
                 </code>
-                <LinkIcon className="h-4 w-4 shrink-0 text-gray-400" />
+                <LinkIcon className="h-4 w-4 shrink-0 text-muted-foreground" />
               </div>
 
               <Button
@@ -922,7 +922,7 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
 
               <div className="flex gap-2">
                 <Button
-                  variant="outline"
+                  variant="outline" className="border-orange-100 dark:border-[hsl(25,12%,20%)] hover:bg-orange-50 rounded-xl"
                   className="flex-1 gap-2"
                   onClick={() => window.open(`/tv/${currentPub?.id}`, '_blank')}
                 >
@@ -930,7 +930,7 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
                   Apri Taplist TV
                 </Button>
                 <Button
-                  variant="outline"
+                  variant="outline" className="border-orange-100 dark:border-[hsl(25,12%,20%)] hover:bg-orange-50 rounded-xl"
                   className="flex-1 gap-2"
                   onClick={() => {
                     navigator.clipboard.writeText(`${window.location.origin}/tv/${currentPub?.id}`);
@@ -943,15 +943,15 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
               </div>
 
               <div className="border-t pt-3">
-                <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">Oppure digita nel browser della Smart TV:</p>
+                <p className="text-xs text-muted-foreground dark:text-muted-foreground mb-2">Oppure digita nel browser della Smart TV:</p>
                 <div
-                  className="bg-gray-100 dark:bg-gray-800 rounded-lg p-2 flex items-center justify-center cursor-pointer hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+                  className="bg-gray-100 dark:bg-[hsl(25,14%,10%)] rounded-xl p-2 flex items-center justify-center cursor-pointer hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
                   onClick={() => {
                     navigator.clipboard.writeText(`${window.location.origin}/tv/${currentPub?.id}`);
                     toast({ title: "Link copiato!" });
                   }}
                 >
-                  <code className="text-xs font-mono font-bold text-amber-600 dark:text-amber-400">
+                  <code className="text-xs font-mono font-bold text-primary dark:text-orange-400">
                     {window.location.host}/tv/{currentPub?.id}
                   </code>
                 </div>
@@ -960,7 +960,7 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
           </DialogContent>
         </Dialog>
         <Button
-          variant="outline"
+          variant="outline" className="border-orange-100 dark:border-[hsl(25,12%,20%)] hover:bg-orange-50 rounded-xl"
           size="sm"
           className="gap-2"
           onClick={() => window.open(`/pub/${(currentPub as any)?.slug || currentPub?.id}`, '_blank')}
@@ -978,12 +978,12 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Taplist Management</h2>
-          <p className="text-gray-600 dark:text-gray-400">Gestisci le birre alla spina del tuo pub</p>
+          <h2 className="text-2xl font-bold text-foreground dark:text-white">Taplist Management</h2>
+          <p className="text-muted-foreground dark:text-muted-foreground">Gestisci le birre alla spina del tuo pub</p>
         </div>
       </div>
       
-      <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-800">
+      <div className="bg-white dark:bg-[hsl(25,14%,10%)] rounded-2xl shadow-sm border border-orange-50 dark:border-[hsl(25,12%,16%)]">
         <TapListManager 
           pubId={currentPub?.id || 0} 
           tapList={typedTapList}
@@ -1017,10 +1017,10 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
             <Utensils className="h-8 w-8 text-white" />
           </motion.div>
           <div>
-            <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
+            <h1 className="text-3xl font-bold text-foreground dark:text-white mb-2">
               Gestione Menu
             </h1>
-            <p className="text-lg text-gray-600 dark:text-gray-400">
+            <p className="text-lg text-muted-foreground dark:text-muted-foreground">
               Organizza categorie e prodotti del tuo menu con facilità
             </p>
           </div>
@@ -1035,41 +1035,41 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
         transition={{ duration: 0.5, delay: 0.2 }}
       >
         <motion.div
-          className="bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-950 dark:to-indigo-950 rounded-2xl p-6 border border-blue-200 dark:border-blue-800"
+          className="bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-950 dark:to-indigo-950 rounded-2xl p-6 border border-blue-100 dark:border-blue-800"
           whileHover={{ scale: 1.02, y: -2 }}
           transition={{ duration: 0.2 }}
         >
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-blue-600 dark:text-blue-400 mb-1">
+              <p className="text-sm font-medium text-blue-700 dark:text-blue-400 mb-1">
                 Categorie Totali
               </p>
               <p className="text-2xl font-bold text-blue-900 dark:text-blue-100">
                 {typedMenuData.length}
               </p>
             </div>
-            <div className="p-3 bg-blue-100 dark:bg-blue-900 rounded-xl">
-              <Utensils className="h-6 w-6 text-blue-600" />
+            <div className="p-3 bg-blue-50 dark:bg-blue-950/20 rounded-2xl">
+              <Utensils className="h-6 w-6 text-blue-700" />
             </div>
           </div>
         </motion.div>
 
         <motion.div
-          className="bg-gradient-to-br from-green-50 to-emerald-50 dark:from-green-950 dark:to-emerald-950 rounded-2xl p-6 border border-green-200 dark:border-green-800"
+          className="bg-gradient-to-br from-green-50 to-emerald-50 dark:from-green-950 dark:to-emerald-950 rounded-2xl p-6 border border-emerald-100 dark:border-green-800"
           whileHover={{ scale: 1.02, y: -2 }}
           transition={{ duration: 0.2 }}
         >
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-green-600 dark:text-green-400 mb-1">
+              <p className="text-sm font-medium text-emerald-600 dark:text-green-400 mb-1">
                 Categorie Visibili
               </p>
-              <p className="text-2xl font-bold text-green-900 dark:text-green-100">
+              <p className="text-2xl font-bold text-emerald-900 dark:text-green-100">
                 {typedMenuData.filter(cat => cat.isVisible).length}
               </p>
             </div>
-            <div className="p-3 bg-green-100 dark:bg-green-900 rounded-xl">
-              <Eye className="h-6 w-6 text-green-600" />
+            <div className="p-3 bg-emerald-100 dark:bg-emerald-950/20 rounded-2xl">
+              <Eye className="h-6 w-6 text-emerald-600" />
             </div>
           </div>
         </motion.div>
@@ -1088,7 +1088,7 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
                 {categoriesWithItems.reduce((total: number, category: any) => total + (category.items || []).filter((i: any) => !i.isInfoBox).length, 0)}
               </p>
             </div>
-            <div className="p-3 bg-orange-100 dark:bg-orange-900 rounded-xl">
+            <div className="p-3 bg-orange-100 dark:bg-orange-900 rounded-2xl">
               <Package className="h-6 w-6 text-orange-600" />
             </div>
           </div>
@@ -1133,19 +1133,19 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
   const renderAnalytics = () => (
     <div className="space-y-6">
       <div>
-        <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Analytics</h2>
-        <p className="text-gray-600 dark:text-gray-400">Statistiche reali del tuo pub</p>
+        <h2 className="text-2xl font-bold text-foreground dark:text-white">Analytics</h2>
+        <p className="text-muted-foreground dark:text-muted-foreground">Statistiche reali del tuo pub</p>
       </div>
       
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <Card className="p-4">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-600 dark:text-gray-400">Birre alla Spina</p>
+              <p className="text-sm text-muted-foreground dark:text-muted-foreground">Birre alla Spina</p>
               <p className="text-2xl font-bold">{typedTapList.length}</p>
             </div>
-            <div className="p-2 bg-amber-100 dark:bg-amber-900 rounded-lg">
-              <Beer className="h-6 w-6 text-amber-600" />
+            <div className="p-2 bg-orange-100 dark:bg-orange-950/20 rounded-xl">
+              <Beer className="h-6 w-6 text-primary" />
             </div>
           </div>
         </Card>
@@ -1153,11 +1153,11 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
         <Card className="p-4">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-600 dark:text-gray-400">Bottiglie</p>
+              <p className="text-sm text-muted-foreground dark:text-muted-foreground">Bottiglie</p>
               <p className="text-2xl font-bold">{typedBottleList.length}</p>
             </div>
-            <div className="p-2 bg-green-100 dark:bg-green-900 rounded-lg">
-              <Package className="h-6 w-6 text-green-600" />
+            <div className="p-2 bg-emerald-100 dark:bg-emerald-950/20 rounded-xl">
+              <Package className="h-6 w-6 text-emerald-600" />
             </div>
           </div>
         </Card>
@@ -1165,11 +1165,11 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
         <Card className="p-4">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-600 dark:text-gray-400">Prodotti Menu</p>
+              <p className="text-sm text-muted-foreground dark:text-muted-foreground">Prodotti Menu</p>
               <p className="text-2xl font-bold">{totalMenuItems}</p>
             </div>
-            <div className="p-2 bg-blue-100 dark:bg-blue-900 rounded-lg">
-              <Utensils className="h-6 w-6 text-blue-600" />
+            <div className="p-2 bg-blue-50 dark:bg-blue-950/20 rounded-xl">
+              <Utensils className="h-6 w-6 text-blue-700" />
             </div>
           </div>
         </Card>
@@ -1177,11 +1177,11 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
         <Card className="p-4">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-600 dark:text-gray-400">Preferiti</p>
+              <p className="text-sm text-muted-foreground dark:text-muted-foreground">Preferiti</p>
               <p className="text-2xl font-bold">{favoritesCount}</p>
             </div>
-            <div className="p-2 bg-red-100 dark:bg-red-900 rounded-lg">
-              <Star className="h-6 w-6 text-red-600" />
+            <div className="p-2 bg-red-50 dark:bg-red-950/20 rounded-xl">
+              <Star className="h-6 w-6 text-red-700" />
             </div>
           </div>
         </Card>
@@ -1190,26 +1190,26 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <Card className="p-6">
           <h3 className="text-lg font-semibold mb-4 flex items-center">
-            <Beer className="mr-2 h-5 w-5 text-amber-600" />
+            <Beer className="mr-2 h-5 w-5 text-primary" />
             Birre alla Spina
           </h3>
           <div className="space-y-3">
             {typedTapList.length === 0 ? (
-              <p className="text-sm text-gray-500 text-center py-4">Nessuna birra alla spina</p>
+              <p className="text-sm text-muted-foreground text-center py-4">Nessuna birra alla spina</p>
             ) : (
               typedTapList.map((beer: any, index: number) => (
-                <div key={beer.id} className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                <div key={beer.id} className="flex items-center justify-between p-3 bg-white dark:bg-[hsl(25,14%,10%)] rounded-xl">
                   <div className="flex items-center space-x-3">
-                    <div className="w-6 h-6 bg-amber-500 text-white rounded-full flex items-center justify-center text-xs font-bold">
+                    <div className="w-6 h-6 bg-orange-500 text-white rounded-full flex items-center justify-center text-xs font-bold">
                       {beer.tapNumber || index + 1}
                     </div>
                     <div>
                       <p className="font-medium text-sm">{beer.beer?.name || 'N/D'}</p>
-                      <p className="text-xs text-gray-500">{beer.beer?.brewery?.name || beer.beer?.breweryName || ''}</p>
+                      <p className="text-xs text-muted-foreground">{beer.beer?.brewery?.name || beer.beer?.breweryName || ''}</p>
                     </div>
                   </div>
                   <div className="text-right">
-                    <span className="text-xs font-medium text-gray-600 dark:text-gray-400">
+                    <span className="text-xs font-medium text-muted-foreground dark:text-muted-foreground">
                       {beer.beer?.abv ? `${beer.beer.abv}%` : ''}
                     </span>
                   </div>
@@ -1221,26 +1221,26 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
 
         <Card className="p-6">
           <h3 className="text-lg font-semibold mb-4 flex items-center">
-            <Package className="mr-2 h-5 w-5 text-green-600" />
+            <Package className="mr-2 h-5 w-5 text-emerald-600" />
             Bottiglie in Cantina
           </h3>
           <div className="space-y-3">
             {typedBottleList.length === 0 ? (
-              <p className="text-sm text-gray-500 text-center py-4">Nessuna bottiglia</p>
+              <p className="text-sm text-muted-foreground text-center py-4">Nessuna bottiglia</p>
             ) : (
               typedBottleList.slice(0, 10).map((bottle: any, index: number) => (
-                <div key={bottle.id} className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                <div key={bottle.id} className="flex items-center justify-between p-3 bg-white dark:bg-[hsl(25,14%,10%)] rounded-xl">
                   <div className="flex items-center space-x-3">
-                    <div className="w-6 h-6 bg-green-500 text-white rounded-full flex items-center justify-center text-xs font-bold">
+                    <div className="w-6 h-6 bg-emerald-500 text-white rounded-full flex items-center justify-center text-xs font-bold">
                       {index + 1}
                     </div>
                     <div>
                       <p className="font-medium text-sm">{bottle.beer?.name || 'N/D'}</p>
-                      <p className="text-xs text-gray-500">{bottle.beer?.brewery?.name || bottle.beer?.breweryName || ''}</p>
+                      <p className="text-xs text-muted-foreground">{bottle.beer?.brewery?.name || bottle.beer?.breweryName || ''}</p>
                     </div>
                   </div>
                   <div className="text-right">
-                    <span className="text-xs font-medium text-gray-600 dark:text-gray-400">
+                    <span className="text-xs font-medium text-muted-foreground dark:text-muted-foreground">
                       {bottle.beer?.abv ? `${bottle.beer.abv}%` : ''}
                     </span>
                   </div>
@@ -1259,10 +1259,10 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
           </h3>
           <div className="space-y-3">
             {typedEvents.slice(0, 5).map((event: any) => (
-              <div key={event.id} className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
+              <div key={event.id} className="flex items-center justify-between p-3 bg-white dark:bg-[hsl(25,14%,10%)] rounded-xl">
                 <div>
                   <p className="font-medium text-sm">{event.title}</p>
-                  <p className="text-xs text-gray-500">
+                  <p className="text-xs text-muted-foreground">
                     {new Date(event.eventDate).toLocaleDateString('it-IT', { weekday: 'short', day: 'numeric', month: 'short' })}
                   </p>
                 </div>
@@ -1282,8 +1282,8 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Gestione Orari</h2>
-          <p className="text-gray-600 dark:text-gray-400">Configura gli orari di apertura del tuo pub</p>
+          <h2 className="text-2xl font-bold text-foreground dark:text-white">Gestione Orari</h2>
+          <p className="text-muted-foreground dark:text-muted-foreground">Configura gli orari di apertura del tuo pub</p>
         </div>
         {settingsChanged && (
           <Button 
@@ -1313,7 +1313,7 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
           <Clock className="h-6 w-6 mr-3 text-orange-600" />
           Orari di Apertura
         </h3>
-        <p className="text-sm text-gray-600 dark:text-gray-400 mb-6">
+        <p className="text-sm text-muted-foreground dark:text-muted-foreground mb-6">
           Configura gli orari di apertura per ogni giorno della settimana. I clienti vedranno in tempo reale se sei attualmente aperto o chiuso.
         </p>
         <div className="space-y-4">
@@ -1330,9 +1330,9 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
             const isClosed = dayHours?.isClosed;
             
             return (
-              <div key={day.key} className="flex flex-col sm:flex-row sm:items-center gap-2 p-3 border border-gray-200 dark:border-gray-700 rounded-lg bg-gray-50 dark:bg-gray-800">
+              <div key={day.key} className="flex flex-col sm:flex-row sm:items-center gap-2 p-3 border border-orange-50 dark:border-[hsl(25,12%,16%)] rounded-xl bg-white dark:bg-[hsl(25,14%,10%)]">
                 <div className="flex items-center justify-between sm:justify-start sm:w-28 flex-shrink-0">
-                  <Label className="font-semibold text-sm text-gray-900 dark:text-white w-24">{day.label}</Label>
+                  <Label className="font-semibold text-sm text-foreground dark:text-white w-24">{day.label}</Label>
                   <div className="flex items-center gap-2 sm:hidden">
                     <Switch
                       checked={isClosed || false}
@@ -1345,11 +1345,11 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
                       }}
                       data-testid={`switch-${day.key}-closed`}
                     />
-                    <Label className="text-xs text-gray-500">Chiuso</Label>
+                    <Label className="text-xs text-muted-foreground">Chiuso</Label>
                   </div>
                 </div>
                 <div className={`flex items-center gap-2 flex-1 ${isClosed ? 'opacity-40 pointer-events-none' : ''}`}>
-                  <Input
+                  <Input className="border-orange-100 dark:border-[hsl(25,12%,20%)] rounded-xl focus-visible:ring-primary/20"
                     type="time"
                     value={dayHours?.open || "12:00"}
                     onChange={(e) => {
@@ -1363,8 +1363,8 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
                     className="flex-1 min-w-0 text-sm"
                     data-testid={`input-${day.key}-open`}
                   />
-                  <span className="text-gray-400 text-sm font-medium flex-shrink-0">—</span>
-                  <Input
+                  <span className="text-muted-foreground text-sm font-medium flex-shrink-0">—</span>
+                  <Input className="border-orange-100 dark:border-[hsl(25,12%,20%)] rounded-xl focus-visible:ring-primary/20"
                     type="time"
                     value={dayHours?.close || "23:00"}
                     onChange={(e) => {
@@ -1391,14 +1391,14 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
                     }}
                     data-testid={`switch-${day.key}-closed`}
                   />
-                  <Label className="text-xs text-gray-500 whitespace-nowrap">Chiuso</Label>
+                  <Label className="text-xs text-muted-foreground whitespace-nowrap">Chiuso</Label>
                 </div>
               </div>
             );
           })}
         </div>
         
-        <div className="mt-6 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-700">
+        <div className="mt-6 p-4 bg-blue-50 dark:bg-blue-950/20/20 rounded-xl border border-blue-100 dark:border-blue-700">
           <p className="text-sm text-blue-700 dark:text-blue-300 flex items-center">
             <Clock className="h-4 w-4 mr-2" />
             <strong>Nota:</strong> Gli orari saranno visibili ai clienti sulla pagina del pub e determinano automaticamente se il locale appare come aperto o chiuso.
@@ -1414,8 +1414,8 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Impostazioni Pub</h2>
-          <p className="text-gray-600 dark:text-gray-400">Gestisci tutti gli aspetti del tuo locale</p>
+          <h2 className="text-2xl font-bold text-foreground dark:text-white">Impostazioni Pub</h2>
+          <p className="text-muted-foreground dark:text-muted-foreground">Gestisci tutti gli aspetti del tuo locale</p>
         </div>
         {settingsChanged && (
           <Button 
@@ -1443,7 +1443,7 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
         {/* Images */}
         <Card className="p-6">
           <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
-            <Image className="h-5 w-5 text-blue-600" />
+            <Image className="h-5 w-5 text-blue-700" />
             Immagini
           </h3>
           <div className="space-y-3">
@@ -1481,7 +1481,7 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <Label htmlFor="pub-name">Nome Pub *</Label>
-              <Input 
+              <Input className="border-orange-100 dark:border-[hsl(25,12%,20%)] rounded-xl focus-visible:ring-primary/20" 
                 id="pub-name"
                 value={settingsData.name || ''}
                 onChange={(e) => updateSettingsField('name', e.target.value)}
@@ -1491,7 +1491,7 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
             </div>
             <div>
               <Label htmlFor="business-name">Nome Commerciale</Label>
-              <Input 
+              <Input className="border-orange-100 dark:border-[hsl(25,12%,20%)] rounded-xl focus-visible:ring-primary/20" 
                 id="business-name"
                 value={settingsData.businessName || ''}
                 onChange={(e) => updateSettingsField('businessName', e.target.value)}
@@ -1501,7 +1501,7 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
             </div>
             <div>
               <Label htmlFor="pub-phone">Telefono</Label>
-              <Input 
+              <Input className="border-orange-100 dark:border-[hsl(25,12%,20%)] rounded-xl focus-visible:ring-primary/20" 
                 id="pub-phone"
                 value={settingsData.phone || ''}
                 onChange={(e) => updateSettingsField('phone', e.target.value)}
@@ -1511,7 +1511,7 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
             </div>
             <div>
               <Label htmlFor="pub-email">Email</Label>
-              <Input 
+              <Input className="border-orange-100 dark:border-[hsl(25,12%,20%)] rounded-xl focus-visible:ring-primary/20" 
                 id="pub-email"
                 type="email"
                 value={settingsData.email || ''}
@@ -1522,7 +1522,7 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
             </div>
             <div>
               <Label htmlFor="vat-number">Partita IVA</Label>
-              <Input 
+              <Input className="border-orange-100 dark:border-[hsl(25,12%,20%)] rounded-xl focus-visible:ring-primary/20" 
                 id="vat-number"
                 value={settingsData.vatNumber || ''}
                 onChange={(e) => updateSettingsField('vatNumber', e.target.value)}
@@ -1533,7 +1533,7 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
           </div>
           <div className="mt-4">
             <Label htmlFor="pub-description">Descrizione</Label>
-            <Textarea 
+            <Textarea className="border-orange-100 dark:border-[hsl(25,12%,20%)] rounded-xl focus-visible:ring-primary/20" 
               id="pub-description"
               value={settingsData.description || ''}
               onChange={(e) => updateSettingsField('description', e.target.value)}
@@ -1547,7 +1547,7 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
         {/* Address and Location */}
         <Card className="p-6">
           <h3 className="text-lg font-semibold mb-4 flex items-center">
-            <MapPin className="h-5 w-5 mr-2 text-red-600" />
+            <MapPin className="h-5 w-5 mr-2 text-red-700" />
             Indirizzo e Posizione
           </h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -1571,7 +1571,7 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
             </div>
             <div>
               <Label htmlFor="pub-city">Città *</Label>
-              <Input 
+              <Input className="border-orange-100 dark:border-[hsl(25,12%,20%)] rounded-xl focus-visible:ring-primary/20" 
                 id="pub-city"
                 value={settingsData.city || ''}
                 onChange={(e) => updateSettingsField('city', e.target.value)}
@@ -1581,7 +1581,7 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
             </div>
             <div>
               <Label htmlFor="pub-region">Regione/Provincia</Label>
-              <Input 
+              <Input className="border-orange-100 dark:border-[hsl(25,12%,20%)] rounded-xl focus-visible:ring-primary/20" 
                 id="pub-region"
                 value={settingsData.region || ''}
                 onChange={(e) => updateSettingsField('region', e.target.value)}
@@ -1591,7 +1591,7 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
             </div>
             <div>
               <Label htmlFor="pub-postal">CAP</Label>
-              <Input 
+              <Input className="border-orange-100 dark:border-[hsl(25,12%,20%)] rounded-xl focus-visible:ring-primary/20" 
                 id="pub-postal"
                 value={settingsData.postalCode || ''}
                 onChange={(e) => updateSettingsField('postalCode', e.target.value)}
@@ -1608,7 +1608,7 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
             <Clock className="h-5 w-5 mr-2 text-orange-600" />
             Orari di Apertura
           </h3>
-          <p className="text-sm text-gray-600 dark:text-gray-400 mb-6">
+          <p className="text-sm text-muted-foreground dark:text-muted-foreground mb-6">
             Configura gli orari di apertura per ogni giorno della settimana. I clienti vedranno se sei attualmente aperto o chiuso.
           </p>
           <div className="space-y-4">
@@ -1625,9 +1625,9 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
               const isClosed = dayHours?.isClosed;
               
               return (
-                <div key={day.key} className="flex flex-col sm:flex-row sm:items-center gap-2 p-3 border border-gray-200 dark:border-gray-700 rounded-lg bg-gray-50 dark:bg-gray-800">
+                <div key={day.key} className="flex flex-col sm:flex-row sm:items-center gap-2 p-3 border border-orange-50 dark:border-[hsl(25,12%,16%)] rounded-xl bg-white dark:bg-[hsl(25,14%,10%)]">
                   <div className="flex items-center justify-between sm:justify-start sm:w-28 flex-shrink-0">
-                    <Label className="font-semibold text-sm text-gray-900 dark:text-white w-24">{day.label}</Label>
+                    <Label className="font-semibold text-sm text-foreground dark:text-white w-24">{day.label}</Label>
                     <div className="flex items-center gap-2 sm:hidden">
                       <Switch
                         checked={isClosed || false}
@@ -1640,11 +1640,11 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
                         }}
                         data-testid={`switch-${day.key}-closed`}
                       />
-                      <Label className="text-xs text-gray-500">Chiuso</Label>
+                      <Label className="text-xs text-muted-foreground">Chiuso</Label>
                     </div>
                   </div>
                   <div className={`flex items-center gap-2 flex-1 ${isClosed ? 'opacity-40 pointer-events-none' : ''}`}>
-                    <Input
+                    <Input className="border-orange-100 dark:border-[hsl(25,12%,20%)] rounded-xl focus-visible:ring-primary/20"
                       type="time"
                       value={dayHours?.open || "12:00"}
                       onChange={(e) => {
@@ -1658,8 +1658,8 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
                       className="flex-1 min-w-0 text-sm"
                       data-testid={`input-${day.key}-open`}
                     />
-                    <span className="text-gray-400 text-sm font-medium flex-shrink-0">—</span>
-                    <Input
+                    <span className="text-muted-foreground text-sm font-medium flex-shrink-0">—</span>
+                    <Input className="border-orange-100 dark:border-[hsl(25,12%,20%)] rounded-xl focus-visible:ring-primary/20"
                       type="time"
                       value={dayHours?.close || "23:00"}
                       onChange={(e) => {
@@ -1686,7 +1686,7 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
                       }}
                       data-testid={`switch-${day.key}-closed`}
                     />
-                    <Label className="text-xs text-gray-500 whitespace-nowrap">Chiuso</Label>
+                    <Label className="text-xs text-muted-foreground whitespace-nowrap">Chiuso</Label>
                   </div>
                 </div>
               );
@@ -1697,10 +1697,10 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
         {/* Social Media Links */}
         <Card className="p-6">
           <h3 className="text-lg font-semibold mb-1 flex items-center">
-            <Globe className="h-5 w-5 mr-2 text-blue-600" />
+            <Globe className="h-5 w-5 mr-2 text-blue-700" />
             Social Media e Web
           </h3>
-          <p className="text-sm text-gray-500 dark:text-gray-400 mb-5">
+          <p className="text-sm text-muted-foreground dark:text-muted-foreground mb-5">
             Collega i profili social — il logo appare automaticamente in base all'URL inserito.
           </p>
           <div className="space-y-3">
@@ -1714,18 +1714,18 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
               const val = settingsData[field] || '';
               const url = val.toLowerCase();
               let rowIcon: React.ReactNode = <Globe className="w-4 h-4" />;
-              let iconColor = 'text-gray-400';
+              let iconColor = 'text-muted-foreground';
               if (icon === 'facebook' || url.includes('facebook.com')) { rowIcon = <SiFacebook size={15} />; iconColor = 'text-[#1877F2]'; }
               else if (icon === 'instagram' || url.includes('instagram.com')) { rowIcon = <SiInstagram size={15} />; iconColor = 'text-[#E1306C]'; }
               else if (icon === 'twitter' || url.includes('x.com') || url.includes('twitter.com')) { rowIcon = <SiX size={15} />; iconColor = 'text-gray-800 dark:text-white'; }
-              else if (icon === 'tiktok' || url.includes('tiktok.com')) { rowIcon = <SiTiktok size={15} />; iconColor = 'text-gray-900 dark:text-white'; }
-              else if (val) { iconColor = 'text-blue-500'; }
+              else if (icon === 'tiktok' || url.includes('tiktok.com')) { rowIcon = <SiTiktok size={15} />; iconColor = 'text-foreground dark:text-white'; }
+              else if (val) { iconColor = 'text-blue-600'; }
               return (
                 <div key={field} className="relative">
                   <div className={`absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none z-10 ${iconColor}`}>
                     {rowIcon}
                   </div>
-                  <Input
+                  <Input className="border-orange-100 dark:border-[hsl(25,12%,20%)] rounded-xl focus-visible:ring-primary/20"
                     value={val}
                     onChange={(e) => updateSettingsField(field, e.target.value)}
                     placeholder={`${label} — ${placeholder}`}
@@ -1741,14 +1741,14 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
         {/* Visibility and Privacy Settings */}
         <Card className="p-6">
           <h3 className="text-lg font-semibold mb-4 flex items-center">
-            <Eye className="h-5 w-5 mr-2 text-green-600" />
+            <Eye className="h-5 w-5 mr-2 text-emerald-600" />
             Visibilità e Privacy
           </h3>
           <div className="space-y-4">
-            <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
+            <div className="flex items-center justify-between p-4 bg-white dark:bg-[hsl(25,14%,10%)] rounded-xl">
               <div>
                 <p className="font-medium">Pub Attivo</p>
-                <p className="text-sm text-gray-500">Il pub è operativo e visibile al pubblico</p>
+                <p className="text-sm text-muted-foreground">Il pub è operativo e visibile al pubblico</p>
               </div>
               <Switch 
                 checked={settingsData.isActive ?? true}
@@ -1756,10 +1756,10 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
                 data-testid="switch-pub-active"
               />
             </div>
-            <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
+            <div className="flex items-center justify-between p-4 bg-white dark:bg-[hsl(25,14%,10%)] rounded-xl">
               <div>
                 <p className="font-medium">Listato nei Risultati</p>
-                <p className="text-sm text-gray-500">Il pub appare nelle ricerche e nelle mappe</p>
+                <p className="text-sm text-muted-foreground">Il pub appare nelle ricerche e nelle mappe</p>
               </div>
               <Switch 
                 checked={settingsData.isActive ?? true}
@@ -1771,11 +1771,11 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
         </Card>
 
         {/* Action Buttons */}
-        <Card className="p-6 bg-gradient-to-r from-blue-50 to-purple-50 dark:from-gray-800 dark:to-gray-700 border-blue-200 dark:border-gray-600">
+        <Card className="p-6 bg-gradient-to-r from-blue-50 to-purple-50 dark:from-gray-800 dark:to-gray-700 border-blue-100 dark:border-gray-600">
           <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
             <div>
-              <h4 className="font-semibold text-gray-900 dark:text-white">Modifiche in Sospeso</h4>
-              <p className="text-sm text-gray-600 dark:text-gray-400">
+              <h4 className="font-semibold text-foreground dark:text-white">Modifiche in Sospeso</h4>
+              <p className="text-sm text-muted-foreground dark:text-muted-foreground">
                 {settingsChanged ? 
                   'Hai delle modifiche non salvate. Clicca "Salva" per confermare.' : 
                   'Tutte le modifiche sono state salvate.'}
@@ -1784,7 +1784,7 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
             <div className="flex gap-3">
               {settingsChanged && (
                 <Button 
-                  variant="outline" 
+                  variant="outline" className="border-orange-100 dark:border-[hsl(25,12%,20%)] hover:bg-orange-50 rounded-xl" 
                   onClick={() => {
                     // Reset to original data
                     if (currentPub) {
@@ -1848,12 +1848,12 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Cantina Management</h2>
-          <p className="text-gray-600 dark:text-gray-400">Gestisci le birre in bottiglia della cantina</p>
+          <h2 className="text-2xl font-bold text-foreground dark:text-white">Cantina Management</h2>
+          <p className="text-muted-foreground dark:text-muted-foreground">Gestisci le birre in bottiglia della cantina</p>
         </div>
       </div>
       
-      <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-800">
+      <div className="bg-white dark:bg-[hsl(25,14%,10%)] rounded-2xl shadow-sm border border-orange-50 dark:border-[hsl(25,12%,16%)]">
         <BottleListManager 
           pubId={currentPub?.id || 0} 
           bottleList={typedBottleList}
@@ -1867,8 +1867,8 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
   const renderProfile = () => (
     <div className="space-y-6">
       <div>
-        <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Profilo</h2>
-        <p className="text-gray-600 dark:text-gray-400">Gestisci il tuo account</p>
+        <h2 className="text-2xl font-bold text-foreground dark:text-white">Profilo</h2>
+        <p className="text-muted-foreground dark:text-muted-foreground">Gestisci il tuo account</p>
       </div>
       
       <Card className="p-6">
@@ -1878,7 +1878,7 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
           </div>
           <div>
             <h3 className="text-xl font-semibold">{(user as any)?.firstName || 'Nome'} {(user as any)?.lastName || 'Cognome'}</h3>
-            <p className="text-gray-600">{(user as any)?.email || 'email@example.com'}</p>
+            <p className="text-muted-foreground">{(user as any)?.email || 'email@example.com'}</p>
             <Badge variant="secondary" className="mt-2">Pub Owner</Badge>
           </div>
         </div>
@@ -1886,15 +1886,15 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
         <div className="grid grid-cols-1 gap-4">
           <div>
             <Label>Nome</Label>
-            <Input defaultValue={(user as any)?.firstName || ''} data-testid="input-first-name" />
+            <Input className="border-orange-100 dark:border-[hsl(25,12%,20%)] rounded-xl focus-visible:ring-primary/20" defaultValue={(user as any)?.firstName || ''} data-testid="input-first-name" />
           </div>
           <div>
             <Label>Cognome</Label>
-            <Input defaultValue={(user as any)?.lastName || ''} data-testid="input-last-name" />
+            <Input className="border-orange-100 dark:border-[hsl(25,12%,20%)] rounded-xl focus-visible:ring-primary/20" defaultValue={(user as any)?.lastName || ''} data-testid="input-last-name" />
           </div>
           <div>
             <Label>Email</Label>
-            <Input defaultValue={(user as any)?.email || ''} type="email" data-testid="input-email" />
+            <Input className="border-orange-100 dark:border-[hsl(25,12%,20%)] rounded-xl focus-visible:ring-primary/20" defaultValue={(user as any)?.email || ''} type="email" data-testid="input-email" />
           </div>
         </div>
         
@@ -1910,10 +1910,10 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
 
   // Mobile Header - Now without conflicts
   const renderMobileHeader = () => (
-    <div className="lg:hidden bg-white dark:bg-gray-900 border-b p-4 flex items-center gap-3 sticky top-0 z-40">
+    <div className="lg:hidden bg-white dark:bg-[hsl(25,14%,10%)] border-b p-4 flex items-center gap-3 sticky top-0 z-40">
       {currentSection !== 'overview' && (
         <Button
-          variant="ghost"
+          variant="ghost" className="hover:text-primary rounded-xl"
           size="sm"
           onClick={() => setCurrentSection('overview')}
           className="text-primary hover:text-primary/80"
@@ -1923,14 +1923,14 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
         </Button>
       )}
       <div className="flex items-center space-x-3">
-        <div className={`p-2 rounded-lg bg-gradient-to-br ${sections.find(s => s.id === currentSection)?.gradient || 'from-blue-500 to-purple-600'}`}>
+        <div className={`p-2 rounded-xl bg-gradient-to-br ${sections.find(s => s.id === currentSection)?.gradient || 'from-blue-500 to-purple-600'}`}>
           {sections.find(s => s.id === currentSection)?.icon && (
             <div className="w-5 h-5 text-white">
               {React.createElement(sections.find(s => s.id === currentSection)!.icon)}
             </div>
           )}
         </div>
-        <h1 className="text-lg font-semibold text-gray-900 dark:text-white">
+        <h1 className="text-lg font-semibold text-foreground dark:text-white">
           {sections.find(s => s.id === currentSection)?.name || 'Dashboard Pub'}
         </h1>
       </div>
@@ -1940,10 +1940,10 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
   // Modern Sidebar  
   const renderSidebar = () => (
     <div className="hidden lg:flex lg:w-64 lg:flex-col lg:fixed lg:inset-y-0">
-      <div className="bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-800 flex-1 flex flex-col min-h-0">
+      <div className="bg-white dark:bg-[hsl(25,14%,10%)] border-r border-orange-50 dark:border-[hsl(25,12%,16%)] flex-1 flex flex-col min-h-0">
         <div className="flex items-center h-16 flex-shrink-0 px-6 border-b">
           <div className="flex items-center">
-            <div className="p-2 rounded-xl bg-gradient-to-br from-amber-500 to-orange-600">
+            <div className="p-2 rounded-2xl bg-gradient-to-br from-amber-500 to-orange-600">
               <Store className="w-6 h-6 text-white" />
             </div>
             <span className="ml-3 text-xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 dark:from-white dark:to-gray-300 bg-clip-text text-transparent">
@@ -1961,16 +1961,15 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
                 <button
                   key={section.id}
                   onClick={() => setCurrentSection(section.id as DashboardSection)}
-                  className={`group flex items-center px-4 py-3 text-sm font-medium rounded-xl w-full text-left transition-all duration-200 ${
+                  className={`group flex items-center px-4 py-3 text-sm font-medium rounded-2xl w-full text-left transition-all duration-200 ${
                     isActive
-                      ? `bg-gradient-to-r ${section.gradient} text-white shadow-lg transform scale-105`
-                      : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-white hover:scale-102'
+                      ? `bg-orange-50 dark:bg-orange-950/20 text-primary border-r-2 border-primary`
+                      : 'text-muted-foreground hover:bg-orange-50/60 dark:hover:bg-orange-950/10 hover:text-foreground'
                   }`}
                   data-testid={`nav-${section.id}`}
                 >
                   <Icon className={`mr-3 h-5 w-5 transition-transform duration-200 ${isActive ? 'scale-110' : 'group-hover:scale-105'}`} />
                   {section.name}
-                  {isActive && <div className="ml-auto w-2 h-2 bg-white rounded-full"></div>}
                 </button>
               );
             })}
@@ -1978,15 +1977,15 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
           
           {/* User Info */}
           <div className="p-4 border-t">
-            <div className="flex items-center space-x-3 p-3 rounded-xl bg-gray-50 dark:bg-gray-800">
+            <div className="flex items-center space-x-3 p-3 rounded-2xl bg-white dark:bg-[hsl(25,14%,10%)]">
               <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white font-semibold">
                 {(user as any)?.firstName?.[0] || 'U'}
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
+                <p className="text-sm font-medium text-foreground dark:text-white truncate">
                   {(user as any)?.firstName || 'Nome'} {(user as any)?.lastName || 'Cognome'}
                 </p>
-                <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
+                <p className="text-xs text-muted-foreground dark:text-muted-foreground truncate">
                   {currentPub?.name}
                 </p>
               </div>
@@ -1999,14 +1998,14 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
 
   if (pubsLoading || !isAuthenticated) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-950">
+      <div className="min-h-screen flex items-center justify-center bg-white dark:bg-gray-950">
         <div className="text-center space-y-4">
           <div className="flex items-center justify-center space-x-2">
             <div className="w-4 h-4 bg-primary rounded-full animate-bounce"></div>
             <div className="w-4 h-4 bg-primary rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
             <div className="w-4 h-4 bg-primary rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
           </div>
-          <p className="text-gray-600 dark:text-gray-400">Caricamento dashboard...</p>
+          <p className="text-muted-foreground dark:text-muted-foreground">Caricamento dashboard...</p>
         </div>
       </div>
     );
@@ -2014,11 +2013,11 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
 
   if (!currentPub) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-950">
+      <div className="min-h-screen flex items-center justify-center bg-white dark:bg-gray-950">
         <div className="text-center space-y-4">
-          <Store className="w-16 h-16 text-gray-400 mx-auto" />
-          <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Nessun pub trovato</h2>
-          <p className="text-gray-600 dark:text-gray-400">
+          <Store className="w-16 h-16 text-muted-foreground mx-auto" />
+          <h2 className="text-2xl font-bold text-foreground dark:text-white">Nessun pub trovato</h2>
+          <p className="text-muted-foreground dark:text-muted-foreground">
             Non hai ancora registrato un pub. Registrane uno per accedere alla dashboard.
           </p>
           <Link href="/registra-pub">
@@ -2054,12 +2053,12 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
             {!isAdminMode && currentPub && !currentPub.isActive && currentSection !== 'overview' && (
               <div className="flex flex-col items-center justify-center py-24 text-center space-y-4">
                 <ShieldOff className="w-16 h-16 text-red-400 mx-auto" />
-                <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Pub ibernato</h2>
-                <p className="text-gray-500 dark:text-gray-400 max-w-sm">
+                <h2 className="text-2xl font-bold text-foreground dark:text-white">Pub ibernato</h2>
+                <p className="text-muted-foreground dark:text-muted-foreground max-w-sm">
                   Questa sezione non è disponibile mentre l'abbonamento è sospeso. Riattiva il pub per continuare.
                 </p>
                 <Link href="/attiva-pub">
-                  <Button className="bg-amber-500 hover:bg-amber-600 text-white">
+                  <Button className="bg-orange-500 hover:bg-primary text-white">
                     <RefreshCw className="w-4 h-4 mr-2" /> Riattiva abbonamento
                   </Button>
                 </Link>
@@ -2087,10 +2086,10 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
                           React.createElement(sections.find(s => s.id === currentSection)!.icon, { className: "w-8 h-8 text-white" })
                         }
                       </div>
-                      <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
+                      <h2 className="text-2xl font-bold text-foreground dark:text-white">
                         {sections.find(s => s.id === currentSection)?.name}
                       </h2>
-                      <p className="text-gray-600 dark:text-gray-400">Sezione in fase di sviluppo.</p>
+                      <p className="text-muted-foreground dark:text-muted-foreground">Sezione in fase di sviluppo.</p>
                     </div>
                   </div>
                 )}
@@ -2105,7 +2104,7 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle className="flex items-center gap-2">
-              <AlertTriangle className="w-5 h-5 text-red-500" />
+              <AlertTriangle className="w-5 h-5 text-red-700" />
               {currentPub?.subscriptionStatus === 'trial' ? 'Disdici la prova gratuita?' : 'Disdici l\'abbonamento?'}
             </AlertDialogTitle>
             <AlertDialogDescription className="space-y-2">
@@ -2114,7 +2113,7 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
                   ? 'Annullando la prova, il tuo pub verrà immediatamente ibernato e non sarà più visibile agli utenti. Nessun addebito verrà effettuato.'
                   : 'Disdire l\'abbonamento iberna immediatamente il pub. Il profilo non sarà più visibile. Puoi riattivarlo in qualsiasi momento.'}
               </span>
-              <span className="block font-medium text-gray-900 dark:text-white">
+              <span className="block font-medium text-foreground dark:text-white">
                 Sei sicuro di voler continuare?
               </span>
             </AlertDialogDescription>
