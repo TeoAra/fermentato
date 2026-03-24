@@ -27,8 +27,8 @@ interface LuppolinoMenuProps {
 
 function InfoBoxCard({ text }: { text: string }) {
   return (
-    <div className="rounded-lg border border-amber-200 dark:border-amber-700 bg-amber-50/80 dark:bg-amber-950/40 px-3 py-2 flex gap-2 items-start">
-      <Info className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400 flex-shrink-0 mt-0.5" />
+    <div className="rounded-2xl border border-amber-100 dark:border-amber-800/40 bg-amber-50 dark:bg-amber-950/30 px-4 py-3 flex gap-2.5 items-start">
+      <Info className="w-4 h-4 text-amber-600 dark:text-amber-400 flex-shrink-0 mt-0.5" />
       <p className="text-xs text-amber-900 dark:text-amber-200 leading-relaxed whitespace-pre-line">
         {text}
       </p>
@@ -43,9 +43,11 @@ export default function LuppolinoMenu({ menu, menuInfoBox }: LuppolinoMenuProps)
 
   if (!menu || menu.length === 0) {
     return (
-      <div className="text-center py-8">
-        <ChefHat className="w-8 h-8 text-gray-400 mx-auto mb-3" />
-        <p className="text-sm text-gray-500 dark:text-gray-400">Menu in preparazione</p>
+      <div className="text-center py-12 rounded-2xl border-2 border-dashed border-orange-100 dark:border-orange-900/30">
+        <div className="w-14 h-14 bg-orange-50 dark:bg-orange-950/20 rounded-full flex items-center justify-center mx-auto mb-3">
+          <ChefHat className="w-7 h-7 text-primary/40" />
+        </div>
+        <p className="text-sm font-medium text-muted-foreground">Menu in preparazione</p>
       </div>
     );
   }
@@ -63,10 +65,10 @@ export default function LuppolinoMenu({ menu, menuInfoBox }: LuppolinoMenuProps)
   };
 
   return (
-    <div className="space-y-2">
+    <div className="space-y-2.5">
       {menuInfoBox && <InfoBoxCard text={menuInfoBox} />}
 
-      <Accordion type="multiple" className="space-y-1.5">
+      <Accordion type="multiple" className="space-y-2.5">
         {menu.map((category) => {
           const regularItems = category.items?.filter(item => !item.isInfoBox) || [];
           const infoBoxItems = category.items?.filter(item => item.isInfoBox) || [];
@@ -75,24 +77,24 @@ export default function LuppolinoMenu({ menu, menuInfoBox }: LuppolinoMenuProps)
             <AccordionItem
               key={category.id}
               value={`category-${category.id}`}
-              className="rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden"
+              className="rounded-2xl border border-orange-50 dark:border-[hsl(25,12%,16%)] bg-white dark:bg-[hsl(25,14%,10%)] shadow-[0_4px_20px_rgba(247,113,4,0.05)] overflow-hidden"
               data-testid={`menu-category-${category.id}`}
             >
-              <AccordionTrigger className="px-4 py-3 hover:no-underline hover:bg-amber-50 dark:hover:bg-gray-800/60 transition-colors">
+              <AccordionTrigger className="px-5 py-4 hover:no-underline hover:bg-[#FFF8F2] dark:hover:bg-orange-950/10 transition-colors [&>svg]:text-primary [&>svg]:h-4 [&>svg]:w-4">
                 <div className="text-left flex-1">
-                  <span className="text-base font-bold text-gray-900 dark:text-white tracking-tight">
+                  <span className="text-base font-bold text-foreground">
                     {category.name}
                   </span>
                   {category.description && (
-                    <p className="text-xs text-gray-500 dark:text-gray-400 italic font-normal mt-0.5">
+                    <p className="text-xs text-muted-foreground font-normal mt-0.5 leading-snug">
                       {category.description}
                     </p>
                   )}
                 </div>
               </AccordionTrigger>
 
-              <AccordionContent className="px-3 pb-3">
-                <div className="space-y-1.5 pt-1.5">
+              <AccordionContent className="px-4 pb-4">
+                <div className="space-y-2 pt-1">
                   {category.infoBox && <InfoBoxCard text={category.infoBox} />}
                   {infoBoxItems.map((item) => (
                     <InfoBoxCard key={item.id} text={item.description || item.name} />
@@ -104,20 +106,20 @@ export default function LuppolinoMenu({ menu, menuInfoBox }: LuppolinoMenuProps)
                       return (
                         <div
                           key={item.id}
-                          className={`flex gap-3 px-2 py-2 rounded-lg border-l-2 border-l-amber-400 bg-white dark:bg-gray-800/50 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors ${!item.isAvailable ? 'opacity-50' : ''}`}
+                          className={`flex gap-3 p-3 rounded-2xl border border-orange-50 dark:border-[hsl(25,12%,18%)] bg-[#FFF8F2]/60 dark:bg-[hsl(25,14%,12%)] hover:bg-[#FFF8F2] dark:hover:bg-orange-950/10 transition-colors ${!item.isAvailable ? 'opacity-50' : ''}`}
                           data-testid={`menu-item-${item.id}`}
                         >
                           {item.imageUrl && (
                             <img
                               src={item.imageUrl}
                               alt={item.name}
-                              className="w-12 h-12 object-cover rounded-lg flex-shrink-0"
+                              className="w-14 h-14 object-cover rounded-xl flex-shrink-0"
                             />
                           )}
                           <div className="flex-1 min-w-0">
                             <div className="flex justify-between items-start gap-2">
-                              <div className="min-w-0">
-                                <span className="text-sm font-semibold text-gray-900 dark:text-white leading-tight">
+                              <div className="min-w-0 flex-1">
+                                <span className="text-sm font-bold text-foreground leading-tight">
                                   {item.name}
                                 </span>
                                 {item.isVegetarian && (
@@ -132,24 +134,24 @@ export default function LuppolinoMenu({ menu, menuInfoBox }: LuppolinoMenuProps)
                                   </Badge>
                                 )}
                               </div>
-                              <span className="text-sm font-bold text-amber-600 dark:text-amber-400 flex-shrink-0">
-                                €{typeof item.price === 'string' ? parseFloat(item.price).toFixed(2) : item.price}
+                              <span className="text-sm font-black text-primary flex-shrink-0">
+                                €{typeof item.price === 'string' ? parseFloat(item.price).toFixed(2) : Number(item.price).toFixed(2)}
                               </span>
                             </div>
                             {item.description && (
-                              <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5 leading-snug">
+                              <p className="text-xs text-muted-foreground mt-0.5 leading-snug">
                                 {item.description}
                               </p>
                             )}
                             {formattedAllergens && formattedAllergens.length > 0 && (
-                              <div className="flex flex-wrap items-center gap-1 mt-1">
-                                <span className="text-[10px] font-medium text-gray-400 uppercase tracking-wide">
+                              <div className="flex flex-wrap items-center gap-1 mt-1.5">
+                                <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wide">
                                   Allergeni:
                                 </span>
                                 {formattedAllergens.map(({ emoji, label }, index) => (
                                   <span
                                     key={index}
-                                    className="inline-flex items-center gap-0.5 px-1.5 py-0.5 bg-amber-50 dark:bg-amber-950/50 text-amber-800 dark:text-amber-200 rounded text-[10px] font-medium border border-amber-200 dark:border-amber-800"
+                                    className="inline-flex items-center gap-0.5 px-1.5 py-0.5 bg-amber-50 dark:bg-amber-950/40 text-amber-800 dark:text-amber-300 rounded-full text-[10px] font-semibold border border-amber-100 dark:border-amber-800/40"
                                   >
                                     <span>{emoji}</span>
                                     <span>{label}</span>
@@ -162,7 +164,7 @@ export default function LuppolinoMenu({ menu, menuInfoBox }: LuppolinoMenuProps)
                       );
                     })
                   ) : infoBoxItems.length === 0 && !category.infoBox ? (
-                    <p className="text-xs text-gray-400 italic text-center py-3">Categoria in allestimento</p>
+                    <p className="text-xs text-muted-foreground italic text-center py-4">Categoria in allestimento</p>
                   ) : null}
                 </div>
               </AccordionContent>
@@ -171,7 +173,7 @@ export default function LuppolinoMenu({ menu, menuInfoBox }: LuppolinoMenuProps)
         })}
       </Accordion>
 
-      <p className="text-[10px] text-gray-400 dark:text-gray-500 text-center pt-2">
+      <p className="text-[10px] text-muted-foreground text-center pt-2 pb-4">
         Informazioni dettagliate sugli allergeni disponibili su richiesta
       </p>
     </div>
