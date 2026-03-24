@@ -145,7 +145,7 @@ function BreweryCard({ brewery }: { brewery: any }) {
   return (
     <Link href={`/brewery/${brewery.id}`}>
       <div className="group relative rounded-2xl overflow-hidden cursor-pointer bg-white dark:bg-neutral-800 shadow-md hover:shadow-xl transition-all duration-300 hover:-translate-y-1 border border-gray-100 dark:border-neutral-700">
-        <div className="relative h-44 overflow-hidden bg-gradient-to-br from-amber-100 to-orange-100 dark:from-amber-900/30 dark:to-orange-900/20">
+        <div className="relative h-44 overflow-hidden bg-gradient-to-br from-orange-50 to-orange-100 dark:from-orange-900/30 dark:to-orange-900/20">
           <img
             src={imgError || !brewery.logoUrl ? BREWERY_FALLBACK : brewery.logoUrl}
             alt={brewery.name}
@@ -178,8 +178,8 @@ function BreweryCard({ brewery }: { brewery: any }) {
             )}
           </div>
           <div className="flex items-center gap-1.5">
-            <Beer className="w-3.5 h-3.5 text-amber-500 flex-shrink-0" />
-            <span className="text-xs font-semibold text-amber-600 dark:text-amber-400">
+            <Beer className="w-3.5 h-3.5 text-primary flex-shrink-0" />
+            <span className="text-xs font-semibold text-primary dark:text-orange-400">
               {Number(brewery.beerCount || 0).toLocaleString("it-IT")} birre
             </span>
           </div>
@@ -249,11 +249,11 @@ export default function ExploreBreweries() {
   const hasFilters = debouncedQ || selectedCountry;
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-neutral-900">
+    <div className="min-h-screen bg-background">
       {/* Hero */}
-      <div className="relative bg-gradient-to-br from-amber-600 via-amber-500 to-orange-500 dark:from-amber-800 dark:via-amber-700 dark:to-orange-700 overflow-hidden">
+      <div className="relative bg-gradient-to-br from-[hsl(24,93%,49%)] via-[hsl(22,92%,46%)] to-[hsl(20,95%,42%)] dark:from-[hsl(24,80%,28%)] dark:via-[hsl(22,78%,24%)] dark:to-[hsl(20,75%,20%)] overflow-hidden">
         <div className="absolute inset-0 opacity-10" style={{ backgroundImage: "url('/brewery-cover.jpg')", backgroundSize: "cover", backgroundPosition: "center" }} />
-        <div className="absolute inset-0 bg-gradient-to-br from-amber-600/90 to-orange-600/80" />
+        <div className="absolute inset-0 bg-gradient-to-br from-[hsl(24,93%,49%)]/90 to-[hsl(20,95%,42%)]/80" />
         <div className="relative max-w-5xl mx-auto px-4 sm:px-6 py-10">
           <div className="flex items-center gap-3 mb-6">
             <Link href="/">
@@ -273,7 +273,7 @@ export default function ExploreBreweries() {
             <h1 className="text-3xl sm:text-4xl font-extrabold text-white mb-2 tracking-tight">
               Esplora i Birrifici del Mondo
             </h1>
-            <p className="text-amber-100 text-base">
+            <p className="text-orange-50 text-base">
               {total > 0
                 ? `${total.toLocaleString("it-IT")} birrifici${selectedCountry ? ` in ${getItalianName(selectedCountry)}` : " in tutto il mondo"}`
                 : "Scopri i migliori birrifici artigianali dal mondo"}
@@ -287,7 +287,7 @@ export default function ExploreBreweries() {
               value={searchInput}
               onChange={e => setSearchInput(e.target.value)}
               placeholder="Cerca birrificio per nome..."
-              className="pl-12 pr-12 py-3 h-12 text-base rounded-xl border-0 shadow-lg bg-white dark:bg-neutral-800 text-gray-900 dark:text-white focus-visible:ring-2 focus-visible:ring-white"
+              className="pl-12 pr-12 py-3 h-12 text-base rounded-xl border-0 shadow-lg bg-white dark:bg-neutral-800 text-gray-900 dark:text-white focus-visible:ring-2 focus-visible:ring-[hsl(24,93%,49%)]"
             />
             {searchInput && (
               <button
@@ -302,15 +302,15 @@ export default function ExploreBreweries() {
       </div>
 
       {/* Country pills */}
-      <div className="sticky top-0 z-20 bg-white dark:bg-neutral-900 border-b border-gray-200 dark:border-neutral-800 shadow-sm">
+      <div className="sticky top-0 z-20 bg-white dark:bg-[hsl(25,14%,8%)] border-b border-orange-50 dark:border-[hsl(25,12%,14%)] shadow-sm">
         <div className="max-w-5xl mx-auto px-4 py-3">
           <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
             <button
               onClick={() => { setSelectedCountry(""); setPage(1); }}
               className={`flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium transition-all border ${
                 !selectedCountry
-                  ? "bg-amber-500 text-white border-amber-500 shadow-sm"
-                  : "bg-white dark:bg-neutral-800 text-gray-600 dark:text-neutral-300 border-gray-200 dark:border-neutral-700 hover:border-amber-300 hover:text-amber-600"
+                  ? "bg-[hsl(24,93%,49%)] text-white border-[hsl(24,93%,49%)] shadow-sm"
+                  : "bg-white dark:bg-neutral-800 text-gray-600 dark:text-neutral-300 border-gray-200 dark:border-neutral-700 hover:border-primary/40 hover:text-primary"
               }`}
             >
               <Globe className="w-3.5 h-3.5" />
@@ -322,13 +322,13 @@ export default function ExploreBreweries() {
                 onClick={() => handleCountrySelect(c.country)}
                 className={`flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium transition-all border ${
                   selectedCountry === c.country
-                    ? "bg-amber-500 text-white border-amber-500 shadow-sm"
-                    : "bg-white dark:bg-neutral-800 text-gray-600 dark:text-neutral-300 border-gray-200 dark:border-neutral-700 hover:border-amber-300 hover:text-amber-600"
+                    ? "bg-[hsl(24,93%,49%)] text-white border-[hsl(24,93%,49%)] shadow-sm"
+                    : "bg-white dark:bg-neutral-800 text-gray-600 dark:text-neutral-300 border-gray-200 dark:border-neutral-700 hover:border-primary/40 hover:text-primary"
                 }`}
               >
                 <span>{getFlag(c.country)}</span>
                 <span>{getItalianName(c.country)}</span>
-                <span className={`text-xs ${selectedCountry === c.country ? "text-amber-100" : "text-gray-400"}`}>
+                <span className={`text-xs ${selectedCountry === c.country ? "text-orange-100" : "text-gray-400"}`}>
                   {c.count.toLocaleString("it-IT")}
                 </span>
               </button>
@@ -354,7 +354,7 @@ export default function ExploreBreweries() {
                 <X className="w-3 h-3 cursor-pointer" onClick={() => { setSelectedCountry(""); setPage(1); }} />
               </Badge>
             )}
-            <button onClick={clearFilters} className="text-xs text-amber-600 hover:text-amber-700 font-medium">
+            <button onClick={clearFilters} className="text-xs text-primary hover:text-primary/80 font-medium">
               Cancella tutti
             </button>
           </div>
@@ -377,7 +377,7 @@ export default function ExploreBreweries() {
             <Globe className="w-16 h-16 mx-auto mb-4 text-gray-200 dark:text-neutral-700" />
             <p className="font-semibold text-gray-600 dark:text-neutral-300 text-lg">Nessun birrificio trovato</p>
             <p className="text-gray-400 text-sm mt-1">Prova con un nome diverso o un altro paese</p>
-            <Button onClick={clearFilters} variant="outline" className="mt-4 border-amber-300 text-amber-600 hover:bg-amber-50">
+            <Button onClick={clearFilters} variant="outline" className="mt-4 border-orange-200 text-primary hover:bg-orange-50">
               Rimuovi filtri
             </Button>
           </div>
@@ -397,7 +397,7 @@ export default function ExploreBreweries() {
                   size="sm"
                   disabled={page <= 1}
                   onClick={() => { setPage(p => p - 1); window.scrollTo({ top: 0, behavior: "smooth" }); }}
-                  className="border-amber-200 text-amber-700 dark:border-amber-700 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-900/20 disabled:opacity-40"
+                  className="border-primary/30 text-primary hover:bg-orange-50 dark:hover:bg-orange-950/20 disabled:opacity-40"
                 >
                   <ChevronLeft className="w-4 h-4 mr-1" />
                   Precedente
@@ -411,7 +411,7 @@ export default function ExploreBreweries() {
                   size="sm"
                   disabled={page >= totalPages}
                   onClick={() => { setPage(p => p + 1); window.scrollTo({ top: 0, behavior: "smooth" }); }}
-                  className="border-amber-200 text-amber-700 dark:border-amber-700 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-900/20 disabled:opacity-40"
+                  className="border-primary/30 text-primary hover:bg-orange-50 dark:hover:bg-orange-950/20 disabled:opacity-40"
                 >
                   Successiva
                   <ChevronRight className="w-4 h-4 ml-1" />

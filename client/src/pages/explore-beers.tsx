@@ -29,7 +29,6 @@ export default function ExploreBeers() {
     staleTime: 10 * 60 * 1000,
   });
 
-  // Exact style match via dedicated endpoint
   const { data: styleBeers, isLoading: styleLoading } = useQuery<any[]>({
     queryKey: ["/api/beers/by-style", activeStyle],
     queryFn: () => fetch(`/api/beers/by-style?style=${encodeURIComponent(activeStyle)}`).then(r => r.json()),
@@ -37,7 +36,6 @@ export default function ExploreBeers() {
     staleTime: 2 * 60 * 1000,
   });
 
-  // Free-text search
   const { data: searchResults, isLoading: searchLoading } = useQuery<{ beers: any[] }>({
     queryKey: ["/api/search", freeQuery],
     queryFn: () => fetch(`/api/search?q=${encodeURIComponent(freeQuery)}`).then(r => r.json()),
@@ -70,59 +68,64 @@ export default function ExploreBeers() {
   }
 
   return (
-    <div className="min-h-screen bg-white dark:bg-neutral-950">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-24 pb-12">
+    <div className="min-h-screen bg-background">
+      {/* Page header */}
+      <div className="bg-white dark:bg-[hsl(25,14%,8%)] border-b border-orange-50 dark:border-[hsl(25,12%,14%)] shadow-sm">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-5">
+          <div className="flex items-center gap-4 mb-4">
+            <Link href="/">
+              <Button variant="ghost" size="sm" className="text-primary hover:text-primary/80 hover:bg-orange-50 dark:hover:bg-orange-950/20 -ml-2">
+                <ArrowLeft className="w-4 h-4 mr-1" /> Indietro
+              </Button>
+            </Link>
+          </div>
+          <div className="flex items-center gap-3 mb-5">
+            <div className="w-10 h-10 rounded-2xl bg-primary flex items-center justify-center flex-shrink-0">
+              <Beer className="h-5 w-5 text-white" />
+            </div>
+            <div>
+              <h1 className="text-2xl font-bold text-foreground tracking-tight">Esplora Birre</h1>
+              {activeStyle ? (
+                <p className="text-sm text-muted-foreground mt-0.5">
+                  Stile: <span className="font-semibold text-primary">{activeStyle}</span>
+                  {Array.isArray(styleBeers) && (
+                    <span className="ml-2 text-muted-foreground">· {styleBeers.length} birre</span>
+                  )}
+                </p>
+              ) : (
+                <p className="text-sm text-muted-foreground">Seleziona uno stile o cerca una birra</p>
+              )}
+            </div>
+          </div>
 
-        {/* Header */}
-        <div className="flex items-center gap-4 mb-6">
-          <Link href="/">
-            <Button variant="ghost" size="sm" className="text-gray-500 hover:text-gray-700 dark:text-gray-400">
-              <ArrowLeft className="w-4 h-4 mr-1" /> Indietro
+          {/* Search bar */}
+          <div className="flex gap-2">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+              <Input
+                value={inputValue}
+                onChange={e => setInputValue(e.target.value)}
+                onKeyDown={e => { if (e.key === "Enter" && inputValue.trim()) runSearch(inputValue.trim()); }}
+                placeholder="Cerca per nome, birrificio…"
+                className="pl-9 pr-9 rounded-xl border-orange-100 dark:border-orange-900/30 focus-visible:ring-primary/30"
+              />
+              {inputValue && (
+                <button onClick={clearAll} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground">
+                  <X className="w-4 h-4" />
+                </button>
+              )}
+            </div>
+            <Button
+              onClick={() => { if (inputValue.trim()) runSearch(inputValue.trim()); }}
+              className="rounded-xl px-5"
+            >
+              Cerca
             </Button>
-          </Link>
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
-              <div className="p-1.5 bg-gradient-to-r from-amber-500 to-orange-500 rounded-lg">
-                <Beer className="h-5 w-5 text-white" />
-              </div>
-              Esplora Birre
-            </h1>
-            {activeStyle && (
-              <p className="text-sm text-gray-500 dark:text-neutral-400 mt-0.5">
-                Stile: <span className="font-semibold text-amber-600 dark:text-amber-400">{activeStyle}</span>
-                {Array.isArray(styleBeers) && (
-                  <span className="ml-2 text-gray-400">· {styleBeers.length} birre</span>
-                )}
-              </p>
-            )}
           </div>
         </div>
+      </div>
 
-        {/* Search bar */}
-        <div className="flex gap-2 mb-5">
-          <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-            <Input
-              value={inputValue}
-              onChange={e => setInputValue(e.target.value)}
-              onKeyDown={e => { if (e.key === "Enter" && inputValue.trim()) runSearch(inputValue.trim()); }}
-              placeholder="Cerca per nome, birrificio…"
-              className="pl-9 pr-9"
-            />
-            {inputValue && (
-              <button onClick={clearAll} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
-                <X className="w-4 h-4" />
-              </button>
-            )}
-          </div>
-          <Button
-            onClick={() => { if (inputValue.trim()) runSearch(inputValue.trim()); }}
-            className="bg-amber-500 hover:bg-amber-400 text-gray-900 font-semibold"
-          >
-            Cerca
-          </Button>
-        </div>
-
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
         {/* Style pills */}
         {Array.isArray(popularStyles) && popularStyles.length > 0 && (
           <div className="flex flex-wrap gap-2 mb-8">
@@ -132,15 +135,15 @@ export default function ExploreBeers() {
                 onClick={() => selectStyle(s.style)}
                 className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium border transition-all ${
                   activeStyle === s.style
-                    ? "bg-amber-500 text-gray-900 border-amber-500 shadow-md scale-105"
-                    : "bg-white dark:bg-neutral-800 text-gray-700 dark:text-gray-300 border-gray-200 dark:border-neutral-600 hover:border-amber-400 hover:text-amber-600 dark:hover:text-amber-400"
+                    ? "bg-primary text-white border-primary shadow-sm scale-105"
+                    : "bg-orange-50 dark:bg-orange-950/20 text-orange-700 dark:text-orange-300 border-orange-100 dark:border-orange-900/30 hover:border-primary/40 hover:text-primary dark:hover:text-orange-200"
                 }`}
               >
                 {s.style}
                 <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${
                   activeStyle === s.style
-                    ? "bg-white/30 text-gray-900"
-                    : "bg-amber-50 dark:bg-amber-900/20 text-amber-500"
+                    ? "bg-white/25 text-white"
+                    : "bg-white dark:bg-orange-950/40 text-primary dark:text-orange-400"
                 }`}>
                   {s.count.toLocaleString("it-IT")}
                 </span>
@@ -153,40 +156,40 @@ export default function ExploreBeers() {
         {isLoading ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
             {[...Array(8)].map((_, i) => (
-              <div key={i} className="h-28 bg-gray-100 dark:bg-neutral-800 rounded-2xl animate-pulse" />
+              <div key={i} className="h-28 bg-orange-50 dark:bg-[hsl(25,14%,12%)] rounded-2xl animate-pulse" />
             ))}
           </div>
         ) : beers.length > 0 ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
             {beers.map((beer: any) => (
               <Link key={beer.id} href={`/beer/${beer.id}`}>
-                <div className="group bg-white dark:bg-neutral-800 border border-gray-100 dark:border-neutral-700 rounded-2xl p-4 hover:shadow-md hover:border-amber-200 dark:hover:border-amber-800 transition-all cursor-pointer h-full">
+                <div className="group bg-white dark:bg-[hsl(25,14%,10%)] border border-orange-50 dark:border-[hsl(25,12%,16%)] rounded-2xl p-4 hover:shadow-md hover:border-primary/20 dark:hover:border-primary/30 transition-all cursor-pointer h-full">
                   <div className="flex items-start gap-3">
-                    <div className="w-12 h-12 rounded-xl flex-shrink-0 bg-amber-50 dark:bg-amber-900/20 flex items-center justify-center overflow-hidden">
+                    <div className="w-12 h-12 rounded-xl flex-shrink-0 bg-orange-50 dark:bg-orange-950/20 flex items-center justify-center overflow-hidden">
                       {beer.imageUrl ? (
                         <img src={beer.imageUrl} alt={beer.name} className="w-12 h-12 object-contain p-0.5" />
                       ) : beer.breweryLogoUrl ? (
                         <img src={beer.breweryLogoUrl} alt={beer.breweryName} className="w-10 h-10 object-contain" />
                       ) : (
-                        <Beer className="w-6 h-6 text-amber-400" />
+                        <Beer className="w-6 h-6 text-primary/60" />
                       )}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="font-semibold text-sm text-gray-900 dark:text-white line-clamp-1 group-hover:text-amber-600 dark:group-hover:text-amber-400">
+                      <p className="font-semibold text-sm text-foreground line-clamp-1 group-hover:text-primary transition-colors">
                         {beer.name}
                       </p>
-                      <p className="text-xs text-gray-500 dark:text-neutral-400 line-clamp-1 mt-0.5">
+                      <p className="text-xs text-muted-foreground line-clamp-1 mt-0.5">
                         {beer.breweryName || beer.brewery?.name}
                       </p>
                       <div className="flex items-center gap-2 mt-1.5 flex-wrap">
                         {beer.style && !activeStyle && (
-                          <span className="text-[10px] font-semibold text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-900/20 px-2 py-0.5 rounded-full">{beer.style}</span>
+                          <span className="text-[10px] font-semibold text-orange-700 dark:text-orange-300 bg-orange-50 dark:bg-orange-950/30 px-2 py-0.5 rounded-full">{beer.style}</span>
                         )}
                         {beer.abv != null && (
-                          <span className="text-[10px] font-medium text-gray-400 dark:text-neutral-500">{beer.abv}% ABV</span>
+                          <span className="text-[10px] font-medium text-muted-foreground">{beer.abv}% ABV</span>
                         )}
                         {beer.ibu != null && (
-                          <span className="text-[10px] font-medium text-gray-400 dark:text-neutral-500">{beer.ibu} IBU</span>
+                          <span className="text-[10px] font-medium text-muted-foreground">{beer.ibu} IBU</span>
                         )}
                       </div>
                     </div>
@@ -196,18 +199,17 @@ export default function ExploreBeers() {
             ))}
           </div>
         ) : (activeStyle || freeQuery) ? (
-          <div className="text-center py-16 text-gray-400 dark:text-neutral-500">
+          <div className="text-center py-16 text-muted-foreground">
             <Beer className="w-12 h-12 mx-auto mb-3 opacity-30" />
             <p className="text-lg font-medium">Nessuna birra trovata</p>
             <p className="text-sm mt-1">Prova con un altro termine o stile</p>
           </div>
         ) : (
-          <div className="text-center py-16 text-gray-400 dark:text-neutral-500">
+          <div className="text-center py-16 text-muted-foreground">
             <Beer className="w-14 h-14 mx-auto mb-3 opacity-20" />
             <p className="text-lg font-medium">Seleziona uno stile o cerca una birra</p>
           </div>
         )}
-
       </div>
       <Footer />
     </div>

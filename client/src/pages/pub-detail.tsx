@@ -110,7 +110,7 @@ const ModernBeerCard = ({ beer, prices, className = "" }: {
   prices?: any[];
   className?: string;
 }) => (
-  <Card className={`overflow-hidden hover:shadow-lg transition-all duration-300 border-l-4 border-l-emerald-500 bg-white dark:bg-gray-800 ${className}`}>
+  <Card className={`overflow-hidden hover:shadow-lg transition-all duration-300 border-l-4 border-l-emerald-500 bg-white dark:bg-[hsl(25,14%,10%)] rounded-2xl border border-orange-50 dark:border-[hsl(25,12%,16%)] shadow-sm ${className}`}>
     <div className="flex gap-3 p-4">
       <ImageWithFallback
         src={beer?.imageUrl || beer?.brewery?.logoUrl}
@@ -124,14 +124,14 @@ const ModernBeerCard = ({ beer, prices, className = "" }: {
       <div className="flex-1 min-w-0 flex gap-2 justify-between">
         <div className="flex-1 min-w-0">
           <Link href={`/beer/${beer?.id}`}>
-            <h3 className="font-bold text-base leading-snug line-clamp-1 hover:text-amber-600 dark:hover:text-amber-400 cursor-pointer transition-colors text-gray-900 dark:text-white">
+            <h3 className="font-bold text-base leading-snug line-clamp-1 hover:text-primary dark:hover:text-orange-400 cursor-pointer transition-colors text-gray-900 dark:text-white">
               {beer?.name || 'Nome non disponibile'}
             </h3>
           </Link>
 
           {beer?.brewery?.id ? (
             <Link href={`/brewery/${beer.brewery.id}`}>
-              <p className="text-xs text-amber-600 dark:text-amber-400 hover:text-amber-700 dark:hover:text-amber-300 cursor-pointer transition-colors truncate leading-snug mt-0.5">
+              <p className="text-xs text-primary dark:text-orange-400 hover:text-primary dark:hover:text-orange-300 cursor-pointer transition-colors truncate leading-snug mt-0.5">
                 {beer.brewery.name || beer?.breweryName || 'Birrificio'}
               </p>
             </Link>
@@ -299,7 +299,7 @@ export default function PubDetail() {
     staleTime: 60_000,
   });
 
-  const isFavorite = isFavoriteData?.isFavorite || false;
+  const isFavorite = (isFavoriteData as any)?.isFavorite || false;
 
   // Toggle favorite mutation with optimistic UI + undo toast
   const toggleFavoriteMutation = useMutation({
@@ -329,7 +329,7 @@ export default function PubDetail() {
           description: "Puoi annullare entro 5 secondi",
           action: (
             <button
-              className="text-xs font-semibold text-amber-600 hover:text-amber-700 underline underline-offset-2"
+              className="text-xs font-semibold text-primary hover:text-primary underline underline-offset-2"
               onClick={() => toggleFavoriteMutation.mutate()}
             >
               Annulla
@@ -491,7 +491,7 @@ export default function PubDetail() {
 
   if (pubLoading) {
     return (
-      <div className="min-h-screen bg-[hsl(38,14%,97%)] dark:bg-[hsl(25,14%,7%)]">
+      <div className="min-h-screen bg-background">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div className="space-y-8">
             {/* Hero Skeleton */}
@@ -551,7 +551,7 @@ export default function PubDetail() {
   const seoUrl = `https://fermenta.to/pub/${id}`;
 
   return (
-    <div className="min-h-screen bg-[hsl(38,14%,97%)] dark:bg-[hsl(25,14%,7%)]">
+    <div className="min-h-screen bg-background">
       <Helmet>
         <title>{seoTitle}</title>
         <meta name="description" content={seoDesc} />
@@ -589,7 +589,7 @@ export default function PubDetail() {
         <div className="absolute bottom-0 left-0 right-0 px-4 pb-4 flex items-end gap-3">
           <Avatar className={`h-14 w-14 sm:h-16 sm:w-16 ring-2 ${openStatus.borderColor} flex-shrink-0 bg-white shadow-lg`}>
             <AvatarImage src={(pub as any)?.logoUrl} alt={(pub as any)?.name} className="object-contain p-1" />
-            <AvatarFallback className="bg-gradient-to-br from-amber-500 to-orange-600 text-white text-xl font-bold">
+            <AvatarFallback className="bg-primary text-white text-xl font-bold">
               {(pub as any)?.name?.[0] || 'P'}
             </AvatarFallback>
           </Avatar>
@@ -602,6 +602,11 @@ export default function PubDetail() {
                 <div title="Pub Verificato" className="flex items-center justify-center bg-emerald-600 border border-emerald-500 rounded-full w-6 h-6 shadow-sm flex-shrink-0">
                   <ShieldCheck className="h-3.5 w-3.5 text-white" />
                 </div>
+              )}
+              {isAdmin && (
+                <Badge variant="secondary" className="bg-primary/20 text-white border-primary/30 backdrop-blur-sm text-[10px] py-0 px-1.5 uppercase tracking-wider font-bold">
+                  Admin
+                </Badge>
               )}
               {(favoritesCountData as any)?.count > 0 && (
                 <div className="flex items-center gap-1 bg-white/20 backdrop-blur-sm border border-white/30 rounded-full px-2 py-0.5 flex-shrink-0">
@@ -621,7 +626,7 @@ export default function PubDetail() {
       </div>
 
       {/* ── INFO BAR ── the most important info, always visible */}
-      <div className="bg-white dark:bg-[hsl(25,14%,10%)] border-b border-gray-100 dark:border-gray-800 px-4 py-3">
+      <div className="bg-white dark:bg-[hsl(25,14%,10%)] border-b border-orange-50 dark:border-orange-900/30 px-4 py-3">
         <div className="max-w-7xl mx-auto flex flex-col items-center gap-3">
           {/* Status pills row */}
           <div className="flex items-center gap-2 flex-wrap justify-center">
@@ -632,7 +637,7 @@ export default function PubDetail() {
                 openStatus.status === 'open'
                   ? 'bg-green-50 dark:bg-green-950 text-green-700 dark:text-green-300 border-green-200 dark:border-green-800'
                   : openStatus.status === 'closing_soon'
-                  ? 'bg-amber-50 dark:bg-amber-950 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-800'
+                  ? 'bg-orange-50 dark:bg-orange-950/20 text-primary dark:text-orange-400 border-orange-100 dark:border-orange-900/30'
                   : openStatus.status === 'opening_soon'
                   ? 'bg-blue-50 dark:bg-blue-950 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-800'
                   : 'bg-red-50 dark:bg-red-950 text-red-700 dark:text-red-300 border-red-200 dark:border-red-800'
@@ -641,7 +646,7 @@ export default function PubDetail() {
             >
               <span className={`w-2 h-2 rounded-full flex-shrink-0 ${
                 openStatus.status === 'open' ? 'bg-green-500' :
-                openStatus.status === 'closing_soon' ? 'bg-amber-500' :
+                openStatus.status === 'closing_soon' ? 'bg-primary' :
                 openStatus.status === 'opening_soon' ? 'bg-blue-500' : 'bg-red-500'
               }`} />
               {openStatus.status === 'open' && 'Aperto'}
@@ -656,7 +661,7 @@ export default function PubDetail() {
             {Array.isArray(tapList) && tapList.filter((t: any) => t.isActive && t.isVisible !== false).length > 0 && (
               <button
                 onClick={() => setActiveTab('taplist')}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-semibold bg-amber-50 dark:bg-amber-950 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-800 hover:bg-amber-100 dark:hover:bg-amber-900 transition-colors"
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-semibold bg-orange-50 dark:bg-orange-950/20 text-primary dark:text-orange-400 border border-orange-100 dark:border-orange-900/30 hover:bg-orange-100 dark:hover:bg-orange-950/10 transition-colors"
               >
                 <Wine className="h-3.5 w-3.5" />
                 {tapList.filter((t: any) => t.isActive && t.isVisible !== false).length} alla spina
@@ -674,7 +679,7 @@ export default function PubDetail() {
               className={`h-9 w-9 flex items-center justify-center rounded-full border transition-all ${
                 isFavorite
                   ? 'bg-red-50 dark:bg-red-950 border-red-200 dark:border-red-800 text-red-500'
-                  : 'bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700 text-gray-500 dark:text-gray-400 hover:border-red-200 hover:text-red-400'
+                  : 'bg-orange-50 dark:bg-orange-950/20 border-orange-100 dark:border-orange-900/30 text-primary dark:text-orange-400 hover:border-primary'
               }`}
             >
               <Heart className={`h-4 w-4 ${isFavorite ? 'fill-current' : ''}`} />
@@ -696,7 +701,7 @@ export default function PubDetail() {
               <a
                 href={`tel:${(pub as any).phone}`}
                 title="Chiama"
-                className="h-9 w-9 flex items-center justify-center rounded-full border bg-green-50 dark:bg-green-950 border-green-200 dark:border-green-800 text-green-600 dark:text-green-400 hover:bg-green-100 dark:hover:bg-green-900 transition-colors"
+                className="h-9 w-9 flex items-center justify-center rounded-full border bg-green-50 dark:bg-green-950 border-green-200 dark:border-green-800 text-green-600 dark:text-green-400 hover:bg-green-100 dark:hover:bg-blue-900 transition-colors"
               >
                 <Phone className="h-4 w-4" />
               </a>
@@ -706,7 +711,7 @@ export default function PubDetail() {
               onClick={handleShare}
               title="Condividi"
               data-testid="button-share"
-              className="h-9 w-9 flex items-center justify-center rounded-full border bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700 text-gray-500 dark:text-gray-400 hover:border-gray-300 transition-colors"
+              className="h-9 w-9 flex items-center justify-center rounded-full border bg-orange-50 dark:bg-orange-950/20 border-orange-100 dark:border-orange-900/30 text-primary dark:text-orange-400 hover:border-primary transition-colors"
             >
               <Share2 className="h-4 w-4" />
             </button>
@@ -716,7 +721,7 @@ export default function PubDetail() {
                 <button
                   title="Gestisci pub"
                   data-testid="button-manage"
-                  className="h-9 w-9 flex items-center justify-center rounded-full border bg-amber-50 dark:bg-amber-950 border-amber-200 dark:border-amber-800 text-amber-600 dark:text-amber-400 hover:bg-amber-100 dark:hover:bg-amber-900 transition-colors"
+                  className="h-9 w-9 flex items-center justify-center rounded-full border bg-primary text-white border-primary hover:bg-primary/90 transition-colors"
                 >
                   <Settings className="h-4 w-4" />
                 </button>
@@ -733,12 +738,12 @@ export default function PubDetail() {
           <div className="lg:col-span-3">
             {/* ── TABS ── sticky, underline style, clean */}
             <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-                <div className="z-10 bg-[hsl(38,14%,97%)] dark:bg-[hsl(25,14%,7%)] border-b border-gray-200 dark:border-gray-800">
+                <div className="z-10 bg-background border-b border-orange-50 dark:border-orange-900/30">
                 <TabsList className="flex w-full h-auto bg-transparent p-0 rounded-none shadow-none border-none overflow-x-auto scrollbar-hide">
                   <TabsTrigger 
                     value="taplist" 
                     data-testid="tab-taplist"
-                    className="relative flex items-center gap-1.5 px-4 py-3 text-sm font-medium whitespace-nowrap rounded-none bg-transparent border-none shadow-none transition-colors text-gray-400 dark:text-gray-500 data-[state=active]:text-[hsl(35,90%,40%)] dark:data-[state=active]:text-[hsl(38,88%,56%)] data-[state=active]:shadow-none data-[state=active]:bg-transparent after:absolute after:bottom-0 after:left-0 after:right-0 after:h-[2px] after:rounded-full after:bg-[hsl(35,90%,42%)] after:opacity-0 data-[state=active]:after:opacity-100 after:transition-opacity"
+                    className="relative flex items-center gap-1.5 px-4 py-3 text-sm font-medium whitespace-nowrap rounded-none bg-transparent border-none shadow-none transition-colors text-gray-400 dark:text-gray-500 data-[state=active]:text-primary dark:data-[state=active]:text-orange-400 data-[state=active]:shadow-none data-[state=active]:bg-transparent after:absolute after:bottom-0 after:left-0 after:right-0 after:h-[2px] after:rounded-full after:bg-primary after:opacity-0 data-[state=active]:after:opacity-100 after:transition-opacity"
                   >
                     <Wine className="h-3.5 w-3.5 flex-shrink-0" />
                     Spina
@@ -751,7 +756,7 @@ export default function PubDetail() {
                   <TabsTrigger 
                     value="bottles" 
                     data-testid="tab-bottles"
-                    className="relative flex items-center gap-1.5 px-4 py-3 text-sm font-medium whitespace-nowrap rounded-none bg-transparent border-none shadow-none transition-colors text-gray-400 dark:text-gray-500 data-[state=active]:text-[hsl(35,90%,40%)] dark:data-[state=active]:text-[hsl(38,88%,56%)] data-[state=active]:shadow-none data-[state=active]:bg-transparent after:absolute after:bottom-0 after:left-0 after:right-0 after:h-[2px] after:rounded-full after:bg-[hsl(35,90%,42%)] after:opacity-0 data-[state=active]:after:opacity-100 after:transition-opacity"
+                    className="relative flex items-center gap-1.5 px-4 py-3 text-sm font-medium whitespace-nowrap rounded-none bg-transparent border-none shadow-none transition-colors text-gray-400 dark:text-gray-500 data-[state=active]:text-primary dark:data-[state=active]:text-orange-400 data-[state=active]:shadow-none data-[state=active]:bg-transparent after:absolute after:bottom-0 after:left-0 after:right-0 after:h-[2px] after:rounded-full after:bg-primary after:opacity-0 data-[state=active]:after:opacity-100 after:transition-opacity"
                   >
                     <Sparkles className="h-3.5 w-3.5 flex-shrink-0" />
                     Cantina
@@ -759,7 +764,7 @@ export default function PubDetail() {
                   <TabsTrigger 
                     value="menu" 
                     data-testid="tab-menu"
-                    className="relative flex items-center gap-1.5 px-4 py-3 text-sm font-medium whitespace-nowrap rounded-none bg-transparent border-none shadow-none transition-colors text-gray-400 dark:text-gray-500 data-[state=active]:text-[hsl(35,90%,40%)] dark:data-[state=active]:text-[hsl(38,88%,56%)] data-[state=active]:shadow-none data-[state=active]:bg-transparent after:absolute after:bottom-0 after:left-0 after:right-0 after:h-[2px] after:rounded-full after:bg-[hsl(35,90%,42%)] after:opacity-0 data-[state=active]:after:opacity-100 after:transition-opacity"
+                    className="relative flex items-center gap-1.5 px-4 py-3 text-sm font-medium whitespace-nowrap rounded-none bg-transparent border-none shadow-none transition-colors text-gray-400 dark:text-gray-500 data-[state=active]:text-primary dark:data-[state=active]:text-orange-400 data-[state=active]:shadow-none data-[state=active]:bg-transparent after:absolute after:bottom-0 after:left-0 after:right-0 after:h-[2px] after:rounded-full after:bg-primary after:opacity-0 data-[state=active]:after:opacity-100 after:transition-opacity"
                   >
                     <span className="flex-shrink-0 leading-none">🍽️</span>
                     Menù
@@ -768,7 +773,7 @@ export default function PubDetail() {
                     <TabsTrigger 
                       value="events" 
                       data-testid="tab-events"
-                      className="relative flex items-center gap-1.5 px-4 py-3 text-sm font-medium whitespace-nowrap rounded-none bg-transparent border-none shadow-none transition-colors text-gray-400 dark:text-gray-500 data-[state=active]:text-[hsl(35,90%,40%)] dark:data-[state=active]:text-[hsl(38,88%,56%)] data-[state=active]:shadow-none data-[state=active]:bg-transparent after:absolute after:bottom-0 after:left-0 after:right-0 after:h-[2px] after:rounded-full after:bg-[hsl(35,90%,42%)] after:opacity-0 data-[state=active]:after:opacity-100 after:transition-opacity"
+                      className="relative flex items-center gap-1.5 px-4 py-3 text-sm font-medium whitespace-nowrap rounded-none bg-transparent border-none shadow-none transition-colors text-gray-400 dark:text-gray-500 data-[state=active]:text-primary dark:data-[state=active]:text-orange-400 data-[state=active]:shadow-none data-[state=active]:bg-transparent after:absolute after:bottom-0 after:left-0 after:right-0 after:h-[2px] after:rounded-full after:bg-primary after:opacity-0 data-[state=active]:after:opacity-100 after:transition-opacity"
                     >
                       <Calendar className="h-3.5 w-3.5 flex-shrink-0" />
                       Serate
@@ -778,7 +783,7 @@ export default function PubDetail() {
                   <TabsTrigger 
                     value="info" 
                     data-testid="tab-info"
-                    className="lg:hidden relative flex items-center gap-1.5 px-4 py-3 text-sm font-medium whitespace-nowrap rounded-none bg-transparent border-none shadow-none transition-colors text-gray-400 dark:text-gray-500 data-[state=active]:text-[hsl(35,90%,40%)] dark:data-[state=active]:text-[hsl(38,88%,56%)] data-[state=active]:shadow-none data-[state=active]:bg-transparent after:absolute after:bottom-0 after:left-0 after:right-0 after:h-[2px] after:rounded-full after:bg-[hsl(35,90%,42%)] after:opacity-0 data-[state=active]:after:opacity-100 after:transition-opacity"
+                    className="lg:hidden relative flex items-center gap-1.5 px-4 py-3 text-sm font-medium whitespace-nowrap rounded-none bg-transparent border-none shadow-none transition-colors text-gray-400 dark:text-gray-500 data-[state=active]:text-primary dark:data-[state=active]:text-orange-400 data-[state=active]:shadow-none data-[state=active]:bg-transparent after:absolute after:bottom-0 after:left-0 after:right-0 after:h-[2px] after:rounded-full after:bg-primary after:opacity-0 data-[state=active]:after:opacity-100 after:transition-opacity"
                   >
                     <Info className="h-3.5 w-3.5 flex-shrink-0" />
                     Info
@@ -904,8 +909,8 @@ export default function PubDetail() {
                   {/* Address */}
                   {(pub as any)?.address && (
                     <div className="flex items-start gap-3">
-                      <div className="p-2.5 rounded-xl bg-amber-100 dark:bg-amber-900/40 flex-shrink-0">
-                        <MapPin className="h-4 w-4 text-amber-600 dark:text-amber-400" />
+                      <div className="p-2.5 rounded-xl bg-orange-50 dark:bg-orange-950/20 flex-shrink-0">
+                        <MapPin className="h-4 w-4 text-primary dark:text-orange-400" />
                       </div>
                       <div className="flex-1 min-w-0 pt-0.5">
                         <p className="text-sm font-semibold text-gray-900 dark:text-white">{(pub as any).address}</p>
@@ -924,14 +929,14 @@ export default function PubDetail() {
                   {/* Hours */}
                   <button
                     onClick={handleShowOpeningHours}
-                    className="w-full flex items-center gap-3 p-3 rounded-xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600 transition-colors text-left"
+                    className="w-full flex items-center gap-3 p-3 rounded-xl bg-white dark:bg-[hsl(25,14%,10%)] border border-orange-50 dark:border-[hsl(25,12%,16%)] hover:bg-orange-50 dark:hover:bg-orange-950/10 transition-colors text-left shadow-sm"
                   >
                     <div className="p-2.5 rounded-xl bg-blue-100 dark:bg-blue-900/40 flex-shrink-0">
                       <Clock className="h-4 w-4 text-blue-600 dark:text-blue-400" />
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-semibold text-gray-900 dark:text-white">Orari di apertura</p>
-                      <p className={`text-xs mt-0.5 font-medium ${openStatus.status === 'open' ? 'text-green-600' : openStatus.status === 'closing_soon' ? 'text-amber-600' : 'text-red-600'}`}>
+                      <p className={`text-xs mt-0.5 font-medium ${openStatus.status === 'open' ? 'text-green-600' : openStatus.status === 'closing_soon' ? 'text-primary' : 'text-red-600'}`}>
                         {openStatus.status === 'open' ? 'Aperto adesso' : openStatus.status === 'closing_soon' ? 'Sta chiudendo' : openStatus.status === 'opening_soon' ? 'Sta per aprire' : 'Chiuso'}
                       </p>
                     </div>
@@ -939,7 +944,7 @@ export default function PubDetail() {
                   </button>
                   {/* Phone */}
                   {(pub as any)?.phone && (
-                    <a href={`tel:${(pub as any).phone}`} className="flex items-center gap-3 p-3 rounded-xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 hover:border-green-300 dark:hover:border-green-700 transition-colors">
+                    <a href={`tel:${(pub as any).phone}`} className="flex items-center gap-3 p-3 rounded-xl bg-white dark:bg-[hsl(25,14%,10%)] border border-orange-50 dark:border-[hsl(25,12%,16%)] hover:bg-orange-50 dark:hover:bg-orange-950/10 transition-colors shadow-sm">
                       <div className="p-2.5 rounded-xl bg-green-100 dark:bg-green-900/40 flex-shrink-0">
                         <Phone className="h-4 w-4 text-green-600 dark:text-green-400" />
                       </div>
@@ -948,7 +953,7 @@ export default function PubDetail() {
                   )}
                   {/* Website */}
                   {(pub as any)?.websiteUrl && (
-                    <a href={(pub as any).websiteUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 p-3 rounded-xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 hover:border-purple-300 dark:hover:border-purple-700 transition-colors">
+                    <a href={(pub as any).websiteUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 p-3 rounded-xl bg-white dark:bg-[hsl(25,14%,10%)] border border-orange-50 dark:border-[hsl(25,12%,16%)] hover:bg-orange-50 dark:hover:bg-orange-950/10 transition-colors shadow-sm">
                       <div className="p-2.5 rounded-xl bg-purple-100 dark:bg-purple-900/40 flex-shrink-0">
                         <Globe className="h-4 w-4 text-purple-600 dark:text-purple-400" />
                       </div>
@@ -957,7 +962,7 @@ export default function PubDetail() {
                   )}
                   {/* Email */}
                   {(pub as any)?.email && (
-                    <a href={`mailto:${(pub as any).email}`} className="flex items-center gap-3 p-3 rounded-xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 hover:border-red-300 dark:hover:border-red-700 transition-colors">
+                    <a href={`mailto:${(pub as any).email}`} className="flex items-center gap-3 p-3 rounded-xl bg-white dark:bg-[hsl(25,14%,10%)] border border-orange-50 dark:border-[hsl(25,12%,16%)] hover:bg-orange-50 dark:hover:bg-orange-950/10 transition-colors shadow-sm">
                       <div className="p-2.5 rounded-xl bg-red-100 dark:bg-red-900/40 flex-shrink-0">
                         <Mail className="h-4 w-4 text-red-600 dark:text-red-400" />
                       </div>
@@ -969,13 +974,13 @@ export default function PubDetail() {
                     <div className="flex gap-3">
                       {(pub as any)?.facebookUrl && (
                         <a href={(pub as any).facebookUrl} target="_blank" rel="noopener noreferrer"
-                          className="flex-1 flex items-center justify-center gap-2 p-3 rounded-xl bg-blue-500 hover:bg-blue-600 text-white text-sm font-semibold transition-colors">
+                          className="flex-1 flex items-center justify-center gap-2 p-3 rounded-xl bg-blue-500 hover:bg-blue-600 text-white text-sm font-semibold transition-colors shadow-sm">
                           <Facebook size={16} /> Facebook
                         </a>
                       )}
                       {(pub as any)?.instagramUrl && (
                         <a href={(pub as any).instagramUrl} target="_blank" rel="noopener noreferrer"
-                          className="flex-1 flex items-center justify-center gap-2 p-3 rounded-xl bg-pink-500 hover:bg-pink-600 text-white text-sm font-semibold transition-colors">
+                          className="flex-1 flex items-center justify-center gap-2 p-3 rounded-xl bg-pink-500 hover:bg-pink-600 text-white text-sm font-semibold transition-colors shadow-sm">
                           <Instagram size={16} /> Instagram
                         </a>
                       )}
@@ -983,7 +988,7 @@ export default function PubDetail() {
                   )}
                   {/* Description */}
                   {(pub as any)?.description && (
-                    <div className="p-4 rounded-xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700">
+                    <div className="p-4 rounded-xl bg-white dark:bg-[hsl(25,14%,10%)] border border-orange-50 dark:border-[hsl(25,12%,16%)] shadow-sm">
                       <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">{(pub as any).description}</p>
                     </div>
                   )}
@@ -994,10 +999,10 @@ export default function PubDetail() {
           {/* Sidebar – desktop only */}
           <div className="hidden lg:block space-y-5 pt-4 pl-6 pr-4 sticky top-[136px] self-start">
             {/* Contact Information */}
-            <Card className="modern-card rounded-2xl overflow-hidden">
-              <CardHeader className="bg-gradient-to-r from-gray-50 to-blue-50 dark:from-gray-800 dark:to-blue-900 border-b">
+            <Card className="bg-white dark:bg-[hsl(25,14%,10%)] rounded-2xl border border-orange-50 dark:border-[hsl(25,12%,16%)] shadow-sm overflow-hidden">
+              <CardHeader className="bg-orange-50/50 dark:bg-orange-950/10 border-b border-orange-50 dark:border-orange-900/30">
                 <CardTitle className="flex items-center">
-                  <Info className="mr-3 h-5 w-5 text-blue-600" />
+                  <Info className="mr-3 h-5 w-5 text-primary" />
                   <span className="text-lg">Informazioni</span>
                 </CardTitle>
               </CardHeader>
@@ -1005,8 +1010,8 @@ export default function PubDetail() {
                 {/* Address with Maps button */}
                 {(pub as any)?.address && (
                   <div className="flex items-start space-x-3">
-                    <div className="p-2 rounded-lg bg-amber-100 dark:bg-amber-900 flex-shrink-0">
-                      <MapPin className="h-4 w-4 text-amber-600 dark:text-amber-400" />
+                    <div className="p-2 rounded-lg bg-orange-50 dark:bg-orange-950/20 flex-shrink-0">
+                      <MapPin className="h-4 w-4 text-primary dark:text-orange-400" />
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="font-medium text-gray-900 dark:text-white text-sm">{(pub as any).address}</p>
@@ -1026,12 +1031,12 @@ export default function PubDetail() {
                 {/* Phone */}
                 {(pub as any)?.phone && (
                   <div className="flex items-center space-x-3">
-                    <div className="p-2 rounded-lg bg-green-100 dark:bg-green-900">
+                    <div className="p-2 rounded-lg bg-green-50 dark:bg-green-950/20">
                       <Phone className="h-4 w-4 text-green-600 dark:text-green-400" />
                     </div>
                     <a 
                       href={`tel:${(pub as any).phone}`} 
-                      className="font-medium text-gray-900 dark:text-white hover:text-primary transition-colors"
+                      className="font-medium text-gray-900 dark:text-white hover:text-primary transition-colors text-sm"
                     >
                       {(pub as any).phone}
                     </a>
@@ -1041,14 +1046,14 @@ export default function PubDetail() {
                 {/* Website */}
                 {(pub as any)?.websiteUrl && (
                   <div className="flex items-center space-x-3">
-                    <div className="p-2 rounded-lg bg-purple-100 dark:bg-purple-900">
+                    <div className="p-2 rounded-lg bg-purple-50 dark:bg-purple-950/20">
                       <Globe className="h-4 w-4 text-purple-600 dark:text-purple-400" />
                     </div>
                     <a 
                       href={(pub as any).websiteUrl} 
                       target="_blank" 
                       rel="noopener noreferrer"
-                      className="font-medium text-gray-900 dark:text-white hover:text-primary transition-colors"
+                      className="font-medium text-gray-900 dark:text-white hover:text-primary transition-colors text-sm"
                     >
                       Visita il Sito Web
                     </a>
@@ -1058,12 +1063,12 @@ export default function PubDetail() {
                 {/* Email */}
                 {(pub as any)?.email && (
                   <div className="flex items-center space-x-3">
-                    <div className="p-2 rounded-lg bg-red-100 dark:bg-red-900">
+                    <div className="p-2 rounded-lg bg-red-50 dark:bg-red-950/20">
                       <Mail className="h-4 w-4 text-red-600 dark:text-red-400" />
                     </div>
                     <a 
                       href={`mailto:${(pub as any).email}`} 
-                      className="font-medium text-gray-900 dark:text-white hover:text-primary transition-colors break-all"
+                      className="font-medium text-gray-900 dark:text-white hover:text-primary transition-colors break-all text-sm"
                     >
                       {(pub as any).email}
                     </a>
@@ -1072,7 +1077,7 @@ export default function PubDetail() {
 
                 {/* Social Media */}
                 {((pub as any)?.facebookUrl || (pub as any)?.instagramUrl) && (
-                  <div className="space-y-3">
+                  <div className="space-y-3 pt-4 border-t border-orange-50 dark:border-orange-900/30">
                     <h4 className="font-semibold text-gray-900 dark:text-white text-sm">Seguici</h4>
                     <div className="flex space-x-3">
                       {(pub as any)?.facebookUrl && (
@@ -1105,7 +1110,7 @@ export default function PubDetail() {
 
             {/* Opening Hours Button */}
             <Button 
-              className="w-full bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 transition-all duration-300 rounded-xl shadow-lg" 
+              className="w-full bg-primary hover:bg-primary/90 text-white transition-all duration-300 rounded-xl shadow-lg h-12 font-bold" 
               size="lg"
               onClick={handleShowOpeningHours}
               data-testid="button-show-hours"

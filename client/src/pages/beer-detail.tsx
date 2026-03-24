@@ -407,7 +407,7 @@ export default function BeerDetail() {
           description: "Puoi annullare entro 5 secondi",
           action: (
             <button
-              className="text-xs font-semibold text-amber-600 hover:text-amber-700 underline underline-offset-2"
+              className="text-xs font-semibold text-primary dark:text-orange-400 hover:text-primary dark:text-orange-400 underline underline-offset-2"
               onClick={() => favoriteMutation.mutate({ itemType, itemId, action: 'remove' })}
             >
               Annulla
@@ -479,7 +479,7 @@ export default function BeerDetail() {
 
   if (beerLoading) {
     return (
-      <div className="min-h-screen bg-[hsl(38,14%,97%)] dark:bg-[hsl(25,14%,7%)]">
+      <div className="min-h-screen bg-background ">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div className="space-y-8">
             <div className="skeleton rounded-2xl h-80 md:h-96"></div>
@@ -528,7 +528,7 @@ export default function BeerDetail() {
   const seoUrl = `https://fermenta.to/beer/${id}`;
 
   return (
-    <div className="min-h-screen bg-[hsl(38,14%,97%)] dark:bg-[hsl(25,14%,7%)]">
+    <div className="min-h-screen bg-background ">
       <Helmet>
         <title>{seoTitle}</title>
         <meta name="description" content={seoDesc} />
@@ -559,7 +559,7 @@ export default function BeerDetail() {
             className="w-full h-full object-cover"
           />
         ) : (
-          <div className="w-full h-full bg-gradient-to-br from-amber-600 via-orange-500 to-red-600" />
+          <div className="w-full h-full bg-gradient-to-br from-[hsl(24,93%,49%)] to-[hsl(20,95%,42%)]" />
         )}
         <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/30 to-transparent" />
         <div className="absolute bottom-0 left-0 right-0 px-4 pb-4 flex items-end gap-3">
@@ -588,7 +588,7 @@ export default function BeerDetail() {
             <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
               {beer?.brewery && (
                 <Link href={`/brewery/${beer.brewery.id}`}>
-                  <span className="text-white/80 text-sm hover:text-amber-300 transition-colors font-medium">{beer.brewery.name}</span>
+                  <span className="text-white/80 text-sm hover:text-primary transition-colors font-medium">{beer.brewery.name}</span>
                 </Link>
               )}
               {beerCollabs.length > 0 && (
@@ -611,7 +611,7 @@ export default function BeerDetail() {
       </div>
 
       {/* ── INFO BAR ── */}
-      <div className="bg-white dark:bg-[hsl(25,14%,10%)] border-b border-gray-100 dark:border-gray-800 px-4 py-3">
+      <div className="bg-white dark:bg-[hsl(25,14%,10%)] rounded-2xl border border-orange-50 shadow-sm border-b  px-4 py-3">
         <div className="max-w-7xl mx-auto flex flex-col items-center gap-3">
           {/* Info pills */}
           <div className="flex items-center gap-2 flex-wrap justify-center">
@@ -712,7 +712,7 @@ export default function BeerDetail() {
                 onClick={openEditDialog}
                 title="Modifica birra"
                 data-testid="button-admin-edit-beer"
-                className="h-9 w-9 flex items-center justify-center rounded-full border bg-amber-50 dark:bg-amber-950 border-amber-200 dark:border-amber-800 text-amber-600 dark:text-amber-400 hover:bg-amber-100 dark:hover:bg-amber-900 transition-colors"
+                className="h-9 w-9 flex items-center justify-center rounded-full border bg-orange-50 dark:bg-orange-950/20 dark:bg-orange-950/30 border-orange-100 dark:border-orange-900/30 dark:border-orange-900/30 text-primary dark:text-orange-400 dark:text-orange-400 hover:bg-orange-50 dark:bg-orange-950/20 dark:hover:bg-orange-950/10 transition-colors"
               >
                 <Pencil className="h-4 w-4" />
               </button>
@@ -733,7 +733,7 @@ export default function BeerDetail() {
 
       <main className="max-w-7xl mx-auto pb-12">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <div className="z-10 bg-[hsl(38,14%,97%)] dark:bg-[hsl(25,14%,7%)] border-b border-gray-200 dark:border-gray-800">
+          <div className="z-10 bg-background  border-b border-gray-200 dark:border-gray-800">
             <TabsList className="flex w-full h-auto bg-transparent p-0 rounded-none shadow-none border-none overflow-x-auto scrollbar-hide">
               <TabsTrigger
                 value="scheda"
@@ -781,9 +781,9 @@ export default function BeerDetail() {
                 </div>
               )}
               {beer?.ibu && (
-                <div className="rounded-xl p-3 bg-amber-50 dark:bg-amber-950/40 border border-amber-100 dark:border-amber-900/50 flex items-center gap-2.5">
-                  <Wheat className="h-4 w-4 text-amber-500 flex-shrink-0" />
-                  <div><p className="text-[10px] uppercase tracking-wider font-semibold text-amber-400 dark:text-amber-500">IBU</p><p className="text-sm font-bold text-gray-900 dark:text-white">{beer.ibu}</p></div>
+                <div className="rounded-xl p-3 bg-orange-50 dark:bg-orange-950/20 dark:bg-orange-950/30/40 border border-orange-100 dark:border-orange-900/30 flex items-center gap-2.5">
+                  <Wheat className="h-4 w-4 text-primary dark:text-orange-400 flex-shrink-0" />
+                  <div><p className="text-[10px] uppercase tracking-wider font-semibold text-primary dark:text-orange-400 dark:text-orange-400">IBU</p><p className="text-sm font-bold text-gray-900 dark:text-white">{beer.ibu}</p></div>
                 </div>
               )}
             </div>
@@ -812,7 +812,7 @@ export default function BeerDetail() {
                     <summary className="text-xs text-gray-400 cursor-pointer hover:text-gray-600 dark:hover:text-gray-300 select-none">
                       Testo originale
                     </summary>
-                    <p className="mt-2 text-sm text-gray-500 dark:text-gray-400 leading-relaxed whitespace-pre-line border-t border-gray-100 dark:border-gray-800 pt-2">
+                    <p className="mt-2 text-sm text-gray-500 dark:text-gray-400 leading-relaxed whitespace-pre-line border-t  pt-2">
                       {String(beer.description)}
                     </p>
                   </details>
@@ -823,21 +823,21 @@ export default function BeerDetail() {
             {/* Brewery info */}
             {beer?.brewery && (
               <>
-                <div className="border-t border-gray-100 dark:border-gray-800" />
+                <div className="border-t " />
                 <Link href={`/brewery/${beer.brewery.id}`}>
                   <div className="flex items-center gap-4 group cursor-pointer">
-                    <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-amber-50 to-orange-100 dark:from-amber-900/30 dark:to-orange-900/30 border border-amber-100 dark:border-amber-800/40 flex items-center justify-center flex-shrink-0 overflow-hidden">
+                    <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-orange-50 to-orange-100 dark:from-orange-950/30 dark:to-orange-900/30 border border-orange-100 dark:border-orange-900/30 flex items-center justify-center flex-shrink-0 overflow-hidden">
                       {(beer.brewery as any).logoUrl
                         ? <img src={(beer.brewery as any).logoUrl} alt={beer.brewery.name} className="w-full h-full object-contain p-1" />
-                        : <Building2 className="h-6 w-6 text-amber-400 dark:text-amber-500" />
+                        : <Building2 className="h-6 w-6 text-primary dark:text-orange-400 dark:text-orange-400" />
                       }
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="text-[10px] uppercase tracking-wider font-bold text-gray-400 dark:text-gray-500 mb-0.5">Birrificio</p>
-                      <p className="text-base font-bold text-gray-900 dark:text-white group-hover:text-amber-600 dark:group-hover:text-amber-400 transition-colors truncate">{beer.brewery.name}</p>
+                      <p className="text-base font-bold text-gray-900 dark:text-white group-hover:text-primary dark:text-orange-400 dark:group-hover:text-orange-400 transition-colors truncate">{beer.brewery.name}</p>
                       {beer.brewery.location && <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5 flex items-center gap-1"><MapPin className="h-3 w-3" />{beer.brewery.location}</p>}
                     </div>
-                    <ChevronRight className="h-5 w-5 text-gray-300 dark:text-gray-600 group-hover:text-amber-500 transition-colors flex-shrink-0" />
+                    <ChevronRight className="h-5 w-5 text-gray-300 dark:text-gray-600 group-hover:text-primary dark:text-orange-400 transition-colors flex-shrink-0" />
                   </div>
                 </Link>
               </>
@@ -846,7 +846,7 @@ export default function BeerDetail() {
             {/* Awards / Premi */}
             {(beer as any)?.awards && (beer as any).awards.length > 0 && (
               <>
-                <div className="border-t border-gray-100 dark:border-gray-800" />
+                <div className="border-t " />
                 <div>
                   <div className="flex items-center gap-2 mb-3">
                     <Trophy className="h-4 w-4 text-yellow-500" />
@@ -854,8 +854,8 @@ export default function BeerDetail() {
                   </div>
                   <div className="flex flex-wrap gap-2">
                     {(beer as any).awards.map((award: any, i: number) => (
-                      <div key={i} className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-gradient-to-r from-yellow-50 to-amber-50 dark:from-yellow-950/40 dark:to-amber-950/40 border border-yellow-200 dark:border-yellow-800/50 text-sm">
-                        <Trophy className={`h-3.5 w-3.5 flex-shrink-0 ${award.type === 'gold' ? 'text-yellow-500' : award.type === 'silver' ? 'text-gray-400' : award.type === 'bronze' ? 'text-amber-700' : 'text-blue-500'}`} />
+                      <div key={i} className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-gradient-to-r from-orange-50 to-orange-50 dark:from-orange-950/20 dark:to-orange-950/20 border border-yellow-200 dark:border-yellow-800/50 text-sm">
+                        <Trophy className={`h-3.5 w-3.5 flex-shrink-0 ${award.type === 'gold' ? 'text-yellow-500' : award.type === 'silver' ? 'text-gray-400' : award.type === 'bronze' ? 'text-primary dark:text-orange-400' : 'text-blue-500'}`} />
                         <span className="font-semibold text-gray-900 dark:text-white">{award.name}</span>
                         <span className="text-gray-500 dark:text-gray-400">·</span>
                         <span className="text-gray-600 dark:text-gray-400 text-xs">{award.competition}</span>
@@ -870,28 +870,28 @@ export default function BeerDetail() {
             {/* Potrebbe piacerti */}
             {suggestedBeers.length > 0 && (
               <>
-                <div className="border-t border-gray-100 dark:border-gray-800" />
+                <div className="border-t " />
                 <div>
                   <div className="flex items-center gap-2 mb-4">
-                    <Sparkles className="h-4 w-4 text-amber-500" />
+                    <Sparkles className="h-4 w-4 text-primary dark:text-orange-400" />
                     <h3 className="text-xs font-bold uppercase tracking-wider text-gray-400 dark:text-gray-500">Potrebbe piacerti</h3>
                   </div>
                   <div className="space-y-1">
                     {suggestedBeers.map((sb: any) => (
                       <Link key={sb.id} href={`/beer/${sb.id}`}>
                         <div className="flex items-center gap-3 py-2.5 px-3 -mx-3 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors group">
-                          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-100 to-orange-100 dark:from-amber-900/30 dark:to-orange-900/30 flex items-center justify-center flex-shrink-0 overflow-hidden border border-amber-100 dark:border-amber-900/30">
+                          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-orange-50 to-orange-100 dark:from-orange-950/30 dark:to-orange-900/30 flex items-center justify-center flex-shrink-0 overflow-hidden border border-orange-100 dark:border-orange-900/30">
                             {sb.imageUrl
                               ? <img src={sb.imageUrl} alt={sb.name} className="w-full h-full object-cover" />
-                              : <BeerIcon className="h-4 w-4 text-amber-400" />
+                              : <BeerIcon className="h-4 w-4 text-primary dark:text-orange-400" />
                             }
                           </div>
                           <div className="flex-1 min-w-0">
-                            <p className="text-sm font-semibold text-gray-900 dark:text-white group-hover:text-amber-600 dark:group-hover:text-amber-400 transition-colors truncate">{sb.name}</p>
+                            <p className="text-sm font-semibold text-gray-900 dark:text-white group-hover:text-primary dark:text-orange-400 dark:group-hover:text-orange-400 transition-colors truncate">{sb.name}</p>
                             {sb.style && <p className="text-xs text-gray-500 dark:text-gray-400 truncate mt-0.5">{sb.style}{sb.abv ? ` · ${sb.abv}%` : ''}</p>}
                           </div>
                           {sb.avgRating != null && (
-                            <div className="flex items-center gap-0.5 text-xs font-bold text-amber-600 dark:text-amber-400 flex-shrink-0 bg-amber-50 dark:bg-amber-900/30 px-2 py-0.5 rounded-full">
+                            <div className="flex items-center gap-0.5 text-xs font-bold text-primary dark:text-orange-400 dark:text-orange-400 flex-shrink-0 bg-orange-50 dark:bg-orange-950/20 dark:bg-orange-950/30 px-2 py-0.5 rounded-full">
                               <Star className="h-3 w-3 fill-current" />
                               {sb.avgRating.toFixed(1)}
                             </div>
@@ -923,15 +923,15 @@ export default function BeerDetail() {
                 {tapLocations.length > 0 && (
                   <div>
                     <h3 className="text-sm font-bold text-gray-700 dark:text-gray-300 mb-3 flex items-center gap-2">
-                      <Wine className="h-4 w-4 text-amber-500" />
+                      <Wine className="h-4 w-4 text-primary dark:text-orange-400" />
                       Alla Spina ({tapLocations.length})
                     </h3>
                     <div className="space-y-2">
                       {tapLocations.map((location: any, idx: number) => (
                         <Link key={idx} href={`/pub/${location.pub.id}`}>
-                          <div className="bg-white dark:bg-[hsl(25,14%,10%)] rounded-xl p-4 border border-gray-100 dark:border-gray-800 hover:border-amber-200 dark:hover:border-amber-800 transition-colors flex items-center justify-between group">
+                          <div className="bg-white dark:bg-[hsl(25,14%,10%)] rounded-2xl border border-orange-50 shadow-sm rounded-xl p-4 border  hover:border-orange-100 dark:border-orange-900/30 dark:hover:border-orange-900/30 transition-colors flex items-center justify-between group">
                             <div>
-                              <h4 className="font-semibold text-sm text-gray-900 dark:text-white group-hover:text-amber-600 dark:group-hover:text-amber-400 transition-colors">{location.pub.name}</h4>
+                              <h4 className="font-semibold text-sm text-gray-900 dark:text-white group-hover:text-primary dark:text-orange-400 dark:group-hover:text-orange-400 transition-colors">{location.pub.name}</h4>
                               <p className="text-xs text-gray-500 dark:text-gray-400">{location.pub.address}, {location.pub.city}</p>
                             </div>
                             {location.tapItem.price && (
@@ -952,7 +952,7 @@ export default function BeerDetail() {
                     <div className="space-y-2">
                       {bottleLocations.map((location: any, idx: number) => (
                         <Link key={idx} href={`/pub/${location.pub.id}`}>
-                          <div className="bg-white dark:bg-[hsl(25,14%,10%)] rounded-xl p-4 border border-gray-100 dark:border-gray-800 hover:border-blue-200 dark:hover:border-blue-800 transition-colors flex items-center justify-between group">
+                          <div className="bg-white dark:bg-[hsl(25,14%,10%)] rounded-2xl border border-orange-50 shadow-sm rounded-xl p-4 border  hover:border-blue-200 dark:hover:border-blue-800 transition-colors flex items-center justify-between group">
                             <div>
                               <h4 className="font-semibold text-sm text-gray-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">{location.pub.name}</h4>
                               <p className="text-xs text-gray-500 dark:text-gray-400">{location.pub.address}, {location.pub.city}</p>
@@ -974,10 +974,10 @@ export default function BeerDetail() {
           <TabsContent value="recensioni" className="px-4 lg:px-6 pt-6 pb-8 space-y-6">
             {/* My tasting note */}
             {isAuthenticated && (
-              <div className="bg-white dark:bg-[hsl(25,14%,10%)] rounded-xl p-5 border border-gray-100 dark:border-gray-800">
+              <div className="bg-white dark:bg-[hsl(25,14%,10%)] rounded-2xl border border-orange-50 shadow-sm rounded-xl p-5 border ">
                 <div className="flex items-center justify-between mb-4">
                   <h2 className="text-base font-bold text-gray-900 dark:text-white flex items-center gap-2">
-                    <Star className="h-4 w-4 text-amber-500" />
+                    <Star className="h-4 w-4 text-primary dark:text-orange-400" />
                     La mia nota
                   </h2>
                   {hasTasted && !showTastingForm && (
@@ -1028,7 +1028,7 @@ export default function BeerDetail() {
 
             {/* Community Reviews */}
             {reviewsData && reviewsData.reviewCount > 0 && (
-              <div className="bg-white dark:bg-[hsl(25,14%,10%)] rounded-xl p-5 border border-gray-100 dark:border-gray-800">
+              <div className="bg-white dark:bg-[hsl(25,14%,10%)] rounded-2xl border border-orange-50 shadow-sm rounded-xl p-5 border ">
                 {/* Header with avg rating */}
                 <div className="flex items-center justify-between mb-4">
                   <h2 className="text-base font-bold text-gray-900 dark:text-white flex items-center gap-2">
@@ -1057,7 +1057,7 @@ export default function BeerDetail() {
                       <button
                         key={star}
                         onClick={() => { setReviewFilterRating(isActive ? null : star); setShowAllReviews(false); }}
-                        className={`flex items-center gap-3 w-full rounded-lg px-1 py-0.5 transition-colors ${isActive ? 'bg-amber-100 dark:bg-amber-900/30' : 'hover:bg-gray-100 dark:hover:bg-gray-700/50'}`}
+                        className={`flex items-center gap-3 w-full rounded-lg px-1 py-0.5 transition-colors ${isActive ? 'bg-orange-50 dark:bg-orange-950/20 dark:bg-orange-950/30' : 'hover:bg-gray-100 dark:hover:bg-gray-700/50'}`}
                       >
                         <div className="flex items-center gap-1 w-12 flex-shrink-0">
                           <span className="text-xs font-medium text-gray-600 dark:text-gray-400 w-3">{star}</span>
@@ -1065,7 +1065,7 @@ export default function BeerDetail() {
                         </div>
                         <div className="flex-1 h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
                           <div
-                            className={`h-full rounded-full transition-all duration-500 ${isActive ? 'bg-amber-500' : 'bg-gradient-to-r from-yellow-400 to-amber-500'}`}
+                            className={`h-full rounded-full transition-all duration-500 ${isActive ? 'bg-primary' : 'bg-gradient-to-r from-yellow-400 to-orange-500'}`}
                             style={{ width: `${pct}%` }}
                           />
                         </div>
@@ -1085,7 +1085,7 @@ export default function BeerDetail() {
                 {reviewFilterRating !== null && (
                   <button
                     onClick={() => setReviewFilterRating(null)}
-                    className="flex items-center gap-1 text-xs bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 px-2.5 py-1 rounded-full font-medium border border-amber-200 dark:border-amber-800 hover:bg-amber-200 dark:hover:bg-amber-800/50 transition-colors"
+                    className="flex items-center gap-1 text-xs bg-orange-50 dark:bg-orange-950/20 dark:bg-orange-950/30 text-primary dark:text-orange-400 dark:text-primary px-2.5 py-1 rounded-full font-medium border border-orange-100 dark:border-orange-900/30 dark:border-orange-900/30 hover:bg-orange-50 dark:hover:bg-orange-950/10 transition-colors"
                   >
                     {reviewFilterRating}★ <X className="h-3 w-3" />
                   </button>
@@ -1119,7 +1119,7 @@ export default function BeerDetail() {
                     <div key={review.id} className="flex gap-3 p-3 bg-gray-50 dark:bg-gray-800/50 rounded-xl group">
                       <Avatar className="h-9 w-9 flex-shrink-0">
                         {review.profileImageUrl && <AvatarImage src={review.profileImageUrl} />}
-                        <AvatarFallback className="bg-gradient-to-br from-amber-400 to-orange-500 text-white font-bold text-sm">
+                        <AvatarFallback className="bg-gradient-to-br from-[hsl(24,93%,49%)] to-[hsl(20,95%,42%)] text-white font-bold text-sm">
                           {initials}
                         </AvatarFallback>
                       </Avatar>
@@ -1128,7 +1128,7 @@ export default function BeerDetail() {
                           <div className="flex items-center gap-1.5 min-w-0">
                             {isPublicReviewer ? (
                               <Link href={`/user/${review.nickname || review.userId}`}>
-                                <span className="font-semibold text-sm text-gray-900 dark:text-white hover:text-amber-600 dark:hover:text-amber-400 cursor-pointer transition-colors truncate">{displayName}</span>
+                                <span className="font-semibold text-sm text-gray-900 dark:text-white hover:text-primary dark:text-orange-400 dark:hover:text-primary dark:text-orange-400 cursor-pointer transition-colors truncate">{displayName}</span>
                               </Link>
                             ) : (
                               <span className="font-semibold text-sm text-gray-900 dark:text-white truncate">{displayName}</span>
@@ -1145,10 +1145,10 @@ export default function BeerDetail() {
                           <p className="text-sm text-gray-700 dark:text-gray-300 italic mb-1">"{review.personalNotes}"</p>
                         )}
                         {review.ownerReply && (
-                          <div className="mt-2 ml-1 pl-3 border-l-2 border-amber-300 dark:border-amber-700/60 rounded-sm">
+                          <div className="mt-2 ml-1 pl-3 border-l-2 border-orange-100 dark:border-orange-900/30 dark:border-orange-900/30 rounded-sm">
                             <div className="flex items-center gap-1 mb-0.5">
-                              <MessageSquare className="h-3 w-3 text-amber-500" />
-                              <span className="text-xs font-semibold text-amber-600 dark:text-amber-400">Risposta del birrificio</span>
+                              <MessageSquare className="h-3 w-3 text-primary dark:text-orange-400" />
+                              <span className="text-xs font-semibold text-primary dark:text-orange-400 dark:text-orange-400">Risposta del birrificio</span>
                             </div>
                             <p className="text-xs text-gray-600 dark:text-gray-400 leading-relaxed">{review.ownerReply}</p>
                           </div>
@@ -1162,7 +1162,7 @@ export default function BeerDetail() {
                                 <span>presso</span>
                                 <a
                                   href={`/pub/${review.pubId}`}
-                                  className="text-amber-500 hover:text-amber-600 dark:text-amber-400 hover:underline font-medium"
+                                  className="text-primary dark:text-orange-400 hover:text-primary dark:text-orange-400 dark:text-orange-400 hover:underline font-medium"
                                   onClick={(e) => e.stopPropagation()}
                                 >
                                   {review.pubName}
@@ -1190,7 +1190,7 @@ export default function BeerDetail() {
               {filteredReviews.length > 5 && (
                 <button
                   onClick={() => setShowAllReviews(!showAllReviews)}
-                  className="w-full mt-4 flex items-center justify-center gap-2 py-2.5 text-sm font-medium text-amber-600 dark:text-amber-400 hover:text-amber-700 dark:hover:text-amber-300 border border-dashed border-amber-300 dark:border-amber-700 rounded-xl hover:bg-amber-50 dark:hover:bg-amber-900/10 transition-colors"
+                  className="w-full mt-4 flex items-center justify-center gap-2 py-2.5 text-sm font-medium text-primary dark:text-orange-400 dark:text-orange-400 hover:text-primary dark:text-orange-400 dark:hover:text-primary border border-dashed border-orange-100 dark:border-orange-900/30 dark:border-amber-700 rounded-xl hover:bg-orange-50 dark:bg-orange-950/20 dark:hover:bg-orange-950/10/10 transition-colors"
                 >
                   <ChevronDown className={`h-4 w-4 transition-transform ${showAllReviews ? 'rotate-180' : ''}`} />
                   {showAllReviews
@@ -1203,7 +1203,7 @@ export default function BeerDetail() {
                 <div className="text-center py-6 text-gray-400">
                   <Star className="h-8 w-8 mx-auto mb-2 opacity-30" />
                   <p className="text-sm">Nessuna recensione con {reviewFilterRating} stelle</p>
-                  <button onClick={() => setReviewFilterRating(null)} className="text-xs text-amber-600 mt-1 hover:underline">Rimuovi filtro</button>
+                  <button onClick={() => setReviewFilterRating(null)} className="text-xs text-primary dark:text-orange-400 mt-1 hover:underline">Rimuovi filtro</button>
                 </div>
               )}
               </div>
@@ -1386,7 +1386,7 @@ export default function BeerDetail() {
               <Button
                 onClick={handleSaveEdit}
                 disabled={isSavingBeer}
-                className="bg-gradient-to-r from-amber-500 to-orange-600 text-white"
+                className="bg-gradient-to-r bg-primary hover:bg-primary/90 text-white"
               >
                 <Save className="h-4 w-4 mr-2" />
                 {isSavingBeer ? 'Salvataggio...' : 'Salva'}
@@ -1475,34 +1475,34 @@ export default function BeerDetail() {
 
       {/* Potrebbero piacerti — same style, other breweries */}
       {similarBeers.length > 0 && (
-        <div className="bg-[hsl(38,14%,97%)] dark:bg-[hsl(25,14%,8%)] border-t border-gray-100 dark:border-gray-800 py-8">
+        <div className="bg-background dark:bg-[hsl(25,14%,8%)] border-t  py-8">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <h3 className="text-base font-bold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
-              <Sparkles className="h-4 w-4 text-amber-500" />
+              <Sparkles className="h-4 w-4 text-primary dark:text-orange-400" />
               Potrebbero piacerti
               <span className="text-xs font-normal text-gray-400 dark:text-neutral-500 ml-1">· stile {beer?.style}</span>
             </h3>
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
               {similarBeers.map((b: any) => (
                 <Link key={b.id} href={`/beer/${b.id}`}>
-                  <div className="group bg-white dark:bg-neutral-800 border border-gray-100 dark:border-neutral-700 rounded-xl p-3 hover:shadow-md hover:border-amber-200 dark:hover:border-amber-800 transition-all cursor-pointer h-full flex flex-col">
-                    <div className="w-10 h-10 rounded-lg flex-shrink-0 bg-amber-50 dark:bg-amber-900/20 flex items-center justify-center overflow-hidden mb-2 mx-auto">
+                  <div className="group bg-white dark:bg-neutral-800 border border-gray-100 dark:border-neutral-700 rounded-xl p-3 hover:shadow-md hover:border-orange-100 dark:border-orange-900/30 dark:hover:border-orange-900/30 transition-all cursor-pointer h-full flex flex-col">
+                    <div className="w-10 h-10 rounded-lg flex-shrink-0 bg-orange-50 dark:bg-orange-950/20 dark:bg-amber-900/20 flex items-center justify-center overflow-hidden mb-2 mx-auto">
                       {b.imageUrl ? (
                         <img src={b.imageUrl} alt={b.name} className="w-10 h-10 object-contain p-0.5" />
                       ) : b.breweryLogoUrl ? (
                         <img src={b.breweryLogoUrl} alt={b.breweryName} className="w-8 h-8 object-contain" />
                       ) : (
-                        <BeerIcon className="w-5 h-5 text-amber-400" />
+                        <BeerIcon className="w-5 h-5 text-primary dark:text-orange-400" />
                       )}
                     </div>
-                    <p className="font-semibold text-xs text-gray-900 dark:text-white line-clamp-2 group-hover:text-amber-600 dark:group-hover:text-amber-400 text-center leading-tight">
+                    <p className="font-semibold text-xs text-gray-900 dark:text-white line-clamp-2 group-hover:text-primary dark:text-orange-400 dark:group-hover:text-orange-400 text-center leading-tight">
                       {b.name}
                     </p>
                     <p className="text-[10px] text-gray-400 dark:text-neutral-500 line-clamp-1 text-center mt-0.5">
                       {b.breweryName}
                     </p>
                     {b.abv && (
-                      <p className="text-[10px] font-medium text-amber-600 dark:text-amber-400 text-center mt-1">{b.abv}% ABV</p>
+                      <p className="text-[10px] font-medium text-primary dark:text-orange-400 dark:text-orange-400 text-center mt-1">{b.abv}% ABV</p>
                     )}
                   </div>
                 </Link>
