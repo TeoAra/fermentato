@@ -6,37 +6,145 @@ import { usePullToRefresh } from "@/hooks/use-pull-to-refresh";
 import {
   Beer, MapPin, Heart, Store, TrendingUp, Navigation, Building2,
   Megaphone, Newspaper, Rocket, Users, Droplets, Search, ChevronRight,
-  Star, Clock, Zap, Package,
+  ArrowRight,
 } from "lucide-react";
 import Footer from "@/components/footer";
 import HomepageMap from "@/components/homepage-map";
-import { Button } from "@/components/ui/button";
+
+// ─── helpers ────────────────────────────────────────────────────────────────
 
 function haversineDistance(lat1: number, lon1: number, lat2: number, lon2: number): number {
   const R = 6371;
   const dLat = (lat2 - lat1) * Math.PI / 180;
   const dLon = (lon2 - lon1) * Math.PI / 180;
-  const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-    Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
-    Math.sin(dLon / 2) * Math.sin(dLon / 2);
-  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-  return R * c;
+  const a = Math.sin(dLat / 2) ** 2 +
+    Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math.sin(dLon / 2) ** 2;
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 }
 
-function fmtDist(km: number): string {
-  if (km < 1) return `${Math.round(km * 1000)} m`;
-  return `${km.toFixed(1)} km`;
+function fmtDist(km: number) {
+  return km < 1 ? `${Math.round(km * 1000)} m` : `${km.toFixed(1)} km`;
+}
+
+function subscriptionLabel(status?: string | null) {
+  if (status === 'active') return '✓ Abbonamento attivo';
+  if (status === 'trial') return '◑ Prova gratuita';
+  return '○ Scaduto';
 }
 
 const STYLE_CHIPS = ["IPA", "Stout", "Lager", "Sour", "Weizen", "Saison", "Porter", "Pale Ale"];
 
-function subscriptionLabel(status: string | null | undefined): string {
-  if (status === 'active') return '✓ Abbonamento attivo';
-  if (status === 'trial') return '◑ Prova gratuita';
-  return '○ Abbonamento scaduto';
+// ─── colour tokens ───────────────────────────────────────────────────────────
+// Map section: dark atmospheric
+// Content section: warm editorial white (#fafaf8) — matches UnifiedMobile
+const C = {
+  bg:         "#fafaf8",
+  mapBg:      "#0f0d0a",
+  border:     "#111009",
+  borderSoft: "#e5ddd5",
+  text:       "#111009",
+  textSoft:   "#9d8e86",
+  textMuted:  "#c8bdb4",
+  amber:      "#d97706",
+  amberLight: "#f59e0b",
+  green:      "#059669",
+  card:       "#fafaf8",
+  shadow:     "2px 2px 0 #111009",
+};
+
+// ─── Section header — editorial style ───────────────────────────────────────
+function SecHead({ label, title, href, linkLabel = "Tutti →", live = false }: {
+  label: string; title: string; href?: string; linkLabel?: string; live?: boolean;
+}) {
+  return (
+    <div className="flex items-end justify-between mb-3">
+      <div>
+        <p style={{ fontSize: 9, fontWeight: 800, letterSpacing: "0.18em", textTransform: "uppercase", color: C.textSoft, marginBottom: 2 }}>
+          {live && <span style={{ color: "#059669", marginRight: 4 }}>●</span>}{label}
+        </p>
+        <h2 style={{ fontSize: 19, fontWeight: 900, letterSpacing: "-0.035em", color: C.text, margin: 0, lineHeight: 1.05 }}>
+          {title}
+        </h2>
+      </div>
+      {href && (
+        <Link href={href}>
+          <span style={{ fontSize: 11, fontWeight: 700, color: C.amber }}>{linkLabel}</span>
+        </Link>
+      )}
+    </div>
+  );
 }
 
-/* ─────────────────────────────────────────────────────────────────── */
+// ─── Pub card — with taplist inline ──────────────────────────────────────────
+function PubCard({ pub, userLocation }: { pub: any; userLocation: { lat: number; lng: number } | null }) {
+  const img = pub.coverImageUrl || pub.logoUrl || pub.imageUrl;
+  const dist = userLocation && pub._distance != null && pub._distance !== Infinity ? fmtDist(pub._distance) : null;
+  const taps: any[] = Array.isArray(pub.taplist) ? pub.taplist.slice(0, 2) : [];
+
+  return (
+    <div className="flex-shrink-0" style={{
+      width: 230, borderRadius: 8, overflow: "hidden",
+      border: `2px solid ${C.border}`, background: C.card,
+      boxShadow: C.shadow, cursor: "pointer",
+    }}>
+      {/* Photo */}
+      <div style={{ position: "relative", height: 132, overflow: "hidden" }}>
+        {img ? (
+          <img src={img} alt={pub.name} className="w-full h-full object-cover" style={{ filter: "brightness(0.8)" }} />
+        ) : (
+          <div className="w-full h-full flex items-center justify-center"
+            style={{ background: "linear-gradient(135deg, #1a1612, #2a2420)" }}>
+            <Store className="w-8 h-8" style={{ color: "#3a3530" }} />
+          </div>
+        )}
+        <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to top, rgba(17,16,9,0.88) 0%, transparent 50%)" }} />
+        {/* Open badge */}
+        <span style={{
+          position: "absolute", top: 8, left: 8, fontSize: 9, fontWeight: 800,
+          padding: "3px 8px", borderRadius: 4,
+          background: pub.isOpen !== false ? "#059669" : "#6b7280", color: "#fff",
+        }}>
+          {pub.isOpen !== false ? "● Aperto" : "● Chiuso"}
+        </span>
+        {/* Rating */}
+        {pub.rating && (
+          <span style={{ position: "absolute", top: 8, right: 8, fontSize: 11, fontWeight: 800, padding: "3px 8px", background: C.amberLight, color: C.mapBg, borderRadius: 4 }}>
+            ★ {Number(pub.rating).toFixed(1)}
+          </span>
+        )}
+        {/* Name + location */}
+        <div style={{ position: "absolute", bottom: 8, left: 10, right: 8 }}>
+          <p style={{ fontSize: 14, fontWeight: 900, color: "#fafaf8", letterSpacing: "-0.03em", lineHeight: 1.1, marginBottom: 2 }} className="line-clamp-1">
+            {pub.name}
+          </p>
+          <div className="flex items-center gap-1">
+            <MapPin className="w-3 h-3 flex-shrink-0" style={{ color: "#c8bdb4" }} />
+            <span style={{ fontSize: 10, color: "#c8bdb4" }}>
+              {pub.city || pub.address || "Italia"}{dist ? ` · ${dist}` : ""}
+              {pub.tapCount ? ` · ${pub.tapCount} spine` : ""}
+            </span>
+          </div>
+        </div>
+      </div>
+      {/* Taplist inline */}
+      {taps.length > 0 && (
+        <div style={{ padding: "8px 10px", display: "flex", flexDirection: "column", gap: 4 }}>
+          {taps.map((t: any, j: number) => (
+            <div key={j} style={{ display: "flex", alignItems: "center", gap: 6, padding: "4px 7px", background: "#f0ece8", borderRadius: 4 }}>
+              <Beer className="w-2.5 h-2.5 flex-shrink-0" style={{ color: C.amber }} />
+              <span style={{ fontSize: 11, fontWeight: 600, color: "#6b6260" }} className="truncate">
+                {t.beerName || t.beer_name || t.name}
+                {(t.abv || t.beer_abv) ? ` · ${t.abv || t.beer_abv}%` : ""}
+              </span>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─── Main component ──────────────────────────────────────────────────────────
 
 export default function Home() {
   const { user, isAuthenticated } = useAuth();
@@ -49,8 +157,8 @@ export default function Home() {
     if (!navigator.geolocation) { setLocationStatus('denied'); return; }
     setLocationStatus('requesting');
     navigator.geolocation.getCurrentPosition(
-      (p) => { setUserLocation({ lat: p.coords.latitude, lng: p.coords.longitude }); setLocationStatus('granted'); },
-      () => { setLocationStatus('denied'); },
+      p => { setUserLocation({ lat: p.coords.latitude, lng: p.coords.longitude }); setLocationStatus('granted'); },
+      () => setLocationStatus('denied'),
       { enableHighAccuracy: true, timeout: 15000, maximumAge: 30000 }
     );
   }, []);
@@ -59,8 +167,8 @@ export default function Home() {
     if (!navigator.geolocation) return;
     setLocationStatus('requesting');
     navigator.geolocation.getCurrentPosition(
-      (p) => { setUserLocation({ lat: p.coords.latitude, lng: p.coords.longitude }); setLocationStatus('granted'); },
-      () => { setLocationStatus('denied'); },
+      p => { setUserLocation({ lat: p.coords.latitude, lng: p.coords.longitude }); setLocationStatus('granted'); },
+      () => setLocationStatus('denied'),
       { enableHighAccuracy: true, timeout: 10000 }
     );
   };
@@ -70,21 +178,18 @@ export default function Home() {
     if (heroSearch.trim()) navigate(`/search?q=${encodeURIComponent(heroSearch.trim())}`);
   };
 
-  const handleStyleChip = (style: string) => {
-    navigate(`/explore/beers?style=${encodeURIComponent(style)}`);
-  };
-
   const queryClient = useQueryClient();
   const handleRefresh = useCallback(async () => { await queryClient.invalidateQueries(); }, [queryClient]);
   const { isPulling, isRefreshing } = usePullToRefresh(handleRefresh);
 
+  // ── Queries ──
   const { data: pubs, isLoading: pubsLoading } = useQuery({ queryKey: ["/api/pubs"], staleTime: 5 * 60 * 1000 });
   const { data: breweriesRaw } = useQuery({
     queryKey: ["/api/breweries"],
     queryFn: () => fetch("/api/breweries?random=true&limit=40").then(r => r.json()),
     staleTime: 0, gcTime: 2 * 60 * 1000, refetchOnMount: true, refetchOnWindowFocus: false,
   });
-  const breweries = useMemo(() => {
+  const breweries: any[] = useMemo(() => {
     if (!Array.isArray(breweriesRaw) || !breweriesRaw.length) return [];
     return [...breweriesRaw].sort(() => Math.random() - 0.5).slice(0, 12);
   }, [breweriesRaw]);
@@ -106,109 +211,84 @@ export default function Home() {
     queryKey: ["/api/stats"], staleTime: 60 * 1000,
   });
 
-  const sortedPubs = useMemo(() => {
+  // ── Derived ──
+  const sortedPubs: any[] = useMemo(() => {
     if (!Array.isArray(pubs)) return [];
     if (!userLocation) return (pubs as any[]).slice(0, 6);
     return [...(pubs as any[])]
-      .map(p => ({
-        ...p,
-        _distance: p.latitude && p.longitude
-          ? haversineDistance(userLocation.lat, userLocation.lng, parseFloat(p.latitude), parseFloat(p.longitude))
-          : Infinity,
-      }))
+      .map(p => ({ ...p, _distance: p.latitude && p.longitude ? haversineDistance(userLocation.lat, userLocation.lng, parseFloat(p.latitude), parseFloat(p.longitude)) : Infinity }))
       .sort((a, b) => a._distance - b._distance)
       .slice(0, 6);
   }, [pubs, userLocation]);
 
-  const isOwner = (user as any)?.userType === 'pub_owner';
-  const isBreweryOwner = (user as any)?.userType === 'brewery_owner';
-  const isAdmin = (user as any)?.activeRole === 'admin' || (!((user as any)?.activeRole) && (user as any)?.userType === 'admin');
+  const isOwner         = (user as any)?.userType === 'pub_owner';
+  const isBreweryOwner  = (user as any)?.userType === 'brewery_owner';
+  const isAdmin         = (user as any)?.activeRole === 'admin' || (!((user as any)?.activeRole) && (user as any)?.userType === 'admin');
   const isAdminWithPubs = (user as any)?.userType === 'admin' && Array.isArray(myPubs) && myPubs.length > 0;
 
+  // Pick a featured brewery from the loaded list for the editorial block
+  const featuredBrewery: any = breweries[0] ?? null;
+
+  // ── Tabs ──
+  const TABS = ["Pub vicini", "In spina", "Birrifici"];
+  const [activeTab, setActiveTab] = useState(0);
+
   return (
-    <div className="min-h-screen" style={{ background: "#080706", color: "#ede8e1" }}>
+    <div className="min-h-screen" style={{ background: C.bg }}>
 
       {/* Pull-to-refresh indicator */}
       {(isPulling || isRefreshing) && (
         <div className="fixed top-16 left-0 right-0 z-40 flex items-center justify-center py-2.5"
-          style={{ background: "rgba(15,13,10,0.95)", borderBottom: "1px solid #2a2420", backdropFilter: "blur(8px)" }}>
-          {isRefreshing ? (
-            <div className="flex items-center gap-2" style={{ color: "#f59e0b", fontSize: 12, fontWeight: 700 }}>
-              <span className="inline-block h-3.5 w-3.5 rounded-full border-2 border-amber-500 border-t-transparent animate-spin" />
-              Aggiornamento in corso…
-            </div>
-          ) : (
-            <p style={{ color: "#8a7d74", fontSize: 12, fontWeight: 600 }}>↓ Rilascia per aggiornare</p>
-          )}
+          style={{ background: "rgba(255,255,255,0.95)", borderBottom: `1px solid ${C.borderSoft}`, backdropFilter: "blur(8px)" }}>
+          {isRefreshing
+            ? <div className="flex items-center gap-2" style={{ fontSize: 12, fontWeight: 700, color: C.amber }}>
+                <span className="inline-block h-3.5 w-3.5 rounded-full border-2 border-t-transparent animate-spin" style={{ borderColor: C.amberLight, borderTopColor: "transparent" }} />
+                Aggiornamento…
+              </div>
+            : <p style={{ fontSize: 12, fontWeight: 600, color: C.textSoft }}>↓ Rilascia per aggiornare</p>
+          }
         </div>
       )}
 
-      {/* ═══════════════════════════════════════════════════════════════
-          SEZIONE MAPPA — atmosferica, ambientale
-      ═══════════════════════════════════════════════════════════════ */}
-      <section style={{ position: "relative" }}>
-        {/* Wrapper con sfumatura in basso verso #080706 */}
-        <div style={{ position: "relative" }}>
-          <HomepageMap
-            pubs={Array.isArray(pubs) ? pubs : []}
-            breweries={Array.isArray(allBreweries) ? allBreweries : (Array.isArray(breweries) ? breweries : [])}
-            userLocation={userLocation}
-            isLoading={pubsLoading}
-            onLocate={(loc) => { setUserLocation(loc); setLocationStatus('granted'); }}
-          />
-          {/* Gradiente bottom per fusione con sezione dati */}
-          <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, height: 60, background: "linear-gradient(to bottom, transparent, #080706)", pointerEvents: "none" }} />
-        </div>
-
-        {/* GPS banner in stile dark */}
-        {locationStatus === 'denied' && (
-          <div className="mx-4 mt-3 mb-0 flex items-center justify-between gap-4 px-4 py-3 rounded-lg"
-            style={{ background: "#161412", border: "1px solid #2a2420" }}>
-            <div className="flex items-center gap-2.5">
-              <Navigation className="w-4 h-4 flex-shrink-0" style={{ color: "#f59e0b" }} />
-              <p style={{ fontSize: 12, color: "#c8bdb4" }}>Attiva la posizione per vedere i locali più vicini</p>
-            </div>
-            <button onClick={handleRequestLocation}
-              className="flex-shrink-0 px-3 py-1.5 rounded-md text-xs font-bold"
-              style={{ background: "#f59e0b", color: "#080706" }}>
-              GPS
-            </button>
-          </div>
-        )}
-        {locationStatus === 'granted' && (
-          <div className="mx-4 mt-3 flex items-center gap-2 px-3 py-2 rounded-md"
-            style={{ background: "#0f1a12", border: "1px solid #1a3020" }}>
-            <span style={{ width: 6, height: 6, borderRadius: "50%", background: "#34d399", flexShrink: 0 }} />
-            <p style={{ fontSize: 11, color: "#34d399", fontWeight: 700 }}>Posizione attiva — risultati per vicinanza</p>
-          </div>
-        )}
+      {/* ════════════════════════════════════════════════════════════
+          MAPPA ATMOSFERICA — dark, con search brutalista floating
+      ════════════════════════════════════════════════════════════ */}
+      <section style={{ position: "relative", background: C.mapBg }}>
+        <HomepageMap
+          pubs={Array.isArray(pubs) ? pubs : []}
+          breweries={Array.isArray(allBreweries) ? allBreweries : breweries}
+          userLocation={userLocation}
+          isLoading={pubsLoading}
+          onLocate={loc => { setUserLocation(loc); setLocationStatus('granted'); }}
+        />
+        {/* Gradiente fusione mappa → sezione bianca */}
+        <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, height: 56, background: `linear-gradient(to bottom, transparent, ${C.bg})`, pointerEvents: "none" }} />
       </section>
 
-      {/* ═══════════════════════════════════════════════════════════════
-          CONTENUTO PRINCIPALE
-      ═══════════════════════════════════════════════════════════════ */}
-      <main className="px-4" style={{ maxWidth: 600, margin: "0 auto" }}>
+      {/* ════════════════════════════════════════════════════════════
+          SEZIONE EDITORIALE — warm white, editorial
+      ════════════════════════════════════════════════════════════ */}
+      <div style={{ background: C.bg, maxWidth: 640, margin: "0 auto" }}>
 
-        {/* ─── SEARCH ─────────────────────────────────────────────────────── */}
-        <div className="mt-4">
+        {/* ── Search brutalista ── */}
+        <div style={{ padding: "4px 16px 14px", borderBottom: `2px solid ${C.border}` }}>
           <form onSubmit={handleHeroSearch} style={{ display: "flex", gap: 8 }}>
             <div style={{
               flex: 1, display: "flex", alignItems: "center", gap: 10,
-              background: "#161412", border: "1px solid #2a2420",
-              borderRadius: 8, padding: "0 14px", height: 44,
+              background: C.bg, border: `2px solid ${C.border}`, borderRadius: 8,
+              padding: "0 14px", height: 44, boxShadow: C.shadow,
             }}>
-              <Search className="w-4 h-4 flex-shrink-0" style={{ color: "#8a7d74" }} />
+              <Search className="w-4 h-4 flex-shrink-0" style={{ color: C.textSoft }} />
               <input
-                type="text"
-                value={heroSearch}
-                onChange={e => setHeroSearch(e.target.value)}
-                placeholder="Cerca birre, pub, birrifici…"
-                style={{ flex: 1, background: "transparent", border: "none", outline: "none", fontSize: 14, color: "#ede8e1" }}
+                type="text" value={heroSearch} onChange={e => setHeroSearch(e.target.value)}
+                placeholder="Pub, birrificio o birra…"
+                style={{ flex: 1, background: "transparent", border: "none", outline: "none", fontSize: 14, color: C.text, fontWeight: 500 }}
               />
             </div>
             <button type="submit" style={{
-              padding: "0 18px", height: 44, background: "#f59e0b", color: "#080706",
-              border: "none", borderRadius: 8, fontSize: 13, fontWeight: 800, cursor: "pointer", flexShrink: 0,
+              padding: "0 18px", height: 44, background: C.text, color: C.bg,
+              border: `2px solid ${C.border}`, borderRadius: 8, fontSize: 13, fontWeight: 800, cursor: "pointer",
+              boxShadow: `2px 2px 0 ${C.amber}`, flexShrink: 0,
             }}>
               Cerca
             </button>
@@ -217,494 +297,458 @@ export default function Home() {
           {/* Style chips */}
           <div className="flex gap-2 flex-wrap mt-3">
             {STYLE_CHIPS.map(style => (
-              <button key={style} onClick={() => handleStyleChip(style)}
+              <button key={style} onClick={() => navigate(`/explore/beers?style=${encodeURIComponent(style)}`)}
                 style={{
                   fontSize: 11, fontWeight: 700, padding: "4px 10px",
-                  background: "#161412", border: "1px solid #2a2420",
-                  borderRadius: 6, color: "#8a7d74", cursor: "pointer",
+                  background: C.bg, border: `2px solid ${C.border}`,
+                  borderRadius: 6, color: C.textSoft, cursor: "pointer",
                 }}>
                 {style}
               </button>
             ))}
           </div>
+
+          {/* GPS status */}
+          {locationStatus === 'denied' && (
+            <div className="flex items-center justify-between gap-3 mt-3 px-3 py-2.5 rounded-lg"
+              style={{ background: "#fef3c7", border: `1px solid #fde68a` }}>
+              <div className="flex items-center gap-2">
+                <Navigation className="w-4 h-4 flex-shrink-0" style={{ color: C.amber }} />
+                <p style={{ fontSize: 12, color: "#92400e" }}>Attiva la posizione per i pub vicini</p>
+              </div>
+              <button onClick={handleRequestLocation} style={{ fontSize: 11, fontWeight: 800, padding: "4px 10px", background: C.amber, color: "#fff", border: "none", borderRadius: 5, cursor: "pointer", flexShrink: 0 }}>
+                GPS
+              </button>
+            </div>
+          )}
+          {locationStatus === 'granted' && (
+            <div className="flex items-center gap-2 mt-3 px-3 py-2 rounded-lg" style={{ background: "#ecfdf5", border: "1px solid #a7f3d0" }}>
+              <span style={{ width: 6, height: 6, borderRadius: "50%", background: C.green, flexShrink: 0 }} />
+              <p style={{ fontSize: 11, fontWeight: 700, color: C.green }}>Posizione attiva — risultati per vicinanza</p>
+            </div>
+          )}
         </div>
 
-        {/* ─── OWNER QUICK ACTIONS ────────────────────────────────────────── */}
+        {/* ── Owner quick actions ── */}
         {(isOwner || isAdminWithPubs || isBreweryOwner || isAdmin) && (
-          <div className="mt-5 grid grid-cols-2 gap-3">
+          <div style={{ padding: "14px 16px", borderBottom: `2px solid ${C.border}`, display: "flex", gap: 8 }}>
             {(isOwner || isAdminWithPubs) && (
-              <Link href="/dashboard">
-                <OwnerAction icon={Store} label="Gestisci il pub" sub="Taplist live →" />
+              <Link href="/dashboard" style={{ flex: 1 }}>
+                <div style={{ padding: "12px", border: `2px solid ${C.border}`, borderRadius: 8, cursor: "pointer", boxShadow: C.shadow, background: C.text }}>
+                  <Store className="w-4 h-4 mb-2" style={{ color: C.amberLight }} />
+                  <p style={{ fontSize: 11, fontWeight: 800, color: C.bg, marginBottom: 2 }}>Il mio pub</p>
+                  <p style={{ fontSize: 10, fontWeight: 700, color: C.amberLight }}>Dashboard →</p>
+                </div>
               </Link>
             )}
             {isBreweryOwner && (
-              <Link href="/brewery-dashboard">
-                <OwnerAction icon={Building2} label="Il mio birrificio" sub="Dashboard →" />
+              <Link href="/brewery-dashboard" style={{ flex: 1 }}>
+                <div style={{ padding: "12px", border: `2px solid ${C.border}`, borderRadius: 8, cursor: "pointer", boxShadow: `2px 2px 0 ${C.amber}`, background: C.bg }}>
+                  <Building2 className="w-4 h-4 mb-2" style={{ color: C.amber }} />
+                  <p style={{ fontSize: 11, fontWeight: 800, color: C.text, marginBottom: 2 }}>Il mio birrificio</p>
+                  <p style={{ fontSize: 10, fontWeight: 700, color: C.amber }}>Gestisci →</p>
+                </div>
               </Link>
             )}
             {isAdmin && (
-              <Link href="/admin">
-                <OwnerAction icon={TrendingUp} label="Admin Panel" sub="Gestisci →" />
+              <Link href="/admin" style={{ flex: 1 }}>
+                <div style={{ padding: "12px", border: `2px solid ${C.border}`, borderRadius: 8, cursor: "pointer", boxShadow: C.shadow, background: C.bg }}>
+                  <TrendingUp className="w-4 h-4 mb-2" style={{ color: C.amber }} />
+                  <p style={{ fontSize: 11, fontWeight: 800, color: C.text, marginBottom: 2 }}>Admin</p>
+                  <p style={{ fontSize: 10, fontWeight: 700, color: C.amber }}>Pannello →</p>
+                </div>
               </Link>
             )}
           </div>
         )}
 
-        {/* ─── IL TUO PUB ─────────────────────────────────────────────────── */}
-        {(isOwner || isAdminWithPubs) && Array.isArray(myPubs) && myPubs.length > 0 && (
-          <section className="mt-7">
-            <SecHead label="IL TUO PUB" title="Gestisci" href="/dashboard" linkLabel="Dashboard →" />
-            <div className="mt-3 flex flex-col gap-2">
-              {(myPubs as any[]).map((pub: any) => (
-                <PubOwnerCard key={pub.id} pub={pub} />
-              ))}
-            </div>
-          </section>
-        )}
-
-        {/* ─── IL TUO BIRRIFICIO ──────────────────────────────────────────── */}
-        {isBreweryOwner && myBreweryData?.brewery && (
-          <section className="mt-7">
-            <SecHead label="IL TUO BIRRIFICIO" title={myBreweryData.brewery.name} href="/brewery-dashboard" linkLabel="Gestisci →" />
-            <Link href={`/brewery/${myBreweryData.brewery.id}`}>
-              <div className="mt-3 flex items-center gap-3 p-4 rounded-lg"
-                style={{ background: "#161412", border: "1px solid #2a2420" }}>
-                {myBreweryData.brewery.logoUrl ? (
-                  <img src={myBreweryData.brewery.logoUrl} alt={myBreweryData.brewery.name}
-                    className="w-12 h-12 rounded-lg object-cover flex-shrink-0" style={{ border: "1px solid #2a2420" }} />
-                ) : (
-                  <div className="w-12 h-12 rounded-lg flex items-center justify-center flex-shrink-0"
-                    style={{ background: "#1a1612", border: "1px solid #2a2420" }}>
-                    <Building2 className="w-5 h-5" style={{ color: "#f59e0b" }} />
-                  </div>
-                )}
-                <div className="flex-1 min-w-0">
-                  <p className="font-bold truncate" style={{ fontSize: 14, color: "#ede8e1", letterSpacing: "-0.02em" }}>
-                    {myBreweryData.brewery.name}
-                  </p>
-                  <p style={{ fontSize: 11, color: "#8a7d74", marginTop: 1 }}>
-                    {myBreweryData.brewery.location} · {myBreweryData.beers?.length ?? 0} birre
-                  </p>
-                </div>
-                <ChevronRight className="w-4 h-4 flex-shrink-0" style={{ color: "#8a7d74" }} />
-              </div>
-            </Link>
-          </section>
-        )}
-
-        {/* ─── IN SPINA ADESSO ─────────────────────────────────────────────── */}
+        {/* ── Live updates taplist ── */}
         {(taplistActivity as any[]).length > 0 && !isOwner && (
-          <section className="mt-7">
-            <SecHead label="LIVE" title="In spina adesso" href="/explore/pubs" dot="green" />
-            <div className="mt-3 flex gap-3 overflow-x-auto pb-1 scrollbar-hide scroll-ios" style={{ marginLeft: -16, marginRight: -16, paddingLeft: 16, paddingRight: 16 }}>
-              {(taplistActivity as any[]).map((item: any) => (
+          <div style={{ borderBottom: `2px solid ${C.border}` }}>
+            <div style={{ padding: "14px 16px 8px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+              <p style={{ fontSize: 9, fontWeight: 800, letterSpacing: "0.18em", textTransform: "uppercase", color: C.textSoft, margin: 0 }}>
+                <span style={{ color: C.green }}>●</span> Aggiornamenti live
+              </p>
+              <Link href="/explore/pubs"><span style={{ fontSize: 10, color: C.amber, fontWeight: 700 }}>Tutti →</span></Link>
+            </div>
+            <div style={{ display: "flex", flexDirection: "column" }}>
+              {(taplistActivity as any[]).slice(0, 3).map((item: any, i: number) => (
                 <Link key={item.id} href={`/pub/${item.pub_id}`}>
-                  <div className="flex-shrink-0 w-36 cursor-pointer" style={{ borderRadius: 8, overflow: "hidden", background: "#161412", border: "1px solid #2a2420" }}>
-                    <div style={{ position: "relative", height: 96, overflow: "hidden" }}>
-                      {item.beer_image ? (
-                        <img src={item.beer_image} alt={item.beer_name} className="w-full h-full object-cover" style={{ filter: "brightness(0.8)" }} />
-                      ) : (
-                        <div className="w-full h-full flex items-center justify-center"
-                          style={{ background: "linear-gradient(135deg, #f59e0b, #d97706)" }}>
-                          <Beer className="w-7 h-7" style={{ color: "#080706", opacity: 0.7 }} />
-                        </div>
-                      )}
-                      <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to top, rgba(8,7,6,0.75) 0%, transparent 55%)" }} />
-                      <span style={{
-                        position: "absolute", top: 6, left: 6, fontSize: 9, fontWeight: 800,
-                        padding: "2px 6px", borderRadius: 4,
-                        background: item.tap_type === 'pompa' ? "#7c3aed" : "#d97706",
-                        color: "#fff",
-                      }}>
-                        {item.tap_type === 'pompa' ? 'Pompa' : 'Spina'}
-                      </span>
+                  <div style={{ padding: "10px 16px", display: "flex", gap: 12, alignItems: "center", borderTop: i > 0 ? `1px solid ${C.borderSoft}` : "none", cursor: "pointer" }}>
+                    <span style={{ fontSize: 20, flexShrink: 0 }}>🍺</span>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <p style={{ fontSize: 12, fontWeight: 800, color: C.text, margin: "0 0 1px", letterSpacing: "-0.01em" }} className="truncate">
+                        {item.pub_name}
+                      </p>
+                      <p style={{ fontSize: 11, color: C.textSoft, margin: 0 }} className="truncate">
+                        {item.beer_name}{item.beer_style ? ` · ${item.beer_style}` : ""}
+                      </p>
                     </div>
-                    <div style={{ padding: "8px 10px" }}>
-                      <p style={{ fontSize: 12, fontWeight: 800, color: "#ede8e1", letterSpacing: "-0.02em", lineHeight: 1.2, marginBottom: 2 }}
-                        className="line-clamp-1">{item.beer_name}</p>
-                      {item.beer_style && <p style={{ fontSize: 10, color: "#8a7d74", marginBottom: 4 }} className="line-clamp-1">{item.beer_style}</p>}
-                      <div className="flex items-center gap-1">
-                        {item.pub_logo ? (
-                          <img src={item.pub_logo} alt={item.pub_name} className="w-3.5 h-3.5 rounded-full object-cover flex-shrink-0" />
-                        ) : (
-                          <Store className="w-3 h-3 flex-shrink-0" style={{ color: "#8a7d74" }} />
-                        )}
-                        <p style={{ fontSize: 10, color: "#8a7d74" }} className="truncate">{item.pub_name}</p>
-                      </div>
-                    </div>
+                    <span style={{ fontSize: 9, fontWeight: 800, padding: "2px 7px", borderRadius: 4, background: item.tap_type === 'pompa' ? "#7c3aed" : C.amberLight, color: "#fff", flexShrink: 0 }}>
+                      {item.tap_type === 'pompa' ? 'Pompa' : 'Spina'}
+                    </span>
                   </div>
                 </Link>
               ))}
             </div>
-          </section>
+          </div>
         )}
 
-        {/* ─── PUB VICINI ─────────────────────────────────────────────────── */}
-        {!isOwner && !isAdminWithPubs && (
-          <section className="mt-7">
-            <SecHead
-              label="VICINO A TE"
-              title={userLocation ? "Pub vicini" : "Pub consigliati"}
-              href="/explore/pubs"
-            />
-            {pubsLoading ? (
-              <div className="mt-3 flex gap-3 overflow-x-auto">
-                {[...Array(3)].map((_, i) => (
-                  <div key={i} className="flex-shrink-0 w-52 h-48 rounded-lg animate-pulse"
-                    style={{ background: "#161412" }} />
-                ))}
+        {/* ── Birrificio in evidenza — blocco editoriale scuro ── */}
+        {featuredBrewery && !isOwner && (
+          <Link href={`/brewery/${featuredBrewery.id}`}>
+            <div style={{ cursor: "pointer" }}>
+              <div style={{ position: "relative" }}>
+                {(featuredBrewery.coverImageUrl || featuredBrewery.logoUrl) ? (
+                  <img src={featuredBrewery.coverImageUrl || featuredBrewery.logoUrl} alt={featuredBrewery.name}
+                    className="w-full object-cover" style={{ height: 188, filter: "brightness(0.42)" }} />
+                ) : (
+                  <div style={{ height: 188, background: "linear-gradient(135deg, #1a1612, #2a2018)" }} />
+                )}
+                <div style={{ position: "absolute", inset: 0, padding: "16px", display: "flex", flexDirection: "column", justifyContent: "flex-end" }}>
+                  <p style={{ fontSize: 9, fontWeight: 800, letterSpacing: "0.2em", textTransform: "uppercase", color: C.amberLight, margin: "0 0 4px" }}>
+                    BIRRIFICIO IN EVIDENZA{featuredBrewery.location ? ` · ${featuredBrewery.city || featuredBrewery.location}` : ""}
+                  </p>
+                  <h2 style={{ fontSize: 24, fontWeight: 900, letterSpacing: "-0.04em", color: "#fafaf8", margin: "0 0 4px", lineHeight: 1 }}>
+                    {featuredBrewery.name}
+                  </h2>
+                  {featuredBrewery.description && (
+                    <p style={{ fontSize: 12, fontStyle: "italic", color: "#c8bdb4", margin: "0 0 8px" }} className="line-clamp-2">
+                      {featuredBrewery.description}
+                    </p>
+                  )}
+                </div>
               </div>
-            ) : (
-              <div className="mt-3 flex gap-3 overflow-x-auto pb-1 scrollbar-hide scroll-ios"
-                style={{ marginLeft: -16, marginRight: -16, paddingLeft: 16, paddingRight: 16 }}>
-                {sortedPubs.map((pub: any) => (
-                  <Link key={pub.id} href={`/pub/${pub.slug || pub.id}`}>
-                    <PubCard pub={pub} userLocation={userLocation} />
+              <div style={{ padding: "10px 16px", display: "flex", justifyContent: "space-between", alignItems: "center", background: C.text, borderBottom: `2px solid ${C.border}` }}>
+                <span style={{ fontSize: 11, color: "#8a7d74" }}>
+                  {featuredBrewery.city || featuredBrewery.location || "Italia"}
+                  {featuredBrewery.yearFounded ? ` · Est. ${featuredBrewery.yearFounded}` : ""}
+                </span>
+                <span style={{ display: "flex", alignItems: "center", gap: 5, fontSize: 12, fontWeight: 800, color: C.amberLight }}>
+                  Scopri <ArrowRight className="w-3.5 h-3.5" />
+                </span>
+              </div>
+            </div>
+          </Link>
+        )}
+
+        {/* ── Pub vicini + tabs ── */}
+        {!isOwner && !isAdminWithPubs && (
+          <div style={{ borderBottom: `2px solid ${C.border}` }}>
+            <div style={{ padding: "16px 16px 0" }}>
+              <SecHead
+                label="VICINO A TE"
+                title={userLocation ? "Pub aperti adesso" : "Pub consigliati"}
+                href="/explore/pubs"
+              />
+            </div>
+
+            {/* Tabs */}
+            <div style={{ display: "flex", margin: "0 16px 14px", border: `2px solid ${C.border}`, borderRadius: 6, overflow: "hidden" }}>
+              {TABS.map((tab, i) => (
+                <button key={tab} onClick={() => setActiveTab(i)} style={{
+                  flex: 1, padding: "9px 0", fontSize: 11, fontWeight: 800,
+                  background: activeTab === i ? C.text : C.bg,
+                  color: activeTab === i ? C.bg : C.textSoft,
+                  border: "none", borderLeft: i > 0 ? `1.5px solid ${C.border}` : "none",
+                  cursor: "pointer", letterSpacing: "-0.01em",
+                }}>{tab}</button>
+              ))}
+            </div>
+
+            {/* Tab content: Pub vicini */}
+            {activeTab === 0 && (
+              pubsLoading ? (
+                <div className="flex gap-3 overflow-x-auto pb-4 px-4">
+                  {[...Array(3)].map((_, i) => (
+                    <div key={i} className="flex-shrink-0 w-52 h-44 rounded-lg animate-pulse" style={{ background: "#e5ddd5" }} />
+                  ))}
+                </div>
+              ) : (
+                <div className="flex gap-3 overflow-x-auto pb-4 scrollbar-hide scroll-ios" style={{ paddingLeft: 16, paddingRight: 16 }}>
+                  {sortedPubs.map(pub => (
+                    <Link key={pub.id} href={`/pub/${pub.slug || pub.id}`}>
+                      <PubCard pub={pub} userLocation={userLocation} />
+                    </Link>
+                  ))}
+                </div>
+              )
+            )}
+
+            {/* Tab content: In spina */}
+            {activeTab === 1 && (
+              <div className="flex gap-3 overflow-x-auto pb-4 scrollbar-hide scroll-ios" style={{ paddingLeft: 16, paddingRight: 16 }}>
+                {(taplistActivity as any[]).map((item: any) => (
+                  <Link key={item.id} href={`/pub/${item.pub_id}`}>
+                    <div className="flex-shrink-0" style={{ width: 148, cursor: "pointer", border: `2px solid ${C.border}`, borderRadius: 8, overflow: "hidden", boxShadow: C.shadow, background: C.bg }}>
+                      <div style={{ position: "relative", height: 96 }}>
+                        {item.beer_image ? (
+                          <img src={item.beer_image} alt={item.beer_name} className="w-full h-full object-cover" style={{ filter: "brightness(0.8)" }} />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center" style={{ background: "linear-gradient(135deg, #f59e0b, #d97706)" }}>
+                            <Beer className="w-7 h-7" style={{ color: "rgba(255,255,255,0.7)" }} />
+                          </div>
+                        )}
+                        <span style={{ position: "absolute", top: 6, left: 6, fontSize: 9, fontWeight: 800, padding: "2px 6px", borderRadius: 3, background: item.tap_type === 'pompa' ? "#7c3aed" : C.amberLight, color: "#fff" }}>
+                          {item.tap_type === 'pompa' ? 'Pompa' : 'Spina'}
+                        </span>
+                      </div>
+                      <div style={{ padding: "8px 10px" }}>
+                        <p style={{ fontSize: 12, fontWeight: 800, color: C.text, letterSpacing: "-0.02em", lineHeight: 1.2, marginBottom: 2 }} className="line-clamp-1">{item.beer_name}</p>
+                        {item.beer_style && <p style={{ fontSize: 10, color: C.textSoft, marginBottom: 3 }} className="line-clamp-1">{item.beer_style}</p>}
+                        <p style={{ fontSize: 10, color: C.textSoft }} className="truncate">{item.pub_name}</p>
+                      </div>
+                    </div>
                   </Link>
                 ))}
               </div>
             )}
-          </section>
+
+            {/* Tab content: Birrifici */}
+            {activeTab === 2 && (
+              <div className="flex gap-3 overflow-x-auto pb-4 scrollbar-hide scroll-ios" style={{ paddingLeft: 16, paddingRight: 16 }}>
+                {breweries.map((brewery: any) => {
+                  const bg = brewery.coverImageUrl || brewery.logoUrl;
+                  return (
+                    <Link key={brewery.id} href={`/brewery/${brewery.id}`}>
+                      <div className="flex-shrink-0" style={{ width: 148, border: `2px solid ${C.border}`, borderRadius: 8, overflow: "hidden", boxShadow: C.shadow, background: C.bg, cursor: "pointer" }}>
+                        <div style={{ position: "relative", height: 88 }}>
+                          {bg ? (
+                            <img src={bg} alt={brewery.name} className="w-full h-full object-cover" style={{ filter: "brightness(0.75)" }} />
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center" style={{ background: "linear-gradient(135deg, #f59e0b, #b45309)" }}>
+                              <span style={{ fontSize: 28, fontWeight: 900, color: "rgba(255,255,255,0.7)" }}>{brewery.name?.[0]?.toUpperCase()}</span>
+                            </div>
+                          )}
+                          <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to top, rgba(17,16,9,0.7) 0%, transparent 55%)" }} />
+                          {(brewery.city || brewery.location) && (
+                            <div className="absolute bottom-1.5 left-2 flex items-center gap-0.5">
+                              <MapPin className="w-2.5 h-2.5 flex-shrink-0" style={{ color: "rgba(255,255,255,0.8)" }} />
+                              <span style={{ fontSize: 9, color: "rgba(255,255,255,0.8)", fontWeight: 600 }} className="truncate">{brewery.city || brewery.location}</span>
+                            </div>
+                          )}
+                        </div>
+                        <div style={{ padding: "8px 10px" }}>
+                          <p style={{ fontSize: 12, fontWeight: 800, color: C.text, letterSpacing: "-0.02em", lineHeight: 1.2 }} className="line-clamp-2">{brewery.name}</p>
+                        </div>
+                      </div>
+                    </Link>
+                  );
+                })}
+              </div>
+            )}
+          </div>
         )}
 
-        {/* ─── BIRRIFICI ─────────────────────────────────────────────────── */}
-        {breweries.length > 0 && !isOwner && (
-          <section className="mt-7">
-            <SecHead label="SCOPRI" title="Birrifici artigianali" href="/explore/breweries" />
-            <div className="mt-3 flex gap-3 overflow-x-auto pb-1 scrollbar-hide scroll-ios"
-              style={{ marginLeft: -16, marginRight: -16, paddingLeft: 16, paddingRight: 16 }}>
-              {breweries.map((brewery: any) => {
-                const bg = brewery.coverImageUrl || brewery.logoUrl;
-                return (
-                  <Link key={brewery.id} href={`/brewery/${brewery.id}`}>
-                    <div className="flex-shrink-0 cursor-pointer" style={{ width: 140, borderRadius: 8, overflow: "hidden", background: "#161412", border: "1px solid #2a2420" }}>
-                      <div style={{ position: "relative", height: 88, overflow: "hidden" }}>
-                        {bg ? (
-                          <img src={bg} alt={brewery.name} className="w-full h-full object-cover" style={{ filter: "brightness(0.75)" }} />
-                        ) : (
-                          <div className="w-full h-full flex items-center justify-center"
-                            style={{ background: "linear-gradient(135deg, #f59e0b, #b45309)" }}>
-                            <span style={{ fontSize: 28, fontWeight: 900, color: "rgba(255,255,255,0.7)" }}>
-                              {brewery.name?.[0]?.toUpperCase() ?? "B"}
-                            </span>
-                          </div>
-                        )}
-                        <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to top, rgba(8,7,6,0.8) 0%, transparent 55%)" }} />
-                        {(brewery.location || brewery.region) && (
-                          <div className="absolute bottom-1.5 left-2 flex items-center gap-0.5">
-                            <MapPin className="w-2.5 h-2.5 flex-shrink-0" style={{ color: "rgba(255,255,255,0.75)" }} />
-                            <span style={{ fontSize: 10, color: "rgba(255,255,255,0.75)", fontWeight: 600 }} className="truncate max-w-[100px]">
-                              {brewery.city || brewery.location || brewery.region}
-                            </span>
-                          </div>
-                        )}
+        {/* ── Il tuo pub (owner) ── */}
+        {(isOwner || isAdminWithPubs) && Array.isArray(myPubs) && myPubs.length > 0 && (
+          <div style={{ padding: "16px", borderBottom: `2px solid ${C.border}` }}>
+            <SecHead label="IL TUO PUB" title="Gestisci" href="/dashboard" linkLabel="Dashboard →" />
+            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+              {(myPubs as any[]).map((pub: any) => (
+                <Link key={pub.id} href="/dashboard">
+                  <div style={{ display: "flex", alignItems: "center", gap: 12, padding: "12px", border: `2px solid ${C.border}`, borderRadius: 8, boxShadow: C.shadow, cursor: "pointer", background: C.bg }}>
+                    {(pub.logoUrl || pub.coverImageUrl) ? (
+                      <img src={pub.logoUrl || pub.coverImageUrl} alt={pub.name} className="w-12 h-12 rounded-lg object-cover flex-shrink-0" style={{ border: `1px solid ${C.borderSoft}` }} />
+                    ) : (
+                      <div className="w-12 h-12 rounded-lg flex items-center justify-center flex-shrink-0" style={{ background: C.text }}>
+                        <Store className="w-5 h-5" style={{ color: C.amberLight }} />
                       </div>
-                      <div style={{ padding: "8px 10px" }}>
-                        <p style={{ fontSize: 12, fontWeight: 800, color: "#ede8e1", letterSpacing: "-0.02em", lineHeight: 1.2 }} className="line-clamp-2">
-                          {brewery.name}
-                        </p>
-                      </div>
+                    )}
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <p style={{ fontSize: 14, fontWeight: 800, color: C.text, letterSpacing: "-0.02em" }} className="truncate">{pub.name}</p>
+                      <p style={{ fontSize: 11, color: C.textSoft, marginTop: 1 }} className="truncate">{pub.address}</p>
+                      {pub.subscriptionStatus && <p style={{ fontSize: 10, fontWeight: 700, color: C.amber, marginTop: 3 }}>{subscriptionLabel(pub.subscriptionStatus)}</p>}
                     </div>
-                  </Link>
-                );
-              })}
+                    <ChevronRight className="w-4 h-4 flex-shrink-0" style={{ color: C.textSoft }} />
+                  </div>
+                </Link>
+              ))}
             </div>
-          </section>
+          </div>
         )}
 
-        {/* ─── ULTIME DAI BIRRIFICI ────────────────────────────────────────── */}
+        {/* ── Il tuo birrificio (owner) ── */}
+        {isBreweryOwner && myBreweryData?.brewery && (
+          <div style={{ padding: "16px", borderBottom: `2px solid ${C.border}` }}>
+            <SecHead label="IL TUO BIRRIFICIO" title={myBreweryData.brewery.name} href="/brewery-dashboard" linkLabel="Gestisci →" />
+            <Link href={`/brewery/${myBreweryData.brewery.id}`}>
+              <div style={{ display: "flex", alignItems: "center", gap: 12, padding: "12px", border: `2px solid ${C.border}`, borderRadius: 8, boxShadow: C.shadow, cursor: "pointer", background: C.bg }}>
+                {myBreweryData.brewery.logoUrl ? (
+                  <img src={myBreweryData.brewery.logoUrl} alt={myBreweryData.brewery.name} className="w-12 h-12 rounded-lg object-cover flex-shrink-0" />
+                ) : (
+                  <div className="w-12 h-12 rounded-lg flex items-center justify-center flex-shrink-0" style={{ background: C.text }}>
+                    <Building2 className="w-5 h-5" style={{ color: C.amberLight }} />
+                  </div>
+                )}
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <p style={{ fontSize: 14, fontWeight: 800, color: C.text, letterSpacing: "-0.02em" }} className="truncate">{myBreweryData.brewery.name}</p>
+                  <p style={{ fontSize: 11, color: C.textSoft, marginTop: 1 }}>{myBreweryData.brewery.location} · {myBreweryData.beers?.length ?? 0} birre nel catalogo</p>
+                </div>
+                <ChevronRight className="w-4 h-4 flex-shrink-0" style={{ color: C.textSoft }} />
+              </div>
+            </Link>
+          </div>
+        )}
+
+        {/* ── Ultime dai birrifici ── */}
         {(homeAnnouncements as any[]).length > 0 && (
-          <section className="mt-7">
-            <SecHead label="NOVITÀ" title="Dai birrifici" />
-            <div className="mt-3 flex gap-3 overflow-x-auto pb-1 scrollbar-hide scroll-ios"
-              style={{ marginLeft: -16, marginRight: -16, paddingLeft: 16, paddingRight: 16 }}>
+          <div style={{ borderBottom: `2px solid ${C.border}` }}>
+            <div style={{ padding: "16px 16px 0" }}>
+              <SecHead label="NOVITÀ" title="Dai birrifici" />
+            </div>
+            <div className="flex gap-3 overflow-x-auto pb-4 scrollbar-hide scroll-ios" style={{ paddingLeft: 16, paddingRight: 16 }}>
               {(homeAnnouncements as any[]).map((ann: any) => {
-                const typeMap: Record<string, { label: string; color: string }> = {
-                  news:    { label: "Novità",      color: "#2563eb" },
-                  release: { label: "Nuova Birra", color: "#d97706" },
-                  collab:  { label: "Collab",      color: "#7c3aed" },
+                const typeMap: Record<string, { label: string; bg: string }> = {
+                  news:    { label: "Novità",      bg: "#2563eb" },
+                  release: { label: "Nuova Birra", bg: C.amberLight },
+                  collab:  { label: "Collab",      bg: "#7c3aed" },
                 };
                 const t = typeMap[ann.type] ?? typeMap.news;
                 return (
                   <Link key={ann.id} href={`/brewery/${ann.breweryId}`}>
-                    <div className="flex-shrink-0 cursor-pointer" style={{
-                      width: 200, padding: "14px", borderRadius: 8,
-                      background: "#161412", border: "1px solid #2a2420",
-                    }}>
+                    <div className="flex-shrink-0" style={{ width: 200, padding: "14px", border: `2px solid ${C.border}`, borderRadius: 8, boxShadow: C.shadow, background: C.bg, cursor: "pointer" }}>
                       <div className="flex items-center gap-2 mb-3">
                         {ann.breweryLogo ? (
-                          <img src={ann.breweryLogo} alt={ann.breweryName}
-                            className="w-7 h-7 rounded-full object-contain flex-shrink-0"
-                            style={{ background: "#1a1612", padding: 2 }} />
+                          <img src={ann.breweryLogo} alt={ann.breweryName} className="w-7 h-7 rounded-full object-contain flex-shrink-0" />
                         ) : (
-                          <div className="w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0"
-                            style={{ background: "#f59e0b" }}>
-                            <span style={{ fontSize: 11, fontWeight: 900, color: "#080706" }}>{ann.breweryName?.[0]}</span>
+                          <div className="w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0" style={{ background: C.amberLight }}>
+                            <span style={{ fontSize: 11, fontWeight: 900, color: C.mapBg }}>{ann.breweryName?.[0]}</span>
                           </div>
                         )}
-                        <p style={{ fontSize: 11, fontWeight: 700, color: "#c8bdb4" }} className="truncate">{ann.breweryName}</p>
+                        <p style={{ fontSize: 11, fontWeight: 700, color: C.textSoft }} className="truncate">{ann.breweryName}</p>
                       </div>
-                      <span style={{ fontSize: 9, fontWeight: 800, padding: "2px 7px", borderRadius: 4, background: t.color, color: "#fff", display: "inline-block", marginBottom: 8 }}>
+                      <span style={{ fontSize: 9, fontWeight: 800, padding: "2px 7px", borderRadius: 4, background: t.bg, color: "#fff", display: "inline-block", marginBottom: 8 }}>
                         {t.label}
                       </span>
-                      <p style={{ fontSize: 12, fontWeight: 800, color: "#ede8e1", letterSpacing: "-0.01em", lineHeight: 1.35 }} className="line-clamp-2">
-                        {ann.title}
-                      </p>
-                      {ann.releaseDate && (
-                        <p style={{ fontSize: 10, color: "#8a7d74", marginTop: 6 }}>
-                          Uscita: {new Date(ann.releaseDate).toLocaleDateString("it-IT")}
-                        </p>
-                      )}
+                      <p style={{ fontSize: 12, fontWeight: 800, color: C.text, letterSpacing: "-0.01em", lineHeight: 1.35 }} className="line-clamp-2">{ann.title}</p>
+                      {ann.releaseDate && <p style={{ fontSize: 10, color: C.textSoft, marginTop: 6 }}>Uscita: {new Date(ann.releaseDate).toLocaleDateString("it-IT")}</p>}
                     </div>
                   </Link>
                 );
               })}
             </div>
-          </section>
+          </div>
         )}
 
-        {/* ─── STILI PIÙ AMATI ─────────────────────────────────────────────── */}
+        {/* ── Stili più amati ── */}
         {isAuthenticated && Array.isArray(popularStyles) && popularStyles.length > 0 && (
-          <section className="mt-7">
-            <SecHead label="TENDENZE" title="Stili più amati" href="/explore/beers" linkLabel="Esplora →" />
-            <div className="mt-3" style={{ border: "1px solid #1f1d1a", borderRadius: 8, overflow: "hidden" }}>
-              {(() => {
-                const top = popularStyles.slice(0, 8);
-                const max = top[0]?.count ?? 1;
-                return top.map((s, i) => (
+          <div style={{ borderBottom: `2px solid ${C.border}` }}>
+            <div style={{ padding: "16px 16px 0" }}>
+              <SecHead label="TENDENZE" title="Stili più amati" href="/explore/beers" linkLabel="Esplora →" />
+            </div>
+            <div style={{ margin: "0 16px 16px", border: `2px solid ${C.border}`, borderRadius: 8, overflow: "hidden" }}>
+              {popularStyles.slice(0, 8).map((s, i) => {
+                const max = popularStyles[0]?.count ?? 1;
+                return (
                   <Link key={s.style} href={`/explore/beers?style=${encodeURIComponent(s.style)}`}>
-                    <div className="flex items-center gap-3 py-2.5 px-4 cursor-pointer"
-                      style={{ borderBottom: i < top.length - 1 ? "1px solid #1f1d1a" : "none", background: "#080706" }}>
-                      <span style={{ width: 20, textAlign: "right", fontSize: 11, fontWeight: 800, color: i < 3 ? "#f59e0b" : "#8a7d74", flexShrink: 0 }}>
-                        {i + 1}
-                      </span>
-                      <div className="flex-1 min-w-0">
-                        <p style={{ fontSize: 13, fontWeight: 700, color: "#ede8e1", marginBottom: 4, letterSpacing: "-0.01em" }} className="truncate">
-                          {s.style}
-                        </p>
-                        <div style={{ height: 3, background: "#1f1d1a", borderRadius: 2, overflow: "hidden" }}>
-                          <div style={{ height: "100%", background: "#f59e0b", borderRadius: 2, width: `${Math.round((s.count / max) * 100)}%` }} />
+                    <div style={{ display: "flex", alignItems: "center", gap: 12, padding: "11px 14px", borderBottom: i < 7 ? `1px solid ${C.borderSoft}` : "none", background: C.bg, cursor: "pointer" }}>
+                      <span style={{ width: 18, textAlign: "right", fontSize: 11, fontWeight: 800, color: i < 3 ? C.amberLight : C.textSoft, flexShrink: 0 }}>{i + 1}</span>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <p style={{ fontSize: 13, fontWeight: 700, color: C.text, marginBottom: 4, letterSpacing: "-0.01em" }} className="truncate">{s.style}</p>
+                        <div style={{ height: 3, background: C.borderSoft, borderRadius: 2, overflow: "hidden" }}>
+                          <div style={{ height: "100%", background: C.amberLight, borderRadius: 2, width: `${Math.round((s.count / max) * 100)}%` }} />
                         </div>
                       </div>
-                      <span style={{ fontSize: 11, fontWeight: 800, color: "#f59e0b", flexShrink: 0, tabularNums: true } as any}>
-                        {s.count.toLocaleString('it-IT')}
-                      </span>
+                      <span style={{ fontSize: 11, fontWeight: 800, color: C.amber, flexShrink: 0 }}>{s.count.toLocaleString('it-IT')}</span>
                     </div>
                   </Link>
-                ));
-              })()}
+                );
+              })}
             </div>
-          </section>
+          </div>
         )}
 
-        {/* ─── I TUOI PREFERITI ────────────────────────────────────────────── */}
+        {/* ── Preferiti ── */}
         {user && Array.isArray(favorites) && (favorites as any[]).length > 0 && (
-          <section className="mt-7">
+          <div style={{ padding: "16px", borderBottom: `2px solid ${C.border}` }}>
             <SecHead label="I TUOI" title="Preferiti" href="/dashboard?tab=favorites" linkLabel="Tutti →" />
-            <div className="mt-3 grid grid-cols-3 gap-2">
-              {(favorites as any[]).filter((f: any) => ['pub', 'brewery', 'beer'].includes(f.itemType) && f.itemName).slice(0, 6).map((fav: any) => {
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 8 }}>
+              {(favorites as any[]).filter((f: any) => ['pub','brewery','beer'].includes(f.itemType) && f.itemName).slice(0, 6).map((fav: any) => {
                 const href = fav.itemType === 'pub' ? `/pub/${fav.itemId}` : fav.itemType === 'brewery' ? `/brewery/${fav.itemId}` : `/beer/${fav.itemId}`;
                 const TypeIcon = fav.itemType === 'pub' ? Store : fav.itemType === 'brewery' ? Building2 : Beer;
                 return (
                   <Link key={fav.id} href={href}>
-                    <div className="cursor-pointer p-3 flex flex-col items-center text-center gap-2 rounded-lg"
-                      style={{ background: "#161412", border: "1px solid #2a2420" }}>
+                    <div style={{ padding: "12px 8px", border: `2px solid ${C.border}`, borderRadius: 8, boxShadow: C.shadow, cursor: "pointer", display: "flex", flexDirection: "column", alignItems: "center", gap: 8, background: C.bg }}>
                       {fav.itemImageUrl ? (
-                        <img src={fav.itemImageUrl} alt={fav.itemName}
-                          className="w-10 h-10 rounded-lg object-cover"
-                          style={{ border: "1px solid #2a2420" }} />
+                        <img src={fav.itemImageUrl} alt={fav.itemName} className="w-10 h-10 rounded-lg object-cover" />
                       ) : (
-                        <div className="w-10 h-10 rounded-lg flex items-center justify-center"
-                          style={{ background: "#f59e0b" }}>
-                          <TypeIcon className="w-5 h-5" style={{ color: "#080706" }} />
+                        <div className="w-10 h-10 rounded-lg flex items-center justify-center" style={{ background: C.amberLight }}>
+                          <TypeIcon className="w-5 h-5" style={{ color: C.mapBg }} />
                         </div>
                       )}
-                      <span style={{ fontSize: 11, fontWeight: 700, color: "#ede8e1", lineHeight: 1.2 }} className="line-clamp-2">
-                        {fav.itemName}
-                      </span>
+                      <span style={{ fontSize: 11, fontWeight: 700, color: C.text, lineHeight: 1.2, textAlign: "center" }} className="line-clamp-2">{fav.itemName}</span>
                     </div>
                   </Link>
                 );
               })}
             </div>
-          </section>
+          </div>
         )}
 
-        {/* ─── STATS COMMUNITY ─────────────────────────────────────────────── */}
-        <section className="mt-8 mb-8">
-          <div style={{ borderRadius: 10, background: "#161412", border: "1px solid #2a2420", overflow: "hidden" }}>
-            <div style={{ padding: "18px 20px" }}>
-              <p style={{ fontSize: 9, fontWeight: 800, letterSpacing: "0.2em", textTransform: "uppercase", color: "#8a7d74", textAlign: "center", marginBottom: 16 }}>
-                La community fermenta<span style={{ color: "#f59e0b" }}>.to</span>
+        {/* ── Stats community ── */}
+        <div style={{ padding: "16px", borderBottom: `2px solid ${C.border}` }}>
+          <div style={{ border: `2px solid ${C.border}`, borderRadius: 8, overflow: "hidden", boxShadow: C.shadow }}>
+            <div style={{ background: C.text, padding: "12px 16px", textAlign: "center", borderBottom: `2px solid ${C.border}` }}>
+              <p style={{ fontSize: 9, fontWeight: 800, letterSpacing: "0.2em", textTransform: "uppercase", color: "#8a7d74", margin: 0 }}>
+                La community fermenta<span style={{ color: C.amberLight }}>.to</span>
               </p>
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 1, background: "#2a2420", marginBottom: 1 }}>
-                {[
-                  { value: globalStats?.totalBeers, label: "Birre", color: "#f59e0b" },
-                  { value: globalStats?.totalBreweries, label: "Birrifici", color: "#38bdf8" },
-                  { value: globalStats?.uniqueStyles, label: "Stili", color: "#34d399" },
-                ].map((s, i) => (
-                  <div key={i} style={{ background: "#161412", padding: "14px 0", textAlign: "center" }}>
-                    <p style={{ fontSize: 22, fontWeight: 900, color: s.color, letterSpacing: "-0.04em", lineHeight: 1, marginBottom: 4 }}>
-                      {s.value != null ? s.value.toLocaleString('it-IT') : '—'}
-                    </p>
-                    <p style={{ fontSize: 9, fontWeight: 700, color: "#8a7d74", textTransform: "uppercase", letterSpacing: "0.1em" }}>{s.label}</p>
-                  </div>
-                ))}
-              </div>
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 1, background: "#2a2420" }}>
-                {[
-                  { value: globalStats?.totalUsers, label: "Utenti", color: "#a78bfa" },
-                  { value: globalStats?.totalPubs, label: "Pub", color: "#fb923c" },
-                ].map((s, i) => (
-                  <div key={i} style={{ background: "#161412", padding: "12px 0", textAlign: "center" }}>
-                    <p style={{ fontSize: 18, fontWeight: 900, color: s.color, letterSpacing: "-0.04em", lineHeight: 1, marginBottom: 3 }}>
-                      {s.value != null ? s.value.toLocaleString('it-IT') : '—'}
-                    </p>
-                    <p style={{ fontSize: 9, fontWeight: 700, color: "#8a7d74", textTransform: "uppercase", letterSpacing: "0.1em" }}>{s.label}</p>
-                  </div>
-                ))}
-              </div>
+            </div>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 0 }}>
+              {[
+                { value: globalStats?.totalBeers, label: "Birre", color: C.amberLight },
+                { value: globalStats?.totalBreweries, label: "Birrifici", color: "#38bdf8" },
+                { value: globalStats?.uniqueStyles, label: "Stili", color: "#34d399" },
+              ].map((s, i) => (
+                <div key={i} style={{ padding: "14px 0", textAlign: "center", borderRight: i < 2 ? `1px solid ${C.borderSoft}` : "none" }}>
+                  <p style={{ fontSize: 20, fontWeight: 900, color: s.color, letterSpacing: "-0.04em", lineHeight: 1, marginBottom: 3 }}>
+                    {s.value != null ? s.value.toLocaleString('it-IT') : '—'}
+                  </p>
+                  <p style={{ fontSize: 9, fontWeight: 700, color: C.textSoft, textTransform: "uppercase", letterSpacing: "0.1em", margin: 0 }}>{s.label}</p>
+                </div>
+              ))}
+            </div>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", borderTop: `1px solid ${C.borderSoft}` }}>
+              {[
+                { value: globalStats?.totalUsers, label: "Utenti", color: "#a78bfa" },
+                { value: globalStats?.totalPubs, label: "Pub", color: "#fb923c" },
+              ].map((s, i) => (
+                <div key={i} style={{ padding: "12px 0", textAlign: "center", borderRight: i === 0 ? `1px solid ${C.borderSoft}` : "none" }}>
+                  <p style={{ fontSize: 17, fontWeight: 900, color: s.color, letterSpacing: "-0.04em", lineHeight: 1, marginBottom: 3 }}>
+                    {s.value != null ? s.value.toLocaleString('it-IT') : '—'}
+                  </p>
+                  <p style={{ fontSize: 9, fontWeight: 700, color: C.textSoft, textTransform: "uppercase", letterSpacing: "0.1em", margin: 0 }}>{s.label}</p>
+                </div>
+              ))}
             </div>
           </div>
-        </section>
+        </div>
 
-        {/* ─── CTA per non iscritti ───────────────────────────────────────── */}
+        {/* ── CTA per non autenticati ── */}
         {!isAuthenticated && (
-          <div className="mb-8 grid grid-cols-2 gap-3">
+          <div style={{ padding: "16px", display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, borderBottom: `2px solid ${C.border}` }}>
             <Link href="/become-publican">
-              <div className="p-4 rounded-lg cursor-pointer" style={{ background: "#161412", border: "1px solid #2a2420" }}>
-                <Store className="w-5 h-5 mb-2" style={{ color: "#f59e0b" }} />
-                <p style={{ fontSize: 12, fontWeight: 800, color: "#ede8e1", marginBottom: 3 }}>Gestisci un pub?</p>
-                <p style={{ fontSize: 10, color: "#8a7d74", marginBottom: 10 }}>Taplist live e visibilità.</p>
-                <span style={{ fontSize: 11, fontWeight: 800, color: "#f59e0b" }}>Inizia →</span>
+              <div style={{ padding: "14px 12px", border: `2px solid ${C.border}`, borderRadius: 8, boxShadow: C.shadow, cursor: "pointer", background: C.bg }}>
+                <Store className="w-5 h-5 mb-2" style={{ color: C.amber }} />
+                <p style={{ fontSize: 11, fontWeight: 800, color: C.text, marginBottom: 3 }}>Gestisci un pub?</p>
+                <p style={{ fontSize: 10, color: C.textSoft, marginBottom: 10 }}>Taplist live e visibilità.</p>
+                <span style={{ fontSize: 11, fontWeight: 800, color: C.amber }}>Inizia →</span>
               </div>
             </Link>
             <Link href="/become-publican">
-              <div className="p-4 rounded-lg cursor-pointer" style={{ background: "#161412", border: "1px solid #2a2420" }}>
-                <Building2 className="w-5 h-5 mb-2" style={{ color: "#f59e0b" }} />
-                <p style={{ fontSize: 12, fontWeight: 800, color: "#ede8e1", marginBottom: 3 }}>Sei un birrificio?</p>
-                <p style={{ fontSize: 10, color: "#8a7d74", marginBottom: 10 }}>Pubblica le tue birre.</p>
-                <span style={{ fontSize: 11, fontWeight: 800, color: "#f59e0b" }}>Registrati →</span>
+              <div style={{ padding: "14px 12px", border: `2px solid ${C.border}`, borderRadius: 8, boxShadow: `2px 2px 0 ${C.amber}`, cursor: "pointer", background: C.bg }}>
+                <Building2 className="w-5 h-5 mb-2" style={{ color: C.amber }} />
+                <p style={{ fontSize: 11, fontWeight: 800, color: C.text, marginBottom: 3 }}>Sei un birrificio?</p>
+                <p style={{ fontSize: 10, color: C.textSoft, marginBottom: 10 }}>Pubblica le tue birre.</p>
+                <span style={{ fontSize: 11, fontWeight: 800, color: C.amber }}>Registrati →</span>
               </div>
             </Link>
           </div>
         )}
 
-      </main>
+      </div>
 
       <Footer />
     </div>
-  );
-}
-
-/* ─── Sub-components ─────────────────────────────────────────────────────── */
-
-function SecHead({
-  label, title, href, linkLabel = "Vedi tutti →", dot,
-}: {
-  label: string; title: string; href?: string; linkLabel?: string; dot?: "green";
-}) {
-  return (
-    <div className="flex items-end justify-between">
-      <div>
-        <p style={{ fontSize: 9, fontWeight: 800, letterSpacing: "0.18em", textTransform: "uppercase", color: "#8a7d74", marginBottom: 3 }}>
-          {dot && <span style={{ color: "#34d399", marginRight: 4 }}>●</span>}
-          {label}
-        </p>
-        <h2 style={{ fontSize: 18, fontWeight: 900, letterSpacing: "-0.03em", color: "#ede8e1", margin: 0, lineHeight: 1.1 }}>
-          {title}
-        </h2>
-      </div>
-      {href && (
-        <Link href={href}>
-          <span style={{ fontSize: 11, fontWeight: 700, color: "#f59e0b" }}>{linkLabel}</span>
-        </Link>
-      )}
-    </div>
-  );
-}
-
-function OwnerAction({ icon: Icon, label, sub }: { icon: any; label: string; sub: string }) {
-  return (
-    <div className="p-4 rounded-lg cursor-pointer" style={{ background: "#161412", border: "1px solid #2a2420" }}>
-      <Icon className="w-5 h-5 mb-2" style={{ color: "#f59e0b" }} />
-      <p style={{ fontSize: 12, fontWeight: 800, color: "#ede8e1", marginBottom: 2 }}>{label}</p>
-      <p style={{ fontSize: 11, fontWeight: 700, color: "#f59e0b" }}>{sub}</p>
-    </div>
-  );
-}
-
-function PubCard({ pub, userLocation }: { pub: any; userLocation: { lat: number; lng: number } | null }) {
-  const img = pub.coverImageUrl || pub.logoUrl || pub.imageUrl;
-  const dist = userLocation && pub._distance != null && pub._distance !== Infinity
-    ? fmtDist(pub._distance) : null;
-
-  return (
-    <div className="flex-shrink-0 cursor-pointer" style={{ width: 220, borderRadius: 8, overflow: "hidden", background: "#161412", border: "1px solid #2a2420" }}>
-      <div style={{ position: "relative", height: 132, overflow: "hidden" }}>
-        {img ? (
-          <img src={img} alt={pub.name} className="w-full h-full object-cover" style={{ filter: "brightness(0.75)" }} />
-        ) : (
-          <div className="w-full h-full flex items-center justify-center"
-            style={{ background: "linear-gradient(135deg, #1a1612, #2a2420)" }}>
-            <Store className="w-8 h-8" style={{ color: "#3a3530" }} />
-          </div>
-        )}
-        <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to top, rgba(8,7,6,0.9) 0%, transparent 55%)" }} />
-        {pub.rating && (
-          <span style={{ position: "absolute", top: 8, right: 8, fontSize: 11, fontWeight: 800, padding: "2px 7px", background: "#f59e0b", color: "#080706", borderRadius: 4 }}>
-            ★ {Number(pub.rating).toFixed(1)}
-          </span>
-        )}
-        <div style={{ position: "absolute", bottom: 8, left: 10 }}>
-          <p style={{ fontSize: 14, fontWeight: 900, color: "#ede8e1", letterSpacing: "-0.03em", marginBottom: 2, lineHeight: 1.1 }} className="line-clamp-1">
-            {pub.name}
-          </p>
-          <div className="flex items-center gap-1">
-            <MapPin className="w-3 h-3 flex-shrink-0" style={{ color: "#f59e0b" }} />
-            <span style={{ fontSize: 10, color: "#c8bdb4" }}>
-              {pub.city || pub.address || "Italia"}{dist ? ` · ${dist}` : ""}
-            </span>
-          </div>
-        </div>
-      </div>
-      {/* Taplist count */}
-      {pub.tapCount != null && (
-        <div style={{ padding: "7px 10px", borderTop: "1px solid #1f1d1a", display: "flex", alignItems: "center", gap: 5 }}>
-          <Beer className="w-3 h-3" style={{ color: "#f59e0b" }} />
-          <span style={{ fontSize: 11, fontWeight: 700, color: "#8a7d74" }}>{pub.tapCount} spine</span>
-        </div>
-      )}
-    </div>
-  );
-}
-
-function PubOwnerCard({ pub }: { pub: any }) {
-  const img = pub.logoUrl || pub.coverImageUrl || pub.imageUrl;
-  return (
-    <Link href="/dashboard">
-      <div className="flex items-center gap-3 p-4 rounded-lg cursor-pointer"
-        style={{ background: "#161412", border: "1px solid #2a2420" }}>
-        {img ? (
-          <img src={img} alt={pub.name} className="w-12 h-12 rounded-lg object-cover flex-shrink-0"
-            style={{ border: "1px solid #2a2420" }} />
-        ) : (
-          <div className="w-12 h-12 rounded-lg flex items-center justify-center flex-shrink-0"
-            style={{ background: "#1a1612", border: "1px solid #2a2420" }}>
-            <Store className="w-5 h-5" style={{ color: "#f59e0b" }} />
-          </div>
-        )}
-        <div className="flex-1 min-w-0">
-          <p style={{ fontSize: 14, fontWeight: 800, color: "#ede8e1", letterSpacing: "-0.02em" }} className="truncate">{pub.name}</p>
-          <p style={{ fontSize: 11, color: "#8a7d74", marginTop: 1 }} className="truncate">{pub.address}</p>
-          {pub.subscriptionStatus && (
-            <p style={{ fontSize: 10, fontWeight: 700, color: "#f59e0b", marginTop: 3 }}>
-              {subscriptionLabel(pub.subscriptionStatus)}
-            </p>
-          )}
-        </div>
-        <ChevronRight className="w-4 h-4 flex-shrink-0" style={{ color: "#8a7d74" }} />
-      </div>
-    </Link>
   );
 }
