@@ -464,18 +464,7 @@ export default function BreweryDetail() {
             <div className="w-full h-full" style={{ background: 'linear-gradient(135deg, #b45309 0%, #d97706 40%, #f59e0b 70%, #fbbf24 100%)' }} />
           )}
           {/* Dark gradient overlay */}
-          <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent" />
-          {/* Brewery name in hero */}
-          <div className="absolute bottom-16 left-4 right-4 z-10">
-            <h1 className="text-white font-extrabold text-xl sm:text-2xl leading-tight drop-shadow-lg line-clamp-2">
-              {brewery?.name}
-            </h1>
-            {brewery?.location && (
-              <p className="text-white/80 text-sm mt-0.5 drop-shadow">
-                {brewery.location}{brewery.region ? ` · ${brewery.region}` : ''}
-              </p>
-            )}
-          </div>
+          <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-black/10 to-transparent" />
           
           {/* Brewery logo bottom-left overlapping */}
           <div className="absolute bottom-4 left-4 z-20">
@@ -577,24 +566,24 @@ export default function BreweryDetail() {
 
             {/* Tabs Section */}
             <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-              <div className="px-6 md:px-8 pb-4">
-                <TabsList className="bg-orange-50 dark:bg-[hsl(25,14%,12%)] rounded-2xl p-1 flex gap-1 w-fit h-auto">
+              <div className="pb-4 overflow-x-auto px-4 md:px-8 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+                <TabsList className="bg-[#FFF8F2] dark:bg-[hsl(25,14%,12%)] rounded-2xl p-1 flex gap-1 w-max min-w-full h-auto">
                   <TabsTrigger
                     value="birre"
-                    className="data-[state=active]:bg-white dark:data-[state=active]:bg-[hsl(25,14%,10%)] data-[state=active]:text-primary data-[state=active]:shadow-sm rounded-xl font-bold px-6 py-2 text-sm transition-all text-muted-foreground hover:text-foreground"
+                    className="data-[state=active]:bg-white dark:data-[state=active]:bg-[hsl(25,14%,10%)] data-[state=active]:text-primary data-[state=active]:shadow-sm rounded-xl font-bold px-4 py-2 text-sm transition-all text-muted-foreground hover:text-foreground whitespace-nowrap flex-1"
                   >
                     Catalogo
                   </TabsTrigger>
                   <TabsTrigger
                     value="info"
-                    className="data-[state=active]:bg-white dark:data-[state=active]:bg-[hsl(25,14%,10%)] data-[state=active]:text-primary data-[state=active]:shadow-sm rounded-xl font-bold px-6 py-2 text-sm transition-all text-muted-foreground hover:text-foreground"
+                    className="data-[state=active]:bg-white dark:data-[state=active]:bg-[hsl(25,14%,10%)] data-[state=active]:text-primary data-[state=active]:shadow-sm rounded-xl font-bold px-4 py-2 text-sm transition-all text-muted-foreground hover:text-foreground whitespace-nowrap flex-1"
                   >
-                    Informazioni
+                    Info
                   </TabsTrigger>
                   {(breweryEvents.length > 0 || announcements.length > 0) && (
                     <TabsTrigger
                       value="serate"
-                      className="data-[state=active]:bg-white dark:data-[state=active]:bg-[hsl(25,14%,10%)] data-[state=active]:text-primary data-[state=active]:shadow-sm rounded-xl font-bold px-6 py-2 text-sm transition-all text-muted-foreground hover:text-foreground"
+                      className="data-[state=active]:bg-white dark:data-[state=active]:bg-[hsl(25,14%,10%)] data-[state=active]:text-primary data-[state=active]:shadow-sm rounded-xl font-bold px-4 py-2 text-sm transition-all text-muted-foreground hover:text-foreground whitespace-nowrap flex-1"
                     >
                       Eventi
                     </TabsTrigger>
@@ -602,7 +591,7 @@ export default function BreweryDetail() {
                   {distribution.length > 0 && (
                     <TabsTrigger
                       value="distribuzione"
-                      className="data-[state=active]:bg-white dark:data-[state=active]:bg-[hsl(25,14%,10%)] data-[state=active]:text-primary data-[state=active]:shadow-sm rounded-xl font-bold px-6 py-2 text-sm transition-all text-muted-foreground hover:text-foreground"
+                      className="data-[state=active]:bg-white dark:data-[state=active]:bg-[hsl(25,14%,10%)] data-[state=active]:text-primary data-[state=active]:shadow-sm rounded-xl font-bold px-4 py-2 text-sm transition-all text-muted-foreground hover:text-foreground whitespace-nowrap flex-1"
                     >
                       Dove trovarci
                     </TabsTrigger>
