@@ -110,16 +110,20 @@ const ModernBeerCard = ({ beer, prices, className = "" }: {
   prices?: any[];
   className?: string;
 }) => (
-  <Card className={`overflow-hidden hover:shadow-lg transition-all duration-300 border-l-4 border-l-emerald-500 bg-white dark:bg-[hsl(25,14%,10%)] rounded-2xl border border-orange-50 dark:border-[hsl(25,12%,16%)] shadow-sm ${className}`}>
+  <div className={`bg-white dark:bg-[hsl(25,14%,10%)] rounded-2xl border border-orange-50 dark:border-[hsl(25,12%,16%)] shadow-[0_4px_20px_rgba(247,113,4,0.06)] hover:shadow-[0_6px_24px_rgba(247,113,4,0.12)] hover:border-orange-200 dark:hover:border-orange-800/40 transition-all duration-300 cursor-pointer ${className}`}>
     <div className="flex gap-3 p-4">
-      <ImageWithFallback
-        src={beer?.imageUrl || beer?.brewery?.logoUrl}
-        alt={beer?.name || 'Beer'}
-        imageType="beer"
-        containerClassName="w-14 h-14 rounded-xl flex-shrink-0 self-center"
-        className="w-14 h-14 rounded-xl object-cover"
-        iconSize="md"
-      />
+      <Link href={`/beer/${beer?.id}`} className="flex-shrink-0 self-center">
+        <div className="w-14 h-14 rounded-2xl overflow-hidden bg-gradient-to-br from-orange-50 to-amber-50 dark:from-orange-950/40 dark:to-amber-900/20 flex items-center justify-center border border-orange-100 dark:border-orange-900/30">
+          <ImageWithFallback
+            src={beer?.imageUrl || beer?.brewery?.logoUrl}
+            alt={beer?.name || 'Beer'}
+            imageType="beer"
+            containerClassName="w-full h-full"
+            className="w-full h-full object-cover"
+            iconSize="md"
+          />
+        </div>
+      </Link>
 
       <div className="flex-1 min-w-0 flex gap-2 justify-between">
         <div className="flex-1 min-w-0">
@@ -131,42 +135,37 @@ const ModernBeerCard = ({ beer, prices, className = "" }: {
 
           {beer?.brewery?.id ? (
             <Link href={`/brewery/${beer.brewery.id}`}>
-              <p className="text-xs text-primary dark:text-orange-400 hover:text-primary dark:hover:text-orange-300 cursor-pointer transition-colors truncate leading-snug mt-0.5">
+              <p className="text-xs font-semibold text-primary dark:text-orange-400 hover:opacity-80 cursor-pointer transition-opacity truncate leading-snug mt-0.5">
                 {beer.brewery.name || beer?.breweryName || 'Birrificio'}
               </p>
             </Link>
           ) : beer?.breweryName ? (
-            <p className="text-xs text-gray-500 dark:text-gray-400 truncate leading-snug mt-0.5">{beer.breweryName}</p>
+            <p className="text-xs text-muted-foreground truncate leading-snug mt-0.5">{beer.breweryName}</p>
           ) : null}
 
-          <p className="text-xs text-gray-500 dark:text-gray-400 truncate leading-snug mt-0.5">
-            {beer?.style || 'Stile N/D'}
-          </p>
-
-          <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
-            <span className="text-xs font-medium text-gray-600 dark:text-gray-400">
+          <div className="flex items-center gap-1.5 mt-1.5 flex-wrap">
+            {beer?.style && (
+              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full" style={{ background: 'linear-gradient(135deg, rgba(247,113,4,0.12) 0%, rgba(249,138,14,0.12) 100%)', color: '#F77104' }}>
+                {beer.style}
+              </span>
+            )}
+            <span className="text-[10px] font-medium text-muted-foreground">
               {beer?.isAlcoholFree ? '0.0% ABV' : `${beer?.abv || '0'}% ABV`}
             </span>
             {beer?.isGlutenFree && <GlutenFreeSmallBadge size={11} />}
             {beer?.isAlcoholFree && <AlcoholFreeBadge size={10} />}
           </div>
-
-          {beer?.description && (
-            <p className="text-xs text-gray-500 dark:text-gray-400 italic mt-1.5 line-clamp-2">
-              {beer.description}
-            </p>
-          )}
         </div>
 
         {prices && prices.length > 0 && (
           <div className="flex-shrink-0 text-right self-center">
-            <div className="space-y-1.5">
+            <div className="space-y-1">
               {prices.map((price: any, index: number) => (
                 <div key={index}>
-                  <div className="text-xs text-gray-400 dark:text-gray-400">
+                  <div className="text-[10px] text-muted-foreground">
                     {typeof price === 'object' ? (price as any).size : price}
                   </div>
-                  <div className="text-sm font-bold text-foreground">
+                  <div className="text-base font-black text-foreground">
                     €{typeof price === 'object' ? parseFloat((price as any).price).toFixed(2) : parseFloat(price).toFixed(2)}
                   </div>
                 </div>
@@ -176,7 +175,7 @@ const ModernBeerCard = ({ beer, prices, className = "" }: {
         )}
       </div>
     </div>
-  </Card>
+  </div>
 );
 
 // Modern Stats Card Component  
@@ -721,7 +720,8 @@ export default function PubDetail() {
                 <button
                   title="Gestisci pub"
                   data-testid="button-manage"
-                  className="h-9 w-9 flex items-center justify-center rounded-full border bg-primary text-white border-primary hover:bg-primary/90 transition-colors"
+                  className="h-9 w-9 flex items-center justify-center rounded-full text-white transition-all hover:opacity-90 shadow-sm"
+                  style={{ background: 'linear-gradient(135deg, #F77104 0%, #f98a0e 50%, #f5a623 100%)' }}
                 >
                   <Settings className="h-4 w-4" />
                 </button>
@@ -918,7 +918,8 @@ export default function PubDetail() {
                           href={getMapNavigationUrl((pub as any).name, (pub as any).address)}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="inline-flex items-center mt-2 px-3 py-1.5 rounded-xl bg-primary hover:bg-primary/90 text-white text-xs font-semibold transition-colors gap-1.5"
+                          className="inline-flex items-center mt-2 px-3 py-1.5 rounded-xl text-white text-xs font-semibold transition-all gap-1.5 hover:opacity-90"
+                          style={{ background: 'linear-gradient(135deg, #F77104 0%, #f98a0e 50%, #f5a623 100%)' }}
                         >
                           <Navigation className="h-3 w-3" />
                           Avvia navigazione
@@ -974,7 +975,7 @@ export default function PubDetail() {
                     <div className="flex gap-3">
                       {(pub as any)?.facebookUrl && (
                         <a href={(pub as any).facebookUrl} target="_blank" rel="noopener noreferrer"
-                          className="flex-1 flex items-center justify-center gap-2 p-3 rounded-xl bg-primary hover:bg-primary/90 text-white text-sm font-semibold transition-colors shadow-sm">
+                          className="flex-1 flex items-center justify-center gap-2 p-3 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold transition-colors shadow-sm">
                           <Facebook size={16} /> Facebook
                         </a>
                       )}
@@ -1019,7 +1020,8 @@ export default function PubDetail() {
                         href={getMapNavigationUrl((pub as any).name, (pub as any).address)}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="inline-flex items-center mt-1.5 px-3 py-1.5 rounded-xl bg-primary hover:bg-primary/90 text-white text-xs font-semibold transition-colors gap-1.5"
+                        className="inline-flex items-center mt-1.5 px-3 py-1.5 rounded-xl text-white text-xs font-semibold transition-all gap-1.5 hover:opacity-90"
+                        style={{ background: 'linear-gradient(135deg, #F77104 0%, #f98a0e 50%, #f5a623 100%)' }}
                       >
                         <Navigation className="h-3 w-3" />
                         Indicazioni
@@ -1085,7 +1087,7 @@ export default function PubDetail() {
                           href={(pub as any).facebookUrl} 
                           target="_blank" 
                           rel="noopener noreferrer"
-                          className="p-2 rounded-xl bg-primary hover:bg-primary/90 text-white transition-colors"
+                          className="p-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white transition-colors"
                           title="Facebook"
                         >
                           <Facebook size={16} />
@@ -1110,10 +1112,11 @@ export default function PubDetail() {
 
             {/* Opening Hours Button */}
             <Button 
-              className="w-full bg-primary hover:bg-primary/90 text-white transition-all duration-300 rounded-xl shadow-lg h-12 font-bold" 
+              className="w-full text-white transition-all duration-300 rounded-xl shadow-md h-12 font-bold hover:opacity-90 border-none" 
               size="lg"
               onClick={handleShowOpeningHours}
               data-testid="button-show-hours"
+              style={{ background: 'linear-gradient(135deg, #F77104 0%, #f98a0e 50%, #f5a623 100%)' }}
             >
               <Clock className="h-5 w-5 mr-2" />
               Vedi Orari Completi

@@ -550,18 +550,18 @@ export default function BeerDetail() {
         })}</script>
       </Helmet>
       
-      {/* ── HERO ── compact, image-first */}
-      <div className="relative h-[220px] sm:h-[280px] md:h-[340px] overflow-hidden">
-        {(beer?.imageUrl || beer?.bottleImageUrl) ? (
+      {/* ── HERO ── orange gradient base, image as overlay (like mockup) */}
+      <div className="relative h-[220px] sm:h-[280px] md:h-[340px] overflow-hidden" style={{ background: 'linear-gradient(135deg, #F77104 0%, #f98a0e 50%, #f5a623 100%)' }}>
+        {/* Radial light glow */}
+        <div className="absolute inset-0 opacity-40 mix-blend-overlay" style={{ backgroundImage: 'radial-gradient(circle at 50% 40%, rgba(255,255,255,0.9) 0%, transparent 60%)' }} />
+        {(beer?.imageUrl || beer?.bottleImageUrl) && (
           <img
             src={beer.imageUrl || beer.bottleImageUrl}
             alt={`${beer?.name} - Immagine`}
-            className="w-full h-full object-cover"
+            className="w-full h-full object-cover mix-blend-overlay opacity-50"
           />
-        ) : (
-          <div className="w-full h-full bg-gradient-to-br from-[hsl(24,93%,49%)] to-[hsl(20,95%,42%)]" />
         )}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/30 to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/10 to-transparent" />
         <div className="absolute bottom-0 left-0 right-0 px-4 pb-4 flex items-end gap-3">
           <div className="h-14 w-14 sm:h-16 sm:w-16 rounded-xl ring-2 ring-white/40 bg-white/10 backdrop-blur-sm flex-shrink-0 overflow-hidden shadow-lg">
             <ImageWithFallback
@@ -616,14 +616,14 @@ export default function BeerDetail() {
           {/* Info pills */}
           <div className="flex items-center gap-2 flex-wrap justify-center">
             {beer?.abv && (
-              <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-bold bg-orange-50 text-primary">
+              <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-bold bg-gradient-to-r from-orange-50 to-amber-50 dark:from-orange-950/50 dark:to-amber-950/30 text-primary border border-orange-100 dark:border-orange-900/30">
                 <Target className="h-3.5 w-3.5" />
                 {beer.abv}% ABV
               </span>
             )}
             {beer?.style && (
               <Link href={`/search?q=${encodeURIComponent(beer.style)}`} className="max-w-full">
-                <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-bold bg-orange-50 text-primary cursor-pointer whitespace-normal text-center">
+                <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-bold bg-gradient-to-r from-orange-50 to-amber-50 dark:from-orange-950/50 dark:to-amber-950/30 text-primary cursor-pointer whitespace-normal text-center border border-orange-100 dark:border-orange-900/30 hover:from-orange-100 hover:to-amber-100 transition-colors">
                   <Sparkles className="h-3.5 w-3.5 flex-shrink-0" />
                   {beer.style}
                 </span>
@@ -766,24 +766,24 @@ export default function BeerDetail() {
 
             {/* Specs grid */}
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
-              <div className="rounded-xl p-3 bg-orange-50 dark:bg-orange-950/40 border border-orange-100 dark:border-orange-900/50 flex items-center gap-2.5">
-                <Target className="h-4 w-4 text-orange-500 flex-shrink-0" />
+              <div className="rounded-2xl p-3 bg-gradient-to-br from-orange-50 to-amber-50 dark:from-orange-950/50 dark:to-amber-950/30 border border-orange-100 dark:border-orange-900/40 flex items-center gap-2.5">
+                <Target className="h-4 w-4 text-primary flex-shrink-0" />
                 <div><p className="text-[10px] uppercase tracking-wider font-semibold text-muted-foreground">ABV</p><p className="text-sm font-bold text-foreground">{beer?.abv ? `${beer.abv}%` : '—'}</p></div>
               </div>
-              <div className="rounded-xl p-3 bg-orange-50 dark:bg-orange-950/40 border border-orange-100 dark:border-orange-900/50 flex items-center gap-2.5">
+              <div className="rounded-2xl p-3 bg-gradient-to-br from-orange-50 to-amber-50 dark:from-orange-950/50 dark:to-amber-950/30 border border-orange-100 dark:border-orange-900/40 flex items-center gap-2.5">
                 <Sparkles className="h-4 w-4 text-primary flex-shrink-0" />
                 <div className="min-w-0"><p className="text-[10px] uppercase tracking-wider font-semibold text-muted-foreground">Stile</p><p className="text-sm font-bold text-foreground leading-tight line-clamp-2">{beer?.style || '—'}</p></div>
               </div>
               {beer?.color && (
-                <div className="rounded-xl p-3 bg-orange-50 dark:bg-orange-950/40 border border-orange-100 dark:border-orange-900/50 flex items-center gap-2.5">
+                <div className="rounded-2xl p-3 bg-gradient-to-br from-orange-50 to-amber-50 dark:from-orange-950/50 dark:to-amber-950/30 border border-orange-100 dark:border-orange-900/40 flex items-center gap-2.5">
                   <Droplets className="h-4 w-4 text-primary flex-shrink-0" />
                   <div><p className="text-[10px] uppercase tracking-wider font-semibold text-muted-foreground">Colore</p><p className="text-sm font-bold text-foreground truncate">{beer.color}</p></div>
                 </div>
               )}
               {beer?.ibu && (
-                <div className="rounded-xl p-3 bg-orange-50 dark:bg-orange-950/20 dark:bg-orange-950/30/40 border border-orange-100 dark:border-orange-900/30 flex items-center gap-2.5">
+                <div className="rounded-2xl p-3 bg-gradient-to-br from-orange-50 to-amber-50 dark:from-orange-950/50 dark:to-amber-950/30 border border-orange-100 dark:border-orange-900/40 flex items-center gap-2.5">
                   <Wheat className="h-4 w-4 text-primary flex-shrink-0" />
-                  <div><p className="text-[10px] uppercase tracking-wider font-semibold text-primary">IBU</p><p className="text-sm font-bold text-foreground">{beer.ibu}</p></div>
+                  <div><p className="text-[10px] uppercase tracking-wider font-semibold text-muted-foreground">IBU</p><p className="text-sm font-bold text-foreground">{beer.ibu}</p></div>
                 </div>
               )}
             </div>
@@ -1064,7 +1064,7 @@ export default function BeerDetail() {
                         </div>
                         <div className="flex-1 h-2 bg-orange-100 dark:bg-orange-900/30 rounded-full overflow-hidden">
                           <div
-                            className={`h-full rounded-full transition-all duration-500 ${isActive ? 'bg-primary' : 'bg-gradient-to-r from-yellow-400 to-orange-500'}`}
+                            className={`h-full rounded-full transition-all duration-500 ${isActive ? 'bg-gradient-to-r from-[#F77104] to-[#f5a623]' : 'bg-gradient-to-r from-yellow-400 to-orange-500'}`}
                             style={{ width: `${pct}%` }}
                           />
                         </div>
@@ -1095,11 +1095,12 @@ export default function BeerDetail() {
                     <button
                       key={opt}
                       onClick={() => { setReviewSortBy(opt); setShowAllReviews(false); }}
-                      className={`text-xs px-2.5 py-1 rounded-full border font-bold transition-colors ${
+                      className={`text-xs px-2.5 py-1 rounded-full border font-bold transition-all ${
                         reviewSortBy === opt
-                          ? 'bg-primary text-white border-primary'
+                          ? 'text-white border-transparent'
                           : 'text-muted-foreground border-orange-50 hover:border-primary/20'
                       }`}
+                      style={reviewSortBy === opt ? { background: 'linear-gradient(135deg, #F77104 0%, #f98a0e 50%, #f5a623 100%)' } : {}}
                     >
                       {opt === 'recent' ? 'Recenti' : opt === 'highest' ? '↑ Voto' : '↓ Voto'}
                     </button>
@@ -1385,7 +1386,8 @@ export default function BeerDetail() {
               <Button
                 onClick={handleSaveEdit}
                 disabled={isSavingBeer}
-                className="bg-gradient-to-r bg-primary hover:bg-primary/90 text-white"
+                className="text-white hover:opacity-90 border-none"
+                style={{ background: 'linear-gradient(135deg, #F77104 0%, #f98a0e 50%, #f5a623 100%)' }}
               >
                 <Save className="h-4 w-4 mr-2" />
                 {isSavingBeer ? 'Salvataggio...' : 'Salva'}
@@ -1435,7 +1437,8 @@ export default function BeerDetail() {
                 Annulla
               </Button>
               <Button
-                className="flex-1 bg-primary hover:bg-primary/90 text-white font-bold"
+                className="flex-1 text-white font-bold hover:opacity-90 border-none"
+                style={{ background: 'linear-gradient(135deg, #F77104 0%, #f98a0e 50%, #f5a623 100%)' }}
                 disabled={reportMutation.isPending}
                 onClick={() => {
                   if (reportDialogReviewId) {

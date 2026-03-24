@@ -1,6 +1,4 @@
 import { useMemo } from "react";
-import { Card } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Link } from "wouter";
 import { Wine, EyeOff } from "lucide-react";
 import ImageWithFallback from "@/components/image-with-fallback";
@@ -73,27 +71,31 @@ export default function TapList({ tapList }: TapListProps) {
   const pompaItems = sorted.filter(t => t.tapType === "pompa");
 
   const renderCard = (tap: typeof sorted[0]) => (
-    <Card key={tap.id} className={`overflow-hidden hover:shadow-lg transition-shadow border-l-4 ${tap.tapType === "pompa" ? "border-l-violet-500" : "border-l-amber-500"} bg-white dark:bg-gray-800 ${tap.isVisible === false ? 'opacity-60' : ''}`}>
+    <div key={tap.id} className={`bg-white dark:bg-[hsl(25,14%,10%)] rounded-2xl border border-orange-50 dark:border-[hsl(25,12%,16%)] shadow-[0_4px_20px_rgba(247,113,4,0.06)] hover:shadow-[0_6px_24px_rgba(247,113,4,0.12)] hover:border-orange-200 dark:hover:border-orange-800/40 transition-all duration-300 ${tap.isVisible === false ? 'opacity-60' : ''}`}>
       <div className="flex gap-3 p-4">
-        <ImageWithFallback
-          src={tap.beer.imageUrl || tap.beer.brewery.logoUrl}
-          alt={tap.beer.name}
-          imageType="beer"
-          containerClassName="w-14 h-14 rounded-xl flex-shrink-0 self-center"
-          className="w-14 h-14 rounded-xl object-cover"
-          iconSize="md"
-        />
+        <Link href={`/beer/${tap.beer.id}`} className="flex-shrink-0 self-center">
+          <div className="w-14 h-14 rounded-2xl overflow-hidden bg-gradient-to-br from-orange-50 to-amber-50 dark:from-orange-950/40 dark:to-amber-900/20 flex items-center justify-center border border-orange-100 dark:border-orange-900/30">
+            <ImageWithFallback
+              src={tap.beer.imageUrl || tap.beer.brewery.logoUrl}
+              alt={tap.beer.name}
+              imageType="beer"
+              containerClassName="w-full h-full"
+              className="w-full h-full object-cover"
+              iconSize="md"
+            />
+          </div>
+        </Link>
 
         <div className="flex-1 min-w-0 flex gap-2 justify-between">
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2">
               <Link href={`/beer/${tap.beer.id}`}>
-                <h3 className="font-bold text-base leading-snug line-clamp-1 hover:text-amber-600 dark:hover:text-amber-400 cursor-pointer transition-colors text-gray-900 dark:text-white">
+                <h3 className="font-bold text-base leading-snug line-clamp-1 hover:text-primary dark:hover:text-orange-400 cursor-pointer transition-colors text-foreground">
                   {tap.beer.name}
                 </h3>
               </Link>
               {tap.isVisible === false && (
-                <span className="inline-flex items-center gap-1 bg-gray-200 dark:bg-gray-700 text-gray-500 dark:text-gray-400 text-xs font-semibold px-1.5 py-0.5 rounded-full flex-shrink-0">
+                <span className="inline-flex items-center gap-1 bg-gray-100 dark:bg-gray-800 text-muted-foreground text-xs font-semibold px-1.5 py-0.5 rounded-full flex-shrink-0">
                   <EyeOff className="h-3 w-3" />
                   Nascosta
                 </span>
@@ -101,17 +103,18 @@ export default function TapList({ tapList }: TapListProps) {
             </div>
 
             <Link href={`/brewery/${tap.beer.brewery.id}`}>
-              <p className="text-xs text-amber-600 dark:text-amber-400 hover:text-amber-700 dark:hover:text-amber-300 cursor-pointer transition-colors truncate leading-snug mt-0.5">
+              <p className="text-xs font-semibold text-primary dark:text-orange-400 hover:opacity-80 cursor-pointer transition-opacity truncate leading-snug mt-0.5">
                 {tap.beer.brewery.name}
               </p>
             </Link>
 
-            <p className="text-xs text-gray-500 dark:text-gray-400 truncate leading-snug mt-0.5">
-              {tap.beer.style || 'Stile N/D'}
-            </p>
-
-            <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
-              <span className="text-xs font-medium text-gray-600 dark:text-gray-400">
+            <div className="flex items-center gap-1.5 mt-1.5 flex-wrap">
+              {tap.beer.style && (
+                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full" style={{ background: 'linear-gradient(135deg, rgba(247,113,4,0.12) 0%, rgba(249,138,14,0.12) 100%)', color: '#F77104' }}>
+                  {tap.beer.style}
+                </span>
+              )}
+              <span className="text-[10px] font-medium text-muted-foreground">
                 {tap.beer.isAlcoholFree ? '0.0% ABV' : `${tap.beer.abv || '0'}% ABV`}
               </span>
               {tap.beer.isGlutenFree && <GlutenFreeSmallBadge size={11} />}
@@ -119,7 +122,7 @@ export default function TapList({ tapList }: TapListProps) {
             </div>
 
             {tap.description && (
-              <p className="text-xs text-gray-500 dark:text-gray-400 italic mt-1.5 line-clamp-2">
+              <p className="text-xs text-muted-foreground italic mt-1.5 line-clamp-2">
                 {tap.description}
               </p>
             )}
@@ -160,7 +163,7 @@ export default function TapList({ tapList }: TapListProps) {
           </div>
         </div>
       </div>
-    </Card>
+    </div>
   );
 
   if (pompaItems.length === 0) {
