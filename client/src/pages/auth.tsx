@@ -140,14 +140,6 @@ export default function AuthPage() {
     enabled: isBrewery && brewerySearch.length >= 2 && !selectedBrewery && !creatingNewBrewery,
   });
 
-  const handleAddressSelect = useCallback((details: {
-    formattedAddress: string; city: string; region: string; country: string; placeId: string;
-  }) => {
-    registerForm.setValue("pubAddress", details.formattedAddress);
-    registerForm.setValue("pubCity", details.city);
-    registerForm.setValue("pubRegion", details.region);
-  }, [registerForm]);
-
   const handleBreweryAddressSelect = useCallback((details: {
     formattedAddress: string; city: string; region: string; country: string; placeId: string;
   }) => {
@@ -603,62 +595,20 @@ export default function AuthPage() {
 
                 {/* Role Toggles */}
                 <div className="space-y-4 pt-2">
-                  <div className={`p-4 rounded-xl border transition-all duration-300 ${isPublican ? "bg-orange-50 dark:bg-orange-950/20 border-orange-200 dark:border-orange-800" : "bg-orange-50/50 dark:bg-orange-950/10 border-orange-100 dark:border-orange-900/30"}`}>
-                    <FormField control={registerForm.control} name="isPublican" render={({ field }) => (
-                      <FormItem className="flex items-center justify-between space-y-0">
-                        <div className="flex items-center gap-3">
-                          <div className={`w-10 h-10 rounded-xl flex items-center justify-center transition-colors ${field.value ? "bg-primary text-white" : "bg-white dark:bg-[hsl(25,14%,12%)] text-muted-foreground"}`}>
-                            <Store className="w-5 h-5" />
-                          </div>
-                          <div>
-                            <FormLabel className="text-sm font-bold block">Registra un Locale</FormLabel>
-                            <span className="text-[11px] text-muted-foreground">Sei il proprietario di un pub o un bar?</span>
-                          </div>
+                  <a href="/registra-pub" className={`block p-4 rounded-xl border bg-orange-50/50 dark:bg-orange-950/10 border-orange-100 dark:border-orange-900/30 hover:bg-orange-50 dark:hover:bg-orange-950/20 hover:border-orange-200 dark:hover:border-orange-800 transition-all duration-200 group`}>
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-white dark:bg-[hsl(25,14%,12%)] text-primary group-hover:bg-primary group-hover:text-white transition-colors">
+                          <Store className="w-5 h-5" />
                         </div>
-                        <FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl>
-                      </FormItem>
-                    )} />
-
-                    {isPublican && (
-                      <div className="mt-4 pt-4 border-t border-orange-100 dark:border-orange-900/30 space-y-4 animate-in fade-in slide-in-from-top-2 duration-300">
-                        <FormField control={registerForm.control} name="pubName" render={({ field }) => (
-                          <FormItem>
-                            <FormLabel className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Nome Locale *</FormLabel>
-                            <FormControl><Input {...field} placeholder="Es: Il Luppolino Felice" className="h-10 bg-white dark:bg-[hsl(25,14%,12%)] border-orange-100 dark:border-[hsl(25,12%,20%)] rounded-xl" /></FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )} />
-
-                        <FormField control={registerForm.control} name="pubAddress" render={({ field }) => (
-                          <FormItem>
-                            <FormLabel className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Indirizzo Locale *</FormLabel>
-                            <FormControl>
-                              <AddressAutocomplete onAddressSelect={handleAddressSelect} defaultValue={field.value} placeholder="Cerca indirizzo..." className="h-10 bg-white dark:bg-[hsl(25,14%,12%)] border-orange-100 dark:border-[hsl(25,12%,20%)] rounded-xl" />
-                            </FormControl>
-                            <FormDescription className="text-[10px]">Seleziona l'indirizzo dai suggerimenti per una geolocalizzazione precisa.</FormDescription>
-                            <FormMessage />
-                          </FormItem>
-                        )} />
-
-                        <div className="grid grid-cols-2 gap-4">
-                          <FormField control={registerForm.control} name="vatNumber" render={({ field }) => (
-                            <FormItem>
-                              <FormLabel className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Partita IVA</FormLabel>
-                              <FormControl><Input {...field} placeholder="IT12345678901" className="h-10 bg-white dark:bg-[hsl(25,14%,12%)] border-orange-100 dark:border-[hsl(25,12%,20%)] rounded-xl" /></FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )} />
-                          <FormField control={registerForm.control} name="phone" render={({ field }) => (
-                            <FormItem>
-                              <FormLabel className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Telefono</FormLabel>
-                              <FormControl><Input {...field} placeholder="+39 012 3456789" className="h-10 bg-white dark:bg-[hsl(25,14%,12%)] border-orange-100 dark:border-[hsl(25,12%,20%)] rounded-xl" /></FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )} />
+                        <div>
+                          <p className="text-sm font-bold text-foreground">Registra un Locale</p>
+                          <p className="text-[11px] text-muted-foreground">Sei il proprietario di un pub o un bar?</p>
                         </div>
                       </div>
-                    )}
-                  </div>
+                      <span className="text-xs font-semibold text-primary group-hover:translate-x-0.5 transition-transform">→</span>
+                    </div>
+                  </a>
 
                   <div className={`p-4 rounded-xl border transition-all duration-300 ${isBrewery ? "bg-orange-50 dark:bg-orange-950/20 border-orange-200 dark:border-orange-800" : "bg-orange-50/50 dark:bg-orange-950/10 border-orange-100 dark:border-orange-900/30"}`}>
                     <FormField control={registerForm.control} name="isBrewery" render={({ field }) => (
