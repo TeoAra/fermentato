@@ -1,243 +1,234 @@
-import { Search, Navigation, Beer, Star, MapPin, Home, Map, Grid, User, Clock } from "lucide-react";
+import { Search, Navigation, Beer, Star, MapPin, Home, Map, Grid, User, ChevronRight, Building2 } from "lucide-react";
 
-const NEARBY_PUBS = [
-  { name: "Luppolino Pub", city: "Milano", dist: "0.4 km", taps: 14, rating: 4.7, open: true, img: "/__mockup/images/pub-interior.png" },
-  { name: "The Brew House", city: "Milano", dist: "1.1 km", taps: 9, rating: 4.5, open: true, img: "/__mockup/images/brewery-interior.png" },
-  { name: "Birreria 27", city: "Torino", dist: "2.3 km", taps: 22, rating: 4.8, open: true, img: "/__mockup/images/pub-interior.png" },
-  { name: "Craft Corner", city: "Roma", dist: "3.0 km", taps: 7, rating: 4.2, open: false, img: "/__mockup/images/brewery-interior.png" },
+const R = "4px";
+
+const PUBS = [
+  { name: "Luppolino Pub", city: "Milano", dist: "0.4 km", taps: 14, rating: 4.7, open: true, img: "/__mockup/images/pub-interior.png",
+    taplist: ["Hop Skin IPA 6.5%", "Duna Stout 8.1%", "Weizen 5.0%"] },
+  { name: "The Brew House", city: "Milano", dist: "1.1 km", taps: 9, rating: 4.5, open: true, img: "/__mockup/images/pub-interior.png",
+    taplist: ["Revelation Sour 4.8%", "Nursia Extra 7.2%"] },
+  { name: "Birreria 27", city: "Torino", dist: "2.3 km", taps: 22, rating: 4.8, open: true, img: "/__mockup/images/brewery-interior.png",
+    taplist: ["Session IPA 5.2%", "Porter Notte 6.8%", "Saison 5.5%"] },
+  { name: "Craft Corner", city: "Roma", dist: "3.0 km", taps: 7, rating: 4.2, open: false, img: "/__mockup/images/pub-interior.png",
+    taplist: ["American Pale Ale 5.0%"] },
 ];
 
-const TRENDING_BEERS = [
-  { name: "Hop Skin IPA", brewery: "CRAK", style: "IPA", abv: "6.5%", rating: 4.8, img: "/__mockup/images/hero-beer.png" },
-  { name: "Duna Imperial", brewery: "Del Borgo", style: "Stout", abv: "8.1%", rating: 4.7, img: "/__mockup/images/beer-cans.png" },
-  { name: "Sour Mango", brewery: "Rev. Cat", style: "Sour", abv: "4.8%", rating: 4.6, img: "/__mockup/images/hero-beer.png" },
-  { name: "Weizen Estate", brewery: "Hop Skin", style: "Weizen", abv: "5.0%", rating: 4.5, img: "/__mockup/images/beer-cans.png" },
+const BREWERIES = [
+  { name: "CRAK Brewery", city: "Campagna", dist: "48 km", beers: 34, img: "/__mockup/images/brewery-interior.png", open: true },
+  { name: "Del Borgo", city: "Borgorose", dist: "83 km", beers: 28, img: "/__mockup/images/brewery-interior.png", open: true },
+  { name: "Revelation Cat", city: "Roma", dist: "1.9 km", beers: 19, img: "/__mockup/images/brewery-interior.png", open: false },
 ];
 
-// Simulated map pins
 const MAP_PINS = [
-  { x: "22%", y: "30%", name: "Luppolino" },
-  { x: "55%", y: "42%", name: "Brew House" },
-  { x: "38%", y: "60%", name: "Birreria 27" },
-  { x: "72%", y: "25%", name: "Craft Corner" },
-  { x: "15%", y: "68%", name: "Hops & Grains" },
-  { x: "80%", y: "58%", name: "Malt Room" },
+  { x: "20%", y: "28%", type: "pub", name: "Luppolino" },
+  { x: "52%", y: "40%", type: "pub", name: "Brew House" },
+  { x: "35%", y: "62%", type: "brewery", name: "CRAK" },
+  { x: "70%", y: "22%", type: "pub", name: "Birreria 27" },
+  { x: "15%", y: "70%", type: "brewery", name: "Del Borgo" },
+  { x: "78%", y: "58%", type: "pub", name: "Craft Corner" },
 ];
 
-const TABS = ["Vicino a te", "In spina", "Trending"];
-const FILTERS = ["Tutti", "Pub", "Birrifici", "In spina"];
+const TABS = ["Pub vicini", "Birrifici", "In spina adesso"];
 
 export function MapFirst() {
   return (
-    <div className="min-h-screen" style={{ background: "#09090b", fontFamily: "system-ui, -apple-system, sans-serif", color: "#fafafa" }}>
+    <div style={{ minHeight: "100vh", background: "#0a0908", color: "#ede8e1", fontFamily: "system-ui,-apple-system,sans-serif" }}>
 
-      {/* ── Full-screen map hero ─────────────────────────── */}
-      <div className="relative overflow-hidden" style={{ height: "62vh", minHeight: 380 }}>
+      {/* ── Full-screen map ── */}
+      <div style={{ position: "relative", height: "56vh", minHeight: 340, overflow: "hidden", background: "#0e0d0c" }}>
 
-        {/* Simulated dark map */}
-        <div className="absolute inset-0" style={{ background: "#111116" }}>
-          {/* Street grid via CSS */}
-          <svg width="100%" height="100%" xmlns="http://www.w3.org/2000/svg" style={{ opacity: 0.22 }}>
-            <defs>
-              <pattern id="grid-h" x="0" y="0" width="80" height="80" patternUnits="userSpaceOnUse">
-                <line x1="0" y1="40" x2="80" y2="40" stroke="#3f3f46" strokeWidth="1" />
-              </pattern>
-              <pattern id="grid-v" x="0" y="0" width="80" height="80" patternUnits="userSpaceOnUse">
-                <line x1="40" y1="0" x2="40" y2="80" stroke="#3f3f46" strokeWidth="1" />
-              </pattern>
-              <pattern id="diagonal" x="0" y="0" width="160" height="160" patternUnits="userSpaceOnUse">
-                <line x1="0" y1="0" x2="80" y2="160" stroke="#3f3f46" strokeWidth="0.7" />
-                <line x1="80" y1="0" x2="160" y2="160" stroke="#3f3f46" strokeWidth="0.7" />
-              </pattern>
-            </defs>
-            <rect width="100%" height="100%" fill="url(#grid-h)" />
-            <rect width="100%" height="100%" fill="url(#grid-v)" />
-            <rect width="100%" height="100%" fill="url(#diagonal)" />
-            {/* Road shapes */}
-            <rect x="30%" y="0" width="6%" height="100%" fill="rgba(39,39,42,0.6)" />
-            <rect x="60%" y="0" width="4%" height="100%" fill="rgba(39,39,42,0.5)" />
-            <rect x="0" y="35%" width="100%" height="5%" fill="rgba(39,39,42,0.6)" />
-            <rect x="0" y="65%" width="100%" height="4%" fill="rgba(39,39,42,0.5)" />
-          </svg>
-          {/* Subtle green parks */}
-          <div className="absolute" style={{ left: "10%", top: "15%", width: 100, height: 60, background: "#14532d22", borderRadius: 8 }} />
-          <div className="absolute" style={{ left: "70%", top: "55%", width: 70, height: 50, background: "#14532d22", borderRadius: 8 }} />
-        </div>
+        {/* Dark map grid */}
+        <svg width="100%" height="100%" style={{ position: "absolute", inset: 0, opacity: 0.18 }} xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <pattern id="g" x="0" y="0" width="72" height="72" patternUnits="userSpaceOnUse">
+              <line x1="0" y1="36" x2="72" y2="36" stroke="#3a3530" strokeWidth="1" />
+              <line x1="36" y1="0" x2="36" y2="72" stroke="#3a3530" strokeWidth="1" />
+            </pattern>
+          </defs>
+          <rect width="100%" height="100%" fill="url(#g)" />
+          {/* Roads */}
+          <rect x="28%" y="0" width="5%" height="100%" fill="rgba(42,38,32,0.7)" />
+          <rect x="62%" y="0" width="4%" height="100%" fill="rgba(42,38,32,0.5)" />
+          <rect x="0" y="33%" width="100%" height="5%" fill="rgba(42,38,32,0.7)" />
+          <rect x="0" y="62%" width="100%" height="4%" fill="rgba(42,38,32,0.5)" />
+          {/* Park */}
+          <rect x="8%" y="12%" width="12%" height="8%" rx="2" fill="rgba(20,83,45,0.25)" />
+          <rect x="72%" y="52%" width="9%" height="7%" rx="2" fill="rgba(20,83,45,0.2)" />
+        </svg>
 
-        {/* Map pins */}
+        {/* Pins */}
         {MAP_PINS.map((pin, i) => (
-          <div key={i} className="absolute" style={{ left: pin.x, top: pin.y, transform: "translate(-50%, -50%)" }}>
-            <div className="relative group cursor-pointer">
-              <div className="w-5 h-5 rounded-full shadow-[0_0_0_6px_rgba(245,158,11,0.18)]"
-                style={{ background: i === 0 ? "#f59e0b" : "#3f3f46", border: i === 0 ? "none" : "1.5px solid #52525b" }} />
-              {/* Tooltip on hover */}
-              <div className="absolute bottom-7 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
-                <div className="text-[11px] font-bold px-2.5 py-1 rounded-lg whitespace-nowrap" style={{ background: "#18181b", border: "1px solid #27272a", color: "#fafafa" }}>
-                  {pin.name}
-                </div>
-              </div>
+          <div key={i} style={{ position: "absolute", left: pin.x, top: pin.y, transform: "translate(-50%,-50%)", cursor: "pointer" }}>
+            <div style={{
+              width: 18, height: 18, borderRadius: R,
+              background: i === 0 ? "#f59e0b" : pin.type === "pub" ? "#2a2420" : "#1a3020",
+              border: i === 0 ? "none" : `1.5px solid ${pin.type === "pub" ? "#3a3530" : "#2a4830"}`,
+              display: "flex", alignItems: "center", justifyContent: "center",
+              boxShadow: i === 0 ? "0 0 0 5px rgba(245,158,11,0.2)" : "none"
+            }}>
+              {pin.type === "pub"
+                ? <Beer size={9} color={i === 0 ? "#0a0908" : "#8a7d74"} />
+                : <Building2 size={9} color="#4a9060" />
+              }
             </div>
           </div>
         ))}
 
-        {/* Gradient overlay at bottom for bottom sheet */}
-        <div className="absolute inset-x-0 bottom-0" style={{ height: 80, background: "linear-gradient(to bottom, transparent, #09090b)" }} />
+        {/* Gradient bottom */}
+        <div style={{ position: "absolute", inset: "auto 0 0 0", height: 80, background: "linear-gradient(to bottom, transparent, #0a0908)" }} />
 
-        {/* ── Top bar: floating ── */}
-        <div className="absolute top-0 left-0 right-0 px-4 pt-4">
-          <div className="flex items-center gap-3">
-            <span className="font-extrabold text-[17px]" style={{ color: "#fafafa" }}>
+        {/* ── Top bar ── */}
+        <div style={{ position: "absolute", top: 0, left: 0, right: 0, padding: "12px 16px" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+            <span style={{ fontWeight: 800, fontSize: 16, color: "#ede8e1", flexShrink: 0 }}>
               fermenta<span style={{ color: "#f59e0b" }}>.to</span>
             </span>
-            <div className="flex-1 flex items-center gap-2 rounded-2xl px-4 h-11"
-              style={{ background: "rgba(24,24,27,0.90)", backdropFilter: "blur(12px)", border: "1px solid #27272a" }}>
-              <Search className="w-4 h-4 flex-shrink-0" style={{ color: "#a1a1aa" }} />
-              <input
-                placeholder="Cerca pub, birrificio o birra..."
-                className="bg-transparent flex-1 text-[13px] outline-none"
-                style={{ color: "#fafafa" }}
-              />
-              <button className="flex items-center gap-1.5 text-[12px] font-bold pl-3" style={{ borderLeft: "1px solid #27272a", color: "#f59e0b" }}>
-                <Navigation className="w-3.5 h-3.5" />
-                GPS
+            <div style={{ flex: 1, display: "flex", alignItems: "center", gap: 8, background: "rgba(20,18,16,0.92)", border: "1px solid #2a2420", borderRadius: R, padding: "0 12px", height: 40, backdropFilter: "blur(10px)" }}>
+              <Search size={14} color="#8a7d74" />
+              <input placeholder="Cerca pub, birrificio o birra…" style={{ background: "transparent", border: "none", outline: "none", flex: 1, fontSize: 13, color: "#ede8e1" }} />
+              <button style={{ display: "flex", alignItems: "center", gap: 5, paddingLeft: 10, borderLeft: "1px solid #2a2420", fontSize: 11, fontWeight: 700, color: "#f59e0b", background: "transparent", border: "none", cursor: "pointer" }}>
+                <Navigation size={12} /> GPS
               </button>
             </div>
           </div>
 
-          {/* Filter pills */}
-          <div className="flex gap-2 mt-3 overflow-x-auto" style={{ scrollbarWidth: "none" }}>
-            {FILTERS.map((f, i) => (
-              <button key={f}
-                className="text-[12px] font-bold px-4 py-1.5 rounded-full flex-shrink-0 transition-colors"
-                style={i === 0
-                  ? { background: "#f59e0b", color: "#09090b", border: "none" }
-                  : { background: "rgba(24,24,27,0.90)", backdropFilter: "blur(8px)", border: "1px solid #27272a", color: "#fafafa" }
-                }>
-                {f}
-              </button>
+          {/* Filter row */}
+          <div style={{ display: "flex", gap: 6, marginTop: 8 }}>
+            {[
+              { label: "Tutti", active: true },
+              { label: "Pub" },
+              { label: "Birrifici" },
+              { label: "In spina" },
+            ].map(({ label, active }) => (
+              <button key={label} style={{
+                padding: "5px 12px", borderRadius: R, fontSize: 11, fontWeight: 700,
+                background: active ? "#f59e0b" : "rgba(20,18,16,0.85)",
+                color: active ? "#0a0908" : "#ede8e1",
+                border: active ? "none" : "1px solid #2a2420",
+                backdropFilter: "blur(8px)",
+                cursor: "pointer"
+              }}>{label}</button>
             ))}
+            <div style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: 5, background: "rgba(20,18,16,0.85)", border: "1px solid #2a2420", borderRadius: R, padding: "5px 10px", backdropFilter: "blur(8px)" }}>
+              <span style={{ width: 7, height: 7, borderRadius: "50%", background: "#34d399", display: "inline-block" }} />
+              <span style={{ fontSize: 11, fontWeight: 700, color: "#ede8e1" }}>12 aperti</span>
+            </div>
           </div>
         </div>
 
-        {/* ── Live counter badge ── */}
-        <div className="absolute bottom-6 left-4 flex items-center gap-2 rounded-full px-4 py-2"
-          style={{ background: "rgba(24,24,27,0.90)", backdropFilter: "blur(8px)", border: "1px solid #27272a" }}>
-          <span className="w-2 h-2 rounded-full animate-pulse" style={{ background: "#34d399" }} />
-          <span className="text-[12px] font-bold" style={{ color: "#fafafa" }}>12 pub aperti in quest'area</span>
-        </div>
-
-        {/* ── Expand map button ── */}
-        <div className="absolute bottom-6 right-4">
-          <button className="text-[12px] font-bold px-4 py-2 rounded-full"
-            style={{ background: "rgba(24,24,27,0.90)", backdropFilter: "blur(8px)", border: "1px solid #27272a", color: "#f59e0b" }}>
-            Espandi mappa
-          </button>
+        {/* Legend */}
+        <div style={{ position: "absolute", bottom: 14, right: 14, display: "flex", gap: 8, background: "rgba(20,18,16,0.90)", border: "1px solid #2a2420", borderRadius: R, padding: "6px 10px", backdropFilter: "blur(8px)" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
+            <div style={{ width: 10, height: 10, borderRadius: 2, background: "#f59e0b" }} />
+            <span style={{ fontSize: 10, color: "#8a7d74" }}>Pub</span>
+          </div>
+          <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
+            <div style={{ width: 10, height: 10, borderRadius: 2, background: "#2a4830", border: "1px solid #4a9060" }} />
+            <span style={{ fontSize: 10, color: "#8a7d74" }}>Birrificio</span>
+          </div>
         </div>
       </div>
 
-      {/* ── Bottom sheet ─────────────────────────────────── */}
-      <div style={{ background: "#09090b" }} className="px-4 pt-2 pb-6">
+      {/* ── Bottom sheet ── */}
+      <div style={{ background: "#0a0908", padding: "8px 16px 16px" }}>
         {/* Handle */}
-        <div className="w-10 h-1 rounded-full mx-auto mb-5" style={{ background: "#27272a" }} />
+        <div style={{ width: 36, height: 3, background: "#2a2420", borderRadius: 2, margin: "0 auto 14px" }} />
 
         {/* Tab bar */}
-        <div className="flex gap-1 p-1 rounded-xl mb-5" style={{ background: "#18181b" }}>
+        <div style={{ display: "flex", gap: 1, background: "#1a1612", marginBottom: 16, borderRadius: R, overflow: "hidden" }}>
           {TABS.map((tab, i) => (
-            <button key={tab}
-              className="flex-1 py-2 rounded-lg text-[12px] font-bold transition-colors"
-              style={i === 0
-                ? { background: "#f59e0b", color: "#09090b" }
-                : { background: "transparent", color: "#a1a1aa" }
-              }>
-              {tab}
-            </button>
+            <button key={tab} style={{
+              flex: 1, padding: "9px 0", fontSize: 11, fontWeight: 700,
+              background: i === 0 ? "#f59e0b" : "transparent",
+              color: i === 0 ? "#0a0908" : "#8a7d74",
+              border: "none", cursor: "pointer"
+            }}>{tab}</button>
           ))}
         </div>
 
-        {/* ── Pub cards: horizontal scroll ── */}
-        <p className="text-[11px] font-bold uppercase tracking-[0.14em] mb-3 px-1" style={{ color: "#52525b" }}>
-          Pub nelle vicinanze
+        {/* ── Pub cards ── */}
+        <p style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.14em", textTransform: "uppercase", color: "#8a7d74", marginBottom: 10 }}>
+          PUB NELLE VICINANZE
         </p>
-        <div className="flex gap-3 overflow-x-auto pb-3 mb-6" style={{ scrollbarWidth: "none" }}>
-          {NEARBY_PUBS.map((pub, i) => (
-            <div key={i} className="flex-shrink-0 rounded-2xl overflow-hidden cursor-pointer group"
-              style={{ width: 240, background: "#18181b", border: "1px solid #27272a" }}>
-              <div className="relative" style={{ height: 136 }}>
-                <img src={pub.img} alt={pub.name} className="w-full h-full object-cover opacity-85 group-hover:opacity-100 transition-opacity duration-300" />
-                <div className="absolute inset-0" style={{ background: "linear-gradient(to top, rgba(0,0,0,0.6) 0%, transparent 55%)" }} />
-                <span className="absolute top-2.5 left-2.5 text-[10px] font-bold px-2 py-1 rounded-full flex items-center gap-1"
-                  style={pub.open
-                    ? { background: "rgba(9,9,11,0.75)", border: "1px solid #27272a", color: "#fafafa", backdropFilter: "blur(4px)" }
-                    : { background: "rgba(9,9,11,0.75)", border: "1px solid #27272a", color: "#71717a", backdropFilter: "blur(4px)" }
-                  }>
-                  <span className="w-1.5 h-1.5 rounded-full" style={{ background: pub.open ? "#34d399" : "#52525b" }} />
-                  {pub.open ? "Aperto" : "Chiuso"}
+        <div style={{ display: "flex", gap: 10, overflowX: "auto", paddingBottom: 12, marginBottom: 18, scrollbarWidth: "none" }}>
+          {PUBS.map((pub, i) => (
+            <div key={i} style={{ flexShrink: 0, width: 248, background: "#161412", border: "1px solid #2a2420", borderRadius: R, overflow: "hidden", cursor: "pointer" }}>
+              <div style={{ position: "relative", height: 120, overflow: "hidden" }}>
+                <img src={pub.img} alt={pub.name} style={{ width: "100%", height: "100%", objectFit: "cover", opacity: 0.85 }} />
+                <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to top, rgba(0,0,0,0.65) 0%, transparent 55%)" }} />
+                <span style={{ position: "absolute", top: 8, left: 8, fontSize: 10, fontWeight: 700, padding: "2px 7px", background: "rgba(12,11,9,0.80)", border: `1px solid ${pub.open ? "#2a4830" : "#2a2420"}`, color: pub.open ? "#34d399" : "#8a7d74", borderRadius: R }}>
+                  {pub.open ? "● Aperto" : "● Chiuso"}
                 </span>
-                <span className="absolute top-2.5 right-2.5 text-[11px] font-bold px-2 py-1 rounded-full"
-                  style={{ background: "#f59e0b", color: "#09090b" }}>
+                <span style={{ position: "absolute", top: 8, right: 8, fontSize: 11, fontWeight: 700, padding: "2px 7px", background: "#f59e0b", color: "#0a0908", borderRadius: R }}>
                   ★ {pub.rating}
                 </span>
               </div>
-              <div className="p-3.5">
-                <div className="flex items-center justify-between mb-0.5">
-                  <h3 className="font-bold text-[14px]" style={{ color: "#fafafa" }}>{pub.name}</h3>
-                  <span className="text-[12px] font-semibold" style={{ color: "#f59e0b" }}>{pub.dist}</span>
+              <div style={{ padding: "12px" }}>
+                <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 2 }}>
+                  <span style={{ fontSize: 13, fontWeight: 700, color: "#ede8e1" }}>{pub.name}</span>
+                  <span style={{ fontSize: 11, color: "#f59e0b", fontWeight: 600, flexShrink: 0 }}>{pub.dist}</span>
                 </div>
-                <p className="text-[12px] mb-3" style={{ color: "#71717a" }}>{pub.city}</p>
-                <div className="flex gap-2">
-                  <span className="text-[11px] font-semibold px-2.5 py-1 rounded-full" style={{ background: "#27272a", color: "#a1a1aa" }}>
-                    🍺 {pub.taps} spine
-                  </span>
-                  <span className="text-[11px] font-semibold px-2.5 py-1 rounded-full" style={{ background: "rgba(245,158,11,0.12)", color: "#f59e0b" }}>
-                    ● Live
-                  </span>
+                <p style={{ fontSize: 11, color: "#8a7d74", margin: "0 0 8px" }}>{pub.city} · {pub.taps} spine</p>
+                {/* Mini taplist */}
+                <div style={{ display: "flex", flexDirection: "column", gap: 3 }}>
+                  {pub.taplist.slice(0, 2).map((t, j) => (
+                    <div key={j} style={{ display: "flex", alignItems: "center", gap: 6, padding: "4px 6px", background: "#0c0b09", borderRadius: R }}>
+                      <Beer size={9} color="#f59e0b" />
+                      <span style={{ fontSize: 11, color: "#c8bdb4" }}>{t}</span>
+                    </div>
+                  ))}
                 </div>
               </div>
             </div>
           ))}
         </div>
 
-        {/* ── Trending beers: 2-col grid ── */}
-        <p className="text-[11px] font-bold uppercase tracking-[0.14em] mb-3 px-1" style={{ color: "#52525b" }}>
-          Birre di tendenza
-        </p>
-        <div className="grid grid-cols-2 gap-3">
-          {TRENDING_BEERS.map((beer, i) => (
-            <div key={i} className="rounded-2xl overflow-hidden cursor-pointer group"
-              style={{ background: "#18181b", border: "1px solid #27272a" }}>
-              <div className="relative" style={{ height: 100 }}>
-                <img src={beer.img} alt={beer.name} className="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity duration-300" />
-                <div className="absolute inset-0" style={{ background: "linear-gradient(to top, rgba(0,0,0,0.65) 0%, transparent 50%)" }} />
-                <span className="absolute bottom-2 left-2 text-[10px] font-bold px-2 py-0.5 rounded-full"
-                  style={{ background: "#f59e0b22", border: "1px solid #f59e0b55", color: "#f59e0b" }}>
-                  {beer.style}
-                </span>
+        {/* ── Birrifici ── */}
+        <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", marginBottom: 10 }}>
+          <p style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.14em", textTransform: "uppercase", color: "#8a7d74", margin: 0 }}>
+            BIRRIFICI DEL TERRITORIO
+          </p>
+          <a style={{ fontSize: 11, color: "#f59e0b", cursor: "pointer" }}>Vedi tutti →</a>
+        </div>
+        <div style={{ display: "flex", flexDirection: "column", gap: 1, background: "#2a2420", marginBottom: 16 }}>
+          {BREWERIES.map((b, i) => (
+            <div key={i} style={{ background: "#161412", padding: "10px 12px", display: "flex", alignItems: "center", gap: 10, cursor: "pointer" }}>
+              <div style={{ width: 38, height: 38, borderRadius: R, overflow: "hidden", flexShrink: 0 }}>
+                <img src={b.img} alt={b.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
               </div>
-              <div className="p-3">
-                <p className="font-bold text-[13px] leading-tight mb-0.5 truncate" style={{ color: "#fafafa" }}>{beer.name}</p>
-                <p className="text-[11px] mb-1" style={{ color: "#71717a" }}>{beer.brewery} · {beer.abv}</p>
-                <div className="flex items-center gap-1">
-                  <Star className="w-3 h-3 fill-amber-400" style={{ color: "#f59e0b" }} />
-                  <span className="text-[11px] font-bold" style={{ color: "#f59e0b" }}>{beer.rating}</span>
-                </div>
+              <div style={{ flex: 1 }}>
+                <p style={{ fontSize: 13, fontWeight: 700, color: "#ede8e1", margin: "0 0 2px" }}>{b.name}</p>
+                <p style={{ fontSize: 11, color: "#8a7d74", margin: 0 }}>{b.city} · {b.beers} birre · {b.dist}</p>
               </div>
+              <span style={{ fontSize: 10, fontWeight: 700, padding: "2px 7px", borderRadius: R, background: b.open ? "#0d2e1a" : "#2a2420", color: b.open ? "#34d399" : "#8a7d74", flexShrink: 0 }}>
+                {b.open ? "Aperto" : "Chiuso"}
+              </span>
             </div>
           ))}
+        </div>
+
+        {/* ── CTA strip ── */}
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
+          <div style={{ padding: "14px", background: "#161412", border: "1px solid #2a2420", borderRadius: R }}>
+            <p style={{ fontSize: 11, fontWeight: 700, color: "#f59e0b", marginBottom: 4 }}>Gestisci un pub?</p>
+            <p style={{ fontSize: 11, color: "#8a7d74", marginBottom: 10 }}>Taplist live e visibilità sulla mappa.</p>
+            <button style={{ width: "100%", padding: "7px 0", border: "1px solid #f59e0b", borderRadius: R, fontSize: 11, fontWeight: 700, color: "#f59e0b", background: "transparent", cursor: "pointer" }}>Registrati →</button>
+          </div>
+          <div style={{ padding: "14px", background: "#161412", border: "1px solid #2a2420", borderRadius: R }}>
+            <p style={{ fontSize: 11, fontWeight: 700, color: "#f59e0b", marginBottom: 4 }}>Hai un birrificio?</p>
+            <p style={{ fontSize: 11, color: "#8a7d74", marginBottom: 10 }}>Pubblica le tue birre e raggiungi i fan.</p>
+            <button style={{ width: "100%", padding: "7px 0", border: "1px solid #f59e0b", borderRadius: R, fontSize: 11, fontWeight: 700, color: "#f59e0b", background: "transparent", cursor: "pointer" }}>Registrati →</button>
+          </div>
         </div>
       </div>
 
-      {/* ── Bottom nav bar ───────────────────────────────── */}
-      <div className="sticky bottom-0 px-4 pb-2" style={{ background: "#09090b", borderTop: "1px solid #18181b" }}>
-        <div className="flex justify-around py-3">
-          {[
-            { icon: Home, label: "Home", active: true },
-            { icon: Map, label: "Mappa" },
-            { icon: Grid, label: "Birre" },
-            { icon: User, label: "Profilo" },
-          ].map(({ icon: Icon, label, active }) => (
-            <button key={label} className="flex flex-col items-center gap-1">
-              <Icon className="w-5 h-5" style={{ color: active ? "#f59e0b" : "#52525b" }} />
-              <span className="text-[10px] font-semibold" style={{ color: active ? "#f59e0b" : "#52525b" }}>{label}</span>
+      {/* ── Bottom nav ── */}
+      <div style={{ background: "#0a0908", borderTop: "1px solid #1a1612", padding: "10px 0 6px" }}>
+        <div style={{ display: "flex", justifyContent: "space-around" }}>
+          {[{ icon: Home, label: "Home", active: true }, { icon: Map, label: "Mappa" }, { icon: Beer, label: "Birre" }, { icon: User, label: "Profilo" }].map(({ icon: Icon, label, active }) => (
+            <button key={label} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 3, background: "none", border: "none", cursor: "pointer" }}>
+              <Icon size={18} color={active ? "#f59e0b" : "#3a3530"} />
+              <span style={{ fontSize: 9, fontWeight: 700, color: active ? "#f59e0b" : "#3a3530" }}>{label}</span>
             </button>
           ))}
         </div>

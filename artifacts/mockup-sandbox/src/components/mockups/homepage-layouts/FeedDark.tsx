@@ -1,192 +1,199 @@
-import { Search, MapPin, Star, Navigation, Beer, Droplets, Clock } from "lucide-react";
+import { Search, Star, Beer, ChevronRight, ArrowRight, Zap } from "lucide-react";
 
-const FEED_ITEMS = [
-  { user: "Marco T.", initial: "M", beer: "Hop Skin IPA", brewery: "CRAK Brewery", style: "IPA", abv: "6.5%", rating: 4, note: "Agrumata e intensa, luppolatura fantastica.", ago: "3 min fa", color: "#f59e0b" },
-  { user: "Giulia R.", initial: "G", beer: "Nursia Extra", brewery: "Birra Nursia", style: "Belgian", abv: "7.2%", rating: 5, note: "Complessa e morbida. La migliore che abbia bevuto quest'anno.", ago: "11 min fa", color: "#8b5cf6" },
-  { user: "Luca B.", initial: "L", beer: "Revelation Sour", brewery: "Revelation Cat", style: "Sour", abv: "4.8%", rating: 4, note: "Fresca e piacevole, ottima per l'estate.", ago: "22 min fa", color: "#10b981" },
-  { user: "Sara M.", initial: "S", beer: "Duna Stout", brewery: "Del Borgo", style: "Stout", abv: "8.1%", rating: 5, note: "Corposa, cioccolatosa, vellutata. Da abbinare con il formaggio.", ago: "35 min fa", color: "#ef4444" },
-  { user: "Paolo F.", initial: "P", beer: "Ambrata Piemontese", brewery: "Beerland", style: "Amber", abv: "5.4%", rating: 3, note: "Equilibrata e maltata. Facile da bere.", ago: "1 ora fa", color: "#f59e0b" },
-  { user: "Chiara V.", initial: "C", beer: "Weizen Classica", brewery: "Hop Skin", style: "Weizen", abv: "5.0%", rating: 4, note: "Banana e chiodi di garofano ben bilanciati.", ago: "2 ore fa", color: "#06b6d4" },
+const R = "4px";
+
+const FEED = [
+  { user: "Marco T.", initial: "M", beer: "Hop Skin IPA", brewery: "CRAK Brewery", style: "IPA", abv: "6.5%", rating: 4, note: "Agrumata e intensa, luppolatura fantastica.", ago: "3 min" },
+  { user: "Giulia R.", initial: "G", beer: "Nursia Extra", brewery: "Birra Nursia", style: "Belgian", abv: "7.2%", rating: 5, note: "Complessa e morbida. La migliore dell'anno.", ago: "11 min" },
+  { user: "Luca B.", initial: "L", beer: "Revelation Sour", brewery: "Revelation Cat", style: "Sour", abv: "4.8%", rating: 4, note: "Fresca e piacevole per l'estate.", ago: "22 min" },
+  { user: "Sara M.", initial: "S", beer: "Duna Stout", brewery: "Del Borgo", style: "Stout", abv: "8.1%", rating: 5, note: "Corposa, cioccolatosa, vellutata.", ago: "35 min" },
+  { user: "Paolo F.", initial: "P", beer: "Ambrata Piemontese", brewery: "Beerland", style: "Amber", abv: "5.4%", rating: 3, note: "Equilibrata e maltata. Facile da bere.", ago: "1h" },
 ];
 
-const NEARBY_PUBS = [
-  { name: "Luppolino Pub", city: "Milano", dist: "0.4 km", taps: 14, rating: 4.7, open: true },
-  { name: "The Brew House", city: "Milano", dist: "1.1 km", taps: 9, rating: 4.5, open: true },
+const BREWERIES = [
+  { name: "CRAK Brewery", city: "Campagna (SA)", beers: 34, latest: "Hop Skin Session IPA", img: "/__mockup/images/brewery-interior.png" },
+  { name: "Del Borgo", city: "Borgorose (RI)", beers: 28, latest: "Duna Imperial Stout", img: "/__mockup/images/brewery-interior.png" },
+  { name: "Revelation Cat", city: "Roma", beers: 19, latest: "Sour Mango Berliner", img: "/__mockup/images/brewery-interior.png" },
 ];
 
-const STYLES = ["IPA", "Stout", "Lager", "Sour", "Weizen", "Porter", "Belgian", "Saison"];
-const STATS = [
-  { n: "12.847", label: "Birre" },
-  { n: "532", label: "Birrifici" },
-  { n: "148", label: "Pub" },
-  { n: "4.210", label: "Utenti" },
+const TAPLISTS = [
+  { pub: "Luppolino Pub", city: "Milano", updatedAgo: "5 min", taps: ["Hop Skin IPA 6.5%", "Duna Stout 8.1%", "Weizen Estate 5.0%"], open: true },
+  { pub: "The Brew House", city: "Roma", updatedAgo: "18 min", taps: ["Revelation Sour 4.8%", "Nursia Extra 7.2%"], open: true },
 ];
+
+const STYLES = ["IPA", "Stout", "Sour", "Lager", "Weizen", "Porter", "Saison", "Belgian"];
 
 export function FeedDark() {
   return (
-    <div className="min-h-screen text-[#f5f0eb]" style={{ background: "#0f0d0b", fontFamily: "system-ui, -apple-system, sans-serif" }}>
+    <div style={{ minHeight: "100vh", background: "#0c0b09", color: "#ede8e1", fontFamily: "system-ui,-apple-system,sans-serif" }}>
 
-      {/* ── Navbar ──────────────────────────────────────── */}
-      <nav style={{ background: "rgba(15,13,11,0.96)", borderBottom: "1px solid #2a2420" }}
-        className="sticky top-0 z-50 backdrop-blur-md">
-        <div className="max-w-6xl mx-auto px-6 h-14 flex items-center justify-between">
-          <span className="font-extrabold text-[17px] tracking-tight" style={{ color: "#f5f0eb" }}>
+      {/* ── Navbar ── */}
+      <div style={{ background: "#0c0b09", borderBottom: "1px solid #1f1d1a", position: "sticky", top: 0, zIndex: 50 }}>
+        <div style={{ maxWidth: 1100, margin: "0 auto", padding: "0 24px", height: 52, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+          <span style={{ fontWeight: 800, fontSize: 16, color: "#ede8e1", letterSpacing: "-0.02em" }}>
             fermenta<span style={{ color: "#f59e0b" }}>.to</span>
           </span>
-          <div className="hidden md:flex items-center gap-6 text-sm">
-            {["Birre", "Pub", "Birrifici", "Festival"].map(l => (
-              <a key={l} className="cursor-pointer transition-colors" style={{ color: "#8a7d74" }}>{l}</a>
-            ))}
+          <div style={{ display: "flex", gap: 32, fontSize: 13, color: "#8a7d74" }}>
+            {["Birre", "Birrifici", "Pub", "Festival", "Mappa"].map(l => <a key={l} style={{ cursor: "pointer" }}>{l}</a>)}
           </div>
-          <div className="flex items-center gap-2">
-            <button className="px-4 py-1.5 rounded-full text-sm font-medium transition-colors" style={{ color: "#8a7d74", border: "1px solid #2a2420" }}>
-              Accedi
-            </button>
-            <button className="px-4 py-1.5 rounded-full text-sm font-bold transition-opacity hover:opacity-90" style={{ background: "#f59e0b", color: "#0f0d0b" }}>
-              Iscriviti
-            </button>
-          </div>
-        </div>
-      </nav>
-
-      {/* ── Hero: compact search ─────────────────────────── */}
-      <div style={{ background: "#0f0d0b", borderBottom: "1px solid #2a2420" }} className="px-6 py-8">
-        <div className="max-w-6xl mx-auto">
-          <h1 className="text-2xl font-bold mb-1" style={{ color: "#f5f0eb" }}>
-            Cosa stanno bevendo?
-          </h1>
-          <p className="text-sm mb-5" style={{ color: "#8a7d74" }}>
-            Scopri le birre artigianali italiane, segui la community, trova il tuo prossimo preferito.
-          </p>
-          <div className="flex gap-2 max-w-xl">
-            <div className="flex-1 flex items-center gap-2 rounded-xl px-4 h-11" style={{ background: "#1a1612", border: "1px solid #2a2420" }}>
-              <Search className="w-4 h-4 flex-shrink-0" style={{ color: "#8a7d74" }} />
-              <input
-                placeholder="Cerca birra, pub o birrificio..."
-                className="bg-transparent flex-1 text-sm outline-none"
-                style={{ color: "#f5f0eb" }}
-              />
-            </div>
-            <button className="h-11 px-5 rounded-xl font-bold text-sm" style={{ background: "#f59e0b", color: "#0f0d0b" }}>
-              Cerca
-            </button>
+          <div style={{ display: "flex", gap: 8 }}>
+            <button style={{ padding: "6px 14px", border: "1px solid #1f1d1a", borderRadius: R, fontSize: 13, color: "#8a7d74", background: "transparent", cursor: "pointer" }}>Accedi</button>
+            <button style={{ padding: "6px 14px", borderRadius: R, fontSize: 13, fontWeight: 700, background: "#f59e0b", color: "#0c0b09", border: "none", cursor: "pointer" }}>Iscriviti</button>
           </div>
         </div>
       </div>
 
-      {/* ── 2-col layout ────────────────────────────────── */}
-      <div className="max-w-6xl mx-auto px-6 py-6" style={{ display: "grid", gridTemplateColumns: "1fr 288px", gap: "24px" }}>
+      {/* ── Hero search bar ── */}
+      <div style={{ background: "#0c0b09", borderBottom: "1px solid #1f1d1a", padding: "20px 24px" }}>
+        <div style={{ maxWidth: 1100, margin: "0 auto" }}>
+          <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+            <div style={{ flex: 1, display: "flex", alignItems: "center", gap: 10, background: "#161412", border: "1px solid #1f1d1a", borderRadius: R, padding: "0 14px", height: 42 }}>
+              <Search size={15} color="#8a7d74" />
+              <input placeholder="Cerca birra, birrificio o pub…" style={{ background: "transparent", border: "none", outline: "none", flex: 1, fontSize: 13, color: "#ede8e1" }} />
+            </div>
+            <div style={{ display: "flex", gap: 6 }}>
+              {STYLES.map(s => (
+                <button key={s} style={{ padding: "6px 12px", border: "1px solid #1f1d1a", borderRadius: R, fontSize: 12, fontWeight: 600, color: "#8a7d74", background: "#161412", cursor: "pointer", whiteSpace: "nowrap" }}>{s}</button>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
 
-        {/* Left: Feed */}
-        <div>
-          <div className="flex items-center justify-between mb-4">
-            <p className="text-[11px] font-bold uppercase tracking-[0.14em]" style={{ color: "#8a7d74" }}>
-              Attività recente
-            </p>
-            <button className="text-[12px] font-semibold" style={{ color: "#f59e0b" }}>
-              Filtra per stile ↓
-            </button>
+      {/* ── 3-column grid ── */}
+      <div style={{ maxWidth: 1100, margin: "0 auto", padding: "24px 24px", display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 1, background: "#1f1d1a" }}>
+
+        {/* ── COL 1: UTENTE — Feed assaggi ── */}
+        <div style={{ background: "#0c0b09", padding: "20px 18px" }}>
+          <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", marginBottom: 16 }}>
+            <div>
+              <p style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: "#8a7d74", marginBottom: 2 }}>UTENTE</p>
+              <h2 style={{ fontSize: 14, fontWeight: 700, color: "#ede8e1", margin: 0 }}>Cosa stanno bevendo</h2>
+            </div>
+            <a style={{ fontSize: 11, color: "#f59e0b", cursor: "pointer" }}>Tutto →</a>
           </div>
 
-          <div className="space-y-3">
-            {FEED_ITEMS.map((item, i) => (
-              <div key={i} className="rounded-2xl p-4 cursor-pointer transition-all hover:scale-[1.005]"
-                style={{ background: "#1a1612", border: "1px solid #2a2420" }}>
-                <div className="flex items-start gap-3">
-                  {/* Avatar */}
-                  <div className="w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0 text-sm font-bold" style={{ background: item.color + "22", color: item.color }}>
-                    {item.initial}
-                  </div>
-                  {/* Content */}
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm leading-snug mb-1">
-                      <span className="font-semibold" style={{ color: "#f5f0eb" }}>{item.user}</span>
-                      <span style={{ color: "#8a7d74" }}> ha assaggiato </span>
-                      <span className="font-bold" style={{ color: "#f59e0b" }}>{item.beer}</span>
-                    </p>
-                    <p className="text-[12px] mb-2" style={{ color: "#8a7d74" }}>
-                      {item.brewery} · {item.style} · {item.abv}
-                    </p>
-                    {/* Stars */}
-                    <div className="flex items-center gap-2 mb-2">
-                      <div className="flex gap-0.5">
-                        {[1,2,3,4,5].map(s => (
-                          <Star key={s} className="w-3.5 h-3.5" fill={s <= item.rating ? "#f59e0b" : "none"} style={{ color: s <= item.rating ? "#f59e0b" : "#2a2420" }} />
-                        ))}
-                      </div>
-                      <span className="text-[11px] font-bold" style={{ color: "#f59e0b" }}>{item.rating}.0</span>
-                    </div>
-                    {/* Note */}
-                    <p className="text-[13px] italic leading-snug" style={{ color: "#c8bdb4" }}>"{item.note}"</p>
-                  </div>
-                  {/* Time */}
-                  <span className="text-[11px] flex-shrink-0 pt-0.5" style={{ color: "#8a7d74" }}>{item.ago}</span>
+          <div style={{ display: "flex", flexDirection: "column", gap: 1, background: "#1f1d1a" }}>
+            {FEED.map((item, i) => (
+              <div key={i} style={{ background: "#0c0b09", padding: "12px 0", display: "flex", gap: 10, alignItems: "flex-start" }}>
+                <div style={{ width: 30, height: 30, borderRadius: R, background: "#161412", border: "1px solid #1f1d1a", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, fontSize: 12, fontWeight: 700, color: "#f59e0b" }}>
+                  {item.initial}
                 </div>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <p style={{ fontSize: 12, margin: "0 0 2px" }}>
+                    <span style={{ fontWeight: 600, color: "#ede8e1" }}>{item.user}</span>
+                    <span style={{ color: "#8a7d74" }}> · </span>
+                    <span style={{ color: "#f59e0b", fontWeight: 700 }}>{item.beer}</span>
+                  </p>
+                  <p style={{ fontSize: 11, color: "#8a7d74", margin: "0 0 4px" }}>{item.brewery} · {item.style} · {item.abv}</p>
+                  <div style={{ display: "flex", gap: 2, marginBottom: 4 }}>
+                    {[1,2,3,4,5].map(s => (
+                      <Star key={s} size={10} fill={s <= item.rating ? "#f59e0b" : "none"} color={s <= item.rating ? "#f59e0b" : "#2a2420"} />
+                    ))}
+                  </div>
+                  <p style={{ fontSize: 11, color: "#c8bdb4", margin: 0, fontStyle: "italic" }}>"{item.note}"</p>
+                </div>
+                <span style={{ fontSize: 10, color: "#8a7d74", flexShrink: 0 }}>{item.ago}</span>
               </div>
             ))}
           </div>
         </div>
 
-        {/* Right sidebar */}
-        <div className="space-y-4">
-
-          {/* Stili */}
-          <div className="rounded-2xl p-4" style={{ background: "#1a1612", border: "1px solid #2a2420" }}>
-            <p className="text-[11px] font-bold uppercase tracking-[0.14em] mb-3" style={{ color: "#8a7d74" }}>
-              Esplora per stile
-            </p>
-            <div className="flex flex-wrap gap-2">
-              {STYLES.map(s => (
-                <button key={s} className="text-[12px] font-semibold px-3 py-1.5 rounded-full transition-colors cursor-pointer"
-                  style={{ border: "1px solid #2a2420", color: "#8a7d74" }}>
-                  {s}
-                </button>
-              ))}
+        {/* ── COL 2: BIRRIFICIO — Ultimi rilasci ── */}
+        <div style={{ background: "#0c0b09", padding: "20px 18px" }}>
+          <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", marginBottom: 16 }}>
+            <div>
+              <p style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: "#8a7d74", marginBottom: 2 }}>BIRRIFICIO</p>
+              <h2 style={{ fontSize: 14, fontWeight: 700, color: "#ede8e1", margin: 0 }}>Nuove uscite</h2>
             </div>
+            <a style={{ fontSize: 11, color: "#f59e0b", cursor: "pointer" }}>Tutti →</a>
           </div>
 
-          {/* Pub vicini */}
-          <div className="rounded-2xl p-4" style={{ background: "#1a1612", border: "1px solid #2a2420" }}>
-            <p className="text-[11px] font-bold uppercase tracking-[0.14em] mb-3" style={{ color: "#8a7d74" }}>
-              Pub vicini a te
-            </p>
-            <div className="space-y-3">
-              {NEARBY_PUBS.map((pub, i) => (
-                <div key={i} className="flex items-center gap-3 cursor-pointer group">
-                  <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: "#0f0d0b" }}>
-                    <Beer className="w-4 h-4" style={{ color: "#f59e0b" }} />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-semibold truncate group-hover:text-amber-400 transition-colors" style={{ color: "#f5f0eb" }}>{pub.name}</p>
-                    <p className="text-[11px]" style={{ color: "#8a7d74" }}>{pub.dist} · {pub.taps} spine</p>
-                  </div>
-                  <div className="flex flex-col items-end gap-1 flex-shrink-0">
-                    <span className="text-[11px] font-bold" style={{ color: "#f59e0b" }}>★ {pub.rating}</span>
-                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full" style={{ background: "#0d2e1a", color: "#34d399" }}>Aperto</span>
+          {/* Brewery cards */}
+          <div style={{ display: "flex", flexDirection: "column", gap: 1, background: "#1f1d1a", marginBottom: 16 }}>
+            {BREWERIES.map((b, i) => (
+              <div key={i} style={{ background: "#0c0b09", padding: "12px 0", display: "flex", gap: 10, cursor: "pointer" }}>
+                <div style={{ width: 44, height: 44, borderRadius: R, overflow: "hidden", flexShrink: 0, border: "1px solid #1f1d1a" }}>
+                  <img src={b.img} alt={b.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                </div>
+                <div style={{ flex: 1 }}>
+                  <p style={{ fontSize: 13, fontWeight: 700, color: "#ede8e1", margin: "0 0 2px" }}>{b.name}</p>
+                  <p style={{ fontSize: 11, color: "#8a7d74", margin: "0 0 5px" }}>{b.city} · {b.beers} birre</p>
+                  <div style={{ display: "flex", alignItems: "center", gap: 5 }}>
+                    <Zap size={10} color="#f59e0b" />
+                    <span style={{ fontSize: 11, color: "#f59e0b", fontWeight: 600 }}>Nuovo: {b.latest}</span>
                   </div>
                 </div>
-              ))}
-              <button className="w-full text-center text-[12px] font-semibold pt-2" style={{ color: "#f59e0b", borderTop: "1px solid #2a2420" }}>
-                Vedi tutti sulla mappa →
-              </button>
+                <ChevronRight size={14} color="#8a7d74" style={{ flexShrink: 0, marginTop: 2 }} />
+              </div>
+            ))}
+          </div>
+
+          {/* CTA birrificio */}
+          <div style={{ border: "1px solid #1f1d1a", borderRadius: R, padding: "14px 16px", background: "#161412" }}>
+            <p style={{ fontSize: 12, fontWeight: 700, color: "#f59e0b", marginBottom: 4 }}>Sei un birrificio?</p>
+            <p style={{ fontSize: 11, color: "#8a7d74", marginBottom: 10 }}>Pubblica le tue birre, gestisci la scheda e raggiungi migliaia di appassionati.</p>
+            <button style={{ width: "100%", padding: "8px 0", background: "#f59e0b", color: "#0c0b09", border: "none", borderRadius: R, fontSize: 12, fontWeight: 700, cursor: "pointer" }}>
+              Registra il birrificio →
+            </button>
+          </div>
+        </div>
+
+        {/* ── COL 3: PUBLICAN — Taplist live ── */}
+        <div style={{ background: "#0c0b09", padding: "20px 18px" }}>
+          <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", marginBottom: 16 }}>
+            <div>
+              <p style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: "#8a7d74", marginBottom: 2 }}>PUB</p>
+              <h2 style={{ fontSize: 14, fontWeight: 700, color: "#ede8e1", margin: 0 }}>Taplist aggiornate</h2>
+            </div>
+            <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
+              <span style={{ width: 6, height: 6, borderRadius: "50%", background: "#34d399", display: "inline-block" }} />
+              <span style={{ fontSize: 10, color: "#34d399", fontWeight: 700 }}>LIVE</span>
             </div>
           </div>
 
-          {/* Stats */}
-          <div className="rounded-2xl p-4" style={{ background: "#1a1612", border: "1px solid #2a2420" }}>
-            <p className="text-[11px] font-bold uppercase tracking-[0.14em] mb-4" style={{ color: "#8a7d74" }}>
-              La community
-            </p>
-            <div className="grid grid-cols-2 gap-3">
-              {STATS.map(s => (
-                <div key={s.label} className="text-center">
-                  <p className="text-xl font-extrabold tabular-nums" style={{ color: "#f59e0b" }}>{s.n}</p>
-                  <p className="text-[11px] mt-0.5" style={{ color: "#8a7d74" }}>{s.label}</p>
+          <div style={{ display: "flex", flexDirection: "column", gap: 1, background: "#1f1d1a", marginBottom: 16 }}>
+            {TAPLISTS.map((t, i) => (
+              <div key={i} style={{ background: "#0c0b09", padding: "12px 0" }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 8 }}>
+                  <div>
+                    <p style={{ fontSize: 13, fontWeight: 700, color: "#ede8e1", margin: "0 0 2px" }}>{t.pub}</p>
+                    <p style={{ fontSize: 11, color: "#8a7d74", margin: 0 }}>{t.city} · aggiornato {t.updatedAgo} fa</p>
+                  </div>
+                  <span style={{ fontSize: 10, fontWeight: 700, padding: "2px 8px", background: "#0d2e1a", color: "#34d399", borderRadius: R }}>
+                    {t.open ? "Aperto" : "Chiuso"}
+                  </span>
                 </div>
-              ))}
-            </div>
+                <div style={{ display: "flex", flexDirection: "column", gap: 3 }}>
+                  {t.taps.map((tap, j) => (
+                    <div key={j} style={{ display: "flex", alignItems: "center", gap: 8, padding: "5px 8px", background: "#161412", borderRadius: R }}>
+                      <Beer size={11} color="#f59e0b" />
+                      <span style={{ fontSize: 12, color: "#c8bdb4" }}>{tap}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ))}
           </div>
 
+          {/* CTA publican */}
+          <div style={{ border: "1px solid #1f1d1a", borderRadius: R, padding: "14px 16px", background: "#161412" }}>
+            <p style={{ fontSize: 12, fontWeight: 700, color: "#f59e0b", marginBottom: 4 }}>Sei un gestore di pub?</p>
+            <p style={{ fontSize: 11, color: "#8a7d74", marginBottom: 10 }}>Aggiorna la taplist in tempo reale, gestisci eventi e attira nuovi clienti.</p>
+            <button style={{ width: "100%", padding: "8px 0", background: "transparent", color: "#f59e0b", border: "1px solid #f59e0b", borderRadius: R, fontSize: 12, fontWeight: 700, cursor: "pointer" }}>
+              Gestisci il tuo pub →
+            </button>
+          </div>
+
+          {/* Stats strip */}
+          <div style={{ marginTop: 16, display: "grid", gridTemplateColumns: "1fr 1fr", gap: 1, background: "#1f1d1a" }}>
+            {[["12.847", "Birre"], ["532", "Birrifici"], ["148", "Pub"], ["4.210", "Utenti"]].map(([n, l]) => (
+              <div key={l} style={{ background: "#0c0b09", padding: "10px 0", textAlign: "center" }}>
+                <p style={{ fontSize: 18, fontWeight: 800, color: "#f59e0b", margin: "0 0 2px", fontVariantNumeric: "tabular-nums" }}>{n}</p>
+                <p style={{ fontSize: 10, color: "#8a7d74", margin: 0 }}>{l}</p>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
     </div>
