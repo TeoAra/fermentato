@@ -194,43 +194,91 @@ export default function Home() {
       )}
 
       {/* ─── Hero ─────────────────────────────────────────────────────────── */}
-      <section className="relative overflow-hidden bg-gradient-to-br from-[hsl(24,93%,49%)] via-[hsl(22,92%,46%)] to-[hsl(20,95%,42%)] dark:from-[hsl(24,80%,28%)] dark:via-[hsl(22,78%,24%)] dark:to-[hsl(20,75%,20%)]">
-        {/* Decorative circles */}
-        <div className="absolute -top-20 -right-20 w-72 h-72 rounded-full bg-white/10 blur-3xl" />
-        <div className="absolute -bottom-16 -left-16 w-56 h-56 rounded-full bg-black/10 blur-2xl" />
+      <section className="relative overflow-hidden bg-[#FFF8F2] dark:bg-[hsl(25,20%,9%)]">
+        {/* Subtle dot texture */}
+        <div
+          className="absolute inset-0 pointer-events-none"
+          style={{
+            backgroundImage: "radial-gradient(circle, #F77104 1px, transparent 1px)",
+            backgroundSize: "28px 28px",
+            opacity: 0.04,
+          }}
+        />
+        {/* Warm glow top-right */}
+        <div className="absolute -top-24 -right-24 w-96 h-96 rounded-full pointer-events-none"
+          style={{ background: "radial-gradient(circle, rgba(247,113,4,0.12) 0%, transparent 70%)" }} />
 
-        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 lg:py-14">
-          <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-8">
-            <div className="text-left max-w-xl">
-              <div className="inline-flex items-center gap-2 bg-white/20 backdrop-blur-sm rounded-full px-3 py-1.5 mb-4">
-                <Beer className="w-3.5 h-3.5 text-white" />
-                <span className="text-white/90 text-xs font-semibold tracking-wide">La piattaforma craft beer italiana</span>
+        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 pb-10 lg:pt-12 lg:pb-12">
+          <div className="flex flex-col lg:flex-row items-start lg:items-end justify-between gap-8">
+
+            {/* Left: text content */}
+            <div className="max-w-xl">
+              {/* Badge */}
+              <div className="inline-flex items-center gap-2 bg-orange-50 dark:bg-orange-900/20 border border-orange-200/70 dark:border-orange-700/30 rounded-full px-3.5 py-1.5 mb-5">
+                <Beer className="w-3.5 h-3.5 text-primary" />
+                <span className="text-primary text-xs font-bold tracking-wide">La piattaforma craft beer italiana</span>
               </div>
-              <h1 className="text-3xl md:text-4xl lg:text-5xl font-extrabold text-white mb-3 leading-tight tracking-tight drop-shadow-sm">
-                Benvenuto su{" "}
-                <span className="text-white/90 underline decoration-white/30 decoration-2 underline-offset-4">
-                  Fermenta.to
+
+              {/* Title */}
+              <h1 className="text-4xl md:text-5xl lg:text-[3.4rem] font-extrabold text-foreground mb-3 leading-[1.1] tracking-tight">
+                Scopri la birra<br />
+                <span style={{
+                  background: "linear-gradient(135deg, #F77104 0%, #f98a0e 50%, #f5a623 100%)",
+                  WebkitBackgroundClip: "text",
+                  WebkitTextFillColor: "transparent",
+                  backgroundClip: "text",
+                }}>
+                  artigianale italiana
                 </span>
               </h1>
-              <p className="text-white/80 text-base md:text-lg leading-relaxed mb-6">
-                Trova pub, birrifici e la perfetta birra artigianale vicino a te
+
+              <p className="text-stone-500 dark:text-stone-400 text-base md:text-lg leading-relaxed mb-5">
+                Trova pub, birrifici e la perfetta birra vicino a te
               </p>
 
+              {/* Stat pills */}
+              {globalStats && (
+                <div className="flex flex-wrap gap-2 mb-6">
+                  {globalStats.totalBreweries > 0 && (
+                    <div className="flex items-center gap-1.5 bg-white dark:bg-[hsl(25,14%,10%)] border border-stone-200 dark:border-[hsl(25,12%,16%)] rounded-full px-3 py-1 text-xs font-semibold text-stone-600 dark:text-stone-400 shadow-sm">
+                      <Building2 className="w-3.5 h-3.5 text-primary" />
+                      {globalStats.totalBreweries} birrifici
+                    </div>
+                  )}
+                  {globalStats.totalPubs > 0 && (
+                    <div className="flex items-center gap-1.5 bg-white dark:bg-[hsl(25,14%,10%)] border border-stone-200 dark:border-[hsl(25,12%,16%)] rounded-full px-3 py-1 text-xs font-semibold text-stone-600 dark:text-stone-400 shadow-sm">
+                      <Store className="w-3.5 h-3.5 text-primary" />
+                      {globalStats.totalPubs} pub
+                    </div>
+                  )}
+                  {globalStats.totalBeers > 0 && (
+                    <div className="flex items-center gap-1.5 bg-white dark:bg-[hsl(25,14%,10%)] border border-stone-200 dark:border-[hsl(25,12%,16%)] rounded-full px-3 py-1 text-xs font-semibold text-stone-600 dark:text-stone-400 shadow-sm">
+                      <Beer className="w-3.5 h-3.5 text-primary" />
+                      {globalStats.totalBeers} birre
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* CTA buttons */}
               <div className="flex flex-wrap gap-2">
                 <Link href="/explore/breweries">
-                  <Button className="bg-white text-primary hover:bg-white/90 font-bold shadow-lg shadow-black/20 rounded-full h-9 px-5 text-sm">
+                  <Button
+                    className="font-bold shadow-md shadow-orange-500/20 rounded-full h-10 px-6 text-sm text-white border-0"
+                    style={{ background: "linear-gradient(135deg, #F77104 0%, #f98a0e 50%, #f5a623 100%)" }}
+                  >
                     <Building2 className="w-4 h-4 mr-1.5" />
                     Birrifici
                   </Button>
                 </Link>
                 <Link href="/explore/pubs">
-                  <Button variant="outline" className="border-white/40 text-white hover:bg-white/15 hover:border-white/60 font-semibold rounded-full h-9 px-5 text-sm bg-white/10 backdrop-blur-sm">
+                  <Button variant="outline" className="border-stone-300 dark:border-stone-700 bg-white dark:bg-transparent text-foreground hover:bg-stone-100 dark:hover:bg-stone-900/30 font-semibold rounded-full h-10 px-6 text-sm">
                     <Store className="w-4 h-4 mr-1.5" />
                     Pub & Locali
                   </Button>
                 </Link>
                 <Link href="/festival">
-                  <Button variant="outline" className="border-white/40 text-white hover:bg-white/15 hover:border-white/60 font-semibold rounded-full h-9 px-5 text-sm bg-white/10 backdrop-blur-sm">
+                  <Button variant="outline" className="border-stone-300 dark:border-stone-700 bg-white dark:bg-transparent text-foreground hover:bg-stone-100 dark:hover:bg-stone-900/30 font-semibold rounded-full h-10 px-6 text-sm">
                     <CalendarDays className="w-4 h-4 mr-1.5" />
                     Festival
                   </Button>
@@ -238,33 +286,35 @@ export default function Home() {
               </div>
             </div>
 
-            {/* Role-based quick actions */}
-            <div className="flex flex-col gap-2 lg:flex-shrink-0">
-              {typedUser?.userType === 'pub_owner' && (
-                <Link href="/dashboard">
-                  <Button className="bg-white/20 hover:bg-white/30 text-white border border-white/30 font-semibold shadow-sm backdrop-blur-sm rounded-xl w-full">
-                    <Store className="mr-2 h-4 w-4" />
-                    Gestisci Pub
-                  </Button>
-                </Link>
-              )}
-              {typedUser?.userType === 'brewery_owner' && (
-                <Link href="/brewery-dashboard">
-                  <Button className="bg-white/20 hover:bg-white/30 text-white border border-white/30 font-semibold shadow-sm backdrop-blur-sm rounded-xl w-full">
-                    <Building2 className="mr-2 h-4 w-4" />
-                    Il Mio Birrificio
-                  </Button>
-                </Link>
-              )}
-              {((typedUser?.activeRole === 'admin' || (!typedUser?.activeRole && typedUser?.userType === 'admin'))) && (
-                <Link href="/admin">
-                  <Button className="bg-white/20 hover:bg-white/30 text-white border border-white/30 font-semibold shadow-sm backdrop-blur-sm rounded-xl w-full">
-                    <TrendingUp className="mr-2 h-4 w-4" />
-                    Admin Panel
-                  </Button>
-                </Link>
-              )}
-            </div>
+            {/* Right: role-based quick actions */}
+            {(typedUser?.userType === 'pub_owner' || typedUser?.userType === 'brewery_owner' || typedUser?.userType === 'admin') && (
+              <div className="flex flex-col gap-2 lg:flex-shrink-0 w-full lg:w-auto">
+                {typedUser?.userType === 'pub_owner' && (
+                  <Link href="/dashboard">
+                    <Button variant="outline" className="border-stone-300 dark:border-stone-700 bg-white dark:bg-[hsl(25,14%,10%)] text-foreground hover:bg-stone-50 dark:hover:bg-stone-900/30 font-semibold rounded-2xl w-full shadow-sm">
+                      <Store className="mr-2 h-4 w-4 text-primary" />
+                      Gestisci Pub
+                    </Button>
+                  </Link>
+                )}
+                {typedUser?.userType === 'brewery_owner' && (
+                  <Link href="/brewery-dashboard">
+                    <Button variant="outline" className="border-stone-300 dark:border-stone-700 bg-white dark:bg-[hsl(25,14%,10%)] text-foreground hover:bg-stone-50 dark:hover:bg-stone-900/30 font-semibold rounded-2xl w-full shadow-sm">
+                      <Building2 className="mr-2 h-4 w-4 text-primary" />
+                      Il Mio Birrificio
+                    </Button>
+                  </Link>
+                )}
+                {(typedUser?.activeRole === 'admin' || (!typedUser?.activeRole && typedUser?.userType === 'admin')) && (
+                  <Link href="/admin">
+                    <Button variant="outline" className="border-stone-300 dark:border-stone-700 bg-white dark:bg-[hsl(25,14%,10%)] text-foreground hover:bg-stone-50 dark:hover:bg-stone-900/30 font-semibold rounded-2xl w-full shadow-sm">
+                      <TrendingUp className="mr-2 h-4 w-4 text-primary" />
+                      Admin Panel
+                    </Button>
+                  </Link>
+                )}
+              </div>
+            )}
           </div>
         </div>
       </section>
