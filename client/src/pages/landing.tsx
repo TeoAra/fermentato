@@ -3,9 +3,9 @@ import { useQuery } from "@tanstack/react-query";
 import { useState, useEffect, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import {
-  Beer, MapPin, Store, Users, Navigation, Star,
+  Beer, MapPin, Store, Users, Navigation,
   ChevronRight, Building2, Search, CheckCircle2,
-  Crown, Shield, ArrowRight, Zap, Sparkles, TrendingUp, QrCode
+  Crown, Shield, ArrowRight, Zap, Sparkles
 } from "lucide-react";
 import Footer from "@/components/footer";
 import PubCard from "@/components/pub-card";
@@ -20,21 +20,6 @@ function haversineDistance(lat1: number, lon1: number, lat2: number, lon2: numbe
     Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math.sin(dLon / 2) ** 2;
   return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 }
-
-const TESTIMONIALS = [
-  {
-    quote: "Finalmente un'app che capisce il craft beer italiano. Trovo sempre qualcosa di nuovo vicino a me.",
-    name: "Luca M.", role: "Appassionato craft", city: "Milano", rating: 5, avatar: "LM",
-  },
-  {
-    quote: "Ho triplicato le visite al pub da quando siamo su Fermenta.to. I clienti arrivano già informati sulla taplist.",
-    name: "Giulia R.", role: "Pub Owner · Roma", city: "Roma", rating: 5, avatar: "GR",
-  },
-  {
-    quote: "Come birrificio abbiamo guadagnato visibilità nazionale in poche settimane. Lo strumento che mancava.",
-    name: "Marco B.", role: "Brewery Owner", city: "Torino", rating: 5, avatar: "MB",
-  },
-];
 
 export default function Landing() {
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
@@ -131,7 +116,7 @@ export default function Landing() {
           {/* Eyebrow pill */}
           <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 dark:bg-primary/15 border border-primary/20 text-primary text-sm font-semibold mb-8">
             <Sparkles className="w-4 h-4" />
-            La piattaforma #1 del craft beer italiano
+            Il tuo punto di riferimento sulla birra artigianale
           </div>
 
           {/* Headline — the most important line on the page */}
@@ -145,8 +130,8 @@ export default function Landing() {
           {/* Sub-headline — explains the 3 things in one sentence */}
           <p className="text-xl text-stone-500 dark:text-stone-400 mb-10 max-w-2xl mx-auto leading-relaxed">
             Fermenta.to ti connette a <strong className="text-stone-700 dark:text-stone-300">pub artigianali</strong>,{" "}
-            <strong className="text-stone-700 dark:text-stone-300">birrifici italiani</strong> e{" "}
-            <strong className="text-stone-700 dark:text-stone-300">oltre {totalBeers > 0 ? (totalBeers / 1000000).toFixed(1) + "M" : "1M"} birre</strong> — tutto in un'unica app gratuita.
+            <strong className="text-stone-700 dark:text-stone-300">birrifici da tutto il mondo</strong> e{" "}
+            <strong className="text-stone-700 dark:text-stone-300">oltre {totalBeers > 0 ? (totalBeers / 1000).toFixed(0) + "k" : "1M"} birre</strong> — tutto in un'unica app gratuita.
           </p>
 
           {/* CTA group — ONE primary, one ghost */}
@@ -203,11 +188,11 @@ export default function Landing() {
           </span>
           <span className="hidden sm:block text-stone-200 dark:text-stone-700">|</span>
           <span className="flex items-center gap-2 font-medium">
-            <Star className="w-4 h-4 text-amber-400 fill-amber-400" /> 4.8 / 5 media recensioni pub
+            <Navigation className="w-4 h-4 text-primary" /> Geolocalizzazione in tempo reale
           </span>
           <span className="hidden sm:block text-stone-200 dark:text-stone-700">|</span>
           <span className="flex items-center gap-2 font-medium">
-            <Navigation className="w-4 h-4 text-primary" /> Geolocalizzazione in tempo reale
+            <Building2 className="w-4 h-4 text-amber-500" /> Birrifici da tutto il mondo
           </span>
           <span className="hidden sm:block text-stone-200 dark:text-stone-700">|</span>
           <span className="flex items-center gap-2 font-medium">
@@ -222,7 +207,7 @@ export default function Landing() {
           <div className="text-center mb-14">
             <p className="text-sm font-bold uppercase tracking-widest text-primary mb-3">Perché Fermenta.to</p>
             <h2 className="text-4xl lg:text-5xl font-black text-stone-900 dark:text-white mb-4 leading-tight">
-              Tutto il craft beer italiano<br className="hidden sm:block" /> in un'unica app
+              Tutto il craft beer,<br className="hidden sm:block" /> in un'unica app
             </h2>
             <p className="text-stone-500 dark:text-stone-400 max-w-xl mx-auto text-lg">
               Che tu sia un appassionato, un gestore di pub o un birrificio — Fermenta.to ha qualcosa per te.
@@ -233,8 +218,8 @@ export default function Landing() {
             {[
               {
                 emoji: "🗺️",
-                title: "Trova il pub giusto in 10 secondi",
-                desc: "Geolocalizzazione in tempo reale con taplist aggiornata, orari e recensioni. Sai già cosa berrai prima di uscire di casa.",
+                title: "Trova il pub giusto in pochi secondi",
+                desc: "Geolocalizzazione in tempo reale con taplist aggiornata e orari. Sai già cosa berrai prima di uscire di casa.",
                 cta: "Cerca pub vicini",
                 href: "/explore/pubs",
                 accent: "bg-orange-50 dark:bg-orange-900/15 border-orange-100 dark:border-orange-900/30",
@@ -242,8 +227,8 @@ export default function Landing() {
               },
               {
                 emoji: "🍺",
-                title: "Esplora 1M+ di birre artigianali",
-                desc: "Il catalogo più completo d'Europa: stile, ABV, IBU, birrificio di origine, disponibilità locale e recensioni della community.",
+                title: "Un catalogo vastissimo di birre",
+                desc: "Stile, ABV, IBU, birrificio di origine e disponibilità locale. Migliaia di etichette da esplorare e scoprire.",
                 cta: "Esplora il catalogo",
                 href: "/search",
                 accent: "bg-amber-50 dark:bg-amber-900/15 border-amber-100 dark:border-amber-900/30",
@@ -251,8 +236,8 @@ export default function Landing() {
               },
               {
                 emoji: "🏭",
-                title: "Scopri i birrifici italiani",
-                desc: "Oltre 50.000 birrifici mappati. Visita i più vicini, segui le uscite stagionali e connettiti direttamente con i produttori.",
+                title: "Birrifici da tutto il mondo",
+                desc: "Oltre 50.000 birrifici mappati in tutto il mondo. Visita i più vicini, segui le uscite stagionali e scopri nuovi produttori.",
                 cta: "Esplora birrifici",
                 href: "/explore/breweries",
                 accent: "bg-stone-50 dark:bg-stone-800/50 border-stone-100 dark:border-stone-700",
@@ -284,7 +269,7 @@ export default function Landing() {
                 {locationStatus === 'granted' ? '📍 La tua zona' : '🗺️ Esplora la mappa'}
               </p>
               <h2 className="text-3xl lg:text-4xl font-black text-stone-900 dark:text-white">
-                {locationStatus === 'granted' ? 'Vicino a te adesso' : 'Pub e birrifici in Italia'}
+                {locationStatus === 'granted' ? 'Vicino a te adesso' : 'Pub e birrifici nel mondo'}
               </h2>
             </div>
             {locationStatus !== 'granted' && (
@@ -392,43 +377,6 @@ export default function Landing() {
         </div>
       </section>
 
-      {/* ─── TESTIMONIALS ────────────────────────────────────────────────── */}
-      <section className="py-20 lg:py-28 bg-white/40 dark:bg-white/2">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-14">
-            <p className="text-sm font-bold uppercase tracking-widest text-primary mb-3">Chi usa Fermenta.to</p>
-            <h2 className="text-4xl font-black text-stone-900 dark:text-white mb-4">
-              Già amato da pub, birrifici<br className="hidden sm:block" /> e appassionati italiani
-            </h2>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {TESTIMONIALS.map((t) => (
-              <div key={t.name} className="bg-white dark:bg-stone-900 rounded-3xl p-7 border border-stone-100 dark:border-stone-800 shadow-sm flex flex-col">
-                {/* Stars */}
-                <div className="flex gap-0.5 mb-5">
-                  {[...Array(t.rating)].map((_, i) => (
-                    <Star key={i} className="w-4 h-4 text-amber-400 fill-amber-400" />
-                  ))}
-                </div>
-                <p className="text-stone-700 dark:text-stone-300 leading-relaxed mb-6 flex-1 text-[15px]">
-                  "{t.quote}"
-                </p>
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full bg-orange-100 dark:bg-orange-900/30 flex items-center justify-center text-primary font-bold text-sm flex-shrink-0">
-                    {t.avatar}
-                  </div>
-                  <div>
-                    <p className="font-semibold text-stone-900 dark:text-white text-sm">{t.name}</p>
-                    <p className="text-xs text-stone-400">{t.role}</p>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
       {/* ─── FOR BUSINESS ────────────────────────────────────────────────── */}
       <section className="py-20 lg:py-28">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -482,30 +430,33 @@ export default function Landing() {
               </Link>
             </div>
 
-            {/* Brewery plan */}
+            {/* Brewery plan — free */}
             <div className="rounded-3xl p-8 text-white shadow-xl border border-stone-700 flex flex-col"
               style={{ background: "linear-gradient(135deg, #1c1917 0%, #292524 100%)" }}>
-              <div className="flex items-center gap-3 mb-6">
-                <div className="w-12 h-12 bg-white/10 rounded-2xl flex items-center justify-center">
-                  <Building2 className="w-6 h-6 text-primary" />
+              <div className="flex items-center justify-between mb-6">
+                <div className="flex items-center gap-3">
+                  <div className="w-12 h-12 bg-white/10 rounded-2xl flex items-center justify-center">
+                    <Building2 className="w-6 h-6 text-primary" />
+                  </div>
+                  <div>
+                    <p className="font-black text-xl">Birrificio Verificato</p>
+                    <p className="text-white/40 text-sm">Per produttori artigianali</p>
+                  </div>
                 </div>
-                <div>
-                  <p className="font-black text-xl">Birrificio Verificato</p>
-                  <p className="text-white/40 text-sm">Per produttori artigianali</p>
-                </div>
+                <span className="px-3 py-1.5 rounded-full text-xs font-black bg-green-500/20 text-green-400 border border-green-500/30 flex-shrink-0">
+                  GRATUITO
+                </span>
               </div>
-              <div className="flex items-end gap-1 mb-2">
-                <span className="text-5xl font-black">€95</span>
-                <span className="text-white/40 mb-2 text-sm">/anno</span>
+              <div className="mb-2">
+                <span className="text-5xl font-black">€0</span>
               </div>
-              <p className="text-white/40 text-xs mb-6">Visibilità nazionale garantita</p>
-              <div className="space-y-2.5 mb-8 flex-1">
+              <p className="text-white/40 text-xs mb-6">Sempre gratuito per i birrifici</p>
+              <div className="space-y-2.5 mb-4 flex-1">
                 {[
-                  "Profilo birrificio verificato e prioritario",
-                  "Catalogo completo delle tue birre",
-                  "Link diretto al tuo e-commerce o shop",
-                  "Festival Mode per eventi e degustazioni",
-                  "Analytics dettagliate su visualizzazioni",
+                  "Profilo birrificio verificato e visibile in mappa",
+                  "Catalogo completo delle tue birre e stili",
+                  "Link diretto al tuo sito o shop online",
+                  "Analytics su visualizzazioni e interesse",
                 ].map(f => (
                   <div key={f} className="flex items-start gap-2.5 text-sm">
                     <CheckCircle2 className="w-4 h-4 text-primary flex-shrink-0 mt-0.5" />
@@ -513,19 +464,21 @@ export default function Landing() {
                   </div>
                 ))}
               </div>
+              {/* Festival Mode highlight */}
+              <div className="rounded-2xl bg-white/5 border border-white/10 p-4 mb-6">
+                <p className="text-xs font-black text-primary uppercase tracking-wider mb-2">🎪 Festival Mode inclusa</p>
+                <p className="text-white/60 text-xs leading-relaxed">
+                  Trasforma il tuo profilo in un punto di controllo live durante fiere ed eventi: gestisci code, scan QR, traccia assaggi e comunica in tempo reale con i visitatori.
+                </p>
+              </div>
               <Link href="/prezzi">
                 <Button className="w-full h-12 rounded-2xl font-bold text-base border border-primary/40 bg-primary/10 hover:bg-primary/20 text-primary shadow-none">
-                  <TrendingUp className="w-4 h-4 mr-2" />
-                  Scopri il piano birrificio
+                  <Building2 className="w-4 h-4 mr-2" />
+                  Registra il tuo birrificio gratis
                 </Button>
               </Link>
             </div>
           </div>
-
-          {/* Urgency hint */}
-          <p className="text-center text-stone-400 dark:text-stone-500 text-sm mt-6">
-            🔥 <strong className="text-stone-600 dark:text-stone-400">Offerta lancio:</strong> i primi 100 pub ottengono il primo anno a <strong className="text-primary">€49</strong> invece di €65
-          </p>
         </div>
       </section>
 
