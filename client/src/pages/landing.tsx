@@ -488,13 +488,21 @@ export default function Landing() {
                 <h3 className="text-xl font-black text-stone-900 dark:text-white mb-2">
                   Porta Fermenta.to alle tue fiere ed eventi
                 </h3>
-                <p className="text-stone-500 dark:text-stone-400 text-sm leading-relaxed max-w-xl">
-                  Attiva la modalità festival sul tuo profilo birrificio e trasformalo in un punto di controllo live: i visitatori scansionano il QR, tracciano gli assaggi in tempo reale e tu gestisci code e comunicazioni direttamente dall'app. Inclusa gratuitamente per tutti i birrifici verificati.
+                <p className="text-stone-500 dark:text-stone-400 text-sm leading-relaxed max-w-xl mb-4">
+                  Attiva la modalità festival per il tuo evento e trasforma il tuo stand in un punto di controllo live: i visitatori scansionano il QR, tracciano gli assaggi in tempo reale e tu gestisci code e comunicazioni direttamente dall'app.
                 </p>
+                <Link href="/festival">
+                  <Button size="sm" className="rounded-xl font-bold text-white border-0"
+                    style={{ background: "linear-gradient(135deg,#F77104,#f5a623)" }}>
+                    Scopri Festival Mode
+                    <ArrowRight className="w-4 h-4 ml-2" />
+                  </Button>
+                </Link>
               </div>
-              <div className="hidden md:flex flex-col items-center justify-center px-10 py-8 bg-stone-50 dark:bg-stone-800/60 border-l border-stone-100 dark:border-stone-700 h-full gap-3 min-w-[200px]">
-                <div className="text-5xl">🎪</div>
-                <span className="text-xs font-black text-green-600 dark:text-green-400 uppercase tracking-wider">Inclusa gratis</span>
+              <div className="hidden md:flex flex-col items-center justify-center px-10 py-8 bg-stone-50 dark:bg-stone-800/60 border-l border-stone-100 dark:border-stone-700 h-full gap-2 min-w-[200px]">
+                <div className="text-5xl mb-1">🎪</div>
+                <span className="text-3xl font-black text-stone-900 dark:text-white">€50</span>
+                <span className="text-xs text-stone-400 dark:text-stone-500 text-center">una tantum<br />per evento</span>
               </div>
             </div>
           </div>
