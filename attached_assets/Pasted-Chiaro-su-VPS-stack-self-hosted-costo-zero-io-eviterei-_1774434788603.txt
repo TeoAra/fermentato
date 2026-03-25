@@ -1,0 +1,141 @@
+Chiaro: su **VPS + stack self-hosted + costo zero**, io eviterei del tutto Firebase e anche motori esterni se non servono. Per **Fermenta.to**, che oggi si presenta come piattaforma per scoprire pub, birrifici e birre artigianali, la priorità è avere ricerca tollerante agli errori, geosearch veloce e UI molto scorrevole su liste/mappe. ([Fermenta.to][1])
+
+La stack che ti consiglierei è questa:
+
+**Ricerca su PostgreSQL**
+La scelta migliore, restando free e molto performante, è:
+
+* **PostgreSQL Full Text Search**
+* **`pg_trgm`**
+* **`unaccent`**
+* **PostGIS** per le query geografiche
+
+`pg_trgm` serve per somiglianza e typo-tolerance, quindi è perfetto per ricerche tipo “birrifico baladin” scritto male o autocomplete fuzzy. `unaccent` rende la ricerca insensibile agli accenti. PostGIS ti permette query nearest-neighbor indicizzate con l’operatore `<->`, quindi “posti vicini a me” in modo davvero efficiente. ([PostgreSQL][2])
+
+Per il tuo caso farei così:
+
+* **nome pub / birrificio / birra**: `pg_trgm` + `unaccent`
+* **descrizioni / tag / note / eventi**: Full Text Search
+* **vicino a me**: PostGIS
+* **ranking finale**: mix tra testo + distanza
+
+In pratica: non metterei Meilisearch o Elastic come primo step. Prima spremi bene Postgres, perché nel tuo scenario basta e avanza quasi sempre.
+
+**CMS**
+Visto che sei su VPS e vuoi roba free, le scelte sensate sono due:
+
+* **Payload CMS**: MIT, self-hosted, supporta Postgres ufficialmente. ([Payload][3])
+* **Strapi Community Edition**: open source/self-hosted, buona scelta se vuoi un CMS classico. ([GitHub][4])
+
+Io però, per un progetto come il tuo, sceglierei così:
+
+* **Payload** se vuoi tenere tutto molto vicino al codice app e lavorare bene in TypeScript
+* **Strapi** se vuoi un CMS più “admin-first”
+
+**Non sceglierei Directus** come prima opzione per te, perché oggi il self-hosted non è semplicemente MIT puro per tutti gli scenari; invece Payload è più lineare lato licensing/free-self-host. ([directus.io][5])
+
+**Geolocalizzazione precisa + mappa personalizzata**
+Qui la combinazione migliore è:
+
+* **Geolocation API del browser**
+* **MapLibre GL JS**
+* **PostGIS**
+
+MapLibre usa WebGL, supporta `GeolocateControl` e si presta bene a mappe custom e interfacce veloci. La geolocalizzazione lato browser richiede HTTPS e dipende dai permessi utente; MapLibre si aggancia direttamente a quell’API. ([MapLibre][6])
+
+Per avere geolocalizzazione “precisa” davvero:
+
+* usa `enableHighAccuracy: true` solo quando serve
+* salva in DB coordinate normalizzate
+* fai query PostGIS con indice spaziale
+* usa clustering marker quando hai molte schede su mappa
+
+Per Fermenta.to questa è la combo giusta: mappa custom con tile/style tuoi, risultati in viewport, e ordinamento per distanza reale. ([PostGIS][7])
+
+**Push notifications senza Firebase**
+Su VPS la soluzione giusta è **Web Push standard con VAPID**, service worker e una libreria server-side come **`web-push`** per Node. La Push API è standard browser, i messaggi vengono gestiti dal service worker e le notifiche persistenti si mostrano da service worker con `showNotification()`. La libreria `web-push` può anche generare le chiavi VAPID. ([MDN Web Docs][8])
+
+Quindi:
+
+* niente Firebase
+* niente lock-in
+* solo `service worker + Push API + VAPID + web-push`
+
+È la scelta più coerente col tuo obiettivo free/self-hosted.
+
+**Fluidità**
+Per la fluidità, i miglioramenti reali oggi sono questi:
+
+* **Workbox** per caching/service worker ben fatto. ([Chrome for Developers][9])
+* **IntersectionObserver** per lazy loading di card, immagini e sezioni. ([MDN Web Docs][10])
+* **`content-visibility: auto`** per liste lunghe e pagine dense. ([web.dev][11])
+* **spezzare i long task** e spostare lavoro pesante fuori dal main thread; web.dev raccomanda di ridurre i long task e usare Web Workers quando serve per migliorare INP. ([web.dev][12])
+
+Per una webapp come la tua, i colli di bottiglia tipici sono:
+
+* troppe card renderizzate insieme
+* troppe immagini
+* marker mappa in massa
+* fetch ridondanti
+* sorting/filtering lato client troppo pesante
+
+Quindi farei subito:
+
+* **virtualizzazione liste**
+* **lazy image**
+* **clustering mappa**
+* **debounce su ricerca**
+* **cache API selettiva**
+* **prefetch solo delle pagine davvero probabili**
+
+**Stack finale che ti consiglio**
+Se vuoi rimanere su roba gratuita, veloce e da VPS:
+
+* **DB**: PostgreSQL
+* **search**: FTS + `pg_trgm` + `unaccent`
+* **geo**: PostGIS
+* **CMS**: Payload CMS
+* **mappe**: MapLibre GL JS
+* **push**: Push API + service worker + `web-push`
+* **PWA/cache**: Workbox
+* **performance UI**: IntersectionObserver + `content-visibility` + Web Workers dove serve
+
+**In ordine di impatto pratico**
+
+1. `pg_trgm` + `unaccent`
+2. PostGIS con indice spaziale
+3. debounce + ranking testo/distanza
+4. Workbox
+5. MapLibre con clustering
+6. lazy loading / virtualizzazione
+7. Web Push con VAPID
+
+Se vuoi una risposta molto concreta, questa è la mia scelta netta per Fermenta.to:
+
+* **non aggiungere motori esterni di search adesso**
+* **usa PostgreSQL al massimo**
+* **usa PostGIS per tutta la parte “vicino a me”**
+* **usa Payload come CMS**
+* **usa Web Push nativo con VAPID**
+* **ottimizza rendering prima ancora di aggiungere feature**
+
+Posso anche scriverti una **stack pronta da deploy su VPS** con:
+
+* estensioni PostgreSQL da attivare
+* schema tabelle base
+* query search/geolocalizzazione
+* service worker PWA
+* setup push VAPID Node/Replit-compatible.
+
+[1]: https://fermenta.to/?utm_source=chatgpt.com "Fermenta.to — Birra Artigianale"
+[2]: https://www.postgresql.org/docs/current/pgtrgm.html?utm_source=chatgpt.com "F.35. pg_trgm — support for similarity of text using trigram ..."
+[3]: https://payloadcms.com/docs/database/postgres?utm_source=chatgpt.com "Postgres | Documentation"
+[4]: https://github.com/strapi/strapi?utm_source=chatgpt.com "Strapi is the leading open-source headless CMS. It's 100% ..."
+[5]: https://directus.io/pricing/self-hosted?utm_source=chatgpt.com "Self-Hosted Pricing | Directus on-premise solutions"
+[6]: https://www.maplibre.org/maplibre-gl-js/docs/API/classes/GeolocateControl/?utm_source=chatgpt.com "GeolocateControl - MapLibre GL JS"
+[7]: https://postgis.net/workshops/postgis-intro/knn.html?utm_source=chatgpt.com "29. Nearest-Neighbour Searching"
+[8]: https://developer.mozilla.org/en-US/docs/Web/API/Push_API?utm_source=chatgpt.com "Push API - MDN Web Docs"
+[9]: https://developer.chrome.com/docs/workbox/caching-strategies-overview?utm_source=chatgpt.com "Strategies for service worker caching | Workbox"
+[10]: https://developer.mozilla.org/en-US/docs/Web/API/Intersection_Observer_API?utm_source=chatgpt.com "Intersection Observer API - MDN Web Docs"
+[11]: https://web.dev/articles/content-visibility?utm_source=chatgpt.com "content-visibility: the new CSS property that boosts your ..."
+[12]: https://web.dev/articles/optimize-long-tasks?utm_source=chatgpt.com "Optimize long tasks | Articles"
