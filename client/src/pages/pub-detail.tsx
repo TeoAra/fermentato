@@ -1152,7 +1152,7 @@ export default function PubDetail() {
                   <img 
                     src={selectedEvent.imageUrl} 
                     alt={selectedEvent.title}
-                    className="w-full h-full object-cover"
+                    className="w-full h-full object-cover lightbox-img"
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
                   <div className="absolute top-3 left-3">

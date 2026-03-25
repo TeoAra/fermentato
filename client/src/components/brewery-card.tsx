@@ -80,7 +80,7 @@ export default function BreweryCard({ brewery, beerCount = 0, distance }: Brewer
         {/* Cover / logo strip */}
         <div className="relative h-28 overflow-hidden">
           {coverBg ? (
-            <img src={coverBg} alt={name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
+            <img src={coverBg} alt={name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300 lightbox-img" />
           ) : (
             <div className="w-full h-full bg-gradient-to-br from-[hsl(24,93%,49%)] via-[hsl(22,92%,46%)] to-[hsl(20,95%,42%)] flex items-center justify-center">
               <span className="text-4xl font-black text-white/80">{initial}</span>

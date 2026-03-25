@@ -167,7 +167,7 @@ export default function ExploreBeers() {
                   <div className="flex items-start gap-3">
                     <div className="w-12 h-12 rounded-xl flex-shrink-0 bg-stone-50 dark:bg-stone-900/20 flex items-center justify-center overflow-hidden">
                       {beer.imageUrl ? (
-                        <img src={beer.imageUrl} alt={beer.name} className="w-12 h-12 object-contain p-0.5" />
+                        <img src={beer.imageUrl} alt={beer.name} className="w-12 h-12 object-contain p-0.5 lightbox-img" />
                       ) : beer.breweryLogoUrl ? (
                         <img src={beer.breweryLogoUrl} alt={beer.breweryName} className="w-10 h-10 object-contain" />
                       ) : (

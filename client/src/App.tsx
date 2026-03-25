@@ -11,6 +11,7 @@ import { useAnalytics } from "./hooks/use-analytics";
 import { usePushBadge } from "@/hooks/use-push-badge";
 import Header from "@/components/header";
 import { NavigationProgress } from "@/components/navigation-progress";
+import Lightbox from "@/components/lightbox";
 import { PwaInstallPrompt, PushNotificationPrompt, AutoPushSubscriber } from "@/components/pwa-prompt";
 
 const BeerDetailLazy = lazy(() => import("@/pages/beer-detail"));
@@ -287,6 +288,7 @@ function App() {
         <QueryClientProvider client={queryClient}>
           <TooltipProvider>
             <Toaster />
+            <Lightbox />
             <Router />
             <AutoPushSubscriber />
             <PwaInstallPrompt />

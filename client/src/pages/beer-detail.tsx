@@ -844,7 +844,7 @@ export default function BeerDetail() {
                   <div className="bg-white dark:bg-[hsl(25,14%,10%)] rounded-2xl border border-stone-100 dark:border-[hsl(25,12%,16%)] shadow-sm p-4 flex items-center gap-4 group cursor-pointer transition-all hover:border-primary/20">
                     <div className="w-14 h-14 rounded-2xl bg-stone-50 dark:bg-[hsl(24,93%,15%)] border border-stone-200 dark:border-stone-700/30 flex items-center justify-center flex-shrink-0 overflow-hidden">
                       {(beer.brewery as any).logoUrl
-                        ? <img src={(beer.brewery as any).logoUrl} alt={beer.brewery.name} className="w-full h-full object-contain p-1" />
+                        ? <img src={(beer.brewery as any).logoUrl} alt={beer.brewery.name} className="w-full h-full object-contain p-1 lightbox-img" />
                         : <Building2 className="h-6 w-6 text-primary" />
                       }
                     </div>
@@ -898,7 +898,7 @@ export default function BeerDetail() {
                         <div className="flex items-center gap-3 py-2.5 px-3 -mx-3 rounded-xl hover:bg-stone-50 dark:hover:bg-stone-900/20 transition-colors group">
                           <div className="w-10 h-10 rounded-xl bg-stone-50 dark:bg-[hsl(24,93%,15%)] flex items-center justify-center flex-shrink-0 overflow-hidden border border-stone-200 dark:border-stone-700/30">
                             {sb.imageUrl
-                              ? <img src={sb.imageUrl} alt={sb.name} className="w-full h-full object-cover" />
+                              ? <img src={sb.imageUrl} alt={sb.name} className="w-full h-full object-cover lightbox-img" />
                               : <BeerIcon className="h-4 w-4 text-primary" />
                             }
                           </div>
@@ -1506,9 +1506,9 @@ export default function BeerDetail() {
                   <div className="group bg-white dark:bg-[hsl(25,14%,10%)] border border-stone-100 dark:border-[hsl(25,12%,16%)] rounded-xl p-3 hover:shadow-md hover:border-primary/20 transition-all cursor-pointer h-full flex flex-col">
                     <div className="w-10 h-10 rounded-lg flex-shrink-0 bg-stone-50 dark:bg-[hsl(24,93%,15%)] flex items-center justify-center overflow-hidden mb-2 mx-auto">
                       {b.imageUrl ? (
-                        <img src={b.imageUrl} alt={b.name} className="w-10 h-10 object-contain p-0.5" />
+                        <img src={b.imageUrl} alt={b.name} className="w-10 h-10 object-contain p-0.5 lightbox-img" />
                       ) : b.breweryLogoUrl ? (
-                        <img src={b.breweryLogoUrl} alt={b.breweryName} className="w-8 h-8 object-contain" />
+                        <img src={b.breweryLogoUrl} alt={b.breweryName} className="w-8 h-8 object-contain lightbox-img" />
                       ) : (
                         <BeerIcon className="w-5 h-5 text-primary" />
                       )}

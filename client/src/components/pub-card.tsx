@@ -113,7 +113,7 @@ export default function PubCard({ pub, distance }: PubCardProps) {
             alt={`${pub.name} - Copertina`}
             imageType="pub"
             containerClassName="w-full h-44"
-            className="w-full h-44 object-cover group-hover:scale-[1.02] transition-transform duration-300"
+            className="w-full h-44 object-cover group-hover:scale-[1.02] transition-transform duration-300 lightbox-img"
             iconSize="xl"
           />
           {!pub.isActive && (

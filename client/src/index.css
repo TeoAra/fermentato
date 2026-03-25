@@ -386,3 +386,6 @@
 }
 
 .dark .pac-item-query { color: hsl(40, 14%, 92%); }
+
+/* Lightbox: cursore zoom su tutte le immagini attive */
+img.lightbox-img { cursor: zoom-in; }

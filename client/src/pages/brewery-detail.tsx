@@ -657,7 +657,7 @@ export default function BreweryDetail() {
                                     <img 
                                       src={beer.imageUrl} 
                                       alt={beer.name} 
-                                      className="w-12 h-12 rounded-2xl object-cover"
+                                      className="w-12 h-12 rounded-2xl object-cover lightbox-img"
                                     />
                                   ) : (
                                     <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-orange-400 to-primary flex items-center justify-center">
@@ -901,7 +901,7 @@ export default function BreweryDetail() {
                         <Link key={pub.id} href={`/pub/${pub.slug || pub.id}`}>
                           <div className="bg-white dark:bg-[hsl(25,14%,10%)] rounded-2xl p-4 flex items-center gap-4 shadow-sm border border-stone-100 dark:border-stone-200 hover:border-primary/20 transition-all cursor-pointer group">
                             {pub.logo_url ? (
-                              <img src={pub.logo_url} alt={pub.name} className="w-12 h-12 rounded-2xl object-cover flex-shrink-0" />
+                              <img src={pub.logo_url} alt={pub.name} className="w-12 h-12 rounded-2xl object-cover flex-shrink-0 lightbox-img" />
                             ) : (
                               <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-orange-400 to-primary flex items-center justify-center flex-shrink-0">
                                 <Store className="w-6 h-6 text-white" />

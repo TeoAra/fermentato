@@ -60,7 +60,7 @@ function createPopupHTML(
   const gradEnd = type === "pub" ? "#f5a623" : "#c46520";
   const label = type === "pub" ? "PUB" : "BIRRIFICIO";
   const logo = logoUrl
-    ? `<img src="${logoUrl}" alt="" onerror="this.style.display='none'" style="width:38px;height:38px;border-radius:10px;object-fit:cover;flex-shrink:0;" />`
+    ? `<img src="${logoUrl}" alt="" class="lightbox-img" onerror="this.style.display='none'" style="width:38px;height:38px;border-radius:10px;object-fit:cover;flex-shrink:0;cursor:zoom-in;" />`
     : "";
   return `
     <div style="font-family:system-ui,sans-serif;padding:14px;min-width:175px;max-width:220px;">
