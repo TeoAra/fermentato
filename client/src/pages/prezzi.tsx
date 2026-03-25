@@ -30,7 +30,7 @@ function FeatureRow({ label, included, icon }: FeatureRowProps) {
 
 export default function PrezziPage() {
   return (
-    <div className="min-h-screen bg-gradient-to-b from-amber-50 to-white dark:from-gray-950 dark:to-gray-900 pt-20">
+    <div className="min-h-screen bg-[#FFF8F2] dark:bg-[hsl(25,14%,7%)]">
       <SEO
         title="Prezzi e Piani — Fermenta.to"
         description="Scopri i piani Fermenta.to per pub e birrifici. Piano pub da 65€/anno. Birrifici verificati gratuitamente."
@@ -85,7 +85,7 @@ export default function PrezziPage() {
                 <p className="text-white/70 text-sm mt-1">Attivazione immediata · Nessun rinnovo automatico</p>
               </div>
               <CardContent className="p-6">
-                <Button className="w-full bg-amber-500 hover:bg-amber-600 text-white mb-6 h-11 text-base font-semibold" asChild>
+                <Button className="w-full text-white mb-6 h-11 text-base font-semibold border-0" style={{ background: "linear-gradient(135deg, #F77104 0%, #f98a0e 50%, #f5a623 100%)" }} asChild>
                   <Link href="/registra-pub">
                     <Zap className="w-4 h-4 mr-2" />
                     Registra il tuo pub — prova gratis
@@ -178,7 +178,7 @@ export default function PrezziPage() {
                 <p className="text-white/70 text-sm mt-1">Richiedi la verifica · Approvazione entro 24h</p>
               </div>
               <CardContent className="p-6">
-                <Button className="w-full bg-orange-500 hover:bg-orange-600 text-white mb-6 h-11 text-base font-semibold" asChild>
+                <Button className="w-full text-white mb-6 h-11 text-base font-semibold border-0" style={{ background: "linear-gradient(135deg, #F77104 0%, #f98a0e 50%, #f5a623 100%)" }} asChild>
                   <Link href="/auth">
                     <Building2 className="w-4 h-4 mr-2" />
                     Registra il Birrificio
@@ -285,7 +285,7 @@ export default function PrezziPage() {
 
         {/* FAQ */}
         <div className="mb-16">
-          <h2 className="text-2xl font-bold text-center text-gray-900 dark:text-white mb-8">Domande frequenti</h2>
+          <h2 className="text-2xl font-bold text-center text-foreground mb-8">Domande frequenti</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {[
               { q: "Come si attiva il piano pub?", a: "Registra il tuo pub e attiva subito il periodo di prova gratuito di 15 giorni — senza carta di credito. Al termine, puoi continuare con il piano completo a €65/anno (IVA inclusa) tramite carta, PayPal o altri metodi online. L'abbonamento si rinnova automaticamente salvo disdetta anticipata." },
@@ -295,10 +295,10 @@ export default function PrezziPage() {
               { q: "Posso avere sia pub che birrificio?", a: "Sì. I due piani sono separati e coesistono sullo stesso account. Se sei un brewpub avrai una doppia dashboard — una per il birrificio, una per il pub." },
               { q: "I prezzi includono l'IVA?", a: "Sì, i prezzi indicati sono IVA inclusa (22% Italia)." },
             ].map(({ q, a }) => (
-              <Card key={q} className="bg-gray-50 dark:bg-gray-800/50 border-0">
+              <Card key={q} className="bg-white dark:bg-[hsl(25,14%,10%)] border border-stone-100 dark:border-[hsl(25,12%,16%)] shadow-sm">
                 <CardContent className="p-5">
-                  <div className="font-semibold text-gray-900 dark:text-white mb-1.5 text-sm">{q}</div>
-                  <div className="text-sm text-gray-600 dark:text-gray-400">{a}</div>
+                  <div className="font-semibold text-foreground mb-1.5 text-sm">{q}</div>
+                  <div className="text-sm text-muted-foreground">{a}</div>
                 </CardContent>
               </Card>
             ))}
@@ -306,17 +306,17 @@ export default function PrezziPage() {
         </div>
 
         {/* CTA bottom */}
-        <div className="text-center bg-gradient-to-r from-amber-500 to-orange-500 rounded-2xl p-8 text-white mb-8">
+        <div className="text-center rounded-3xl p-8 text-white mb-8" style={{ background: "linear-gradient(135deg, #F77104 0%, #f98a0e 50%, #f5a623 100%)" }}>
           <h2 className="text-2xl font-bold mb-2">Pronto a iniziare?</h2>
           <p className="text-white/80 mb-6 max-w-md mx-auto">15 giorni di prova gratuita, senza carta di credito. Poi €65/anno con rinnovo automatico, disdici quando vuoi.</p>
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
-            <Button size="lg" className="bg-white text-amber-600 hover:bg-gray-50 font-semibold shadow-md" asChild>
+            <Button size="lg" className="bg-white text-primary hover:bg-stone-50 font-semibold shadow-md" asChild>
               <Link href="/registra-pub">
                 <ArrowRight className="w-4 h-4 mr-2" />
                 Registra il tuo pub — prova gratis
               </Link>
             </Button>
-            <Button size="lg" variant="outline" className="border-2 border-white text-white hover:bg-white hover:text-amber-600 font-semibold bg-white/10" asChild>
+            <Button size="lg" variant="outline" className="border-2 border-white text-white hover:bg-white hover:text-primary font-semibold bg-white/10" asChild>
               <a href="mailto:info@fermenta.to">
                 <Mail className="w-4 h-4 mr-2" />
                 Contattaci

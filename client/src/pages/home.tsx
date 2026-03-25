@@ -216,24 +216,24 @@ export default function Home() {
               {/* Badge */}
               <div className="inline-flex items-center gap-2 bg-orange-50 dark:bg-orange-900/20 border border-orange-200/70 dark:border-orange-700/30 rounded-full px-3.5 py-1.5 mb-5">
                 <Beer className="w-3.5 h-3.5 text-primary" />
-                <span className="text-primary text-xs font-bold tracking-wide">La piattaforma craft beer italiana</span>
+                <span className="text-primary text-xs font-bold tracking-wide">Il tuo punto di riferimento sulla birra</span>
               </div>
 
               {/* Title */}
               <h1 className="text-4xl md:text-5xl lg:text-[3.4rem] font-extrabold text-foreground mb-3 leading-[1.1] tracking-tight">
-                Scopri la birra<br />
+                {typedUser?.firstName ? `Ciao, ${typedUser.firstName}!` : 'Cosa scopri oggi?'}<br />
                 <span style={{
                   background: "linear-gradient(135deg, #F77104 0%, #f98a0e 50%, #f5a623 100%)",
                   WebkitBackgroundClip: "text",
                   WebkitTextFillColor: "transparent",
                   backgroundClip: "text",
                 }}>
-                  artigianale italiana
+                  Esplora il craft beer
                 </span>
               </h1>
 
               <p className="text-stone-500 dark:text-stone-400 text-base md:text-lg leading-relaxed mb-5">
-                Trova pub, birrifici e la perfetta birra vicino a te
+                Pub, birrifici e birre da tutto il mondo — geolocalizzati in tempo reale
               </p>
 
               {/* Stat pills */}
@@ -260,28 +260,28 @@ export default function Home() {
                 </div>
               )}
 
-              {/* CTA buttons */}
-              <div className="flex flex-wrap gap-2">
+              {/* CTA buttons — 1 primary, 1 secondary, 1 text link */}
+              <div className="flex flex-wrap items-center gap-2">
                 <Link href="/explore/breweries">
                   <Button
                     className="font-bold shadow-md shadow-orange-500/20 rounded-full h-10 px-6 text-sm text-white border-0"
                     style={{ background: "linear-gradient(135deg, #F77104 0%, #f98a0e 50%, #f5a623 100%)" }}
                   >
                     <Building2 className="w-4 h-4 mr-1.5" />
-                    Birrifici
+                    Esplora Birrifici
                   </Button>
                 </Link>
                 <Link href="/explore/pubs">
                   <Button variant="outline" className="border-stone-300 dark:border-stone-700 bg-white dark:bg-transparent text-foreground hover:bg-stone-100 dark:hover:bg-stone-900/30 font-semibold rounded-full h-10 px-6 text-sm">
                     <Store className="w-4 h-4 mr-1.5" />
-                    Pub & Locali
+                    Pub Vicini
                   </Button>
                 </Link>
                 <Link href="/festival">
-                  <Button variant="outline" className="border-stone-300 dark:border-stone-700 bg-white dark:bg-transparent text-foreground hover:bg-stone-100 dark:hover:bg-stone-900/30 font-semibold rounded-full h-10 px-6 text-sm">
-                    <CalendarDays className="w-4 h-4 mr-1.5" />
+                  <span className="text-sm text-primary font-semibold hover:underline flex items-center gap-1 px-2">
+                    <CalendarDays className="w-3.5 h-3.5" />
                     Festival
-                  </Button>
+                  </span>
                 </Link>
               </div>
             </div>
