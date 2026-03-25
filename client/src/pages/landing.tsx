@@ -451,7 +451,7 @@ export default function Landing() {
                 <span className="text-5xl font-black">€0</span>
               </div>
               <p className="text-white/40 text-xs mb-6">Sempre gratuito per i birrifici</p>
-              <div className="space-y-2.5 mb-4 flex-1">
+              <div className="space-y-2.5 mb-5 flex-1">
                 {[
                   "Profilo birrificio verificato e visibile in mappa",
                   "Catalogo completo delle tue birre e stili",
@@ -464,11 +464,11 @@ export default function Landing() {
                   </div>
                 ))}
               </div>
-              {/* Festival Mode highlight */}
+              {/* Brewpub note */}
               <div className="rounded-2xl bg-white/5 border border-white/10 p-4 mb-6">
-                <p className="text-xs font-black text-primary uppercase tracking-wider mb-2">🎪 Festival Mode inclusa</p>
+                <p className="text-xs font-black text-amber-400 uppercase tracking-wider mb-1.5">🍻 Sei un brewpub?</p>
                 <p className="text-white/60 text-xs leading-relaxed">
-                  Trasforma il tuo profilo in un punto di controllo live durante fiere ed eventi: gestisci code, scan QR, traccia assaggi e comunica in tempo reale con i visitatori.
+                  Se produci e somministri, ottieni accesso a <strong className="text-white/80">entrambi i pannelli</strong> — birrificio verificato + gestione pub — al solo costo del Piano Pub Pro. Nessun extra.
                 </p>
               </div>
               <Link href="/prezzi">
@@ -477,6 +477,25 @@ export default function Landing() {
                   Registra il tuo birrificio gratis
                 </Button>
               </Link>
+            </div>
+          </div>
+
+          {/* ── Festival Mode — full-width banner below both cards ── */}
+          <div className="mt-6 rounded-3xl border border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-900 overflow-hidden">
+            <div className="grid grid-cols-1 md:grid-cols-[1fr_auto] items-center gap-0">
+              <div className="p-8">
+                <p className="text-xs font-black text-primary uppercase tracking-widest mb-3">🎪 Festival Mode</p>
+                <h3 className="text-xl font-black text-stone-900 dark:text-white mb-2">
+                  Porta Fermenta.to alle tue fiere ed eventi
+                </h3>
+                <p className="text-stone-500 dark:text-stone-400 text-sm leading-relaxed max-w-xl">
+                  Attiva la modalità festival sul tuo profilo birrificio e trasformalo in un punto di controllo live: i visitatori scansionano il QR, tracciano gli assaggi in tempo reale e tu gestisci code e comunicazioni direttamente dall'app. Inclusa gratuitamente per tutti i birrifici verificati.
+                </p>
+              </div>
+              <div className="hidden md:flex flex-col items-center justify-center px-10 py-8 bg-stone-50 dark:bg-stone-800/60 border-l border-stone-100 dark:border-stone-700 h-full gap-3 min-w-[200px]">
+                <div className="text-5xl">🎪</div>
+                <span className="text-xs font-black text-green-600 dark:text-green-400 uppercase tracking-wider">Inclusa gratis</span>
+              </div>
             </div>
           </div>
         </div>
