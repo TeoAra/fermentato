@@ -215,7 +215,7 @@
 
   body {
     @apply antialiased bg-background text-foreground;
-    font-family: 'Plus Jakarta Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
+    font-family: 'DM Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
     font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
     scroll-behavior: smooth;
     overscroll-behavior-y: none;
@@ -354,7 +354,7 @@
   border: 1px solid var(--border);
   border-radius: 12px;
   box-shadow: var(--elevation-3);
-  font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+  font-family: 'DM Sans', system-ui, sans-serif;
 }
 .pac-item {
   padding: 9px 14px;

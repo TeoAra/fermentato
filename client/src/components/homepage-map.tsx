@@ -141,7 +141,7 @@ export default function HomepageMap({ pubs, breweries, userLocation, isLoading }
       attributionControl: false,
       fadeDuration: 0,           // Tiles appaiono subito, senza fade-in
       trackResize: true,
-      localIdeographFontFamily: "'Plus Jakarta Sans', sans-serif", // Usa font già caricato
+      localIdeographFontFamily: "'DM Sans', sans-serif", // Usa font già caricato
       renderWorldCopies: false,  // Meno geometria = render più veloce
     });
 

@@ -6,7 +6,7 @@ export default {
   theme: {
     extend: {
       fontFamily: {
-        sans: ["'Plus Jakarta Sans'", "system-ui", "-apple-system", "Segoe UI", "sans-serif"],
+        sans: ["'DM Sans'", "system-ui", "-apple-system", "Segoe UI", "sans-serif"],
       },
       borderRadius: {
         lg: "var(--radius)",

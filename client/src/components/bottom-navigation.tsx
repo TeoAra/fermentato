@@ -44,12 +44,12 @@ export function BottomNavigation() {
       <SearchDialog isOpen={searchOpen} onClose={() => setSearchOpen(false)} />
 
       <nav
-        className="lg:hidden fixed bottom-0 left-0 right-0 z-50 flex justify-center px-3"
-        style={{ paddingBottom: "max(10px, env(safe-area-inset-bottom))" }}
+        className="lg:hidden fixed z-50 left-1/2 -translate-x-1/2"
+        style={{ bottom: "max(16px, env(safe-area-inset-bottom))" }}
       >
         <div
-          className="flex items-center bg-white/96 dark:bg-[hsl(25,14%,9%)]/96 backdrop-blur-xl rounded-full px-2 py-2 border border-[hsl(36,14%,88%)] dark:border-[hsl(25,12%,18%)]"
-          style={{ boxShadow: "0 8px 32px rgba(247,113,4,0.12), 0 2px 8px rgba(0,0,0,0.06)" }}
+          className="flex items-center bg-white/96 dark:bg-[hsl(25,14%,9%)]/96 backdrop-blur-xl rounded-full px-2 py-2 border border-orange-100 dark:border-[hsl(25,12%,18%)]"
+          style={{ boxShadow: "0 8px 40px rgba(247,113,4,0.18), 0 4px 16px rgba(0,0,0,0.08)" }}
         >
           {/* Home */}
           <Link href="/" className="flex active:opacity-70 transition-opacity">
