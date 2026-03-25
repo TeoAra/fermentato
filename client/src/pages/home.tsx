@@ -228,7 +228,19 @@ export default function Home() {
         </div>
       </section>
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 lg:py-10">
+      {/* ─── Mappa full-bleed, agganciata al hero ────────────────────────── */}
+      <HomepageMap
+        pubs={Array.isArray(pubs) ? pubs : []}
+        breweries={Array.isArray(allBreweries) ? allBreweries : (Array.isArray(breweries) ? breweries : [])}
+        userLocation={userLocation}
+        isLoading={pubsLoading || breweriesLoading}
+        onLocate={(loc) => {
+          setUserLocation(loc);
+          setLocationStatus('granted');
+        }}
+      />
+
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-4 pb-10 lg:pt-6 lg:pb-12">
 
         {locationStatus === 'denied' && (
           <div className="mb-6 p-4 rounded-2xl bg-orange-50 dark:bg-orange-950/20 border border-orange-100 dark:border-orange-900/30 flex items-center justify-between">
@@ -249,17 +261,6 @@ export default function Home() {
             </Button>
           </div>
         )}
-
-        <HomepageMap
-          pubs={Array.isArray(pubs) ? pubs : []}
-          breweries={Array.isArray(allBreweries) ? allBreweries : (Array.isArray(breweries) ? breweries : [])}
-          userLocation={userLocation}
-          isLoading={pubsLoading || breweriesLoading}
-          onLocate={(loc) => {
-            setUserLocation(loc);
-            setLocationStatus('granted');
-          }}
-        />
 
         {/* ─── Il Tuo Pub (pub owner / admin) ──────────────────────────────── */}
         {(typedUser?.userType === 'pub_owner' || (typedUser?.userType === 'admin' && Array.isArray(myPubs) && myPubs.length > 0)) ? (

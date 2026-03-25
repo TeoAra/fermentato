@@ -1,48 +1,86 @@
-import { useEffect, useRef, useState, useMemo } from "react";
-import { MapPin, Loader2 } from "lucide-react";
-import { MapContainer, TileLayer, Marker, Popup, useMap } from "react-leaflet";
-import L from "leaflet";
-import "leaflet/dist/leaflet.css";
+import { useEffect, useRef, useMemo } from "react";
+import maplibregl from "maplibre-gl";
+import "maplibre-gl/dist/maplibre-gl.css";
 
-// Fix Leaflet default icon paths broken by Vite bundling
-delete (L.Icon.Default.prototype as any)._getIconUrl;
-L.Icon.Default.mergeOptions({
-  iconRetinaUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png",
-  iconUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png",
-  shadowUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png",
-});
+const PUB_COLOR = "#F77104";
+const BREWERY_COLOR = "#9B4E10";
 
-const PUB_COLOR = "#3B82F6";
-const BREWERY_COLOR = "#F59E0B";
+function createMarkerEl(type: "pub" | "brewery", logoUrl?: string | null): HTMLElement {
+  const color = type === "pub" ? PUB_COLOR : BREWERY_COLOR;
+  const gradEnd = type === "pub" ? "#f5a623" : "#c46520";
+  const emoji = type === "pub" ? "🍻" : "🍺";
 
-function createDivIcon(color: string, logoUrl?: string | null): L.DivIcon {
-  const emoji = color === PUB_COLOR ? "🍻" : "🍺";
-  const logoHtml = logoUrl
-    ? `<img src="${logoUrl}" style="width:26px;height:26px;border-radius:50%;object-fit:cover;" onerror="this.style.display='none';this.nextSibling.style.display='block';" /><span style="display:none;font-size:14px;">${emoji}</span>`
-    : `<span style="font-size:14px;">${emoji}</span>`;
-  const html = `
-    <div style="
-      width:40px;height:48px;position:relative;cursor:pointer;
-    ">
-      <div style="
-        width:40px;height:40px;background:${color};border-radius:50% 50% 50% 0;
-        transform:rotate(-45deg);border:3px solid white;
-        box-shadow:0 2px 6px rgba(0,0,0,0.3);position:absolute;top:0;left:0;
-      "></div>
-      <div style="
-        width:28px;height:28px;border-radius:50%;background:white;
-        position:absolute;top:3px;left:6px;overflow:hidden;
-        display:flex;align-items:center;justify-content:center;
-      ">${logoHtml}</div>
-      <div style="
-        width:0;height:0;border-left:5px solid transparent;border-right:5px solid transparent;
-        border-top:7px solid ${color};position:absolute;bottom:0;left:15px;
-      "></div>
-    </div>
-  `;
-  return L.divIcon({ html, iconSize: [40, 48], iconAnchor: [20, 48], popupAnchor: [0, -52], className: "" });
+  const el = document.createElement("div");
+  el.style.cssText = [
+    "width:34px;height:34px;border-radius:50%;",
+    `background:linear-gradient(135deg,${color},${gradEnd});`,
+    "border:2.5px solid white;",
+    "box-shadow:0 2px 10px rgba(0,0,0,0.22);",
+    "display:flex;align-items:center;justify-content:center;",
+    "cursor:pointer;overflow:hidden;flex-shrink:0;",
+    "transition:transform 0.15s ease,box-shadow 0.15s ease;",
+  ].join("");
+
+  if (logoUrl) {
+    const img = document.createElement("img");
+    img.src = logoUrl;
+    img.style.cssText = "width:100%;height:100%;object-fit:cover;";
+    img.onerror = () => {
+      el.removeChild(img);
+      const s = document.createElement("span");
+      s.style.fontSize = "15px";
+      s.textContent = emoji;
+      el.appendChild(s);
+    };
+    el.appendChild(img);
+  } else {
+    const s = document.createElement("span");
+    s.style.fontSize = "15px";
+    s.textContent = emoji;
+    el.appendChild(s);
+  }
+
+  el.addEventListener("mouseenter", () => {
+    el.style.transform = "scale(1.18)";
+    el.style.boxShadow = "0 4px 16px rgba(247,113,4,0.4)";
+  });
+  el.addEventListener("mouseleave", () => {
+    el.style.transform = "scale(1)";
+    el.style.boxShadow = "0 2px 10px rgba(0,0,0,0.22)";
+  });
+
+  return el;
 }
 
+function createPopupHTML(
+  type: "pub" | "brewery",
+  name: string,
+  sub: string,
+  href: string,
+  logoUrl?: string | null
+): string {
+  const color = type === "pub" ? PUB_COLOR : BREWERY_COLOR;
+  const gradEnd = type === "pub" ? "#f5a623" : "#c46520";
+  const label = type === "pub" ? "PUB" : "BIRRIFICIO";
+  const logo = logoUrl
+    ? `<img src="${logoUrl}" alt="" onerror="this.style.display='none'" style="width:38px;height:38px;border-radius:10px;object-fit:cover;flex-shrink:0;" />`
+    : "";
+  return `
+    <div style="font-family:system-ui,sans-serif;padding:14px;min-width:175px;max-width:220px;">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
+        ${logo}
+        <div style="min-width:0;flex:1;">
+          <div style="font-weight:700;font-size:13px;color:#1a1107;line-height:1.3;margin-bottom:3px;">${name}</div>
+          <div style="display:inline-block;font-size:9.5px;font-weight:800;letter-spacing:0.06em;color:${color};background:${color}18;padding:1px 7px;border-radius:20px;">${label}</div>
+        </div>
+      </div>
+      ${sub ? `<div style="font-size:11px;color:#9B7B5A;margin-bottom:10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">📍 ${sub}</div>` : ""}
+      <a href="${href}" style="display:block;text-align:center;padding:7px 12px;background:linear-gradient(135deg,${color},${gradEnd});color:white;border-radius:10px;text-decoration:none;font-size:12px;font-weight:700;">
+        Scopri →
+      </a>
+    </div>
+  `;
+}
 
 interface MapPub {
   id: number;
@@ -50,8 +88,8 @@ interface MapPub {
   latitude: string | null;
   longitude: string | null;
   logoUrl?: string | null;
-  address?: string | null;
   city?: string | null;
+  slug?: string | null;
 }
 
 interface MapBrewery {
@@ -69,185 +107,165 @@ interface HomepageMapProps {
   breweries: MapBrewery[];
   userLocation?: { lat: number; lng: number } | null;
   isLoading?: boolean;
-  onLocate?: (location: { lat: number; lng: number }) => void;
-}
-
-
-function MapController({ userLocation, hasData }: { userLocation?: { lat: number; lng: number } | null; hasData: boolean }) {
-  const map = useMap();
-  const hasCenteredRef = useRef(false);
-
-  useEffect(() => {
-    if (userLocation && !hasCenteredRef.current) {
-      hasCenteredRef.current = true;
-      map.setView([userLocation.lat, userLocation.lng], 12);
-    }
-  }, [userLocation, map]);
-
-  useEffect(() => {
-    if (!userLocation && !hasCenteredRef.current && hasData) {
-      // Fit to Italy if no user location
-      map.setView([42.5, 12.5], 6);
-    }
-  }, [hasData, userLocation, map]);
-
-  return null;
+  onLocate?: (loc: { lat: number; lng: number }) => void;
 }
 
 export default function HomepageMap({ pubs, breweries, userLocation, isLoading }: HomepageMapProps) {
-  const sectionRef = useRef<HTMLDivElement>(null);
-  const [isVisible, setIsVisible] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const mapRef = useRef<maplibregl.Map | null>(null);
+  const markersRef = useRef<maplibregl.Marker[]>([]);
+  const didCenterRef = useRef(false);
 
-  useEffect(() => {
-    const section = sectionRef.current;
-    if (!section) return;
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting) {
-          setIsVisible(true);
-          observer.disconnect();
-        }
-      },
-      { rootMargin: "200px" }
-    );
-    observer.observe(section);
-    return () => observer.disconnect();
-  }, []);
-
-  const geoFilteredPubs = useMemo(() =>
-    pubs.filter(p => p.latitude && p.longitude && !isNaN(parseFloat(p.latitude)) && !isNaN(parseFloat(p.longitude))),
+  const geoFilteredPubs = useMemo(
+    () => pubs.filter(p => p.latitude && p.longitude && !isNaN(parseFloat(p.latitude)) && !isNaN(parseFloat(p.longitude))),
     [pubs]
   );
-  const geoFilteredBreweries = useMemo(() =>
-    breweries.filter(b => b.latitude && b.longitude && !isNaN(parseFloat(b.latitude!)) && !isNaN(parseFloat(b.longitude!))),
+  const geoFilteredBreweries = useMemo(
+    () => breweries.filter(b => b.latitude && b.longitude && !isNaN(parseFloat(b.latitude!)) && !isNaN(parseFloat(b.longitude!))),
     [breweries]
   );
-
   const pubCount = geoFilteredPubs.length;
   const breweryCount = geoFilteredBreweries.length;
-  const hasData = pubCount + breweryCount > 0;
 
-  const center: [number, number] = userLocation
-    ? [userLocation.lat, userLocation.lng]
-    : [42.5, 12.5];
-  const zoom = userLocation ? 12 : 6;
+  useEffect(() => {
+    if (!containerRef.current || mapRef.current) return;
+
+    const map = new maplibregl.Map({
+      container: containerRef.current,
+      style: "https://tiles.openfreemap.org/styles/liberty",
+      center: userLocation ? [userLocation.lng, userLocation.lat] : [12.5, 42.0],
+      zoom: userLocation ? 11 : 5.4,
+      minZoom: 4,
+      maxZoom: 18,
+      scrollZoom: false,
+      attributionControl: false,
+    });
+
+    map.addControl(new maplibregl.AttributionControl({ compact: true }), "bottom-right");
+    map.addControl(new maplibregl.NavigationControl({ showCompass: false }), "bottom-right");
+
+    mapRef.current = map;
+    return () => {
+      map.remove();
+      mapRef.current = null;
+      markersRef.current = [];
+    };
+  }, []);
+
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !userLocation || didCenterRef.current) return;
+    didCenterRef.current = true;
+    map.flyTo({ center: [userLocation.lng, userLocation.lat], zoom: 12, duration: 900, essential: true });
+  }, [userLocation]);
+
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map) return;
+
+    markersRef.current.forEach(m => m.remove());
+    markersRef.current = [];
+
+    const add = (lat: number, lng: number, el: HTMLElement, html: string) => {
+      const popup = new maplibregl.Popup({
+        offset: [0, -4],
+        closeButton: false,
+        maxWidth: "240px",
+        className: "fermenta-popup",
+      }).setHTML(html);
+      const marker = new maplibregl.Marker({ element: el, anchor: "center" })
+        .setLngLat([lng, lat])
+        .setPopup(popup)
+        .addTo(map);
+      markersRef.current.push(marker);
+    };
+
+    geoFilteredPubs.forEach(pub => {
+      const el = createMarkerEl("pub", pub.logoUrl);
+      const html = createPopupHTML(
+        "pub",
+        pub.name,
+        pub.city || "",
+        pub.slug ? `/pub/${pub.slug}` : `/pub/${pub.id}`,
+        pub.logoUrl
+      );
+      add(parseFloat(pub.latitude!), parseFloat(pub.longitude!), el, html);
+    });
+
+    geoFilteredBreweries.forEach(brewery => {
+      const el = createMarkerEl("brewery", brewery.logoUrl);
+      const sub = [brewery.location, brewery.country].filter(Boolean).join(", ");
+      const html = createPopupHTML("brewery", brewery.name, sub, `/brewery/${brewery.id}`, brewery.logoUrl);
+      add(parseFloat(brewery.latitude!), parseFloat(brewery.longitude!), el, html);
+    });
+  }, [geoFilteredPubs, geoFilteredBreweries]);
 
   return (
-    <section ref={sectionRef} className="mb-16 lg:mb-20">
-      <div className="bg-white dark:bg-neutral-800 border border-gray-100 dark:border-neutral-700 rounded-2xl overflow-hidden shadow-xl">
-        <div className="bg-gradient-to-r from-amber-600 via-orange-500 to-amber-600 px-6 py-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-white/20 rounded-lg backdrop-blur-sm">
-              <MapPin className="h-5 w-5 text-white" />
-            </div>
-            <div>
-              <h2 className="text-xl font-bold text-white">Esplora sulla Mappa</h2>
-              <p className="text-xs text-amber-100">
-                {isLoading ? "Caricamento..." : `${pubCount} pub e ${breweryCount} birrifici geolocalizzati`}
-              </p>
-            </div>
-          </div>
-          <div className="flex items-center gap-4 text-sm">
-            <div className="flex items-center gap-2 bg-white/20 rounded-full px-3 py-1.5 backdrop-blur-sm">
-              <div className="w-2.5 h-2.5 rounded-full ring-2 ring-white/50" style={{ background: PUB_COLOR }} />
-              <span className="text-white text-xs font-medium">Pub</span>
-            </div>
-            <div className="flex items-center gap-2 bg-white/20 rounded-full px-3 py-1.5 backdrop-blur-sm">
-              <div className="w-2.5 h-2.5 rounded-full ring-2 ring-white/50" style={{ background: BREWERY_COLOR }} />
-              <span className="text-white text-xs font-medium">Birrifici</span>
-            </div>
+    <div className="relative w-full" style={{ height: "clamp(280px, 50vh, 520px)" }}>
+      {isLoading && (
+        <div
+          className="absolute inset-0 z-20 flex items-center justify-center"
+          style={{ background: "#f0e6d8" }}
+        >
+          <div className="flex flex-col items-center gap-3">
+            <div
+              className="w-8 h-8 rounded-full border-4 border-t-transparent animate-spin"
+              style={{ borderColor: "#F77104", borderTopColor: "transparent" }}
+            />
+            <span className="text-sm font-medium" style={{ color: "#9B7B5A" }}>Caricamento mappa...</span>
           </div>
         </div>
+      )}
 
-        <div className="relative">
-          {isLoading && (
-            <div className="absolute inset-0 z-10 flex items-center justify-center bg-gray-100 dark:bg-gray-800">
-              <div className="flex flex-col items-center gap-3">
-                <Loader2 className="w-8 h-8 animate-spin text-amber-500" />
-                <span className="text-sm text-gray-500 dark:text-gray-400">Caricamento mappa...</span>
-              </div>
-            </div>
-          )}
+      <div ref={containerRef} className="absolute inset-0" />
 
-          {!isVisible && (
-            <div className="w-full h-[400px] md:h-[500px] bg-neutral-100 dark:bg-neutral-700 flex items-center justify-center">
-              <Loader2 className="w-8 h-8 animate-spin text-amber-500 opacity-60" />
-            </div>
-          )}
+      <div
+        className="absolute bottom-0 left-0 right-0 h-20 pointer-events-none z-10"
+        style={{ background: "linear-gradient(to bottom, transparent 0%, var(--background) 100%)" }}
+      />
 
-          {isVisible && (
-            <div className="w-full h-[400px] md:h-[500px]" style={{ background: "#e8e4dc" }}>
-            <MapContainer
-              center={center}
-              zoom={zoom}
-              style={{ width: "100%", height: "100%", background: "#e8e4dc" }}
-              zoomControl={true}
-              scrollWheelZoom={false}
-            >
-              <TileLayer
-                attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
-                url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png"
-              />
-              <MapController userLocation={userLocation} hasData={hasData} />
-
-              {geoFilteredPubs.map((pub) => (
-                <Marker
-                  key={`pub-${pub.id}`}
-                  position={[parseFloat(pub.latitude!), parseFloat(pub.longitude!)]}
-                  icon={createDivIcon(PUB_COLOR, pub.logoUrl)}
-                >
-                  <Popup>
-                    <div style={{ fontFamily: "system-ui,sans-serif", maxWidth: "200px" }}>
-                      <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "6px" }}>
-                        {pub.logoUrl && (
-                          <img src={pub.logoUrl} alt={pub.name} style={{ width: "36px", height: "36px", borderRadius: "6px", objectFit: "cover", flexShrink: 0 }} />
-                        )}
-                        <div>
-                          <div style={{ fontWeight: 600, fontSize: "14px", color: "#1F2937" }}>{pub.name}</div>
-                          <div style={{ fontSize: "11px", color: PUB_COLOR, fontWeight: 500 }}>PUB</div>
-                        </div>
-                      </div>
-                      {pub.city && <div style={{ fontSize: "12px", color: "#6B7280", marginBottom: "8px" }}>📍 {pub.city}</div>}
-                      <a href={`/pub/${pub.slug || pub.id}`} style={{ display: "inline-block", padding: "4px 12px", background: PUB_COLOR, color: "white", borderRadius: "6px", textDecoration: "none", fontSize: "12px", fontWeight: 500 }}>
-                        Vai al pub →
-                      </a>
-                    </div>
-                  </Popup>
-                </Marker>
-              ))}
-
-              {geoFilteredBreweries.map((brewery) => (
-                <Marker
-                  key={`brewery-${brewery.id}`}
-                  position={[parseFloat(brewery.latitude!), parseFloat(brewery.longitude!)]}
-                  icon={createDivIcon(BREWERY_COLOR, brewery.logoUrl)}
-                >
-                  <Popup>
-                    <div style={{ fontFamily: "system-ui,sans-serif", maxWidth: "200px" }}>
-                      <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "6px" }}>
-                        {brewery.logoUrl && (
-                          <img src={brewery.logoUrl} alt={brewery.name} style={{ width: "36px", height: "36px", borderRadius: "6px", objectFit: "cover", flexShrink: 0 }} />
-                        )}
-                        <div>
-                          <div style={{ fontWeight: 600, fontSize: "14px", color: "#1F2937" }}>{brewery.name}</div>
-                          <div style={{ fontSize: "11px", color: BREWERY_COLOR, fontWeight: 500 }}>BIRRIFICIO</div>
-                        </div>
-                      </div>
-                      {brewery.location && <div style={{ fontSize: "12px", color: "#6B7280", marginBottom: "8px" }}>📍 {brewery.location}{brewery.country ? `, ${brewery.country}` : ""}</div>}
-                      <a href={`/brewery/${brewery.id}`} style={{ display: "inline-block", padding: "4px 12px", background: BREWERY_COLOR, color: "white", borderRadius: "6px", textDecoration: "none", fontSize: "12px", fontWeight: 500 }}>
-                        Vai al birrificio →
-                      </a>
-                    </div>
-                  </Popup>
-                </Marker>
-              ))}
-
-            </MapContainer>
-            </div>
-          )}
-
+      {!isLoading && pubCount + breweryCount > 0 && (
+        <div className="absolute bottom-5 left-3 z-20">
+          <div
+            className="flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-bold backdrop-blur-sm shadow-sm"
+            style={{
+              background: "rgba(255,248,242,0.92)",
+              border: "1px solid rgba(247,113,4,0.15)",
+              color: "#5C3D1A",
+            }}
+          >
+            <span className="w-2 h-2 rounded-full inline-block" style={{ background: PUB_COLOR }} />
+            <span>{pubCount} pub</span>
+            <span style={{ color: "#D4A882" }}>·</span>
+            <span className="w-2 h-2 rounded-full inline-block" style={{ background: BREWERY_COLOR }} />
+            <span>{breweryCount} birrifici</span>
+          </div>
         </div>
-      </div>
-    </section>
+      )}
+
+      <style>{`
+        .fermenta-popup .maplibregl-popup-content {
+          border-radius: 14px !important;
+          padding: 0 !important;
+          box-shadow: 0 8px 32px rgba(0,0,0,0.14) !important;
+          border: 1px solid rgba(247,113,4,0.12) !important;
+          overflow: hidden;
+        }
+        .fermenta-popup .maplibregl-popup-tip { display: none !important; }
+        .maplibregl-ctrl-attrib {
+          background: rgba(255,248,242,0.85) !important;
+          border-radius: 8px !important;
+          font-size: 10px !important;
+        }
+        .maplibregl-ctrl-group {
+          border-radius: 10px !important;
+          overflow: hidden;
+          box-shadow: 0 2px 8px rgba(0,0,0,0.12) !important;
+        }
+        .maplibregl-ctrl button {
+          border-radius: 0 !important;
+        }
+      `}</style>
+    </div>
   );
 }
