@@ -99,15 +99,16 @@ function FestivalCreationForm({ onCreated }: { onCreated: (fest: any) => void })
       {/* Slug */}
       <div>
         <Label>URL pubblico (slug) *</Label>
-        <div className="flex items-center gap-1 mt-1">
-          <span className="text-xs text-gray-400 whitespace-nowrap">/festival/</span>
-          <Input
+        <div className="flex items-center mt-1 rounded-xl border border-input bg-background focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2 overflow-hidden">
+          <span className="px-3 text-xs text-muted-foreground whitespace-nowrap border-r border-input bg-muted/50 self-stretch flex items-center">/festival/</span>
+          <input
+            className="flex-1 min-w-0 px-3 py-2 text-sm bg-transparent outline-none placeholder:text-muted-foreground"
             value={form.slug}
             onChange={e => { setSlugEdited(true); setForm(f => ({ ...f, slug: e.target.value })); }}
             placeholder="roma-beer-fest-2026"
           />
         </div>
-        <p className="text-xs text-gray-400 mt-0.5">Questo sarà il link del vostro taplist QR</p>
+        <p className="text-xs text-muted-foreground mt-0.5">Questo sarà il link del vostro taplist QR</p>
       </div>
 
       {/* Date */}
@@ -152,18 +153,18 @@ function FestivalCreationForm({ onCreated }: { onCreated: (fest: any) => void })
         <Label>Mostra sezione menu cibo</Label>
       </div>
 
-      <Button
-        className="w-full bg-amber-500 hover:bg-amber-600 text-white font-semibold"
-        size="lg"
+      <button
+        className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-2xl text-white font-bold text-sm transition-opacity disabled:opacity-50"
+        style={{ background: 'linear-gradient(135deg, #F77104 0%, #f5a623 100%)' }}
         onClick={() => createMutation.mutate(form)}
         disabled={createMutation.isPending || !form.name || !form.slug}
       >
         {createMutation.isPending
-          ? <Loader2 className="h-4 w-4 animate-spin mr-2" />
-          : <ArrowRight className="h-4 w-4 mr-2" />}
+          ? <Loader2 className="h-4 w-4 animate-spin" />
+          : <ArrowRight className="h-4 w-4" />}
         Crea festival e procedi al pagamento
-      </Button>
-      <p className="text-xs text-center text-gray-400">
+      </button>
+      <p className="text-xs text-center text-muted-foreground">
         Pagamento sicuro via Stripe · €{PRICE} una tantum · Nessun abbonamento
       </p>
     </div>
@@ -546,9 +547,9 @@ export default function CreaFestival() {
 
       {/* Creation form dialog */}
       <Dialog open={showForm} onOpenChange={setShowForm}>
-        <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
+        <DialogContent className="w-[calc(100vw-2rem)] sm:max-w-lg max-h-[90vh] overflow-y-auto rounded-2xl">
           <DialogHeader>
-            <DialogTitle>Crea il tuo festival</DialogTitle>
+            <DialogTitle className="text-xl font-extrabold">Crea il tuo festival</DialogTitle>
           </DialogHeader>
           <FestivalCreationForm onCreated={handleCreated} />
         </DialogContent>
