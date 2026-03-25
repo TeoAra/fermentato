@@ -31,26 +31,67 @@ export default function Home() {
       return;
     }
     setLocationStatus('requesting');
+    let watchId: number | null = null;
+    let gotCoarse = false;
+
+    // Fase 1 — risposta immediata con posizione approssimativa (cache/IP)
     navigator.geolocation.getCurrentPosition(
-      (position) => {
-        setUserLocation({ lat: position.coords.latitude, lng: position.coords.longitude });
+      (pos) => {
+        gotCoarse = true;
+        setUserLocation({ lat: pos.coords.latitude, lng: pos.coords.longitude });
         setLocationStatus('granted');
       },
-      () => { setLocationStatus('denied'); },
-      { enableHighAccuracy: true, timeout: 15000, maximumAge: 30000 }
+      () => { /* fase 2 gestisce l'errore */ },
+      { enableHighAccuracy: false, maximumAge: 300000, timeout: 5000 }
     );
+
+    // Fase 2 — raffinamento progressivo GPS (maximumAge: 0 = sempre fresco)
+    watchId = navigator.geolocation.watchPosition(
+      (pos) => {
+        setUserLocation({ lat: pos.coords.latitude, lng: pos.coords.longitude });
+        setLocationStatus('granted');
+        // Precisione GPS raggiunta (< 50 m su mobile), stop watch
+        if (pos.coords.accuracy <= 50 && watchId !== null) {
+          navigator.geolocation.clearWatch(watchId);
+          watchId = null;
+        }
+      },
+      () => {
+        if (!gotCoarse) setLocationStatus('denied');
+      },
+      { enableHighAccuracy: true, maximumAge: 0, timeout: 20000 }
+    );
+
+    return () => {
+      if (watchId !== null) navigator.geolocation.clearWatch(watchId);
+    };
   }, []);
 
   const handleRequestLocation = () => {
     if (!navigator.geolocation) return;
     setLocationStatus('requesting');
+    let watchId: number | null = null;
+
     navigator.geolocation.getCurrentPosition(
-      (position) => {
-        setUserLocation({ lat: position.coords.latitude, lng: position.coords.longitude });
+      (pos) => {
+        setUserLocation({ lat: pos.coords.latitude, lng: pos.coords.longitude });
         setLocationStatus('granted');
       },
+      () => {},
+      { enableHighAccuracy: false, maximumAge: 60000, timeout: 5000 }
+    );
+
+    watchId = navigator.geolocation.watchPosition(
+      (pos) => {
+        setUserLocation({ lat: pos.coords.latitude, lng: pos.coords.longitude });
+        setLocationStatus('granted');
+        if (pos.coords.accuracy <= 50 && watchId !== null) {
+          navigator.geolocation.clearWatch(watchId);
+          watchId = null;
+        }
+      },
       () => { setLocationStatus('denied'); },
-      { enableHighAccuracy: true, timeout: 10000 }
+      { enableHighAccuracy: true, maximumAge: 0, timeout: 15000 }
     );
   };
 

@@ -127,6 +127,9 @@ export default function HomepageMap({ pubs, breweries, userLocation, isLoading }
   useEffect(() => {
     if (!containerRef.current || mapRef.current) return;
 
+    // Parallel tile loading (browser default is 16, explicit is better)
+    maplibregl.setMaxParallelImageRequests(16);
+
     const map = new maplibregl.Map({
       container: containerRef.current,
       style: "https://tiles.openfreemap.org/styles/liberty",
@@ -136,6 +139,10 @@ export default function HomepageMap({ pubs, breweries, userLocation, isLoading }
       maxZoom: 18,
       scrollZoom: false,
       attributionControl: false,
+      fadeDuration: 0,           // Tiles appaiono subito, senza fade-in
+      trackResize: true,
+      localIdeographFontFamily: "'Plus Jakarta Sans', sans-serif", // Usa font già caricato
+      renderWorldCopies: false,  // Meno geometria = render più veloce
     });
 
     map.addControl(new maplibregl.AttributionControl({ compact: true }), "bottom-right");
