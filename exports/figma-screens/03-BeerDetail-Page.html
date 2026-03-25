@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Beer Detail Page — Fermenta.to Craft UX</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            primary: '#F77104',
+            'primary-light': '#f5a623',
+          },
+          fontFamily: {
+            sans: ['DM Sans', 'sans-serif'],
+          },
+        }
+      }
+    }
+  </script>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;0,9..40,800;1,9..40,400&display=swap" rel="stylesheet" />
+  <style>
+    * { font-family: 'DM Sans', sans-serif; box-sizing: border-box; }
+    body { margin: 0; background: #FFF8F2; }
+    .scrollbar-hide::-webkit-scrollbar { display: none; }
+    .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+  </style>
+</head>
+<body>
+
+<div class="min-h-screen bg-[#FFF8F2] font-sans pb-28 md:pb-0">
+  <!-- Hero Header -->
+  <div class="relative overflow-hidden" style="background:linear-gradient(160deg,#F77104 0%,#f98a0e 40%,#f5a623 100%);min-height:300px">
+    <div style="position:absolute;inset:0;opacity:0.1;background:radial-gradient(circle at 70% 50%,white,transparent)"></div>
+    <button class="absolute top-12 left-5 w-10 h-10 rounded-2xl bg-white/20 backdrop-blur flex items-center justify-center text-white">←</button>
+    <button class="absolute top-12 right-5 w-10 h-10 rounded-2xl bg-white/20 backdrop-blur flex items-center justify-center text-white">❤️</button>
+
+    <div class="flex flex-col items-center pt-16 pb-8 px-6">
+      <div class="w-28 h-28 rounded-full bg-white/25 backdrop-blur-sm border-4 border-white/40 flex items-center justify-center mb-4 shadow-2xl">
+        <span class="text-6xl">🍺</span>
+      </div>
+      <span class="text-xs font-bold uppercase tracking-widest text-white/70 mb-1">IPA · 6.2% ABV</span>
+      <h1 class="text-3xl font-black text-white mb-1">Nebbia Rossa</h1>
+      <p class="text-white/80 text-sm font-medium mb-4">Hype Brewing · Milano</p>
+      <div class="flex items-center gap-1 bg-white/20 rounded-full px-3 py-1.5">
+        <span class="text-yellow-300">★</span>
+        <span class="text-white font-bold">4.3</span>
+        <span class="text-white/60 text-xs ml-1">/ 5 · 247 check-in</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Stats pills -->
+  <div class="px-5 -mt-4 mb-6 flex gap-3 overflow-x-auto scrollbar-hide">
+    
+    <div class="shrink-0 bg-orange-50 rounded-2xl px-4 py-2.5 text-center shadow-sm border border-orange-50">
+      <div class="text-[10px] font-semibold text-slate-400 uppercase tracking-wide">ABV</div>
+      <div class="text-lg font-black text-[#F77104] mt-0.5">6.2%</div>
+    </div>
+    <div class="shrink-0 bg-amber-50 rounded-2xl px-4 py-2.5 text-center shadow-sm border border-orange-50">
+      <div class="text-[10px] font-semibold text-slate-400 uppercase tracking-wide">IBU</div>
+      <div class="text-lg font-black text-amber-600 mt-0.5">55</div>
+    </div>
+    <div class="shrink-0 bg-stone-100 rounded-2xl px-4 py-2.5 text-center shadow-sm border border-orange-50">
+      <div class="text-[10px] font-semibold text-slate-400 uppercase tracking-wide">EBC</div>
+      <div class="text-lg font-black text-stone-600 mt-0.5">18</div>
+    </div>
+    <div class="shrink-0 bg-rose-50 rounded-2xl px-4 py-2.5 text-center shadow-sm border border-orange-50">
+      <div class="text-[10px] font-semibold text-slate-400 uppercase tracking-wide">Cal</div>
+      <div class="text-lg font-black text-rose-500 mt-0.5">210</div>
+    </div>
+  </div>
+
+  <!-- Description -->
+  <div class="px-5 mb-6">
+    <div class="bg-white rounded-2xl p-5 shadow-sm border border-orange-50">
+      <h3 class="font-bold text-slate-900 mb-2">Descrizione</h3>
+      <p class="text-sm text-slate-600 leading-relaxed">Una IPA dal carattere intenso con note di frutta tropicale, agrumi e un finale amaro deciso. Luppolatura massiccia con Citra e Simcoe. Colore ambrato carico, schiuma compatta. Perfetta per gli amanti del luppolo.</p>
+      <div class="flex flex-wrap gap-2 mt-3">
+        <span class="text-xs font-semibold px-2.5 py-1 rounded-full bg-orange-50 text-[#F77104]">Fruttata</span><span class="text-xs font-semibold px-2.5 py-1 rounded-full bg-orange-50 text-[#F77104]">Luppolata</span><span class="text-xs font-semibold px-2.5 py-1 rounded-full bg-orange-50 text-[#F77104]">Amara</span><span class="text-xs font-semibold px-2.5 py-1 rounded-full bg-orange-50 text-[#F77104]">Agrumata</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Birrificio -->
+  <div class="px-5 mb-6">
+    <div class="bg-white rounded-2xl p-4 flex items-center gap-4 shadow-sm border border-orange-50">
+      <div class="w-14 h-14 rounded-2xl bg-orange-50 flex items-center justify-center shrink-0 text-2xl">🏭</div>
+      <div class="flex-1">
+        <p class="text-xs text-slate-400 font-medium uppercase tracking-wide">Birrificio</p>
+        <p class="font-bold text-slate-900">Hype Brewing</p>
+        <p class="text-xs text-slate-500">Milano, Lombardia · Est. 2015</p>
+      </div>
+      <span class="text-[#F77104] text-sm font-bold">→</span>
+    </div>
+  </div>
+
+  <!-- Dove trovarla -->
+  <div class="px-5 mb-6">
+    <div class="flex items-center justify-between mb-3">
+      <h3 class="font-bold text-slate-900">📍 Dove trovarla</h3>
+      <button class="text-sm text-[#F77104] font-semibold">Vedi tutti →</button>
+    </div>
+    <div class="flex gap-3 overflow-x-auto scrollbar-hide pb-1">
+      
+      <div class="shrink-0 w-44 bg-white rounded-2xl p-3 shadow-sm border border-orange-50">
+        <p class="font-bold text-sm text-slate-900 truncate">Luppolino Pub</p>
+        <p class="text-xs text-slate-500 mt-0.5">📍 320m · Roma</p>
+      </div>
+      <div class="shrink-0 w-44 bg-white rounded-2xl p-3 shadow-sm border border-orange-50">
+        <p class="font-bold text-sm text-slate-900 truncate">The Malt District</p>
+        <p class="text-xs text-slate-500 mt-0.5">📍 850m · Roma</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- CTA -->
+  <div class="px-5 pb-8">
+    <button class="w-full py-4 rounded-2xl font-bold text-white shadow-lg shadow-orange-200" style="background:linear-gradient(135deg,#F77104,#f5a623)">
+      📷 Fai check-in con questa birra
+    </button>
+  </div>
+
+  <!-- Mobile Bottom Nav -->
+  <nav class="fixed bottom-4 left-1/2 -translate-x-1/2 z-50 md:hidden">
+    <div class="flex items-center gap-1 bg-white rounded-full px-4 py-3 shadow-2xl border border-orange-50">
+      
+      <button class="flex flex-col items-center gap-0.5 px-3 py-1 rounded-full text-slate-400">
+        <span class="text-base">🏠</span>
+        <span class="text-[10px] font-semibold">Home</span>
+      </button>
+      <button class="flex flex-col items-center gap-0.5 px-3 py-1 rounded-full text-slate-400">
+        <span class="text-base">🧭</span>
+        <span class="text-[10px] font-semibold">Esplora</span>
+      </button>
+      <button class="flex flex-col items-center gap-0.5 px-3 py-1 rounded-full bg-[#F77104] text-white">
+        <span class="text-base">📷</span>
+        <span class="text-[10px] font-semibold">Scan</span>
+      </button>
+      <button class="flex flex-col items-center gap-0.5 px-3 py-1 rounded-full text-slate-400">
+        <span class="text-base">❤️</span>
+        <span class="text-[10px] font-semibold">Salvati</span>
+      </button>
+      <button class="flex flex-col items-center gap-0.5 px-3 py-1 rounded-full text-slate-400">
+        <span class="text-base">👤</span>
+        <span class="text-[10px] font-semibold">Profilo</span>
+      </button>
+    </div>
+  </nav>
+</div>
+</body>
+</html>

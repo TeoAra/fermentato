@@ -1,0 +1,8 @@
+uploads = []
+generated = []
+
+[[outputs]]
+id = "jutqatHGcTLSUEk2_6slS"
+uri = "file://exports/figma-screens.zip"
+type = "unspecified"
+title = "Fermenta.to – 4 schermate Craft UX (HTML)"

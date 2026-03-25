@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Esplora & Categorie — Fermenta.to Craft UX</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            primary: '#F77104',
+            'primary-light': '#f5a623',
+          },
+          fontFamily: {
+            sans: ['DM Sans', 'sans-serif'],
+          },
+        }
+      }
+    }
+  </script>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;0,9..40,800;1,9..40,400&display=swap" rel="stylesheet" />
+  <style>
+    * { font-family: 'DM Sans', sans-serif; box-sizing: border-box; }
+    body { margin: 0; background: #FFF8F2; }
+    .scrollbar-hide::-webkit-scrollbar { display: none; }
+    .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+  </style>
+</head>
+<body>
+
+<div class="min-h-screen bg-[#FFF8F2] font-sans pb-28">
+  <!-- Header -->
+  <div class="px-5 pt-12 pb-4 flex items-center justify-between">
+    <div>
+      <h1 class="text-2xl font-bold text-slate-900">Esplora 🧭</h1>
+      <p class="text-sm text-slate-500 mt-0.5">Birre, birrifici e pub in Italia</p>
+    </div>
+    <button class="w-10 h-10 rounded-2xl bg-white border border-orange-100 flex items-center justify-center shadow-sm text-slate-500">
+      🔍
+    </button>
+  </div>
+
+  <!-- Category chips -->
+  <div class="px-5 mb-6">
+    <div class="flex gap-2 overflow-x-auto scrollbar-hide pb-1">
+      
+      <button class="shrink-0 px-4 py-2 rounded-full text-sm font-semibold whitespace-nowrap text-white shadow-md shadow-orange-200" style="background:linear-gradient(135deg,#F77104,#f5a623)">
+        Tutti
+      </button>
+      <button class="shrink-0 px-4 py-2 rounded-full text-sm font-semibold whitespace-nowrap bg-white text-slate-600 border border-orange-100" style="">
+        IPA 🌿
+      </button>
+      <button class="shrink-0 px-4 py-2 rounded-full text-sm font-semibold whitespace-nowrap bg-white text-slate-600 border border-orange-100" style="">
+        Stout 🌑
+      </button>
+      <button class="shrink-0 px-4 py-2 rounded-full text-sm font-semibold whitespace-nowrap bg-white text-slate-600 border border-orange-100" style="">
+        Sour 🍋
+      </button>
+      <button class="shrink-0 px-4 py-2 rounded-full text-sm font-semibold whitespace-nowrap bg-white text-slate-600 border border-orange-100" style="">
+        Saison 🌾
+      </button>
+      <button class="shrink-0 px-4 py-2 rounded-full text-sm font-semibold whitespace-nowrap bg-white text-slate-600 border border-orange-100" style="">
+        Weizen 🌻
+      </button>
+      <button class="shrink-0 px-4 py-2 rounded-full text-sm font-semibold whitespace-nowrap bg-white text-slate-600 border border-orange-100" style="">
+        Porter 🍫
+      </button>
+      <button class="shrink-0 px-4 py-2 rounded-full text-sm font-semibold whitespace-nowrap bg-white text-slate-600 border border-orange-100" style="">
+        Pilsner 🌼
+      </button>
+    </div>
+  </div>
+
+  <!-- Section: Birrifici in evidenza -->
+  <div class="px-5 mb-8">
+    <div class="flex items-center justify-between mb-4">
+      <h2 class="text-lg font-bold text-slate-900">🏭 Birrifici in evidenza</h2>
+      <button class="text-sm text-[#F77104] font-semibold">Tutti →</button>
+    </div>
+    <div class="flex gap-4 overflow-x-auto scrollbar-hide pb-2">
+      
+      <div class="shrink-0 w-40 bg-white rounded-2xl overflow-hidden shadow-sm border border-orange-50">
+        <div class="h-24 flex items-center justify-center" style="background:linear-gradient(135deg,#F7710415,#F7710430)">
+          <span class="text-4xl">🏭</span>
+        </div>
+        <div class="p-3">
+          <p class="font-bold text-sm text-slate-900 leading-tight">Hype Brewing</p>
+          <p class="text-xs text-slate-400 mt-0.5">📍 Milano</p>
+          <p class="text-xs text-[#F77104] font-semibold mt-1">24 birre · IPA specialist</p>
+        </div>
+      </div>
+      <div class="shrink-0 w-40 bg-white rounded-2xl overflow-hidden shadow-sm border border-orange-50">
+        <div class="h-24 flex items-center justify-center" style="background:linear-gradient(135deg,#F7710415,#F7710430)">
+          <span class="text-4xl">🏭</span>
+        </div>
+        <div class="p-3">
+          <p class="font-bold text-sm text-slate-900 leading-tight">Baladin</p>
+          <p class="text-xs text-slate-400 mt-0.5">📍 Piozzo (CN)</p>
+          <p class="text-xs text-[#F77104] font-semibold mt-1">18 birre · Belgian styles</p>
+        </div>
+      </div>
+      <div class="shrink-0 w-40 bg-white rounded-2xl overflow-hidden shadow-sm border border-orange-50">
+        <div class="h-24 flex items-center justify-center" style="background:linear-gradient(135deg,#F7710415,#F7710430)">
+          <span class="text-4xl">🏭</span>
+        </div>
+        <div class="p-3">
+          <p class="font-bold text-sm text-slate-900 leading-tight">Birra del Borgo</p>
+          <p class="text-xs text-slate-400 mt-0.5">📍 Borgorose (RI)</p>
+          <p class="text-xs text-[#F77104] font-semibold mt-1">21 birre · Craft & creative</p>
+        </div>
+      </div>
+      <div class="shrink-0 w-40 bg-white rounded-2xl overflow-hidden shadow-sm border border-orange-50">
+        <div class="h-24 flex items-center justify-center" style="background:linear-gradient(135deg,#F7710415,#F7710430)">
+          <span class="text-4xl">🏭</span>
+        </div>
+        <div class="p-3">
+          <p class="font-bold text-sm text-slate-900 leading-tight">Extraomnes</p>
+          <p class="text-xs text-slate-400 mt-0.5">📍 Marnate (VA)</p>
+          <p class="text-xs text-[#F77104] font-semibold mt-1">16 birre · Belgian & Saison</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Section: Pub top -->
+  <div class="px-5 mb-8">
+    <div class="flex items-center justify-between mb-4">
+      <h2 class="text-lg font-bold text-slate-900">🏠 Pub top d'Italia</h2>
+      <button class="text-sm text-[#F77104] font-semibold">Mappa →</button>
+    </div>
+    <div class="space-y-3">
+      
+      <div class="bg-white rounded-2xl p-4 flex items-center gap-4 shadow-sm border border-orange-50">
+        <div class="w-8 h-8 rounded-full flex items-center justify-center shrink-0 font-black text-sm bg-yellow-100 text-yellow-600">
+          🥇
+        </div>
+        <div class="flex-1 min-w-0">
+          <div class="flex items-center gap-2">
+            <p class="font-bold text-sm text-slate-900 truncate">Luppolino Pub</p>
+            <span class="text-[10px] px-1.5 py-0.5 rounded-full bg-slate-100 text-slate-500 font-semibold">Tap Room</span>
+          </div>
+          <p class="text-xs text-slate-500">📍 Roma · 🍺 22 birre</p>
+        </div>
+        <div class="text-right shrink-0">
+          <div class="text-sm font-black text-slate-900">⭐ 4.8</div>
+        </div>
+      </div>
+      <div class="bg-white rounded-2xl p-4 flex items-center gap-4 shadow-sm border border-orange-50">
+        <div class="w-8 h-8 rounded-full flex items-center justify-center shrink-0 font-black text-sm bg-stone-100 text-stone-500">
+          🥈
+        </div>
+        <div class="flex-1 min-w-0">
+          <div class="flex items-center gap-2">
+            <p class="font-bold text-sm text-slate-900 truncate">Open Baladin Torino</p>
+            <span class="text-[10px] px-1.5 py-0.5 rounded-full bg-slate-100 text-slate-500 font-semibold">Flagship</span>
+          </div>
+          <p class="text-xs text-slate-500">📍 Torino · 🍺 36 birre</p>
+        </div>
+        <div class="text-right shrink-0">
+          <div class="text-sm font-black text-slate-900">⭐ 4.7</div>
+        </div>
+      </div>
+      <div class="bg-white rounded-2xl p-4 flex items-center gap-4 shadow-sm border border-orange-50">
+        <div class="w-8 h-8 rounded-full flex items-center justify-center shrink-0 font-black text-sm bg-orange-50 text-orange-400">
+          🥉
+        </div>
+        <div class="flex-1 min-w-0">
+          <div class="flex items-center gap-2">
+            <p class="font-bold text-sm text-slate-900 truncate">Birroteca</p>
+            <span class="text-[10px] px-1.5 py-0.5 rounded-full bg-slate-100 text-slate-500 font-semibold">Craft Bar</span>
+          </div>
+          <p class="text-xs text-slate-500">📍 Milano · 🍺 18 birre</p>
+        </div>
+        <div class="text-right shrink-0">
+          <div class="text-sm font-black text-slate-900">⭐ 4.6</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Section: Birre del momento -->
+  <div class="px-5">
+    <div class="flex items-center justify-between mb-4">
+      <h2 class="text-lg font-bold text-slate-900">🔥 Birre del momento</h2>
+      <button class="text-sm text-[#F77104] font-semibold">Tutte →</button>
+    </div>
+    <div class="grid grid-cols-2 gap-3">
+      
+      <div class="bg-white rounded-2xl overflow-hidden shadow-sm border border-orange-50">
+        <div class="h-24 flex items-center justify-center" style="background:linear-gradient(135deg,#F7710418,#F7710435)">
+          <span class="text-4xl">🍺</span>
+        </div>
+        <div class="p-3">
+          <p class="font-bold text-sm text-slate-900 leading-tight truncate">Nebbia Rossa</p>
+          <p class="text-xs text-slate-500">Hype</p>
+          <div class="flex items-center justify-between mt-2">
+            <span class="text-[10px] font-bold px-2 py-0.5 rounded-full" style="background:#F7710418;color:#F77104">IPA</span>
+            <span class="text-xs font-bold text-amber-500">⭐ 4.3</span>
+          </div>
+        </div>
+      </div>
+      <div class="bg-white rounded-2xl overflow-hidden shadow-sm border border-orange-50">
+        <div class="h-24 flex items-center justify-center" style="background:linear-gradient(135deg,#CFA86518,#CFA86535)">
+          <span class="text-4xl">🍺</span>
+        </div>
+        <div class="p-3">
+          <p class="font-bold text-sm text-slate-900 leading-tight truncate">Luna Sour</p>
+          <p class="text-xs text-slate-500">Baladin</p>
+          <div class="flex items-center justify-between mt-2">
+            <span class="text-[10px] font-bold px-2 py-0.5 rounded-full" style="background:#CFA86518;color:#CFA865">Sour</span>
+            <span class="text-xs font-bold text-amber-500">⭐ 4.5</span>
+          </div>
+        </div>
+      </div>
+      <div class="bg-white rounded-2xl overflow-hidden shadow-sm border border-orange-50">
+        <div class="h-24 flex items-center justify-center" style="background:linear-gradient(135deg,#88B04B18,#88B04B35)">
+          <span class="text-4xl">🍺</span>
+        </div>
+        <div class="p-3">
+          <p class="font-bold text-sm text-slate-900 leading-tight truncate">Vallée Blanche</p>
+          <p class="text-xs text-slate-500">Extraomnes</p>
+          <div class="flex items-center justify-between mt-2">
+            <span class="text-[10px] font-bold px-2 py-0.5 rounded-full" style="background:#88B04B18;color:#88B04B">Saison</span>
+            <span class="text-xs font-bold text-amber-500">⭐ 4.7</span>
+          </div>
+        </div>
+      </div>
+      <div class="bg-white rounded-2xl overflow-hidden shadow-sm border border-orange-50">
+        <div class="h-24 flex items-center justify-center" style="background:linear-gradient(135deg,#5C3D1E18,#5C3D1E35)">
+          <span class="text-4xl">🍺</span>
+        </div>
+        <div class="p-3">
+          <p class="font-bold text-sm text-slate-900 leading-tight truncate">Orso Bruno</p>
+          <p class="text-xs text-slate-500">Del Borgo</p>
+          <div class="flex items-center justify-between mt-2">
+            <span class="text-[10px] font-bold px-2 py-0.5 rounded-full" style="background:#5C3D1E18;color:#5C3D1E">Stout</span>
+            <span class="text-xs font-bold text-amber-500">⭐ 4.1</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Mobile Bottom Nav -->
+  <nav class="fixed bottom-4 left-1/2 -translate-x-1/2 z-50">
+    <div class="flex items-center gap-1 bg-white rounded-full px-4 py-3 shadow-2xl border border-orange-50">
+      
+      <button class="flex flex-col items-center gap-0.5 px-3 py-1 rounded-full text-slate-400">
+        <span class="text-base">🏠</span>
+        <span class="text-[10px] font-semibold">Home</span>
+      </button>
+      <button class="flex flex-col items-center gap-0.5 px-3 py-1 rounded-full bg-[#F77104] text-white">
+        <span class="text-base">🧭</span>
+        <span class="text-[10px] font-semibold">Esplora</span>
+      </button>
+      <button class="flex flex-col items-center gap-0.5 px-3 py-1 rounded-full text-slate-400">
+        <span class="text-base">📷</span>
+        <span class="text-[10px] font-semibold">Scan</span>
+      </button>
+      <button class="flex flex-col items-center gap-0.5 px-3 py-1 rounded-full text-slate-400">
+        <span class="text-base">❤️</span>
+        <span class="text-[10px] font-semibold">Salvati</span>
+      </button>
+      <button class="flex flex-col items-center gap-0.5 px-3 py-1 rounded-full text-slate-400">
+        <span class="text-base">👤</span>
+        <span class="text-[10px] font-semibold">Profilo</span>
+      </button>
+    </div>
+  </nav>
+</div>
+</body>
+</html>
