@@ -9,7 +9,6 @@ import { useState, useEffect, Component, ReactNode, lazy, Suspense } from "react
 import { initGA } from "./lib/analytics";
 import { useAnalytics } from "./hooks/use-analytics";
 import { usePushBadge } from "@/hooks/use-push-badge";
-import Header from "@/components/header";
 import { NavigationProgress } from "@/components/navigation-progress";
 import Lightbox from "@/components/lightbox";
 import { PwaInstallPrompt, PushNotificationPrompt, AutoPushSubscriber } from "@/components/pwa-prompt";
@@ -131,6 +130,7 @@ import RegistraFestival from "@/pages/registra-festival";
 import ResetPassword from "@/pages/reset-password";
 import { MobileHeader } from "@/components/mobile-header";
 import { BottomNavigation } from "@/components/bottom-navigation";
+import { DesktopSidebar } from "@/components/desktop-sidebar";
 import CookieBanner from "@/components/CookieBanner";
 import { ThemeProvider } from "@/lib/theme";
 import type { User } from "@shared/schema";
@@ -147,17 +147,17 @@ function Router() {
   // Note: Google OAuth new users now go directly to /dashboard (no onboarding redirect)
 
   return (
-    <div className="min-h-screen bg-background text-foreground">
+    <div className="min-h-screen bg-background text-foreground lg:flex">
       {/* Scroll to top on route change */}
       <ScrollToTop />
       {/* Navigation progress bar */}
       <NavigationProgress />
-      
-      {/* Desktop Header */}
-      <div className="hidden lg:block">
-        <Header />
-      </div>
-      
+
+      {/* Desktop Sidebar — icon+label, sticky left, lg+ only */}
+      <DesktopSidebar />
+
+      {/* Content column: mobile header + page content */}
+      <div className="flex-1 min-w-0">
       {/* Mobile Header */}
       <MobileHeader 
         onMenuToggle={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
@@ -165,7 +165,7 @@ function Router() {
       />
       
       {/* Main Content */}
-      <main className="lg:pt-0 pt-16 pb-20 lg:pb-0">
+      <main className="pt-16 lg:pt-0 pb-28 lg:pb-8">
         <RouteErrorBoundary>
         <Switch>
           <Route path="/" component={isLoading || !isAuthenticated ? Landing : Home} />
@@ -240,7 +240,9 @@ function Router() {
         </RouteErrorBoundary>
       </main>
 
-      {/* Bottom Navigation */}
+      </div> {/* end content column */}
+
+      {/* Bottom Navigation — fixed, outside content column */}
       <BottomNavigation />
     </div>
   );
