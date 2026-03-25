@@ -147,25 +147,24 @@ function Router() {
   // Note: Google OAuth new users now go directly to /dashboard (no onboarding redirect)
 
   return (
-    <div className="min-h-screen bg-background text-foreground lg:flex">
+    <div className="min-h-screen bg-background text-foreground">
       {/* Scroll to top on route change */}
       <ScrollToTop />
       {/* Navigation progress bar */}
       <NavigationProgress />
 
-      {/* Desktop Sidebar — icon+label, sticky left, lg+ only */}
+      {/* Desktop Topbar — full-width sticky top, lg+ only */}
       <DesktopSidebar />
 
-      {/* Content column: mobile header + page content */}
-      <div className="flex-1 min-w-0">
-      {/* Mobile Header */}
+      {/* Mobile Header — shown only below lg */}
       <MobileHeader 
         onMenuToggle={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
         isMenuOpen={isMobileMenuOpen}
       />
-      
-      {/* Main Content */}
-      <main className="pt-16 lg:pt-0 pb-28 lg:pb-8">
+
+      {/* Main Content — pt-16 always (both mobile header and desktop topbar are h-16) */}
+      <div>
+      <main className="pt-16 pb-28 lg:pb-8">
         <RouteErrorBoundary>
         <Switch>
           <Route path="/" component={isLoading || !isAuthenticated ? Landing : Home} />
@@ -239,10 +238,9 @@ function Router() {
         </Switch>
         </RouteErrorBoundary>
       </main>
+      </div>
 
-      </div> {/* end content column */}
-
-      {/* Bottom Navigation — fixed, outside content column */}
+      {/* Bottom Navigation — fixed */}
       <BottomNavigation />
     </div>
   );
