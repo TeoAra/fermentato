@@ -10,15 +10,20 @@ function createMarkerEl(type: "pub" | "brewery", logoUrl?: string | null): HTMLE
   const gradEnd = type === "pub" ? "#f5a623" : "#c46520";
   const emoji = type === "pub" ? "🍻" : "🍺";
 
-  const el = document.createElement("div");
-  el.style.cssText = [
+  // Outer wrapper: handles CSS hover scale without overflow clipping
+  const wrapper = document.createElement("div");
+  wrapper.className = "fermenta-marker";
+  wrapper.style.cssText = "width:34px;height:34px;cursor:pointer;position:relative;";
+
+  // Inner circle: gradient bg + border, overflow:hidden only here (for logo crop)
+  const inner = document.createElement("div");
+  inner.style.cssText = [
     "width:34px;height:34px;border-radius:50%;",
     `background:linear-gradient(135deg,${color},${gradEnd});`,
     "border:2.5px solid white;",
     "box-shadow:0 2px 10px rgba(0,0,0,0.22);",
     "display:flex;align-items:center;justify-content:center;",
-    "cursor:pointer;overflow:hidden;flex-shrink:0;",
-    "transition:transform 0.15s ease,box-shadow 0.15s ease;",
+    "overflow:hidden;pointer-events:none;",
   ].join("");
 
   if (logoUrl) {
@@ -26,30 +31,22 @@ function createMarkerEl(type: "pub" | "brewery", logoUrl?: string | null): HTMLE
     img.src = logoUrl;
     img.style.cssText = "width:100%;height:100%;object-fit:cover;";
     img.onerror = () => {
-      el.removeChild(img);
+      inner.removeChild(img);
       const s = document.createElement("span");
       s.style.fontSize = "15px";
       s.textContent = emoji;
-      el.appendChild(s);
+      inner.appendChild(s);
     };
-    el.appendChild(img);
+    inner.appendChild(img);
   } else {
     const s = document.createElement("span");
     s.style.fontSize = "15px";
     s.textContent = emoji;
-    el.appendChild(s);
+    inner.appendChild(s);
   }
 
-  el.addEventListener("mouseenter", () => {
-    el.style.transform = "scale(1.18)";
-    el.style.boxShadow = "0 4px 16px rgba(247,113,4,0.4)";
-  });
-  el.addEventListener("mouseleave", () => {
-    el.style.transform = "scale(1)";
-    el.style.boxShadow = "0 2px 10px rgba(0,0,0,0.22)";
-  });
-
-  return el;
+  wrapper.appendChild(inner);
+  return wrapper;
 }
 
 function createPopupHTML(
@@ -244,6 +241,19 @@ export default function HomepageMap({ pubs, breweries, userLocation, isLoading }
       )}
 
       <style>{`
+        /* Marker hover via CSS — no JS listeners to conflict with MapLibre */
+        .fermenta-marker {
+          will-change: transform;
+          transition: transform 0.15s ease;
+        }
+        .fermenta-marker:hover {
+          transform: scale(1.2);
+          z-index: 999 !important;
+        }
+        .fermenta-marker:hover > div {
+          box-shadow: 0 4px 18px rgba(247,113,4,0.45) !important;
+        }
+
         .fermenta-popup .maplibregl-popup-content {
           border-radius: 14px !important;
           padding: 0 !important;
