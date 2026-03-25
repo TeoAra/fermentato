@@ -6,3 +6,9 @@ id = "jutqatHGcTLSUEk2_6slS"
 uri = "file://exports/figma-screens.zip"
 type = "unspecified"
 title = "Fermenta.to – 4 schermate Craft UX (HTML)"
+
+[[outputs]]
+id = "YVYPY6qvq5QpD9yjUdC6I"
+uri = "file://exports/fermenta-figma-screens.zip"
+type = "unspecified"
+title = "Fermenta.to – 20 screenshot reali (desktop + mobile)"
