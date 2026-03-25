@@ -70,11 +70,11 @@ export default function ExploreBeers() {
   return (
     <div className="min-h-screen bg-background">
       {/* Page header */}
-      <div className="bg-white dark:bg-[hsl(25,14%,8%)] border-b border-orange-50 dark:border-[hsl(25,12%,14%)] shadow-sm">
+      <div className="bg-white dark:bg-[hsl(25,14%,8%)] border-b border-stone-100 dark:border-[hsl(25,12%,14%)] shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-5">
           <div className="flex items-center gap-4 mb-4">
             <Link href="/">
-              <Button variant="ghost" size="sm" className="text-primary hover:text-primary/80 hover:bg-orange-50 dark:hover:bg-orange-950/20 -ml-2">
+              <Button variant="ghost" size="sm" className="text-primary hover:text-primary/80 hover:bg-stone-50 dark:hover:bg-stone-900/20 -ml-2">
                 <ArrowLeft className="w-4 h-4 mr-1" /> Indietro
               </Button>
             </Link>
@@ -107,7 +107,7 @@ export default function ExploreBeers() {
                 onChange={e => setInputValue(e.target.value)}
                 onKeyDown={e => { if (e.key === "Enter" && inputValue.trim()) runSearch(inputValue.trim()); }}
                 placeholder="Cerca per nome, birrificio…"
-                className="pl-9 pr-9 rounded-xl border-orange-100 dark:border-orange-900/30 focus-visible:ring-primary/30"
+                className="pl-9 pr-9 rounded-xl border-stone-200 dark:border-stone-700/30 focus-visible:ring-primary/30"
               />
               {inputValue && (
                 <button onClick={clearAll} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground">
@@ -136,14 +136,14 @@ export default function ExploreBeers() {
                 className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium border transition-all ${
                   activeStyle === s.style
                     ? "bg-primary text-white border-primary shadow-sm scale-105"
-                    : "bg-orange-50 dark:bg-orange-950/20 text-orange-700 dark:text-orange-300 border-orange-100 dark:border-orange-900/30 hover:border-primary/40 hover:text-primary dark:hover:text-orange-200"
+                    : "bg-stone-50 dark:bg-stone-900/20 text-orange-700 dark:text-orange-300 border-stone-200 dark:border-stone-700/30 hover:border-primary/40 hover:text-primary dark:hover:text-orange-200"
                 }`}
               >
                 {s.style}
                 <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${
                   activeStyle === s.style
                     ? "bg-white/25 text-white"
-                    : "bg-white dark:bg-orange-950/40 text-primary dark:text-orange-400"
+                    : "bg-white dark:bg-stone-900/40 text-primary dark:text-orange-400"
                 }`}>
                   {s.count.toLocaleString("it-IT")}
                 </span>
@@ -156,16 +156,16 @@ export default function ExploreBeers() {
         {isLoading ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
             {[...Array(8)].map((_, i) => (
-              <div key={i} className="h-28 bg-orange-50 dark:bg-[hsl(25,14%,12%)] rounded-2xl animate-pulse" />
+              <div key={i} className="h-28 bg-stone-50 dark:bg-[hsl(25,14%,12%)] rounded-2xl animate-pulse" />
             ))}
           </div>
         ) : beers.length > 0 ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
             {beers.map((beer: any) => (
               <Link key={beer.id} href={`/beer/${beer.id}`}>
-                <div className="group bg-white dark:bg-[hsl(25,14%,10%)] border border-orange-50 dark:border-[hsl(25,12%,16%)] rounded-2xl p-4 hover:shadow-md hover:border-primary/20 dark:hover:border-primary/30 transition-all cursor-pointer h-full">
+                <div className="group bg-white dark:bg-[hsl(25,14%,10%)] border border-stone-100 dark:border-[hsl(25,12%,16%)] rounded-2xl p-4 hover:shadow-md hover:border-primary/20 dark:hover:border-primary/30 transition-all cursor-pointer h-full">
                   <div className="flex items-start gap-3">
-                    <div className="w-12 h-12 rounded-xl flex-shrink-0 bg-orange-50 dark:bg-orange-950/20 flex items-center justify-center overflow-hidden">
+                    <div className="w-12 h-12 rounded-xl flex-shrink-0 bg-stone-50 dark:bg-stone-900/20 flex items-center justify-center overflow-hidden">
                       {beer.imageUrl ? (
                         <img src={beer.imageUrl} alt={beer.name} className="w-12 h-12 object-contain p-0.5" />
                       ) : beer.breweryLogoUrl ? (
@@ -183,7 +183,7 @@ export default function ExploreBeers() {
                       </p>
                       <div className="flex items-center gap-2 mt-1.5 flex-wrap">
                         {beer.style && !activeStyle && (
-                          <span className="text-[10px] font-semibold text-orange-700 dark:text-orange-300 bg-orange-50 dark:bg-orange-950/30 px-2 py-0.5 rounded-full">{beer.style}</span>
+                          <span className="text-[10px] font-semibold text-orange-700 dark:text-orange-300 bg-stone-50 dark:bg-stone-900/30 px-2 py-0.5 rounded-full">{beer.style}</span>
                         )}
                         {beer.abv != null && (
                           <span className="text-[10px] font-medium text-muted-foreground">{beer.abv}% ABV</span>

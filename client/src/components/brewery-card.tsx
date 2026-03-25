@@ -75,7 +75,7 @@ export default function BreweryCard({ brewery, beerCount = 0, distance }: Brewer
 
   return (
     <Link href={`/brewery/${brewery.id}`} onMouseEnter={handlePrefetch} onTouchStart={handlePrefetch}>
-      <div className="group bg-white dark:bg-[hsl(25,14%,10%)] rounded-2xl border border-orange-50 dark:border-[hsl(25,12%,16%)] shadow-sm overflow-hidden cursor-pointer hover:shadow-[0_8px_28px_rgba(247,113,4,0.13)] hover:-translate-y-0.5 transition-all duration-250">
+      <div className="group bg-white dark:bg-[hsl(25,14%,10%)] rounded-2xl border border-stone-100 dark:border-[hsl(25,12%,16%)] shadow-sm overflow-hidden cursor-pointer hover:shadow-[0_8px_28px_rgba(247,113,4,0.13)] hover:-translate-y-0.5 transition-all duration-250">
         
         {/* Cover / logo strip */}
         <div className="relative h-28 overflow-hidden">
@@ -116,7 +116,7 @@ export default function BreweryCard({ brewery, beerCount = 0, distance }: Brewer
         {/* Info */}
         <div className="p-3.5 flex items-center gap-3">
           {/* Logo circle */}
-          <div className="w-12 h-12 rounded-xl border border-orange-50 dark:border-[hsl(25,12%,20%)] overflow-hidden flex-shrink-0 bg-orange-50 dark:bg-orange-950/20 shadow-sm">
+          <div className="w-12 h-12 rounded-xl border border-stone-100 dark:border-[hsl(25,12%,20%)] overflow-hidden flex-shrink-0 bg-stone-50 dark:bg-stone-900/20 shadow-sm">
             <ImageWithFallback
               src={brewery.logoUrl}
               alt={`Logo ${name}`}
@@ -132,7 +132,7 @@ export default function BreweryCard({ brewery, beerCount = 0, distance }: Brewer
               {name}
             </h3>
             {beerCount > 0 && (
-              <span className="inline-flex items-center gap-1 mt-1 px-2 py-0.5 rounded-full text-[11px] font-semibold bg-orange-50 dark:bg-orange-950/30 text-primary dark:text-orange-400 border border-orange-100 dark:border-orange-900/30">
+              <span className="inline-flex items-center gap-1 mt-1 px-2 py-0.5 rounded-full text-[11px] font-semibold bg-stone-50 dark:bg-stone-900/30 text-primary dark:text-orange-400 border border-stone-200 dark:border-stone-700/30">
                 <Beer className="w-2.5 h-2.5" />
                 {beerCount} birre
               </span>

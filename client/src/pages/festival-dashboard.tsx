@@ -1008,7 +1008,7 @@ function FestivalFoodManager({ festId }: { festId: number }) {
                           {item.allergens && item.allergens.length > 0 && (
                             <div className="flex flex-wrap gap-1 mt-1">
                               {item.allergens.map(a => (
-                                <span key={a} className="text-xs bg-orange-50 dark:bg-orange-900/20 text-orange-600 dark:text-orange-400 border border-orange-200 dark:border-orange-700 px-1.5 py-0.5 rounded-full">
+                                <span key={a} className="text-xs bg-stone-50 dark:bg-orange-900/20 text-orange-600 dark:text-orange-400 border border-stone-300 dark:border-stone-600 px-1.5 py-0.5 rounded-full">
                                   {ALLERGEN_LABELS[a.toLowerCase()] ?? a}
                                 </span>
                               ))}
@@ -1593,7 +1593,7 @@ export default function FestivalDashboard() {
                             ) : stats.topTaps.map((t, i) => (
                               <div key={t.tapNumber} className="flex items-center gap-3">
                                 <span className={`w-7 h-7 flex items-center justify-center rounded-full text-xs font-bold ${
-                                  i === 0 ? "bg-yellow-100 text-yellow-700" : i === 1 ? "bg-gray-100 text-gray-600" : i === 2 ? "bg-orange-100 text-orange-600" : "bg-gray-50 text-gray-500"
+                                  i === 0 ? "bg-yellow-100 text-yellow-700" : i === 1 ? "bg-gray-100 text-gray-600" : i === 2 ? "bg-stone-100 text-orange-600" : "bg-gray-50 text-gray-500"
                                 }`}>{i + 1}</span>
                                 <div className="flex-1">
                                   <span className="text-sm font-medium">{t.beerName}</span>

@@ -322,8 +322,8 @@ export function MenuManager({ pubId, menu }: MenuManagerProps) {
   };
 
   return (
-    <Card className="bg-background border-orange-50 dark:border-[hsl(25,12%,16%)] shadow-sm rounded-2xl overflow-hidden">
-      <CardHeader className="border-b border-orange-50 dark:border-[hsl(25,12%,16%)]">
+    <Card className="bg-background border-stone-100 dark:border-[hsl(25,12%,16%)] shadow-sm rounded-2xl overflow-hidden">
+      <CardHeader className="border-b border-stone-100 dark:border-[hsl(25,12%,16%)]">
         <CardTitle className="flex items-center justify-between font-bold text-foreground">
           <div className="flex items-center gap-2">
             <Utensils className="text-primary w-5 h-5" />
@@ -332,12 +332,12 @@ export function MenuManager({ pubId, menu }: MenuManagerProps) {
           <div className="flex gap-2">
             <Dialog open={isAddCategoryOpen} onOpenChange={setIsAddCategoryOpen}>
               <DialogTrigger asChild>
-                <Button variant="outline" className="border-orange-100 text-primary hover:bg-orange-50 rounded-xl font-semibold">
+                <Button variant="outline" className="border-stone-200 text-primary hover:bg-stone-50 rounded-xl font-semibold">
                   <FolderPlus className="w-4 h-4 mr-2" />
                   Categoria
                 </Button>
               </DialogTrigger>
-              <DialogContent className="rounded-2xl border-orange-50 dark:border-[hsl(25,12%,16%)]">
+              <DialogContent className="rounded-2xl border-stone-100 dark:border-[hsl(25,12%,16%)]">
                 <DialogHeader>
                   <DialogTitle className="font-bold text-foreground">
                     {editingCategory ? "Modifica Categoria" : "Aggiungi Categoria"}
@@ -350,7 +350,7 @@ export function MenuManager({ pubId, menu }: MenuManagerProps) {
                       placeholder="Antipasti, Primi, Secondi..."
                       value={categoryForm.name}
                       onChange={(e) => setCategoryForm({ ...categoryForm, name: e.target.value })}
-                      className="border-orange-100 rounded-xl focus-visible:ring-primary/20"
+                      className="border-stone-200 rounded-xl focus-visible:ring-primary/20"
                     />
                   </div>
                   <div>
@@ -360,7 +360,7 @@ export function MenuManager({ pubId, menu }: MenuManagerProps) {
                       value={categoryForm.description}
                       onChange={(e) => setCategoryForm({ ...categoryForm, description: e.target.value })}
                       rows={2}
-                      className="border-orange-100 rounded-xl focus-visible:ring-primary/20"
+                      className="border-stone-200 rounded-xl focus-visible:ring-primary/20"
                     />
                   </div>
                   <div className="flex items-center space-x-2">
@@ -374,7 +374,7 @@ export function MenuManager({ pubId, menu }: MenuManagerProps) {
                   <div className="flex justify-end space-x-2">
                     <Button
                       variant="outline"
-                      className="border-orange-100 text-muted-foreground hover:bg-orange-50 rounded-xl"
+                      className="border-stone-200 text-muted-foreground hover:bg-stone-50 rounded-xl"
                       onClick={() => {
                         setIsAddCategoryOpen(false);
                         setEditingCategory(null);
@@ -398,7 +398,7 @@ export function MenuManager({ pubId, menu }: MenuManagerProps) {
                   Prodotto
                 </Button>
               </DialogTrigger>
-              <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto rounded-2xl border-orange-50 dark:border-[hsl(25,12%,16%)]">
+              <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto rounded-2xl border-stone-100 dark:border-[hsl(25,12%,16%)]">
                 <DialogHeader>
                   <DialogTitle className="font-bold text-foreground">
                     {editingItem ? "Modifica Prodotto" : "Aggiungi Prodotto"}
@@ -409,7 +409,7 @@ export function MenuManager({ pubId, menu }: MenuManagerProps) {
                     <div>
                       <Label className="font-semibold text-foreground">Categoria</Label>
                       <select
-                        className="w-full p-2 border border-orange-100 rounded-xl focus-visible:ring-primary/20 bg-background"
+                        className="w-full p-2 border border-stone-200 rounded-xl focus-visible:ring-primary/20 bg-background"
                         value={selectedCategoryId || ""}
                         onChange={(e) => setSelectedCategoryId(parseInt(e.target.value))}
                       >
@@ -430,7 +430,7 @@ export function MenuManager({ pubId, menu }: MenuManagerProps) {
                         placeholder="Nome del piatto..."
                         value={itemForm.name}
                         onChange={(e) => setItemForm({ ...itemForm, name: e.target.value })}
-                        className="border-orange-100 rounded-xl focus-visible:ring-primary/20"
+                        className="border-stone-200 rounded-xl focus-visible:ring-primary/20"
                       />
                     </div>
                     <div>
@@ -441,7 +441,7 @@ export function MenuManager({ pubId, menu }: MenuManagerProps) {
                         placeholder="12.50"
                         value={itemForm.price}
                         onChange={(e) => setItemForm({ ...itemForm, price: e.target.value })}
-                        className="border-orange-100 rounded-xl focus-visible:ring-primary/20"
+                        className="border-stone-200 rounded-xl focus-visible:ring-primary/20"
                       />
                     </div>
                   </div>
@@ -453,7 +453,7 @@ export function MenuManager({ pubId, menu }: MenuManagerProps) {
                       value={itemForm.description}
                       onChange={(e) => setItemForm({ ...itemForm, description: e.target.value })}
                       rows={3}
-                      className="border-orange-100 rounded-xl focus-visible:ring-primary/20"
+                      className="border-stone-200 rounded-xl focus-visible:ring-primary/20"
                     />
                   </div>
 
@@ -481,7 +481,7 @@ export function MenuManager({ pubId, menu }: MenuManagerProps) {
                       placeholder="https://..."
                       value={itemForm.imageUrl}
                       onChange={(e) => setItemForm({ ...itemForm, imageUrl: e.target.value })}
-                      className="border-orange-100 rounded-xl focus-visible:ring-primary/20"
+                      className="border-stone-200 rounded-xl focus-visible:ring-primary/20"
                     />
                   </div>
 
@@ -532,7 +532,7 @@ export function MenuManager({ pubId, menu }: MenuManagerProps) {
                   <div className="flex justify-end space-x-2">
                     <Button
                       variant="outline"
-                      className="border-orange-100 text-muted-foreground hover:bg-orange-50 rounded-xl"
+                      className="border-stone-200 text-muted-foreground hover:bg-stone-50 rounded-xl"
                       onClick={() => {
                         setIsAddItemOpen(false);
                         setEditingItem(null);
@@ -556,7 +556,7 @@ export function MenuManager({ pubId, menu }: MenuManagerProps) {
       </CardHeader>
       <CardContent className="p-6">
         {menu.length === 0 ? (
-          <div className="text-center py-12 border-2 border-dashed border-orange-200 rounded-2xl text-muted-foreground">
+          <div className="text-center py-12 border-2 border-dashed border-stone-300 rounded-2xl text-muted-foreground">
             <Utensils className="w-12 h-12 mx-auto mb-4 text-primary opacity-20" />
             <p className="font-semibold text-foreground">Nessuna categoria nel menu.</p>
             <p className="text-sm">Clicca "Categoria" per iniziare.</p>
@@ -571,7 +571,7 @@ export function MenuManager({ pubId, menu }: MenuManagerProps) {
                   className={`px-4 py-1.5 rounded-full transition-colors text-sm ${
                     expandedCategories.has(category.id)
                       ? "bg-primary text-white font-semibold shadow-sm shadow-primary/20"
-                      : "text-muted-foreground hover:text-primary hover:bg-orange-50/60"
+                      : "text-muted-foreground hover:text-primary hover:bg-stone-50/60"
                   }`}
                 >
                   {category.name}
@@ -593,7 +593,7 @@ export function MenuManager({ pubId, menu }: MenuManagerProps) {
                       <h3 className="font-bold text-xl text-foreground flex items-center gap-2">
                         {category.name}
                         {!category.isVisible && (
-                          <Badge variant="secondary" className="text-[10px] bg-orange-50 text-primary border-none">
+                          <Badge variant="secondary" className="text-[10px] bg-stone-50 text-primary border-none">
                             <EyeOff className="w-3 h-3 mr-1" />
                             Nascosta
                           </Badge>
@@ -609,7 +609,7 @@ export function MenuManager({ pubId, menu }: MenuManagerProps) {
                     <Button
                       variant="ghost"
                       size="sm"
-                      className="text-primary hover:bg-orange-50"
+                      className="text-primary hover:bg-stone-50"
                       onClick={() => {
                         toggleCategoryVisibilityMutation.mutate({
                           id: category.id,
@@ -622,7 +622,7 @@ export function MenuManager({ pubId, menu }: MenuManagerProps) {
                     <Button
                       variant="ghost"
                       size="sm"
-                      className="text-primary hover:bg-orange-50"
+                      className="text-primary hover:bg-stone-50"
                       onClick={() => {
                         startEditCategory(category);
                         setIsAddCategoryOpen(true);
@@ -645,7 +645,7 @@ export function MenuManager({ pubId, menu }: MenuManagerProps) {
                     <Button
                       variant="ghost"
                       size="sm"
-                      className="text-primary hover:bg-orange-50"
+                      className="text-primary hover:bg-stone-50"
                       onClick={() => {
                         setSelectedCategoryId(category.id);
                         setIsAddItemOpen(true);
@@ -660,7 +660,7 @@ export function MenuManager({ pubId, menu }: MenuManagerProps) {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     {category.items.length === 0 ? (
                       <div 
-                        className="col-span-full py-10 border-2 border-dashed border-orange-200 rounded-2xl flex flex-col items-center justify-center text-muted-foreground hover:bg-orange-50/30 cursor-pointer transition-colors"
+                        className="col-span-full py-10 border-2 border-dashed border-stone-300 rounded-2xl flex flex-col items-center justify-center text-muted-foreground hover:bg-stone-50/30 cursor-pointer transition-colors"
                         onClick={() => {
                           setSelectedCategoryId(category.id);
                           setIsAddItemOpen(true);
@@ -673,7 +673,7 @@ export function MenuManager({ pubId, menu }: MenuManagerProps) {
                       category.items.map((item) => (
                         <div
                           key={item.id}
-                          className={`bg-white dark:bg-[hsl(25,14%,10%)] rounded-2xl border border-orange-50 dark:border-[hsl(25,12%,16%)] shadow-sm p-4 relative group transition-all hover:shadow-md ${
+                          className={`bg-white dark:bg-[hsl(25,14%,10%)] rounded-2xl border border-stone-100 dark:border-[hsl(25,12%,16%)] shadow-sm p-4 relative group transition-all hover:shadow-md ${
                             !item.isVisible ? 'opacity-60 grayscale-[0.3]' : ''
                           }`}
                         >
@@ -682,7 +682,7 @@ export function MenuManager({ pubId, menu }: MenuManagerProps) {
                               <img 
                                 src={item.imageUrl} 
                                 alt={item.name} 
-                                className="w-16 h-16 rounded-xl object-cover shrink-0 border border-orange-50"
+                                className="w-16 h-16 rounded-xl object-cover shrink-0 border border-stone-100"
                               />
                             )}
                             <div className="flex-1 min-w-0">
@@ -703,7 +703,7 @@ export function MenuManager({ pubId, menu }: MenuManagerProps) {
                                   <Badge variant="secondary" className="bg-red-50 text-red-700 dark:bg-red-950/40 dark:text-red-400 border-none text-[10px]">🌶️ Piccante</Badge>
                                 )}
                                 {!item.isVisible && (
-                                  <Badge variant="secondary" className="bg-orange-50 text-primary border-none text-[10px]">Nascosto</Badge>
+                                  <Badge variant="secondary" className="bg-stone-50 text-primary border-none text-[10px]">Nascosto</Badge>
                                 )}
                                 {!item.isAvailable && (
                                   <Badge variant="destructive" className="bg-red-100 text-red-700 dark:bg-red-950/60 dark:text-red-300 border-none text-[10px]">Esaurito</Badge>
@@ -730,7 +730,7 @@ export function MenuManager({ pubId, menu }: MenuManagerProps) {
                             <Button
                               variant="ghost"
                               size="sm"
-                              className="h-8 w-8 p-0 text-primary hover:bg-orange-50 rounded-md"
+                              className="h-8 w-8 p-0 text-primary hover:bg-stone-50 rounded-md"
                               onClick={() => {
                                 toggleItemVisibilityMutation.mutate({
                                   id: item.id,
@@ -743,7 +743,7 @@ export function MenuManager({ pubId, menu }: MenuManagerProps) {
                             <Button
                               variant="ghost"
                               size="sm"
-                              className="h-8 w-8 p-0 text-primary hover:bg-orange-50 rounded-md"
+                              className="h-8 w-8 p-0 text-primary hover:bg-stone-50 rounded-md"
                               onClick={() => {
                                 startEditItem(item);
                                 setIsAddItemOpen(true);

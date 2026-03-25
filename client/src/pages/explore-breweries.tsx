@@ -302,7 +302,7 @@ export default function ExploreBreweries() {
       </div>
 
       {/* Country pills */}
-      <div className="sticky top-0 z-20 bg-white dark:bg-[hsl(25,14%,8%)] border-b border-orange-50 dark:border-[hsl(25,12%,14%)] shadow-sm">
+      <div className="sticky top-0 z-20 bg-white dark:bg-[hsl(25,14%,8%)] border-b border-stone-100 dark:border-[hsl(25,12%,14%)] shadow-sm">
         <div className="max-w-5xl mx-auto px-4 py-3">
           <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
             <button
@@ -377,7 +377,7 @@ export default function ExploreBreweries() {
             <Globe className="w-16 h-16 mx-auto mb-4 text-gray-200 dark:text-neutral-700" />
             <p className="font-semibold text-gray-600 dark:text-neutral-300 text-lg">Nessun birrificio trovato</p>
             <p className="text-gray-400 text-sm mt-1">Prova con un nome diverso o un altro paese</p>
-            <Button onClick={clearFilters} variant="outline" className="mt-4 border-orange-200 text-primary hover:bg-orange-50">
+            <Button onClick={clearFilters} variant="outline" className="mt-4 border-stone-300 text-primary hover:bg-stone-50">
               Rimuovi filtri
             </Button>
           </div>
@@ -397,7 +397,7 @@ export default function ExploreBreweries() {
                   size="sm"
                   disabled={page <= 1}
                   onClick={() => { setPage(p => p - 1); window.scrollTo({ top: 0, behavior: "smooth" }); }}
-                  className="border-primary/30 text-primary hover:bg-orange-50 dark:hover:bg-orange-950/20 disabled:opacity-40"
+                  className="border-primary/30 text-primary hover:bg-stone-50 dark:hover:bg-stone-900/20 disabled:opacity-40"
                 >
                   <ChevronLeft className="w-4 h-4 mr-1" />
                   Precedente
@@ -411,7 +411,7 @@ export default function ExploreBreweries() {
                   size="sm"
                   disabled={page >= totalPages}
                   onClick={() => { setPage(p => p + 1); window.scrollTo({ top: 0, behavior: "smooth" }); }}
-                  className="border-primary/30 text-primary hover:bg-orange-50 dark:hover:bg-orange-950/20 disabled:opacity-40"
+                  className="border-primary/30 text-primary hover:bg-stone-50 dark:hover:bg-stone-900/20 disabled:opacity-40"
                 >
                   Successiva
                   <ChevronRight className="w-4 h-4 ml-1" />

@@ -220,7 +220,7 @@ export default function AuthPage() {
   if (pendingVerificationEmail) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center p-4">
-        <div className="w-full max-w-sm bg-white dark:bg-[hsl(25,14%,10%)] rounded-2xl border border-orange-50 dark:border-[hsl(25,12%,16%)] shadow-sm p-8 text-center space-y-6">
+        <div className="w-full max-w-sm bg-white dark:bg-[hsl(25,14%,10%)] rounded-2xl border border-stone-100 dark:border-[hsl(25,12%,16%)] shadow-sm p-8 text-center space-y-6">
           <div className="mx-auto w-16 h-16 bg-emerald-50 dark:bg-emerald-950/20 rounded-2xl flex items-center justify-center">
             <MailCheck className="w-8 h-8 text-emerald-600 dark:text-emerald-400" />
           </div>
@@ -235,7 +235,7 @@ export default function AuthPage() {
             </p>
           </div>
           <div className="space-y-2">
-            <Button variant="outline" className="w-full text-sm border-orange-100 dark:border-[hsl(25,12%,20%)] hover:bg-orange-50 dark:hover:bg-orange-950/20 text-foreground" onClick={() => resendMutation.mutate(pendingVerificationEmail)} disabled={resendMutation.isPending}>
+            <Button variant="outline" className="w-full text-sm border-stone-200 dark:border-[hsl(25,12%,20%)] hover:bg-stone-50 dark:hover:bg-stone-900/20 text-foreground" onClick={() => resendMutation.mutate(pendingVerificationEmail)} disabled={resendMutation.isPending}>
               {resendMutation.isPending ? <><RefreshCw className="w-3.5 h-3.5 mr-2 animate-spin" />Invio...</> : <><RefreshCw className="w-3.5 h-3.5 mr-2" />Reinvia email</>}
             </Button>
             <Button variant="ghost" className="w-full text-sm text-muted-foreground" onClick={() => { setPendingVerificationEmail(null); setActiveTab("login"); }}>
@@ -302,7 +302,7 @@ export default function AuthPage() {
 
       {/* Right form panel */}
       <div className="flex-1 flex items-center justify-center p-4 sm:p-8 overflow-y-auto">
-        <div className="w-full max-w-md bg-white dark:bg-[hsl(25,14%,10%)] rounded-2xl border border-orange-50 dark:border-[hsl(25,12%,16%)] shadow-sm p-6 md:p-8">
+        <div className="w-full max-w-md bg-white dark:bg-[hsl(25,14%,10%)] rounded-2xl border border-stone-100 dark:border-[hsl(25,12%,16%)] shadow-sm p-6 md:p-8">
           {/* Mobile logo */}
           <div className="flex items-center gap-2.5 mb-8 lg:hidden">
             <div className="w-9 h-9 bg-gradient-to-br from-[hsl(24,93%,49%)] to-[hsl(20,95%,42%)] rounded-xl flex items-center justify-center">
@@ -316,7 +316,7 @@ export default function AuthPage() {
             <h1 className="text-2xl font-bold text-foreground mb-5">
               {activeTab === "login" ? "Bentornato" : "Crea un account"}
             </h1>
-            <div className="flex items-center p-1 bg-orange-50 dark:bg-orange-950/20 rounded-full border border-orange-100 dark:border-[hsl(25,12%,16%)]">
+            <div className="flex items-center p-1 bg-stone-50 dark:bg-stone-900/20 rounded-full border border-stone-200 dark:border-[hsl(25,12%,16%)]">
               {(["login", "register"] as const).map((tab) => (
                 <button
                   key={tab}
@@ -352,7 +352,7 @@ export default function AuthPage() {
                 </div>
               )}
               {verifiedParam === "expired" && (
-                <div className="flex items-start gap-3 p-3.5 bg-orange-50 dark:bg-orange-950/20 border border-orange-100 dark:border-orange-900/30 rounded-xl">
+                <div className="flex items-start gap-3 p-3.5 bg-stone-50 dark:bg-stone-900/20 border border-stone-200 dark:border-stone-700/30 rounded-xl">
                   <AlertTriangle className="w-4.5 h-4.5 text-primary dark:text-orange-400 flex-shrink-0 mt-0.5" />
                   <div>
                     <p className="text-sm text-primary dark:text-orange-400 font-medium">Link scaduto.</p>
@@ -365,7 +365,7 @@ export default function AuthPage() {
                 </div>
               )}
               {emailNotVerified && (
-                <div className="flex items-start gap-3 p-3.5 bg-orange-50 dark:bg-orange-950/20 border border-orange-100 dark:border-orange-900/30 rounded-xl">
+                <div className="flex items-start gap-3 p-3.5 bg-stone-50 dark:bg-stone-900/20 border border-stone-200 dark:border-stone-700/30 rounded-xl">
                   <Mail className="w-4.5 h-4.5 text-primary dark:text-orange-400 flex-shrink-0 mt-0.5" />
                   <div className="flex-1">
                     <p className="text-sm text-primary dark:text-orange-400 font-medium">Email non verificata.</p>
@@ -386,7 +386,7 @@ export default function AuthPage() {
                       <FormControl>
                         <div className="relative">
                           <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                          <Input {...field} placeholder="tu@esempio.it oppure @username" className="pl-10 h-11 bg-white dark:bg-[hsl(25,14%,10%)] border-orange-100 dark:border-[hsl(25,12%,20%)] focus-visible:ring-primary/20 rounded-xl"
+                          <Input {...field} placeholder="tu@esempio.it oppure @username" className="pl-10 h-11 bg-white dark:bg-[hsl(25,14%,10%)] border-stone-200 dark:border-[hsl(25,12%,20%)] focus-visible:ring-primary/20 rounded-xl"
                             data-testid="input-login-email" autoComplete="username" />
                         </div>
                       </FormControl>
@@ -401,7 +401,7 @@ export default function AuthPage() {
                         <div className="relative">
                           <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                           <Input {...field} type={showPassword ? "text" : "password"} placeholder="••••••••"
-                            className="pl-10 pr-10 h-11 bg-white dark:bg-[hsl(25,14%,10%)] border-orange-100 dark:border-[hsl(25,12%,20%)] focus-visible:ring-primary/20 rounded-xl"
+                            className="pl-10 pr-10 h-11 bg-white dark:bg-[hsl(25,14%,10%)] border-stone-200 dark:border-[hsl(25,12%,20%)] focus-visible:ring-primary/20 rounded-xl"
                             data-testid="input-login-password" />
                           <button type="button" onClick={() => setShowPassword(!showPassword)}
                             className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground">
@@ -417,7 +417,7 @@ export default function AuthPage() {
                     <FormItem className="flex flex-row items-center space-x-2 space-y-0">
                       <FormControl>
                         <input type="checkbox" checked={field.value} onChange={field.onChange}
-                          className="h-4 w-4 rounded border-orange-100 text-primary focus:ring-primary/20 cursor-pointer accent-primary" />
+                          className="h-4 w-4 rounded border-stone-200 text-primary focus:ring-primary/20 cursor-pointer accent-primary" />
                       </FormControl>
                       <FormLabel className="text-sm font-normal text-muted-foreground cursor-pointer">Ricordami</FormLabel>
                     </FormItem>
@@ -449,7 +449,7 @@ export default function AuthPage() {
 
               {/* Forgot password panel */}
               {showForgotPassword && (
-                <div className="mt-4 p-5 bg-orange-50 dark:bg-orange-950/20 rounded-xl border border-orange-100 dark:border-orange-900/30 space-y-4">
+                <div className="mt-4 p-5 bg-stone-50 dark:bg-stone-900/20 rounded-xl border border-stone-200 dark:border-stone-700/30 space-y-4">
                   {forgotSent ? (
                     <div className="text-center space-y-2">
                       <MailCheck className="w-8 h-8 text-primary dark:text-orange-400 mx-auto" />
@@ -462,7 +462,7 @@ export default function AuthPage() {
                       <p className="text-sm font-medium text-foreground">Recupero password</p>
                       <div className="space-y-2">
                         <Input placeholder="Inserisci la tua email" value={forgotEmail} onChange={(e) => setForgotEmail(e.target.value)}
-                          className="h-10 bg-white dark:bg-[hsl(25,14%,12%)] border-orange-100 dark:border-[hsl(25,12%,20%)] rounded-xl" />
+                          className="h-10 bg-white dark:bg-[hsl(25,14%,12%)] border-stone-200 dark:border-[hsl(25,12%,20%)] rounded-xl" />
                         <div className="flex gap-2">
                           <Button className="flex-1 bg-primary hover:bg-primary/90 text-white rounded-xl h-10" onClick={() => forgotPasswordMutation.mutate(forgotEmail)}
                             disabled={forgotPasswordMutation.isPending || !forgotEmail.includes("@")}>
@@ -477,12 +477,12 @@ export default function AuthPage() {
               )}
 
               <div className="relative my-8">
-                <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-orange-100 dark:border-[hsl(25,12%,16%)]"></div></div>
+                <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-stone-200 dark:border-[hsl(25,12%,16%)]"></div></div>
                 <div className="relative flex justify-center text-xs uppercase"><span className="bg-white dark:bg-[hsl(25,14%,10%)] px-2 text-muted-foreground">Oppure continua con</span></div>
               </div>
 
               <Button type="button" variant="outline" onClick={handleGoogleLogin}
-                className="w-full h-11 bg-white dark:bg-[hsl(25,14%,12%)] border border-orange-100 dark:border-[hsl(25,12%,20%)] text-foreground rounded-xl font-medium hover:bg-orange-50 dark:hover:bg-orange-950/20">
+                className="w-full h-11 bg-white dark:bg-[hsl(25,14%,12%)] border border-stone-200 dark:border-[hsl(25,12%,20%)] text-foreground rounded-xl font-medium hover:bg-stone-50 dark:hover:bg-stone-900/20">
                 <SiGoogle className="w-4 h-4 mr-2" />
                 Google
               </Button>
@@ -500,7 +500,7 @@ export default function AuthPage() {
                       <FormControl>
                         <div className="relative">
                           <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                          <Input {...field} placeholder="Il tuo nome" className="pl-10 h-11 bg-white dark:bg-[hsl(25,14%,10%)] border-orange-100 dark:border-[hsl(25,12%,20%)] focus-visible:ring-primary/20 rounded-xl"
+                          <Input {...field} placeholder="Il tuo nome" className="pl-10 h-11 bg-white dark:bg-[hsl(25,14%,10%)] border-stone-200 dark:border-[hsl(25,12%,20%)] focus-visible:ring-primary/20 rounded-xl"
                             onChange={(e) => {
                               const val = e.target.value.toLowerCase().replace(/[^a-z0-9_.]/g, "");
                               field.onChange(val);
@@ -525,7 +525,7 @@ export default function AuthPage() {
                       <FormControl>
                         <div className="relative">
                           <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                          <Input {...field} type="email" placeholder="tu@esempio.it" className="pl-10 h-11 bg-white dark:bg-[hsl(25,14%,10%)] border-orange-100 dark:border-[hsl(25,12%,20%)] focus-visible:ring-primary/20 rounded-xl" />
+                          <Input {...field} type="email" placeholder="tu@esempio.it" className="pl-10 h-11 bg-white dark:bg-[hsl(25,14%,10%)] border-stone-200 dark:border-[hsl(25,12%,20%)] focus-visible:ring-primary/20 rounded-xl" />
                         </div>
                       </FormControl>
                       <FormMessage />
@@ -541,7 +541,7 @@ export default function AuthPage() {
                         <div className="relative">
                           <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                           <Input {...field} type={showPassword ? "text" : "password"} placeholder="••••••••"
-                            className="pl-10 pr-10 h-11 bg-white dark:bg-[hsl(25,14%,10%)] border-orange-100 dark:border-[hsl(25,12%,20%)] focus-visible:ring-primary/20 rounded-xl"
+                            className="pl-10 pr-10 h-11 bg-white dark:bg-[hsl(25,14%,10%)] border-stone-200 dark:border-[hsl(25,12%,20%)] focus-visible:ring-primary/20 rounded-xl"
                             onChange={(e) => { field.onChange(e); setPasswordValue(e.target.value); }} />
                           <button type="button" onClick={() => setShowPassword(!showPassword)}
                             className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground">
@@ -550,13 +550,13 @@ export default function AuthPage() {
                         </div>
                       </FormControl>
                       {passwordValue && (
-                        <div className="mt-2.5 p-3 bg-orange-50/50 dark:bg-orange-950/10 rounded-xl border border-orange-100 dark:border-[hsl(25,12%,16%)]">
+                        <div className="mt-2.5 p-3 bg-stone-50/50 dark:bg-stone-900/10 rounded-xl border border-stone-200 dark:border-[hsl(25,12%,16%)]">
                           <div className="flex gap-1 mb-2">
                             {[1, 2, 3, 4].map(idx => (
                               <div key={idx} className={`h-1 flex-1 rounded-full transition-colors ${
                                 idx <= passStrength
                                   ? passStrength <= 1 ? "bg-destructive" : passStrength <= 3 ? "bg-yellow-500" : "bg-emerald-600"
-                                  : "bg-orange-100 dark:bg-orange-900/30"
+                                  : "bg-stone-100 dark:bg-orange-900/30"
                               }`} />
                             ))}
                           </div>
@@ -581,7 +581,7 @@ export default function AuthPage() {
                         <div className="relative">
                           <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                           <Input {...field} type={showConfirmPassword ? "text" : "password"} placeholder="••••••••"
-                            className="pl-10 pr-10 h-11 bg-white dark:bg-[hsl(25,14%,10%)] border-orange-100 dark:border-[hsl(25,12%,20%)] focus-visible:ring-primary/20 rounded-xl" />
+                            className="pl-10 pr-10 h-11 bg-white dark:bg-[hsl(25,14%,10%)] border-stone-200 dark:border-[hsl(25,12%,20%)] focus-visible:ring-primary/20 rounded-xl" />
                           <button type="button" onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                             className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground">
                             {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
@@ -595,7 +595,7 @@ export default function AuthPage() {
 
                 {/* Role Toggles */}
                 <div className="space-y-4 pt-2">
-                  <a href="/registra-pub" className={`block p-4 rounded-xl border bg-orange-50/50 dark:bg-orange-950/10 border-orange-100 dark:border-orange-900/30 hover:bg-orange-50 dark:hover:bg-orange-950/20 hover:border-orange-200 dark:hover:border-orange-800 transition-all duration-200 group`}>
+                  <a href="/registra-pub" className={`block p-4 rounded-xl border bg-stone-50/50 dark:bg-stone-900/10 border-stone-200 dark:border-stone-700/30 hover:bg-stone-50 dark:hover:bg-stone-900/20 hover:border-stone-300 dark:hover:border-orange-800 transition-all duration-200 group`}>
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-3">
                         <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-white dark:bg-[hsl(25,14%,12%)] text-primary group-hover:bg-primary group-hover:text-white transition-colors">
@@ -610,7 +610,7 @@ export default function AuthPage() {
                     </div>
                   </a>
 
-                  <div className={`p-4 rounded-xl border transition-all duration-300 ${isBrewery ? "bg-orange-50 dark:bg-orange-950/20 border-orange-200 dark:border-orange-800" : "bg-orange-50/50 dark:bg-orange-950/10 border-orange-100 dark:border-orange-900/30"}`}>
+                  <div className={`p-4 rounded-xl border transition-all duration-300 ${isBrewery ? "bg-stone-50 dark:bg-stone-900/20 border-stone-300 dark:border-stone-700" : "bg-stone-50/50 dark:bg-stone-900/10 border-stone-200 dark:border-stone-700/30"}`}>
                     <FormField control={registerForm.control} name="isBrewery" render={({ field }) => (
                       <FormItem className="flex items-center justify-between space-y-0">
                         <div className="flex items-center gap-3">
@@ -627,22 +627,22 @@ export default function AuthPage() {
                     )} />
 
                     {isBrewery && (
-                      <div className="mt-4 pt-4 border-t border-orange-100 dark:border-orange-900/30 space-y-4 animate-in fade-in slide-in-from-top-2 duration-300">
+                      <div className="mt-4 pt-4 border-t border-stone-200 dark:border-stone-700/30 space-y-4 animate-in fade-in slide-in-from-top-2 duration-300">
                         {!selectedBrewery && !creatingNewBrewery && (
                           <div className="space-y-4">
                             <FormItem>
                               <FormLabel className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Cerca Birrificio Esistente</FormLabel>
                               <div className="relative">
                                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                                <Input value={brewerySearch} onChange={(e) => setBrewerySearch(e.target.value)} placeholder="Inserisci il nome..." className="pl-10 h-10 bg-white dark:bg-[hsl(25,14%,12%)] border-orange-100 dark:border-[hsl(25,12%,20%)] rounded-xl" />
+                                <Input value={brewerySearch} onChange={(e) => setBrewerySearch(e.target.value)} placeholder="Inserisci il nome..." className="pl-10 h-10 bg-white dark:bg-[hsl(25,14%,12%)] border-stone-200 dark:border-[hsl(25,12%,20%)] rounded-xl" />
                               </div>
                             </FormItem>
 
                             {searchedBreweries && searchedBreweries.length > 0 && (
                               <div className="space-y-2 max-h-48 overflow-y-auto pr-1">
                                 {searchedBreweries.map(b => (
-                                  <button key={b.id} type="button" onClick={() => { setSelectedBrewery(b); registerForm.setValue("breweryId", b.id); }} className="w-full p-2.5 flex items-center gap-3 rounded-lg border border-orange-100 dark:border-[hsl(25,12%,20%)] bg-white dark:bg-[hsl(25,14%,12%)] hover:bg-orange-50 dark:hover:bg-orange-950/20 text-left transition-colors">
-                                    <div className="w-8 h-8 rounded bg-orange-50 dark:bg-orange-950/20 flex items-center justify-center flex-shrink-0 text-primary dark:text-orange-400"><Factory className="w-4 h-4" /></div>
+                                  <button key={b.id} type="button" onClick={() => { setSelectedBrewery(b); registerForm.setValue("breweryId", b.id); }} className="w-full p-2.5 flex items-center gap-3 rounded-lg border border-stone-200 dark:border-[hsl(25,12%,20%)] bg-white dark:bg-[hsl(25,14%,12%)] hover:bg-stone-50 dark:hover:bg-stone-900/20 text-left transition-colors">
+                                    <div className="w-8 h-8 rounded bg-stone-50 dark:bg-stone-900/20 flex items-center justify-center flex-shrink-0 text-primary dark:text-orange-400"><Factory className="w-4 h-4" /></div>
                                     <div><p className="text-sm font-bold leading-none">{b.name}</p><p className="text-[10px] text-muted-foreground mt-1">{b.location}</p></div>
                                   </button>
                                 ))}
@@ -650,18 +650,18 @@ export default function AuthPage() {
                             )}
 
                             <div className="relative py-2">
-                              <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-orange-100 dark:border-[hsl(25,12%,16%)]"></div></div>
-                              <div className="relative flex justify-center text-[10px] uppercase"><span className="bg-orange-50 dark:bg-[hsl(25,14%,10%)] px-2 text-muted-foreground font-semibold">Oppure</span></div>
+                              <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-stone-200 dark:border-[hsl(25,12%,16%)]"></div></div>
+                              <div className="relative flex justify-center text-[10px] uppercase"><span className="bg-stone-50 dark:bg-[hsl(25,14%,10%)] px-2 text-muted-foreground font-semibold">Oppure</span></div>
                             </div>
 
-                            <Button type="button" variant="outline" onClick={() => setCreatingNewBrewery(true)} className="w-full h-10 border-orange-100 dark:border-[hsl(25,12%,20%)] rounded-xl hover:bg-orange-50 dark:hover:bg-orange-950/20">
+                            <Button type="button" variant="outline" onClick={() => setCreatingNewBrewery(true)} className="w-full h-10 border-stone-200 dark:border-[hsl(25,12%,20%)] rounded-xl hover:bg-stone-50 dark:hover:bg-stone-900/20">
                               <Plus className="w-4 h-4 mr-2" /> Registra Nuovo Birrificio
                             </Button>
                           </div>
                         )}
 
                         {selectedBrewery && (
-                          <div className="p-3 bg-white dark:bg-[hsl(25,14%,12%)] rounded-xl border border-primary/20 dark:border-orange-400/20 flex items-center justify-between">
+                          <div className="p-3 bg-white dark:bg-[hsl(25,14%,12%)] rounded-xl border border-primary/20 dark:border-stone-600/30 flex items-center justify-between">
                             <div className="flex items-center gap-3">
                               <div className="w-8 h-8 rounded bg-primary text-white flex items-center justify-center"><Check className="w-4 h-4" /></div>
                               <div><p className="text-sm font-bold leading-none">{selectedBrewery.name}</p><p className="text-[10px] text-muted-foreground mt-1">Birrificio selezionato</p></div>
@@ -680,7 +680,7 @@ export default function AuthPage() {
                             <FormField control={registerForm.control} name="breweryName" render={({ field }) => (
                               <FormItem>
                                 <FormLabel className="text-[10px] font-semibold uppercase text-muted-foreground">Nome Birrificio *</FormLabel>
-                                <FormControl><Input {...field} placeholder="Es: Birrificio dell'Eremo" className="h-10 bg-white dark:bg-[hsl(25,14%,12%)] border-orange-100 dark:border-[hsl(25,12%,20%)] rounded-xl" /></FormControl>
+                                <FormControl><Input {...field} placeholder="Es: Birrificio dell'Eremo" className="h-10 bg-white dark:bg-[hsl(25,14%,12%)] border-stone-200 dark:border-[hsl(25,12%,20%)] rounded-xl" /></FormControl>
                                 <FormMessage />
                               </FormItem>
                             )} />
@@ -689,7 +689,7 @@ export default function AuthPage() {
                               <FormItem>
                                 <FormLabel className="text-[10px] font-semibold uppercase text-muted-foreground">Sede Birrificio *</FormLabel>
                                 <FormControl>
-                                  <AddressAutocomplete onAddressSelect={handleBreweryAddressSelect} defaultValue={field.value} placeholder="Indirizzo sede..." className="h-10 bg-white dark:bg-[hsl(25,14%,12%)] border-orange-100 dark:border-[hsl(25,12%,20%)] rounded-xl" />
+                                  <AddressAutocomplete onAddressSelect={handleBreweryAddressSelect} defaultValue={field.value} placeholder="Indirizzo sede..." className="h-10 bg-white dark:bg-[hsl(25,14%,12%)] border-stone-200 dark:border-[hsl(25,12%,20%)] rounded-xl" />
                                 </FormControl>
                                 <FormMessage />
                               </FormItem>
@@ -699,14 +699,14 @@ export default function AuthPage() {
                               <FormField control={registerForm.control} name="breweryVatNumber" render={({ field }) => (
                                 <FormItem>
                                   <FormLabel className="text-[10px] font-semibold uppercase text-muted-foreground">P. IVA</FormLabel>
-                                  <FormControl><Input {...field} placeholder="IT..." className="h-10 bg-white dark:bg-[hsl(25,14%,12%)] border-orange-100 dark:border-[hsl(25,12%,20%)] rounded-xl" /></FormControl>
+                                  <FormControl><Input {...field} placeholder="IT..." className="h-10 bg-white dark:bg-[hsl(25,14%,12%)] border-stone-200 dark:border-[hsl(25,12%,20%)] rounded-xl" /></FormControl>
                                   <FormMessage />
                                 </FormItem>
                               )} />
                               <FormField control={registerForm.control} name="breweryPhone" render={({ field }) => (
                                 <FormItem>
                                   <FormLabel className="text-[10px] font-semibold uppercase text-muted-foreground">Telefono</FormLabel>
-                                  <FormControl><Input {...field} placeholder="+39..." className="h-10 bg-white dark:bg-[hsl(25,14%,12%)] border-orange-100 dark:border-[hsl(25,12%,20%)] rounded-xl" /></FormControl>
+                                  <FormControl><Input {...field} placeholder="+39..." className="h-10 bg-white dark:bg-[hsl(25,14%,12%)] border-stone-200 dark:border-[hsl(25,12%,20%)] rounded-xl" /></FormControl>
                                   <FormMessage />
                                 </FormItem>
                               )} />

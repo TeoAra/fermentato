@@ -151,7 +151,7 @@ export default function PrezziPage() {
         {/* ══════════════════════════════════════════ */}
         <div className="mb-16">
           <div className="flex items-center gap-3 mb-8">
-            <div className="w-10 h-10 bg-orange-100 dark:bg-orange-900/40 rounded-xl flex items-center justify-center">
+            <div className="w-10 h-10 bg-stone-100 dark:bg-orange-900/40 rounded-xl flex items-center justify-center">
               <Building2 className="w-5 h-5 text-orange-600" />
             </div>
             <div>
@@ -162,7 +162,7 @@ export default function PrezziPage() {
 
           {/* Single free + verified card */}
           <div className="max-w-md mx-auto mb-8">
-            <Card className="border-2 border-orange-300 dark:border-orange-700 shadow-xl shadow-orange-50 dark:shadow-orange-900/10">
+            <Card className="border-2 border-orange-300 dark:border-stone-600 shadow-xl shadow-orange-50 dark:shadow-orange-900/10">
               <div className="bg-gradient-to-r from-orange-500 to-amber-500 rounded-t-xl px-6 py-5 text-white">
                 <div className="flex items-center justify-between mb-2">
                   <div className="flex items-center gap-2">
@@ -212,7 +212,7 @@ export default function PrezziPage() {
           </div>
 
           {/* Info box */}
-          <div className="bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800 rounded-xl p-4 mb-8 max-w-2xl mx-auto">
+          <div className="bg-stone-50 dark:bg-orange-900/20 border border-stone-300 dark:border-stone-700 rounded-xl p-4 mb-8 max-w-2xl mx-auto">
             <div className="flex gap-3">
               <Shield className="w-5 h-5 text-orange-500 flex-shrink-0 mt-0.5" />
               <div>

@@ -88,10 +88,10 @@ export default function AdminAdditionRequests() {
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
-      <div className="sticky top-0 z-20 bg-white dark:bg-[hsl(25,14%,10%)] border-b border-orange-50 dark:border-[hsl(25,12%,16%)] shadow-sm">
+      <div className="sticky top-0 z-20 bg-white dark:bg-[hsl(25,14%,10%)] border-b border-stone-100 dark:border-[hsl(25,12%,16%)] shadow-sm">
         <div className="flex items-center gap-3 px-4 py-3 max-w-3xl mx-auto">
           <Link href="/admin">
-            <button className="p-2 rounded-full hover:bg-orange-50 dark:hover:bg-orange-950/20 transition-colors">
+            <button className="p-2 rounded-full hover:bg-stone-50 dark:hover:bg-stone-900/20 transition-colors">
               <ArrowLeft className="h-5 w-5 text-primary" />
             </button>
           </Link>
@@ -100,10 +100,10 @@ export default function AdminAdditionRequests() {
             <p className="text-xs text-muted-foreground">Birre e birrifici proposti dagli utenti</p>
           </div>
           <Select value={statusFilter} onValueChange={setStatusFilter}>
-            <SelectTrigger className="w-32 h-9 border-orange-100 rounded-xl focus:ring-primary/20">
+            <SelectTrigger className="w-32 h-9 border-stone-200 rounded-xl focus:ring-primary/20">
               <SelectValue />
             </SelectTrigger>
-            <SelectContent className="rounded-xl border-orange-100">
+            <SelectContent className="rounded-xl border-stone-200">
               <SelectItem value="pending">In attesa</SelectItem>
               <SelectItem value="approved">Approvate</SelectItem>
               <SelectItem value="rejected">Rifiutate</SelectItem>
@@ -118,7 +118,7 @@ export default function AdminAdditionRequests() {
             <Loader2 className="h-8 w-8 animate-spin text-primary" />
           </div>
         ) : requests.length === 0 ? (
-          <div className="text-center py-20 bg-white dark:bg-[hsl(25,14%,10%)] border border-orange-50 dark:border-[hsl(25,12%,16%)] rounded-2xl shadow-sm">
+          <div className="text-center py-20 bg-white dark:bg-[hsl(25,14%,10%)] border border-stone-100 dark:border-[hsl(25,12%,16%)] rounded-2xl shadow-sm">
             <CheckCircle className="h-12 w-12 text-muted-foreground/30 mx-auto mb-3" />
             <p className="text-muted-foreground font-medium">Nessuna richiesta {statusFilter === 'pending' ? 'in attesa' : statusFilter === 'approved' ? 'approvata' : 'rifiutata'}</p>
           </div>
@@ -128,20 +128,20 @@ export default function AdminAdditionRequests() {
               const isExpanded = expandedId === r.id;
               const name = getName(r);
               return (
-                <div key={r.id} className="bg-white dark:bg-[hsl(25,14%,10%)] rounded-2xl border border-orange-50 dark:border-[hsl(25,12%,16%)] shadow-sm overflow-hidden transition-all">
+                <div key={r.id} className="bg-white dark:bg-[hsl(25,14%,10%)] rounded-2xl border border-stone-100 dark:border-[hsl(25,12%,16%)] shadow-sm overflow-hidden transition-all">
                   <div className="p-4">
                     <div className="flex items-start gap-3">
-                      <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 border border-orange-50 dark:border-orange-900/50 ${r.type === 'beer' ? 'bg-orange-50 dark:bg-orange-950/20' : 'bg-blue-50 dark:bg-blue-900/20'}`}>
+                      <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 border border-stone-100 dark:border-stone-700/50 ${r.type === 'beer' ? 'bg-stone-50 dark:bg-stone-900/20' : 'bg-blue-50 dark:bg-blue-900/20'}`}>
                         {r.type === 'beer' ? <Beer className="h-5 w-5 text-primary" /> : <Building2 className="h-5 w-5 text-blue-600 dark:text-blue-400" />}
                       </div>
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 flex-wrap">
-                          <Badge className={`text-xs rounded-full font-medium ${r.type === 'beer' ? 'bg-orange-50 text-primary border-orange-100 dark:bg-orange-950/40 dark:text-orange-400' : 'bg-blue-50 text-blue-700 border-blue-100 dark:bg-blue-900/40 dark:text-blue-400'}`} variant="outline">
+                          <Badge className={`text-xs rounded-full font-medium ${r.type === 'beer' ? 'bg-stone-50 text-primary border-stone-200 dark:bg-stone-900/40 dark:text-orange-400' : 'bg-blue-50 text-blue-700 border-blue-100 dark:bg-blue-900/40 dark:text-blue-400'}`} variant="outline">
                             {r.type === 'beer' ? 'Birra' : 'Birrificio'}
                           </Badge>
                           {r.status === 'approved' && <Badge className="bg-emerald-50 text-emerald-700 dark:bg-emerald-950/20 dark:text-emerald-400 text-xs rounded-full font-medium border-emerald-100 dark:border-emerald-900/50">Approvata</Badge>}
                           {r.status === 'rejected' && <Badge className="bg-destructive/10 text-destructive dark:bg-destructive/20 text-xs rounded-full font-medium border-destructive/20">Rifiutata</Badge>}
-                          {r.status === 'pending' && <Badge className="bg-orange-50 text-primary dark:bg-orange-950/20 dark:text-orange-400 text-xs rounded-full font-medium border-orange-100 dark:border-orange-900/50">In attesa</Badge>}
+                          {r.status === 'pending' && <Badge className="bg-stone-50 text-primary dark:bg-stone-900/20 dark:text-orange-400 text-xs rounded-full font-medium border-stone-200 dark:border-stone-700/50">In attesa</Badge>}
                         </div>
                         <p className="font-bold text-foreground mt-1 truncate">{name || "—"}</p>
                         <div className="flex items-center gap-3 mt-1 text-xs text-muted-foreground">
@@ -150,16 +150,16 @@ export default function AdminAdditionRequests() {
                         </div>
                         {/* Quick info pills */}
                         <div className="flex flex-wrap gap-1.5 mt-2">
-                          {r.style && <span className="text-xs bg-orange-50/50 dark:bg-orange-950/10 text-primary dark:text-orange-400 px-2.5 py-0.5 rounded-full font-medium border border-orange-50 dark:border-orange-900/30">{r.style}</span>}
-                          {r.abv && <span className="text-xs bg-orange-50/50 dark:bg-orange-950/10 text-primary dark:text-orange-400 px-2.5 py-0.5 rounded-full font-medium border border-orange-50 dark:border-orange-900/30">{r.abv}%</span>}
-                          {r.city && <span className="text-xs bg-orange-50/50 dark:bg-orange-950/10 text-primary dark:text-orange-400 px-2.5 py-0.5 rounded-full font-medium border border-orange-50 dark:border-orange-900/30">{r.city}</span>}
-                          {r.country && r.country !== 'Italia' && <span className="text-xs bg-orange-50/50 dark:bg-orange-950/10 text-primary dark:text-orange-400 px-2.5 py-0.5 rounded-full font-medium border border-orange-50 dark:border-orange-900/30">{r.country}</span>}
+                          {r.style && <span className="text-xs bg-stone-50/50 dark:bg-stone-900/10 text-primary dark:text-orange-400 px-2.5 py-0.5 rounded-full font-medium border border-stone-100 dark:border-stone-700/30">{r.style}</span>}
+                          {r.abv && <span className="text-xs bg-stone-50/50 dark:bg-stone-900/10 text-primary dark:text-orange-400 px-2.5 py-0.5 rounded-full font-medium border border-stone-100 dark:border-stone-700/30">{r.abv}%</span>}
+                          {r.city && <span className="text-xs bg-stone-50/50 dark:bg-stone-900/10 text-primary dark:text-orange-400 px-2.5 py-0.5 rounded-full font-medium border border-stone-100 dark:border-stone-700/30">{r.city}</span>}
+                          {r.country && r.country !== 'Italia' && <span className="text-xs bg-stone-50/50 dark:bg-stone-900/10 text-primary dark:text-orange-400 px-2.5 py-0.5 rounded-full font-medium border border-stone-100 dark:border-stone-700/30">{r.country}</span>}
                           {r.breweryId && <span className="text-xs bg-blue-50/50 dark:bg-blue-950/10 text-blue-600 dark:text-blue-400 px-2.5 py-0.5 rounded-full font-medium border border-blue-50 dark:border-blue-900/30">Birrificio ID #{r.breweryId}</span>}
                         </div>
                       </div>
                       <button
                         onClick={() => setExpandedId(isExpanded ? null : r.id)}
-                        className="p-1.5 rounded-lg hover:bg-orange-50 dark:hover:bg-orange-950/20 text-muted-foreground transition-colors shrink-0"
+                        className="p-1.5 rounded-lg hover:bg-stone-50 dark:hover:bg-stone-900/20 text-muted-foreground transition-colors shrink-0"
                       >
                         {isExpanded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
                       </button>
@@ -167,7 +167,7 @@ export default function AdminAdditionRequests() {
 
                     {/* Expanded details */}
                     {isExpanded && (
-                      <div className="mt-3 pl-13 space-y-2 text-sm border-t border-orange-50 dark:border-[hsl(25,12%,16%)] pt-3">
+                      <div className="mt-3 pl-13 space-y-2 text-sm border-t border-stone-100 dark:border-[hsl(25,12%,16%)] pt-3">
                         {r.breweryName && r.type === 'beer' && (
                           <p className="text-muted-foreground"><span className="font-bold text-foreground">Birrificio:</span> {r.breweryName}</p>
                         )}
@@ -181,7 +181,7 @@ export default function AdminAdditionRequests() {
                           <p className="text-muted-foreground"><span className="font-bold text-foreground">Note utente:</span> {r.notes}</p>
                         )}
                         {r.adminNotes && (
-                          <div className="bg-orange-50/30 dark:bg-orange-950/5 p-3 rounded-xl border border-orange-50 dark:border-orange-900/30">
+                          <div className="bg-stone-50/30 dark:bg-stone-900/10 p-3 rounded-xl border border-stone-100 dark:border-stone-700/30">
                             <p className="text-muted-foreground"><span className="font-bold text-foreground text-primary">Note admin:</span> {r.adminNotes}</p>
                           </div>
                         )}
@@ -190,7 +190,7 @@ export default function AdminAdditionRequests() {
 
                     {/* Action buttons (only for pending) */}
                     {r.status === 'pending' && (
-                      <div className="flex gap-2 mt-3 pt-3 border-t border-orange-50 dark:border-[hsl(25,12%,16%)]">
+                      <div className="flex gap-2 mt-3 pt-3 border-t border-stone-100 dark:border-[hsl(25,12%,16%)]">
                         <Button
                           size="sm"
                           onClick={() => setApproveId(r.id)}
@@ -202,7 +202,7 @@ export default function AdminAdditionRequests() {
                           size="sm"
                           variant="outline"
                           onClick={() => { setRejectId(r.id); setRejectNote(""); }}
-                          className="flex-1 border-orange-100 dark:border-[hsl(25,12%,20%)] text-destructive hover:bg-orange-50 rounded-xl font-semibold gap-1.5"
+                          className="flex-1 border-stone-200 dark:border-[hsl(25,12%,20%)] text-destructive hover:bg-stone-50 rounded-xl font-semibold gap-1.5"
                         >
                           <XCircle className="h-4 w-4" /> Rifiuta
                         </Button>
@@ -218,7 +218,7 @@ export default function AdminAdditionRequests() {
 
       {/* Approve dialog */}
       <AlertDialog open={approveId !== null} onOpenChange={open => !open && setApproveId(null)}>
-        <AlertDialogContent className="rounded-2xl border-orange-100 dark:border-[hsl(25,12%,20%)]">
+        <AlertDialogContent className="rounded-2xl border-stone-200 dark:border-[hsl(25,12%,20%)]">
           <AlertDialogHeader>
             <AlertDialogTitle className="text-foreground font-bold text-xl">Approva richiesta</AlertDialogTitle>
             <AlertDialogDescription className="text-muted-foreground">
@@ -232,12 +232,12 @@ export default function AdminAdditionRequests() {
               value={approveNote}
               onChange={e => setApproveNote(e.target.value)}
               placeholder="Messaggio per l'utente..."
-              className="mt-1 resize-none border-orange-100 rounded-xl focus-visible:ring-primary/20"
+              className="mt-1 resize-none border-stone-200 rounded-xl focus-visible:ring-primary/20"
               rows={2}
             />
           </div>
           <AlertDialogFooter className="gap-2">
-            <AlertDialogCancel className="rounded-xl border-orange-100 dark:border-[hsl(25,12%,20%)] hover:bg-orange-50">Annulla</AlertDialogCancel>
+            <AlertDialogCancel className="rounded-xl border-stone-200 dark:border-[hsl(25,12%,20%)] hover:bg-stone-50">Annulla</AlertDialogCancel>
             <AlertDialogAction
               onClick={() => approveId !== null && approveMutation.mutate({ id: approveId, adminNotes: approveNote })}
               className="bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-semibold"
@@ -251,7 +251,7 @@ export default function AdminAdditionRequests() {
 
       {/* Reject dialog */}
       <AlertDialog open={rejectId !== null} onOpenChange={open => !open && setRejectId(null)}>
-        <AlertDialogContent className="rounded-2xl border-orange-100 dark:border-[hsl(25,12%,20%)]">
+        <AlertDialogContent className="rounded-2xl border-stone-200 dark:border-[hsl(25,12%,20%)]">
           <AlertDialogHeader>
             <AlertDialogTitle className="text-foreground font-bold text-xl">Rifiuta richiesta</AlertDialogTitle>
             <AlertDialogDescription className="text-muted-foreground">
@@ -265,12 +265,12 @@ export default function AdminAdditionRequests() {
               value={rejectNote}
               onChange={e => setRejectNote(e.target.value)}
               placeholder="es. Già presente nel database, informazioni insufficienti..."
-              className="mt-1 resize-none border-orange-100 rounded-xl focus-visible:ring-primary/20"
+              className="mt-1 resize-none border-stone-200 rounded-xl focus-visible:ring-primary/20"
               rows={3}
             />
           </div>
           <AlertDialogFooter className="gap-2">
-            <AlertDialogCancel className="rounded-xl border-orange-100 dark:border-[hsl(25,12%,20%)] hover:bg-orange-50">Annulla</AlertDialogCancel>
+            <AlertDialogCancel className="rounded-xl border-stone-200 dark:border-[hsl(25,12%,20%)] hover:bg-stone-50">Annulla</AlertDialogCancel>
             <AlertDialogAction
               onClick={() => rejectId !== null && rejectMutation.mutate({ id: rejectId, adminNotes: rejectNote })}
               className="bg-destructive hover:bg-destructive/90 text-white rounded-xl font-semibold"

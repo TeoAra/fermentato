@@ -149,7 +149,7 @@ export default function AdminDuplicates() {
 
   const simColor = (sim: number) => {
     if (sim >= 0.95) return 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400';
-    if (sim >= 0.85) return 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400';
+    if (sim >= 0.85) return 'bg-stone-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400';
     return 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400';
   };
 

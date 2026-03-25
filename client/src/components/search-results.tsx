@@ -74,7 +74,7 @@ export default function SearchResults({ query, onClose }: SearchResultsProps) {
               <li key={`pub-${pub.id}`}>
                 <Link href={`/pub/${pub.slug || pub.id}`}>
                   <div className="flex items-center gap-3 px-4 py-2.5 hover:bg-amber-50 dark:hover:bg-neutral-800 transition-colors cursor-pointer group" onClick={onClose}>
-                    <div className="w-10 h-10 rounded-xl bg-orange-100 dark:bg-orange-900/30 flex items-center justify-center flex-shrink-0 overflow-hidden">
+                    <div className="w-10 h-10 rounded-xl bg-stone-100 dark:bg-orange-900/30 flex items-center justify-center flex-shrink-0 overflow-hidden">
                       {(pub.logoUrl || pub.coverImageUrl || pub.imageUrl) ? (
                         <img src={pub.logoUrl || pub.coverImageUrl || pub.imageUrl} alt="" className="w-10 h-10 rounded-xl object-cover" />
                       ) : (
@@ -85,7 +85,7 @@ export default function SearchResults({ query, onClose }: SearchResultsProps) {
                       <p className="text-sm font-semibold text-gray-900 dark:text-white truncate group-hover:text-amber-600 dark:group-hover:text-amber-400 transition-colors">{pub.name}</p>
                       {pub.address && <p className="text-xs text-gray-500 dark:text-neutral-400 truncate">{pub.address}</p>}
                     </div>
-                    <span className="flex-shrink-0 text-[10px] font-bold uppercase tracking-wide text-orange-500 bg-orange-50 dark:bg-orange-900/20 px-2 py-0.5 rounded-full">Pub</span>
+                    <span className="flex-shrink-0 text-[10px] font-bold uppercase tracking-wide text-orange-500 bg-stone-50 dark:bg-orange-900/20 px-2 py-0.5 rounded-full">Pub</span>
                   </div>
                 </Link>
               </li>

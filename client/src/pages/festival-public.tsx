@@ -181,7 +181,7 @@ function TapCard({ tap, slug, isAuth, isManager, useTokens, tokenName }: {
   return (
     <div className={`bg-white dark:bg-[hsl(25,14%,10%)] rounded-2xl border transition-all ${
       tap.isAvailable
-        ? "border-orange-50 dark:border-[hsl(25,12%,16%)] shadow-sm"
+        ? "border-stone-100 dark:border-[hsl(25,12%,16%)] shadow-sm"
         : "border-gray-100 dark:border-gray-800 opacity-60"
     }`}>
       {/* Collapsed row */}
@@ -193,7 +193,7 @@ function TapCard({ tap, slug, isAuth, isManager, useTokens, tokenName }: {
           {/* Tap number badge */}
           <div className={`w-12 h-12 flex-shrink-0 rounded-2xl flex items-center justify-center font-bold text-sm ${
             tap.isAvailable
-              ? "bg-orange-50 text-primary"
+              ? "bg-stone-50 text-primary"
               : "bg-[hsl(38,14%,93%)] dark:bg-[hsl(25,14%,14%)] text-muted-foreground"
           }`}>
             {tap.tapNumber}
@@ -203,7 +203,7 @@ function TapCard({ tap, slug, isAuth, isManager, useTokens, tokenName }: {
           {imageUrl ? (
             <img src={imageUrl} alt={beerName} className="w-12 h-12 rounded-2xl object-cover flex-shrink-0" />
           ) : (
-            <div className="w-12 h-12 rounded-2xl bg-orange-50 dark:bg-orange-950/20 flex items-center justify-center flex-shrink-0">
+            <div className="w-12 h-12 rounded-2xl bg-stone-50 dark:bg-stone-900/20 flex items-center justify-center flex-shrink-0">
               <Beer className="h-6 w-6 text-primary" />
             </div>
           )}
@@ -245,7 +245,7 @@ function TapCard({ tap, slug, isAuth, isManager, useTokens, tokenName }: {
             )}
 
             <div className="flex flex-wrap items-center gap-1.5 mt-0.5">
-              {style && <Badge variant="secondary" className="text-xs py-0 bg-orange-50 text-primary hover:bg-orange-100">{style}</Badge>}
+              {style && <Badge variant="secondary" className="text-xs py-0 bg-stone-50 text-primary hover:bg-stone-100">{style}</Badge>}
               {abv && (
                 <span className="text-xs text-muted-foreground flex items-center gap-0.5">
                   <Droplets className="h-3 w-3" />{abv}% ABV
@@ -258,7 +258,7 @@ function TapCard({ tap, slug, isAuth, isManager, useTokens, tokenName }: {
                 </span>
               )}
               {hasPrices && (
-                <span className="text-xs bg-orange-50 dark:bg-orange-950/20 text-primary font-bold rounded-full px-2 py-0.5">
+                <span className="text-xs bg-stone-50 dark:bg-stone-900/20 text-primary font-bold rounded-full px-2 py-0.5">
                   {Object.entries(tap.prices!).map(([size, price]) => `${size} ${formatPrice(price, useTokens, tokenName)}`).join(" · ")}
                 </span>
               )}
@@ -280,7 +280,7 @@ function TapCard({ tap, slug, isAuth, isManager, useTokens, tokenName }: {
 
       {/* Expanded content */}
       {expanded && tap.isAvailable && (
-        <div className="px-4 pb-4 border-t border-orange-100 dark:border-[hsl(25,12%,16%)] pt-3">
+        <div className="px-4 pb-4 border-t border-stone-200 dark:border-[hsl(25,12%,16%)] pt-3">
           {/* Notes */}
           {tap.notes && (
             <p className="text-xs text-muted-foreground mb-3">{tap.notes}</p>
@@ -288,7 +288,7 @@ function TapCard({ tap, slug, isAuth, isManager, useTokens, tokenName }: {
 
           {/* Beer description */}
           {hasDescription && (
-            <div className="mb-3 bg-orange-50 dark:bg-orange-950/20 rounded-xl p-3 border border-primary/10">
+            <div className="mb-3 bg-stone-50 dark:bg-stone-900/20 rounded-xl p-3 border border-primary/10">
               <p className="text-xs font-bold text-primary dark:text-orange-400 mb-1 flex items-center gap-1">
                 <Info className="h-3.5 w-3.5" />Descrizione
               </p>
@@ -313,7 +313,7 @@ function TapCard({ tap, slug, isAuth, isManager, useTokens, tokenName }: {
           {isAuth ? (
             <SliderRating tapId={tap.id} slug={slug} current={tap.userRating} avg={tap.avgRating} count={tap.ratingCount} />
           ) : (
-            <div className="flex items-center gap-2 p-3 bg-orange-50 dark:bg-orange-950/20 rounded-xl">
+            <div className="flex items-center gap-2 p-3 bg-stone-50 dark:bg-stone-900/20 rounded-xl">
               {tap.avgRating !== null && tap.ratingCount > 0 && (
                 <div className="flex items-center gap-1 text-xs text-primary dark:text-orange-400">
                   <Star className="h-3.5 w-3.5 fill-current" />
@@ -338,14 +338,14 @@ function FoodCategoryBlock({ category, items }: { category: string; items: Festi
   const available = items.filter(i => i.isAvailable).length;
 
   return (
-    <div className="overflow-hidden rounded-2xl border border-orange-50 dark:border-[hsl(25,12%,16%)] bg-white dark:bg-[hsl(25,14%,10%)] shadow-sm">
+    <div className="overflow-hidden rounded-2xl border border-stone-100 dark:border-[hsl(25,12%,16%)] bg-white dark:bg-[hsl(25,14%,10%)] shadow-sm">
       <button
-        className="w-full flex items-center justify-between px-4 py-3 hover:bg-orange-50/50 dark:hover:bg-white/5 transition-colors text-left"
+        className="w-full flex items-center justify-between px-4 py-3 hover:bg-stone-50/50 dark:hover:bg-white/5 transition-colors text-left"
         onClick={() => setExpanded(e => !e)}
       >
         <div className="flex items-center gap-2">
           <span className="font-bold text-sm text-foreground">{category}</span>
-          <span className="text-xs text-primary bg-orange-50 dark:bg-orange-950/20 px-1.5 py-0.5 rounded-full font-semibold">
+          <span className="text-xs text-primary bg-stone-50 dark:bg-stone-900/20 px-1.5 py-0.5 rounded-full font-semibold">
             {available}/{items.length}
           </span>
         </div>
@@ -372,7 +372,7 @@ function FoodCategoryBlock({ category, items }: { category: string; items: Festi
                   {item.allergens && item.allergens.length > 0 && (
                     <div className="flex flex-wrap gap-1 mt-1.5">
                       {item.allergens.map(a => (
-                        <span key={a} className="text-xs bg-orange-50 dark:bg-orange-950/20 text-primary border border-primary/20 px-1.5 py-0.5 rounded-full font-medium">
+                        <span key={a} className="text-xs bg-stone-50 dark:bg-stone-900/20 text-primary border border-primary/20 px-1.5 py-0.5 rounded-full font-medium">
                           {ALLERGEN_LABELS[a.toLowerCase()] ?? a}
                         </span>
                       ))}
@@ -380,7 +380,7 @@ function FoodCategoryBlock({ category, items }: { category: string; items: Festi
                   )}
                 </div>
                 {item.price && (
-                  <span className="font-bold text-primary text-sm whitespace-nowrap bg-orange-50 dark:bg-orange-950/20 px-2 py-0.5 rounded-full">€{parseFloat(item.price).toFixed(2)}</span>
+                  <span className="font-bold text-primary text-sm whitespace-nowrap bg-stone-50 dark:bg-stone-900/20 px-2 py-0.5 rounded-full">€{parseFloat(item.price).toFixed(2)}</span>
                 )}
               </div>
             </div>
@@ -404,19 +404,19 @@ function RankingsTab({ rankings }: { rankings: FestivalData["rankings"] }) {
   return (
     <div className="space-y-2">
       {rankings.map((t, i) => (
-        <div key={t.tapNumber} className="flex items-center gap-3 bg-white dark:bg-[hsl(25,14%,10%)] rounded-2xl border border-orange-50 dark:border-[hsl(25,12%,16%)] p-3 shadow-sm">
+        <div key={t.tapNumber} className="flex items-center gap-3 bg-white dark:bg-[hsl(25,14%,10%)] rounded-2xl border border-stone-100 dark:border-[hsl(25,12%,16%)] p-3 shadow-sm">
           <div className={`w-8 h-8 flex items-center justify-center rounded-xl text-sm font-bold flex-shrink-0 ${
             i === 0 ? "bg-primary text-white" :
             i === 1 ? "bg-gray-200 text-gray-600" :
-            i === 2 ? "bg-orange-100 text-orange-600" :
-            "bg-orange-50 dark:bg-orange-950/20 text-primary"
+            i === 2 ? "bg-stone-100 text-orange-600" :
+            "bg-stone-50 dark:bg-stone-900/20 text-primary"
           }`}>
             {i + 1}
           </div>
           {t.beerImageUrl ? (
             <img src={t.beerImageUrl} alt={t.beerName} className="w-10 h-10 rounded-xl object-cover flex-shrink-0" />
           ) : (
-            <div className="w-10 h-10 rounded-xl bg-orange-50 dark:bg-orange-950/20 flex items-center justify-center flex-shrink-0">
+            <div className="w-10 h-10 rounded-xl bg-stone-50 dark:bg-stone-900/20 flex items-center justify-center flex-shrink-0">
               <Beer className="h-5 w-5 text-primary" />
             </div>
           )}
@@ -583,7 +583,7 @@ export default function FestivalPublic() {
         <div className="space-y-4">
           {/* Schedule */}
           {festival.schedule && festival.schedule.length > 0 && (
-            <div className="bg-orange-50 dark:bg-orange-950/20 rounded-2xl border border-primary/10 px-4 py-4 shadow-sm">
+            <div className="bg-stone-50 dark:bg-stone-900/20 rounded-2xl border border-primary/10 px-4 py-4 shadow-sm">
               <div className="flex items-center gap-2 text-primary dark:text-orange-400 text-sm font-bold uppercase tracking-wider mb-3">
                 <Clock className="h-4 w-4" />Orari del festival
               </div>
@@ -614,7 +614,7 @@ export default function FestivalPublic() {
             />
             {!isAuthenticated && (
               <a href="/api/login" className="w-full sm:flex-1">
-                <Button variant="outline" className="w-full text-xs font-bold text-primary border-primary/20 hover:bg-orange-50 rounded-xl py-5">
+                <Button variant="outline" className="w-full text-xs font-bold text-primary border-primary/20 hover:bg-stone-50 rounded-xl py-5">
                   Accedi per votare →
                 </Button>
               </a>
@@ -623,9 +623,9 @@ export default function FestivalPublic() {
 
           {/* Informazioni – expandable card */}
           {festival.description && (
-            <div className="rounded-2xl overflow-hidden border border-orange-100 dark:border-[hsl(25,12%,16%)] shadow-sm bg-white dark:bg-[hsl(25,14%,10%)]">
+            <div className="rounded-2xl overflow-hidden border border-stone-200 dark:border-[hsl(25,12%,16%)] shadow-sm bg-white dark:bg-[hsl(25,14%,10%)]">
               <button
-                className="w-full px-4 py-3 flex items-center justify-between text-left hover:bg-orange-50/50 dark:hover:bg-white/5 transition-colors"
+                className="w-full px-4 py-3 flex items-center justify-between text-left hover:bg-stone-50/50 dark:hover:bg-white/5 transition-colors"
                 onClick={() => setDescExpanded(v => !v)}
               >
                 <span className="text-sm font-bold text-foreground flex items-center gap-2">
@@ -637,7 +637,7 @@ export default function FestivalPublic() {
                   : <ChevronDown className="h-4 w-4 text-primary" />}
               </button>
               {descExpanded && (
-                <div className="px-5 py-4 border-t border-orange-50 dark:border-[hsl(25,12%,16%)]">
+                <div className="px-5 py-4 border-t border-stone-100 dark:border-[hsl(25,12%,16%)]">
                   <div
                     className="prose prose-sm dark:prose-invert max-w-none text-foreground/80
                       prose-headings:text-foreground prose-headings:font-bold
@@ -655,7 +655,7 @@ export default function FestivalPublic() {
         {/* Content tabs */}
         <div className="mt-8">
           <Tabs defaultValue="taps">
-            <TabsList className="w-full mb-6 bg-orange-50/50 dark:bg-orange-950/10 p-1 rounded-xl h-12">
+            <TabsList className="w-full mb-6 bg-stone-50/50 dark:bg-stone-900/10 p-1 rounded-xl h-12">
               <TabsTrigger value="taps" className="flex-1 gap-2 rounded-lg data-[state=active]:bg-primary data-[state=active]:text-white font-bold h-10">
                 <Beer className="h-4 w-4" />
                 Birre ({availableCount}/{taps.length})
@@ -681,7 +681,7 @@ export default function FestivalPublic() {
                     placeholder="Cerca per nome, birrificio, stile…"
                     value={search}
                     onChange={e => setSearch(e.target.value)}
-                    className="pl-10 bg-white dark:bg-transparent border-orange-100 dark:border-[hsl(25,12%,16%)] rounded-xl h-11 focus:ring-primary focus:border-primary"
+                    className="pl-10 bg-white dark:bg-transparent border-stone-200 dark:border-[hsl(25,12%,16%)] rounded-xl h-11 focus:ring-primary focus:border-primary"
                   />
                 </div>
                 <Button
@@ -689,7 +689,7 @@ export default function FestivalPublic() {
                   size="default"
                   onClick={() => setShowUnavailable(v => !v)}
                   className={`gap-2 whitespace-nowrap font-bold rounded-xl h-11 px-4 ${
-                    !showUnavailable ? "bg-primary text-white" : "border-orange-100 text-primary hover:bg-orange-50"
+                    !showUnavailable ? "bg-primary text-white" : "border-stone-200 text-primary hover:bg-stone-50"
                   }`}
                 >
                   {showUnavailable ? <XCircle className="h-4 w-4" /> : <CheckCircle2 className="h-4 w-4" />}
@@ -698,7 +698,7 @@ export default function FestivalPublic() {
               </div>
 
               {filteredTaps.length === 0 ? (
-                <div className="text-center py-16 bg-orange-50/20 dark:bg-white/5 rounded-3xl border border-dashed border-orange-200 dark:border-[hsl(25,12%,16%)]">
+                <div className="text-center py-16 bg-stone-50/20 dark:bg-white/5 rounded-3xl border border-dashed border-stone-300 dark:border-[hsl(25,12%,16%)]">
                   <Beer className="h-10 w-10 mx-auto mb-3 opacity-20 text-primary" />
                   <p className="font-bold text-foreground">Nessuna birra trovata</p>
                   <p className="text-sm text-muted-foreground mt-1">Prova a cambiare i termini di ricerca</p>
@@ -715,7 +715,7 @@ export default function FestivalPublic() {
             {festival.showFood && (
               <TabsContent value="food" className="space-y-4">
                 {Object.keys(foodByCategory).length === 0 ? (
-                  <div className="text-center py-16 bg-orange-50/20 dark:bg-white/5 rounded-3xl border border-dashed border-orange-200">
+                  <div className="text-center py-16 bg-stone-50/20 dark:bg-white/5 rounded-3xl border border-dashed border-stone-300">
                     <UtensilsCrossed className="h-10 w-10 mx-auto mb-3 opacity-20 text-primary" />
                     <p className="font-bold text-foreground">Nessuna voce nel menu</p>
                   </div>
@@ -726,7 +726,7 @@ export default function FestivalPublic() {
                     ))}
                   </div>
                 )}
-                <div className="bg-orange-50/50 dark:bg-orange-950/10 p-4 rounded-2xl text-center">
+                <div className="bg-stone-50/50 dark:bg-stone-900/10 p-4 rounded-2xl text-center">
                   <p className="text-xs text-muted-foreground">
                     I prezzi includono IVA · Informare il personale di eventuali allergie
                   </p>
@@ -740,7 +740,7 @@ export default function FestivalPublic() {
           </Tabs>
         </div>
 
-        <div className="text-center py-12 text-xs text-muted-foreground border-t border-orange-50 dark:border-[hsl(25,12%,16%)] mt-12">
+        <div className="text-center py-12 text-xs text-muted-foreground border-t border-stone-100 dark:border-[hsl(25,12%,16%)] mt-12">
           <a href="/" className="font-bold text-primary hover:underline transition-colors">Fermenta.to</a>
           <span className="mx-2">·</span>
           Aggiornato ogni 30 secondi

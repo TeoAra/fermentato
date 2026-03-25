@@ -436,7 +436,7 @@ export default function UserDashboard() {
                 <Store className="mr-3 h-5 w-5 text-orange-600" />
                 <span>Pub</span>
               </div>
-              <Badge variant="outline" className="border-orange-200 text-orange-800">
+              <Badge variant="outline" className="border-stone-300 text-orange-800">
                 {pubFavorites.length}
               </Badge>
             </CardTitle>

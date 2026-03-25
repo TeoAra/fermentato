@@ -352,7 +352,7 @@ export default function PubDashboard() {
           }
           const daysLeft = Math.ceil((trialEnd.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
           return (
-            <Card className={`border-amber-200 dark:border-amber-800 ${daysLeft <= 5 ? 'bg-orange-50 dark:bg-orange-900/20' : 'bg-amber-50 dark:bg-amber-900/20'}`}>
+            <Card className={`border-amber-200 dark:border-amber-800 ${daysLeft <= 5 ? 'bg-stone-50 dark:bg-orange-900/20' : 'bg-amber-50 dark:bg-amber-900/20'}`}>
               <CardContent className="p-4">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                   <div>

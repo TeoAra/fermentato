@@ -75,8 +75,8 @@ const ACTIVITY_TYPES = [
 
 const TYPE_COLORS: Record<string, { bg: string; text: string; border: string }> = {
   user:     { bg: 'bg-blue-50 dark:bg-blue-900/20',    text: 'text-blue-600 dark:text-blue-400',    border: 'border-blue-200 dark:border-blue-800' },
-  pub:      { bg: 'bg-orange-50 dark:bg-orange-950/20', text: 'text-primary dark:text-orange-400', border: 'border-orange-100 dark:border-orange-900' },
-  brewery:  { bg: 'bg-orange-50 dark:bg-orange-950/20',  text: 'text-primary dark:text-orange-400',  border: 'border-orange-100 dark:border-orange-900' },
+  pub:      { bg: 'bg-stone-50 dark:bg-stone-900/20', text: 'text-primary dark:text-orange-400', border: 'border-stone-200 dark:border-stone-700' },
+  brewery:  { bg: 'bg-stone-50 dark:bg-stone-900/20',  text: 'text-primary dark:text-orange-400',  border: 'border-stone-200 dark:border-stone-700' },
   review:   { bg: 'bg-yellow-50 dark:bg-yellow-900/20', text: 'text-yellow-600 dark:text-yellow-400', border: 'border-yellow-200 dark:border-yellow-800' },
   event:    { bg: 'bg-emerald-50 dark:bg-emerald-900/20',  text: 'text-emerald-600 dark:text-emerald-400',  border: 'border-emerald-200 dark:border-emerald-800' },
 };
@@ -158,7 +158,7 @@ export default function AdminAnalytics() {
       <div className="container mx-auto px-4 py-6 max-w-7xl space-y-6">
         <div className="flex items-center gap-4 mb-2">
           <Link href="/admin">
-            <Button variant="outline" size="sm" className="border-orange-100 dark:border-[hsl(25,12%,20%)] hover:bg-orange-50 rounded-xl">
+            <Button variant="outline" size="sm" className="border-stone-200 dark:border-[hsl(25,12%,20%)] hover:bg-stone-50 rounded-xl">
               <ArrowLeft className="w-4 h-4 mr-2" />
               Dashboard Admin
             </Button>
@@ -176,7 +176,7 @@ export default function AdminAnalytics() {
 
         {/* KPI Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          <Card className="bg-white dark:bg-[hsl(25,14%,10%)] border border-orange-50 dark:border-[hsl(25,12%,16%)] rounded-2xl shadow-sm border-l-4 border-l-blue-500">
+          <Card className="bg-white dark:bg-[hsl(25,14%,10%)] border border-stone-100 dark:border-[hsl(25,12%,16%)] rounded-2xl shadow-sm border-l-4 border-l-blue-500">
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
@@ -192,7 +192,7 @@ export default function AdminAnalytics() {
             </CardContent>
           </Card>
 
-          <Card className="bg-white dark:bg-[hsl(25,14%,10%)] border border-orange-50 dark:border-[hsl(25,12%,16%)] rounded-2xl shadow-sm border-l-4 border-l-emerald-500">
+          <Card className="bg-white dark:bg-[hsl(25,14%,10%)] border border-stone-100 dark:border-[hsl(25,12%,16%)] rounded-2xl shadow-sm border-l-4 border-l-emerald-500">
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
@@ -207,7 +207,7 @@ export default function AdminAnalytics() {
             </CardContent>
           </Card>
 
-          <Card className="bg-white dark:bg-[hsl(25,14%,10%)] border border-orange-50 dark:border-[hsl(25,12%,16%)] rounded-2xl shadow-sm border-l-4 border-l-primary">
+          <Card className="bg-white dark:bg-[hsl(25,14%,10%)] border border-stone-100 dark:border-[hsl(25,12%,16%)] rounded-2xl shadow-sm border-l-4 border-l-primary">
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
@@ -223,7 +223,7 @@ export default function AdminAnalytics() {
             </CardContent>
           </Card>
 
-          <Card className="bg-white dark:bg-[hsl(25,14%,10%)] border border-orange-50 dark:border-[hsl(25,12%,16%)] rounded-2xl shadow-sm border-l-4 border-l-purple-500">
+          <Card className="bg-white dark:bg-[hsl(25,14%,10%)] border border-stone-100 dark:border-[hsl(25,12%,16%)] rounded-2xl shadow-sm border-l-4 border-l-purple-500">
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
@@ -241,14 +241,14 @@ export default function AdminAnalytics() {
         </div>
 
         {/* ===== ATTIVITÀ RECENTI ===== */}
-        <Card className="bg-white dark:bg-[hsl(25,14%,10%)] border border-orange-50 dark:border-[hsl(25,12%,16%)] rounded-2xl shadow-sm">
-          <CardHeader className="pb-3 border-b border-orange-50 dark:border-[hsl(25,12%,16%)]">
+        <Card className="bg-white dark:bg-[hsl(25,14%,10%)] border border-stone-100 dark:border-[hsl(25,12%,16%)] rounded-2xl shadow-sm">
+          <CardHeader className="pb-3 border-b border-stone-100 dark:border-[hsl(25,12%,16%)]">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
               <CardTitle className="flex items-center gap-2 font-bold text-foreground">
                 <Activity className="w-5 h-5 text-primary" />
                 Attività Recenti
                 {activityLoading && <Loader2 className="w-4 h-4 animate-spin text-muted-foreground ml-1" />}
-                <Badge variant="secondary" className="ml-1 bg-orange-50 text-primary dark:bg-orange-950/20">{recentActivity.length}</Badge>
+                <Badge variant="secondary" className="ml-1 bg-stone-50 text-primary dark:bg-stone-900/20">{recentActivity.length}</Badge>
               </CardTitle>
               {/* Type filters */}
               <div className="flex flex-wrap gap-1.5">
@@ -259,7 +259,7 @@ export default function AdminAnalytics() {
                     className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border transition-all ${
                       activityType === key
                         ? 'bg-primary text-white border-primary shadow-sm'
-                        : 'bg-white dark:bg-[hsl(25,14%,12%)] text-muted-foreground border-orange-100 dark:border-[hsl(25,12%,20%)] hover:border-primary/50 hover:text-primary'
+                        : 'bg-white dark:bg-[hsl(25,14%,12%)] text-muted-foreground border-stone-200 dark:border-[hsl(25,12%,20%)] hover:border-primary/50 hover:text-primary'
                     }`}
                   >
                     <Icon className="w-3 h-3" />
@@ -281,7 +281,7 @@ export default function AdminAnalytics() {
                 {recentActivity.map((activity, index) => (
                   <div
                     key={index}
-                    className="flex items-center gap-3 px-3 py-2.5 rounded-xl border border-transparent hover:bg-orange-50/30 dark:hover:bg-orange-950/10 hover:border-orange-100 dark:hover:border-[hsl(25,12%,20%)] transition-all group cursor-pointer"
+                    className="flex items-center gap-3 px-3 py-2.5 rounded-xl border border-transparent hover:bg-stone-50/30 dark:hover:bg-stone-900/10 hover:border-stone-200 dark:hover:border-[hsl(25,12%,20%)] transition-all group cursor-pointer"
                     onClick={() => { if (activity.link) navigate(activity.link); }}
                   >
                     {/* Type icon */}
@@ -324,7 +324,7 @@ export default function AdminAnalytics() {
                 ))}
 
                 {/* Expand / load more */}
-                <div className="flex items-center justify-between pt-3 mt-2 border-t border-orange-50 dark:border-[hsl(25,12%,16%)]">
+                <div className="flex items-center justify-between pt-3 mt-2 border-t border-stone-100 dark:border-[hsl(25,12%,16%)]">
                   <span className="text-xs text-muted-foreground">
                     Mostrando {recentActivity.length} attività
                   </span>
@@ -334,7 +334,7 @@ export default function AdminAnalytics() {
                         key={extra}
                         variant="outline"
                         size="sm"
-                        className="h-7 text-xs px-2.5 border-orange-100 dark:border-[hsl(25,12%,20%)] hover:bg-orange-50 rounded-xl"
+                        className="h-7 text-xs px-2.5 border-stone-200 dark:border-[hsl(25,12%,20%)] hover:bg-stone-50 rounded-xl"
                         onClick={() => setActivityLimit(prev => prev + extra)}
                         disabled={activityLoading}
                       >
@@ -351,8 +351,8 @@ export default function AdminAnalytics() {
         {/* Top Performance Section */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Top Stili Birre */}
-          <Card className="bg-white dark:bg-[hsl(25,14%,10%)] border border-orange-50 dark:border-[hsl(25,12%,16%)] rounded-2xl shadow-sm">
-            <CardHeader className="border-b border-orange-50 dark:border-[hsl(25,12%,16%)]">
+          <Card className="bg-white dark:bg-[hsl(25,14%,10%)] border border-stone-100 dark:border-[hsl(25,12%,16%)] rounded-2xl shadow-sm">
+            <CardHeader className="border-b border-stone-100 dark:border-[hsl(25,12%,16%)]">
               <CardTitle className="flex items-center gap-2 font-bold text-foreground">
                 <BarChart3 className="w-5 h-5 text-primary" />
                 Top Stili di Birre
@@ -361,7 +361,7 @@ export default function AdminAnalytics() {
             <CardContent className="pt-4">
               <div className="space-y-4">
                 {globalStats?.topStyles?.slice(0, 6).map((style, index) => (
-                  <div key={style.style} className="flex items-center justify-between p-3 rounded-xl bg-orange-50/30 dark:bg-orange-950/10">
+                  <div key={style.style} className="flex items-center justify-between p-3 rounded-xl bg-stone-50/30 dark:bg-stone-900/10">
                     <div className="flex items-center gap-3">
                       <div className="w-8 h-8 rounded-full bg-gradient-to-r from-primary to-orange-400 flex items-center justify-center text-white font-bold text-sm">
                         #{index + 1}
@@ -379,8 +379,8 @@ export default function AdminAnalytics() {
           </Card>
 
           {/* Top Birrifici */}
-          <Card className="bg-white dark:bg-[hsl(25,14%,10%)] border border-orange-50 dark:border-[hsl(25,12%,16%)] rounded-2xl shadow-sm">
-            <CardHeader className="border-b border-orange-50 dark:border-[hsl(25,12%,16%)]">
+          <Card className="bg-white dark:bg-[hsl(25,14%,10%)] border border-stone-100 dark:border-[hsl(25,12%,16%)] rounded-2xl shadow-sm">
+            <CardHeader className="border-b border-stone-100 dark:border-[hsl(25,12%,16%)]">
               <CardTitle className="flex items-center gap-2 font-bold text-foreground">
                 <Globe className="w-5 h-5 text-primary" />
                 Birrifici più Produttivi
@@ -389,7 +389,7 @@ export default function AdminAnalytics() {
             <CardContent className="pt-4">
               <div className="space-y-4">
                 {globalStats?.topBreweries?.slice(0, 6).map((brewery, index) => (
-                  <div key={brewery.breweryName} className="flex items-center justify-between p-3 rounded-xl bg-orange-50/30 dark:bg-orange-950/10">
+                  <div key={brewery.breweryName} className="flex items-center justify-between p-3 rounded-xl bg-stone-50/30 dark:bg-stone-900/10">
                     <div className="flex items-center gap-3">
                       <div className="w-8 h-8 rounded-full bg-gradient-to-r from-blue-400 to-purple-500 flex items-center justify-center text-white font-bold text-sm">
                         #{index + 1}
@@ -413,8 +413,8 @@ export default function AdminAnalytics() {
         {/* Aggiornamenti Recenti e Insights */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Insights Rapidi */}
-          <Card className="bg-white dark:bg-[hsl(25,14%,10%)] border border-orange-50 dark:border-[hsl(25,12%,16%)] rounded-2xl shadow-sm">
-            <CardHeader className="border-b border-orange-50 dark:border-[hsl(25,12%,16%)]">
+          <Card className="bg-white dark:bg-[hsl(25,14%,10%)] border border-stone-100 dark:border-[hsl(25,12%,16%)] rounded-2xl shadow-sm">
+            <CardHeader className="border-b border-stone-100 dark:border-[hsl(25,12%,16%)]">
               <CardTitle className="flex items-center gap-2 font-bold text-foreground">
                 <TrendingUp className="w-5 h-5 text-primary" />
                 Insights Rapidi
@@ -439,7 +439,7 @@ export default function AdminAnalytics() {
                   Database copre 20+ paesi con 293 stili unici
                 </p>
               </div>
-              <div className="p-3 rounded-xl bg-orange-50 dark:bg-orange-950/20 border border-orange-100 dark:border-orange-900/50">
+              <div className="p-3 rounded-xl bg-stone-50 dark:bg-stone-900/20 border border-stone-200 dark:border-stone-700/50">
                 <div className="flex items-center gap-2 text-primary dark:text-orange-400 mb-1">
                   <Activity className="w-4 h-4" />
                   <span className="font-bold">Qualità Dati</span>
@@ -452,8 +452,8 @@ export default function AdminAnalytics() {
           </Card>
 
           {/* Sistema Status */}
-          <Card className="bg-white dark:bg-[hsl(25,14%,10%)] border border-orange-50 dark:border-[hsl(25,12%,16%)] rounded-2xl shadow-sm">
-            <CardHeader className="border-b border-orange-50 dark:border-[hsl(25,12%,16%)]">
+          <Card className="bg-white dark:bg-[hsl(25,14%,10%)] border border-stone-100 dark:border-[hsl(25,12%,16%)] rounded-2xl shadow-sm">
+            <CardHeader className="border-b border-stone-100 dark:border-[hsl(25,12%,16%)]">
               <CardTitle className="flex items-center gap-2 font-bold text-foreground">
                 <Activity className="w-5 h-5 text-primary" />
                 Stato Sistema
@@ -470,7 +470,7 @@ export default function AdminAnalytics() {
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-sm font-medium text-foreground">Ultimo Backup</span>
-                <Badge variant="secondary" className="bg-orange-50 text-primary dark:bg-orange-950/20 font-bold">2 ore fa</Badge>
+                <Badge variant="secondary" className="bg-stone-50 text-primary dark:bg-stone-900/20 font-bold">2 ore fa</Badge>
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-sm font-medium text-foreground">Uptime</span>
@@ -480,8 +480,8 @@ export default function AdminAnalytics() {
           </Card>
 
           {/* Aggiornamenti Recenti */}
-          <Card className="bg-white dark:bg-[hsl(25,14%,10%)] border border-orange-50 dark:border-[hsl(25,12%,16%)] rounded-2xl shadow-sm">
-            <CardHeader className="border-b border-orange-50 dark:border-[hsl(25,12%,16%)]">
+          <Card className="bg-white dark:bg-[hsl(25,14%,10%)] border border-stone-100 dark:border-[hsl(25,12%,16%)] rounded-2xl shadow-sm">
+            <CardHeader className="border-b border-stone-100 dark:border-[hsl(25,12%,16%)]">
               <CardTitle className="flex items-center gap-2 font-bold text-foreground">
                 <Calendar className="w-5 h-5 text-primary" />
                 Aggiornamenti Recenti
@@ -517,8 +517,8 @@ export default function AdminAnalytics() {
         </div>
 
         {/* Database Global Overview */}
-        <Card className="bg-white dark:bg-[hsl(25,14%,10%)] border border-orange-50 dark:border-[hsl(25,12%,16%)] rounded-2xl shadow-sm">
-          <CardHeader className="border-b border-orange-50 dark:border-[hsl(25,12%,16%)]">
+        <Card className="bg-white dark:bg-[hsl(25,14%,10%)] border border-stone-100 dark:border-[hsl(25,12%,16%)] rounded-2xl shadow-sm">
+          <CardHeader className="border-b border-stone-100 dark:border-[hsl(25,12%,16%)]">
             <CardTitle className="flex items-center gap-2 font-bold text-foreground">
               <Globe className="w-5 h-5 text-primary" />
               Panoramica Database Globale
@@ -540,7 +540,7 @@ export default function AdminAnalytics() {
                 <p className="text-sm font-bold text-emerald-700 dark:text-emerald-300 uppercase tracking-wider">Birrifici</p>
                 <p className="text-xs text-emerald-600/70 dark:text-emerald-400/70 mt-1 font-medium">Produttori censiti</p>
               </div>
-              <div className="text-center p-6 rounded-2xl bg-gradient-to-br from-orange-50 to-orange-100 dark:from-orange-900/20 dark:to-orange-800/20 border border-orange-100 dark:border-orange-900/50">
+              <div className="text-center p-6 rounded-2xl bg-gradient-to-br from-orange-50 to-orange-100 dark:from-orange-900/20 dark:to-orange-800/20 border border-stone-200 dark:border-stone-700/50">
                 <div className="text-4xl font-black text-primary dark:text-orange-400 mb-2">
                   {globalStats?.uniqueStyles || '—'}
                 </div>

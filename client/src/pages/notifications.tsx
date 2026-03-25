@@ -20,7 +20,7 @@ function getNotificationIcon(type: string) {
   switch (type) {
     case 'new_beer':
     case 'tap_change':
-      return { icon: <Beer className={`${base} text-orange-600`} />, bg: 'bg-orange-50 dark:bg-orange-950/30' };
+      return { icon: <Beer className={`${base} text-orange-600`} />, bg: 'bg-stone-50 dark:bg-stone-900/30' };
     case 'beer_removed':
       return { icon: <Beer className={`${base} text-red-500`} />, bg: 'bg-red-50 dark:bg-red-950/30' };
     case 'event':
@@ -168,7 +168,7 @@ export default function Notifications() {
     return (
       <div className="max-w-2xl mx-auto px-4 py-8 pb-24 space-y-4">
         {[...Array(4)].map((_, i) => (
-          <div key={i} className="h-20 bg-orange-50/80 dark:bg-orange-950/10 rounded-2xl animate-pulse" />
+          <div key={i} className="h-20 bg-stone-50/80 dark:bg-stone-900/10 rounded-2xl animate-pulse" />
         ))}
       </div>
     );
@@ -201,7 +201,7 @@ export default function Notifications() {
             <button
               onClick={() => markAllReadMutation.mutate()}
               disabled={markAllReadMutation.isPending}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-orange-50 dark:bg-orange-950/20 text-primary hover:bg-orange-100 transition-colors"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-stone-50 dark:bg-stone-900/20 text-primary hover:bg-stone-100 transition-colors"
             >
               {markAllReadMutation.isPending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <CheckCheck className="h-3.5 w-3.5" />}
               Segna lette
@@ -209,7 +209,7 @@ export default function Notifications() {
           )}
           <button
             onClick={() => setShowSettings(s => !s)}
-            className={`p-2 rounded-xl transition-colors ${showSettings ? 'bg-primary text-white' : 'bg-orange-50 dark:bg-orange-950/20 text-primary hover:bg-orange-100'}`}
+            className={`p-2 rounded-xl transition-colors ${showSettings ? 'bg-primary text-white' : 'bg-stone-50 dark:bg-stone-900/20 text-primary hover:bg-stone-100'}`}
           >
             {showSettings ? <X className="h-4 w-4" /> : <Settings className="h-4 w-4" />}
           </button>
@@ -265,8 +265,8 @@ export default function Notifications() {
 
       {/* Settings panel */}
       {showSettings && (
-        <div className="rounded-2xl border border-orange-50 dark:border-[hsl(25,12%,16%)] bg-white dark:bg-[hsl(25,14%,10%)] shadow-[0_4px_20px_rgba(247,113,4,0.06)] overflow-hidden">
-          <div className="px-5 py-4 border-b border-orange-50 dark:border-[hsl(25,12%,16%)] bg-[#FFF8F2] dark:bg-orange-950/10">
+        <div className="rounded-2xl border border-stone-100 dark:border-[hsl(25,12%,16%)] bg-white dark:bg-[hsl(25,14%,10%)] shadow-[0_4px_20px_rgba(247,113,4,0.06)] overflow-hidden">
+          <div className="px-5 py-4 border-b border-stone-100 dark:border-[hsl(25,12%,16%)] bg-[#FFF8F2] dark:bg-stone-900/10">
             <h2 className="font-bold text-foreground text-sm">Preferenze notifiche</h2>
           </div>
           <div className="p-5 space-y-5">
@@ -292,7 +292,7 @@ export default function Notifications() {
               disabled={updatePrefsMutation.isPending}
             />
 
-            <div className="border-t border-orange-50 dark:border-[hsl(25,12%,16%)] pt-4">
+            <div className="border-t border-stone-100 dark:border-[hsl(25,12%,16%)] pt-4">
               <div className="flex items-center gap-2 mb-1">
                 <CalendarDays className="h-4 w-4 text-violet-600" />
                 <span className="text-sm font-bold text-foreground">Festival</span>
@@ -314,7 +314,7 @@ export default function Notifications() {
               </div>
             </div>
 
-            <div className="border-t border-orange-50 dark:border-[hsl(25,12%,16%)] pt-4 flex flex-wrap gap-2">
+            <div className="border-t border-stone-100 dark:border-[hsl(25,12%,16%)] pt-4 flex flex-wrap gap-2">
               {pushStatus?.subscribed && (
                 <button
                   onClick={handleUnsubscribe}
@@ -351,8 +351,8 @@ export default function Notifications() {
               onClick={() => handleClick(n)}
               className={`rounded-2xl border cursor-pointer transition-all duration-200 ${
                 !n.isRead
-                  ? 'bg-white dark:bg-[hsl(25,14%,10%)] border-orange-100 dark:border-orange-900/40 shadow-[0_2px_12px_rgba(247,113,4,0.08)]'
-                  : 'bg-white dark:bg-[hsl(25,14%,10%)] border-orange-50 dark:border-[hsl(25,12%,16%)] hover:border-orange-100'
+                  ? 'bg-white dark:bg-[hsl(25,14%,10%)] border-stone-200 dark:border-stone-700/40 shadow-[0_2px_12px_rgba(247,113,4,0.08)]'
+                  : 'bg-white dark:bg-[hsl(25,14%,10%)] border-stone-100 dark:border-[hsl(25,12%,16%)] hover:border-stone-200'
               } hover:shadow-[0_4px_20px_rgba(247,113,4,0.1)]`}
             >
               <div className="flex items-start gap-3 p-4">
@@ -408,7 +408,7 @@ export default function Notifications() {
         {hasMore && (
           <button
             onClick={() => setShowAll(true)}
-            className="w-full flex items-center justify-center gap-2 py-3 rounded-2xl border border-orange-50 dark:border-[hsl(25,12%,16%)] bg-white dark:bg-[hsl(25,14%,10%)] text-sm font-semibold text-muted-foreground hover:text-foreground hover:border-orange-100 transition-all"
+            className="w-full flex items-center justify-center gap-2 py-3 rounded-2xl border border-stone-100 dark:border-[hsl(25,12%,16%)] bg-white dark:bg-[hsl(25,14%,10%)] text-sm font-semibold text-muted-foreground hover:text-foreground hover:border-stone-200 transition-all"
           >
             <ChevronDown className="h-4 w-4" />
             Mostra di più ({notificationsList.length - NOTIF_PAGE_SIZE} altre)
@@ -416,7 +416,7 @@ export default function Notifications() {
         )}
 
         {notificationsList.length === 0 && (
-          <div className="text-center py-16 rounded-2xl border-2 border-dashed border-orange-100 dark:border-orange-900/30">
+          <div className="text-center py-16 rounded-2xl border-2 border-dashed border-stone-200 dark:border-stone-700/30">
             <div className="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4" style={{ background: 'linear-gradient(135deg, rgba(247,113,4,0.1) 0%, rgba(245,166,35,0.1) 100%)' }}>
               <Bell className="h-8 w-8 text-primary/40" />
             </div>

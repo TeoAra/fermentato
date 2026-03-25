@@ -151,7 +151,7 @@ export default function AdminDashboardNew() {
       <div className="container mx-auto px-4 py-6 max-w-7xl space-y-8">
         <div className="flex items-center gap-4 mb-2">
           <Link href="/">
-            <Button variant="outline" size="sm" className="border-orange-100 dark:border-[hsl(25,12%,20%)] hover:bg-orange-50 rounded-xl">
+            <Button variant="outline" size="sm" className="border-stone-200 dark:border-[hsl(25,12%,20%)] hover:bg-stone-50 rounded-xl">
               <ArrowLeft className="w-4 h-4 mr-2" />
               Home
             </Button>
@@ -191,7 +191,7 @@ export default function AdminDashboardNew() {
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           <Link href="/admin/analytics">
-            <Card className="bg-white dark:bg-[hsl(25,14%,10%)] border border-orange-50 dark:border-[hsl(25,12%,16%)] rounded-2xl shadow-sm hover:shadow-md transition-all duration-300 cursor-pointer border-l-4 border-l-blue-600 group">
+            <Card className="bg-white dark:bg-[hsl(25,14%,10%)] border border-stone-100 dark:border-[hsl(25,12%,16%)] rounded-2xl shadow-sm hover:shadow-md transition-all duration-300 cursor-pointer border-l-4 border-l-blue-600 group">
               <CardContent className="p-6">
                 <div className="flex items-center justify-between">
                   <div>
@@ -210,7 +210,7 @@ export default function AdminDashboardNew() {
           </Link>
 
           <Link href="/admin/content">
-            <Card className="bg-white dark:bg-[hsl(25,14%,10%)] border border-orange-50 dark:border-[hsl(25,12%,16%)] rounded-2xl shadow-sm hover:shadow-md transition-all duration-300 cursor-pointer border-l-4 border-l-primary group">
+            <Card className="bg-white dark:bg-[hsl(25,14%,10%)] border border-stone-100 dark:border-[hsl(25,12%,16%)] rounded-2xl shadow-sm hover:shadow-md transition-all duration-300 cursor-pointer border-l-4 border-l-primary group">
               <CardContent className="p-6">
                 <div className="flex items-center justify-between">
                   <div>
@@ -229,7 +229,7 @@ export default function AdminDashboardNew() {
           </Link>
 
           <Link href="/admin/moderation">
-            <Card className="bg-white dark:bg-[hsl(25,14%,10%)] border border-orange-50 dark:border-[hsl(25,12%,16%)] rounded-2xl shadow-sm hover:shadow-md transition-all duration-300 cursor-pointer border-l-4 border-l-orange-500 group">
+            <Card className="bg-white dark:bg-[hsl(25,14%,10%)] border border-stone-100 dark:border-[hsl(25,12%,16%)] rounded-2xl shadow-sm hover:shadow-md transition-all duration-300 cursor-pointer border-l-4 border-l-orange-500 group">
               <CardContent className="p-6">
                 <div className="flex items-center justify-between">
                   <div>
@@ -248,7 +248,7 @@ export default function AdminDashboardNew() {
           </Link>
 
           <Link href="/admin/suggestions">
-            <Card className="bg-white dark:bg-[hsl(25,14%,10%)] border border-orange-50 dark:border-[hsl(25,12%,16%)] rounded-2xl shadow-sm hover:shadow-md transition-all duration-300 cursor-pointer border-l-4 border-l-amber-500 group relative">
+            <Card className="bg-white dark:bg-[hsl(25,14%,10%)] border border-stone-100 dark:border-[hsl(25,12%,16%)] rounded-2xl shadow-sm hover:shadow-md transition-all duration-300 cursor-pointer border-l-4 border-l-amber-500 group relative">
               <CardContent className="p-6">
                 <div className="flex items-center justify-between">
                   <div>
@@ -272,7 +272,7 @@ export default function AdminDashboardNew() {
           </Link>
 
           <Link href="/admin/addition-requests">
-            <Card className="bg-white dark:bg-[hsl(25,14%,10%)] border border-orange-50 dark:border-[hsl(25,12%,16%)] rounded-2xl shadow-sm hover:shadow-md transition-all duration-300 cursor-pointer border-l-4 border-l-emerald-600 group relative">
+            <Card className="bg-white dark:bg-[hsl(25,14%,10%)] border border-stone-100 dark:border-[hsl(25,12%,16%)] rounded-2xl shadow-sm hover:shadow-md transition-all duration-300 cursor-pointer border-l-4 border-l-emerald-600 group relative">
               <CardContent className="p-6">
                 <div className="flex items-center justify-between">
                   <div>
@@ -296,7 +296,7 @@ export default function AdminDashboardNew() {
           </Link>
 
           <Link href="/admin/users">
-            <Card className="bg-white dark:bg-[hsl(25,14%,10%)] border border-orange-50 dark:border-[hsl(25,12%,16%)] rounded-2xl shadow-sm hover:shadow-md transition-all duration-300 cursor-pointer border-l-4 border-l-purple-500 group">
+            <Card className="bg-white dark:bg-[hsl(25,14%,10%)] border border-stone-100 dark:border-[hsl(25,12%,16%)] rounded-2xl shadow-sm hover:shadow-md transition-all duration-300 cursor-pointer border-l-4 border-l-purple-500 group">
               <CardContent className="p-6">
                 <div className="flex items-center justify-between">
                   <div>
@@ -315,7 +315,7 @@ export default function AdminDashboardNew() {
           </Link>
 
           <Link href="/admin/publican-requests">
-            <Card className="bg-white dark:bg-[hsl(25,14%,10%)] border border-orange-50 dark:border-[hsl(25,12%,16%)] rounded-2xl shadow-sm hover:shadow-md transition-all duration-300 cursor-pointer border-l-4 border-l-primary group relative">
+            <Card className="bg-white dark:bg-[hsl(25,14%,10%)] border border-stone-100 dark:border-[hsl(25,12%,16%)] rounded-2xl shadow-sm hover:shadow-md transition-all duration-300 cursor-pointer border-l-4 border-l-primary group relative">
               <CardContent className="p-6">
                 <div className="flex items-center justify-between">
                   <div>
@@ -344,7 +344,7 @@ export default function AdminDashboardNew() {
           </Link>
 
           <Link href="/admin/pages">
-            <Card className="bg-white dark:bg-[hsl(25,14%,10%)] border border-orange-50 dark:border-[hsl(25,12%,16%)] rounded-2xl shadow-sm hover:shadow-md transition-all duration-300 cursor-pointer border-l-4 border-l-teal-500 group">
+            <Card className="bg-white dark:bg-[hsl(25,14%,10%)] border border-stone-100 dark:border-[hsl(25,12%,16%)] rounded-2xl shadow-sm hover:shadow-md transition-all duration-300 cursor-pointer border-l-4 border-l-teal-500 group">
               <CardContent className="p-6">
                 <div className="flex items-center justify-between">
                   <div>
@@ -363,7 +363,7 @@ export default function AdminDashboardNew() {
           </Link>
 
           <Link href="/admin/subscriptions">
-            <Card className="bg-white dark:bg-[hsl(25,14%,10%)] border border-orange-50 dark:border-[hsl(25,12%,16%)] rounded-2xl shadow-sm hover:shadow-md transition-all duration-300 cursor-pointer border-l-4 border-l-emerald-600 group">
+            <Card className="bg-white dark:bg-[hsl(25,14%,10%)] border border-stone-100 dark:border-[hsl(25,12%,16%)] rounded-2xl shadow-sm hover:shadow-md transition-all duration-300 cursor-pointer border-l-4 border-l-emerald-600 group">
               <CardContent className="p-6">
                 <div className="flex items-center justify-between">
                   <div>
@@ -382,7 +382,7 @@ export default function AdminDashboardNew() {
           </Link>
 
           <Link href="/admin/festivals">
-            <Card className="bg-white dark:bg-[hsl(25,14%,10%)] border border-orange-50 dark:border-[hsl(25,12%,16%)] rounded-2xl shadow-sm hover:shadow-md transition-all duration-300 cursor-pointer border-l-4 border-l-primary group">
+            <Card className="bg-white dark:bg-[hsl(25,14%,10%)] border border-stone-100 dark:border-[hsl(25,12%,16%)] rounded-2xl shadow-sm hover:shadow-md transition-all duration-300 cursor-pointer border-l-4 border-l-primary group">
               <CardContent className="p-6">
                 <div className="flex items-center justify-between">
                   <div>
@@ -402,7 +402,7 @@ export default function AdminDashboardNew() {
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <Card className="bg-white dark:bg-[hsl(25,14%,10%)] border border-orange-50 dark:border-[hsl(25,12%,16%)] rounded-2xl shadow-sm">
+          <Card className="bg-white dark:bg-[hsl(25,14%,10%)] border border-stone-100 dark:border-[hsl(25,12%,16%)] rounded-2xl shadow-sm">
             <CardHeader>
               <CardTitle className="flex items-center gap-2 text-foreground">
                 <Activity className="w-5 h-5 text-emerald-600" />
@@ -410,7 +410,7 @@ export default function AdminDashboardNew() {
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="flex items-center justify-between p-4 rounded-xl bg-orange-50/40 dark:bg-orange-950/10 border border-orange-50 dark:border-[hsl(25,12%,16%)]">
+              <div className="flex items-center justify-between p-4 rounded-xl bg-stone-50/40 dark:bg-stone-900/10 border border-stone-100 dark:border-[hsl(25,12%,16%)]">
                 <div className="flex items-center gap-3">
                   <div className="w-3 h-3 bg-emerald-600 rounded-full animate-pulse"></div>
                   <div>
@@ -425,7 +425,7 @@ export default function AdminDashboardNew() {
                 </Badge>
               </div>
 
-              <div className="flex items-center justify-between p-4 rounded-xl bg-orange-50/40 dark:bg-orange-950/10 border border-orange-50 dark:border-[hsl(25,12%,16%)]">
+              <div className="flex items-center justify-between p-4 rounded-xl bg-stone-50/40 dark:bg-stone-900/10 border border-stone-100 dark:border-[hsl(25,12%,16%)]">
                 <div className="flex items-center gap-3">
                   <div className="w-3 h-3 bg-blue-600 rounded-full animate-pulse"></div>
                   <div>
@@ -438,7 +438,7 @@ export default function AdminDashboardNew() {
                 </Badge>
               </div>
 
-              <div className="flex items-center justify-between p-4 rounded-xl bg-orange-50/40 dark:bg-orange-950/10 border border-orange-50 dark:border-[hsl(25,12%,16%)]">
+              <div className="flex items-center justify-between p-4 rounded-xl bg-stone-50/40 dark:bg-stone-900/10 border border-stone-100 dark:border-[hsl(25,12%,16%)]">
                 <div className="flex items-center gap-3">
                   <div className="w-3 h-3 bg-purple-500 rounded-full animate-pulse"></div>
                   <div>
@@ -453,7 +453,7 @@ export default function AdminDashboardNew() {
             </CardContent>
           </Card>
 
-          <Card className="bg-white dark:bg-[hsl(25,14%,10%)] border border-orange-50 dark:border-[hsl(25,12%,16%)] rounded-2xl shadow-sm">
+          <Card className="bg-white dark:bg-[hsl(25,14%,10%)] border border-stone-100 dark:border-[hsl(25,12%,16%)] rounded-2xl shadow-sm">
             <CardHeader>
               <CardTitle className="flex items-center justify-between gap-2 text-foreground">
                 <div className="flex items-center gap-2">
@@ -471,13 +471,13 @@ export default function AdminDashboardNew() {
             <CardContent className="space-y-2.5">
               {[
                 { icon: Beer, label: 'Birre', value: adminStats?.totalBeers || globalStats?.totalBeers || 0, color: 'text-emerald-600', bgColor: 'bg-emerald-50 dark:bg-emerald-950/10' },
-                { icon: Building2, label: 'Birrifici', value: adminStats?.totalBreweries || globalStats?.totalBreweries || 0, color: 'text-primary', bgColor: 'bg-orange-50 dark:bg-orange-950/10' },
-                { icon: Store, label: 'Pub', value: adminStats?.totalPubs || 0, color: 'text-primary', bgColor: 'bg-orange-50 dark:bg-orange-950/10' },
+                { icon: Building2, label: 'Birrifici', value: adminStats?.totalBreweries || globalStats?.totalBreweries || 0, color: 'text-primary', bgColor: 'bg-stone-50 dark:bg-stone-900/10' },
+                { icon: Store, label: 'Pub', value: adminStats?.totalPubs || 0, color: 'text-primary', bgColor: 'bg-stone-50 dark:bg-stone-900/10' },
                 { icon: Users, label: 'Utenti', value: adminStats?.totalUsers || 0, color: 'text-blue-600', bgColor: 'bg-blue-50 dark:bg-blue-950/10' },
                 { icon: Star, label: 'Recensioni', value: adminStats?.totalReviews || 0, color: 'text-amber-500', bgColor: 'bg-amber-50 dark:bg-amber-950/10' },
                 { icon: CalendarDays, label: 'Eventi', value: adminStats?.totalEvents || 0, color: 'text-purple-500', bgColor: 'bg-purple-50 dark:bg-purple-950/10' },
               ].map(({ icon: Icon, label, value, color, bgColor }) => (
-                <div key={label} className={`flex items-center justify-between p-3 rounded-xl ${bgColor} border border-orange-50/50 dark:border-[hsl(25,12%,16%)]/50`}>
+                <div key={label} className={`flex items-center justify-between p-3 rounded-xl ${bgColor} border border-stone-100/50 dark:border-[hsl(25,12%,16%)]/50`}>
                   <div className="flex items-center gap-3">
                     <Icon className={`w-5 h-5 ${color}`} />
                     <span className="font-medium text-foreground">{label}</span>
@@ -492,7 +492,7 @@ export default function AdminDashboardNew() {
         </div>
 
         {/* Translation Tool */}
-        <Card className="bg-white dark:bg-[hsl(25,14%,10%)] border border-orange-50 dark:border-[hsl(25,12%,16%)] rounded-2xl shadow-sm">
+        <Card className="bg-white dark:bg-[hsl(25,14%,10%)] border border-stone-100 dark:border-[hsl(25,12%,16%)] rounded-2xl shadow-sm">
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-foreground">
               <Languages className="w-5 h-5 text-teal-500" />
@@ -527,7 +527,7 @@ export default function AdminDashboardNew() {
                 <Button
                   variant="outline"
                   onClick={() => setTranslateOffset(prev => prev + 10)}
-                  className="border-orange-100 dark:border-[hsl(25,12%,20%)] hover:bg-orange-50 rounded-xl"
+                  className="border-stone-200 dark:border-[hsl(25,12%,20%)] hover:bg-stone-50 rounded-xl"
                 >
                   <SkipForward className="w-4 h-4 mr-2" />
                   Salta 10
@@ -544,7 +544,7 @@ export default function AdminDashboardNew() {
           </CardContent>
         </Card>
 
-        <Card className="bg-white dark:bg-[hsl(25,14%,10%)] border border-orange-50 dark:border-[hsl(25,12%,16%)] rounded-2xl shadow-sm">
+        <Card className="bg-white dark:bg-[hsl(25,14%,10%)] border border-stone-100 dark:border-[hsl(25,12%,16%)] rounded-2xl shadow-sm">
           <CardHeader className="pb-3">
             <div className="flex items-center justify-between">
               <CardTitle className="flex items-center gap-2 text-foreground">
@@ -566,7 +566,7 @@ export default function AdminDashboardNew() {
                       className={`text-xs px-2.5 py-1 rounded-full border transition-colors ${
                         activityFilter === key
                           ? "bg-primary text-white border-primary shadow-sm"
-                          : "border-orange-100 dark:border-[hsl(25,12%,20%)] text-muted-foreground hover:bg-orange-50/60"
+                          : "border-stone-200 dark:border-[hsl(25,12%,20%)] text-muted-foreground hover:bg-stone-50/60"
                       }`}
                     >
                       {label}
@@ -584,10 +584,10 @@ export default function AdminDashboardNew() {
             ) : (
               <div className="space-y-1">
                 {recentActivity.map((item: any, i: number) => (
-                  <div key={i} className="flex items-start gap-3 p-3 rounded-xl hover:bg-orange-50/30 dark:hover:bg-orange-950/10 transition-colors border border-transparent hover:border-orange-50/50">
+                  <div key={i} className="flex items-start gap-3 p-3 rounded-xl hover:bg-stone-50/30 dark:hover:bg-stone-900/10 transition-colors border border-transparent hover:border-stone-100/50">
                     <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5 ${
                       item.icon === 'user' ? 'bg-purple-100 text-purple-700' :
-                      item.icon === 'pub' ? 'bg-orange-50 text-primary' :
+                      item.icon === 'pub' ? 'bg-stone-50 text-primary' :
                       item.icon === 'brewery' ? 'bg-blue-50 text-blue-700' :
                       item.icon === 'review' ? 'bg-yellow-100 text-yellow-700' :
                       'bg-emerald-50 text-emerald-700'
@@ -611,7 +611,7 @@ export default function AdminDashboardNew() {
                       )}
                       {item.link && (
                         <Link href={item.link}>
-                          <Button variant="ghost" size="sm" className="h-6 px-2 text-xs text-muted-foreground hover:text-primary hover:bg-orange-50/60">
+                          <Button variant="ghost" size="sm" className="h-6 px-2 text-xs text-muted-foreground hover:text-primary hover:bg-stone-50/60">
                             <ChevronRight className="w-3 h-3" />
                           </Button>
                         </Link>

@@ -171,7 +171,7 @@ export function ImageUpload({
         onDragLeave={handleDragLeave}
         className={`
           flex items-center gap-4 p-3 rounded-xl border-2 transition-all duration-200
-          ${isDragging ? 'border-orange-400 bg-orange-50 dark:bg-orange-950/30' : 'border-dashed border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600 bg-gray-50/50 dark:bg-gray-800/30'}
+          ${isDragging ? 'border-orange-400 bg-stone-50 dark:bg-stone-900/30' : 'border-dashed border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600 bg-gray-50/50 dark:bg-gray-800/30'}
           ${uploadState === 'error' ? 'border-red-400 bg-red-50 dark:bg-red-950/20' : ''}
           ${uploadState === 'uploading' ? 'border-blue-400 bg-blue-50 dark:bg-blue-950/20' : ''}
           ${disabled ? 'opacity-50 cursor-not-allowed' : ''}

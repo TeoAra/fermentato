@@ -125,10 +125,10 @@ const ModernBeerCard = ({ beer, prices, className = "" }: {
   prices?: any[];
   className?: string;
 }) => (
-  <div className={`bg-white dark:bg-[hsl(25,14%,10%)] rounded-2xl border border-orange-50 dark:border-[hsl(25,12%,16%)] shadow-[0_4px_20px_rgba(247,113,4,0.06)] hover:shadow-[0_6px_24px_rgba(247,113,4,0.12)] hover:border-orange-200 dark:hover:border-orange-800/40 transition-all duration-300 cursor-pointer ${className}`}>
+  <div className={`bg-white dark:bg-[hsl(25,14%,10%)] rounded-2xl border border-stone-100 dark:border-[hsl(25,12%,16%)] shadow-[0_4px_20px_rgba(247,113,4,0.06)] hover:shadow-[0_6px_24px_rgba(247,113,4,0.12)] hover:border-stone-300 dark:hover:border-orange-800/40 transition-all duration-300 cursor-pointer ${className}`}>
     <div className="flex gap-3 p-4">
       <Link href={`/beer/${beer?.id}`} className="flex-shrink-0 self-center">
-        <div className="w-14 h-14 rounded-2xl overflow-hidden bg-gradient-to-br from-orange-50 to-amber-50 dark:from-orange-950/40 dark:to-amber-900/20 flex items-center justify-center border border-orange-100 dark:border-orange-900/30">
+        <div className="w-14 h-14 rounded-2xl overflow-hidden bg-gradient-to-br from-orange-50 to-amber-50 dark:from-orange-950/40 dark:to-amber-900/20 flex items-center justify-center border border-stone-200 dark:border-stone-700/30">
           <ImageWithFallback
             src={beer?.imageUrl || beer?.brewery?.logoUrl}
             alt={beer?.name || 'Beer'}
@@ -643,7 +643,7 @@ export default function PubDetail() {
       </div>
 
       {/* ── INFO BAR ── the most important info, always visible */}
-      <div className="bg-white dark:bg-[hsl(25,14%,10%)] border-b border-orange-50 dark:border-orange-900/30 px-4 py-3">
+      <div className="bg-white dark:bg-[hsl(25,14%,10%)] border-b border-stone-100 dark:border-stone-700/30 px-4 py-3">
         <div className="max-w-7xl mx-auto flex flex-col items-center gap-3">
           {/* Status pills row */}
           <div className="flex items-center gap-2 flex-wrap justify-center">
@@ -654,9 +654,9 @@ export default function PubDetail() {
                 openStatus.status === 'open'
                   ? 'bg-green-50 dark:bg-green-950 text-green-700 dark:text-green-300 border-green-200 dark:border-green-800'
                   : openStatus.status === 'closing_soon'
-                  ? 'bg-orange-50 dark:bg-orange-950/20 text-primary dark:text-orange-400 border-orange-100 dark:border-orange-900/30'
+                  ? 'bg-stone-50 dark:bg-stone-900/20 text-primary dark:text-orange-400 border-stone-200 dark:border-stone-700/30'
                   : openStatus.status === 'opening_soon'
-                  ? 'bg-orange-50 dark:bg-orange-950/20 text-primary dark:text-orange-400 border-orange-100 dark:border-orange-900/30'
+                  ? 'bg-stone-50 dark:bg-stone-900/20 text-primary dark:text-orange-400 border-stone-200 dark:border-stone-700/30'
                   : 'bg-red-50 dark:bg-red-950 text-red-700 dark:text-red-300 border-red-200 dark:border-red-800'
               }`}
               data-testid="button-show-hours"
@@ -678,7 +678,7 @@ export default function PubDetail() {
             {Array.isArray(tapList) && tapList.filter((t: any) => t.isActive && t.isVisible !== false).length > 0 && (
               <button
                 onClick={() => setActiveTab('taplist')}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-semibold bg-orange-50 dark:bg-orange-950/20 text-primary dark:text-orange-400 border border-orange-100 dark:border-orange-900/30 hover:bg-orange-100 dark:hover:bg-orange-950/10 transition-colors"
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-semibold bg-stone-50 dark:bg-stone-900/20 text-primary dark:text-orange-400 border border-stone-200 dark:border-stone-700/30 hover:bg-stone-100 dark:hover:bg-stone-900/10 transition-colors"
               >
                 <Wine className="h-3.5 w-3.5" />
                 {tapList.filter((t: any) => t.isActive && t.isVisible !== false).length} alla spina
@@ -696,7 +696,7 @@ export default function PubDetail() {
               className={`h-9 w-9 flex items-center justify-center rounded-full border transition-all ${
                 isFavorite
                   ? 'bg-red-50 dark:bg-red-950 border-red-200 dark:border-red-800 text-red-500'
-                  : 'bg-orange-50 dark:bg-orange-950/20 border-orange-100 dark:border-orange-900/30 text-primary dark:text-orange-400 hover:border-primary'
+                  : 'bg-stone-50 dark:bg-stone-900/20 border-stone-200 dark:border-stone-700/30 text-primary dark:text-orange-400 hover:border-primary'
               }`}
             >
               <Heart className={`h-4 w-4 ${isFavorite ? 'fill-current' : ''}`} />
@@ -708,7 +708,7 @@ export default function PubDetail() {
                 target="_blank"
                 rel="noopener noreferrer"
                 title="Avvia navigazione"
-                className="h-9 w-9 flex items-center justify-center rounded-full border bg-orange-50 dark:bg-orange-950/20 border-orange-100 dark:border-orange-900/30 text-primary dark:text-orange-400 hover:bg-orange-100 dark:hover:bg-orange-950 transition-colors"
+                className="h-9 w-9 flex items-center justify-center rounded-full border bg-stone-50 dark:bg-stone-900/20 border-stone-200 dark:border-stone-700/30 text-primary dark:text-orange-400 hover:bg-stone-100 dark:hover:bg-stone-900 transition-colors"
               >
                 <Navigation className="h-4 w-4" />
               </a>
@@ -718,7 +718,7 @@ export default function PubDetail() {
               <a
                 href={`tel:${(pub as any).phone}`}
                 title="Chiama"
-                className="h-9 w-9 flex items-center justify-center rounded-full border bg-orange-50 dark:bg-orange-950/20 border-orange-100 dark:border-orange-900/30 text-primary dark:text-orange-400 hover:bg-orange-100 dark:hover:bg-orange-950/30 transition-colors"
+                className="h-9 w-9 flex items-center justify-center rounded-full border bg-stone-50 dark:bg-stone-900/20 border-stone-200 dark:border-stone-700/30 text-primary dark:text-orange-400 hover:bg-stone-100 dark:hover:bg-stone-900/30 transition-colors"
               >
                 <Phone className="h-4 w-4" />
               </a>
@@ -728,7 +728,7 @@ export default function PubDetail() {
               onClick={handleShare}
               title="Condividi"
               data-testid="button-share"
-              className="h-9 w-9 flex items-center justify-center rounded-full border bg-orange-50 dark:bg-orange-950/20 border-orange-100 dark:border-orange-900/30 text-primary dark:text-orange-400 hover:border-primary transition-colors"
+              className="h-9 w-9 flex items-center justify-center rounded-full border bg-stone-50 dark:bg-stone-900/20 border-stone-200 dark:border-stone-700/30 text-primary dark:text-orange-400 hover:border-primary transition-colors"
             >
               <Share2 className="h-4 w-4" />
             </button>
@@ -756,7 +756,7 @@ export default function PubDetail() {
           <div className="lg:col-span-3">
             {/* ── TABS ── pill-container style (come da mockup) */}
             <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-                <div className="z-10 px-4 py-3 bg-background border-b border-orange-50 dark:border-orange-900/30">
+                <div className="z-10 px-4 py-3 bg-background border-b border-stone-100 dark:border-stone-700/30">
                   <div className="flex gap-1 bg-[#FFF8F2] dark:bg-[hsl(25,14%,12%)] rounded-2xl p-1 overflow-x-auto scrollbar-hide">
                     <button
                       data-testid="tab-taplist"
@@ -946,7 +946,7 @@ export default function PubDetail() {
                   {/* Hours */}
                   <button
                     onClick={handleShowOpeningHours}
-                    className="w-full flex items-center gap-3 p-3 rounded-xl bg-white dark:bg-[hsl(25,14%,10%)] border border-orange-50 dark:border-[hsl(25,12%,16%)] hover:bg-amber-50 dark:hover:bg-amber-950/10 transition-colors text-left shadow-sm"
+                    className="w-full flex items-center gap-3 p-3 rounded-xl bg-white dark:bg-[hsl(25,14%,10%)] border border-stone-100 dark:border-[hsl(25,12%,16%)] hover:bg-amber-50 dark:hover:bg-amber-950/10 transition-colors text-left shadow-sm"
                   >
                     <div className="p-2.5 rounded-xl bg-amber-50 dark:bg-amber-950/30 flex-shrink-0">
                       <Clock className="h-4 w-4 text-amber-600 dark:text-amber-400" />
@@ -961,7 +961,7 @@ export default function PubDetail() {
                   </button>
                   {/* Phone */}
                   {(pub as any)?.phone && (
-                    <a href={`tel:${(pub as any).phone}`} className="flex items-center gap-3 p-3 rounded-xl bg-white dark:bg-[hsl(25,14%,10%)] border border-orange-50 dark:border-[hsl(25,12%,16%)] hover:bg-emerald-50 dark:hover:bg-emerald-950/10 transition-colors shadow-sm">
+                    <a href={`tel:${(pub as any).phone}`} className="flex items-center gap-3 p-3 rounded-xl bg-white dark:bg-[hsl(25,14%,10%)] border border-stone-100 dark:border-[hsl(25,12%,16%)] hover:bg-emerald-50 dark:hover:bg-emerald-950/10 transition-colors shadow-sm">
                       <div className="p-2.5 rounded-xl bg-emerald-50 dark:bg-emerald-950/30 flex-shrink-0">
                         <Phone className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
                       </div>
@@ -970,7 +970,7 @@ export default function PubDetail() {
                   )}
                   {/* Website */}
                   {(pub as any)?.websiteUrl && (
-                    <a href={(pub as any).websiteUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 p-3 rounded-xl bg-white dark:bg-[hsl(25,14%,10%)] border border-orange-50 dark:border-[hsl(25,12%,16%)] hover:bg-violet-50 dark:hover:bg-violet-950/10 transition-colors shadow-sm">
+                    <a href={(pub as any).websiteUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 p-3 rounded-xl bg-white dark:bg-[hsl(25,14%,10%)] border border-stone-100 dark:border-[hsl(25,12%,16%)] hover:bg-violet-50 dark:hover:bg-violet-950/10 transition-colors shadow-sm">
                       <div className="p-2.5 rounded-xl bg-violet-50 dark:bg-violet-950/30 flex-shrink-0">
                         <Globe className="h-4 w-4 text-violet-600 dark:text-violet-400" />
                       </div>
@@ -979,7 +979,7 @@ export default function PubDetail() {
                   )}
                   {/* Email */}
                   {(pub as any)?.email && (
-                    <a href={`mailto:${(pub as any).email}`} className="flex items-center gap-3 p-3 rounded-xl bg-white dark:bg-[hsl(25,14%,10%)] border border-orange-50 dark:border-[hsl(25,12%,16%)] hover:bg-blue-50 dark:hover:bg-blue-950/10 transition-colors shadow-sm">
+                    <a href={`mailto:${(pub as any).email}`} className="flex items-center gap-3 p-3 rounded-xl bg-white dark:bg-[hsl(25,14%,10%)] border border-stone-100 dark:border-[hsl(25,12%,16%)] hover:bg-blue-50 dark:hover:bg-blue-950/10 transition-colors shadow-sm">
                       <div className="p-2.5 rounded-xl bg-blue-50 dark:bg-blue-950/30 flex-shrink-0">
                         <Mail className="h-4 w-4 text-blue-600 dark:text-blue-400" />
                       </div>
@@ -1005,7 +1005,7 @@ export default function PubDetail() {
                   )}
                   {/* Description */}
                   {(pub as any)?.description && (
-                    <div className="p-4 rounded-xl bg-white dark:bg-[hsl(25,14%,10%)] border border-orange-50 dark:border-[hsl(25,12%,16%)] shadow-sm">
+                    <div className="p-4 rounded-xl bg-white dark:bg-[hsl(25,14%,10%)] border border-stone-100 dark:border-[hsl(25,12%,16%)] shadow-sm">
                       <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">{(pub as any).description}</p>
                     </div>
                   )}
@@ -1016,8 +1016,8 @@ export default function PubDetail() {
           {/* Sidebar – desktop only */}
           <div className="hidden lg:block space-y-5 pt-4 pl-6 pr-4 sticky top-[136px] self-start">
             {/* Contact Information */}
-            <Card className="bg-white dark:bg-[hsl(25,14%,10%)] rounded-2xl border border-orange-50 dark:border-[hsl(25,12%,16%)] shadow-sm overflow-hidden">
-              <CardHeader className="bg-orange-50/50 dark:bg-orange-950/10 border-b border-orange-50 dark:border-orange-900/30">
+            <Card className="bg-white dark:bg-[hsl(25,14%,10%)] rounded-2xl border border-stone-100 dark:border-[hsl(25,12%,16%)] shadow-sm overflow-hidden">
+              <CardHeader className="bg-stone-50/50 dark:bg-stone-900/10 border-b border-stone-100 dark:border-stone-700/30">
                 <CardTitle className="flex items-center">
                   <Info className="mr-3 h-5 w-5 text-primary" />
                   <span className="text-lg">Informazioni</span>
@@ -1094,7 +1094,7 @@ export default function PubDetail() {
 
                 {/* Social Media */}
                 {((pub as any)?.facebookUrl || (pub as any)?.instagramUrl) && (
-                  <div className="space-y-3 pt-4 border-t border-orange-50 dark:border-orange-900/30">
+                  <div className="space-y-3 pt-4 border-t border-stone-100 dark:border-stone-700/30">
                     <h4 className="font-semibold text-foreground text-sm">Seguici</h4>
                     <div className="flex space-x-3">
                       {(pub as any)?.facebookUrl && (

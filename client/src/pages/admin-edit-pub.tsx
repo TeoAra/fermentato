@@ -10,12 +10,12 @@ export default function AdminEditPub() {
 
   return (
     <div>
-      <div className="p-4 border-b bg-background border-orange-100 dark:border-[hsl(25,12%,16%)]">
+      <div className="p-4 border-b bg-background border-stone-200 dark:border-[hsl(25,12%,16%)]">
         <Button
           variant="ghost"
           size="sm"
           onClick={() => navigate("/admin/content")}
-          className="text-muted-foreground hover:text-primary hover:bg-orange-50 dark:hover:bg-orange-950/20 rounded-xl"
+          className="text-muted-foreground hover:text-primary hover:bg-stone-50 dark:hover:bg-stone-900/20 rounded-xl"
         >
           <ArrowLeft className="w-4 h-4 mr-2" />
           Torna ai contenuti

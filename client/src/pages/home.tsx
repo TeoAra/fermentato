@@ -140,7 +140,7 @@ export default function Home() {
     <div className="min-h-screen bg-background">
       {/* Pull to refresh indicator */}
       {(isPulling || isRefreshing) && (
-        <div className="fixed top-16 left-0 right-0 z-40 flex items-center justify-center py-2.5 bg-orange-50 dark:bg-orange-950/90 border-b border-orange-200 dark:border-orange-800 backdrop-blur-sm">
+        <div className="fixed top-16 left-0 right-0 z-40 flex items-center justify-center py-2.5 bg-stone-50 dark:bg-stone-900/95 border-b border-stone-300 dark:border-stone-700 backdrop-blur-sm">
           {isRefreshing ? (
             <div className="flex items-center gap-2 text-primary dark:text-orange-300 text-xs font-medium">
               <span className="inline-block h-3.5 w-3.5 rounded-full border-2 border-primary border-t-transparent animate-spin" />
@@ -243,7 +243,7 @@ export default function Home() {
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-4 pb-10 lg:pt-6 lg:pb-12">
 
         {locationStatus === 'denied' && (
-          <div className="mb-6 p-4 rounded-2xl bg-orange-50 dark:bg-orange-950/20 border border-orange-100 dark:border-orange-900/30 flex items-center justify-between">
+          <div className="mb-6 p-4 rounded-2xl bg-stone-50 dark:bg-stone-900/20 border border-stone-200 dark:border-stone-700/30 flex items-center justify-between">
             <div className="flex items-center gap-3">
               <Navigation className="w-5 h-5 text-primary flex-shrink-0" />
               <p className="text-sm text-foreground/80">
@@ -254,7 +254,7 @@ export default function Home() {
               variant="outline"
               size="sm"
               onClick={handleRequestLocation}
-              className="border-orange-200 dark:border-orange-800 text-primary hover:bg-orange-100 dark:hover:bg-orange-950/30 rounded-xl flex-shrink-0 ml-3"
+              className="border-stone-300 dark:border-stone-700 text-primary hover:bg-stone-100 dark:hover:bg-stone-900/30 rounded-xl flex-shrink-0 ml-3"
             >
               <Navigation className="w-4 h-4 mr-1" />
               GPS
@@ -271,16 +271,16 @@ export default function Home() {
                 Il Tuo Pub
               </h2>
               <Link href="/dashboard">
-                <Button size="sm" variant="ghost" className="text-primary font-semibold text-sm hover:bg-orange-50 dark:hover:bg-orange-950/20">Dashboard →</Button>
+                <Button size="sm" variant="ghost" className="text-primary font-semibold text-sm hover:bg-stone-50 dark:hover:bg-stone-900/20">Dashboard →</Button>
               </Link>
             </div>
             {pubsLoading ? (
-              <div className="h-24 bg-orange-50 dark:bg-[hsl(25,14%,12%)] rounded-2xl animate-pulse" />
+              <div className="h-24 bg-stone-50 dark:bg-[hsl(25,14%,12%)] rounded-2xl animate-pulse" />
             ) : Array.isArray(myPubs) && myPubs.length > 0 ? (
               <div className="space-y-3">
                 {myPubs.map((pub: any) => (
-                  <div key={pub.id} className="bg-white dark:bg-[hsl(25,14%,10%)] border border-orange-50 dark:border-[hsl(25,12%,16%)] rounded-2xl p-4 flex items-center gap-4 shadow-sm">
-                    <div className="w-16 h-16 rounded-xl overflow-hidden flex-shrink-0 bg-orange-50 dark:bg-[hsl(25,14%,14%)] flex items-center justify-center">
+                  <div key={pub.id} className="bg-white dark:bg-[hsl(25,14%,10%)] border border-stone-100 dark:border-[hsl(25,12%,16%)] rounded-2xl p-4 flex items-center gap-4 shadow-sm">
+                    <div className="w-16 h-16 rounded-xl overflow-hidden flex-shrink-0 bg-stone-50 dark:bg-[hsl(25,14%,14%)] flex items-center justify-center">
                       {(pub.logoUrl || pub.coverImageUrl || pub.imageUrl) ? (
                         <img src={pub.logoUrl || pub.coverImageUrl || pub.imageUrl} alt={pub.name} className="w-16 h-16 object-cover" />
                       ) : (
@@ -296,7 +296,7 @@ export default function Home() {
                       </div>
                       <p className="text-xs text-muted-foreground truncate">{pub.address}</p>
                       {pub.subscriptionStatus && pub.subscriptionStatus !== 'none' && (
-                        <span className="inline-block mt-1 text-[10px] font-semibold text-orange-700 dark:text-orange-300 bg-orange-50 dark:bg-orange-950/30 px-2 py-0.5 rounded-full capitalize">
+                        <span className="inline-block mt-1 text-[10px] font-semibold text-orange-700 dark:text-orange-300 bg-stone-50 dark:bg-stone-900/30 px-2 py-0.5 rounded-full capitalize">
                           {pub.subscriptionStatus === 'trial' ? '⏱ Prova attiva' : pub.subscriptionStatus === 'active' ? '✓ Piano attivo' : pub.subscriptionStatus === 'gifted' ? '🎁 Piano gifted' : pub.subscriptionStatus}
                         </span>
                       )}
@@ -306,14 +306,14 @@ export default function Home() {
                         <Button size="sm" className="font-medium text-xs px-3">Gestisci</Button>
                       </Link>
                       <Link href={`/pub/${pub.slug || pub.id}`}>
-                        <Button size="sm" variant="outline" className="text-xs px-3 w-full border-orange-100 dark:border-orange-900/30 hover:bg-orange-50">Pagina</Button>
+                        <Button size="sm" variant="outline" className="text-xs px-3 w-full border-stone-200 dark:border-stone-700/30 hover:bg-stone-50">Pagina</Button>
                       </Link>
                     </div>
                   </div>
                 ))}
               </div>
             ) : (
-              <div className="bg-orange-50 dark:bg-[hsl(25,14%,11%)] rounded-2xl p-6 text-center">
+              <div className="bg-stone-50 dark:bg-[hsl(25,14%,11%)] rounded-2xl p-6 text-center">
                 <p className="text-muted-foreground text-sm mb-3">Non hai ancora registrato nessun pub</p>
                 <Link href="/registra-pub"><Button size="sm">Registra il tuo pub</Button></Link>
               </div>
@@ -330,7 +330,7 @@ export default function Home() {
                 {userLocation ? 'Pub Vicini' : 'Pub Consigliati'}
               </h2>
               <Link href="/explore/pubs">
-                <Button variant="ghost" size="sm" className="text-primary hover:bg-orange-50 dark:hover:bg-orange-950/20 font-semibold text-sm">
+                <Button variant="ghost" size="sm" className="text-primary hover:bg-stone-50 dark:hover:bg-stone-900/20 font-semibold text-sm">
                   Vedi tutti →
                 </Button>
               </Link>
@@ -338,7 +338,7 @@ export default function Home() {
             {pubsLoading ? (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {[...Array(3)].map((_, i) => (
-                  <div key={i} className="bg-orange-50 dark:bg-[hsl(25,14%,12%)] rounded-2xl h-64 animate-pulse" />
+                  <div key={i} className="bg-stone-50 dark:bg-[hsl(25,14%,12%)] rounded-2xl h-64 animate-pulse" />
                 ))}
               </div>
             ) : (
@@ -364,11 +364,11 @@ export default function Home() {
                 Il Tuo Birrificio
               </h2>
               <Link href="/brewery-dashboard">
-                <Button size="sm" variant="ghost" className="text-primary hover:bg-orange-50 dark:hover:bg-orange-950/20 font-semibold text-sm">Gestisci →</Button>
+                <Button size="sm" variant="ghost" className="text-primary hover:bg-stone-50 dark:hover:bg-stone-900/20 font-semibold text-sm">Gestisci →</Button>
               </Link>
             </div>
-            <div className="bg-white dark:bg-[hsl(25,14%,10%)] border border-orange-50 dark:border-[hsl(25,12%,16%)] rounded-2xl p-4 flex items-center gap-4 shadow-sm">
-              <div className="w-16 h-16 rounded-xl overflow-hidden flex-shrink-0 bg-orange-50 dark:bg-orange-950/20 flex items-center justify-center">
+            <div className="bg-white dark:bg-[hsl(25,14%,10%)] border border-stone-100 dark:border-[hsl(25,12%,16%)] rounded-2xl p-4 flex items-center gap-4 shadow-sm">
+              <div className="w-16 h-16 rounded-xl overflow-hidden flex-shrink-0 bg-stone-50 dark:bg-stone-900/20 flex items-center justify-center">
                 {myBreweryData.brewery.logoUrl ? (
                   <img src={myBreweryData.brewery.logoUrl} alt={myBreweryData.brewery.name} className="w-16 h-16 object-contain" />
                 ) : (
@@ -387,7 +387,7 @@ export default function Home() {
                   <Button size="sm" className="font-medium text-xs px-3">Gestisci</Button>
                 </Link>
                 <Link href={`/brewery/${myBreweryData.brewery.id}`}>
-                  <Button size="sm" variant="outline" className="text-xs px-3 w-full border-orange-100 dark:border-orange-900/30 hover:bg-orange-50">Pagina</Button>
+                  <Button size="sm" variant="outline" className="text-xs px-3 w-full border-stone-200 dark:border-stone-700/30 hover:bg-stone-50">Pagina</Button>
                 </Link>
               </div>
             </div>
@@ -403,7 +403,7 @@ export default function Home() {
                 In Spina Adesso
               </h2>
               <Link href="/explore/pubs">
-                <Button variant="ghost" size="sm" className="text-primary hover:bg-orange-50 dark:hover:bg-orange-950/20 font-semibold text-sm">Vedi tutti →</Button>
+                <Button variant="ghost" size="sm" className="text-primary hover:bg-stone-50 dark:hover:bg-stone-900/20 font-semibold text-sm">Vedi tutti →</Button>
               </Link>
             </div>
             <div className="flex gap-3 overflow-x-auto pb-2 -mx-1 px-1" style={{ scrollbarWidth: "none" }}>
@@ -448,7 +448,7 @@ export default function Home() {
                 Birrifici da Scoprire
               </h2>
               <Link href="/explore/breweries">
-                <Button variant="ghost" size="sm" className="text-primary hover:bg-orange-50 dark:hover:bg-orange-950/20 font-semibold text-sm">Vedi tutti →</Button>
+                <Button variant="ghost" size="sm" className="text-primary hover:bg-stone-50 dark:hover:bg-stone-900/20 font-semibold text-sm">Vedi tutti →</Button>
               </Link>
             </div>
             <div className="flex gap-3 overflow-x-auto pb-2 -mx-1 px-1" style={{ scrollbarWidth: "none" }}>
@@ -495,17 +495,17 @@ export default function Home() {
             <div className="flex gap-3 overflow-x-auto pb-2 -mx-1 px-1" style={{ scrollbarWidth: "none" }}>
               {homeAnnouncements.map((ann: any) => {
                 const typeMap: Record<string, { label: string; color: string; Icon: any }> = {
-                  news:    { label: "Novità",      color: "bg-orange-50 text-primary dark:bg-orange-950/40 dark:text-orange-300",   Icon: Newspaper },
+                  news:    { label: "Novità",      color: "bg-stone-50 text-primary dark:bg-stone-900/40 dark:text-orange-300",   Icon: Newspaper },
                   release: { label: "Nuova Birra", color: "bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300", Icon: Rocket },
-                  collab:  { label: "Collab",      color: "bg-orange-100 text-orange-700 dark:bg-orange-900/40 dark:text-orange-300", Icon: Users },
+                  collab:  { label: "Collab",      color: "bg-stone-100 text-orange-700 dark:bg-orange-900/40 dark:text-orange-300", Icon: Users },
                 };
                 const t = typeMap[ann.type] ?? typeMap.news;
                 return (
                   <Link key={ann.id} href={`/brewery/${ann.breweryId}`}>
-                    <div className="group flex-shrink-0 w-[200px] p-3 rounded-2xl border border-orange-50 dark:border-[hsl(25,12%,16%)] bg-white dark:bg-[hsl(25,12%,11%)] hover:border-primary/25 dark:hover:border-primary/30 transition-colors cursor-pointer shadow-sm hover:shadow-md">
+                    <div className="group flex-shrink-0 w-[200px] p-3 rounded-2xl border border-stone-100 dark:border-[hsl(25,12%,16%)] bg-white dark:bg-[hsl(25,12%,11%)] hover:border-primary/25 dark:hover:border-primary/30 transition-colors cursor-pointer shadow-sm hover:shadow-md">
                       <div className="flex items-center gap-2 mb-2">
                         {ann.breweryLogo ? (
-                          <img src={ann.breweryLogo} alt={ann.breweryName} className="w-8 h-8 rounded-full object-contain bg-orange-50 dark:bg-orange-950/20 flex-shrink-0 p-0.5" />
+                          <img src={ann.breweryLogo} alt={ann.breweryName} className="w-8 h-8 rounded-full object-contain bg-stone-50 dark:bg-stone-900/20 flex-shrink-0 p-0.5" />
                         ) : (
                           <div className="w-8 h-8 rounded-full bg-gradient-to-br from-primary to-[hsl(20,95%,42%)] flex items-center justify-center flex-shrink-0">
                             <span className="text-xs font-bold text-white">{ann.breweryName?.[0]}</span>
@@ -537,18 +537,18 @@ export default function Home() {
                 Stili più Amati
               </h2>
               <Link href="/explore/beers">
-                <Button variant="ghost" size="sm" className="text-primary hover:bg-orange-50 dark:hover:bg-orange-950/20 font-semibold text-sm">Esplora →</Button>
+                <Button variant="ghost" size="sm" className="text-primary hover:bg-stone-50 dark:hover:bg-stone-900/20 font-semibold text-sm">Esplora →</Button>
               </Link>
             </div>
             {(() => {
               const top = popularStyles.slice(0, 10);
               const max = top[0]?.count ?? 1;
               return (
-                <div className="bg-white dark:bg-[hsl(25,14%,10%)] border border-orange-50 dark:border-[hsl(25,12%,16%)] rounded-2xl p-4 shadow-sm">
+                <div className="bg-white dark:bg-[hsl(25,14%,10%)] border border-stone-100 dark:border-[hsl(25,12%,16%)] rounded-2xl p-4 shadow-sm">
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-0">
                     {top.map((s, i) => (
                       <Link key={s.style} href={`/explore/beers?style=${encodeURIComponent(s.style)}`}>
-                        <div className="group flex items-center gap-3 py-2.5 border-b border-orange-50 dark:border-[hsl(25,12%,14%)] last:border-0 cursor-pointer hover:bg-orange-50/50 dark:hover:bg-orange-950/10 rounded-lg px-2 transition-colors">
+                        <div className="group flex items-center gap-3 py-2.5 border-b border-stone-100 dark:border-[hsl(25,12%,14%)] last:border-0 cursor-pointer hover:bg-stone-50/50 dark:hover:bg-stone-900/10 rounded-lg px-2 transition-colors">
                           <span className={`flex-shrink-0 w-5 text-right text-[11px] font-bold ${i < 3 ? 'text-primary dark:text-orange-400' : 'text-muted-foreground'}`}>
                             {i + 1}
                           </span>
@@ -556,7 +556,7 @@ export default function Home() {
                             <p className="text-[13px] font-medium text-foreground group-hover:text-primary truncate transition-colors leading-tight mb-1">
                               {s.style}
                             </p>
-                            <div className="h-1 bg-orange-100 dark:bg-orange-950/30 rounded-full overflow-hidden">
+                            <div className="h-1 bg-stone-100 dark:bg-stone-900/30 rounded-full overflow-hidden">
                               <div
                                 className="h-full bg-primary rounded-full transition-all"
                                 style={{ width: `${Math.round((s.count / max) * 100)}%` }}
@@ -585,7 +585,7 @@ export default function Home() {
                 I Tuoi Preferiti
               </h2>
               <Link href="/dashboard?tab=favorites">
-                <Button variant="ghost" size="sm" className="text-primary hover:bg-orange-50 dark:hover:bg-orange-950/20 font-semibold text-sm">
+                <Button variant="ghost" size="sm" className="text-primary hover:bg-stone-50 dark:hover:bg-stone-900/20 font-semibold text-sm">
                   Vedi tutti →
                 </Button>
               </Link>
@@ -599,7 +599,7 @@ export default function Home() {
                 
                 return (
                   <Link key={favorite.id} href={href}>
-                    <div className="group relative bg-white dark:bg-[hsl(25,14%,10%)] border border-orange-50 dark:border-[hsl(25,12%,16%)] rounded-2xl p-3 hover:shadow-md hover:border-primary/20 hover:scale-[1.03] transition-all duration-200 cursor-pointer h-full">
+                    <div className="group relative bg-white dark:bg-[hsl(25,14%,10%)] border border-stone-100 dark:border-[hsl(25,12%,16%)] rounded-2xl p-3 hover:shadow-md hover:border-primary/20 hover:scale-[1.03] transition-all duration-200 cursor-pointer h-full">
                       <div className="absolute top-2 right-2 bg-primary rounded-full p-1">
                         <TypeIcon className="w-3 h-3 text-white" />
                       </div>
@@ -624,7 +624,7 @@ export default function Home() {
         ) : null}
 
         {/* ─── Statistiche Community ────────────────────────────────────────── */}
-        <section className="mb-8 bg-gradient-to-br from-orange-50 to-[hsl(38,30%,96%)] dark:from-[hsl(25,14%,10%)] dark:to-[hsl(25,12%,9%)] border border-orange-100 dark:border-[hsl(25,12%,16%)] rounded-2xl p-5 lg:p-6">
+        <section className="mb-8 bg-gradient-to-br from-orange-50 to-[hsl(38,30%,96%)] dark:from-[hsl(25,14%,10%)] dark:to-[hsl(25,12%,9%)] border border-stone-200 dark:border-[hsl(25,12%,16%)] rounded-2xl p-5 lg:p-6">
           <h2 className="text-[11px] font-bold text-center text-muted-foreground mb-5 uppercase tracking-[0.12em]">
             La Community Fermenta.to
           </h2>
@@ -633,7 +633,7 @@ export default function Home() {
               <div className="text-[17px] font-bold text-primary tabular-nums leading-tight">{globalStats?.totalBeers != null ? globalStats.totalBeers.toLocaleString("it-IT") : '—'}</div>
               <div className="text-[10px] text-muted-foreground mt-1 font-medium uppercase tracking-wide">Birre</div>
             </div>
-            <div className="text-center border-x border-orange-100 dark:border-[hsl(25,12%,16%)]">
+            <div className="text-center border-x border-stone-200 dark:border-[hsl(25,12%,16%)]">
               <div className="text-[17px] font-bold text-primary tabular-nums leading-tight">{globalStats?.totalBreweries != null ? globalStats.totalBreweries.toLocaleString("it-IT") : '—'}</div>
               <div className="text-[10px] text-muted-foreground mt-1 font-medium uppercase tracking-wide">Birrifici</div>
             </div>
@@ -642,7 +642,7 @@ export default function Home() {
               <div className="text-[10px] text-muted-foreground mt-1 font-medium uppercase tracking-wide">Stili</div>
             </div>
           </div>
-          <div className="border-t border-orange-100 dark:border-[hsl(25,12%,16%)] mb-4" />
+          <div className="border-t border-stone-200 dark:border-[hsl(25,12%,16%)] mb-4" />
           <div className="flex justify-center gap-12">
             <div className="text-center">
               <div className="text-[15px] font-bold text-primary tabular-nums leading-tight">{globalStats?.totalUsers != null ? globalStats.totalUsers.toLocaleString("it-IT") : '—'}</div>

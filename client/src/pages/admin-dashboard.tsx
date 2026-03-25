@@ -180,7 +180,7 @@ export default function AdminDashboard() {
       <div className="container mx-auto px-4 py-6 max-w-7xl space-y-6">
         <div className="flex items-center gap-4">
           <Link href="/admin">
-            <Button variant="outline" size="sm" className="border-orange-100 dark:border-[hsl(25,12%,20%)] hover:bg-orange-50 rounded-xl">
+            <Button variant="outline" size="sm" className="border-stone-200 dark:border-[hsl(25,12%,20%)] hover:bg-stone-50 rounded-xl">
               <ArrowLeft className="w-4 h-4 mr-2" />
               Dashboard Admin
             </Button>
@@ -191,15 +191,15 @@ export default function AdminDashboard() {
         {/* Stats Row */}
         <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-3">
           {[
-            { label: "Utenti", value: adminStats?.totalUsers ?? allUsers.length, icon: Users, color: "text-blue-600", border: "border-orange-50 dark:border-[hsl(25,12%,16%)]" },
-            { label: "Pub", value: adminStats?.totalPubs ?? 0, icon: Store, color: "text-primary", border: "border-orange-50 dark:border-[hsl(25,12%,16%)]" },
-            { label: "Birrifici", value: (adminStats?.totalBreweries || globalStats?.totalBreweries || 0).toLocaleString("it-IT"), icon: Building2, color: "text-primary", border: "border-orange-50 dark:border-[hsl(25,12%,16%)]" },
-            { label: "Birre", value: (adminStats?.totalBeers || globalStats?.totalBeers || 0).toLocaleString("it-IT"), icon: Beer, color: "text-emerald-600", border: "border-orange-50 dark:border-[hsl(25,12%,16%)]" },
-            { label: "Recensioni", value: adminStats?.totalReviews ?? 0, icon: Star, color: "text-amber-500", border: "border-orange-50 dark:border-[hsl(25,12%,16%)]" },
-            { label: "Eventi", value: adminStats?.totalEvents ?? 0, icon: CalendarDays, color: "text-purple-500", border: "border-orange-50 dark:border-[hsl(25,12%,16%)]" },
-            { label: "Festival", value: adminStats?.totalFestivals ?? 0, icon: QrCode, color: "text-pink-500", border: "border-orange-50 dark:border-[hsl(25,12%,16%)]" },
+            { label: "Utenti", value: adminStats?.totalUsers ?? allUsers.length, icon: Users, color: "text-blue-600", border: "border-stone-100 dark:border-[hsl(25,12%,16%)]" },
+            { label: "Pub", value: adminStats?.totalPubs ?? 0, icon: Store, color: "text-primary", border: "border-stone-100 dark:border-[hsl(25,12%,16%)]" },
+            { label: "Birrifici", value: (adminStats?.totalBreweries || globalStats?.totalBreweries || 0).toLocaleString("it-IT"), icon: Building2, color: "text-primary", border: "border-stone-100 dark:border-[hsl(25,12%,16%)]" },
+            { label: "Birre", value: (adminStats?.totalBeers || globalStats?.totalBeers || 0).toLocaleString("it-IT"), icon: Beer, color: "text-emerald-600", border: "border-stone-100 dark:border-[hsl(25,12%,16%)]" },
+            { label: "Recensioni", value: adminStats?.totalReviews ?? 0, icon: Star, color: "text-amber-500", border: "border-stone-100 dark:border-[hsl(25,12%,16%)]" },
+            { label: "Eventi", value: adminStats?.totalEvents ?? 0, icon: CalendarDays, color: "text-purple-500", border: "border-stone-100 dark:border-[hsl(25,12%,16%)]" },
+            { label: "Festival", value: adminStats?.totalFestivals ?? 0, icon: QrCode, color: "text-pink-500", border: "border-stone-100 dark:border-[hsl(25,12%,16%)]" },
           ].map(({ label, value, icon: Icon, color, border }) => (
-            <Card key={label} className={`bg-white dark:bg-[hsl(25,14%,10%)] border border-orange-50 dark:border-[hsl(25,12%,16%)] rounded-2xl shadow-sm p-0 overflow-hidden`}>
+            <Card key={label} className={`bg-white dark:bg-[hsl(25,14%,10%)] border border-stone-100 dark:border-[hsl(25,12%,16%)] rounded-2xl shadow-sm p-0 overflow-hidden`}>
               <CardContent className="p-3">
                 <div className="flex items-center justify-between">
                   <div>
@@ -216,7 +216,7 @@ export default function AdminDashboard() {
         {/* ===== RECENT ACTIVITY + QUICK LINKS ===== */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
           {/* Recent Activity */}
-          <Card className="lg:col-span-2 bg-white dark:bg-[hsl(25,14%,10%)] border border-orange-50 dark:border-[hsl(25,12%,16%)] rounded-2xl shadow-sm">
+          <Card className="lg:col-span-2 bg-white dark:bg-[hsl(25,14%,10%)] border border-stone-100 dark:border-[hsl(25,12%,16%)] rounded-2xl shadow-sm">
             <CardHeader className="pb-3">
               <div className="flex items-center justify-between">
                 <CardTitle className="flex items-center gap-2 text-base">
@@ -236,7 +236,7 @@ export default function AdminDashboard() {
                       <button
                         key={key}
                         onClick={() => setActivityFilter(key)}
-                        className={`text-xs px-2 py-0.5 rounded-full border transition-colors ${activityFilter === key ? "bg-primary text-white border-primary" : "border-orange-100 dark:border-[hsl(25,12%,20%)] text-muted-foreground hover:bg-orange-50/60"}`}
+                        className={`text-xs px-2 py-0.5 rounded-full border transition-colors ${activityFilter === key ? "bg-primary text-white border-primary" : "border-stone-200 dark:border-[hsl(25,12%,20%)] text-muted-foreground hover:bg-stone-50/60"}`}
                       >
                         {label}
                       </button>
@@ -263,16 +263,16 @@ export default function AdminDashboard() {
                     };
                     const ColorMap: Record<string, string> = {
                       user: "text-blue-600 bg-blue-50 dark:bg-blue-900/20",
-                      pub: "text-primary bg-orange-50 dark:bg-orange-950/20",
-                      brewery: "text-primary bg-orange-50 dark:bg-orange-950/20",
+                      pub: "text-primary bg-stone-50 dark:bg-stone-900/20",
+                      brewery: "text-primary bg-stone-50 dark:bg-stone-900/20",
                       review: "text-yellow-500 bg-yellow-50 dark:bg-yellow-900/20",
                       event: "text-purple-500 bg-purple-50 dark:bg-purple-900/20",
                       festival: "text-pink-500 bg-pink-50 dark:bg-pink-900/20",
                     };
                     const Icon = IconMap[item.type] || Activity;
-                    const colorClass = ColorMap[item.type] || "text-muted-foreground bg-orange-50/60";
+                    const colorClass = ColorMap[item.type] || "text-muted-foreground bg-stone-50/60";
                     const content = (
-                      <div key={i} className="flex items-center gap-3 p-2 rounded-lg hover:bg-orange-50/30 dark:hover:bg-orange-950/10 transition-colors">
+                      <div key={i} className="flex items-center gap-3 p-2 rounded-lg hover:bg-stone-50/30 dark:hover:bg-stone-900/10 transition-colors">
                         <div className={`w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 ${colorClass}`}>
                           <Icon className="w-3.5 h-3.5" />
                         </div>
@@ -297,7 +297,7 @@ export default function AdminDashboard() {
 
           {/* Quick Links + System Status */}
           <div className="space-y-4">
-            <Card className="bg-white dark:bg-[hsl(25,14%,10%)] border border-orange-50 dark:border-[hsl(25,12%,16%)] rounded-2xl shadow-sm">
+            <Card className="bg-white dark:bg-[hsl(25,14%,10%)] border border-stone-100 dark:border-[hsl(25,12%,16%)] rounded-2xl shadow-sm">
               <CardHeader className="pb-2">
                 <CardTitle className="text-sm flex items-center gap-2">
                   <ChevronRight className="w-4 h-4 text-primary" />
@@ -315,7 +315,7 @@ export default function AdminDashboard() {
                   { href: "/admin/pages", icon: FileText, label: "Pagine Statiche" },
                 ].map(({ href, icon: Icon, label }) => (
                   <Link key={href} href={href}>
-                    <div className="flex items-center gap-2.5 px-2 py-1.5 rounded-md hover:bg-orange-50/60 dark:hover:bg-orange-950/20 transition-colors cursor-pointer group">
+                    <div className="flex items-center gap-2.5 px-2 py-1.5 rounded-md hover:bg-stone-50/60 dark:hover:bg-stone-900/20 transition-colors cursor-pointer group">
                       <Icon className="w-3.5 h-3.5 text-muted-foreground group-hover:text-primary transition-colors" />
                       <span className="text-sm text-muted-foreground group-hover:text-foreground transition-colors">{label}</span>
                       <ChevronRight className="w-3 h-3 text-orange-100 group-hover:text-primary ml-auto transition-colors" />
@@ -325,7 +325,7 @@ export default function AdminDashboard() {
               </CardContent>
             </Card>
 
-            <Card className="bg-white dark:bg-[hsl(25,14%,10%)] border border-orange-50 dark:border-[hsl(25,12%,16%)] rounded-2xl shadow-sm">
+            <Card className="bg-white dark:bg-[hsl(25,14%,10%)] border border-stone-100 dark:border-[hsl(25,12%,16%)] rounded-2xl shadow-sm">
               <CardHeader className="pb-2">
                 <CardTitle className="text-sm flex items-center gap-2">
                   <Server className="w-4 h-4 text-emerald-500" />
@@ -361,7 +361,7 @@ export default function AdminDashboard() {
         </div>
 
         <Tabs defaultValue="users" className="w-full">
-          <TabsList className="grid w-full max-w-xs grid-cols-2 bg-orange-50/60 dark:bg-orange-950/20">
+          <TabsList className="grid w-full max-w-xs grid-cols-2 bg-stone-50/60 dark:bg-stone-900/20">
             <TabsTrigger value="users" className="gap-2 data-[state=active]:bg-white dark:data-[state=active]:bg-[hsl(25,14%,10%)] data-[state=active]:text-primary">
               <Users className="w-4 h-4" />
               Utenti
@@ -381,17 +381,17 @@ export default function AdminDashboard() {
                   placeholder="Cerca per email, nickname, nome..."
                   value={userSearch}
                   onChange={(e) => setUserSearch(e.target.value)}
-                  className="pl-9 border-orange-100 dark:border-[hsl(25,12%,20%)] focus-visible:ring-primary"
+                  className="pl-9 border-stone-200 dark:border-[hsl(25,12%,20%)] focus-visible:ring-primary"
                 />
               </div>
               <span className="text-sm text-muted-foreground">{filteredUsers.length} utenti</span>
             </div>
 
-            <Card className="bg-white dark:bg-[hsl(25,14%,10%)] border border-orange-50 dark:border-[hsl(25,12%,16%)] rounded-2xl shadow-sm overflow-hidden">
+            <Card className="bg-white dark:bg-[hsl(25,14%,10%)] border border-stone-100 dark:border-[hsl(25,12%,16%)] rounded-2xl shadow-sm overflow-hidden">
               <CardContent className="p-0">
                 <div className="overflow-x-auto">
                   <table className="w-full">
-                    <thead className="bg-orange-50/40 dark:bg-orange-950/10 border-b border-orange-50 dark:border-[hsl(25,12%,16%)]">
+                    <thead className="bg-stone-50/40 dark:bg-stone-900/10 border-b border-stone-100 dark:border-[hsl(25,12%,16%)]">
                       <tr>
                         <th className="px-4 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">Utente</th>
                         <th className="px-4 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">Ruolo</th>
@@ -418,12 +418,12 @@ export default function AdminDashboard() {
                           const isBanned = u.userType === "banned";
                           const isSelf = u.id === (user as any)?.id;
                           return (
-                            <tr key={u.id} className={`hover:bg-orange-50/30 dark:hover:bg-orange-950/10 ${isBanned ? "opacity-60" : ""}`}>
+                            <tr key={u.id} className={`hover:bg-stone-50/30 dark:hover:bg-stone-900/10 ${isBanned ? "opacity-60" : ""}`}>
                               <td className="px-4 py-3">
                                 <div className="flex items-center gap-3">
                                   <Avatar className="w-8 h-8 flex-shrink-0">
                                     <AvatarImage src={u.profileImageUrl} />
-                                    <AvatarFallback className="text-xs bg-orange-100 dark:bg-orange-900/40 text-primary">
+                                    <AvatarFallback className="text-xs bg-stone-100 dark:bg-orange-900/40 text-primary">
                                       {(u.nickname?.[0] || u.firstName?.[0] || u.email?.[0] || "U").toUpperCase()}
                                     </AvatarFallback>
                                   </Avatar>
@@ -442,10 +442,10 @@ export default function AdminDashboard() {
                                 <Badge
                                   className={`text-xs whitespace-nowrap ${
                                     u.userType === "admin" ? "bg-purple-100 text-purple-700 hover:bg-purple-100/80" :
-                                    u.userType === "pub_owner" ? "bg-orange-50 text-primary hover:bg-orange-50/80" :
+                                    u.userType === "pub_owner" ? "bg-stone-50 text-primary hover:bg-stone-50/80" :
                                     u.userType === "brewery_owner" ? "bg-blue-50 text-blue-700 hover:bg-blue-50/80" :
                                     u.userType === "banned" ? "bg-red-100 text-red-700 hover:bg-red-100/80" :
-                                    "bg-orange-50/60 text-muted-foreground hover:bg-orange-50/80"
+                                    "bg-stone-50/60 text-muted-foreground hover:bg-stone-50/80"
                                   }`}
                                 >
                                   {isBanned ? "🚫 Bannato" : ROLE_LABELS[u.userType] || u.userType}
@@ -457,7 +457,7 @@ export default function AdminDashboard() {
                               <td className="px-4 py-3">
                                 <div className="flex items-center gap-1.5">
                                   <Link href={`/user/${u.nickname || u.id}`}>
-                                    <Button size="sm" variant="ghost" className="h-7 w-7 p-0 hover:bg-orange-50 dark:hover:bg-orange-950/20 text-muted-foreground" title="Vedi profilo">
+                                    <Button size="sm" variant="ghost" className="h-7 w-7 p-0 hover:bg-stone-50 dark:hover:bg-stone-900/20 text-muted-foreground" title="Vedi profilo">
                                       <ExternalLink className="w-3.5 h-3.5" />
                                     </Button>
                                   </Link>
@@ -466,7 +466,7 @@ export default function AdminDashboard() {
                                       <Button
                                         size="sm"
                                         variant="ghost"
-                                        className="h-7 w-7 p-0 hover:bg-orange-50 dark:hover:bg-orange-950/20 hover:text-primary text-muted-foreground"
+                                        className="h-7 w-7 p-0 hover:bg-stone-50 dark:hover:bg-stone-900/20 hover:text-primary text-muted-foreground"
                                         title="Modifica ruolo"
                                         onClick={() => { setEditTarget(u); setEditRole(isBanned ? "customer" : u.userType); }}
                                       >

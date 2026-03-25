@@ -84,10 +84,10 @@ export default function TapList({ tapList }: TapListProps) {
   const pompaItems = sorted.filter(t => t.tapType === "pompa");
 
   const renderCard = (tap: typeof sorted[0]) => (
-    <div key={tap.id} className={`bg-white dark:bg-[hsl(25,14%,10%)] rounded-2xl border border-orange-50 dark:border-[hsl(25,12%,16%)] shadow-[0_4px_20px_rgba(247,113,4,0.06)] hover:shadow-[0_6px_24px_rgba(247,113,4,0.12)] hover:border-orange-200 dark:hover:border-orange-800/40 transition-all duration-300 ${tap.isVisible === false ? 'opacity-60' : ''}`}>
+    <div key={tap.id} className={`bg-white dark:bg-[hsl(25,14%,10%)] rounded-2xl border border-stone-100 dark:border-[hsl(25,12%,16%)] shadow-[0_4px_20px_rgba(247,113,4,0.06)] hover:shadow-[0_6px_24px_rgba(247,113,4,0.12)] hover:border-stone-300 dark:hover:border-orange-800/40 transition-all duration-300 ${tap.isVisible === false ? 'opacity-60' : ''}`}>
       <div className="flex gap-3 p-4">
         <Link href={`/beer/${tap.beer.id}`} className="flex-shrink-0 self-center">
-          <div className="w-14 h-14 rounded-2xl overflow-hidden bg-gradient-to-br from-orange-50 to-amber-50 dark:from-orange-950/40 dark:to-amber-900/20 flex items-center justify-center border border-orange-100 dark:border-orange-900/30">
+          <div className="w-14 h-14 rounded-2xl overflow-hidden bg-gradient-to-br from-orange-50 to-amber-50 dark:from-orange-950/40 dark:to-amber-900/20 flex items-center justify-center border border-stone-200 dark:border-stone-700/30">
             <ImageWithFallback
               src={tap.beer.imageUrl || tap.beer.brewery.logoUrl}
               alt={tap.beer.name}

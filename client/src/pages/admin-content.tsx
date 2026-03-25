@@ -10,7 +10,7 @@ export default function AdminContent() {
       <div className="max-w-7xl mx-auto p-6">
         <div className="flex items-center gap-4 mb-6">
           <Link href="/admin">
-            <Button variant="outline" size="sm" className="border-orange-100 hover:bg-orange-50 rounded-xl">
+            <Button variant="outline" size="sm" className="border-stone-200 hover:bg-stone-50 rounded-xl">
               <ArrowLeft className="w-4 h-4 mr-2" />
               Dashboard Admin
             </Button>
@@ -21,7 +21,7 @@ export default function AdminContent() {
         </div>
 
         <Tabs defaultValue="beers" className="space-y-6">
-          <TabsList className="bg-orange-50 dark:bg-[hsl(25,14%,12%)] p-1 rounded-2xl h-auto">
+          <TabsList className="bg-stone-50 dark:bg-[hsl(25,14%,12%)] p-1 rounded-2xl h-auto">
             <TabsTrigger value="beers" className="flex items-center gap-2 text-sm font-semibold rounded-xl data-[state=active]:bg-white dark:data-[state=active]:bg-[hsl(25,14%,10%)] data-[state=active]:text-primary data-[state=active]:shadow-sm">
               <BeerIcon className="w-4 h-4" />
               Birre

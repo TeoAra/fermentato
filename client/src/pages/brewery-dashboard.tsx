@@ -47,9 +47,9 @@ type BeerFormValues = z.infer<typeof beerFormSchema>;
 function PendingApprovalOverlay({ breweryName, createdAt }: { breweryName: string; createdAt: string | null }) {
   return (
     <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
-      <Card className="max-w-md w-full bg-white dark:bg-[hsl(25,14%,10%)] border border-orange-100 dark:border-[hsl(25,12%,16%)] rounded-2xl shadow-2xl">
+      <Card className="max-w-md w-full bg-white dark:bg-[hsl(25,14%,10%)] border border-stone-200 dark:border-[hsl(25,12%,16%)] rounded-2xl shadow-2xl">
         <CardContent className="pt-8 pb-8 text-center space-y-6">
-          <div className="w-20 h-20 mx-auto rounded-full bg-orange-50 dark:bg-orange-950/30 flex items-center justify-center">
+          <div className="w-20 h-20 mx-auto rounded-full bg-stone-50 dark:bg-stone-900/30 flex items-center justify-center">
             <Clock className="w-10 h-10 text-primary" />
           </div>
           <div>
@@ -60,7 +60,7 @@ function PendingApprovalOverlay({ breweryName, createdAt }: { breweryName: strin
               La tua richiesta per il birrificio <strong>"{breweryName}"</strong> è in attesa di approvazione da parte dell'amministratore.
             </p>
           </div>
-          <div className="bg-orange-50 dark:bg-orange-900/20 rounded-xl p-4 text-sm text-orange-700 dark:text-orange-200">
+          <div className="bg-stone-50 dark:bg-orange-900/20 rounded-xl p-4 text-sm text-orange-700 dark:text-orange-200">
             <AlertTriangle className="w-5 h-5 inline-block mr-2" />
             Non puoi accedere alla dashboard del birrificio fino all'approvazione. Riceverai una notifica quando la tua richiesta verrà gestita.
           </div>
@@ -71,7 +71,7 @@ function PendingApprovalOverlay({ breweryName, createdAt }: { breweryName: strin
           )}
           <Button
             variant="outline"
-            className="w-full border-orange-100 dark:border-[hsl(25,12%,20%)] hover:bg-orange-50 rounded-xl"
+            className="w-full border-stone-200 dark:border-[hsl(25,12%,20%)] hover:bg-stone-50 rounded-xl"
             onClick={() => window.location.href = '/'}
           >
             Torna alla Home
@@ -105,7 +105,7 @@ function RejectedOverlay({ breweryName, adminNotes }: { breweryName: string; adm
           )}
           <Button
             variant="outline"
-            className="w-full border-orange-100 dark:border-[hsl(25,12%,20%)] hover:bg-orange-50 rounded-xl"
+            className="w-full border-stone-200 dark:border-[hsl(25,12%,20%)] hover:bg-stone-50 rounded-xl"
             onClick={() => window.location.href = '/'}
           >
             Torna alla Home
@@ -147,12 +147,12 @@ function AnnouncementsManager({ breweryId }: { breweryId: number }) {
 
   const typeLabel: Record<string, { label: string; color: string; icon: any }> = {
     news: { label: "Novità", color: "bg-blue-50 text-blue-700 border-blue-100 dark:bg-blue-950/30 dark:text-blue-300", icon: Newspaper },
-    release: { label: "Nuova Birra", color: "bg-orange-50 text-primary border-orange-100 dark:bg-orange-950/30 dark:text-orange-400", icon: Rocket },
+    release: { label: "Nuova Birra", color: "bg-stone-50 text-primary border-stone-200 dark:bg-stone-900/30 dark:text-orange-400", icon: Rocket },
     collab: { label: "Collaborazione", color: "bg-purple-50 text-purple-700 border-purple-100 dark:bg-purple-950/30 dark:text-purple-300", icon: Users },
   };
 
   return (
-    <div className="bg-white dark:bg-[hsl(25,14%,10%)] border border-orange-50 dark:border-[hsl(25,12%,16%)] rounded-2xl shadow-sm p-6 mb-8">
+    <div className="bg-white dark:bg-[hsl(25,14%,10%)] border border-stone-100 dark:border-[hsl(25,12%,16%)] rounded-2xl shadow-sm p-6 mb-8">
       <div className="flex items-center justify-between mb-6">
         <h2 className="text-2xl font-bold text-foreground flex items-center">
           <div className="p-2 bg-primary rounded-xl mr-3 shadow-sm">
@@ -170,7 +170,7 @@ function AnnouncementsManager({ breweryId }: { breweryId: number }) {
       </div>
 
       {isLoading ? (
-        <div className="space-y-3">{[1,2].map(i => <div key={i} className="h-20 rounded-xl bg-orange-50/20 animate-pulse" />)}</div>
+        <div className="space-y-3">{[1,2].map(i => <div key={i} className="h-20 rounded-xl bg-stone-50/20 animate-pulse" />)}</div>
       ) : announcements.length === 0 ? (
         <div className="text-center py-12 text-muted-foreground">
           <Megaphone className="w-12 h-12 mx-auto mb-3 opacity-30 text-primary" />
@@ -182,7 +182,7 @@ function AnnouncementsManager({ breweryId }: { breweryId: number }) {
             const t = typeLabel[ann.type] ?? typeLabel.news;
             const TIcon = t.icon;
             return (
-              <div key={ann.id} className="flex gap-4 p-4 rounded-xl border border-orange-50 dark:border-[hsl(25,12%,16%)] bg-white dark:bg-[hsl(25,14%,10%)] hover:bg-orange-50/50 dark:hover:bg-orange-950/10 transition-colors">
+              <div key={ann.id} className="flex gap-4 p-4 rounded-xl border border-stone-100 dark:border-[hsl(25,12%,16%)] bg-white dark:bg-[hsl(25,14%,10%)] hover:bg-stone-50/50 dark:hover:bg-stone-900/10 transition-colors">
                 <div className="flex-1 min-w-0 text-left">
                   <div className="flex items-center gap-2 mb-1 flex-wrap">
                     <span className={`inline-flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-full border ${t.color}`}>
@@ -214,7 +214,7 @@ function AnnouncementsManager({ breweryId }: { breweryId: number }) {
 
       {/* Create dialog */}
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="max-w-md rounded-2xl border-orange-50 dark:border-[hsl(25,12%,16%)]">
+        <DialogContent className="max-w-md rounded-2xl border-stone-100 dark:border-[hsl(25,12%,16%)]">
           <DialogHeader>
             <DialogTitle>Nuovo Annuncio</DialogTitle>
           </DialogHeader>
@@ -222,8 +222,8 @@ function AnnouncementsManager({ breweryId }: { breweryId: number }) {
             <div className="space-y-1 text-left">
               <label className="text-sm font-medium">Tipo</label>
               <Select value={form.type} onValueChange={(v) => setForm(f => ({ ...f, type: v }))}>
-                <SelectTrigger className="border-orange-100 rounded-xl focus:ring-primary/20"><SelectValue /></SelectTrigger>
-                <SelectContent className="rounded-xl border-orange-100">
+                <SelectTrigger className="border-stone-200 rounded-xl focus:ring-primary/20"><SelectValue /></SelectTrigger>
+                <SelectContent className="rounded-xl border-stone-200">
                   <SelectItem value="news">Novità / News</SelectItem>
                   <SelectItem value="release">Nuova Birra / Uscita Limitata</SelectItem>
                   <SelectItem value="collab">Collaborazione</SelectItem>
@@ -236,7 +236,7 @@ function AnnouncementsManager({ breweryId }: { breweryId: number }) {
                 placeholder="Es. Nuova IPA estiva in arrivo!"
                 value={form.title}
                 onChange={(e) => setForm(f => ({ ...f, title: e.target.value }))}
-                className="border-orange-100 dark:border-[hsl(25,12%,20%)] rounded-xl focus-visible:ring-primary/20"
+                className="border-stone-200 dark:border-[hsl(25,12%,20%)] rounded-xl focus-visible:ring-primary/20"
               />
             </div>
             <div className="space-y-1 text-left">
@@ -246,7 +246,7 @@ function AnnouncementsManager({ breweryId }: { breweryId: number }) {
                 rows={3}
                 value={form.content}
                 onChange={(e) => setForm(f => ({ ...f, content: e.target.value }))}
-                className="border-orange-100 dark:border-[hsl(25,12%,20%)] rounded-xl focus-visible:ring-primary/20"
+                className="border-stone-200 dark:border-[hsl(25,12%,20%)] rounded-xl focus-visible:ring-primary/20"
               />
             </div>
             {form.type === "release" && (
@@ -256,7 +256,7 @@ function AnnouncementsManager({ breweryId }: { breweryId: number }) {
                   type="date"
                   value={form.releaseDate}
                   onChange={(e) => setForm(f => ({ ...f, releaseDate: e.target.value }))}
-                  className="border-orange-100 dark:border-[hsl(25,12%,20%)] rounded-xl focus-visible:ring-primary/20"
+                  className="border-stone-200 dark:border-[hsl(25,12%,20%)] rounded-xl focus-visible:ring-primary/20"
                 />
               </div>
             )}
@@ -278,7 +278,7 @@ function AnnouncementsManager({ breweryId }: { breweryId: number }) {
               <Button 
                 variant="outline" 
                 onClick={() => setOpen(false)}
-                className="border-orange-100 dark:border-[hsl(25,12%,20%)] hover:bg-orange-50 rounded-xl"
+                className="border-stone-200 dark:border-[hsl(25,12%,20%)] hover:bg-stone-50 rounded-xl"
               >
                 Annulla
               </Button>
@@ -299,7 +299,7 @@ function DistributionSection({ breweryId }: { breweryId: number }) {
   });
 
   return (
-    <div className="bg-white dark:bg-[hsl(25,14%,10%)] border border-orange-50 dark:border-[hsl(25,12%,16%)] rounded-2xl shadow-sm p-6 mb-8">
+    <div className="bg-white dark:bg-[hsl(25,14%,10%)] border border-stone-100 dark:border-[hsl(25,12%,16%)] rounded-2xl shadow-sm p-6 mb-8">
       <h2 className="text-2xl font-bold text-foreground flex items-center mb-6">
         <div className="p-2 bg-primary rounded-xl mr-3 shadow-sm">
           <Store className="h-6 w-6 text-white" />
@@ -314,7 +314,7 @@ function DistributionSection({ breweryId }: { breweryId: number }) {
 
       {isLoading ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {[1,2,3].map(i => <div key={i} className="h-24 rounded-xl bg-orange-50/20 animate-pulse" />)}
+          {[1,2,3].map(i => <div key={i} className="h-24 rounded-xl bg-stone-50/20 animate-pulse" />)}
         </div>
       ) : pubs.length === 0 ? (
         <div className="text-center py-12 text-muted-foreground">
@@ -326,9 +326,9 @@ function DistributionSection({ breweryId }: { breweryId: number }) {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {pubs.map((pub: any) => (
             <Link key={pub.id} href={`/pub/${pub.slug || pub.id}`}>
-              <div className="flex items-center gap-3 p-4 rounded-xl border border-orange-50 dark:border-[hsl(25,12%,16%)] bg-white dark:bg-[hsl(25,14%,10%)] hover:bg-orange-50/50 dark:hover:bg-orange-950/10 transition-colors cursor-pointer group">
+              <div className="flex items-center gap-3 p-4 rounded-xl border border-stone-100 dark:border-[hsl(25,12%,16%)] bg-white dark:bg-[hsl(25,14%,10%)] hover:bg-stone-50/50 dark:hover:bg-stone-900/10 transition-colors cursor-pointer group">
                 {pub.logo_url ? (
-                  <img src={pub.logo_url} alt={pub.name} className="w-10 h-10 rounded-full object-cover flex-shrink-0 border border-orange-100 dark:border-[hsl(25,12%,20%)]" />
+                  <img src={pub.logo_url} alt={pub.name} className="w-10 h-10 rounded-full object-cover flex-shrink-0 border border-stone-200 dark:border-[hsl(25,12%,20%)]" />
                 ) : (
                   <div className="w-10 h-10 rounded-full bg-primary flex items-center justify-center flex-shrink-0">
                     <Store className="w-5 h-5 text-white" />
@@ -357,11 +357,11 @@ function DistributionSection({ breweryId }: { breweryId: number }) {
 
 const BreweryStatsCard = ({ icon: Icon, value, label, colorClass, onClick }: any) => (
   <div
-    className={`bg-white dark:bg-[hsl(25,14%,10%)] border border-orange-50 dark:border-[hsl(25,12%,16%)] rounded-2xl shadow-sm p-4 hover:scale-[1.02] transition-all duration-300 group ${onClick ? 'cursor-pointer' : ''}`}
+    className={`bg-white dark:bg-[hsl(25,14%,10%)] border border-stone-100 dark:border-[hsl(25,12%,16%)] rounded-2xl shadow-sm p-4 hover:scale-[1.02] transition-all duration-300 group ${onClick ? 'cursor-pointer' : ''}`}
     onClick={onClick}
   >
     <div className="flex items-center space-x-3">
-      <div className={`p-3 rounded-xl bg-orange-50 dark:bg-orange-950/30 group-hover:scale-110 transition-transform duration-300`}>
+      <div className={`p-3 rounded-xl bg-stone-50 dark:bg-stone-900/30 group-hover:scale-110 transition-transform duration-300`}>
         <Icon className={`h-5 w-5 ${colorClass || 'text-primary'}`} />
       </div>
       <div className="text-left">
@@ -666,9 +666,9 @@ export default function BreweryDashboard({ adminBreweryId }: BreweryDashboardPro
   if (!brewery) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center p-6">
-        <Card className="max-w-md w-full bg-white dark:bg-[hsl(25,14%,10%)] border border-orange-100 dark:border-[hsl(25,12%,16%)] rounded-2xl shadow-sm">
+        <Card className="max-w-md w-full bg-white dark:bg-[hsl(25,14%,10%)] border border-stone-200 dark:border-[hsl(25,12%,16%)] rounded-2xl shadow-sm">
           <CardContent className="pt-8 pb-8 text-center">
-            <div className="w-20 h-20 mx-auto rounded-full bg-orange-50 dark:bg-orange-950/30 flex items-center justify-center mb-6">
+            <div className="w-20 h-20 mx-auto rounded-full bg-stone-50 dark:bg-stone-900/30 flex items-center justify-center mb-6">
               <Factory className="w-10 h-10 text-primary" />
             </div>
             <h2 className="text-2xl font-bold text-foreground mb-2">Nessun Birrificio Associato</h2>
@@ -694,11 +694,11 @@ export default function BreweryDashboard({ adminBreweryId }: BreweryDashboardPro
       {!isAdminMode && <RoleSwitcherBanner />}
       
       {/* Header Bar */}
-      <header className="sticky top-0 z-30 bg-white dark:bg-[hsl(25,14%,10%)] border-b border-orange-50 dark:border-[hsl(25,12%,16%)] shadow-sm">
+      <header className="sticky top-0 z-30 bg-white dark:bg-[hsl(25,14%,10%)] border-b border-stone-100 dark:border-[hsl(25,12%,16%)] shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
           <div className="flex items-center gap-4">
             <Link href="/">
-              <div className="p-2 bg-orange-50 dark:bg-orange-950/30 rounded-xl cursor-pointer hover:scale-105 transition-transform">
+              <div className="p-2 bg-stone-50 dark:bg-stone-900/30 rounded-xl cursor-pointer hover:scale-105 transition-transform">
                 <BeerIcon className="h-6 w-6 text-primary" />
               </div>
             </Link>
@@ -715,7 +715,7 @@ export default function BreweryDashboard({ adminBreweryId }: BreweryDashboardPro
               <Button
                 variant="outline"
                 size="sm"
-                className="hidden sm:flex border-orange-100 dark:border-[hsl(25,12%,20%)] hover:bg-orange-50 rounded-xl h-9"
+                className="hidden sm:flex border-stone-200 dark:border-[hsl(25,12%,20%)] hover:bg-stone-50 rounded-xl h-9"
                 onClick={() => window.location.href = `/brewery/${brewery.slug || brewery.id}`}
               >
                 <Eye className="w-4 h-4 mr-2" />
@@ -725,7 +725,7 @@ export default function BreweryDashboard({ adminBreweryId }: BreweryDashboardPro
             <Button
               variant="outline"
               size="sm"
-              className="border-orange-100 dark:border-[hsl(25,12%,20%)] hover:bg-orange-50 rounded-xl h-9"
+              className="border-stone-200 dark:border-[hsl(25,12%,20%)] hover:bg-stone-50 rounded-xl h-9"
               onClick={() => {
                 const url = `${window.location.origin}/brewery/${brewery.slug || brewery.id}`;
                 if (navigator.share) {
@@ -744,7 +744,7 @@ export default function BreweryDashboard({ adminBreweryId }: BreweryDashboardPro
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6">
         {/* Hero / Cover Section */}
-        <div className="relative h-48 sm:h-64 rounded-2xl overflow-hidden mb-8 border border-orange-50 dark:border-[hsl(25,12%,16%)] shadow-sm group">
+        <div className="relative h-48 sm:h-64 rounded-2xl overflow-hidden mb-8 border border-stone-100 dark:border-[hsl(25,12%,16%)] shadow-sm group">
           <ImageWithFallback
             src={brewery.coverImageUrl || "/brewery-cover.jpg"}
             alt={brewery.name}
@@ -829,7 +829,7 @@ export default function BreweryDashboard({ adminBreweryId }: BreweryDashboardPro
         </div>
 
         {/* Info section with contact details */}
-        <div className="bg-white dark:bg-[hsl(25,14%,10%)] border border-orange-50 dark:border-[hsl(25,12%,16%)] rounded-2xl shadow-sm p-6 mb-8">
+        <div className="bg-white dark:bg-[hsl(25,14%,10%)] border border-stone-100 dark:border-[hsl(25,12%,16%)] rounded-2xl shadow-sm p-6 mb-8">
           <div className="flex items-center gap-2 mb-4">
             <Building className="h-5 w-5 text-primary" />
             <h3 className="text-lg font-bold text-foreground">Il Birrificio</h3>
@@ -851,17 +851,17 @@ export default function BreweryDashboard({ adminBreweryId }: BreweryDashboardPro
 
               <div className="flex gap-4 mt-6">
                 {(brewery as any).instagramUrl && (
-                  <a href={(brewery as any).instagramUrl} target="_blank" rel="noopener" className="p-2 bg-orange-50 dark:bg-orange-950/30 rounded-xl text-primary hover:scale-110 transition-transform">
+                  <a href={(brewery as any).instagramUrl} target="_blank" rel="noopener" className="p-2 bg-stone-50 dark:bg-stone-900/30 rounded-xl text-primary hover:scale-110 transition-transform">
                     <SiInstagram className="h-5 w-5" />
                   </a>
                 )}
                 {(brewery as any).facebookUrl && (
-                  <a href={(brewery as any).facebookUrl} target="_blank" rel="noopener" className="p-2 bg-orange-50 dark:bg-orange-950/30 rounded-xl text-primary hover:scale-110 transition-transform">
+                  <a href={(brewery as any).facebookUrl} target="_blank" rel="noopener" className="p-2 bg-stone-50 dark:bg-stone-900/30 rounded-xl text-primary hover:scale-110 transition-transform">
                     <SiFacebook className="h-5 w-5" />
                   </a>
                 )}
                 {(brewery as any).tiktokUrl && (
-                  <a href={(brewery as any).tiktokUrl} target="_blank" rel="noopener" className="p-2 bg-orange-50 dark:bg-orange-950/30 rounded-xl text-primary hover:scale-110 transition-transform">
+                  <a href={(brewery as any).tiktokUrl} target="_blank" rel="noopener" className="p-2 bg-stone-50 dark:bg-stone-900/30 rounded-xl text-primary hover:scale-110 transition-transform">
                     <SiTiktok className="h-5 w-5" />
                   </a>
                 )}
@@ -873,7 +873,7 @@ export default function BreweryDashboard({ adminBreweryId }: BreweryDashboardPro
               <div className="space-y-3">
                 {brewery.websiteUrl && (
                   <a href={brewery.websiteUrl} target="_blank" rel="noopener" className="flex items-center gap-3 text-sm text-foreground hover:text-primary transition-colors group">
-                    <div className="p-2 bg-orange-50 dark:bg-orange-950/30 rounded-lg group-hover:bg-primary/10">
+                    <div className="p-2 bg-stone-50 dark:bg-stone-900/30 rounded-lg group-hover:bg-primary/10">
                       <Globe className="h-4 w-4 text-primary" />
                     </div>
                     <span className="truncate">{brewery.websiteUrl.replace(/^https?:\/\//, '')}</span>
@@ -881,7 +881,7 @@ export default function BreweryDashboard({ adminBreweryId }: BreweryDashboardPro
                 )}
                 {(brewery as any).email && (
                   <a href={`mailto:${(brewery as any).email}`} className="flex items-center gap-3 text-sm text-foreground hover:text-primary transition-colors group">
-                    <div className="p-2 bg-orange-50 dark:bg-orange-950/30 rounded-lg group-hover:bg-primary/10">
+                    <div className="p-2 bg-stone-50 dark:bg-stone-900/30 rounded-lg group-hover:bg-primary/10">
                       <Mail className="h-4 w-4 text-primary" />
                     </div>
                     <span className="truncate">{(brewery as any).email}</span>
@@ -889,7 +889,7 @@ export default function BreweryDashboard({ adminBreweryId }: BreweryDashboardPro
                 )}
                 {brewery.phone && (
                   <a href={`tel:${brewery.phone}`} className="flex items-center gap-3 text-sm text-foreground hover:text-primary transition-colors group">
-                    <div className="p-2 bg-orange-50 dark:bg-orange-950/30 rounded-lg group-hover:bg-primary/10">
+                    <div className="p-2 bg-stone-50 dark:bg-stone-900/30 rounded-lg group-hover:bg-primary/10">
                       <Phone className="h-4 w-4 text-primary" />
                     </div>
                     <span>{brewery.phone}</span>
@@ -897,7 +897,7 @@ export default function BreweryDashboard({ adminBreweryId }: BreweryDashboardPro
                 )}
                 {brewery.vatNumber && (
                   <div className="flex items-center gap-3 text-sm text-muted-foreground">
-                    <div className="p-2 bg-orange-50 dark:bg-orange-950/30 rounded-lg">
+                    <div className="p-2 bg-stone-50 dark:bg-stone-900/30 rounded-lg">
                       <FileText className="h-4 w-4 text-primary" />
                     </div>
                     <span>P.IVA: {brewery.vatNumber}</span>
@@ -925,14 +925,14 @@ export default function BreweryDashboard({ adminBreweryId }: BreweryDashboardPro
         </Link>
 
         {/* Beers Section */}
-        <div className="bg-white dark:bg-[hsl(25,14%,10%)] border border-orange-50 dark:border-[hsl(25,12%,16%)] rounded-2xl shadow-sm p-6 mb-8">
+        <div className="bg-white dark:bg-[hsl(25,14%,10%)] border border-stone-100 dark:border-[hsl(25,12%,16%)] rounded-2xl shadow-sm p-6 mb-8">
           <div className="flex items-center justify-between mb-6">
             <div className="flex items-center gap-2">
               <div className="p-2 bg-primary rounded-xl shadow-sm">
                 <BeerIcon className="h-5 w-5 text-white" />
               </div>
               <h2 className="text-xl font-bold text-foreground">Catalogo Birre</h2>
-              <Badge variant="secondary" className="bg-orange-50 text-orange-700 border-orange-100 ml-2">
+              <Badge variant="secondary" className="bg-stone-50 text-orange-700 border-stone-200 ml-2">
                 {beers.length}
               </Badge>
             </div>
@@ -946,8 +946,8 @@ export default function BreweryDashboard({ adminBreweryId }: BreweryDashboardPro
           </div>
 
           {beers.length === 0 ? (
-            <div className="text-center py-16 border-2 border-dashed border-orange-100 dark:border-orange-900/30 rounded-3xl">
-              <div className="w-20 h-20 bg-orange-50 dark:bg-orange-950/30 rounded-full flex items-center justify-center mx-auto mb-4">
+            <div className="text-center py-16 border-2 border-dashed border-stone-200 dark:border-stone-700/30 rounded-3xl">
+              <div className="w-20 h-20 bg-stone-50 dark:bg-stone-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
                 <BeerIcon className="h-10 w-10 text-primary opacity-20" />
               </div>
               <h3 className="text-xl font-bold text-foreground mb-2">Nessuna birra ancora</h3>
@@ -960,14 +960,14 @@ export default function BreweryDashboard({ adminBreweryId }: BreweryDashboardPro
             <>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                 {displayedBeers.map((beer: Beer) => (
-                  <Card key={beer.id} className="bg-white dark:bg-[hsl(25,14%,10%)] border border-orange-50 dark:border-[hsl(25,12%,16%)] hover:border-primary/30 transition-all duration-300 rounded-2xl shadow-sm group overflow-hidden">
+                  <Card key={beer.id} className="bg-white dark:bg-[hsl(25,14%,10%)] border border-stone-100 dark:border-[hsl(25,12%,16%)] hover:border-primary/30 transition-all duration-300 rounded-2xl shadow-sm group overflow-hidden">
                     <CardContent className="p-5">
                       <div className="flex items-start gap-4 mb-4 text-left">
                         <ImageWithFallback
                           src={beer?.imageUrl}
                           alt={beer?.name}
                           imageType="beer"
-                          containerClassName="w-16 h-16 rounded-xl border border-orange-100 dark:border-orange-900/30"
+                          containerClassName="w-16 h-16 rounded-xl border border-stone-200 dark:border-stone-700/30"
                           className="w-16 h-16 object-cover rounded-xl group-hover:scale-110 transition-transform duration-500"
                           iconSize="lg"
                         />
@@ -980,7 +980,7 @@ export default function BreweryDashboard({ adminBreweryId }: BreweryDashboardPro
                           </p>
                           <div className="flex flex-wrap gap-2 mt-2">
                             {beer.abv && (
-                              <span className="text-[10px] font-bold bg-orange-50 text-orange-700 px-1.5 py-0.5 rounded border border-orange-100">
+                              <span className="text-[10px] font-bold bg-stone-50 text-orange-700 px-1.5 py-0.5 rounded border border-stone-200">
                                 {beer.abv}% ABV
                               </span>
                             )}
@@ -1000,12 +1000,12 @@ export default function BreweryDashboard({ adminBreweryId }: BreweryDashboardPro
                       )}
 
                       {/* Edit/Delete buttons */}
-                      <div className="flex items-center gap-2 pt-4 border-t border-orange-50 dark:border-orange-900/30">
+                      <div className="flex items-center gap-2 pt-4 border-t border-stone-100 dark:border-stone-700/30">
                         <Button
                           variant="outline"
                           size="sm"
                           onClick={() => openEditBeerDialog(beer)}
-                          className="flex-1 border-orange-100 dark:border-[hsl(25,12%,20%)] hover:bg-orange-50 rounded-xl"
+                          className="flex-1 border-stone-200 dark:border-[hsl(25,12%,20%)] hover:bg-stone-50 rounded-xl"
                         >
                           <Pencil className="w-3.5 h-3.5 mr-2" />
                           Modifica
@@ -1018,7 +1018,7 @@ export default function BreweryDashboard({ adminBreweryId }: BreweryDashboardPro
                               deleteBeerMutation.mutate(beer.id);
                             }
                           }}
-                          className="text-destructive hover:text-destructive hover:bg-red-50 dark:hover:bg-red-950 border-orange-100 dark:border-[hsl(25,12%,20%)] rounded-xl"
+                          className="text-destructive hover:text-destructive hover:bg-red-50 dark:hover:bg-red-950 border-stone-200 dark:border-[hsl(25,12%,20%)] rounded-xl"
                           disabled={deleteBeerMutation.isPending}
                         >
                           <Trash2 className="w-3.5 h-3.5" />
@@ -1034,7 +1034,7 @@ export default function BreweryDashboard({ adminBreweryId }: BreweryDashboardPro
                   <Button
                     variant="outline"
                     onClick={() => setShowAllBeers(!showAllBeers)}
-                    className="border-orange-100 dark:border-[hsl(25,12%,20%)] hover:bg-orange-50 rounded-xl bg-white dark:bg-transparent"
+                    className="border-stone-200 dark:border-[hsl(25,12%,20%)] hover:bg-stone-50 rounded-xl bg-white dark:bg-transparent"
                   >
                     {showAllBeers ? 'Mostra Meno' : `Mostra Tutte (${beers.length})`}
                   </Button>
@@ -1045,13 +1045,13 @@ export default function BreweryDashboard({ adminBreweryId }: BreweryDashboardPro
         </div>
 
         {/* Events Section */}
-        <div className="bg-white dark:bg-[hsl(25,14%,10%)] border border-orange-50 dark:border-[hsl(25,12%,16%)] rounded-2xl shadow-sm p-6 mb-8">
+        <div className="bg-white dark:bg-[hsl(25,14%,10%)] border border-stone-100 dark:border-[hsl(25,12%,16%)] rounded-2xl shadow-sm p-6 mb-8">
           <BreweryEventsManager breweryId={brewery.id} breweryName={brewery.name} />
         </div>
 
         {/* Reviews Section */}
         {showReviewsSection && (
-          <div className="bg-white dark:bg-[hsl(25,14%,10%)] border border-orange-50 dark:border-[hsl(25,12%,16%)] rounded-2xl shadow-sm p-6 mb-8">
+          <div className="bg-white dark:bg-[hsl(25,14%,10%)] border border-stone-100 dark:border-[hsl(25,12%,16%)] rounded-2xl shadow-sm p-6 mb-8">
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-xl font-bold text-foreground flex items-center gap-2">
                 <div className="p-2 bg-primary rounded-xl shadow-sm">
@@ -1068,14 +1068,14 @@ export default function BreweryDashboard({ adminBreweryId }: BreweryDashboardPro
                 <Loader2 className="h-8 w-8 animate-spin text-primary" />
               </div>
             ) : recentReviewsData.reviews.length === 0 ? (
-              <div className="text-center py-12 text-muted-foreground bg-orange-50/20 rounded-2xl">
+              <div className="text-center py-12 text-muted-foreground bg-stone-50/20 rounded-2xl">
                 <MessageSquare className="w-12 h-12 mx-auto mb-3 opacity-20" />
                 <p>Nessuna recensione ricevuta ancora.</p>
               </div>
             ) : (
               <div className="space-y-4">
                 {recentReviewsData.reviews.map((review: any) => (
-                  <div key={review.id} className="rounded-2xl border border-orange-50 dark:border-[hsl(25,12%,16%)] p-5 hover:bg-orange-50/30 transition-colors">
+                  <div key={review.id} className="rounded-2xl border border-stone-100 dark:border-[hsl(25,12%,16%)] p-5 hover:bg-stone-50/30 transition-colors">
                     <div className="flex items-start justify-between gap-4 text-left">
                       <div className="flex-1 min-w-0">
                         <div className="flex flex-wrap items-center gap-2 mb-2">
@@ -1093,10 +1093,10 @@ export default function BreweryDashboard({ adminBreweryId }: BreweryDashboardPro
                           </div>
                         </div>
                         {review.personalNotes && (
-                          <p className="text-sm text-muted-foreground leading-relaxed italic border-l-2 border-orange-100 pl-3 mb-3">"{review.personalNotes}"</p>
+                          <p className="text-sm text-muted-foreground leading-relaxed italic border-l-2 border-stone-200 pl-3 mb-3">"{review.personalNotes}"</p>
                         )}
                         {review.ownerReply && (
-                          <div className="mt-3 bg-orange-50 dark:bg-orange-950/20 p-4 rounded-xl border border-orange-100 dark:border-orange-900/30">
+                          <div className="mt-3 bg-stone-50 dark:bg-stone-900/20 p-4 rounded-xl border border-stone-200 dark:border-stone-700/30">
                             <p className="text-xs font-bold text-primary uppercase tracking-wider mb-1">La tua risposta</p>
                             <p className="text-sm text-foreground">{review.ownerReply}</p>
                           </div>
@@ -1108,7 +1108,7 @@ export default function BreweryDashboard({ adminBreweryId }: BreweryDashboardPro
                               onChange={(e) => setReplyText(e.target.value)}
                               placeholder="Ringrazia l'utente o commenta la recensione..."
                               rows={3}
-                              className="text-sm border-orange-100 dark:border-[hsl(25,12%,20%)] rounded-xl focus-visible:ring-primary/20"
+                              className="text-sm border-stone-200 dark:border-[hsl(25,12%,20%)] rounded-xl focus-visible:ring-primary/20"
                             />
                             <div className="flex gap-2">
                               <Button
@@ -1129,7 +1129,7 @@ export default function BreweryDashboard({ adminBreweryId }: BreweryDashboardPro
                           <Button
                             size="sm"
                             variant="ghost"
-                            className="mt-3 text-xs text-primary hover:text-primary hover:bg-orange-50 rounded-xl h-8 px-3"
+                            className="mt-3 text-xs text-primary hover:text-primary hover:bg-stone-50 rounded-xl h-8 px-3"
                             onClick={() => { setReplyingTo(review.id); setReplyText(review.ownerReply || ""); }}
                           >
                             <MessageSquare className="h-3.5 w-3.5 mr-1.5" />
@@ -1156,7 +1156,7 @@ export default function BreweryDashboard({ adminBreweryId }: BreweryDashboardPro
 
         {/* Website Link */}
         {brewery.websiteUrl && (
-          <div className="bg-white dark:bg-[hsl(25,14%,10%)] border border-orange-50 dark:border-[hsl(25,12%,16%)] rounded-2xl shadow-sm p-6 text-center">
+          <div className="bg-white dark:bg-[hsl(25,14%,10%)] border border-stone-100 dark:border-[hsl(25,12%,16%)] rounded-2xl shadow-sm p-6 text-center">
             <a
               href={brewery.websiteUrl}
               target="_blank"
@@ -1173,7 +1173,7 @@ export default function BreweryDashboard({ adminBreweryId }: BreweryDashboardPro
       {/* Profile Edit Dialog */}
       <Dialog open={isEditingProfile} onOpenChange={setIsEditingProfile} modal={false}>
         <DialogContent
-          className="max-w-2xl max-h-[90vh] overflow-y-auto rounded-3xl border-orange-100 shadow-2xl"
+          className="max-w-2xl max-h-[90vh] overflow-y-auto rounded-3xl border-stone-200 shadow-2xl"
           onPointerDownOutside={(e) => {
             const target = e.target as HTMLElement;
             if (target.closest('.pac-container')) e.preventDefault();
@@ -1198,7 +1198,7 @@ export default function BreweryDashboard({ adminBreweryId }: BreweryDashboardPro
                 <Input
                   value={editForm.name}
                   onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
-                  className="border-orange-100 rounded-xl focus-visible:ring-primary/20 h-11"
+                  className="border-stone-200 rounded-xl focus-visible:ring-primary/20 h-11"
                 />
               </div>
               <div className="space-y-2 text-left">
@@ -1215,14 +1215,14 @@ export default function BreweryDashboard({ adminBreweryId }: BreweryDashboardPro
                       country: details.country,
                     });
                   }}
-                  className="border-orange-100 rounded-xl focus-visible:ring-primary/20 h-11"
+                  className="border-stone-200 rounded-xl focus-visible:ring-primary/20 h-11"
                 />
               </div>
             </div>
             <div className="space-y-2 text-left">
               <label className="text-sm font-bold text-foreground flex items-center justify-between">
                 <span>Storia e Filosofia</span>
-                <span className="text-[10px] text-muted-foreground font-medium uppercase tracking-tighter bg-orange-50 px-2 py-0.5 rounded-full border border-orange-100">Editor Avanzato</span>
+                <span className="text-[10px] text-muted-foreground font-medium uppercase tracking-tighter bg-stone-50 px-2 py-0.5 rounded-full border border-stone-200">Editor Avanzato</span>
               </label>
               <RichTextEditor
                 content={editForm.descriptionHtml}
@@ -1238,7 +1238,7 @@ export default function BreweryDashboard({ adminBreweryId }: BreweryDashboardPro
                   value={editForm.websiteUrl}
                   onChange={(e) => setEditForm({ ...editForm, websiteUrl: e.target.value })}
                   placeholder="https://www.esempio.it"
-                  className="border-orange-100 rounded-xl focus-visible:ring-primary/20 h-11"
+                  className="border-stone-200 rounded-xl focus-visible:ring-primary/20 h-11"
                 />
               </div>
               <div className="space-y-2 text-left">
@@ -1247,7 +1247,7 @@ export default function BreweryDashboard({ adminBreweryId }: BreweryDashboardPro
                   value={editForm.phone}
                   onChange={(e) => setEditForm({ ...editForm, phone: e.target.value })}
                   placeholder="+39 012 3456789"
-                  className="border-orange-100 rounded-xl focus-visible:ring-primary/20 h-11"
+                  className="border-stone-200 rounded-xl focus-visible:ring-primary/20 h-11"
                 />
               </div>
             </div>
@@ -1259,7 +1259,7 @@ export default function BreweryDashboard({ adminBreweryId }: BreweryDashboardPro
                   onChange={(e) => setEditForm({ ...editForm, email: e.target.value })}
                   placeholder="info@birrificio.it"
                   type="email"
-                  className="border-orange-100 rounded-xl focus-visible:ring-primary/20 h-11"
+                  className="border-stone-200 rounded-xl focus-visible:ring-primary/20 h-11"
                 />
               </div>
               <div className="space-y-2 text-left">
@@ -1268,52 +1268,52 @@ export default function BreweryDashboard({ adminBreweryId }: BreweryDashboardPro
                   value={editForm.vatNumber}
                   onChange={(e) => setEditForm({ ...editForm, vatNumber: e.target.value })}
                   placeholder="IT01234567890"
-                  className="border-orange-100 rounded-xl focus-visible:ring-primary/20 h-11"
+                  className="border-stone-200 rounded-xl focus-visible:ring-primary/20 h-11"
                 />
               </div>
             </div>
-            <div className="bg-orange-50/50 dark:bg-orange-950/10 p-5 rounded-3xl border border-orange-100 dark:border-orange-900/30">
+            <div className="bg-stone-50/50 dark:bg-stone-900/10 p-5 rounded-3xl border border-stone-200 dark:border-stone-700/30">
               <p className="text-sm font-bold mb-4 flex items-center gap-2 text-foreground text-left">
                 <SiInstagram className="h-4 w-4 text-primary" />
                 Presenza Social
               </p>
               <div className="grid grid-cols-1 gap-4">
                 <div className="flex items-center gap-3">
-                  <div className="p-2 bg-white dark:bg-black rounded-xl border border-orange-100 flex-shrink-0">
+                  <div className="p-2 bg-white dark:bg-black rounded-xl border border-stone-200 flex-shrink-0">
                     <SiInstagram className="h-5 w-5 text-pink-600" />
                   </div>
                   <Input
                     value={editForm.instagramUrl}
                     onChange={(e) => setEditForm({ ...editForm, instagramUrl: e.target.value })}
                     placeholder="URL Instagram"
-                    className="border-orange-100 rounded-xl focus-visible:ring-primary/20 h-11"
+                    className="border-stone-200 rounded-xl focus-visible:ring-primary/20 h-11"
                   />
                 </div>
                 <div className="flex items-center gap-3">
-                  <div className="p-2 bg-white dark:bg-black rounded-xl border border-orange-100 flex-shrink-0">
+                  <div className="p-2 bg-white dark:bg-black rounded-xl border border-stone-200 flex-shrink-0">
                     <SiFacebook className="h-5 w-5 text-blue-700" />
                   </div>
                   <Input
                     value={editForm.facebookUrl}
                     onChange={(e) => setEditForm({ ...editForm, facebookUrl: e.target.value })}
                     placeholder="URL Facebook"
-                    className="border-orange-100 rounded-xl focus-visible:ring-primary/20 h-11"
+                    className="border-stone-200 rounded-xl focus-visible:ring-primary/20 h-11"
                   />
                 </div>
                 <div className="flex items-center gap-3">
-                  <div className="p-2 bg-white dark:bg-black rounded-xl border border-orange-100 flex-shrink-0">
+                  <div className="p-2 bg-white dark:bg-black rounded-xl border border-stone-200 flex-shrink-0">
                     <SiTiktok className="h-5 w-5 text-foreground" />
                   </div>
                   <Input
                     value={editForm.tiktokUrl}
                     onChange={(e) => setEditForm({ ...editForm, tiktokUrl: e.target.value })}
                     placeholder="URL TikTok"
-                    className="border-orange-100 rounded-xl focus-visible:ring-primary/20 h-11"
+                    className="border-stone-200 rounded-xl focus-visible:ring-primary/20 h-11"
                   />
                 </div>
               </div>
             </div>
-            <div className="flex gap-3 pt-4 border-t border-orange-50">
+            <div className="flex gap-3 pt-4 border-t border-stone-100">
               <Button
                 onClick={handleSaveProfile}
                 className="flex-1 bg-primary hover:bg-primary/90 text-white rounded-xl font-bold h-12 shadow-md"
@@ -1326,7 +1326,7 @@ export default function BreweryDashboard({ adminBreweryId }: BreweryDashboardPro
               <Button 
                 variant="outline" 
                 onClick={() => setIsEditingProfile(false)}
-                className="px-6 border-orange-100 hover:bg-orange-50 rounded-xl h-12"
+                className="px-6 border-stone-200 hover:bg-stone-50 rounded-xl h-12"
               >
                 Annulla
               </Button>
@@ -1337,7 +1337,7 @@ export default function BreweryDashboard({ adminBreweryId }: BreweryDashboardPro
 
       {/* Image Edit Dialog */}
       <Dialog open={isEditingImages} onOpenChange={setIsEditingImages}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto rounded-3xl border-orange-100 shadow-2xl">
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto rounded-3xl border-stone-200 shadow-2xl">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2 text-xl">
               <div className="p-2 bg-primary rounded-xl">
@@ -1377,7 +1377,7 @@ export default function BreweryDashboard({ adminBreweryId }: BreweryDashboardPro
 
       {/* Beer Create/Edit Dialog */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto rounded-3xl border-orange-100 shadow-2xl">
+        <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto rounded-3xl border-stone-200 shadow-2xl">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2 text-xl">
               <div className="p-2 bg-primary rounded-xl">
@@ -1395,7 +1395,7 @@ export default function BreweryDashboard({ adminBreweryId }: BreweryDashboardPro
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel className="font-bold">Nome Birra *</FormLabel>
-                      <FormControl><Input placeholder="Es. Luppolina" {...field} className="border-orange-100 rounded-xl focus-visible:ring-primary/20 h-11" /></FormControl>
+                      <FormControl><Input placeholder="Es. Luppolina" {...field} className="border-stone-200 rounded-xl focus-visible:ring-primary/20 h-11" /></FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
@@ -1406,7 +1406,7 @@ export default function BreweryDashboard({ adminBreweryId }: BreweryDashboardPro
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel className="font-bold">Stile *</FormLabel>
-                      <FormControl><Input placeholder="Es. American IPA" {...field} className="border-orange-100 rounded-xl focus-visible:ring-primary/20 h-11" /></FormControl>
+                      <FormControl><Input placeholder="Es. American IPA" {...field} className="border-stone-200 rounded-xl focus-visible:ring-primary/20 h-11" /></FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
@@ -1423,7 +1423,7 @@ export default function BreweryDashboard({ adminBreweryId }: BreweryDashboardPro
                       <FormControl>
                         <Input type="number" step="0.1" placeholder="5.2"
                           {...field} value={field.value ?? ""} onChange={(e) => field.onChange(e.target.value === "" ? null : parseFloat(e.target.value))} 
-                          className="border-orange-100 rounded-xl focus-visible:ring-primary/20 h-11" />
+                          className="border-stone-200 rounded-xl focus-visible:ring-primary/20 h-11" />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -1438,7 +1438,7 @@ export default function BreweryDashboard({ adminBreweryId }: BreweryDashboardPro
                       <FormControl>
                         <Input type="number" placeholder="45"
                           {...field} value={field.value ?? ""} onChange={(e) => field.onChange(e.target.value === "" ? null : parseInt(e.target.value))} 
-                          className="border-orange-100 rounded-xl focus-visible:ring-primary/20 h-11" />
+                          className="border-stone-200 rounded-xl focus-visible:ring-primary/20 h-11" />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -1452,7 +1452,7 @@ export default function BreweryDashboard({ adminBreweryId }: BreweryDashboardPro
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel className="font-bold">Colore</FormLabel>
-                    <FormControl><Input placeholder="Es. Giallo Paglierino, Mogano..." {...field} value={field.value ?? ""} className="border-orange-100 rounded-xl focus-visible:ring-primary/20 h-11" /></FormControl>
+                    <FormControl><Input placeholder="Es. Giallo Paglierino, Mogano..." {...field} value={field.value ?? ""} className="border-stone-200 rounded-xl focus-visible:ring-primary/20 h-11" /></FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -1464,7 +1464,7 @@ export default function BreweryDashboard({ adminBreweryId }: BreweryDashboardPro
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel className="font-bold">Descrizione Organolettica</FormLabel>
-                    <FormControl><Textarea placeholder="Note di degustazione, malti e luppoli utilizzati..." rows={3} {...field} value={field.value ?? ""} className="border-orange-100 rounded-xl focus-visible:ring-primary/20" /></FormControl>
+                    <FormControl><Textarea placeholder="Note di degustazione, malti e luppoli utilizzati..." rows={3} {...field} value={field.value ?? ""} className="border-stone-200 rounded-xl focus-visible:ring-primary/20" /></FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -1485,7 +1485,7 @@ export default function BreweryDashboard({ adminBreweryId }: BreweryDashboardPro
               </div>
 
               {/* Awards editor */}
-              <div className="bg-orange-50/50 dark:bg-orange-950/10 p-5 rounded-3xl border border-orange-100 dark:border-orange-900/30 space-y-4">
+              <div className="bg-stone-50/50 dark:bg-stone-900/10 p-5 rounded-3xl border border-stone-200 dark:border-stone-700/30 space-y-4">
                 <label className="text-sm font-bold flex items-center gap-2 text-foreground uppercase tracking-wider">
                   <Trophy className="h-4 w-4 text-primary" />
                   Hall of Fame (Premi)
@@ -1493,7 +1493,7 @@ export default function BreweryDashboard({ adminBreweryId }: BreweryDashboardPro
                 {editingAwards.length > 0 && (
                   <div className="space-y-2 mb-4">
                     {editingAwards.map((a, i) => (
-                      <div key={i} className="flex items-center gap-3 text-sm bg-white dark:bg-black/40 rounded-xl px-3 py-2 border border-orange-100/50">
+                      <div key={i} className="flex items-center gap-3 text-sm bg-white dark:bg-black/40 rounded-xl px-3 py-2 border border-stone-200/50">
                         <Trophy className={`h-4 w-4 flex-shrink-0 ${a.type === 'gold' ? 'text-yellow-500' : a.type === 'silver' ? 'text-gray-300' : a.type === 'bronze' ? 'text-orange-700' : 'text-primary'}`} />
                         <span className="flex-1 truncate font-medium">{a.name} — {a.competition} ({a.year})</span>
                         <button type="button" onClick={() => setEditingAwards(prev => prev.filter((_, j) => j !== i))} className="text-muted-foreground hover:text-destructive p-1">
@@ -1508,23 +1508,23 @@ export default function BreweryDashboard({ adminBreweryId }: BreweryDashboardPro
                     placeholder="Nome premio (es. Oro)"
                     value={newAward.name}
                     onChange={(e) => setNewAward(prev => ({ ...prev, name: e.target.value }))}
-                    className="text-sm border-orange-100 rounded-xl h-10"
+                    className="text-sm border-stone-200 rounded-xl h-10"
                   />
                   <Input
                     placeholder="Competizione (es. BdA)"
                     value={newAward.competition}
                     onChange={(e) => setNewAward(prev => ({ ...prev, competition: e.target.value }))}
-                    className="text-sm border-orange-100 rounded-xl h-10"
+                    className="text-sm border-stone-200 rounded-xl h-10"
                   />
                   <Input
                     type="number"
                     placeholder="Anno"
                     value={newAward.year}
                     onChange={(e) => setNewAward(prev => ({ ...prev, year: parseInt(e.target.value) || new Date().getFullYear() }))}
-                    className="text-sm border-orange-100 rounded-xl h-10"
+                    className="text-sm border-stone-200 rounded-xl h-10"
                   />
                   <Select value={newAward.type} onValueChange={(v) => setNewAward(prev => ({ ...prev, type: v }))}>
-                    <SelectTrigger className="text-sm border-orange-100 rounded-xl h-10"><SelectValue /></SelectTrigger>
+                    <SelectTrigger className="text-sm border-stone-200 rounded-xl h-10"><SelectValue /></SelectTrigger>
                     <SelectContent className="rounded-xl">
                       <SelectItem value="gold">Oro</SelectItem>
                       <SelectItem value="silver">Argento</SelectItem>
@@ -1537,7 +1537,7 @@ export default function BreweryDashboard({ adminBreweryId }: BreweryDashboardPro
                   type="button"
                   variant="outline"
                   size="sm"
-                  className="w-full border-orange-100 hover:bg-orange-50 rounded-xl font-bold py-5"
+                  className="w-full border-stone-200 hover:bg-stone-50 rounded-xl font-bold py-5"
                   disabled={!newAward.name.trim() || !newAward.competition.trim()}
                   onClick={() => {
                     if (newAward.name.trim() && newAward.competition.trim()) {
@@ -1551,7 +1551,7 @@ export default function BreweryDashboard({ adminBreweryId }: BreweryDashboardPro
                 </Button>
               </div>
 
-              <div className="flex gap-3 pt-4 border-t border-orange-50">
+              <div className="flex gap-3 pt-4 border-t border-stone-100">
                 <Button
                   type="submit"
                   className="flex-1 bg-primary hover:bg-primary/90 text-white rounded-xl font-bold h-12 shadow-md"
@@ -1564,7 +1564,7 @@ export default function BreweryDashboard({ adminBreweryId }: BreweryDashboardPro
                   )}
                   {editingBeer ? "Aggiorna Birra" : "Salva Birra"}
                 </Button>
-                <Button variant="outline" type="button" onClick={() => setDialogOpen(false)} className="px-6 border-orange-100 rounded-xl h-12">
+                <Button variant="outline" type="button" onClick={() => setDialogOpen(false)} className="px-6 border-stone-200 rounded-xl h-12">
                   Annulla
                 </Button>
               </div>

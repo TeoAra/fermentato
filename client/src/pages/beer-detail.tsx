@@ -624,12 +624,12 @@ export default function BeerDetail() {
       </div>
 
       {/* ── INFO BAR ── */}
-      <div className="bg-white dark:bg-[hsl(25,14%,10%)] rounded-2xl border border-orange-50 shadow-sm border-b  px-4 py-3">
+      <div className="bg-white dark:bg-[hsl(25,14%,10%)] rounded-2xl border border-stone-100 shadow-sm border-b  px-4 py-3">
         <div className="max-w-7xl mx-auto flex flex-col items-center gap-3">
           {/* Info pills */}
           <div className="flex items-center gap-2 flex-wrap justify-center">
             {beer?.abv && (
-              <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-bold bg-gradient-to-r from-orange-50 to-amber-50 dark:from-orange-950/50 dark:to-amber-950/30 text-primary border border-orange-100 dark:border-orange-900/30">
+              <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-bold bg-gradient-to-r from-orange-50 to-amber-50 dark:from-orange-950/50 dark:to-amber-950/30 text-primary border border-stone-200 dark:border-stone-700/30">
                 <Target className="h-3.5 w-3.5" />
                 {beer.abv}% ABV
               </span>
@@ -665,7 +665,7 @@ export default function BeerDetail() {
               </span>
             )}
             {beer?.isAlcoholFree && (
-              <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-bold bg-orange-50 text-primary">
+              <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-bold bg-stone-50 text-primary">
                 0.0% Analcolica
               </span>
             )}
@@ -710,7 +710,7 @@ export default function BeerDetail() {
               className={`h-9 w-9 flex items-center justify-center rounded-full border transition-all ${
                 isBeerFavorited
                   ? 'bg-red-50 dark:bg-red-950 border-red-200 dark:border-red-800 text-red-500'
-                  : 'bg-white dark:bg-[hsl(25,14%,10%)] border-orange-50 dark:border-[hsl(25,12%,16%)] text-muted-foreground hover:border-primary/20'
+                  : 'bg-white dark:bg-[hsl(25,14%,10%)] border-stone-100 dark:border-[hsl(25,12%,16%)] text-muted-foreground hover:border-primary/20'
               }`}
             >
               <Heart className={`h-4 w-4 ${isBeerFavorited ? 'fill-current' : ''}`} />
@@ -719,7 +719,7 @@ export default function BeerDetail() {
               onClick={handleShare}
               title="Condividi"
               data-testid="button-share"
-              className="h-9 w-9 flex items-center justify-center rounded-full border bg-white dark:bg-[hsl(25,14%,10%)] border-orange-50 dark:border-[hsl(25,12%,16%)] text-muted-foreground hover:border-primary/20 transition-colors"
+              className="h-9 w-9 flex items-center justify-center rounded-full border bg-white dark:bg-[hsl(25,14%,10%)] border-stone-100 dark:border-[hsl(25,12%,16%)] text-muted-foreground hover:border-primary/20 transition-colors"
             >
               <Share2 className="h-4 w-4" />
             </button>
@@ -728,7 +728,7 @@ export default function BeerDetail() {
                 onClick={openEditDialog}
                 title="Modifica birra"
                 data-testid="button-admin-edit-beer"
-                className="h-9 w-9 flex items-center justify-center rounded-full border bg-orange-50 dark:bg-orange-950/20 dark:bg-orange-950/30 border-orange-100 dark:border-orange-900/30 dark:border-orange-900/30 text-primary dark:text-orange-400 dark:text-orange-400 hover:bg-orange-50 dark:bg-orange-950/20 dark:hover:bg-orange-950/10 transition-colors"
+                className="h-9 w-9 flex items-center justify-center rounded-full border bg-stone-50 dark:bg-stone-900/20 dark:bg-stone-900/30 border-stone-200 dark:border-stone-700/30 dark:border-stone-700/30 text-primary dark:text-orange-400 dark:text-orange-400 hover:bg-stone-50 dark:bg-stone-900/20 dark:hover:bg-stone-900/10 transition-colors"
               >
                 <Pencil className="h-4 w-4" />
               </button>
@@ -738,7 +738,7 @@ export default function BeerDetail() {
                 onClick={() => setIsSuggestDialogOpen(true)}
                 title="Suggerisci modifica"
                 data-testid="button-suggest-change"
-                className="h-9 w-9 flex items-center justify-center rounded-full border bg-white dark:bg-[hsl(25,14%,10%)] border-orange-50 dark:border-[hsl(25,12%,16%)] text-muted-foreground hover:border-primary/20 transition-colors"
+                className="h-9 w-9 flex items-center justify-center rounded-full border bg-white dark:bg-[hsl(25,14%,10%)] border-stone-100 dark:border-[hsl(25,12%,16%)] text-muted-foreground hover:border-primary/20 transition-colors"
               >
                 <Lightbulb className="h-4 w-4" />
               </button>
@@ -782,22 +782,22 @@ export default function BeerDetail() {
 
             {/* Specs grid */}
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
-              <div className="rounded-2xl p-3 bg-gradient-to-br from-orange-50 to-amber-50 dark:from-orange-950/50 dark:to-amber-950/30 border border-orange-100 dark:border-orange-900/40 flex items-center gap-2.5">
+              <div className="rounded-2xl p-3 bg-gradient-to-br from-orange-50 to-amber-50 dark:from-orange-950/50 dark:to-amber-950/30 border border-stone-200 dark:border-stone-700/40 flex items-center gap-2.5">
                 <Target className="h-4 w-4 text-primary flex-shrink-0" />
                 <div><p className="text-[10px] uppercase tracking-wider font-semibold text-muted-foreground">ABV</p><p className="text-sm font-bold text-foreground">{beer?.abv ? `${beer.abv}%` : '—'}</p></div>
               </div>
-              <div className="rounded-2xl p-3 bg-gradient-to-br from-orange-50 to-amber-50 dark:from-orange-950/50 dark:to-amber-950/30 border border-orange-100 dark:border-orange-900/40 flex items-center gap-2.5">
+              <div className="rounded-2xl p-3 bg-gradient-to-br from-orange-50 to-amber-50 dark:from-orange-950/50 dark:to-amber-950/30 border border-stone-200 dark:border-stone-700/40 flex items-center gap-2.5">
                 <Sparkles className="h-4 w-4 text-primary flex-shrink-0" />
                 <div className="min-w-0"><p className="text-[10px] uppercase tracking-wider font-semibold text-muted-foreground">Stile</p><p className="text-sm font-bold text-foreground leading-tight line-clamp-2">{beer?.style || '—'}</p></div>
               </div>
               {beer?.color && (
-                <div className="rounded-2xl p-3 bg-gradient-to-br from-orange-50 to-amber-50 dark:from-orange-950/50 dark:to-amber-950/30 border border-orange-100 dark:border-orange-900/40 flex items-center gap-2.5">
+                <div className="rounded-2xl p-3 bg-gradient-to-br from-orange-50 to-amber-50 dark:from-orange-950/50 dark:to-amber-950/30 border border-stone-200 dark:border-stone-700/40 flex items-center gap-2.5">
                   <Droplets className="h-4 w-4 text-primary flex-shrink-0" />
                   <div><p className="text-[10px] uppercase tracking-wider font-semibold text-muted-foreground">Colore</p><p className="text-sm font-bold text-foreground truncate">{beer.color}</p></div>
                 </div>
               )}
               {beer?.ibu && (
-                <div className="rounded-2xl p-3 bg-gradient-to-br from-orange-50 to-amber-50 dark:from-orange-950/50 dark:to-amber-950/30 border border-orange-100 dark:border-orange-900/40 flex items-center gap-2.5">
+                <div className="rounded-2xl p-3 bg-gradient-to-br from-orange-50 to-amber-50 dark:from-orange-950/50 dark:to-amber-950/30 border border-stone-200 dark:border-stone-700/40 flex items-center gap-2.5">
                   <Wheat className="h-4 w-4 text-primary flex-shrink-0" />
                   <div><p className="text-[10px] uppercase tracking-wider font-semibold text-muted-foreground">IBU</p><p className="text-sm font-bold text-foreground">{beer.ibu}</p></div>
                 </div>
@@ -815,7 +815,7 @@ export default function BeerDetail() {
                 </span>
               )}
                   {translatedDesc && !translating && (
-                    <span className="text-[10px] font-semibold bg-orange-50 text-primary px-2 py-0.5 rounded-full">
+                    <span className="text-[10px] font-semibold bg-stone-50 text-primary px-2 py-0.5 rounded-full">
                       Tradotto
                     </span>
                   )}
@@ -828,7 +828,7 @@ export default function BeerDetail() {
                     <summary className="text-xs text-muted-foreground cursor-pointer hover:text-foreground select-none transition-colors">
                       Testo originale
                     </summary>
-                    <p className="mt-2 text-sm text-muted-foreground leading-relaxed whitespace-pre-line border-t border-orange-50 pt-2">
+                    <p className="mt-2 text-sm text-muted-foreground leading-relaxed whitespace-pre-line border-t border-stone-100 pt-2">
                       {String(beer.description)}
                     </p>
                   </details>
@@ -841,8 +841,8 @@ export default function BeerDetail() {
               <>
                 <div className="border-t " />
                 <Link href={`/brewery/${beer.brewery.id}`}>
-                  <div className="bg-white dark:bg-[hsl(25,14%,10%)] rounded-2xl border border-orange-50 dark:border-[hsl(25,12%,16%)] shadow-sm p-4 flex items-center gap-4 group cursor-pointer transition-all hover:border-primary/20">
-                    <div className="w-14 h-14 rounded-2xl bg-orange-50 dark:bg-[hsl(24,93%,15%)] border border-orange-100 dark:border-orange-900/30 flex items-center justify-center flex-shrink-0 overflow-hidden">
+                  <div className="bg-white dark:bg-[hsl(25,14%,10%)] rounded-2xl border border-stone-100 dark:border-[hsl(25,12%,16%)] shadow-sm p-4 flex items-center gap-4 group cursor-pointer transition-all hover:border-primary/20">
+                    <div className="w-14 h-14 rounded-2xl bg-stone-50 dark:bg-[hsl(24,93%,15%)] border border-stone-200 dark:border-stone-700/30 flex items-center justify-center flex-shrink-0 overflow-hidden">
                       {(beer.brewery as any).logoUrl
                         ? <img src={(beer.brewery as any).logoUrl} alt={beer.brewery.name} className="w-full h-full object-contain p-1" />
                         : <Building2 className="h-6 w-6 text-primary" />
@@ -870,7 +870,7 @@ export default function BeerDetail() {
                   </div>
                   <div className="flex flex-wrap gap-2">
                     {(beer as any).awards.map((award: any, i: number) => (
-                      <div key={i} className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white dark:bg-[hsl(25,14%,10%)] border border-orange-50 dark:border-orange-900/50 shadow-sm text-sm">
+                      <div key={i} className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white dark:bg-[hsl(25,14%,10%)] border border-stone-100 dark:border-stone-700/50 shadow-sm text-sm">
                         <Trophy className={`h-3.5 w-3.5 flex-shrink-0 ${award.type === 'gold' ? 'text-yellow-500' : award.type === 'silver' ? 'text-muted-foreground' : award.type === 'bronze' ? 'text-primary' : 'text-primary'}`} />
                         <span className="font-semibold text-foreground">{award.name}</span>
                         <span className="text-muted-foreground">·</span>
@@ -895,8 +895,8 @@ export default function BeerDetail() {
                   <div className="space-y-1">
                     {suggestedBeers.map((sb: any) => (
                       <Link key={sb.id} href={`/beer/${sb.id}`}>
-                        <div className="flex items-center gap-3 py-2.5 px-3 -mx-3 rounded-xl hover:bg-orange-50 dark:hover:bg-orange-950/20 transition-colors group">
-                          <div className="w-10 h-10 rounded-xl bg-orange-50 dark:bg-[hsl(24,93%,15%)] flex items-center justify-center flex-shrink-0 overflow-hidden border border-orange-100 dark:border-orange-900/30">
+                        <div className="flex items-center gap-3 py-2.5 px-3 -mx-3 rounded-xl hover:bg-stone-50 dark:hover:bg-stone-900/20 transition-colors group">
+                          <div className="w-10 h-10 rounded-xl bg-stone-50 dark:bg-[hsl(24,93%,15%)] flex items-center justify-center flex-shrink-0 overflow-hidden border border-stone-200 dark:border-stone-700/30">
                             {sb.imageUrl
                               ? <img src={sb.imageUrl} alt={sb.name} className="w-full h-full object-cover" />
                               : <BeerIcon className="h-4 w-4 text-primary" />
@@ -907,7 +907,7 @@ export default function BeerDetail() {
                             {sb.style && <p className="text-xs text-muted-foreground truncate mt-0.5">{sb.style}{sb.abv ? ` · ${sb.abv}%` : ''}</p>}
                           </div>
                           {sb.avgRating != null && (
-                            <div className="flex items-center gap-0.5 text-xs font-bold text-primary flex-shrink-0 bg-orange-50 px-2 py-0.5 rounded-full">
+                            <div className="flex items-center gap-0.5 text-xs font-bold text-primary flex-shrink-0 bg-stone-50 px-2 py-0.5 rounded-full">
                               <Star className="h-3 w-3 fill-current" />
                               {sb.avgRating.toFixed(1)}
                             </div>
@@ -929,7 +929,7 @@ export default function BeerDetail() {
               </div>
             ) : totalLocations === 0 ? (
               <div className="text-center py-16">
-                <div className="w-14 h-14 bg-orange-50 dark:bg-[hsl(24,93%,15%)] rounded-full flex items-center justify-center mx-auto mb-4">
+                <div className="w-14 h-14 bg-stone-50 dark:bg-[hsl(24,93%,15%)] rounded-full flex items-center justify-center mx-auto mb-4">
                   <MapPin className="h-7 w-7 text-primary" />
                 </div>
                 <p className="text-muted-foreground text-sm">Questa birra non è disponibile in nessun locale al momento.</p>
@@ -945,13 +945,13 @@ export default function BeerDetail() {
                     <div className="space-y-2">
                       {tapLocations.map((location: any, idx: number) => (
                         <Link key={idx} href={`/pub/${location.pub.id}`}>
-                          <div className="bg-white dark:bg-[hsl(25,14%,10%)] rounded-2xl border border-orange-50 dark:border-[hsl(25,12%,16%)] shadow-sm p-4 border  hover:border-primary/20 transition-colors flex items-center justify-between group">
+                          <div className="bg-white dark:bg-[hsl(25,14%,10%)] rounded-2xl border border-stone-100 dark:border-[hsl(25,12%,16%)] shadow-sm p-4 border  hover:border-primary/20 transition-colors flex items-center justify-between group">
                             <div>
                               <h4 className="font-bold text-sm text-foreground group-hover:text-primary transition-colors">{location.pub.name}</h4>
                               <p className="text-xs text-muted-foreground">{location.pub.address}, {location.pub.city}</p>
                             </div>
                             {location.tapItem.price && (
-                              <Badge className="bg-orange-50 text-primary border-orange-100 border text-xs font-bold">€{location.tapItem.price}</Badge>
+                              <Badge className="bg-stone-50 text-primary border-stone-200 border text-xs font-bold">€{location.tapItem.price}</Badge>
                             )}
                           </div>
                         </Link>
@@ -968,13 +968,13 @@ export default function BeerDetail() {
                     <div className="space-y-2">
                       {bottleLocations.map((location: any, idx: number) => (
                         <Link key={idx} href={`/pub/${location.pub.id}`}>
-                          <div className="bg-white dark:bg-[hsl(25,14%,10%)] rounded-2xl border border-orange-50 dark:border-[hsl(25,12%,16%)] shadow-sm p-4 border  hover:border-primary/20 transition-colors flex items-center justify-between group">
+                          <div className="bg-white dark:bg-[hsl(25,14%,10%)] rounded-2xl border border-stone-100 dark:border-[hsl(25,12%,16%)] shadow-sm p-4 border  hover:border-primary/20 transition-colors flex items-center justify-between group">
                             <div>
                               <h4 className="font-bold text-sm text-foreground group-hover:text-primary transition-colors">{location.pub.name}</h4>
                               <p className="text-xs text-muted-foreground">{location.pub.address}, {location.pub.city}</p>
                             </div>
                             {location.bottleItem.price && (
-                              <Badge className="bg-orange-50 text-primary border-orange-100 border text-xs font-bold">€{location.bottleItem.price}</Badge>
+                              <Badge className="bg-stone-50 text-primary border-stone-200 border text-xs font-bold">€{location.bottleItem.price}</Badge>
                             )}
                           </div>
                         </Link>
@@ -990,7 +990,7 @@ export default function BeerDetail() {
           <TabsContent value="recensioni" className="px-4 lg:px-6 pt-6 pb-8 space-y-6">
             {/* My tasting note */}
             {isAuthenticated && (
-              <div className="bg-white dark:bg-[hsl(25,14%,10%)] rounded-2xl border border-orange-50 dark:border-[hsl(25,12%,16%)] shadow-sm p-5 border ">
+              <div className="bg-white dark:bg-[hsl(25,14%,10%)] rounded-2xl border border-stone-100 dark:border-[hsl(25,12%,16%)] shadow-sm p-5 border ">
                 <div className="flex items-center justify-between mb-4">
                   <h2 className="text-base font-bold text-foreground flex items-center gap-2">
                     <Star className="h-4 w-4 text-primary" />
@@ -1044,7 +1044,7 @@ export default function BeerDetail() {
 
             {/* Community Reviews */}
             {reviewsData && reviewsData.reviewCount > 0 && (
-              <div className="bg-white dark:bg-[hsl(25,14%,10%)] rounded-2xl border border-orange-50 dark:border-[hsl(25,12%,16%)] shadow-sm p-4 border-b">
+              <div className="bg-white dark:bg-[hsl(25,14%,10%)] rounded-2xl border border-stone-100 dark:border-[hsl(25,12%,16%)] shadow-sm p-4 border-b">
                 <div className="flex items-center justify-between mb-4">
                   <h2 className="text-base font-bold text-foreground flex items-center gap-2">
                     <Star className="h-4 w-4 text-amber-500 fill-amber-500" />
@@ -1063,7 +1063,7 @@ export default function BeerDetail() {
 
               {/* Rating Distribution Histogram */}
               {reviewsData.distribution && (
-                <div className="mb-4 space-y-1.5 bg-orange-50/50 dark:bg-orange-950/20 rounded-xl p-3">
+                <div className="mb-4 space-y-1.5 bg-stone-50/50 dark:bg-stone-900/20 rounded-xl p-3">
                   {[5, 4, 3, 2, 1].map(star => {
                     const count = reviewsData.distribution?.[star] || 0;
                     const pct = reviewsData.reviewCount > 0 ? (count / reviewsData.reviewCount) * 100 : 0;
@@ -1072,13 +1072,13 @@ export default function BeerDetail() {
                       <button
                         key={star}
                         onClick={() => { setReviewFilterRating(isActive ? null : star); setShowAllReviews(false); }}
-                        className={`flex items-center gap-3 w-full rounded-lg px-1 py-0.5 transition-colors ${isActive ? 'bg-orange-100 dark:bg-orange-950/30' : 'hover:bg-orange-50 dark:hover:bg-orange-950/20'}`}
+                        className={`flex items-center gap-3 w-full rounded-lg px-1 py-0.5 transition-colors ${isActive ? 'bg-stone-100 dark:bg-stone-900/30' : 'hover:bg-stone-50 dark:hover:bg-stone-900/20'}`}
                       >
                         <div className="flex items-center gap-1 w-12 flex-shrink-0">
                           <span className="text-xs font-bold text-muted-foreground w-3">{star}</span>
                           <Star className="h-3 w-3 text-amber-500 fill-amber-500" />
                         </div>
-                        <div className="flex-1 h-2 bg-orange-100 dark:bg-orange-900/30 rounded-full overflow-hidden">
+                        <div className="flex-1 h-2 bg-stone-100 dark:bg-orange-900/30 rounded-full overflow-hidden">
                           <div
                             className={`h-full rounded-full transition-all duration-500 ${isActive ? 'bg-gradient-to-r from-[#F77104] to-[#f5a623]' : 'bg-gradient-to-r from-yellow-400 to-orange-500'}`}
                             style={{ width: `${pct}%` }}
@@ -1100,7 +1100,7 @@ export default function BeerDetail() {
                 {reviewFilterRating !== null && (
                   <button
                     onClick={() => setReviewFilterRating(null)}
-                    className="flex items-center gap-1 text-xs bg-orange-50 dark:bg-orange-950/20 dark:bg-orange-950/30 text-primary dark:text-orange-400 dark:text-primary px-2.5 py-1 rounded-full font-medium border border-orange-100 dark:border-orange-900/30 dark:border-orange-900/30 hover:bg-orange-50 dark:hover:bg-orange-950/10 transition-colors"
+                    className="flex items-center gap-1 text-xs bg-stone-50 dark:bg-stone-900/20 dark:bg-stone-900/30 text-primary dark:text-orange-400 dark:text-primary px-2.5 py-1 rounded-full font-medium border border-stone-200 dark:border-stone-700/30 dark:border-stone-700/30 hover:bg-stone-50 dark:hover:bg-stone-900/10 transition-colors"
                   >
                     {reviewFilterRating}★ <X className="h-3 w-3" />
                   </button>
@@ -1114,7 +1114,7 @@ export default function BeerDetail() {
                       className={`text-xs px-2.5 py-1 rounded-full border font-bold transition-all ${
                         reviewSortBy === opt
                           ? 'text-white border-transparent'
-                          : 'text-muted-foreground border-orange-50 hover:border-primary/20'
+                          : 'text-muted-foreground border-stone-100 hover:border-primary/20'
                       }`}
                       style={reviewSortBy === opt ? { background: 'linear-gradient(135deg, #F77104 0%, #f98a0e 50%, #f5a623 100%)' } : {}}
                     >
@@ -1132,7 +1132,7 @@ export default function BeerDetail() {
                   const userBadge = getBadgeForCount(Number(review.userReviewCount || 0));
                   const isPublicReviewer = review.isPublic !== false;
                   return (
-                    <div key={review.id} className="flex gap-3 p-3 bg-orange-50/30 dark:bg-orange-950/10 rounded-xl group">
+                    <div key={review.id} className="flex gap-3 p-3 bg-stone-50/30 dark:bg-stone-900/10 rounded-xl group">
                       <Avatar className="h-9 w-9 flex-shrink-0">
                         {review.profileImageUrl && <AvatarImage src={review.profileImageUrl} />}
                         <AvatarFallback className="bg-gradient-to-br from-[hsl(24,93%,49%)] to-[hsl(20,95%,42%)] text-white font-bold text-sm">
@@ -1161,7 +1161,7 @@ export default function BeerDetail() {
                           <p className="text-sm text-foreground italic mb-1">"{review.personalNotes}"</p>
                         )}
                         {review.ownerReply && (
-                          <div className="mt-2 ml-1 pl-3 border-l-2 border-orange-50 dark:border-orange-900/30 rounded-sm">
+                          <div className="mt-2 ml-1 pl-3 border-l-2 border-stone-100 dark:border-stone-700/30 rounded-sm">
                             <div className="flex items-center gap-1 mb-0.5">
                               <MessageSquare className="h-3 w-3 text-primary" />
                               <span className="text-xs font-bold text-primary">Risposta del birrificio</span>
@@ -1206,7 +1206,7 @@ export default function BeerDetail() {
               {filteredReviews.length > 5 && (
                 <button
                   onClick={() => setShowAllReviews(!showAllReviews)}
-                  className="w-full mt-4 flex items-center justify-center gap-2 py-2.5 text-sm font-bold text-primary hover:text-primary/80 border border-dashed border-orange-100 dark:border-orange-900/30 rounded-xl hover:bg-orange-50 dark:hover:bg-orange-950/10 transition-colors"
+                  className="w-full mt-4 flex items-center justify-center gap-2 py-2.5 text-sm font-bold text-primary hover:text-primary/80 border border-dashed border-stone-200 dark:border-stone-700/30 rounded-xl hover:bg-stone-50 dark:hover:bg-stone-900/10 transition-colors"
                 >
                   <ChevronDown className={`h-4 w-4 transition-transform ${showAllReviews ? 'rotate-180' : ''}`} />
                   {showAllReviews
@@ -1317,7 +1317,7 @@ export default function BeerDetail() {
                   type="checkbox"
                   checked={editForm.isAlcoholFree}
                   onChange={(e) => setEditForm({ ...editForm, isAlcoholFree: e.target.checked })}
-                  className="w-4 h-4 rounded border-orange-50 text-primary focus:ring-primary"
+                  className="w-4 h-4 rounded border-stone-100 text-primary focus:ring-primary"
                 />
                 <span className="text-sm font-bold text-primary">0.0% Analcolica</span>
               </label>
@@ -1326,18 +1326,18 @@ export default function BeerDetail() {
                   type="checkbox"
                   checked={editForm.isCollaboration}
                   onChange={(e) => { setEditForm({ ...editForm, isCollaboration: e.target.checked }); if (!e.target.checked) setEditCollabBreweries([]); }}
-                  className="w-4 h-4 rounded border-orange-50 text-primary focus:ring-primary"
+                  className="w-4 h-4 rounded border-stone-100 text-primary focus:ring-primary"
                 />
                 <span className="text-sm font-bold text-primary flex items-center gap-1"><Users className="w-3.5 h-3.5" />Birra in Collaborazione</span>
               </label>
             </div>
             {editForm.isCollaboration && (
-              <div className="space-y-2 p-3 rounded-lg border border-orange-100 bg-orange-50 dark:bg-[hsl(24,93%,15%)]">
+              <div className="space-y-2 p-3 rounded-lg border border-stone-200 bg-stone-50 dark:bg-[hsl(24,93%,15%)]">
                 <Label className="text-primary font-bold flex items-center gap-1.5"><Building2 className="w-4 h-4" />Birrifici Partner</Label>
                 {editCollabBreweries.length > 0 && (
                   <div className="flex flex-wrap gap-2">
                     {editCollabBreweries.map(b => (
-                      <span key={b.id} className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-sm font-bold bg-white dark:bg-[hsl(25,14%,10%)] border border-orange-50 dark:border-orange-900/30 text-primary">
+                      <span key={b.id} className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-sm font-bold bg-white dark:bg-[hsl(25,14%,10%)] border border-stone-100 dark:border-stone-700/30 text-primary">
                         <Building2 className="w-3 h-3" />{b.name}
                         <button type="button" onClick={() => setEditCollabBreweries(editCollabBreweries.filter(x => x.id !== b.id))} className="ml-0.5 hover:text-primary/80 transition-colors">×</button>
                       </span>
@@ -1353,11 +1353,11 @@ export default function BeerDetail() {
                     autoComplete="off"
                   />
                   {showCollabResults && collabResults.length > 0 && (
-                    <div className="absolute z-50 w-full mt-1 bg-white dark:bg-[hsl(25,14%,10%)] border border-orange-50 rounded-md shadow-xl max-h-40 overflow-y-auto">
+                    <div className="absolute z-50 w-full mt-1 bg-white dark:bg-[hsl(25,14%,10%)] border border-stone-100 rounded-md shadow-xl max-h-40 overflow-y-auto">
                       {collabResults.map((b: any) => (
                         <button key={b.id} type="button"
                           onMouseDown={e => { e.preventDefault(); setEditCollabBreweries([...editCollabBreweries, { id: b.id, name: b.name }]); setCollabQuery(""); setCollabResults([]); setShowCollabResults(false); }}
-                          className="w-full px-3 py-2 text-left hover:bg-orange-50 dark:hover:bg-orange-950/20 border-b last:border-b-0 flex items-center gap-2 text-sm text-foreground">
+                          className="w-full px-3 py-2 text-left hover:bg-stone-50 dark:hover:bg-stone-900/20 border-b last:border-b-0 flex items-center gap-2 text-sm text-foreground">
                           {b.logoUrl ? <img src={b.logoUrl} alt="" className="w-5 h-5 rounded-full object-cover" /> : <Building2 className="w-4 h-4 text-primary" />}
                           <span>{b.name}</span>
                           <span className="text-xs text-muted-foreground ml-auto">{b.location}</span>
@@ -1429,7 +1429,7 @@ export default function BeerDetail() {
               <select
                 value={reportReason}
                 onChange={(e) => setReportReason(e.target.value)}
-                className="w-full border border-orange-50 dark:border-[hsl(25,12%,16%)] rounded-md px-3 py-2 text-sm bg-white dark:bg-[hsl(25,14%,10%)] text-foreground"
+                className="w-full border border-stone-100 dark:border-[hsl(25,12%,16%)] rounded-md px-3 py-2 text-sm bg-white dark:bg-[hsl(25,14%,10%)] text-foreground"
               >
                 <option value="inappropriato">Contenuto inappropriato</option>
                 <option value="spam">Spam o pubblicità</option>
@@ -1503,8 +1503,8 @@ export default function BeerDetail() {
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
               {similarBeers.map((b: any) => (
                 <Link key={b.id} href={`/beer/${b.id}`}>
-                  <div className="group bg-white dark:bg-[hsl(25,14%,10%)] border border-orange-50 dark:border-[hsl(25,12%,16%)] rounded-xl p-3 hover:shadow-md hover:border-primary/20 transition-all cursor-pointer h-full flex flex-col">
-                    <div className="w-10 h-10 rounded-lg flex-shrink-0 bg-orange-50 dark:bg-[hsl(24,93%,15%)] flex items-center justify-center overflow-hidden mb-2 mx-auto">
+                  <div className="group bg-white dark:bg-[hsl(25,14%,10%)] border border-stone-100 dark:border-[hsl(25,12%,16%)] rounded-xl p-3 hover:shadow-md hover:border-primary/20 transition-all cursor-pointer h-full flex flex-col">
+                    <div className="w-10 h-10 rounded-lg flex-shrink-0 bg-stone-50 dark:bg-[hsl(24,93%,15%)] flex items-center justify-center overflow-hidden mb-2 mx-auto">
                       {b.imageUrl ? (
                         <img src={b.imageUrl} alt={b.name} className="w-10 h-10 object-contain p-0.5" />
                       ) : b.breweryLogoUrl ? (

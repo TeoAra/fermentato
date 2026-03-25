@@ -420,7 +420,7 @@ export default function RegistraPub() {
                 <FormField control={form.control} name="isBrewpub" render={({ field }) => (
                   <FormItem className="flex flex-row items-center justify-between">
                     <div className="flex items-center gap-3">
-                      <div className="p-2 bg-orange-100 dark:bg-orange-900/30 rounded-full">
+                      <div className="p-2 bg-stone-100 dark:bg-orange-900/30 rounded-full">
                         <Factory className="w-5 h-5 text-orange-600" />
                       </div>
                       <div>
@@ -451,7 +451,7 @@ export default function RegistraPub() {
 
             {/* Section 4: Brewery details (if brewpub) */}
             {isBrewpub && (
-              <Card className="shadow-sm border-orange-200 dark:border-orange-800">
+              <Card className="shadow-sm border-stone-300 dark:border-stone-700">
                 <CardHeader className="pb-4">
                   <CardTitle className="flex items-center gap-2 text-base text-orange-800 dark:text-orange-200">
                     <Factory className="w-4 h-4" />
@@ -480,7 +480,7 @@ export default function RegistraPub() {
                               form.setValue("breweryRegion", b.region || "");
                               form.setValue("breweryCountry", (b as any).country || "");
                               setBrewerySearch("");
-                            }} className="w-full text-left p-2 rounded hover:bg-orange-50 dark:hover:bg-orange-900/20 transition-colors">
+                            }} className="w-full text-left p-2 rounded hover:bg-stone-50 dark:hover:bg-stone-800/35 transition-colors">
                               <p className="font-medium text-sm">{b.name}</p>
                               <p className="text-xs text-gray-500">{b.location}</p>
                             </button>
@@ -495,7 +495,7 @@ export default function RegistraPub() {
                   )}
 
                   {selectedBrewery && (
-                    <div className="p-3 bg-orange-50 dark:bg-orange-900/20 rounded-lg border border-orange-200 dark:border-orange-700">
+                    <div className="p-3 bg-stone-50 dark:bg-orange-900/20 rounded-lg border border-stone-300 dark:border-stone-600">
                       <div className="flex items-center justify-between">
                         <div>
                           <p className="font-medium text-orange-900 dark:text-orange-100">{selectedBrewery.name}</p>
@@ -574,7 +574,7 @@ export default function RegistraPub() {
                         )} />
                       )}
                       {sameSiteAsPub && (
-                        <div className="text-sm text-gray-500 dark:text-gray-400 bg-orange-50 dark:bg-orange-900/20 rounded-lg px-3 py-2 border border-orange-100 dark:border-orange-800">
+                        <div className="text-sm text-gray-500 dark:text-gray-400 bg-stone-50 dark:bg-orange-900/20 rounded-lg px-3 py-2 border border-stone-200 dark:border-stone-700">
                           Sede: <span className="font-medium text-gray-700 dark:text-gray-300">{form.watch("pubAddress") || form.watch("pubCity")}</span>
                         </div>
                       )}

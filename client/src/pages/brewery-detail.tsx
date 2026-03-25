@@ -500,7 +500,7 @@ export default function BreweryDetail() {
 
         {/* ── MAIN CONTENT CARD ── */}
         <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 -mt-6 relative z-10 pb-20">
-          <div className="bg-white dark:bg-[hsl(25,14%,10%)] rounded-t-3xl md:rounded-3xl shadow-lg overflow-hidden border border-orange-50 dark:border-[hsl(25,12%,16%)]">
+          <div className="bg-white dark:bg-[hsl(25,14%,10%)] rounded-t-3xl md:rounded-3xl shadow-lg overflow-hidden border border-stone-100 dark:border-[hsl(25,12%,16%)]">
             {/* Header Info */}
             <div className="p-6 md:p-8">
               <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
@@ -543,7 +543,7 @@ export default function BreweryDetail() {
                 <div className="flex items-center gap-2">
                   {isAdmin && (
                     <Link href={`/admin/edit-brewery/${id}`}>
-                      <Button variant="outline" size="sm" className="rounded-xl border-orange-100 dark:border-orange-900/50">
+                      <Button variant="outline" size="sm" className="rounded-xl border-stone-200 dark:border-stone-700/50">
                         <Settings className="h-4 w-4 mr-2" />
                         Gestisci
                       </Button>
@@ -553,7 +553,7 @@ export default function BreweryDetail() {
                     <Button 
                       variant="outline" 
                       size="sm" 
-                      className="rounded-xl border-orange-100 dark:border-orange-900/50"
+                      className="rounded-xl border-stone-200 dark:border-stone-700/50"
                       onClick={() => setIsSuggestDialogOpen(true)}
                     >
                       <Lightbulb className="h-4 w-4 mr-2" />
@@ -637,8 +637,8 @@ export default function BreweryDetail() {
                         ))}
                       </div>
                     ) : beers.length === 0 ? (
-                      <div className="text-center py-12 border-2 border-dashed border-orange-100 dark:border-orange-900/30 rounded-3xl">
-                        <div className="w-16 h-16 bg-orange-50 dark:bg-orange-950/20 rounded-full flex items-center justify-center mx-auto mb-4">
+                      <div className="text-center py-12 border-2 border-dashed border-stone-200 dark:border-stone-700/30 rounded-3xl">
+                        <div className="w-16 h-16 bg-stone-50 dark:bg-stone-900/20 rounded-full flex items-center justify-center mx-auto mb-4">
                           <Beer className="h-8 w-8 text-primary/40" />
                         </div>
                         <h3 className="text-lg font-bold text-foreground">Nessuna birra ancora</h3>
@@ -651,7 +651,7 @@ export default function BreweryDetail() {
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                           {displayedBeers.map((beer: Beer) => (
                             <Link key={beer.id} href={`/beer/${beer.id}`}>
-                              <div className={`bg-white dark:bg-[hsl(25,14%,10%)] rounded-2xl p-4 flex items-center gap-4 shadow-sm border border-orange-50 dark:border-[hsl(25,12%,16%)] hover:border-primary/20 dark:hover:border-primary/25 cursor-pointer transition-all group relative ${(beer as any).isHidden ? 'opacity-50 grayscale' : ''}`}>
+                              <div className={`bg-white dark:bg-[hsl(25,14%,10%)] rounded-2xl p-4 flex items-center gap-4 shadow-sm border border-stone-100 dark:border-[hsl(25,12%,16%)] hover:border-primary/20 dark:hover:border-primary/25 cursor-pointer transition-all group relative ${(beer as any).isHidden ? 'opacity-50 grayscale' : ''}`}>
                                 <div className="relative">
                                   {beer.imageUrl ? (
                                     <img 
@@ -714,7 +714,7 @@ export default function BreweryDetail() {
                                     if (!isAuthenticated) return;
                                     favoriteMutation.mutate({ itemType: 'beer', itemId: beer.id, action: isBeerFavorited(beer.id) ? 'remove' : 'add' });
                                   }}
-                                  className="h-8 w-8 flex items-center justify-center rounded-xl transition-all opacity-0 group-hover:opacity-100 hover:bg-orange-50 dark:hover:bg-orange-950/30"
+                                  className="h-8 w-8 flex items-center justify-center rounded-xl transition-all opacity-0 group-hover:opacity-100 hover:bg-stone-50 dark:hover:bg-stone-900/30"
                                 >
                                   <Heart className={`h-4 w-4 ${isBeerFavorited(beer.id) ? 'fill-primary text-primary' : 'text-muted-foreground'}`} />
                                 </button>
@@ -727,7 +727,7 @@ export default function BreweryDetail() {
                           <div className="flex justify-center pt-6">
                             <Button 
                               variant="ghost" 
-                              className="text-primary font-bold rounded-xl hover:bg-orange-50"
+                              className="text-primary font-bold rounded-xl hover:bg-stone-50"
                               onClick={() => setVisibleCount(filteredBeers.length)}
                             >
                               Mostra tutte le ${filteredBeers.length} birre
@@ -761,7 +761,7 @@ export default function BreweryDetail() {
                       <h3 className="font-bold text-foreground">Contatti e Social</h3>
                       <div className="flex flex-col gap-2">
                         {brewery?.websiteUrl && (
-                          <a href={brewery.websiteUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 p-3 rounded-2xl bg-orange-50/50 dark:bg-orange-950/10 border border-orange-50 dark:border-orange-900/20 hover:border-primary/30 transition-all group">
+                          <a href={brewery.websiteUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 p-3 rounded-2xl bg-stone-50/50 dark:bg-stone-900/10 border border-stone-100 dark:border-stone-700/20 hover:border-primary/30 transition-all group">
                             <div className="w-10 h-10 rounded-xl bg-white dark:bg-[hsl(25,14%,12%)] flex items-center justify-center text-primary shadow-sm">
                               <Globe className="h-5 w-5" />
                             </div>
@@ -772,7 +772,7 @@ export default function BreweryDetail() {
                           </a>
                         )}
                         {(brewery as any)?.email && (
-                          <a href={`mailto:${(brewery as any).email}`} className="flex items-center gap-3 p-3 rounded-2xl bg-orange-50/50 dark:bg-orange-950/10 border border-orange-50 dark:border-orange-900/20 hover:border-primary/30 transition-all group">
+                          <a href={`mailto:${(brewery as any).email}`} className="flex items-center gap-3 p-3 rounded-2xl bg-stone-50/50 dark:bg-stone-900/10 border border-stone-100 dark:border-stone-700/20 hover:border-primary/30 transition-all group">
                             <div className="w-10 h-10 rounded-xl bg-white dark:bg-[hsl(25,14%,12%)] flex items-center justify-center text-primary shadow-sm">
                               <Mail className="h-5 w-5" />
                             </div>
@@ -784,12 +784,12 @@ export default function BreweryDetail() {
                         )}
                         <div className="flex gap-2">
                           {(brewery as any)?.instagramUrl && (
-                            <a href={(brewery as any).instagramUrl} target="_blank" rel="noopener noreferrer" className="h-12 w-12 rounded-2xl bg-orange-50/50 dark:bg-orange-950/10 border border-orange-50 dark:border-orange-900/20 flex items-center justify-center text-primary hover:border-primary/30 transition-all">
+                            <a href={(brewery as any).instagramUrl} target="_blank" rel="noopener noreferrer" className="h-12 w-12 rounded-2xl bg-stone-50/50 dark:bg-stone-900/10 border border-stone-100 dark:border-stone-700/20 flex items-center justify-center text-primary hover:border-primary/30 transition-all">
                               <SiInstagram className="h-5 w-5" />
                             </a>
                           )}
                           {(brewery as any)?.facebookUrl && (
-                            <a href={(brewery as any).facebookUrl} target="_blank" rel="noopener noreferrer" className="h-12 w-12 rounded-2xl bg-orange-50/50 dark:bg-orange-950/10 border border-orange-50 dark:border-orange-900/20 flex items-center justify-center text-primary hover:border-primary/30 transition-all">
+                            <a href={(brewery as any).facebookUrl} target="_blank" rel="noopener noreferrer" className="h-12 w-12 rounded-2xl bg-stone-50/50 dark:bg-stone-900/10 border border-stone-100 dark:border-stone-700/20 flex items-center justify-center text-primary hover:border-primary/30 transition-all">
                               <SiFacebook className="h-5 w-5" />
                             </a>
                           )}
@@ -804,7 +804,7 @@ export default function BreweryDetail() {
                           href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(brewery.name + ' ' + brewery.location)}`}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="block p-3 rounded-2xl bg-orange-50/50 dark:bg-orange-950/10 border border-orange-50 dark:border-orange-900/20 hover:border-primary/30 transition-all group"
+                          className="block p-3 rounded-2xl bg-stone-50/50 dark:bg-stone-900/10 border border-stone-100 dark:border-stone-700/20 hover:border-primary/30 transition-all group"
                         >
                           <div className="flex items-center gap-3 mb-3">
                             <div className="w-10 h-10 rounded-xl bg-white dark:bg-[hsl(25,14%,12%)] flex items-center justify-center text-primary shadow-sm">
@@ -815,7 +815,7 @@ export default function BreweryDetail() {
                               <p className="text-sm font-semibold truncate group-hover:text-primary transition-colors">{brewery.location}</p>
                             </div>
                           </div>
-                          <div className="h-32 rounded-xl bg-orange-100/50 dark:bg-orange-900/20 flex items-center justify-center text-primary/50 text-xs font-bold uppercase tracking-widest border border-orange-200/50 dark:border-orange-800/30">
+                          <div className="h-32 rounded-xl bg-stone-100/50 dark:bg-orange-900/20 flex items-center justify-center text-primary/50 text-xs font-bold uppercase tracking-widest border border-stone-300/50 dark:border-stone-700/30">
                             Vedi sulla mappa
                           </div>
                         </a>
@@ -834,9 +834,9 @@ export default function BreweryDetail() {
                       </h3>
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         {announcements.map((announcement: any) => (
-                          <div key={announcement.id} className="bg-white dark:bg-[hsl(25,14%,10%)] rounded-2xl border border-orange-50 dark:border-orange-900/20 p-5 shadow-sm">
+                          <div key={announcement.id} className="bg-white dark:bg-[hsl(25,14%,10%)] rounded-2xl border border-stone-100 dark:border-stone-700/20 p-5 shadow-sm">
                             <div className="flex items-start gap-4">
-                              <div className="w-10 h-10 rounded-xl bg-orange-50 dark:bg-orange-950/30 flex items-center justify-center text-primary shrink-0">
+                              <div className="w-10 h-10 rounded-xl bg-stone-50 dark:bg-stone-900/30 flex items-center justify-center text-primary shrink-0">
                                 <Newspaper className="h-5 w-5" />
                               </div>
                               <div className="space-y-1">
@@ -861,7 +861,7 @@ export default function BreweryDetail() {
                       </h3>
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         {breweryEvents.filter(e => isFuture(new Date(e.eventDate))).slice(0, 4).map((event: any) => (
-                          <div key={event.id} className="bg-white dark:bg-[hsl(25,14%,10%)] rounded-3xl overflow-hidden border border-orange-50 dark:border-orange-900/20 shadow-sm group">
+                          <div key={event.id} className="bg-white dark:bg-[hsl(25,14%,10%)] rounded-3xl overflow-hidden border border-stone-100 dark:border-stone-700/20 shadow-sm group">
                             {event.imageUrl && (
                               <div className="h-40 bg-cover bg-center transition-transform group-hover:scale-105 duration-500" style={{ backgroundImage: `url(${event.imageUrl})` }} />
                             )}
@@ -891,7 +891,7 @@ export default function BreweryDetail() {
                   <div className="space-y-4">
                     <div className="flex items-center justify-between">
                       <h2 className="text-xl font-bold text-foreground">Dove trovarci</h2>
-                      <span className="bg-orange-50 text-primary text-[10px] font-bold px-3 py-1 rounded-full">
+                      <span className="bg-stone-50 text-primary text-[10px] font-bold px-3 py-1 rounded-full">
                         ${distribution.length} LOCALI
                       </span>
                     </div>
@@ -899,7 +899,7 @@ export default function BreweryDetail() {
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                       {distribution.map((pub: any) => (
                         <Link key={pub.id} href={`/pub/${pub.slug || pub.id}`}>
-                          <div className="bg-white dark:bg-[hsl(25,14%,10%)] rounded-2xl p-4 flex items-center gap-4 shadow-sm border border-orange-50 dark:border-orange-100 hover:border-primary/20 transition-all cursor-pointer group">
+                          <div className="bg-white dark:bg-[hsl(25,14%,10%)] rounded-2xl p-4 flex items-center gap-4 shadow-sm border border-stone-100 dark:border-stone-200 hover:border-primary/20 transition-all cursor-pointer group">
                             {pub.logo_url ? (
                               <img src={pub.logo_url} alt={pub.name} className="w-12 h-12 rounded-2xl object-cover flex-shrink-0" />
                             ) : (

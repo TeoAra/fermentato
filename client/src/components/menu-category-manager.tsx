@@ -754,7 +754,7 @@ export default function MenuCategoryManager({ pubId, categories }: MenuCategoryM
                               size="sm" 
                               variant="ghost" 
                               onClick={() => handleEditCategory(category)}
-                              className="text-gray-600 hover:text-orange-600 hover:bg-orange-50 dark:hover:bg-orange-900"
+                              className="text-gray-600 hover:text-orange-600 hover:bg-stone-50 dark:hover:bg-stone-800"
                               data-testid={`button-edit-category-${category.id}`}
                             >
                               <Edit3 className="h-4 w-4" />
@@ -825,7 +825,7 @@ export default function MenuCategoryManager({ pubId, categories }: MenuCategoryM
                                               setEditCategoryIds(product.categoryId ? [product.categoryId] : []);
                                               setIsEditProductOpen(true);
                                             }}
-                                            className="text-gray-600 hover:text-orange-600 hover:bg-orange-50"
+                                            className="text-gray-600 hover:text-orange-600 hover:bg-stone-50"
                                           >
                                             <Edit3 className="h-4 w-4" />
                                           </Button>
@@ -907,7 +907,7 @@ export default function MenuCategoryManager({ pubId, categories }: MenuCategoryM
                                             setEditCategoryIds(product.categoryId ? [product.categoryId] : []);
                                             setIsEditProductOpen(true);
                                           }}
-                                          className="text-gray-600 hover:text-orange-600 hover:bg-orange-50"
+                                          className="text-gray-600 hover:text-orange-600 hover:bg-stone-50"
                                           data-testid={`button-edit-product-${product.id}`}
                                         >
                                           <Edit3 className="h-4 w-4" />

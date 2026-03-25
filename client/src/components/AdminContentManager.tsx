@@ -633,7 +633,7 @@ export default function AdminContentManager({ type }: AdminContentManagerProps) 
                             </div>
                           )}
                           {item.style && <Badge variant="outline" className="text-xs py-0 h-4">{item.style}</Badge>}
-                          {item.abv != null && <Badge variant="secondary" className="text-xs py-0 h-4 bg-orange-100 dark:bg-orange-900/40 text-orange-700">{item.abv}%</Badge>}
+                          {item.abv != null && <Badge variant="secondary" className="text-xs py-0 h-4 bg-stone-100 dark:bg-orange-900/40 text-orange-700">{item.abv}%</Badge>}
                           {item.isGlutenFree && <GlutenFreeSmallBadge size={12} />}
                           {item.isAlcoholFree && <AlcoholFreeBadge size={11} />}
                         </div>

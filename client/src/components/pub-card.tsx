@@ -105,7 +105,7 @@ export default function PubCard({ pub, distance }: PubCardProps) {
 
   return (
     <Link href={`/pub/${(pub as any).slug || pub.id}`} onMouseEnter={handlePrefetch} onTouchStart={handlePrefetch}>
-      <div className="group bg-white dark:bg-[hsl(25,14%,10%)] rounded-2xl border border-orange-50 dark:border-[hsl(25,12%,16%)] shadow-sm overflow-hidden cursor-pointer hover:shadow-[0_8px_28px_rgba(247,113,4,0.13)] hover:-translate-y-0.5 transition-all duration-250">
+      <div className="group bg-white dark:bg-[hsl(25,14%,10%)] rounded-2xl border border-stone-100 dark:border-[hsl(25,12%,16%)] shadow-sm overflow-hidden cursor-pointer hover:shadow-[0_8px_28px_rgba(247,113,4,0.13)] hover:-translate-y-0.5 transition-all duration-250">
         {/* Cover image */}
         <div className="relative">
           <ImageWithFallback
@@ -169,7 +169,7 @@ export default function PubCard({ pub, distance }: PubCardProps) {
           {/* Info pills */}
           <div className="flex items-center gap-1.5 flex-wrap">
             {beersOnTap > 0 && (
-              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold bg-orange-50 dark:bg-orange-950/30 text-primary dark:text-orange-400 border border-orange-100 dark:border-orange-900/30">
+              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold bg-stone-50 dark:bg-stone-900/30 text-primary dark:text-orange-400 border border-stone-200 dark:border-stone-700/30">
                 <Beer className="w-3 h-3" />
                 {beersOnTap} alla spina
               </span>

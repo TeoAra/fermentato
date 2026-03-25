@@ -103,7 +103,7 @@ export default function AdminModeration() {
       <div className="container mx-auto px-4 py-6 max-w-5xl space-y-6">
         <div className="flex items-center gap-4 mb-2">
           <Link href="/admin">
-            <Button variant="outline" size="sm" className="border-orange-100 dark:border-[hsl(25,12%,20%)] hover:bg-orange-50 rounded-xl">
+            <Button variant="outline" size="sm" className="border-stone-200 dark:border-[hsl(25,12%,20%)] hover:bg-stone-50 rounded-xl">
               <ArrowLeft className="w-4 h-4 mr-2" />
               Dashboard Admin
             </Button>
@@ -131,7 +131,7 @@ export default function AdminModeration() {
           ].map(({ label, value, color, icon: Icon, iconColor }) => (
             <Card
               key={value}
-              className={`bg-white dark:bg-[hsl(25,14%,10%)] border border-orange-50 dark:border-[hsl(25,12%,16%)] rounded-2xl shadow-sm border-l-4 ${color} cursor-pointer transition-shadow hover:shadow-md ${statusFilter === value ? "ring-2 ring-offset-1 ring-primary" : ""}`}
+              className={`bg-white dark:bg-[hsl(25,14%,10%)] border border-stone-100 dark:border-[hsl(25,12%,16%)] rounded-2xl shadow-sm border-l-4 ${color} cursor-pointer transition-shadow hover:shadow-md ${statusFilter === value ? "ring-2 ring-offset-1 ring-primary" : ""}`}
               onClick={() => setStatusFilter(value)}
             >
               <CardContent className="p-4 flex items-center justify-between">
@@ -160,7 +160,7 @@ export default function AdminModeration() {
               className={`px-3 py-1 rounded-full text-xs font-medium transition-colors ${
                 statusFilter === value
                   ? "bg-primary text-white"
-                  : "bg-orange-50 dark:bg-orange-950/20 text-primary hover:bg-orange-100"
+                  : "bg-stone-50 dark:bg-stone-900/20 text-primary hover:bg-stone-100"
               }`}
             >
               {label}
@@ -174,7 +174,7 @@ export default function AdminModeration() {
             <p className="text-muted-foreground">Caricamento segnalazioni...</p>
           </div>
         ) : reports.length === 0 ? (
-          <Card className="bg-white dark:bg-[hsl(25,14%,10%)] border border-orange-50 dark:border-[hsl(25,12%,16%)] rounded-2xl shadow-sm">
+          <Card className="bg-white dark:bg-[hsl(25,14%,10%)] border border-stone-100 dark:border-[hsl(25,12%,16%)] rounded-2xl shadow-sm">
             <CardContent className="p-12 text-center">
               <Shield className="w-16 h-16 mx-auto text-emerald-500 mb-4" />
               <h3 className="text-lg font-semibold mb-2 text-foreground">
@@ -193,7 +193,7 @@ export default function AdminModeration() {
               const reporterName = report.reporterNickname || report.reporterFirstName || `Utente ${report.reporterId.slice(0, 6)}`;
               const reasonLabel = reasonLabels[report.reason] || report.reason;
               return (
-                <Card key={report.id} className="bg-white dark:bg-[hsl(25,14%,10%)] border border-orange-50 dark:border-[hsl(25,12%,16%)] rounded-2xl shadow-sm hover:shadow-md transition-shadow">
+                <Card key={report.id} className="bg-white dark:bg-[hsl(25,14%,10%)] border border-stone-100 dark:border-[hsl(25,12%,16%)] rounded-2xl shadow-sm hover:shadow-md transition-shadow">
                   <CardContent className="p-5">
                     <div className="flex items-start justify-between gap-4">
                       <div className="flex-1 space-y-3">
@@ -205,7 +205,7 @@ export default function AdminModeration() {
                           <Badge
                             className={`text-xs rounded-full px-2.5 py-0.5 font-medium ${
                               report.status === "resolved" ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/20 dark:text-emerald-400" :
-                              report.status === "pending" ? "bg-orange-50 text-primary dark:bg-orange-950/20 dark:text-orange-400" :
+                              report.status === "pending" ? "bg-stone-50 text-primary dark:bg-stone-900/20 dark:text-orange-400" :
                               "bg-muted text-muted-foreground"
                             }`}
                           >
@@ -220,7 +220,7 @@ export default function AdminModeration() {
                         </div>
 
                         {report.reviewText || report.beerName ? (
-                          <div className="bg-orange-50 dark:bg-orange-950/20 border border-orange-100 dark:border-orange-900/50 rounded-xl p-3">
+                          <div className="bg-stone-50 dark:bg-stone-900/20 border border-stone-200 dark:border-stone-700/50 rounded-xl p-3">
                             <div className="flex items-center gap-2 mb-2">
                               <BeerIcon className="w-3.5 h-3.5 text-primary" />
                               <span className="text-xs font-medium text-primary dark:text-orange-400">
@@ -283,7 +283,7 @@ export default function AdminModeration() {
                           <Button
                             size="sm"
                             variant="outline"
-                            className="border-orange-100 dark:border-[hsl(25,12%,20%)] hover:bg-orange-50 rounded-xl font-semibold gap-1.5 text-muted-foreground"
+                            className="border-stone-200 dark:border-[hsl(25,12%,20%)] hover:bg-stone-50 rounded-xl font-semibold gap-1.5 text-muted-foreground"
                             disabled={reportActionMutation.isPending}
                             onClick={() => reportActionMutation.mutate({ reportId: report.id, action: "dismiss" })}
                           >

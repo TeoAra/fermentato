@@ -44,7 +44,7 @@ function getOpenStatus(openingHours: any): { status: OpenStatus; label: string; 
         : (closeTime - currentTime);
       
       if (minutesToClose <= 30) {
-        return { status: 'closing_soon', label: `Chiude tra ${minutesToClose} min`, color: 'text-orange-600 bg-orange-50 dark:bg-orange-900/20' };
+        return { status: 'closing_soon', label: `Chiude tra ${minutesToClose} min`, color: 'text-orange-600 bg-stone-50 dark:bg-orange-900/20' };
       }
       return { status: 'open', label: 'Aperto', color: 'text-green-600 bg-green-50 dark:bg-green-900/20' };
     } else {
@@ -364,7 +364,7 @@ export default function Activity() {
                       <Card className="hover:shadow-lg hover:scale-[1.02] transition-all duration-200 cursor-pointer h-full">
                         <CardContent className="p-4">
                           <div className="flex items-start gap-3">
-                            <div className="w-12 h-12 bg-orange-100 dark:bg-orange-900/20 rounded-lg flex items-center justify-center flex-shrink-0">
+                            <div className="w-12 h-12 bg-stone-100 dark:bg-orange-900/20 rounded-lg flex items-center justify-center flex-shrink-0">
                               <MapPin className="h-6 w-6 text-orange-600" />
                             </div>
                             <div className="flex-1 min-w-0">
@@ -604,7 +604,7 @@ export default function Activity() {
                       <div className={`w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 ${
                         tc.type === 'beer_removed' 
                           ? 'bg-red-100 dark:bg-red-900/20' 
-                          : 'bg-orange-100 dark:bg-orange-900/20'
+                          : 'bg-stone-100 dark:bg-orange-900/20'
                       }`}>
                         <Beer className={`h-5 w-5 ${
                           tc.type === 'beer_removed' ? 'text-red-600' : 'text-orange-600'

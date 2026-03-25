@@ -128,7 +128,7 @@ function StylesPickerOverview({ current, onChange, onSave, isSaving }: {
           value={styleSearch}
           onChange={e => { setStyleSearch(e.target.value); setShowAll(false); }}
           placeholder={`Cerca tra ${allStyles.length} stili dal database...`}
-          className="pl-9 text-sm border-orange-200 dark:border-gray-600 focus:border-orange-400 h-9"
+          className="pl-9 text-sm border-stone-300 dark:border-gray-600 focus:border-orange-400 h-9"
         />
         {styleSearch && (
           <button onClick={() => setStyleSearch("")} className="absolute right-2 top-1/2 -translate-y-1/2">
@@ -440,7 +440,7 @@ export default function UserProfile() {
       <div className="container mx-auto px-4 py-8">
         <div className="animate-pulse">
           <div className="h-8 bg-orange-200/50 rounded-xl mb-4"></div>
-          <div className="h-64 bg-orange-100/50 rounded-xl"></div>
+          <div className="h-64 bg-stone-100/50 rounded-xl"></div>
         </div>
       </div>
     );
@@ -636,14 +636,14 @@ export default function UserProfile() {
                       onChange={(e) => setEditedProfile({ ...editedProfile, bio: e.target.value })}
                       placeholder="Racconta qualcosa di te, cosa ami bere..."
                       rows={3}
-                      className="border-orange-200 focus:border-orange-400 focus:ring-orange-400/20 text-sm"
+                      className="border-stone-300 focus:border-orange-400 focus:ring-orange-400/20 text-sm"
                     />
                     <div className="flex gap-2">
                       <Button size="sm" onClick={handleSaveProfile} disabled={updateProfileMutation.isPending} className="bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 text-white">
                         <Save className="w-3.5 h-3.5 mr-1.5" />
                         {updateProfileMutation.isPending ? "Salvando..." : "Salva"}
                       </Button>
-                      <Button size="sm" variant="outline" onClick={() => { setIsEditing(false); setEditedProfile({ nickname: typedUser?.nickname || "", bio: typedUser?.bio || "", favoriteStyles: typedUser?.favoriteStyles || [], profileImageUrl: typedUser?.profileImageUrl || "" }); }} className="border-orange-200">
+                      <Button size="sm" variant="outline" onClick={() => { setIsEditing(false); setEditedProfile({ nickname: typedUser?.nickname || "", bio: typedUser?.bio || "", favoriteStyles: typedUser?.favoriteStyles || [], profileImageUrl: typedUser?.profileImageUrl || "" }); }} className="border-stone-300">
                         <X className="w-3.5 h-3.5 mr-1.5" />Annulla
                       </Button>
                     </div>
@@ -787,7 +787,7 @@ export default function UserProfile() {
                       <Input
                         value={tempNickname}
                         onChange={(e) => setTempNickname(e.target.value)}
-                        className="flex-1 border-orange-200 focus:border-orange-400 focus:ring-orange-400/20"
+                        className="flex-1 border-stone-300 focus:border-orange-400 focus:ring-orange-400/20"
                         placeholder="Inserisci nickname"
                       />
                       <Button
@@ -805,7 +805,7 @@ export default function UserProfile() {
                           setIsEditingNickname(false);
                           setTempNickname(typedUser.nickname || "");
                         }}
-                        className="border-orange-200 hover:bg-orange-50 dark:border-orange-800"
+                        className="border-stone-300 hover:bg-stone-50 dark:border-stone-700"
                       >
                         <X className="w-4 h-4" />
                       </Button>
@@ -823,7 +823,7 @@ export default function UserProfile() {
                         onClick={() => setIsEditingNickname(true)}
                         disabled={!canUpdateNickname()}
                         title={!canUpdateNickname() ? `Disponibile tra ${getDaysUntilNicknameUpdate()} giorni` : "Modifica nickname"}
-                        className="border-orange-200 hover:bg-orange-50 hover:text-orange-700 dark:border-orange-800 dark:hover:bg-orange-900/30"
+                        className="border-stone-300 hover:bg-stone-50 hover:text-orange-700 dark:border-stone-700 dark:hover:bg-stone-800/40"
                       >
                         <Edit3 className="w-4 h-4" />
                       </Button>
@@ -845,7 +845,7 @@ export default function UserProfile() {
                         type="email"
                         value={tempEmail}
                         onChange={(e) => setTempEmail(e.target.value)}
-                        className="flex-1 border-orange-200 focus:border-orange-400 focus:ring-orange-400/20"
+                        className="flex-1 border-stone-300 focus:border-orange-400 focus:ring-orange-400/20"
                         placeholder="Inserisci email"
                       />
                       <Button
@@ -864,7 +864,7 @@ export default function UserProfile() {
                           setIsEditingEmail(false);
                           setTempEmail(typedUser.email || "");
                         }}
-                        className="border-orange-200 hover:bg-orange-50 dark:border-orange-800"
+                        className="border-stone-300 hover:bg-stone-50 dark:border-stone-700"
                       >
                         <X className="w-4 h-4" />
                       </Button>
@@ -880,7 +880,7 @@ export default function UserProfile() {
                         size="sm"
                         variant="outline"
                         onClick={() => setIsEditingEmail(true)}
-                        className="border-orange-200 hover:bg-orange-50 hover:text-orange-700 dark:border-orange-800 dark:hover:bg-orange-900/30"
+                        className="border-stone-300 hover:bg-stone-50 hover:text-orange-700 dark:border-stone-700 dark:hover:bg-stone-800/40"
                       >
                         <Edit3 className="w-4 h-4" />
                       </Button>
@@ -891,7 +891,7 @@ export default function UserProfile() {
                   </p>
                 </div>
 
-                <div className="border-t border-orange-100 dark:border-gray-700 pt-4">
+                <div className="border-t border-stone-200 dark:border-gray-700 pt-4">
                   <h3 className="text-sm font-medium mb-4 text-gray-700 dark:text-gray-300 flex items-center gap-2">
                     {isPublicProfile ? <Eye className="h-4 w-4 text-orange-600" /> : <EyeOff className="h-4 w-4 text-gray-500" />}
                     Privacy Profilo
@@ -927,12 +927,12 @@ export default function UserProfile() {
                   )}
                 </div>
 
-                <div className="border-t border-orange-100 dark:border-gray-700 pt-4">
+                <div className="border-t border-stone-200 dark:border-gray-700 pt-4">
                   <h3 className="text-sm font-medium mb-4 text-gray-700 dark:text-gray-300">Sicurezza</h3>
                   <PasswordChangeForm />
                 </div>
 
-                <div className="border-t border-orange-100 dark:border-gray-700 pt-4">
+                <div className="border-t border-stone-200 dark:border-gray-700 pt-4">
                   <h3 className="text-sm font-medium mb-4 text-red-600">Zona Pericolo</h3>
                   {!showDeleteConfirm ? (
                     <Button
@@ -1045,7 +1045,7 @@ export default function UserProfile() {
               value={passwordData.currentPassword}
               onChange={(e) => setPasswordData(prev => ({ ...prev, currentPassword: e.target.value }))}
               placeholder="Inserisci password attuale"
-              className="border-orange-200 focus:border-orange-400 focus:ring-orange-400/20"
+              className="border-stone-300 focus:border-orange-400 focus:ring-orange-400/20"
             />
           </div>
         )}
@@ -1059,7 +1059,7 @@ export default function UserProfile() {
             value={passwordData.newPassword}
             onChange={(e) => setPasswordData(prev => ({ ...prev, newPassword: e.target.value }))}
             placeholder="Min. 6 caratteri"
-            className="border-orange-200 focus:border-orange-400 focus:ring-orange-400/20"
+            className="border-stone-300 focus:border-orange-400 focus:ring-orange-400/20"
           />
         </div>
         
@@ -1070,7 +1070,7 @@ export default function UserProfile() {
             value={passwordData.confirmPassword}
             onChange={(e) => setPasswordData(prev => ({ ...prev, confirmPassword: e.target.value }))}
             placeholder="Ripeti la password"
-            className="border-orange-200 focus:border-orange-400 focus:ring-orange-400/20"
+            className="border-stone-300 focus:border-orange-400 focus:ring-orange-400/20"
           />
         </div>
         

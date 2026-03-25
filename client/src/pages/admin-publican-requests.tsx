@@ -270,7 +270,7 @@ export default function AdminPublicanRequests() {
     : "";
 
   const RequestCard = ({ request, showActions = false }: { request: PublicanRequest; showActions?: boolean }) => (
-    <Card className="mb-4 bg-white dark:bg-[hsl(25,14%,10%)] border border-orange-50 dark:border-[hsl(25,12%,16%)] rounded-2xl shadow-sm overflow-hidden">
+    <Card className="mb-4 bg-white dark:bg-[hsl(25,14%,10%)] border border-stone-100 dark:border-[hsl(25,12%,16%)] rounded-2xl shadow-sm overflow-hidden">
       <CardContent className="pt-6">
         <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
           <div className="flex-1 space-y-3">
@@ -279,7 +279,7 @@ export default function AdminPublicanRequests() {
               <h3 className="font-bold text-lg text-foreground">{request.pubName}</h3>
               <Badge 
                 className={`text-xs px-2 py-0.5 rounded-full font-medium ${
-                  request.status === 'pending' ? 'bg-orange-50 text-primary dark:bg-orange-950/20 dark:text-orange-400' : 
+                  request.status === 'pending' ? 'bg-stone-50 text-primary dark:bg-stone-900/20 dark:text-orange-400' : 
                   request.status === 'approved' ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/20 dark:text-emerald-400' : 
                   'bg-destructive/10 text-destructive dark:bg-destructive/20'
                 }`}
@@ -324,7 +324,7 @@ export default function AdminPublicanRequests() {
               </p>
             )}
 
-            <div className="flex items-center gap-4 text-xs text-muted-foreground pt-2 border-t border-orange-50 dark:border-[hsl(25,12%,16%)]">
+            <div className="flex items-center gap-4 text-xs text-muted-foreground pt-2 border-t border-stone-100 dark:border-[hsl(25,12%,16%)]">
               <div className="flex items-center gap-1">
                 <User className="h-3 w-3" />
                 <span>
@@ -340,7 +340,7 @@ export default function AdminPublicanRequests() {
             </div>
 
             {request.adminNotes && (
-              <div className="bg-orange-50/50 dark:bg-orange-950/10 p-3 rounded-xl mt-2 border border-orange-50 dark:border-[hsl(25,12%,16%)]">
+              <div className="bg-stone-50/50 dark:bg-stone-900/10 p-3 rounded-xl mt-2 border border-stone-100 dark:border-[hsl(25,12%,16%)]">
                 <p className="text-sm text-foreground">
                   <strong className="text-primary">Note admin:</strong> {request.adminNotes}
                 </p>
@@ -384,11 +384,11 @@ export default function AdminPublicanRequests() {
     ].filter(Boolean).join(' ');
 
     return (
-      <Card className="mb-4 bg-white dark:bg-[hsl(25,14%,10%)] border border-orange-50 dark:border-[hsl(25,12%,16%)] rounded-2xl shadow-sm overflow-hidden">
+      <Card className="mb-4 bg-white dark:bg-[hsl(25,14%,10%)] border border-stone-100 dark:border-[hsl(25,12%,16%)] rounded-2xl shadow-sm overflow-hidden">
         <CardContent className="pt-5 pb-4">
           {/* Header row: icon + name + badges */}
           <div className="flex items-start gap-3 mb-4">
-            <div className="w-9 h-9 rounded-xl bg-orange-50 dark:bg-orange-950/20 flex items-center justify-center shrink-0 mt-0.5 border border-orange-100 dark:border-orange-900/50">
+            <div className="w-9 h-9 rounded-xl bg-stone-50 dark:bg-stone-900/20 flex items-center justify-center shrink-0 mt-0.5 border border-stone-200 dark:border-stone-700/50">
               <Factory className="h-4.5 w-4.5 text-primary" />
             </div>
             <div className="flex-1 min-w-0">
@@ -396,7 +396,7 @@ export default function AdminPublicanRequests() {
                 <h3 className="font-bold text-base text-foreground">{request.breweryName}</h3>
                 <Badge
                   className={`text-xs px-2.5 py-0.5 rounded-full font-medium ${
-                    request.status === 'pending' ? 'bg-orange-50 text-primary dark:bg-orange-950/20 dark:text-orange-400' :
+                    request.status === 'pending' ? 'bg-stone-50 text-primary dark:bg-stone-900/20 dark:text-orange-400' :
                     request.status === 'approved' ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/20 dark:text-emerald-400' :
                     'bg-destructive/10 text-destructive dark:bg-destructive/20'
                   }`}
@@ -449,11 +449,11 @@ export default function AdminPublicanRequests() {
             </div>
 
             {request.description && (
-              <p className="text-sm text-muted-foreground italic bg-orange-50/30 dark:bg-orange-950/5 p-2 rounded-lg border border-transparent hover:border-orange-50 transition-colors">{request.description}</p>
+              <p className="text-sm text-muted-foreground italic bg-stone-50/30 dark:bg-stone-900/10 p-2 rounded-lg border border-transparent hover:border-stone-100 transition-colors">{request.description}</p>
             )}
 
             {request.adminNotes && (
-              <div className="bg-orange-50/50 dark:bg-orange-950/10 p-2.5 rounded-xl border border-orange-50 dark:border-[hsl(25,12%,16%)]">
+              <div className="bg-stone-50/50 dark:bg-stone-900/10 p-2.5 rounded-xl border border-stone-100 dark:border-[hsl(25,12%,16%)]">
                 <p className="text-xs font-medium text-foreground"><strong className="text-primary">Note admin:</strong> {request.adminNotes}</p>
                 {request.reviewedAt && (
                   <p className="text-xs text-muted-foreground mt-0.5">
@@ -465,7 +465,7 @@ export default function AdminPublicanRequests() {
           </div>
 
           {/* Footer: user info + actions */}
-          <div className="flex flex-wrap items-center justify-between gap-3 mt-4 pt-3 border-t border-orange-50 dark:border-[hsl(25,12%,16%)]">
+          <div className="flex flex-wrap items-center justify-between gap-3 mt-4 pt-3 border-t border-stone-100 dark:border-[hsl(25,12%,16%)]">
             <div className="flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
               <div className="flex items-center gap-1">
                 <User className="h-3 w-3" />
@@ -511,7 +511,7 @@ export default function AdminPublicanRequests() {
       <div className="container mx-auto px-4 py-8 max-w-5xl">
         <div className="mb-6">
           <Link href="/admin">
-            <Button variant="outline" size="sm" className="mb-4 border-orange-100 dark:border-[hsl(25,12%,20%)] hover:bg-orange-50 rounded-xl" data-testid="button-back-admin">
+            <Button variant="outline" size="sm" className="mb-4 border-stone-200 dark:border-[hsl(25,12%,20%)] hover:bg-stone-50 rounded-xl" data-testid="button-back-admin">
               <ArrowLeft className="h-4 w-4 mr-2" />
               Torna al pannello admin
             </Button>
@@ -547,7 +547,7 @@ export default function AdminPublicanRequests() {
 
         <div className="grid grid-cols-2 gap-3 mb-6">
           <Card 
-            className={`cursor-pointer transition-all rounded-2xl border-orange-50 dark:border-[hsl(25,12%,16%)] shadow-sm ${section === "pub" ? "ring-2 ring-primary bg-orange-50/50 dark:bg-orange-950/20" : "hover:bg-orange-50/30 dark:hover:bg-orange-950/10 bg-white dark:bg-[hsl(25,14%,10%)]"}`}
+            className={`cursor-pointer transition-all rounded-2xl border-stone-100 dark:border-[hsl(25,12%,16%)] shadow-sm ${section === "pub" ? "ring-2 ring-primary bg-stone-50/50 dark:bg-stone-900/20" : "hover:bg-stone-50/30 dark:hover:bg-stone-900/10 bg-white dark:bg-[hsl(25,14%,10%)]"}`}
             onClick={() => { setSection("pub"); setActiveTab("pending"); }}
           >
             <CardContent className="flex items-center gap-3 py-4">
@@ -559,7 +559,7 @@ export default function AdminPublicanRequests() {
             </CardContent>
           </Card>
           <Card 
-            className={`cursor-pointer transition-all rounded-2xl border-orange-50 dark:border-[hsl(25,12%,16%)] shadow-sm ${section === "brewery" ? "ring-2 ring-primary bg-orange-50/50 dark:bg-orange-950/20" : "hover:bg-orange-50/30 dark:hover:bg-orange-950/10 bg-white dark:bg-[hsl(25,14%,10%)]"}`}
+            className={`cursor-pointer transition-all rounded-2xl border-stone-100 dark:border-[hsl(25,12%,16%)] shadow-sm ${section === "brewery" ? "ring-2 ring-primary bg-stone-50/50 dark:bg-stone-900/20" : "hover:bg-stone-50/30 dark:hover:bg-stone-900/10 bg-white dark:bg-[hsl(25,14%,10%)]"}`}
             onClick={() => { setSection("brewery"); setActiveTab("pending"); }}
           >
             <CardContent className="flex items-center gap-3 py-4">
@@ -580,7 +580,7 @@ export default function AdminPublicanRequests() {
                 <strong>Attivazione automatica via Stripe.</strong> I nuovi pub si attivano autonomamente dopo il checkout (prova gratuita 15 giorni → €65/anno). Non è necessaria approvazione manuale. Questa sezione mostra solo lo storico e permette di rifiutare richieste anomale.
               </span>
             </div>
-            <TabsList className="mb-6 bg-orange-50 dark:bg-orange-950/20 p-1 rounded-xl border border-orange-100 dark:border-orange-900/50">
+            <TabsList className="mb-6 bg-stone-50 dark:bg-stone-900/20 p-1 rounded-xl border border-stone-200 dark:border-stone-700/50">
               <TabsTrigger value="pending" className="gap-2 rounded-lg data-[state=active]:bg-white dark:data-[state=active]:bg-primary dark:data-[state=active]:text-white font-semibold">
                 <Clock className="h-4 w-4" />
                 In attesa ({pendingRequests.length})
@@ -596,21 +596,21 @@ export default function AdminPublicanRequests() {
             </TabsList>
             <TabsContent value="pending" className="mt-0">
               {pendingRequests.length === 0 ? (
-                <Card className="bg-white dark:bg-[hsl(25,14%,10%)] border border-orange-50 dark:border-[hsl(25,12%,16%)] rounded-2xl shadow-sm"><CardContent className="p-8 text-center text-muted-foreground">Nessuna richiesta in attesa</CardContent></Card>
+                <Card className="bg-white dark:bg-[hsl(25,14%,10%)] border border-stone-100 dark:border-[hsl(25,12%,16%)] rounded-2xl shadow-sm"><CardContent className="p-8 text-center text-muted-foreground">Nessuna richiesta in attesa</CardContent></Card>
               ) : (
                 pendingRequests.map(r => <RequestCard key={r.id} request={r} showActions />)
               )}
             </TabsContent>
             <TabsContent value="approved" className="mt-0">
               {approvedRequests.length === 0 ? (
-                <Card className="bg-white dark:bg-[hsl(25,14%,10%)] border border-orange-50 dark:border-[hsl(25,12%,16%)] rounded-2xl shadow-sm"><CardContent className="p-8 text-center text-muted-foreground">Nessuna richiesta approvata</CardContent></Card>
+                <Card className="bg-white dark:bg-[hsl(25,14%,10%)] border border-stone-100 dark:border-[hsl(25,12%,16%)] rounded-2xl shadow-sm"><CardContent className="p-8 text-center text-muted-foreground">Nessuna richiesta approvata</CardContent></Card>
               ) : (
                 approvedRequests.map(r => <RequestCard key={r.id} request={r} />)
               )}
             </TabsContent>
             <TabsContent value="rejected" className="mt-0">
               {rejectedRequests.length === 0 ? (
-                <Card className="bg-white dark:bg-[hsl(25,14%,10%)] border border-orange-50 dark:border-[hsl(25,12%,16%)] rounded-2xl shadow-sm"><CardContent className="p-8 text-center text-muted-foreground">Nessuna richiesta rifiutata</CardContent></Card>
+                <Card className="bg-white dark:bg-[hsl(25,14%,10%)] border border-stone-100 dark:border-[hsl(25,12%,16%)] rounded-2xl shadow-sm"><CardContent className="p-8 text-center text-muted-foreground">Nessuna richiesta rifiutata</CardContent></Card>
               ) : (
                 rejectedRequests.map(r => <RequestCard key={r.id} request={r} />)
               )}
@@ -620,7 +620,7 @@ export default function AdminPublicanRequests() {
 
         {section === "brewery" && (
           <Tabs value={activeTab} onValueChange={setActiveTab}>
-            <TabsList className="mb-6 bg-orange-50 dark:bg-orange-950/20 p-1 rounded-xl border border-orange-100 dark:border-orange-900/50">
+            <TabsList className="mb-6 bg-stone-50 dark:bg-stone-900/20 p-1 rounded-xl border border-stone-200 dark:border-stone-700/50">
               <TabsTrigger value="pending" className="gap-2 rounded-lg data-[state=active]:bg-white dark:data-[state=active]:bg-primary dark:data-[state=active]:text-white font-semibold">
                 <Clock className="h-4 w-4" />
                 In attesa ({pendingBreweryRequests.length})
@@ -636,21 +636,21 @@ export default function AdminPublicanRequests() {
             </TabsList>
             <TabsContent value="pending" className="mt-0">
               {pendingBreweryRequests.length === 0 ? (
-                <Card className="bg-white dark:bg-[hsl(25,14%,10%)] border border-orange-50 dark:border-[hsl(25,12%,16%)] rounded-2xl shadow-sm"><CardContent className="p-8 text-center text-muted-foreground">Nessuna richiesta in attesa</CardContent></Card>
+                <Card className="bg-white dark:bg-[hsl(25,14%,10%)] border border-stone-100 dark:border-[hsl(25,12%,16%)] rounded-2xl shadow-sm"><CardContent className="p-8 text-center text-muted-foreground">Nessuna richiesta in attesa</CardContent></Card>
               ) : (
                 pendingBreweryRequests.map(r => <BreweryRequestCard key={r.id} request={r} showActions />)
               )}
             </TabsContent>
             <TabsContent value="approved" className="mt-0">
               {approvedBreweryRequests.length === 0 ? (
-                <Card className="bg-white dark:bg-[hsl(25,14%,10%)] border border-orange-50 dark:border-[hsl(25,12%,16%)] rounded-2xl shadow-sm"><CardContent className="p-8 text-center text-muted-foreground">Nessuna richiesta approvata</CardContent></Card>
+                <Card className="bg-white dark:bg-[hsl(25,14%,10%)] border border-stone-100 dark:border-[hsl(25,12%,16%)] rounded-2xl shadow-sm"><CardContent className="p-8 text-center text-muted-foreground">Nessuna richiesta approvata</CardContent></Card>
               ) : (
                 approvedBreweryRequests.map(r => <BreweryRequestCard key={r.id} request={r} />)
               )}
             </TabsContent>
             <TabsContent value="rejected" className="mt-0">
               {rejectedBreweryRequests.length === 0 ? (
-                <Card className="bg-white dark:bg-[hsl(25,14%,10%)] border border-orange-50 dark:border-[hsl(25,12%,16%)] rounded-2xl shadow-sm"><CardContent className="p-8 text-center text-muted-foreground">Nessuna richiesta rifiutata</CardContent></Card>
+                <Card className="bg-white dark:bg-[hsl(25,14%,10%)] border border-stone-100 dark:border-[hsl(25,12%,16%)] rounded-2xl shadow-sm"><CardContent className="p-8 text-center text-muted-foreground">Nessuna richiesta rifiutata</CardContent></Card>
               ) : (
                 rejectedBreweryRequests.map(r => <BreweryRequestCard key={r.id} request={r} />)
               )}
@@ -659,7 +659,7 @@ export default function AdminPublicanRequests() {
         )}
 
         <Dialog open={!!dialogTarget} onOpenChange={(open) => !open && setDialogTarget(null)}>
-          <DialogContent className="rounded-2xl border-orange-100 dark:border-[hsl(25,12%,20%)]">
+          <DialogContent className="rounded-2xl border-stone-200 dark:border-[hsl(25,12%,20%)]">
             <DialogHeader>
               <DialogTitle className="text-foreground font-bold">
                 {dialogAction === "approve" ? "Approva richiesta" : "Rifiuta richiesta"}
@@ -674,11 +674,11 @@ export default function AdminPublicanRequests() {
                 placeholder="Inserisci eventuali note per l'utente..."
                 value={adminNotes}
                 onChange={(e) => setAdminNotes(e.target.value)}
-                className="min-h-[100px] border-orange-100 rounded-xl focus-visible:ring-primary/20"
+                className="min-h-[100px] border-stone-200 rounded-xl focus-visible:ring-primary/20"
               />
             </div>
             <DialogFooter className="gap-2">
-              <Button variant="outline" onClick={() => setDialogTarget(null)} className="rounded-xl border-orange-100 dark:border-[hsl(25,12%,20%)] hover:bg-orange-50">
+              <Button variant="outline" onClick={() => setDialogTarget(null)} className="rounded-xl border-stone-200 dark:border-[hsl(25,12%,20%)] hover:bg-stone-50">
                 Annulla
               </Button>
               <Button

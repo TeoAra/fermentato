@@ -222,7 +222,7 @@ export function PubMap({ pins, height = "100%" }: PubMapProps) {
   const pinsTotal = pins.length;
 
   return (
-    <div className="relative w-full rounded-2xl overflow-hidden border border-orange-50 dark:border-[hsl(25,12%,16%)]" style={{ height }}>
+    <div className="relative w-full rounded-2xl overflow-hidden border border-stone-100 dark:border-[hsl(25,12%,16%)]" style={{ height }}>
       <div ref={containerRef} className="w-full h-full" />
 
       {/* Info badge */}
@@ -238,7 +238,7 @@ export function PubMap({ pins, height = "100%" }: PubMapProps) {
       <button
         onClick={handleLocate}
         disabled={locating}
-        className="absolute bottom-10 right-3 z-10 w-9 h-9 rounded-xl bg-white dark:bg-[hsl(25,14%,12%)] shadow-md flex items-center justify-center text-primary hover:bg-orange-50 transition-colors border border-orange-50"
+        className="absolute bottom-10 right-3 z-10 w-9 h-9 rounded-xl bg-white dark:bg-[hsl(25,14%,12%)] shadow-md flex items-center justify-center text-primary hover:bg-stone-50 transition-colors border border-stone-100"
         title="Vicino a me"
       >
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
