@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { Link } from "wouter";
-import { MapPin, Store, ArrowLeft, Clock, List, Map } from "lucide-react";
+import { MapPin, Store, ArrowLeft, Clock, Map } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -98,6 +98,37 @@ export default function ExplorePubs() {
     ? allPubs.map((p: any) => ({ ...p, type: "pub" as const }))
     : [];
 
+  // Full-screen map mode
+  if (viewMode === "map") {
+    return (
+      <div className="fixed inset-0 z-40 bg-background">
+        {/* Floating header controls */}
+        <div className="absolute top-3 left-3 right-3 z-50 flex items-center gap-2 pointer-events-none">
+          <button
+            onClick={() => setViewMode("list")}
+            className="pointer-events-auto flex items-center gap-1.5 px-3 py-2 rounded-2xl text-sm font-bold bg-white dark:bg-[hsl(25,14%,10%)] shadow-lg border border-orange-50 dark:border-[hsl(25,12%,16%)] text-foreground hover:bg-orange-50 transition-colors"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            Lista
+          </button>
+          <div className="flex-1 pointer-events-auto flex items-center gap-2 px-3 py-2 rounded-2xl bg-white dark:bg-[hsl(25,14%,10%)] shadow-lg border border-orange-50 dark:border-[hsl(25,12%,16%)]">
+            <div className="w-6 h-6 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: 'linear-gradient(135deg, #F77104, #f5a623)' }}>
+              <Store className="h-3.5 w-3.5 text-white" />
+            </div>
+            <span className="text-sm font-bold text-foreground truncate">Mappa pub</span>
+          </div>
+        </div>
+
+        {/* Full-screen map (leaves room for bottom nav ~56px) */}
+        {isLoading ? (
+          <div className="w-full h-full bg-orange-50 dark:bg-[hsl(25,14%,12%)] animate-pulse" />
+        ) : (
+          <PubMap pins={mapPins} height="100%" />
+        )}
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
@@ -117,47 +148,29 @@ export default function ExplorePubs() {
                 </div>
                 <div>
                   <h1 className="text-2xl font-bold text-foreground tracking-tight">Esplora Tutti i Pub</h1>
-                  <p className="text-sm text-muted-foreground">
-                    {viewMode === "map" ? "Vista mappa interattiva" : "Organizzati per regione"}
-                  </p>
+                  <p className="text-sm text-muted-foreground">Organizzati per regione</p>
                 </div>
               </div>
             </div>
-
-            {/* Vista toggle */}
-            <div className="flex items-center gap-1 p-1 rounded-2xl bg-orange-50 dark:bg-[hsl(25,14%,12%)]">
-              <button
-                onClick={() => setViewMode("list")}
-                className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold transition-all ${viewMode === "list" ? "bg-white dark:bg-[hsl(25,14%,8%)] text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"}`}
-              >
-                <List className="w-3.5 h-3.5" />
-                <span className="hidden sm:inline">Lista</span>
-              </button>
-              <button
-                onClick={() => setViewMode("map")}
-                className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold transition-all ${viewMode === "map" ? "bg-white dark:bg-[hsl(25,14%,8%)] text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"}`}
-              >
-                <Map className="w-3.5 h-3.5" />
-                <span className="hidden sm:inline">Mappa</span>
-              </button>
-            </div>
+            {/* Mappa toggle */}
+            <button
+              onClick={() => setViewMode("map")}
+              className="flex items-center gap-1.5 px-3 py-2 rounded-2xl text-xs font-bold bg-orange-50 dark:bg-[hsl(25,14%,12%)] text-primary hover:bg-orange-100 transition-colors border border-orange-100 dark:border-[hsl(25,12%,16%)]"
+            >
+              <Map className="w-3.5 h-3.5" />
+              <span>Mappa</span>
+            </button>
           </div>
         </div>
       </div>
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
         {isLoading ? (
-          viewMode === "map" ? (
-            <div className="w-full rounded-2xl bg-orange-50 dark:bg-[hsl(25,14%,12%)] animate-pulse" style={{ height: "70vh" }} />
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {[...Array(6)].map((_, i) => (
-                <div key={i} className="bg-orange-50 dark:bg-[hsl(25,14%,12%)] rounded-2xl h-48 animate-pulse" />
-              ))}
-            </div>
-          )
-        ) : viewMode === "map" ? (
-          <PubMap pins={mapPins} height="70vh" />
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {[...Array(6)].map((_, i) => (
+              <div key={i} className="bg-orange-50 dark:bg-[hsl(25,14%,12%)] rounded-2xl h-48 animate-pulse" />
+            ))}
+          </div>
         ) : (
           <div className="space-y-4">
             {statiItaliani.map(state => {

@@ -250,15 +250,6 @@ export default function Home() {
           </div>
         )}
 
-        {locationStatus === 'granted' && (
-          <div className="mb-6 p-3 rounded-2xl bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-100 dark:border-emerald-800 flex items-center gap-3">
-            <Navigation className="w-4 h-4 text-emerald-600 dark:text-emerald-400 flex-shrink-0" />
-            <p className="text-sm text-emerald-800 dark:text-emerald-200">
-              Posizione attiva — risultati ordinati per vicinanza
-            </p>
-          </div>
-        )}
-
         <HomepageMap
           pubs={Array.isArray(pubs) ? pubs : []}
           breweries={Array.isArray(allBreweries) ? allBreweries : (Array.isArray(breweries) ? breweries : [])}
@@ -630,32 +621,6 @@ export default function Home() {
             </div>
           </section>
         ) : null}
-
-        {/* ─── Case Study / Testimonianze ──────────────────────────────────── */}
-        <section className="mb-8">
-          <h2 className="text-[11px] font-bold text-muted-foreground mb-4 uppercase tracking-[0.12em]">
-            Chi usa Fermenta.to
-          </h2>
-          <div className="flex gap-3 overflow-x-auto pb-2 -mx-1 px-1" style={{ scrollbarWidth: "none" }}>
-            {[
-              { name: "Luppolino Pub", city: "Roma · Prati", quote: "La taplist digitale ha triplicato le interazioni con i clienti. Li aiutiamo a scegliere la birra giusta ogni sera.", role: "Gestore pub", initial: "L", color: "#F77104" },
-              { name: "Hype Brewing", city: "Milano", quote: "Con Fermenta.to i nostri fan sanno in tempo reale dove trovare le nostre birre. Le visite in brewery sono aumentate del 40%.", role: "Head Brewer", initial: "H", color: "#e06b00" },
-              { name: "Baladin Open Garden", city: "Torino", quote: "Il menu digitale ci permette di aggiornare la carta ogni giorno senza costi tipografici. Fantastico per le stagionali.", role: "Responsabile locale", initial: "B", color: "#c45f00" },
-            ].map((cs) => (
-              <div key={cs.name} className="flex-shrink-0 w-[220px] bg-white dark:bg-[hsl(25,14%,10%)] rounded-2xl border border-orange-50 dark:border-[hsl(25,12%,16%)] shadow-sm p-4">
-                <div className="flex items-center gap-2.5 mb-3">
-                  <div className="w-9 h-9 rounded-full flex items-center justify-center text-white font-black text-sm flex-shrink-0" style={{ background: `linear-gradient(135deg, ${cs.color}, ${cs.color}cc)` }}>{cs.initial}</div>
-                  <div className="min-w-0">
-                    <p className="text-[12px] font-bold text-foreground truncate">{cs.name}</p>
-                    <p className="text-[10px] text-muted-foreground">{cs.city}</p>
-                  </div>
-                </div>
-                <p className="text-[11px] text-muted-foreground leading-relaxed line-clamp-4 italic">"{cs.quote}"</p>
-                <p className="text-[10px] font-semibold text-primary mt-2">— {cs.role}</p>
-              </div>
-            ))}
-          </div>
-        </section>
 
         {/* ─── Statistiche Community ────────────────────────────────────────── */}
         <section className="mb-8 bg-gradient-to-br from-orange-50 to-[hsl(38,30%,96%)] dark:from-[hsl(25,14%,10%)] dark:to-[hsl(25,12%,9%)] border border-orange-100 dark:border-[hsl(25,12%,16%)] rounded-2xl p-5 lg:p-6">
