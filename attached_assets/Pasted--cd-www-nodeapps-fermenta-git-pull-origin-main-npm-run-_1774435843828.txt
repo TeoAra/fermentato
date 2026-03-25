@@ -1,0 +1,49 @@
+ cd /www/nodeapps/fermenta && git pull origin main && npm run build && pm2 restart fermenta
+remote: Enumerating objects: 46, done.
+remote: Counting objects: 100% (46/46), done.
+remote: Compressing objects: 100% (8/8), done.
+remote: Total 32 (delta 24), reused 32 (delta 24), pack-reused 0 (from 0)
+Unpacking objects: 100% (32/32), 19.73 KiB | 439.00 KiB/s, done.
+From https://github.com/TeoAra/fermentato
+ * branch            main       -> FETCH_HEAD
+   064e9f2..f4bbf0a  main       -> origin/main
+Updating 064e9f2..f4bbf0a
+Fast-forward
+ .replit                                                         |   2 +-
+ ...-stack-self-hosted-costo-zero-io-eviterei-_1774434788603.txt | 141 +++++++++
+ client/public/sw.js                                             | 172 +++++++++--
+ client/src/components/homepage-map.tsx                          | 424 +++++++++++++++-------------
+ client/src/components/pub-map.tsx                               | 251 ++++++++++++++++
+ client/src/pages/explore-pubs.tsx                               | 113 +++++---
+ client/src/pages/home.tsx                                       |  60 +---
+ package-lock.json                                               | 239 ++++++++++++++++
+ package.json                                                    |   1 +
+ 9 files changed, 1094 insertions(+), 309 deletions(-)
+ create mode 100644 attached_assets/Pasted-Chiaro-su-VPS-stack-self-hosted-costo-zero-io-eviterei-_1774434788603.txt
+ create mode 100644 client/src/components/pub-map.tsx
+npm warn config init.module Use `--init-module` instead.
+
+> rest-express@1.0.0 build
+> vite build && esbuild server/index.ts --platform=node --packages=external --bundle --format=esm --outdir=dist
+
+NODE_ENV=production is not supported in the .env file. Only NODE_ENV=development is supported to create a development build of your project. If you need to set process.env.NODE_ENV, you can set it in the Vite config instead.
+vite v5.4.19 building for production...
+transforming (2) ../vite/modulepreload-polyfill.jsBrowserslist: browsers data (caniuse-lite) is 17 months old. Please run:
+  npx update-browserslist-db@latest
+  Why you should do it regularly: https://github.com/browserslist/update-db#readme
+✓ 144 modules transformed.
+x Build failed in 7.12s
+error during build:
+[vite]: Rollup failed to resolve import "maplibre-gl" from "/www/nodeapps/fermenta/client/src/components/homepage-map.tsx".
+This is most likely unintended because it can break your application at runtime.
+If you do want to externalize this module explicitly add it to
+`build.rollupOptions.external`
+    at viteWarn (file:///www/nodeapps/fermenta/node_modules/vite/dist/node/chunks/dep-C6uTJdX2.js:65839:17)
+    at onwarn (file:///www/nodeapps/fermenta/node_modules/@vitejs/plugin-react/dist/index.mjs:280:9)
+    at onRollupWarning (file:///www/nodeapps/fermenta/node_modules/vite/dist/node/chunks/dep-C6uTJdX2.js:65869:5)
+    at onwarn (file:///www/nodeapps/fermenta/node_modules/vite/dist/node/chunks/dep-C6uTJdX2.js:65534:7)
+    at file:///www/nodeapps/fermenta/node_modules/rollup/dist/es/shared/node-entry.js:19452:13
+    at Object.logger [as onLog] (file:///www/nodeapps/fermenta/node_modules/rollup/dist/es/shared/node-entry.js:21178:9)
+    at ModuleLoader.handleInvalidResolvedId (file:///www/nodeapps/fermenta/node_modules/rollup/dist/es/shared/node-entry.js:20067:26)
+    at file:///www/nodeapps/fermenta/node_modules/rollup/dist/es/shared/node-entry.js:20025:26
+root@luppolino:/www/nodeapps/fermenta#
