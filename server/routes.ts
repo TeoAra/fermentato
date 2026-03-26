@@ -1728,14 +1728,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(403).json({ message: "This menu category does not belong to your pub" });
       }
 
-      const updates = insertMenuCategorySchema.omit({ pubId: true, id: true }).partial().parse(req.body);
+      const allowedCatFields = ['name', 'description', 'infoBox', 'isVisible', 'orderIndex'];
+      const updates: Record<string, any> = {};
+      for (const field of allowedCatFields) {
+        if (field in req.body) {
+          updates[field] = req.body[field];
+        }
+      }
       const updatedCategory = await storage.updateMenuCategory(categoryId, updates);
       broadcastPubUpdate(pubId, "menu");
       res.json(updatedCategory);
     } catch (error) {
-      if (error instanceof z.ZodError) {
-        return res.status(400).json({ message: "Validation error", errors: error.errors });
-      }
       console.error("Error updating menu category:", error);
       res.status(500).json({ message: "Failed to update menu category" });
     }
@@ -1861,7 +1864,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(403).json({ message: "This menu item does not belong to your pub" });
       }
 
-      const updates = insertMenuItemSchema.omit({ id: true, createdAt: true, updatedAt: true }).partial().parse(req.body);
+      // Extract allowed fields directly from req.body to avoid Zod stripping boolean false values
+      const allowedFields = ['name', 'description', 'price', 'allergens', 'isVisible', 'isAvailable', 'isInfoBox', 'isVegetarian', 'isSpicy', 'imageUrl', 'orderIndex', 'categoryId'];
+      const updates: Record<string, any> = {};
+      for (const field of allowedFields) {
+        if (field in req.body) {
+          updates[field] = req.body[field];
+        }
+      }
       // If categoryId is being changed, verify the new category belongs to this pub
       if (updates.categoryId && updates.categoryId !== item.categoryId) {
         const catExists = categories.some(cat => cat.id === updates.categoryId);
