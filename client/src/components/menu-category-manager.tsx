@@ -1079,8 +1079,8 @@ export default function MenuCategoryManager({ pubId, categories }: MenuCategoryM
                 <Label>Nome Prodotto</Label>
                 <Input
                   placeholder="Nome del piatto..."
-                  defaultValue={editingProduct.name}
-                  onChange={(e) => setEditingProduct({ ...editingProduct, name: e.target.value })}
+                  value={editingProduct.name || ''}
+                  onChange={(e) => setEditingProduct((prev: any) => ({ ...prev, name: e.target.value }))}
                 />
               </div>
               <div>
@@ -1089,16 +1089,16 @@ export default function MenuCategoryManager({ pubId, categories }: MenuCategoryM
                   type="number"
                   step="0.10"
                   placeholder="12.50"
-                  defaultValue={editingProduct.price}
-                  onChange={(e) => setEditingProduct({ ...editingProduct, price: e.target.value })}
+                  value={editingProduct.price || ''}
+                  onChange={(e) => setEditingProduct((prev: any) => ({ ...prev, price: e.target.value }))}
                 />
               </div>
               <div>
                 <Label>Descrizione</Label>
                 <Textarea
                   placeholder="Descrizione del piatto..."
-                  defaultValue={editingProduct.description || ''}
-                  onChange={(e) => setEditingProduct({ ...editingProduct, description: e.target.value })}
+                  value={editingProduct.description || ''}
+                  onChange={(e) => setEditingProduct((prev: any) => ({ ...prev, description: e.target.value }))}
                   rows={3}
                 />
               </div>
@@ -1165,6 +1165,7 @@ export default function MenuCategoryManager({ pubId, categories }: MenuCategoryM
                         );
                       }
                       queryClient.invalidateQueries({ queryKey: ["/api/pubs", pubId, "menu"] });
+                      queryClient.invalidateQueries({ queryKey: ["/api/pubs", String(pubId), "menu", "full"] });
                       setIsEditProductOpen(false);
                       setEditingProduct(null);
                       setEditCategoryIds([]);
