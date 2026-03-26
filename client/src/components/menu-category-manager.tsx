@@ -198,12 +198,12 @@ export default function MenuCategoryManager({ pubId, categories }: MenuCategoryM
       setPendingCategoryToggles(prev => new Set([...prev, id]));
     },
     onSuccess: (data: any, { id }) => {
+      setPendingCategoryToggles(prev => { const next = new Set(prev); next.delete(id); return next; });
       if (data?.isVisible !== undefined) {
         queryClient.setQueryData(["/api/pubs", pubId, "menu"], (old: any) =>
           Array.isArray(old) ? old.map((cat: any) => cat.id === id ? { ...cat, isVisible: data.isVisible } : cat) : old
         );
       }
-      setPendingCategoryToggles(prev => { const next = new Set(prev); next.delete(id); return next; });
     },
     onError: (_e: any, { id }) => {
       setPendingCategoryToggles(prev => { const next = new Set(prev); next.delete(id); return next; });
@@ -242,26 +242,38 @@ export default function MenuCategoryManager({ pubId, categories }: MenuCategoryM
     }
   });
 
+  const patchAllProductsCache = (itemIds: number[], newVisible: boolean) => {
+    queryClient.setQueriesData<Record<number, any[]>>(
+      { queryKey: ["/api/pubs", pubId, "menu", "all-products"] },
+      (old) => {
+        if (!old || typeof old !== 'object') return old;
+        const updated: Record<number, any[]> = {};
+        for (const catId of Object.keys(old)) {
+          updated[catId as any] = (old[catId as any] || []).map((item: any) =>
+            itemIds.includes(item.id) ? { ...item, isVisible: newVisible } : item
+          );
+        }
+        return updated;
+      }
+    );
+  };
+
   const toggleProductVisibilityMutation = useMutation({
     mutationFn: async ({ id }: { id: number; isVisible: boolean }) => {
       return apiRequest(`/api/pubs/${pubId}/menu-items/${id}/toggle-visibility`, { method: 'PATCH' });
     },
-    onMutate: async ({ id }) => {
-      setPendingToggles(prev => new Set([...prev, id]));
+    onMutate: async ({ id, isVisible }) => {
+      // isVisible is the desired NEW state passed from the click handler
+      patchAllProductsCache([id], isVisible);
     },
     onSuccess: (data: any, { id }) => {
       if (data?.isVisible !== undefined) {
-        queryClient.setQueryData(["/api/pubs", pubId, "menu"], (old: any) =>
-          Array.isArray(old) ? old.map((cat: any) => ({
-            ...cat,
-            items: (cat.items || []).map((item: any) => item.id === id ? { ...item, isVisible: data.isVisible } : item)
-          })) : old
-        );
+        patchAllProductsCache([id], data.isVisible);
       }
-      setPendingToggles(prev => { const next = new Set(prev); next.delete(id); return next; });
     },
-    onError: (_e: any, { id }) => {
-      setPendingToggles(prev => { const next = new Set(prev); next.delete(id); return next; });
+    onError: (_e: any, { id, isVisible }) => {
+      // Revert to original state (opposite of the desired new state)
+      patchAllProductsCache([id], !isVisible);
       toast({ title: "❌ Errore", description: "Impossibile aggiornare la visibilità", variant: "destructive" });
     },
   });
@@ -387,22 +399,28 @@ export default function MenuCategoryManager({ pubId, categories }: MenuCategoryM
   const handleToggleProductVisibility = async (product: any) => {
     const siblings = findAllByName(product.name, product.id);
     const allIds = [product.id, ...siblings.map((s: any) => s.id)];
-    setPendingToggles(prev => new Set([...prev, ...allIds]));
+    const newVisible = !product.isVisible;
+
+    patchAllProductsCache(allIds, newVisible);
+
     try {
-      await Promise.all(
+      const results = await Promise.all(
         allIds.map(id =>
           apiRequest(`/api/pubs/${pubId}/menu-items/${id}/toggle-visibility`, { method: 'PATCH' })
         )
       );
-      queryClient.invalidateQueries({ queryKey: ["/api/pubs", pubId, "menu"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/pubs", pubId, "menu", "all-products"] });
+      // Confirm with actual server values per-item
+      results.forEach((r: any) => {
+        if (r?.id !== undefined && r?.isVisible !== undefined) {
+          patchAllProductsCache([r.id], r.isVisible);
+        }
+      });
       if (siblings.length > 0) {
         toast({ title: "✅ Visibilità aggiornata", description: `Applicato a ${allIds.length} categorie` });
       }
     } catch {
+      patchAllProductsCache(allIds, !newVisible);
       toast({ title: "❌ Errore", description: "Impossibile aggiornare la visibilità", variant: "destructive" });
-    } finally {
-      setPendingToggles(prev => { const next = new Set(prev); allIds.forEach(id => next.delete(id)); return next; });
     }
   };
 
