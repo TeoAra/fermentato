@@ -153,11 +153,17 @@ export function MenuManager({ pubId, menu }: MenuManagerProps) {
       );
       return { prev };
     },
+    onSuccess: (data: any, { id }) => {
+      if (data?.isVisible !== undefined) {
+        queryClient.setQueryData(["/api/pubs", pubId, "menu"], (old: any) =>
+          Array.isArray(old) ? old.map((cat: any) => cat.id === id ? { ...cat, isVisible: data.isVisible } : cat) : old
+        );
+      }
+    },
     onError: (_e: any, _v: any, ctx: any) => {
       if (ctx?.prev) queryClient.setQueryData(["/api/pubs", pubId, "menu"], ctx.prev);
       toast({ title: "Errore", description: "Impossibile aggiornare la visibilità", variant: "destructive" });
     },
-    onSettled: () => queryClient.invalidateQueries({ queryKey: ["/api/pubs", pubId, "menu"] }),
   });
 
   // Item mutations
@@ -219,11 +225,20 @@ export function MenuManager({ pubId, menu }: MenuManagerProps) {
       );
       return { prev };
     },
+    onSuccess: (data: any, { id }) => {
+      if (data?.isVisible !== undefined) {
+        queryClient.setQueryData(["/api/pubs", pubId, "menu"], (old: any) =>
+          Array.isArray(old) ? old.map((cat: any) => ({
+            ...cat,
+            items: (cat.items || []).map((item: any) => item.id === id ? { ...item, isVisible: data.isVisible } : item)
+          })) : old
+        );
+      }
+    },
     onError: (_e: any, _v: any, ctx: any) => {
       if (ctx?.prev) queryClient.setQueryData(["/api/pubs", pubId, "menu"], ctx.prev);
       toast({ title: "Errore", description: "Impossibile aggiornare la visibilità", variant: "destructive" });
     },
-    onSettled: () => queryClient.invalidateQueries({ queryKey: ["/api/pubs", pubId, "menu"] }),
   });
 
   const toggleItemAvailabilityMutation = useMutation({
@@ -241,11 +256,20 @@ export function MenuManager({ pubId, menu }: MenuManagerProps) {
       );
       return { prev };
     },
+    onSuccess: (data: any, { id }) => {
+      if (data?.isAvailable !== undefined) {
+        queryClient.setQueryData(["/api/pubs", pubId, "menu"], (old: any) =>
+          Array.isArray(old) ? old.map((cat: any) => ({
+            ...cat,
+            items: (cat.items || []).map((item: any) => item.id === id ? { ...item, isAvailable: data.isAvailable } : item)
+          })) : old
+        );
+      }
+    },
     onError: (_e: any, _v: any, ctx: any) => {
       if (ctx?.prev) queryClient.setQueryData(["/api/pubs", pubId, "menu"], ctx.prev);
       toast({ title: "Errore", description: "Impossibile aggiornare la disponibilità", variant: "destructive" });
     },
-    onSettled: () => queryClient.invalidateQueries({ queryKey: ["/api/pubs", pubId, "menu"] }),
   });
 
   const resetCategoryForm = () => {

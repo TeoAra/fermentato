@@ -197,16 +197,18 @@ export default function MenuCategoryManager({ pubId, categories }: MenuCategoryM
     onMutate: async ({ id }) => {
       setPendingCategoryToggles(prev => new Set([...prev, id]));
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/pubs", pubId, "menu"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/pubs", pubId, "menu", "all-products"] });
+    onSuccess: (data: any, { id }) => {
+      if (data?.isVisible !== undefined) {
+        queryClient.setQueryData(["/api/pubs", pubId, "menu"], (old: any) =>
+          Array.isArray(old) ? old.map((cat: any) => cat.id === id ? { ...cat, isVisible: data.isVisible } : cat) : old
+        );
+      }
+      setPendingCategoryToggles(prev => { const next = new Set(prev); next.delete(id); return next; });
     },
-    onError: () => {
+    onError: (_e: any, { id }) => {
+      setPendingCategoryToggles(prev => { const next = new Set(prev); next.delete(id); return next; });
       toast({ title: "❌ Errore", description: "Impossibile aggiornare la visibilità", variant: "destructive" });
     },
-    onSettled: (_data, _err, { id }) => {
-      setPendingCategoryToggles(prev => { const next = new Set(prev); next.delete(id); return next; });
-    }
   });
 
   // Product mutations
@@ -247,16 +249,21 @@ export default function MenuCategoryManager({ pubId, categories }: MenuCategoryM
     onMutate: async ({ id }) => {
       setPendingToggles(prev => new Set([...prev, id]));
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/pubs", pubId, "menu"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/pubs", pubId, "menu", "all-products"] });
+    onSuccess: (data: any, { id }) => {
+      if (data?.isVisible !== undefined) {
+        queryClient.setQueryData(["/api/pubs", pubId, "menu"], (old: any) =>
+          Array.isArray(old) ? old.map((cat: any) => ({
+            ...cat,
+            items: (cat.items || []).map((item: any) => item.id === id ? { ...item, isVisible: data.isVisible } : item)
+          })) : old
+        );
+      }
+      setPendingToggles(prev => { const next = new Set(prev); next.delete(id); return next; });
     },
-    onError: () => {
+    onError: (_e: any, { id }) => {
+      setPendingToggles(prev => { const next = new Set(prev); next.delete(id); return next; });
       toast({ title: "❌ Errore", description: "Impossibile aggiornare la visibilità", variant: "destructive" });
     },
-    onSettled: (_data, _err, { id }) => {
-      setPendingToggles(prev => { const next = new Set(prev); next.delete(id); return next; });
-    }
   });
 
   // Item mutations
