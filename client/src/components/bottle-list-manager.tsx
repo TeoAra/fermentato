@@ -187,15 +187,35 @@ export function BottleListManager({ pubId, bottleList, tapList = [] }: BottleLis
   const handleToggleBottleVisibility = async (item: BottleItem) => {
     const newVisible = !item.isVisible;
     const tapItem = findTapItem(item.beer?.id);
-    await apiRequest(`/api/pubs/${pubId}/bottles/${item.id}`, { method: "PATCH" }, { isVisible: newVisible });
-    queryClient.invalidateQueries({ queryKey: ["/api/pubs", pubId, "bottles"] });
+
+    const prevBottles = queryClient.getQueryData(["/api/pubs", pubId, "bottles"]);
+    queryClient.cancelQueries({ queryKey: ["/api/pubs", pubId, "bottles"] });
+    queryClient.setQueryData(["/api/pubs", pubId, "bottles"], (old: any) =>
+      Array.isArray(old) ? old.map((b: any) => b.id === item.id ? { ...b, isVisible: newVisible } : b) : old
+    );
+
+    let prevTaplist: any = null;
     if (tapItem) {
-      await apiRequest(`/api/pubs/${pubId}/taplist/${tapItem.id}`, { method: "PATCH" }, { isVisible: newVisible });
-      queryClient.invalidateQueries({ queryKey: ["/api/pubs", pubId, "taplist"] });
-      toast({
-        title: newVisible ? "✅ Birra visibile" : "👁️ Birra nascosta",
-        description: "Applicato anche alla taplist",
-      });
+      prevTaplist = queryClient.getQueryData(["/api/pubs", pubId, "taplist"]);
+      queryClient.cancelQueries({ queryKey: ["/api/pubs", pubId, "taplist"] });
+      queryClient.setQueryData(["/api/pubs", pubId, "taplist"], (old: any) =>
+        Array.isArray(old) ? old.map((t: any) => t.id === tapItem.id ? { ...t, isVisible: newVisible } : t) : old
+      );
+    }
+
+    try {
+      await apiRequest(`/api/pubs/${pubId}/bottles/${item.id}`, { method: "PATCH" }, { isVisible: newVisible });
+      if (tapItem) {
+        await apiRequest(`/api/pubs/${pubId}/taplist/${tapItem.id}`, { method: "PATCH" }, { isVisible: newVisible });
+        toast({ title: newVisible ? "✅ Birra visibile" : "👁️ Birra nascosta", description: "Applicato anche alla taplist" });
+      }
+    } catch {
+      queryClient.setQueryData(["/api/pubs", pubId, "bottles"], prevBottles);
+      if (prevTaplist) queryClient.setQueryData(["/api/pubs", pubId, "taplist"], prevTaplist);
+      toast({ title: "Errore", description: "Impossibile aggiornare la visibilità", variant: "destructive" });
+    } finally {
+      queryClient.invalidateQueries({ queryKey: ["/api/pubs", pubId, "bottles"] });
+      if (tapItem) queryClient.invalidateQueries({ queryKey: ["/api/pubs", pubId, "taplist"] });
     }
   };
 

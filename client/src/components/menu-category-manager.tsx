@@ -76,6 +76,14 @@ export default function MenuCategoryManager({ pubId, categories }: MenuCategoryM
   const [isSubmittingEditProduct, setIsSubmittingEditProduct] = useState(false);
   const [editCategoryIds, setEditCategoryIds] = useState<number[]>([]);
   const [expandedCategories, setExpandedCategories] = useState<Set<number>>(new Set());
+  const [pendingToggles, setPendingToggles] = useState<Set<number>>(new Set());
+  const [pendingCategoryToggles, setPendingCategoryToggles] = useState<Set<number>>(new Set());
+
+  const effectiveProductIsVisible = (product: any) =>
+    pendingToggles.has(product.id) ? !product.isVisible : product.isVisible;
+  const effectiveCategoryIsVisible = (category: any) =>
+    pendingCategoryToggles.has(category.id) ? !category.isVisible : category.isVisible;
+
   const [editingProduct, setEditingProduct] = useState<any>(null);
   const [isEditProductOpen, setIsEditProductOpen] = useState(false);
   
@@ -186,16 +194,18 @@ export default function MenuCategoryManager({ pubId, categories }: MenuCategoryM
     mutationFn: async ({ id }: { id: number; isVisible: boolean }) => {
       return apiRequest(`/api/pubs/${pubId}/menu-categories/${id}/toggle-visibility`, { method: 'PATCH' });
     },
+    onMutate: async ({ id }) => {
+      setPendingCategoryToggles(prev => new Set([...prev, id]));
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/pubs", pubId, "menu"] });
       queryClient.invalidateQueries({ queryKey: ["/api/pubs", pubId, "menu", "all-products"] });
     },
     onError: () => {
-      toast({ 
-        title: "❌ Errore", 
-        description: "Impossibile aggiornare la visibilità", 
-        variant: "destructive" 
-      });
+      toast({ title: "❌ Errore", description: "Impossibile aggiornare la visibilità", variant: "destructive" });
+    },
+    onSettled: (_data, _err, { id }) => {
+      setPendingCategoryToggles(prev => { const next = new Set(prev); next.delete(id); return next; });
     }
   });
 
@@ -234,12 +244,18 @@ export default function MenuCategoryManager({ pubId, categories }: MenuCategoryM
     mutationFn: async ({ id }: { id: number; isVisible: boolean }) => {
       return apiRequest(`/api/pubs/${pubId}/menu-items/${id}/toggle-visibility`, { method: 'PATCH' });
     },
+    onMutate: async ({ id }) => {
+      setPendingToggles(prev => new Set([...prev, id]));
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/pubs", pubId, "menu"] });
       queryClient.invalidateQueries({ queryKey: ["/api/pubs", pubId, "menu", "all-products"] });
     },
     onError: () => {
       toast({ title: "❌ Errore", description: "Impossibile aggiornare la visibilità", variant: "destructive" });
+    },
+    onSettled: (_data, _err, { id }) => {
+      setPendingToggles(prev => { const next = new Set(prev); next.delete(id); return next; });
     }
   });
 
@@ -364,6 +380,7 @@ export default function MenuCategoryManager({ pubId, categories }: MenuCategoryM
   const handleToggleProductVisibility = async (product: any) => {
     const siblings = findAllByName(product.name, product.id);
     const allIds = [product.id, ...siblings.map((s: any) => s.id)];
+    setPendingToggles(prev => new Set([...prev, ...allIds]));
     try {
       await Promise.all(
         allIds.map(id =>
@@ -373,13 +390,12 @@ export default function MenuCategoryManager({ pubId, categories }: MenuCategoryM
       queryClient.invalidateQueries({ queryKey: ["/api/pubs", pubId, "menu"] });
       queryClient.invalidateQueries({ queryKey: ["/api/pubs", pubId, "menu", "all-products"] });
       if (siblings.length > 0) {
-        toast({
-          title: "✅ Visibilità aggiornata",
-          description: `Applicato a ${allIds.length} categorie`,
-        });
+        toast({ title: "✅ Visibilità aggiornata", description: `Applicato a ${allIds.length} categorie` });
       }
     } catch {
       toast({ title: "❌ Errore", description: "Impossibile aggiornare la visibilità", variant: "destructive" });
+    } finally {
+      setPendingToggles(prev => { const next = new Set(prev); allIds.forEach(id => next.delete(id)); return next; });
     }
   };
 
@@ -698,13 +714,13 @@ export default function MenuCategoryManager({ pubId, categories }: MenuCategoryM
                       <div className="flex items-center justify-between mb-3">
                         <div className="flex items-center space-x-2">
                           <Badge 
-                            variant={category.isVisible ? "default" : "secondary"}
-                            className={`${category.isVisible 
+                            variant={effectiveCategoryIsVisible(category) ? "default" : "secondary"}
+                            className={`${effectiveCategoryIsVisible(category)
                               ? 'bg-green-100 text-green-800 border-green-200 dark:bg-green-900 dark:text-green-200' 
                               : 'bg-gray-100 text-gray-800 border-gray-200 dark:bg-gray-800 dark:text-gray-200'
                             }`}
                           >
-                            {category.isVisible ? (
+                            {effectiveCategoryIsVisible(category) ? (
                               <>
                                 <Eye className="h-3 w-3 mr-1" />
                                 Visibile
@@ -745,7 +761,7 @@ export default function MenuCategoryManager({ pubId, categories }: MenuCategoryM
                               className="text-gray-600 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900"
                               data-testid={`button-toggle-visibility-${category.id}`}
                             >
-                              {category.isVisible ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                              {effectiveCategoryIsVisible(category) ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                             </Button>
                           </motion.div>
                           <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}>
@@ -797,7 +813,7 @@ export default function MenuCategoryManager({ pubId, categories }: MenuCategoryM
                                           <div>
                                             <div className="flex items-center gap-2">
                                               <Badge className="bg-amber-100 text-amber-800 border-amber-300 text-xs">Info Box</Badge>
-                                              {!product.isVisible && (
+                                              {!effectiveProductIsVisible(product) && (
                                                 <Badge variant="secondary" className="text-xs">
                                                   <EyeOff className="h-3 w-3 mr-1" />
                                                   Nascosto
@@ -814,7 +830,7 @@ export default function MenuCategoryManager({ pubId, categories }: MenuCategoryM
                                             onClick={() => toggleProductVisibilityMutation.mutate({ id: product.id, isVisible: !product.isVisible })}
                                             className="text-gray-600 hover:text-blue-600 hover:bg-blue-50"
                                           >
-                                            {product.isVisible ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                                            {effectiveProductIsVisible(product) ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                                           </Button>
                                           <Button
                                             size="sm"
@@ -852,7 +868,7 @@ export default function MenuCategoryManager({ pubId, categories }: MenuCategoryM
                                           {product.isSpicy && (
                                             <span title="Piccante" className="text-sm">🌶️</span>
                                           )}
-                                          {!product.isVisible && (
+                                          {!effectiveProductIsVisible(product) && (
                                             <Badge variant="secondary" className="text-xs">
                                               <EyeOff className="h-3 w-3 mr-1" />
                                               Nascosto
@@ -896,7 +912,7 @@ export default function MenuCategoryManager({ pubId, categories }: MenuCategoryM
                                           className="text-gray-600 hover:text-blue-600 hover:bg-blue-50"
                                           data-testid={`button-toggle-product-visibility-${product.id}`}
                                         >
-                                          {product.isVisible ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                                          {effectiveProductIsVisible(product) ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                                         </Button>
                                         <Button
                                           size="sm"
