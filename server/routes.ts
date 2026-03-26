@@ -1891,6 +1891,87 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Toggle menu item visibility (reads from DB and flips, same pattern as beer toggle)
+  app.patch("/api/pubs/:pubId/menu-items/:id/toggle-visibility", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = (req.user as any).id;
+      const pubId = parseInt(req.params.pubId);
+      const itemId = parseInt(req.params.id);
+
+      const user = await storage.getUser(userId);
+      const existingPub = await storage.getPub(pubId);
+      const effectiveRole = user?.activeRole || user?.userType;
+      const isAdminRole = effectiveRole === 'admin';
+      if (!existingPub || (!isAdminRole && existingPub.ownerId !== userId)) {
+        return res.status(403).json({ message: "Not authorized" });
+      }
+
+      const [current] = await db.select({ isVisible: menuItems.isVisible }).from(menuItems).where(eq(menuItems.id, itemId));
+      if (!current) return res.status(404).json({ message: "Menu item not found" });
+      const newVisible = !current.isVisible;
+      const [updated] = await db.update(menuItems).set({ isVisible: newVisible, updatedAt: new Date() }).where(eq(menuItems.id, itemId)).returning();
+      broadcastPubUpdate(pubId, "menu");
+      res.json(updated);
+    } catch (error) {
+      console.error("Error toggling menu item visibility:", error);
+      res.status(500).json({ message: "Failed to toggle visibility" });
+    }
+  });
+
+  // Toggle menu item availability (reads from DB and flips)
+  app.patch("/api/pubs/:pubId/menu-items/:id/toggle-availability", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = (req.user as any).id;
+      const pubId = parseInt(req.params.pubId);
+      const itemId = parseInt(req.params.id);
+
+      const user = await storage.getUser(userId);
+      const existingPub = await storage.getPub(pubId);
+      const effectiveRole = user?.activeRole || user?.userType;
+      const isAdminRole = effectiveRole === 'admin';
+      if (!existingPub || (!isAdminRole && existingPub.ownerId !== userId)) {
+        return res.status(403).json({ message: "Not authorized" });
+      }
+
+      const [current] = await db.select({ isAvailable: menuItems.isAvailable }).from(menuItems).where(eq(menuItems.id, itemId));
+      if (!current) return res.status(404).json({ message: "Menu item not found" });
+      const newAvailable = !current.isAvailable;
+      const [updated] = await db.update(menuItems).set({ isAvailable: newAvailable, updatedAt: new Date() }).where(eq(menuItems.id, itemId)).returning();
+      broadcastPubUpdate(pubId, "menu");
+      res.json(updated);
+    } catch (error) {
+      console.error("Error toggling menu item availability:", error);
+      res.status(500).json({ message: "Failed to toggle availability" });
+    }
+  });
+
+  // Toggle menu category visibility (reads from DB and flips)
+  app.patch("/api/pubs/:pubId/menu-categories/:id/toggle-visibility", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = (req.user as any).id;
+      const pubId = parseInt(req.params.pubId);
+      const categoryId = parseInt(req.params.id);
+
+      const user = await storage.getUser(userId);
+      const existingPub = await storage.getPub(pubId);
+      const effectiveRole = user?.activeRole || user?.userType;
+      const isAdminRole = effectiveRole === 'admin';
+      if (!existingPub || (!isAdminRole && existingPub.ownerId !== userId)) {
+        return res.status(403).json({ message: "Not authorized" });
+      }
+
+      const [current] = await db.select({ isVisible: menuCategories.isVisible }).from(menuCategories).where(eq(menuCategories.id, categoryId));
+      if (!current) return res.status(404).json({ message: "Menu category not found" });
+      const newVisible = !current.isVisible;
+      const [updated] = await db.update(menuCategories).set({ isVisible: newVisible }).where(eq(menuCategories.id, categoryId)).returning();
+      broadcastPubUpdate(pubId, "menu");
+      res.json(updated);
+    } catch (error) {
+      console.error("Error toggling menu category visibility:", error);
+      res.status(500).json({ message: "Failed to toggle visibility" });
+    }
+  });
+
   // Delete menu item (only pub owner)
   app.delete("/api/pubs/:pubId/menu-items/:id", isAuthenticated, async (req: any, res) => {
     try {

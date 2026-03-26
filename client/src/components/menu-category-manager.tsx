@@ -183,8 +183,8 @@ export default function MenuCategoryManager({ pubId, categories }: MenuCategoryM
   });
 
   const toggleVisibilityMutation = useMutation({
-    mutationFn: async ({ id, isVisible }: { id: number; isVisible: boolean }) => {
-      return apiRequest(`/api/pubs/${pubId}/menu/categories/${id}`, { method: 'PATCH' }, { isVisible });
+    mutationFn: async ({ id }: { id: number; isVisible: boolean }) => {
+      return apiRequest(`/api/pubs/${pubId}/menu-categories/${id}/toggle-visibility`, { method: 'PATCH' });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/pubs", pubId, "menu"] });
@@ -231,8 +231,8 @@ export default function MenuCategoryManager({ pubId, categories }: MenuCategoryM
   });
 
   const toggleProductVisibilityMutation = useMutation({
-    mutationFn: async ({ id, isVisible }: { id: number; isVisible: boolean }) => {
-      return apiRequest(`/api/pubs/${pubId}/menu-items/${id}`, { method: 'PATCH' }, { isVisible });
+    mutationFn: async ({ id }: { id: number; isVisible: boolean }) => {
+      return apiRequest(`/api/pubs/${pubId}/menu-items/${id}/toggle-visibility`, { method: 'PATCH' });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/pubs", pubId, "menu"] });
@@ -362,20 +362,19 @@ export default function MenuCategoryManager({ pubId, categories }: MenuCategoryM
 
   // Batch visibility toggle: applies to all items with the same name
   const handleToggleProductVisibility = async (product: any) => {
-    const newVisible = !product.isVisible;
     const siblings = findAllByName(product.name, product.id);
     const allIds = [product.id, ...siblings.map((s: any) => s.id)];
     try {
       await Promise.all(
         allIds.map(id =>
-          apiRequest(`/api/pubs/${pubId}/menu-items/${id}`, { method: 'PATCH' }, { isVisible: newVisible })
+          apiRequest(`/api/pubs/${pubId}/menu-items/${id}/toggle-visibility`, { method: 'PATCH' })
         )
       );
       queryClient.invalidateQueries({ queryKey: ["/api/pubs", pubId, "menu"] });
       queryClient.invalidateQueries({ queryKey: ["/api/pubs", pubId, "menu", "all-products"] });
       if (siblings.length > 0) {
         toast({
-          title: newVisible ? "✅ Prodotto visibile" : "👁️ Prodotto nascosto",
+          title: "✅ Visibilità aggiornata",
           description: `Applicato a ${allIds.length} categorie`,
         });
       }
