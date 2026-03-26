@@ -1080,7 +1080,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const pubId = await resolvePubId(req.params.id);
       if (!pubId) return res.status(404).json({ message: "Pub not found" });
       const menu = await storage.getMenuByPub(pubId);
-      res.setHeader('Cache-Control', 'public, max-age=60, stale-while-revalidate=30');
+      res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
       res.json(menu);
     } catch (error) {
       console.error("Error fetching full menu:", error);

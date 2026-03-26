@@ -159,6 +159,7 @@ export function MenuManager({ pubId, menu }: MenuManagerProps) {
           Array.isArray(old) ? old.map((cat: any) => cat.id === id ? { ...cat, isVisible: data.isVisible } : cat) : old
         );
       }
+      queryClient.invalidateQueries({ queryKey: ["/api/pubs", String(pubId), "menu", "full"] });
     },
     onError: (_e: any, _v: any, ctx: any) => {
       if (ctx?.prev) queryClient.setQueryData(["/api/pubs", pubId, "menu"], ctx.prev);
@@ -234,6 +235,7 @@ export function MenuManager({ pubId, menu }: MenuManagerProps) {
           })) : old
         );
       }
+      queryClient.invalidateQueries({ queryKey: ["/api/pubs", String(pubId), "menu", "full"] });
     },
     onError: (_e: any, _v: any, ctx: any) => {
       if (ctx?.prev) queryClient.setQueryData(["/api/pubs", pubId, "menu"], ctx.prev);

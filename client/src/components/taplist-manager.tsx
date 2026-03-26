@@ -247,10 +247,12 @@ export function TapListManager({ pubId, tapList, bottleList = [] }: TapListManag
     try {
       const updatedTap = await apiRequest(`/api/pubs/${pubId}/taplist/${item.id}`, { method: "PATCH" }, { isVisible: newVisible });
       if (updatedTap?.isVisible !== undefined) applyTap(updatedTap.isVisible);
+      queryClient.invalidateQueries({ queryKey: ["/api/pubs", String(pubId), "taplist"] });
 
       if (bottleItem) {
         const updatedBottle = await apiRequest(`/api/pubs/${pubId}/bottles/${bottleItem.id}`, { method: "PATCH" }, { isVisible: newVisible });
         if (updatedBottle?.isVisible !== undefined) applyBottle(bottleItem.id, updatedBottle.isVisible);
+        queryClient.invalidateQueries({ queryKey: ["/api/pubs", String(pubId), "bottles"] });
         toast({ title: newVisible ? "✅ Birra visibile" : "👁️ Birra nascosta", description: "Applicato anche alla cantina" });
       }
     } catch {

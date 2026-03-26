@@ -204,6 +204,7 @@ export default function MenuCategoryManager({ pubId, categories }: MenuCategoryM
           Array.isArray(old) ? old.map((cat: any) => cat.id === id ? { ...cat, isVisible: data.isVisible } : cat) : old
         );
       }
+      queryClient.invalidateQueries({ queryKey: ["/api/pubs", String(pubId), "menu", "full"] });
     },
     onError: (_e: any, { id }) => {
       setPendingCategoryToggles(prev => { const next = new Set(prev); next.delete(id); return next; });
@@ -270,6 +271,7 @@ export default function MenuCategoryManager({ pubId, categories }: MenuCategoryM
       if (data?.isVisible !== undefined) {
         patchAllProductsCache([id], data.isVisible);
       }
+      queryClient.invalidateQueries({ queryKey: ["/api/pubs", String(pubId), "menu", "full"] });
     },
     onError: (_e: any, { id, isVisible }) => {
       // Revert to original state (opposite of the desired new state)
@@ -415,6 +417,7 @@ export default function MenuCategoryManager({ pubId, categories }: MenuCategoryM
           patchAllProductsCache([r.id], r.isVisible);
         }
       });
+      queryClient.invalidateQueries({ queryKey: ["/api/pubs", String(pubId), "menu", "full"] });
       if (siblings.length > 0) {
         toast({ title: "✅ Visibilità aggiornata", description: `Applicato a ${allIds.length} categorie` });
       }
