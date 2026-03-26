@@ -1512,12 +1512,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(403).json({ message: "Not authorized to update this pub" });
       }
 
-      // Include logoUrl and coverImageUrl in update data
-      const updateData = {
-        ...req.body,
-        logoUrl: req.body.logoUrl || null,
-        coverImageUrl: req.body.coverImageUrl || null,
-      };
+      // Only include logoUrl/coverImageUrl if explicitly provided in the request body
+      // (undefined means "not sent" = don't touch; empty string means "remove")
+      const updateData: any = { ...req.body };
+      if ('logoUrl' in req.body) updateData.logoUrl = req.body.logoUrl || null;
+      if ('coverImageUrl' in req.body) updateData.coverImageUrl = req.body.coverImageUrl || null;
       
       const pubData = insertPubSchema.partial().parse(updateData);
       const updatedPub = await storage.updatePub(pubId, pubData);
