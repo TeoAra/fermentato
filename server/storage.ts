@@ -207,7 +207,7 @@ export interface IStorage {
   updateBrewery(id: number, updates: Partial<InsertBrewery>): Promise<Brewery>;
   deleteBrewery(id: number): Promise<void>;
   searchBreweries(query: string): Promise<Brewery[]>;
-  exploreBreweries(q: string, country: string, page: number, limit: number): Promise<{ breweries: any[]; total: number }>;
+  exploreBreweries(q: string, country: string, page: number, limit: number, excludeCountry?: string): Promise<{ breweries: any[]; total: number }>;
   getBreweryCountries(): Promise<{ country: string; count: number }[]>;
 
   // Beer operations
@@ -531,10 +531,11 @@ export class DatabaseStorage implements IStorage {
     return result;
   }
 
-  async exploreBreweries(q: string, country: string, page: number, limit: number): Promise<{ breweries: any[]; total: number }> {
+  async exploreBreweries(q: string, country: string, page: number, limit: number, excludeCountry?: string): Promise<{ breweries: any[]; total: number }> {
     const conditions: any[] = [];
     if (q && q.length >= 2) conditions.push(ilike(breweries.name, `%${q}%`));
     if (country) conditions.push(ilike(breweries.country, country));
+    if (excludeCountry) conditions.push(sql`LOWER(${breweries.country}) != LOWER(${excludeCountry})`);
     const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
     const offset = (page - 1) * limit;
 
@@ -1923,9 +1924,9 @@ class StorageWrapper implements IStorage {
     );
   }
 
-  async exploreBreweries(q: string, country: string, page: number, limit: number): Promise<{ breweries: any[]; total: number }> {
+  async exploreBreweries(q: string, country: string, page: number, limit: number, excludeCountry?: string): Promise<{ breweries: any[]; total: number }> {
     return this.dbCall(
-      () => this.databaseStorage.exploreBreweries(q, country, page, limit),
+      () => this.databaseStorage.exploreBreweries(q, country, page, limit, excludeCountry),
       async () => ({ breweries: [], total: 0 })
     );
   }

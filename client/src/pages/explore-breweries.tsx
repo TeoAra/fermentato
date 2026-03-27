@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { useState, useMemo, useEffect, useCallback } from "react";
 import { Link } from "wouter";
-import { MapPin, Beer, ArrowLeft, Heart, Search, Globe, X, ChevronLeft, ChevronRight } from "lucide-react";
+import { MapPin, Beer, ArrowLeft, Heart, Search, Globe, X, ChevronLeft, ChevronRight, TrendingUp, Flag } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -141,15 +141,16 @@ function BreweryCard({ brewery }: { brewery: any }) {
 
   const flag = getFlag(brewery.country || "");
   const italianCountry = getItalianName(brewery.country || "");
+  const isItalian = brewery.country === "Italy" || brewery.country === "Italia";
 
   return (
     <Link href={`/brewery/${brewery.id}`}>
-      <div className="group relative rounded-2xl overflow-hidden cursor-pointer bg-white dark:bg-neutral-800 shadow-md hover:shadow-xl transition-all duration-300 hover:-translate-y-1 border border-gray-100 dark:border-neutral-700">
-        <div className="relative h-44 overflow-hidden bg-gradient-to-br from-orange-50 to-orange-100 dark:from-orange-900/30 dark:to-orange-900/20">
+      <div className="group relative rounded-2xl overflow-hidden cursor-pointer bg-white dark:bg-neutral-800 shadow-sm hover:shadow-lg transition-all duration-300 hover:-translate-y-1 border border-gray-100 dark:border-neutral-700">
+        <div className="relative h-40 overflow-hidden bg-gradient-to-br from-orange-50 to-orange-100 dark:from-orange-900/30 dark:to-orange-900/20">
           <img
             src={imgError || !brewery.logoUrl ? BREWERY_FALLBACK : brewery.logoUrl}
             alt={brewery.name}
-            className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
             onError={() => setImgError(true)}
           />
           <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-transparent" />
@@ -167,13 +168,19 @@ function BreweryCard({ brewery }: { brewery: any }) {
         </div>
 
         <div className="p-3">
-          <div className="flex items-center gap-1.5 text-xs text-gray-500 dark:text-neutral-400 mb-2">
+          <div className="flex items-center gap-1.5 text-xs text-gray-500 dark:text-neutral-400 mb-1.5">
             <span className="text-base leading-none">{flag}</span>
             <span className="truncate">{italianCountry}</span>
-            {brewery.location && brewery.location !== brewery.country && (
+            {!isItalian && brewery.location && brewery.location !== brewery.country && (
               <>
                 <span className="text-gray-300 dark:text-neutral-600">·</span>
                 <span className="truncate">{brewery.location}</span>
+              </>
+            )}
+            {isItalian && brewery.location && (
+              <>
+                <span className="text-gray-300 dark:text-neutral-600">·</span>
+                <span className="truncate text-orange-600 dark:text-orange-400 font-medium">{brewery.location}</span>
               </>
             )}
           </div>
@@ -191,10 +198,16 @@ function BreweryCard({ brewery }: { brewery: any }) {
 
 const PAGE_SIZE = 48;
 
+// Nazioni "internazionali" = tutte eccetto Italy/Italia
+const INTL_EXCLUDE = ["Italy", "Italia"];
+
+type QuickFilter = "all" | "italy" | "international" | "top";
+
 export default function ExploreBreweries() {
   const [searchInput, setSearchInput] = useState("");
   const [debouncedQ, setDebouncedQ] = useState("");
   const [selectedCountry, setSelectedCountry] = useState("");
+  const [quickFilter, setQuickFilter] = useState<QuickFilter>("all");
   const [page, setPage] = useState(1);
 
   useEffect(() => {
@@ -210,12 +223,20 @@ export default function ExploreBreweries() {
     staleTime: 10 * 60 * 1000,
   });
 
+  // Build API params considering quick filters
+  const apiCountry = useMemo(() => {
+    if (selectedCountry) return selectedCountry;
+    if (quickFilter === "italy") return "Italy";
+    return "";
+  }, [selectedCountry, quickFilter]);
+
   const { data, isLoading } = useQuery<{ breweries: any[]; total: number }>({
-    queryKey: ["/api/breweries/explore", debouncedQ, selectedCountry, page],
+    queryKey: ["/api/breweries/explore", debouncedQ, apiCountry, quickFilter, page],
     queryFn: () => {
       const p = new URLSearchParams();
       if (debouncedQ) p.set("q", debouncedQ);
-      if (selectedCountry) p.set("country", selectedCountry);
+      if (apiCountry) p.set("country", apiCountry);
+      if (quickFilter === "international" && !selectedCountry) p.set("excludeCountry", "Italy");
       p.set("page", String(page));
       p.set("limit", String(PAGE_SIZE));
       return fetch(`/api/breweries/explore?${p}`).then(r => r.json());
@@ -227,26 +248,44 @@ export default function ExploreBreweries() {
   const total = data?.total || 0;
   const totalPages = Math.ceil(total / PAGE_SIZE);
 
+  // Country pills: pin Italy first, then rest sorted by count
   const topCountries = useMemo(() => {
-    return countries
+    const sorted = countries
       .filter(c => c.country && c.country.trim())
       .sort((a, b) => b.count - a.count)
-      .slice(0, 24);
+      .slice(0, 30);
+
+    const italyEntry = sorted.find(c => c.country === "Italy" || c.country === "Italia");
+    const rest = sorted.filter(c => c.country !== "Italy" && c.country !== "Italia");
+    return italyEntry ? [italyEntry, ...rest] : sorted;
   }, [countries]);
 
   const handleCountrySelect = useCallback((country: string) => {
     setSelectedCountry(prev => prev === country ? "" : country);
+    setQuickFilter("all");
     setPage(1);
   }, []);
+
+  const handleQuickFilter = (f: QuickFilter) => {
+    setQuickFilter(f);
+    setSelectedCountry("");
+    setPage(1);
+  };
 
   const clearFilters = () => {
     setSearchInput("");
     setDebouncedQ("");
     setSelectedCountry("");
+    setQuickFilter("all");
     setPage(1);
   };
 
-  const hasFilters = debouncedQ || selectedCountry;
+  const hasFilters = debouncedQ || selectedCountry || quickFilter !== "all";
+
+  const italyCount = useMemo(() => {
+    const c = countries.find(c => c.country === "Italy" || c.country === "Italia");
+    return c?.count ?? 0;
+  }, [countries]);
 
   return (
     <div className="min-h-screen bg-[#FFF8F2] dark:bg-[hsl(25,14%,7%)]">
@@ -264,7 +303,7 @@ export default function ExploreBreweries() {
             </Link>
           </div>
 
-          <div className="text-center mb-8">
+          <div className="text-center mb-6">
             <div className="flex justify-center mb-3">
               <div className="bg-white/20 rounded-full p-3">
                 <Globe className="w-8 h-8 text-white" />
@@ -275,13 +314,13 @@ export default function ExploreBreweries() {
             </h1>
             <p className="text-orange-50 text-base">
               {total > 0
-                ? `${total.toLocaleString("it-IT")} birrifici${selectedCountry ? ` in ${getItalianName(selectedCountry)}` : " in tutto il mondo"}`
+                ? `${total.toLocaleString("it-IT")} birrifici${selectedCountry ? ` in ${getItalianName(selectedCountry)}` : quickFilter === "italy" ? " italiani" : quickFilter === "international" ? " internazionali" : " in tutto il mondo"}`
                 : "Scopri i migliori birrifici artigianali dal mondo"}
             </p>
           </div>
 
           {/* Search bar */}
-          <div className="max-w-xl mx-auto relative">
+          <div className="max-w-xl mx-auto relative mb-6">
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 z-10" />
             <Input
               value={searchInput}
@@ -298,41 +337,87 @@ export default function ExploreBreweries() {
               </button>
             )}
           </div>
-        </div>
-      </div>
 
-      {/* Country pills */}
-      <div className="sticky top-0 z-20 bg-white dark:bg-[hsl(25,14%,8%)] border-b border-stone-100 dark:border-[hsl(25,12%,14%)] shadow-sm">
-        <div className="max-w-5xl mx-auto px-4 py-3">
-          <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
+          {/* Quick filters — prominenti nell'hero */}
+          <div className="flex flex-wrap justify-center gap-2">
             <button
-              onClick={() => { setSelectedCountry(""); setPage(1); }}
-              className={`flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium transition-all border ${
-                !selectedCountry
-                  ? "bg-[hsl(24,93%,49%)] text-white border-[hsl(24,93%,49%)] shadow-sm"
-                  : "bg-white dark:bg-neutral-800 text-gray-600 dark:text-neutral-300 border-gray-200 dark:border-neutral-700 hover:border-primary/40 hover:text-primary"
+              onClick={() => handleQuickFilter("all")}
+              className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-semibold transition-all border ${
+                quickFilter === "all" && !selectedCountry
+                  ? "bg-white text-primary border-white shadow-md"
+                  : "bg-white/15 text-white border-white/30 hover:bg-white/25"
               }`}
             >
               <Globe className="w-3.5 h-3.5" />
-              <span>Tutti</span>
+              Tutti
             </button>
-            {topCountries.map(c => (
-              <button
-                key={c.country}
-                onClick={() => handleCountrySelect(c.country)}
-                className={`flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium transition-all border ${
-                  selectedCountry === c.country
-                    ? "bg-[hsl(24,93%,49%)] text-white border-[hsl(24,93%,49%)] shadow-sm"
-                    : "bg-white dark:bg-neutral-800 text-gray-600 dark:text-neutral-300 border-gray-200 dark:border-neutral-700 hover:border-primary/40 hover:text-primary"
-                }`}
-              >
-                <span>{getFlag(c.country)}</span>
-                <span>{getItalianName(c.country)}</span>
-                <span className={`text-xs ${selectedCountry === c.country ? "text-orange-100" : "text-gray-400"}`}>
-                  {c.count.toLocaleString("it-IT")}
-                </span>
-              </button>
-            ))}
+            <button
+              onClick={() => handleQuickFilter("italy")}
+              className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-semibold transition-all border ${
+                quickFilter === "italy" && !selectedCountry
+                  ? "bg-white text-primary border-white shadow-md"
+                  : "bg-white/15 text-white border-white/30 hover:bg-white/25"
+              }`}
+            >
+              🇮🇹 Italia
+              {italyCount > 0 && <span className={`text-xs ${quickFilter === "italy" && !selectedCountry ? "text-primary/60" : "text-white/60"}`}>{italyCount.toLocaleString("it-IT")}</span>}
+            </button>
+            <button
+              onClick={() => handleQuickFilter("international")}
+              className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-semibold transition-all border ${
+                quickFilter === "international" && !selectedCountry
+                  ? "bg-white text-primary border-white shadow-md"
+                  : "bg-white/15 text-white border-white/30 hover:bg-white/25"
+              }`}
+            >
+              <MapPin className="w-3.5 h-3.5" />
+              Internazionali
+            </button>
+            <button
+              onClick={() => handleQuickFilter("top")}
+              className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-semibold transition-all border ${
+                quickFilter === "top" && !selectedCountry
+                  ? "bg-white text-primary border-white shadow-md"
+                  : "bg-white/15 text-white border-white/30 hover:bg-white/25"
+              }`}
+            >
+              <TrendingUp className="w-3.5 h-3.5" />
+              Più grandi
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* Country pills — sticky, con fade sul bordo */}
+      <div className="sticky top-0 z-20 bg-white dark:bg-[hsl(25,14%,8%)] border-b border-stone-100 dark:border-[hsl(25,12%,14%)] shadow-sm">
+        <div className="max-w-5xl mx-auto px-4 py-2.5">
+          <div className="relative">
+            {/* Fade indicatore scorrevole */}
+            <div className="pointer-events-none absolute right-0 top-0 bottom-0 w-12 bg-gradient-to-l from-white dark:from-[hsl(25,14%,8%)] to-transparent z-10" />
+            <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide pr-8">
+              {topCountries.map(c => {
+                const isItaly = c.country === "Italy" || c.country === "Italia";
+                return (
+                  <button
+                    key={c.country}
+                    onClick={() => handleCountrySelect(c.country)}
+                    className={`flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium transition-all border ${
+                      selectedCountry === c.country
+                        ? "bg-[hsl(24,93%,49%)] text-white border-[hsl(24,93%,49%)] shadow-sm"
+                        : isItaly
+                        ? "bg-orange-50 dark:bg-orange-950/30 text-orange-700 dark:text-orange-300 border-orange-200 dark:border-orange-800/40 hover:border-primary/60"
+                        : "bg-white dark:bg-neutral-800 text-gray-600 dark:text-neutral-300 border-gray-200 dark:border-neutral-700 hover:border-primary/40 hover:text-primary"
+                    }`}
+                  >
+                    <span>{getFlag(c.country)}</span>
+                    <span>{getItalianName(c.country)}</span>
+                    <span className={`text-xs ${selectedCountry === c.country ? "text-orange-100" : "text-gray-400 dark:text-neutral-500"}`}>
+                      {c.count.toLocaleString("it-IT")}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
           </div>
         </div>
       </div>
@@ -340,8 +425,14 @@ export default function ExploreBreweries() {
       {/* Content */}
       <main className="max-w-5xl mx-auto px-4 sm:px-6 py-6">
         {hasFilters && (
-          <div className="flex items-center gap-2 mb-4">
-            <span className="text-sm text-gray-500 dark:text-neutral-400">Filtri attivi:</span>
+          <div className="flex items-center gap-2 mb-4 flex-wrap">
+            <span className="text-sm text-gray-500 dark:text-neutral-400">Filtri:</span>
+            {quickFilter !== "all" && !selectedCountry && (
+              <Badge variant="secondary" className="gap-1">
+                {quickFilter === "italy" ? "🇮🇹 Italia" : quickFilter === "international" ? "🌍 Internazionali" : "🔝 Più grandi"}
+                <X className="w-3 h-3 cursor-pointer" onClick={() => handleQuickFilter("all")} />
+              </Badge>
+            )}
             {debouncedQ && (
               <Badge variant="secondary" className="gap-1">
                 "{debouncedQ}"
@@ -361,10 +452,10 @@ export default function ExploreBreweries() {
         )}
 
         {isLoading ? (
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
             {[...Array(12)].map((_, i) => (
               <div key={i} className="rounded-2xl overflow-hidden animate-pulse">
-                <div className="h-44 bg-gray-200 dark:bg-neutral-700" />
+                <div className="h-40 bg-gray-200 dark:bg-neutral-700" />
                 <div className="p-3 bg-white dark:bg-neutral-800 space-y-2">
                   <div className="h-3 bg-gray-200 dark:bg-neutral-700 rounded w-3/4" />
                   <div className="h-3 bg-gray-200 dark:bg-neutral-700 rounded w-1/2" />
@@ -376,7 +467,7 @@ export default function ExploreBreweries() {
           <div className="text-center py-20">
             <Globe className="w-16 h-16 mx-auto mb-4 text-gray-200 dark:text-neutral-700" />
             <p className="font-semibold text-gray-600 dark:text-neutral-300 text-lg">Nessun birrificio trovato</p>
-            <p className="text-gray-400 text-sm mt-1">Prova con un nome diverso o un altro paese</p>
+            <p className="text-gray-400 text-sm mt-1">Prova con un nome diverso o un altro filtro</p>
             <Button onClick={clearFilters} variant="outline" className="mt-4 border-stone-300 text-primary hover:bg-stone-50">
               Rimuovi filtri
             </Button>

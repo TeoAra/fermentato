@@ -605,9 +605,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const q = (req.query.q as string) || "";
       const country = (req.query.country as string) || "";
+      const excludeCountry = (req.query.excludeCountry as string) || "";
       const page = Math.max(1, parseInt(req.query.page as string) || 1);
       const limit = Math.min(60, parseInt(req.query.limit as string) || 48);
-      const result = await storage.exploreBreweries(q, country, page, limit);
+      const result = await storage.exploreBreweries(q, country, page, limit, excludeCountry || undefined);
       res.json(result);
     } catch (error) {
       console.error("Error exploring breweries:", error);
