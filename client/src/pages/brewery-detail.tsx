@@ -431,7 +431,7 @@ export default function BreweryDetail() {
   const seoUrl = `https://fermenta.to/brewery/${id}`;
 
   return (
-      <div className="min-h-screen bg-background">
+      <div className="min-h-screen bg-[#FFF8F2] dark:bg-background">
       <Helmet>
         <title>{seoTitle}</title>
         <meta name="description" content={seoDesc} />
@@ -452,8 +452,8 @@ export default function BreweryDetail() {
         })}</script>
       </Helmet>
       
-      {/* ── HERO ── image with dark gradient overlay */}
-        <div className="relative h-[260px] sm:h-[320px] md:h-[380px] overflow-hidden">
+      {/* ── HERO ── */}
+        <div className="relative h-[280px] sm:h-[360px] md:h-[440px] overflow-hidden">
           {brewery?.coverImageUrl ? (
             <img
               src={brewery.coverImageUrl}
@@ -563,6 +563,15 @@ export default function BreweryDetail() {
                 </div>
               </div>
             </div>
+
+            {/* Description preview */}
+            {(brewery as any)?.description && (
+              <div className="px-6 md:px-8 pb-4">
+                <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed line-clamp-3">
+                  {(brewery as any).description}
+                </p>
+              </div>
+            )}
 
             {/* Tabs Section */}
             <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">

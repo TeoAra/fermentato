@@ -2,6 +2,7 @@ import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Check, X, Beer, Building2, Zap, Shield, Star, MessageCircle, BarChart3, Bell, QrCode, FileText, Tv2, Users, Map, Calendar, Image, RefreshCw, Lock, Crown, Sparkles, Mail, CheckCircle2, ArrowRight } from "lucide-react";
 import { SEO } from "@/components/seo";
 import Footer from "@/components/footer";
@@ -285,23 +286,28 @@ export default function PrezziPage() {
 
         {/* FAQ */}
         <div className="mb-16">
-          <h2 className="text-2xl font-bold text-center text-foreground mb-8">Domande frequenti</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {[
-              { q: "Come si attiva il piano pub?", a: "Registra il tuo pub e attiva subito il periodo di prova gratuito di 15 giorni — senza carta di credito. Al termine, puoi continuare con il piano completo a €65/anno (IVA inclusa) tramite carta, PayPal o altri metodi online. L'abbonamento si rinnova automaticamente salvo disdetta anticipata." },
-              { q: "Come faccio a ottenere la verifica birrificio?", a: "Registra il profilo del birrificio. Il team verifica i dati e attiva il badge entro poche ore. La verifica è completamente gratuita." },
-              { q: "Posso disdire il piano pub?", a: "Sì, in qualsiasi momento prima del rinnovo annuale. Il piano rimane attivo fino alla scadenza e non verrà rinnovato. Nessun costo di recesso." },
-              { q: "Come avviene il pagamento del piano pub?", a: "Il pagamento avviene tramite carta di credito/debito, PayPal e altri metodi online. L'addebito è annuale e automatico salvo disdetta anticipata." },
-              { q: "Posso avere sia pub che birrificio?", a: "Sì. I due piani sono separati e coesistono sullo stesso account. Se sei un brewpub avrai una doppia dashboard — una per il birrificio, una per il pub." },
-              { q: "I prezzi includono l'IVA?", a: "Sì, i prezzi indicati sono IVA inclusa (22% Italia)." },
-            ].map(({ q, a }) => (
-              <Card key={q} className="bg-white dark:bg-[hsl(25,14%,10%)] border border-stone-100 dark:border-[hsl(25,12%,16%)] shadow-sm">
-                <CardContent className="p-5">
-                  <div className="font-semibold text-foreground mb-1.5 text-sm">{q}</div>
-                  <div className="text-sm text-muted-foreground">{a}</div>
-                </CardContent>
-              </Card>
-            ))}
+          <h2 className="text-2xl font-bold text-center text-foreground mb-2">Domande frequenti</h2>
+          <p className="text-center text-muted-foreground text-sm mb-8">Tutto quello che devi sapere su Fermenta.to</p>
+          <div className="max-w-2xl mx-auto bg-white dark:bg-[hsl(25,14%,10%)] rounded-3xl border border-stone-100 dark:border-[hsl(25,12%,16%)] shadow-sm overflow-hidden">
+            <Accordion type="single" collapsible className="divide-y divide-stone-100 dark:divide-stone-700/30">
+              {[
+                { q: "Come si attiva il piano pub?", a: "Registra il tuo pub e attiva subito il periodo di prova gratuito di 15 giorni — senza carta di credito. Al termine, puoi continuare con il piano completo a €65/anno (IVA inclusa) tramite carta, PayPal o altri metodi online. L'abbonamento si rinnova automaticamente salvo disdetta anticipata." },
+                { q: "Come faccio a ottenere la verifica birrificio?", a: "Registra il profilo del birrificio. Il team verifica i dati e attiva il badge entro poche ore. La verifica è completamente gratuita." },
+                { q: "Posso disdire il piano pub?", a: "Sì, in qualsiasi momento prima del rinnovo annuale. Il piano rimane attivo fino alla scadenza e non verrà rinnovato. Nessun costo di recesso." },
+                { q: "Come avviene il pagamento del piano pub?", a: "Il pagamento avviene tramite carta di credito/debito, PayPal e altri metodi online. L'addebito è annuale e automatico salvo disdetta anticipata." },
+                { q: "Posso avere sia pub che birrificio?", a: "Sì. I due piani sono separati e coesistono sullo stesso account. Se sei un brewpub avrai una doppia dashboard — una per il birrificio, una per il pub." },
+                { q: "I prezzi includono l'IVA?", a: "Sì, i prezzi indicati sono IVA inclusa (22% Italia)." },
+              ].map(({ q, a }, i) => (
+                <AccordionItem key={q} value={`faq-${i}`} className="border-0 px-6">
+                  <AccordionTrigger className="text-sm font-semibold text-foreground hover:no-underline hover:text-primary transition-colors py-5 text-left">
+                    {q}
+                  </AccordionTrigger>
+                  <AccordionContent className="text-sm text-muted-foreground leading-relaxed pb-5">
+                    {a}
+                  </AccordionContent>
+                </AccordionItem>
+              ))}
+            </Accordion>
           </div>
         </div>
 

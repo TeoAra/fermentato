@@ -191,6 +191,7 @@ export default function UserProfile() {
   const [tempEmail, setTempEmail] = useState("");
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [isPublicProfile, setIsPublicProfile] = useState<boolean>(true);
+  const [activeProfileTab, setActiveProfileTab] = useState<'overview' | 'favorites' | 'settings'>('overview');
   
   const [passwordData, setPasswordData] = useState({
     currentPassword: "",
@@ -454,6 +455,7 @@ export default function UserProfile() {
   const isBreweryOwner = typedUser?.userType === 'brewery_owner' || typedUser?.activeRole === 'brewery_owner';
 
   return (
+    <div className="min-h-screen bg-[#FFF8F2] dark:bg-background">
     <div className="container mx-auto px-4 py-8 max-w-4xl">
       <div className="space-y-6">
         {/* Role switcher banner for pub/brewery owners */}
@@ -538,12 +540,22 @@ export default function UserProfile() {
         </Card>
 
         {/* Main Content */}
-        <Tabs defaultValue="overview" className="w-full">
-          <TabsList className="grid w-full grid-cols-3 bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl border border-amber-100 dark:border-gray-700 rounded-xl p-1 shadow-lg">
-            <TabsTrigger value="overview" className="rounded-lg data-[state=active]:bg-gradient-to-r data-[state=active]:from-amber-500 data-[state=active]:to-orange-600 data-[state=active]:text-white data-[state=active]:shadow-lg transition-all duration-300">Panoramica</TabsTrigger>
-            <TabsTrigger value="favorites" className="rounded-lg data-[state=active]:bg-gradient-to-r data-[state=active]:from-amber-500 data-[state=active]:to-orange-600 data-[state=active]:text-white data-[state=active]:shadow-lg transition-all duration-300">Preferiti</TabsTrigger>
-            <TabsTrigger value="settings" className="rounded-lg data-[state=active]:bg-gradient-to-r data-[state=active]:from-amber-500 data-[state=active]:to-orange-600 data-[state=active]:text-white data-[state=active]:shadow-lg transition-all duration-300">Impostazioni</TabsTrigger>
-          </TabsList>
+        <Tabs value={activeProfileTab} onValueChange={(v) => setActiveProfileTab(v as any)} className="w-full">
+          <div className="flex gap-1 bg-white dark:bg-[hsl(25,14%,10%)] rounded-2xl p-1 border border-stone-100 dark:border-[hsl(25,12%,16%)] shadow-sm mb-4">
+            {[
+              { value: 'overview', label: 'Panoramica' },
+              { value: 'favorites', label: 'Preferiti' },
+              { value: 'settings', label: 'Impostazioni' },
+            ].map(({ value, label }) => (
+              <button
+                key={value}
+                onClick={() => setActiveProfileTab(value as any)}
+                className={`flex-1 px-3 py-2 rounded-xl text-sm font-bold transition-all ${activeProfileTab === value ? 'bg-[#FFF8F2] dark:bg-[hsl(25,14%,12%)] text-primary dark:text-orange-400 shadow-sm' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'}`}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
 
           <TabsContent value="overview" className="space-y-4">
             {/* Stats row */}
@@ -986,6 +998,7 @@ export default function UserProfile() {
           </TabsContent>
         </Tabs>
       </div>
+    </div>
     </div>
   );
 

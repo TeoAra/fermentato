@@ -5,7 +5,6 @@ import { GlutenFreeSmallBadge, AlcoholFreeBadge } from "@/components/beer-badges
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState, useMemo, useEffect } from "react";
 import { 
-  Star, 
   Clock, 
   Phone, 
   Globe, 
@@ -13,30 +12,22 @@ import {
   Facebook, 
   Instagram, 
   Settings, 
-  Edit,
   Heart,
-  Eye,
   Share2,
-  Users,
-  Award,
   Navigation,
   Mail,
   Calendar,
   Info,
-  CheckCircle,
   XCircle,
   Sparkles,
-  TrendingUp,
-  Target,
-  Monitor,
   MapPin,
   ShieldCheck,
 } from "lucide-react";
 import Footer from "@/components/footer";
 import TapList from "@/components/tap-list";
 import LuppolinoMenu from "@/components/luppolino-menu";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Tabs, TabsContent } from "@/components/ui/tabs";
+import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -568,7 +559,7 @@ export default function PubDetail() {
   const seoUrl = `https://fermenta.to/pub/${id}`;
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-[#FFF8F2] dark:bg-background">
       <Helmet>
         <title>{seoTitle}</title>
         <meta name="description" content={seoDesc} />
@@ -594,8 +585,8 @@ export default function PubDetail() {
         })}</script>
       </Helmet>
       
-      {/* ── HERO ── compact, image-first */}
-      <div className="relative h-[220px] sm:h-[280px] md:h-[340px] overflow-hidden">
+      {/* ── HERO ── */}
+      <div className="relative h-[260px] sm:h-[340px] md:h-[420px] overflow-hidden">
         <img
           src={(pub as any)?.coverImageUrl || "https://images.unsplash.com/photo-1514933651103-005eec06c04b?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&h=600"}
           alt={`${(pub as any)?.name} - Copertina`}
@@ -642,11 +633,11 @@ export default function PubDetail() {
         </div>
       </div>
 
-      {/* ── INFO BAR ── the most important info, always visible */}
-      <div className="bg-white dark:bg-[hsl(25,14%,10%)] border-b border-stone-100 dark:border-stone-700/30 px-4 py-3">
-        <div className="max-w-7xl mx-auto flex flex-col items-center gap-3">
-          {/* Status pills row */}
-          <div className="flex items-center gap-2 flex-wrap justify-center">
+      {/* ── INFO BAR ── single row: pills left, actions right */}
+      <div className="bg-white dark:bg-[hsl(25,14%,10%)] border-b border-stone-100 dark:border-stone-700/30 px-4 py-2.5">
+        <div className="max-w-7xl mx-auto flex items-center justify-between gap-3">
+          {/* Left: status pills */}
+          <div className="flex items-center gap-2 flex-wrap">
             {/* Open status pill */}
             <button
               onClick={handleShowOpeningHours}
@@ -686,8 +677,8 @@ export default function PubDetail() {
             )}
           </div>
 
-          {/* Action buttons – centered */}
-          <div className="flex items-center gap-2 justify-center">
+          {/* Right: action buttons */}
+          <div className="flex items-center gap-2 flex-shrink-0">
             <button
               onClick={handleSave}
               disabled={toggleFavoriteMutation.isPending}
@@ -756,7 +747,7 @@ export default function PubDetail() {
           <div className="lg:col-span-3">
             {/* ── TABS ── pill-container style (come da mockup) */}
             <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-                <div className="z-10 px-4 py-3 bg-background border-b border-stone-100 dark:border-stone-700/30">
+                <div className="z-10 px-4 py-3 bg-[#FFF8F2] dark:bg-background border-b border-stone-100 dark:border-stone-700/30">
                   <div className="flex gap-1 bg-[#FFF8F2] dark:bg-[hsl(25,14%,12%)] rounded-2xl p-1 overflow-x-auto scrollbar-hide">
                     <button
                       data-testid="tab-taplist"
@@ -1014,128 +1005,106 @@ export default function PubDetail() {
           </div>
 
           {/* Sidebar – desktop only */}
-          <div className="hidden lg:block space-y-5 pt-4 pl-6 pr-4 sticky top-[136px] self-start">
-            {/* Contact Information */}
-            <Card className="bg-white dark:bg-[hsl(25,14%,10%)] rounded-2xl border border-stone-100 dark:border-[hsl(25,12%,16%)] shadow-sm overflow-hidden">
-              <CardHeader className="bg-stone-50/50 dark:bg-stone-900/10 border-b border-stone-100 dark:border-stone-700/30">
-                <CardTitle className="flex items-center">
-                  <Info className="mr-3 h-5 w-5 text-primary" />
-                  <span className="text-lg">Informazioni</span>
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="p-6 space-y-6">
-                {/* Address with Maps button */}
+          <div className="hidden lg:block space-y-4 pt-4 pl-6 pr-4 sticky top-[120px] self-start">
+
+            {/* Description */}
+            {(pub as any)?.description && (
+              <div className="bg-white dark:bg-[hsl(25,14%,10%)] rounded-2xl border border-stone-100 dark:border-[hsl(25,12%,16%)] shadow-sm p-4">
+                <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">{(pub as any).description}</p>
+              </div>
+            )}
+
+            {/* Orari */}
+            <button
+              onClick={handleShowOpeningHours}
+              data-testid="button-show-hours"
+              className="w-full flex items-center gap-3 px-4 py-3 bg-white dark:bg-[hsl(25,14%,10%)] rounded-2xl border border-stone-100 dark:border-[hsl(25,12%,16%)] shadow-sm hover:border-primary/40 transition-colors text-left"
+            >
+              <div className="p-2 rounded-xl bg-amber-50 dark:bg-amber-950/30 flex-shrink-0">
+                <Clock className="h-4 w-4 text-amber-600 dark:text-amber-400" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-semibold text-foreground">Orari di apertura</p>
+                <p className={`text-xs mt-0.5 font-medium ${openStatus.status === 'open' ? 'text-emerald-600 dark:text-emerald-400' : openStatus.status === 'closing_soon' ? 'text-amber-600 dark:text-amber-400' : openStatus.status === 'opening_soon' ? 'text-primary dark:text-orange-400' : 'text-red-600 dark:text-red-400'}`}>
+                  {openStatus.status === 'open' ? 'Aperto adesso' : openStatus.status === 'closing_soon' ? 'Sta chiudendo' : openStatus.status === 'opening_soon' ? 'Sta per aprire' : 'Chiuso adesso'}
+                </p>
+              </div>
+              <Info className="h-4 w-4 text-gray-400 flex-shrink-0" />
+            </button>
+
+            {/* Contatti + Social */}
+            <div className="bg-white dark:bg-[hsl(25,14%,10%)] rounded-2xl border border-stone-100 dark:border-[hsl(25,12%,16%)] shadow-sm overflow-hidden">
+              <div className="px-4 py-3 border-b border-stone-100 dark:border-stone-700/30">
+                <h3 className="text-sm font-bold text-foreground uppercase tracking-wide">Contatti</h3>
+              </div>
+              <div className="p-4 space-y-3">
                 {(pub as any)?.address && (
-                  <div className="flex items-start space-x-3">
-                    <div className="p-2.5 rounded-xl bg-blue-50 dark:bg-blue-950/30 flex-shrink-0">
-                      <MapPin className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                  <div className="flex items-start gap-3">
+                    <div className="p-2 rounded-xl bg-blue-50 dark:bg-blue-950/30 flex-shrink-0 mt-0.5">
+                      <MapPin className="h-3.5 w-3.5 text-blue-600 dark:text-blue-400" />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="font-medium text-foreground text-sm">{(pub as any).address}</p>
+                      <p className="text-sm text-foreground leading-snug">{(pub as any).address}</p>
                       <a
                         href={getMapNavigationUrl((pub as any).name, (pub as any).address)}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="inline-flex items-center mt-1.5 px-3 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold transition-colors gap-1.5"
+                        className="inline-flex items-center mt-1.5 px-2.5 py-1 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-[11px] font-semibold transition-colors gap-1"
                       >
-                        <Navigation className="h-3 w-3" />
+                        <Navigation className="h-2.5 w-2.5" />
                         Indicazioni
                       </a>
                     </div>
                   </div>
                 )}
-
-                {/* Phone */}
                 {(pub as any)?.phone && (
-                  <div className="flex items-center space-x-3">
-                    <div className="p-2.5 rounded-xl bg-emerald-50 dark:bg-emerald-950/30">
-                      <Phone className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 rounded-xl bg-emerald-50 dark:bg-emerald-950/30 flex-shrink-0">
+                      <Phone className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400" />
                     </div>
-                    <a 
-                      href={`tel:${(pub as any).phone}`} 
-                      className="font-medium text-foreground hover:text-emerald-600 transition-colors text-sm"
-                    >
+                    <a href={`tel:${(pub as any).phone}`} className="text-sm text-foreground hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors">
                       {(pub as any).phone}
                     </a>
                   </div>
                 )}
-
-                {/* Website */}
                 {(pub as any)?.websiteUrl && (
-                  <div className="flex items-center space-x-3">
-                    <div className="p-2.5 rounded-xl bg-violet-50 dark:bg-violet-950/30">
-                      <Globe className="h-4 w-4 text-violet-600 dark:text-violet-400" />
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 rounded-xl bg-violet-50 dark:bg-violet-950/30 flex-shrink-0">
+                      <Globe className="h-3.5 w-3.5 text-violet-600 dark:text-violet-400" />
                     </div>
-                    <a 
-                      href={(pub as any).websiteUrl} 
-                      target="_blank" 
-                      rel="noopener noreferrer"
-                      className="font-medium text-foreground hover:text-violet-600 transition-colors text-sm"
-                    >
-                      Visita il Sito Web
+                    <a href={(pub as any).websiteUrl} target="_blank" rel="noopener noreferrer" className="text-sm text-foreground hover:text-violet-600 dark:hover:text-violet-400 transition-colors truncate">
+                      Sito Web
                     </a>
                   </div>
                 )}
-
-                {/* Email */}
                 {(pub as any)?.email && (
-                  <div className="flex items-center space-x-3">
-                    <div className="p-2.5 rounded-xl bg-blue-50 dark:bg-blue-950/30">
-                      <Mail className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 rounded-xl bg-blue-50 dark:bg-blue-950/30 flex-shrink-0">
+                      <Mail className="h-3.5 w-3.5 text-blue-600 dark:text-blue-400" />
                     </div>
-                    <a 
-                      href={`mailto:${(pub as any).email}`} 
-                      className="font-medium text-foreground hover:text-blue-600 transition-colors break-all text-sm"
-                    >
+                    <a href={`mailto:${(pub as any).email}`} className="text-sm text-foreground hover:text-blue-600 dark:hover:text-blue-400 transition-colors break-all">
                       {(pub as any).email}
                     </a>
                   </div>
                 )}
-
-                {/* Social Media */}
                 {((pub as any)?.facebookUrl || (pub as any)?.instagramUrl) && (
-                  <div className="space-y-3 pt-4 border-t border-stone-100 dark:border-stone-700/30">
-                    <h4 className="font-semibold text-foreground text-sm">Seguici</h4>
-                    <div className="flex space-x-3">
-                      {(pub as any)?.facebookUrl && (
-                        <a 
-                          href={(pub as any).facebookUrl} 
-                          target="_blank" 
-                          rel="noopener noreferrer"
-                          className="p-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white transition-colors"
-                          title="Facebook"
-                        >
-                          <Facebook size={16} />
-                        </a>
-                      )}
-                      {(pub as any)?.instagramUrl && (
-                        <a 
-                          href={(pub as any).instagramUrl} 
-                          target="_blank" 
-                          rel="noopener noreferrer"
-                          className="p-2 rounded-lg bg-pink-500 hover:bg-pink-600 text-white transition-colors"
-                          title="Instagram"
-                        >
-                          <Instagram size={16} />
-                        </a>
-                      )}
-                    </div>
+                  <div className="flex gap-2 pt-1 border-t border-stone-100 dark:border-stone-700/30 mt-1">
+                    {(pub as any)?.facebookUrl && (
+                      <a href={(pub as any).facebookUrl} target="_blank" rel="noopener noreferrer"
+                        className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold transition-colors">
+                        <Facebook size={13} /> Facebook
+                      </a>
+                    )}
+                    {(pub as any)?.instagramUrl && (
+                      <a href={(pub as any).instagramUrl} target="_blank" rel="noopener noreferrer"
+                        className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl bg-gradient-to-r from-pink-500 to-rose-500 hover:from-pink-600 hover:to-rose-600 text-white text-xs font-semibold transition-all">
+                        <Instagram size={13} /> Instagram
+                      </a>
+                    )}
                   </div>
                 )}
-              </CardContent>
-            </Card>
-
-            {/* Opening Hours Button */}
-            <Button 
-              className="w-full text-white transition-all duration-300 rounded-xl shadow-md h-12 font-bold hover:opacity-90 border-none" 
-              size="lg"
-              onClick={handleShowOpeningHours}
-              data-testid="button-show-hours"
-              style={{ background: 'linear-gradient(135deg, #F77104 0%, #f98a0e 50%, #f5a623 100%)' }}
-            >
-              <Clock className="h-5 w-5 mr-2" />
-              Vedi Orari Completi
-            </Button>
+              </div>
+            </div>
           </div>
         </div>
       </main>

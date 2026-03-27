@@ -492,7 +492,7 @@ export default function BeerDetail() {
 
   if (beerLoading) {
     return (
-      <div className="min-h-screen bg-background ">
+      <div className="min-h-screen bg-[#FFF8F2] dark:bg-background ">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div className="space-y-8">
             <div className="skeleton rounded-2xl h-80 md:h-96"></div>
@@ -541,7 +541,7 @@ export default function BeerDetail() {
   const seoUrl = `https://fermenta.to/beer/${id}`;
 
   return (
-    <div className="min-h-screen bg-background ">
+    <div className="min-h-screen bg-[#FFF8F2] dark:bg-background ">
       <Helmet>
         <title>{seoTitle}</title>
         <meta name="description" content={seoDesc} />
@@ -749,7 +749,7 @@ export default function BeerDetail() {
 
       <main className="max-w-7xl mx-auto pb-12">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <div className="z-10 bg-background  border-b border-gray-200 dark:border-gray-800">
+          <div className="z-10 bg-[#FFF8F2] dark:bg-background border-b border-gray-200 dark:border-gray-800">
             <TabsList className="flex w-full h-auto bg-transparent p-0 rounded-none shadow-none border-none overflow-x-auto scrollbar-hide">
               <TabsTrigger
                 value="scheda"
