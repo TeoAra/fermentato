@@ -286,8 +286,8 @@ export default function Home() {
               </div>
             </div>
 
-            {/* Right: role-based quick actions */}
-            {(typedUser?.userType === 'pub_owner' || typedUser?.userType === 'brewery_owner' || typedUser?.userType === 'admin') && (
+            {/* Right: role-based quick actions for business users, discovery grid for customers */}
+            {(typedUser?.userType === 'pub_owner' || typedUser?.userType === 'brewery_owner' || typedUser?.userType === 'admin') ? (
               <div className="flex flex-col gap-2 lg:flex-shrink-0 w-full lg:w-auto">
                 {typedUser?.userType === 'pub_owner' && (
                   <Link href="/dashboard">
@@ -313,6 +313,26 @@ export default function Home() {
                     </Button>
                   </Link>
                 )}
+              </div>
+            ) : (
+              /* Discovery quick-access grid for customer / guest */
+              <div className="grid grid-cols-2 gap-2.5 lg:flex-shrink-0 w-full lg:w-[240px]">
+                {[
+                  { href: "/explore/pubs",       Icon: Store,        label: "Pub",        sub: "Trova locali" },
+                  { href: "/explore/breweries",  Icon: Building2,    label: "Birrifici",  sub: "Italiani e globali" },
+                  { href: "/explore/beers",      Icon: Beer,         label: "Birre",      sub: "Esplora stili" },
+                  { href: "/festival",           Icon: CalendarDays, label: "Festival",   sub: "Prossimi eventi" },
+                ].map(({ href, Icon, label, sub }) => (
+                  <Link key={href} href={href}>
+                    <div className="group bg-white dark:bg-[hsl(25,14%,10%)] border border-stone-100 dark:border-[hsl(25,12%,16%)] rounded-2xl p-3 hover:border-primary/30 hover:shadow-sm transition-all cursor-pointer">
+                      <div className="w-8 h-8 rounded-xl bg-orange-50 dark:bg-orange-900/20 flex items-center justify-center mb-2">
+                        <Icon className="w-4 h-4 text-primary" />
+                      </div>
+                      <p className="text-[13px] font-bold text-foreground group-hover:text-primary transition-colors leading-tight">{label}</p>
+                      <p className="text-[11px] text-muted-foreground leading-tight mt-0.5">{sub}</p>
+                    </div>
+                  </Link>
+                ))}
               </div>
             )}
           </div>
@@ -358,6 +378,7 @@ export default function Home() {
           <section className="mb-8">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-lg font-bold text-foreground flex items-center gap-2">
+                <span className="w-1 h-5 rounded-full bg-primary flex-shrink-0" />
                 <Store className="h-4 w-4 text-primary" />
                 Il Tuo Pub
               </h2>
@@ -417,6 +438,7 @@ export default function Home() {
           <section className="mb-8">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-lg font-bold text-foreground flex items-center gap-2">
+                <span className="w-1 h-5 rounded-full bg-primary flex-shrink-0" />
                 <MapPin className="h-4 w-4 text-primary" />
                 {userLocation ? 'Pub Vicini' : 'Pub Consigliati'}
               </h2>
@@ -451,6 +473,7 @@ export default function Home() {
           <section className="mb-8">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-lg font-bold text-foreground flex items-center gap-2">
+                <span className="w-1 h-5 rounded-full bg-primary flex-shrink-0" />
                 <Building2 className="h-4 w-4 text-primary" />
                 Il Tuo Birrificio
               </h2>
@@ -490,6 +513,7 @@ export default function Home() {
           <section className="mb-8">
             <div className="flex items-center justify-between mb-3">
               <h2 className="text-lg font-bold text-foreground flex items-center gap-2">
+                <span className="w-1 h-5 rounded-full bg-primary flex-shrink-0" />
                 <Droplets className="h-4 w-4 text-primary" />
                 In Spina Adesso
               </h2>
@@ -500,16 +524,17 @@ export default function Home() {
             <div className="flex gap-3 overflow-x-auto pb-2 -mx-1 px-1" style={{ scrollbarWidth: "none" }}>
               {taplistActivity.map((item: any) => (
                 <Link key={item.id} href={`/pub/${item.pub_slug || item.pub_id}`}>
-                  <div className="group flex-shrink-0 w-[148px] cursor-pointer">
-                    <div className="relative h-[96px] rounded-2xl overflow-hidden mb-2 shadow-sm group-hover:shadow-md transition-shadow">
+                  <div className="group flex-shrink-0 w-[168px] cursor-pointer">
+                    <div className="relative h-[116px] rounded-2xl overflow-hidden mb-2 shadow-sm group-hover:shadow-md transition-shadow">
                       {item.beer_image ? (
-                        <img src={item.beer_image} alt={item.beer_name} className="w-full h-full object-cover" />
+                        <img src={item.beer_image} alt={item.beer_name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
                       ) : (
                         <div className="w-full h-full bg-gradient-to-br from-primary to-[hsl(20,95%,42%)] flex items-center justify-center">
-                          <Beer className="w-8 h-8 text-white opacity-70" />
+                          <Beer className="w-9 h-9 text-white opacity-70" />
                         </div>
                       )}
-                      <span className={`absolute top-1.5 left-1.5 text-[10px] font-bold px-1.5 py-0.5 rounded-full ${item.tap_type === 'pompa' ? 'bg-violet-600 text-white' : 'bg-primary text-white'}`}>
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent" />
+                      <span className={`absolute top-2 left-2 text-[10px] font-bold px-2 py-0.5 rounded-full ${item.tap_type === 'pompa' ? 'bg-violet-600 text-white' : 'bg-primary text-white'}`}>
                         {item.tap_type === 'pompa' ? 'Pompa' : 'Spina'}
                       </span>
                     </div>
@@ -535,6 +560,7 @@ export default function Home() {
           <section className="mb-8">
             <div className="flex items-center justify-between mb-3">
               <h2 className="text-lg font-bold text-foreground flex items-center gap-2">
+                <span className="w-1 h-5 rounded-full bg-primary flex-shrink-0" />
                 <Building2 className="h-4 w-4 text-primary" />
                 Birrifici da Scoprire
               </h2>
@@ -548,8 +574,8 @@ export default function Home() {
                 const initial = brewery.name?.[0]?.toUpperCase() ?? "B";
                 return (
                   <Link key={brewery.id} href={`/brewery/${brewery.id}`}>
-                    <div className="group flex-shrink-0 w-[148px] cursor-pointer">
-                      <div className="relative h-[96px] rounded-2xl overflow-hidden mb-2 shadow-sm group-hover:shadow-md transition-shadow">
+                    <div className="group flex-shrink-0 w-[168px] cursor-pointer">
+                      <div className="relative h-[116px] rounded-2xl overflow-hidden mb-2 shadow-sm group-hover:shadow-md transition-shadow">
                         {bg ? (
                           <img src={bg} alt={brewery.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
                         ) : (
@@ -559,7 +585,7 @@ export default function Home() {
                         )}
                         <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
                         {(brewery.location || brewery.region) && (
-                          <span className="absolute bottom-1.5 left-2 text-[10px] text-white/90 font-medium truncate max-w-[120px] flex items-center gap-0.5">
+                          <span className="absolute bottom-2 left-2 text-[10px] text-white/90 font-medium truncate max-w-[136px] flex items-center gap-0.5">
                             <MapPin className="w-2.5 h-2.5 flex-shrink-0" />
                             {brewery.city || brewery.location || brewery.region}
                           </span>
@@ -579,6 +605,7 @@ export default function Home() {
           <section className="mb-8">
             <div className="flex items-center justify-between mb-3">
               <h2 className="text-lg font-bold text-foreground flex items-center gap-2">
+                <span className="w-1 h-5 rounded-full bg-primary flex-shrink-0" />
                 <Megaphone className="h-4 w-4 text-primary" />
                 Ultime dai Birrifici
               </h2>
@@ -624,6 +651,7 @@ export default function Home() {
           <section className="mb-8">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-lg font-bold text-foreground flex items-center gap-2">
+                <span className="w-1 h-5 rounded-full bg-primary flex-shrink-0" />
                 <Beer className="h-4 w-4 text-primary" />
                 Stili più Amati
               </h2>
@@ -672,6 +700,7 @@ export default function Home() {
           <section className="mb-8">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-lg font-bold text-foreground flex items-center gap-2">
+                <span className="w-1 h-5 rounded-full bg-primary flex-shrink-0" />
                 <Heart className="h-4 w-4 text-primary" />
                 I Tuoi Preferiti
               </h2>
@@ -714,34 +743,62 @@ export default function Home() {
           </section>
         ) : null}
 
+        {/* ─── Guest CTA banner ─────────────────────────────────────────────── */}
+        {!isAuthenticated && (
+          <section className="mb-8">
+            <div className="relative overflow-hidden rounded-3xl p-6 lg:p-8" style={{ background: "linear-gradient(135deg, #F77104 0%, #f98a0e 60%, #f5a623 100%)" }}>
+              <div className="absolute -top-12 -right-12 w-48 h-48 rounded-full pointer-events-none" style={{ background: "rgba(255,255,255,0.08)" }} />
+              <div className="absolute -bottom-8 -left-8 w-36 h-36 rounded-full pointer-events-none" style={{ background: "rgba(255,255,255,0.06)" }} />
+              <div className="relative flex flex-col sm:flex-row sm:items-center gap-4 sm:gap-6">
+                <div className="flex-1">
+                  <p className="text-white/80 text-xs font-bold uppercase tracking-widest mb-1">Sei nuovo?</p>
+                  <h3 className="text-xl font-extrabold text-white leading-tight mb-1">
+                    Unisciti alla community
+                  </h3>
+                  <p className="text-white/80 text-sm leading-snug">
+                    Salva i tuoi preferiti, tieni il diario degli assaggi e scopri birre con persone come te.
+                  </p>
+                </div>
+                <div className="flex gap-2 flex-shrink-0">
+                  <Link href="/api/login">
+                    <Button className="bg-white text-primary hover:bg-orange-50 font-bold rounded-full h-10 px-5 text-sm shadow-md">
+                      Registrati gratis
+                    </Button>
+                  </Link>
+                </div>
+              </div>
+            </div>
+          </section>
+        )}
+
         {/* ─── Statistiche Community ────────────────────────────────────────── */}
-        <section className="mb-8 bg-gradient-to-br from-orange-50 to-[hsl(38,30%,96%)] dark:from-[hsl(25,14%,10%)] dark:to-[hsl(25,12%,9%)] border border-stone-200 dark:border-[hsl(25,12%,16%)] rounded-2xl p-5 lg:p-6">
-          <h2 className="text-[11px] font-bold text-center text-muted-foreground mb-5 uppercase tracking-[0.12em]">
+        <section className="mb-8 bg-white dark:bg-[hsl(25,14%,10%)] border border-stone-100 dark:border-[hsl(25,12%,16%)] rounded-3xl p-5 lg:p-7 shadow-sm">
+          <p className="text-[11px] font-bold text-center text-muted-foreground mb-5 uppercase tracking-[0.14em]">
             La Community Fermenta.to
-          </h2>
-          <div className="grid grid-cols-3 gap-2 mb-4">
+          </p>
+          <div className="grid grid-cols-3 gap-4 mb-5">
             <div className="text-center">
-              <div className="text-[17px] font-bold text-primary tabular-nums leading-tight">{globalStats?.totalBeers != null ? globalStats.totalBeers.toLocaleString("it-IT") : '—'}</div>
-              <div className="text-[10px] text-muted-foreground mt-1 font-medium uppercase tracking-wide">Birre</div>
+              <div className="text-2xl font-extrabold text-primary tabular-nums leading-tight">{globalStats?.totalBeers != null ? globalStats.totalBeers.toLocaleString("it-IT") : '—'}</div>
+              <div className="text-[11px] text-muted-foreground mt-1 font-medium">Birre</div>
             </div>
-            <div className="text-center border-x border-stone-200 dark:border-[hsl(25,12%,16%)]">
-              <div className="text-[17px] font-bold text-primary tabular-nums leading-tight">{globalStats?.totalBreweries != null ? globalStats.totalBreweries.toLocaleString("it-IT") : '—'}</div>
-              <div className="text-[10px] text-muted-foreground mt-1 font-medium uppercase tracking-wide">Birrifici</div>
+            <div className="text-center border-x border-stone-100 dark:border-[hsl(25,12%,16%)]">
+              <div className="text-2xl font-extrabold text-primary tabular-nums leading-tight">{globalStats?.totalBreweries != null ? globalStats.totalBreweries.toLocaleString("it-IT") : '—'}</div>
+              <div className="text-[11px] text-muted-foreground mt-1 font-medium">Birrifici</div>
             </div>
             <div className="text-center">
-              <div className="text-[17px] font-bold text-primary tabular-nums leading-tight">{globalStats?.uniqueStyles != null ? globalStats.uniqueStyles.toLocaleString("it-IT") : '—'}</div>
-              <div className="text-[10px] text-muted-foreground mt-1 font-medium uppercase tracking-wide">Stili</div>
+              <div className="text-2xl font-extrabold text-primary tabular-nums leading-tight">{globalStats?.uniqueStyles != null ? globalStats.uniqueStyles.toLocaleString("it-IT") : '—'}</div>
+              <div className="text-[11px] text-muted-foreground mt-1 font-medium">Stili</div>
             </div>
           </div>
-          <div className="border-t border-stone-200 dark:border-[hsl(25,12%,16%)] mb-4" />
-          <div className="flex justify-center gap-12">
+          <div className="border-t border-stone-100 dark:border-[hsl(25,12%,16%)] mb-5" />
+          <div className="flex justify-center gap-16">
             <div className="text-center">
-              <div className="text-[15px] font-bold text-primary tabular-nums leading-tight">{globalStats?.totalUsers != null ? globalStats.totalUsers.toLocaleString("it-IT") : '—'}</div>
-              <div className="text-[10px] text-muted-foreground mt-1 font-medium uppercase tracking-wide">Utenti</div>
+              <div className="text-xl font-extrabold text-primary tabular-nums leading-tight">{globalStats?.totalUsers != null ? globalStats.totalUsers.toLocaleString("it-IT") : '—'}</div>
+              <div className="text-[11px] text-muted-foreground mt-1 font-medium">Utenti</div>
             </div>
             <div className="text-center">
-              <div className="text-[15px] font-bold text-primary tabular-nums leading-tight">{globalStats?.totalPubs != null ? globalStats.totalPubs.toLocaleString("it-IT") : '—'}</div>
-              <div className="text-[10px] text-muted-foreground mt-1 font-medium uppercase tracking-wide">Pub</div>
+              <div className="text-xl font-extrabold text-primary tabular-nums leading-tight">{globalStats?.totalPubs != null ? globalStats.totalPubs.toLocaleString("it-IT") : '—'}</div>
+              <div className="text-[11px] text-muted-foreground mt-1 font-medium">Pub</div>
             </div>
           </div>
         </section>
