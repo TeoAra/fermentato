@@ -468,101 +468,15 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
     updatePubMutation.mutate(settingsData);
   };
 
-  // Smart dashboard sections configuration
+  // Smart dashboard sections configuration — 5 primary tabs only
+  // Settings and Profile remain accessible via the dropdown menus
   const sections = [
     { id: 'overview', name: 'Dashboard', icon: Home, gradient: 'from-orange-400 to-primary' },
     { id: 'taplist', name: 'Taplist', icon: Beer, gradient: 'from-orange-500 to-primary' },
     { id: 'bottles', name: 'Cantina', icon: Wine, gradient: 'from-purple-500 to-violet-600' },
     { id: 'menu', name: 'Menu', icon: Utensils, gradient: 'from-emerald-500 to-teal-600' },
     { id: 'events', name: 'Eventi', icon: Calendar, gradient: 'from-pink-500 to-rose-600' },
-    { id: 'analytics', name: 'Analytics', icon: BarChart3, gradient: 'from-blue-500 to-indigo-600' },
-    { id: 'settings', name: 'Impostazioni', icon: Settings, gradient: 'from-gray-500 to-neutral-600' },
-    { id: 'profile', name: 'Profilo', icon: Users, gradient: 'from-rose-500 to-pink-600' },
   ];
-
-  // Modern KPI Cards Component with Animations
-  const ModernKPICard = ({ 
-    title, 
-    value, 
-    icon: Icon, 
-    trend, 
-    trendValue, 
-    gradient, 
-    description,
-    delay = 0
-  }: {
-    title: string;
-    value: string | number;
-    icon: any;
-    trend?: 'up' | 'down';
-    trendValue?: string;
-    gradient: string;
-    description?: string;
-    delay?: number;
-  }) => (
-    <motion.div 
-      className="bg-white dark:bg-[hsl(25,14%,10%)] border border-stone-100 dark:border-[hsl(25,12%,16%)] rounded-2xl shadow-sm p-4 group relative overflow-hidden"
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.5, delay }}
-      whileHover={{ scale: 1.03, y: -2 }}
-      whileTap={{ scale: 0.98 }}
-    >
-      {/* Background Gradient */}
-      <motion.div 
-        className={`absolute inset-0 bg-gradient-to-br ${gradient}`}
-        initial={{ opacity: 0 }}
-        whileHover={{ opacity: 0.1 }}
-        transition={{ duration: 0.3 }}
-      />
-      
-      {/* Content */}
-      <div className="relative z-10">
-        <div className="flex items-center justify-between mb-2">
-          <div className={`p-2 rounded-xl bg-stone-50 dark:bg-stone-900/30`}>
-            <Icon className={`h-5 w-5 text-primary`} />
-          </div>
-          {trend && trendValue && (
-            <div className={`flex items-center text-sm ${trend === 'up' ? 'text-emerald-600' : 'text-red-700'}`}>
-              {trend === 'up' ? <ArrowUp className="h-4 w-4" /> : <ArrowDown className="h-4 w-4" />}
-              <span className="ml-1">{trendValue}</span>
-            </div>
-          )}
-        </div>
-        
-        <div className="space-y-1">
-          <h3 className="text-xl font-bold text-primary">
-            {value}
-          </h3>
-          <p className="text-xs font-medium text-muted-foreground">
-            {title}
-          </p>
-          <AnimatePresence>
-            {description && (
-              <motion.p 
-                className="text-xs text-muted-foreground"
-                initial={{ opacity: 0, height: 0 }}
-                whileHover={{ opacity: 1, height: 'auto' }}
-                exit={{ opacity: 0, height: 0 }}
-                transition={{ duration: 0.3 }}
-              >
-                {description}
-              </motion.p>
-            )}
-          </AnimatePresence>
-        </div>
-      </div>
-      
-      {/* Hover Effect */}
-      <motion.div 
-        className={`absolute bottom-0 left-0 right-0 h-1 bg-primary`}
-        initial={{ scaleX: 0 }}
-        whileHover={{ scaleX: 1 }}
-        transition={{ duration: 0.3 }}
-        style={{ transformOrigin: 'left' }}
-      />
-    </motion.div>
-  );
 
   // ── Subscription banner (shown on every section) ──────────────────────────
   const renderSubscriptionBanner = () => {
@@ -636,337 +550,201 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
   };
 
   const renderOverview = () => (
-    <motion.div 
-      className="space-y-8"
+    <motion.div
+      className="space-y-6"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
-      transition={{ duration: 0.6 }}
+      transition={{ duration: 0.4 }}
     >
       <RoleSwitcherBanner currentView="pub" />
 
-      {/* Hero Section */}
-      <motion.div 
-        className="bg-white dark:bg-[hsl(25,14%,10%)] border border-stone-100 dark:border-[hsl(25,12%,16%)] rounded-2xl shadow-sm p-8 mb-8 relative overflow-hidden"
-        initial={{ opacity: 0, y: -20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.6 }}
-      >
-        <div className="absolute inset-0 bg-primary opacity-5"></div>
-        <div className="relative z-10">
-          <div className="flex items-center justify-between mb-6">
-            <div>
-              <h1 className="text-display-xl text-foreground mb-2 font-bold">
-                {currentPub?.name}
-              </h1>
-              <div className="flex items-center text-muted-foreground text-body-medium">
-                <MapPin className="h-4 w-4 mr-2 text-primary" />
-                {currentPub?.address}
+      {/* Header — nome pub + indirizzo + badge stato */}
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold text-foreground">{currentPub?.name}</h1>
+          <div className="flex items-center text-muted-foreground text-sm mt-1">
+            <MapPin className="h-3.5 w-3.5 mr-1.5 text-primary shrink-0" />
+            {currentPub?.address}
+          </div>
+        </div>
+        <Badge
+          variant="secondary"
+          className={`shrink-0 px-3 py-1 ${currentPub?.isActive
+            ? 'bg-emerald-50 dark:bg-emerald-950/20 text-emerald-700 dark:text-emerald-400 border-emerald-100'
+            : 'bg-red-50 dark:bg-red-950/20 text-red-700 dark:text-red-400 border-red-100'}`}
+        >
+          <div className={`w-2 h-2 rounded-full mr-2 ${currentPub?.isActive ? 'bg-emerald-500' : 'bg-red-500'}`} />
+          {currentPub?.isActive ? 'Attivo' : 'Ibernato'}
+        </Badge>
+      </div>
+
+      {/* KPI — 4 statistiche principali */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+        <div className="bg-white dark:bg-[hsl(25,14%,10%)] border border-stone-100 dark:border-[hsl(25,12%,16%)] rounded-2xl p-4 flex items-center justify-between">
+          <div>
+            <p className="text-xs text-muted-foreground mb-1">Alla spina</p>
+            <p className="text-2xl font-bold text-foreground">{typedTapList.length}</p>
+          </div>
+          <div className="p-2.5 bg-orange-50 dark:bg-orange-950/20 rounded-xl">
+            <Beer className="h-5 w-5 text-primary" />
+          </div>
+        </div>
+        <div className="bg-white dark:bg-[hsl(25,14%,10%)] border border-stone-100 dark:border-[hsl(25,12%,16%)] rounded-2xl p-4 flex items-center justify-between">
+          <div>
+            <p className="text-xs text-muted-foreground mb-1">Bottiglie</p>
+            <p className="text-2xl font-bold text-foreground">{typedBottleList.length}</p>
+          </div>
+          <div className="p-2.5 bg-purple-50 dark:bg-purple-950/20 rounded-xl">
+            <Wine className="h-5 w-5 text-purple-600" />
+          </div>
+        </div>
+        <div className="bg-white dark:bg-[hsl(25,14%,10%)] border border-stone-100 dark:border-[hsl(25,12%,16%)] rounded-2xl p-4 flex items-center justify-between">
+          <div>
+            <p className="text-xs text-muted-foreground mb-1">Prodotti menu</p>
+            <p className="text-2xl font-bold text-foreground">{totalMenuItems}</p>
+          </div>
+          <div className="p-2.5 bg-blue-50 dark:bg-blue-950/20 rounded-xl">
+            <Utensils className="h-5 w-5 text-blue-600" />
+          </div>
+        </div>
+        <div className="bg-white dark:bg-[hsl(25,14%,10%)] border border-stone-100 dark:border-[hsl(25,12%,16%)] rounded-2xl p-4 flex items-center justify-between">
+          <div>
+            <p className="text-xs text-muted-foreground mb-1">Preferiti</p>
+            <p className="text-2xl font-bold text-foreground">{favoritesCount}</p>
+          </div>
+          <div className="p-2.5 bg-red-50 dark:bg-red-950/20 rounded-xl">
+            <Star className="h-5 w-5 text-red-500" />
+          </div>
+        </div>
+      </div>
+
+      {/* Strumenti — azioni rapide */}
+      <div>
+        <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">Strumenti</p>
+        <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-5 gap-3">
+
+          {/* QR Code */}
+          <PubQRCode pubId={currentPub?.id} pubName={currentPub?.name || ""} pubSlug={(currentPub as any)?.slug} compact />
+
+          {/* PDF Menu */}
+          <MenuPdfDownload
+            pubName={currentPub?.name || ""}
+            tapList={typedTapList}
+            bottleList={typedBottleList}
+            menuCategories={categoriesWithItems}
+            menuInfoBox={currentPub?.menuInfoBox}
+            compact
+          />
+
+          {/* Festival Mode */}
+          <Link href="/festival">
+            <div className="bg-white dark:bg-[hsl(25,14%,10%)] border border-stone-100 dark:border-[hsl(25,12%,16%)] rounded-2xl p-4 flex items-center gap-3 cursor-pointer hover:border-primary/40 hover:shadow-sm transition-all h-full">
+              <div className="p-2.5 bg-orange-50 dark:bg-orange-950/20 rounded-xl shrink-0">
+                <QrCode className="h-5 w-5 text-primary" />
+              </div>
+              <div className="min-w-0">
+                <p className="font-semibold text-sm text-foreground leading-tight">Festival Mode</p>
+                <p className="text-xs text-muted-foreground mt-0.5 leading-tight">Taplist per eventi</p>
               </div>
             </div>
-            <Badge variant="secondary" className="bg-emerald-50 dark:bg-emerald-950/20 text-emerald-700 dark:text-emerald-400 border-emerald-100 px-3 py-1">
-              <div className="w-2 h-2 bg-emerald-500 rounded-full mr-2"></div>
-              Attivo
-            </Badge>
-          </div>
-        </div>
-      </motion.div>
+          </Link>
 
-      {/* Festival Mode CTA */}
-      <Link href="/festival">
-        <div className="bg-white dark:bg-[hsl(25,14%,10%)] border border-stone-200 dark:border-stone-700/30 bg-gradient-to-r from-orange-50 to-orange-50/30 dark:from-orange-950/20 dark:to-orange-900/10 rounded-2xl p-5 mb-6 flex items-center justify-between gap-4 cursor-pointer hover:shadow-md transition-shadow">
-          <div className="flex items-center gap-4 min-w-0">
-            <div className="p-3 bg-primary rounded-2xl shrink-0">
-              <QrCode className="h-6 w-6 text-white" />
-            </div>
-            <div className="min-w-0">
-              <p className="font-semibold text-foreground">Festival Mode</p>
-              <p className="text-sm text-muted-foreground truncate">Crea il taplist QR per il tuo prossimo festival birra</p>
-            </div>
-          </div>
-          <LinkIcon className="h-5 w-5 text-primary shrink-0" />
-        </div>
-      </Link>
-
-      {/* Abbonamento */}
-      {!isAdminMode && currentPub && (() => {
-        const status = currentPub.subscriptionStatus as string;
-        const trialEndsAt = currentPub.trialEndsAt ? new Date(currentPub.trialEndsAt) : null;
-        const expiresAt = currentPub.subscriptionExpiresAt ? new Date(currentPub.subscriptionExpiresAt) : null;
-        const now = new Date();
-        const trialStartedAt = trialEndsAt ? new Date(trialEndsAt.getTime() - 15 * 86400000) : null;
-        const daysLeft = trialEndsAt ? Math.max(0, Math.ceil((trialEndsAt.getTime() - now.getTime()) / 86400000)) : 0;
-        const trialExpired = status === 'trial' && trialEndsAt && trialEndsAt < now;
-        const fmt = (d: Date) => d.toLocaleDateString('it-IT', { day: '2-digit', month: 'long', year: 'numeric' });
-
-        let bgColor = 'bg-stone-50 dark:bg-stone-900/20 border-stone-200 dark:border-stone-700/30';
-        let icon = <Gift className="w-5 h-5 text-primary" />;
-        let badgeEl = <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-stone-100 dark:bg-orange-900/50 text-primary dark:text-orange-300">Prova gratuita</span>;
-
-        if (status === 'gifted') {
-          bgColor = 'bg-purple-50 dark:bg-purple-950/20 border-purple-100 dark:border-purple-900/30';
-          icon = <Crown className="w-5 h-5 text-purple-600" />;
-          badgeEl = <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-purple-100 dark:bg-purple-900/50 text-purple-700 dark:text-purple-300">Accesso fondatore ✦</span>;
-        } else if (status === 'active') {
-          bgColor = 'bg-emerald-50 dark:bg-emerald-950/20 border-emerald-100 dark:border-emerald-900/30';
-          icon = <BadgeCheck className="w-5 h-5 text-emerald-600" />;
-          badgeEl = <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-900/50 text-emerald-700 dark:text-emerald-300">Abbonato ✓</span>;
-        } else if (trialExpired) {
-          bgColor = 'bg-red-50 dark:bg-red-950/20 border-red-100 dark:border-red-900/30';
-          icon = <AlertTriangle className="w-5 h-5 text-red-700" />;
-          badgeEl = <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-red-50 dark:bg-red-950/20/50 text-red-700 dark:text-red-300">Prova scaduta</span>;
-        } else if (status === 'canceled' || status === 'none') {
-          bgColor = 'bg-muted/50 dark:bg-muted/20 border-border';
-          icon = <CreditCard className="w-5 h-5 text-muted-foreground" />;
-          badgeEl = <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-muted text-muted-foreground">Non attivo</span>;
-        }
-
-        return (
-          <motion.div
-            className={`rounded-2xl border p-5 ${bgColor}`}
-            initial={{ opacity: 0, y: 16 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.2 }}
-          >
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
-              <div className="flex items-center gap-3 min-w-0">
-                <div className="shrink-0">{icon}</div>
+          {/* TV Mode */}
+          <Dialog>
+            <DialogTrigger asChild>
+              <div className="bg-white dark:bg-[hsl(25,14%,10%)] border border-stone-100 dark:border-[hsl(25,12%,16%)] rounded-2xl p-4 flex items-center gap-3 cursor-pointer hover:border-primary/40 hover:shadow-sm transition-all">
+                <div className="p-2.5 bg-stone-100 dark:bg-stone-800/60 rounded-xl shrink-0">
+                  <Cast className="h-5 w-5 text-foreground" />
+                </div>
                 <div className="min-w-0">
-                  <div className="flex flex-wrap items-center gap-2 mb-1">
-                    <span className="font-semibold text-foreground text-sm">Abbonamento</span>
-                    {badgeEl}
-                  </div>
-                  <div className="space-y-1 text-xs text-muted-foreground dark:text-muted-foreground">
-                    {status === 'gifted' && (
-                      <>
-                        <div className="flex items-center gap-1.5">
-                          <Crown className="w-3.5 h-3.5 text-violet-500 shrink-0" />
-                          <span className="text-violet-700 dark:text-violet-300 font-medium">Accesso completo senza scadenza</span>
-                        </div>
-                        {expiresAt && expiresAt.getFullYear() < 2099 && (
-                          <div className="flex items-center gap-1.5">
-                            <CalendarDays className="w-3.5 h-3.5 shrink-0" />
-                            <span>Valido fino al <strong className="text-gray-800 dark:text-gray-200">{fmt(expiresAt)}</strong></span>
-                          </div>
-                        )}
-                      </>
-                    )}
-                    {status === 'trial' && trialStartedAt && trialEndsAt && (
-                      <>
-                        <div className="flex items-center gap-1.5">
-                          <CalendarDays className="w-3.5 h-3.5 shrink-0" />
-                          <span>Inizio prova: <strong className="text-gray-800 dark:text-gray-200">{fmt(trialStartedAt)}</strong></span>
-                        </div>
-                        <div className="flex items-center gap-1.5">
-                          <CalendarDays className="w-3.5 h-3.5 shrink-0" />
-                          <span>
-                            {trialExpired
-                              ? <>Prova scaduta il <strong className="text-red-700 dark:text-red-400">{fmt(trialEndsAt)}</strong></>
-                              : <>Scade il <strong className="text-gray-800 dark:text-gray-200">{fmt(trialEndsAt)}</strong>
-                                  {daysLeft > 0 && <span className="ml-1 font-semibold text-primary dark:text-orange-400">({daysLeft} {daysLeft === 1 ? 'giorno' : 'giorni'} rimasti)</span>}
-                                </>
-                            }
-                          </span>
-                        </div>
-                      </>
-                    )}
-                    {status === 'active' && expiresAt && (
-                      <>
-                        <div className="flex items-center gap-1.5">
-                          <CreditCard className="w-3.5 h-3.5 shrink-0" />
-                          <span>€65/anno IVA inclusa</span>
-                        </div>
-                        <div className="flex items-center gap-1.5">
-                          <CalendarDays className="w-3.5 h-3.5 shrink-0" />
-                          <span>Prossimo rinnovo: <strong className="text-gray-800 dark:text-gray-200">{fmt(expiresAt)}</strong></span>
-                        </div>
-                      </>
-                    )}
-                    {(status === 'none' || status === 'canceled') && (
-                      <span>Attiva l'abbonamento per rendere il pub visibile su Fermenta.to</span>
-                    )}
-                  </div>
+                  <p className="font-semibold text-sm text-foreground leading-tight">TV Mode</p>
+                  <p className="text-xs text-muted-foreground mt-0.5 leading-tight">Taplist su Smart TV</p>
                 </div>
               </div>
-              <div className="flex flex-row sm:flex-col items-center sm:items-end gap-2 shrink-0">
-                {(status === 'trial' && !trialExpired) && (
-                  <>
-                    <Button size="sm" className="bg-orange-500 hover:bg-primary text-white text-xs whitespace-nowrap" onClick={() => window.location.href = '/attiva-pub?checkout=1'}>
-                      Abbonati €65/anno
-                    </Button>
-                    <button
-                      className="text-xs text-red-700 hover:text-red-700 underline whitespace-nowrap"
-                      onClick={() => setShowCancelDialog(true)}
-                    >
-                      Annulla prova
-                    </button>
-                  </>
-                )}
-                {(trialExpired || status === 'none' || status === 'canceled') && (
-                  <Button size="sm" className="bg-orange-500 hover:bg-primary text-white text-xs whitespace-nowrap" onClick={() => window.location.href = '/attiva-pub?checkout=1'}>
-                    Abbonati €65/anno
-                  </Button>
-                )}
-                {status === 'active' && (
-                  <button
-                    className="text-xs text-red-700 hover:text-red-700 underline whitespace-nowrap"
-                    onClick={() => setShowCancelDialog(true)}
-                  >
-                    Disdici
-                  </button>
-                )}
-              </div>
-            </div>
-          </motion.div>
-        );
-      })()}
-
-      {/* Sharing & Tools */}
-      <motion.div
-        className="grid grid-cols-2 md:grid-cols-4 gap-4"
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.6, delay: 0.45 }}
-      >
-        <PubQRCode pubId={currentPub?.id} pubName={currentPub?.name || ""} pubSlug={(currentPub as any)?.slug} compact />
-        <MenuPdfDownload
-          pubName={currentPub?.name || ""}
-          tapList={typedTapList}
-          bottleList={typedBottleList}
-          menuCategories={categoriesWithItems}
-          menuInfoBox={currentPub?.menuInfoBox}
-          compact
-        />
-        <Dialog>
-          <DialogTrigger asChild>
-            <Button
-              variant="outline"
-              size="sm"
-              className="gap-2 border-stone-200 dark:border-[hsl(25,12%,20%)] hover:bg-stone-50 rounded-xl"
-            >
-              <Cast className="h-4 w-4" />
-              TV Mode
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="sm:max-w-md">
-            <DialogHeader>
-              <DialogTitle className="flex items-center gap-2">
-                <Cast className="h-5 w-5" />
-                Taplist su TV
-              </DialogTitle>
-            </DialogHeader>
-            <div className="space-y-4">
-              <p className="text-sm text-muted-foreground dark:text-muted-foreground">
-                Apri questo indirizzo nel browser della tua Smart TV:
-              </p>
-
-              <div
-                className="bg-gray-100 dark:bg-[hsl(25,14%,10%)] rounded-xl p-3 flex items-center justify-between gap-2 cursor-pointer hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
-                onClick={() => {
-                  navigator.clipboard?.writeText(`${window.location.origin}/tv/${currentPub?.id}`)
-                    .catch(() => {});
-                  toast({ title: "Link copiato!" });
-                }}
-              >
-                <code className="text-sm font-mono font-bold text-primary dark:text-orange-400 break-all">
-                  {window.location.origin}/tv/{currentPub?.id}
-                </code>
-                <LinkIcon className="h-4 w-4 shrink-0 text-muted-foreground" />
-              </div>
-
-              <Button
-                className="w-full gap-2 bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 py-5 text-base"
-                onClick={async () => {
-                  const w = window as any;
-                  const castFramework = w.cast?.framework;
-
-                  if (!castFramework) {
-                    // Cast SDK non caricato — apri la pagina TV e suggerisci Cast nativo di Chrome
-                    window.open(`/tv/${currentPub?.id}`, '_blank');
-                    toast({ title: "Pagina TV aperta", description: "Usa il menu di Chrome per trasmettere" });
-                    return;
-                  }
-
-                  try {
-                    const ctx = castFramework.CastContext.getInstance();
-                    ctx.setOptions({
-                      receiverApplicationId: '6666EC62',
-                      autoJoinPolicy: w.chrome?.cast?.AutoJoinPolicy?.ORIGIN_SCOPED ?? 'origin_scoped'
-                    });
-                    toast({ title: "Connessione alla TV...", description: "Seleziona il dispositivo" });
-                    await ctx.requestSession();
-                    const session = ctx.getCurrentSession();
-                    if (!session) {
-                      toast({ title: "Sessione non creata", description: "Riprova", variant: "destructive" });
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-md">
+              <DialogHeader>
+                <DialogTitle className="flex items-center gap-2">
+                  <Cast className="h-5 w-5" />
+                  Taplist su TV
+                </DialogTitle>
+              </DialogHeader>
+              <div className="space-y-4">
+                <p className="text-sm text-muted-foreground">
+                  Apri questo indirizzo nel browser della tua Smart TV:
+                </p>
+                <div
+                  className="bg-gray-100 dark:bg-[hsl(25,14%,10%)] rounded-xl p-3 flex items-center justify-between gap-2 cursor-pointer hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+                  onClick={() => {
+                    navigator.clipboard?.writeText(`${window.location.origin}/tv/${currentPub?.id}`).catch(() => {});
+                    toast({ title: "Link copiato!" });
+                  }}
+                >
+                  <code className="text-sm font-mono font-bold text-primary dark:text-orange-400 break-all">
+                    {window.location.origin}/tv/{currentPub?.id}
+                  </code>
+                  <LinkIcon className="h-4 w-4 shrink-0 text-muted-foreground" />
+                </div>
+                <Button
+                  className="w-full gap-2 bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 py-5 text-base"
+                  onClick={async () => {
+                    const w = window as any;
+                    const castFramework = w.cast?.framework;
+                    if (!castFramework) {
+                      window.open(`/tv/${currentPub?.id}`, '_blank');
+                      toast({ title: "Pagina TV aperta", description: "Usa il menu di Chrome per trasmettere" });
                       return;
                     }
-                    toast({ title: "Connesso!", description: "Invio taplist live..." });
-                    const taplistUrl = `https://fermenta.to/tv/${currentPub?.id}`;
-                    await session.sendMessage('urn:x-cast:fermenta.to', { url: taplistUrl });
-                    toast({ title: "Taplist LIVE sulla TV!", description: "Si aggiorna in tempo reale" });
-                  } catch (err: any) {
-                    if (err?.code === 'cancel' || err?.message === 'cancel') return;
-                    const errCode = err?.code || '';
-                    const errDesc = err?.description || err?.message || '';
-                    console.error('Cast error:', errCode, errDesc);
-                    // Fallback: apri la pagina TV
-                    window.open(`/tv/${currentPub?.id}`, '_blank');
-                    toast({ title: "Pagina TV aperta", description: "Usa Cast di Chrome per trasmetterla" });
-                  }
-                }}
-              >
-                <Cast className="h-5 w-5" />
-                Trasmetti Taplist su TV
-              </Button>
-
-              <div className="flex gap-2">
-                <Button
-                  variant="outline"
-                  className="flex-1 gap-2 border-stone-200 dark:border-[hsl(25,12%,20%)] hover:bg-stone-50 rounded-xl"
-                  onClick={() => window.open(`/tv/${currentPub?.id}`, '_blank')}
-                >
-                  <Eye className="h-4 w-4" />
-                  Apri Taplist TV
-                </Button>
-                <Button
-                  variant="outline"
-                  className="flex-1 gap-2 border-stone-200 dark:border-[hsl(25,12%,20%)] hover:bg-stone-50 rounded-xl"
-                  onClick={() => {
-                    navigator.clipboard.writeText(`${window.location.origin}/tv/${currentPub?.id}`);
-                    toast({ title: "Link copiato!" });
+                    try {
+                      const ctx = castFramework.CastContext.getInstance();
+                      ctx.setOptions({ receiverApplicationId: '6666EC62', autoJoinPolicy: w.chrome?.cast?.AutoJoinPolicy?.ORIGIN_SCOPED ?? 'origin_scoped' });
+                      toast({ title: "Connessione alla TV...", description: "Seleziona il dispositivo" });
+                      await ctx.requestSession();
+                      const session = ctx.getCurrentSession();
+                      if (!session) { toast({ title: "Sessione non creata", description: "Riprova", variant: "destructive" }); return; }
+                      toast({ title: "Connesso!", description: "Invio taplist live..." });
+                      await session.sendMessage('urn:x-cast:fermenta.to', { url: `https://fermenta.to/tv/${currentPub?.id}` });
+                      toast({ title: "Taplist LIVE sulla TV!", description: "Si aggiorna in tempo reale" });
+                    } catch (err: any) {
+                      if (err?.code === 'cancel' || err?.message === 'cancel') return;
+                      window.open(`/tv/${currentPub?.id}`, '_blank');
+                      toast({ title: "Pagina TV aperta", description: "Usa Cast di Chrome per trasmetterla" });
+                    }
                   }}
                 >
-                  <LinkIcon className="h-4 w-4" />
-                  Copia Link
+                  <Cast className="h-5 w-5" />
+                  Trasmetti Taplist su TV
                 </Button>
-              </div>
-
-              <div className="border-t pt-3">
-                <p className="text-xs text-muted-foreground dark:text-muted-foreground mb-2">Oppure digita nel browser della Smart TV:</p>
-                <div
-                  className="bg-gray-100 dark:bg-[hsl(25,14%,10%)] rounded-xl p-2 flex items-center justify-center cursor-pointer hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
-                  onClick={() => {
-                    navigator.clipboard.writeText(`${window.location.origin}/tv/${currentPub?.id}`);
-                    toast({ title: "Link copiato!" });
-                  }}
-                >
-                  <code className="text-xs font-mono font-bold text-primary dark:text-orange-400">
-                    {window.location.host}/tv/{currentPub?.id}
-                  </code>
+                <div className="flex gap-2">
+                  <Button variant="outline" className="flex-1 gap-2 border-stone-200 dark:border-[hsl(25,12%,20%)] hover:bg-stone-50 rounded-xl" onClick={() => window.open(`/tv/${currentPub?.id}`, '_blank')}>
+                    <Eye className="h-4 w-4" />
+                    Apri TV
+                  </Button>
+                  <Button variant="outline" className="flex-1 gap-2 border-stone-200 dark:border-[hsl(25,12%,20%)] hover:bg-stone-50 rounded-xl" onClick={() => { navigator.clipboard.writeText(`${window.location.origin}/tv/${currentPub?.id}`); toast({ title: "Link copiato!" }); }}>
+                    <LinkIcon className="h-4 w-4" />
+                    Copia Link
+                  </Button>
                 </div>
               </div>
+            </DialogContent>
+          </Dialog>
+
+          {/* Pagina Pub */}
+          <div
+            className="bg-white dark:bg-[hsl(25,14%,10%)] border border-stone-100 dark:border-[hsl(25,12%,16%)] rounded-2xl p-4 flex items-center gap-3 cursor-pointer hover:border-primary/40 hover:shadow-sm transition-all"
+            onClick={() => window.open(`/pub/${(currentPub as any)?.slug || currentPub?.id}`, '_blank')}
+          >
+            <div className="p-2.5 bg-stone-100 dark:bg-stone-800/60 rounded-xl shrink-0">
+              <Eye className="h-5 w-5 text-foreground" />
             </div>
-          </DialogContent>
-        </Dialog>
-        <Button
-          variant="outline"
-          size="sm"
-          className="gap-2 border-stone-200 dark:border-[hsl(25,12%,20%)] hover:bg-stone-50 rounded-xl"
-          onClick={() => window.open(`/pub/${(currentPub as any)?.slug || currentPub?.id}`, '_blank')}
-        >
-          <Eye className="h-4 w-4" />
-          Pagina Pub
-        </Button>
-      </motion.div>
+            <div className="min-w-0">
+              <p className="font-semibold text-sm text-foreground leading-tight">Pagina Pub</p>
+              <p className="text-xs text-muted-foreground mt-0.5 leading-tight">Anteprima pubblica</p>
+            </div>
+          </div>
+
+        </div>
+      </div>
 
     </motion.div>
   );
