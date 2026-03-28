@@ -104,7 +104,7 @@ export function MenuManager({ pubId, menu }: MenuManagerProps) {
     },
     onSuccess: () => {
       toast({ title: "Categoria aggiunta!" });
-      queryClient.invalidateQueries({ queryKey: ["/api/pubs", pubId, "menu"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/pubs", String(pubId), "menu"] });
       setIsAddCategoryOpen(false);
       resetCategoryForm();
     },
@@ -119,7 +119,7 @@ export function MenuManager({ pubId, menu }: MenuManagerProps) {
     },
     onSuccess: () => {
       toast({ title: "Categoria aggiornata!" });
-      queryClient.invalidateQueries({ queryKey: ["/api/pubs", pubId, "menu"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/pubs", String(pubId), "menu"] });
       setEditingCategory(null);
       resetCategoryForm();
     },
@@ -134,7 +134,7 @@ export function MenuManager({ pubId, menu }: MenuManagerProps) {
     },
     onSuccess: () => {
       toast({ title: "Categoria eliminata!" });
-      queryClient.invalidateQueries({ queryKey: ["/api/pubs", pubId, "menu"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/pubs", String(pubId), "menu"] });
     },
     onError: () => {
       toast({ title: "Errore", description: "Impossibile eliminare la categoria", variant: "destructive" });
@@ -146,7 +146,7 @@ export function MenuManager({ pubId, menu }: MenuManagerProps) {
       return apiRequest(`/api/pubs/${pubId}/menu-categories/${id}/toggle-visibility`, { method: "PATCH" });
     },
     onMutate: async ({ id }) => {
-      await queryClient.cancelQueries({ queryKey: ["/api/pubs", pubId, "menu"] });
+      await queryClient.cancelQueries({ queryKey: ["/api/pubs", String(pubId), "menu"] });
       const prev = queryClient.getQueryData(["/api/pubs", pubId, "menu"]);
       queryClient.setQueryData(["/api/pubs", pubId, "menu"], (old: any) =>
         Array.isArray(old) ? old.map((cat: any) => cat.id === id ? { ...cat, isVisible: !cat.isVisible } : cat) : old
@@ -174,7 +174,7 @@ export function MenuManager({ pubId, menu }: MenuManagerProps) {
     },
     onSuccess: () => {
       toast({ title: "Prodotto aggiunto!" });
-      queryClient.invalidateQueries({ queryKey: ["/api/pubs", pubId, "menu"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/pubs", String(pubId), "menu"] });
       setIsAddItemOpen(false);
       resetItemForm();
     },
@@ -189,7 +189,8 @@ export function MenuManager({ pubId, menu }: MenuManagerProps) {
     },
     onSuccess: () => {
       toast({ title: "Prodotto aggiornato!" });
-      queryClient.invalidateQueries({ queryKey: ["/api/pubs", pubId, "menu"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/pubs", String(pubId), "menu", "full"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/pubs", String(pubId), "menu"] });
       setEditingItem(null);
       resetItemForm();
     },
@@ -204,7 +205,8 @@ export function MenuManager({ pubId, menu }: MenuManagerProps) {
     },
     onSuccess: () => {
       toast({ title: "Prodotto eliminato!" });
-      queryClient.invalidateQueries({ queryKey: ["/api/pubs", pubId, "menu"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/pubs", String(pubId), "menu", "full"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/pubs", String(pubId), "menu"] });
     },
     onError: () => {
       toast({ title: "Errore", description: "Impossibile eliminare il prodotto", variant: "destructive" });
@@ -216,7 +218,7 @@ export function MenuManager({ pubId, menu }: MenuManagerProps) {
       return apiRequest(`/api/pubs/${pubId}/menu-items/${id}/toggle-visibility`, { method: "PATCH" });
     },
     onMutate: async ({ id }) => {
-      await queryClient.cancelQueries({ queryKey: ["/api/pubs", pubId, "menu"] });
+      await queryClient.cancelQueries({ queryKey: ["/api/pubs", String(pubId), "menu"] });
       const prev = queryClient.getQueryData(["/api/pubs", pubId, "menu"]);
       queryClient.setQueryData(["/api/pubs", pubId, "menu"], (old: any) =>
         Array.isArray(old) ? old.map((cat: any) => ({
@@ -248,7 +250,7 @@ export function MenuManager({ pubId, menu }: MenuManagerProps) {
       return apiRequest(`/api/pubs/${pubId}/menu-items/${id}/toggle-availability`, { method: "PATCH" });
     },
     onMutate: async ({ id }) => {
-      await queryClient.cancelQueries({ queryKey: ["/api/pubs", pubId, "menu"] });
+      await queryClient.cancelQueries({ queryKey: ["/api/pubs", String(pubId), "menu"] });
       const prev = queryClient.getQueryData(["/api/pubs", pubId, "menu"]);
       queryClient.setQueryData(["/api/pubs", pubId, "menu"], (old: any) =>
         Array.isArray(old) ? old.map((cat: any) => ({

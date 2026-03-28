@@ -257,11 +257,13 @@ export default function PubDetail() {
   });
 
   // Single query for full menu (categories + all items) — eliminates N+1
+  // staleTime basso per mostrare sempre i dati aggiornati (es. descrizioni prodotti)
   const { data: menuFull = [], isLoading: menuLoading } = useQuery({
     queryKey: ["/api/pubs", id, "menu", "full"],
     queryFn: () => apiRequest(`/api/pubs/${id}/menu/full`),
     enabled: !!id,
-    staleTime: 5 * 60_000,
+    staleTime: 30_000,
+    refetchOnWindowFocus: true,
   });
 
   const menu = useMemo(() => Array.isArray(menuFull) ? menuFull : [], [menuFull]);

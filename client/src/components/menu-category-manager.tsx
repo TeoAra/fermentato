@@ -130,7 +130,7 @@ export default function MenuCategoryManager({ pubId, categories }: MenuCategoryM
       return apiRequest(`/api/pubs/${pubId}/menu/categories`, { method: 'POST' }, data);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/pubs", pubId, "menu"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/pubs", String(pubId), "menu"] });
       setIsCreateDialogOpen(false);
       resetForm();
       toast({ 
@@ -152,7 +152,7 @@ export default function MenuCategoryManager({ pubId, categories }: MenuCategoryM
       return apiRequest(`/api/pubs/${pubId}/menu/categories/${id}`, { method: 'PATCH' }, data);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/pubs", pubId, "menu"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/pubs", String(pubId), "menu"] });
       setIsEditDialogOpen(false);
       setEditingCategory(null);
       resetForm();
@@ -175,7 +175,7 @@ export default function MenuCategoryManager({ pubId, categories }: MenuCategoryM
       return apiRequest(`/api/pubs/${pubId}/menu/categories/${id}`, { method: 'DELETE' });
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/pubs", pubId, "menu"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/pubs", String(pubId), "menu"] });
       toast({ 
         title: "🗑️ Categoria eliminata", 
         description: "La categoria è stata rimossa dal menu" 
@@ -218,7 +218,7 @@ export default function MenuCategoryManager({ pubId, categories }: MenuCategoryM
       return apiRequest(`/api/pubs/${pubId}/menu-items/${id}`, { method: 'PATCH' }, data);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/pubs", pubId, "menu"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/pubs", String(pubId), "menu"] });
       queryClient.invalidateQueries({ queryKey: ["/api/pubs", pubId, "menu", "all-products"] });
       setIsEditProductOpen(false);
       setEditingProduct(null);
@@ -234,7 +234,7 @@ export default function MenuCategoryManager({ pubId, categories }: MenuCategoryM
       return apiRequest(`/api/pubs/${pubId}/menu-items/${id}`, { method: 'DELETE' });
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/pubs", pubId, "menu"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/pubs", String(pubId), "menu"] });
       queryClient.invalidateQueries({ queryKey: ["/api/pubs", pubId, "menu", "all-products"] });
       toast({ title: "🗑️ Prodotto eliminato" });
     },
@@ -286,7 +286,7 @@ export default function MenuCategoryManager({ pubId, categories }: MenuCategoryM
       return apiRequest(`/api/pubs/${pubId}/menu-items`, { method: 'POST' }, data);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/pubs", pubId, "menu"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/pubs", String(pubId), "menu"] });
       setIsAddItemOpen(false);
       setSelectedCategoryIds([]);
       setItemForm({ name: '', description: '', price: '', isVisible: true, allergens: [], isVegetarian: false, isSpicy: false });
@@ -302,7 +302,7 @@ export default function MenuCategoryManager({ pubId, categories }: MenuCategoryM
       return apiRequest(`/api/pubs/${pubId}/menu-items`, { method: 'POST' }, data);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/pubs", pubId, "menu"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/pubs", String(pubId), "menu"] });
       queryClient.invalidateQueries({ queryKey: ["/api/pubs", pubId, "menu", "all-products"] });
       setIsAddInfoBoxOpen(false);
       setInfoBoxCategoryId(null);
@@ -448,7 +448,7 @@ export default function MenuCategoryManager({ pubId, categories }: MenuCategoryM
           apiRequest(`/api/pubs/${pubId}/menu-items/${id}`, { method: 'DELETE' })
         )
       );
-      queryClient.invalidateQueries({ queryKey: ["/api/pubs", pubId, "menu"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/pubs", String(pubId), "menu"] });
       queryClient.invalidateQueries({ queryKey: ["/api/pubs", pubId, "menu", "all-products"] });
       toast({
         title: "🗑️ Prodotto eliminato",
@@ -1164,7 +1164,7 @@ export default function MenuCategoryManager({ pubId, categories }: MenuCategoryM
                           )
                         );
                       }
-                      queryClient.invalidateQueries({ queryKey: ["/api/pubs", pubId, "menu"] });
+                      queryClient.invalidateQueries({ queryKey: ["/api/pubs", String(pubId), "menu"] });
                       queryClient.invalidateQueries({ queryKey: ["/api/pubs", String(pubId), "menu", "full"] });
                       setIsEditProductOpen(false);
                       setEditingProduct(null);
@@ -1303,7 +1303,7 @@ export default function MenuCategoryManager({ pubId, categories }: MenuCategoryM
                         apiRequest(`/api/pubs/${pubId}/menu-items`, { method: 'POST' }, { ...snapshot, categoryId: catId })
                       )
                     );
-                    queryClient.invalidateQueries({ queryKey: ["/api/pubs", pubId, "menu"] });
+                    queryClient.invalidateQueries({ queryKey: ["/api/pubs", String(pubId), "menu"] });
                     setIsAddItemOpen(false);
                     setSelectedCategoryIds([]);
                     setItemForm({ name: '', description: '', price: '', isVisible: true, allergens: [], isVegetarian: false, isSpicy: false });
