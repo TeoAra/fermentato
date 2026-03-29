@@ -196,6 +196,12 @@ export default function MenuCategoryManager({ pubId, categories }: MenuCategoryM
     },
     onMutate: async ({ id }) => {
       setPendingCategoryToggles(prev => new Set([...prev, id]));
+      await queryClient.cancelQueries({ queryKey: ["/api/pubs", pubId, "menu"] });
+      const prev = queryClient.getQueryData(["/api/pubs", pubId, "menu"]);
+      queryClient.setQueryData(["/api/pubs", pubId, "menu"], (old: any) =>
+        Array.isArray(old) ? old.map((cat: any) => cat.id === id ? { ...cat, isVisible: !cat.isVisible } : cat) : old
+      );
+      return { prev };
     },
     onSuccess: (data: any, { id }) => {
       setPendingCategoryToggles(prev => { const next = new Set(prev); next.delete(id); return next; });
@@ -206,8 +212,9 @@ export default function MenuCategoryManager({ pubId, categories }: MenuCategoryM
       }
       queryClient.invalidateQueries({ queryKey: ["/api/pubs", String(pubId), "menu", "full"] });
     },
-    onError: (_e: any, { id }) => {
+    onError: (_e: any, { id }, ctx: any) => {
       setPendingCategoryToggles(prev => { const next = new Set(prev); next.delete(id); return next; });
+      if (ctx?.prev) queryClient.setQueryData(["/api/pubs", pubId, "menu"], ctx.prev);
       toast({ title: "❌ Errore", description: "Impossibile aggiornare la visibilità", variant: "destructive" });
     },
   });
@@ -256,6 +263,14 @@ export default function MenuCategoryManager({ pubId, categories }: MenuCategoryM
         }
         return updated;
       }
+    );
+    queryClient.setQueryData(["/api/pubs", pubId, "menu"], (old: any) =>
+      Array.isArray(old) ? old.map((cat: any) => ({
+        ...cat,
+        items: (cat.items || []).map((item: any) =>
+          itemIds.includes(item.id) ? { ...item, isVisible: newVisible } : item
+        ),
+      })) : old
     );
   };
 

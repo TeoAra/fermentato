@@ -143,10 +143,24 @@ export function BottleListManager({ pubId, bottleList, tapList = [] }: BottleLis
     mutationFn: async ({ id, isVisible }: { id: number; isVisible: boolean }) => {
       return apiRequest(`/api/pubs/${pubId}/bottles/${id}`, { method: "PATCH" }, { isVisible });
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/pubs", pubId, "bottles"] });
+    onMutate: async ({ id, isVisible }) => {
+      await queryClient.cancelQueries({ queryKey: ["/api/pubs", pubId, "bottles"] });
+      const prev = queryClient.getQueryData(["/api/pubs", pubId, "bottles"]);
+      queryClient.setQueryData(["/api/pubs", pubId, "bottles"], (old: any) =>
+        Array.isArray(old) ? old.map((b: any) => b.id === id ? { ...b, isVisible } : b) : old
+      );
+      return { prev };
     },
-    onError: () => {
+    onSuccess: (data, { id }) => {
+      if (data?.isVisible !== undefined) {
+        queryClient.setQueryData(["/api/pubs", pubId, "bottles"], (old: any) =>
+          Array.isArray(old) ? old.map((b: any) => b.id === id ? { ...b, isVisible: data.isVisible } : b) : old
+        );
+      }
+      queryClient.invalidateQueries({ queryKey: ["/api/pubs", String(pubId), "bottles"] });
+    },
+    onError: (_e, _v, ctx) => {
+      if (ctx?.prev) queryClient.setQueryData(["/api/pubs", pubId, "bottles"], ctx.prev);
       toast({ title: "Errore", description: "Impossibile aggiornare la visibilità", variant: "destructive" });
     },
   });
@@ -209,7 +223,9 @@ export function BottleListManager({ pubId, bottleList, tapList = [] }: BottleLis
         const updatedTap = await apiRequest(`/api/pubs/${pubId}/taplist/${tapItem.id}`, { method: "PATCH" }, { isVisible: newVisible });
         if (updatedTap?.isVisible !== undefined) applyTap(tapItem.id, updatedTap.isVisible);
         queryClient.invalidateQueries({ queryKey: ["/api/pubs", String(pubId), "taplist"] });
-        toast({ title: newVisible ? "✅ Birra visibile" : "👁️ Birra nascosta", description: "Applicato anche alla taplist" });
+        toast({ title: newVisible ? "Birra visibile" : "Birra nascosta", description: "Applicato anche alla taplist" });
+      } else {
+        toast({ title: newVisible ? "Birra visibile" : "Birra nascosta" });
       }
     } catch {
       applyBottle(item.isVisible ?? true);
