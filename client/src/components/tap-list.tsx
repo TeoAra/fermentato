@@ -163,7 +163,7 @@ export default function TapList({ tapList }: TapListProps) {
             {prices.length > 0 && (
               <div className="flex flex-col items-end gap-0.5 pl-2 flex-shrink-0">
                 {prices.map((p, i) => (
-                  <p key={i} className={`font-bold tabular-nums leading-tight ${i === 0 ? 'text-[15px] text-primary dark:text-orange-400' : 'text-[12px] text-stone-400 dark:text-stone-500'}`}>
+                  <p key={i} className="text-[13px] font-semibold tabular-nums leading-tight text-stone-600 dark:text-stone-400">
                     {p}
                   </p>
                 ))}

@@ -245,16 +245,21 @@ export default function Home() {
               <Bell className="w-4 h-4" />
             </button>
           </Link>
-          <button className="w-9 h-9 flex items-center justify-center bg-white dark:bg-[hsl(25,14%,10%)] border border-stone-200 dark:border-stone-700/40 rounded-full shadow-sm text-stone-500 hover:text-primary transition-colors">
-            <Bookmark className="w-4 h-4" />
-          </button>
+          <Link href="/dashboard?tab=favorites">
+            <button className="w-9 h-9 flex items-center justify-center bg-white dark:bg-[hsl(25,14%,10%)] border border-stone-200 dark:border-stone-700/40 rounded-full shadow-sm text-stone-500 hover:text-primary transition-colors" title="I tuoi preferiti">
+              <Bookmark className="w-4 h-4" />
+            </button>
+          </Link>
         </div>
       </section>
 
       {/* ─── Mappa ────────────────────────────────────────────────────────── */}
       <HomepageMap
         pubs={Array.isArray(pubs) ? pubs : []}
-        breweries={Array.isArray(allBreweries) ? allBreweries : (Array.isArray(breweries) ? breweries : [])}
+        breweries={(() => {
+          const src = Array.isArray(allBreweries) ? allBreweries : (Array.isArray(breweries) ? breweries : []);
+          return (src as any[]).filter((b: any) => b.latitude && b.longitude).slice(0, 80);
+        })()}
         userLocation={userLocation}
         isLoading={pubsLoading || breweriesLoading}
         onLocate={(loc) => {

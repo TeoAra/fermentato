@@ -465,9 +465,9 @@ export default function BreweryDetail() {
               }}
               aria-label="Espandi logo"
             >
-              <Avatar className="h-20 w-20 sm:h-24 sm:w-24 rounded-2xl border border-stone-200 dark:border-stone-700 shadow-sm bg-stone-50 dark:bg-stone-800 overflow-hidden">
-                <AvatarImage src={brewery?.logoUrl} alt={brewery?.name} className="object-contain p-1" />
-                <AvatarFallback className="bg-stone-100 dark:bg-stone-700 text-stone-500 text-3xl font-bold rounded-2xl">
+              <Avatar className="h-20 w-20 sm:h-24 sm:w-24 rounded-full border border-stone-200 dark:border-stone-700 shadow-sm bg-stone-50 dark:bg-stone-800 overflow-hidden">
+                <AvatarImage src={brewery?.logoUrl} alt={brewery?.name} className="object-cover" />
+                <AvatarFallback className="bg-stone-100 dark:bg-stone-700 text-stone-500 text-3xl font-bold rounded-full">
                   {brewery?.name?.[0] || 'B'}
                 </AvatarFallback>
               </Avatar>

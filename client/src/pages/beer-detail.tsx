@@ -576,7 +576,7 @@ export default function BeerDetail() {
             }}
             aria-label="Espandi immagine"
           >
-            <div className="h-20 w-20 sm:h-24 sm:w-24 rounded-2xl border border-stone-200 dark:border-stone-700 shadow-sm bg-stone-50 dark:bg-stone-800 overflow-hidden flex items-center justify-center">
+            <div className="h-20 w-20 sm:h-24 sm:w-24 rounded-full border border-stone-200 dark:border-stone-700 shadow-sm bg-stone-50 dark:bg-stone-800 overflow-hidden flex items-center justify-center">
               {(beer?.imageUrl || beer?.bottleImageUrl) ? (
                 <img
                   src={beer?.imageUrl || beer?.bottleImageUrl}

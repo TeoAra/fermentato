@@ -589,8 +589,15 @@ export default function PubDetail() {
       </Helmet>
       
       {/* ── HERO — iOS Settings style ── */}
-      <div className="bg-white dark:bg-[hsl(25,14%,10%)] border-b border-stone-100 dark:border-stone-700/30 px-4 py-4">
-        <div className="max-w-7xl mx-auto flex items-start gap-4">
+      <div className="relative bg-white dark:bg-[hsl(25,14%,10%)] border-b border-stone-100 dark:border-stone-700/30 overflow-hidden">
+        {/* Cover strip — barely visible */}
+        {(pub as any)?.coverImageUrl && (
+          <div className="absolute inset-x-0 top-0 h-20 pointer-events-none">
+            <img src={(pub as any).coverImageUrl} alt="" className="w-full h-full object-cover opacity-20 blur-[1px] scale-105" />
+            <div className="absolute inset-0 bg-gradient-to-b from-transparent to-white dark:to-[hsl(25,14%,10%)]" />
+          </div>
+        )}
+        <div className="relative max-w-7xl mx-auto flex items-start gap-4 px-4 py-4" style={(pub as any)?.coverImageUrl ? { paddingTop: '1.5rem' } : {}}>
 
           {/* Logo — tap to expand */}
           <button
@@ -601,9 +608,9 @@ export default function PubDetail() {
             }}
             aria-label="Espandi logo"
           >
-            <Avatar className="h-20 w-20 sm:h-24 sm:w-24 rounded-2xl border border-stone-200 dark:border-stone-700 shadow-sm bg-stone-50 dark:bg-stone-800 overflow-hidden">
-              <AvatarImage src={(pub as any)?.logoUrl} alt={(pub as any)?.name} className="object-contain p-1" />
-              <AvatarFallback className="bg-stone-100 dark:bg-stone-700 text-stone-500 text-3xl font-bold rounded-2xl">
+            <Avatar className="h-20 w-20 sm:h-24 sm:w-24 rounded-full border border-stone-200 dark:border-stone-700 shadow-sm bg-stone-50 dark:bg-stone-800 overflow-hidden">
+              <AvatarImage src={(pub as any)?.logoUrl} alt={(pub as any)?.name} className="object-cover" />
+              <AvatarFallback className="bg-stone-100 dark:bg-stone-700 text-stone-500 text-3xl font-bold rounded-full">
                 {(pub as any)?.name?.[0] || 'P'}
               </AvatarFallback>
             </Avatar>
@@ -651,65 +658,60 @@ export default function PubDetail() {
                 </button>
               </div>
 
-              {/* Action buttons — stacked right */}
-              <div className="flex flex-col items-end gap-1.5 flex-shrink-0">
-                <div className="flex items-center gap-1.5">
-                  <button
-                    onClick={handleSave}
-                    disabled={toggleFavoriteMutation.isPending}
-                    title={isFavorite ? 'Rimuovi dai preferiti' : 'Aggiungi ai preferiti'}
-                    data-testid="button-save"
-                    className={`h-9 w-9 flex items-center justify-center rounded-full transition-all ${
-                      isFavorite
-                        ? 'bg-red-50 dark:bg-red-950/40 text-red-500'
-                        : 'bg-stone-100 dark:bg-stone-800 text-stone-500 hover:text-red-500'
-                    }`}
+              {/* Action buttons — single horizontal row */}
+              <div className="flex items-center gap-1.5 flex-shrink-0">
+                <button
+                  onClick={handleSave}
+                  disabled={toggleFavoriteMutation.isPending}
+                  title={isFavorite ? 'Rimuovi dai preferiti' : 'Aggiungi ai preferiti'}
+                  data-testid="button-save"
+                  className={`h-9 w-9 flex items-center justify-center rounded-full transition-all ${
+                    isFavorite
+                      ? 'bg-red-50 dark:bg-red-950/40 text-red-500'
+                      : 'bg-stone-100 dark:bg-stone-800 text-stone-500 hover:text-red-500'
+                  }`}
+                >
+                  <Heart className={`h-4 w-4 ${isFavorite ? 'fill-current' : ''}`} />
+                </button>
+                {(((pub as any)?.latitude && (pub as any)?.longitude) || (pub as any)?.address) && (
+                  <a
+                    href={getMapNavigationUrl((pub as any).name, (pub as any).address)}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    title="Avvia navigazione"
+                    className="h-9 w-9 flex items-center justify-center rounded-full bg-stone-100 dark:bg-stone-800 text-teal-600 dark:text-teal-400 transition-colors"
                   >
-                    <Heart className={`h-4 w-4 ${isFavorite ? 'fill-current' : ''}`} />
-                  </button>
-                  <button
-                    onClick={handleShare}
-                    title="Condividi"
-                    data-testid="button-share"
-                    className="h-9 w-9 flex items-center justify-center rounded-full bg-stone-100 dark:bg-stone-800 text-stone-500 dark:text-stone-400 transition-colors"
+                    <Navigation className="h-4 w-4" />
+                  </a>
+                )}
+                {(pub as any)?.phone && (
+                  <a
+                    href={`tel:${(pub as any).phone}`}
+                    title="Chiama"
+                    className="h-9 w-9 flex items-center justify-center rounded-full bg-stone-100 dark:bg-stone-800 text-emerald-600 dark:text-emerald-400 transition-colors"
                   >
-                    <Share2 className="h-4 w-4" />
-                  </button>
-                  {canManage && (
-                    <Link href={isAdmin ? `/admin/edit-pub/${id}` : "/dashboard"}>
-                      <button
-                        title="Gestisci pub"
-                        data-testid="button-manage"
-                        className="h-9 w-9 flex items-center justify-center rounded-full text-white bg-primary hover:bg-primary/90 transition-all shadow-sm"
-                      >
-                        <Settings className="h-4 w-4" />
-                      </button>
-                    </Link>
-                  )}
-                </div>
-                {/* Secondary: navigation + phone */}
-                <div className="flex items-center gap-1.5">
-                  {(((pub as any)?.latitude && (pub as any)?.longitude) || (pub as any)?.address) && (
-                    <a
-                      href={getMapNavigationUrl((pub as any).name, (pub as any).address)}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      title="Avvia navigazione"
-                      className="h-8 w-8 flex items-center justify-center rounded-full bg-stone-100 dark:bg-stone-800 text-teal-600 dark:text-teal-400 transition-colors"
+                    <Phone className="h-4 w-4" />
+                  </a>
+                )}
+                <button
+                  onClick={handleShare}
+                  title="Condividi"
+                  data-testid="button-share"
+                  className="h-9 w-9 flex items-center justify-center rounded-full bg-stone-100 dark:bg-stone-800 text-stone-500 dark:text-stone-400 transition-colors"
+                >
+                  <Share2 className="h-4 w-4" />
+                </button>
+                {canManage && (
+                  <Link href={isAdmin ? `/admin/edit-pub/${id}` : "/dashboard"}>
+                    <button
+                      title="Gestisci pub"
+                      data-testid="button-manage"
+                      className="h-9 w-9 flex items-center justify-center rounded-full text-white bg-primary hover:bg-primary/90 transition-all shadow-sm"
                     >
-                      <Navigation className="h-3.5 w-3.5" />
-                    </a>
-                  )}
-                  {(pub as any)?.phone && (
-                    <a
-                      href={`tel:${(pub as any).phone}`}
-                      title="Chiama"
-                      className="h-8 w-8 flex items-center justify-center rounded-full bg-stone-100 dark:bg-stone-800 text-emerald-600 dark:text-emerald-400 transition-colors"
-                    >
-                      <Phone className="h-3.5 w-3.5" />
-                    </a>
-                  )}
-                </div>
+                      <Settings className="h-4 w-4" />
+                    </button>
+                  </Link>
+                )}
               </div>
             </div>
           </div>
@@ -724,7 +726,7 @@ export default function PubDetail() {
             {/* ── TABS ── */}
             <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
                 <div className="sticky top-14 lg:top-16 z-10 bg-white dark:bg-[hsl(25,14%,10%)] border-b border-stone-100 dark:border-stone-700/30">
-                  <div className="flex overflow-x-auto scrollbar-hide px-1">
+                  <div className="flex justify-center overflow-x-auto scrollbar-hide px-1">
                     {[
                       { id: 'taplist', label: 'Spina', icon: <Wine className="h-4 w-4 flex-shrink-0" /> },
                       { id: 'bottles', label: 'Cantina', icon: <Sparkles className="h-4 w-4 flex-shrink-0" /> },
