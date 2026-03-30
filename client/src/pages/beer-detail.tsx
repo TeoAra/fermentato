@@ -563,26 +563,26 @@ export default function BeerDetail() {
         })}</script>
       </Helmet>
       
-      {/* ── HERO ── orange gradient base, image as overlay (like mockup) */}
-      <div className="relative h-[220px] sm:h-[280px] md:h-[340px] overflow-hidden" style={{ background: 'linear-gradient(135deg, #F77104 0%, #f98a0e 50%, #f5a623 100%)' }}>
-        {/* Radial light glow */}
-        <div className="absolute inset-0 opacity-40 mix-blend-overlay" style={{ backgroundImage: 'radial-gradient(circle at 50% 40%, rgba(255,255,255,0.9) 0%, transparent 60%)' }} />
+      {/* ── HERO ── neutral dark base, image displayed cleanly */}
+      <div className="relative h-[220px] sm:h-[280px] md:h-[340px] overflow-hidden" style={{ background: 'linear-gradient(135deg, hsl(25,18%,10%) 0%, hsl(20,15%,18%) 50%, hsl(30,12%,24%) 100%)' }}>
+        {/* Subtle grid texture */}
+        <div className="absolute inset-0 opacity-[0.04]" style={{ backgroundImage: 'repeating-linear-gradient(45deg, #fff 0, #fff 1px, transparent 0, transparent 50%)', backgroundSize: '18px 18px' }} />
         {(beer?.imageUrl || beer?.bottleImageUrl) && (
           <img
             src={beer.imageUrl || beer.bottleImageUrl}
             alt={`${beer?.name} - Immagine`}
-            className="w-full h-full object-cover mix-blend-overlay opacity-50"
+            className="w-full h-full object-cover opacity-30"
           />
         )}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/10 to-transparent" />
-        <div className="absolute bottom-0 left-0 right-0 px-4 pb-4 flex items-end gap-3">
-          <div className="h-14 w-14 sm:h-16 sm:w-16 rounded-xl ring-2 ring-white/40 bg-white/10 backdrop-blur-sm flex-shrink-0 overflow-hidden shadow-lg">
+        <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
+        <div className="absolute bottom-0 left-0 right-0 px-4 pb-4 flex items-end gap-4">
+          <div className="h-20 w-20 sm:h-24 sm:w-24 rounded-2xl ring-2 ring-white/20 bg-white/5 backdrop-blur-sm flex-shrink-0 overflow-hidden shadow-xl border border-white/10">
             <ImageWithFallback
               src={beer?.imageUrl || beer?.bottleImageUrl}
               alt={beer?.name}
               imageType="beer"
               containerClassName="w-full h-full"
-              className="w-full h-full object-cover"
+              className="w-full h-full object-contain p-1"
               iconSize="lg"
             />
           </div>
@@ -629,7 +629,7 @@ export default function BeerDetail() {
           {/* Info pills */}
           <div className="flex items-center gap-2 flex-wrap justify-center">
             {beer?.abv && (
-              <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-bold bg-gradient-to-r from-orange-50 to-amber-50 dark:from-orange-950/50 dark:to-amber-950/30 text-primary border border-stone-200 dark:border-stone-700/30">
+              <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-bold bg-stone-50 dark:bg-stone-900/30 text-stone-700 dark:text-stone-300 border border-stone-200 dark:border-stone-700/30">
                 <Target className="h-3.5 w-3.5" />
                 {beer.abv}% ABV
               </span>

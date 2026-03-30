@@ -119,7 +119,7 @@ const ModernBeerCard = ({ beer, prices, className = "" }: {
   <div className={`bg-white dark:bg-[hsl(25,14%,10%)] rounded-2xl border border-stone-100 dark:border-[hsl(25,12%,16%)] shadow-[0_4px_20px_rgba(247,113,4,0.06)] hover:shadow-[0_6px_24px_rgba(247,113,4,0.12)] hover:border-stone-300 dark:hover:border-orange-800/40 transition-all duration-300 cursor-pointer ${className}`}>
     <div className="flex gap-3 p-4">
       <Link href={`/beer/${beer?.id}`} className="flex-shrink-0 self-center">
-        <div className="w-14 h-14 rounded-2xl overflow-hidden bg-gradient-to-br from-orange-50 to-amber-50 dark:from-orange-950/40 dark:to-amber-900/20 flex items-center justify-center border border-stone-200 dark:border-stone-700/30">
+        <div className="w-14 h-14 rounded-2xl overflow-hidden bg-stone-50 dark:bg-stone-900/40 flex items-center justify-center border border-stone-200 dark:border-stone-700/30">
           <ImageWithFallback
             src={beer?.imageUrl || beer?.brewery?.logoUrl}
             alt={beer?.name || 'Beer'}
@@ -597,9 +597,9 @@ export default function PubDetail() {
         <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
         {/* Pub name + logo anchored to bottom-left of image */}
         <div className="absolute bottom-0 left-0 right-0 px-4 pb-4 flex items-end gap-3">
-          <Avatar className={`h-14 w-14 sm:h-16 sm:w-16 ring-2 ${openStatus.borderColor} flex-shrink-0 bg-white shadow-lg`}>
-            <AvatarImage src={(pub as any)?.logoUrl} alt={(pub as any)?.name} className="object-contain p-1" />
-            <AvatarFallback className="bg-primary text-white text-xl font-bold">
+          <Avatar className={`h-20 w-20 sm:h-24 sm:w-24 ring-3 ${openStatus.borderColor} flex-shrink-0 bg-white shadow-xl border-2 border-white`}>
+            <AvatarImage src={(pub as any)?.logoUrl} alt={(pub as any)?.name} className="object-contain p-1.5" />
+            <AvatarFallback className="bg-stone-800 text-white text-2xl font-bold">
               {(pub as any)?.name?.[0] || 'P'}
             </AvatarFallback>
           </Avatar>
@@ -731,8 +731,7 @@ export default function PubDetail() {
                 <button
                   title="Gestisci pub"
                   data-testid="button-manage"
-                  className="h-9 w-9 flex items-center justify-center rounded-full text-white transition-all hover:opacity-90 shadow-sm"
-                  style={{ background: 'linear-gradient(135deg, #F77104 0%, #f98a0e 50%, #f5a623 100%)' }}
+                  className="h-9 w-9 flex items-center justify-center rounded-full text-white bg-primary hover:bg-primary/90 transition-all shadow-sm"
                 >
                   <Settings className="h-4 w-4" />
                 </button>
@@ -939,7 +938,7 @@ export default function PubDetail() {
                   {/* Hours */}
                   <button
                     onClick={handleShowOpeningHours}
-                    className="w-full flex items-center gap-3 p-3 rounded-xl bg-white dark:bg-[hsl(25,14%,10%)] border border-stone-100 dark:border-[hsl(25,12%,16%)] hover:bg-amber-50 dark:hover:bg-amber-950/10 transition-colors text-left shadow-sm"
+                    className="w-full flex items-center gap-3 p-3 rounded-xl bg-white dark:bg-[hsl(25,14%,10%)] border border-stone-100 dark:border-[hsl(25,12%,16%)] hover:bg-stone-50 dark:hover:bg-stone-900/20 transition-colors text-left shadow-sm"
                   >
                     <div className="p-2.5 rounded-xl bg-amber-50 dark:bg-amber-950/30 flex-shrink-0">
                       <Clock className="h-4 w-4 text-amber-600 dark:text-amber-400" />

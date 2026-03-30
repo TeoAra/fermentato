@@ -248,65 +248,12 @@ export default function AuthPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background flex">
-      {/* Left branding panel — hidden on mobile */}
-      <div className="hidden lg:flex lg:w-[420px] xl:w-[480px] flex-shrink-0 bg-[hsl(25,30%,12%)] dark:bg-[hsl(25,30%,8%)] flex-col justify-between p-10 relative overflow-hidden">
-        {/* Decorative circles */}
-        <div className="absolute -top-24 -right-24 w-72 h-72 rounded-full bg-primary/10 pointer-events-none" />
-        <div className="absolute bottom-10 -left-16 w-56 h-56 rounded-full bg-primary/10 pointer-events-none" />
-        <div className="absolute top-1/2 right-8 w-32 h-32 rounded-full bg-primary/5 pointer-events-none" />
-
-        {/* Logo */}
-        <div>
-          <div className="flex items-center gap-3 mb-2">
-            <div className="w-10 h-10 bg-gradient-to-br from-[hsl(24,93%,49%)] to-[hsl(20,95%,42%)] rounded-xl flex items-center justify-center flex-shrink-0">
-              <Beer className="w-5 h-5 text-white" />
-            </div>
-            <span className="text-white font-bold text-xl tracking-tight">fermenta.to</span>
-          </div>
-          <p className="text-orange-100/50 text-xs mt-1 ml-[52px]">Bevi Artigianale</p>
-        </div>
-
-        {/* Central content */}
-        <div className="space-y-8">
-          <div>
-            <h2 className="text-3xl font-bold text-white leading-tight">
-              Scopri il meglio<br />
-              <span className="text-primary dark:text-orange-400">della birra artigianale</span><br />
-              italiana e del mondo.
-            </h2>
-            <p className="mt-4 text-orange-100/50 text-sm leading-relaxed max-w-xs">
-              Migliaia di birre, birrifici e locali selezionati. Tieni traccia di quello che assaggi, scopri nuovi posti, condividi le tue esperienze.
-            </p>
-          </div>
-
-          <div className="space-y-3">
-            {[
-              "Catalogo di oltre 1 milione di birre",
-              "Mappa dei pub e birrifici italiani",
-              "Valutazioni e recensioni dalla community",
-            ].map((item) => (
-              <div key={item} className="flex items-center gap-3">
-                <div className="w-5 h-5 rounded-full bg-primary/20 flex items-center justify-center flex-shrink-0">
-                  <Check className="w-3 h-3 text-primary dark:text-orange-400" />
-                </div>
-                <span className="text-orange-100/70 text-sm">{item}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Bottom tagline */}
-        <p className="text-orange-100/30 text-xs">© {new Date().getFullYear()} Fermenta.to</p>
-      </div>
-
-      {/* Right form panel */}
-      <div className="flex-1 flex items-center justify-center p-4 sm:p-8 overflow-y-auto">
-        <div className="w-full max-w-md bg-white dark:bg-[hsl(25,14%,10%)] rounded-2xl border border-stone-100 dark:border-[hsl(25,12%,16%)] shadow-sm p-6 md:p-8">
-          {/* Mobile logo */}
-          <div className="flex items-center gap-2.5 mb-8 lg:hidden">
-            <div className="w-9 h-9 bg-gradient-to-br from-[hsl(24,93%,49%)] to-[hsl(20,95%,42%)] rounded-xl flex items-center justify-center">
-              <Beer className="w-4.5 h-4.5 text-white" />
+    <div className="min-h-screen bg-[#FFF8F2] dark:bg-background flex items-center justify-center p-4 sm:p-8 overflow-y-auto">
+      <div className="w-full max-w-md bg-white dark:bg-[hsl(25,14%,10%)] rounded-3xl border border-stone-100 dark:border-[hsl(25,12%,16%)] shadow-sm p-6 md:p-8">
+          {/* Logo */}
+          <div className="flex items-center gap-2.5 mb-8">
+            <div className="w-9 h-9 bg-gradient-to-br from-[hsl(24,78%,51%)] to-[hsl(20,82%,44%)] rounded-xl flex items-center justify-center">
+              <Beer className="w-4 h-4 text-white" />
             </div>
             <span className="font-bold text-lg text-foreground tracking-tight">fermenta.to</span>
           </div>
@@ -743,6 +690,5 @@ export default function AuthPage() {
           </div>
         </div>
       </div>
-    </div>
   );
 }

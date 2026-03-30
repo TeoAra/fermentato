@@ -461,16 +461,18 @@ export default function BreweryDetail() {
               className="w-full h-full object-cover"
             />
           ) : (
-            <div className="w-full h-full" style={{ background: 'linear-gradient(135deg, #b45309 0%, #d97706 40%, #f59e0b 70%, #fbbf24 100%)' }} />
+            <div className="w-full h-full relative overflow-hidden" style={{ background: 'linear-gradient(135deg, hsl(25,18%,10%) 0%, hsl(20,15%,18%) 50%, hsl(30,12%,24%) 100%)' }}>
+              <div className="absolute inset-0 opacity-[0.04]" style={{ backgroundImage: 'repeating-linear-gradient(45deg, #fff 0, #fff 1px, transparent 0, transparent 50%)', backgroundSize: '18px 18px' }} />
+            </div>
           )}
-          {/* Dark gradient overlay */}
-          <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-black/10 to-transparent" />
+          {/* Gradient overlay */}
+          <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/15 to-transparent" />
           
           {/* Brewery logo bottom-left overlapping */}
           <div className="absolute bottom-4 left-4 z-20">
-            <Avatar className="w-20 h-20 rounded-2xl border-4 border-white shadow-lg bg-white overflow-hidden">
-              <AvatarImage src={brewery?.logoUrl} alt={brewery?.name} className="object-contain p-1" />
-              <AvatarFallback className="bg-primary text-white text-2xl font-bold">
+            <Avatar className="w-24 h-24 rounded-2xl border-4 border-white shadow-xl bg-white overflow-hidden">
+              <AvatarImage src={brewery?.logoUrl} alt={brewery?.name} className="object-contain p-1.5" />
+              <AvatarFallback className="bg-stone-800 text-white text-3xl font-bold">
                 {brewery?.name?.[0] || 'B'}
               </AvatarFallback>
             </Avatar>
@@ -666,11 +668,11 @@ export default function BreweryDetail() {
                                     <img 
                                       src={beer.imageUrl} 
                                       alt={beer.name} 
-                                      className="w-12 h-12 rounded-2xl object-cover lightbox-img"
+                                      className="w-14 h-14 rounded-2xl object-contain p-0.5 lightbox-img bg-stone-50 dark:bg-stone-900/30"
                                     />
                                   ) : (
-                                    <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-orange-400 to-primary flex items-center justify-center">
-                                      <Beer className="h-6 w-6 text-white" />
+                                    <div className="w-14 h-14 rounded-2xl bg-stone-100 dark:bg-stone-800 flex items-center justify-center">
+                                      <Beer className="h-6 w-6 text-stone-400 dark:text-stone-500" />
                                     </div>
                                   )}
                                   {isBeerTasted(beer.id) && (
@@ -703,7 +705,7 @@ export default function BreweryDetail() {
                                       );
                                     })()}
                                     {beer.abv && (
-                                      <span className="bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-400 text-[10px] font-bold px-2 py-0.5 rounded-full">
+                                      <span className="bg-stone-50 dark:bg-stone-900/20 text-stone-600 dark:text-stone-400 text-[10px] font-bold px-2 py-0.5 rounded-full">
                                         {beer.abv}%
                                       </span>
                                     )}
@@ -739,7 +741,7 @@ export default function BreweryDetail() {
                               className="text-primary font-bold rounded-xl hover:bg-stone-50"
                               onClick={() => setVisibleCount(filteredBeers.length)}
                             >
-                              Mostra tutte le ${filteredBeers.length} birre
+                              Mostra tutte le {filteredBeers.length} birre
                             </Button>
                           </div>
                         )}
@@ -922,7 +924,7 @@ export default function BreweryDetail() {
                                 {[pub.city, pub.region].filter(Boolean).join(", ")}
                               </p>
                               <p className="text-[10px] text-primary font-bold mt-1 uppercase">
-                                ${pub.beer_count} ${Number(pub.beer_count) === 1 ? "birra" : "birre"} ON TAP
+                                {pub.beer_count} {Number(pub.beer_count) === 1 ? "birra" : "birre"} ON TAP
                               </p>
                             </div>
                           </div>
