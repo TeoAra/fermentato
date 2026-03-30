@@ -163,20 +163,12 @@ export default function Landing() {
   const businessReveal = useScrollReveal();
 
   return (
-    <div className="min-h-screen bg-[#FFF8F2] dark:bg-[hsl(25,14%,7%)] slide-up">
+    <div className="min-h-screen bg-background slide-up">
 
       {/* ─── HERO ────────────────────────────────────────────────────────── */}
       <section className="relative overflow-hidden">
-        {/* Background layers */}
         <div className="absolute inset-0">
-          <div className="absolute inset-0 bg-[radial-gradient(ellipse_80%_60%_at_50%_-10%,rgba(247,113,4,0.12),transparent)] dark:opacity-40" />
-          <div
-            className="absolute inset-0 opacity-[0.025] dark:opacity-[0.04]"
-            style={{
-              backgroundImage: "radial-gradient(circle, #F77104 1px, transparent 1px)",
-              backgroundSize: "28px 28px",
-            }}
-          />
+          <div className="absolute inset-0 bg-[radial-gradient(ellipse_80%_60%_at_50%_-10%,rgba(247,113,4,0.07),transparent)]" />
         </div>
 
         <div className="relative max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pt-20 pb-24 lg:pt-12 lg:pb-32 text-center">
@@ -196,9 +188,7 @@ export default function Landing() {
             style={{ animationDelay: '80ms' }}
           >
             Trova la birra perfetta.<br />
-            <span style={{ background: "linear-gradient(135deg, #a78545 0%, #c9a05a 45%, #e8c47a 100%)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text" }}>
-              Sempre vicina a te.
-            </span>
+            <span className="text-primary">Sempre vicina a te.</span>
           </h1>
 
           {/* Sub-headline */}
@@ -260,7 +250,7 @@ export default function Landing() {
         </div>
 
         {/* Smooth fade into next section */}
-        <div className="absolute bottom-0 left-0 right-0 h-16 bg-gradient-to-b from-transparent to-[#FFF8F2] dark:to-[hsl(25,14%,7%)]" />
+        <div className="absolute bottom-0 left-0 right-0 h-16 bg-gradient-to-b from-transparent to-background" />
       </section>
 
       {/* ─── SOCIAL PROOF BAR ────────────────────────────────────────────── */}

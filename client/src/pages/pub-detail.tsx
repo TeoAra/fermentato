@@ -22,6 +22,7 @@ import {
   Sparkles,
   MapPin,
   ShieldCheck,
+  ChevronRight,
 } from "lucide-react";
 import Footer from "@/components/footer";
 import TapList from "@/components/tap-list";
@@ -524,7 +525,7 @@ export default function PubDetail() {
 
   if (!pub) {
     return (
-      <div className="min-h-screen bg-[#FFF8F2] dark:bg-background flex items-center justify-center">
+      <div className="min-h-screen bg-background dark:bg-background flex items-center justify-center">
         <div className="text-center space-y-4">
           <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-red-500 to-pink-600 mx-auto flex items-center justify-center">
             <XCircle className="w-8 h-8 text-white" />
@@ -543,6 +544,7 @@ export default function PubDetail() {
 
   const isOpen = isOpenNow((pub as any)?.openingHours);
   const openStatus = getOpenStatus((pub as any)?.openingHours);
+  const activeTapCount = Array.isArray(tapList) ? tapList.filter((t: any) => t.isActive && t.isVisible !== false).length : 0;
 
   // Quick Actions Handlers
   const handleShowOpeningHours = () => {
@@ -561,7 +563,7 @@ export default function PubDetail() {
   const seoUrl = `https://fermenta.to/pub/${id}`;
 
   return (
-    <div className="min-h-screen bg-[#FFF8F2] dark:bg-background slide-up">
+    <div className="min-h-screen bg-background dark:bg-background slide-up">
       <Helmet>
         <title>{seoTitle}</title>
         <meta name="description" content={seoDesc} />
@@ -588,27 +590,27 @@ export default function PubDetail() {
       </Helmet>
       
       {/* ── HERO ── */}
-      <div className="relative h-[260px] sm:h-[340px] md:h-[420px] overflow-hidden">
+      <div className="relative h-[320px] sm:h-[400px] md:h-[440px] overflow-hidden">
         <img
           src={(pub as any)?.coverImageUrl || "https://images.unsplash.com/photo-1514933651103-005eec06c04b?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&h=600"}
           alt={`${(pub as any)?.name} - Copertina`}
           className="w-full h-full object-cover"
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/10 to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-black/10" />
 
-        {/* Logo centered — focal point */}
-        <div className="absolute inset-0 flex items-center justify-center z-20">
-          <Avatar className={`h-36 w-36 sm:h-44 sm:w-44 rounded-full border-[5px] border-white shadow-[0_8px_40px_rgba(0,0,0,0.35)] bg-white overflow-hidden ring-4 ${openStatus.borderColor}`}>
+        {/* Logo — top center */}
+        <div className="absolute top-8 sm:top-10 inset-x-0 flex justify-center z-20">
+          <Avatar className={`h-28 w-28 sm:h-36 sm:w-36 rounded-full border-[4px] border-white shadow-[0_8px_40px_rgba(0,0,0,0.4)] bg-white overflow-hidden ring-4 ${openStatus.borderColor}`}>
             <AvatarImage src={(pub as any)?.logoUrl} alt={(pub as any)?.name} className="object-cover" />
-            <AvatarFallback className="bg-stone-800 text-white text-5xl font-bold">
+            <AvatarFallback className="bg-stone-800 text-white text-4xl font-bold">
               {(pub as any)?.name?.[0] || 'P'}
             </AvatarFallback>
           </Avatar>
         </div>
 
-        {/* Name + badges at bottom */}
-        <div className="absolute bottom-0 left-0 right-0 px-4 pb-3 z-20">
-          <div className="flex items-center gap-2 flex-wrap">
+        {/* Bottom content — name + CTA */}
+        <div className="absolute bottom-0 inset-x-0 px-4 pb-5 z-20 text-center">
+          <div className="flex items-center justify-center gap-2 flex-wrap mb-0.5">
             <h1 className="display-serif text-2xl sm:text-3xl md:text-4xl text-white leading-tight drop-shadow-md">
               {(pub as any)?.name}
             </h1>
@@ -617,24 +619,21 @@ export default function PubDetail() {
                 <ShieldCheck className="h-3.5 w-3.5 text-white" />
               </div>
             )}
-            {isAdmin && (
-              <Badge variant="secondary" className="bg-primary/20 text-white border-primary/30 backdrop-blur-sm text-[10px] py-0 px-1.5 uppercase tracking-wider font-bold">
-                Admin
-              </Badge>
-            )}
-            {(favoritesCountData as any)?.count > 0 && (
-              <div className="flex items-center gap-1 bg-white/20 backdrop-blur-sm border border-white/30 rounded-full px-2 py-0.5 flex-shrink-0">
-                <Heart className="h-3 w-3 text-red-300 fill-current" />
-                <span className="text-white text-xs font-semibold leading-none">{(favoritesCountData as any).count}</span>
-              </div>
-            )}
           </div>
-          {(pub as any)?.city && (
-            <p className="text-white/80 text-sm mt-0.5 flex items-center gap-1">
-              <MapPin className="h-3 w-3 flex-shrink-0" />
-              {(pub as any).city}
-            </p>
-          )}
+          <p className="text-white/75 text-sm drop-shadow flex items-center justify-center gap-2">
+            {(pub as any)?.city && (
+              <span className="flex items-center gap-1">
+                <MapPin className="h-3 w-3 flex-shrink-0" />
+                {(pub as any).city}
+              </span>
+            )}
+            {activeTapCount > 0 && (
+              <>
+                {(pub as any)?.city && <span className="opacity-50">·</span>}
+                <span>{activeTapCount} spine attive oggi</span>
+              </>
+            )}
+          </p>
         </div>
       </div>
 
@@ -751,8 +750,8 @@ export default function PubDetail() {
           <div className="lg:col-span-3">
             {/* ── TABS ── pill-container style (come da mockup) */}
             <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-                <div className="z-10 px-4 py-3 bg-[#FFF8F2] dark:bg-background border-b border-stone-100 dark:border-stone-700/30">
-                  <div className="flex gap-1 bg-[#FFF8F2] dark:bg-[hsl(25,14%,12%)] rounded-2xl p-1 overflow-x-auto scrollbar-hide">
+                <div className="z-10 px-4 py-3 bg-background dark:bg-background border-b border-stone-100 dark:border-stone-700/30">
+                  <div className="flex gap-1 bg-background dark:bg-[hsl(25,14%,12%)] rounded-2xl p-1 overflow-x-auto scrollbar-hide">
                     <button
                       data-testid="tab-taplist"
                       onClick={() => setActiveTab('taplist')}

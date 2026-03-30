@@ -1,12 +1,10 @@
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { Link } from "wouter";
-import { MapPin, Store, ArrowLeft, Clock, Map } from "lucide-react";
+import { MapPin, Store, ArrowLeft, Map, ChevronDown, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { PubMap } from "@/components/pub-map";
+import PubCard from "@/components/pub-card";
 
 function isOpenNow(openingHours: any) {
   if (!openingHours) return false;
@@ -32,43 +30,6 @@ const statiItaliani = [
   "Molise", "Piemonte", "Puglia", "Sardegna", "Sicilia", "Toscana",
   "Trentino-Alto Adige", "Umbria", "Valle d'Aosta", "Veneto"
 ];
-
-function PubSquareCard({ pub }: { pub: any }) {
-  const open = isOpenNow(pub.openingHours);
-  return (
-    <Link href={`/pub/${pub.slug || pub.id}`}>
-      <Card className="overflow-hidden hover:shadow-md transition-all duration-200 cursor-pointer group h-48 border border-stone-100 dark:border-[hsl(25,12%,16%)] bg-white dark:bg-[hsl(25,14%,10%)] hover:border-primary/20 dark:hover:border-primary/30 rounded-2xl">
-        <CardContent className="p-4 h-full flex flex-col">
-          <div className="relative w-full h-24 mb-3 rounded-xl overflow-hidden bg-stone-50 dark:bg-[hsl(25,14%,14%)]">
-            <img
-              src={pub.logoUrl || "https://images.unsplash.com/photo-1514933651103-005eec06c04b?ixlib=rb-4.0.3&auto=format&fit=crop&w=200&h=150"}
-              alt={pub.name}
-              className="w-full h-full object-cover group-hover:scale-105 transition-transform"
-            />
-          </div>
-          <div className="flex-1 flex flex-col">
-            <h3 className="font-semibold text-sm mb-1 line-clamp-1 text-foreground group-hover:text-primary transition-colors">
-              {pub.name}
-            </h3>
-            <div className="flex items-center gap-1 text-xs text-muted-foreground mb-2">
-              <MapPin className="w-3 h-3 flex-shrink-0" />
-              <span className="line-clamp-1">{pub.address}</span>
-            </div>
-            <div className="flex flex-wrap gap-1 mt-auto">
-              <Badge variant="outline" className="text-xs px-2 py-0.5 h-auto border-stone-200 dark:border-stone-700/30 text-orange-700 dark:text-orange-300">
-                <Store className="w-3 h-3 mr-1" />Pub
-              </Badge>
-              <Badge className={`text-xs px-2 py-0.5 h-auto border-0 ${open ? 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-800 dark:text-emerald-400' : 'bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-400'}`}>
-                <Clock className="w-3 h-3 mr-1" />
-                {open ? 'Aperto' : 'Chiuso'}
-              </Badge>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-    </Link>
-  );
-}
 
 type ViewMode = "list" | "map";
 
@@ -98,11 +59,9 @@ export default function ExplorePubs() {
     ? allPubs.map((p: any) => ({ ...p, type: "pub" as const }))
     : [];
 
-  // Full-screen map mode
   if (viewMode === "map") {
     return (
       <div className="fixed inset-x-0 bottom-0 top-16 z-40 bg-background">
-        {/* Floating header controls */}
         <div className="absolute top-3 left-3 right-3 z-50 flex items-center gap-2 pointer-events-none">
           <button
             onClick={() => setViewMode("list")}
@@ -112,16 +71,12 @@ export default function ExplorePubs() {
             Lista
           </button>
           <div className="flex-1 pointer-events-auto flex items-center gap-2 px-3 py-2 rounded-2xl bg-white dark:bg-[hsl(25,14%,10%)] shadow-lg border border-stone-100 dark:border-[hsl(25,12%,16%)]">
-            <div className="w-6 h-6 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: 'linear-gradient(135deg, #F77104, #f5a623)' }}>
-              <Store className="h-3.5 w-3.5 text-white" />
-            </div>
+            <Store className="h-4 w-4 text-primary flex-shrink-0" />
             <span className="text-sm font-bold text-foreground truncate">Mappa pub</span>
           </div>
         </div>
-
-        {/* Full-screen map (leaves room for bottom nav ~56px) */}
         {isLoading ? (
-          <div className="w-full h-full bg-stone-50 dark:bg-[hsl(25,14%,12%)] animate-pulse" />
+          <div className="w-full h-full bg-stone-100 dark:bg-[hsl(25,14%,12%)] animate-pulse" />
         ) : (
           <PubMap pins={mapPins} height="100%" />
         )}
@@ -130,85 +85,113 @@ export default function ExplorePubs() {
   }
 
   return (
-    <div className="min-h-screen bg-[#FFF8F2] dark:bg-[hsl(25,14%,7%)] slide-up">
+    <div className="min-h-screen bg-background slide-up">
       {/* Header */}
-      <div className="bg-white dark:bg-[hsl(25,14%,8%)] border-b border-stone-100 dark:border-[hsl(25,12%,14%)] shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-5">
+      <div className="bg-white dark:bg-[hsl(25,14%,8%)] border-b border-stone-100 dark:border-[hsl(25,12%,14%)]">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex items-center justify-between gap-4">
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-3">
               <Link href="/">
-                <Button variant="ghost" size="sm" className="text-primary hover:text-primary/80 hover:bg-stone-50 dark:hover:bg-stone-900/20 -ml-2">
-                  <ArrowLeft className="w-4 h-4 mr-2" />
-                  Torna alla Home
-                </Button>
+                <button className="p-2 rounded-xl text-stone-400 hover:text-stone-700 hover:bg-stone-100 dark:hover:bg-stone-800 transition-colors">
+                  <ArrowLeft className="w-4 h-4" />
+                </button>
               </Link>
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-2xl bg-primary flex items-center justify-center flex-shrink-0">
-                  <Store className="h-5 w-5 text-white" />
-                </div>
-                <div>
-                  <h1 className="text-2xl font-bold text-foreground tracking-tight">Esplora Tutti i Pub</h1>
-                  <p className="text-sm text-muted-foreground">Organizzati per regione</p>
-                </div>
+              <div>
+                <h1 className="text-xl font-bold text-stone-900 dark:text-white">Pub & Locali</h1>
+                <p className="text-xs text-stone-400 dark:text-stone-500">
+                  {Array.isArray(allPubs) ? `${allPubs.length} locali` : 'Caricamento…'}
+                </p>
               </div>
             </div>
-            {/* Mappa toggle */}
             <button
               onClick={() => setViewMode("map")}
-              className="flex items-center gap-1.5 px-3 py-2 rounded-2xl text-xs font-bold bg-stone-50 dark:bg-[hsl(25,14%,12%)] text-primary hover:bg-stone-100 transition-colors border border-stone-200 dark:border-[hsl(25,12%,16%)]"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold bg-stone-100 dark:bg-stone-800 text-stone-700 dark:text-stone-300 hover:bg-stone-200 dark:hover:bg-stone-700 transition-colors"
             >
               <Map className="w-3.5 h-3.5" />
-              <span>Mappa</span>
+              Mappa
             </button>
           </div>
         </div>
       </div>
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 pb-24">
         {isLoading ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {[...Array(6)].map((_, i) => (
-              <div key={i} className="bg-stone-50 dark:bg-[hsl(25,14%,12%)] rounded-2xl h-48 animate-pulse" />
+          <div className="space-y-3">
+            {[...Array(5)].map((_, i) => (
+              <div key={i} className="bg-white dark:bg-[hsl(25,14%,10%)] rounded-2xl h-14 animate-pulse" />
             ))}
           </div>
         ) : (
-          <div className="space-y-4">
+          <div className="space-y-3">
             {statiItaliani.map(state => {
               const statePubs = pubsByState[state] || [];
               if (statePubs.length === 0) return null;
+              const isOpen = openStates.includes(state);
               return (
-                <Collapsible
-                  key={state}
-                  open={openStates.includes(state)}
-                  onOpenChange={() => toggleState(state)}
-                >
-                  <CollapsibleTrigger asChild>
-                    <Button
-                      variant="outline"
-                      className="w-full justify-between text-left h-auto p-4 mb-2 bg-white dark:bg-[hsl(25,14%,10%)] border-stone-200 dark:border-[hsl(25,12%,16%)] text-foreground hover:bg-stone-50 dark:hover:bg-stone-900/10 hover:border-primary/30 dark:hover:border-primary/20 rounded-2xl transition-colors"
-                    >
-                      <div className="flex items-center gap-3">
-                        <MapPin className="w-5 h-5 text-primary flex-shrink-0" />
-                        <span className="font-semibold text-base">{state}</span>
-                        <span className="text-xs font-semibold text-orange-700 dark:text-orange-300 bg-stone-100 dark:bg-stone-900/30 px-2 py-0.5 rounded-full">
-                          {statePubs.length} pub
-                        </span>
-                      </div>
-                      <div className="text-muted-foreground text-lg font-light">
-                        {openStates.includes(state) ? '−' : '+'}
-                      </div>
-                    </Button>
-                  </CollapsibleTrigger>
-                  <CollapsibleContent>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 mb-6">
-                      {statePubs.map((pub: any) => (
-                        <PubSquareCard key={pub.id} pub={pub} />
+                <div key={state} className="bg-white dark:bg-[hsl(25,14%,10%)] rounded-2xl overflow-hidden border border-stone-100/70 dark:border-stone-700/20 shadow-sm">
+                  {/* Region header */}
+                  <button
+                    className="w-full flex items-center justify-between px-4 py-3.5 text-left hover:bg-stone-50 dark:hover:bg-stone-800/30 transition-colors"
+                    onClick={() => toggleState(state)}
+                  >
+                    <div className="flex items-center gap-2.5">
+                      <MapPin className="w-4 h-4 text-primary flex-shrink-0" />
+                      <span className="font-semibold text-[15px] text-stone-900 dark:text-white">{state}</span>
+                      <span className="text-xs font-bold text-stone-400 dark:text-stone-500 bg-stone-100 dark:bg-stone-800 px-2 py-0.5 rounded-full">
+                        {statePubs.length}
+                      </span>
+                    </div>
+                    {isOpen ? (
+                      <ChevronDown className="w-4 h-4 text-stone-400 flex-shrink-0" />
+                    ) : (
+                      <ChevronRight className="w-4 h-4 text-stone-400 flex-shrink-0" />
+                    )}
+                  </button>
+
+                  {/* Pub rows */}
+                  {isOpen && (
+                    <div className="border-t border-stone-100 dark:border-stone-800/60">
+                      {statePubs.map((pub: any, idx: number) => (
+                        <PubCard
+                          key={pub.id}
+                          pub={pub}
+                          isLast={idx === statePubs.length - 1}
+                        />
                       ))}
                     </div>
-                  </CollapsibleContent>
-                </Collapsible>
+                  )}
+                </div>
               );
             })}
+
+            {/* Other/unlisted */}
+            {(() => {
+              const others = pubsByState['Altri'] || [];
+              if (others.length === 0) return null;
+              const isOpen = openStates.includes('Altri');
+              return (
+                <div className="bg-white dark:bg-[hsl(25,14%,10%)] rounded-2xl overflow-hidden border border-stone-100/70 dark:border-stone-700/20 shadow-sm">
+                  <button
+                    className="w-full flex items-center justify-between px-4 py-3.5 text-left hover:bg-stone-50 dark:hover:bg-stone-800/30 transition-colors"
+                    onClick={() => toggleState('Altri')}
+                  >
+                    <div className="flex items-center gap-2.5">
+                      <Store className="w-4 h-4 text-stone-400 flex-shrink-0" />
+                      <span className="font-semibold text-[15px] text-stone-900 dark:text-white">Altri</span>
+                      <span className="text-xs font-bold text-stone-400 bg-stone-100 dark:bg-stone-800 px-2 py-0.5 rounded-full">{others.length}</span>
+                    </div>
+                    {isOpen ? <ChevronDown className="w-4 h-4 text-stone-400" /> : <ChevronRight className="w-4 h-4 text-stone-400" />}
+                  </button>
+                  {isOpen && (
+                    <div className="border-t border-stone-100 dark:border-stone-800/60">
+                      {others.map((pub: any, idx: number) => (
+                        <PubCard key={pub.id} pub={pub} isLast={idx === others.length - 1} />
+                      ))}
+                    </div>
+                  )}
+                </div>
+              );
+            })()}
           </div>
         )}
       </main>

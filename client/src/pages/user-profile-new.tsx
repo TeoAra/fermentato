@@ -455,7 +455,7 @@ export default function UserProfile() {
   const isBreweryOwner = typedUser?.userType === 'brewery_owner' || typedUser?.activeRole === 'brewery_owner';
 
   return (
-    <div className="min-h-screen bg-[#FFF8F2] dark:bg-background">
+    <div className="min-h-screen bg-background dark:bg-background">
     <div className="container mx-auto px-4 py-8 max-w-4xl">
       <div className="space-y-6">
         {/* Role switcher banner for pub/brewery owners */}
@@ -550,7 +550,7 @@ export default function UserProfile() {
               <button
                 key={value}
                 onClick={() => setActiveProfileTab(value as any)}
-                className={`flex-1 px-3 py-2 rounded-xl text-sm font-bold transition-all ${activeProfileTab === value ? 'bg-[#FFF8F2] dark:bg-[hsl(25,14%,12%)] text-primary dark:text-orange-400 shadow-sm' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'}`}
+                className={`flex-1 px-3 py-2 rounded-xl text-sm font-bold transition-all ${activeProfileTab === value ? 'bg-background dark:bg-[hsl(25,14%,12%)] text-primary dark:text-orange-400 shadow-sm' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'}`}
               >
                 {label}
               </button>

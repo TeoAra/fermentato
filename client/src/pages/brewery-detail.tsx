@@ -431,7 +431,7 @@ export default function BreweryDetail() {
   const seoUrl = `https://fermenta.to/brewery/${id}`;
 
   return (
-      <div className="min-h-screen bg-[#FFF8F2] dark:bg-background slide-up">
+      <div className="min-h-screen bg-background dark:bg-background slide-up">
       <Helmet>
         <title>{seoTitle}</title>
         <meta name="description" content={seoDesc} />
@@ -578,7 +578,7 @@ export default function BreweryDetail() {
             {/* Tabs Section */}
             <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
               <div className="pb-4 overflow-x-auto px-4 md:px-8 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
-                <TabsList className="bg-[#FFF8F2] dark:bg-[hsl(25,14%,12%)] rounded-2xl p-1 flex gap-1 w-max min-w-full h-auto">
+                <TabsList className="bg-background dark:bg-[hsl(25,14%,12%)] rounded-2xl p-1 flex gap-1 w-max min-w-full h-auto">
                   <TabsTrigger
                     value="birre"
                     className="data-[state=active]:bg-white dark:data-[state=active]:bg-[hsl(25,14%,10%)] data-[state=active]:text-primary data-[state=active]:shadow-sm rounded-xl font-bold px-4 py-2 text-sm transition-all text-muted-foreground hover:text-foreground whitespace-nowrap flex-1"

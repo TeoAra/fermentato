@@ -78,7 +78,7 @@ const SupportoPage       = lazy(() => import("@/pages/static-page").then(m => ({
 // ─────────────────────────────────────────────────────────────────────────────
 
 const PageSkeleton = () => (
-  <div className="min-h-screen bg-[#FFF8F2] dark:bg-[hsl(25,14%,7%)] overflow-hidden fade-in">
+  <div className="min-h-screen bg-background dark:bg-[hsl(25,14%,7%)] overflow-hidden fade-in">
     <div className="max-w-2xl mx-auto px-6 pt-20 pb-12 text-center space-y-5">
       {/* Brand identity: hop icon + wordmark shimmer */}
       <div className="flex items-center justify-center gap-2 mb-2">

@@ -288,130 +288,89 @@ export default function ExploreBreweries() {
   }, [countries]);
 
   return (
-    <div className="min-h-screen bg-[#FFF8F2] dark:bg-[hsl(25,14%,7%)] slide-up">
-      {/* Hero */}
-      <div className="relative bg-gradient-to-br from-[hsl(24,93%,49%)] via-[hsl(22,92%,46%)] to-[hsl(20,95%,42%)] dark:from-[hsl(24,80%,28%)] dark:via-[hsl(22,78%,24%)] dark:to-[hsl(20,75%,20%)] overflow-hidden">
-        <div className="absolute inset-0 opacity-10" style={{ backgroundImage: "url('/brewery-cover.jpg')", backgroundSize: "cover", backgroundPosition: "center" }} />
-        <div className="absolute inset-0 bg-gradient-to-br from-[hsl(24,93%,49%)]/90 to-[hsl(20,95%,42%)]/80" />
-        <div className="relative max-w-5xl mx-auto px-4 sm:px-6 py-10">
-          <div className="flex items-center gap-3 mb-6">
+    <div className="min-h-screen bg-background slide-up">
+      {/* Header */}
+      <div className="bg-white dark:bg-[hsl(25,14%,8%)] border-b border-stone-100 dark:border-[hsl(25,12%,14%)]">
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 py-4">
+          <div className="flex items-center gap-3 mb-3">
             <Link href="/">
-              <Button variant="ghost" size="sm" className="text-white/80 hover:text-white hover:bg-white/10">
-                <ArrowLeft className="w-4 h-4 mr-1" />
-                Home
-              </Button>
+              <button className="p-2 rounded-xl text-stone-400 hover:text-stone-700 hover:bg-stone-100 dark:hover:bg-stone-800 transition-colors">
+                <ArrowLeft className="w-4 h-4" />
+              </button>
             </Link>
-          </div>
-
-          <div className="text-center mb-6">
-            <div className="flex justify-center mb-3">
-              <div className="bg-white/20 rounded-full p-3">
-                <Globe className="w-8 h-8 text-white" />
-              </div>
+            <div>
+              <h1 className="text-xl font-bold text-stone-900 dark:text-white">Birrifici</h1>
+              <p className="text-xs text-stone-400 dark:text-stone-500">
+                {total > 0
+                  ? `${total.toLocaleString("it-IT")} birrifici${selectedCountry ? ` · ${getItalianName(selectedCountry)}` : quickFilter === "italy" ? " italiani" : quickFilter === "international" ? " internazionali" : ""}`
+                  : "Caricamento…"}
+              </p>
             </div>
-            <h1 className="text-3xl sm:text-4xl font-extrabold text-white mb-2 tracking-tight">
-              Esplora i Birrifici del Mondo
-            </h1>
-            <p className="text-orange-50 text-base">
-              {total > 0
-                ? `${total.toLocaleString("it-IT")} birrifici${selectedCountry ? ` in ${getItalianName(selectedCountry)}` : quickFilter === "italy" ? " italiani" : quickFilter === "international" ? " internazionali" : " in tutto il mondo"}`
-                : "Scopri i migliori birrifici artigianali dal mondo"}
-            </p>
           </div>
 
-          {/* Search bar */}
-          <div className="max-w-xl mx-auto relative mb-6">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 z-10" />
+          {/* Search */}
+          <div className="relative mb-3">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-stone-400 z-10" />
             <Input
               value={searchInput}
               onChange={e => setSearchInput(e.target.value)}
-              placeholder="Cerca birrificio per nome..."
-              className="pl-12 pr-12 py-3 h-12 text-base rounded-xl border-0 shadow-lg bg-white dark:bg-neutral-800 text-gray-900 dark:text-white focus-visible:ring-2 focus-visible:ring-[hsl(24,93%,49%)]"
+              placeholder="Cerca birrificio…"
+              className="pl-9 pr-9 rounded-xl border-stone-200 dark:border-stone-700/30 focus-visible:ring-primary/30 bg-stone-50 dark:bg-stone-900/30"
             />
             {searchInput && (
               <button
                 onClick={() => { setSearchInput(""); setDebouncedQ(""); setPage(1); }}
-                className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-stone-400 hover:text-stone-600"
               >
                 <X className="w-4 h-4" />
               </button>
             )}
           </div>
 
-          {/* Quick filters — prominenti nell'hero */}
-          <div className="flex flex-wrap justify-center gap-2">
-            <button
-              onClick={() => handleQuickFilter("all")}
-              className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-semibold transition-all border ${
-                quickFilter === "all" && !selectedCountry
-                  ? "bg-white text-primary border-white shadow-md"
-                  : "bg-white/15 text-white border-white/30 hover:bg-white/25"
-              }`}
-            >
-              <Globe className="w-3.5 h-3.5" />
-              Tutti
-            </button>
-            <button
-              onClick={() => handleQuickFilter("italy")}
-              className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-semibold transition-all border ${
-                quickFilter === "italy" && !selectedCountry
-                  ? "bg-white text-primary border-white shadow-md"
-                  : "bg-white/15 text-white border-white/30 hover:bg-white/25"
-              }`}
-            >
-              🇮🇹 Italia
-              {italyCount > 0 && <span className={`text-xs ${quickFilter === "italy" && !selectedCountry ? "text-primary/60" : "text-white/60"}`}>{italyCount.toLocaleString("it-IT")}</span>}
-            </button>
-            <button
-              onClick={() => handleQuickFilter("international")}
-              className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-semibold transition-all border ${
-                quickFilter === "international" && !selectedCountry
-                  ? "bg-white text-primary border-white shadow-md"
-                  : "bg-white/15 text-white border-white/30 hover:bg-white/25"
-              }`}
-            >
-              <MapPin className="w-3.5 h-3.5" />
-              Internazionali
-            </button>
-            <button
-              onClick={() => handleQuickFilter("top")}
-              className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-semibold transition-all border ${
-                quickFilter === "top" && !selectedCountry
-                  ? "bg-white text-primary border-white shadow-md"
-                  : "bg-white/15 text-white border-white/30 hover:bg-white/25"
-              }`}
-            >
-              <TrendingUp className="w-3.5 h-3.5" />
-              Più grandi
-            </button>
+          {/* Quick filters */}
+          <div className="flex flex-wrap gap-1.5 mb-3">
+            {[
+              { key: "all" as QuickFilter, label: "Tutti", icon: <Globe className="w-3 h-3" /> },
+              { key: "italy" as QuickFilter, label: `🇮🇹 Italia${italyCount > 0 ? ` ${italyCount.toLocaleString("it-IT")}` : ""}`, icon: null },
+              { key: "international" as QuickFilter, label: "Internazionali", icon: <MapPin className="w-3 h-3" /> },
+              { key: "top" as QuickFilter, label: "Più grandi", icon: <TrendingUp className="w-3 h-3" /> },
+            ].map(f => (
+              <button
+                key={f.key}
+                onClick={() => handleQuickFilter(f.key)}
+                className={`flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-semibold border transition-all ${
+                  quickFilter === f.key && !selectedCountry
+                    ? "bg-primary text-white border-primary shadow-sm"
+                    : "bg-white dark:bg-stone-900/20 text-stone-700 dark:text-stone-300 border-stone-200 dark:border-stone-700/30 hover:border-primary/40 hover:text-primary"
+                }`}
+              >
+                {f.icon}
+                {f.label}
+              </button>
+            ))}
           </div>
-        </div>
-      </div>
 
-      {/* Country pills — sticky, con fade sul bordo */}
-      <div className="sticky top-0 z-20 bg-white dark:bg-[hsl(25,14%,8%)] border-b border-stone-100 dark:border-[hsl(25,12%,14%)] shadow-sm">
-        <div className="max-w-5xl mx-auto px-4 py-2.5">
+          {/* Country pills */}
           <div className="relative">
-            {/* Fade indicatore scorrevole */}
-            <div className="pointer-events-none absolute right-0 top-0 bottom-0 w-12 bg-gradient-to-l from-white dark:from-[hsl(25,14%,8%)] to-transparent z-10" />
-            <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide pr-8">
+            <div className="pointer-events-none absolute right-0 top-0 bottom-0 w-10 bg-gradient-to-l from-white dark:from-[hsl(25,14%,8%)] to-transparent z-10" />
+            <div className="flex gap-1.5 overflow-x-auto pb-1 scrollbar-hide pr-8">
               {topCountries.map(c => {
                 const isItaly = c.country === "Italy" || c.country === "Italia";
                 return (
                   <button
                     key={c.country}
                     onClick={() => handleCountrySelect(c.country)}
-                    className={`flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium transition-all border ${
+                    className={`flex-shrink-0 flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-semibold border transition-all ${
                       selectedCountry === c.country
-                        ? "bg-[hsl(24,93%,49%)] text-white border-[hsl(24,93%,49%)] shadow-sm"
+                        ? "bg-primary text-white border-primary shadow-sm"
                         : isItaly
-                        ? "bg-orange-50 dark:bg-orange-950/30 text-orange-700 dark:text-orange-300 border-orange-200 dark:border-orange-800/40 hover:border-primary/60"
-                        : "bg-white dark:bg-neutral-800 text-gray-600 dark:text-neutral-300 border-gray-200 dark:border-neutral-700 hover:border-primary/40 hover:text-primary"
+                        ? "bg-orange-50 dark:bg-orange-950/20 text-orange-700 dark:text-orange-300 border-orange-200 dark:border-orange-800/30"
+                        : "bg-white dark:bg-stone-900/20 text-stone-600 dark:text-stone-400 border-stone-200 dark:border-stone-700/30 hover:border-primary/40 hover:text-primary"
                     }`}
                   >
                     <span>{getFlag(c.country)}</span>
                     <span>{getItalianName(c.country)}</span>
-                    <span className={`text-xs ${selectedCountry === c.country ? "text-orange-100" : "text-gray-400 dark:text-neutral-500"}`}>
+                    <span className={`${selectedCountry === c.country ? "opacity-75" : "text-stone-400"}`}>
                       {c.count.toLocaleString("it-IT")}
                     </span>
                   </button>
@@ -452,31 +411,25 @@ export default function ExploreBreweries() {
         )}
 
         {isLoading ? (
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-            {[...Array(12)].map((_, i) => (
-              <div key={i} className="rounded-2xl overflow-hidden animate-pulse">
-                <div className="h-40 bg-gray-200 dark:bg-neutral-700" />
-                <div className="p-3 bg-white dark:bg-neutral-800 space-y-2">
-                  <div className="h-3 bg-gray-200 dark:bg-neutral-700 rounded w-3/4" />
-                  <div className="h-3 bg-gray-200 dark:bg-neutral-700 rounded w-1/2" />
-                </div>
-              </div>
+          <div className="bg-white dark:bg-[hsl(25,14%,10%)] rounded-2xl overflow-hidden border border-stone-100/70 dark:border-stone-700/20 shadow-sm">
+            {[...Array(8)].map((_, i) => (
+              <div key={i} className="h-14 animate-pulse bg-stone-50 dark:bg-stone-800/30 mx-4 my-2 rounded-xl" />
             ))}
           </div>
         ) : breweries.length === 0 ? (
-          <div className="text-center py-20">
-            <Globe className="w-16 h-16 mx-auto mb-4 text-gray-200 dark:text-neutral-700" />
-            <p className="font-semibold text-gray-600 dark:text-neutral-300 text-lg">Nessun birrificio trovato</p>
-            <p className="text-gray-400 text-sm mt-1">Prova con un nome diverso o un altro filtro</p>
-            <Button onClick={clearFilters} variant="outline" className="mt-4 border-stone-300 text-primary hover:bg-stone-50">
+          <div className="text-center py-16">
+            <Globe className="w-12 h-12 mx-auto mb-3 text-stone-200 dark:text-stone-700" />
+            <p className="font-semibold text-stone-600 dark:text-stone-300 text-base">Nessun birrificio trovato</p>
+            <p className="text-stone-400 text-sm mt-1">Prova con un nome diverso o un altro filtro</p>
+            <Button onClick={clearFilters} variant="outline" className="mt-4 border-stone-300 text-primary hover:bg-stone-50 rounded-full">
               Rimuovi filtri
             </Button>
           </div>
         ) : (
           <>
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-              {breweries.map((brewery: any) => (
-                <BreweryCard key={brewery.id} brewery={brewery} />
+            <div className="bg-white dark:bg-[hsl(25,14%,10%)] rounded-2xl overflow-hidden border border-stone-100/70 dark:border-stone-700/20 shadow-sm">
+              {breweries.map((brewery: any, idx: number) => (
+                <BreweryCard key={brewery.id} brewery={brewery} isLast={idx === breweries.length - 1} />
               ))}
             </div>
 

@@ -6,6 +6,7 @@ import { usePullToRefresh } from "@/hooks/use-pull-to-refresh";
 import { Beer, MapPin, Heart, Store, TrendingUp, Navigation, Building2, ChevronRight, Zap, List, CalendarDays, Settings2, Megaphone, Newspaper, Rocket, Users, Droplets } from "lucide-react";
 import Footer from "@/components/footer";
 import PubCard from "@/components/pub-card";
+import BreweryCard from "@/components/brewery-card";
 import HomepageMap from "@/components/homepage-map";
 import { Button } from "@/components/ui/button";
 
@@ -178,7 +179,7 @@ export default function Home() {
   const typedUser = user as any;
 
   return (
-    <div className="min-h-screen bg-[#FFF8F2] dark:bg-background slide-up">
+    <div className="min-h-screen bg-background slide-up">
       {/* Pull to refresh indicator */}
       {(isPulling || isRefreshing) && (
         <div className="fixed top-16 left-0 right-0 z-40 flex items-center justify-center py-2.5 bg-stone-50 dark:bg-stone-900/95 border-b border-stone-300 dark:border-stone-700 backdrop-blur-sm">
@@ -194,19 +195,7 @@ export default function Home() {
       )}
 
       {/* ─── Hero ─────────────────────────────────────────────────────────── */}
-      <section className="relative overflow-hidden bg-[#FFF8F2] dark:bg-[hsl(25,20%,9%)]">
-        {/* Subtle dot texture */}
-        <div
-          className="absolute inset-0 pointer-events-none"
-          style={{
-            backgroundImage: "radial-gradient(circle, #F77104 1px, transparent 1px)",
-            backgroundSize: "28px 28px",
-            opacity: 0.04,
-          }}
-        />
-        {/* Warm glow top-right */}
-        <div className="absolute -top-24 -right-24 w-96 h-96 rounded-full pointer-events-none"
-          style={{ background: "radial-gradient(circle, rgba(247,113,4,0.12) 0%, transparent 70%)" }} />
+      <section className="relative overflow-hidden bg-background dark:bg-background">
 
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 pb-10 lg:pt-12 lg:pb-12">
           <div className="flex flex-col lg:flex-row items-start lg:items-end justify-between gap-8">
@@ -222,14 +211,7 @@ export default function Home() {
               {/* Title */}
               <h1 className="display-serif text-4xl md:text-5xl lg:text-[3.4rem] font-extrabold text-foreground mb-3 leading-[1.1]">
                 {typedUser?.firstName ? `Ciao, ${typedUser.firstName}!` : 'Cosa scopri oggi?'}<br />
-                <span style={{
-                  background: "linear-gradient(135deg, #a78545 0%, #c9a05a 45%, #e8c47a 100%)",
-                  WebkitBackgroundClip: "text",
-                  WebkitTextFillColor: "transparent",
-                  backgroundClip: "text",
-                }}>
-                  Esplora il craft beer
-                </span>
+                <span className="text-primary">Esplora il craft beer</span>
               </h1>
 
               <p className="text-stone-500 dark:text-stone-400 text-base md:text-lg leading-relaxed mb-5">
@@ -449,18 +431,19 @@ export default function Home() {
               </Link>
             </div>
             {pubsLoading ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              <div className="bg-white dark:bg-[hsl(25,14%,10%)] rounded-2xl overflow-hidden border border-stone-100/70 dark:border-stone-700/20 shadow-sm">
                 {[...Array(3)].map((_, i) => (
-                  <div key={i} className="bg-stone-50 dark:bg-[hsl(25,14%,12%)] rounded-2xl h-64 animate-pulse" />
+                  <div key={i} className="h-14 animate-pulse bg-stone-50 dark:bg-stone-800/30 mx-4 my-2 rounded-xl" />
                 ))}
               </div>
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {sortedPubs.map((pub: any) => (
+              <div className="bg-white dark:bg-[hsl(25,14%,10%)] rounded-2xl overflow-hidden border border-stone-100/70 dark:border-stone-700/20 shadow-sm">
+                {sortedPubs.map((pub: any, idx: number) => (
                   <PubCard 
                     key={pub.id} 
                     pub={pub}
                     distance={userLocation && pub._distance !== Infinity ? pub._distance : undefined}
+                    isLast={idx === sortedPubs.length - 1}
                   />
                 ))}
               </div>
@@ -568,34 +551,10 @@ export default function Home() {
                 <Button variant="ghost" size="sm" className="text-primary hover:bg-stone-50 dark:hover:bg-stone-900/20 font-semibold text-sm">Vedi tutti →</Button>
               </Link>
             </div>
-            <div className="flex gap-3 overflow-x-auto pb-2 -mx-1 px-1" style={{ scrollbarWidth: "none" }}>
-              {breweries.map((brewery: any) => {
-                const bg = brewery.coverImageUrl || brewery.logoUrl;
-                const initial = brewery.name?.[0]?.toUpperCase() ?? "B";
-                return (
-                  <Link key={brewery.id} href={`/brewery/${brewery.id}`}>
-                    <div className="group flex-shrink-0 w-[168px] cursor-pointer">
-                      <div className="relative h-[116px] rounded-2xl overflow-hidden mb-2 shadow-sm group-hover:shadow-md transition-shadow">
-                        {bg ? (
-                          <img src={bg} alt={brewery.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
-                        ) : (
-                          <div className="w-full h-full bg-gradient-to-br from-primary via-[hsl(22,92%,46%)] to-[hsl(20,95%,42%)] flex items-center justify-center">
-                            <span className="text-3xl font-bold text-white/80">{initial}</span>
-                          </div>
-                        )}
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
-                        {(brewery.location || brewery.region) && (
-                          <span className="absolute bottom-2 left-2 text-[10px] text-white/90 font-medium truncate max-w-[136px] flex items-center gap-0.5">
-                            <MapPin className="w-2.5 h-2.5 flex-shrink-0" />
-                            {brewery.city || brewery.location || brewery.region}
-                          </span>
-                        )}
-                      </div>
-                      <p className="text-xs font-semibold text-foreground line-clamp-2 leading-tight group-hover:text-primary transition-colors">{brewery.name}</p>
-                    </div>
-                  </Link>
-                );
-              })}
+            <div className="bg-white dark:bg-[hsl(25,14%,10%)] rounded-2xl overflow-hidden border border-stone-100/70 dark:border-stone-700/20 shadow-sm">
+              {breweries.slice(0, 5).map((brewery: any, idx: number) => (
+                <BreweryCard key={brewery.id} brewery={brewery} isLast={idx === Math.min(4, breweries.length - 1)} />
+              ))}
             </div>
           </section>
         )}

@@ -53,7 +53,7 @@ Preferred communication style: Simple, everyday language.
 - **Cookie Consent**: Configurable cookie banner with granular preferences.
 - **reCAPTCHA**: Integrated reCAPTCHA v2 for authentication forms.
 - **Theme System**: Light/dark mode toggle with localStorage persistence.
-- **Global Redesign**: Updated landing page, homepage, and CTA sections.
+- **Global Redesign v2 (Apple/Untappd style)**: Full sitewide redesign. Off-white `hsl(36,10%,95%)` background, pure white cards with stone borders, Poppins font throughout, orange only for CTAs. Row-based lists with 48px rounded logos + thin dividers replace card grids. Affected: pub-card, brewery-card, tap-list, pub-detail, home, explore-pubs, explore-beers, explore-breweries, landing, search. All `#FFF8F2` backgrounds replaced with CSS variable `bg-background`.
 - **Performance Optimization**: Eliminated N+1 queries for pub menus and optimized admin search.
 - **Large-scale Data Import**: Efficient import of over 1 million beer records with optimized search capabilities.
 - **Content Suggestions**: Users can suggest changes to beer/brewery data (including images). Admins and brewery owners are notified via push. Admin review panel at `/admin/suggestions` with diff view, approve (applies changes) and reject (notifies user) actions.

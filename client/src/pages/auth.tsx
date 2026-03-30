@@ -248,7 +248,7 @@ export default function AuthPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#FFF8F2] dark:bg-background flex items-center justify-center p-4 sm:p-8 overflow-y-auto">
+    <div className="min-h-screen bg-background dark:bg-background flex items-center justify-center p-4 sm:p-8 overflow-y-auto">
       <div className="w-full max-w-md bg-white dark:bg-[hsl(25,14%,10%)] rounded-3xl border border-stone-100 dark:border-[hsl(25,12%,16%)] shadow-sm p-6 md:p-8">
           {/* Logo */}
           <div className="flex items-center gap-2.5 mb-8">

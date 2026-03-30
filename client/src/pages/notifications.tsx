@@ -266,7 +266,7 @@ export default function Notifications() {
       {/* Settings panel */}
       {showSettings && (
         <div className="rounded-2xl border border-stone-100 dark:border-[hsl(25,12%,16%)] bg-white dark:bg-[hsl(25,14%,10%)] shadow-[0_4px_20px_rgba(247,113,4,0.06)] overflow-hidden">
-          <div className="px-5 py-4 border-b border-stone-100 dark:border-[hsl(25,12%,16%)] bg-[#FFF8F2] dark:bg-stone-900/10">
+          <div className="px-5 py-4 border-b border-stone-100 dark:border-[hsl(25,12%,16%)] bg-background dark:bg-stone-900/10">
             <h2 className="font-bold text-foreground text-sm">Preferenze notifiche</h2>
           </div>
           <div className="p-5 space-y-5">

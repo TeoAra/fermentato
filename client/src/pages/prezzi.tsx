@@ -31,7 +31,7 @@ function FeatureRow({ label, included, icon }: FeatureRowProps) {
 
 export default function PrezziPage() {
   return (
-    <div className="min-h-screen bg-[#FFF8F2] dark:bg-[hsl(25,14%,7%)]">
+    <div className="min-h-screen bg-background dark:bg-[hsl(25,14%,7%)]">
       <SEO
         title="Prezzi e Piani — Fermenta.to"
         description="Scopri i piani Fermenta.to per pub e birrifici. Piano pub da 65€/anno. Birrifici verificati gratuitamente."

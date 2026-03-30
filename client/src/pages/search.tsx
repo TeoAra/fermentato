@@ -138,7 +138,7 @@ export default function SearchPage() {
 
   return (
     <>
-    <div className="min-h-screen bg-[#FFF8F2] dark:bg-background">
+    <div className="min-h-screen bg-background">
 
       {/* Header section */}
       <div className="bg-white dark:bg-[hsl(25,14%,10%)] border-b border-stone-100 dark:border-[hsl(25,12%,16%)] sticky top-0 z-50">

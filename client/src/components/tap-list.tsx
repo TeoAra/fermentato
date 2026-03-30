@@ -1,20 +1,27 @@
 import { useMemo } from "react";
 import { Link } from "wouter";
-import { Wine, EyeOff } from "lucide-react";
+import { Wine } from "lucide-react";
 import ImageWithFallback from "@/components/image-with-fallback";
 import { GlutenFreeSmallBadge, AlcoholFreeBadge } from "@/components/beer-badges";
 
 function getBeerStyleColor(style: string): { bg: string; text: string } {
   const s = style?.toLowerCase() || '';
-  if (s.includes('stout') || s.includes('porter')) return { bg: 'rgba(92,61,30,0.14)', text: '#7B4A1E' };
-  if (s.includes('sour') || s.includes('gose') || s.includes('lambic') || s.includes('berliner')) return { bg: 'rgba(212,168,56,0.15)', text: '#A8840A' };
-  if (s.includes('saison') || s.includes('farmhouse') || s.includes('bière de garde')) return { bg: 'rgba(100,160,70,0.15)', text: '#4E8A28' };
-  if (s.includes('wit') || s.includes('weiss') || s.includes('weizen') || s.includes('wheat') || s.includes('farro')) return { bg: 'rgba(212,168,67,0.15)', text: '#9A7820' };
-  if (s.includes('lager') || s.includes('pilsner') || s.includes('pils') || s.includes('märzen') || s.includes('marzen') || s.includes('bock')) return { bg: 'rgba(207,168,101,0.15)', text: '#8A6A10' };
-  if (s.includes('red') || s.includes('amber') || s.includes('rossa') || s.includes('ambrata')) return { bg: 'rgba(185,60,30,0.14)', text: '#B04020' };
-  if (s.includes('barley wine') || s.includes('barleywine') || s.includes('imperial') || s.includes('wee heavy')) return { bg: 'rgba(130,30,80,0.13)', text: '#8A1E55' };
-  if (s.includes('apa') || s.includes('pale ale') || s.includes('session')) return { bg: 'rgba(232,140,30,0.14)', text: '#C07010' };
-  return { bg: 'rgba(247,113,4,0.13)', text: '#F77104' };
+  if (s.includes('stout') || s.includes('porter')) return { bg: 'rgba(60,30,10,0.12)', text: '#7B4A1E' };
+  if (s.includes('sour') || s.includes('gose') || s.includes('lambic') || s.includes('berliner')) return { bg: 'rgba(212,168,56,0.14)', text: '#A8840A' };
+  if (s.includes('saison') || s.includes('farmhouse') || s.includes('bière de garde')) return { bg: 'rgba(100,160,70,0.14)', text: '#4E8A28' };
+  if (s.includes('wit') || s.includes('weiss') || s.includes('weizen') || s.includes('wheat') || s.includes('farro')) return { bg: 'rgba(212,168,67,0.14)', text: '#9A7820' };
+  if (s.includes('lager') || s.includes('pilsner') || s.includes('pils') || s.includes('märzen') || s.includes('marzen') || s.includes('bock')) return { bg: 'rgba(207,168,101,0.14)', text: '#8A6A10' };
+  if (s.includes('red') || s.includes('amber') || s.includes('rossa') || s.includes('ambrata')) return { bg: 'rgba(185,60,30,0.13)', text: '#B04020' };
+  if (s.includes('barley wine') || s.includes('barleywine') || s.includes('imperial') || s.includes('wee heavy')) return { bg: 'rgba(130,30,80,0.12)', text: '#8A1E55' };
+  if (s.includes('ipa') || s.includes('india pale')) return { bg: 'rgba(80,140,60,0.13)', text: '#3A7A1A' };
+  if (s.includes('apa') || s.includes('pale ale') || s.includes('session')) return { bg: 'rgba(232,140,30,0.13)', text: '#C07010' };
+  return { bg: 'rgba(247,113,4,0.12)', text: '#C05A00' };
+}
+
+function formatPrice(price: string): string {
+  const num = parseFloat(price);
+  if (isNaN(num) || num <= 0) return '';
+  return `€\u00a0${num.toFixed(2).replace('.', ',')}`;
 }
 
 interface PriceItem {
@@ -23,33 +30,48 @@ interface PriceItem {
   format?: string;
 }
 
-interface TapListProps {
-  tapList: Array<{
+type TapListItem = {
+  id: number;
+  beer: {
     id: number;
-    beer: {
+    name: string;
+    style: string;
+    abv: string | null;
+    ibu?: number | null;
+    logoUrl: string | null;
+    imageUrl?: string | null;
+    isGlutenFree?: boolean;
+    isAlcoholFree?: boolean;
+    brewery: {
       id: number;
       name: string;
-      style: string;
-      abv: string | null;
       logoUrl: string | null;
-      imageUrl?: string | null;
-      isGlutenFree?: boolean;
-      isAlcoholFree?: boolean;
-      brewery: {
-        id: number;
-        name: string;
-        logoUrl: string | null;
-      };
     };
-    prices?: PriceItem[];
-    priceSmall: string | null;
-    priceMedium: string | null;
-    priceLarge: string | null;
-    tapNumber: number | null;
-    tapType?: string | null;
-    description?: string | null;
-    isVisible?: boolean | null;
-  }>;
+  };
+  prices?: PriceItem[];
+  priceSmall: string | null;
+  priceMedium: string | null;
+  priceLarge: string | null;
+  tapNumber: number | null;
+  tapType?: string | null;
+  description?: string | null;
+  isVisible?: boolean | null;
+};
+
+interface TapListProps {
+  tapList: TapListItem[];
+}
+
+function getBestPrice(tap: TapListItem): string {
+  if (tap.prices && tap.prices.length > 0) {
+    const valid = tap.prices.filter(p => parseFloat(p.price) > 0);
+    if (valid.length > 0) return formatPrice(valid[0].price);
+  }
+  const candidates = [tap.priceMedium, tap.priceLarge, tap.priceSmall];
+  for (const p of candidates) {
+    if (p && parseFloat(p) > 0) return formatPrice(p);
+  }
+  return '';
 }
 
 export default function TapList({ tapList }: TapListProps) {
@@ -67,14 +89,14 @@ export default function TapList({ tapList }: TapListProps) {
   if (!sorted || sorted.length === 0) {
     return (
       <div className="text-center py-16">
-        <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-amber-100 to-orange-100 dark:from-amber-900/20 dark:to-orange-900/20 mx-auto mb-6 flex items-center justify-center">
-          <Wine className="h-10 w-10 text-amber-600 dark:text-amber-400" />
+        <div className="w-20 h-20 rounded-2xl bg-stone-100 dark:bg-stone-800 mx-auto mb-4 flex items-center justify-center">
+          <Wine className="h-10 w-10 text-stone-400" />
         </div>
-        <h4 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
+        <h4 className="text-base font-semibold text-stone-700 dark:text-stone-300 mb-1">
           Nessuna birra alla spina
         </h4>
-        <p className="text-gray-600 dark:text-gray-400">
-          Controlla più tardi per vedere le novità in taplist!
+        <p className="text-sm text-stone-400 dark:text-stone-500">
+          Controlla più tardi per le novità in taplist
         </p>
       </div>
     );
@@ -83,130 +105,95 @@ export default function TapList({ tapList }: TapListProps) {
   const spinaItems = sorted.filter(t => !t.tapType || t.tapType === "spina");
   const pompaItems = sorted.filter(t => t.tapType === "pompa");
 
-  const renderCard = (tap: typeof sorted[0]) => (
-    <div key={tap.id} className={`bg-white dark:bg-[hsl(25,14%,10%)] rounded-2xl border border-stone-100 dark:border-[hsl(25,12%,16%)] shadow-[0_4px_20px_rgba(247,113,4,0.06)] hover:shadow-[0_6px_24px_rgba(247,113,4,0.12)] hover:border-stone-300 dark:hover:border-orange-800/40 transition-all duration-300 ${tap.isVisible === false ? 'opacity-60' : ''}`}>
-      <div className="flex gap-3 p-4">
-        <Link href={`/beer/${tap.beer.id}`} className="flex-shrink-0 self-center">
-          <div className="w-14 h-14 rounded-2xl overflow-hidden bg-gradient-to-br from-orange-50 to-amber-50 dark:from-orange-950/40 dark:to-amber-900/20 flex items-center justify-center border border-stone-200 dark:border-stone-700/30">
-            <ImageWithFallback
-              src={tap.beer.imageUrl || tap.beer.brewery.logoUrl}
-              alt={tap.beer.name}
-              imageType="beer"
-              containerClassName="w-full h-full"
-              className="w-full h-full object-cover"
-              iconSize="md"
-            />
-          </div>
-        </Link>
+  const renderRow = (tap: TapListItem, index: number, arr: TapListItem[]) => {
+    const styleColor = getBeerStyleColor(tap.beer.style);
+    const price = getBestPrice(tap);
+    const isLast = index === arr.length - 1;
 
-        <div className="flex-1 min-w-0 flex gap-2 justify-between">
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2">
-              <Link href={`/beer/${tap.beer.id}`}>
-                <h3 className="font-bold text-base leading-snug line-clamp-1 hover:text-primary dark:hover:text-orange-400 cursor-pointer transition-colors text-foreground">
+    const metaParts: string[] = [];
+    if (tap.beer.style) metaParts.push(tap.beer.style);
+    if (tap.beer.abv && parseFloat(tap.beer.abv) > 0) {
+      metaParts.push(tap.beer.isAlcoholFree ? '0,0% ABV' : `${tap.beer.abv}%`);
+    }
+    if (tap.beer.ibu && tap.beer.ibu > 0) metaParts.push(`${tap.beer.ibu} IBU`);
+    const metaLine = metaParts.join(' · ');
+
+    return (
+      <div key={tap.id} className={tap.isVisible === false ? 'opacity-50' : ''}>
+        <Link href={`/beer/${tap.beer.id}`}>
+          <div className="flex items-center gap-3.5 px-4 py-3.5 active:bg-stone-50 dark:active:bg-stone-800/30 cursor-pointer transition-colors">
+            {/* Style-tinted icon */}
+            <div
+              className="w-11 h-11 rounded-xl overflow-hidden flex-shrink-0"
+              style={{ background: styleColor.bg }}
+            >
+              <ImageWithFallback
+                src={tap.beer.imageUrl || tap.beer.logoUrl}
+                alt={tap.beer.name}
+                imageType="beer"
+                containerClassName="w-full h-full"
+                className="w-full h-full object-cover"
+                iconSize="sm"
+              />
+            </div>
+
+            {/* Name + meta */}
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-1.5 flex-wrap">
+                <p className="font-semibold text-[15px] text-stone-900 dark:text-white leading-snug truncate">
                   {tap.beer.name}
-                </h3>
-              </Link>
-              {tap.isVisible === false && (
-                <span className="inline-flex items-center gap-1 bg-gray-100 dark:bg-gray-800 text-muted-foreground text-xs font-semibold px-1.5 py-0.5 rounded-full flex-shrink-0">
-                  <EyeOff className="h-3 w-3" />
-                  Nascosta
-                </span>
+                </p>
+                {tap.beer.isGlutenFree && <GlutenFreeSmallBadge size={10} />}
+                {tap.beer.isAlcoholFree && <AlcoholFreeBadge size={10} />}
+              </div>
+              {metaLine ? (
+                <p className="text-xs text-stone-400 dark:text-stone-500 mt-0.5 truncate">{metaLine}</p>
+              ) : (
+                <p className="text-xs text-primary/80 dark:text-orange-400/70 mt-0.5 truncate">{tap.beer.brewery.name}</p>
               )}
             </div>
 
-            <Link href={`/brewery/${tap.beer.brewery.id}`}>
-              <p className="text-xs font-semibold text-primary dark:text-orange-400 hover:opacity-80 cursor-pointer transition-opacity truncate leading-snug mt-0.5">
-                {tap.beer.brewery.name}
-              </p>
-            </Link>
-
-            <div className="flex items-center gap-1.5 mt-1.5 flex-wrap">
-              {tap.beer.style && (() => {
-                const sc = getBeerStyleColor(tap.beer.style);
-                return (
-                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-full" style={{ background: sc.bg, color: sc.text }}>
-                    {tap.beer.style}
-                  </span>
-                );
-              })()}
-              <span className="text-[10px] font-medium text-muted-foreground">
-                {tap.beer.isAlcoholFree ? '0.0% ABV' : `${tap.beer.abv || '0'}% ABV`}
-              </span>
-              {tap.beer.isGlutenFree && <GlutenFreeSmallBadge size={11} />}
-              {tap.beer.isAlcoholFree && <AlcoholFreeBadge size={10} />}
-            </div>
-
-            {tap.description && (
-              <p className="text-xs text-muted-foreground italic mt-1.5 line-clamp-2">
-                {tap.description}
+            {/* Price */}
+            {price && (
+              <p className="font-bold text-[15px] text-stone-900 dark:text-white flex-shrink-0 tabular-nums pl-1">
+                {price}
               </p>
             )}
           </div>
+        </Link>
+        {!isLast && (
+          <div className="h-px bg-stone-100 dark:bg-stone-800/60 ml-[3.75rem] mr-4" />
+        )}
+      </div>
+    );
+  };
 
-          <div className="flex-shrink-0 text-right self-center">
-            <div className="space-y-1.5">
-              {tap.prices && tap.prices.length > 0 ? (
-                tap.prices.map((priceItem, index) => (
-                  <div key={index}>
-                    <div className="text-xs text-gray-400 dark:text-gray-400">{priceItem.size}</div>
-                    <div className="text-sm font-bold text-gray-900 dark:text-white">€{parseFloat(priceItem.price).toFixed(2)}</div>
-                  </div>
-                ))
-              ) : (
-                <>
-                  {tap.priceSmall && parseFloat(tap.priceSmall) > 0 && (
-                    <div>
-                      <div className="text-xs text-gray-400 dark:text-gray-400">Piccola</div>
-                      <div className="text-sm font-bold text-gray-900 dark:text-white">€{parseFloat(tap.priceSmall).toFixed(2)}</div>
-                    </div>
-                  )}
-                  {tap.priceMedium && parseFloat(tap.priceMedium) > 0 && (
-                    <div>
-                      <div className="text-xs text-gray-400 dark:text-gray-400">Media</div>
-                      <div className="text-sm font-bold text-gray-900 dark:text-white">€{parseFloat(tap.priceMedium).toFixed(2)}</div>
-                    </div>
-                  )}
-                  {tap.priceLarge && parseFloat(tap.priceLarge) > 0 && (
-                    <div>
-                      <div className="text-xs text-gray-400 dark:text-gray-400">Grande</div>
-                      <div className="text-sm font-bold text-gray-900 dark:text-white">€{parseFloat(tap.priceLarge).toFixed(2)}</div>
-                    </div>
-                  )}
-                </>
-              )}
-            </div>
-          </div>
+  const Section = ({ items, label, accent }: { items: TapListItem[]; label?: string; accent?: string }) => (
+    <div>
+      {label && (
+        <div className="flex items-center gap-2 px-4 pb-1 pt-2">
+          <span className={`text-[11px] font-black uppercase tracking-widest ${accent || 'text-stone-400 dark:text-stone-500'}`}>
+            {label}
+          </span>
         </div>
+      )}
+      <div className="bg-white dark:bg-[hsl(25,14%,10%)] rounded-2xl overflow-hidden border border-stone-100/70 dark:border-stone-700/20 shadow-sm">
+        {items.map((tap, i) => renderRow(tap, i, items))}
       </div>
     </div>
   );
 
   if (pompaItems.length === 0) {
-    return <div className="space-y-3">{spinaItems.map(renderCard)}</div>;
+    return <Section items={spinaItems} />;
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       {spinaItems.length > 0 && (
-        <div className="space-y-3">
-          <div className="flex items-center gap-2">
-            <div className="h-px flex-1 bg-amber-200 dark:bg-amber-900/40" />
-            <span className="text-xs font-semibold uppercase tracking-widest text-amber-700 dark:text-amber-400 px-2">In Spina</span>
-            <div className="h-px flex-1 bg-amber-200 dark:bg-amber-900/40" />
-          </div>
-          {spinaItems.map(renderCard)}
-        </div>
+        <Section items={spinaItems} label="In Spina" accent="text-primary dark:text-orange-400" />
       )}
       {pompaItems.length > 0 && (
-        <div className="space-y-3">
-          <div className="flex items-center gap-2">
-            <div className="h-px flex-1 bg-violet-200 dark:bg-violet-900/40" />
-            <span className="text-xs font-semibold uppercase tracking-widest text-violet-700 dark:text-violet-400 px-2">In Pompa</span>
-            <div className="h-px flex-1 bg-violet-200 dark:bg-violet-900/40" />
-          </div>
-          {pompaItems.map(renderCard)}
-        </div>
+        <Section items={pompaItems} label="In Pompa" accent="text-violet-600 dark:text-violet-400" />
       )}
     </div>
   );

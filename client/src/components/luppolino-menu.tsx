@@ -80,7 +80,7 @@ export default function LuppolinoMenu({ menu, menuInfoBox }: LuppolinoMenuProps)
               className="rounded-2xl border border-stone-100 dark:border-[hsl(25,12%,16%)] bg-white dark:bg-[hsl(25,14%,10%)] shadow-[0_4px_20px_rgba(247,113,4,0.05)] overflow-hidden"
               data-testid={`menu-category-${category.id}`}
             >
-              <AccordionTrigger className="px-5 py-4 hover:no-underline hover:bg-[#FFF8F2] dark:hover:bg-stone-900/10 transition-colors [&>svg]:text-primary [&>svg]:h-4 [&>svg]:w-4">
+              <AccordionTrigger className="px-5 py-4 hover:no-underline hover:bg-background dark:hover:bg-stone-900/10 transition-colors [&>svg]:text-primary [&>svg]:h-4 [&>svg]:w-4">
                 <div className="text-left flex-1">
                   <span className="text-base font-bold text-foreground">
                     {category.name}
@@ -106,7 +106,7 @@ export default function LuppolinoMenu({ menu, menuInfoBox }: LuppolinoMenuProps)
                       return (
                         <div
                           key={item.id}
-                          className={`flex gap-3 p-3 rounded-2xl border border-stone-100 dark:border-[hsl(25,12%,18%)] bg-[#FFF8F2]/60 dark:bg-[hsl(25,14%,12%)] hover:bg-[#FFF8F2] dark:hover:bg-stone-900/10 transition-colors ${!item.isAvailable ? 'opacity-50' : ''}`}
+                          className={`flex gap-3 p-3 rounded-2xl border border-stone-100 dark:border-[hsl(25,12%,18%)] bg-background/60 dark:bg-[hsl(25,14%,12%)] hover:bg-background dark:hover:bg-stone-900/10 transition-colors ${!item.isAvailable ? 'opacity-50' : ''}`}
                           data-testid={`menu-item-${item.id}`}
                         >
                           {item.imageUrl && (

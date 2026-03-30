@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { useState, useEffect } from "react";
 import { Link } from "wouter";
-import { Beer, ArrowLeft, Search, X } from "lucide-react";
+import { Beer, ArrowLeft, Search, X, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import Footer from "@/components/footer";
@@ -68,33 +68,21 @@ export default function ExploreBeers() {
   }
 
   return (
-    <div className="min-h-screen bg-[#FFF8F2] dark:bg-background slide-up">
+    <div className="min-h-screen bg-background slide-up">
       {/* Page header */}
-      <div className="bg-white dark:bg-[hsl(25,14%,8%)] border-b border-stone-100 dark:border-[hsl(25,12%,14%)] shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-5">
-          <div className="flex items-center gap-4 mb-4">
+      <div className="bg-white dark:bg-[hsl(25,14%,8%)] border-b border-stone-100 dark:border-[hsl(25,12%,14%)]">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+          <div className="flex items-center gap-3 mb-4">
             <Link href="/">
-              <Button variant="ghost" size="sm" className="text-primary hover:text-primary/80 hover:bg-stone-50 dark:hover:bg-stone-900/20 -ml-2">
-                <ArrowLeft className="w-4 h-4 mr-1" /> Indietro
-              </Button>
+              <button className="p-2 rounded-xl text-stone-400 hover:text-stone-700 hover:bg-stone-100 dark:hover:bg-stone-800 transition-colors">
+                <ArrowLeft className="w-4 h-4" />
+              </button>
             </Link>
-          </div>
-          <div className="flex items-center gap-3 mb-5">
-            <div className="w-10 h-10 rounded-2xl bg-primary flex items-center justify-center flex-shrink-0">
-              <Beer className="h-5 w-5 text-white" />
-            </div>
             <div>
-              <h1 className="text-2xl font-bold text-foreground tracking-tight">Esplora Birre</h1>
-              {activeStyle ? (
-                <p className="text-sm text-muted-foreground mt-0.5">
-                  Stile: <span className="font-semibold text-primary">{activeStyle}</span>
-                  {Array.isArray(styleBeers) && (
-                    <span className="ml-2 text-muted-foreground">· {styleBeers.length} birre</span>
-                  )}
-                </p>
-              ) : (
-                <p className="text-sm text-muted-foreground">Seleziona uno stile o cerca una birra</p>
-              )}
+              <h1 className="text-xl font-bold text-stone-900 dark:text-white">Esplora Birre</h1>
+              <p className="text-xs text-stone-400 dark:text-stone-500">
+                {activeStyle ? `Stile: ${activeStyle}${Array.isArray(styleBeers) ? ` · ${styleBeers.length} birre` : ''}` : 'Seleziona uno stile o cerca'}
+              </p>
             </div>
           </div>
 
@@ -125,25 +113,23 @@ export default function ExploreBeers() {
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 pb-24">
         {/* Style pills */}
         {Array.isArray(popularStyles) && popularStyles.length > 0 && (
-          <div className="flex flex-wrap gap-2 mb-8">
+          <div className="flex flex-wrap gap-1.5 mb-5">
             {popularStyles.slice(0, 24).map(s => (
               <button
                 key={s.style}
                 onClick={() => selectStyle(s.style)}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium border transition-all ${
+                className={`flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-semibold border transition-all ${
                   activeStyle === s.style
-                    ? "bg-primary text-white border-primary shadow-sm scale-105"
-                    : "bg-stone-50 dark:bg-stone-900/20 text-orange-700 dark:text-orange-300 border-stone-200 dark:border-stone-700/30 hover:border-primary/40 hover:text-primary dark:hover:text-orange-200"
+                    ? "bg-primary text-white border-primary shadow-sm"
+                    : "bg-white dark:bg-stone-900/20 text-stone-700 dark:text-stone-300 border-stone-200 dark:border-stone-700/30 hover:border-primary/40 hover:text-primary"
                 }`}
               >
                 {s.style}
-                <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${
-                  activeStyle === s.style
-                    ? "bg-white/25 text-white"
-                    : "bg-white dark:bg-stone-900/40 text-primary dark:text-orange-400"
+                <span className={`text-[10px] font-bold ${
+                  activeStyle === s.style ? "opacity-75" : "text-stone-400"
                 }`}>
                   {s.count.toLocaleString("it-IT")}
                 </span>
@@ -154,60 +140,58 @@ export default function ExploreBeers() {
 
         {/* Results */}
         {isLoading ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-            {[...Array(8)].map((_, i) => (
-              <div key={i} className="h-28 bg-stone-50 dark:bg-[hsl(25,14%,12%)] rounded-2xl animate-pulse" />
+          <div className="bg-white dark:bg-[hsl(25,14%,10%)] rounded-2xl overflow-hidden border border-stone-100/70 dark:border-stone-700/20 shadow-sm">
+            {[...Array(6)].map((_, i) => (
+              <div key={i} className="h-14 animate-pulse bg-stone-50 dark:bg-stone-800/30 mx-4 my-2 rounded-xl" />
             ))}
           </div>
         ) : beers.length > 0 ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-            {beers.map((beer: any) => (
-              <Link key={beer.id} href={`/beer/${beer.id}`}>
-                <div className="group bg-white dark:bg-[hsl(25,14%,10%)] border border-stone-100 dark:border-[hsl(25,12%,16%)] rounded-2xl p-4 hover:shadow-md hover:border-primary/20 dark:hover:border-primary/30 transition-all cursor-pointer h-full">
-                  <div className="flex items-start gap-3">
-                    <div className="w-12 h-12 rounded-xl flex-shrink-0 bg-stone-50 dark:bg-stone-900/20 flex items-center justify-center overflow-hidden">
+          <div className="bg-white dark:bg-[hsl(25,14%,10%)] rounded-2xl overflow-hidden border border-stone-100/70 dark:border-stone-700/20 shadow-sm">
+            {beers.map((beer: any, idx: number) => (
+              <div key={beer.id}>
+                <Link href={`/beer/${beer.id}`}>
+                  <div className="flex items-center gap-3.5 px-4 py-3.5 active:bg-stone-50 dark:active:bg-stone-800/30 cursor-pointer transition-colors group">
+                    <div className="w-11 h-11 rounded-xl flex-shrink-0 bg-stone-100 dark:bg-stone-800 flex items-center justify-center overflow-hidden">
                       {beer.imageUrl ? (
-                        <img src={beer.imageUrl} alt={beer.name} className="w-12 h-12 object-contain p-0.5 lightbox-img" />
+                        <img src={beer.imageUrl} alt={beer.name} className="w-full h-full object-cover" />
                       ) : beer.breweryLogoUrl ? (
-                        <img src={beer.breweryLogoUrl} alt={beer.breweryName} className="w-10 h-10 object-contain" />
+                        <img src={beer.breweryLogoUrl} alt={beer.breweryName} className="w-full h-full object-cover" />
                       ) : (
-                        <Beer className="w-6 h-6 text-primary/60" />
+                        <Beer className="w-5 h-5 text-stone-400" />
                       )}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="font-semibold text-sm text-foreground line-clamp-1 group-hover:text-primary transition-colors">
+                      <p className="font-semibold text-[15px] text-stone-900 dark:text-white leading-snug truncate group-hover:text-primary transition-colors">
                         {beer.name}
                       </p>
-                      <p className="text-xs text-muted-foreground line-clamp-1 mt-0.5">
-                        {beer.breweryName || beer.brewery?.name}
+                      <p className="text-xs text-stone-400 dark:text-stone-500 mt-0.5 truncate">
+                        {[
+                          beer.breweryName || beer.brewery?.name,
+                          beer.style && !activeStyle ? beer.style : null,
+                          beer.abv != null ? `${beer.abv}%` : null,
+                          beer.ibu != null ? `${beer.ibu} IBU` : null,
+                        ].filter(Boolean).join(' · ')}
                       </p>
-                      <div className="flex items-center gap-2 mt-1.5 flex-wrap">
-                        {beer.style && !activeStyle && (
-                          <span className="text-[10px] font-semibold text-orange-700 dark:text-orange-300 bg-stone-50 dark:bg-stone-900/30 px-2 py-0.5 rounded-full">{beer.style}</span>
-                        )}
-                        {beer.abv != null && (
-                          <span className="text-[10px] font-medium text-muted-foreground">{beer.abv}% ABV</span>
-                        )}
-                        {beer.ibu != null && (
-                          <span className="text-[10px] font-medium text-muted-foreground">{beer.ibu} IBU</span>
-                        )}
-                      </div>
                     </div>
+                    <ChevronRight className="w-3.5 h-3.5 text-stone-300 dark:text-stone-600 flex-shrink-0" />
                   </div>
-                </div>
-              </Link>
+                </Link>
+                {idx < beers.length - 1 && (
+                  <div className="h-px bg-stone-100 dark:bg-stone-800/60 ml-[3.875rem] mr-4" />
+                )}
+              </div>
             ))}
           </div>
         ) : (activeStyle || freeQuery) ? (
-          <div className="text-center py-16 text-muted-foreground">
+          <div className="text-center py-16 text-stone-400">
             <Beer className="w-12 h-12 mx-auto mb-3 opacity-30" />
-            <p className="text-lg font-medium">Nessuna birra trovata</p>
+            <p className="text-base font-semibold text-stone-600 dark:text-stone-400">Nessuna birra trovata</p>
             <p className="text-sm mt-1">Prova con un altro termine o stile</p>
           </div>
         ) : (
-          <div className="text-center py-16 text-muted-foreground">
+          <div className="text-center py-16 text-stone-400">
             <Beer className="w-14 h-14 mx-auto mb-3 opacity-20" />
-            <p className="text-lg font-medium">Seleziona uno stile o cerca una birra</p>
+            <p className="text-base font-semibold text-stone-600 dark:text-stone-400">Seleziona uno stile o cerca una birra</p>
           </div>
         )}
       </div>
