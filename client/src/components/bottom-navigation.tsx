@@ -5,6 +5,36 @@ import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import SearchDialog from "@/components/search-dialog";
 
+function NavItem({
+  active,
+  children,
+}: {
+  active: boolean;
+  children: React.ReactNode;
+}) {
+  return (
+    <div
+      className={`relative flex flex-col items-center gap-0.5 px-4 py-2 rounded-full transition-all duration-200 active:scale-[0.92] ${
+        active ? "text-white" : "text-[hsl(28,8%,52%)] dark:text-[hsl(35,8%,52%)] hover:text-[hsl(24,93%,49%)]"
+      }`}
+    >
+      {active && (
+        <span
+          key="active-pill"
+          className="absolute inset-0 rounded-full scale-in"
+          style={{
+            background: "hsl(24,93%,49%)",
+            boxShadow: "0 2px 10px rgba(247,113,4,0.40)",
+          }}
+        />
+      )}
+      <span className="relative z-10 flex flex-col items-center gap-0.5">
+        {children}
+      </span>
+    </div>
+  );
+}
+
 export function BottomNavigation() {
   const [location] = useLocation();
   const { isAuthenticated, user } = useAuth();
@@ -32,12 +62,10 @@ export function BottomNavigation() {
     return location.startsWith(path);
   };
 
-  const navItem = (active: boolean) =>
-    `flex flex-col items-center gap-0.5 px-4 py-2 rounded-full transition-all duration-200 active:scale-[0.92] ${
-      active
-        ? 'bg-[hsl(24,93%,49%)] text-white shadow-sm'
-        : 'text-[hsl(28,8%,52%)] dark:text-[hsl(35,8%,52%)] hover:text-[hsl(24,93%,49%)]'
-    }`;
+  const homeActive = isActive('/');
+  const notifActive = isActive('/notifications');
+  const activityActive = isActive('/activity');
+  const profileActive = isActive('/dashboard') || isActive('/profile') || location === '/login';
 
   return (
     <>
@@ -52,18 +80,18 @@ export function BottomNavigation() {
           style={{ boxShadow: "0 8px 40px rgba(247,113,4,0.18), 0 4px 16px rgba(0,0,0,0.08)" }}
         >
           {/* Home */}
-          <Link href="/" className="flex active:opacity-70 transition-opacity">
-            <div className={navItem(isActive('/'))}>
-              <Home className="h-[20px] w-[20px]" strokeWidth={isActive('/') ? 2.3 : 1.8} />
+          <Link href="/" className="flex">
+            <NavItem active={homeActive}>
+              <Home className="h-[20px] w-[20px]" strokeWidth={homeActive ? 2.3 : 1.8} />
               <span className="text-[10px] leading-none font-semibold">Home</span>
-            </div>
+            </NavItem>
           </Link>
 
           {/* Notifiche */}
-          <Link href="/notifications" className="flex active:opacity-70 transition-opacity">
-            <div className={navItem(isActive('/notifications'))}>
+          <Link href="/notifications" className="flex">
+            <NavItem active={notifActive}>
               <div className="relative">
-                <Bell className="h-[20px] w-[20px]" strokeWidth={isActive('/notifications') ? 2.3 : 1.8} />
+                <Bell className="h-[20px] w-[20px]" strokeWidth={notifActive ? 2.3 : 1.8} />
                 {unread && unread > 0 ? (
                   <span className="absolute -top-1.5 -right-2 min-w-[15px] h-[15px] px-0.5 bg-red-500 text-white text-[9px] font-bold rounded-full flex items-center justify-center leading-none">
                     {unread > 9 ? '9+' : unread}
@@ -71,7 +99,7 @@ export function BottomNavigation() {
                 ) : null}
               </div>
               <span className="text-[10px] leading-none font-semibold">Notifiche</span>
-            </div>
+            </NavItem>
           </Link>
 
           {/* Cerca — CENTER, gradient pill with glow */}
@@ -92,19 +120,19 @@ export function BottomNavigation() {
           </button>
 
           {/* Attività */}
-          <Link href="/activity" className="flex active:opacity-70 transition-opacity">
-            <div className={navItem(isActive('/activity'))}>
-              <Activity className="h-[20px] w-[20px]" strokeWidth={isActive('/activity') ? 2.3 : 1.8} />
+          <Link href="/activity" className="flex">
+            <NavItem active={activityActive}>
+              <Activity className="h-[20px] w-[20px]" strokeWidth={activityActive ? 2.3 : 1.8} />
               <span className="text-[10px] leading-none font-semibold">Attività</span>
-            </div>
+            </NavItem>
           </Link>
 
           {/* Tu / Profilo */}
-          <Link href={dashboardHref} className="flex active:opacity-70 transition-opacity">
-            <div className={navItem(isActive('/dashboard') || isActive('/profile') || location === '/login')}>
-              <User className="h-[20px] w-[20px]" strokeWidth={(isActive('/dashboard') || isActive('/profile') || location === '/login') ? 2.3 : 1.8} />
+          <Link href={dashboardHref} className="flex">
+            <NavItem active={profileActive}>
+              <User className="h-[20px] w-[20px]" strokeWidth={profileActive ? 2.3 : 1.8} />
               <span className="text-[10px] leading-none font-semibold">{profileLabel}</span>
-            </div>
+            </NavItem>
           </Link>
         </div>
       </nav>
