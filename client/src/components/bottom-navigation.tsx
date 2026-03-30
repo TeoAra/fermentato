@@ -33,7 +33,7 @@ export function BottomNavigation() {
   };
 
   const navItem = (active: boolean) =>
-    `flex flex-col items-center gap-0.5 px-4 py-2 rounded-full transition-all duration-200 ${
+    `flex flex-col items-center gap-0.5 px-4 py-2 rounded-full transition-all duration-200 active:scale-[0.92] ${
       active
         ? 'bg-[hsl(24,93%,49%)] text-white shadow-sm'
         : 'text-[hsl(28,8%,52%)] dark:text-[hsl(35,8%,52%)] hover:text-[hsl(24,93%,49%)]'

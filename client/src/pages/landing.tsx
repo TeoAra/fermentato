@@ -1,6 +1,6 @@
 import { Link } from "wouter";
 import { useQuery } from "@tanstack/react-query";
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Beer, MapPin, Store, Users, Navigation,
@@ -11,6 +11,52 @@ import Footer from "@/components/footer";
 import PubCard from "@/components/pub-card";
 import BreweryCard from "@/components/brewery-card";
 import HomepageMap from "@/components/homepage-map";
+
+function useCountUp(target: number, duration = 1400, startDelay = 300) {
+  const [value, setValue] = useState(0);
+  const started = useRef(false);
+  useEffect(() => {
+    if (target === 0 || started.current) return;
+    const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (prefersReduced) { setValue(target); return; }
+    const id = setTimeout(() => {
+      started.current = true;
+      const t0 = performance.now();
+      const tick = (now: number) => {
+        const p = Math.min((now - t0) / duration, 1);
+        const e = 1 - Math.pow(1 - p, 3);
+        setValue(Math.round(e * target));
+        if (p < 1) requestAnimationFrame(tick);
+      };
+      requestAnimationFrame(tick);
+    }, startDelay);
+    return () => clearTimeout(id);
+  }, [target, duration, startDelay]);
+  return value;
+}
+
+function useScrollReveal() {
+  const ref = useRef<HTMLElement>(null);
+  const [visible, setVisible] = useState(false);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (prefersReduced) { setVisible(true); return; }
+    const obs = new IntersectionObserver(
+      ([e]) => { if (e.isIntersecting) { setVisible(true); obs.disconnect(); } },
+      { threshold: 0.1 }
+    );
+    obs.observe(el);
+    return () => obs.disconnect();
+  }, []);
+  const style: React.CSSProperties = {
+    opacity: visible ? 1 : 0,
+    transform: visible ? 'translateY(0)' : 'translateY(22px)',
+    transition: 'opacity 0.6s cubic-bezier(0.22,1,0.36,1), transform 0.6s cubic-bezier(0.22,1,0.36,1)',
+  };
+  return { ref, style };
+}
 
 function haversineDistance(lat1: number, lon1: number, lat2: number, lon2: number): number {
   const R = 6371;
@@ -94,6 +140,16 @@ export default function Landing() {
   const totalBeers = globalStats?.totalBeers ?? 0;
   const totalPubs = globalStats?.totalPubs ?? 0;
 
+  const animBreweries = useCountUp(totalBreweries, 1400, 450);
+  const animPubs = useCountUp(totalPubs, 1400, 550);
+  const animBeers = useCountUp(totalBeers, 1400, 650);
+
+  const valuePropsReveal = useScrollReveal();
+  const mapReveal = useScrollReveal();
+  const pubsReveal = useScrollReveal();
+  const breweriesReveal = useScrollReveal();
+  const businessReveal = useScrollReveal();
+
   return (
     <div className="min-h-screen bg-[#FFF8F2] dark:bg-[hsl(25,14%,7%)]">
 
@@ -114,32 +170,44 @@ export default function Landing() {
         <div className="relative max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pt-20 pb-24 lg:pt-12 lg:pb-32 text-center">
 
           {/* Eyebrow pill */}
-          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 dark:bg-primary/15 border border-primary/20 text-primary text-sm font-semibold mb-8">
+          <div
+            className="slide-up inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 dark:bg-primary/15 border border-primary/20 text-primary text-sm font-semibold mb-8"
+            style={{ animationDelay: '0ms' }}
+          >
             <Sparkles className="w-4 h-4" />
             Il tuo punto di riferimento sulla birra artigianale
           </div>
 
           {/* Headline — the most important line on the page */}
-          <h1 className="text-5xl sm:text-6xl lg:text-7xl font-black text-stone-900 dark:text-white mb-6 leading-[1.05] tracking-tight">
+          <h1
+            className="slide-up text-5xl sm:text-6xl lg:text-7xl font-black text-stone-900 dark:text-white mb-6 leading-[1.05] tracking-tight"
+            style={{ animationDelay: '80ms' }}
+          >
             Trova la birra perfetta.<br />
             <span style={{ background: "linear-gradient(135deg, #F77104 0%, #f98a0e 50%, #f5a623 100%)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text" }}>
               Sempre vicina a te.
             </span>
           </h1>
 
-          {/* Sub-headline — explains the 3 things in one sentence */}
-          <p className="text-xl text-stone-500 dark:text-stone-400 mb-10 max-w-2xl mx-auto leading-relaxed">
+          {/* Sub-headline */}
+          <p
+            className="slide-up text-xl text-stone-500 dark:text-stone-400 mb-10 max-w-2xl mx-auto leading-relaxed"
+            style={{ animationDelay: '160ms' }}
+          >
             Fermenta.to ti connette a <strong className="text-stone-700 dark:text-stone-300">pub artigianali</strong>,{" "}
             <strong className="text-stone-700 dark:text-stone-300">birrifici da tutto il mondo</strong> e{" "}
             <strong className="text-stone-700 dark:text-stone-300">oltre {totalBeers > 0 ? (totalBeers / 1000).toFixed(0) + "k" : "1M"} birre</strong> — tutto in un'unica app gratuita.
           </p>
 
           {/* CTA group — ONE primary, one ghost */}
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-3 mb-14">
+          <div
+            className="slide-up flex flex-col sm:flex-row items-center justify-center gap-3 mb-14"
+            style={{ animationDelay: '240ms' }}
+          >
             <a href="/api/login">
               <Button
                 size="lg"
-                className="h-14 px-8 text-base font-bold rounded-2xl text-white border-0 shadow-xl shadow-orange-200/50 dark:shadow-orange-900/30 hover:opacity-90 transition-opacity"
+                className="h-14 px-8 text-base font-bold rounded-2xl text-white border-0 shadow-xl shadow-orange-200/50 dark:shadow-orange-900/30 active:scale-[0.97] transition-transform"
                 style={{ background: "linear-gradient(135deg, #F77104 0%, #f98a0e 50%, #f5a623 100%)" }}
               >
                 <Users className="mr-2 w-5 h-5" />
@@ -150,7 +218,7 @@ export default function Landing() {
               <Button
                 size="lg"
                 variant="ghost"
-                className="h-14 px-8 text-base font-semibold rounded-2xl text-stone-600 dark:text-stone-300 hover:bg-white dark:hover:bg-white/10 border border-stone-200 dark:border-stone-700 bg-white/60 dark:bg-white/5 backdrop-blur-sm"
+                className="h-14 px-8 text-base font-semibold rounded-2xl text-stone-600 dark:text-stone-300 hover:bg-white dark:hover:bg-white/10 border border-stone-200 dark:border-stone-700 bg-white/60 dark:bg-white/5 backdrop-blur-sm active:scale-[0.97] transition-transform"
               >
                 <Search className="mr-2 w-5 h-5" />
                 Esplora senza account
@@ -158,17 +226,20 @@ export default function Landing() {
             </Link>
           </div>
 
-          {/* Live stats pills */}
+          {/* Live stats pills — animated count-up */}
           {totalBreweries > 0 && (
-            <div className="flex flex-wrap items-center justify-center gap-3">
+            <div
+              className="slide-up flex flex-wrap items-center justify-center gap-3"
+              style={{ animationDelay: '340ms' }}
+            >
               {[
-                { icon: Building2, val: totalBreweries.toLocaleString("it-IT"), label: "birrifici" },
-                { icon: Store, val: totalPubs.toLocaleString("it-IT"), label: "pub" },
-                { icon: Beer, val: totalBeers > 0 ? (totalBeers / 1000).toFixed(0) + "k" : "—", label: "birre" },
+                { icon: Building2, val: animBreweries.toLocaleString("it-IT"), label: "birrifici" },
+                { icon: Store, val: animPubs.toLocaleString("it-IT"), label: "pub" },
+                { icon: Beer, val: animBeers > 0 ? (animBeers / 1000).toFixed(1) + "k" : "—", label: "birre" },
               ].map(({ icon: Icon, val, label }) => (
-                <div key={label} className="flex items-center gap-2 px-4 py-2 bg-white dark:bg-white/8 rounded-full border border-stone-100 dark:border-stone-800 shadow-sm">
-                  <Icon className="w-4 h-4 text-primary" />
-                  <span className="font-bold text-stone-900 dark:text-white text-sm">{val}</span>
+                <div key={label} className="flex items-center gap-2 px-4 py-2.5 bg-white dark:bg-white/8 rounded-full border border-stone-100 dark:border-stone-800 shadow-sm tabular-nums">
+                  <Icon className="w-4 h-4 text-primary flex-shrink-0" />
+                  <span className="font-bold text-stone-900 dark:text-white text-sm min-w-[2.5rem] text-right">{val}</span>
                   <span className="text-stone-400 dark:text-stone-500 text-sm">{label}</span>
                 </div>
               ))}
@@ -202,7 +273,7 @@ export default function Landing() {
       </section>
 
       {/* ─── VALUE PROPS ─────────────────────────────────────────────────── */}
-      <section className="py-20 lg:py-28">
+      <section ref={valuePropsReveal.ref} style={valuePropsReveal.style} className="py-20 lg:py-28">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-14">
             <p className="text-sm font-bold uppercase tracking-widest text-primary mb-3">Perché Fermenta.to</p>
@@ -243,25 +314,28 @@ export default function Landing() {
                 accent: "bg-stone-50 dark:bg-stone-800/50 border-stone-100 dark:border-stone-700",
                 ctaClass: "text-stone-700 dark:text-stone-300",
               },
-            ].map((card) => (
-              <div key={card.title} className={`rounded-3xl p-8 border ${card.accent} flex flex-col`}>
-                <div className="text-5xl mb-5">{card.emoji}</div>
-                <h3 className="text-xl font-bold text-stone-900 dark:text-white mb-3 leading-snug">{card.title}</h3>
-                <p className="text-stone-500 dark:text-stone-400 text-sm leading-relaxed flex-1 mb-6">{card.desc}</p>
-                <Link href={card.href}>
+            ].map((card, i) => (
+              <Link key={card.title} href={card.href}>
+                <div
+                  className={`interactive-card rounded-3xl p-8 border ${card.accent} flex flex-col h-full`}
+                  style={{ transitionDelay: `${i * 60}ms` }}
+                >
+                  <div className="text-5xl mb-5">{card.emoji}</div>
+                  <h3 className="text-xl font-bold text-stone-900 dark:text-white mb-3 leading-snug">{card.title}</h3>
+                  <p className="text-stone-500 dark:text-stone-400 text-sm leading-relaxed flex-1 mb-6">{card.desc}</p>
                   <span className={`flex items-center gap-1.5 text-sm font-bold ${card.ctaClass} group`}>
                     {card.cta}
                     <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
                   </span>
-                </Link>
-              </div>
+                </div>
+              </Link>
             ))}
           </div>
         </div>
       </section>
 
       {/* ─── MAP + GPS ───────────────────────────────────────────────────── */}
-      <section className="py-6 pb-20">
+      <section ref={mapReveal.ref} style={mapReveal.style} className="py-6 pb-20">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-end justify-between mb-8 flex-wrap gap-4">
             <div>
@@ -317,7 +391,7 @@ export default function Landing() {
       </section>
 
       {/* ─── PUB VICINI ──────────────────────────────────────────────────── */}
-      <section className="py-6 pb-20 bg-white/40 dark:bg-white/2">
+      <section ref={pubsReveal.ref} style={pubsReveal.style} className="py-6 pb-20 bg-white/40 dark:bg-white/2">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between mb-10">
             <div>
@@ -347,7 +421,7 @@ export default function Landing() {
       </section>
 
       {/* ─── BIRRIFICI ───────────────────────────────────────────────────── */}
-      <section className="py-6 pb-20">
+      <section ref={breweriesReveal.ref} style={breweriesReveal.style} className="py-6 pb-20">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between mb-10">
             <div>
@@ -378,7 +452,7 @@ export default function Landing() {
       </section>
 
       {/* ─── FOR BUSINESS ────────────────────────────────────────────────── */}
-      <section className="py-20 lg:py-28">
+      <section ref={businessReveal.ref} style={businessReveal.style} className="py-20 lg:py-28">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-14">
             <p className="text-sm font-bold uppercase tracking-widest text-primary mb-3">Per le attività</p>

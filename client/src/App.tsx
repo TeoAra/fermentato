@@ -78,9 +78,33 @@ const SupportoPage       = lazy(() => import("@/pages/static-page").then(m => ({
 // ─────────────────────────────────────────────────────────────────────────────
 
 const PageSkeleton = () => (
-  <div className="min-h-screen flex items-center justify-center bg-[#FFF8F2]">
-    <div className="flex flex-col items-center gap-3">
-      <div className="w-10 h-10 rounded-full border-2 border-[#F77104]/30 border-t-[#F77104] animate-spin" />
+  <div className="min-h-screen bg-[#FFF8F2] dark:bg-[hsl(25,14%,7%)] overflow-hidden fade-in">
+    <div className="max-w-2xl mx-auto px-6 pt-20 pb-12 text-center space-y-5">
+      <div className="skeleton mx-auto h-8 w-52 rounded-full" />
+      <div className="space-y-3">
+        <div className="skeleton mx-auto h-11 w-4/5 rounded-2xl" />
+        <div className="skeleton mx-auto h-11 w-3/5 rounded-2xl" />
+      </div>
+      <div className="space-y-2">
+        <div className="skeleton mx-auto h-5 w-full rounded-xl" />
+        <div className="skeleton mx-auto h-5 w-5/6 rounded-xl" />
+      </div>
+      <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">
+        <div className="skeleton h-14 w-56 rounded-2xl" />
+        <div className="skeleton h-14 w-48 rounded-2xl" />
+      </div>
+      <div className="flex items-center justify-center gap-3 pt-2">
+        <div className="skeleton h-9 w-28 rounded-full" />
+        <div className="skeleton h-9 w-24 rounded-full" />
+        <div className="skeleton h-9 w-28 rounded-full" />
+      </div>
+    </div>
+    <div className="max-w-6xl mx-auto px-6 pb-16">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        {[0, 1, 2].map(i => (
+          <div key={i} className="skeleton h-52 rounded-3xl" style={{ animationDelay: `${i * 80}ms` }} />
+        ))}
+      </div>
     </div>
   </div>
 );
@@ -178,6 +202,7 @@ function Router() {
       <main className="pt-16 pb-28 lg:pb-8">
         <RouteErrorBoundary>
         <Suspense fallback={<PageSkeleton />}>
+        <div key={location.split('?')[0]} className="route-fade">
         <Switch>
           <Route path="/" component={isLoading || !isAuthenticated ? Landing : Home} />
           <Route path="/login" component={AuthPage} />
@@ -242,6 +267,7 @@ function Router() {
           <Route path="/reset-password" component={ResetPassword} />
           <Route component={NotFound} />
         </Switch>
+        </div>
         </Suspense>
         </RouteErrorBoundary>
       </main>
