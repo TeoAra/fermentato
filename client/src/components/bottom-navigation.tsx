@@ -2,7 +2,7 @@ import { Search, User, Home, Activity, Bell } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import { useAuth } from "@/hooks/useAuth";
 import { useQuery } from "@tanstack/react-query";
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import SearchDialog from "@/components/search-dialog";
 
 function NavItem({
@@ -10,7 +10,7 @@ function NavItem({
   children,
 }: {
   active: boolean;
-  children: React.ReactNode;
+  children: ReactNode;
 }) {
   return (
     <div
