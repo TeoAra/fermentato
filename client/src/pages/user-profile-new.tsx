@@ -427,7 +427,7 @@ export default function UserProfile() {
       const data = await response.json();
       if (!response.ok) throw new Error(data.message || `Errore ${response.status}`);
       if (!data.url) throw new Error("Nessun URL ricevuto dal server");
-      await updateProfileMutation.mutateAsync({ profileImageUrl: data.url, lastProfileImageUpdate: new Date() } as any);
+      await updateProfileMutation.mutateAsync({ profileImageUrl: data.url } as any);
       toast({ title: "Foto aggiornata", description: "La tua immagine del profilo è stata aggiornata" });
     } catch (e: any) {
       toast({ title: "Errore upload", description: e.message || "Impossibile caricare la foto", variant: "destructive" });

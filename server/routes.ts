@@ -2046,10 +2046,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userId = (req.user as any).id;
       const updates = { ...req.body };
 
+      // Convert any date string fields to Date objects (Drizzle requires Date, not string)
+      const dateFields = ['lastProfileImageUpdate', 'createdAt', 'updatedAt', 'birthDate'];
+      for (const field of dateFields) {
+        if (updates[field] !== undefined && updates[field] !== null && typeof updates[field] === 'string') {
+          const parsed = new Date(updates[field]);
+          updates[field] = isNaN(parsed.getTime()) ? undefined : parsed;
+        }
+      }
+
       if (updates.profileImageUrl !== undefined && updates.lastProfileImageUpdate) {
         const currentUser = await storage.getUser(userId);
         if (currentUser?.lastProfileImageUpdate) {
-          const lastUpdate = new Date(currentUser.lastProfileImageUpdate);
+          const lastUpdate = new Date(currentUser.lastProfileImageUpdate as any);
           const now = new Date();
           const daysDiff = (now.getTime() - lastUpdate.getTime()) / (1000 * 3600 * 24);
           if (daysDiff < 15) {
@@ -2058,6 +2067,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
             });
           }
         }
+      }
+
+      // If changing profile image, set lastProfileImageUpdate to now
+      if (updates.profileImageUrl !== undefined && !updates.lastProfileImageUpdate) {
+        updates.lastProfileImageUpdate = new Date();
       }
 
       const updatedUser = await storage.updateUser(userId, updates);
