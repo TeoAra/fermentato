@@ -329,6 +329,18 @@
     transform: scale(0.985) translateY(0px);
     box-shadow: var(--elevation-1);
   }
+
+  /* Scroll reveal — CSS class-based (avoids inline style duplication) */
+  .reveal-section {
+    opacity: 0;
+    transform: translateY(22px);
+    transition: opacity 0.6s cubic-bezier(0.22, 1, 0.36, 1),
+                transform 0.6s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+  .reveal-section.is-visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 /* ============================
@@ -419,6 +431,11 @@ img.lightbox-img { cursor: zoom-in; }
     background: var(--muted) !important;
   }
   .interactive-card {
+    transition: none !important;
+  }
+  .reveal-section {
+    opacity: 1 !important;
+    transform: none !important;
     transition: none !important;
   }
 }

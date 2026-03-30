@@ -60,12 +60,7 @@ function useScrollReveal() {
     obs.observe(el);
     return () => obs.disconnect();
   }, []);
-  const style: React.CSSProperties = {
-    opacity: visible ? 1 : 0,
-    transform: visible ? 'translateY(0)' : 'translateY(22px)',
-    transition: 'opacity 0.6s cubic-bezier(0.22,1,0.36,1), transform 0.6s cubic-bezier(0.22,1,0.36,1)',
-  };
-  return { ref, style };
+  return { ref, className: `reveal-section${visible ? ' is-visible' : ''}` };
 }
 
 function haversineDistance(lat1: number, lon1: number, lat2: number, lon2: number): number {
@@ -283,7 +278,7 @@ export default function Landing() {
       </section>
 
       {/* ─── VALUE PROPS ─────────────────────────────────────────────────── */}
-      <section ref={valuePropsReveal.ref} style={valuePropsReveal.style} className="py-20 lg:py-28">
+      <section ref={valuePropsReveal.ref} className={`${valuePropsReveal.className} py-20 lg:py-28`}>
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-14">
             <p className="text-sm font-bold uppercase tracking-widest text-primary mb-3">Perché Fermenta.to</p>
@@ -345,7 +340,7 @@ export default function Landing() {
       </section>
 
       {/* ─── MAP + GPS ───────────────────────────────────────────────────── */}
-      <section ref={mapReveal.ref} style={mapReveal.style} className="py-6 pb-20">
+      <section ref={mapReveal.ref} className={`${mapReveal.className} py-6 pb-20`}>
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-end justify-between mb-8 flex-wrap gap-4">
             <div>
@@ -401,7 +396,7 @@ export default function Landing() {
       </section>
 
       {/* ─── PUB VICINI ──────────────────────────────────────────────────── */}
-      <section ref={pubsReveal.ref} style={pubsReveal.style} className="py-6 pb-20 bg-white/40 dark:bg-white/2">
+      <section ref={pubsReveal.ref} className={`${pubsReveal.className} py-6 pb-20 bg-white/40 dark:bg-white/2`}>
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between mb-10">
             <div>
@@ -431,7 +426,7 @@ export default function Landing() {
       </section>
 
       {/* ─── BIRRIFICI ───────────────────────────────────────────────────── */}
-      <section ref={breweriesReveal.ref} style={breweriesReveal.style} className="py-6 pb-20">
+      <section ref={breweriesReveal.ref} className={`${breweriesReveal.className} py-6 pb-20`}>
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between mb-10">
             <div>
@@ -462,7 +457,7 @@ export default function Landing() {
       </section>
 
       {/* ─── FOR BUSINESS ────────────────────────────────────────────────── */}
-      <section ref={businessReveal.ref} style={businessReveal.style} className="py-20 lg:py-28">
+      <section ref={businessReveal.ref} className={`${businessReveal.className} py-20 lg:py-28`}>
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-14">
             <p className="text-sm font-bold uppercase tracking-widest text-primary mb-3">Per le attività</p>
