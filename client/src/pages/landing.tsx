@@ -15,6 +15,7 @@ import HomepageMap from "@/components/homepage-map";
 function useCountUp(target: number, duration = 1400, startDelay = 300) {
   const [value, setValue] = useState(0);
   const started = useRef(false);
+  const rafRef = useRef<number>(0);
   useEffect(() => {
     if (target === 0 || started.current) return;
     const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -26,11 +27,14 @@ function useCountUp(target: number, duration = 1400, startDelay = 300) {
         const p = Math.min((now - t0) / duration, 1);
         const e = 1 - Math.pow(1 - p, 3);
         setValue(Math.round(e * target));
-        if (p < 1) requestAnimationFrame(tick);
+        if (p < 1) rafRef.current = requestAnimationFrame(tick);
       };
-      requestAnimationFrame(tick);
+      rafRef.current = requestAnimationFrame(tick);
     }, startDelay);
-    return () => clearTimeout(id);
+    return () => {
+      clearTimeout(id);
+      if (rafRef.current) cancelAnimationFrame(rafRef.current);
+    };
   }, [target, duration, startDelay]);
   return value;
 }
