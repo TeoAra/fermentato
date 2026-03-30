@@ -470,7 +470,7 @@ export default function BreweryDetail() {
 
           {/* Logo centered — focal point */}
           <div className="absolute inset-0 flex items-center justify-center z-20">
-            <Avatar className="w-36 h-36 sm:w-44 sm:h-44 rounded-3xl border-[5px] border-white shadow-[0_8px_40px_rgba(0,0,0,0.35)] bg-white overflow-hidden">
+            <Avatar className="w-36 h-36 sm:w-44 sm:h-44 rounded-full border-[5px] border-white shadow-[0_8px_40px_rgba(0,0,0,0.35)] bg-white overflow-hidden">
               <AvatarImage src={brewery?.logoUrl} alt={brewery?.name} className="object-contain p-2" />
               <AvatarFallback className="bg-stone-800 text-white text-5xl font-bold">
                 {brewery?.name?.[0] || 'B'}

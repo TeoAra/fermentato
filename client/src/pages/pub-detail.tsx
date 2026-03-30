@@ -598,7 +598,7 @@ export default function PubDetail() {
 
         {/* Logo centered — focal point */}
         <div className="absolute inset-0 flex items-center justify-center z-20">
-          <Avatar className={`h-36 w-36 sm:h-44 sm:w-44 rounded-3xl border-[5px] border-white shadow-[0_8px_40px_rgba(0,0,0,0.35)] bg-white overflow-hidden ring-4 ${openStatus.borderColor}`}>
+          <Avatar className={`h-36 w-36 sm:h-44 sm:w-44 rounded-full border-[5px] border-white shadow-[0_8px_40px_rgba(0,0,0,0.35)] bg-white overflow-hidden ring-4 ${openStatus.borderColor}`}>
             <AvatarImage src={(pub as any)?.logoUrl} alt={(pub as any)?.name} className="object-contain p-2" />
             <AvatarFallback className="bg-stone-800 text-white text-5xl font-bold">
               {(pub as any)?.name?.[0] || 'P'}

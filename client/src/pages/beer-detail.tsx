@@ -570,15 +570,19 @@ export default function BeerDetail() {
 
         {/* Beer image — centered focal point */}
         <div className="absolute inset-0 flex items-center justify-center z-10 pointer-events-none pb-10">
-          {(beer?.imageUrl || beer?.bottleImageUrl) ? (
-            <img
-              src={beer?.imageUrl || beer?.bottleImageUrl}
-              alt={beer?.name}
-              className="h-[80%] w-auto max-w-[45%] object-contain drop-shadow-[0_8px_32px_rgba(0,0,0,0.7)]"
-            />
-          ) : (
-            <BeerIcon className="h-24 w-24 text-white/15" />
-          )}
+          <div className="w-36 h-36 sm:w-44 sm:h-44 rounded-full border-[5px] border-white shadow-[0_8px_40px_rgba(0,0,0,0.35)] bg-stone-900 overflow-hidden flex-shrink-0">
+            {(beer?.imageUrl || beer?.bottleImageUrl) ? (
+              <img
+                src={beer?.imageUrl || beer?.bottleImageUrl}
+                alt={beer?.name}
+                className="w-full h-full object-contain p-2"
+              />
+            ) : (
+              <div className="w-full h-full flex items-center justify-center">
+                <BeerIcon className="h-16 w-16 text-white/30" />
+              </div>
+            )}
+          </div>
         </div>
 
         <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
