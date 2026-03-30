@@ -340,11 +340,27 @@
     box-shadow: var(--elevation-1);
   }
 
-  /* ── Typography: display serif for big headings ── */
+  /* ── Typography: display font for big headings ── */
   .display-serif {
-    font-family: 'Instrument Serif', Georgia, serif;
-    font-weight: 400;
+    font-family: 'Poppins', 'DM Sans', system-ui, sans-serif;
+    font-weight: 700;
+    letter-spacing: -0.015em;
+  }
+
+  /* Apply display font globally to all headings on every page */
+  h1, h2, h3 {
+    font-family: 'Poppins', 'DM Sans', system-ui, sans-serif;
+  }
+  h1 {
+    letter-spacing: -0.015em;
+  }
+  h2 {
     letter-spacing: -0.01em;
+  }
+  h2.display-serif,
+  .section-heading {
+    font-weight: 700;
+    letter-spacing: -0.015em;
   }
 
   /* ── Neumorphism ── */

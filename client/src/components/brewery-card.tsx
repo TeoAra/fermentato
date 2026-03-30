@@ -75,18 +75,22 @@ export default function BreweryCard({ brewery, beerCount = 0, distance }: Brewer
 
   return (
     <Link href={`/brewery/${brewery.id}`} onMouseEnter={handlePrefetch} onTouchStart={handlePrefetch}>
-      <div className="group bg-white dark:bg-[hsl(25,14%,10%)] rounded-2xl border border-stone-100 dark:border-[hsl(25,12%,16%)] shadow-sm overflow-hidden cursor-pointer hover:shadow-[0_8px_28px_rgba(247,113,4,0.13)] hover:-translate-y-0.5 active:scale-[0.98] transition-all duration-200">
-        
+      <div className="group neu-card rounded-2xl overflow-hidden cursor-pointer hover:-translate-y-0.5 active:scale-[0.98] transition-all duration-200">
+
         {/* Cover / logo strip */}
         <div className="relative h-28 overflow-hidden">
           {coverBg ? (
-            <img src={coverBg} alt={name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300 lightbox-img" />
+            <img
+              src={coverBg}
+              alt={name}
+              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300 lightbox-img"
+            />
           ) : (
-            <div className="w-full h-full bg-gradient-to-br from-[hsl(24,93%,49%)] via-[hsl(22,92%,46%)] to-[hsl(20,95%,42%)] flex items-center justify-center">
-              <span className="text-4xl font-black text-white/80">{initial}</span>
+            <div className="w-full h-full bg-gradient-to-br from-stone-800 via-stone-700 to-stone-900 flex items-center justify-center">
+              <span className="text-5xl font-black text-white/20 display-serif">{initial}</span>
             </div>
           )}
-          <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent" />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/55 via-black/10 to-transparent" />
 
           {/* Favorite button */}
           <button
@@ -101,11 +105,11 @@ export default function BreweryCard({ brewery, beerCount = 0, distance }: Brewer
 
           {/* Location overlay */}
           {locationStr && (
-            <div className="absolute bottom-2 left-3 flex items-center gap-1 text-white text-[11px] font-semibold">
-              <MapPin className="w-3 h-3 text-orange-300 flex-shrink-0" />
-              <span className="truncate max-w-[160px] drop-shadow-sm">{locationStr}</span>
+            <div className="absolute bottom-2 left-3 flex items-center gap-1 text-white text-[11px] font-medium">
+              <MapPin className="w-3 h-3 text-stone-300 flex-shrink-0" />
+              <span className="truncate max-w-[160px] drop-shadow-sm text-white/90">{locationStr}</span>
               {distance != null && (
-                <span className="ml-1 font-bold text-orange-300">
+                <span className="ml-1 font-bold text-teal-300">
                   {distance < 1 ? `${Math.round(distance * 1000)}m` : `${distance.toFixed(1)}km`}
                 </span>
               )}
@@ -116,7 +120,7 @@ export default function BreweryCard({ brewery, beerCount = 0, distance }: Brewer
         {/* Info */}
         <div className="p-3.5 flex items-center gap-3">
           {/* Logo circle */}
-          <div className="w-12 h-12 rounded-xl border border-stone-100 dark:border-[hsl(25,12%,20%)] overflow-hidden flex-shrink-0 bg-stone-50 dark:bg-stone-900/20 shadow-sm">
+          <div className="w-12 h-12 rounded-full overflow-hidden flex-shrink-0 bg-stone-50 dark:bg-stone-900/20 shadow-sm border-2 border-white dark:border-stone-700/40">
             <ImageWithFallback
               src={brewery.logoUrl}
               alt={`Logo ${name}`}
@@ -128,11 +132,11 @@ export default function BreweryCard({ brewery, beerCount = 0, distance }: Brewer
           </div>
 
           <div className="flex-1 min-w-0">
-            <h3 className="font-bold text-[14px] text-foreground truncate group-hover:text-primary transition-colors leading-snug">
+            <h3 className="display-serif font-bold text-[15px] text-foreground truncate group-hover:text-primary transition-colors leading-snug">
               {name}
             </h3>
             {beerCount > 0 && (
-              <span className="inline-flex items-center gap-1 mt-1 px-2 py-0.5 rounded-full text-[11px] font-semibold bg-stone-50 dark:bg-stone-900/30 text-primary dark:text-orange-400 border border-stone-200 dark:border-stone-700/30">
+              <span className="inline-flex items-center gap-1 mt-1 px-2 py-0.5 rounded-full text-[11px] font-semibold bg-teal-50 dark:bg-teal-900/20 text-teal-700 dark:text-teal-400 border border-teal-100 dark:border-teal-800/30">
                 <Beer className="w-2.5 h-2.5" />
                 {beerCount} birre
               </span>

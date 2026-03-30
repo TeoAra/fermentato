@@ -220,10 +220,10 @@ export default function Home() {
               </div>
 
               {/* Title */}
-              <h1 className="text-4xl md:text-5xl lg:text-[3.4rem] font-extrabold text-foreground mb-3 leading-[1.1] tracking-tight">
+              <h1 className="display-serif text-4xl md:text-5xl lg:text-[3.4rem] font-extrabold text-foreground mb-3 leading-[1.1]">
                 {typedUser?.firstName ? `Ciao, ${typedUser.firstName}!` : 'Cosa scopri oggi?'}<br />
                 <span style={{
-                  background: "linear-gradient(135deg, #F77104 0%, #f98a0e 50%, #f5a623 100%)",
+                  background: "linear-gradient(135deg, #a78545 0%, #c9a05a 45%, #e8c47a 100%)",
                   WebkitBackgroundClip: "text",
                   WebkitTextFillColor: "transparent",
                   backgroundClip: "text",

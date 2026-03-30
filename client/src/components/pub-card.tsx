@@ -1,5 +1,4 @@
-import { Heart, Beer, Clock, MapPin, Star } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
+import { Heart, Beer, MapPin, Star } from "lucide-react";
 import { Link } from "wouter";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/useAuth";
@@ -105,7 +104,7 @@ export default function PubCard({ pub, distance }: PubCardProps) {
 
   return (
     <Link href={`/pub/${(pub as any).slug || pub.id}`} onMouseEnter={handlePrefetch} onTouchStart={handlePrefetch}>
-      <div className="group bg-white dark:bg-[hsl(25,14%,10%)] rounded-2xl border border-stone-100 dark:border-[hsl(25,12%,16%)] shadow-sm overflow-hidden cursor-pointer hover:shadow-[0_8px_28px_rgba(247,113,4,0.13)] hover:-translate-y-0.5 active:scale-[0.98] transition-all duration-200">
+      <div className="group neu-card rounded-2xl overflow-hidden cursor-pointer hover:-translate-y-0.5 active:scale-[0.98] transition-all duration-200">
         {/* Cover image */}
         <div className="relative">
           <ImageWithFallback
@@ -123,9 +122,11 @@ export default function PubCard({ pub, distance }: PubCardProps) {
           )}
           {/* Open/closed pill */}
           <div className={`absolute top-3 left-3 flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold backdrop-blur-sm ${
-            open ? 'bg-green-500/90 text-white' : 'bg-black/50 text-white/80'
+            open
+              ? 'bg-emerald-500/90 text-white'
+              : 'bg-black/50 text-white/80'
           }`}>
-            <span className={`w-1.5 h-1.5 rounded-full ${open ? 'bg-white animate-pulse' : 'bg-white/50'}`} />
+            <span className={`w-1.5 h-1.5 rounded-full ${open ? 'bg-white animate-pulse' : 'bg-white/40'}`} />
             {open ? 'Aperto' : 'Chiuso'}
           </div>
           {/* Favorite */}
@@ -144,23 +145,23 @@ export default function PubCard({ pub, distance }: PubCardProps) {
         <div className="p-4">
           {/* Name + rating row */}
           <div className="flex items-start justify-between gap-2 mb-1.5">
-            <h3 className="text-[15px] font-bold text-foreground truncate leading-snug group-hover:text-primary transition-colors">{pub.name}</h3>
+            <h3 className="display-serif text-[16px] font-bold text-foreground truncate leading-snug group-hover:text-primary transition-colors">{pub.name}</h3>
             {rating && (
-              <div className="flex items-center gap-0.5 flex-shrink-0">
-                <Star className="w-3.5 h-3.5 text-amber-500 fill-amber-500" />
-                <span className="text-[13px] font-bold text-foreground">{rating.toFixed(1)}</span>
+              <div className="flex items-center gap-0.5 flex-shrink-0 bg-amber-50 dark:bg-amber-900/20 px-1.5 py-0.5 rounded-full border border-amber-100 dark:border-amber-800/30">
+                <Star className="w-3 h-3 text-amber-500 fill-amber-500" />
+                <span className="text-[12px] font-bold text-amber-700 dark:text-amber-400">{rating.toFixed(1)}</span>
               </div>
             )}
           </div>
 
           {/* Location */}
           <p className="text-xs text-muted-foreground flex items-center gap-1 mb-3">
-            <MapPin className="w-3 h-3 text-primary flex-shrink-0" />
+            <MapPin className="w-3 h-3 text-stone-400 flex-shrink-0" />
             <span className="truncate">
               {distance != null ? pub.city : `${pub.city || pub.address}`}
             </span>
             {distance != null && (
-              <span className="ml-1 text-[11px] font-bold text-primary whitespace-nowrap flex-shrink-0">
+              <span className="ml-1 text-[11px] font-bold text-teal-600 dark:text-teal-400 whitespace-nowrap flex-shrink-0">
                 {distance < 1 ? `${Math.round(distance * 1000)}m` : `${distance.toFixed(1)}km`}
               </span>
             )}
@@ -169,7 +170,7 @@ export default function PubCard({ pub, distance }: PubCardProps) {
           {/* Info pills */}
           <div className="flex items-center gap-1.5 flex-wrap">
             {beersOnTap > 0 && (
-              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold bg-stone-50 dark:bg-stone-900/30 text-primary dark:text-orange-400 border border-stone-200 dark:border-stone-700/30">
+              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold bg-teal-50 dark:bg-teal-900/20 text-teal-700 dark:text-teal-400 border border-teal-100 dark:border-teal-800/30">
                 <Beer className="w-3 h-3" />
                 {beersOnTap} alla spina
               </span>

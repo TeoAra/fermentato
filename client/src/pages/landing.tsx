@@ -192,11 +192,11 @@ export default function Landing() {
 
           {/* Headline — the most important line on the page */}
           <h1
-            className="slide-up text-5xl sm:text-6xl lg:text-7xl font-black text-stone-900 dark:text-white mb-6 leading-[1.05] tracking-tight"
+            className="slide-up display-serif text-5xl sm:text-6xl lg:text-7xl font-black text-stone-900 dark:text-white mb-6 leading-[1.05]"
             style={{ animationDelay: '80ms' }}
           >
             Trova la birra perfetta.<br />
-            <span style={{ background: "linear-gradient(135deg, #F77104 0%, #f98a0e 50%, #f5a623 100%)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text" }}>
+            <span style={{ background: "linear-gradient(135deg, #a78545 0%, #c9a05a 45%, #e8c47a 100%)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text" }}>
               Sempre vicina a te.
             </span>
           </h1>
@@ -289,7 +289,7 @@ export default function Landing() {
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-14">
             <p className="text-sm font-bold uppercase tracking-widest text-primary mb-3">Perché Fermenta.to</p>
-            <h2 className="text-4xl lg:text-5xl font-black text-stone-900 dark:text-white mb-4 leading-tight">
+            <h2 className="display-serif text-4xl lg:text-5xl font-black text-stone-900 dark:text-white mb-4 leading-tight">
               Tutto il craft beer,<br className="hidden sm:block" /> in un'unica app
             </h2>
             <p className="text-stone-500 dark:text-stone-400 max-w-xl mx-auto text-lg">
@@ -354,7 +354,7 @@ export default function Landing() {
               <p className="text-sm font-bold uppercase tracking-widest text-primary mb-2">
                 {locationStatus === 'granted' ? '📍 La tua zona' : '🗺️ Esplora la mappa'}
               </p>
-              <h2 className="text-3xl lg:text-4xl font-black text-stone-900 dark:text-white">
+              <h2 className="display-serif text-3xl lg:text-4xl font-black text-stone-900 dark:text-white">
                 {locationStatus === 'granted' ? 'Vicino a te adesso' : 'Pub e birrifici nel mondo'}
               </h2>
             </div>
@@ -408,7 +408,7 @@ export default function Landing() {
           <div className="flex items-center justify-between mb-10">
             <div>
               <p className="text-sm font-bold uppercase tracking-widest text-primary mb-2">Locali</p>
-              <h2 className="text-3xl font-black text-stone-900 dark:text-white">
+              <h2 className="display-serif text-3xl font-black text-stone-900 dark:text-white">
                 {userLocation ? 'Pub vicini a te' : 'Pub consigliati'}
               </h2>
             </div>
@@ -438,7 +438,7 @@ export default function Landing() {
           <div className="flex items-center justify-between mb-10">
             <div>
               <p className="text-sm font-bold uppercase tracking-widest text-primary mb-2">Produttori</p>
-              <h2 className="text-3xl font-black text-stone-900 dark:text-white">
+              <h2 className="display-serif text-3xl font-black text-stone-900 dark:text-white">
                 {nearbyHasResults ? 'Birrifici vicini' : 'Birrifici in evidenza'}
               </h2>
             </div>
@@ -468,7 +468,7 @@ export default function Landing() {
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-14">
             <p className="text-sm font-bold uppercase tracking-widest text-primary mb-3">Per le attività</p>
-            <h2 className="text-4xl font-black text-stone-900 dark:text-white mb-4">
+            <h2 className="display-serif text-4xl font-black text-stone-900 dark:text-white mb-4">
               Sei un pub o un birrificio?
             </h2>
             <p className="text-stone-500 dark:text-stone-400 max-w-xl mx-auto text-lg">
@@ -604,7 +604,7 @@ export default function Landing() {
               style={{ backgroundImage: "radial-gradient(circle, white 1px, transparent 1px)", backgroundSize: "24px 24px" }} />
             <div className="relative">
               <div className="text-5xl mb-6">🍺</div>
-              <h2 className="text-4xl lg:text-5xl font-black text-white mb-4 leading-tight">
+              <h2 className="display-serif text-4xl lg:text-5xl font-black text-white mb-4 leading-tight">
                 Inizia a esplorare<br />il craft beer italiano
               </h2>
               <p className="text-white/80 mb-8 text-lg max-w-lg mx-auto">
