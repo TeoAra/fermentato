@@ -61,7 +61,7 @@ export default function PubCard({ pub, distance }: PubCardProps) {
   const isFavorite = isFavoriteData?.isFavorite || false;
   const favoritesCount = (favoritesCountData as any)?.count || 0;
   const open = isOpenNow(pub.openingHours);
-  const rating = pub.rating ? parseFloat(pub.rating) : null;
+  const rating = pub.rating && parseFloat(pub.rating) > 0 ? parseFloat(pub.rating) : null;
 
   const toggleFavoriteMutation = useMutation({
     mutationFn: async () => {
