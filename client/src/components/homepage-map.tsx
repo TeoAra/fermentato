@@ -5,17 +5,24 @@ import "maplibre-gl/dist/maplibre-gl.css";
 const PUB_COLOR = "#F77104";
 const BREWERY_COLOR = "#9B4E10";
 
+function haversineDist(lat1: number, lon1: number, lat2: number, lon2: number): number {
+  const R = 6371;
+  const dLat = (lat2 - lat1) * Math.PI / 180;
+  const dLon = (lon2 - lon1) * Math.PI / 180;
+  const a = Math.sin(dLat / 2) ** 2 +
+    Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math.sin(dLon / 2) ** 2;
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+}
+
 function createMarkerEl(type: "pub" | "brewery", logoUrl?: string | null): HTMLElement {
   const color = type === "pub" ? PUB_COLOR : BREWERY_COLOR;
   const gradEnd = type === "pub" ? "#f5a623" : "#c46520";
   const emoji = type === "pub" ? "🍻" : "🍺";
 
-  // Outer wrapper: handles CSS hover scale without overflow clipping
   const wrapper = document.createElement("div");
   wrapper.className = "fermenta-marker";
   wrapper.style.cssText = "width:34px;height:34px;cursor:pointer;position:relative;";
 
-  // Inner circle: gradient bg + border, overflow:hidden only here (for logo crop)
   const inner = document.createElement("div");
   inner.style.cssText = [
     "width:34px;height:34px;border-radius:50%;",
@@ -60,7 +67,7 @@ function createPopupHTML(
   const gradEnd = type === "pub" ? "#f5a623" : "#c46520";
   const label = type === "pub" ? "PUB" : "BIRRIFICIO";
   const logo = logoUrl
-    ? `<img src="${logoUrl}" alt="" class="lightbox-img" onerror="this.style.display='none'" style="width:38px;height:38px;border-radius:10px;object-fit:cover;flex-shrink:0;cursor:zoom-in;" />`
+    ? `<img src="${logoUrl}" alt="" onerror="this.style.display='none'" style="width:38px;height:38px;border-radius:10px;object-fit:cover;flex-shrink:0;" />`
     : "";
   return `
     <div style="font-family:system-ui,sans-serif;padding:14px;min-width:175px;max-width:220px;">
@@ -105,29 +112,57 @@ interface HomepageMapProps {
   userLocation?: { lat: number; lng: number } | null;
   isLoading?: boolean;
   onLocate?: (loc: { lat: number; lng: number }) => void;
+  showPubs?: boolean;
+  showBreweries?: boolean;
+  distanceKm?: number;
 }
 
-export default function HomepageMap({ pubs, breweries, userLocation, isLoading }: HomepageMapProps) {
+export default function HomepageMap({
+  pubs,
+  breweries,
+  userLocation,
+  isLoading,
+  showPubs = true,
+  showBreweries = true,
+  distanceKm,
+}: HomepageMapProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<maplibregl.Map | null>(null);
   const markersRef = useRef<maplibregl.Marker[]>([]);
   const didCenterRef = useRef(false);
 
-  const geoFilteredPubs = useMemo(
-    () => pubs.filter(p => p.latitude && p.longitude && !isNaN(parseFloat(p.latitude)) && !isNaN(parseFloat(p.longitude))),
-    [pubs]
-  );
-  const geoFilteredBreweries = useMemo(
-    () => breweries.filter(b => b.latitude && b.longitude && !isNaN(parseFloat(b.latitude!)) && !isNaN(parseFloat(b.longitude!))),
-    [breweries]
-  );
+  const geoFilteredPubs = useMemo(() => {
+    if (!showPubs) return [];
+    const valid = pubs.filter(p =>
+      p.latitude && p.longitude &&
+      !isNaN(parseFloat(p.latitude)) &&
+      !isNaN(parseFloat(p.longitude))
+    );
+    if (!userLocation || !distanceKm) return valid;
+    return valid.filter(p =>
+      haversineDist(userLocation.lat, userLocation.lng, parseFloat(p.latitude!), parseFloat(p.longitude!)) <= distanceKm
+    );
+  }, [pubs, showPubs, userLocation, distanceKm]);
+
+  const geoFilteredBreweries = useMemo(() => {
+    if (!showBreweries) return [];
+    const valid = breweries.filter(b =>
+      b.latitude && b.longitude &&
+      !isNaN(parseFloat(b.latitude!)) &&
+      !isNaN(parseFloat(b.longitude!))
+    );
+    if (!userLocation || !distanceKm) return valid;
+    return valid.filter(b =>
+      haversineDist(userLocation.lat, userLocation.lng, parseFloat(b.latitude!), parseFloat(b.longitude!)) <= distanceKm
+    );
+  }, [breweries, showBreweries, userLocation, distanceKm]);
+
   const pubCount = geoFilteredPubs.length;
   const breweryCount = geoFilteredBreweries.length;
 
   useEffect(() => {
     if (!containerRef.current || mapRef.current) return;
 
-    // Parallel tile loading (browser default is 16, explicit is better)
     maplibregl.setMaxParallelImageRequests(16);
 
     const map = new maplibregl.Map({
@@ -139,10 +174,10 @@ export default function HomepageMap({ pubs, breweries, userLocation, isLoading }
       maxZoom: 18,
       scrollZoom: false,
       attributionControl: false,
-      fadeDuration: 0,           // Tiles appaiono subito, senza fade-in
+      fadeDuration: 0,
       trackResize: true,
-      localIdeographFontFamily: "'DM Sans', sans-serif", // Usa font già caricato
-      renderWorldCopies: false,  // Meno geometria = render più veloce
+      localIdeographFontFamily: "'DM Sans', sans-serif",
+      renderWorldCopies: false,
     });
 
     map.addControl(new maplibregl.AttributionControl({ compact: true }), "bottom-right");
@@ -228,7 +263,7 @@ export default function HomepageMap({ pubs, breweries, userLocation, isLoading }
         style={{ background: "linear-gradient(to bottom, transparent 0%, var(--background) 100%)" }}
       />
 
-      {!isLoading && pubCount + breweryCount > 0 && (
+      {!isLoading && (pubCount + breweryCount > 0) && (
         <div className="absolute bottom-5 left-3 z-20">
           <div
             className="flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-bold backdrop-blur-sm shadow-sm"
@@ -238,17 +273,24 @@ export default function HomepageMap({ pubs, breweries, userLocation, isLoading }
               color: "#5C3D1A",
             }}
           >
-            <span className="w-2 h-2 rounded-full inline-block" style={{ background: PUB_COLOR }} />
-            <span>{pubCount} pub</span>
-            <span style={{ color: "#D4A882" }}>·</span>
-            <span className="w-2 h-2 rounded-full inline-block" style={{ background: BREWERY_COLOR }} />
-            <span>{breweryCount} birrifici</span>
+            {showPubs && (
+              <>
+                <span className="w-2 h-2 rounded-full inline-block" style={{ background: PUB_COLOR }} />
+                <span>{pubCount} pub</span>
+              </>
+            )}
+            {showPubs && showBreweries && <span style={{ color: "#D4A882" }}>·</span>}
+            {showBreweries && (
+              <>
+                <span className="w-2 h-2 rounded-full inline-block" style={{ background: BREWERY_COLOR }} />
+                <span>{breweryCount} birrifici</span>
+              </>
+            )}
           </div>
         </div>
       )}
 
       <style>{`
-        /* Marker hover via CSS — no JS listeners to conflict with MapLibre */
         .fermenta-marker {
           will-change: transform;
           transition: transform 0.15s ease;
@@ -260,7 +302,6 @@ export default function HomepageMap({ pubs, breweries, userLocation, isLoading }
         .fermenta-marker:hover > div {
           box-shadow: 0 4px 18px rgba(247,113,4,0.45) !important;
         }
-
         .fermenta-popup .maplibregl-popup-content {
           border-radius: 14px !important;
           padding: 0 !important;
