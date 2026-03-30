@@ -313,9 +313,9 @@
   }
 
   .fade-in  { animation: fadeIn  0.5s cubic-bezier(0.22, 1, 0.36, 1) both; }
-  .slide-up { animation: slideUp 0.5s cubic-bezier(0.22, 1, 0.36, 1) both; }
+  .slide-up { animation: slideUp 0.45s cubic-bezier(0.22, 1, 0.36, 1) 80ms both; }
   .scale-in { animation: scaleIn 0.35s cubic-bezier(0.22, 1, 0.36, 1) both; }
-  .route-fade { animation: routeFade 0.28s cubic-bezier(0.22, 1, 0.36, 1) both; }
+  .route-fade { animation: routeFade 0.22s cubic-bezier(0.22, 1, 0.36, 1) both; }
 
   .interactive-card {
     transition: box-shadow 0.22s ease, transform 0.22s ease;
