@@ -65,12 +65,12 @@ export default function ExplorePubs() {
         <div className="absolute top-3 left-3 right-3 z-50 flex items-center gap-2 pointer-events-none">
           <button
             onClick={() => setViewMode("list")}
-            className="pointer-events-auto flex items-center gap-1.5 px-3 py-2 rounded-2xl text-sm font-bold bg-white dark:bg-[hsl(25,14%,10%)] shadow-lg border border-stone-100 dark:border-[hsl(25,12%,16%)] text-foreground hover:bg-stone-50 transition-colors"
+            className="pointer-events-auto flex items-center gap-1.5 px-3 py-2 rounded-2xl text-sm font-bold bg-white dark:bg-card shadow-lg border border-stone-100 dark:border-border text-foreground hover:bg-stone-50 transition-colors"
           >
             <ArrowLeft className="w-4 h-4" />
             Lista
           </button>
-          <div className="flex-1 pointer-events-auto flex items-center gap-2 px-3 py-2 rounded-2xl bg-white dark:bg-[hsl(25,14%,10%)] shadow-lg border border-stone-100 dark:border-[hsl(25,12%,16%)]">
+          <div className="flex-1 pointer-events-auto flex items-center gap-2 px-3 py-2 rounded-2xl bg-white dark:bg-card shadow-lg border border-stone-100 dark:border-border">
             <Store className="h-4 w-4 text-primary flex-shrink-0" />
             <span className="text-sm font-bold text-foreground truncate">Mappa pub</span>
           </div>
@@ -118,7 +118,7 @@ export default function ExplorePubs() {
         {isLoading ? (
           <div className="space-y-3">
             {[...Array(5)].map((_, i) => (
-              <div key={i} className="bg-white dark:bg-[hsl(25,14%,10%)] rounded-2xl h-14 animate-pulse" />
+              <div key={i} className="bg-white dark:bg-card rounded-2xl h-14 animate-pulse" />
             ))}
           </div>
         ) : (
@@ -128,7 +128,7 @@ export default function ExplorePubs() {
               if (statePubs.length === 0) return null;
               const isOpen = openStates.includes(state);
               return (
-                <div key={state} className="bg-white dark:bg-[hsl(25,14%,10%)] rounded-2xl overflow-hidden border border-stone-100/70 dark:border-stone-700/20 shadow-sm">
+                <div key={state} className="bg-white dark:bg-card rounded-2xl overflow-hidden border border-stone-100/70 dark:border-stone-700/20 shadow-sm">
                   {/* Region header */}
                   <button
                     className="w-full flex items-center justify-between px-4 py-3.5 text-left hover:bg-stone-50 dark:hover:bg-stone-800/30 transition-colors"
@@ -170,7 +170,7 @@ export default function ExplorePubs() {
               if (others.length === 0) return null;
               const isOpen = openStates.includes('Altri');
               return (
-                <div className="bg-white dark:bg-[hsl(25,14%,10%)] rounded-2xl overflow-hidden border border-stone-100/70 dark:border-stone-700/20 shadow-sm">
+                <div className="bg-white dark:bg-card rounded-2xl overflow-hidden border border-stone-100/70 dark:border-stone-700/20 shadow-sm">
                   <button
                     className="w-full flex items-center justify-between px-4 py-3.5 text-left hover:bg-stone-50 dark:hover:bg-stone-800/30 transition-colors"
                     onClick={() => toggleState('Altri')}

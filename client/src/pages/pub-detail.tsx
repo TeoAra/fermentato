@@ -117,7 +117,7 @@ const ModernBeerCard = ({ beer, prices, className = "" }: {
   prices?: any[];
   className?: string;
 }) => (
-  <div className={`bg-white dark:bg-[hsl(25,14%,10%)] rounded-2xl border border-stone-100 dark:border-[hsl(25,12%,16%)] shadow-[0_4px_20px_rgba(247,113,4,0.06)] hover:shadow-[0_6px_24px_rgba(247,113,4,0.12)] hover:border-stone-300 dark:hover:border-orange-800/40 transition-all duration-300 cursor-pointer ${className}`}>
+  <div className={`bg-white dark:bg-card rounded-2xl border border-stone-100 dark:border-border shadow-[0_4px_20px_rgba(247,113,4,0.06)] hover:shadow-[0_6px_24px_rgba(247,113,4,0.12)] hover:border-stone-300 dark:hover:border-orange-800/40 transition-all duration-300 cursor-pointer ${className}`}>
     <div className="flex gap-3 p-4">
       <Link href={`/beer/${beer?.id}`} className="flex-shrink-0 self-center">
         <div className="w-14 h-14 rounded-2xl overflow-hidden bg-stone-50 dark:bg-stone-900/40 flex items-center justify-center border border-stone-200 dark:border-stone-700/30">
@@ -589,12 +589,12 @@ export default function PubDetail() {
       </Helmet>
       
       {/* ── HERO ── */}
-      <div className="relative bg-white dark:bg-[hsl(25,14%,10%)] border-b border-stone-100 dark:border-stone-700/30 overflow-hidden">
+      <div className="relative bg-white dark:bg-card border-b border-stone-100 dark:border-stone-700/30 overflow-hidden">
         {/* Cover strip — barely visible */}
         {(pub as any)?.coverImageUrl && (
           <div className="absolute inset-x-0 top-0 h-24 pointer-events-none">
             <img src={(pub as any).coverImageUrl} alt="" className="w-full h-full object-cover opacity-20 blur-[1px] scale-105" />
-            <div className="absolute inset-0 bg-gradient-to-b from-transparent to-white dark:to-[hsl(25,14%,10%)]" />
+            <div className="absolute inset-0 bg-gradient-to-b from-transparent to-white dark:to-card" />
           </div>
         )}
 
@@ -712,7 +712,7 @@ export default function PubDetail() {
           <div className="lg:col-span-3">
             {/* ── TABS ── */}
             <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-                <div className="sticky top-14 lg:top-16 z-10 bg-white dark:bg-[hsl(25,14%,10%)] border-b border-stone-100 dark:border-stone-700/30">
+                <div className="sticky top-14 lg:top-16 z-10 bg-white dark:bg-card border-b border-stone-100 dark:border-stone-700/30">
                   <div className="flex justify-center overflow-x-auto scrollbar-hide px-1">
                     {[
                       { id: 'taplist', label: 'Spina', icon: <Wine className="h-4 w-4 flex-shrink-0" /> },
@@ -885,7 +885,7 @@ export default function PubDetail() {
                   {/* Hours */}
                   <button
                     onClick={handleShowOpeningHours}
-                    className="w-full flex items-center gap-3 p-3 rounded-xl bg-white dark:bg-[hsl(25,14%,10%)] border border-stone-100 dark:border-[hsl(25,12%,16%)] hover:bg-stone-50 dark:hover:bg-stone-900/20 transition-colors text-left shadow-sm"
+                    className="w-full flex items-center gap-3 p-3 rounded-xl bg-white dark:bg-card border border-stone-100 dark:border-border hover:bg-stone-50 dark:hover:bg-stone-900/20 transition-colors text-left shadow-sm"
                   >
                     <div className="p-2.5 rounded-xl bg-amber-50 dark:bg-amber-950/30 flex-shrink-0">
                       <Clock className="h-4 w-4 text-amber-600 dark:text-amber-400" />
@@ -900,7 +900,7 @@ export default function PubDetail() {
                   </button>
                   {/* Phone */}
                   {(pub as any)?.phone && (
-                    <a href={`tel:${(pub as any).phone}`} className="flex items-center gap-3 p-3 rounded-xl bg-white dark:bg-[hsl(25,14%,10%)] border border-stone-100 dark:border-[hsl(25,12%,16%)] hover:bg-emerald-50 dark:hover:bg-emerald-950/10 transition-colors shadow-sm">
+                    <a href={`tel:${(pub as any).phone}`} className="flex items-center gap-3 p-3 rounded-xl bg-white dark:bg-card border border-stone-100 dark:border-border hover:bg-emerald-50 dark:hover:bg-emerald-950/10 transition-colors shadow-sm">
                       <div className="p-2.5 rounded-xl bg-emerald-50 dark:bg-emerald-950/30 flex-shrink-0">
                         <Phone className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
                       </div>
@@ -909,7 +909,7 @@ export default function PubDetail() {
                   )}
                   {/* Website */}
                   {(pub as any)?.websiteUrl && (
-                    <a href={(pub as any).websiteUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 p-3 rounded-xl bg-white dark:bg-[hsl(25,14%,10%)] border border-stone-100 dark:border-[hsl(25,12%,16%)] hover:bg-violet-50 dark:hover:bg-violet-950/10 transition-colors shadow-sm">
+                    <a href={(pub as any).websiteUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 p-3 rounded-xl bg-white dark:bg-card border border-stone-100 dark:border-border hover:bg-violet-50 dark:hover:bg-violet-950/10 transition-colors shadow-sm">
                       <div className="p-2.5 rounded-xl bg-violet-50 dark:bg-violet-950/30 flex-shrink-0">
                         <Globe className="h-4 w-4 text-violet-600 dark:text-violet-400" />
                       </div>
@@ -918,7 +918,7 @@ export default function PubDetail() {
                   )}
                   {/* Email */}
                   {(pub as any)?.email && (
-                    <a href={`mailto:${(pub as any).email}`} className="flex items-center gap-3 p-3 rounded-xl bg-white dark:bg-[hsl(25,14%,10%)] border border-stone-100 dark:border-[hsl(25,12%,16%)] hover:bg-blue-50 dark:hover:bg-blue-950/10 transition-colors shadow-sm">
+                    <a href={`mailto:${(pub as any).email}`} className="flex items-center gap-3 p-3 rounded-xl bg-white dark:bg-card border border-stone-100 dark:border-border hover:bg-blue-50 dark:hover:bg-blue-950/10 transition-colors shadow-sm">
                       <div className="p-2.5 rounded-xl bg-blue-50 dark:bg-blue-950/30 flex-shrink-0">
                         <Mail className="h-4 w-4 text-blue-600 dark:text-blue-400" />
                       </div>
@@ -944,7 +944,7 @@ export default function PubDetail() {
                   )}
                   {/* Description */}
                   {(pub as any)?.description && (
-                    <div className="p-4 rounded-xl bg-white dark:bg-[hsl(25,14%,10%)] border border-stone-100 dark:border-[hsl(25,12%,16%)] shadow-sm">
+                    <div className="p-4 rounded-xl bg-white dark:bg-card border border-stone-100 dark:border-border shadow-sm">
                       <p className="text-sm text-gray-600 dark:text-stone-400 leading-relaxed">{(pub as any).description}</p>
                     </div>
                   )}
@@ -957,7 +957,7 @@ export default function PubDetail() {
 
             {/* Description */}
             {(pub as any)?.description && (
-              <div className="bg-white dark:bg-[hsl(25,14%,10%)] rounded-2xl border border-stone-100 dark:border-[hsl(25,12%,16%)] shadow-sm p-4">
+              <div className="bg-white dark:bg-card rounded-2xl border border-stone-100 dark:border-border shadow-sm p-4">
                 <p className="text-sm text-gray-600 dark:text-stone-400 leading-relaxed">{(pub as any).description}</p>
               </div>
             )}
@@ -966,7 +966,7 @@ export default function PubDetail() {
             <button
               onClick={handleShowOpeningHours}
               data-testid="button-show-hours"
-              className="w-full flex items-center gap-3 px-4 py-3 bg-white dark:bg-[hsl(25,14%,10%)] rounded-2xl border border-stone-100 dark:border-[hsl(25,12%,16%)] shadow-sm hover:border-primary/40 transition-colors text-left"
+              className="w-full flex items-center gap-3 px-4 py-3 bg-white dark:bg-card rounded-2xl border border-stone-100 dark:border-border shadow-sm hover:border-primary/40 transition-colors text-left"
             >
               <div className="p-2 rounded-xl bg-amber-50 dark:bg-amber-950/30 flex-shrink-0">
                 <Clock className="h-4 w-4 text-amber-600 dark:text-amber-400" />
@@ -981,7 +981,7 @@ export default function PubDetail() {
             </button>
 
             {/* Contatti + Social */}
-            <div className="bg-white dark:bg-[hsl(25,14%,10%)] rounded-2xl border border-stone-100 dark:border-[hsl(25,12%,16%)] shadow-sm overflow-hidden">
+            <div className="bg-white dark:bg-card rounded-2xl border border-stone-100 dark:border-border shadow-sm overflow-hidden">
               <div className="px-4 py-3 border-b border-stone-100 dark:border-stone-700/30">
                 <h3 className="text-sm font-bold text-foreground uppercase tracking-wide">Contatti</h3>
               </div>

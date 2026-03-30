@@ -180,7 +180,7 @@ export default function AdminDashboard() {
       <div className="container mx-auto px-4 py-6 max-w-7xl space-y-6">
         <div className="flex items-center gap-4">
           <Link href="/admin">
-            <Button variant="outline" size="sm" className="border-stone-200 dark:border-[hsl(25,12%,20%)] hover:bg-stone-50 rounded-xl">
+            <Button variant="outline" size="sm" className="border-stone-200 dark:border-border hover:bg-stone-50 rounded-xl">
               <ArrowLeft className="w-4 h-4 mr-2" />
               Dashboard Admin
             </Button>
@@ -191,15 +191,15 @@ export default function AdminDashboard() {
         {/* Stats Row */}
         <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-3">
           {[
-            { label: "Utenti", value: adminStats?.totalUsers ?? allUsers.length, icon: Users, color: "text-blue-600", border: "border-stone-100 dark:border-[hsl(25,12%,16%)]" },
-            { label: "Pub", value: adminStats?.totalPubs ?? 0, icon: Store, color: "text-primary", border: "border-stone-100 dark:border-[hsl(25,12%,16%)]" },
-            { label: "Birrifici", value: (adminStats?.totalBreweries || globalStats?.totalBreweries || 0).toLocaleString("it-IT"), icon: Building2, color: "text-primary", border: "border-stone-100 dark:border-[hsl(25,12%,16%)]" },
-            { label: "Birre", value: (adminStats?.totalBeers || globalStats?.totalBeers || 0).toLocaleString("it-IT"), icon: Beer, color: "text-emerald-600", border: "border-stone-100 dark:border-[hsl(25,12%,16%)]" },
-            { label: "Recensioni", value: adminStats?.totalReviews ?? 0, icon: Star, color: "text-amber-500", border: "border-stone-100 dark:border-[hsl(25,12%,16%)]" },
-            { label: "Eventi", value: adminStats?.totalEvents ?? 0, icon: CalendarDays, color: "text-purple-500", border: "border-stone-100 dark:border-[hsl(25,12%,16%)]" },
-            { label: "Festival", value: adminStats?.totalFestivals ?? 0, icon: QrCode, color: "text-pink-500", border: "border-stone-100 dark:border-[hsl(25,12%,16%)]" },
+            { label: "Utenti", value: adminStats?.totalUsers ?? allUsers.length, icon: Users, color: "text-blue-600", border: "border-stone-100 dark:border-border" },
+            { label: "Pub", value: adminStats?.totalPubs ?? 0, icon: Store, color: "text-primary", border: "border-stone-100 dark:border-border" },
+            { label: "Birrifici", value: (adminStats?.totalBreweries || globalStats?.totalBreweries || 0).toLocaleString("it-IT"), icon: Building2, color: "text-primary", border: "border-stone-100 dark:border-border" },
+            { label: "Birre", value: (adminStats?.totalBeers || globalStats?.totalBeers || 0).toLocaleString("it-IT"), icon: Beer, color: "text-emerald-600", border: "border-stone-100 dark:border-border" },
+            { label: "Recensioni", value: adminStats?.totalReviews ?? 0, icon: Star, color: "text-amber-500", border: "border-stone-100 dark:border-border" },
+            { label: "Eventi", value: adminStats?.totalEvents ?? 0, icon: CalendarDays, color: "text-purple-500", border: "border-stone-100 dark:border-border" },
+            { label: "Festival", value: adminStats?.totalFestivals ?? 0, icon: QrCode, color: "text-pink-500", border: "border-stone-100 dark:border-border" },
           ].map(({ label, value, icon: Icon, color, border }) => (
-            <Card key={label} className={`bg-white dark:bg-[hsl(25,14%,10%)] border border-stone-100 dark:border-[hsl(25,12%,16%)] rounded-2xl shadow-sm p-0 overflow-hidden`}>
+            <Card key={label} className={`bg-white dark:bg-card border border-stone-100 dark:border-border rounded-2xl shadow-sm p-0 overflow-hidden`}>
               <CardContent className="p-3">
                 <div className="flex items-center justify-between">
                   <div>
@@ -216,7 +216,7 @@ export default function AdminDashboard() {
         {/* ===== RECENT ACTIVITY + QUICK LINKS ===== */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
           {/* Recent Activity */}
-          <Card className="lg:col-span-2 bg-white dark:bg-[hsl(25,14%,10%)] border border-stone-100 dark:border-[hsl(25,12%,16%)] rounded-2xl shadow-sm">
+          <Card className="lg:col-span-2 bg-white dark:bg-card border border-stone-100 dark:border-border rounded-2xl shadow-sm">
             <CardHeader className="pb-3">
               <div className="flex items-center justify-between">
                 <CardTitle className="flex items-center gap-2 text-base">
@@ -236,7 +236,7 @@ export default function AdminDashboard() {
                       <button
                         key={key}
                         onClick={() => setActivityFilter(key)}
-                        className={`text-xs px-2 py-0.5 rounded-full border transition-colors ${activityFilter === key ? "bg-primary text-white border-primary" : "border-stone-200 dark:border-[hsl(25,12%,20%)] text-muted-foreground hover:bg-stone-50/60"}`}
+                        className={`text-xs px-2 py-0.5 rounded-full border transition-colors ${activityFilter === key ? "bg-primary text-white border-primary" : "border-stone-200 dark:border-border text-muted-foreground hover:bg-stone-50/60"}`}
                       >
                         {label}
                       </button>
@@ -297,7 +297,7 @@ export default function AdminDashboard() {
 
           {/* Quick Links + System Status */}
           <div className="space-y-4">
-            <Card className="bg-white dark:bg-[hsl(25,14%,10%)] border border-stone-100 dark:border-[hsl(25,12%,16%)] rounded-2xl shadow-sm">
+            <Card className="bg-white dark:bg-card border border-stone-100 dark:border-border rounded-2xl shadow-sm">
               <CardHeader className="pb-2">
                 <CardTitle className="text-sm flex items-center gap-2">
                   <ChevronRight className="w-4 h-4 text-primary" />
@@ -325,7 +325,7 @@ export default function AdminDashboard() {
               </CardContent>
             </Card>
 
-            <Card className="bg-white dark:bg-[hsl(25,14%,10%)] border border-stone-100 dark:border-[hsl(25,12%,16%)] rounded-2xl shadow-sm">
+            <Card className="bg-white dark:bg-card border border-stone-100 dark:border-border rounded-2xl shadow-sm">
               <CardHeader className="pb-2">
                 <CardTitle className="text-sm flex items-center gap-2">
                   <Server className="w-4 h-4 text-emerald-500" />
@@ -362,11 +362,11 @@ export default function AdminDashboard() {
 
         <Tabs defaultValue="users" className="w-full">
           <TabsList className="grid w-full max-w-xs grid-cols-2 bg-stone-50/60 dark:bg-stone-900/20">
-            <TabsTrigger value="users" className="gap-2 data-[state=active]:bg-white dark:data-[state=active]:bg-[hsl(25,14%,10%)] data-[state=active]:text-primary">
+            <TabsTrigger value="users" className="gap-2 data-[state=active]:bg-white dark:data-[state=active]:bg-card data-[state=active]:text-primary">
               <Users className="w-4 h-4" />
               Utenti
             </TabsTrigger>
-            <TabsTrigger value="analytics" className="gap-2 data-[state=active]:bg-white dark:data-[state=active]:bg-[hsl(25,14%,10%)] data-[state=active]:text-primary">
+            <TabsTrigger value="analytics" className="gap-2 data-[state=active]:bg-white dark:data-[state=active]:bg-card data-[state=active]:text-primary">
               <TrendingUp className="w-4 h-4" />
               Analytics
             </TabsTrigger>
@@ -381,17 +381,17 @@ export default function AdminDashboard() {
                   placeholder="Cerca per email, nickname, nome..."
                   value={userSearch}
                   onChange={(e) => setUserSearch(e.target.value)}
-                  className="pl-9 border-stone-200 dark:border-[hsl(25,12%,20%)] focus-visible:ring-primary"
+                  className="pl-9 border-stone-200 dark:border-border focus-visible:ring-primary"
                 />
               </div>
               <span className="text-sm text-muted-foreground">{filteredUsers.length} utenti</span>
             </div>
 
-            <Card className="bg-white dark:bg-[hsl(25,14%,10%)] border border-stone-100 dark:border-[hsl(25,12%,16%)] rounded-2xl shadow-sm overflow-hidden">
+            <Card className="bg-white dark:bg-card border border-stone-100 dark:border-border rounded-2xl shadow-sm overflow-hidden">
               <CardContent className="p-0">
                 <div className="overflow-x-auto">
                   <table className="w-full">
-                    <thead className="bg-stone-50/40 dark:bg-stone-900/10 border-b border-stone-100 dark:border-[hsl(25,12%,16%)]">
+                    <thead className="bg-stone-50/40 dark:bg-stone-900/10 border-b border-stone-100 dark:border-border">
                       <tr>
                         <th className="px-4 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">Utente</th>
                         <th className="px-4 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">Ruolo</th>
@@ -399,7 +399,7 @@ export default function AdminDashboard() {
                         <th className="px-4 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">Azioni</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-orange-50 dark:divide-[hsl(25,12%,16%)]">
+                    <tbody className="divide-y divide-orange-50 dark:divide-border">
                       {usersLoading ? (
                         <tr>
                           <td colSpan={4} className="px-4 py-8 text-center text-muted-foreground">

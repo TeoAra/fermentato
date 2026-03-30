@@ -63,7 +63,7 @@ function UserSearchPicker({ onSelect }: { onSelect: (user: AdminUser) => void })
         <Input className="pl-9 border-stone-200 rounded-xl focus-visible:ring-primary/20" placeholder="Cerca per email, username o nome…" value={q} onChange={e => setQ(e.target.value)} />
       </div>
       {users.length > 0 && (
-        <div className="border border-stone-200 rounded-xl overflow-hidden bg-white dark:bg-[hsl(25,14%,10%)]">
+        <div className="border border-stone-200 rounded-xl overflow-hidden bg-white dark:bg-card">
           {users.map(u => (
             <button key={u.id} className="w-full text-left flex items-center gap-3 px-3 py-2 hover:bg-stone-50 dark:hover:bg-stone-900/10 border-b border-stone-200 last:border-b-0 transition-colors" onClick={() => { onSelect(u); setQ(""); }}>
               <div className="w-7 h-7 rounded-full bg-stone-50 dark:bg-orange-900/40 flex items-center justify-center flex-shrink-0">
@@ -102,7 +102,7 @@ function TransferDialog({ festival, onClose }: { festival: AdminFestival; onClos
 
   return (
     <Dialog open onOpenChange={onClose}>
-      <DialogContent className="max-w-md bg-white dark:bg-[hsl(25,14%,10%)] border-stone-100 dark:border-[hsl(25,12%,16%)] rounded-2xl">
+      <DialogContent className="max-w-md bg-white dark:bg-card border-stone-100 dark:border-border rounded-2xl">
         <DialogHeader>
           <DialogTitle className="text-foreground font-bold">Trasferisci "{festival.name}"</DialogTitle>
         </DialogHeader>
@@ -166,7 +166,7 @@ function CreateForUserDialog({ onClose }: { onClose: () => void }) {
 
   return (
     <Dialog open onOpenChange={onClose}>
-      <DialogContent className="max-w-md bg-white dark:bg-[hsl(25,14%,10%)] border-stone-100 dark:border-[hsl(25,12%,16%)] rounded-2xl">
+      <DialogContent className="max-w-md bg-white dark:bg-card border-stone-100 dark:border-border rounded-2xl">
         <DialogHeader>
           <DialogTitle className="text-foreground font-bold">Crea festival per un utente</DialogTitle>
         </DialogHeader>
@@ -261,7 +261,7 @@ export default function AdminFestivals() {
     <div className="min-h-screen bg-background">
       <div className="max-w-5xl mx-auto px-4 py-6">
         {/* Header */}
-        <div className="flex items-center gap-3 mb-6 bg-white dark:bg-[hsl(25,14%,10%)] border-b border-stone-200 dark:border-[hsl(25,12%,16%)] p-4 -mx-4 sm:mx-0 rounded-t-2xl">
+        <div className="flex items-center gap-3 mb-6 bg-white dark:bg-card border-b border-stone-200 dark:border-border p-4 -mx-4 sm:mx-0 rounded-t-2xl">
           <Link href="/admin">
             <button className="p-2 border border-stone-200 hover:bg-stone-50 rounded-xl text-muted-foreground transition-colors">
               <ArrowLeft className="h-5 w-5" />
@@ -282,7 +282,7 @@ export default function AdminFestivals() {
         {/* Search */}
         <div className="relative mb-4">
           <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-          <Input className="pl-9 bg-white dark:bg-[hsl(25,14%,10%)] border-stone-200 rounded-xl focus-visible:ring-primary/20" placeholder="Cerca per nome, slug, email proprietario…" value={search} onChange={e => setSearch(e.target.value)} />
+          <Input className="pl-9 bg-white dark:bg-card border-stone-200 rounded-xl focus-visible:ring-primary/20" placeholder="Cerca per nome, slug, email proprietario…" value={search} onChange={e => setSearch(e.target.value)} />
         </div>
 
         {/* Festival list */}
@@ -299,7 +299,7 @@ export default function AdminFestivals() {
         ) : (
           <div className="space-y-3">
             {filteredFestivals.map(fest => (
-              <Card key={fest.id} className="bg-white dark:bg-[hsl(25,14%,10%)] rounded-2xl border border-stone-100 dark:border-[hsl(25,12%,16%)] shadow-sm">
+              <Card key={fest.id} className="bg-white dark:bg-card rounded-2xl border border-stone-100 dark:border-border shadow-sm">
                 <CardContent className="p-4">
                   <div className="flex items-start gap-4">
                     {/* Logo */}

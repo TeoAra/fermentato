@@ -564,7 +564,7 @@ export default function BeerDetail() {
       </Helmet>
       
       {/* ── HERO ── */}
-      <div className="bg-white dark:bg-[hsl(25,14%,10%)] border-b border-stone-100 dark:border-stone-700/30">
+      <div className="bg-white dark:bg-card border-b border-stone-100 dark:border-stone-700/30">
         <div className="max-w-7xl mx-auto px-5 pt-6 pb-5">
           <div className="flex items-start gap-5">
 
@@ -738,22 +738,22 @@ export default function BeerDetail() {
 
             {/* Specs grid */}
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
-              <div className="rounded-2xl p-3 bg-white dark:bg-[hsl(25,14%,10%)] border border-stone-100 dark:border-[hsl(25,12%,17%)] flex items-center gap-2.5">
+              <div className="rounded-2xl p-3 bg-white dark:bg-card border border-stone-100 dark:border-border flex items-center gap-2.5">
                 <Target className="h-4 w-4 text-primary flex-shrink-0" />
                 <div><p className="text-[10px] uppercase tracking-wider font-semibold text-muted-foreground">ABV</p><p className="text-sm font-bold text-foreground">{beer?.abv ? `${beer.abv}%` : '—'}</p></div>
               </div>
-              <div className="rounded-2xl p-3 bg-white dark:bg-[hsl(25,14%,10%)] border border-stone-100 dark:border-[hsl(25,12%,17%)] flex items-center gap-2.5">
+              <div className="rounded-2xl p-3 bg-white dark:bg-card border border-stone-100 dark:border-border flex items-center gap-2.5">
                 <Sparkles className="h-4 w-4 text-primary flex-shrink-0" />
                 <div className="min-w-0"><p className="text-[10px] uppercase tracking-wider font-semibold text-muted-foreground">Stile</p><p className="text-sm font-bold text-foreground leading-tight line-clamp-2">{beer?.style || '—'}</p></div>
               </div>
               {beer?.color && (
-                <div className="rounded-2xl p-3 bg-white dark:bg-[hsl(25,14%,10%)] border border-stone-100 dark:border-[hsl(25,12%,17%)] flex items-center gap-2.5">
+                <div className="rounded-2xl p-3 bg-white dark:bg-card border border-stone-100 dark:border-border flex items-center gap-2.5">
                   <Droplets className="h-4 w-4 text-primary flex-shrink-0" />
                   <div><p className="text-[10px] uppercase tracking-wider font-semibold text-muted-foreground">Colore</p><p className="text-sm font-bold text-foreground truncate">{beer.color}</p></div>
                 </div>
               )}
               {beer?.ibu && (
-                <div className="rounded-2xl p-3 bg-white dark:bg-[hsl(25,14%,10%)] border border-stone-100 dark:border-[hsl(25,12%,17%)] flex items-center gap-2.5">
+                <div className="rounded-2xl p-3 bg-white dark:bg-card border border-stone-100 dark:border-border flex items-center gap-2.5">
                   <Wheat className="h-4 w-4 text-primary flex-shrink-0" />
                   <div><p className="text-[10px] uppercase tracking-wider font-semibold text-muted-foreground">IBU</p><p className="text-sm font-bold text-foreground">{beer.ibu}</p></div>
                 </div>
@@ -797,7 +797,7 @@ export default function BeerDetail() {
               <>
                 <div className="border-t " />
                 <Link href={`/brewery/${beer.brewery.id}`}>
-                  <div className="bg-white dark:bg-[hsl(25,14%,10%)] rounded-2xl border border-stone-100 dark:border-[hsl(25,12%,16%)] shadow-sm p-4 flex items-center gap-4 group cursor-pointer transition-all hover:border-primary/20 hover:-translate-y-0.5 active:scale-[0.98]">
+                  <div className="bg-white dark:bg-card rounded-2xl border border-stone-100 dark:border-border shadow-sm p-4 flex items-center gap-4 group cursor-pointer transition-all hover:border-primary/20 hover:-translate-y-0.5 active:scale-[0.98]">
                     <div className="w-14 h-14 rounded-2xl bg-stone-50 dark:bg-[hsl(24,93%,15%)] border border-stone-200 dark:border-stone-700/30 flex items-center justify-center flex-shrink-0 overflow-hidden">
                       {(beer.brewery as any).logoUrl
                         ? <img src={(beer.brewery as any).logoUrl} alt={beer.brewery.name} className="w-full h-full object-contain p-1 lightbox-img" />
@@ -826,7 +826,7 @@ export default function BeerDetail() {
                   </div>
                   <div className="flex flex-wrap gap-2">
                     {(beer as any).awards.map((award: any, i: number) => (
-                      <div key={i} className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white dark:bg-[hsl(25,14%,10%)] border border-stone-100 dark:border-stone-700/50 shadow-sm text-sm">
+                      <div key={i} className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white dark:bg-card border border-stone-100 dark:border-stone-700/50 shadow-sm text-sm">
                         <Trophy className={`h-3.5 w-3.5 flex-shrink-0 ${award.type === 'gold' ? 'text-yellow-500' : award.type === 'silver' ? 'text-muted-foreground' : award.type === 'bronze' ? 'text-primary' : 'text-primary'}`} />
                         <span className="font-semibold text-foreground">{award.name}</span>
                         <span className="text-muted-foreground">·</span>
@@ -901,7 +901,7 @@ export default function BeerDetail() {
                     <div className="space-y-2">
                       {tapLocations.map((location: any, idx: number) => (
                         <Link key={idx} href={`/pub/${location.pub.id}`}>
-                          <div className="bg-white dark:bg-[hsl(25,14%,10%)] rounded-2xl border border-stone-100 dark:border-[hsl(25,12%,16%)] shadow-sm p-4 border  hover:border-primary/20 transition-colors flex items-center justify-between group">
+                          <div className="bg-white dark:bg-card rounded-2xl border border-stone-100 dark:border-border shadow-sm p-4 border  hover:border-primary/20 transition-colors flex items-center justify-between group">
                             <div>
                               <h4 className="font-bold text-sm text-foreground group-hover:text-primary transition-colors">{location.pub.name}</h4>
                               <p className="text-xs text-muted-foreground">{location.pub.address}, {location.pub.city}</p>
@@ -924,7 +924,7 @@ export default function BeerDetail() {
                     <div className="space-y-2">
                       {bottleLocations.map((location: any, idx: number) => (
                         <Link key={idx} href={`/pub/${location.pub.id}`}>
-                          <div className="bg-white dark:bg-[hsl(25,14%,10%)] rounded-2xl border border-stone-100 dark:border-[hsl(25,12%,16%)] shadow-sm p-4 border  hover:border-primary/20 transition-colors flex items-center justify-between group">
+                          <div className="bg-white dark:bg-card rounded-2xl border border-stone-100 dark:border-border shadow-sm p-4 border  hover:border-primary/20 transition-colors flex items-center justify-between group">
                             <div>
                               <h4 className="font-bold text-sm text-foreground group-hover:text-primary transition-colors">{location.pub.name}</h4>
                               <p className="text-xs text-muted-foreground">{location.pub.address}, {location.pub.city}</p>
@@ -946,7 +946,7 @@ export default function BeerDetail() {
           <TabsContent value="recensioni" className="px-4 lg:px-6 pt-6 pb-8 space-y-6">
             {/* My tasting note */}
             {isAuthenticated && (
-              <div className="bg-white dark:bg-[hsl(25,14%,10%)] rounded-2xl border border-stone-100 dark:border-[hsl(25,12%,16%)] shadow-sm p-5 border ">
+              <div className="bg-white dark:bg-card rounded-2xl border border-stone-100 dark:border-border shadow-sm p-5 border ">
                 <div className="flex items-center justify-between mb-4">
                   <h2 className="text-base font-bold text-foreground flex items-center gap-2">
                     <Star className="h-4 w-4 text-primary" />
@@ -1000,7 +1000,7 @@ export default function BeerDetail() {
 
             {/* Community Reviews */}
             {reviewsData && reviewsData.reviewCount > 0 && (
-              <div className="bg-white dark:bg-[hsl(25,14%,10%)] rounded-2xl border border-stone-100 dark:border-[hsl(25,12%,16%)] shadow-sm p-4 border-b">
+              <div className="bg-white dark:bg-card rounded-2xl border border-stone-100 dark:border-border shadow-sm p-4 border-b">
                 <div className="flex items-center justify-between mb-4">
                   <h2 className="text-base font-bold text-foreground flex items-center gap-2">
                     <Star className="h-4 w-4 text-amber-500 fill-amber-500" />
@@ -1293,7 +1293,7 @@ export default function BeerDetail() {
                 {editCollabBreweries.length > 0 && (
                   <div className="flex flex-wrap gap-2">
                     {editCollabBreweries.map(b => (
-                      <span key={b.id} className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-sm font-bold bg-white dark:bg-[hsl(25,14%,10%)] border border-stone-100 dark:border-stone-700/30 text-primary">
+                      <span key={b.id} className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-sm font-bold bg-white dark:bg-card border border-stone-100 dark:border-stone-700/30 text-primary">
                         <Building2 className="w-3 h-3" />{b.name}
                         <button type="button" onClick={() => setEditCollabBreweries(editCollabBreweries.filter(x => x.id !== b.id))} className="ml-0.5 hover:text-primary/80 transition-colors">×</button>
                       </span>
@@ -1309,7 +1309,7 @@ export default function BeerDetail() {
                     autoComplete="off"
                   />
                   {showCollabResults && collabResults.length > 0 && (
-                    <div className="absolute z-50 w-full mt-1 bg-white dark:bg-[hsl(25,14%,10%)] border border-stone-100 rounded-md shadow-xl max-h-40 overflow-y-auto">
+                    <div className="absolute z-50 w-full mt-1 bg-white dark:bg-card border border-stone-100 rounded-md shadow-xl max-h-40 overflow-y-auto">
                       {collabResults.map((b: any) => (
                         <button key={b.id} type="button"
                           onMouseDown={e => { e.preventDefault(); setEditCollabBreweries([...editCollabBreweries, { id: b.id, name: b.name }]); setCollabQuery(""); setCollabResults([]); setShowCollabResults(false); }}
@@ -1385,7 +1385,7 @@ export default function BeerDetail() {
               <select
                 value={reportReason}
                 onChange={(e) => setReportReason(e.target.value)}
-                className="w-full border border-stone-100 dark:border-[hsl(25,12%,16%)] rounded-md px-3 py-2 text-sm bg-white dark:bg-[hsl(25,14%,10%)] text-foreground"
+                className="w-full border border-stone-100 dark:border-border rounded-md px-3 py-2 text-sm bg-white dark:bg-card text-foreground"
               >
                 <option value="inappropriato">Contenuto inappropriato</option>
                 <option value="spam">Spam o pubblicità</option>
@@ -1459,7 +1459,7 @@ export default function BeerDetail() {
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
               {similarBeers.map((b: any) => (
                 <Link key={b.id} href={`/beer/${b.id}`}>
-                  <div className="group bg-white dark:bg-[hsl(25,14%,10%)] border border-stone-100 dark:border-[hsl(25,12%,16%)] rounded-xl p-3 hover:shadow-md hover:border-primary/20 hover:-translate-y-0.5 active:scale-[0.98] transition-all cursor-pointer h-full flex flex-col">
+                  <div className="group bg-white dark:bg-card border border-stone-100 dark:border-border rounded-xl p-3 hover:shadow-md hover:border-primary/20 hover:-translate-y-0.5 active:scale-[0.98] transition-all cursor-pointer h-full flex flex-col">
                     <div className="w-10 h-10 rounded-lg flex-shrink-0 bg-stone-50 dark:bg-[hsl(24,93%,15%)] flex items-center justify-center overflow-hidden mb-2 mx-auto">
                       {b.imageUrl ? (
                         <img src={b.imageUrl} alt={b.name} className="w-10 h-10 object-contain p-0.5 lightbox-img" />

@@ -10,7 +10,7 @@ export default function AdminEditPub() {
 
   return (
     <div>
-      <div className="p-4 border-b bg-background border-stone-200 dark:border-[hsl(25,12%,16%)]">
+      <div className="p-4 border-b bg-background border-stone-200 dark:border-border">
         <Button
           variant="ghost"
           size="sm"

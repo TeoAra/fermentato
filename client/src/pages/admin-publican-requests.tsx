@@ -270,7 +270,7 @@ export default function AdminPublicanRequests() {
     : "";
 
   const RequestCard = ({ request, showActions = false }: { request: PublicanRequest; showActions?: boolean }) => (
-    <Card className="mb-4 bg-white dark:bg-[hsl(25,14%,10%)] border border-stone-100 dark:border-[hsl(25,12%,16%)] rounded-2xl shadow-sm overflow-hidden">
+    <Card className="mb-4 bg-white dark:bg-card border border-stone-100 dark:border-border rounded-2xl shadow-sm overflow-hidden">
       <CardContent className="pt-6">
         <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
           <div className="flex-1 space-y-3">
@@ -324,7 +324,7 @@ export default function AdminPublicanRequests() {
               </p>
             )}
 
-            <div className="flex items-center gap-4 text-xs text-muted-foreground pt-2 border-t border-stone-100 dark:border-[hsl(25,12%,16%)]">
+            <div className="flex items-center gap-4 text-xs text-muted-foreground pt-2 border-t border-stone-100 dark:border-border">
               <div className="flex items-center gap-1">
                 <User className="h-3 w-3" />
                 <span>
@@ -340,7 +340,7 @@ export default function AdminPublicanRequests() {
             </div>
 
             {request.adminNotes && (
-              <div className="bg-stone-50/50 dark:bg-stone-900/10 p-3 rounded-xl mt-2 border border-stone-100 dark:border-[hsl(25,12%,16%)]">
+              <div className="bg-stone-50/50 dark:bg-stone-900/10 p-3 rounded-xl mt-2 border border-stone-100 dark:border-border">
                 <p className="text-sm text-foreground">
                   <strong className="text-primary">Note admin:</strong> {request.adminNotes}
                 </p>
@@ -384,7 +384,7 @@ export default function AdminPublicanRequests() {
     ].filter(Boolean).join(' ');
 
     return (
-      <Card className="mb-4 bg-white dark:bg-[hsl(25,14%,10%)] border border-stone-100 dark:border-[hsl(25,12%,16%)] rounded-2xl shadow-sm overflow-hidden">
+      <Card className="mb-4 bg-white dark:bg-card border border-stone-100 dark:border-border rounded-2xl shadow-sm overflow-hidden">
         <CardContent className="pt-5 pb-4">
           {/* Header row: icon + name + badges */}
           <div className="flex items-start gap-3 mb-4">
@@ -453,7 +453,7 @@ export default function AdminPublicanRequests() {
             )}
 
             {request.adminNotes && (
-              <div className="bg-stone-50/50 dark:bg-stone-900/10 p-2.5 rounded-xl border border-stone-100 dark:border-[hsl(25,12%,16%)]">
+              <div className="bg-stone-50/50 dark:bg-stone-900/10 p-2.5 rounded-xl border border-stone-100 dark:border-border">
                 <p className="text-xs font-medium text-foreground"><strong className="text-primary">Note admin:</strong> {request.adminNotes}</p>
                 {request.reviewedAt && (
                   <p className="text-xs text-muted-foreground mt-0.5">
@@ -465,7 +465,7 @@ export default function AdminPublicanRequests() {
           </div>
 
           {/* Footer: user info + actions */}
-          <div className="flex flex-wrap items-center justify-between gap-3 mt-4 pt-3 border-t border-stone-100 dark:border-[hsl(25,12%,16%)]">
+          <div className="flex flex-wrap items-center justify-between gap-3 mt-4 pt-3 border-t border-stone-100 dark:border-border">
             <div className="flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
               <div className="flex items-center gap-1">
                 <User className="h-3 w-3" />
@@ -511,7 +511,7 @@ export default function AdminPublicanRequests() {
       <div className="container mx-auto px-4 py-8 max-w-5xl">
         <div className="mb-6">
           <Link href="/admin">
-            <Button variant="outline" size="sm" className="mb-4 border-stone-200 dark:border-[hsl(25,12%,20%)] hover:bg-stone-50 rounded-xl" data-testid="button-back-admin">
+            <Button variant="outline" size="sm" className="mb-4 border-stone-200 dark:border-border hover:bg-stone-50 rounded-xl" data-testid="button-back-admin">
               <ArrowLeft className="h-4 w-4 mr-2" />
               Torna al pannello admin
             </Button>
@@ -547,7 +547,7 @@ export default function AdminPublicanRequests() {
 
         <div className="grid grid-cols-2 gap-3 mb-6">
           <Card 
-            className={`cursor-pointer transition-all rounded-2xl border-stone-100 dark:border-[hsl(25,12%,16%)] shadow-sm ${section === "pub" ? "ring-2 ring-primary bg-stone-50/50 dark:bg-stone-900/20" : "hover:bg-stone-50/30 dark:hover:bg-stone-900/10 bg-white dark:bg-[hsl(25,14%,10%)]"}`}
+            className={`cursor-pointer transition-all rounded-2xl border-stone-100 dark:border-border shadow-sm ${section === "pub" ? "ring-2 ring-primary bg-stone-50/50 dark:bg-stone-900/20" : "hover:bg-stone-50/30 dark:hover:bg-stone-900/10 bg-white dark:bg-card"}`}
             onClick={() => { setSection("pub"); setActiveTab("pending"); }}
           >
             <CardContent className="flex items-center gap-3 py-4">
@@ -559,7 +559,7 @@ export default function AdminPublicanRequests() {
             </CardContent>
           </Card>
           <Card 
-            className={`cursor-pointer transition-all rounded-2xl border-stone-100 dark:border-[hsl(25,12%,16%)] shadow-sm ${section === "brewery" ? "ring-2 ring-primary bg-stone-50/50 dark:bg-stone-900/20" : "hover:bg-stone-50/30 dark:hover:bg-stone-900/10 bg-white dark:bg-[hsl(25,14%,10%)]"}`}
+            className={`cursor-pointer transition-all rounded-2xl border-stone-100 dark:border-border shadow-sm ${section === "brewery" ? "ring-2 ring-primary bg-stone-50/50 dark:bg-stone-900/20" : "hover:bg-stone-50/30 dark:hover:bg-stone-900/10 bg-white dark:bg-card"}`}
             onClick={() => { setSection("brewery"); setActiveTab("pending"); }}
           >
             <CardContent className="flex items-center gap-3 py-4">
@@ -596,21 +596,21 @@ export default function AdminPublicanRequests() {
             </TabsList>
             <TabsContent value="pending" className="mt-0">
               {pendingRequests.length === 0 ? (
-                <Card className="bg-white dark:bg-[hsl(25,14%,10%)] border border-stone-100 dark:border-[hsl(25,12%,16%)] rounded-2xl shadow-sm"><CardContent className="p-8 text-center text-muted-foreground">Nessuna richiesta in attesa</CardContent></Card>
+                <Card className="bg-white dark:bg-card border border-stone-100 dark:border-border rounded-2xl shadow-sm"><CardContent className="p-8 text-center text-muted-foreground">Nessuna richiesta in attesa</CardContent></Card>
               ) : (
                 pendingRequests.map(r => <RequestCard key={r.id} request={r} showActions />)
               )}
             </TabsContent>
             <TabsContent value="approved" className="mt-0">
               {approvedRequests.length === 0 ? (
-                <Card className="bg-white dark:bg-[hsl(25,14%,10%)] border border-stone-100 dark:border-[hsl(25,12%,16%)] rounded-2xl shadow-sm"><CardContent className="p-8 text-center text-muted-foreground">Nessuna richiesta approvata</CardContent></Card>
+                <Card className="bg-white dark:bg-card border border-stone-100 dark:border-border rounded-2xl shadow-sm"><CardContent className="p-8 text-center text-muted-foreground">Nessuna richiesta approvata</CardContent></Card>
               ) : (
                 approvedRequests.map(r => <RequestCard key={r.id} request={r} />)
               )}
             </TabsContent>
             <TabsContent value="rejected" className="mt-0">
               {rejectedRequests.length === 0 ? (
-                <Card className="bg-white dark:bg-[hsl(25,14%,10%)] border border-stone-100 dark:border-[hsl(25,12%,16%)] rounded-2xl shadow-sm"><CardContent className="p-8 text-center text-muted-foreground">Nessuna richiesta rifiutata</CardContent></Card>
+                <Card className="bg-white dark:bg-card border border-stone-100 dark:border-border rounded-2xl shadow-sm"><CardContent className="p-8 text-center text-muted-foreground">Nessuna richiesta rifiutata</CardContent></Card>
               ) : (
                 rejectedRequests.map(r => <RequestCard key={r.id} request={r} />)
               )}
@@ -636,21 +636,21 @@ export default function AdminPublicanRequests() {
             </TabsList>
             <TabsContent value="pending" className="mt-0">
               {pendingBreweryRequests.length === 0 ? (
-                <Card className="bg-white dark:bg-[hsl(25,14%,10%)] border border-stone-100 dark:border-[hsl(25,12%,16%)] rounded-2xl shadow-sm"><CardContent className="p-8 text-center text-muted-foreground">Nessuna richiesta in attesa</CardContent></Card>
+                <Card className="bg-white dark:bg-card border border-stone-100 dark:border-border rounded-2xl shadow-sm"><CardContent className="p-8 text-center text-muted-foreground">Nessuna richiesta in attesa</CardContent></Card>
               ) : (
                 pendingBreweryRequests.map(r => <BreweryRequestCard key={r.id} request={r} showActions />)
               )}
             </TabsContent>
             <TabsContent value="approved" className="mt-0">
               {approvedBreweryRequests.length === 0 ? (
-                <Card className="bg-white dark:bg-[hsl(25,14%,10%)] border border-stone-100 dark:border-[hsl(25,12%,16%)] rounded-2xl shadow-sm"><CardContent className="p-8 text-center text-muted-foreground">Nessuna richiesta approvata</CardContent></Card>
+                <Card className="bg-white dark:bg-card border border-stone-100 dark:border-border rounded-2xl shadow-sm"><CardContent className="p-8 text-center text-muted-foreground">Nessuna richiesta approvata</CardContent></Card>
               ) : (
                 approvedBreweryRequests.map(r => <BreweryRequestCard key={r.id} request={r} />)
               )}
             </TabsContent>
             <TabsContent value="rejected" className="mt-0">
               {rejectedBreweryRequests.length === 0 ? (
-                <Card className="bg-white dark:bg-[hsl(25,14%,10%)] border border-stone-100 dark:border-[hsl(25,12%,16%)] rounded-2xl shadow-sm"><CardContent className="p-8 text-center text-muted-foreground">Nessuna richiesta rifiutata</CardContent></Card>
+                <Card className="bg-white dark:bg-card border border-stone-100 dark:border-border rounded-2xl shadow-sm"><CardContent className="p-8 text-center text-muted-foreground">Nessuna richiesta rifiutata</CardContent></Card>
               ) : (
                 rejectedBreweryRequests.map(r => <BreweryRequestCard key={r.id} request={r} />)
               )}
@@ -659,7 +659,7 @@ export default function AdminPublicanRequests() {
         )}
 
         <Dialog open={!!dialogTarget} onOpenChange={(open) => !open && setDialogTarget(null)}>
-          <DialogContent className="rounded-2xl border-stone-200 dark:border-[hsl(25,12%,20%)]">
+          <DialogContent className="rounded-2xl border-stone-200 dark:border-border">
             <DialogHeader>
               <DialogTitle className="text-foreground font-bold">
                 {dialogAction === "approve" ? "Approva richiesta" : "Rifiuta richiesta"}
@@ -678,7 +678,7 @@ export default function AdminPublicanRequests() {
               />
             </div>
             <DialogFooter className="gap-2">
-              <Button variant="outline" onClick={() => setDialogTarget(null)} className="rounded-xl border-stone-200 dark:border-[hsl(25,12%,20%)] hover:bg-stone-50">
+              <Button variant="outline" onClick={() => setDialogTarget(null)} className="rounded-xl border-stone-200 dark:border-border hover:bg-stone-50">
                 Annulla
               </Button>
               <Button

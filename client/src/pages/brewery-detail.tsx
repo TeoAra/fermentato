@@ -453,7 +453,7 @@ export default function BreweryDetail() {
       </Helmet>
       
       {/* ── HERO ── */}
-      <div className="bg-white dark:bg-[hsl(25,14%,10%)] border-b border-stone-100 dark:border-stone-700/30">
+      <div className="bg-white dark:bg-card border-b border-stone-100 dark:border-stone-700/30">
         <div className="max-w-7xl mx-auto px-5 pt-6 pb-5">
           <div className="flex items-start gap-5">
 
@@ -547,7 +547,7 @@ export default function BreweryDetail() {
 
         {/* ── MAIN CONTENT ── */}
         <main className="max-w-7xl mx-auto pb-20">
-          <div className="bg-white dark:bg-[hsl(25,14%,10%)]">
+          <div className="bg-white dark:bg-card">
 
             {/* Description preview */}
             {(brewery as any)?.description && (
@@ -564,20 +564,20 @@ export default function BreweryDetail() {
                 <TabsList className="bg-background dark:bg-[hsl(25,14%,12%)] rounded-2xl p-1 flex gap-1 w-max min-w-full h-auto">
                   <TabsTrigger
                     value="birre"
-                    className="data-[state=active]:bg-white dark:data-[state=active]:bg-[hsl(25,14%,10%)] data-[state=active]:text-primary data-[state=active]:shadow-sm rounded-xl font-bold px-4 py-2 text-sm transition-all text-muted-foreground hover:text-foreground whitespace-nowrap flex-1"
+                    className="data-[state=active]:bg-white dark:data-[state=active]:bg-card data-[state=active]:text-primary data-[state=active]:shadow-sm rounded-xl font-bold px-4 py-2 text-sm transition-all text-muted-foreground hover:text-foreground whitespace-nowrap flex-1"
                   >
                     Catalogo
                   </TabsTrigger>
                   <TabsTrigger
                     value="info"
-                    className="data-[state=active]:bg-white dark:data-[state=active]:bg-[hsl(25,14%,10%)] data-[state=active]:text-primary data-[state=active]:shadow-sm rounded-xl font-bold px-4 py-2 text-sm transition-all text-muted-foreground hover:text-foreground whitespace-nowrap flex-1"
+                    className="data-[state=active]:bg-white dark:data-[state=active]:bg-card data-[state=active]:text-primary data-[state=active]:shadow-sm rounded-xl font-bold px-4 py-2 text-sm transition-all text-muted-foreground hover:text-foreground whitespace-nowrap flex-1"
                   >
                     Info
                   </TabsTrigger>
                   {(breweryEvents.length > 0 || announcements.length > 0) && (
                     <TabsTrigger
                       value="serate"
-                      className="data-[state=active]:bg-white dark:data-[state=active]:bg-[hsl(25,14%,10%)] data-[state=active]:text-primary data-[state=active]:shadow-sm rounded-xl font-bold px-4 py-2 text-sm transition-all text-muted-foreground hover:text-foreground whitespace-nowrap flex-1"
+                      className="data-[state=active]:bg-white dark:data-[state=active]:bg-card data-[state=active]:text-primary data-[state=active]:shadow-sm rounded-xl font-bold px-4 py-2 text-sm transition-all text-muted-foreground hover:text-foreground whitespace-nowrap flex-1"
                     >
                       Eventi
                     </TabsTrigger>
@@ -585,7 +585,7 @@ export default function BreweryDetail() {
                   {distribution.length > 0 && (
                     <TabsTrigger
                       value="distribuzione"
-                      className="data-[state=active]:bg-white dark:data-[state=active]:bg-[hsl(25,14%,10%)] data-[state=active]:text-primary data-[state=active]:shadow-sm rounded-xl font-bold px-4 py-2 text-sm transition-all text-muted-foreground hover:text-foreground whitespace-nowrap flex-1"
+                      className="data-[state=active]:bg-white dark:data-[state=active]:bg-card data-[state=active]:text-primary data-[state=active]:shadow-sm rounded-xl font-bold px-4 py-2 text-sm transition-all text-muted-foreground hover:text-foreground whitespace-nowrap flex-1"
                     >
                       Dove trovarci
                     </TabsTrigger>
@@ -645,7 +645,7 @@ export default function BreweryDetail() {
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                           {displayedBeers.map((beer: Beer) => (
                             <Link key={beer.id} href={`/beer/${beer.id}`}>
-                              <div className={`bg-white dark:bg-[hsl(25,14%,10%)] rounded-2xl p-4 flex items-center gap-4 shadow-sm border border-stone-100 dark:border-[hsl(25,12%,16%)] hover:border-primary/20 dark:hover:border-primary/25 cursor-pointer transition-all group relative ${(beer as any).isHidden ? 'opacity-50 grayscale' : ''}`}>
+                              <div className={`bg-white dark:bg-card rounded-2xl p-4 flex items-center gap-4 shadow-sm border border-stone-100 dark:border-border hover:border-primary/20 dark:hover:border-primary/25 cursor-pointer transition-all group relative ${(beer as any).isHidden ? 'opacity-50 grayscale' : ''}`}>
                                 <div className="relative">
                                   {beer.imageUrl ? (
                                     <img 
@@ -828,7 +828,7 @@ export default function BreweryDetail() {
                       </h3>
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         {announcements.map((announcement: any) => (
-                          <div key={announcement.id} className="bg-white dark:bg-[hsl(25,14%,10%)] rounded-2xl border border-stone-100 dark:border-stone-700/20 p-5 shadow-sm">
+                          <div key={announcement.id} className="bg-white dark:bg-card rounded-2xl border border-stone-100 dark:border-stone-700/20 p-5 shadow-sm">
                             <div className="flex items-start gap-4">
                               <div className="w-10 h-10 rounded-xl bg-stone-50 dark:bg-stone-900/30 flex items-center justify-center text-primary shrink-0">
                                 <Newspaper className="h-5 w-5" />
@@ -855,7 +855,7 @@ export default function BreweryDetail() {
                       </h3>
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         {breweryEvents.filter(e => isFuture(new Date(e.eventDate))).slice(0, 4).map((event: any) => (
-                          <div key={event.id} className="bg-white dark:bg-[hsl(25,14%,10%)] rounded-3xl overflow-hidden border border-stone-100 dark:border-stone-700/20 shadow-sm group">
+                          <div key={event.id} className="bg-white dark:bg-card rounded-3xl overflow-hidden border border-stone-100 dark:border-stone-700/20 shadow-sm group">
                             {event.imageUrl && (
                               <div className="h-40 bg-cover bg-center transition-transform group-hover:scale-105 duration-500" style={{ backgroundImage: `url(${event.imageUrl})` }} />
                             )}
@@ -893,7 +893,7 @@ export default function BreweryDetail() {
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                       {distribution.map((pub: any) => (
                         <Link key={pub.id} href={`/pub/${pub.slug || pub.id}`}>
-                          <div className="bg-white dark:bg-[hsl(25,14%,10%)] rounded-2xl p-4 flex items-center gap-4 shadow-sm border border-stone-100 dark:border-stone-200 hover:border-primary/20 transition-all cursor-pointer group">
+                          <div className="bg-white dark:bg-card rounded-2xl p-4 flex items-center gap-4 shadow-sm border border-stone-100 dark:border-stone-200 hover:border-primary/20 transition-all cursor-pointer group">
                             {pub.logo_url ? (
                               <img src={pub.logo_url} alt={pub.name} className="w-12 h-12 rounded-2xl object-cover flex-shrink-0 lightbox-img" />
                             ) : (

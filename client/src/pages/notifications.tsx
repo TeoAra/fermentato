@@ -218,7 +218,7 @@ export default function Notifications() {
 
       {/* Push permission banner */}
       {notifPerm !== 'granted' && notifPerm !== 'unsupported' && (
-        <div className={`rounded-2xl p-4 border flex items-start gap-3 ${notifPerm === 'denied' ? 'bg-red-50 dark:bg-red-950/20 border-red-100 dark:border-red-900/30' : 'bg-white dark:bg-[hsl(25,14%,10%)] border-stone-100 dark:border-[hsl(25,12%,17%)]'}`}>
+        <div className={`rounded-2xl p-4 border flex items-start gap-3 ${notifPerm === 'denied' ? 'bg-red-50 dark:bg-red-950/20 border-red-100 dark:border-red-900/30' : 'bg-white dark:bg-card border-stone-100 dark:border-border'}`}>
           <div className={`p-2 rounded-xl flex-shrink-0 ${notifPerm === 'denied' ? 'bg-red-100 dark:bg-red-900/30' : 'bg-stone-100 dark:bg-stone-800'}`}>
             <BellOff className={`h-4 w-4 ${notifPerm === 'denied' ? 'text-red-600' : 'text-stone-500'}`} />
           </div>
@@ -254,7 +254,7 @@ export default function Notifications() {
       )}
 
       {notifPerm === 'granted' && !pushStatus?.subscribed && (
-        <div className="rounded-2xl p-4 border border-stone-100 dark:border-[hsl(25,12%,17%)] bg-white dark:bg-[hsl(25,14%,10%)] flex items-center gap-3">
+        <div className="rounded-2xl p-4 border border-stone-100 dark:border-border bg-white dark:bg-card flex items-center gap-3">
           <AlertCircle className="h-4 w-4 text-primary flex-shrink-0" />
           <p className="text-xs text-muted-foreground flex-1">Permesso concesso ma non registrato. Clicca per completare l'attivazione.</p>
           <button onClick={handleSubscribe} disabled={isSubscribing} className="text-xs font-bold text-primary hover:underline">
@@ -265,8 +265,8 @@ export default function Notifications() {
 
       {/* Settings panel */}
       {showSettings && (
-        <div className="rounded-2xl border border-stone-100 dark:border-[hsl(25,12%,16%)] bg-white dark:bg-[hsl(25,14%,10%)] shadow-[0_4px_20px_rgba(247,113,4,0.06)] overflow-hidden">
-          <div className="px-5 py-4 border-b border-stone-100 dark:border-[hsl(25,12%,16%)] bg-background dark:bg-stone-900/10">
+        <div className="rounded-2xl border border-stone-100 dark:border-border bg-white dark:bg-card shadow-[0_4px_20px_rgba(247,113,4,0.06)] overflow-hidden">
+          <div className="px-5 py-4 border-b border-stone-100 dark:border-border bg-background dark:bg-stone-900/10">
             <h2 className="font-bold text-foreground text-sm">Preferenze notifiche</h2>
           </div>
           <div className="p-5 space-y-5">
@@ -292,7 +292,7 @@ export default function Notifications() {
               disabled={updatePrefsMutation.isPending}
             />
 
-            <div className="border-t border-stone-100 dark:border-[hsl(25,12%,16%)] pt-4">
+            <div className="border-t border-stone-100 dark:border-border pt-4">
               <div className="flex items-center gap-2 mb-1">
                 <CalendarDays className="h-4 w-4 text-violet-600" />
                 <span className="text-sm font-bold text-foreground">Festival</span>
@@ -314,7 +314,7 @@ export default function Notifications() {
               </div>
             </div>
 
-            <div className="border-t border-stone-100 dark:border-[hsl(25,12%,16%)] pt-4 flex flex-wrap gap-2">
+            <div className="border-t border-stone-100 dark:border-border pt-4 flex flex-wrap gap-2">
               {pushStatus?.subscribed && (
                 <button
                   onClick={handleUnsubscribe}
@@ -351,8 +351,8 @@ export default function Notifications() {
               onClick={() => handleClick(n)}
               className={`rounded-2xl border cursor-pointer transition-all duration-200 hover:-translate-y-0.5 active:scale-[0.98] ${
                 !n.isRead
-                  ? 'bg-white dark:bg-[hsl(25,14%,10%)] border-stone-200 dark:border-stone-700/40 shadow-[0_2px_12px_rgba(247,113,4,0.08)]'
-                  : 'bg-white dark:bg-[hsl(25,14%,10%)] border-stone-100 dark:border-[hsl(25,12%,16%)] hover:border-stone-200'
+                  ? 'bg-white dark:bg-card border-stone-200 dark:border-stone-700/40 shadow-[0_2px_12px_rgba(247,113,4,0.08)]'
+                  : 'bg-white dark:bg-card border-stone-100 dark:border-border hover:border-stone-200'
               } hover:shadow-[0_4px_20px_rgba(247,113,4,0.1)]`}
             >
               <div className="flex items-start gap-3 p-4">
@@ -408,7 +408,7 @@ export default function Notifications() {
         {hasMore && (
           <button
             onClick={() => setShowAll(true)}
-            className="w-full flex items-center justify-center gap-2 py-3 rounded-2xl border border-stone-100 dark:border-[hsl(25,12%,16%)] bg-white dark:bg-[hsl(25,14%,10%)] text-sm font-semibold text-muted-foreground hover:text-foreground hover:border-stone-200 transition-all"
+            className="w-full flex items-center justify-center gap-2 py-3 rounded-2xl border border-stone-100 dark:border-border bg-white dark:bg-card text-sm font-semibold text-muted-foreground hover:text-foreground hover:border-stone-200 transition-all"
           >
             <ChevronDown className="h-4 w-4" />
             Mostra di più ({notificationsList.length - NOTIF_PAGE_SIZE} altre)

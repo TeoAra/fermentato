@@ -377,8 +377,8 @@ export function MenuManager({ pubId, menu }: MenuManagerProps) {
   };
 
   return (
-    <Card className="bg-background border-stone-100 dark:border-[hsl(25,12%,16%)] shadow-sm rounded-2xl overflow-hidden">
-      <CardHeader className="border-b border-stone-100 dark:border-[hsl(25,12%,16%)]">
+    <Card className="bg-background border-stone-100 dark:border-border shadow-sm rounded-2xl overflow-hidden">
+      <CardHeader className="border-b border-stone-100 dark:border-border">
         <CardTitle className="flex items-center justify-between font-bold text-foreground">
           <div className="flex items-center gap-2">
             <Utensils className="text-primary w-5 h-5" />
@@ -392,7 +392,7 @@ export function MenuManager({ pubId, menu }: MenuManagerProps) {
                   Categoria
                 </Button>
               </DialogTrigger>
-              <DialogContent className="rounded-2xl border-stone-100 dark:border-[hsl(25,12%,16%)]">
+              <DialogContent className="rounded-2xl border-stone-100 dark:border-border">
                 <DialogHeader>
                   <DialogTitle className="font-bold text-foreground">
                     {editingCategory ? "Modifica Categoria" : "Aggiungi Categoria"}
@@ -453,7 +453,7 @@ export function MenuManager({ pubId, menu }: MenuManagerProps) {
                   Prodotto
                 </Button>
               </DialogTrigger>
-              <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto rounded-2xl border-stone-100 dark:border-[hsl(25,12%,16%)]">
+              <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto rounded-2xl border-stone-100 dark:border-border">
                 <DialogHeader>
                   <DialogTitle className="font-bold text-foreground">
                     {editingItem ? "Modifica Prodotto" : "Aggiungi Prodotto"}
@@ -728,7 +728,7 @@ export function MenuManager({ pubId, menu }: MenuManagerProps) {
                       category.items.map((item) => (
                         <div
                           key={item.id}
-                          className={`bg-white dark:bg-[hsl(25,14%,10%)] rounded-2xl border border-stone-100 dark:border-[hsl(25,12%,16%)] shadow-sm p-4 relative group transition-all hover:shadow-md ${
+                          className={`bg-white dark:bg-card rounded-2xl border border-stone-100 dark:border-border shadow-sm p-4 relative group transition-all hover:shadow-md ${
                             !item.isVisible ? 'opacity-60 grayscale-[0.3]' : ''
                           }`}
                         >

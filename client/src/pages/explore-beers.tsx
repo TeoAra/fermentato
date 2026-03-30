@@ -140,13 +140,13 @@ export default function ExploreBeers() {
 
         {/* Results */}
         {isLoading ? (
-          <div className="bg-white dark:bg-[hsl(25,14%,10%)] rounded-2xl overflow-hidden border border-stone-100/70 dark:border-stone-700/20 shadow-sm">
+          <div className="bg-white dark:bg-card rounded-2xl overflow-hidden border border-stone-100/70 dark:border-stone-700/20 shadow-sm">
             {[...Array(6)].map((_, i) => (
               <div key={i} className="h-14 animate-pulse bg-stone-50 dark:bg-stone-800/30 mx-4 my-2 rounded-xl" />
             ))}
           </div>
         ) : beers.length > 0 ? (
-          <div className="bg-white dark:bg-[hsl(25,14%,10%)] rounded-2xl overflow-hidden border border-stone-100/70 dark:border-stone-700/20 shadow-sm">
+          <div className="bg-white dark:bg-card rounded-2xl overflow-hidden border border-stone-100/70 dark:border-stone-700/20 shadow-sm">
             {beers.map((beer: any, idx: number) => (
               <div key={beer.id}>
                 <Link href={`/beer/${beer.id}`}>

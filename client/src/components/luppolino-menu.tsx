@@ -77,7 +77,7 @@ export default function LuppolinoMenu({ menu, menuInfoBox }: LuppolinoMenuProps)
             <AccordionItem
               key={category.id}
               value={`category-${category.id}`}
-              className="rounded-2xl border border-stone-100 dark:border-[hsl(25,12%,16%)] bg-white dark:bg-[hsl(25,14%,10%)] shadow-[0_4px_20px_rgba(247,113,4,0.05)] overflow-hidden"
+              className="rounded-2xl border border-stone-100 dark:border-border bg-white dark:bg-card shadow-[0_4px_20px_rgba(247,113,4,0.05)] overflow-hidden"
               data-testid={`menu-category-${category.id}`}
             >
               <AccordionTrigger className="px-5 py-4 hover:no-underline hover:bg-background dark:hover:bg-stone-900/10 transition-colors [&>svg]:text-primary [&>svg]:h-4 [&>svg]:w-4">

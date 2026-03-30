@@ -158,7 +158,7 @@ export default function AdminAnalytics() {
       <div className="container mx-auto px-4 py-6 max-w-7xl space-y-6">
         <div className="flex items-center gap-4 mb-2">
           <Link href="/admin">
-            <Button variant="outline" size="sm" className="border-stone-200 dark:border-[hsl(25,12%,20%)] hover:bg-stone-50 rounded-xl">
+            <Button variant="outline" size="sm" className="border-stone-200 dark:border-border hover:bg-stone-50 rounded-xl">
               <ArrowLeft className="w-4 h-4 mr-2" />
               Dashboard Admin
             </Button>
@@ -176,7 +176,7 @@ export default function AdminAnalytics() {
 
         {/* KPI Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          <Card className="bg-white dark:bg-[hsl(25,14%,10%)] border border-stone-100 dark:border-[hsl(25,12%,16%)] rounded-2xl shadow-sm border-l-4 border-l-blue-500">
+          <Card className="bg-white dark:bg-card border border-stone-100 dark:border-border rounded-2xl shadow-sm border-l-4 border-l-blue-500">
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
@@ -192,7 +192,7 @@ export default function AdminAnalytics() {
             </CardContent>
           </Card>
 
-          <Card className="bg-white dark:bg-[hsl(25,14%,10%)] border border-stone-100 dark:border-[hsl(25,12%,16%)] rounded-2xl shadow-sm border-l-4 border-l-emerald-500">
+          <Card className="bg-white dark:bg-card border border-stone-100 dark:border-border rounded-2xl shadow-sm border-l-4 border-l-emerald-500">
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
@@ -207,7 +207,7 @@ export default function AdminAnalytics() {
             </CardContent>
           </Card>
 
-          <Card className="bg-white dark:bg-[hsl(25,14%,10%)] border border-stone-100 dark:border-[hsl(25,12%,16%)] rounded-2xl shadow-sm border-l-4 border-l-primary">
+          <Card className="bg-white dark:bg-card border border-stone-100 dark:border-border rounded-2xl shadow-sm border-l-4 border-l-primary">
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
@@ -223,7 +223,7 @@ export default function AdminAnalytics() {
             </CardContent>
           </Card>
 
-          <Card className="bg-white dark:bg-[hsl(25,14%,10%)] border border-stone-100 dark:border-[hsl(25,12%,16%)] rounded-2xl shadow-sm border-l-4 border-l-purple-500">
+          <Card className="bg-white dark:bg-card border border-stone-100 dark:border-border rounded-2xl shadow-sm border-l-4 border-l-purple-500">
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
@@ -241,8 +241,8 @@ export default function AdminAnalytics() {
         </div>
 
         {/* ===== ATTIVITÀ RECENTI ===== */}
-        <Card className="bg-white dark:bg-[hsl(25,14%,10%)] border border-stone-100 dark:border-[hsl(25,12%,16%)] rounded-2xl shadow-sm">
-          <CardHeader className="pb-3 border-b border-stone-100 dark:border-[hsl(25,12%,16%)]">
+        <Card className="bg-white dark:bg-card border border-stone-100 dark:border-border rounded-2xl shadow-sm">
+          <CardHeader className="pb-3 border-b border-stone-100 dark:border-border">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
               <CardTitle className="flex items-center gap-2 font-bold text-foreground">
                 <Activity className="w-5 h-5 text-primary" />
@@ -259,7 +259,7 @@ export default function AdminAnalytics() {
                     className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border transition-all ${
                       activityType === key
                         ? 'bg-primary text-white border-primary shadow-sm'
-                        : 'bg-white dark:bg-[hsl(25,14%,12%)] text-muted-foreground border-stone-200 dark:border-[hsl(25,12%,20%)] hover:border-primary/50 hover:text-primary'
+                        : 'bg-white dark:bg-[hsl(25,14%,12%)] text-muted-foreground border-stone-200 dark:border-border hover:border-primary/50 hover:text-primary'
                     }`}
                   >
                     <Icon className="w-3 h-3" />
@@ -324,7 +324,7 @@ export default function AdminAnalytics() {
                 ))}
 
                 {/* Expand / load more */}
-                <div className="flex items-center justify-between pt-3 mt-2 border-t border-stone-100 dark:border-[hsl(25,12%,16%)]">
+                <div className="flex items-center justify-between pt-3 mt-2 border-t border-stone-100 dark:border-border">
                   <span className="text-xs text-muted-foreground">
                     Mostrando {recentActivity.length} attività
                   </span>
@@ -334,7 +334,7 @@ export default function AdminAnalytics() {
                         key={extra}
                         variant="outline"
                         size="sm"
-                        className="h-7 text-xs px-2.5 border-stone-200 dark:border-[hsl(25,12%,20%)] hover:bg-stone-50 rounded-xl"
+                        className="h-7 text-xs px-2.5 border-stone-200 dark:border-border hover:bg-stone-50 rounded-xl"
                         onClick={() => setActivityLimit(prev => prev + extra)}
                         disabled={activityLoading}
                       >
@@ -351,8 +351,8 @@ export default function AdminAnalytics() {
         {/* Top Performance Section */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Top Stili Birre */}
-          <Card className="bg-white dark:bg-[hsl(25,14%,10%)] border border-stone-100 dark:border-[hsl(25,12%,16%)] rounded-2xl shadow-sm">
-            <CardHeader className="border-b border-stone-100 dark:border-[hsl(25,12%,16%)]">
+          <Card className="bg-white dark:bg-card border border-stone-100 dark:border-border rounded-2xl shadow-sm">
+            <CardHeader className="border-b border-stone-100 dark:border-border">
               <CardTitle className="flex items-center gap-2 font-bold text-foreground">
                 <BarChart3 className="w-5 h-5 text-primary" />
                 Top Stili di Birre
@@ -379,8 +379,8 @@ export default function AdminAnalytics() {
           </Card>
 
           {/* Top Birrifici */}
-          <Card className="bg-white dark:bg-[hsl(25,14%,10%)] border border-stone-100 dark:border-[hsl(25,12%,16%)] rounded-2xl shadow-sm">
-            <CardHeader className="border-b border-stone-100 dark:border-[hsl(25,12%,16%)]">
+          <Card className="bg-white dark:bg-card border border-stone-100 dark:border-border rounded-2xl shadow-sm">
+            <CardHeader className="border-b border-stone-100 dark:border-border">
               <CardTitle className="flex items-center gap-2 font-bold text-foreground">
                 <Globe className="w-5 h-5 text-primary" />
                 Birrifici più Produttivi
@@ -413,8 +413,8 @@ export default function AdminAnalytics() {
         {/* Aggiornamenti Recenti e Insights */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Insights Rapidi */}
-          <Card className="bg-white dark:bg-[hsl(25,14%,10%)] border border-stone-100 dark:border-[hsl(25,12%,16%)] rounded-2xl shadow-sm">
-            <CardHeader className="border-b border-stone-100 dark:border-[hsl(25,12%,16%)]">
+          <Card className="bg-white dark:bg-card border border-stone-100 dark:border-border rounded-2xl shadow-sm">
+            <CardHeader className="border-b border-stone-100 dark:border-border">
               <CardTitle className="flex items-center gap-2 font-bold text-foreground">
                 <TrendingUp className="w-5 h-5 text-primary" />
                 Insights Rapidi
@@ -452,8 +452,8 @@ export default function AdminAnalytics() {
           </Card>
 
           {/* Sistema Status */}
-          <Card className="bg-white dark:bg-[hsl(25,14%,10%)] border border-stone-100 dark:border-[hsl(25,12%,16%)] rounded-2xl shadow-sm">
-            <CardHeader className="border-b border-stone-100 dark:border-[hsl(25,12%,16%)]">
+          <Card className="bg-white dark:bg-card border border-stone-100 dark:border-border rounded-2xl shadow-sm">
+            <CardHeader className="border-b border-stone-100 dark:border-border">
               <CardTitle className="flex items-center gap-2 font-bold text-foreground">
                 <Activity className="w-5 h-5 text-primary" />
                 Stato Sistema
@@ -480,8 +480,8 @@ export default function AdminAnalytics() {
           </Card>
 
           {/* Aggiornamenti Recenti */}
-          <Card className="bg-white dark:bg-[hsl(25,14%,10%)] border border-stone-100 dark:border-[hsl(25,12%,16%)] rounded-2xl shadow-sm">
-            <CardHeader className="border-b border-stone-100 dark:border-[hsl(25,12%,16%)]">
+          <Card className="bg-white dark:bg-card border border-stone-100 dark:border-border rounded-2xl shadow-sm">
+            <CardHeader className="border-b border-stone-100 dark:border-border">
               <CardTitle className="flex items-center gap-2 font-bold text-foreground">
                 <Calendar className="w-5 h-5 text-primary" />
                 Aggiornamenti Recenti
@@ -517,8 +517,8 @@ export default function AdminAnalytics() {
         </div>
 
         {/* Database Global Overview */}
-        <Card className="bg-white dark:bg-[hsl(25,14%,10%)] border border-stone-100 dark:border-[hsl(25,12%,16%)] rounded-2xl shadow-sm">
-          <CardHeader className="border-b border-stone-100 dark:border-[hsl(25,12%,16%)]">
+        <Card className="bg-white dark:bg-card border border-stone-100 dark:border-border rounded-2xl shadow-sm">
+          <CardHeader className="border-b border-stone-100 dark:border-border">
             <CardTitle className="flex items-center gap-2 font-bold text-foreground">
               <Globe className="w-5 h-5 text-primary" />
               Panoramica Database Globale

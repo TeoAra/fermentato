@@ -187,7 +187,7 @@ export default function TapList({ tapList }: TapListProps) {
           </span>
         </div>
       )}
-      <div className="bg-white dark:bg-[hsl(25,14%,10%)] rounded-2xl overflow-hidden border border-stone-100/70 dark:border-stone-700/20 shadow-sm">
+      <div className="bg-white dark:bg-card rounded-2xl overflow-hidden border border-stone-100/70 dark:border-stone-700/20 shadow-sm">
         {items.map((tap, i) => renderRow(tap, i, items))}
       </div>
     </div>

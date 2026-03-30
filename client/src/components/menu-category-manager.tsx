@@ -576,7 +576,6 @@ export default function MenuCategoryManager({ pubId, categories }: MenuCategoryM
         <Button 
           onClick={isEdit ? handleEditSubmit : handleCreateSubmit}
           disabled={isEdit ? updateCategoryMutation.isPending : createCategoryMutation.isPending}
-          className="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700"
           data-testid={isEdit ? "button-save-edit" : "button-save-create"}
         >
           {(isEdit ? updateCategoryMutation.isPending : createCategoryMutation.isPending) ? (
@@ -628,7 +627,6 @@ export default function MenuCategoryManager({ pubId, categories }: MenuCategoryM
             <DialogTrigger asChild>
               <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
                 <Button 
-                  className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 shadow-lg"
                   data-testid="button-add-category"
                 >
                   <Plus className="h-4 w-4 mr-2" />
@@ -639,7 +637,7 @@ export default function MenuCategoryManager({ pubId, categories }: MenuCategoryM
           <DialogContent className="sm:max-w-md" onOpenAutoFocus={(e) => e.preventDefault()}>
             <DialogHeader>
               <DialogTitle className="flex items-center text-xl">
-                <div className="p-2 bg-gradient-to-r from-blue-500 to-indigo-500 rounded-lg mr-3">
+                <div className="p-2 bg-primary rounded-lg mr-3">
                   <Plus className="h-5 w-5 text-white" />
                 </div>
                 Crea Nuova Categoria
@@ -651,7 +649,7 @@ export default function MenuCategoryManager({ pubId, categories }: MenuCategoryM
         <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
           <Button 
             onClick={() => setIsAddItemOpen(true)}
-            className="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 shadow-lg"
+            variant="outline"
           >
             <Plus className="h-4 w-4 mr-2" />
             Prodotto
@@ -694,7 +692,7 @@ export default function MenuCategoryManager({ pubId, categories }: MenuCategoryM
               if (!open) resetForm();
             }}>
               <DialogTrigger asChild>
-                <Button className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700">
+                <Button>
                   <Plus className="h-4 w-4 mr-2" />
                   Crea Prima Categoria
                 </Button>
@@ -702,7 +700,7 @@ export default function MenuCategoryManager({ pubId, categories }: MenuCategoryM
               <DialogContent className="sm:max-w-md" onOpenAutoFocus={(e) => e.preventDefault()}>
                 <DialogHeader>
                   <DialogTitle className="flex items-center text-xl">
-                    <div className="p-2 bg-gradient-to-r from-blue-500 to-indigo-500 rounded-lg mr-3">
+                    <div className="p-2 bg-primary rounded-lg mr-3">
                       <Plus className="h-5 w-5 text-white" />
                     </div>
                     Crea Prima Categoria

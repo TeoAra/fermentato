@@ -316,7 +316,7 @@ export default function Activity() {
       )}
 
       {!userLocation && !requestingLocation && !locationError && (
-        <div className="mb-6 p-4 rounded-2xl bg-white dark:bg-[hsl(25,14%,10%)] border border-stone-100 dark:border-[hsl(25,12%,17%)] flex items-center gap-3 shadow-sm">
+        <div className="mb-6 p-4 rounded-2xl bg-white dark:bg-card border border-stone-100 dark:border-border flex items-center gap-3 shadow-sm">
           <div className="w-10 h-10 rounded-full bg-stone-100 dark:bg-stone-800 flex items-center justify-center flex-shrink-0">
             <Navigation className="h-5 w-5 text-stone-500 dark:text-stone-400" />
           </div>

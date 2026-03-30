@@ -213,13 +213,13 @@ export default function Home() {
           <div className="relative">
             <button
               onClick={() => setShowDistancePicker(v => !v)}
-              className="flex items-center gap-1.5 bg-white dark:bg-[hsl(25,14%,10%)] border border-stone-200 dark:border-stone-700/40 rounded-full px-3.5 py-2 text-sm font-bold text-foreground shadow-sm"
+              className="flex items-center gap-1.5 bg-white dark:bg-card border border-stone-200 dark:border-stone-700/40 rounded-full px-3.5 py-2 text-sm font-bold text-foreground shadow-sm"
             >
               {distanceKm} km
               <ChevronDown className="w-3.5 h-3.5 text-stone-400" />
             </button>
             {showDistancePicker && (
-              <div className="absolute top-10 left-0 z-50 bg-white dark:bg-[hsl(25,14%,10%)] border border-stone-200 dark:border-stone-700/40 rounded-2xl shadow-xl overflow-hidden min-w-[100px]">
+              <div className="absolute top-10 left-0 z-50 bg-white dark:bg-card border border-stone-200 dark:border-stone-700/40 rounded-2xl shadow-xl overflow-hidden min-w-[100px]">
                 {[5, 10, 25, 50, 100].map(d => (
                   <button
                     key={d}
@@ -236,17 +236,17 @@ export default function Home() {
           <button
             onClick={handleRequestLocation}
             title="Usa la mia posizione"
-            className={`w-9 h-9 flex items-center justify-center bg-white dark:bg-[hsl(25,14%,10%)] border rounded-full shadow-sm transition-colors ${locationStatus === 'granted' ? 'border-primary text-primary' : 'border-stone-200 dark:border-stone-700/40 text-stone-500 hover:text-primary'}`}
+            className={`w-9 h-9 flex items-center justify-center bg-white dark:bg-card border rounded-full shadow-sm transition-colors ${locationStatus === 'granted' ? 'border-primary text-primary' : 'border-stone-200 dark:border-stone-700/40 text-stone-500 hover:text-primary'}`}
           >
             <MapPin className="w-4 h-4" />
           </button>
           <Link href="/notifications">
-            <button className="w-9 h-9 flex items-center justify-center bg-white dark:bg-[hsl(25,14%,10%)] border border-stone-200 dark:border-stone-700/40 rounded-full shadow-sm text-stone-500 hover:text-primary transition-colors">
+            <button className="w-9 h-9 flex items-center justify-center bg-white dark:bg-card border border-stone-200 dark:border-stone-700/40 rounded-full shadow-sm text-stone-500 hover:text-primary transition-colors">
               <Bell className="w-4 h-4" />
             </button>
           </Link>
           <Link href="/dashboard?tab=favorites">
-            <button className="w-9 h-9 flex items-center justify-center bg-white dark:bg-[hsl(25,14%,10%)] border border-stone-200 dark:border-stone-700/40 rounded-full shadow-sm text-stone-500 hover:text-primary transition-colors" title="I tuoi preferiti">
+            <button className="w-9 h-9 flex items-center justify-center bg-white dark:bg-card border border-stone-200 dark:border-stone-700/40 rounded-full shadow-sm text-stone-500 hover:text-primary transition-colors" title="I tuoi preferiti">
               <Bookmark className="w-4 h-4" />
             </button>
           </Link>
@@ -308,7 +308,7 @@ export default function Home() {
             ) : Array.isArray(myPubs) && myPubs.length > 0 ? (
               <div className="space-y-3">
                 {myPubs.map((pub: any) => (
-                  <div key={pub.id} className="bg-white dark:bg-[hsl(25,14%,10%)] border border-stone-100 dark:border-[hsl(25,12%,16%)] rounded-2xl p-4 flex items-center gap-4 shadow-sm">
+                  <div key={pub.id} className="bg-white dark:bg-card border border-stone-100 dark:border-border rounded-2xl p-4 flex items-center gap-4 shadow-sm">
                     <div className="w-16 h-16 rounded-xl overflow-hidden flex-shrink-0 bg-stone-50 dark:bg-[hsl(25,14%,14%)] flex items-center justify-center">
                       {(pub.logoUrl || pub.coverImageUrl || pub.imageUrl) ? (
                         <img src={pub.logoUrl || pub.coverImageUrl || pub.imageUrl} alt={pub.name} className="w-16 h-16 object-cover" />
@@ -365,13 +365,13 @@ export default function Home() {
               </Link>
             </div>
             {pubsLoading ? (
-              <div className="bg-white dark:bg-[hsl(25,14%,10%)] rounded-2xl overflow-hidden border border-stone-100/70 dark:border-stone-700/20 shadow-sm">
+              <div className="bg-white dark:bg-card rounded-2xl overflow-hidden border border-stone-100/70 dark:border-stone-700/20 shadow-sm">
                 {[...Array(3)].map((_, i) => (
                   <div key={i} className="h-14 animate-pulse bg-stone-50 dark:bg-stone-800/30 mx-4 my-2 rounded-xl" />
                 ))}
               </div>
             ) : sortedPubs.length === 0 ? (
-              <div className="bg-white dark:bg-[hsl(25,14%,10%)] rounded-2xl border border-stone-100/70 dark:border-stone-700/20 shadow-sm px-4 py-8 text-center">
+              <div className="bg-white dark:bg-card rounded-2xl border border-stone-100/70 dark:border-stone-700/20 shadow-sm px-4 py-8 text-center">
                 <Beer className="w-8 h-8 text-stone-300 mx-auto mb-2" />
                 <p className="text-sm text-stone-500 dark:text-stone-400">Nessun locale trovato in {distanceKm} km</p>
                 <button onClick={() => setDistanceKm(50)} className="mt-2 text-sm font-semibold text-primary hover:underline">
@@ -379,7 +379,7 @@ export default function Home() {
                 </button>
               </div>
             ) : (
-              <div className="bg-white dark:bg-[hsl(25,14%,10%)] rounded-2xl overflow-hidden border border-stone-100/70 dark:border-stone-700/20 shadow-sm">
+              <div className="bg-white dark:bg-card rounded-2xl overflow-hidden border border-stone-100/70 dark:border-stone-700/20 shadow-sm">
                 {sortedPubs.map((pub: any, idx: number) => (
                   <PubCard 
                     key={pub.id} 
@@ -406,7 +406,7 @@ export default function Home() {
                 <Button size="sm" variant="ghost" className="text-primary hover:bg-stone-50 dark:hover:bg-stone-900/20 font-semibold text-sm">Gestisci →</Button>
               </Link>
             </div>
-            <div className="bg-white dark:bg-[hsl(25,14%,10%)] border border-stone-100 dark:border-[hsl(25,12%,16%)] rounded-2xl p-4 flex items-center gap-4 shadow-sm">
+            <div className="bg-white dark:bg-card border border-stone-100 dark:border-border rounded-2xl p-4 flex items-center gap-4 shadow-sm">
               <div className="w-16 h-16 rounded-xl overflow-hidden flex-shrink-0 bg-stone-50 dark:bg-stone-900/20 flex items-center justify-center">
                 {myBreweryData.brewery.logoUrl ? (
                   <img src={myBreweryData.brewery.logoUrl} alt={myBreweryData.brewery.name} className="w-16 h-16 object-contain" />
@@ -493,7 +493,7 @@ export default function Home() {
                 <Button variant="ghost" size="sm" className="text-primary hover:bg-stone-50 dark:hover:bg-stone-900/20 font-semibold text-sm">Vedi tutti →</Button>
               </Link>
             </div>
-            <div className="bg-white dark:bg-[hsl(25,14%,10%)] rounded-2xl overflow-hidden border border-stone-100/70 dark:border-stone-700/20 shadow-sm">
+            <div className="bg-white dark:bg-card rounded-2xl overflow-hidden border border-stone-100/70 dark:border-stone-700/20 shadow-sm">
               {breweries.slice(0, 5).map((brewery: any, idx: number) => (
                 <BreweryCard key={brewery.id} brewery={brewery} isLast={idx === Math.min(4, breweries.length - 1)} />
               ))}
@@ -521,7 +521,7 @@ export default function Home() {
                 const t = typeMap[ann.type] ?? typeMap.news;
                 return (
                   <Link key={ann.id} href={`/brewery/${ann.breweryId}`}>
-                    <div className="group flex-shrink-0 w-[200px] p-3 rounded-2xl border border-stone-100 dark:border-[hsl(25,12%,16%)] bg-white dark:bg-[hsl(25,12%,11%)] hover:border-primary/25 dark:hover:border-primary/30 transition-colors cursor-pointer shadow-sm hover:shadow-md">
+                    <div className="group flex-shrink-0 w-[200px] p-3 rounded-2xl border border-stone-100 dark:border-border bg-white dark:bg-[hsl(25,12%,11%)] hover:border-primary/25 dark:hover:border-primary/30 transition-colors cursor-pointer shadow-sm hover:shadow-md">
                       <div className="flex items-center gap-2 mb-2">
                         {ann.breweryLogo ? (
                           <img src={ann.breweryLogo} alt={ann.breweryName} className="w-8 h-8 rounded-full object-contain bg-stone-50 dark:bg-stone-900/20 flex-shrink-0 p-0.5" />
@@ -564,7 +564,7 @@ export default function Home() {
               const top = popularStyles.slice(0, 10);
               const max = top[0]?.count ?? 1;
               return (
-                <div className="bg-white dark:bg-[hsl(25,14%,10%)] border border-stone-100 dark:border-[hsl(25,12%,16%)] rounded-2xl p-4 shadow-sm">
+                <div className="bg-white dark:bg-card border border-stone-100 dark:border-border rounded-2xl p-4 shadow-sm">
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-0">
                     {top.map((s, i) => (
                       <Link key={s.style} href={`/explore/beers?style=${encodeURIComponent(s.style)}`}>
@@ -620,7 +620,7 @@ export default function Home() {
                 
                 return (
                   <Link key={favorite.id} href={href}>
-                    <div className="group relative bg-white dark:bg-[hsl(25,14%,10%)] border border-stone-100 dark:border-[hsl(25,12%,16%)] rounded-2xl p-3 hover:shadow-md hover:border-primary/20 hover:scale-[1.03] transition-all duration-200 cursor-pointer h-full">
+                    <div className="group relative bg-white dark:bg-card border border-stone-100 dark:border-border rounded-2xl p-3 hover:shadow-md hover:border-primary/20 hover:scale-[1.03] transition-all duration-200 cursor-pointer h-full">
                       <div className="absolute top-2 right-2 bg-primary rounded-full p-1">
                         <TypeIcon className="w-3 h-3 text-white" />
                       </div>
@@ -673,7 +673,7 @@ export default function Home() {
         )}
 
         {/* ─── Statistiche Community ────────────────────────────────────────── */}
-        <section className="mb-8 bg-white dark:bg-[hsl(25,14%,10%)] border border-stone-100 dark:border-[hsl(25,12%,16%)] rounded-3xl p-5 lg:p-7 shadow-sm">
+        <section className="mb-8 bg-white dark:bg-card border border-stone-100 dark:border-border rounded-3xl p-5 lg:p-7 shadow-sm">
           <p className="text-[11px] font-bold text-center text-muted-foreground mb-5 uppercase tracking-[0.14em]">
             La Community Fermenta.to
           </p>
@@ -682,7 +682,7 @@ export default function Home() {
               <div className="text-2xl font-extrabold text-primary tabular-nums leading-tight">{globalStats?.totalBeers != null ? globalStats.totalBeers.toLocaleString("it-IT") : '—'}</div>
               <div className="text-[11px] text-muted-foreground mt-1 font-medium">Birre</div>
             </div>
-            <div className="text-center border-x border-stone-100 dark:border-[hsl(25,12%,16%)]">
+            <div className="text-center border-x border-stone-100 dark:border-border">
               <div className="text-2xl font-extrabold text-primary tabular-nums leading-tight">{globalStats?.totalBreweries != null ? globalStats.totalBreweries.toLocaleString("it-IT") : '—'}</div>
               <div className="text-[11px] text-muted-foreground mt-1 font-medium">Birrifici</div>
             </div>
@@ -691,7 +691,7 @@ export default function Home() {
               <div className="text-[11px] text-muted-foreground mt-1 font-medium">Stili</div>
             </div>
           </div>
-          <div className="border-t border-stone-100 dark:border-[hsl(25,12%,16%)] mb-5" />
+          <div className="border-t border-stone-100 dark:border-border mb-5" />
           <div className="flex justify-center gap-16">
             <div className="text-center">
               <div className="text-xl font-extrabold text-primary tabular-nums leading-tight">{globalStats?.totalUsers != null ? globalStats.totalUsers.toLocaleString("it-IT") : '—'}</div>

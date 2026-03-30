@@ -111,7 +111,7 @@ export default function AdminSubscriptions() {
       <div className="container mx-auto px-4 py-6 max-w-6xl space-y-6">
         <div className="flex flex-wrap items-center gap-3">
           <Link href="/admin">
-            <Button variant="outline" size="sm" className="shrink-0 border-stone-200 dark:border-[hsl(25,12%,20%)] hover:bg-stone-50 rounded-xl">
+            <Button variant="outline" size="sm" className="shrink-0 border-stone-200 dark:border-border hover:bg-stone-50 rounded-xl">
               <ArrowLeft className="w-4 h-4 mr-2" />
               <span className="hidden sm:inline">Dashboard Admin</span>
               <span className="sm:hidden">Admin</span>
@@ -134,7 +134,7 @@ export default function AdminSubscriptions() {
             { label: "In scadenza (30gg)", value: stats.expiringSoon, color: "text-primary", border: "border-l-primary" },
             { label: "Scaduti", value: stats.expired, color: "text-destructive", border: "border-l-destructive" },
           ].map(({ label, value, color, border }) => (
-            <Card key={label} className={`bg-white dark:bg-[hsl(25,14%,10%)] border border-stone-100 dark:border-[hsl(25,12%,16%)] rounded-2xl shadow-sm border-l-4 ${border}`}>
+            <Card key={label} className={`bg-white dark:bg-card border border-stone-100 dark:border-border rounded-2xl shadow-sm border-l-4 ${border}`}>
               <CardContent className="p-4">
                 <p className={`text-2xl font-bold ${color}`}>{value}</p>
                 <p className="text-xs text-muted-foreground mt-0.5">{label}</p>
@@ -170,11 +170,11 @@ export default function AdminSubscriptions() {
         </div>
 
         {/* Table */}
-        <Card className="bg-white dark:bg-[hsl(25,14%,10%)] border border-stone-100 dark:border-[hsl(25,12%,16%)] rounded-2xl shadow-sm overflow-hidden">
+        <Card className="bg-white dark:bg-card border border-stone-100 dark:border-border rounded-2xl shadow-sm overflow-hidden">
           <CardContent className="p-0">
             <div className="overflow-x-auto">
               <table className="w-full">
-                <thead className="bg-stone-50/50 dark:bg-stone-900/20 border-b border-stone-100 dark:border-[hsl(25,12%,16%)]">
+                <thead className="bg-stone-50/50 dark:bg-stone-900/20 border-b border-stone-100 dark:border-border">
                   <tr>
                     <th className="px-4 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">Pub</th>
                     <th className="px-4 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">Proprietario</th>
@@ -183,7 +183,7 @@ export default function AdminSubscriptions() {
                     <th className="px-4 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">Azioni</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-orange-50 dark:divide-[hsl(25,12%,16%)]">
+                <tbody className="divide-y divide-orange-50 dark:divide-border">
                   {subLoading ? (
                     <tr>
                       <td colSpan={5} className="px-4 py-8 text-center">
@@ -253,7 +253,7 @@ export default function AdminSubscriptions() {
                               <Button
                                 size="sm"
                                 variant="outline"
-                                className="h-7 text-xs gap-1 border-stone-200 dark:border-[hsl(25,12%,20%)] hover:bg-stone-50 rounded-xl"
+                                className="h-7 text-xs gap-1 border-stone-200 dark:border-border hover:bg-stone-50 rounded-xl"
                                 onClick={() => setGiftTarget(pub)}
                               >
                                 <Gift className="w-3 h-3" />

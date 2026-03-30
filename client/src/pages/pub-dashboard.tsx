@@ -311,7 +311,7 @@ export default function PubDashboard() {
 
       {/* Trial welcome banner */}
       {showTrialWelcome && (
-        <Card className="border-green-200 dark:border-green-800 bg-green-50 dark:bg-green-900/20 mb-2">
+        <Card className="border-border bg-muted/40 mb-2">
           <CardContent className="p-4">
             <div className="flex items-start gap-3">
               <span className="text-2xl">🎉</span>
@@ -787,13 +787,13 @@ function PubInfoTab({ pub }: { pub: Pub }) {
                   showFileInfo={true}
                 />
               </div>
-              <div className="bg-blue-50 dark:bg-blue-950/50 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
+              <div className="bg-muted border border-border rounded-lg p-4">
                 <div className="flex items-start gap-3">
-                  <div className="bg-blue-100 dark:bg-blue-900/50 rounded-full p-2 flex-shrink-0">
-                    <Camera className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+                  <div className="bg-background rounded-full p-2 flex-shrink-0">
+                    <Camera className="w-4 h-4 text-primary" />
                   </div>
                   <div>
-                    <h5 className="text-sm font-medium text-blue-900 dark:text-blue-100 mb-1">
+                    <h5 className="text-sm font-medium text-foreground mb-1">
                       Consigli per le immagini
                     </h5>
                     <ul className="text-xs text-blue-800 dark:text-blue-200 space-y-1">

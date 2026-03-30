@@ -57,7 +57,7 @@ export function BottomNavigation() {
       <SearchDialog isOpen={searchOpen} onClose={() => setSearchOpen(false)} />
 
       <nav
-        className="lg:hidden fixed bottom-0 left-0 right-0 z-50 bg-white dark:bg-[hsl(25,14%,9%)] border-t border-stone-100 dark:border-[hsl(25,12%,16%)]"
+        className="lg:hidden fixed bottom-0 left-0 right-0 z-50 bg-white dark:bg-[hsl(25,14%,9%)] border-t border-stone-100 dark:border-border"
         style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
       >
         <div className="flex items-stretch">

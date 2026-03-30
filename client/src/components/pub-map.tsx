@@ -222,7 +222,7 @@ export function PubMap({ pins, height = "100%" }: PubMapProps) {
   const pinsTotal = pins.length;
 
   return (
-    <div className="relative w-full rounded-2xl overflow-hidden border border-stone-100 dark:border-[hsl(25,12%,16%)]" style={{ height }}>
+    <div className="relative w-full rounded-2xl overflow-hidden border border-stone-100 dark:border-border" style={{ height }}>
       <div ref={containerRef} className="w-full h-full" />
 
       {/* Info badge */}

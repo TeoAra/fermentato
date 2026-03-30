@@ -64,7 +64,7 @@ export default function Footer() {
           </div>
         </div>
 
-        <div className="border-t border-[hsl(36,14%,87%)] dark:border-[hsl(25,12%,16%)] mt-8 pt-8 text-center text-[hsl(28,8%,56%)] dark:text-[hsl(35,8%,44%)] text-sm">
+        <div className="border-t border-[hsl(36,14%,87%)] dark:border-border mt-8 pt-8 text-center text-[hsl(28,8%,56%)] dark:text-[hsl(35,8%,44%)] text-sm">
           <p>&copy; 2024 Fermenta.to. Tutti i diritti riservati.</p>
         </div>
       </div>

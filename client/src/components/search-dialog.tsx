@@ -529,22 +529,22 @@ export default function SearchDialog({ isOpen, onClose }: SearchDialogProps) {
         </div>
 
         {/* Footer */}
-        <div className="border-t border-stone-100 dark:border-[hsl(25,12%,16%)] bg-stone-50/40 dark:bg-[hsl(25,14%,8%)]">
+        <div className="border-t border-stone-100 dark:border-border bg-stone-50/40 dark:bg-[hsl(25,14%,8%)]">
           {/* Keyboard shortcuts — desktop only */}
           <div className="hidden sm:flex items-center justify-between px-4 py-2 text-xs text-muted-foreground border-b border-stone-100 dark:border-[hsl(25,12%,14%)]">
             <div className="flex items-center gap-4">
               <div className="flex items-center gap-1">
-                <kbd className="px-2 py-1 bg-white dark:bg-[hsl(25,12%,14%)] border border-stone-200 dark:border-[hsl(25,12%,20%)] rounded shadow-sm">↑</kbd>
-                <kbd className="px-2 py-1 bg-white dark:bg-[hsl(25,12%,14%)] border border-stone-200 dark:border-[hsl(25,12%,20%)] rounded shadow-sm">↓</kbd>
+                <kbd className="px-2 py-1 bg-white dark:bg-[hsl(25,12%,14%)] border border-stone-200 dark:border-border rounded shadow-sm">↑</kbd>
+                <kbd className="px-2 py-1 bg-white dark:bg-[hsl(25,12%,14%)] border border-stone-200 dark:border-border rounded shadow-sm">↓</kbd>
                 <span>naviga</span>
               </div>
               <div className="flex items-center gap-1">
-                <kbd className="px-2 py-1 bg-white dark:bg-[hsl(25,12%,14%)] border border-stone-200 dark:border-[hsl(25,12%,20%)] rounded shadow-sm">↵</kbd>
+                <kbd className="px-2 py-1 bg-white dark:bg-[hsl(25,12%,14%)] border border-stone-200 dark:border-border rounded shadow-sm">↵</kbd>
                 <span>seleziona</span>
               </div>
             </div>
             <div className="flex items-center gap-1">
-              <kbd className="px-2 py-1 bg-white dark:bg-[hsl(25,12%,14%)] border border-stone-200 dark:border-[hsl(25,12%,20%)] rounded shadow-sm">Esc</kbd>
+              <kbd className="px-2 py-1 bg-white dark:bg-[hsl(25,12%,14%)] border border-stone-200 dark:border-border rounded shadow-sm">Esc</kbd>
               <span>chiudi</span>
             </div>
           </div>

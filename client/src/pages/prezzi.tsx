@@ -288,7 +288,7 @@ export default function PrezziPage() {
         <div className="mb-16">
           <h2 className="text-2xl font-bold text-center text-foreground mb-2">Domande frequenti</h2>
           <p className="text-center text-muted-foreground text-sm mb-8">Tutto quello che devi sapere su Fermenta.to</p>
-          <div className="max-w-2xl mx-auto bg-white dark:bg-[hsl(25,14%,10%)] rounded-3xl border border-stone-100 dark:border-[hsl(25,12%,16%)] shadow-sm overflow-hidden">
+          <div className="max-w-2xl mx-auto bg-white dark:bg-card rounded-3xl border border-stone-100 dark:border-border shadow-sm overflow-hidden">
             <Accordion type="single" collapsible className="divide-y divide-stone-100 dark:divide-stone-700/30">
               {[
                 { q: "Come si attiva il piano pub?", a: "Registra il tuo pub e attiva subito il periodo di prova gratuito di 15 giorni — senza carta di credito. Al termine, puoi continuare con il piano completo a €65/anno (IVA inclusa) tramite carta, PayPal o altri metodi online. L'abbonamento si rinnova automaticamente salvo disdetta anticipata." },

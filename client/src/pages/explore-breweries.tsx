@@ -411,7 +411,7 @@ export default function ExploreBreweries() {
         )}
 
         {isLoading ? (
-          <div className="bg-white dark:bg-[hsl(25,14%,10%)] rounded-2xl overflow-hidden border border-stone-100/70 dark:border-stone-700/20 shadow-sm">
+          <div className="bg-white dark:bg-card rounded-2xl overflow-hidden border border-stone-100/70 dark:border-stone-700/20 shadow-sm">
             {[...Array(8)].map((_, i) => (
               <div key={i} className="h-14 animate-pulse bg-stone-50 dark:bg-stone-800/30 mx-4 my-2 rounded-xl" />
             ))}
@@ -427,7 +427,7 @@ export default function ExploreBreweries() {
           </div>
         ) : (
           <>
-            <div className="bg-white dark:bg-[hsl(25,14%,10%)] rounded-2xl overflow-hidden border border-stone-100/70 dark:border-stone-700/20 shadow-sm">
+            <div className="bg-white dark:bg-card rounded-2xl overflow-hidden border border-stone-100/70 dark:border-stone-700/20 shadow-sm">
               {breweries.map((brewery: any, idx: number) => (
                 <BreweryCard key={brewery.id} brewery={brewery} isLast={idx === breweries.length - 1} />
               ))}

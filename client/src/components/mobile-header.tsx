@@ -163,11 +163,11 @@ export function MobileHeader({ onMenuToggle, isMenuOpen }: MobileHeaderProps) {
 
       {/* ── SLIDE-OUT MENU ──────────────────────────────────────────────── */}
       <Sheet open={isMenuOpen} onOpenChange={(open) => { if (!open) onMenuToggle(); }}>
-        <SheetContent side="right" className="w-[300px] p-0 flex flex-col bg-white dark:bg-[hsl(25,14%,9%)] border-l border-stone-100 dark:border-[hsl(25,12%,16%)]">
+        <SheetContent side="right" className="w-[300px] p-0 flex flex-col bg-white dark:bg-[hsl(25,14%,9%)] border-l border-stone-100 dark:border-border">
           <SheetTitle className="sr-only">Menu di navigazione</SheetTitle>
 
           {/* User profile header */}
-          <div className="px-4 pt-5 pb-4 border-b border-stone-100 dark:border-[hsl(25,12%,16%)]">
+          <div className="px-4 pt-5 pb-4 border-b border-stone-100 dark:border-border">
             {isAuthenticated && typedUser ? (
               <Link href="/dashboard" onClick={onMenuToggle}>
                 <div className="flex items-center gap-3">
@@ -275,7 +275,7 @@ export function MobileHeader({ onMenuToggle, isMenuOpen }: MobileHeaderProps) {
           </div>
 
           {/* Footer: theme + logout */}
-          <div className="px-2 py-3 border-t border-stone-100 dark:border-[hsl(25,12%,16%)] space-y-0.5">
+          <div className="px-2 py-3 border-t border-stone-100 dark:border-border space-y-0.5">
             <div className="flex items-center justify-between px-3 py-2">
               <span className="text-sm text-stone-500 dark:text-stone-400 font-medium">Tema</span>
               <ThemeToggle />

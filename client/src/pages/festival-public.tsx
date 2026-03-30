@@ -179,9 +179,9 @@ function TapCard({ tap, slug, isAuth, isManager, useTokens, tokenName }: {
   const descriptionMissing = tap.beerId && !hasDescription && isManager;
 
   return (
-    <div className={`bg-white dark:bg-[hsl(25,14%,10%)] rounded-2xl border transition-all ${
+    <div className={`bg-white dark:bg-card rounded-2xl border transition-all ${
       tap.isAvailable
-        ? "border-stone-100 dark:border-[hsl(25,12%,16%)] shadow-sm"
+        ? "border-stone-100 dark:border-border shadow-sm"
         : "border-gray-100 dark:border-gray-800 opacity-60"
     }`}>
       {/* Collapsed row */}
@@ -280,7 +280,7 @@ function TapCard({ tap, slug, isAuth, isManager, useTokens, tokenName }: {
 
       {/* Expanded content */}
       {expanded && tap.isAvailable && (
-        <div className="px-4 pb-4 border-t border-stone-200 dark:border-[hsl(25,12%,16%)] pt-3">
+        <div className="px-4 pb-4 border-t border-stone-200 dark:border-border pt-3">
           {/* Notes */}
           {tap.notes && (
             <p className="text-xs text-muted-foreground mb-3">{tap.notes}</p>
@@ -338,7 +338,7 @@ function FoodCategoryBlock({ category, items }: { category: string; items: Festi
   const available = items.filter(i => i.isAvailable).length;
 
   return (
-    <div className="overflow-hidden rounded-2xl border border-stone-100 dark:border-[hsl(25,12%,16%)] bg-white dark:bg-[hsl(25,14%,10%)] shadow-sm">
+    <div className="overflow-hidden rounded-2xl border border-stone-100 dark:border-border bg-white dark:bg-card shadow-sm">
       <button
         className="w-full flex items-center justify-between px-4 py-3 hover:bg-stone-50/50 dark:hover:bg-white/5 transition-colors text-left"
         onClick={() => setExpanded(e => !e)}
@@ -353,7 +353,7 @@ function FoodCategoryBlock({ category, items }: { category: string; items: Festi
       </button>
 
       {expanded && (
-        <div className="divide-y divide-orange-50 dark:divide-[hsl(25,12%,16%)]">
+        <div className="divide-y divide-orange-50 dark:divide-border">
           {items.map(item => (
             <div key={item.id} className={`px-4 py-3 ${!item.isAvailable ? "opacity-50" : ""}`}>
               <div className="flex items-start justify-between gap-3">
@@ -404,7 +404,7 @@ function RankingsTab({ rankings }: { rankings: FestivalData["rankings"] }) {
   return (
     <div className="space-y-2">
       {rankings.map((t, i) => (
-        <div key={t.tapNumber} className="flex items-center gap-3 bg-white dark:bg-[hsl(25,14%,10%)] rounded-2xl border border-stone-100 dark:border-[hsl(25,12%,16%)] p-3 shadow-sm">
+        <div key={t.tapNumber} className="flex items-center gap-3 bg-white dark:bg-card rounded-2xl border border-stone-100 dark:border-border p-3 shadow-sm">
           <div className={`w-8 h-8 flex items-center justify-center rounded-xl text-sm font-bold flex-shrink-0 ${
             i === 0 ? "bg-primary text-white" :
             i === 1 ? "bg-stone-200 text-muted-foreground" :
@@ -578,7 +578,7 @@ export default function FestivalPublic() {
       </div>
 
       {/* Main content with rounded corners overlap */}
-      <div className="max-w-2xl mx-auto bg-white dark:bg-[hsl(25,14%,10%)] rounded-t-3xl -mt-8 relative z-10 px-4 pt-6 min-h-[calc(100vh-200px)]">
+      <div className="max-w-2xl mx-auto bg-white dark:bg-card rounded-t-3xl -mt-8 relative z-10 px-4 pt-6 min-h-[calc(100vh-200px)]">
         {/* Info content */}
         <div className="space-y-4">
           {/* Schedule */}
@@ -623,7 +623,7 @@ export default function FestivalPublic() {
 
           {/* Informazioni – expandable card */}
           {festival.description && (
-            <div className="rounded-2xl overflow-hidden border border-stone-200 dark:border-[hsl(25,12%,16%)] shadow-sm bg-white dark:bg-[hsl(25,14%,10%)]">
+            <div className="rounded-2xl overflow-hidden border border-stone-200 dark:border-border shadow-sm bg-white dark:bg-card">
               <button
                 className="w-full px-4 py-3 flex items-center justify-between text-left hover:bg-stone-50/50 dark:hover:bg-white/5 transition-colors"
                 onClick={() => setDescExpanded(v => !v)}
@@ -637,7 +637,7 @@ export default function FestivalPublic() {
                   : <ChevronDown className="h-4 w-4 text-primary" />}
               </button>
               {descExpanded && (
-                <div className="px-5 py-4 border-t border-stone-100 dark:border-[hsl(25,12%,16%)]">
+                <div className="px-5 py-4 border-t border-stone-100 dark:border-border">
                   <div
                     className="prose prose-sm dark:prose-invert max-w-none text-foreground/80
                       prose-headings:text-foreground prose-headings:font-bold
@@ -681,7 +681,7 @@ export default function FestivalPublic() {
                     placeholder="Cerca per nome, birrificio, stile…"
                     value={search}
                     onChange={e => setSearch(e.target.value)}
-                    className="pl-10 bg-white dark:bg-transparent border-stone-200 dark:border-[hsl(25,12%,16%)] rounded-xl h-11 focus:ring-primary focus:border-primary"
+                    className="pl-10 bg-white dark:bg-transparent border-stone-200 dark:border-border rounded-xl h-11 focus:ring-primary focus:border-primary"
                   />
                 </div>
                 <Button
@@ -698,7 +698,7 @@ export default function FestivalPublic() {
               </div>
 
               {filteredTaps.length === 0 ? (
-                <div className="text-center py-16 bg-stone-50/20 dark:bg-white/5 rounded-3xl border border-dashed border-stone-300 dark:border-[hsl(25,12%,16%)]">
+                <div className="text-center py-16 bg-stone-50/20 dark:bg-white/5 rounded-3xl border border-dashed border-stone-300 dark:border-border">
                   <Beer className="h-10 w-10 mx-auto mb-3 opacity-20 text-primary" />
                   <p className="font-bold text-foreground">Nessuna birra trovata</p>
                   <p className="text-sm text-muted-foreground mt-1">Prova a cambiare i termini di ricerca</p>
@@ -740,7 +740,7 @@ export default function FestivalPublic() {
           </Tabs>
         </div>
 
-        <div className="text-center py-12 text-xs text-muted-foreground border-t border-stone-100 dark:border-[hsl(25,12%,16%)] mt-12">
+        <div className="text-center py-12 text-xs text-muted-foreground border-t border-stone-100 dark:border-border mt-12">
           <a href="/" className="font-bold text-primary hover:underline transition-colors">Fermenta.to</a>
           <span className="mx-2">·</span>
           Aggiornato ogni 30 secondi

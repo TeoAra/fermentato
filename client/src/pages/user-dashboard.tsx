@@ -221,7 +221,7 @@ export default function UserDashboard() {
                 <Edit3 className="h-4 w-4 mr-2" />
                 Modifica Profilo
               </Button>
-              <Button size="sm" className="bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700">
+              <Button size="sm">
                 <Compass className="h-4 w-4 mr-2" />
                 Esplora
               </Button>
@@ -276,15 +276,13 @@ export default function UserDashboard() {
         {/* Recent Activity */}
         <div className="lg:col-span-2">
           <Card className="modern-card rounded-2xl overflow-hidden">
-            <CardHeader className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-950 dark:to-indigo-950 border-b">
+            <CardHeader className="border-b bg-muted/30">
               <CardTitle className="flex items-center justify-between">
                 <div className="flex items-center">
-                  <Activity className="mr-3 h-5 w-5 text-blue-600" />
+                  <Activity className="mr-3 h-5 w-5 text-primary" />
                   <span className="text-display-lg">Attività Recente</span>
                 </div>
-                <Badge variant="secondary" className="bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200">
-                  Ultimi 7 giorni
-                </Badge>
+                <Badge variant="secondary">Ultimi 7 giorni</Badge>
               </CardTitle>
             </CardHeader>
             <CardContent className="p-6">
@@ -328,7 +326,7 @@ export default function UserDashboard() {
         <div className="space-y-6">
           {/* Personal Goals */}
           <Card className="modern-card rounded-2xl overflow-hidden">
-            <CardHeader className="bg-gradient-to-r from-purple-50 to-pink-50 dark:from-purple-950 dark:to-pink-950">
+            <CardHeader className="bg-muted/30">
               <CardTitle className="flex items-center">
                 <Target className="mr-3 h-5 w-5 text-purple-600" />
                 <span className="text-lg">I Tuoi Obiettivi</span>
@@ -473,7 +471,7 @@ export default function UserDashboard() {
 
         {/* Brewery Favorites */}
         <Card className="modern-card rounded-2xl overflow-hidden">
-          <CardHeader className="bg-gradient-to-r from-emerald-50 to-green-50 dark:from-emerald-950 dark:to-green-950">
+          <CardHeader className="bg-muted/30">
             <CardTitle className="flex items-center justify-between">
               <div className="flex items-center">
                 <Beer className="mr-3 h-5 w-5 text-emerald-600" />
@@ -516,7 +514,7 @@ export default function UserDashboard() {
 
         {/* Beer Favorites */}
         <Card className="modern-card rounded-2xl overflow-hidden">
-          <CardHeader className="bg-gradient-to-r from-purple-50 to-pink-50 dark:from-purple-950 dark:to-pink-950">
+          <CardHeader className="bg-muted/30">
             <CardTitle className="flex items-center justify-between">
               <div className="flex items-center">
                 <Sparkles className="mr-3 h-5 w-5 text-purple-600" />

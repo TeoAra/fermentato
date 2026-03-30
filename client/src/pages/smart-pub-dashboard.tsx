@@ -113,7 +113,7 @@ function PubMenuInfoBox({ pubId, currentValue }: { pubId: number; currentValue: 
       <Button
         variant="outline"
         onClick={() => setIsEditing(true)}
-        className="w-full border-dashed border-stone-200 dark:border-[hsl(25,12%,20%)] text-primary hover:bg-stone-50 dark:text-orange-400 dark:hover:bg-stone-900/30 rounded-xl"
+        className="w-full border-dashed border-stone-200 dark:border-border text-primary hover:bg-stone-50 dark:text-orange-400 dark:hover:bg-stone-900/30 rounded-xl"
       >
         <Info className="h-4 w-4 mr-2" />
         Aggiungi Info Box generale (prima di tutto il menu)
@@ -154,7 +154,7 @@ function PubMenuInfoBox({ pubId, currentValue }: { pubId: number; currentValue: 
       </div>
       {isEditing ? (
         <Textarea
-          className="bg-white dark:bg-[hsl(25,14%,10%)] border-stone-200 dark:border-[hsl(25,12%,20%)] rounded-xl focus-visible:ring-primary/20"
+          className="bg-white dark:bg-card border-stone-200 dark:border-border rounded-xl focus-visible:ring-primary/20"
           value={text}
           onChange={(e) => setText(e.target.value)}
           placeholder="Nota informativa che apparirà prima di tutto il menu nel PDF..."
@@ -580,7 +580,7 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
 
       {/* KPI — 4 statistiche principali */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-        <div className="bg-white dark:bg-[hsl(25,14%,10%)] border border-stone-100 dark:border-[hsl(25,12%,16%)] rounded-2xl p-4 flex items-center justify-between">
+        <div className="bg-white dark:bg-card border border-stone-100 dark:border-border rounded-2xl p-4 flex items-center justify-between">
           <div>
             <p className="text-xs text-muted-foreground mb-1">Alla spina</p>
             <p className="text-2xl font-bold text-foreground">{typedTapList.length}</p>
@@ -589,7 +589,7 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
             <Beer className="h-5 w-5 text-primary" />
           </div>
         </div>
-        <div className="bg-white dark:bg-[hsl(25,14%,10%)] border border-stone-100 dark:border-[hsl(25,12%,16%)] rounded-2xl p-4 flex items-center justify-between">
+        <div className="bg-white dark:bg-card border border-stone-100 dark:border-border rounded-2xl p-4 flex items-center justify-between">
           <div>
             <p className="text-xs text-muted-foreground mb-1">Bottiglie</p>
             <p className="text-2xl font-bold text-foreground">{typedBottleList.length}</p>
@@ -598,16 +598,16 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
             <Wine className="h-5 w-5 text-purple-600" />
           </div>
         </div>
-        <div className="bg-white dark:bg-[hsl(25,14%,10%)] border border-stone-100 dark:border-[hsl(25,12%,16%)] rounded-2xl p-4 flex items-center justify-between">
+        <div className="bg-white dark:bg-card border border-stone-100 dark:border-border rounded-2xl p-4 flex items-center justify-between">
           <div>
             <p className="text-xs text-muted-foreground mb-1">Prodotti menu</p>
             <p className="text-2xl font-bold text-foreground">{totalMenuItems}</p>
           </div>
-          <div className="p-2.5 bg-blue-50 dark:bg-blue-950/20 rounded-xl">
-            <Utensils className="h-5 w-5 text-blue-600" />
+          <div className="p-2.5 bg-muted rounded-xl">
+            <Utensils className="h-5 w-5 text-foreground/60" />
           </div>
         </div>
-        <div className="bg-white dark:bg-[hsl(25,14%,10%)] border border-stone-100 dark:border-[hsl(25,12%,16%)] rounded-2xl p-4 flex items-center justify-between">
+        <div className="bg-white dark:bg-card border border-stone-100 dark:border-border rounded-2xl p-4 flex items-center justify-between">
           <div>
             <p className="text-xs text-muted-foreground mb-1">Preferiti</p>
             <p className="text-2xl font-bold text-foreground">{favoritesCount}</p>
@@ -638,7 +638,7 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
 
           {/* Festival Mode */}
           <Link href="/festival">
-            <div className="bg-white dark:bg-[hsl(25,14%,10%)] border border-stone-100 dark:border-[hsl(25,12%,16%)] rounded-2xl p-4 flex items-center gap-3 cursor-pointer hover:border-primary/40 hover:shadow-sm transition-all h-full">
+            <div className="bg-white dark:bg-card border border-stone-100 dark:border-border rounded-2xl p-4 flex items-center gap-3 cursor-pointer hover:border-primary/40 hover:shadow-sm transition-all h-full">
               <div className="p-2.5 bg-orange-50 dark:bg-orange-950/20 rounded-xl shrink-0">
                 <QrCode className="h-5 w-5 text-primary" />
               </div>
@@ -652,7 +652,7 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
           {/* TV Mode */}
           <Dialog>
             <DialogTrigger asChild>
-              <div className="bg-white dark:bg-[hsl(25,14%,10%)] border border-stone-100 dark:border-[hsl(25,12%,16%)] rounded-2xl p-4 flex items-center gap-3 cursor-pointer hover:border-primary/40 hover:shadow-sm transition-all">
+              <div className="bg-white dark:bg-card border border-stone-100 dark:border-border rounded-2xl p-4 flex items-center gap-3 cursor-pointer hover:border-primary/40 hover:shadow-sm transition-all">
                 <div className="p-2.5 bg-stone-100 dark:bg-stone-800/60 rounded-xl shrink-0">
                   <Cast className="h-5 w-5 text-foreground" />
                 </div>
@@ -674,7 +674,7 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
                   Apri questo indirizzo nel browser della tua Smart TV:
                 </p>
                 <div
-                  className="bg-gray-100 dark:bg-[hsl(25,14%,10%)] rounded-xl p-3 flex items-center justify-between gap-2 cursor-pointer hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+                  className="bg-gray-100 dark:bg-card rounded-xl p-3 flex items-center justify-between gap-2 cursor-pointer hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
                   onClick={() => {
                     navigator.clipboard?.writeText(`${window.location.origin}/tv/${currentPub?.id}`).catch(() => {});
                     toast({ title: "Link copiato!" });
@@ -716,11 +716,11 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
                   Trasmetti Taplist su TV
                 </Button>
                 <div className="flex gap-2">
-                  <Button variant="outline" className="flex-1 gap-2 border-stone-200 dark:border-[hsl(25,12%,20%)] hover:bg-stone-50 rounded-xl" onClick={() => window.open(`/tv/${currentPub?.id}`, '_blank')}>
+                  <Button variant="outline" className="flex-1 gap-2 border-stone-200 dark:border-border hover:bg-stone-50 rounded-xl" onClick={() => window.open(`/tv/${currentPub?.id}`, '_blank')}>
                     <Eye className="h-4 w-4" />
                     Apri TV
                   </Button>
-                  <Button variant="outline" className="flex-1 gap-2 border-stone-200 dark:border-[hsl(25,12%,20%)] hover:bg-stone-50 rounded-xl" onClick={() => { navigator.clipboard.writeText(`${window.location.origin}/tv/${currentPub?.id}`); toast({ title: "Link copiato!" }); }}>
+                  <Button variant="outline" className="flex-1 gap-2 border-stone-200 dark:border-border hover:bg-stone-50 rounded-xl" onClick={() => { navigator.clipboard.writeText(`${window.location.origin}/tv/${currentPub?.id}`); toast({ title: "Link copiato!" }); }}>
                     <LinkIcon className="h-4 w-4" />
                     Copia Link
                   </Button>
@@ -731,7 +731,7 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
 
           {/* Pagina Pub */}
           <div
-            className="bg-white dark:bg-[hsl(25,14%,10%)] border border-stone-100 dark:border-[hsl(25,12%,16%)] rounded-2xl p-4 flex items-center gap-3 cursor-pointer hover:border-primary/40 hover:shadow-sm transition-all"
+            className="bg-white dark:bg-card border border-stone-100 dark:border-border rounded-2xl p-4 flex items-center gap-3 cursor-pointer hover:border-primary/40 hover:shadow-sm transition-all"
             onClick={() => window.open(`/pub/${(currentPub as any)?.slug || currentPub?.id}`, '_blank')}
           >
             <div className="p-2.5 bg-stone-100 dark:bg-stone-800/60 rounded-xl shrink-0">
@@ -759,7 +759,7 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
         </div>
       </div>
       
-      <div className="bg-white dark:bg-[hsl(25,14%,10%)] rounded-2xl shadow-sm border border-stone-100 dark:border-[hsl(25,12%,16%)]">
+      <div className="bg-white dark:bg-card rounded-2xl shadow-sm border border-stone-100 dark:border-border">
         <TapListManager 
           pubId={currentPub?.id || 0} 
           tapList={typedTapList}
@@ -811,61 +811,51 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
         transition={{ duration: 0.5, delay: 0.2 }}
       >
         <motion.div
-          className="bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-950 dark:to-indigo-950 rounded-2xl p-6 border border-blue-100 dark:border-blue-800"
+          className="bg-card border border-border rounded-2xl p-6"
           whileHover={{ scale: 1.02, y: -2 }}
           transition={{ duration: 0.2 }}
         >
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-blue-700 dark:text-blue-400 mb-1">
-                Categorie Totali
-              </p>
-              <p className="text-2xl font-bold text-blue-900 dark:text-blue-100">
-                {typedMenuData.length}
-              </p>
+              <p className="text-sm font-medium text-muted-foreground mb-1">Categorie Totali</p>
+              <p className="text-2xl font-bold text-foreground">{typedMenuData.length}</p>
             </div>
-            <div className="p-3 bg-blue-50 dark:bg-blue-950/20 rounded-2xl">
-              <Utensils className="h-6 w-6 text-blue-700" />
+            <div className="p-3 bg-muted rounded-2xl">
+              <Utensils className="h-6 w-6 text-foreground/60" />
             </div>
           </div>
         </motion.div>
 
         <motion.div
-          className="bg-gradient-to-br from-green-50 to-emerald-50 dark:from-green-950 dark:to-emerald-950 rounded-2xl p-6 border border-emerald-100 dark:border-green-800"
+          className="bg-card border border-border rounded-2xl p-6"
           whileHover={{ scale: 1.02, y: -2 }}
           transition={{ duration: 0.2 }}
         >
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-emerald-600 dark:text-green-400 mb-1">
-                Categorie Visibili
-              </p>
-              <p className="text-2xl font-bold text-emerald-900 dark:text-green-100">
-                {typedMenuData.filter(cat => cat.isVisible).length}
-              </p>
+              <p className="text-sm font-medium text-muted-foreground mb-1">Categorie Visibili</p>
+              <p className="text-2xl font-bold text-foreground">{typedMenuData.filter(cat => cat.isVisible).length}</p>
             </div>
-            <div className="p-3 bg-emerald-100 dark:bg-emerald-950/20 rounded-2xl">
-              <Eye className="h-6 w-6 text-emerald-600" />
+            <div className="p-3 bg-muted rounded-2xl">
+              <Eye className="h-6 w-6 text-foreground/60" />
             </div>
           </div>
         </motion.div>
 
         <motion.div
-          className="bg-gradient-to-br from-orange-50 to-red-50 dark:from-orange-950 dark:to-red-950 rounded-2xl p-6 border border-stone-300 dark:border-stone-700"
+          className="bg-card border border-border rounded-2xl p-6"
           whileHover={{ scale: 1.02, y: -2 }}
           transition={{ duration: 0.2 }}
         >
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-orange-600 dark:text-orange-400 mb-1">
-                Prodotti Totali
-              </p>
-              <p className="text-2xl font-bold text-orange-900 dark:text-orange-100">
+              <p className="text-sm font-medium text-muted-foreground mb-1">Prodotti Totali</p>
+              <p className="text-2xl font-bold text-foreground">
                 {categoriesWithItems.reduce((total: number, category: any) => total + (category.items || []).filter((i: any) => !i.isInfoBox).length, 0)}
               </p>
             </div>
-            <div className="p-3 bg-stone-100 dark:bg-orange-900 rounded-2xl">
-              <Package className="h-6 w-6 text-orange-600" />
+            <div className="p-3 bg-orange-50 dark:bg-orange-950/20 rounded-2xl">
+              <Package className="h-6 w-6 text-primary" />
             </div>
           </div>
         </motion.div>
@@ -944,7 +934,7 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
               <p className="text-sm text-muted-foreground dark:text-muted-foreground">Prodotti Menu</p>
               <p className="text-2xl font-bold">{totalMenuItems}</p>
             </div>
-            <div className="p-2 bg-blue-50 dark:bg-blue-950/20 rounded-xl">
+            <div className="p-2 bg-muted rounded-xl">
               <Utensils className="h-6 w-6 text-blue-700" />
             </div>
           </div>
@@ -974,7 +964,7 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
               <p className="text-sm text-muted-foreground text-center py-4">Nessuna birra alla spina</p>
             ) : (
               typedTapList.map((beer: any, index: number) => (
-                <div key={beer.id} className="flex items-center justify-between p-3 bg-white dark:bg-[hsl(25,14%,10%)] rounded-xl">
+                <div key={beer.id} className="flex items-center justify-between p-3 bg-white dark:bg-card rounded-xl">
                   <div className="flex items-center space-x-3">
                     <div className="w-6 h-6 bg-orange-500 text-white rounded-full flex items-center justify-center text-xs font-bold">
                       {beer.tapNumber || index + 1}
@@ -1005,7 +995,7 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
               <p className="text-sm text-muted-foreground text-center py-4">Nessuna bottiglia</p>
             ) : (
               typedBottleList.slice(0, 10).map((bottle: any, index: number) => (
-                <div key={bottle.id} className="flex items-center justify-between p-3 bg-white dark:bg-[hsl(25,14%,10%)] rounded-xl">
+                <div key={bottle.id} className="flex items-center justify-between p-3 bg-white dark:bg-card rounded-xl">
                   <div className="flex items-center space-x-3">
                     <div className="w-6 h-6 bg-emerald-500 text-white rounded-full flex items-center justify-center text-xs font-bold">
                       {index + 1}
@@ -1035,7 +1025,7 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
           </h3>
           <div className="space-y-3">
             {typedEvents.slice(0, 5).map((event: any) => (
-              <div key={event.id} className="flex items-center justify-between p-3 bg-white dark:bg-[hsl(25,14%,10%)] rounded-xl">
+              <div key={event.id} className="flex items-center justify-between p-3 bg-white dark:bg-card rounded-xl">
                 <div>
                   <p className="font-medium text-sm">{event.title}</p>
                   <p className="text-xs text-muted-foreground">
@@ -1065,7 +1055,7 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
           <Button 
             onClick={handleSaveSettings}
             disabled={updatePubMutation.isPending}
-            className="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700"
+            className=""
             data-testid="button-save-hours"
           >
             {updatePubMutation.isPending ? (
@@ -1106,7 +1096,7 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
             const isClosed = dayHours?.isClosed;
             
             return (
-              <div key={day.key} className="flex flex-col sm:flex-row sm:items-center gap-2 p-3 border border-stone-100 dark:border-[hsl(25,12%,16%)] rounded-xl bg-white dark:bg-[hsl(25,14%,10%)]">
+              <div key={day.key} className="flex flex-col sm:flex-row sm:items-center gap-2 p-3 border border-stone-100 dark:border-border rounded-xl bg-white dark:bg-card">
                 <div className="flex items-center justify-between sm:justify-start sm:w-28 flex-shrink-0">
                   <Label className="font-semibold text-sm text-foreground dark:text-white w-24">{day.label}</Label>
                   <div className="flex items-center gap-2 sm:hidden">
@@ -1136,7 +1126,7 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
                       updateSettingsField('openingHours', newHours);
                     }}
                     disabled={isClosed}
-                    className="flex-1 min-w-0 text-sm border-stone-200 dark:border-[hsl(25,12%,20%)] rounded-xl focus-visible:ring-primary/20"
+                    className="flex-1 min-w-0 text-sm border-stone-200 dark:border-border rounded-xl focus-visible:ring-primary/20"
                     data-testid={`input-${day.key}-open`}
                   />
                   <span className="text-muted-foreground text-sm font-medium flex-shrink-0">—</span>
@@ -1151,7 +1141,7 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
                       updateSettingsField('openingHours', newHours);
                     }}
                     disabled={isClosed}
-                    className="flex-1 min-w-0 text-sm border-stone-200 dark:border-[hsl(25,12%,20%)] rounded-xl focus-visible:ring-primary/20"
+                    className="flex-1 min-w-0 text-sm border-stone-200 dark:border-border rounded-xl focus-visible:ring-primary/20"
                     data-testid={`input-${day.key}-close`}
                   />
                 </div>
@@ -1174,10 +1164,10 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
           })}
         </div>
         
-        <div className="mt-6 p-4 bg-blue-50 dark:bg-blue-950/20/20 rounded-xl border border-blue-100 dark:border-blue-700">
-          <p className="text-sm text-blue-700 dark:text-blue-300 flex items-center">
-            <Clock className="h-4 w-4 mr-2" />
-            <strong>Nota:</strong> Gli orari saranno visibili ai clienti sulla pagina del pub e determinano automaticamente se il locale appare come aperto o chiuso.
+        <div className="mt-6 p-4 bg-muted rounded-xl border border-border">
+          <p className="text-sm text-muted-foreground flex items-center gap-2">
+            <Clock className="h-4 w-4 shrink-0 text-primary" />
+            <span><strong className="text-foreground">Nota:</strong> Gli orari saranno visibili ai clienti sulla pagina del pub e determinano automaticamente se il locale appare come aperto o chiuso.</span>
           </p>
         </div>
       </Card>
@@ -1197,7 +1187,7 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
           <Button 
             onClick={handleSaveSettings}
             disabled={updatePubMutation.isPending}
-            className="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700"
+            className=""
             data-testid="button-save-all-settings"
           >
             {updatePubMutation.isPending ? (
@@ -1257,7 +1247,7 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <Label htmlFor="pub-name">Nome Pub *</Label>
-              <Input className="border-stone-200 dark:border-[hsl(25,12%,20%)] rounded-xl focus-visible:ring-primary/20" 
+              <Input className="border-stone-200 dark:border-border rounded-xl focus-visible:ring-primary/20" 
                 id="pub-name"
                 value={settingsData.name || ''}
                 onChange={(e) => updateSettingsField('name', e.target.value)}
@@ -1267,7 +1257,7 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
             </div>
             <div>
               <Label htmlFor="business-name">Nome Commerciale</Label>
-              <Input className="border-stone-200 dark:border-[hsl(25,12%,20%)] rounded-xl focus-visible:ring-primary/20" 
+              <Input className="border-stone-200 dark:border-border rounded-xl focus-visible:ring-primary/20" 
                 id="business-name"
                 value={settingsData.businessName || ''}
                 onChange={(e) => updateSettingsField('businessName', e.target.value)}
@@ -1277,7 +1267,7 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
             </div>
             <div>
               <Label htmlFor="pub-phone">Telefono</Label>
-              <Input className="border-stone-200 dark:border-[hsl(25,12%,20%)] rounded-xl focus-visible:ring-primary/20" 
+              <Input className="border-stone-200 dark:border-border rounded-xl focus-visible:ring-primary/20" 
                 id="pub-phone"
                 value={settingsData.phone || ''}
                 onChange={(e) => updateSettingsField('phone', e.target.value)}
@@ -1287,7 +1277,7 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
             </div>
             <div>
               <Label htmlFor="pub-email">Email</Label>
-              <Input className="border-stone-200 dark:border-[hsl(25,12%,20%)] rounded-xl focus-visible:ring-primary/20" 
+              <Input className="border-stone-200 dark:border-border rounded-xl focus-visible:ring-primary/20" 
                 id="pub-email"
                 type="email"
                 value={settingsData.email || ''}
@@ -1298,7 +1288,7 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
             </div>
             <div>
               <Label htmlFor="vat-number">Partita IVA</Label>
-              <Input className="border-stone-200 dark:border-[hsl(25,12%,20%)] rounded-xl focus-visible:ring-primary/20" 
+              <Input className="border-stone-200 dark:border-border rounded-xl focus-visible:ring-primary/20" 
                 id="vat-number"
                 value={settingsData.vatNumber || ''}
                 onChange={(e) => updateSettingsField('vatNumber', e.target.value)}
@@ -1309,7 +1299,7 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
           </div>
           <div className="mt-4">
             <Label htmlFor="pub-description">Descrizione</Label>
-            <Textarea className="border-stone-200 dark:border-[hsl(25,12%,20%)] rounded-xl focus-visible:ring-primary/20" 
+            <Textarea className="border-stone-200 dark:border-border rounded-xl focus-visible:ring-primary/20" 
               id="pub-description"
               value={settingsData.description || ''}
               onChange={(e) => updateSettingsField('description', e.target.value)}
@@ -1347,7 +1337,7 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
             </div>
             <div>
               <Label htmlFor="pub-city">Città *</Label>
-              <Input className="border-stone-200 dark:border-[hsl(25,12%,20%)] rounded-xl focus-visible:ring-primary/20" 
+              <Input className="border-stone-200 dark:border-border rounded-xl focus-visible:ring-primary/20" 
                 id="pub-city"
                 value={settingsData.city || ''}
                 onChange={(e) => updateSettingsField('city', e.target.value)}
@@ -1357,7 +1347,7 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
             </div>
             <div>
               <Label htmlFor="pub-region">Regione/Provincia</Label>
-              <Input className="border-stone-200 dark:border-[hsl(25,12%,20%)] rounded-xl focus-visible:ring-primary/20" 
+              <Input className="border-stone-200 dark:border-border rounded-xl focus-visible:ring-primary/20" 
                 id="pub-region"
                 value={settingsData.region || ''}
                 onChange={(e) => updateSettingsField('region', e.target.value)}
@@ -1367,7 +1357,7 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
             </div>
             <div>
               <Label htmlFor="pub-postal">CAP</Label>
-              <Input className="border-stone-200 dark:border-[hsl(25,12%,20%)] rounded-xl focus-visible:ring-primary/20" 
+              <Input className="border-stone-200 dark:border-border rounded-xl focus-visible:ring-primary/20" 
                 id="pub-postal"
                 value={settingsData.postalCode || ''}
                 onChange={(e) => updateSettingsField('postalCode', e.target.value)}
@@ -1401,7 +1391,7 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
               const isClosed = dayHours?.isClosed;
               
               return (
-                <div key={day.key} className="flex flex-col sm:flex-row sm:items-center gap-2 p-3 border border-stone-100 dark:border-[hsl(25,12%,16%)] rounded-xl bg-white dark:bg-[hsl(25,14%,10%)]">
+                <div key={day.key} className="flex flex-col sm:flex-row sm:items-center gap-2 p-3 border border-stone-100 dark:border-border rounded-xl bg-white dark:bg-card">
                   <div className="flex items-center justify-between sm:justify-start sm:w-28 flex-shrink-0">
                     <Label className="font-semibold text-sm text-foreground dark:text-white w-24">{day.label}</Label>
                     <div className="flex items-center gap-2 sm:hidden">
@@ -1431,7 +1421,7 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
                         updateSettingsField('openingHours', newHours);
                       }}
                       disabled={isClosed}
-                      className="flex-1 min-w-0 text-sm border-stone-200 dark:border-[hsl(25,12%,20%)] rounded-xl focus-visible:ring-primary/20"
+                      className="flex-1 min-w-0 text-sm border-stone-200 dark:border-border rounded-xl focus-visible:ring-primary/20"
                       data-testid={`input-${day.key}-open`}
                     />
                     <span className="text-muted-foreground text-sm font-medium flex-shrink-0">—</span>
@@ -1446,7 +1436,7 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
                         updateSettingsField('openingHours', newHours);
                       }}
                       disabled={isClosed}
-                      className="flex-1 min-w-0 text-sm border-stone-200 dark:border-[hsl(25,12%,20%)] rounded-xl focus-visible:ring-primary/20"
+                      className="flex-1 min-w-0 text-sm border-stone-200 dark:border-border rounded-xl focus-visible:ring-primary/20"
                       data-testid={`input-${day.key}-close`}
                     />
                   </div>
@@ -1495,7 +1485,7 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
               else if (icon === 'instagram' || url.includes('instagram.com')) { rowIcon = <SiInstagram size={15} />; iconColor = 'text-[#E1306C]'; }
               else if (icon === 'twitter' || url.includes('x.com') || url.includes('twitter.com')) { rowIcon = <SiX size={15} />; iconColor = 'text-gray-800 dark:text-white'; }
               else if (icon === 'tiktok' || url.includes('tiktok.com')) { rowIcon = <SiTiktok size={15} />; iconColor = 'text-foreground dark:text-white'; }
-              else if (val) { iconColor = 'text-blue-600'; }
+              else if (val) { iconColor = 'text-foreground/60'; }
               return (
                 <div key={field} className="relative">
                   <div className={`absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none z-10 ${iconColor}`}>
@@ -1505,7 +1495,7 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
                     value={val}
                     onChange={(e) => updateSettingsField(field, e.target.value)}
                     placeholder={`${label} — ${placeholder}`}
-                    className="h-10 pl-9 text-sm border-stone-200 dark:border-[hsl(25,12%,20%)] rounded-xl focus-visible:ring-primary/20"
+                    className="h-10 pl-9 text-sm border-stone-200 dark:border-border rounded-xl focus-visible:ring-primary/20"
                     data-testid={`input-${field}`}
                   />
                 </div>
@@ -1521,7 +1511,7 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
             Visibilità e Privacy
           </h3>
           <div className="space-y-4">
-            <div className="flex items-center justify-between p-4 bg-white dark:bg-[hsl(25,14%,10%)] rounded-xl">
+            <div className="flex items-center justify-between p-4 bg-white dark:bg-card rounded-xl">
               <div>
                 <p className="font-medium">Pub Attivo</p>
                 <p className="text-sm text-muted-foreground">Il pub è operativo e visibile al pubblico</p>
@@ -1532,7 +1522,7 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
                 data-testid="switch-pub-active"
               />
             </div>
-            <div className="flex items-center justify-between p-4 bg-white dark:bg-[hsl(25,14%,10%)] rounded-xl">
+            <div className="flex items-center justify-between p-4 bg-white dark:bg-card rounded-xl">
               <div>
                 <p className="font-medium">Listato nei Risultati</p>
                 <p className="text-sm text-muted-foreground">Il pub appare nelle ricerche e nelle mappe</p>
@@ -1547,7 +1537,7 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
         </Card>
 
         {/* Action Buttons */}
-        <Card className="p-6 bg-gradient-to-r from-blue-50 to-purple-50 dark:from-gray-800 dark:to-gray-700 border-blue-100 dark:border-gray-600">
+        <Card className="p-6 bg-muted/50 border-border">
           <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
             <div>
               <h4 className="font-semibold text-foreground dark:text-white">Modifiche in Sospeso</h4>
@@ -1560,7 +1550,7 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
             <div className="flex gap-3">
               {settingsChanged && (
                 <Button 
-                  variant="outline" className="border-stone-200 dark:border-[hsl(25,12%,20%)] hover:bg-stone-50 rounded-xl" 
+                  variant="outline" className="border-stone-200 dark:border-border hover:bg-stone-50 rounded-xl" 
                   onClick={() => {
                     // Reset to original data
                     if (currentPub) {
@@ -1596,7 +1586,7 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
               <Button 
                 onClick={handleSaveSettings}
                 disabled={!settingsChanged || updatePubMutation.isPending}
-                className="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700"
+                className=""
                 data-testid="button-save-settings"
               >
                 {updatePubMutation.isPending ? (
@@ -1629,7 +1619,7 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
         </div>
       </div>
       
-      <div className="bg-white dark:bg-[hsl(25,14%,10%)] rounded-2xl shadow-sm border border-stone-100 dark:border-[hsl(25,12%,16%)]">
+      <div className="bg-white dark:bg-card rounded-2xl shadow-sm border border-stone-100 dark:border-border">
         <BottleListManager 
           pubId={currentPub?.id || 0} 
           bottleList={typedBottleList}
@@ -1662,15 +1652,15 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
         <div className="grid grid-cols-1 gap-4">
           <div>
             <Label>Nome</Label>
-            <Input className="border-stone-200 dark:border-[hsl(25,12%,20%)] rounded-xl focus-visible:ring-primary/20" defaultValue={(user as any)?.firstName || ''} data-testid="input-first-name" />
+            <Input className="border-stone-200 dark:border-border rounded-xl focus-visible:ring-primary/20" defaultValue={(user as any)?.firstName || ''} data-testid="input-first-name" />
           </div>
           <div>
             <Label>Cognome</Label>
-            <Input className="border-stone-200 dark:border-[hsl(25,12%,20%)] rounded-xl focus-visible:ring-primary/20" defaultValue={(user as any)?.lastName || ''} data-testid="input-last-name" />
+            <Input className="border-stone-200 dark:border-border rounded-xl focus-visible:ring-primary/20" defaultValue={(user as any)?.lastName || ''} data-testid="input-last-name" />
           </div>
           <div>
             <Label>Email</Label>
-            <Input className="border-stone-200 dark:border-[hsl(25,12%,20%)] rounded-xl focus-visible:ring-primary/20" defaultValue={(user as any)?.email || ''} type="email" data-testid="input-email" />
+            <Input className="border-stone-200 dark:border-border rounded-xl focus-visible:ring-primary/20" defaultValue={(user as any)?.email || ''} type="email" data-testid="input-email" />
           </div>
         </div>
         
@@ -1686,7 +1676,7 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
 
   // Mobile Header - Now without conflicts
   const renderMobileHeader = () => (
-    <div className="lg:hidden bg-white dark:bg-[hsl(25,14%,10%)] border-b p-4 flex items-center gap-3 sticky top-0 z-40">
+    <div className="lg:hidden bg-white dark:bg-card border-b p-4 flex items-center gap-3 sticky top-0 z-40">
       {currentSection !== 'overview' && (
         <Button
           variant="ghost"
@@ -1716,7 +1706,7 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
   // Modern Sidebar  
   const renderSidebar = () => (
     <div className="hidden lg:flex lg:w-64 lg:flex-col lg:fixed lg:inset-y-0">
-      <div className="bg-white dark:bg-[hsl(25,14%,10%)] border-r border-stone-100 dark:border-[hsl(25,12%,16%)] flex-1 flex flex-col min-h-0">
+      <div className="bg-white dark:bg-card border-r border-stone-100 dark:border-border flex-1 flex flex-col min-h-0">
         <div className="flex items-center h-16 flex-shrink-0 px-6 border-b">
           <div className="flex items-center">
             <div className="p-2 rounded-2xl bg-primary">
@@ -1753,7 +1743,7 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
           
           {/* User Info */}
           <div className="p-4 border-t">
-            <div className="flex items-center space-x-3 p-3 rounded-2xl bg-white dark:bg-[hsl(25,14%,10%)]">
+            <div className="flex items-center space-x-3 p-3 rounded-2xl bg-white dark:bg-card">
               <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white font-semibold">
                 {(user as any)?.firstName?.[0] || 'U'}
               </div>

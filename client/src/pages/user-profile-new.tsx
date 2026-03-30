@@ -541,7 +541,7 @@ export default function UserProfile() {
 
         {/* Main Content */}
         <Tabs value={activeProfileTab} onValueChange={(v) => setActiveProfileTab(v as any)} className="w-full">
-          <div className="flex gap-1 bg-white dark:bg-[hsl(25,14%,10%)] rounded-2xl p-1 border border-stone-100 dark:border-[hsl(25,12%,16%)] shadow-sm mb-4">
+          <div className="flex gap-1 bg-white dark:bg-card rounded-2xl p-1 border border-stone-100 dark:border-border shadow-sm mb-4">
             {[
               { value: 'overview', label: 'Panoramica' },
               { value: 'favorites', label: 'Preferiti' },

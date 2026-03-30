@@ -129,7 +129,7 @@ export default function Header() {
                       setShowResults(e.target.value.length > 2);
                     }}
                     onFocus={() => setShowResults(searchQuery.length > 2)}
-                    className="pl-8 pr-16 h-8 text-[13px] bg-[hsl(40,14%,94%)] dark:bg-[hsl(25,12%,13%)] border-transparent focus:border-[hsl(24,93%,49%)] dark:focus:border-[hsl(24,93%,55%)] focus:ring-0 focus:bg-white dark:focus:bg-[hsl(25,14%,10%)] transition-all duration-200 placeholder:text-[hsl(30,8%,60%)] dark:placeholder:text-[hsl(35,8%,50%)]"
+                    className="pl-8 pr-16 h-8 text-[13px] bg-[hsl(40,14%,94%)] dark:bg-muted border-transparent focus:border-[hsl(24,93%,49%)] dark:focus:border-[hsl(24,93%,55%)] focus:ring-0 focus:bg-white dark:focus:bg-card transition-all duration-200 placeholder:text-[hsl(30,8%,60%)] dark:placeholder:text-[hsl(35,8%,50%)]"
                     data-testid="search-input-desktop"
                   />
                   <Link href={searchQuery.trim() ? `/search?q=${encodeURIComponent(searchQuery.trim())}` : "/search"}>
@@ -190,7 +190,7 @@ export default function Header() {
                     </button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end" className="w-60">
-                    <div className="px-3 py-2.5 border-b border-[hsl(36,14%,87%)] dark:border-[hsl(25,12%,17%)]">
+                    <div className="px-3 py-2.5 border-b border-[hsl(36,14%,87%)] dark:border-border">
                       <div className="text-[13px] font-semibold text-[hsl(28,18%,13%)] dark:text-[hsl(40,12%,94%)] truncate">
                         {typedUser.firstName ? `${typedUser.firstName} ${typedUser.lastName || ''}`.trim() : typedUser.email?.split('@')[0]}
                       </div>

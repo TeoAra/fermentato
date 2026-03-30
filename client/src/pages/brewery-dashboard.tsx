@@ -47,7 +47,7 @@ type BeerFormValues = z.infer<typeof beerFormSchema>;
 function PendingApprovalOverlay({ breweryName, createdAt }: { breweryName: string; createdAt: string | null }) {
   return (
     <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
-      <Card className="max-w-md w-full bg-white dark:bg-[hsl(25,14%,10%)] border border-stone-200 dark:border-[hsl(25,12%,16%)] rounded-2xl shadow-2xl">
+      <Card className="max-w-md w-full bg-white dark:bg-card border border-stone-200 dark:border-border rounded-2xl shadow-2xl">
         <CardContent className="pt-8 pb-8 text-center space-y-6">
           <div className="w-20 h-20 mx-auto rounded-full bg-stone-50 dark:bg-stone-900/30 flex items-center justify-center">
             <Clock className="w-10 h-10 text-primary" />
@@ -71,7 +71,7 @@ function PendingApprovalOverlay({ breweryName, createdAt }: { breweryName: strin
           )}
           <Button
             variant="outline"
-            className="w-full border-stone-200 dark:border-[hsl(25,12%,20%)] hover:bg-stone-50 rounded-xl"
+            className="w-full border-stone-200 dark:border-border hover:bg-stone-50 rounded-xl"
             onClick={() => window.location.href = '/'}
           >
             Torna alla Home
@@ -85,7 +85,7 @@ function PendingApprovalOverlay({ breweryName, createdAt }: { breweryName: strin
 function RejectedOverlay({ breweryName, adminNotes }: { breweryName: string; adminNotes: string | null }) {
   return (
     <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
-      <Card className="max-w-md w-full bg-white dark:bg-[hsl(25,14%,10%)] border border-red-100 dark:border-red-900/30 rounded-2xl shadow-2xl">
+      <Card className="max-w-md w-full bg-white dark:bg-card border border-red-100 dark:border-red-900/30 rounded-2xl shadow-2xl">
         <CardContent className="pt-8 pb-8 text-center space-y-6">
           <div className="w-20 h-20 mx-auto rounded-full bg-red-50 dark:bg-red-900/30 flex items-center justify-center">
             <AlertTriangle className="w-10 h-10 text-red-600" />
@@ -105,7 +105,7 @@ function RejectedOverlay({ breweryName, adminNotes }: { breweryName: string; adm
           )}
           <Button
             variant="outline"
-            className="w-full border-stone-200 dark:border-[hsl(25,12%,20%)] hover:bg-stone-50 rounded-xl"
+            className="w-full border-stone-200 dark:border-border hover:bg-stone-50 rounded-xl"
             onClick={() => window.location.href = '/'}
           >
             Torna alla Home
@@ -152,7 +152,7 @@ function AnnouncementsManager({ breweryId }: { breweryId: number }) {
   };
 
   return (
-    <div className="bg-white dark:bg-[hsl(25,14%,10%)] border border-stone-100 dark:border-[hsl(25,12%,16%)] rounded-2xl shadow-sm p-6 mb-8">
+    <div className="bg-white dark:bg-card border border-stone-100 dark:border-border rounded-2xl shadow-sm p-6 mb-8">
       <div className="flex items-center justify-between mb-6">
         <h2 className="text-2xl font-bold text-foreground flex items-center">
           <div className="p-2 bg-primary rounded-xl mr-3 shadow-sm">
@@ -182,7 +182,7 @@ function AnnouncementsManager({ breweryId }: { breweryId: number }) {
             const t = typeLabel[ann.type] ?? typeLabel.news;
             const TIcon = t.icon;
             return (
-              <div key={ann.id} className="flex gap-4 p-4 rounded-xl border border-stone-100 dark:border-[hsl(25,12%,16%)] bg-white dark:bg-[hsl(25,14%,10%)] hover:bg-stone-50/50 dark:hover:bg-stone-900/10 transition-colors">
+              <div key={ann.id} className="flex gap-4 p-4 rounded-xl border border-stone-100 dark:border-border bg-white dark:bg-card hover:bg-stone-50/50 dark:hover:bg-stone-900/10 transition-colors">
                 <div className="flex-1 min-w-0 text-left">
                   <div className="flex items-center gap-2 mb-1 flex-wrap">
                     <span className={`inline-flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-full border ${t.color}`}>
@@ -214,7 +214,7 @@ function AnnouncementsManager({ breweryId }: { breweryId: number }) {
 
       {/* Create dialog */}
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="max-w-md rounded-2xl border-stone-100 dark:border-[hsl(25,12%,16%)]">
+        <DialogContent className="max-w-md rounded-2xl border-stone-100 dark:border-border">
           <DialogHeader>
             <DialogTitle>Nuovo Annuncio</DialogTitle>
           </DialogHeader>
@@ -236,7 +236,7 @@ function AnnouncementsManager({ breweryId }: { breweryId: number }) {
                 placeholder="Es. Nuova IPA estiva in arrivo!"
                 value={form.title}
                 onChange={(e) => setForm(f => ({ ...f, title: e.target.value }))}
-                className="border-stone-200 dark:border-[hsl(25,12%,20%)] rounded-xl focus-visible:ring-primary/20"
+                className="border-stone-200 dark:border-border rounded-xl focus-visible:ring-primary/20"
               />
             </div>
             <div className="space-y-1 text-left">
@@ -246,7 +246,7 @@ function AnnouncementsManager({ breweryId }: { breweryId: number }) {
                 rows={3}
                 value={form.content}
                 onChange={(e) => setForm(f => ({ ...f, content: e.target.value }))}
-                className="border-stone-200 dark:border-[hsl(25,12%,20%)] rounded-xl focus-visible:ring-primary/20"
+                className="border-stone-200 dark:border-border rounded-xl focus-visible:ring-primary/20"
               />
             </div>
             {form.type === "release" && (
@@ -256,7 +256,7 @@ function AnnouncementsManager({ breweryId }: { breweryId: number }) {
                   type="date"
                   value={form.releaseDate}
                   onChange={(e) => setForm(f => ({ ...f, releaseDate: e.target.value }))}
-                  className="border-stone-200 dark:border-[hsl(25,12%,20%)] rounded-xl focus-visible:ring-primary/20"
+                  className="border-stone-200 dark:border-border rounded-xl focus-visible:ring-primary/20"
                 />
               </div>
             )}
@@ -278,7 +278,7 @@ function AnnouncementsManager({ breweryId }: { breweryId: number }) {
               <Button 
                 variant="outline" 
                 onClick={() => setOpen(false)}
-                className="border-stone-200 dark:border-[hsl(25,12%,20%)] hover:bg-stone-50 rounded-xl"
+                className="border-stone-200 dark:border-border hover:bg-stone-50 rounded-xl"
               >
                 Annulla
               </Button>
@@ -299,7 +299,7 @@ function DistributionSection({ breweryId }: { breweryId: number }) {
   });
 
   return (
-    <div className="bg-white dark:bg-[hsl(25,14%,10%)] border border-stone-100 dark:border-[hsl(25,12%,16%)] rounded-2xl shadow-sm p-6 mb-8">
+    <div className="bg-white dark:bg-card border border-stone-100 dark:border-border rounded-2xl shadow-sm p-6 mb-8">
       <h2 className="text-2xl font-bold text-foreground flex items-center mb-6">
         <div className="p-2 bg-primary rounded-xl mr-3 shadow-sm">
           <Store className="h-6 w-6 text-white" />
@@ -326,9 +326,9 @@ function DistributionSection({ breweryId }: { breweryId: number }) {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {pubs.map((pub: any) => (
             <Link key={pub.id} href={`/pub/${pub.slug || pub.id}`}>
-              <div className="flex items-center gap-3 p-4 rounded-xl border border-stone-100 dark:border-[hsl(25,12%,16%)] bg-white dark:bg-[hsl(25,14%,10%)] hover:bg-stone-50/50 dark:hover:bg-stone-900/10 transition-colors cursor-pointer group">
+              <div className="flex items-center gap-3 p-4 rounded-xl border border-stone-100 dark:border-border bg-white dark:bg-card hover:bg-stone-50/50 dark:hover:bg-stone-900/10 transition-colors cursor-pointer group">
                 {pub.logo_url ? (
-                  <img src={pub.logo_url} alt={pub.name} className="w-10 h-10 rounded-full object-cover flex-shrink-0 border border-stone-200 dark:border-[hsl(25,12%,20%)]" />
+                  <img src={pub.logo_url} alt={pub.name} className="w-10 h-10 rounded-full object-cover flex-shrink-0 border border-stone-200 dark:border-border" />
                 ) : (
                   <div className="w-10 h-10 rounded-full bg-primary flex items-center justify-center flex-shrink-0">
                     <Store className="w-5 h-5 text-white" />
@@ -357,7 +357,7 @@ function DistributionSection({ breweryId }: { breweryId: number }) {
 
 const BreweryStatsCard = ({ icon: Icon, value, label, colorClass, onClick }: any) => (
   <div
-    className={`bg-white dark:bg-[hsl(25,14%,10%)] border border-stone-100 dark:border-[hsl(25,12%,16%)] rounded-2xl shadow-sm p-4 hover:scale-[1.02] transition-all duration-300 group ${onClick ? 'cursor-pointer' : ''}`}
+    className={`bg-white dark:bg-card border border-stone-100 dark:border-border rounded-2xl shadow-sm p-4 hover:scale-[1.02] transition-all duration-300 group ${onClick ? 'cursor-pointer' : ''}`}
     onClick={onClick}
   >
     <div className="flex items-center space-x-3">
@@ -666,7 +666,7 @@ export default function BreweryDashboard({ adminBreweryId }: BreweryDashboardPro
   if (!brewery) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center p-6">
-        <Card className="max-w-md w-full bg-white dark:bg-[hsl(25,14%,10%)] border border-stone-200 dark:border-[hsl(25,12%,16%)] rounded-2xl shadow-sm">
+        <Card className="max-w-md w-full bg-white dark:bg-card border border-stone-200 dark:border-border rounded-2xl shadow-sm">
           <CardContent className="pt-8 pb-8 text-center">
             <div className="w-20 h-20 mx-auto rounded-full bg-stone-50 dark:bg-stone-900/30 flex items-center justify-center mb-6">
               <Factory className="w-10 h-10 text-primary" />
@@ -694,7 +694,7 @@ export default function BreweryDashboard({ adminBreweryId }: BreweryDashboardPro
       {!isAdminMode && <RoleSwitcherBanner />}
       
       {/* Header Bar */}
-      <header className="sticky top-0 z-30 bg-white dark:bg-[hsl(25,14%,10%)] border-b border-stone-100 dark:border-[hsl(25,12%,16%)] shadow-sm">
+      <header className="sticky top-0 z-30 bg-white dark:bg-card border-b border-stone-100 dark:border-border shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
           <div className="flex items-center gap-4">
             <Link href="/">
@@ -715,7 +715,7 @@ export default function BreweryDashboard({ adminBreweryId }: BreweryDashboardPro
               <Button
                 variant="outline"
                 size="sm"
-                className="hidden sm:flex border-stone-200 dark:border-[hsl(25,12%,20%)] hover:bg-stone-50 rounded-xl h-9"
+                className="hidden sm:flex border-stone-200 dark:border-border hover:bg-stone-50 rounded-xl h-9"
                 onClick={() => window.location.href = `/brewery/${brewery.slug || brewery.id}`}
               >
                 <Eye className="w-4 h-4 mr-2" />
@@ -725,7 +725,7 @@ export default function BreweryDashboard({ adminBreweryId }: BreweryDashboardPro
             <Button
               variant="outline"
               size="sm"
-              className="border-stone-200 dark:border-[hsl(25,12%,20%)] hover:bg-stone-50 rounded-xl h-9"
+              className="border-stone-200 dark:border-border hover:bg-stone-50 rounded-xl h-9"
               onClick={() => {
                 const url = `${window.location.origin}/brewery/${brewery.slug || brewery.id}`;
                 if (navigator.share) {
@@ -744,7 +744,7 @@ export default function BreweryDashboard({ adminBreweryId }: BreweryDashboardPro
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6">
         {/* Hero / Cover Section */}
-        <div className="relative h-48 sm:h-64 rounded-2xl overflow-hidden mb-8 border border-stone-100 dark:border-[hsl(25,12%,16%)] shadow-sm group">
+        <div className="relative h-48 sm:h-64 rounded-2xl overflow-hidden mb-8 border border-stone-100 dark:border-border shadow-sm group">
           <ImageWithFallback
             src={brewery.coverImageUrl || "/brewery-cover.jpg"}
             alt={brewery.name}
@@ -756,7 +756,7 @@ export default function BreweryDashboard({ adminBreweryId }: BreweryDashboardPro
           <div className="absolute bottom-4 left-4 right-4 flex items-end justify-between">
             <div className="flex items-center gap-4">
               <div className="relative">
-                <Avatar className="h-16 w-16 sm:h-20 sm:w-20 border-4 border-white dark:border-[hsl(25,14%,10%)] shadow-lg rounded-2xl">
+                <Avatar className="h-16 w-16 sm:h-20 sm:w-20 border-4 border-white dark:border-card shadow-lg rounded-2xl">
                   <AvatarImage src={brewery.logoUrl} className="object-cover" />
                   <AvatarFallback className="bg-primary text-white text-xl rounded-2xl">
                     {brewery.name.substring(0, 2).toUpperCase()}
@@ -829,7 +829,7 @@ export default function BreweryDashboard({ adminBreweryId }: BreweryDashboardPro
         </div>
 
         {/* Info section with contact details */}
-        <div className="bg-white dark:bg-[hsl(25,14%,10%)] border border-stone-100 dark:border-[hsl(25,12%,16%)] rounded-2xl shadow-sm p-6 mb-8">
+        <div className="bg-white dark:bg-card border border-stone-100 dark:border-border rounded-2xl shadow-sm p-6 mb-8">
           <div className="flex items-center gap-2 mb-4">
             <Building className="h-5 w-5 text-primary" />
             <h3 className="text-lg font-bold text-foreground">Il Birrificio</h3>
@@ -910,7 +910,7 @@ export default function BreweryDashboard({ adminBreweryId }: BreweryDashboardPro
 
         {/* Festival Mode CTA */}
         <Link href="/festival">
-          <div className="bg-white dark:bg-[hsl(25,14%,10%)] border border-primary/20 dark:border-primary/20 bg-gradient-to-r from-orange-50 to-white dark:from-orange-950/10 dark:to-[hsl(25,14%,10%)] rounded-2xl p-5 mb-8 flex items-center justify-between gap-4 cursor-pointer hover:shadow-md transition-all group">
+          <div className="bg-white dark:bg-card border border-primary/20 dark:border-primary/20 bg-gradient-to-r from-orange-50 to-white dark:from-orange-950/10 dark:to-card rounded-2xl p-5 mb-8 flex items-center justify-between gap-4 cursor-pointer hover:shadow-md transition-all group">
             <div className="flex items-center gap-4 min-w-0">
               <div className="p-3 bg-primary rounded-xl shrink-0 shadow-sm group-hover:scale-110 transition-transform">
                 <QrCode className="h-6 w-6 text-white" />
@@ -925,7 +925,7 @@ export default function BreweryDashboard({ adminBreweryId }: BreweryDashboardPro
         </Link>
 
         {/* Beers Section */}
-        <div className="bg-white dark:bg-[hsl(25,14%,10%)] border border-stone-100 dark:border-[hsl(25,12%,16%)] rounded-2xl shadow-sm p-6 mb-8">
+        <div className="bg-white dark:bg-card border border-stone-100 dark:border-border rounded-2xl shadow-sm p-6 mb-8">
           <div className="flex items-center justify-between mb-6">
             <div className="flex items-center gap-2">
               <div className="p-2 bg-primary rounded-xl shadow-sm">
@@ -960,7 +960,7 @@ export default function BreweryDashboard({ adminBreweryId }: BreweryDashboardPro
             <>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                 {displayedBeers.map((beer: Beer) => (
-                  <Card key={beer.id} className="bg-white dark:bg-[hsl(25,14%,10%)] border border-stone-100 dark:border-[hsl(25,12%,16%)] hover:border-primary/30 transition-all duration-300 rounded-2xl shadow-sm group overflow-hidden">
+                  <Card key={beer.id} className="bg-white dark:bg-card border border-stone-100 dark:border-border hover:border-primary/30 transition-all duration-300 rounded-2xl shadow-sm group overflow-hidden">
                     <CardContent className="p-5">
                       <div className="flex items-start gap-4 mb-4 text-left">
                         <ImageWithFallback
@@ -1005,7 +1005,7 @@ export default function BreweryDashboard({ adminBreweryId }: BreweryDashboardPro
                           variant="outline"
                           size="sm"
                           onClick={() => openEditBeerDialog(beer)}
-                          className="flex-1 border-stone-200 dark:border-[hsl(25,12%,20%)] hover:bg-stone-50 rounded-xl"
+                          className="flex-1 border-stone-200 dark:border-border hover:bg-stone-50 rounded-xl"
                         >
                           <Pencil className="w-3.5 h-3.5 mr-2" />
                           Modifica
@@ -1018,7 +1018,7 @@ export default function BreweryDashboard({ adminBreweryId }: BreweryDashboardPro
                               deleteBeerMutation.mutate(beer.id);
                             }
                           }}
-                          className="text-destructive hover:text-destructive hover:bg-red-50 dark:hover:bg-red-950 border-stone-200 dark:border-[hsl(25,12%,20%)] rounded-xl"
+                          className="text-destructive hover:text-destructive hover:bg-red-50 dark:hover:bg-red-950 border-stone-200 dark:border-border rounded-xl"
                           disabled={deleteBeerMutation.isPending}
                         >
                           <Trash2 className="w-3.5 h-3.5" />
@@ -1034,7 +1034,7 @@ export default function BreweryDashboard({ adminBreweryId }: BreweryDashboardPro
                   <Button
                     variant="outline"
                     onClick={() => setShowAllBeers(!showAllBeers)}
-                    className="border-stone-200 dark:border-[hsl(25,12%,20%)] hover:bg-stone-50 rounded-xl bg-white dark:bg-transparent"
+                    className="border-stone-200 dark:border-border hover:bg-stone-50 rounded-xl bg-white dark:bg-transparent"
                   >
                     {showAllBeers ? 'Mostra Meno' : `Mostra Tutte (${beers.length})`}
                   </Button>
@@ -1045,13 +1045,13 @@ export default function BreweryDashboard({ adminBreweryId }: BreweryDashboardPro
         </div>
 
         {/* Events Section */}
-        <div className="bg-white dark:bg-[hsl(25,14%,10%)] border border-stone-100 dark:border-[hsl(25,12%,16%)] rounded-2xl shadow-sm p-6 mb-8">
+        <div className="bg-white dark:bg-card border border-stone-100 dark:border-border rounded-2xl shadow-sm p-6 mb-8">
           <BreweryEventsManager breweryId={brewery.id} breweryName={brewery.name} />
         </div>
 
         {/* Reviews Section */}
         {showReviewsSection && (
-          <div className="bg-white dark:bg-[hsl(25,14%,10%)] border border-stone-100 dark:border-[hsl(25,12%,16%)] rounded-2xl shadow-sm p-6 mb-8">
+          <div className="bg-white dark:bg-card border border-stone-100 dark:border-border rounded-2xl shadow-sm p-6 mb-8">
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-xl font-bold text-foreground flex items-center gap-2">
                 <div className="p-2 bg-primary rounded-xl shadow-sm">
@@ -1075,7 +1075,7 @@ export default function BreweryDashboard({ adminBreweryId }: BreweryDashboardPro
             ) : (
               <div className="space-y-4">
                 {recentReviewsData.reviews.map((review: any) => (
-                  <div key={review.id} className="rounded-2xl border border-stone-100 dark:border-[hsl(25,12%,16%)] p-5 hover:bg-stone-50/30 transition-colors">
+                  <div key={review.id} className="rounded-2xl border border-stone-100 dark:border-border p-5 hover:bg-stone-50/30 transition-colors">
                     <div className="flex items-start justify-between gap-4 text-left">
                       <div className="flex-1 min-w-0">
                         <div className="flex flex-wrap items-center gap-2 mb-2">
@@ -1108,7 +1108,7 @@ export default function BreweryDashboard({ adminBreweryId }: BreweryDashboardPro
                               onChange={(e) => setReplyText(e.target.value)}
                               placeholder="Ringrazia l'utente o commenta la recensione..."
                               rows={3}
-                              className="text-sm border-stone-200 dark:border-[hsl(25,12%,20%)] rounded-xl focus-visible:ring-primary/20"
+                              className="text-sm border-stone-200 dark:border-border rounded-xl focus-visible:ring-primary/20"
                             />
                             <div className="flex gap-2">
                               <Button
@@ -1156,7 +1156,7 @@ export default function BreweryDashboard({ adminBreweryId }: BreweryDashboardPro
 
         {/* Website Link */}
         {brewery.websiteUrl && (
-          <div className="bg-white dark:bg-[hsl(25,14%,10%)] border border-stone-100 dark:border-[hsl(25,12%,16%)] rounded-2xl shadow-sm p-6 text-center">
+          <div className="bg-white dark:bg-card border border-stone-100 dark:border-border rounded-2xl shadow-sm p-6 text-center">
             <a
               href={brewery.websiteUrl}
               target="_blank"
