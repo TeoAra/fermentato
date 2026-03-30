@@ -623,44 +623,8 @@ export default function PubDetail() {
           <p className="text-white/80 text-sm drop-shadow mb-1">
             {(pub as any)?.city && (pub as any).city}
           </p>
-          {activeTapCount > 0 && (
-            <p className="text-white/70 text-sm drop-shadow mb-4">
-              {activeTapCount} spine attive oggi
-            </p>
-          )}
-          {activeTapCount > 0 && (
-            <button
-              onClick={() => setActiveTab('taplist')}
-              className="inline-flex items-center gap-2 px-7 py-2.5 bg-primary hover:bg-primary/90 text-white rounded-full font-bold text-sm shadow-xl active:scale-95 transition-all"
-            >
-              Vedi le spine <ChevronRight className="w-4 h-4" />
-            </button>
-          )}
         </div>
       </div>
-
-      {/* ── LIVE STRIP ── */}
-      {activeTapCount > 0 && (
-        <div className="px-4 pt-4 pb-1 max-w-7xl mx-auto">
-          <button
-            className="w-full flex items-center justify-between bg-white dark:bg-[hsl(25,14%,10%)] rounded-2xl border border-stone-100 dark:border-stone-700/30 px-4 py-3 shadow-sm active:scale-[0.99] transition-transform text-left"
-            onClick={() => setActiveTab('taplist')}
-          >
-            <div className="flex items-center gap-3">
-              <span className="w-2.5 h-2.5 rounded-full bg-primary flex-shrink-0 animate-pulse" />
-              <div>
-                <div className="flex items-center gap-2">
-                  <span className="text-[11px] font-black text-primary tracking-widest uppercase leading-none">LIVE</span>
-                  <span className="text-stone-300 dark:text-stone-600 leading-none">|</span>
-                  <span className="text-sm font-bold text-stone-900 dark:text-white">{activeTapCount} spine disponibili</span>
-                </div>
-                <p className="text-xs text-stone-400 dark:text-stone-500 mt-0.5">Aggiornato ora</p>
-              </div>
-            </div>
-            <ChevronRight className="w-4 h-4 text-stone-400 flex-shrink-0" />
-          </button>
-        </div>
-      )}
 
       {/* ── INFO BAR ── single row: pills left, actions right */}
       <div className="bg-white dark:bg-[hsl(25,14%,10%)] border-b border-stone-100 dark:border-stone-700/30 px-4 py-2.5">
@@ -773,57 +737,40 @@ export default function PubDetail() {
         <div className="grid grid-cols-1 lg:grid-cols-4">
           {/* Main Content */}
           <div className="lg:col-span-3">
-            {/* ── TABS ── pill-container style (come da mockup) */}
+            {/* ── TABS ── */}
             <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-                <div className="z-10 px-4 py-3 bg-background dark:bg-background border-b border-stone-100 dark:border-stone-700/30">
-                  <div className="flex gap-1 bg-background dark:bg-[hsl(25,14%,12%)] rounded-2xl p-1 overflow-x-auto scrollbar-hide">
-                    <button
-                      data-testid="tab-taplist"
-                      onClick={() => setActiveTab('taplist')}
-                      className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm font-bold whitespace-nowrap transition-all flex-1 justify-center ${activeTab === 'taplist' ? 'bg-white dark:bg-[hsl(25,14%,10%)] text-primary dark:text-orange-400 shadow-sm' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'}`}
-                    >
-                      <Wine className="h-3.5 w-3.5 flex-shrink-0" />
-                      Spina
-                      {Array.isArray(tapList) && tapList.filter((t: any) => t.isActive && t.isVisible !== false).length > 0 && (
-                        <span className={`text-[10px] font-black px-1 rounded-full ${activeTab === 'taplist' ? 'text-primary/70 dark:text-orange-400/70' : 'text-slate-400'}`}>
-                          {tapList.filter((t: any) => t.isActive && t.isVisible !== false).length}
-                        </span>
-                      )}
-                    </button>
-                    <button
-                      data-testid="tab-bottles"
-                      onClick={() => setActiveTab('bottles')}
-                      className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm font-bold whitespace-nowrap transition-all flex-1 justify-center ${activeTab === 'bottles' ? 'bg-white dark:bg-[hsl(25,14%,10%)] text-violet-600 dark:text-violet-400 shadow-sm' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'}`}
-                    >
-                      <Sparkles className="h-3.5 w-3.5 flex-shrink-0" />
-                      Cantina
-                    </button>
-                    <button
-                      data-testid="tab-menu"
-                      onClick={() => setActiveTab('menu')}
-                      className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm font-bold whitespace-nowrap transition-all flex-1 justify-center ${activeTab === 'menu' ? 'bg-white dark:bg-[hsl(25,14%,10%)] text-emerald-600 dark:text-emerald-400 shadow-sm' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'}`}
-                    >
-                      <span className="flex-shrink-0 leading-none text-base">🍽️</span>
-                      Menù
-                    </button>
-                    {Array.isArray(pubEvents) && pubEvents.length > 0 && (
-                      <button
-                        data-testid="tab-events"
-                        onClick={() => setActiveTab('events')}
-                        className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm font-bold whitespace-nowrap transition-all flex-1 justify-center ${activeTab === 'events' ? 'bg-white dark:bg-[hsl(25,14%,10%)] text-pink-600 dark:text-pink-400 shadow-sm' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'}`}
-                      >
-                        <Calendar className="h-3.5 w-3.5 flex-shrink-0" />
-                        Serate
-                      </button>
-                    )}
-                    <button
-                      data-testid="tab-info"
-                      onClick={() => setActiveTab('info')}
-                      className={`lg:hidden flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm font-bold whitespace-nowrap transition-all flex-1 justify-center ${activeTab === 'info' ? 'bg-white dark:bg-[hsl(25,14%,10%)] text-blue-600 dark:text-blue-400 shadow-sm' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'}`}
-                    >
-                      <Info className="h-3.5 w-3.5 flex-shrink-0" />
-                      Info
-                    </button>
+                <div className="sticky top-14 lg:top-16 z-10 bg-white dark:bg-[hsl(25,14%,10%)] border-b border-stone-100 dark:border-stone-700/30">
+                  <div className="flex overflow-x-auto scrollbar-hide px-1">
+                    {[
+                      { id: 'taplist', label: 'Spina', icon: <Wine className="h-4 w-4 flex-shrink-0" />, badge: Array.isArray(tapList) ? tapList.filter((t: any) => t.isActive && t.isVisible !== false).length : 0 },
+                      { id: 'bottles', label: 'Cantina', icon: <Sparkles className="h-4 w-4 flex-shrink-0" /> },
+                      { id: 'menu', label: 'Menù', icon: <span className="flex-shrink-0 leading-none text-[15px]">🍽️</span> },
+                      ...(Array.isArray(pubEvents) && pubEvents.length > 0 ? [{ id: 'events', label: 'Serate', icon: <Calendar className="h-4 w-4 flex-shrink-0" /> }] : []),
+                      { id: 'info', label: 'Info', icon: <Info className="h-4 w-4 flex-shrink-0" />, mobileOnly: true },
+                    ].map((tab) => {
+                      const isTab = activeTab === tab.id;
+                      return (
+                        <button
+                          key={tab.id}
+                          data-testid={`tab-${tab.id}`}
+                          onClick={() => setActiveTab(tab.id)}
+                          className={`${tab.mobileOnly ? 'lg:hidden' : ''} flex items-center gap-1.5 px-4 py-3.5 text-sm font-semibold whitespace-nowrap transition-all relative flex-shrink-0 ${
+                            isTab
+                              ? 'text-primary dark:text-orange-400'
+                              : 'text-stone-500 dark:text-stone-400'
+                          }`}
+                        >
+                          {isTab && <span className="absolute bottom-0 left-0 right-0 h-[2.5px] bg-primary rounded-t-full" />}
+                          {tab.icon}
+                          {tab.label}
+                          {tab.badge && tab.badge > 0 ? (
+                            <span className={`text-[10px] font-black min-w-[16px] h-[16px] rounded-full flex items-center justify-center px-[3px] ${isTab ? 'bg-primary/10 text-primary dark:text-orange-400' : 'bg-stone-100 dark:bg-stone-700 text-stone-400'}`}>
+                              {tab.badge}
+                            </span>
+                          ) : null}
+                        </button>
+                      );
+                    })}
                   </div>
                 </div>
 
