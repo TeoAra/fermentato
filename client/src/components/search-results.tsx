@@ -27,7 +27,7 @@ export default function SearchResults({ query, onClose }: SearchResultsProps) {
   if (isLoading) {
     return (
       <div className={container}>
-        <div className="p-6 flex items-center gap-3 text-gray-500 dark:text-neutral-400">
+        <div className="p-6 flex items-center gap-3 text-muted-foreground dark:text-neutral-400">
           <div className="w-5 h-5 border-2 border-amber-400 border-t-transparent rounded-full animate-spin" />
           <span className="text-sm">Ricerca in corso...</span>
         </div>
@@ -45,10 +45,10 @@ export default function SearchResults({ query, onClose }: SearchResultsProps) {
     return (
       <div className={container}>
         <div className="p-5 text-center space-y-3">
-          <Search className="w-8 h-8 text-gray-300 dark:text-neutral-600 mx-auto" />
+          <Search className="w-8 h-8 text-stone-300 dark:text-neutral-600 mx-auto" />
           <div>
-            <p className="text-sm font-medium text-gray-500 dark:text-neutral-400">Nessun risultato per</p>
-            <p className="text-sm font-bold text-gray-800 dark:text-white mt-0.5">"{query}"</p>
+            <p className="text-sm font-medium text-muted-foreground dark:text-neutral-400">Nessun risultato per</p>
+            <p className="text-sm font-bold text-foreground dark:text-white mt-0.5">"{query}"</p>
           </div>
           <Link href={`/search?q=${encodeURIComponent(query)}`} onClick={onClose}>
             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-amber-50 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400 text-sm font-semibold hover:bg-amber-100 dark:hover:bg-amber-900/50 transition-colors cursor-pointer border border-amber-200 dark:border-amber-700">
@@ -67,7 +67,7 @@ export default function SearchResults({ query, onClose }: SearchResultsProps) {
       {results.pubs && results.pubs.length > 0 && (
         <section>
           <div className="px-4 pt-3 pb-1">
-            <span className="text-[10px] font-bold uppercase tracking-widest text-gray-400 dark:text-neutral-500">Pub & Locali</span>
+            <span className="text-[10px] font-bold uppercase tracking-widest text-stone-400 dark:text-neutral-500">Pub & Locali</span>
           </div>
           <ul>
             {results.pubs.slice(0, 4).map((pub) => (
@@ -82,8 +82,8 @@ export default function SearchResults({ query, onClose }: SearchResultsProps) {
                       )}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-semibold text-gray-900 dark:text-white truncate group-hover:text-amber-600 dark:group-hover:text-amber-400 transition-colors">{pub.name}</p>
-                      {pub.address && <p className="text-xs text-gray-500 dark:text-neutral-400 truncate">{pub.address}</p>}
+                      <p className="text-sm font-semibold text-foreground dark:text-white truncate group-hover:text-amber-600 dark:group-hover:text-amber-400 transition-colors">{pub.name}</p>
+                      {pub.address && <p className="text-xs text-muted-foreground dark:text-neutral-400 truncate">{pub.address}</p>}
                     </div>
                     <span className="flex-shrink-0 text-[10px] font-bold uppercase tracking-wide text-orange-500 bg-stone-50 dark:bg-orange-900/20 px-2 py-0.5 rounded-full">Pub</span>
                   </div>
@@ -99,7 +99,7 @@ export default function SearchResults({ query, onClose }: SearchResultsProps) {
         <section>
           {results.pubs?.length > 0 && <div className="border-t border-gray-100 dark:border-neutral-800 mx-4" />}
           <div className="px-4 pt-3 pb-1">
-            <span className="text-[10px] font-bold uppercase tracking-widest text-gray-400 dark:text-neutral-500">Birrifici</span>
+            <span className="text-[10px] font-bold uppercase tracking-widest text-stone-400 dark:text-neutral-500">Birrifici</span>
           </div>
           <ul>
             {results.breweries.slice(0, 4).map((brewery) => (
@@ -114,8 +114,8 @@ export default function SearchResults({ query, onClose }: SearchResultsProps) {
                       )}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-semibold text-gray-900 dark:text-white truncate group-hover:text-amber-600 dark:group-hover:text-amber-400 transition-colors">{brewery.name}</p>
-                      {brewery.location && <p className="text-xs text-gray-500 dark:text-neutral-400 truncate">{brewery.location}</p>}
+                      <p className="text-sm font-semibold text-foreground dark:text-white truncate group-hover:text-amber-600 dark:group-hover:text-amber-400 transition-colors">{brewery.name}</p>
+                      {brewery.location && <p className="text-xs text-muted-foreground dark:text-neutral-400 truncate">{brewery.location}</p>}
                     </div>
                     <span className="flex-shrink-0 text-[10px] font-bold uppercase tracking-wide text-amber-600 bg-amber-50 dark:bg-amber-900/20 px-2 py-0.5 rounded-full">Birrificio</span>
                   </div>
@@ -131,7 +131,7 @@ export default function SearchResults({ query, onClose }: SearchResultsProps) {
         <section>
           {(results.pubs?.length > 0 || results.breweries?.length > 0) && <div className="border-t border-gray-100 dark:border-neutral-800 mx-4" />}
           <div className="px-4 pt-3 pb-1">
-            <span className="text-[10px] font-bold uppercase tracking-widest text-gray-400 dark:text-neutral-500">Birre</span>
+            <span className="text-[10px] font-bold uppercase tracking-widest text-stone-400 dark:text-neutral-500">Birre</span>
           </div>
           <ul>
             {results.beers.slice(0, 5).map((beer) => (
@@ -146,11 +146,11 @@ export default function SearchResults({ query, onClose }: SearchResultsProps) {
                       )}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-semibold text-gray-900 dark:text-white truncate group-hover:text-amber-600 dark:group-hover:text-amber-400 transition-colors">{beer.name}</p>
-                      <p className="text-xs text-gray-500 dark:text-neutral-400 truncate">
+                      <p className="text-sm font-semibold text-foreground dark:text-white truncate group-hover:text-amber-600 dark:group-hover:text-amber-400 transition-colors">{beer.name}</p>
+                      <p className="text-xs text-muted-foreground dark:text-neutral-400 truncate">
                         {beer.brewery?.name || beer.breweryName}
                         {(beer.style || beer.abv) && (
-                          <span className="text-gray-400 dark:text-neutral-500">
+                          <span className="text-stone-400 dark:text-neutral-500">
                             {beer.brewery?.name || beer.breweryName ? " · " : ""}
                             {[beer.style, beer.abv ? `${beer.abv}%` : null].filter(Boolean).join(" · ")}
                           </span>

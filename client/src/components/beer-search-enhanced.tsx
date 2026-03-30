@@ -62,7 +62,7 @@ export default function BeerSearchEnhanced({
       <CardContent>
         <div className="space-y-4">
           <div className="relative">
-            <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+            <Search className="absolute left-3 top-3 h-4 w-4 text-stone-400" />
             <Input
               placeholder="Cerca per nome birra, birrificio o stile..."
               value={searchQuery}
@@ -75,12 +75,12 @@ export default function BeerSearchEnhanced({
             {beersLoading ? (
               <div className="text-center py-4">Caricamento database birre...</div>
             ) : searchQuery.trim() && filteredBeers.length === 0 ? (
-              <div className="text-center py-4 text-gray-500">
+              <div className="text-center py-4 text-muted-foreground">
                 Nessuna birra trovata per "{searchQuery}"
               </div>
             ) : (
               filteredBeers.slice(0, 20).map((beer: any) => (
-                <div key={beer.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
+                <div key={beer.id} className="flex items-center justify-between p-3 bg-stone-50 rounded-lg hover:bg-stone-100 transition-colors">
                   <div className="flex-1">
                     <div className="flex items-center space-x-3">
                       {beer.imageUrl && (
@@ -92,7 +92,7 @@ export default function BeerSearchEnhanced({
                       )}
                       <div>
                         <p className="font-medium text-sm">{beer.name}</p>
-                        <div className="flex items-center text-xs text-gray-600 gap-1">
+                        <div className="flex items-center text-xs text-muted-foreground gap-1">
                           {beer.brewery?.id || beer.breweryId ? (
                             <Link href={`/brewery/${beer.brewery?.id || beer.breweryId}`}>
                               <span className="hover:text-primary hover:underline cursor-pointer">
@@ -145,7 +145,7 @@ export default function BeerSearchEnhanced({
           </div>
 
           {searchQuery.trim() && (
-            <div className="text-xs text-gray-500 text-center">
+            <div className="text-xs text-muted-foreground text-center">
               Trovate {filteredBeers.length} birre nel database di {Array.isArray(allBeers) ? allBeers.length : 0} birre totali
             </div>
           )}

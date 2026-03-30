@@ -219,9 +219,9 @@ export default function PubDashboard() {
 
   if (!isAuthenticated) {
     return (
-      <div className="max-w-md mx-auto mt-8 p-6 bg-white dark:bg-gray-800 rounded-lg shadow">
+      <div className="max-w-md mx-auto mt-8 p-6 bg-white dark:bg-stone-900 rounded-lg shadow">
         <h2 className="text-2xl font-bold mb-4">Accesso Richiesto</h2>
-        <p className="text-gray-600 dark:text-gray-300 mb-6">
+        <p className="text-muted-foreground dark:text-stone-300 mb-6">
           Per gestire i tuoi pub devi prima effettuare l'accesso.
         </p>
         <Button asChild className="w-full">
@@ -236,11 +236,11 @@ export default function PubDashboard() {
 
   if (!pubs || pubs.length === 0) {
     return (
-      <div className="max-w-2xl mx-auto mt-8 p-6 bg-white dark:bg-gray-800 rounded-lg shadow">
+      <div className="max-w-2xl mx-auto mt-8 p-6 bg-white dark:bg-stone-900 rounded-lg shadow">
         <div className="text-center">
-          <Building2 className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+          <Building2 className="w-16 h-16 text-stone-400 mx-auto mb-4" />
           <h2 className="text-2xl font-bold mb-4">Nessun Pub Registrato</h2>
-          <p className="text-gray-600 dark:text-gray-300 mb-6">
+          <p className="text-muted-foreground dark:text-stone-300 mb-6">
             Non hai ancora registrato nessun pub. Inizia registrando il tuo primo locale.
           </p>
           <Button asChild>
@@ -258,14 +258,14 @@ export default function PubDashboard() {
     <div className="container mx-auto px-2 sm:px-4 py-4 sm:py-8">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4 sm:mb-8 gap-4">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">
+          <h1 className="text-2xl sm:text-3xl font-bold text-foreground dark:text-white">
             Dashboard Pub
           </h1>
-          <p className="text-gray-600 dark:text-gray-300 mt-2 text-sm sm:text-base">
+          <p className="text-muted-foreground dark:text-stone-300 mt-2 text-sm sm:text-base">
             Gestisci i tuoi pub e le loro tap list
           </p>
           {user ? (
-            <p className="text-xs sm:text-sm text-gray-500 mt-1">
+            <p className="text-xs sm:text-sm text-muted-foreground mt-1">
               Benvenuto, {(user as any)?.firstName || 'Utente'} {(user as any)?.lastName || ''}
             </p>
           ) : null}
@@ -342,7 +342,7 @@ export default function PubDashboard() {
                       <p className="font-semibold text-red-800 dark:text-red-200">⏱️ La tua prova gratuita è terminata</p>
                       <p className="text-sm text-red-700 dark:text-red-300">Abbonati per continuare a gestire il tuo pub su Fermenta.to.</p>
                     </div>
-                    <Button className="bg-amber-500 hover:bg-amber-600 text-white shrink-0" onClick={() => setLocation('/attiva-pub')}>
+                    <Button className="bg-primary hover:bg-primary/90 text-white shrink-0" onClick={() => setLocation('/attiva-pub')}>
                       Abbonati — €65/anno
                     </Button>
                   </div>
@@ -352,14 +352,14 @@ export default function PubDashboard() {
           }
           const daysLeft = Math.ceil((trialEnd.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
           return (
-            <Card className={`border-amber-200 dark:border-amber-800 ${daysLeft <= 5 ? 'bg-stone-50 dark:bg-orange-900/20' : 'bg-amber-50 dark:bg-amber-900/20'}`}>
+            <Card className={`border-stone-200 dark:border-stone-700 ${daysLeft <= 5 ? 'bg-stone-50 dark:bg-orange-900/20' : 'bg-stone-50 dark:bg-stone-900/20'}`}>
               <CardContent className="p-4">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                   <div>
-                    <p className="font-semibold text-amber-900 dark:text-amber-100">
+                    <p className="font-semibold text-foreground">
                       {daysLeft <= 5 ? '⚠️' : '⏳'} Prova gratuita in corso — {daysLeft} {daysLeft === 1 ? 'giorno' : 'giorni'} rimasti
                     </p>
-                    <p className="text-sm text-amber-700 dark:text-amber-300">
+                    <p className="text-sm text-muted-foreground">
                       Scade il {new Date(pub.trialEndsAt).toLocaleDateString('it-IT')}. Abbonati per continuare senza interruzioni.
                     </p>
                   </div>
@@ -371,7 +371,7 @@ export default function PubDashboard() {
                     }} disabled={cancelTrialMutation.isPending}>
                       Annulla prova
                     </Button>
-                    <Button className="bg-amber-500 hover:bg-amber-600 text-white" size="sm" onClick={() => setLocation('/attiva-pub')}>
+                    <Button className="bg-primary hover:bg-primary/90 text-white" size="sm" onClick={() => setLocation('/attiva-pub')}>
                       Abbonati — €65/anno
                     </Button>
                   </div>
@@ -382,14 +382,14 @@ export default function PubDashboard() {
         }
         if (status === 'none') {
           return (
-            <Card className="border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50">
+            <Card className="border-stone-200 dark:border-stone-700 bg-stone-50 dark:bg-stone-900/50">
               <CardContent className="p-4">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                   <div>
-                    <p className="font-semibold text-gray-800 dark:text-gray-200">🔒 Attiva il tuo abbonamento</p>
-                    <p className="text-sm text-gray-600 dark:text-gray-400">Abbonati per rendere visibile il tuo pub su Fermenta.to.</p>
+                    <p className="font-semibold text-foreground dark:text-gray-200">🔒 Attiva il tuo abbonamento</p>
+                    <p className="text-sm text-muted-foreground dark:text-stone-400">Abbonati per rendere visibile il tuo pub su Fermenta.to.</p>
                   </div>
-                  <Button className="bg-amber-500 hover:bg-amber-600 text-white shrink-0" onClick={() => setLocation('/attiva-pub')}>
+                  <Button className="bg-primary hover:bg-primary/90 text-white shrink-0" onClick={() => setLocation('/attiva-pub')}>
                     Abbonati — €65/anno
                   </Button>
                 </div>
@@ -423,10 +423,10 @@ export default function PubDashboard() {
                   <div className="flex items-start gap-2 mb-3">
                     <MapPin className="text-primary flex-shrink-0 mt-1" size={18} />
                     <div>
-                      <CardDescription className="text-base font-medium text-gray-800 dark:text-gray-200">
+                      <CardDescription className="text-base font-medium text-foreground dark:text-gray-200">
                         {selectedPub.address}
                       </CardDescription>
-                      <CardDescription className="text-sm text-gray-600">
+                      <CardDescription className="text-sm text-muted-foreground">
                         {selectedPub.city}, {selectedPub.region}
                       </CardDescription>
                       <button 
@@ -442,7 +442,7 @@ export default function PubDashboard() {
                   </div>
 
                   {selectedPub.description && (
-                    <p className="text-gray-600 dark:text-gray-300 mt-3 bg-gray-50 dark:bg-gray-700 p-3 rounded-lg">
+                    <p className="text-muted-foreground dark:text-stone-300 mt-3 bg-stone-50 dark:bg-stone-700 p-3 rounded-lg">
                       {selectedPub.description}
                     </p>
                   )}
@@ -453,7 +453,7 @@ export default function PubDashboard() {
                   {selectedPub.phone && (
                     <div className="flex items-center gap-2">
                       <Phone className="text-primary" size={16} />
-                      <a href={`tel:${selectedPub.phone}`} className="text-gray-700 hover:text-primary font-medium">
+                      <a href={`tel:${selectedPub.phone}`} className="text-muted-foreground hover:text-primary font-medium">
                         {selectedPub.phone}
                       </a>
                     </div>
@@ -465,7 +465,7 @@ export default function PubDashboard() {
                         href={selectedPub.websiteUrl} 
                         target="_blank" 
                         rel="noopener noreferrer"
-                        className="text-gray-700 hover:text-primary font-medium"
+                        className="text-muted-foreground hover:text-primary font-medium"
                       >
                         Sito Web
                       </a>
@@ -574,9 +574,9 @@ function PubAnalyticsTab({ pubId }: { pubId: number }) {
     return (
       <div className="space-y-4">
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-          {[1,2,3,4].map(i => <div key={i} className="h-24 rounded-xl bg-gray-100 dark:bg-gray-800 animate-pulse" />)}
+          {[1,2,3,4].map(i => <div key={i} className="h-24 rounded-xl bg-stone-100 dark:bg-stone-900 animate-pulse" />)}
         </div>
-        <div className="h-64 rounded-xl bg-gray-100 dark:bg-gray-800 animate-pulse" />
+        <div className="h-64 rounded-xl bg-stone-100 dark:bg-stone-900 animate-pulse" />
       </div>
     );
   }
@@ -588,11 +588,11 @@ function PubAnalyticsTab({ pubId }: { pubId: number }) {
           <Card key={label}>
             <CardContent className="pt-5 pb-4">
               <div className="flex items-center gap-2 mb-1">
-                <Icon className="w-4 h-4 text-amber-600 dark:text-amber-400" />
-                <span className="text-xs font-medium text-gray-500 dark:text-gray-400">{label}</span>
+                <Icon className="w-4 h-4 text-primary" />
+                <span className="text-xs font-medium text-muted-foreground dark:text-stone-400">{label}</span>
               </div>
-              <p className="text-3xl font-bold text-gray-900 dark:text-white">{value.toLocaleString("it-IT")}</p>
-              <p className="text-xs text-gray-400 mt-0.5">visite alla pagina</p>
+              <p className="text-3xl font-bold text-foreground dark:text-white">{value.toLocaleString("it-IT")}</p>
+              <p className="text-xs text-stone-400 mt-0.5">visite alla pagina</p>
             </CardContent>
           </Card>
         ))}
@@ -605,7 +605,7 @@ function PubAnalyticsTab({ pubId }: { pubId: number }) {
         </CardHeader>
         <CardContent>
           {data?.last30 === 0 ? (
-            <div className="flex flex-col items-center justify-center py-12 text-gray-400">
+            <div className="flex flex-col items-center justify-center py-12 text-stone-400">
               <TrendingUp className="w-12 h-12 mb-3 opacity-30" />
               <p className="text-sm">Nessuna visita registrata ancora.</p>
               <p className="text-xs mt-1">I dati vengono raccolti a partire da oggi.</p>
@@ -756,8 +756,8 @@ function PubInfoTab({ pub }: { pub: Pub }) {
             {/* Immagini */}
             <div className="space-y-6">
               <div>
-                <h4 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Immagini del Pub</h4>
-                <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                <h4 className="text-lg font-semibold text-foreground dark:text-gray-100">Immagini del Pub</h4>
+                <p className="text-sm text-muted-foreground dark:text-stone-400 mt-1">
                   Carica immagini professionali per dare al tuo pub un aspetto attraente
                 </p>
               </div>
@@ -996,7 +996,7 @@ function OpeningHoursManager({ pub }: { pub: Pub }) {
                   onChange={() => toggleClosed(day.key)}
                   className="rounded"
                 />
-                <Label className="text-sm text-gray-600">Chiuso</Label>
+                <Label className="text-sm text-muted-foreground">Chiuso</Label>
               </div>
             </div>
           ))}

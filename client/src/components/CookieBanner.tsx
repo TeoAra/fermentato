@@ -80,10 +80,10 @@ export default function CookieBanner() {
                 <Cookie className="w-5 h-5 text-amber-600 dark:text-amber-400" />
               </div>
               <div className="flex-1 min-w-0">
-                <h3 className="text-base font-bold text-gray-900 dark:text-white mb-1">
+                <h3 className="text-base font-bold text-foreground dark:text-white mb-1">
                   🍪 Utilizziamo i cookie
                 </h3>
-                <p className="text-sm text-gray-600 dark:text-gray-300 leading-relaxed">
+                <p className="text-sm text-muted-foreground dark:text-stone-300 leading-relaxed">
                   Usiamo cookie e tecnologie simili per migliorare la tua esperienza, analizzare il traffico e personalizzare i contenuti. 
                   Puoi scegliere quali accettare o consultare la nostra{" "}
                   <a href="/privacy" className="text-amber-600 dark:text-amber-400 underline underline-offset-2 hover:text-amber-700">
@@ -108,7 +108,7 @@ export default function CookieBanner() {
                   <Button
                     onClick={() => setShowSettings(true)}
                     variant="ghost"
-                    className="text-sm h-9 px-4 text-gray-600 dark:text-gray-300"
+                    className="text-sm h-9 px-4 text-muted-foreground dark:text-stone-300"
                   >
                     <Settings2 className="w-3.5 h-3.5 mr-1.5" />
                     Personalizza
@@ -125,13 +125,13 @@ export default function CookieBanner() {
                 <div className="w-8 h-8 bg-amber-100 dark:bg-amber-900/30 rounded-lg flex items-center justify-center">
                   <Settings2 className="w-4 h-4 text-amber-600 dark:text-amber-400" />
                 </div>
-                <h3 className="text-base font-bold text-gray-900 dark:text-white">Impostazioni Cookie</h3>
+                <h3 className="text-base font-bold text-foreground dark:text-white">Impostazioni Cookie</h3>
               </div>
               <button
                 onClick={() => setShowSettings(false)}
-                className="w-7 h-7 rounded-full flex items-center justify-center hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                className="w-7 h-7 rounded-full flex items-center justify-center hover:bg-stone-100 dark:hover:bg-gray-800 transition-colors"
               >
-                <X className="w-4 h-4 text-gray-500" />
+                <X className="w-4 h-4 text-muted-foreground" />
               </button>
             </div>
 
@@ -213,11 +213,11 @@ export default function CookieBanner() {
               <Button onClick={acceptAll} variant="outline" className="text-sm h-9 px-4">
                 Accetta tutti
               </Button>
-              <Button onClick={acceptEssential} variant="ghost" className="text-sm h-9 px-3 text-gray-500">
+              <Button onClick={acceptEssential} variant="ghost" className="text-sm h-9 px-3 text-muted-foreground">
                 Solo essenziali
               </Button>
             </div>
-            <p className="text-xs text-gray-400 mt-3">
+            <p className="text-xs text-stone-400 mt-3">
               Puoi modificare le preferenze in qualsiasi momento dal footer del sito.
               Consulta la nostra <a href="/privacy" className="underline underline-offset-1">Privacy Policy</a>.
             </p>
@@ -257,20 +257,20 @@ function CookieCategory({
           <div className="mt-0.5">{icon}</div>
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 flex-wrap">
-              <span className="text-sm font-semibold text-gray-900 dark:text-white">{title}</span>
+              <span className="text-sm font-semibold text-foreground dark:text-white">{title}</span>
               <span className={`text-xs px-1.5 py-0.5 rounded-full font-medium ${
                 disabled
                   ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400"
-                  : "bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400"
+                  : "bg-stone-100 text-muted-foreground dark:bg-gray-800 dark:text-stone-400"
               }`}>
                 {badge}
               </span>
             </div>
-            <p className="text-xs text-gray-600 dark:text-gray-400 mt-1 leading-relaxed">{description}</p>
+            <p className="text-xs text-muted-foreground dark:text-stone-400 mt-1 leading-relaxed">{description}</p>
             <button
               type="button"
               onClick={() => setExpanded(!expanded)}
-              className="flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400 mt-1.5 hover:text-gray-700 dark:hover:text-gray-200 transition-colors"
+              className="flex items-center gap-1 text-xs text-muted-foreground dark:text-stone-400 mt-1.5 hover:text-muted-foreground dark:hover:text-gray-200 transition-colors"
             >
               {expanded ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
               {expanded ? "Meno dettagli" : "Dettagli"}
@@ -278,7 +278,7 @@ function CookieCategory({
             {expanded && (
               <ul className="mt-2 space-y-0.5">
                 {details.map((d, i) => (
-                  <li key={i} className="text-xs text-gray-500 dark:text-gray-400 flex items-start gap-1.5">
+                  <li key={i} className="text-xs text-muted-foreground dark:text-stone-400 flex items-start gap-1.5">
                     <span className="mt-1 w-1 h-1 rounded-full bg-gray-400 flex-shrink-0" />
                     {d}
                   </li>
@@ -304,7 +304,7 @@ export function CookieSettingsButton() {
     window.location.reload();
   };
   return (
-    <button onClick={reopen} className="text-xs text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 underline underline-offset-2">
+    <button onClick={reopen} className="text-xs text-muted-foreground hover:text-muted-foreground dark:hover:text-stone-300 underline underline-offset-2">
       Gestisci preferenze cookie
     </button>
   );

@@ -157,7 +157,7 @@ export default function AdminDashboard() {
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-center space-y-4">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
-          <p className="text-gray-600">Caricamento...</p>
+          <p className="text-muted-foreground">Caricamento...</p>
         </div>
       </div>
     );
@@ -185,7 +185,7 @@ export default function AdminDashboard() {
               Dashboard Admin
             </Button>
           </Link>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Gestione Piattaforma</h1>
+          <h1 className="text-2xl font-bold text-foreground dark:text-white">Gestione Piattaforma</h1>
         </div>
 
         {/* Stats Row */}
@@ -534,13 +534,13 @@ export default function AdminDashboard() {
                       const pct = Math.min(100, (parseInt(style.count) / parseInt(globalStats.topStyles[0].count)) * 100);
                       return (
                         <div key={style.style} className="flex items-center gap-3">
-                          <span className="text-xs font-bold text-gray-400 w-5 text-right flex-shrink-0">#{i + 1}</span>
+                          <span className="text-xs font-bold text-stone-400 w-5 text-right flex-shrink-0">#{i + 1}</span>
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center justify-between mb-0.5">
                               <span className="text-sm font-medium truncate">{style.style}</span>
-                              <span className="text-xs text-gray-400 ml-2 flex-shrink-0">{parseInt(style.count).toLocaleString("it-IT")}</span>
+                              <span className="text-xs text-stone-400 ml-2 flex-shrink-0">{parseInt(style.count).toLocaleString("it-IT")}</span>
                             </div>
-                            <div className="h-1.5 bg-gray-100 dark:bg-gray-800 rounded-full overflow-hidden">
+                            <div className="h-1.5 bg-stone-100 dark:bg-gray-800 rounded-full overflow-hidden">
                               <div className="h-full bg-gradient-to-r from-amber-400 to-orange-500 rounded-full" style={{ width: `${pct}%` }} />
                             </div>
                           </div>
@@ -549,7 +549,7 @@ export default function AdminDashboard() {
                     })}
                   </div>
                 ) : (
-                  <p className="text-sm text-gray-400 text-center py-4">Nessun dato disponibile</p>
+                  <p className="text-sm text-stone-400 text-center py-4">Nessun dato disponibile</p>
                 )}
               </CardContent>
             </Card>
@@ -565,21 +565,21 @@ export default function AdminDashboard() {
                 {globalStats?.topBreweries?.length > 0 ? (
                   <div className="space-y-2">
                     {globalStats.topBreweries.slice(0, 10).map((brewery: any, i: number) => (
-                      <div key={brewery.breweryName} className="flex items-center gap-3 p-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
-                        <span className="text-xs font-bold text-gray-400 w-5 text-right flex-shrink-0">#{i + 1}</span>
+                      <div key={brewery.breweryName} className="flex items-center gap-3 p-2 rounded-lg hover:bg-stone-50 dark:hover:bg-gray-800 transition-colors">
+                        <span className="text-xs font-bold text-stone-400 w-5 text-right flex-shrink-0">#{i + 1}</span>
                         <div className="flex-1 min-w-0">
                           <p className="text-sm font-medium truncate">{brewery.breweryName}</p>
-                          <p className="text-xs text-gray-400">{brewery.location || "—"}</p>
+                          <p className="text-xs text-stone-400">{brewery.location || "—"}</p>
                         </div>
                         <div className="text-right flex-shrink-0">
                           <p className="text-sm font-bold text-blue-600">{parseInt(brewery.beerCount).toLocaleString("it-IT")}</p>
-                          <p className="text-xs text-gray-400">birre</p>
+                          <p className="text-xs text-stone-400">birre</p>
                         </div>
                       </div>
                     ))}
                   </div>
                 ) : (
-                  <p className="text-sm text-gray-400 text-center py-4">Nessun dato disponibile</p>
+                  <p className="text-sm text-stone-400 text-center py-4">Nessun dato disponibile</p>
                 )}
               </CardContent>
             </Card>
@@ -602,8 +602,8 @@ export default function AdminDashboard() {
                 ].map(({ label, value, desc, color, textColor }) => (
                   <div key={label} className={`p-4 rounded-xl bg-gradient-to-br ${color}`}>
                     <p className={`text-2xl font-bold ${textColor}`}>{value}</p>
-                    <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mt-1">{label}</p>
-                    <p className="text-xs text-gray-500 mt-0.5">{desc}</p>
+                    <p className="text-sm font-medium text-muted-foreground dark:text-stone-300 mt-1">{label}</p>
+                    <p className="text-xs text-muted-foreground mt-0.5">{desc}</p>
                   </div>
                 ))}
               </div>
@@ -621,9 +621,9 @@ export default function AdminDashboard() {
               <CardContent>
                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2">
                   {globalStats.countries.slice(0, 18).map((c: any) => (
-                    <div key={c.country} className="flex items-center justify-between p-2 rounded-lg bg-gray-50 dark:bg-gray-800 text-xs">
+                    <div key={c.country} className="flex items-center justify-between p-2 rounded-lg bg-stone-50 dark:bg-gray-800 text-xs">
                       <span className="font-medium truncate">{c.country || "N/D"}</span>
-                      <span className="text-gray-400 ml-1 flex-shrink-0">{parseInt(c.count).toLocaleString("it-IT")}</span>
+                      <span className="text-stone-400 ml-1 flex-shrink-0">{parseInt(c.count).toLocaleString("it-IT")}</span>
                     </div>
                   ))}
                 </div>
@@ -644,18 +644,18 @@ export default function AdminDashboard() {
             </DialogTitle>
           </DialogHeader>
           <div className="space-y-4 pt-2">
-            <div className="flex items-center gap-3 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
+            <div className="flex items-center gap-3 p-3 bg-stone-50 dark:bg-gray-800 rounded-lg">
               <Avatar className="w-10 h-10">
                 <AvatarImage src={editTarget?.profileImageUrl} />
                 <AvatarFallback>{(editTarget?.nickname?.[0] || "U").toUpperCase()}</AvatarFallback>
               </Avatar>
               <div>
                 <p className="font-medium text-sm">{editTarget?.nickname || editTarget?.firstName || "Utente"}</p>
-                <p className="text-xs text-gray-400">{editTarget?.email}</p>
+                <p className="text-xs text-stone-400">{editTarget?.email}</p>
               </div>
             </div>
             <div>
-              <label className="text-sm font-medium text-gray-700 dark:text-gray-300 block mb-2">Nuovo ruolo</label>
+              <label className="text-sm font-medium text-muted-foreground dark:text-stone-300 block mb-2">Nuovo ruolo</label>
               <Select value={editRole} onValueChange={setEditRole}>
                 <SelectTrigger>
                   <SelectValue />

@@ -214,12 +214,12 @@ function TapCard({ tap, slug, isAuth, isManager, useTokens, tokenName }: {
               {tap.beerId ? (
                 <Link href={`/beer/${tap.beerId}`} onClick={e => e.stopPropagation()}>
                   <span className={`font-bold text-sm hover:underline cursor-pointer ${
-                    tap.isAvailable ? "text-foreground" : "text-gray-400 line-through"
+                    tap.isAvailable ? "text-foreground" : "text-stone-400 line-through"
                   }`}>{beerName}</span>
                 </Link>
               ) : (
                 <span className={`font-bold text-sm ${
-                  tap.isAvailable ? "text-foreground" : "text-gray-400 line-through"
+                  tap.isAvailable ? "text-foreground" : "text-stone-400 line-through"
                 }`}>{beerName}</span>
               )}
               {!tap.isAvailable && (
@@ -407,7 +407,7 @@ function RankingsTab({ rankings }: { rankings: FestivalData["rankings"] }) {
         <div key={t.tapNumber} className="flex items-center gap-3 bg-white dark:bg-[hsl(25,14%,10%)] rounded-2xl border border-stone-100 dark:border-[hsl(25,12%,16%)] p-3 shadow-sm">
           <div className={`w-8 h-8 flex items-center justify-center rounded-xl text-sm font-bold flex-shrink-0 ${
             i === 0 ? "bg-primary text-white" :
-            i === 1 ? "bg-gray-200 text-gray-600" :
+            i === 1 ? "bg-stone-200 text-muted-foreground" :
             i === 2 ? "bg-stone-100 text-orange-600" :
             "bg-stone-50 dark:bg-stone-900/20 text-primary"
           }`}>

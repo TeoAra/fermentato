@@ -177,7 +177,7 @@ export default function BeerTastingsEditor({ beerTastings }: BeerTastingsEditorP
           {showFilters && (
             <div className="flex flex-wrap items-end gap-3 mt-3 pt-3 border-t">
               <div className="flex-1 min-w-[140px]">
-                <label className="text-xs font-medium text-gray-500 mb-1 block">Dal</label>
+                <label className="text-xs font-medium text-muted-foreground mb-1 block">Dal</label>
                 <Input
                   type="date"
                   value={dateFrom}
@@ -186,7 +186,7 @@ export default function BeerTastingsEditor({ beerTastings }: BeerTastingsEditorP
                 />
               </div>
               <div className="flex-1 min-w-[140px]">
-                <label className="text-xs font-medium text-gray-500 mb-1 block">Al</label>
+                <label className="text-xs font-medium text-muted-foreground mb-1 block">Al</label>
                 <Input
                   type="date"
                   value={dateTo}
@@ -206,7 +206,7 @@ export default function BeerTastingsEditor({ beerTastings }: BeerTastingsEditorP
           {paginatedTastings.length > 0 ? (
             <div className="space-y-3">
               {paginatedTastings.map((tasting: any) => (
-                <div key={tasting.id} className="flex items-center justify-between p-3 border rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
+                <div key={tasting.id} className="flex items-center justify-between p-3 border rounded-lg hover:bg-stone-50 dark:hover:bg-gray-800/50 transition-colors">
                   <div className="flex items-center gap-3 flex-1 min-w-0">
                     <Link href={`/beer/${tasting.beerId || tasting.beer?.id}`}>
                       <img
@@ -222,17 +222,17 @@ export default function BeerTastingsEditor({ beerTastings }: BeerTastingsEditorP
                         </h4>
                       </Link>
                       <Link href={`/brewery/${tasting.beer?.brewery?.id || tasting.beer?.breweryId}`}>
-                        <p className="text-sm text-gray-600 dark:text-gray-400 hover:text-amber-600 cursor-pointer transition-colors truncate">
+                        <p className="text-sm text-muted-foreground dark:text-stone-400 hover:text-amber-600 cursor-pointer transition-colors truncate">
                           {tasting.beer?.brewery?.name || 'Birrificio sconosciuto'}
                         </p>
                       </Link>
                       {tasting.personalNotes && (
-                        <p className="text-xs text-gray-700 dark:text-gray-300 italic mt-1 bg-gray-50 dark:bg-gray-800 px-2 py-1 rounded line-clamp-2">
+                        <p className="text-xs text-muted-foreground dark:text-stone-300 italic mt-1 bg-stone-50 dark:bg-gray-800 px-2 py-1 rounded line-clamp-2">
                           "{tasting.personalNotes}"
                         </p>
                       )}
                       {(tasting.createdAt || tasting.tastedAt) && (
-                        <p className="text-xs text-gray-400 mt-0.5 flex items-center gap-1">
+                        <p className="text-xs text-stone-400 mt-0.5 flex items-center gap-1">
                           <Calendar className="w-3 h-3" />
                           Degustata il {formatDate(tasting.createdAt || tasting.tastedAt)}
                           {tasting.format ? ` in ${tasting.format}` : ''}
@@ -249,7 +249,7 @@ export default function BeerTastingsEditor({ beerTastings }: BeerTastingsEditorP
                           className={`w-4 h-4 ${
                             star <= (tasting.rating || 0)
                               ? 'text-yellow-400 fill-current'
-                              : 'text-gray-300'
+                              : 'text-stone-300'
                           }`}
                         />
                       ))}
@@ -276,14 +276,14 @@ export default function BeerTastingsEditor({ beerTastings }: BeerTastingsEditorP
               ))}
             </div>
           ) : (
-            <p className="text-gray-500 dark:text-gray-400 text-center py-4">
+            <p className="text-muted-foreground dark:text-stone-400 text-center py-4">
               {hasActiveFilters ? 'Nessuna recensione trovata con questi filtri.' : 'Nessuna recensione ancora. Inizia a esplorare!'}
             </p>
           )}
 
           {filteredTastings.length > perPage && (
             <div className="flex items-center justify-between mt-4 pt-4 border-t">
-              <p className="text-sm text-gray-500">
+              <p className="text-sm text-muted-foreground">
                 {((safePage - 1) * perPage) + 1}-{Math.min(safePage * perPage, filteredTastings.length)} di {filteredTastings.length}
               </p>
               <div className="flex items-center gap-1">
@@ -355,7 +355,7 @@ export default function BeerTastingsEditor({ beerTastings }: BeerTastingsEditorP
                       <h4 className="font-medium hover:text-amber-600 cursor-pointer">{editingTasting.beer?.name}</h4>
                     </Link>
                     <Link href={`/brewery/${editingTasting.beer?.brewery?.id || editingTasting.beer?.breweryId}`}>
-                      <p className="text-sm text-gray-600 hover:text-amber-600 cursor-pointer">{editingTasting.beer?.brewery?.name || 'Birrificio sconosciuto'}</p>
+                      <p className="text-sm text-muted-foreground hover:text-amber-600 cursor-pointer">{editingTasting.beer?.brewery?.name || 'Birrificio sconosciuto'}</p>
                     </Link>
                   </div>
                 </div>
@@ -373,7 +373,7 @@ export default function BeerTastingsEditor({ beerTastings }: BeerTastingsEditorP
                           className={`w-6 h-6 ${
                             star <= editRating
                               ? 'text-yellow-400 fill-current'
-                              : 'text-gray-300 hover:text-yellow-200'
+                              : 'text-stone-300 hover:text-yellow-200'
                           }`}
                         />
                       </button>

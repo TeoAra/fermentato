@@ -8,7 +8,7 @@ import { SEO } from "@/components/seo";
 import Footer from "@/components/footer";
 
 const YES = () => <span className="flex justify-center"><Check className="w-4 h-4 text-green-500 flex-shrink-0" /></span>;
-const NO = () => <span className="flex justify-center"><X className="w-4 h-4 text-gray-300 flex-shrink-0" /></span>;
+const NO = () => <span className="flex justify-center"><X className="w-4 h-4 text-stone-300 flex-shrink-0" /></span>;
 
 interface FeatureRowProps {
   label: string;
@@ -18,11 +18,11 @@ interface FeatureRowProps {
 function FeatureRow({ label, included, icon }: FeatureRowProps) {
   return (
     <div className="flex items-center gap-3 py-2.5 border-b border-gray-100 dark:border-gray-800 last:border-0">
-      {icon && <div className="flex-shrink-0 w-4 h-4 text-gray-400">{icon}</div>}
-      <div className="flex-1 text-sm text-gray-700 dark:text-gray-300">{label}</div>
+      {icon && <div className="flex-shrink-0 w-4 h-4 text-stone-400">{icon}</div>}
+      <div className="flex-1 text-sm text-muted-foreground dark:text-stone-300">{label}</div>
       <div className="flex-shrink-0">
         {typeof included === 'boolean'
-          ? (included ? <Check className="w-4 h-4 text-green-500" /> : <X className="w-4 h-4 text-gray-300" />)
+          ? (included ? <Check className="w-4 h-4 text-green-500" /> : <X className="w-4 h-4 text-stone-300" />)
           : <span className="text-amber-600 dark:text-amber-400 text-xs font-semibold">{included}</span>}
       </div>
     </div>
@@ -45,11 +45,11 @@ export default function PrezziPage() {
           <Badge className="bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300 border-0 mb-4 text-sm px-3 py-1">
             🍺 Piani Fermenta.to
           </Badge>
-          <h1 className="text-4xl sm:text-5xl font-bold text-gray-900 dark:text-white mb-4">
+          <h1 className="text-4xl sm:text-5xl font-bold text-foreground dark:text-white mb-4">
             Porta il tuo locale online.<br />
             <span className="text-amber-500">Semplice e trasparente.</span>
           </h1>
-          <p className="text-lg text-gray-600 dark:text-gray-400 max-w-2xl mx-auto">
+          <p className="text-lg text-muted-foreground dark:text-stone-400 max-w-2xl mx-auto">
             Un piano per i pub, una verifica gratuita per i birrifici. Nessun vincolo, nessuna sorpresa.
           </p>
         </div>
@@ -63,8 +63,8 @@ export default function PrezziPage() {
               <Beer className="w-5 h-5 text-amber-600" />
             </div>
             <div>
-              <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Piano Pub</h2>
-              <p className="text-sm text-gray-500">Per pub, birrerie, locali specializzati e ristoranti con selezione artigianale</p>
+              <h2 className="text-2xl font-bold text-foreground dark:text-white">Piano Pub</h2>
+              <p className="text-sm text-muted-foreground">Per pub, birrerie, locali specializzati e ristoranti con selezione artigianale</p>
             </div>
           </div>
 
@@ -108,7 +108,7 @@ export default function PrezziPage() {
                     "Dashboard gestionale dedicata",
                     "Supporto email dedicato",
                   ].map(f => (
-                    <div key={f} className="flex items-start gap-2 text-sm text-gray-700 dark:text-gray-300">
+                    <div key={f} className="flex items-start gap-2 text-sm text-muted-foreground dark:text-stone-300">
                       <CheckCircle2 className="w-4 h-4 text-green-500 flex-shrink-0 mt-0.5" />
                       <span>{f}</span>
                     </div>
@@ -121,24 +121,24 @@ export default function PrezziPage() {
           {/* Feature table */}
           <Card>
             <CardContent className="p-6">
-              <h3 className="font-bold text-gray-900 dark:text-white mb-4 text-base">Cosa include il piano</h3>
-              <div className="text-xs font-bold text-gray-400 uppercase tracking-wide pt-2 pb-1">Profilo e Visibilità</div>
+              <h3 className="font-bold text-foreground dark:text-white mb-4 text-base">Cosa include il piano</h3>
+              <div className="text-xs font-bold text-stone-400 uppercase tracking-wide pt-2 pb-1">Profilo e Visibilità</div>
               <FeatureRow icon={<Map />} label="Profilo pub sul catalogo nazionale" included={true} />
               <FeatureRow icon={<Map />} label="Pagina pubblica con mappa e orari" included={true} />
               <FeatureRow icon={<Star />} label="Ricevere recensioni dagli utenti" included={true} />
               <FeatureRow icon={<Shield />} label="Badge profilo verificato" included={true} />
               <FeatureRow icon={<Sparkles />} label="Priorità nei risultati di ricerca" included={true} />
-              <div className="text-xs font-bold text-gray-400 uppercase tracking-wide pt-4 pb-1">Taplist e Menu</div>
+              <div className="text-xs font-bold text-stone-400 uppercase tracking-wide pt-4 pb-1">Taplist e Menu</div>
               <FeatureRow icon={<Beer />} label="Taplist digitale illimitata" included={true} />
               <FeatureRow icon={<Beer />} label="Menu bottiglia illimitato" included={true} />
               <FeatureRow icon={<FileText />} label="Menu con categorie e prezzi" included={true} />
               <FeatureRow icon={<RefreshCw />} label="Aggiornamento in tempo reale" included={true} />
-              <div className="text-xs font-bold text-gray-400 uppercase tracking-wide pt-4 pb-1">Strumenti</div>
+              <div className="text-xs font-bold text-stone-400 uppercase tracking-wide pt-4 pb-1">Strumenti</div>
               <FeatureRow icon={<Tv2 />} label="Modalità TV taplist (schermo intero)" included={true} />
               <FeatureRow icon={<QrCode />} label="QR Code personalizzato" included={true} />
               <FeatureRow icon={<FileText />} label="PDF menu scaricabile in tempo reale" included={true} />
               <FeatureRow icon={<Calendar />} label="Gestione eventi e serate" included={true} />
-              <div className="text-xs font-bold text-gray-400 uppercase tracking-wide pt-4 pb-1">Marketing e Analytics</div>
+              <div className="text-xs font-bold text-stone-400 uppercase tracking-wide pt-4 pb-1">Marketing e Analytics</div>
               <FeatureRow icon={<Bell />} label="Notifiche push ai clienti" included={true} />
               <FeatureRow icon={<BarChart3 />} label="Analytics visite profilo" included={true} />
               <FeatureRow icon={<BarChart3 />} label="Statistiche taplist (tap più cliccate)" included={true} />
@@ -156,8 +156,8 @@ export default function PrezziPage() {
               <Building2 className="w-5 h-5 text-orange-600" />
             </div>
             <div>
-              <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Piano Birrificio</h2>
-              <p className="text-sm text-gray-500">Per birrifici artigianali — completamente gratuito</p>
+              <h2 className="text-2xl font-bold text-foreground dark:text-white">Piano Birrificio</h2>
+              <p className="text-sm text-muted-foreground">Per birrifici artigianali — completamente gratuito</p>
             </div>
           </div>
 
@@ -202,7 +202,7 @@ export default function PrezziPage() {
                     "Priorità nei risultati di ricerca",
                     "Supporto email prioritario",
                   ].map(f => (
-                    <div key={f} className="flex items-start gap-2 text-sm text-gray-700 dark:text-gray-300">
+                    <div key={f} className="flex items-start gap-2 text-sm text-muted-foreground dark:text-stone-300">
                       <CheckCircle2 className="w-4 h-4 text-green-500 flex-shrink-0 mt-0.5" />
                       <span>{f}</span>
                     </div>
@@ -228,21 +228,21 @@ export default function PrezziPage() {
           {/* Feature table */}
           <Card>
             <CardContent className="p-6">
-              <h3 className="font-bold text-gray-900 dark:text-white mb-4 text-base">Cosa include la verifica</h3>
-              <div className="text-xs font-bold text-gray-400 uppercase tracking-wide pt-2 pb-1">Profilo e Catalogo</div>
+              <h3 className="font-bold text-foreground dark:text-white mb-4 text-base">Cosa include la verifica</h3>
+              <div className="text-xs font-bold text-stone-400 uppercase tracking-wide pt-2 pb-1">Profilo e Catalogo</div>
               <FeatureRow icon={<Building2 />} label="Profilo birrificio sul catalogo" included={true} />
               <FeatureRow icon={<Map />} label="Pagina pubblica con mappa" included={true} />
               <FeatureRow icon={<Beer />} label="Birre presenti nel database" included={true} />
               <FeatureRow icon={<Shield />} label="Badge birrificio verificato" included={true} />
               <FeatureRow icon={<Image />} label="Upload immagini prodotti e logo HD" included={true} />
               <FeatureRow icon={<Beer />} label="Gestione catalogo birre illimitato" included={true} />
-              <div className="text-xs font-bold text-gray-400 uppercase tracking-wide pt-4 pb-1">Gestione e Comunicazione</div>
+              <div className="text-xs font-bold text-stone-400 uppercase tracking-wide pt-4 pb-1">Gestione e Comunicazione</div>
               <FeatureRow icon={<Calendar />} label="Gestione eventi e degustazioni" included={true} />
               <FeatureRow icon={<Bell />} label="Notifiche push ai seguaci" included={true} />
               <FeatureRow icon={<MessageCircle />} label="Risposta alle recensioni" included={true} />
               <FeatureRow icon={<MessageCircle />} label="Segnalazioni e richieste dai fan" included={true} />
               <FeatureRow icon={<Beer />} label="Ricezione richieste aggiunta birre" included={true} />
-              <div className="text-xs font-bold text-gray-400 uppercase tracking-wide pt-4 pb-1">Analytics e Visibilità</div>
+              <div className="text-xs font-bold text-stone-400 uppercase tracking-wide pt-4 pb-1">Analytics e Visibilità</div>
               <FeatureRow icon={<BarChart3 />} label="Statistiche visite profilo" included={true} />
               <FeatureRow icon={<BarChart3 />} label="Birre più cercate e visualizzate" included={true} />
               <FeatureRow icon={<Users />} label="Tendenze follower" included={true} />
@@ -264,10 +264,10 @@ export default function PrezziPage() {
                 </div>
                 <div>
                   <div className="flex items-center gap-2 mb-2">
-                    <h3 className="text-lg font-bold text-gray-900 dark:text-white">Brewpub?</h3>
+                    <h3 className="text-lg font-bold text-foreground dark:text-white">Brewpub?</h3>
                     <Badge className="bg-purple-100 text-purple-700 dark:bg-purple-900/40 dark:text-purple-300 border-0 text-xs">Entrambi i piani</Badge>
                   </div>
-                  <p className="text-gray-600 dark:text-gray-400 text-sm leading-relaxed">
+                  <p className="text-muted-foreground dark:text-stone-400 text-sm leading-relaxed">
                     Se sei sia un birrificio che un pub, puoi attivare entrambi i piani sullo stesso account. Il tuo profilo apparirà sia nel catalogo birrifici che in quello dei pub, e avrai accesso a una <strong>doppia dashboard</strong> — una per gestire la produzione e il catalogo birre, una per taplist, menu, eventi e prenotazioni del locale.
                   </p>
                   <div className="flex flex-wrap gap-2 mt-3">

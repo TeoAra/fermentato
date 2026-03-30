@@ -122,7 +122,7 @@ export default function PubRegistration() {
   // Show loading while checking authentication
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gray-50">
+      <div className="min-h-screen bg-stone-50">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8 pt-20 lg:pt-8">
           <div className="animate-pulse">
             <div className="h-8 bg-gray-300 rounded mb-6"></div>
@@ -139,7 +139,7 @@ export default function PubRegistration() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-stone-50">
       <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8 pt-20 lg:pt-8">
         {/* Header */}
         <div className="text-center mb-8">
@@ -147,7 +147,7 @@ export default function PubRegistration() {
             <Store className="text-primary mr-3" size={48} />
             <h1 className="text-4xl font-bold text-secondary">Registra il tuo Pub</h1>
           </div>
-          <p className="text-xl text-gray-600 max-w-2xl mx-auto">
+          <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
             Unisciti a Fermenta.to e porta il tuo pub nel mondo della birra artigianale. 
             Gestisci facilmente la tua tap list e fai scoprire le tue birre agli appassionati.
           </p>
@@ -161,7 +161,7 @@ export default function PubRegistration() {
                 <FileText className="text-white" size={24} />
               </div>
               <h3 className="font-semibold mb-2">Gestione Facile</h3>
-              <p className="text-sm text-gray-600">Dashboard intuitiva per aggiornare tap list e prezzi in tempo reale</p>
+              <p className="text-sm text-muted-foreground">Dashboard intuitiva per aggiornare tap list e prezzi in tempo reale</p>
             </CardContent>
           </Card>
 
@@ -171,7 +171,7 @@ export default function PubRegistration() {
                 <MapPin className="text-white" size={24} />
               </div>
               <h3 className="font-semibold mb-2">Visibilità Online</h3>
-              <p className="text-sm text-gray-600">Raggiungi migliaia di appassionati di birra artigianale</p>
+              <p className="text-sm text-muted-foreground">Raggiungi migliaia di appassionati di birra artigianale</p>
             </CardContent>
           </Card>
 
@@ -181,7 +181,7 @@ export default function PubRegistration() {
                 <Building className="text-white" size={24} />
               </div>
               <h3 className="font-semibold mb-2">Crescita Business</h3>
-              <p className="text-sm text-gray-600">Attira nuovi clienti e fidelizza quelli esistenti</p>
+              <p className="text-sm text-muted-foreground">Attira nuovi clienti e fidelizza quelli esistenti</p>
             </CardContent>
           </Card>
         </div>
@@ -555,7 +555,7 @@ export default function PubRegistration() {
                 </div>
                 <div>
                   <h4 className="font-semibold">Verifica Dati</h4>
-                  <p className="text-gray-600">I tuoi dati verranno verificati entro 24 ore</p>
+                  <p className="text-muted-foreground">I tuoi dati verranno verificati entro 24 ore</p>
                 </div>
               </div>
               
@@ -565,7 +565,7 @@ export default function PubRegistration() {
                 </div>
                 <div>
                   <h4 className="font-semibold">Setup Dashboard</h4>
-                  <p className="text-gray-600">Accedi alla dashboard per configurare tap list e menu</p>
+                  <p className="text-muted-foreground">Accedi alla dashboard per configurare tap list e menu</p>
                 </div>
               </div>
               
@@ -575,7 +575,7 @@ export default function PubRegistration() {
                 </div>
                 <div>
                   <h4 className="font-semibold">Vai Online</h4>
-                  <p className="text-gray-600">Il tuo pub sarà visibile a tutti gli utenti di Fermenta.to</p>
+                  <p className="text-muted-foreground">Il tuo pub sarà visibile a tutti gli utenti di Fermenta.to</p>
                 </div>
               </div>
             </div>

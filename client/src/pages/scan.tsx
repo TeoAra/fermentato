@@ -264,7 +264,7 @@ export default function ScanPage() {
   // Auth gate — show spinner while loading
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-950 flex items-center justify-center">
+      <div className="min-h-screen bg-stone-50 dark:bg-gray-950 flex items-center justify-center">
         <div className="w-10 h-10 rounded-full border-4 border-amber-400 border-t-transparent animate-spin" />
       </div>
     );
@@ -273,15 +273,15 @@ export default function ScanPage() {
   // Not logged in → invite to login
   if (!isAuthenticated) {
     return (
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-950 flex flex-col items-center justify-center px-6 text-center gap-6">
+      <div className="min-h-screen bg-stone-50 dark:bg-gray-950 flex flex-col items-center justify-center px-6 text-center gap-6">
         <div className="w-20 h-20 rounded-full bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center">
           <Lock className="h-10 w-10 text-amber-500" />
         </div>
         <div>
-          <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
+          <h2 className="text-2xl font-bold text-foreground dark:text-white mb-2">
             Accesso riservato
           </h2>
-          <p className="text-gray-500 dark:text-gray-400 max-w-sm">
+          <p className="text-muted-foreground dark:text-stone-400 max-w-sm">
             Lo scanner etichette è disponibile solo per gli utenti registrati. Crea un account gratuito per iniziare.
           </p>
         </div>
@@ -306,15 +306,15 @@ export default function ScanPage() {
   // Logged in but onboarding not complete → invite to finish setup
   if ((user as any)?.needsOnboarding) {
     return (
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-950 flex flex-col items-center justify-center px-6 text-center gap-6">
+      <div className="min-h-screen bg-stone-50 dark:bg-gray-950 flex flex-col items-center justify-center px-6 text-center gap-6">
         <div className="w-20 h-20 rounded-full bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center">
           <Lock className="h-10 w-10 text-amber-500" />
         </div>
         <div>
-          <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
+          <h2 className="text-2xl font-bold text-foreground dark:text-white mb-2">
             Completa la registrazione
           </h2>
-          <p className="text-gray-500 dark:text-gray-400 max-w-sm">
+          <p className="text-muted-foreground dark:text-stone-400 max-w-sm">
             Devi completare la configurazione del tuo account per accedere allo scanner etichette.
           </p>
         </div>
@@ -340,19 +340,19 @@ export default function ScanPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-950">
+    <div className="min-h-screen bg-stone-50 dark:bg-gray-950">
       {/* Header */}
       <div className="sticky top-0 z-20 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 shadow-sm">
         <div className="flex items-center gap-3 px-4 py-3">
           <button
             onClick={handleRescan}
-            className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors text-gray-600 dark:text-gray-400"
+            className="p-2 rounded-full hover:bg-stone-100 dark:hover:bg-gray-800 transition-colors text-muted-foreground dark:text-stone-400"
           >
             <ArrowLeft className="h-5 w-5" />
           </button>
           <div className="flex-1 min-w-0">
-            <h1 className="font-semibold text-gray-900 dark:text-white text-sm">Risultati Scansione</h1>
-            <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
+            <h1 className="font-semibold text-foreground dark:text-white text-sm">Risultati Scansione</h1>
+            <p className="text-xs text-muted-foreground dark:text-stone-400 truncate">
               {detectedSource === "barcode" ? "📊 Barcode" : "🔍 OCR"}: "{detectedText}"
             </p>
           </div>
@@ -368,18 +368,18 @@ export default function ScanPage() {
         {/* Manual refinement bar */}
         <div className="px-4 pb-3">
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-stone-400" />
             <input
               type="text"
               value={manualQuery}
               onChange={e => setManualQuery(e.target.value)}
               placeholder="Affina la ricerca..."
-              className="w-full pl-9 pr-9 py-2.5 bg-gray-100 dark:bg-gray-800 rounded-xl text-sm text-gray-900 dark:text-white placeholder-gray-400 border-0 focus:outline-none focus:ring-2 focus:ring-amber-400"
+              className="w-full pl-9 pr-9 py-2.5 bg-stone-100 dark:bg-gray-800 rounded-xl text-sm text-foreground dark:text-white placeholder-gray-400 border-0 focus:outline-none focus:ring-2 focus:ring-amber-400"
             />
             {manualQuery && (
               <button
                 onClick={() => setManualQuery("")}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-stone-400 hover:text-muted-foreground"
               >
                 <X className="h-4 w-4" />
               </button>
@@ -400,17 +400,17 @@ export default function ScanPage() {
         {(scanState === "searching" || isSearching) && (
           <div className="flex flex-col items-center justify-center py-20 gap-4">
             <div className="w-12 h-12 rounded-full border-4 border-amber-400 border-t-transparent animate-spin" />
-            <p className="text-gray-500 dark:text-gray-400 text-sm">Cerco nel catalogo...</p>
+            <p className="text-muted-foreground dark:text-stone-400 text-sm">Cerco nel catalogo...</p>
           </div>
         )}
 
         {/* No results */}
         {scanState === "notfound" && !isSearching && (
           <div className="flex flex-col items-center justify-center py-16 gap-4 text-center">
-            <Beer className="h-16 w-16 text-gray-300 dark:text-gray-700" />
+            <Beer className="h-16 w-16 text-stone-300 dark:text-muted-foreground" />
             <div>
-              <p className="text-lg font-semibold text-gray-700 dark:text-gray-300">Nessuna birra trovata</p>
-              <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+              <p className="text-lg font-semibold text-muted-foreground dark:text-stone-300">Nessuna birra trovata</p>
+              <p className="text-sm text-muted-foreground dark:text-stone-400 mt-1">
                 Prova a riscansionare avvicinandoti oppure modifica il testo qui sopra.
               </p>
             </div>
@@ -449,7 +449,7 @@ export default function ScanPage() {
         {scanState === "results" && !isSearching && totalResults > 0 && (
           <>
             <div className="flex items-center justify-between mb-4">
-              <p className="text-xs text-gray-500 dark:text-gray-400">
+              <p className="text-xs text-muted-foreground dark:text-stone-400">
                 {totalResults} risultat{totalResults === 1 ? "o" : "i"} trovat{totalResults === 1 ? "o" : "i"}
               </p>
               <Link href="/scan/history" className="flex items-center gap-1 text-xs text-amber-600 dark:text-amber-400 hover:underline">
@@ -461,7 +461,7 @@ export default function ScanPage() {
             {/* Beers */}
             {beers.length > 0 && (
               <section className="mb-6">
-                <h2 className="flex items-center gap-2 text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-3">
+                <h2 className="flex items-center gap-2 text-xs font-bold text-muted-foreground dark:text-stone-400 uppercase tracking-wider mb-3">
                   <Beer className="h-3.5 w-3.5 text-amber-500" />
                   Birre ({beers.length})
                 </h2>
@@ -480,9 +480,9 @@ export default function ScanPage() {
                         )}
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="font-semibold text-gray-900 dark:text-white truncate text-sm">{beer.name}</p>
+                        <p className="font-semibold text-foreground dark:text-white truncate text-sm">{beer.name}</p>
                         {beer.breweryName && (
-                          <p className="text-xs text-gray-500 dark:text-gray-400 truncate">{beer.breweryName}</p>
+                          <p className="text-xs text-muted-foreground dark:text-stone-400 truncate">{beer.breweryName}</p>
                         )}
                         <div className="flex items-center gap-2 mt-1 flex-wrap">
                           {beer.style && (
@@ -502,7 +502,7 @@ export default function ScanPage() {
             {/* Breweries */}
             {breweries.length > 0 && (
               <section>
-                <h2 className="flex items-center gap-2 text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-3">
+                <h2 className="flex items-center gap-2 text-xs font-bold text-muted-foreground dark:text-stone-400 uppercase tracking-wider mb-3">
                   <Building2 className="h-3.5 w-3.5 text-blue-500" />
                   Birrifici ({breweries.length})
                 </h2>
@@ -521,9 +521,9 @@ export default function ScanPage() {
                         )}
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="font-semibold text-gray-900 dark:text-white truncate text-sm">{brewery.name}</p>
+                        <p className="font-semibold text-foreground dark:text-white truncate text-sm">{brewery.name}</p>
                         {(brewery.city || brewery.country) && (
-                          <p className="text-xs text-gray-500 dark:text-gray-400">
+                          <p className="text-xs text-muted-foreground dark:text-stone-400">
                             {[brewery.city, brewery.country].filter(Boolean).join(", ")}
                           </p>
                         )}
@@ -540,7 +540,7 @@ export default function ScanPage() {
         {/* Visual Similarity Results — shown regardless of OCR result */}
         {(scanState === "results" || scanState === "notfound") && (imageSimilarResults.length > 0 || isImageSearching) && (
           <section className="mt-4 px-4">
-            <h2 className="flex items-center gap-2 text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-3">
+            <h2 className="flex items-center gap-2 text-xs font-bold text-muted-foreground dark:text-stone-400 uppercase tracking-wider mb-3">
               <Sparkles className="h-3.5 w-3.5 text-purple-500" />
               Per somiglianza visiva
               {isImageSearching && <span className="w-3 h-3 rounded-full border-2 border-purple-400 border-t-transparent animate-spin" />}
@@ -560,7 +560,7 @@ export default function ScanPage() {
                     )}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="font-semibold text-gray-900 dark:text-white truncate text-sm">{beer.name}</p>
+                    <p className="font-semibold text-foreground dark:text-white truncate text-sm">{beer.name}</p>
                     {beer.breweryName && (
                       <p className="text-xs text-amber-700 dark:text-amber-400 truncate">{beer.breweryName}</p>
                     )}

@@ -39,7 +39,7 @@ export const EVENT_CATEGORIES: Record<string, { label: string; color: string; bg
   live_music: { label: "Live Music", color: "#EC4899", bg: "bg-pink-100 text-pink-800", darkBg: "dark:bg-pink-900 dark:text-pink-200", icon: Music },
   sport: { label: "Sport", color: "#10B981", bg: "bg-emerald-100 text-emerald-800", darkBg: "dark:bg-emerald-900 dark:text-emerald-200", icon: Trophy },
   festa: { label: "Festa", color: "#F59E0B", bg: "bg-amber-100 text-amber-800", darkBg: "dark:bg-amber-900 dark:text-amber-200", icon: PartyPopper },
-  altro: { label: "Altro", color: "#6B7280", bg: "bg-gray-100 text-gray-800", darkBg: "dark:bg-gray-900 dark:text-gray-200", icon: Sparkles },
+  altro: { label: "Altro", color: "#6B7280", bg: "bg-stone-100 text-foreground", darkBg: "dark:bg-gray-900 dark:text-gray-200", icon: Sparkles },
 };
 
 interface EventsManagerProps {
@@ -108,7 +108,7 @@ export function EventShareButtons({ event, pubId, size = "sm" }: { event: any; p
   };
 
   return (
-    <Button variant="ghost" size="icon" className={`${btnSize} text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800`} onClick={handleShare} title="Condividi">
+    <Button variant="ghost" size="icon" className={`${btnSize} text-muted-foreground dark:text-stone-400 hover:bg-stone-100 dark:hover:bg-gray-800`} onClick={handleShare} title="Condividi">
       <Share2 className={iconSize} />
     </Button>
   );
@@ -147,7 +147,7 @@ export function EventInterestButton({
 
   if (readOnly) {
     return (
-      <div className="flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400">
+      <div className="flex items-center gap-1 text-xs text-muted-foreground dark:text-stone-400">
         <Users className="h-3.5 w-3.5" />
         <span>{count} {count === 1 ? "interessato" : "interessati"}</span>
       </div>
@@ -166,7 +166,7 @@ export function EventInterestButton({
       className={`inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-all select-none
         ${interested
           ? "bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300 hover:bg-amber-200"
-          : "bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700"
+          : "bg-stone-100 dark:bg-gray-800 text-muted-foreground dark:text-stone-400 hover:bg-stone-200 dark:hover:bg-gray-700"
         }
         ${!isAuthenticated ? "opacity-60 cursor-default" : "cursor-pointer"}
       `}
@@ -275,11 +275,11 @@ export function EventsManager({ pubId, pubName }: EventsManagerProps) {
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h2 className="text-2xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
+          <h2 className="text-2xl font-bold text-foreground dark:text-white flex items-center gap-2">
             <CalendarDays className="h-6 w-6 text-purple-600" />
             Eventi
           </h2>
-          <p className="text-gray-600 dark:text-gray-400">Gestisci gli eventi del tuo pub</p>
+          <p className="text-muted-foreground dark:text-stone-400">Gestisci gli eventi del tuo pub</p>
         </div>
         <Dialog open={dialogOpen} onOpenChange={(open) => { setDialogOpen(open); if (!open) resetForm(); }}>
           <DialogTrigger asChild>
@@ -368,10 +368,10 @@ export function EventsManager({ pubId, pubName }: EventsManagerProps) {
                 </div>
               </div>
 
-              <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
+              <div className="flex items-center justify-between p-3 bg-stone-50 dark:bg-gray-800 rounded-lg">
                 <div>
                   <p className="font-medium text-sm">Pubblicato</p>
-                  <p className="text-xs text-gray-500">Visibile ai clienti</p>
+                  <p className="text-xs text-muted-foreground">Visibile ai clienti</p>
                 </div>
                 <Switch
                   checked={form.isPublished}
@@ -396,15 +396,15 @@ export function EventsManager({ pubId, pubName }: EventsManagerProps) {
         </div>
       ) : (events as any[]).length === 0 ? (
         <Card className="p-8 text-center">
-          <PartyPopper className="h-12 w-12 text-gray-300 mx-auto mb-4" />
-          <h3 className="text-lg font-semibold text-gray-700 dark:text-gray-300">Nessun evento</h3>
-          <p className="text-sm text-gray-500 mt-2">Crea il tuo primo evento per attirare clienti!</p>
+          <PartyPopper className="h-12 w-12 text-stone-300 mx-auto mb-4" />
+          <h3 className="text-lg font-semibold text-muted-foreground dark:text-stone-300">Nessun evento</h3>
+          <p className="text-sm text-muted-foreground mt-2">Crea il tuo primo evento per attirare clienti!</p>
         </Card>
       ) : (
         <div className="space-y-6">
           {upcomingEvents.length > 0 && (
             <div>
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-3 flex items-center gap-2">
+              <h3 className="text-lg font-semibold text-foreground dark:text-white mb-3 flex items-center gap-2">
                 <Calendar className="h-5 w-5 text-green-600" />
                 Prossimi ({upcomingEvents.length})
               </h3>
@@ -417,7 +417,7 @@ export function EventsManager({ pubId, pubName }: EventsManagerProps) {
           )}
           {pastEvents.length > 0 && (
             <div>
-              <h3 className="text-lg font-semibold text-gray-500 dark:text-gray-400 mb-3 flex items-center gap-2">
+              <h3 className="text-lg font-semibold text-muted-foreground dark:text-stone-400 mb-3 flex items-center gap-2">
                 <Clock className="h-5 w-5" />
                 Passati ({pastEvents.length})
               </h3>
@@ -451,7 +451,7 @@ function EventCard({ event, pubId, onEdit, onDelete, isPast }: { event: any; pub
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 mb-1 flex-wrap">
               {!event.imageUrl && <EventCategoryBadge category={event.category} />}
-              <h4 className="font-semibold text-gray-900 dark:text-white truncate">{event.title}</h4>
+              <h4 className="font-semibold text-foreground dark:text-white truncate">{event.title}</h4>
               {!event.isPublished && (
                 <Badge variant="secondary" className="text-xs shrink-0">
                   <EyeOff className="h-3 w-3 mr-1" />
@@ -459,18 +459,18 @@ function EventCard({ event, pubId, onEdit, onDelete, isPast }: { event: any; pub
                 </Badge>
               )}
             </div>
-            <div className="flex items-center text-sm text-gray-600 dark:text-gray-400 gap-1 mb-1">
+            <div className="flex items-center text-sm text-muted-foreground dark:text-stone-400 gap-1 mb-1">
               <Calendar className="h-3.5 w-3.5 shrink-0" />
               <span>{format(new Date(event.eventDate), "d MMMM yyyy 'alle' HH:mm", { locale: it })}</span>
             </div>
             {event.endDate && (
-              <div className="flex items-center text-xs text-gray-500 gap-1 mb-1">
+              <div className="flex items-center text-xs text-muted-foreground gap-1 mb-1">
                 <Clock className="h-3 w-3 shrink-0" />
                 <span>fino alle {format(new Date(event.endDate), "HH:mm", { locale: it })}</span>
               </div>
             )}
             {event.description && (
-              <p className="text-sm text-gray-600 dark:text-gray-400 line-clamp-2 mb-2">{event.description}</p>
+              <p className="text-sm text-muted-foreground dark:text-stone-400 line-clamp-2 mb-2">{event.description}</p>
             )}
             <div className="flex items-center gap-2 flex-wrap">
               <EventShareButtons event={event} pubId={pubId} size="sm" />
@@ -526,24 +526,24 @@ function BreweryEventCard({ event, breweryId, onEdit, onDelete, isPast }: { even
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 mb-1 flex-wrap">
               {!event.imageUrl && <EventCategoryBadge category={event.category} />}
-              <h4 className="font-semibold text-gray-900 dark:text-white truncate">{event.title}</h4>
+              <h4 className="font-semibold text-foreground dark:text-white truncate">{event.title}</h4>
               {!event.isPublished && (
                 <Badge variant="secondary" className="text-xs shrink-0"><EyeOff className="h-3 w-3 mr-1" />Bozza</Badge>
               )}
             </div>
-            <div className="flex items-center text-sm text-gray-600 dark:text-gray-400 gap-1 mb-1">
+            <div className="flex items-center text-sm text-muted-foreground dark:text-stone-400 gap-1 mb-1">
               <Calendar className="h-3.5 w-3.5 shrink-0" />
               <span>{format(new Date(event.eventDate), "d MMMM yyyy 'alle' HH:mm", { locale: it })}</span>
             </div>
             {event.endDate && (
-              <div className="flex items-center text-xs text-gray-500 gap-1 mb-1">
+              <div className="flex items-center text-xs text-muted-foreground gap-1 mb-1">
                 <Clock className="h-3 w-3 shrink-0" />
                 <span>fino alle {format(new Date(event.endDate), "HH:mm", { locale: it })}</span>
               </div>
             )}
-            {event.description && <p className="text-sm text-gray-600 dark:text-gray-400 line-clamp-2 mb-2">{event.description}</p>}
+            {event.description && <p className="text-sm text-muted-foreground dark:text-stone-400 line-clamp-2 mb-2">{event.description}</p>}
             <div className="flex items-center gap-2 flex-wrap">
-              <Button variant="ghost" size="icon" className="h-7 w-7 text-gray-600 dark:text-gray-400" onClick={handleShare} title="Condividi">
+              <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground dark:text-stone-400" onClick={handleShare} title="Condividi">
                 <Share2 className="h-3.5 w-3.5" />
               </Button>
               <EventInterestButton eventId={event.id} type="brewery" readOnly />
@@ -658,11 +658,11 @@ export function BreweryEventsManager({ breweryId, breweryName }: BreweryEventsMa
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h2 className="text-2xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
+          <h2 className="text-2xl font-bold text-foreground dark:text-white flex items-center gap-2">
             <CalendarDays className="h-6 w-6 text-purple-600" />
             Eventi del Birrificio
           </h2>
-          <p className="text-gray-600 dark:text-gray-400">Degustazioni, open day, fiere e altro</p>
+          <p className="text-muted-foreground dark:text-stone-400">Degustazioni, open day, fiere e altro</p>
         </div>
         <Dialog open={dialogOpen} onOpenChange={(open) => { setDialogOpen(open); if (!open) resetForm(); }}>
           <DialogTrigger asChild>
@@ -723,10 +723,10 @@ export function BreweryEventsManager({ breweryId, breweryName }: BreweryEventsMa
                   <Input id="be-end" type="datetime-local" value={form.endDate} onChange={(e) => setForm({ ...form, endDate: e.target.value })} />
                 </div>
               </div>
-              <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
+              <div className="flex items-center justify-between p-3 bg-stone-50 dark:bg-gray-800 rounded-lg">
                 <div>
                   <p className="font-medium text-sm">Pubblicato</p>
-                  <p className="text-xs text-gray-500">Visibile al pubblico</p>
+                  <p className="text-xs text-muted-foreground">Visibile al pubblico</p>
                 </div>
                 <Switch checked={form.isPublished} onCheckedChange={(checked) => setForm({ ...form, isPublished: checked })} />
               </div>
@@ -744,15 +744,15 @@ export function BreweryEventsManager({ breweryId, breweryName }: BreweryEventsMa
         </div>
       ) : (events as any[]).length === 0 ? (
         <Card className="p-8 text-center">
-          <PartyPopper className="h-12 w-12 text-gray-300 mx-auto mb-4" />
-          <h3 className="text-lg font-semibold text-gray-700 dark:text-gray-300">Nessun evento</h3>
-          <p className="text-sm text-gray-500 mt-2">Crea il primo evento del birrificio: open day, degustazioni, fiere...</p>
+          <PartyPopper className="h-12 w-12 text-stone-300 mx-auto mb-4" />
+          <h3 className="text-lg font-semibold text-muted-foreground dark:text-stone-300">Nessun evento</h3>
+          <p className="text-sm text-muted-foreground mt-2">Crea il primo evento del birrificio: open day, degustazioni, fiere...</p>
         </Card>
       ) : (
         <div className="space-y-6">
           {upcomingEvents.length > 0 && (
             <div>
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-3 flex items-center gap-2">
+              <h3 className="text-lg font-semibold text-foreground dark:text-white mb-3 flex items-center gap-2">
                 <Calendar className="h-5 w-5 text-green-600" />
                 Prossimi ({upcomingEvents.length})
               </h3>
@@ -765,7 +765,7 @@ export function BreweryEventsManager({ breweryId, breweryName }: BreweryEventsMa
           )}
           {pastEvents.length > 0 && (
             <div>
-              <h3 className="text-lg font-semibold text-gray-500 dark:text-gray-400 mb-3 flex items-center gap-2">
+              <h3 className="text-lg font-semibold text-muted-foreground dark:text-stone-400 mb-3 flex items-center gap-2">
                 <Clock className="h-5 w-5" />
                 Passati ({pastEvents.length})
               </h3>

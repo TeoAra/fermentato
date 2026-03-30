@@ -569,7 +569,7 @@ export default function BreweryDetail() {
             {/* Description preview */}
             {(brewery as any)?.description && (
               <div className="px-6 md:px-8 pb-4">
-                <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed line-clamp-3">
+                <p className="text-sm text-muted-foreground dark:text-stone-400 leading-relaxed line-clamp-3">
                   {(brewery as any).description}
                 </p>
               </div>
@@ -618,7 +618,7 @@ export default function BreweryDetail() {
                       <div className="flex flex-wrap gap-2">
                         <button
                           onClick={() => { setActiveStyleFilter(""); setVisibleCount(9); }}
-                          className={`px-3 py-1.5 rounded-full text-xs font-bold transition-all ${activeStyleFilter === "" ? "bg-foreground text-background shadow-md" : "bg-gray-100 dark:bg-gray-800 text-muted-foreground hover:bg-gray-200 dark:hover:bg-gray-700"}`}
+                          className={`px-3 py-1.5 rounded-full text-xs font-bold transition-all ${activeStyleFilter === "" ? "bg-foreground text-background shadow-md" : "bg-stone-100 dark:bg-stone-800 text-muted-foreground hover:bg-stone-200 dark:hover:bg-gray-700"}`}
                         >
                           Tutte le birre
                         </button>

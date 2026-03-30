@@ -63,7 +63,7 @@ export function MobileHeader({ onMenuToggle, isMenuOpen }: MobileHeaderProps) {
   });
 
   const exploreItems = [
-    { icon: Beer, label: "Esplora Birre", href: "/search", desc: "Oltre 1 milione di birre" },
+    { icon: Beer, label: "Esplora Birre", href: "/explore/beers", desc: "Oltre 1 milione di birre" },
     { icon: Building2Icon, label: "Birrifici", href: "/explore/breweries", desc: "Scopri i birrifici" },
     { icon: MapPin, label: "Pub & Locali", href: "/explore/pubs", desc: "Trova dove berla" },
     { icon: QrCode, label: "Festival", href: "/festival", desc: "Festival di birra artigianale" },
@@ -75,15 +75,15 @@ export function MobileHeader({ onMenuToggle, isMenuOpen }: MobileHeaderProps) {
     const isActive = location === href || (href !== '/' && location.startsWith(href));
     return (
       <Link href={href} onClick={() => { onMenuToggle(); onClick?.(); }}>
-        <div className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-colors ${isActive ? 'bg-orange-50 dark:bg-orange-900/20' : 'hover:bg-stone-50 dark:hover:bg-stone-900/20'}`}>
-          <div className={`flex items-center justify-center w-10 h-10 rounded-xl ${isActive ? 'bg-primary text-white' : 'bg-stone-100 dark:bg-stone-800 text-stone-500 dark:text-stone-400'}`}>
-            <Icon className="h-5 w-5" />
+        <div className={`flex items-center gap-3 px-3 py-2.5 rounded-xl transition-colors ${isActive ? 'bg-orange-50 dark:bg-orange-900/20' : 'hover:bg-stone-50 dark:hover:bg-stone-900/20'}`}>
+          <div className={`flex items-center justify-center w-9 h-9 rounded-xl ${isActive ? 'bg-primary text-white' : 'bg-stone-100 dark:bg-stone-800 text-stone-500 dark:text-stone-400'}`}>
+            <Icon className="h-4.5 w-4.5" style={{ width: '18px', height: '18px' }} />
           </div>
           <div className="flex-1 min-w-0">
             <div className={`text-sm font-semibold ${isActive ? 'text-primary' : 'text-foreground'}`}>{label}</div>
             {desc && <div className="text-xs text-stone-400 dark:text-stone-500 truncate">{desc}</div>}
           </div>
-          <ChevronRight className="h-4 w-4 text-stone-300 dark:text-stone-600" />
+          <ChevronRight className="h-3.5 w-3.5 text-stone-300 dark:text-stone-600 flex-shrink-0" />
         </div>
       </Link>
     );
@@ -91,53 +91,68 @@ export function MobileHeader({ onMenuToggle, isMenuOpen }: MobileHeaderProps) {
 
   return (
     <>
-      <header className="lg:hidden fixed top-0 left-0 right-0 z-50 h-16">
-        {/* Frosted background */}
-        <div className="absolute inset-0 bg-white/97 dark:bg-[hsl(25,14%,7%)] backdrop-blur-xl border-b border-[hsl(36,14%,86%)] dark:border-[hsl(25,12%,14%)]" />
-        <div className="relative flex items-center justify-between px-4 h-full">
+      {/* ── TOP HEADER ──────────────────────────────────────────────────── */}
+      <header className="lg:hidden fixed top-0 left-0 right-0 z-50 h-14 bg-white dark:bg-[hsl(25,14%,8%)] border-b border-stone-100 dark:border-[hsl(25,12%,14%)]">
+        <div className="flex items-center justify-between px-4 h-full">
+
+          {/* Logo */}
           <Link href="/">
-            <img src="/logo-full.png" alt="Fermenta.to" className="h-9 w-auto block dark:hidden" />
-            <img src="/logo-dark-mode.png" alt="Fermenta.to" className="h-9 w-auto hidden dark:block" />
+            <img
+              src="/logo-full.png"
+              alt="Fermenta.to"
+              className="h-8 w-auto block dark:hidden"
+              onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none'; (e.currentTarget.nextSibling as HTMLElement)?.removeAttribute('hidden'); }}
+            />
+            <img
+              src="/logo-dark-mode.png"
+              alt="Fermenta.to"
+              className="h-8 w-auto hidden dark:block"
+              onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }}
+            />
+            {/* Text fallback */}
+            <span className="hidden items-center gap-1.5 text-foreground font-bold text-base">
+              <Beer className="h-5 w-5 text-primary" />
+              <span>Fermenta<span className="text-primary">.tò</span></span>
+            </span>
           </Link>
 
+          {/* Right icons */}
           <div className="flex items-center gap-0.5">
-            <button
-              onClick={() => setIsSearchOpen(true)}
-              className="p-2.5 text-[hsl(28,8%,52%)] dark:text-[hsl(35,8%,52%)] hover:text-[hsl(24,93%,49%)] dark:hover:text-[hsl(24,93%,58%)] hover:bg-[hsl(36,14%,93%)] dark:hover:bg-[hsl(25,12%,13%)] rounded-xl transition-colors"
-              aria-label="Cerca"
-            >
-              <Search className="h-5 w-5" />
-            </button>
 
-            {isAuthenticated && typedUser && (
+            {/* Bell */}
+            {isAuthenticated && (
               <Link href="/notifications" className="relative p-2.5">
-                <Bell className="h-5 w-5 text-[hsl(28,8%,52%)] dark:text-[hsl(35,8%,52%)] hover:text-[hsl(24,93%,49%)] dark:hover:text-[hsl(24,93%,58%)] transition-colors" />
+                <Bell className="h-5 w-5 text-stone-500 dark:text-stone-400" />
                 {(unreadData?.count ?? 0) > 0 && (
-                  <span className="absolute top-1.5 right-1.5 h-4 w-4 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center">
+                  <span className="absolute top-1.5 right-1.5 h-[14px] w-[14px] bg-red-500 text-white text-[9px] font-bold rounded-full flex items-center justify-center leading-none">
                     {(unreadData?.count ?? 0) > 9 ? '9+' : unreadData?.count}
                   </span>
                 )}
               </Link>
             )}
 
-            {isAuthenticated && typedUser && (
-              <Link href="/dashboard">
-                <Avatar className="h-8 w-8 ring-2 ring-[hsl(38,80%,82%)] dark:ring-[hsl(35,40%,28%)]">
+            {/* Avatar → dashboard */}
+            {isAuthenticated && typedUser ? (
+              <Link href="/dashboard" className="p-1.5">
+                <Avatar className="h-7 w-7 ring-2 ring-stone-200 dark:ring-stone-700">
                   {typedUser.profileImageUrl && (
                     <AvatarImage src={typedUser.profileImageUrl} alt={typedUser.nickname || 'Profilo'} />
                   )}
-                  <AvatarFallback className="bg-[hsl(38,80%,93%)] dark:bg-[hsl(35,30%,18%)] text-[hsl(24,93%,44%)] dark:text-[hsl(38,88%,60%)] text-sm font-semibold">
+                  <AvatarFallback className="bg-orange-50 dark:bg-orange-900/30 text-primary text-xs font-bold">
                     {typedUser.nickname?.[0]?.toUpperCase() || typedUser.firstName?.[0] || 'U'}
                   </AvatarFallback>
                 </Avatar>
               </Link>
+            ) : (
+              <Link href="/login" className="p-2.5">
+                <User className="h-5 w-5 text-stone-500 dark:text-stone-400" />
+              </Link>
             )}
 
-            <ThemeToggle />
-
+            {/* Hamburger */}
             <button
               onClick={onMenuToggle}
-              className="p-2.5 text-[hsl(28,8%,52%)] dark:text-[hsl(35,8%,52%)] hover:text-[hsl(24,93%,49%)] dark:hover:text-[hsl(24,93%,58%)] hover:bg-[hsl(36,14%,93%)] dark:hover:bg-[hsl(25,12%,13%)] rounded-xl transition-colors"
+              className="p-2.5 text-stone-500 dark:text-stone-400 hover:text-primary dark:hover:text-primary hover:bg-stone-50 dark:hover:bg-stone-900/20 rounded-xl transition-colors"
               aria-label={isMenuOpen ? "Chiudi menu" : "Apri menu"}
             >
               {isMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
@@ -146,24 +161,26 @@ export function MobileHeader({ onMenuToggle, isMenuOpen }: MobileHeaderProps) {
         </div>
       </header>
 
+      {/* ── SLIDE-OUT MENU ──────────────────────────────────────────────── */}
       <Sheet open={isMenuOpen} onOpenChange={(open) => { if (!open) onMenuToggle(); }}>
         <SheetContent side="right" className="w-[300px] p-0 flex flex-col bg-white dark:bg-[hsl(25,14%,9%)] border-l border-stone-100 dark:border-[hsl(25,12%,16%)]">
           <SheetTitle className="sr-only">Menu di navigazione</SheetTitle>
-          {/* User Profile Header */}
-          <div className="px-5 pt-6 pb-4 border-b border-stone-100 dark:border-[hsl(25,12%,16%)]">
+
+          {/* User profile header */}
+          <div className="px-4 pt-5 pb-4 border-b border-stone-100 dark:border-[hsl(25,12%,16%)]">
             {isAuthenticated && typedUser ? (
               <Link href="/dashboard" onClick={onMenuToggle}>
                 <div className="flex items-center gap-3">
-                  <Avatar className="h-12 w-12 ring-2 ring-primary/20">
+                  <Avatar className="h-11 w-11 ring-2 ring-stone-100 dark:ring-stone-700">
                     {typedUser.profileImageUrl && (
                       <AvatarImage src={typedUser.profileImageUrl} alt={typedUser.nickname || 'Profilo'} />
                     )}
-                    <AvatarFallback className="bg-amber-100 dark:bg-orange-900/30 text-primary text-lg font-bold">
+                    <AvatarFallback className="bg-orange-50 dark:bg-orange-900/30 text-primary text-base font-bold">
                       {typedUser.nickname?.[0]?.toUpperCase() || typedUser.firstName?.[0] || 'U'}
                     </AvatarFallback>
                   </Avatar>
                   <div className="flex-1 min-w-0">
-                    <div className="font-semibold text-foreground truncate">
+                    <div className="font-semibold text-foreground text-sm truncate">
                       {typedUser.nickname || typedUser.firstName || typedUser.email?.split('@')[0]}
                     </div>
                     {rolesData && (
@@ -172,16 +189,16 @@ export function MobileHeader({ onMenuToggle, isMenuOpen }: MobileHeaderProps) {
                       </div>
                     )}
                   </div>
-                  <ChevronRight className="h-4 w-4 text-stone-300" />
+                  <ChevronRight className="h-4 w-4 text-stone-300 flex-shrink-0" />
                 </div>
               </Link>
             ) : (
               <div className="flex items-center gap-3">
-                <div className="flex items-center justify-center w-12 h-12 rounded-full bg-stone-100 dark:bg-stone-800">
-                  <User className="h-6 w-6 text-stone-400" />
+                <div className="flex items-center justify-center w-11 h-11 rounded-full bg-stone-100 dark:bg-stone-800">
+                  <User className="h-5 w-5 text-stone-400" />
                 </div>
                 <div>
-                  <div className="font-semibold text-foreground">Ospite</div>
+                  <div className="font-semibold text-foreground text-sm">Ospite</div>
                   <button
                     onClick={() => { onMenuToggle(); window.location.href = '/login'; }}
                     className="text-xs text-primary font-medium"
@@ -193,42 +210,36 @@ export function MobileHeader({ onMenuToggle, isMenuOpen }: MobileHeaderProps) {
             )}
           </div>
 
-          <div className="flex-1 overflow-y-auto py-3 px-3 space-y-1">
-            {/* Home */}
+          {/* Nav items */}
+          <div className="flex-1 overflow-y-auto py-2 px-2 space-y-0.5">
             <MenuItem href="/" icon={Home} label="Home" />
 
-            {/* Separator + Esplora */}
-            <div className="px-4 pt-3 pb-1">
-              <span className="text-[11px] font-semibold uppercase tracking-wider text-stone-400 dark:text-stone-500">Esplora</span>
+            <div className="px-3 pt-3 pb-1">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-stone-400 dark:text-stone-500">Esplora</span>
             </div>
-            <MenuItem href="/search" icon={Search} label="Ricerca avanzata" desc="Database di oltre 1M di birre" />
+            <MenuItem href="/explore/beers" icon={Beer} label="Birre" desc="Catalogo di oltre 1M di birre" />
             <MenuItem href="/explore/breweries" icon={Building2Icon} label="Birrifici" desc="Artigianali italiani e internazionali" />
             <MenuItem href="/explore/pubs" icon={MapPin} label="Pub & Locali" desc="Dove bere artigianale in Italia" />
             <MenuItem href="/festival" icon={QrCode} label="Festival" desc="Festival di birra artigianale" />
 
             {isAuthenticated && (
               <>
-                <div className="px-4 pt-3 pb-1">
-                  <span className="text-[11px] font-semibold uppercase tracking-wider text-stone-400 dark:text-stone-500">Account</span>
+                <div className="px-3 pt-3 pb-1">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-stone-400 dark:text-stone-500">Account</span>
                 </div>
                 <MenuItem href="/dashboard" icon={User} label="Il mio profilo" />
-                {isAuthenticated && (
-                  <MenuItem href="/activity" icon={Activity} label="Attività" />
-                )}
-                {isAuthenticated && (
-                  <MenuItem href="/notifications" icon={Bell} label="Notifiche" />
-                )}
+                <MenuItem href="/activity" icon={Activity} label="Attività" />
+                <MenuItem href="/notifications" icon={Bell} label="Notifiche" />
                 {((user as any)?.activeRole === 'admin' || (!(user as any)?.activeRole && (user as any)?.userType === 'admin')) && (
                   <MenuItem href="/admin" icon={Shield} label="Admin Panel" />
                 )}
 
-                {/* Festival Mode section */}
-                <div className="px-4 pt-3 pb-1">
-                  <span className="text-[11px] font-semibold uppercase tracking-wider text-stone-400 dark:text-stone-500">Festival</span>
+                <div className="px-3 pt-3 pb-1">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-stone-400 dark:text-stone-500">Festival</span>
                 </div>
                 {myFestivals && myFestivals.length > 0 ? (
                   <>
-                    <MenuItem href="/festival-dashboard" icon={QrCode} label="Festival Dashboard" desc={`${myFestivals.length} festival${myFestivals.length > 1 ? '' : ''} attiv${myFestivals.length > 1 ? 'i' : 'o'}`} />
+                    <MenuItem href="/festival-dashboard" icon={QrCode} label="Festival Dashboard" desc={`${myFestivals.length} festival attiv${myFestivals.length > 1 ? 'i' : 'o'}`} />
                     <MenuItem href="/festival" icon={Building2} label="Crea un nuovo festival" />
                   </>
                 ) : (
@@ -240,8 +251,8 @@ export function MobileHeader({ onMenuToggle, isMenuOpen }: MobileHeaderProps) {
             {/* Role switcher */}
             {rolesData && rolesData.roles.length > 1 && (
               <>
-                <div className="px-4 pt-3 pb-1">
-                  <span className="text-[11px] font-semibold uppercase tracking-wider text-stone-400 dark:text-stone-500">Cambia modalità</span>
+                <div className="px-3 pt-3 pb-1">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-stone-400 dark:text-stone-500">Cambia modalità</span>
                 </div>
                 {rolesData.roles.filter(role => role !== rolesData.activeRole).map(role => {
                   const Icon = roleIcons[role] || User;
@@ -250,10 +261,10 @@ export function MobileHeader({ onMenuToggle, isMenuOpen }: MobileHeaderProps) {
                       key={role}
                       onClick={() => switchRoleMutation.mutate(role)}
                       disabled={switchRoleMutation.isPending}
-                      className="w-full flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-stone-50 dark:hover:bg-stone-900/20 transition-colors"
+                      className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-stone-50 dark:hover:bg-stone-900/20 transition-colors"
                     >
-                      <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-stone-100 dark:bg-stone-800 text-stone-500 dark:text-stone-400">
-                        <Icon className="h-5 w-5" />
+                      <div className="flex items-center justify-center w-9 h-9 rounded-xl bg-stone-100 dark:bg-stone-800 text-stone-500 dark:text-stone-400">
+                        <Icon style={{ width: '18px', height: '18px' }} />
                       </div>
                       <span className="text-sm font-semibold text-foreground">Passa a {roleLabels[role]}</span>
                     </button>
@@ -263,15 +274,15 @@ export function MobileHeader({ onMenuToggle, isMenuOpen }: MobileHeaderProps) {
             )}
           </div>
 
-          {/* Bottom actions */}
-          <div className="px-3 py-4 border-t border-stone-100 dark:border-[hsl(25,12%,16%)] space-y-1">
-            <div className="flex items-center justify-between px-4 py-2">
-              <span className="text-sm text-stone-500 dark:text-stone-400">Tema</span>
+          {/* Footer: theme + logout */}
+          <div className="px-2 py-3 border-t border-stone-100 dark:border-[hsl(25,12%,16%)] space-y-0.5">
+            <div className="flex items-center justify-between px-3 py-2">
+              <span className="text-sm text-stone-500 dark:text-stone-400 font-medium">Tema</span>
               <ThemeToggle />
             </div>
             {isAuthenticated ? (
               <button
-                className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+                className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
                 onClick={() => {
                   onMenuToggle();
                   fetch('/api/auth/logout', { method: 'POST', credentials: 'include' })
@@ -279,15 +290,15 @@ export function MobileHeader({ onMenuToggle, isMenuOpen }: MobileHeaderProps) {
                 }}
                 data-testid="logout-button-mobile"
               >
-                <LogOut className="h-5 w-5" />
+                <LogOut className="h-4.5 w-4.5" style={{ width: '18px', height: '18px' }} />
                 <span className="text-sm font-semibold">Esci</span>
               </button>
             ) : (
               <button
-                className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-primary hover:bg-orange-50 dark:hover:bg-orange-900/20 transition-colors"
+                className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-primary hover:bg-orange-50 dark:hover:bg-orange-900/20 transition-colors"
                 onClick={() => { onMenuToggle(); window.location.href = '/login'; }}
               >
-                <LogIn className="h-5 w-5" />
+                <LogIn className="h-4.5 w-4.5" style={{ width: '18px', height: '18px' }} />
                 <span className="text-sm font-semibold">Accedi</span>
               </button>
             )}

@@ -471,8 +471,8 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
   // Smart dashboard sections configuration — 5 primary tabs only
   // Settings and Profile remain accessible via the dropdown menus
   const sections = [
-    { id: 'overview', name: 'Dashboard', icon: Home, gradient: 'from-orange-400 to-primary' },
-    { id: 'taplist', name: 'Taplist', icon: Beer, gradient: 'from-orange-500 to-primary' },
+    { id: 'overview', name: 'Dashboard', icon: Home, gradient: 'from-primary to-orange-600' },
+    { id: 'taplist', name: 'Taplist', icon: Beer, gradient: 'from-primary to-orange-600' },
     { id: 'bottles', name: 'Cantina', icon: Wine, gradient: 'from-purple-500 to-violet-600' },
     { id: 'menu', name: 'Menu', icon: Utensils, gradient: 'from-emerald-500 to-teal-600' },
     { id: 'events', name: 'Eventi', icon: Calendar, gradient: 'from-pink-500 to-rose-600' },
@@ -686,7 +686,7 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
                   <LinkIcon className="h-4 w-4 shrink-0 text-muted-foreground" />
                 </div>
                 <Button
-                  className="w-full gap-2 bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 py-5 text-base"
+                  className="w-full gap-2 bg-primary hover:bg-primary/90 py-5 text-base"
                   onClick={async () => {
                     const w = window as any;
                     const castFramework = w.cast?.framework;
@@ -786,7 +786,7 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
       >
         <div className="inline-flex items-center justify-center lg:justify-start w-full">
           <motion.div
-            className="p-3 bg-gradient-to-r from-orange-500 to-red-500 rounded-2xl shadow-lg mr-4"
+            className="p-3 bg-primary rounded-2xl shadow-lg mr-4"
             whileHover={{ scale: 1.1, rotate: 5 }}
             transition={{ duration: 0.3 }}
           >
@@ -1719,7 +1719,7 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
       <div className="bg-white dark:bg-[hsl(25,14%,10%)] border-r border-stone-100 dark:border-[hsl(25,12%,16%)] flex-1 flex flex-col min-h-0">
         <div className="flex items-center h-16 flex-shrink-0 px-6 border-b">
           <div className="flex items-center">
-            <div className="p-2 rounded-2xl bg-gradient-to-br from-amber-500 to-orange-600">
+            <div className="p-2 rounded-2xl bg-primary">
               <Store className="w-6 h-6 text-white" />
             </div>
             <span className="ml-3 text-xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 dark:from-white dark:to-gray-300 bg-clip-text text-transparent">

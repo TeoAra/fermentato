@@ -202,9 +202,9 @@ function Router() {
         isMenuOpen={isMobileMenuOpen}
       />
 
-      {/* Main Content — pt-16 always (both mobile header and desktop topbar are h-16) */}
+      {/* Main Content — pt-14 mobile header (h-14), desktop topbar is h-16 so lg:pt-16 */}
       <div>
-      <main className="pt-16 pb-28 lg:pb-8">
+      <main className="pt-14 lg:pt-16 pb-20 lg:pb-8">
         <RouteErrorBoundary>
         <Suspense fallback={<PageSkeleton />}>
         <div key={location.split('?')[0]} className="route-fade">

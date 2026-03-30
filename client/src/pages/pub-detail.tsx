@@ -49,7 +49,7 @@ import { usePubLiveUpdates } from "@/hooks/usePubLiveUpdates";
 type OpenStatus = 'open' | 'closing_soon' | 'opening_soon' | 'closed';
 
 function getOpenStatus(openingHours: any): { status: OpenStatus; borderColor: string; bgColor: string } {
-  if (!openingHours) return { status: 'closed', borderColor: 'ring-gray-400', bgColor: 'bg-gray-400' };
+  if (!openingHours) return { status: 'closed', borderColor: 'ring-stone-400', bgColor: 'bg-stone-400' };
   
   const now = new Date();
   const currentDay = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'][now.getDay()];
@@ -209,9 +209,9 @@ const PubStatsCard = ({
       </div>
       <div>
         <p className="text-2xl font-bold text-foreground">{value}</p>
-        <p className="text-sm text-gray-600 dark:text-gray-400 font-medium">{label}</p>
+        <p className="text-sm text-gray-600 dark:text-stone-400 font-medium">{label}</p>
         {description && (
-          <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{description}</p>
+          <p className="text-xs text-muted-foreground dark:text-stone-400 mt-1">{description}</p>
         )}
       </div>
     </div>
@@ -531,7 +531,7 @@ export default function PubDetail() {
             <XCircle className="w-8 h-8 text-white" />
           </div>
           <h2 className="text-2xl font-bold text-foreground">Pub non trovato</h2>
-          <p className="text-gray-600 dark:text-gray-400">
+          <p className="text-gray-600 dark:text-stone-400">
             Il pub che stai cercando non esiste o è stato rimosso.
           </p>
           <Button asChild>
@@ -845,7 +845,7 @@ export default function PubDetail() {
                 {/* Bottles Tab */}
                 <TabsContent value="bottles" className="px-4 lg:px-0 pt-4 space-y-4">
                   <div className="flex items-center justify-between">
-                    <p className="text-sm text-gray-500 dark:text-gray-400 font-medium">
+                    <p className="text-sm text-muted-foreground dark:text-stone-400 font-medium">
                       {Array.isArray(bottles) ? bottles.length : 0} birre disponibili
                     </p>
                   </div>
@@ -868,11 +868,11 @@ export default function PubDetail() {
                     </div>
                   ) : (
                     <div className="text-center py-16">
-                      <Sparkles className="h-16 w-16 text-gray-400 mx-auto mb-4" />
+                      <Sparkles className="h-16 w-16 text-stone-400 mx-auto mb-4" />
                       <h4 className="text-xl font-semibold text-foreground mb-2">
                         Nessuna birra in cantina
                       </h4>
-                      <p className="text-gray-600 dark:text-gray-400">
+                      <p className="text-gray-600 dark:text-stone-400">
                         La cantina è attualmente vuota. Controlla più tardi!
                       </p>
                     </div>
@@ -920,13 +920,13 @@ export default function PubDetail() {
                                 <span>{format(new Date(event.eventDate), "EEEE d MMMM yyyy 'alle' HH:mm", { locale: itLocale })}</span>
                               </div>
                               {event.endDate && (
-                                <div className="flex items-center text-xs text-gray-500 gap-2 mb-3">
+                                <div className="flex items-center text-xs text-muted-foreground gap-2 mb-3">
                                   <Clock className="h-3.5 w-3.5" />
                                   <span>fino alle {format(new Date(event.endDate), "HH:mm", { locale: itLocale })}</span>
                                 </div>
                               )}
                               {event.description && (
-                                <p className="text-gray-600 dark:text-gray-400 text-sm mb-3">{event.description}</p>
+                                <p className="text-gray-600 dark:text-stone-400 text-sm mb-3">{event.description}</p>
                               )}
                               <div className="flex items-center gap-2 flex-wrap">
                                 <EventShareButtons event={event} pubId={(pub as any).id} />
@@ -976,7 +976,7 @@ export default function PubDetail() {
                         {openStatus.status === 'open' ? 'Aperto adesso' : openStatus.status === 'closing_soon' ? 'Sta chiudendo' : openStatus.status === 'opening_soon' ? 'Sta per aprire' : 'Chiuso'}
                       </p>
                     </div>
-                    <Info className="h-4 w-4 text-gray-400 flex-shrink-0" />
+                    <Info className="h-4 w-4 text-stone-400 flex-shrink-0" />
                   </button>
                   {/* Phone */}
                   {(pub as any)?.phone && (
@@ -1025,7 +1025,7 @@ export default function PubDetail() {
                   {/* Description */}
                   {(pub as any)?.description && (
                     <div className="p-4 rounded-xl bg-white dark:bg-[hsl(25,14%,10%)] border border-stone-100 dark:border-[hsl(25,12%,16%)] shadow-sm">
-                      <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">{(pub as any).description}</p>
+                      <p className="text-sm text-gray-600 dark:text-stone-400 leading-relaxed">{(pub as any).description}</p>
                     </div>
                   )}
                 </TabsContent>
@@ -1038,7 +1038,7 @@ export default function PubDetail() {
             {/* Description */}
             {(pub as any)?.description && (
               <div className="bg-white dark:bg-[hsl(25,14%,10%)] rounded-2xl border border-stone-100 dark:border-[hsl(25,12%,16%)] shadow-sm p-4">
-                <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">{(pub as any).description}</p>
+                <p className="text-sm text-gray-600 dark:text-stone-400 leading-relaxed">{(pub as any).description}</p>
               </div>
             )}
 
@@ -1057,7 +1057,7 @@ export default function PubDetail() {
                   {openStatus.status === 'open' ? 'Aperto adesso' : openStatus.status === 'closing_soon' ? 'Sta chiudendo' : openStatus.status === 'opening_soon' ? 'Sta per aprire' : 'Chiuso adesso'}
                 </p>
               </div>
-              <Info className="h-4 w-4 text-gray-400 flex-shrink-0" />
+              <Info className="h-4 w-4 text-stone-400 flex-shrink-0" />
             </button>
 
             {/* Contatti + Social */}
@@ -1169,7 +1169,7 @@ export default function PubDetail() {
                   <span>{format(new Date(selectedEvent.eventDate), "EEEE d MMMM yyyy 'alle' HH:mm", { locale: itLocale })}</span>
                 </div>
                 {selectedEvent.endDate && (
-                  <div className="flex items-center text-sm text-gray-500 gap-2">
+                  <div className="flex items-center text-sm text-muted-foreground gap-2">
                     <Clock className="h-4 w-4" />
                     <span>fino alle {format(new Date(selectedEvent.endDate), "HH:mm", { locale: itLocale })}</span>
                   </div>
@@ -1178,7 +1178,7 @@ export default function PubDetail() {
                   <p className="text-foreground whitespace-pre-wrap">{selectedEvent.description}</p>
                 )}
                 <div className="pt-3 border-t">
-                  <p className="text-xs text-gray-500 mb-2">Condividi questo evento</p>
+                  <p className="text-xs text-muted-foreground mb-2">Condividi questo evento</p>
                   <EventShareButtons event={selectedEvent} pubId={(pub as any).id} size="default" />
                 </div>
               </div>

@@ -134,7 +134,7 @@ export default function AdminDashboardNew() {
         <div className="flex items-center justify-center min-h-screen">
           <div className="text-center space-y-4">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
-            <p className="text-gray-600">Caricamento dashboard amministrativa...</p>
+            <p className="text-muted-foreground">Caricamento dashboard amministrativa...</p>
           </div>
         </div>
       </div>

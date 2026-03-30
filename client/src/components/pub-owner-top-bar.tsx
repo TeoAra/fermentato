@@ -68,8 +68,8 @@ export function PubOwnerTopBar({
               </DropdownMenuTrigger>
               <DropdownMenuContent align="start" className="w-52 glass-card border-white/20">
                 <div className="px-3 py-2">
-                  <p className="text-sm font-bold text-gray-900 dark:text-white">{currentPub?.name || 'Dashboard'}</p>
-                  <p className="text-xs text-gray-500">Pannello Gestionale</p>
+                  <p className="text-sm font-bold text-foreground dark:text-white">{currentPub?.name || 'Dashboard'}</p>
+                  <p className="text-xs text-muted-foreground">Pannello Gestionale</p>
                 </div>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={() => window.location.href = '/'} className="cursor-pointer">
@@ -99,7 +99,7 @@ export function PubOwnerTopBar({
 
             {/* Center - Section icons (icon-only on mobile, icon+label on desktop) */}
             <div className="flex-1 flex items-center justify-center">
-              <nav className="flex items-center gap-0.5 lg:gap-1 bg-gray-100/50 dark:bg-gray-800/50 rounded-xl lg:rounded-2xl p-0.5 lg:p-1">
+              <nav className="flex items-center gap-0.5 lg:gap-1 bg-stone-100/50 dark:bg-gray-800/50 rounded-xl lg:rounded-2xl p-0.5 lg:p-1">
                 {sections.map((section, index) => {
                   const Icon = section.icon;
                   const isActive = currentSection === section.id;
@@ -111,7 +111,7 @@ export function PubOwnerTopBar({
                       className={`relative flex items-center justify-center p-2 lg:px-3 lg:py-2 rounded-lg lg:rounded-xl text-sm font-medium transition-all duration-300 ${
                         isActive
                           ? 'text-white shadow-lg'
-                          : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-white/50 dark:hover:bg-gray-700/50'
+                          : 'text-muted-foreground dark:text-stone-400 hover:text-foreground dark:hover:text-white hover:bg-white/50 dark:hover:bg-gray-700/50'
                       }`}
                       data-testid={`nav-${section.id}`}
                       whileTap={{ scale: 0.9 }}
@@ -150,15 +150,15 @@ export function PubOwnerTopBar({
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-56 glass-card border-white/20">
                 <div className="px-3 py-2">
-                  <p className="text-sm font-medium text-gray-900 dark:text-white">
+                  <p className="text-sm font-medium text-foreground dark:text-white">
                     {(user as any)?.displayName || 'Pub Owner'}
                   </p>
-                  <p className="text-xs text-gray-500 dark:text-gray-400">
+                  <p className="text-xs text-muted-foreground dark:text-stone-400">
                     {(user as any)?.email}
                   </p>
                 </div>
                 <DropdownMenuSeparator />
-                <DropdownMenuLabel className="text-xs text-gray-500 dark:text-gray-400 flex items-center gap-2">
+                <DropdownMenuLabel className="text-xs text-muted-foreground dark:text-stone-400 flex items-center gap-2">
                   <RefreshCw className="h-3 w-3" />
                   Cambia Ruolo
                 </DropdownMenuLabel>

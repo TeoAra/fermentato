@@ -693,7 +693,7 @@ export default function BeerDetail() {
                       <Star className={`h-5 w-5 transition-colors ${
                         s <= (hasTasted ? existingTasting?.rating || 0 : (hoverRating || quickRating))
                           ? 'text-amber-500 fill-amber-500'
-                          : 'text-gray-300 dark:text-gray-600'
+                          : 'text-stone-300 dark:text-muted-foreground'
                       }`} />
                     </button>
                   ))}
@@ -783,22 +783,22 @@ export default function BeerDetail() {
 
             {/* Specs grid */}
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
-              <div className="rounded-2xl p-3 bg-gradient-to-br from-orange-50 to-amber-50 dark:from-orange-950/50 dark:to-amber-950/30 border border-stone-200 dark:border-stone-700/40 flex items-center gap-2.5">
+              <div className="rounded-2xl p-3 bg-white dark:bg-[hsl(25,14%,10%)] border border-stone-100 dark:border-[hsl(25,12%,17%)] flex items-center gap-2.5">
                 <Target className="h-4 w-4 text-primary flex-shrink-0" />
                 <div><p className="text-[10px] uppercase tracking-wider font-semibold text-muted-foreground">ABV</p><p className="text-sm font-bold text-foreground">{beer?.abv ? `${beer.abv}%` : '—'}</p></div>
               </div>
-              <div className="rounded-2xl p-3 bg-gradient-to-br from-orange-50 to-amber-50 dark:from-orange-950/50 dark:to-amber-950/30 border border-stone-200 dark:border-stone-700/40 flex items-center gap-2.5">
+              <div className="rounded-2xl p-3 bg-white dark:bg-[hsl(25,14%,10%)] border border-stone-100 dark:border-[hsl(25,12%,17%)] flex items-center gap-2.5">
                 <Sparkles className="h-4 w-4 text-primary flex-shrink-0" />
                 <div className="min-w-0"><p className="text-[10px] uppercase tracking-wider font-semibold text-muted-foreground">Stile</p><p className="text-sm font-bold text-foreground leading-tight line-clamp-2">{beer?.style || '—'}</p></div>
               </div>
               {beer?.color && (
-                <div className="rounded-2xl p-3 bg-gradient-to-br from-orange-50 to-amber-50 dark:from-orange-950/50 dark:to-amber-950/30 border border-stone-200 dark:border-stone-700/40 flex items-center gap-2.5">
+                <div className="rounded-2xl p-3 bg-white dark:bg-[hsl(25,14%,10%)] border border-stone-100 dark:border-[hsl(25,12%,17%)] flex items-center gap-2.5">
                   <Droplets className="h-4 w-4 text-primary flex-shrink-0" />
                   <div><p className="text-[10px] uppercase tracking-wider font-semibold text-muted-foreground">Colore</p><p className="text-sm font-bold text-foreground truncate">{beer.color}</p></div>
                 </div>
               )}
               {beer?.ibu && (
-                <div className="rounded-2xl p-3 bg-gradient-to-br from-orange-50 to-amber-50 dark:from-orange-950/50 dark:to-amber-950/30 border border-stone-200 dark:border-stone-700/40 flex items-center gap-2.5">
+                <div className="rounded-2xl p-3 bg-white dark:bg-[hsl(25,14%,10%)] border border-stone-100 dark:border-[hsl(25,12%,17%)] flex items-center gap-2.5">
                   <Wheat className="h-4 w-4 text-primary flex-shrink-0" />
                   <div><p className="text-[10px] uppercase tracking-wider font-semibold text-muted-foreground">IBU</p><p className="text-sm font-bold text-foreground">{beer.ibu}</p></div>
                 </div>
@@ -1027,7 +1027,7 @@ export default function BeerDetail() {
               ) : (
                 <div className="space-y-3">
                   <div className="flex items-center gap-2">
-                    {[1,2,3,4,5].map(s => <Star key={s} className={`h-4 w-4 ${s <= existingTasting.rating ? 'text-amber-500 fill-amber-500' : 'text-gray-300'}`} />)}
+                    {[1,2,3,4,5].map(s => <Star key={s} className={`h-4 w-4 ${s <= existingTasting.rating ? 'text-amber-500 fill-amber-500' : 'text-stone-300'}`} />)}
                     <span className="text-sm font-bold text-foreground">{existingTasting.rating}/5</span>
                   </div>
                   {(existingTasting.personalNotes || existingTasting.notes) && (
@@ -1055,7 +1055,7 @@ export default function BeerDetail() {
                   {reviewsData.avgRating && (
                     <div className="flex items-center gap-1">
                       {[1,2,3,4,5].map(s => (
-                        <Star key={s} className={`h-3.5 w-3.5 ${s <= Math.round(reviewsData.avgRating || 0) ? 'text-amber-500 fill-amber-500' : 'text-gray-300 dark:text-gray-400'}`} />
+                        <Star key={s} className={`h-3.5 w-3.5 ${s <= Math.round(reviewsData.avgRating || 0) ? 'text-amber-500 fill-amber-500' : 'text-stone-300 dark:text-stone-400'}`} />
                       ))}
                       <span className="ml-1 text-sm font-bold text-foreground">{reviewsData.avgRating?.toFixed(1)}</span>
                     </div>
@@ -1085,7 +1085,7 @@ export default function BeerDetail() {
                             style={{ width: `${pct}%` }}
                           />
                         </div>
-                        <span className="text-xs text-gray-500 w-6 text-right">{count}</span>
+                        <span className="text-xs text-muted-foreground w-6 text-right">{count}</span>
                       </button>
                     );
                   })}
@@ -1094,7 +1094,7 @@ export default function BeerDetail() {
 
               {/* Filters */}
               <div className="flex items-center gap-2 mb-4 flex-wrap">
-                <div className="flex items-center gap-1.5 text-xs text-gray-500">
+                <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
                   <Filter className="h-3.5 w-3.5" />
                   <span className="font-medium">Filtra:</span>
                 </div>
@@ -1154,7 +1154,7 @@ export default function BeerDetail() {
                           </div>
                           <div className="flex items-center gap-0.5 flex-shrink-0">
                             {[1,2,3,4,5].map(s => (
-                              <Star key={s} className={`h-3 w-3 ${s <= (review.rating || 0) ? 'text-amber-500 fill-amber-500' : 'text-gray-300 dark:text-gray-400'}`} />
+                              <Star key={s} className={`h-3 w-3 ${s <= (review.rating || 0) ? 'text-amber-500 fill-amber-500' : 'text-stone-300 dark:text-stone-400'}`} />
                             ))}
                           </div>
                         </div>

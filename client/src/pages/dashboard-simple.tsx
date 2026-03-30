@@ -63,11 +63,11 @@ export default function Dashboard() {
     return (
       <div className="container mx-auto px-4 py-8">
         <div className="animate-pulse space-y-6">
-          <div className="h-8 bg-gray-200 dark:bg-gray-700 rounded w-1/3"></div>
+          <div className="h-8 bg-stone-200 dark:bg-gray-700 rounded w-1/3"></div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="h-32 bg-gray-200 dark:bg-gray-700 rounded"></div>
-            <div className="h-32 bg-gray-200 dark:bg-gray-700 rounded"></div>
-            <div className="h-32 bg-gray-200 dark:bg-gray-700 rounded"></div>
+            <div className="h-32 bg-stone-200 dark:bg-gray-700 rounded"></div>
+            <div className="h-32 bg-stone-200 dark:bg-gray-700 rounded"></div>
+            <div className="h-32 bg-stone-200 dark:bg-gray-700 rounded"></div>
           </div>
         </div>
       </div>
@@ -81,10 +81,10 @@ export default function Dashboard() {
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+          <h1 className="text-2xl font-bold text-foreground dark:text-white">
             Dashboard Cliente
           </h1>
-          <p className="text-gray-600 dark:text-gray-400">
+          <p className="text-muted-foreground dark:text-stone-400">
             Il tuo profilo birraio personale
           </p>
         </div>
@@ -165,7 +165,7 @@ export default function Dashboard() {
           <CardTitle>Attività Recente</CardTitle>
         </CardHeader>
         <CardContent>
-          <p className="text-center text-gray-500 py-8">
+          <p className="text-center text-muted-foreground py-8">
             Nessuna attività recente. Inizia esplorando pub e birre!
           </p>
         </CardContent>

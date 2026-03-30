@@ -138,7 +138,7 @@ export default function SearchDialog({ isOpen, onClose }: SearchDialogProps) {
           {/* Modern Search Input */}
           <div className="relative">
             <div className="absolute inset-y-0 left-0 flex items-center pl-4 pointer-events-none">
-              <Search className="h-5 w-5 text-gray-400 dark:text-gray-400" />
+              <Search className="h-5 w-5 text-stone-400 dark:text-stone-400" />
             </div>
             <Input
               ref={inputRef}
@@ -146,13 +146,13 @@ export default function SearchDialog({ isOpen, onClose }: SearchDialogProps) {
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               onKeyDown={handleKeyDown}
-              className="pl-12 pr-12 py-4 text-base bg-gray-50/50 dark:bg-gray-800/50 border-gray-200 dark:border-gray-700 rounded-2xl focus-visible:ring-2 focus-visible:ring-orange-500/20 focus-visible:border-orange-500 transition-all duration-200"
+              className="pl-12 pr-12 py-4 text-base bg-stone-50/50 dark:bg-gray-800/50 border-gray-200 dark:border-gray-700 rounded-2xl focus-visible:ring-2 focus-visible:ring-orange-500/20 focus-visible:border-orange-500 transition-all duration-200"
               data-testid="input-search"
             />
             {searchTerm && (
               <button
                 onClick={() => setSearchTerm("")}
-                className="absolute inset-y-0 right-0 flex items-center pr-4 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+                className="absolute inset-y-0 right-0 flex items-center pr-4 text-stone-400 hover:text-muted-foreground dark:hover:text-stone-300 transition-colors"
                 data-testid="button-clear-search"
               >
                 <X className="h-4 w-4" />
@@ -173,7 +173,7 @@ export default function SearchDialog({ isOpen, onClose }: SearchDialogProps) {
               className={`inline-flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-full border transition-all duration-200 ${
                 filterGlutenFree
                   ? 'bg-green-100 dark:bg-green-900/40 text-green-800 dark:text-green-300 border-green-400 dark:border-green-600 shadow-sm'
-                  : 'bg-gray-50 dark:bg-gray-800 text-gray-500 dark:text-gray-400 border-gray-200 dark:border-gray-700 hover:border-green-300 dark:hover:border-green-600'
+                  : 'bg-stone-50 dark:bg-gray-800 text-muted-foreground dark:text-stone-400 border-gray-200 dark:border-gray-700 hover:border-green-300 dark:hover:border-green-600'
               }`}
             >
               <svg viewBox="0 0 16 16" className="w-3.5 h-3.5" fill="currentColor"><path d="M8 1a7 7 0 100 14A7 7 0 008 1zm0 1.5a5.5 5.5 0 110 11 5.5 5.5 0 010-11zM5.5 7.5h5v1.5h-5z"/></svg>
@@ -184,7 +184,7 @@ export default function SearchDialog({ isOpen, onClose }: SearchDialogProps) {
               className={`inline-flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-full border transition-all duration-200 ${
                 filterAlcoholFree
                   ? 'bg-blue-100 dark:bg-blue-900/40 text-blue-800 dark:text-blue-300 border-blue-400 dark:border-blue-600 shadow-sm'
-                  : 'bg-gray-50 dark:bg-gray-800 text-gray-500 dark:text-gray-400 border-gray-200 dark:border-gray-700 hover:border-blue-300 dark:hover:border-blue-600'
+                  : 'bg-stone-50 dark:bg-gray-800 text-muted-foreground dark:text-stone-400 border-gray-200 dark:border-gray-700 hover:border-blue-300 dark:hover:border-blue-600'
               }`}
             >
               0.0% Analcolica
@@ -198,7 +198,7 @@ export default function SearchDialog({ isOpen, onClose }: SearchDialogProps) {
               {/* Recent Searches */}
               {recentSearches.length > 0 && (
                 <div className="space-y-3">
-                  <div className="flex items-center gap-2 text-sm font-medium text-gray-700 dark:text-gray-300">
+                  <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground dark:text-stone-300">
                     <Clock className="h-4 w-4" />
                     Ricerche recenti
                   </div>
@@ -207,14 +207,14 @@ export default function SearchDialog({ isOpen, onClose }: SearchDialogProps) {
                       <button
                         key={index}
                         onClick={() => setSearchTerm(search)}
-                        className="flex items-center gap-3 w-full p-3 text-left hover:bg-gray-50 dark:hover:bg-gray-800/50 rounded-xl transition-all duration-200 group"
+                        className="flex items-center gap-3 w-full p-3 text-left hover:bg-stone-50 dark:hover:bg-gray-800/50 rounded-xl transition-all duration-200 group"
                         data-testid={`recent-search-${index}`}
                       >
-                        <Clock className="h-4 w-4 text-gray-400 group-hover:text-orange-500 transition-colors" />
-                        <span className="flex-1 text-sm text-gray-700 dark:text-gray-300 group-hover:text-gray-900 dark:group-hover:text-white">
+                        <Clock className="h-4 w-4 text-stone-400 group-hover:text-orange-500 transition-colors" />
+                        <span className="flex-1 text-sm text-muted-foreground dark:text-stone-300 group-hover:text-foreground dark:group-hover:text-white">
                           {search}
                         </span>
-                        <ArrowRight className="h-4 w-4 text-gray-300 group-hover:text-orange-500 opacity-0 group-hover:opacity-100 transform translate-x-1 group-hover:translate-x-0 transition-all duration-200" />
+                        <ArrowRight className="h-4 w-4 text-stone-300 group-hover:text-orange-500 opacity-0 group-hover:opacity-100 transform translate-x-1 group-hover:translate-x-0 transition-all duration-200" />
                       </button>
                     ))}
                   </div>
@@ -223,7 +223,7 @@ export default function SearchDialog({ isOpen, onClose }: SearchDialogProps) {
 
               {/* Popular Suggestions */}
               <div className="space-y-3">
-                <div className="flex items-center gap-2 text-sm font-medium text-gray-700 dark:text-gray-300">
+                <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground dark:text-stone-300">
                   <TrendingUp className="h-4 w-4" />
                   Popolari
                 </div>
@@ -245,10 +245,10 @@ export default function SearchDialog({ isOpen, onClose }: SearchDialogProps) {
               {/* Welcome message */}
               <div className="text-center py-8">
                 <div className="relative inline-block">
-                  <Search className="h-16 w-16 text-gray-300 dark:text-gray-400 mx-auto mb-4" />
+                  <Search className="h-16 w-16 text-stone-300 dark:text-stone-400 mx-auto mb-4" />
                   <Sparkles className="h-6 w-6 text-orange-500 absolute -top-1 -right-1 animate-pulse" />
                 </div>
-                <p className="text-gray-500 dark:text-gray-400 text-sm leading-relaxed">
+                <p className="text-muted-foreground dark:text-stone-400 text-sm leading-relaxed">
                   Inizia a digitare per cercare tra migliaia di pub, birrifici e birre artigianali
                 </p>
               </div>
@@ -260,8 +260,8 @@ export default function SearchDialog({ isOpen, onClose }: SearchDialogProps) {
                 <div className="relative inline-block">
                   <Loader2 className="h-8 w-8 animate-spin text-orange-500 mx-auto mb-3" />
                 </div>
-                <p className="text-gray-500 dark:text-gray-400 text-sm">
-                  Ricerca in corso per "<span className="font-medium text-gray-700 dark:text-gray-300">{debouncedSearch}</span>"
+                <p className="text-muted-foreground dark:text-stone-400 text-sm">
+                  Ricerca in corso per "<span className="font-medium text-muted-foreground dark:text-stone-300">{debouncedSearch}</span>"
                 </p>
               </div>
               
@@ -269,10 +269,10 @@ export default function SearchDialog({ isOpen, onClose }: SearchDialogProps) {
               <div className="space-y-4">
                 {[...Array(6)].map((_, i) => (
                   <div key={i} className="flex items-center gap-4 p-3 animate-pulse">
-                    <div className="h-10 w-10 bg-gray-200 dark:bg-gray-700 rounded-full" />
+                    <div className="h-10 w-10 bg-stone-200 dark:bg-gray-700 rounded-full" />
                     <div className="flex-1 space-y-2">
-                      <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-3/4" />
-                      <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded w-1/2" />
+                      <div className="h-4 bg-stone-200 dark:bg-gray-700 rounded w-3/4" />
+                      <div className="h-3 bg-stone-200 dark:bg-gray-700 rounded w-1/2" />
                     </div>
                   </div>
                 ))}
@@ -282,9 +282,9 @@ export default function SearchDialog({ isOpen, onClose }: SearchDialogProps) {
             /* Enhanced Results Display */
             <div className="p-6 space-y-6">
               {/* Results count */}
-              <div className="text-sm text-gray-500 dark:text-gray-400">
+              <div className="text-sm text-muted-foreground dark:text-stone-400">
                 {(searchResults.pubs?.length || 0) + (searchResults.breweries?.length || 0) + (searchResults.beers?.length || 0)} risultati per 
-                <span className="font-medium text-gray-700 dark:text-gray-300 ml-1">"{debouncedSearch}"</span>
+                <span className="font-medium text-muted-foreground dark:text-stone-300 ml-1">"{debouncedSearch}"</span>
               </div>
 
               {/* Pub Results */}
@@ -297,7 +297,7 @@ export default function SearchDialog({ isOpen, onClose }: SearchDialogProps) {
                   <div className="space-y-3">
                     <div className="flex items-center gap-2">
                       <MapPin className="h-4 w-4 text-orange-600" />
-                      <h3 className="font-semibold text-gray-900 dark:text-white">Pub</h3>
+                      <h3 className="font-semibold text-foreground dark:text-white">Pub</h3>
                       <Badge variant="outline" className="text-xs">{searchResults.pubs.length}</Badge>
                     </div>
                     <div className="space-y-2">
@@ -307,7 +307,7 @@ export default function SearchDialog({ isOpen, onClose }: SearchDialogProps) {
                           className={`group cursor-pointer p-3 rounded-xl border transition-all duration-200 ${
                             selectedIndex === baseIndex + index
                               ? 'bg-stone-50 dark:bg-orange-900/10 border-stone-300 dark:border-stone-600'
-                              : 'bg-white/50 dark:bg-gray-800/30 border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800/50 hover:border-gray-300 dark:hover:border-gray-600'
+                              : 'bg-white/50 dark:bg-gray-800/30 border-gray-200 dark:border-gray-700 hover:bg-stone-50 dark:hover:bg-gray-800/50 hover:border-gray-300 dark:hover:border-gray-600'
                           }`}
                           onClick={() => handleResultClick('pub', pub.id)}
                         >
@@ -321,14 +321,14 @@ export default function SearchDialog({ isOpen, onClose }: SearchDialogProps) {
                               iconSize="sm"
                             />
                             <div className="flex-1 min-w-0">
-                              <div className="font-medium text-sm text-gray-900 dark:text-white truncate group-hover:text-orange-600 dark:group-hover:text-orange-400 transition-colors">
+                              <div className="font-medium text-sm text-foreground dark:text-white truncate group-hover:text-orange-600 dark:group-hover:text-orange-400 transition-colors">
                                 {pub.name}
                               </div>
-                              <div className="text-xs text-gray-500 dark:text-gray-400 truncate">
+                              <div className="text-xs text-muted-foreground dark:text-stone-400 truncate">
                                 {pub.city && pub.address ? `${pub.city} • ${pub.address}` : pub.city || pub.address || 'Indirizzo non disponibile'}
                               </div>
                             </div>
-                            <ArrowRight className="h-4 w-4 text-gray-300 group-hover:text-orange-500 flex-shrink-0 opacity-0 group-hover:opacity-100 transition-all duration-200" />
+                            <ArrowRight className="h-4 w-4 text-stone-300 group-hover:text-orange-500 flex-shrink-0 opacity-0 group-hover:opacity-100 transition-all duration-200" />
                           </div>
                         </div>
                       ))}
@@ -350,7 +350,7 @@ export default function SearchDialog({ isOpen, onClose }: SearchDialogProps) {
               })()}
 
               {searchResults.pubs?.length > 0 && (searchResults.breweries?.length > 0 || searchResults.beers?.length > 0) && (
-                <Separator className="bg-gray-200 dark:bg-gray-700" />
+                <Separator className="bg-stone-200 dark:bg-gray-700" />
               )}
 
               {/* Brewery Results */}
@@ -363,7 +363,7 @@ export default function SearchDialog({ isOpen, onClose }: SearchDialogProps) {
                   <div className="space-y-3">
                     <div className="flex items-center gap-2">
                       <Building className="h-4 w-4 text-orange-600" />
-                      <h3 className="font-semibold text-gray-900 dark:text-white">Birrifici</h3>
+                      <h3 className="font-semibold text-foreground dark:text-white">Birrifici</h3>
                       <Badge variant="outline" className="text-xs">{searchResults.breweries.length}</Badge>
                     </div>
                     <div className="space-y-2">
@@ -373,7 +373,7 @@ export default function SearchDialog({ isOpen, onClose }: SearchDialogProps) {
                           className={`group cursor-pointer p-3 rounded-xl border transition-all duration-200 ${
                             selectedIndex === baseIndex + index
                               ? 'bg-stone-50 dark:bg-orange-900/10 border-stone-300 dark:border-stone-600'
-                              : 'bg-white/50 dark:bg-gray-800/30 border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800/50 hover:border-gray-300 dark:hover:border-gray-600'
+                              : 'bg-white/50 dark:bg-gray-800/30 border-gray-200 dark:border-gray-700 hover:bg-stone-50 dark:hover:bg-gray-800/50 hover:border-gray-300 dark:hover:border-gray-600'
                           }`}
                           onClick={() => handleResultClick('brewery', brewery.id)}
                         >
@@ -387,14 +387,14 @@ export default function SearchDialog({ isOpen, onClose }: SearchDialogProps) {
                               iconSize="sm"
                             />
                             <div className="flex-1 min-w-0">
-                              <div className="font-medium text-sm text-gray-900 dark:text-white truncate group-hover:text-orange-600 dark:group-hover:text-orange-400 transition-colors">
+                              <div className="font-medium text-sm text-foreground dark:text-white truncate group-hover:text-orange-600 dark:group-hover:text-orange-400 transition-colors">
                                 {brewery.name}
                               </div>
-                              <div className="text-xs text-gray-500 dark:text-gray-400 truncate">
+                              <div className="text-xs text-muted-foreground dark:text-stone-400 truncate">
                                 {brewery.location && brewery.region ? `${brewery.location} • ${brewery.region}` : brewery.location || brewery.region || 'Posizione non disponibile'}
                               </div>
                             </div>
-                            <ArrowRight className="h-4 w-4 text-gray-300 group-hover:text-orange-500 flex-shrink-0 opacity-0 group-hover:opacity-100 transition-all duration-200" />
+                            <ArrowRight className="h-4 w-4 text-stone-300 group-hover:text-orange-500 flex-shrink-0 opacity-0 group-hover:opacity-100 transition-all duration-200" />
                           </div>
                         </div>
                       ))}
@@ -416,7 +416,7 @@ export default function SearchDialog({ isOpen, onClose }: SearchDialogProps) {
               })()}
 
               {searchResults.breweries?.length > 0 && searchResults.beers?.length > 0 && (
-                <Separator className="bg-gray-200 dark:bg-gray-700" />
+                <Separator className="bg-stone-200 dark:bg-gray-700" />
               )}
 
               {/* Beer Results */}
@@ -431,7 +431,7 @@ export default function SearchDialog({ isOpen, onClose }: SearchDialogProps) {
                   <div className="space-y-3">
                     <div className="flex items-center gap-2">
                       <Beer className="h-4 w-4 text-orange-600" />
-                      <h3 className="font-semibold text-gray-900 dark:text-white">Birre</h3>
+                      <h3 className="font-semibold text-foreground dark:text-white">Birre</h3>
                       <Badge variant="outline" className="text-xs">{searchResults.beers.length}</Badge>
                     </div>
                     <div className="space-y-2">
@@ -441,7 +441,7 @@ export default function SearchDialog({ isOpen, onClose }: SearchDialogProps) {
                           className={`group cursor-pointer p-3 rounded-xl border transition-all duration-200 ${
                             selectedIndex === baseIndex + index
                               ? 'bg-stone-50 dark:bg-orange-900/10 border-stone-300 dark:border-stone-600'
-                              : 'bg-white/50 dark:bg-gray-800/30 border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800/50 hover:border-gray-300 dark:hover:border-gray-600'
+                              : 'bg-white/50 dark:bg-gray-800/30 border-gray-200 dark:border-gray-700 hover:bg-stone-50 dark:hover:bg-gray-800/50 hover:border-gray-300 dark:hover:border-gray-600'
                           }`}
                           onClick={() => handleResultClick('beer', beer.id)}
                         >
@@ -455,14 +455,14 @@ export default function SearchDialog({ isOpen, onClose }: SearchDialogProps) {
                               iconSize="sm"
                             />
                             <div className="flex-1 min-w-0">
-                              <div className="font-medium text-sm text-gray-900 dark:text-white truncate group-hover:text-orange-600 dark:group-hover:text-orange-400 transition-colors">
+                              <div className="font-medium text-sm text-foreground dark:text-white truncate group-hover:text-orange-600 dark:group-hover:text-orange-400 transition-colors">
                                 {beer.name}
                               </div>
                               {(beer.brewery?.name || beer.breweryName) && (
-                                <div className="text-xs text-gray-600 dark:text-gray-300 truncate">{beer.brewery?.name || beer.breweryName}</div>
+                                <div className="text-xs text-muted-foreground dark:text-stone-300 truncate">{beer.brewery?.name || beer.breweryName}</div>
                               )}
                               <div className="flex items-center gap-1.5 flex-wrap">
-                                <span className="text-xs text-gray-500 dark:text-gray-400">
+                                <span className="text-xs text-muted-foreground dark:text-stone-400">
                                   {beer.style && beer.abv ? `${beer.style} • ${beer.abv}%` : beer.style || `${beer.abv}%` || 'Dettagli non disponibili'}
                                 </span>
                                 {beer.isGlutenFree && (
@@ -473,7 +473,7 @@ export default function SearchDialog({ isOpen, onClose }: SearchDialogProps) {
                                 )}
                               </div>
                             </div>
-                            <ArrowRight className="h-4 w-4 text-gray-300 group-hover:text-orange-500 flex-shrink-0 opacity-0 group-hover:opacity-100 transition-all duration-200" />
+                            <ArrowRight className="h-4 w-4 text-stone-300 group-hover:text-orange-500 flex-shrink-0 opacity-0 group-hover:opacity-100 transition-all duration-200" />
                           </div>
                         </div>
                       ))}
@@ -498,13 +498,13 @@ export default function SearchDialog({ isOpen, onClose }: SearchDialogProps) {
               {(!searchResults.pubs?.length && !searchResults.breweries?.length && !searchResults.beers?.length) && (
                 <div className="text-center py-10">
                   <div className="relative inline-block mb-4">
-                    <Search className="h-16 w-16 text-gray-300 dark:text-gray-400 mx-auto" />
+                    <Search className="h-16 w-16 text-stone-300 dark:text-stone-400 mx-auto" />
                     <X className="h-6 w-6 text-red-400 absolute -bottom-1 -right-1" />
                   </div>
-                  <p className="text-gray-500 dark:text-gray-400 text-lg font-medium mb-2">
+                  <p className="text-muted-foreground dark:text-stone-400 text-lg font-medium mb-2">
                     Nessun risultato trovato
                   </p>
-                  <p className="text-gray-400 dark:text-gray-400 text-sm mb-5">
+                  <p className="text-stone-400 dark:text-stone-400 text-sm mb-5">
                     Prova con termini di ricerca diversi per "<span className="font-medium">{debouncedSearch}</span>"
                   </p>
                   <button
@@ -520,8 +520,8 @@ export default function SearchDialog({ isOpen, onClose }: SearchDialogProps) {
             </div>
           ) : (
             <div className="p-6 text-center">
-              <Search className="h-12 w-12 mx-auto mb-3 text-gray-300 dark:text-gray-400" />
-              <p className="text-gray-500 dark:text-gray-400">
+              <Search className="h-12 w-12 mx-auto mb-3 text-stone-300 dark:text-stone-400" />
+              <p className="text-muted-foreground dark:text-stone-400">
                 Inizia la tua ricerca...
               </p>
             </div>

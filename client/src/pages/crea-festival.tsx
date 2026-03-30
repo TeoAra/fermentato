@@ -199,7 +199,7 @@ function FestivalCard({ fest }: { fest: any }) {
             {!fest.coverImageUrl && fest.logoUrl && (
               <img src={fest.logoUrl} alt="" className="w-9 h-9 rounded-lg object-cover flex-shrink-0" />
             )}
-            <h3 className="font-semibold text-gray-900 dark:text-gray-100 leading-tight">{fest.name}</h3>
+            <h3 className="font-semibold text-foreground dark:text-gray-100 leading-tight">{fest.name}</h3>
           </div>
           {isPast ? (
             <Badge variant="secondary" className="text-xs flex-shrink-0">Concluso</Badge>
@@ -210,13 +210,13 @@ function FestivalCard({ fest }: { fest: any }) {
           )}
         </div>
         {fest.location && (
-          <div className="flex items-center gap-1 text-xs text-gray-500">
+          <div className="flex items-center gap-1 text-xs text-muted-foreground">
             <MapPin className="h-3 w-3" />
             {fest.location}
           </div>
         )}
         {(fest.startDate || fest.endDate) && (
-          <div className="flex items-center gap-1 text-xs text-gray-500">
+          <div className="flex items-center gap-1 text-xs text-muted-foreground">
             <Calendar className="h-3 w-3" />
             {fest.startDate && fest.endDate
               ? `${formatDate(fest.startDate)} – ${formatDate(fest.endDate)}`
@@ -225,7 +225,7 @@ function FestivalCard({ fest }: { fest: any }) {
           </div>
         )}
         {fest.description && (
-          <p className="text-xs text-gray-500 line-clamp-2">{fest.description}</p>
+          <p className="text-xs text-muted-foreground line-clamp-2">{fest.description}</p>
         )}
         {fest.isActive && (
           <div className="flex items-center gap-1 text-xs text-amber-600 font-medium mt-1">
@@ -375,15 +375,15 @@ export default function CreaFestival() {
                 <CheckCircle2 className="h-7 w-7 text-green-600" />
               </div>
               <div>
-                <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100">
+                <h2 className="text-xl font-bold text-foreground dark:text-gray-100">
                   "{createdFest.name}" è pronto!
                 </h2>
-                <p className="text-gray-600 dark:text-gray-400 mt-1">
+                <p className="text-muted-foreground dark:text-stone-400 mt-1">
                   Completa il pagamento per attivare il taplist pubblico.
                 </p>
               </div>
               <div className="text-4xl font-extrabold text-amber-600">€{createdFest.priceEur ?? PRICE}</div>
-              <p className="text-sm text-gray-500">Pagamento unico · accesso per tutta la durata dell'evento</p>
+              <p className="text-sm text-muted-foreground">Pagamento unico · accesso per tutta la durata dell'evento</p>
               <div className="flex flex-col sm:flex-row gap-3 justify-center">
                 <Button
                   size="lg"
@@ -402,7 +402,7 @@ export default function CreaFestival() {
                   Gestisci prima le spine
                 </Button>
               </div>
-              <p className="text-xs text-gray-400">
+              <p className="text-xs text-stone-400">
                 Puoi configurare spine e menu anche ora. Il taplist diventerà pubblico solo dopo il pagamento.
               </p>
             </CardContent>
@@ -418,10 +418,10 @@ export default function CreaFestival() {
               <div>
                 <div className="flex items-center gap-2 mb-4">
                   <span className="w-2.5 h-2.5 rounded-full bg-green-500 animate-pulse inline-block" />
-                  <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100">
+                  <h2 className="text-xl font-bold text-foreground dark:text-gray-100">
                     Festival in corso e in arrivo
                   </h2>
-                  <span className="ml-auto text-xs text-gray-400">scorri →</span>
+                  <span className="ml-auto text-xs text-stone-400">scorri →</span>
                 </div>
                 <div className="flex gap-4 overflow-x-auto pb-3 snap-x snap-mandatory scroll-smooth -mx-4 px-4">
                   {[...liveFests, ...futureFests].map(f => (
@@ -438,7 +438,7 @@ export default function CreaFestival() {
               <div>
                 <div className="flex items-center gap-2 mb-3">
                   <span className="w-2 h-2 rounded-full bg-gray-400 inline-block" />
-                  <h2 className="text-base font-semibold text-gray-500 dark:text-gray-400">Festival passati</h2>
+                  <h2 className="text-base font-semibold text-muted-foreground dark:text-stone-400">Festival passati</h2>
                 </div>
                 <div className="flex gap-3 overflow-x-auto pb-3 snap-x snap-mandatory -mx-4 px-4">
                   {pastFests.map(f => (
@@ -455,7 +455,7 @@ export default function CreaFestival() {
 
         {/* Features */}
         <div>
-          <h2 className="text-2xl font-bold text-center text-gray-900 dark:text-gray-100 mb-8">
+          <h2 className="text-2xl font-bold text-center text-foreground dark:text-gray-100 mb-8">
             Tutto quello che ti serve, già incluso
           </h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -465,8 +465,8 @@ export default function CreaFestival() {
                   <div className="w-10 h-10 rounded-xl bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center mb-3">
                     <Icon className="h-5 w-5 text-amber-600" />
                   </div>
-                  <h3 className="font-semibold text-gray-900 dark:text-gray-100 mb-1">{title}</h3>
-                  <p className="text-sm text-gray-500">{desc}</p>
+                  <h3 className="font-semibold text-foreground dark:text-gray-100 mb-1">{title}</h3>
+                  <p className="text-sm text-muted-foreground">{desc}</p>
                 </CardContent>
               </Card>
             ))}
@@ -476,9 +476,9 @@ export default function CreaFestival() {
         {/* Pricing */}
         <Card className="border-2 border-amber-200 dark:border-amber-800">
           <CardContent className="py-10 text-center space-y-4">
-            <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Una tariffa unica. Nessuna sorpresa.</h2>
+            <h2 className="text-2xl font-bold text-foreground dark:text-gray-100">Una tariffa unica. Nessuna sorpresa.</h2>
             <div className="text-6xl font-extrabold text-amber-600">€{PRICE}</div>
-            <p className="text-gray-500">Pagamento unico per tutta la durata del festival</p>
+            <p className="text-muted-foreground">Pagamento unico per tutta la durata del festival</p>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-w-md mx-auto text-sm text-left">
               {[
                 "Taplist QR illimitato",
@@ -492,7 +492,7 @@ export default function CreaFestival() {
               ].map(f => (
                 <div key={f} className="flex items-center gap-2">
                   <CheckCircle2 className="h-4 w-4 text-green-500 flex-shrink-0" />
-                  <span className="text-gray-700 dark:text-gray-300">{f}</span>
+                  <span className="text-muted-foreground dark:text-stone-300">{f}</span>
                 </div>
               ))}
             </div>
@@ -508,7 +508,7 @@ export default function CreaFestival() {
 
         {/* FAQ */}
         <div className="space-y-4">
-          <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100">Domande frequenti</h2>
+          <h2 className="text-xl font-bold text-foreground dark:text-gray-100">Domande frequenti</h2>
           {[
             {
               q: "I visitatori devono scaricare un'app?",
@@ -528,15 +528,15 @@ export default function CreaFestival() {
             },
           ].map(({ q, a }) => (
             <div key={q} className="bg-white dark:bg-gray-800 rounded-xl p-5 border border-gray-100 dark:border-gray-700">
-              <h3 className="font-semibold text-gray-900 dark:text-gray-100 mb-1">{q}</h3>
-              <p className="text-sm text-gray-600 dark:text-gray-400">{a}</p>
+              <h3 className="font-semibold text-foreground dark:text-gray-100 mb-1">{q}</h3>
+              <p className="text-sm text-muted-foreground dark:text-stone-400">{a}</p>
             </div>
           ))}
         </div>
 
         {/* Bottom CTA */}
         <div className="text-center py-4 border-t border-gray-100 dark:border-gray-800">
-          <p className="text-gray-600 dark:text-gray-400">
+          <p className="text-muted-foreground dark:text-stone-400">
             Hai già un festival su Fermenta?{" "}
             <Link href="/festival-dashboard" className="text-amber-600 font-semibold hover:underline">
               Vai alla dashboard

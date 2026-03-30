@@ -158,7 +158,7 @@ export default function SuggestChangeDialog({ open, onOpenChange, type, itemId, 
             <Lightbulb className="h-5 w-5" />
             Suggerisci una modifica
           </DialogTitle>
-          <DialogDescription className="flex items-start gap-2 text-sm text-gray-500 dark:text-gray-400">
+          <DialogDescription className="flex items-start gap-2 text-sm text-muted-foreground dark:text-stone-400">
             <Info className="h-4 w-4 mt-0.5 flex-shrink-0" />
             Le tue modifiche saranno inviate per revisione. Verranno applicate solo se approvate dall'amministratore o dal proprietario.
           </DialogDescription>

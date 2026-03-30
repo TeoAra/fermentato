@@ -1088,7 +1088,7 @@ export default function BreweryDashboard({ adminBreweryId }: BreweryDashboardPro
                           </Link>
                           <div className="flex items-center gap-0.5 ml-1">
                             {Array.from({ length: 5 }).map((_, i) => (
-                              <Star key={i} className={`h-3.5 w-3.5 ${i < (review.rating || 0) ? 'text-primary fill-primary' : 'text-orange-100 dark:text-gray-800'}`} />
+                              <Star key={i} className={`h-3.5 w-3.5 ${i < (review.rating || 0) ? 'text-primary fill-primary' : 'text-orange-100 dark:text-foreground'}`} />
                             ))}
                           </div>
                         </div>
@@ -1494,7 +1494,7 @@ export default function BreweryDashboard({ adminBreweryId }: BreweryDashboardPro
                   <div className="space-y-2 mb-4">
                     {editingAwards.map((a, i) => (
                       <div key={i} className="flex items-center gap-3 text-sm bg-white dark:bg-black/40 rounded-xl px-3 py-2 border border-stone-200/50">
-                        <Trophy className={`h-4 w-4 flex-shrink-0 ${a.type === 'gold' ? 'text-yellow-500' : a.type === 'silver' ? 'text-gray-300' : a.type === 'bronze' ? 'text-orange-700' : 'text-primary'}`} />
+                        <Trophy className={`h-4 w-4 flex-shrink-0 ${a.type === 'gold' ? 'text-yellow-500' : a.type === 'silver' ? 'text-stone-300' : a.type === 'bronze' ? 'text-orange-700' : 'text-primary'}`} />
                         <span className="flex-1 truncate font-medium">{a.name} — {a.competition} ({a.year})</span>
                         <button type="button" onClick={() => setEditingAwards(prev => prev.filter((_, j) => j !== i))} className="text-muted-foreground hover:text-destructive p-1">
                           <X className="h-3.5 w-3.5" />

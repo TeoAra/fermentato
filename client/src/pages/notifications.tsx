@@ -36,7 +36,7 @@ function getNotificationIcon(type: string) {
     case 'festival_update':
       return { icon: <CalendarDays className={`${base} text-violet-600`} />, bg: 'bg-violet-50 dark:bg-violet-950/30' };
     default:
-      return { icon: <Bell className={`${base} text-gray-500`} />, bg: 'bg-gray-100 dark:bg-gray-800' };
+      return { icon: <Bell className={`${base} text-muted-foreground`} />, bg: 'bg-stone-100 dark:bg-stone-800' };
   }
 }
 
@@ -218,9 +218,9 @@ export default function Notifications() {
 
       {/* Push permission banner */}
       {notifPerm !== 'granted' && notifPerm !== 'unsupported' && (
-        <div className={`rounded-2xl p-4 border flex items-start gap-3 ${notifPerm === 'denied' ? 'bg-red-50 dark:bg-red-950/20 border-red-100 dark:border-red-900/30' : 'bg-amber-50 dark:bg-amber-950/20 border-amber-100 dark:border-amber-900/30'}`}>
-          <div className={`p-2 rounded-xl flex-shrink-0 ${notifPerm === 'denied' ? 'bg-red-100 dark:bg-red-900/30' : 'bg-amber-100 dark:bg-amber-900/30'}`}>
-            <BellOff className={`h-4 w-4 ${notifPerm === 'denied' ? 'text-red-600' : 'text-amber-600'}`} />
+        <div className={`rounded-2xl p-4 border flex items-start gap-3 ${notifPerm === 'denied' ? 'bg-red-50 dark:bg-red-950/20 border-red-100 dark:border-red-900/30' : 'bg-white dark:bg-[hsl(25,14%,10%)] border-stone-100 dark:border-[hsl(25,12%,17%)]'}`}>
+          <div className={`p-2 rounded-xl flex-shrink-0 ${notifPerm === 'denied' ? 'bg-red-100 dark:bg-red-900/30' : 'bg-stone-100 dark:bg-stone-800'}`}>
+            <BellOff className={`h-4 w-4 ${notifPerm === 'denied' ? 'text-red-600' : 'text-stone-500'}`} />
           </div>
           <div className="flex-1 min-w-0">
             <p className="text-sm font-bold text-foreground">
@@ -254,10 +254,10 @@ export default function Notifications() {
       )}
 
       {notifPerm === 'granted' && !pushStatus?.subscribed && (
-        <div className="rounded-2xl p-4 border border-amber-100 dark:border-amber-900/30 bg-amber-50 dark:bg-amber-950/20 flex items-center gap-3">
-          <AlertCircle className="h-4 w-4 text-amber-600 flex-shrink-0" />
-          <p className="text-xs text-amber-800 dark:text-amber-300 flex-1">Permesso concesso ma non registrato. Clicca per completare l'attivazione.</p>
-          <button onClick={handleSubscribe} disabled={isSubscribing} className="text-xs font-bold text-amber-700 dark:text-amber-400 hover:underline">
+        <div className="rounded-2xl p-4 border border-stone-100 dark:border-[hsl(25,12%,17%)] bg-white dark:bg-[hsl(25,14%,10%)] flex items-center gap-3">
+          <AlertCircle className="h-4 w-4 text-primary flex-shrink-0" />
+          <p className="text-xs text-muted-foreground flex-1">Permesso concesso ma non registrato. Clicca per completare l'attivazione.</p>
+          <button onClick={handleSubscribe} disabled={isSubscribing} className="text-xs font-bold text-primary hover:underline">
             {isSubscribing ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : 'Attiva'}
           </button>
         </div>

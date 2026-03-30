@@ -27,7 +27,7 @@ function StarDisplay({ rating }: { rating: number }) {
       {[1, 2, 3, 4, 5].map((s) => (
         <Star
           key={s}
-          className={`h-3.5 w-3.5 ${s <= rating ? "text-yellow-500 fill-yellow-500" : "text-gray-300 dark:text-gray-400"}`}
+          className={`h-3.5 w-3.5 ${s <= rating ? "text-yellow-500 fill-yellow-500" : "text-stone-300 dark:text-stone-400"}`}
         />
       ))}
     </div>
@@ -42,7 +42,7 @@ function BadgeCard({ badge, reviewCount, isCurrentLevel }: { badge: any; reviewC
         ? `border-current bg-gradient-to-br ${badge.bgFrom} ${badge.bgTo} text-white shadow-lg scale-105`
         : unlocked
         ? `${badge.borderColor} bg-white dark:bg-gray-800`
-        : "border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 opacity-40"
+        : "border-gray-200 dark:border-gray-700 bg-stone-50 dark:bg-gray-900 opacity-40"
     }`}>
       {isCurrentLevel && (
         <div className="absolute -top-2 -right-2 bg-yellow-400 text-yellow-900 text-xs font-bold px-2 py-0.5 rounded-full shadow">
@@ -50,10 +50,10 @@ function BadgeCard({ badge, reviewCount, isCurrentLevel }: { badge: any; reviewC
         </div>
       )}
       <span className="text-3xl">{badge.emoji}</span>
-      <span className={`text-xs font-bold text-center leading-tight ${isCurrentLevel ? "text-white" : "text-gray-700 dark:text-gray-300"}`}>
+      <span className={`text-xs font-bold text-center leading-tight ${isCurrentLevel ? "text-white" : "text-muted-foreground dark:text-stone-300"}`}>
         {badge.name}
       </span>
-      <span className={`text-xs ${isCurrentLevel ? "text-white/80" : "text-gray-400 dark:text-gray-400"}`}>
+      <span className={`text-xs ${isCurrentLevel ? "text-white/80" : "text-stone-400 dark:text-stone-400"}`}>
         {badge.minReviews}+ rec.
       </span>
     </div>
@@ -103,10 +103,10 @@ export default function UserPublicProfile() {
               {isPrivate ? <Lock className="h-10 w-10 text-white" /> : <span className="text-4xl">🍺</span>}
             </div>
             <div>
-              <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
+              <h2 className="text-2xl font-bold text-foreground dark:text-white mb-2">
                 {isPrivate ? 'Profilo privato' : 'Utente non trovato'}
               </h2>
-              <p className="text-gray-600 dark:text-gray-400">
+              <p className="text-muted-foreground dark:text-stone-400">
                 {isPrivate
                   ? 'Questo utente ha scelto di mantenere il suo profilo privato.'
                   : 'Il profilo che stai cercando non esiste o è stato rimosso.'}
@@ -203,14 +203,14 @@ export default function UserPublicProfile() {
           {nextBadge && (
             <div className="px-6 py-4 bg-white dark:bg-gray-900 border-t border-gray-100 dark:border-gray-800">
               <div className="flex items-center justify-between mb-2">
-                <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                <span className="text-sm font-medium text-muted-foreground dark:text-stone-300">
                   Progresso verso <strong>{nextBadge.name}</strong> {nextBadge.emoji}
                 </span>
-                <span className="text-sm text-gray-500">
+                <span className="text-sm text-muted-foreground">
                   {profile.reviewCount} / {nextBadge.minReviews}
                 </span>
               </div>
-              <div className="h-2.5 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+              <div className="h-2.5 bg-stone-200 dark:bg-gray-700 rounded-full overflow-hidden">
                 <div
                   className={`h-full bg-gradient-to-r ${badge.bgFrom} ${badge.bgTo} rounded-full transition-all duration-500`}
                   style={{ width: `${progress}%` }}
@@ -231,7 +231,7 @@ export default function UserPublicProfile() {
         {profile.favoriteStyles && profile.favoriteStyles.length > 0 && (
           <Card className="border-0 shadow-lg">
             <CardContent className="p-6">
-              <h2 className="font-bold text-gray-900 dark:text-white mb-3 flex items-center gap-2">
+              <h2 className="font-bold text-foreground dark:text-white mb-3 flex items-center gap-2">
                 🍺 Stili preferiti
               </h2>
               <div className="flex flex-wrap gap-2">
@@ -246,7 +246,7 @@ export default function UserPublicProfile() {
                   </Link>
                 ))}
               </div>
-              <p className="text-xs text-gray-400 mt-3">Clicca uno stile per cercarlo nel catalogo</p>
+              <p className="text-xs text-stone-400 mt-3">Clicca uno stile per cercarlo nel catalogo</p>
             </CardContent>
           </Card>
         )}
@@ -256,10 +256,10 @@ export default function UserPublicProfile() {
           <Card className="border-0 shadow-lg">
             <CardContent className="p-6">
               <div className="flex items-center justify-between mb-4">
-                <h2 className="font-bold text-gray-900 dark:text-white flex items-center gap-2">
+                <h2 className="font-bold text-foreground dark:text-white flex items-center gap-2">
                   🏅 Achievement ({earnedAchievements.length})
                 </h2>
-                <span className="text-xs text-gray-500 dark:text-gray-400">
+                <span className="text-xs text-muted-foreground dark:text-stone-400">
                   Badge guadagnati per traguardi speciali
                 </span>
               </div>
@@ -269,10 +269,10 @@ export default function UserPublicProfile() {
                   if (!catAchievements || catAchievements.length === 0) return null;
                   return (
                     <div key={cat}>
-                      <h3 className="text-sm font-semibold text-gray-600 dark:text-gray-400 mb-2 flex items-center gap-2">
+                      <h3 className="text-sm font-semibold text-muted-foreground dark:text-stone-400 mb-2 flex items-center gap-2">
                         <span>{ACHIEVEMENT_CATEGORY_EMOJI[cat]}</span>
                         {ACHIEVEMENT_CATEGORY_LABEL[cat]}
-                        <span className="text-xs text-gray-400">({catAchievements.length})</span>
+                        <span className="text-xs text-stone-400">({catAchievements.length})</span>
                       </h3>
                       <div className="flex flex-wrap gap-2">
                         {catAchievements.map(a => (
@@ -297,8 +297,8 @@ export default function UserPublicProfile() {
         {/* Badge Progression */}
         <Card className="border-0 shadow-lg">
           <CardContent className="p-6">
-            <h2 className="font-bold text-gray-900 dark:text-white mb-1">Percorso Livelli</h2>
-            <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
+            <h2 className="font-bold text-foreground dark:text-white mb-1">Percorso Livelli</h2>
+            <p className="text-sm text-muted-foreground dark:text-stone-400 mb-4">
               {badge.description}
             </p>
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
@@ -318,14 +318,14 @@ export default function UserPublicProfile() {
         {profile.recentReviews && profile.recentReviews.length > 0 && (
           <Card className="border-0 shadow-lg">
             <CardContent className="p-6">
-              <h2 className="font-bold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+              <h2 className="font-bold text-foreground dark:text-white mb-4 flex items-center gap-2">
                 <Star className="h-5 w-5 text-yellow-500 fill-yellow-500" />
                 Ultime recensioni ({profile.reviewCount})
               </h2>
               <div className="space-y-3">
                 {profile.recentReviews.map((review: any) => (
                   <Link key={review.id} href={`/beer/${review.beerId}`}>
-                    <div className="flex items-start gap-3 p-3 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors cursor-pointer">
+                    <div className="flex items-start gap-3 p-3 rounded-xl hover:bg-stone-50 dark:hover:bg-gray-800 transition-colors cursor-pointer">
                       <ImageWithFallback
                         src={review.beerImageUrl}
                         alt={review.beerName}
@@ -335,14 +335,14 @@ export default function UserPublicProfile() {
                       />
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center justify-between gap-2">
-                          <span className="font-semibold text-sm text-gray-900 dark:text-white truncate">{review.beerName}</span>
+                          <span className="font-semibold text-sm text-foreground dark:text-white truncate">{review.beerName}</span>
                           <StarDisplay rating={review.rating} />
                         </div>
-                        {review.beerStyle && <span className="text-xs text-gray-500">{review.beerStyle}</span>}
+                        {review.beerStyle && <span className="text-xs text-muted-foreground">{review.beerStyle}</span>}
                         {review.personalNotes && (
-                          <p className="text-xs text-gray-600 dark:text-gray-400 italic mt-1 line-clamp-2">"{review.personalNotes}"</p>
+                          <p className="text-xs text-muted-foreground dark:text-stone-400 italic mt-1 line-clamp-2">"{review.personalNotes}"</p>
                         )}
-                        <p className="text-xs text-gray-400 mt-1">
+                        <p className="text-xs text-stone-400 mt-1">
                           {format(new Date(review.tastedAt), "d MMM yyyy", { locale: it })}
                         </p>
                       </div>

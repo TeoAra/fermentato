@@ -69,7 +69,7 @@ export default function UserDashboard() {
     { id: 'overview', name: 'Dashboard', icon: TrendingUp, gradient: 'from-blue-500 to-purple-600' },
     { id: 'discoveries', name: 'Scoperte', icon: Compass, gradient: 'from-emerald-500 to-teal-600' },
     { id: 'favorites', name: 'Preferiti', icon: Heart, gradient: 'from-rose-500 to-pink-600' },
-    { id: 'activity', name: 'Attività', icon: Activity, gradient: 'from-orange-500 to-red-600' },
+    { id: 'activity', name: 'Attività', icon: Activity, gradient: 'from-primary to-orange-600' },
     { id: 'profile', name: 'Profilo', icon: User, gradient: 'from-indigo-500 to-purple-600' },
     { id: 'settings', name: 'Impostazioni', icon: Settings, gradient: 'from-gray-500 to-neutral-600' },
   ];
@@ -106,7 +106,7 @@ export default function UserDashboard() {
           </div>
           <div className="flex items-center space-x-2">
             {badge && (
-              <Badge variant="secondary" className="text-xs bg-white/50 text-gray-700">
+              <Badge variant="secondary" className="text-xs bg-white/50 text-muted-foreground">
                 {badge}
               </Badge>
             )}
@@ -114,7 +114,7 @@ export default function UserDashboard() {
               <div className={`flex items-center text-sm ${
                 trend === 'up' ? 'text-green-600' : 
                 trend === 'down' ? 'text-red-600' : 
-                'text-gray-600'
+                'text-muted-foreground'
               }`}>
                 {trend === 'up' && <TrendingUp className="h-4 w-4" />}
                 {trend === 'down' && <TrendingUp className="h-4 w-4 rotate-180" />}
@@ -126,14 +126,14 @@ export default function UserDashboard() {
         </div>
         
         <div className="space-y-2">
-          <h3 className="text-3xl font-bold text-gray-900 dark:text-white group-hover:text-gray-700 dark:group-hover:text-gray-100 transition-colors">
+          <h3 className="text-3xl font-bold text-gray-900 dark:text-white group-hover:text-muted-foreground dark:group-hover:text-gray-100 transition-colors">
             {value}
           </h3>
-          <p className="text-sm font-medium text-gray-600 dark:text-gray-400">
+          <p className="text-sm font-medium text-muted-foreground dark:text-stone-400">
             {title}
           </p>
           {description && (
-            <p className="text-xs text-gray-500 dark:text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+            <p className="text-xs text-muted-foreground dark:text-stone-400 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
               {description}
             </p>
           )}
@@ -158,18 +158,18 @@ export default function UserDashboard() {
       <div className="flex items-center space-x-3">
         <div className={`p-2 rounded-lg ${
           unlocked 
-            ? 'bg-gradient-to-br from-yellow-400 to-orange-500 text-white' 
-            : 'bg-gray-200 dark:bg-gray-700 text-gray-400'
+            ? 'bg-primary text-white' 
+            : 'bg-stone-200 dark:bg-stone-700 text-stone-400'
         }`}>
           <Icon className="h-5 w-5" />
         </div>
         <div>
           <h4 className={`font-semibold text-sm ${
-            unlocked ? 'text-gray-900 dark:text-white' : 'text-gray-500 dark:text-gray-400'
+            unlocked ? 'text-gray-900 dark:text-white' : 'text-muted-foreground dark:text-stone-400'
           }`}>
             {title}
           </h4>
-          <p className="text-xs text-gray-500 dark:text-gray-400">
+          <p className="text-xs text-muted-foreground dark:text-stone-400">
             {description}
           </p>
         </div>
@@ -201,10 +201,10 @@ export default function UserDashboard() {
                 <h1 className="text-display-lg text-gray-900 dark:text-white mb-2">
                   Ciao, {user?.firstName || 'Utente'}! 👋
                 </h1>
-                <p className="text-body-medium text-gray-600 dark:text-gray-400 mb-1">
+                <p className="text-body-medium text-muted-foreground dark:text-stone-400 mb-1">
                   Benvenuto nella tua dashboard birraia
                 </p>
-                <div className="flex items-center space-x-4 text-sm text-gray-500">
+                <div className="flex items-center space-x-4 text-sm text-muted-foreground">
                   <div className="flex items-center">
                     <Clock className="h-4 w-4 mr-1" />
                     Attivo da Luglio 2024
@@ -245,7 +245,7 @@ export default function UserDashboard() {
           title="Pub Visitati"
           value={pubFavorites.length}
           icon={Store}
-          gradient="from-amber-500 to-orange-600"
+          gradient="from-primary to-orange-600"
           trend="up"
           trendValue="+2"
           description="Locali aggiunti ai preferiti"
@@ -290,7 +290,7 @@ export default function UserDashboard() {
             <CardContent className="p-6">
               <div className="space-y-4">
                 {favorites.slice(0, 5).map((fav: any, index: number) => (
-                  <div key={fav.id} className="flex items-center justify-between p-4 rounded-xl bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+                  <div key={fav.id} className="flex items-center justify-between p-4 rounded-xl bg-stone-50 dark:bg-stone-900 hover:bg-stone-100 dark:hover:bg-gray-700 transition-colors">
                     <div className="flex items-center space-x-4">
                       <div className="flex items-center justify-center w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 text-white font-bold text-sm">
                         {fav.itemType === 'pub' && <Store className="h-5 w-5" />}
@@ -301,7 +301,7 @@ export default function UserDashboard() {
                         <h4 className="font-semibold text-gray-900 dark:text-white">
                           Hai aggiunto {fav.itemName} ai preferiti
                         </h4>
-                        <p className="text-sm text-gray-500 dark:text-gray-400">
+                        <p className="text-sm text-muted-foreground dark:text-stone-400">
                           {formatDistanceToNow(new Date(fav.createdAt), { addSuffix: true, locale: it })}
                         </p>
                       </div>
@@ -313,8 +313,8 @@ export default function UserDashboard() {
                 ))}
                 {favorites.length === 0 && (
                   <div className="text-center py-8">
-                    <Activity className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                    <p className="text-gray-500 dark:text-gray-400">
+                    <Activity className="h-12 w-12 text-stone-400 mx-auto mb-4" />
+                    <p className="text-muted-foreground dark:text-stone-400">
                       Nessuna attività recente. Inizia esplorando!
                     </p>
                   </div>
@@ -338,21 +338,21 @@ export default function UserDashboard() {
               <div className="space-y-4">
                 <div>
                   <div className="flex justify-between text-sm mb-2">
-                    <span className="text-gray-600 dark:text-gray-400">Pub da Visitare</span>
+                    <span className="text-muted-foreground dark:text-stone-400">Pub da Visitare</span>
                     <span className="font-semibold">{pubFavorites.length}/10</span>
                   </div>
                   <Progress value={(pubFavorites.length / 10) * 100} className="h-2" />
                 </div>
                 <div>
                   <div className="flex justify-between text-sm mb-2">
-                    <span className="text-gray-600 dark:text-gray-400">Birrifici da Scoprire</span>
+                    <span className="text-muted-foreground dark:text-stone-400">Birrifici da Scoprire</span>
                     <span className="font-semibold">{breweryFavorites.length}/15</span>
                   </div>
                   <Progress value={(breweryFavorites.length / 15) * 100} className="h-2" />
                 </div>
                 <div>
                   <div className="flex justify-between text-sm mb-2">
-                    <span className="text-gray-600 dark:text-gray-400">Stili Birra Assaggiati</span>
+                    <span className="text-muted-foreground dark:text-stone-400">Stili Birra Assaggiati</span>
                     <span className="font-semibold">{beerFavorites.length}/25</span>
                   </div>
                   <Progress value={(beerFavorites.length / 25) * 100} className="h-2" />
@@ -409,7 +409,7 @@ export default function UserDashboard() {
                 <Icon className="h-6 w-6 text-white" />
               </div>
               <p className="font-semibold text-gray-900 dark:text-white text-sm mb-1">{section.name}</p>
-              <ChevronRight className="h-4 w-4 mx-auto text-gray-400" />
+              <ChevronRight className="h-4 w-4 mx-auto text-stone-400" />
             </div>
           );
         })}
@@ -430,7 +430,7 @@ export default function UserDashboard() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Pub Favorites */}
         <Card className="modern-card rounded-2xl overflow-hidden">
-          <CardHeader className="bg-gradient-to-r from-orange-50 to-amber-50 dark:from-orange-950 dark:to-amber-950">
+          <CardHeader className="bg-stone-50 dark:bg-stone-900">
             <CardTitle className="flex items-center justify-between">
               <div className="flex items-center">
                 <Store className="mr-3 h-5 w-5 text-orange-600" />
@@ -445,22 +445,22 @@ export default function UserDashboard() {
             <div className="space-y-3">
               {pubFavorites.length === 0 ? (
                 <div className="text-center py-8">
-                  <Store className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                  <p className="text-gray-500 dark:text-gray-400 text-sm">
+                  <Store className="h-12 w-12 text-stone-400 mx-auto mb-4" />
+                  <p className="text-muted-foreground dark:text-stone-400 text-sm">
                     Nessun pub preferito
                   </p>
                 </div>
               ) : (
                 pubFavorites.slice(0, 5).map((fav: any) => (
                   <div key={fav.id} className="flex items-center gap-3 p-3 glass-card rounded-lg hover:scale-102 transition-transform">
-                    <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-orange-500 to-amber-600 flex items-center justify-center text-white">
+                    <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-primary to-orange-600 flex items-center justify-center text-white">
                       <Store className="h-5 w-5" />
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="font-medium text-sm truncate text-gray-900 dark:text-white">
                         {fav.itemName}
                       </p>
-                      <p className="text-xs text-gray-500">
+                      <p className="text-xs text-muted-foreground">
                         {fav.itemLocation || 'Posizione'}
                       </p>
                     </div>
@@ -488,8 +488,8 @@ export default function UserDashboard() {
             <div className="space-y-3">
               {breweryFavorites.length === 0 ? (
                 <div className="text-center py-8">
-                  <Beer className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                  <p className="text-gray-500 dark:text-gray-400 text-sm">
+                  <Beer className="h-12 w-12 text-stone-400 mx-auto mb-4" />
+                  <p className="text-muted-foreground dark:text-stone-400 text-sm">
                     Nessun birrificio preferito
                   </p>
                 </div>
@@ -503,7 +503,7 @@ export default function UserDashboard() {
                       <p className="font-medium text-sm truncate text-gray-900 dark:text-white">
                         {fav.itemName}
                       </p>
-                      <p className="text-xs text-gray-500">
+                      <p className="text-xs text-muted-foreground">
                         {fav.itemLocation || 'Località'}
                       </p>
                     </div>
@@ -531,8 +531,8 @@ export default function UserDashboard() {
             <div className="space-y-3">
               {beerFavorites.length === 0 ? (
                 <div className="text-center py-8">
-                  <Sparkles className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                  <p className="text-gray-500 dark:text-gray-400 text-sm">
+                  <Sparkles className="h-12 w-12 text-stone-400 mx-auto mb-4" />
+                  <p className="text-muted-foreground dark:text-stone-400 text-sm">
                     Nessuna birra preferita
                   </p>
                 </div>
@@ -546,7 +546,7 @@ export default function UserDashboard() {
                       <p className="font-medium text-sm truncate text-gray-900 dark:text-white">
                         {fav.itemName}
                       </p>
-                      <p className="text-xs text-gray-500">
+                      <p className="text-xs text-muted-foreground">
                         Birra preferita
                       </p>
                     </div>
@@ -613,7 +613,7 @@ export default function UserDashboard() {
                   className={`group flex items-center px-4 py-3 text-sm font-medium rounded-xl w-full text-left transition-all duration-200 ${
                     isActive
                       ? `bg-gradient-to-r ${section.gradient} text-white shadow-lg transform scale-105`
-                      : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-white hover:scale-102'
+                      : 'text-muted-foreground dark:text-gray-300 hover:bg-stone-100 dark:hover:bg-stone-800 hover:text-gray-900 dark:hover:text-white hover:scale-102'
                   }`}
                   data-testid={`nav-${section.id}`}
                 >
@@ -627,7 +627,7 @@ export default function UserDashboard() {
           
           {/* User Info */}
           <div className="p-4 border-t">
-            <div className="flex items-center space-x-3 p-3 rounded-xl bg-gray-50 dark:bg-gray-800">
+            <div className="flex items-center space-x-3 p-3 rounded-xl bg-stone-50 dark:bg-stone-900">
               <Avatar className="w-8 h-8">
                 <AvatarImage src={user?.profileImageUrl || ''} />
                 <AvatarFallback className="bg-gradient-to-br from-blue-500 to-purple-600 text-white text-sm">
@@ -638,7 +638,7 @@ export default function UserDashboard() {
                 <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
                   {user?.firstName} {user?.lastName}
                 </p>
-                <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
+                <p className="text-xs text-muted-foreground dark:text-stone-400 truncate">
                   Esploratore Birraio
                 </p>
               </div>
@@ -653,9 +653,9 @@ export default function UserDashboard() {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-50 via-blue-50 to-indigo-50 dark:from-gray-950 dark:via-blue-950 dark:to-indigo-950">
         <div className="text-center space-y-4">
-          <User className="w-16 h-16 text-gray-400 mx-auto" />
+          <User className="w-16 h-16 text-stone-400 mx-auto" />
           <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Accesso richiesto</h2>
-          <p className="text-gray-600 dark:text-gray-400">
+          <p className="text-muted-foreground dark:text-stone-400">
             Effettua l'accesso per vedere la tua dashboard personale.
           </p>
           <Button className="mt-4">
@@ -692,7 +692,7 @@ export default function UserDashboard() {
                     <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
                       {sections.find(s => s.id === currentSection)?.name}
                     </h2>
-                    <p className="text-gray-600 dark:text-gray-400">
+                    <p className="text-muted-foreground dark:text-stone-400">
                       Sezione in fase di sviluppo con il nuovo design system.
                     </p>
                   </div>
@@ -716,7 +716,7 @@ export default function UserDashboard() {
                 className={`flex flex-col items-center py-3 px-2 text-xs rounded-xl transition-all duration-200 ${
                   isActive
                     ? `bg-gradient-to-t ${section.gradient} text-white shadow-lg scale-105`
-                    : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800'
+                    : 'text-muted-foreground dark:text-stone-400 hover:text-gray-900 dark:hover:text-white hover:bg-stone-100 dark:hover:bg-stone-800'
                 }`}
                 data-testid={`mobile-nav-${section.id}`}
               >

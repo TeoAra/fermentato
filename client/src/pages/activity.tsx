@@ -17,7 +17,7 @@ import { ShareButton } from "@/components/share-button";
 type OpenStatus = 'open' | 'closing_soon' | 'opening_soon' | 'closed';
 
 function getOpenStatus(openingHours: any): { status: OpenStatus; label: string; color: string } {
-  if (!openingHours) return { status: 'closed', label: 'Orari non disponibili', color: 'text-gray-500' };
+  if (!openingHours) return { status: 'closed', label: 'Orari non disponibili', color: 'text-muted-foreground' };
   
   const now = new Date();
   const currentDay = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'][now.getDay()];
@@ -268,7 +268,7 @@ export default function Activity() {
         </div>
       )}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6">
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Attività in Zona</h1>
+        <h1 className="text-2xl font-bold text-foreground dark:text-white">Attività in Zona</h1>
         <div className="flex items-center gap-2">
           <Select value={radius} onValueChange={setRadius}>
             <SelectTrigger className="w-24" data-testid="select-radius">
@@ -316,22 +316,22 @@ export default function Activity() {
       )}
 
       {!userLocation && !requestingLocation && !locationError && (
-        <div className="mb-6 p-5 rounded-2xl bg-gradient-to-br from-amber-50 to-orange-50 dark:from-amber-950/40 dark:to-orange-950/40 border border-amber-200 dark:border-amber-800 flex items-center gap-4">
-          <div className="w-12 h-12 rounded-full bg-amber-100 dark:bg-amber-900/60 flex items-center justify-center flex-shrink-0">
-            <Navigation className="h-6 w-6 text-amber-600 dark:text-amber-400" />
+        <div className="mb-6 p-4 rounded-2xl bg-white dark:bg-[hsl(25,14%,10%)] border border-stone-100 dark:border-[hsl(25,12%,17%)] flex items-center gap-3 shadow-sm">
+          <div className="w-10 h-10 rounded-full bg-stone-100 dark:bg-stone-800 flex items-center justify-center flex-shrink-0">
+            <Navigation className="h-5 w-5 text-stone-500 dark:text-stone-400" />
           </div>
           <div className="flex-1 min-w-0">
-            <p className="font-semibold text-gray-900 dark:text-white text-sm">Attiva la posizione</p>
-            <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Per vedere pub, eventi e birre vicino a te</p>
+            <p className="font-semibold text-foreground text-sm">Attiva la posizione</p>
+            <p className="text-xs text-muted-foreground mt-0.5">Per vedere pub, eventi e birre vicino a te</p>
           </div>
-          <Button onClick={requestLocation} size="sm" className="bg-amber-500 hover:bg-amber-600 text-white flex-shrink-0">
+          <Button onClick={requestLocation} size="sm" className="bg-primary hover:bg-primary/90 text-white flex-shrink-0 rounded-xl h-8 px-3 text-xs font-bold">
             Attiva
           </Button>
         </div>
       )}
 
       {userLocation && (
-        <div className="mb-4 text-sm text-gray-500 dark:text-gray-400 flex items-center gap-2">
+        <div className="mb-4 text-sm text-muted-foreground dark:text-stone-400 flex items-center gap-2">
           <MapPin className="h-4 w-4 text-green-500" />
           <span>Posizione rilevata · Risultati entro <strong>{radius} km</strong></span>
         </div>
@@ -340,7 +340,7 @@ export default function Activity() {
       <div className="space-y-8">
         {/* SECTION 1: Locali Vicini */}
         <section>
-          <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+          <h2 className="text-lg font-semibold text-foreground dark:text-white mb-4 flex items-center gap-2">
             <MapPin className="h-5 w-5 text-orange-600" />
             Locali Vicini
           </h2>
@@ -349,9 +349,9 @@ export default function Activity() {
               <Loader2 className="h-8 w-8 animate-spin text-orange-600" />
             </div>
           ) : nearbyPubs.length === 0 ? (
-            <div className="text-center py-8 bg-gray-50 dark:bg-gray-800/50 rounded-xl">
-              <MapPin className="h-10 w-10 text-gray-400 mx-auto mb-3" />
-              <p className="text-sm text-gray-500 dark:text-gray-400">Nessun pub trovato entro {radius} km</p>
+            <div className="text-center py-8 bg-gray-50 dark:bg-stone-800/50 rounded-xl">
+              <MapPin className="h-10 w-10 text-stone-400 mx-auto mb-3" />
+              <p className="text-sm text-muted-foreground dark:text-stone-400">Nessun pub trovato entro {radius} km</p>
               <Button variant="link" size="sm" onClick={() => setRadius("50")}>Espandi a 50 km</Button>
             </div>
           ) : (
@@ -369,7 +369,7 @@ export default function Activity() {
                             </div>
                             <div className="flex-1 min-w-0">
                               <h3 className="font-semibold text-sm mb-1 truncate">{pub.name}</h3>
-                              <p className="text-xs text-gray-500 mb-2 flex items-center gap-1">
+                              <p className="text-xs text-muted-foreground mb-2 flex items-center gap-1">
                                 <MapPin className="w-3 h-3 flex-shrink-0" />
                                 <span className="line-clamp-1">
                                   {userLocation && pub.distance !== 9999 ? pub.city || pub.address?.split(',').pop()?.trim() : pub.address}
@@ -410,7 +410,7 @@ export default function Activity() {
 
         {/* SECTION 2: Eventi in Zona */}
         <section>
-          <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+          <h2 className="text-lg font-semibold text-foreground dark:text-white mb-4 flex items-center gap-2">
             <CalendarDays className="h-5 w-5 text-pink-600" />
             Eventi in Zona
             {nearbyEvents.length > 0 && (
@@ -422,9 +422,9 @@ export default function Activity() {
               <Loader2 className="h-8 w-8 animate-spin text-pink-600" />
             </div>
           ) : nearbyEvents.length === 0 ? (
-            <div className="text-center py-8 bg-gray-50 dark:bg-gray-800/50 rounded-xl">
-              <CalendarDays className="h-10 w-10 text-gray-400 mx-auto mb-3" />
-              <p className="text-sm text-gray-500 dark:text-gray-400">Nessun evento in programma entro {radius} km</p>
+            <div className="text-center py-8 bg-gray-50 dark:bg-stone-800/50 rounded-xl">
+              <CalendarDays className="h-10 w-10 text-stone-400 mx-auto mb-3" />
+              <p className="text-sm text-muted-foreground dark:text-stone-400">Nessun evento in programma entro {radius} km</p>
             </div>
           ) : (
             <div className="space-y-3">
@@ -452,7 +452,7 @@ export default function Activity() {
                           <Calendar className="h-3 w-3" />
                           <span>{format(new Date(ev.eventDate), "EEE d MMM 'alle' HH:mm", { locale: it })}</span>
                         </div>
-                        <div className="flex items-center gap-2 text-xs text-gray-500 flex-wrap mb-1.5">
+                        <div className="flex items-center gap-2 text-xs text-muted-foreground flex-wrap mb-1.5">
                           <Link href={`/pub/${ev.pubId}`} onClick={(e: any) => e.stopPropagation()}>
                             <span className="text-orange-600 hover:underline font-medium cursor-pointer">{ev.pub?.name}</span>
                           </Link>
@@ -473,7 +473,7 @@ export default function Activity() {
 
         {/* SECTION 3: Festival in Evidenza */}
         <section>
-          <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+          <h2 className="text-lg font-semibold text-foreground dark:text-white mb-4 flex items-center gap-2">
             <CalendarDays className="h-5 w-5 text-amber-600" />
             Festival in Evidenza
             {Array.isArray(activeFestivals) && activeFestivals.length > 0 && (
@@ -485,9 +485,9 @@ export default function Activity() {
               <Loader2 className="h-8 w-8 animate-spin text-amber-600" />
             </div>
           ) : !Array.isArray(activeFestivals) || activeFestivals.length === 0 ? (
-            <div className="text-center py-8 bg-gray-50 dark:bg-gray-800/50 rounded-xl">
-              <CalendarDays className="h-10 w-10 text-gray-400 mx-auto mb-3" />
-              <p className="text-sm text-gray-500 dark:text-gray-400">Nessun festival attivo al momento</p>
+            <div className="text-center py-8 bg-gray-50 dark:bg-stone-800/50 rounded-xl">
+              <CalendarDays className="h-10 w-10 text-stone-400 mx-auto mb-3" />
+              <p className="text-sm text-muted-foreground dark:text-stone-400">Nessun festival attivo al momento</p>
               <Link href="/festival">
                 <Button variant="link" size="sm">Scopri i festival →</Button>
               </Link>
@@ -518,7 +518,7 @@ export default function Activity() {
                         <div className="flex-1 min-w-0">
                           <h3 className="font-semibold text-sm truncate">{fest.name}</h3>
                           {fest.location && (
-                            <p className="text-xs text-gray-500 flex items-center gap-1 mt-0.5">
+                            <p className="text-xs text-muted-foreground flex items-center gap-1 mt-0.5">
                               <MapPin className="w-3 h-3 flex-shrink-0" />{fest.location}
                             </p>
                           )}
@@ -555,7 +555,7 @@ export default function Activity() {
 
         {/* SECTION 4: Birre in Zona */}
         <section>
-          <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+          <h2 className="text-lg font-semibold text-foreground dark:text-white mb-4 flex items-center gap-2">
             <Beer className="h-5 w-5 text-amber-600" />
             Birre in Zona
             {nearbyTapChanges.length > 0 && (
@@ -566,7 +566,7 @@ export default function Activity() {
           {nearbyTapChanges.length > 0 && (
             <div className="flex items-center justify-end gap-2 mb-3">
               {dismissedIds.size > 0 && (
-                <Button variant="ghost" size="sm" onClick={clearAllDismissed} className="text-xs text-gray-500">
+                <Button variant="ghost" size="sm" onClick={clearAllDismissed} className="text-xs text-muted-foreground">
                   Ripristina nascoste
                 </Button>
               )}
@@ -582,9 +582,9 @@ export default function Activity() {
               <Loader2 className="h-8 w-8 animate-spin text-orange-600" />
             </div>
           ) : nearbyTapChanges.length === 0 ? (
-            <div className="text-center py-8 bg-gray-50 dark:bg-gray-800/50 rounded-xl">
-              <Beer className="h-10 w-10 text-gray-400 mx-auto mb-3" />
-              <p className="text-sm text-gray-500 dark:text-gray-400">
+            <div className="text-center py-8 bg-gray-50 dark:bg-stone-800/50 rounded-xl">
+              <Beer className="h-10 w-10 text-stone-400 mx-auto mb-3" />
+              <p className="text-sm text-muted-foreground dark:text-stone-400">
                 {dismissedIds.size > 0
                   ? "Hai nascosto tutte le notifiche."
                   : `Nessuna birra aggiunta o rimossa entro ${radius} km negli ultimi 30 giorni.`}
@@ -611,7 +611,7 @@ export default function Activity() {
                         }`} />
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-gray-900 dark:text-white">
+                        <p className="text-sm font-medium text-foreground dark:text-white">
                           {tc.message}
                         </p>
                         <div className="flex items-center gap-2 mt-1 flex-wrap">
@@ -621,7 +621,7 @@ export default function Activity() {
                             </span>
                           </Link>
                           {tc.pubCity && (
-                            <span className="text-xs text-gray-400">• {tc.pubCity}</span>
+                            <span className="text-xs text-stone-400">• {tc.pubCity}</span>
                           )}
                           {'distance' in tc && (tc as any).distance !== 9999 && (
                             <span className="text-xs font-medium text-blue-600 dark:text-blue-400">
@@ -629,14 +629,14 @@ export default function Activity() {
                             </span>
                           )}
                         </div>
-                        <span className="text-xs text-gray-400 mt-1 block">
+                        <span className="text-xs text-stone-400 mt-1 block">
                           {formatDistanceToNow(new Date(tc.createdAt), { addSuffix: true, locale: it })}
                         </span>
                       </div>
                       <Button
                         variant="ghost"
                         size="icon"
-                        className="flex-shrink-0 h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity text-gray-400 hover:text-red-500"
+                        className="flex-shrink-0 h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity text-stone-400 hover:text-red-500"
                         onClick={() => dismissChange(tc.id)}
                       >
                         <X className="h-4 w-4" />
@@ -680,13 +680,13 @@ export default function Activity() {
                   <span>{format(new Date(selectedEvent.eventDate), "EEEE d MMMM yyyy 'alle' HH:mm", { locale: it })}</span>
                 </div>
                 {selectedEvent.endDate && (
-                  <div className="flex items-center text-sm text-gray-500 gap-2">
+                  <div className="flex items-center text-sm text-muted-foreground gap-2">
                     <Clock className="h-4 w-4" />
                     <span>fino alle {format(new Date(selectedEvent.endDate), "HH:mm", { locale: it })}</span>
                   </div>
                 )}
                 {selectedEvent.description && (
-                  <p className="text-gray-700 dark:text-gray-300 whitespace-pre-wrap">{selectedEvent.description}</p>
+                  <p className="text-muted-foreground dark:text-stone-300 whitespace-pre-wrap">{selectedEvent.description}</p>
                 )}
                 <div className="flex items-center gap-2 pt-2">
                   <MapPin className="h-4 w-4 text-orange-600 flex-shrink-0" />
@@ -696,12 +696,12 @@ export default function Activity() {
                     </span>
                   </Link>
                   {selectedEvent.pub?.city && (
-                    <span className="text-sm text-gray-500">• {selectedEvent.pub.city}</span>
+                    <span className="text-sm text-muted-foreground">• {selectedEvent.pub.city}</span>
                   )}
                 </div>
                 <EventInterestButton eventId={selectedEvent.id} type="pub" />
                 <div className="pt-3 border-t flex items-center justify-between">
-                  <p className="text-xs text-gray-500">Condividi questo evento</p>
+                  <p className="text-xs text-muted-foreground">Condividi questo evento</p>
                   <EventShareButtons event={selectedEvent} pubId={selectedEvent.pubId} size="default" />
                 </div>
               </div>

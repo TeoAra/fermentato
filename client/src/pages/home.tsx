@@ -510,7 +510,7 @@ export default function Home() {
               {homeAnnouncements.map((ann: any) => {
                 const typeMap: Record<string, { label: string; color: string; Icon: any }> = {
                   news:    { label: "Novità",      color: "bg-stone-50 text-primary dark:bg-stone-900/40 dark:text-orange-300",   Icon: Newspaper },
-                  release: { label: "Nuova Birra", color: "bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300", Icon: Rocket },
+                  release: { label: "Nuova Birra", color: "bg-stone-50 text-primary dark:bg-stone-900/40 dark:text-orange-300", Icon: Rocket },
                   collab:  { label: "Collab",      color: "bg-stone-100 text-orange-700 dark:bg-orange-900/40 dark:text-orange-300", Icon: Users },
                 };
                 const t = typeMap[ann.type] ?? typeMap.news;

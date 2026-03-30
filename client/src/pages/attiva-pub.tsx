@@ -177,14 +177,14 @@ export default function AttivaPub() {
           {!activationTimedOut ? (
             <>
               <Loader2 className="w-12 h-12 text-amber-500 animate-spin mx-auto" />
-              <p className="text-lg font-semibold text-gray-900 dark:text-white">Attivazione in corso…</p>
-              <p className="text-gray-500 dark:text-gray-400 text-sm">Stiamo configurando il tuo pub. Un attimo.</p>
+              <p className="text-lg font-semibold text-foreground dark:text-white">Attivazione in corso…</p>
+              <p className="text-muted-foreground dark:text-stone-400 text-sm">Stiamo configurando il tuo pub. Un attimo.</p>
             </>
           ) : (
             <>
               <CheckCircle2 className="w-12 h-12 text-amber-500 mx-auto" />
-              <p className="text-lg font-semibold text-gray-900 dark:text-white">Il pagamento è stato ricevuto</p>
-              <p className="text-gray-500 dark:text-gray-400 text-sm">
+              <p className="text-lg font-semibold text-foreground dark:text-white">Il pagamento è stato ricevuto</p>
+              <p className="text-muted-foreground dark:text-stone-400 text-sm">
                 L'attivazione potrebbe richiedere qualche secondo in più. Clicca qui sotto per completarla.
               </p>
               <Button
@@ -197,7 +197,7 @@ export default function AttivaPub() {
               </Button>
               <div className="pt-2">
                 <Link href="/dashboard">
-                  <Button variant="ghost" className="text-sm text-gray-500">Vai alla dashboard →</Button>
+                  <Button variant="ghost" className="text-sm text-muted-foreground">Vai alla dashboard →</Button>
                 </Link>
               </div>
             </>
@@ -218,8 +218,8 @@ export default function AttivaPub() {
             <div className="w-20 h-20 bg-green-100 dark:bg-green-900/40 rounded-full flex items-center justify-center mx-auto">
               <CheckCircle2 className="w-10 h-10 text-green-500" />
             </div>
-            <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Periodo di prova attivato!</h1>
-            <p className="text-gray-600 dark:text-gray-400 text-lg">
+            <h1 className="text-3xl font-bold text-foreground dark:text-white">Periodo di prova attivato!</h1>
+            <p className="text-muted-foreground dark:text-stone-400 text-lg">
               Hai 15 giorni gratuiti per esplorare tutte le funzionalità del Piano Pub Pro. Il tuo pub è ora verificato.
             </p>
             <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-xl p-4">
@@ -257,10 +257,10 @@ export default function AttivaPub() {
             <div className="w-20 h-20 bg-green-100 dark:bg-green-900/40 rounded-full flex items-center justify-center mx-auto">
               <CheckCircle2 className="w-10 h-10 text-green-500" />
             </div>
-            <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
+            <h1 className="text-3xl font-bold text-foreground dark:text-white">
               {isBrewpub ? "Il tuo brewpub è attivo!" : "Il tuo pub è attivo!"}
             </h1>
-            <p className="text-gray-600 dark:text-gray-400 text-lg">
+            <p className="text-muted-foreground dark:text-stone-400 text-lg">
               Benvenuto nel Piano Pub Pro. Il tuo periodo di prova di 15 giorni è iniziato — nessun addebito per ora.
             </p>
             <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-xl p-4 space-y-2">
@@ -311,7 +311,7 @@ export default function AttivaPub() {
       <div className="min-h-screen bg-gradient-to-b from-amber-50 to-white dark:from-gray-950 dark:to-gray-900 pt-20 flex flex-col">
         <SEO title={isReactivation ? "Riattiva Piano Pub — Fermenta.to" : "Attiva Piano Pub — Fermenta.to"} url="https://fermenta.to/attiva-pub" />
         <div className="max-w-lg mx-auto px-4 py-12 flex-1 w-full">
-          <button onClick={() => setStep("choose")} className="flex items-center gap-2 text-gray-500 hover:text-gray-900 dark:hover:text-white text-sm mb-8 transition-colors">
+          <button onClick={() => setStep("choose")} className="flex items-center gap-2 text-muted-foreground hover:text-foreground dark:hover:text-white text-sm mb-8 transition-colors">
             <ArrowLeft className="w-4 h-4" /> Torna indietro
           </button>
 
@@ -320,10 +320,10 @@ export default function AttivaPub() {
               <Crown className="w-6 h-6 text-amber-600" />
             </div>
             <div>
-              <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+              <h1 className="text-2xl font-bold text-foreground dark:text-white">
                 {isReactivation ? "Riattiva il tuo pub" : "Piano Pub Pro"}
               </h1>
-              <p className="text-gray-500 dark:text-gray-400 text-sm">
+              <p className="text-muted-foreground dark:text-stone-400 text-sm">
                 {isReactivation ? "€65/anno IVA inclusa · rinnovo automatico annuale" : "15 giorni gratis · poi €65/anno IVA inclusa"}
               </p>
             </div>
@@ -333,12 +333,12 @@ export default function AttivaPub() {
             <Card>
               <CardContent className="p-6">
                 <div className="flex justify-between items-center mb-4">
-                  <span className="font-semibold text-gray-900 dark:text-white">Piano Pub Pro — annuale</span>
+                  <span className="font-semibold text-foreground dark:text-white">Piano Pub Pro — annuale</span>
                   <span className="text-2xl font-bold text-amber-600">€65</span>
                 </div>
                 <div className="space-y-2">
                   {checkoutFeatures.map((f, i) => (
-                    <div key={i} className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
+                    <div key={i} className="flex items-center gap-2 text-sm text-muted-foreground dark:text-stone-400">
                       <CheckCircle2 className="w-4 h-4 text-green-500 flex-shrink-0" />
                       {f}
                     </div>
@@ -378,11 +378,11 @@ export default function AttivaPub() {
             </Button>
 
             {!isAuthenticated && (
-              <p className="text-center text-sm text-gray-500 dark:text-gray-400">
+              <p className="text-center text-sm text-muted-foreground dark:text-stone-400">
                 <Link href="/login" className="text-amber-600 hover:underline font-semibold">Accedi</Link> per procedere al pagamento.
               </p>
             )}
-            <div className="flex items-center justify-center gap-2 text-xs text-gray-400 dark:text-gray-500">
+            <div className="flex items-center justify-center gap-2 text-xs text-stone-400 dark:text-muted-foreground">
               <Lock className="w-3 h-3" />
               Pagamento sicuro e cifrato · Powered by Stripe
             </div>
@@ -401,7 +401,7 @@ export default function AttivaPub() {
       <div className="min-h-screen bg-gradient-to-b from-amber-50 to-white dark:from-gray-950 dark:to-gray-900 pt-20 flex flex-col">
         <SEO title="Prova gratuita — Fermenta.to" url="https://fermenta.to/attiva-pub" />
         <div className="max-w-md mx-auto px-4 py-16 flex-1">
-          <button onClick={() => setStep("choose")} className="flex items-center gap-2 text-gray-500 hover:text-gray-900 dark:hover:text-white text-sm mb-8 transition-colors">
+          <button onClick={() => setStep("choose")} className="flex items-center gap-2 text-muted-foreground hover:text-foreground dark:hover:text-white text-sm mb-8 transition-colors">
             <ArrowLeft className="w-4 h-4" /> Torna indietro
           </button>
 
@@ -409,14 +409,14 @@ export default function AttivaPub() {
             <div className="w-16 h-16 bg-amber-100 dark:bg-amber-900/40 rounded-2xl flex items-center justify-center mx-auto mb-4">
               <Gift className="w-8 h-8 text-amber-600" />
             </div>
-            <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">Periodo di prova gratuita</h1>
-            <p className="text-gray-500 dark:text-gray-400">15 giorni con tutte le funzionalità del Piano Pub Pro — senza carta di credito.</p>
+            <h1 className="text-2xl font-bold text-foreground dark:text-white mb-2">Periodo di prova gratuita</h1>
+            <p className="text-muted-foreground dark:text-stone-400">15 giorni con tutte le funzionalità del Piano Pub Pro — senza carta di credito.</p>
           </div>
 
           {eligiblePubs.length === 0 ? (
             <Card>
               <CardContent className="p-6 text-center space-y-4">
-                <p className="text-gray-500 dark:text-gray-400">
+                <p className="text-muted-foreground dark:text-stone-400">
                   {!isAuthenticated
                     ? "Accedi per attivare il periodo di prova su un tuo pub."
                     : "Tutti i tuoi pub hanno già usato il periodo di prova o hanno un abbonamento attivo."
@@ -431,7 +431,7 @@ export default function AttivaPub() {
             </Card>
           ) : (
             <div className="space-y-3">
-              <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">Scegli il pub su cui attivare la prova:</p>
+              <p className="text-sm font-medium text-muted-foreground dark:text-stone-300 mb-3">Scegli il pub su cui attivare la prova:</p>
               {eligiblePubs.map((pub: any) => (
                 <Card
                   key={pub.id}
@@ -443,8 +443,8 @@ export default function AttivaPub() {
                       <Beer className="w-5 h-5 text-amber-600" />
                     </div>
                     <div className="flex-1">
-                      <p className="font-semibold text-gray-900 dark:text-white">{pub.name}</p>
-                      <p className="text-sm text-gray-500">{pub.city}</p>
+                      <p className="font-semibold text-foreground dark:text-white">{pub.name}</p>
+                      <p className="text-sm text-muted-foreground">{pub.city}</p>
                     </div>
                     {selectedPub?.id === pub.id && <CheckCircle2 className="w-5 h-5 text-amber-500" />}
                   </CardContent>
@@ -483,11 +483,11 @@ export default function AttivaPub() {
           <Badge className="bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300 border-0 mb-4 text-sm px-3 py-1">
             Piano Pub Pro
           </Badge>
-          <h1 className="text-4xl sm:text-5xl font-bold text-gray-900 dark:text-white mb-4">
+          <h1 className="text-4xl sm:text-5xl font-bold text-foreground dark:text-white mb-4">
             Porta il tuo pub<br />
             <span className="text-amber-500">su Fermenta.to</span>
           </h1>
-          <p className="text-lg text-gray-600 dark:text-gray-400 max-w-xl mx-auto">
+          <p className="text-lg text-muted-foreground dark:text-stone-400 max-w-xl mx-auto">
             Taplist digitale, analytics, notifiche push e molto altro. Tutto in un unico piano a <strong>€65/anno</strong>.
           </p>
         </div>
@@ -513,7 +513,7 @@ export default function AttivaPub() {
                 </div>
               </div>
               <CardContent className="p-6">
-                <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+                <p className="text-sm text-muted-foreground dark:text-stone-400 mb-4">
                   Riattiva il tuo pub e rendi il profilo nuovamente visibile. Rinnovo automatico annuale.
                 </p>
                 <Button className="w-full bg-amber-500 hover:bg-amber-600 text-white group-hover:bg-amber-600">
@@ -535,11 +535,11 @@ export default function AttivaPub() {
                     <Gift className="w-5 h-5 text-amber-600" />
                   </div>
                   <div>
-                    <p className="font-bold text-gray-900 dark:text-white">Prova gratuita</p>
-                    <p className="text-xs text-gray-500">15 giorni — nessuna carta di credito</p>
+                    <p className="font-bold text-foreground dark:text-white">Prova gratuita</p>
+                    <p className="text-xs text-muted-foreground">15 giorni — nessuna carta di credito</p>
                   </div>
                 </div>
-                <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+                <p className="text-sm text-muted-foreground dark:text-stone-400 mb-4">
                   Esplora tutte le funzionalità gratuitamente per 15 giorni. Nessun obbligo, nessun rinnovo automatico.
                 </p>
                 <Button className="w-full bg-amber-500 hover:bg-amber-600 text-white group-hover:bg-amber-600">
@@ -567,7 +567,7 @@ export default function AttivaPub() {
                 </div>
               </div>
               <CardContent className="p-6">
-                <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+                <p className="text-sm text-muted-foreground dark:text-stone-400 mb-4">
                   Attiva subito con 15 giorni di prova gratuita. Se disdici nei 15 giorni non paghi nulla.
                 </p>
                 <Button className="w-full bg-amber-500 hover:bg-amber-600 text-white group-hover:bg-amber-600">
@@ -581,10 +581,10 @@ export default function AttivaPub() {
 
         <Card className="mb-10">
           <CardContent className="p-6">
-            <h2 className="font-bold text-gray-900 dark:text-white text-base mb-4">Tutto incluso nel Piano Pub Pro</h2>
+            <h2 className="font-bold text-foreground dark:text-white text-base mb-4">Tutto incluso nel Piano Pub Pro</h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
               {PUB_FEATURES.map(f => (
-                <div key={f} className="flex items-start gap-2 text-sm text-gray-700 dark:text-gray-300">
+                <div key={f} className="flex items-start gap-2 text-sm text-muted-foreground dark:text-stone-300">
                   <CheckCircle2 className="w-4 h-4 text-green-500 flex-shrink-0 mt-0.5" />
                   <span>{f}</span>
                 </div>

@@ -229,21 +229,21 @@ function IosInstallGuide({ onClose }: { onClose: () => void }) {
             {steps.map((_, i) => (
               <div
                 key={i}
-                className={`h-1.5 rounded-full transition-all duration-300 ${i === step ? 'w-8 bg-amber-500' : i < step ? 'w-4 bg-amber-300' : 'w-4 bg-gray-200 dark:bg-gray-700'}`}
+                className={`h-1.5 rounded-full transition-all duration-300 ${i === step ? 'w-8 bg-amber-500' : i < step ? 'w-4 bg-amber-300' : 'w-4 bg-stone-200 dark:bg-gray-700'}`}
               />
             ))}
           </div>
 
           <div className="text-center space-y-4">
-            <div className="w-16 h-16 bg-gray-100 dark:bg-gray-800 rounded-2xl flex items-center justify-center mx-auto">
+            <div className="w-16 h-16 bg-stone-100 dark:bg-gray-800 rounded-2xl flex items-center justify-center mx-auto">
               {current.icon}
             </div>
             <div>
               <p className="text-xs font-semibold text-amber-600 dark:text-amber-400 mb-1">
                 Passo {step + 1} di {steps.length}
               </p>
-              <h4 className="text-lg font-bold text-gray-900 dark:text-white">{current.title}</h4>
-              <p className="text-sm text-gray-600 dark:text-gray-400 mt-2">{current.desc}</p>
+              <h4 className="text-lg font-bold text-foreground dark:text-white">{current.title}</h4>
+              <p className="text-sm text-muted-foreground dark:text-stone-400 mt-2">{current.desc}</p>
             </div>
             <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-xl p-3">
               <p className="text-xs text-amber-700 dark:text-amber-300">{current.hint}</p>
@@ -279,7 +279,7 @@ function IosInstallGuide({ onClose }: { onClose: () => void }) {
 
         {inSafari && (
           <div className="px-6 pb-6">
-            <div className="flex items-center gap-2 text-xs text-gray-400 justify-center">
+            <div className="flex items-center gap-2 text-xs text-stone-400 justify-center">
               <ArrowUp className="w-3 h-3" />
               <span>Cerca l'icona ↑ nella barra in basso</span>
             </div>
@@ -353,10 +353,10 @@ export function PwaInstallPrompt() {
               <Smartphone className="w-5 h-5 text-white" />
             </div>
             <div className="flex-1 min-w-0">
-              <h3 className="font-semibold text-gray-900 dark:text-white text-sm">
+              <h3 className="font-semibold text-foreground dark:text-white text-sm">
                 Installa Fermenta.to
               </h3>
-              <p className="text-xs text-gray-600 dark:text-gray-400 mt-0.5">
+              <p className="text-xs text-muted-foreground dark:text-stone-400 mt-0.5">
                 {deferredPrompt
                   ? "Aggiungi alla schermata home per un accesso rapido e ricevere notifiche."
                   : device === 'ios'
@@ -366,7 +366,7 @@ export function PwaInstallPrompt() {
                       : "Usa il menu del browser per installare l'app come applicazione."}
               </p>
             </div>
-            <button onClick={handleDismiss} className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 flex-shrink-0">
+            <button onClick={handleDismiss} className="text-stone-400 hover:text-muted-foreground dark:hover:text-stone-300 flex-shrink-0">
               <X className="w-4 h-4" />
             </button>
           </div>
@@ -398,7 +398,7 @@ export function PwaInstallPrompt() {
                 Ho capito
               </Button>
             )}
-            <Button onClick={handleDismiss} size="sm" variant="ghost" className="text-gray-500">
+            <Button onClick={handleDismiss} size="sm" variant="ghost" className="text-muted-foreground">
               Non ora
             </Button>
           </div>
@@ -454,14 +454,14 @@ export function PushNotificationPrompt() {
             <Bell className="w-5 h-5 text-white" />
           </div>
           <div className="flex-1 min-w-0">
-            <h3 className="font-semibold text-gray-900 dark:text-white text-sm">
+            <h3 className="font-semibold text-foreground dark:text-white text-sm">
               Attiva le notifiche
             </h3>
-            <p className="text-xs text-gray-600 dark:text-gray-400 mt-0.5">
+            <p className="text-xs text-muted-foreground dark:text-stone-400 mt-0.5">
               Ricevi aggiornamenti sulle nuove birre alla spina nei tuoi pub preferiti.
             </p>
           </div>
-          <button onClick={handleDismiss} className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
+          <button onClick={handleDismiss} className="text-stone-400 hover:text-muted-foreground dark:hover:text-stone-300">
             <X className="w-4 h-4" />
           </button>
         </div>
@@ -474,7 +474,7 @@ export function PushNotificationPrompt() {
             <Bell className="w-4 h-4 mr-1" />
             Attiva
           </Button>
-          <Button onClick={handleDismiss} size="sm" variant="ghost" className="text-gray-500">
+          <Button onClick={handleDismiss} size="sm" variant="ghost" className="text-muted-foreground">
             Non ora
           </Button>
         </div>

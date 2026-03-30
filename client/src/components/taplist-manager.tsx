@@ -615,7 +615,7 @@ export function TapListManager({ pubId, tapList, bottleList = [] }: TapListManag
                                 ))}
                               </div>
                             )}
-                            <div className="p-3 border border-dashed rounded-lg text-center text-gray-500">
+                            <div className="p-3 border border-dashed rounded-lg text-center text-muted-foreground">
                               {searchResults?.beers?.length === 0 && (
                                 <p className="mb-2 text-sm">Nessuna birra trovata per "{debouncedSearchTerm}"</p>
                               )}
@@ -678,7 +678,7 @@ export function TapListManager({ pubId, tapList, bottleList = [] }: TapListManag
                       ) : (
                         <div className="space-y-2">
                           <div className="relative">
-                            <Search className="absolute left-2.5 top-2.5 h-3.5 w-3.5 text-gray-400" />
+                            <Search className="absolute left-2.5 top-2.5 h-3.5 w-3.5 text-stone-400" />
                             <Input
                               value={brewerySearchTerm}
                               onChange={(e) => setBrewerySearchTerm(e.target.value)}
@@ -698,7 +698,7 @@ export function TapListManager({ pubId, tapList, bottleList = [] }: TapListManag
                                   }}
                                 >
                                   <span className="font-medium">{b.name}</span>
-                                  <span className="text-gray-500 ml-1">• {b.location}</span>
+                                  <span className="text-muted-foreground ml-1">• {b.location}</span>
                                 </div>
                               ))}
                             </div>
@@ -1043,9 +1043,9 @@ export function TapListManager({ pubId, tapList, bottleList = [] }: TapListManag
                     <Label className="text-sm font-medium">Cerca nuova birra</Label>
                     <div className="relative">
                       {isSearching ? (
-                        <Loader2 className="absolute left-3 top-3 h-4 w-4 text-gray-400 animate-spin" />
+                        <Loader2 className="absolute left-3 top-3 h-4 w-4 text-stone-400 animate-spin" />
                       ) : (
-                        <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                        <Search className="absolute left-3 top-3 h-4 w-4 text-stone-400" />
                       )}
                       <Input
                         placeholder="Cerca per nome o birrificio..."
@@ -1105,7 +1105,7 @@ export function TapListManager({ pubId, tapList, bottleList = [] }: TapListManag
                             ))}
                           </div>
                         )}
-                        <div className="p-3 border border-dashed rounded-lg text-center text-gray-500">
+                        <div className="p-3 border border-dashed rounded-lg text-center text-muted-foreground">
                           {searchResults?.beers?.length === 0 && (
                             <p className="mb-2 text-sm">Nessuna birra trovata per "{debouncedSearchTerm}"</p>
                           )}
@@ -1151,7 +1151,7 @@ export function TapListManager({ pubId, tapList, bottleList = [] }: TapListManag
                   </div>
                   
                   {formData.prices.length === 0 ? (
-                    <div className="p-4 border border-dashed rounded-lg text-center text-gray-500">
+                    <div className="p-4 border border-dashed rounded-lg text-center text-muted-foreground">
                       <p className="mb-2">Nessun prezzo configurato</p>
                       <Button
                         type="button"
@@ -1197,7 +1197,7 @@ export function TapListManager({ pubId, tapList, bottleList = [] }: TapListManag
                             <option value="Taster" />
                           </datalist>
                           <div className="flex items-center gap-1">
-                            <span className="text-sm text-gray-500">€</span>
+                            <span className="text-sm text-muted-foreground">€</span>
                             <Input
                               type="number"
                               step="0.10"
@@ -1345,8 +1345,8 @@ export function TapListManager({ pubId, tapList, bottleList = [] }: TapListManag
       </CardHeader>
       <CardContent>
         {tapList.length === 0 ? (
-          <div className="text-center py-8 text-gray-500">
-            <Beer className="w-12 h-12 mx-auto mb-4 text-gray-300" />
+          <div className="text-center py-8 text-muted-foreground">
+            <Beer className="w-12 h-12 mx-auto mb-4 text-stone-300" />
             <p>Nessuna birra alla spina.</p>
             <p className="text-sm">Clicca "Aggiungi Birra" per iniziare.</p>
           </div>
@@ -1468,7 +1468,7 @@ export function TapListManager({ pubId, tapList, bottleList = [] }: TapListManag
 
                 {item.description && (
                   <div className="mt-3 ml-[60px]">
-                    <p className="text-sm text-gray-600 dark:text-gray-400 italic">{item.description}</p>
+                    <p className="text-sm text-muted-foreground dark:text-stone-400 italic">{item.description}</p>
                   </div>
                 )}
               </div>

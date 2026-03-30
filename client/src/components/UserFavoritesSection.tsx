@@ -53,7 +53,7 @@ export default function UserFavoritesSection({ favorites }: UserFavoritesSection
       case 'beer': return { border: 'border-l-green-500', icon: 'text-green-600 bg-green-100 dark:bg-green-900/20', hover: 'hover:text-green-600' };
       case 'brewery': return { border: 'border-l-amber-500', icon: 'text-amber-600 bg-amber-100 dark:bg-amber-900/20', hover: 'hover:text-amber-600' };
       case 'pub': return { border: 'border-l-blue-500', icon: 'text-blue-600 bg-blue-100 dark:bg-blue-900/20', hover: 'hover:text-blue-600' };
-      default: return { border: 'border-l-gray-500', icon: 'text-gray-600 bg-gray-100 dark:bg-gray-900/20', hover: 'hover:text-gray-600' };
+      default: return { border: 'border-l-gray-500', icon: 'text-muted-foreground bg-stone-100 dark:bg-gray-900/20', hover: 'hover:text-muted-foreground' };
     }
   };
 
@@ -78,11 +78,11 @@ export default function UserFavoritesSection({ favorites }: UserFavoritesSection
   if (!favorites || favorites.length === 0) {
     return (
       <div className="text-center py-12">
-        <div className="w-16 h-16 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center mx-auto mb-4">
-          <Heart className="h-8 w-8 text-gray-400" />
+        <div className="w-16 h-16 bg-stone-100 dark:bg-gray-800 rounded-full flex items-center justify-center mx-auto mb-4">
+          <Heart className="h-8 w-8 text-stone-400" />
         </div>
-        <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">Nessun preferito ancora</h3>
-        <p className="text-gray-500 dark:text-gray-400 mb-4">Inizia a esplorare pub, birrifici e birre per aggiungere i tuoi preferiti!</p>
+        <h3 className="text-lg font-semibold text-foreground dark:text-white mb-2">Nessun preferito ancora</h3>
+        <p className="text-muted-foreground dark:text-stone-400 mb-4">Inizia a esplorare pub, birrifici e birre per aggiungere i tuoi preferiti!</p>
         <div className="flex gap-3 justify-center">
           <Link href="/">
             <Button variant="outline">Esplora</Button>
@@ -107,7 +107,7 @@ export default function UserFavoritesSection({ favorites }: UserFavoritesSection
               <div className={`p-2 rounded-lg ${colors.icon}`}>
                 {getCategoryIcon(category)}
               </div>
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-white">{getCategoryTitle(category)}</h3>
+              <h3 className="text-lg font-semibold text-foreground dark:text-white">{getCategoryTitle(category)}</h3>
               <Badge variant="secondary" className="ml-auto">{items.length}</Badge>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -131,7 +131,7 @@ export default function UserFavoritesSection({ favorites }: UserFavoritesSection
                           <h4 className={`font-semibold mb-1 truncate transition-colors ${colors.hover}`}>
                             {favorite.itemName || `${getCategoryTitle(category)} #${favorite.itemId}`}
                           </h4>
-                          <p className="text-xs text-gray-500 dark:text-gray-400">
+                          <p className="text-xs text-muted-foreground dark:text-stone-400">
                             Aggiunto il {new Date(favorite.createdAt).toLocaleDateString('it-IT')}
                           </p>
                         </div>
@@ -139,7 +139,7 @@ export default function UserFavoritesSection({ favorites }: UserFavoritesSection
                       <Button
                         variant="ghost"
                         size="sm"
-                        className="flex-shrink-0 text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20"
+                        className="flex-shrink-0 text-stone-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20"
                         onClick={() => removeFavoriteMutation.mutate({ itemType: favorite.itemType, itemId: favorite.itemId })}
                         disabled={removeFavoriteMutation.isPending}
                         title="Non seguire più"

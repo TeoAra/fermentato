@@ -1,38 +1,15 @@
-import { Search, User, Home, Activity, Bell } from "lucide-react";
+import { Search, User, Home, Activity, Beer, Store } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import { useAuth } from "@/hooks/useAuth";
-import { useQuery } from "@tanstack/react-query";
 import { useState, type ReactNode } from "react";
 import SearchDialog from "@/components/search-dialog";
 
-function NavItem({
-  active,
-  children,
-}: {
-  active: boolean;
-  children: ReactNode;
-}) {
-  return (
-    <div
-      className={`relative flex flex-col items-center gap-0.5 px-4 py-2 rounded-full transition-all duration-200 active:scale-[0.92] ${
-        active ? "text-white" : "text-[hsl(28,8%,52%)] dark:text-[hsl(35,8%,52%)] hover:text-[hsl(24,93%,49%)]"
-      }`}
-    >
-      {active && (
-        <span
-          key="active-pill"
-          className="absolute inset-0 rounded-full scale-in"
-          style={{
-            background: "hsl(24,93%,49%)",
-            boxShadow: "0 2px 10px rgba(247,113,4,0.40)",
-          }}
-        />
-      )}
-      <span className="relative z-10 flex flex-col items-center gap-0.5">
-        {children}
-      </span>
-    </div>
-  );
+interface TabItem {
+  href?: string;
+  icon: (active: boolean) => ReactNode;
+  label: string;
+  onClick?: () => void;
+  active?: boolean;
 }
 
 export function BottomNavigation() {
@@ -40,99 +17,122 @@ export function BottomNavigation() {
   const { isAuthenticated, user } = useAuth();
   const [searchOpen, setSearchOpen] = useState(false);
 
-  const { data: unreadData } = useQuery<{ count: number }>({
-    queryKey: ['/api/notifications/unread-count'],
-    enabled: isAuthenticated,
-    refetchInterval: 120000,
-  });
-  const unread = unreadData?.count && unreadData.count > 0 ? unreadData.count : undefined;
-
   if (location.startsWith("/tv/") || location.startsWith("/festival-tv/")) return null;
 
   const typedUser = user as any;
   const activeRole = typedUser?.activeRole || typedUser?.userType || 'customer';
-  const dashboardHref = isAuthenticated ? "/dashboard" : "/login";
-  const profileLabel = !isAuthenticated ? "Accedi" :
-    activeRole === 'pub_owner' ? "Pub" :
-    activeRole === 'brewery_owner' ? "Birrificio" :
-    activeRole === 'admin' ? "Admin" : "Tu";
+
+  const pubHref =
+    activeRole === "pub_owner"
+      ? "/dashboard"
+      : activeRole === "admin"
+      ? "/admin"
+      : "/explore/pubs";
 
   const isActive = (path: string) => {
-    if (path === '/') return location === '/';
+    if (path === "/") return location === "/";
     return location.startsWith(path);
   };
 
-  const homeActive = isActive('/');
-  const notifActive = isActive('/notifications');
-  const activityActive = isActive('/activity');
-  const profileActive = isActive('/dashboard') || isActive('/profile') || location === '/login';
+  const homeActive     = isActive("/");
+  const birreActive    = isActive("/explore/beers") || isActive("/beer/");
+  const cercaActive    = searchOpen;
+  const attivitaActive = isActive("/activity");
+  const pubActive      = isActive("/explore/pubs") || isActive("/dashboard") || isActive("/admin");
+
+  const TabInner = ({
+    active,
+    children,
+  }: {
+    active: boolean;
+    children: ReactNode;
+  }) => (
+    <div
+      className={`flex flex-col items-center justify-center gap-[3px] flex-1 py-2 min-h-[52px] transition-colors active:scale-95 relative w-full ${
+        active ? "text-primary" : "text-stone-400 dark:text-stone-500"
+      }`}
+    >
+      {active && (
+        <span className="absolute top-0 left-1/2 -translate-x-1/2 w-6 h-[2.5px] rounded-full bg-primary" />
+      )}
+      {children}
+    </div>
+  );
 
   return (
     <>
       <SearchDialog isOpen={searchOpen} onClose={() => setSearchOpen(false)} />
 
       <nav
-        className="lg:hidden fixed z-50 left-1/2 -translate-x-1/2"
-        style={{ bottom: "max(16px, env(safe-area-inset-bottom))" }}
+        className="lg:hidden fixed bottom-0 left-0 right-0 z-50 bg-white dark:bg-[hsl(25,14%,9%)] border-t border-stone-100 dark:border-[hsl(25,12%,16%)]"
+        style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
       >
-        <div
-          className="flex items-center bg-white/96 dark:bg-[hsl(25,14%,9%)]/96 backdrop-blur-xl rounded-full px-2 py-2 border border-orange-100 dark:border-[hsl(25,12%,18%)]"
-          style={{ boxShadow: "0 8px 40px rgba(247,113,4,0.18), 0 4px 16px rgba(0,0,0,0.08)" }}
-        >
+        <div className="flex items-stretch">
           {/* Home */}
-          <Link href="/" className="flex">
-            <NavItem active={homeActive}>
-              <Home className="h-[20px] w-[20px]" strokeWidth={homeActive ? 2.3 : 1.8} />
-              <span className="text-[10px] leading-none font-semibold">Home</span>
-            </NavItem>
+          <Link href="/" className="flex-1 flex">
+            <TabInner active={homeActive}>
+              <Home
+                className="h-[22px] w-[22px]"
+                strokeWidth={homeActive ? 2.4 : 1.8}
+                fill={homeActive ? "currentColor" : "none"}
+                style={homeActive ? { fillOpacity: 0.15, strokeOpacity: 1 } : {}}
+              />
+              <span className="text-[10px] font-semibold leading-none">Home</span>
+            </TabInner>
           </Link>
 
-          {/* Notifiche */}
-          <Link href="/notifications" className="flex">
-            <NavItem active={notifActive}>
-              <div className="relative">
-                <Bell className="h-[20px] w-[20px]" strokeWidth={notifActive ? 2.3 : 1.8} />
-                {unread && unread > 0 ? (
-                  <span className="absolute -top-1.5 -right-2 min-w-[15px] h-[15px] px-0.5 bg-red-500 text-white text-[9px] font-bold rounded-full flex items-center justify-center leading-none">
-                    {unread > 9 ? '9+' : unread}
-                  </span>
-                ) : null}
-              </div>
-              <span className="text-[10px] leading-none font-semibold">Notifiche</span>
-            </NavItem>
+          {/* Birré */}
+          <Link href="/explore/beers" className="flex-1 flex">
+            <TabInner active={birreActive}>
+              <Beer
+                className="h-[22px] w-[22px]"
+                strokeWidth={birreActive ? 2.4 : 1.8}
+              />
+              <span className="text-[10px] font-semibold leading-none">Birré</span>
+            </TabInner>
           </Link>
 
-          {/* Cerca — CENTER, gradient pill with glow */}
+          {/* Cerca — center, uses button (no link) */}
           <button
             onClick={() => setSearchOpen(true)}
-            className="flex active:scale-95 transition-all duration-150 mx-1"
+            className="flex-1 flex active:scale-95 transition-transform"
           >
-            <div
-              className="flex flex-col items-center gap-0.5 px-5 py-2 rounded-full text-white"
-              style={{
-                background: "linear-gradient(135deg, #F77104 0%, #f98a0e 50%, #f5a623 100%)",
-                boxShadow: "0 4px 16px rgba(247,113,4,0.45), 0 1px 4px rgba(247,113,4,0.2)",
-              }}
-            >
-              <Search className="h-[20px] w-[20px]" strokeWidth={2.3} />
-              <span className="text-[10px] leading-none font-bold">Cerca</span>
-            </div>
+            <TabInner active={cercaActive}>
+              <div
+                className={`w-10 h-10 rounded-full flex items-center justify-center transition-colors ${
+                  cercaActive
+                    ? "bg-primary text-white"
+                    : "bg-stone-100 dark:bg-stone-800 text-stone-500 dark:text-stone-400"
+                }`}
+              >
+                <Search className="h-[18px] w-[18px]" strokeWidth={2.2} />
+              </div>
+              <span className={`text-[10px] font-semibold leading-none ${cercaActive ? "text-primary" : "text-stone-400 dark:text-stone-500"}`}>
+                Cerca
+              </span>
+            </TabInner>
           </button>
 
           {/* Attività */}
-          <Link href="/activity" className="flex">
-            <NavItem active={activityActive}>
-              <Activity className="h-[20px] w-[20px]" strokeWidth={activityActive ? 2.3 : 1.8} />
-              <span className="text-[10px] leading-none font-semibold">Attività</span>
-            </NavItem>
+          <Link href="/activity" className="flex-1 flex">
+            <TabInner active={attivitaActive}>
+              <Activity
+                className="h-[22px] w-[22px]"
+                strokeWidth={attivitaActive ? 2.4 : 1.8}
+              />
+              <span className="text-[10px] font-semibold leading-none">Attività</span>
+            </TabInner>
           </Link>
 
-          {/* Tu / Profilo */}
-          <Link href={dashboardHref} className="flex">
-            <NavItem active={profileActive}>
-              <User className="h-[20px] w-[20px]" strokeWidth={profileActive ? 2.3 : 1.8} />
-              <span className="text-[10px] leading-none font-semibold">{profileLabel}</span>
-            </NavItem>
+          {/* Pub */}
+          <Link href={pubHref} className="flex-1 flex">
+            <TabInner active={pubActive}>
+              <Store
+                className="h-[22px] w-[22px]"
+                strokeWidth={pubActive ? 2.4 : 1.8}
+              />
+              <span className="text-[10px] font-semibold leading-none">Pub</span>
+            </TabInner>
           </Link>
         </div>
       </nav>

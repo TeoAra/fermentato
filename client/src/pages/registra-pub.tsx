@@ -196,8 +196,8 @@ export default function RegistraPub() {
             <div className="w-16 h-16 bg-amber-100 dark:bg-amber-900/30 rounded-full flex items-center justify-center mx-auto">
               <MailCheck className="w-8 h-8 text-amber-600" />
             </div>
-            <h2 className="text-xl font-bold text-gray-900 dark:text-white">Controlla la tua email!</h2>
-            <p className="text-gray-600 dark:text-gray-300 text-sm">
+            <h2 className="text-xl font-bold text-foreground dark:text-white">Controlla la tua email!</h2>
+            <p className="text-muted-foreground dark:text-stone-300 text-sm">
               Abbiamo inviato un link di conferma a<br />
               <span className="font-semibold text-amber-700 dark:text-amber-300">{pendingEmail}</span>
             </p>
@@ -234,8 +234,8 @@ export default function RegistraPub() {
               <Store className="w-6 h-6 text-amber-600" />
             </div>
             <div>
-              <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Registra il tuo pub</h1>
-              <p className="text-sm text-gray-500 dark:text-gray-400">15 giorni gratuiti, poi €65/anno (IVA inclusa)</p>
+              <h1 className="text-2xl font-bold text-foreground dark:text-white">Registra il tuo pub</h1>
+              <p className="text-sm text-muted-foreground dark:text-stone-400">15 giorni gratuiti, poi €65/anno (IVA inclusa)</p>
             </div>
           </div>
         </div>
@@ -249,8 +249,8 @@ export default function RegistraPub() {
           ].map(({ icon, title, desc }) => (
             <div key={title} className="bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 p-3 shadow-sm">
               <div className="text-xl mb-1">{icon}</div>
-              <p className="font-semibold text-gray-800 dark:text-gray-200 leading-tight">{title}</p>
-              <p className="text-gray-500 dark:text-gray-400 leading-tight mt-0.5">{desc}</p>
+              <p className="font-semibold text-foreground dark:text-gray-200 leading-tight">{title}</p>
+              <p className="text-muted-foreground dark:text-stone-400 leading-tight mt-0.5">{desc}</p>
             </div>
           ))}
         </div>
@@ -272,10 +272,10 @@ export default function RegistraPub() {
                     <FormLabel>Username *</FormLabel>
                     <FormControl>
                       <div className="relative">
-                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">@</span>
+                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-stone-400 text-sm">@</span>
                         <Input {...field} placeholder="il_tuo_username" className="pl-8"
                           onChange={e => { field.onChange(e); checkNickname(e.target.value); }} />
-                        {nicknameChecking && <RefreshCw className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 animate-spin text-gray-400" />}
+                        {nicknameChecking && <RefreshCw className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 animate-spin text-stone-400" />}
                         {!nicknameChecking && nicknameAvailable === true && <CheckCircle2 className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-green-500" />}
                         {!nicknameChecking && nicknameAvailable === false && <X className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-red-500" />}
                       </div>
@@ -289,7 +289,7 @@ export default function RegistraPub() {
                     <FormLabel>Email *</FormLabel>
                     <FormControl>
                       <div className="relative">
-                        <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                        <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-stone-400" />
                         <Input {...field} type="email" placeholder="tu@esempio.it" className="pl-10" />
                       </div>
                     </FormControl>
@@ -303,9 +303,9 @@ export default function RegistraPub() {
                       <FormLabel>Password *</FormLabel>
                       <FormControl>
                         <div className="relative">
-                          <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                          <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-stone-400" />
                           <Input {...field} type={showPassword ? "text" : "password"} placeholder="Minimo 8 caratteri" className="pl-10 pr-10" />
-                          <button type="button" onClick={() => setShowPassword(v => !v)} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
+                          <button type="button" onClick={() => setShowPassword(v => !v)} className="absolute right-3 top-1/2 -translate-y-1/2 text-stone-400 hover:text-muted-foreground">
                             {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                           </button>
                         </div>
@@ -319,7 +319,7 @@ export default function RegistraPub() {
                       <FormLabel>Conferma Password *</FormLabel>
                       <FormControl>
                         <div className="relative">
-                          <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                          <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-stone-400" />
                           <Input {...field} type={showPassword ? "text" : "password"} placeholder="Ripeti la password" className="pl-10" />
                         </div>
                       </FormControl>
@@ -344,7 +344,7 @@ export default function RegistraPub() {
                     <FormLabel>Nome del Locale *</FormLabel>
                     <FormControl>
                       <div className="relative">
-                        <Store className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                        <Store className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-stone-400" />
                         <Input {...field} placeholder="Es. The Craft Pub" className="pl-10" />
                       </div>
                     </FormControl>
@@ -395,7 +395,7 @@ export default function RegistraPub() {
                       <FormLabel>Telefono</FormLabel>
                       <FormControl>
                         <div className="relative">
-                          <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                          <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-stone-400" />
                           <Input {...field} placeholder="+39 06 1234567" className="pl-10" />
                         </div>
                       </FormControl>
@@ -424,7 +424,7 @@ export default function RegistraPub() {
                         <Factory className="w-5 h-5 text-orange-600" />
                       </div>
                       <div>
-                        <FormLabel className="font-semibold text-gray-900 dark:text-gray-100">
+                        <FormLabel className="font-semibold text-foreground dark:text-gray-100">
                           Questo è un Brewpub
                         </FormLabel>
                         <FormDescription className="text-xs">
@@ -464,7 +464,7 @@ export default function RegistraPub() {
                       <div>
                         <FormLabel className="text-sm">Cerca il tuo birrificio nel database</FormLabel>
                         <div className="relative mt-1">
-                          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-stone-400" />
                           <Input value={brewerySearch} onChange={e => setBrewerySearch(e.target.value)} placeholder="Nome del birrificio..." className="pl-10" />
                         </div>
                       </div>
@@ -482,7 +482,7 @@ export default function RegistraPub() {
                               setBrewerySearch("");
                             }} className="w-full text-left p-2 rounded hover:bg-stone-50 dark:hover:bg-stone-800/35 transition-colors">
                               <p className="font-medium text-sm">{b.name}</p>
-                              <p className="text-xs text-gray-500">{b.location}</p>
+                              <p className="text-xs text-muted-foreground">{b.location}</p>
                             </button>
                           ))}
                         </div>
@@ -553,7 +553,7 @@ export default function RegistraPub() {
                           }}
                           className="w-4 h-4 accent-orange-500 cursor-pointer"
                         />
-                        <label htmlFor="same-site" className="text-sm text-gray-700 dark:text-gray-300 cursor-pointer select-none">
+                        <label htmlFor="same-site" className="text-sm text-muted-foreground dark:text-stone-300 cursor-pointer select-none">
                           Stessa sede del pub
                         </label>
                       </div>
@@ -574,8 +574,8 @@ export default function RegistraPub() {
                         )} />
                       )}
                       {sameSiteAsPub && (
-                        <div className="text-sm text-gray-500 dark:text-gray-400 bg-stone-50 dark:bg-orange-900/20 rounded-lg px-3 py-2 border border-stone-200 dark:border-stone-700">
-                          Sede: <span className="font-medium text-gray-700 dark:text-gray-300">{form.watch("pubAddress") || form.watch("pubCity")}</span>
+                        <div className="text-sm text-muted-foreground dark:text-stone-400 bg-stone-50 dark:bg-orange-900/20 rounded-lg px-3 py-2 border border-stone-200 dark:border-stone-700">
+                          Sede: <span className="font-medium text-muted-foreground dark:text-stone-300">{form.watch("pubAddress") || form.watch("pubCity")}</span>
                         </div>
                       )}
 
@@ -591,7 +591,7 @@ export default function RegistraPub() {
                             <FormLabel>Telefono</FormLabel>
                             <FormControl>
                               <div className="relative">
-                                <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                                <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-stone-400" />
                                 <Input {...field} placeholder="+39..." className="pl-10" />
                               </div>
                             </FormControl>
@@ -635,7 +635,7 @@ export default function RegistraPub() {
             )}
 
             {/* Terms note */}
-            <p className="text-xs text-center text-gray-500 dark:text-gray-400">
+            <p className="text-xs text-center text-muted-foreground dark:text-stone-400">
               Registrandoti accetti i nostri{" "}
               <a href="/tos" className="underline hover:text-amber-600">Termini di Servizio</a>{" "}
               e la{" "}
@@ -659,7 +659,7 @@ export default function RegistraPub() {
           </form>
         </Form>
 
-        <p className="text-center text-sm text-gray-500 dark:text-gray-400">
+        <p className="text-center text-sm text-muted-foreground dark:text-stone-400">
           Hai già un account?{" "}
           <button onClick={() => setLocation('/auth')} className="text-amber-600 hover:underline font-medium">Accedi</button>
         </p>

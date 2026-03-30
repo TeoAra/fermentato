@@ -68,7 +68,7 @@ export default function ResetPasswordPage() {
           <div className="w-8 h-8 rounded-lg bg-amber-500 flex items-center justify-center">
             <Beer className="w-4 h-4 text-white" />
           </div>
-          <span className="font-bold text-gray-900 dark:text-white tracking-tight">fermenta.to</span>
+          <span className="font-bold text-foreground dark:text-white tracking-tight">fermenta.to</span>
         </Link>
       </header>
 
@@ -80,8 +80,8 @@ export default function ResetPasswordPage() {
               <div className="w-14 h-14 rounded-full bg-green-100 flex items-center justify-center mx-auto">
                 <CheckCircle2 className="w-7 h-7 text-green-600" />
               </div>
-              <h1 className="text-xl font-bold text-gray-900 dark:text-white">Password aggiornata!</h1>
-              <p className="text-sm text-gray-500">Ora puoi accedere con la tua nuova password.</p>
+              <h1 className="text-xl font-bold text-foreground dark:text-white">Password aggiornata!</h1>
+              <p className="text-sm text-muted-foreground">Ora puoi accedere con la tua nuova password.</p>
               <Button className="w-full bg-amber-500 hover:bg-amber-600 text-white font-semibold h-11 mt-2"
                 onClick={() => navigate("/login")}>
                 Vai al login
@@ -92,8 +92,8 @@ export default function ResetPasswordPage() {
               <div className="w-14 h-14 rounded-full bg-red-100 flex items-center justify-center mx-auto">
                 <AlertTriangle className="w-7 h-7 text-red-500" />
               </div>
-              <h1 className="text-xl font-bold text-gray-900 dark:text-white">Link non valido</h1>
-              <p className="text-sm text-gray-500">{tokenError}</p>
+              <h1 className="text-xl font-bold text-foreground dark:text-white">Link non valido</h1>
+              <p className="text-sm text-muted-foreground">{tokenError}</p>
               <Button variant="outline" className="w-full h-11" onClick={() => navigate("/login")}>
                 Torna al login
               </Button>
@@ -104,8 +104,8 @@ export default function ResetPasswordPage() {
                 <div className="w-12 h-12 rounded-xl bg-amber-100 flex items-center justify-center mb-4">
                   <Lock className="w-6 h-6 text-amber-600" />
                 </div>
-                <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Nuova password</h1>
-                <p className="text-sm text-gray-500 mt-1">Scegli una password sicura per il tuo account Fermenta.to</p>
+                <h1 className="text-2xl font-bold text-foreground dark:text-white">Nuova password</h1>
+                <p className="text-sm text-muted-foreground mt-1">Scegli una password sicura per il tuo account Fermenta.to</p>
               </div>
 
               <Form {...form}>
@@ -116,12 +116,12 @@ export default function ResetPasswordPage() {
                       <FormLabel className="text-sm font-medium">Nuova password</FormLabel>
                       <FormControl>
                         <div className="relative">
-                          <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                          <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-stone-400" />
                           <Input {...field} type={showPass ? "text" : "password"} placeholder="Crea una password sicura"
                             className="pl-10 pr-10 h-11 rounded-xl" autoComplete="new-password"
                             onChange={(e) => { field.onChange(e); setPasswordValue(e.target.value); }} />
                           <button type="button" onClick={() => setShowPass(v => !v)}
-                            className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
+                            className="absolute right-3 top-1/2 -translate-y-1/2 text-stone-400 hover:text-muted-foreground">
                             {showPass ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                           </button>
                         </div>
@@ -136,13 +136,13 @@ export default function ResetPasswordPage() {
                                   : passStrength <= 2 ? "bg-orange-400"
                                   : passStrength <= 3 ? "bg-amber-400"
                                   : "bg-green-500"
-                                  : "bg-gray-200 dark:bg-gray-700"
+                                  : "bg-stone-200 dark:bg-gray-700"
                               }`} />
                             ))}
                           </div>
                           <div className="flex flex-wrap gap-x-3 gap-y-1">
                             {passReqs.map((req) => (
-                              <span key={req.label} className={`flex items-center gap-1 text-xs transition-colors ${req.passed ? "text-green-600 dark:text-green-400" : "text-gray-400"}`}>
+                              <span key={req.label} className={`flex items-center gap-1 text-xs transition-colors ${req.passed ? "text-green-600 dark:text-green-400" : "text-stone-400"}`}>
                                 {req.passed ? <Check className="w-3 h-3" /> : <X className="w-3 h-3" />}
                                 {req.label}
                               </span>
@@ -159,11 +159,11 @@ export default function ResetPasswordPage() {
                       <FormLabel className="text-sm font-medium">Conferma password</FormLabel>
                       <FormControl>
                         <div className="relative">
-                          <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                          <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-stone-400" />
                           <Input {...field} type={showConfirm ? "text" : "password"} placeholder="Ripeti la nuova password"
                             className="pl-10 pr-10 h-11 rounded-xl" autoComplete="new-password" />
                           <button type="button" onClick={() => setShowConfirm(v => !v)}
-                            className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
+                            className="absolute right-3 top-1/2 -translate-y-1/2 text-stone-400 hover:text-muted-foreground">
                             {showConfirm ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                           </button>
                         </div>

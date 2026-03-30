@@ -160,7 +160,7 @@ function BreweryCard({ brewery }: { brewery: any }) {
           {isAuthenticated && (
             <button
               onClick={(e) => { e.preventDefault(); e.stopPropagation(); favMut.mutate({ action: isFav ? "remove" : "add" }); }}
-              className={`absolute top-2 right-2 w-8 h-8 rounded-full flex items-center justify-center transition-all shadow ${isFav ? "bg-red-500 text-white" : "bg-white/80 text-gray-500 hover:bg-red-50 hover:text-red-500"}`}
+              className={`absolute top-2 right-2 w-8 h-8 rounded-full flex items-center justify-center transition-all shadow ${isFav ? "bg-red-500 text-white" : "bg-white/80 text-muted-foreground hover:bg-red-50 hover:text-red-500"}`}
             >
               <Heart className={`w-4 h-4 ${isFav ? "fill-current" : ""}`} />
             </button>
@@ -168,7 +168,7 @@ function BreweryCard({ brewery }: { brewery: any }) {
         </div>
 
         <div className="p-3">
-          <div className="flex items-center gap-1.5 text-xs text-gray-500 dark:text-neutral-400 mb-1.5">
+          <div className="flex items-center gap-1.5 text-xs text-muted-foreground dark:text-neutral-400 mb-1.5">
             <span className="text-base leading-none">{flag}</span>
             <span className="truncate">{italianCountry}</span>
             {!isItalian && brewery.location && brewery.location !== brewery.country && (
@@ -385,7 +385,7 @@ export default function ExploreBreweries() {
       <main className="max-w-5xl mx-auto px-4 sm:px-6 py-6">
         {hasFilters && (
           <div className="flex items-center gap-2 mb-4 flex-wrap">
-            <span className="text-sm text-gray-500 dark:text-neutral-400">Filtri:</span>
+            <span className="text-sm text-muted-foreground dark:text-neutral-400">Filtri:</span>
             {quickFilter !== "all" && !selectedCountry && (
               <Badge variant="secondary" className="gap-1">
                 {quickFilter === "italy" ? "🇮🇹 Italia" : quickFilter === "international" ? "🌍 Internazionali" : "🔝 Più grandi"}
@@ -446,7 +446,7 @@ export default function ExploreBreweries() {
                   <ChevronLeft className="w-4 h-4 mr-1" />
                   Precedente
                 </Button>
-                <span className="text-sm text-gray-500 dark:text-neutral-400 px-2">
+                <span className="text-sm text-muted-foreground dark:text-neutral-400 px-2">
                   Pagina <span className="font-semibold text-gray-800 dark:text-white">{page}</span> di{" "}
                   <span className="font-semibold text-gray-800 dark:text-white">{totalPages.toLocaleString("it-IT")}</span>
                 </span>

@@ -146,7 +146,7 @@ export default function BeerTastingForm({ beerId, beerName, existingTasting, ini
                         className={`w-6 h-6 ${
                           star <= formData.rating
                             ? "fill-amber-400 text-amber-400"
-                            : "text-gray-300 hover:text-amber-300"
+                            : "text-stone-300 hover:text-amber-300"
                         }`}
                       />
                     </button>

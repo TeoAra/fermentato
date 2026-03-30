@@ -139,12 +139,12 @@ function TVModeButton({ slug }: { slug: string }) {
             <Monitor className="h-5 w-5 text-amber-600" />TV Mode
           </DialogTitle>
         </DialogHeader>
-        <p className="text-sm text-gray-600">
+        <p className="text-sm text-muted-foreground">
           Apri questa URL su un TV o monitor per visualizzare la taplist in modalità schermo intero,
           con aggiornamento automatico ogni 15 secondi.
         </p>
-        <div className="flex items-center gap-2 bg-gray-50 border rounded-lg p-3">
-          <span className="text-xs text-gray-600 break-all flex-1">{tvUrl}</span>
+        <div className="flex items-center gap-2 bg-stone-50 border rounded-lg p-3">
+          <span className="text-xs text-muted-foreground break-all flex-1">{tvUrl}</span>
           <Button size="sm" variant="outline" className="shrink-0"
             onClick={() => { navigator.clipboard.writeText(tvUrl); toast({ title: "URL copiato!" }); }}>
             <Copy className="h-3.5 w-3.5" />
@@ -175,7 +175,7 @@ function QRModal({ slug, name, onClose }: { slug: string; name: string; onClose:
           <DialogTitle>QR Code — {name}</DialogTitle>
         </DialogHeader>
         <img src={qrUrl} alt="QR Code festival" className="mx-auto rounded-xl" />
-        <p className="text-xs text-gray-500 break-all">{url}</p>
+        <p className="text-xs text-muted-foreground break-all">{url}</p>
         <div className="flex gap-2 justify-center mt-2">
           <Button size="sm" variant="outline" onClick={() => window.open(qrUrl, "_blank")}>
             Scarica QR
@@ -203,10 +203,10 @@ function TapRow({ tap, festivalId, onToggle, onDelete, onEdit }: {
 
   return (
     <div className={`flex items-center gap-3 p-3 rounded-xl border transition-all ${
-      tap.isAvailable ? "bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700" : "bg-gray-50 dark:bg-gray-900 border-gray-100 dark:border-gray-800 opacity-70"
+      tap.isAvailable ? "bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700" : "bg-stone-50 dark:bg-gray-900 border-gray-100 dark:border-gray-800 opacity-70"
     }`}>
       <div className={`w-9 h-9 flex-shrink-0 rounded-xl flex items-center justify-center text-xs font-bold ${
-        tap.isAvailable ? "bg-amber-100 text-amber-700" : "bg-gray-200 text-gray-400"
+        tap.isAvailable ? "bg-amber-100 text-amber-700" : "bg-stone-200 text-stone-400"
       }`}>
         {tap.tapNumber}
       </div>
@@ -218,7 +218,7 @@ function TapRow({ tap, festivalId, onToggle, onDelete, onEdit }: {
 
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-1.5">
-          <p className={`text-sm font-semibold truncate ${!tap.isAvailable ? "line-through text-gray-400" : ""}`}>
+          <p className={`text-sm font-semibold truncate ${!tap.isAvailable ? "line-through text-stone-400" : ""}`}>
             {beerName}
           </p>
           {tap.tapType === "pompa" && (
@@ -228,13 +228,13 @@ function TapRow({ tap, festivalId, onToggle, onDelete, onEdit }: {
         <div className="flex items-center gap-2 flex-wrap">
           {brewName && <span className="text-xs text-amber-600 dark:text-amber-400 truncate max-w-[120px]">{brewName}</span>}
           {style && <Badge variant="secondary" className="text-xs py-0">{style}</Badge>}
-          {abv && <span className="text-xs text-gray-500">{abv}%</span>}
+          {abv && <span className="text-xs text-muted-foreground">{abv}%</span>}
         </div>
       </div>
       <div className="flex items-center gap-1 flex-shrink-0">
         <button
           onClick={() => onEdit(tap)}
-          className="p-1.5 rounded-lg text-gray-400 hover:text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-900/20 transition-colors"
+          className="p-1.5 rounded-lg text-stone-400 hover:text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-900/20 transition-colors"
           title="Modifica spina"
         >
           <Pencil className="h-4 w-4" />
@@ -252,7 +252,7 @@ function TapRow({ tap, festivalId, onToggle, onDelete, onEdit }: {
         </button>
         <button
           onClick={() => onDelete(tap)}
-          className="p-1.5 rounded-lg text-gray-300 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+          className="p-1.5 rounded-lg text-stone-300 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
           title="Elimina spina"
         >
           <Trash2 className="h-4 w-4" />
@@ -283,7 +283,7 @@ function PriceRowsEditor({ rows, onChange }: { rows: PriceRow[]; onChange: (r: P
         </Button>
       </div>
       {rows.length === 0 && (
-        <p className="text-xs text-gray-400">Nessun prezzo impostato</p>
+        <p className="text-xs text-stone-400">Nessun prezzo impostato</p>
       )}
       {rows.map((row, i) => (
         <div key={i} className="flex gap-2 items-center">
@@ -300,7 +300,7 @@ function PriceRowsEditor({ rows, onChange }: { rows: PriceRow[]; onChange: (r: P
             </datalist>
           </div>
           <div className="flex items-center gap-1">
-            <span className="text-sm text-gray-500">€</span>
+            <span className="text-sm text-muted-foreground">€</span>
             <Input
               className="h-8 text-sm w-20"
               type="number"
@@ -311,7 +311,7 @@ function PriceRowsEditor({ rows, onChange }: { rows: PriceRow[]; onChange: (r: P
               onChange={e => updateRow(i, { price: e.target.value })}
             />
           </div>
-          <button type="button" onClick={() => removeRow(i)} className="text-gray-400 hover:text-red-500 p-1">
+          <button type="button" onClick={() => removeRow(i)} className="text-stone-400 hover:text-red-500 p-1">
             <X className="h-3.5 w-3.5" />
           </button>
         </div>
@@ -410,7 +410,7 @@ function TapEditDialog({ festivalId, tapNumber, existing, onClose }: {
                   )}
                   <div>
                     <p className="font-semibold text-sm">{selectedBeer.name}</p>
-                    <p className="text-xs text-gray-500 mt-0.5">
+                    <p className="text-xs text-muted-foreground mt-0.5">
                       {selectedBeer.breweryName}{selectedBeer.style ? ` · ${selectedBeer.style}` : ""}{selectedBeer.abv ? ` · ${selectedBeer.abv}% ABV` : ""}
                     </p>
                   </div>
@@ -424,8 +424,8 @@ function TapEditDialog({ festivalId, tapNumber, existing, onClose }: {
               <Label className="text-sm font-medium">Cerca birra nel database</Label>
               <div className="relative">
                 {isSearching
-                  ? <Loader2 className="absolute left-3 top-3 h-4 w-4 text-gray-400 animate-spin" />
-                  : <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />}
+                  ? <Loader2 className="absolute left-3 top-3 h-4 w-4 text-stone-400 animate-spin" />
+                  : <Search className="absolute left-3 top-3 h-4 w-4 text-stone-400" />}
                 <Input
                   className="pl-10"
                   placeholder="Cerca per nome o birrificio…"
@@ -456,7 +456,7 @@ function TapEditDialog({ festivalId, tapNumber, existing, onClose }: {
                           )}
                           <div className="min-w-0">
                             <p className="text-sm font-medium truncate">{beer.name}</p>
-                            <p className="text-xs text-gray-500 truncate">{beer.brewery?.name || "Birrificio sconosciuto"}{beer.style ? ` · ${beer.style}` : ""}{beer.abv ? ` · ${beer.abv}% ABV` : ""}</p>
+                            <p className="text-xs text-muted-foreground truncate">{beer.brewery?.name || "Birrificio sconosciuto"}{beer.style ? ` · ${beer.style}` : ""}{beer.abv ? ` · ${beer.abv}% ABV` : ""}</p>
                           </div>
                         </div>
                       ))}
@@ -464,14 +464,14 @@ function TapEditDialog({ festivalId, tapNumber, existing, onClose }: {
                   )}
                   {searchResults?.beers?.length === 0 && (
                     <div className="border border-dashed rounded-xl p-3 text-center space-y-1.5">
-                      <p className="text-xs text-gray-500">Nessuna birra trovata per "{debouncedSearch}"</p>
-                      <p className="text-xs text-gray-400">Se la birra non è ancora nel database, aggiungila prima dalla sezione birrificio.</p>
+                      <p className="text-xs text-muted-foreground">Nessuna birra trovata per "{debouncedSearch}"</p>
+                      <p className="text-xs text-stone-400">Se la birra non è ancora nel database, aggiungila prima dalla sezione birrificio.</p>
                     </div>
                   )}
                 </>
               )}
               {debouncedSearch.length < 2 && (
-                <p className="text-xs text-gray-400">Digita almeno 2 caratteri per cercare</p>
+                <p className="text-xs text-stone-400">Digita almeno 2 caratteri per cercare</p>
               )}
             </div>
           )}
@@ -489,11 +489,11 @@ function TapEditDialog({ festivalId, tapNumber, existing, onClose }: {
             <Label className="text-xs mb-1 block">Tipo erogazione</Label>
             <div className="flex gap-2">
               <button type="button" onClick={() => setForm(f => ({ ...f, tapType: "spina" }))}
-                className={`flex-1 py-1.5 px-3 rounded-lg border text-sm font-medium transition-colors ${form.tapType === "spina" ? "bg-amber-500 border-amber-500 text-white" : "border-gray-200 text-gray-600 hover:border-amber-300"}`}>
+                className={`flex-1 py-1.5 px-3 rounded-lg border text-sm font-medium transition-colors ${form.tapType === "spina" ? "bg-amber-500 border-amber-500 text-white" : "border-gray-200 text-muted-foreground hover:border-amber-300"}`}>
                 🍺 In spina
               </button>
               <button type="button" onClick={() => setForm(f => ({ ...f, tapType: "pompa" }))}
-                className={`flex-1 py-1.5 px-3 rounded-lg border text-sm font-medium transition-colors ${form.tapType === "pompa" ? "bg-amber-500 border-amber-500 text-white" : "border-gray-200 text-gray-600 hover:border-amber-300"}`}>
+                className={`flex-1 py-1.5 px-3 rounded-lg border text-sm font-medium transition-colors ${form.tapType === "pompa" ? "bg-amber-500 border-amber-500 text-white" : "border-gray-200 text-muted-foreground hover:border-amber-300"}`}>
                 🍵 In pompa
               </button>
             </div>
@@ -638,14 +638,14 @@ function FestivalForm({
       <div>
         <Label>URL pubblico (slug) *</Label>
         <div className="flex items-center gap-1 mt-1">
-          <span className="text-xs text-gray-400 whitespace-nowrap">/festival/</span>
+          <span className="text-xs text-stone-400 whitespace-nowrap">/festival/</span>
           <Input
             value={form.slug}
             onChange={e => { setSlugEdited(true); setForm(f => ({ ...f, slug: e.target.value })); }}
             placeholder="roma-beer-fest-2026"
           />
         </div>
-        <p className="text-xs text-gray-400 mt-0.5">URL pubblico del taplist QR</p>
+        <p className="text-xs text-stone-400 mt-0.5">URL pubblico del taplist QR</p>
       </div>
 
       {/* Location con Google */}
@@ -693,16 +693,16 @@ function FestivalForm({
           </Button>
         </div>
         {schedule.length === 0 && (
-          <p className="text-xs text-gray-400 italic py-2">Nessun orario aggiunto. Verranno mostrati sul taplist pubblico.</p>
+          <p className="text-xs text-stone-400 italic py-2">Nessun orario aggiunto. Verranno mostrati sul taplist pubblico.</p>
         )}
         <div className="space-y-2">
           {schedule.map((slot, i) => {
             const isAuto = !!slot.date;
             return (
-              <div key={i} className="flex items-center gap-2 bg-gray-50 dark:bg-gray-800 rounded-xl p-2">
+              <div key={i} className="flex items-center gap-2 bg-stone-50 dark:bg-gray-800 rounded-xl p-2">
                 <div className="flex-1 min-w-0">
                   {isAuto ? (
-                    <p className="text-sm font-medium text-gray-700 dark:text-gray-300 truncate px-1">{slot.label}</p>
+                    <p className="text-sm font-medium text-muted-foreground dark:text-stone-300 truncate px-1">{slot.label}</p>
                   ) : (
                     <Input
                       className="h-8 text-sm"
@@ -714,15 +714,15 @@ function FestivalForm({
                 </div>
                 <div className="flex flex-col gap-1.5">
                   <div className="flex items-center gap-1">
-                    <span className="text-xs text-gray-500 w-10">Apertura</span>
+                    <span className="text-xs text-muted-foreground w-10">Apertura</span>
                     <Input type="time" className="h-8 w-28 text-sm" value={slot.openFrom} onChange={e => updateSlot(i, { openFrom: e.target.value })} />
                   </div>
                   <div className="flex items-center gap-1">
-                    <span className="text-xs text-gray-500 w-10">Chiusura</span>
+                    <span className="text-xs text-muted-foreground w-10">Chiusura</span>
                     <Input type="time" className="h-8 w-28 text-sm" value={slot.openTo} onChange={e => updateSlot(i, { openTo: e.target.value })} />
                   </div>
                 </div>
-                <button type="button" onClick={() => removeSlot(i)} className="text-gray-400 hover:text-red-500 transition-colors p-1">
+                <button type="button" onClick={() => removeSlot(i)} className="text-stone-400 hover:text-red-500 transition-colors p-1">
                   <X className="h-4 w-4" />
                 </button>
               </div>
@@ -746,7 +746,7 @@ function FestivalForm({
           <Switch checked={form.useTokens} onCheckedChange={v => setForm(f => ({ ...f, useTokens: v }))} />
           <div>
             <Label className="text-sm font-semibold">Sistema a token</Label>
-            <p className="text-xs text-gray-500">I prezzi saranno espressi in token anziché in €</p>
+            <p className="text-xs text-muted-foreground">I prezzi saranno espressi in token anziché in €</p>
           </div>
         </div>
         {form.useTokens && (
@@ -758,7 +758,7 @@ function FestivalForm({
               onChange={e => setForm(f => ({ ...f, tokenName: e.target.value }))}
               placeholder="token"
             />
-            <p className="text-xs text-gray-400 mt-1">
+            <p className="text-xs text-stone-400 mt-1">
               Verrà mostrato come: "2 {form.tokenName || 'token'}" invece di "€2.00"
             </p>
           </div>
@@ -888,7 +888,7 @@ function FestivalFoodManager({ festId }: { festId: number }) {
             className={`text-xs px-2 py-1 rounded-full border transition-colors ${
               itemForm.allergens.includes(a)
                 ? "bg-orange-500 text-white border-orange-500"
-                : "bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-400 border-gray-200 dark:border-gray-600 hover:border-orange-300"
+                : "bg-white dark:bg-gray-800 text-muted-foreground dark:text-stone-400 border-gray-200 dark:border-gray-600 hover:border-orange-300"
             }`}
           >
             {ALLERGEN_LABELS[a]}
@@ -902,7 +902,7 @@ function FestivalFoodManager({ festId }: { festId: number }) {
     <div className="space-y-4">
       {/* Add category */}
       <div className="flex items-center justify-between">
-        <p className="text-sm text-gray-600 dark:text-gray-400">{categories.length} categorie · {food.length} voci</p>
+        <p className="text-sm text-muted-foreground dark:text-stone-400">{categories.length} categorie · {food.length} voci</p>
         <Button size="sm" variant="outline" onClick={() => setShowNewCategory(true)}>
           <Plus className="h-4 w-4 mr-1" />Nuova categoria
         </Button>
@@ -952,9 +952,9 @@ function FestivalFoodManager({ festId }: { festId: number }) {
       {categories.length === 0 && (
         <Card>
           <CardContent className="py-10 text-center space-y-3">
-            <UtensilsCrossed className="h-8 w-8 text-gray-300 mx-auto" />
-            <p className="text-gray-500 text-sm">Nessuna categoria ancora</p>
-            <p className="text-xs text-gray-400">Crea una categoria per iniziare ad aggiungere voci al menu</p>
+            <UtensilsCrossed className="h-8 w-8 text-stone-300 mx-auto" />
+            <p className="text-muted-foreground text-sm">Nessuna categoria ancora</p>
+            <p className="text-xs text-stone-400">Crea una categoria per iniziare ad aggiungere voci al menu</p>
           </CardContent>
         </Card>
       )}
@@ -967,7 +967,7 @@ function FestivalFoodManager({ festId }: { festId: number }) {
           <Card key={cat} className="overflow-hidden">
             <CardHeader className="p-0">
               <button
-                className="w-full flex items-center justify-between px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors text-left"
+                className="w-full flex items-center justify-between px-4 py-3 hover:bg-stone-50 dark:hover:bg-gray-800 transition-colors text-left"
                 onClick={() => toggleCategory(cat)}
               >
                 <div className="flex items-center gap-3">
@@ -976,14 +976,14 @@ function FestivalFoodManager({ festId }: { festId: number }) {
                   </div>
                   <div>
                     <p className="font-semibold text-sm">{cat}</p>
-                    <p className="text-xs text-gray-500">{items.length} voc{items.length === 1 ? "e" : "i"}</p>
+                    <p className="text-xs text-muted-foreground">{items.length} voc{items.length === 1 ? "e" : "i"}</p>
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
                   <Button size="sm" variant="outline" className="h-7 text-xs" onClick={e => { e.stopPropagation(); openAddItem(cat); }}>
                     <Plus className="h-3 w-3 mr-1" />Aggiungi
                   </Button>
-                  <ChevronDown className={`h-4 w-4 text-gray-400 transition-transform ${isExpanded ? "rotate-180" : ""}`} />
+                  <ChevronDown className={`h-4 w-4 text-stone-400 transition-transform ${isExpanded ? "rotate-180" : ""}`} />
                 </div>
               </button>
             </CardHeader>
@@ -991,7 +991,7 @@ function FestivalFoodManager({ festId }: { festId: number }) {
             {isExpanded && (
               <CardContent className="p-0 border-t dark:border-gray-700">
                 {items.length === 0 ? (
-                  <div className="px-4 py-5 text-center text-sm text-gray-400">
+                  <div className="px-4 py-5 text-center text-sm text-stone-400">
                     Nessuna voce in questa categoria.{" "}
                     <button className="text-amber-600 hover:underline" onClick={() => openAddItem(cat)}>Aggiungine una</button>
                   </div>
@@ -1001,10 +1001,10 @@ function FestivalFoodManager({ festId }: { festId: number }) {
                       <div key={item.id} className={`flex items-start gap-3 px-4 py-3 ${!item.isAvailable ? "opacity-60" : ""}`}>
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2">
-                            <p className={`text-sm font-medium ${!item.isAvailable ? "line-through text-gray-400" : ""}`}>{item.name}</p>
+                            <p className={`text-sm font-medium ${!item.isAvailable ? "line-through text-stone-400" : ""}`}>{item.name}</p>
                             {!item.isAvailable && <span className="text-xs text-red-400 bg-red-50 dark:bg-red-900/20 px-1.5 py-0.5 rounded-full">Esaurito</span>}
                           </div>
-                          {item.description && <p className="text-xs text-gray-500 truncate mt-0.5">{item.description}</p>}
+                          {item.description && <p className="text-xs text-muted-foreground truncate mt-0.5">{item.description}</p>}
                           {item.allergens && item.allergens.length > 0 && (
                             <div className="flex flex-wrap gap-1 mt-1">
                               {item.allergens.map(a => (
@@ -1016,7 +1016,7 @@ function FestivalFoodManager({ festId }: { festId: number }) {
                           )}
                         </div>
                         {item.price && <span className="font-bold text-amber-600 text-sm shrink-0 pt-0.5">€{parseFloat(item.price).toFixed(2)}</span>}
-                        <button onClick={() => openEditItem(item)} className="p-1 rounded text-gray-400 hover:text-amber-600 transition-colors shrink-0 mt-0.5">
+                        <button onClick={() => openEditItem(item)} className="p-1 rounded text-stone-400 hover:text-amber-600 transition-colors shrink-0 mt-0.5">
                           <Pencil className="h-4 w-4" />
                         </button>
                         <button onClick={() => toggleFoodMutation.mutate(item)} className="p-1 rounded shrink-0 transition-colors mt-0.5"
@@ -1025,7 +1025,7 @@ function FestivalFoodManager({ festId }: { festId: number }) {
                             ? <CheckCircle2 className="h-5 w-5 text-green-500" />
                             : <XCircle className="h-5 w-5 text-red-400" />}
                         </button>
-                        <button onClick={() => deleteFoodMutation.mutate(item.id)} className="p-1 rounded text-gray-300 hover:text-red-500 transition-colors shrink-0 mt-0.5">
+                        <button onClick={() => deleteFoodMutation.mutate(item.id)} className="p-1 rounded text-stone-300 hover:text-red-500 transition-colors shrink-0 mt-0.5">
                           <Trash2 className="h-4 w-4" />
                         </button>
                       </div>
@@ -1287,15 +1287,15 @@ export default function FestivalDashboard() {
   if (!isAuthenticated) return (
     <div className="min-h-screen flex items-center justify-center">
       <div className="text-center">
-        <Beer className="h-10 w-10 text-gray-300 mx-auto mb-3" />
-        <p className="text-gray-600">Accedi per gestire i festival</p>
+        <Beer className="h-10 w-10 text-stone-300 mx-auto mb-3" />
+        <p className="text-muted-foreground">Accedi per gestire i festival</p>
         <Button className="mt-3" onClick={() => navigate("/")}>Vai alla home</Button>
       </div>
     </div>
   );
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+    <div className="min-h-screen bg-stone-50 dark:bg-gray-900">
       {/* Header */}
       <div className="bg-gradient-to-r from-amber-600 to-orange-600 text-white px-4 py-4">
         <div className="max-w-5xl mx-auto flex items-center justify-between gap-4 flex-wrap">
@@ -1330,12 +1330,12 @@ export default function FestivalDashboard() {
       <div className="max-w-5xl mx-auto px-4 py-6 space-y-6">
         {/* Festival selector */}
         {listLoading ? (
-          <div className="flex items-center gap-2 text-gray-500"><Loader2 className="h-4 w-4 animate-spin" />Caricamento...</div>
+          <div className="flex items-center gap-2 text-muted-foreground"><Loader2 className="h-4 w-4 animate-spin" />Caricamento...</div>
         ) : festList.length === 0 ? (
           <Card>
             <CardContent className="py-10 text-center space-y-3">
-              <Beer className="h-10 w-10 text-gray-300 mx-auto" />
-              <p className="text-gray-600">Nessun festival ancora</p>
+              <Beer className="h-10 w-10 text-stone-300 mx-auto" />
+              <p className="text-muted-foreground">Nessun festival ancora</p>
               <div className="flex flex-col sm:flex-row gap-2 justify-center">
                 <Button asChild className="bg-amber-500 hover:bg-amber-600 text-white">
                   <a href="/festival"><Plus className="h-4 w-4 mr-1" />Crea il tuo festival</a>
@@ -1362,7 +1362,7 @@ export default function FestivalDashboard() {
                       className={`px-4 py-2 rounded-xl text-sm font-medium transition-all flex items-center gap-1.5 ${
                         (selectedFest?.id === f.id)
                           ? "bg-amber-500 text-white shadow"
-                          : "bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-amber-50"
+                          : "bg-white dark:bg-gray-800 text-muted-foreground dark:text-stone-300 hover:bg-amber-50"
                       }`}
                     >
                       {f.name}
@@ -1416,13 +1416,13 @@ export default function FestivalDashboard() {
                         <CreditCard className="h-6 w-6 text-amber-600" />
                       </div>
                       <div>
-                        <h3 className="font-semibold text-gray-900 dark:text-gray-100">Attiva il festival con il pagamento</h3>
-                        <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                        <h3 className="font-semibold text-foreground dark:text-gray-100">Attiva il festival con il pagamento</h3>
+                        <p className="text-sm text-muted-foreground dark:text-stone-400 mt-1">
                           Per rendere il taplist pubblico e raccogliere valutazioni è necessario il pagamento una tantum.
                         </p>
                       </div>
                       <div className="text-3xl font-bold text-amber-600">€{selectedFest.priceEur ?? 99}</div>
-                      <div className="text-xs text-gray-500">Pagamento unico · accesso per tutta la durata del festival</div>
+                      <div className="text-xs text-muted-foreground">Pagamento unico · accesso per tutta la durata del festival</div>
                       <div className="flex flex-col sm:flex-row gap-2 justify-center">
                         <Button
                           size="lg"
@@ -1446,7 +1446,7 @@ export default function FestivalDashboard() {
                           </Button>
                         )}
                       </div>
-                      <p className="text-xs text-gray-400">Puoi configurare spine e menu anche ora, ma il QR sarà pubblico solo dopo il pagamento.</p>
+                      <p className="text-xs text-stone-400">Puoi configurare spine e menu anche ora, ma il QR sarà pubblico solo dopo il pagamento.</p>
                     </CardContent>
                   </Card>
                 )}
@@ -1458,8 +1458,8 @@ export default function FestivalDashboard() {
                       <div className="flex items-center gap-3">
                         <AlertCircle className="h-8 w-8 text-red-400 flex-shrink-0" />
                         <div>
-                          <h3 className="font-semibold text-gray-900 dark:text-gray-100">Festival terminato</h3>
-                          <p className="text-sm text-gray-500">Il festival è scaduto il {selectedFest.endDate ? new Date(selectedFest.endDate).toLocaleDateString("it-IT") : "—"}. Rinnova per riattivarlo.</p>
+                          <h3 className="font-semibold text-foreground dark:text-gray-100">Festival terminato</h3>
+                          <p className="text-sm text-muted-foreground">Il festival è scaduto il {selectedFest.endDate ? new Date(selectedFest.endDate).toLocaleDateString("it-IT") : "—"}. Rinnova per riattivarlo.</p>
                         </div>
                       </div>
                       <Button
@@ -1486,7 +1486,7 @@ export default function FestivalDashboard() {
                       <CardContent className="p-3 text-center">
                         <Icon className={`h-4 w-4 mx-auto mb-0.5 ${color}`} />
                         <div className={`text-xl font-bold ${color}`}>{value}</div>
-                        <div className="text-xs text-gray-500">{label}</div>
+                        <div className="text-xs text-muted-foreground">{label}</div>
                       </CardContent>
                     </Card>
                   ))}
@@ -1505,8 +1505,8 @@ export default function FestivalDashboard() {
                   <TabsContent value="taps" className="space-y-4">
                     {status === "expired" ? (
                       <Card className="border-dashed">
-                        <CardContent className="py-8 text-center text-gray-500 space-y-2">
-                          <Lock className="h-8 w-8 mx-auto text-gray-300" />
+                        <CardContent className="py-8 text-center text-muted-foreground space-y-2">
+                          <Lock className="h-8 w-8 mx-auto text-stone-300" />
                           <p className="font-medium">Festival terminato</p>
                           <p className="text-sm">Le spine non sono più modificabili. Rinnova il festival per riattivarlo.</p>
                         </CardContent>
@@ -1514,8 +1514,8 @@ export default function FestivalDashboard() {
                     ) : taps.length === 0 ? (
                       <Card>
                         <CardContent className="py-8 text-center space-y-3">
-                          <Beer className="h-8 w-8 text-gray-300 mx-auto" />
-                          <p className="text-gray-500">Nessuna spina configurata</p>
+                          <Beer className="h-8 w-8 text-stone-300 mx-auto" />
+                          <p className="text-muted-foreground">Nessuna spina configurata</p>
                           <Button onClick={() => setEditingTap({ tapNumber: 1 })}>
                             <Plus className="h-4 w-4 mr-1" />Aggiungi prima spina
                           </Button>
@@ -1524,7 +1524,7 @@ export default function FestivalDashboard() {
                     ) : (
                       <>
                         <div className="flex items-center justify-between gap-3 flex-wrap">
-                          <p className="text-sm text-gray-600 dark:text-gray-400">
+                          <p className="text-sm text-muted-foreground dark:text-stone-400">
                             {taps.filter(t => t.isAvailable).length} di {taps.length} disponibili
                           </p>
                           <Button size="sm" variant="outline" onClick={() => setEditingTap({ tapNumber: taps.length + 1 })}>
@@ -1551,8 +1551,8 @@ export default function FestivalDashboard() {
                   <TabsContent value="food" className="space-y-4">
                     {status === "expired" ? (
                       <Card className="border-dashed">
-                        <CardContent className="py-8 text-center text-gray-500 space-y-2">
-                          <Lock className="h-8 w-8 mx-auto text-gray-300" />
+                        <CardContent className="py-8 text-center text-muted-foreground space-y-2">
+                          <Lock className="h-8 w-8 mx-auto text-stone-300" />
                           <p className="font-medium">Festival terminato</p>
                           <p className="text-sm">Il menu non è più modificabile. Rinnova il festival per riattivarlo.</p>
                         </CardContent>
@@ -1571,17 +1571,17 @@ export default function FestivalDashboard() {
                         <div className="grid grid-cols-3 gap-3">
                           <Card><CardContent className="p-4 text-center">
                             <div className="text-2xl font-bold text-amber-600">{stats.availableTaps}/{stats.totalTaps}</div>
-                            <div className="text-xs text-gray-500">Spine disponibili</div>
+                            <div className="text-xs text-muted-foreground">Spine disponibili</div>
                           </CardContent></Card>
                           <Card><CardContent className="p-4 text-center">
                             <div className="text-2xl font-bold text-amber-600">{stats.totalRatings}</div>
-                            <div className="text-xs text-gray-500">Voti totali</div>
+                            <div className="text-xs text-muted-foreground">Voti totali</div>
                           </CardContent></Card>
                           <Card><CardContent className="p-4 text-center">
                             <div className="text-2xl font-bold text-amber-600">
                               {stats.topTaps[0]?.avg.toFixed(1) ?? "—"}
                             </div>
-                            <div className="text-xs text-gray-500">Miglior media</div>
+                            <div className="text-xs text-muted-foreground">Miglior media</div>
                           </CardContent></Card>
                         </div>
 
@@ -1589,19 +1589,19 @@ export default function FestivalDashboard() {
                           <CardHeader><CardTitle className="flex items-center gap-2 text-sm"><Trophy className="h-4 w-4 text-amber-500" />Top 10 birre più votate</CardTitle></CardHeader>
                           <CardContent className="space-y-2">
                             {stats.topTaps.length === 0 ? (
-                              <p className="text-gray-500 text-sm text-center py-4">Ancora nessun voto</p>
+                              <p className="text-muted-foreground text-sm text-center py-4">Ancora nessun voto</p>
                             ) : stats.topTaps.map((t, i) => (
                               <div key={t.tapNumber} className="flex items-center gap-3">
                                 <span className={`w-7 h-7 flex items-center justify-center rounded-full text-xs font-bold ${
-                                  i === 0 ? "bg-yellow-100 text-yellow-700" : i === 1 ? "bg-gray-100 text-gray-600" : i === 2 ? "bg-stone-100 text-orange-600" : "bg-gray-50 text-gray-500"
+                                  i === 0 ? "bg-yellow-100 text-yellow-700" : i === 1 ? "bg-stone-100 text-muted-foreground" : i === 2 ? "bg-stone-100 text-orange-600" : "bg-stone-50 text-muted-foreground"
                                 }`}>{i + 1}</span>
                                 <div className="flex-1">
                                   <span className="text-sm font-medium">{t.beerName}</span>
-                                  <span className="text-xs text-gray-500 ml-1">(spina #{t.tapNumber})</span>
+                                  <span className="text-xs text-muted-foreground ml-1">(spina #{t.tapNumber})</span>
                                 </div>
                                 <div className="text-right">
                                   <div className="font-bold text-amber-600">{t.avg.toFixed(1)}</div>
-                                  <div className="text-xs text-gray-400">{t.count} vot{t.count === 1 ? "o" : "i"}</div>
+                                  <div className="text-xs text-stone-400">{t.count} vot{t.count === 1 ? "o" : "i"}</div>
                                 </div>
                               </div>
                             ))}
@@ -1625,7 +1625,7 @@ export default function FestivalDashboard() {
                         <Button size="sm" variant="outline" onClick={() => setShowQR(true)}>
                           <QrCode className="h-4 w-4 mr-1" />QR Code
                         </Button>
-                        <code className="text-xs text-gray-400 ml-auto">/festival/{selectedFest.slug}</code>
+                        <code className="text-xs text-stone-400 ml-auto">/festival/{selectedFest.slug}</code>
                       </CardContent>
                     </Card>
 

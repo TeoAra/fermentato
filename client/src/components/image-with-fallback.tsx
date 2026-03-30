@@ -30,7 +30,7 @@ const getFallbackIcon = (type: ImageType, iconSize: string) => {
   };
 
   const iconProps = {
-    className: `${sizeClasses[iconSize as keyof typeof sizeClasses]} text-gray-400`
+    className: `${sizeClasses[iconSize as keyof typeof sizeClasses]} text-stone-400`
   };
 
   switch (type) {
@@ -68,7 +68,7 @@ export default function ImageWithFallback({
 
   if (shouldShowFallback) {
     return (
-      <div className={`flex items-center justify-center bg-gray-100 dark:bg-gray-800 ${containerClassName} ${iconClassName}`}>
+      <div className={`flex items-center justify-center bg-stone-100 dark:bg-gray-800 ${containerClassName} ${iconClassName}`}>
         {getFallbackIcon(imageType, iconSize)}
       </div>
     );
@@ -88,7 +88,7 @@ export default function ImageWithFallback({
         style={{ display: imageError ? 'none' : 'block' }}
       />
       {isLoading && (
-        <div className={`flex items-center justify-center bg-gray-100 dark:bg-gray-800 ${className}`}>
+        <div className={`flex items-center justify-center bg-stone-100 dark:bg-gray-800 ${className}`}>
           <div className="animate-pulse">
             {getFallbackIcon(imageType, iconSize)}
           </div>

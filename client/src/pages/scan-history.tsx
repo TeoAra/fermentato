@@ -29,10 +29,10 @@ function engineLabel(engine: string | null): { label: string; color: string } {
   switch (engine) {
     case "gemini": return { label: "Gemini AI", color: "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300" };
     case "paddleocr": return { label: "PaddleOCR", color: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300" };
-    case "tesseract": return { label: "Tesseract", color: "bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300" };
+    case "tesseract": return { label: "Tesseract", color: "bg-stone-100 text-muted-foreground dark:bg-gray-800 dark:text-stone-300" };
     case "ocrspace": return { label: "OCR.space", color: "bg-stone-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-300" };
     case "barcode": return { label: "Barcode", color: "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300" };
-    default: return { label: engine || "OCR", color: "bg-gray-100 text-gray-600" };
+    default: return { label: engine || "OCR", color: "bg-stone-100 text-muted-foreground" };
   }
 }
 
@@ -46,7 +46,7 @@ export default function ScanHistoryPage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-950 flex items-center justify-center">
+      <div className="min-h-screen bg-stone-50 dark:bg-gray-950 flex items-center justify-center">
         <div className="w-10 h-10 rounded-full border-4 border-amber-400 border-t-transparent animate-spin" />
       </div>
     );
@@ -54,25 +54,25 @@ export default function ScanHistoryPage() {
 
   if (!isAuthenticated) {
     return (
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-950 flex items-center justify-center">
-        <p className="text-gray-500">Accedi per vedere lo storico</p>
+      <div className="min-h-screen bg-stone-50 dark:bg-gray-950 flex items-center justify-center">
+        <p className="text-muted-foreground">Accedi per vedere lo storico</p>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-950">
+    <div className="min-h-screen bg-stone-50 dark:bg-gray-950">
       {/* Header */}
       <div className="bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 sticky top-0 z-10">
         <div className="max-w-xl mx-auto px-4 py-4 flex items-center gap-3">
           <Link href="/scan">
-            <button className="w-9 h-9 flex items-center justify-center rounded-full bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors">
-              <ArrowLeft className="h-4 w-4 text-gray-600 dark:text-gray-300" />
+            <button className="w-9 h-9 flex items-center justify-center rounded-full bg-stone-100 dark:bg-gray-800 hover:bg-stone-200 dark:hover:bg-gray-700 transition-colors">
+              <ArrowLeft className="h-4 w-4 text-muted-foreground dark:text-stone-300" />
             </button>
           </Link>
           <div className="flex items-center gap-2">
             <History className="h-5 w-5 text-amber-500" />
-            <h1 className="text-lg font-bold text-gray-900 dark:text-white">Storico scansioni</h1>
+            <h1 className="text-lg font-bold text-foreground dark:text-white">Storico scansioni</h1>
           </div>
         </div>
       </div>
@@ -87,12 +87,12 @@ export default function ScanHistoryPage() {
           </div>
         ) : logs.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-20 text-center gap-4">
-            <div className="w-16 h-16 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
-              <Camera className="h-8 w-8 text-gray-400" />
+            <div className="w-16 h-16 rounded-full bg-stone-100 dark:bg-gray-800 flex items-center justify-center">
+              <Camera className="h-8 w-8 text-stone-400" />
             </div>
             <div>
-              <p className="font-semibold text-gray-700 dark:text-gray-300">Nessuna scansione ancora</p>
-              <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+              <p className="font-semibold text-muted-foreground dark:text-stone-300">Nessuna scansione ancora</p>
+              <p className="text-sm text-muted-foreground dark:text-stone-400 mt-1">
                 Le tue scansioni appariranno qui dopo averle effettuate.
               </p>
             </div>
@@ -113,11 +113,11 @@ export default function ScanHistoryPage() {
                 <div key={log.id} className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 overflow-hidden shadow-sm">
                   <div className="flex gap-3 p-3">
                     {/* Scanned image or placeholder */}
-                    <div className="w-16 h-16 rounded-xl bg-gray-100 dark:bg-gray-800 flex items-center justify-center overflow-hidden shrink-0">
+                    <div className="w-16 h-16 rounded-xl bg-stone-100 dark:bg-gray-800 flex items-center justify-center overflow-hidden shrink-0">
                       {log.imageUrl ? (
                         <img src={log.imageUrl} alt="scan" className="w-full h-full object-cover" />
                       ) : (
-                        <Camera className="h-7 w-7 text-gray-400" />
+                        <Camera className="h-7 w-7 text-stone-400" />
                       )}
                     </div>
 
@@ -128,27 +128,27 @@ export default function ScanHistoryPage() {
                           {hasResult ? (
                             log.chosenBeerId ? (
                               <Link href={`/beer/${log.chosenBeerId}`}>
-                                <p className="font-semibold text-gray-900 dark:text-white text-sm truncate hover:text-amber-600 dark:hover:text-amber-400">
+                                <p className="font-semibold text-foreground dark:text-white text-sm truncate hover:text-amber-600 dark:hover:text-amber-400">
                                   {log.beerName || "Birra"}
                                 </p>
                               </Link>
                             ) : (
                               <Link href={`/brewery/${log.chosenBreweryId}`}>
-                                <p className="font-semibold text-gray-900 dark:text-white text-sm truncate hover:text-amber-600 dark:hover:text-amber-400">
+                                <p className="font-semibold text-foreground dark:text-white text-sm truncate hover:text-amber-600 dark:hover:text-amber-400">
                                   {log.breweryName || "Birrificio"}
                                 </p>
                               </Link>
                             )
                           ) : (
-                            <p className="font-semibold text-gray-500 dark:text-gray-400 text-sm truncate italic">
+                            <p className="font-semibold text-muted-foreground dark:text-stone-400 text-sm truncate italic">
                               {log.usedQuery ? `"${log.usedQuery}"` : "Nessun risultato scelto"}
                             </p>
                           )}
                           {log.beerStyle && (
-                            <p className="text-xs text-gray-400 truncate">{log.beerStyle}</p>
+                            <p className="text-xs text-stone-400 truncate">{log.beerStyle}</p>
                           )}
                         </div>
-                        <span className="text-xs text-gray-400 shrink-0">
+                        <span className="text-xs text-stone-400 shrink-0">
                           {formatDistanceToNow(new Date(log.createdAt), { addSuffix: true, locale: it })}
                         </span>
                       </div>
@@ -160,7 +160,7 @@ export default function ScanHistoryPage() {
                           {eng.label}
                         </span>
                         {log.latencyMs && (
-                          <span className="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400">
+                          <span className="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full bg-stone-100 dark:bg-gray-800 text-muted-foreground dark:text-stone-400">
                             <Clock className="h-3 w-3" />
                             {log.latencyMs < 1000 ? `${log.latencyMs}ms` : `${(log.latencyMs/1000).toFixed(1)}s`}
                           </span>
@@ -171,7 +171,7 @@ export default function ScanHistoryPage() {
                             {log.chosenBeerId ? "Birra" : "Birrificio"}
                           </span>
                         ) : (
-                          <span className="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full bg-gray-100 dark:bg-gray-800 text-gray-500">
+                          <span className="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full bg-stone-100 dark:bg-gray-800 text-muted-foreground">
                             <Search className="h-3 w-3" />
                             Nessuna scelta
                           </span>
@@ -180,7 +180,7 @@ export default function ScanHistoryPage() {
 
                       {/* OCR text */}
                       {log.ocrText && (
-                        <p className="text-xs text-gray-400 dark:text-gray-500 mt-1 truncate">
+                        <p className="text-xs text-stone-400 dark:text-muted-foreground mt-1 truncate">
                           OCR: "{log.ocrText.slice(0, 60)}{log.ocrText.length > 60 ? "…" : ""}"
                         </p>
                       )}
