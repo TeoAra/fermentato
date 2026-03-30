@@ -1,6 +1,17 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { addClient, removeClient, broadcastPubUpdate } from "./pubBroadcast";
+
+// ─── Simple in-memory TTL cache ──────────────────────────────────────────────
+const _memCache = new Map<string, { data: any; expires: number }>();
+async function memCached<T>(key: string, ttlMs: number, fetcher: () => Promise<T>): Promise<T> {
+  const hit = _memCache.get(key);
+  if (hit && hit.expires > Date.now()) return hit.data as T;
+  const data = await fetcher();
+  _memCache.set(key, { data, expires: Date.now() + ttlMs });
+  return data;
+}
+// ─────────────────────────────────────────────────────────────────────────────
 import { execFile } from "child_process";
 import { promisify } from "util";
 import { tmpdir } from "os";
@@ -412,7 +423,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Get all breweries for explore page
   app.get("/api/breweries/all", async (req, res) => {
     try {
-      const allBreweries = await storage.getBreweriesWithBeerCount();
+      const allBreweries = await memCached("breweries:all", 5 * 60 * 1000, () =>
+        storage.getBreweriesWithBeerCount(undefined, false)
+      );
+      res.setHeader('Cache-Control', 'public, max-age=60, stale-while-revalidate=300');
       res.json(allBreweries);
     } catch (error) {
       console.error("Error fetching all breweries:", error);
@@ -437,16 +451,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/beers/popular-styles", async (req, res) => {
     try {
       const limit = Math.min(50, parseInt(req.query.limit as string) || 30);
-      const rows = await db
-        .select({
-          style: beers.style,
-          count: sql<number>`COUNT(*)::int`,
-        })
-        .from(beers)
-        .where(sql`${beers.style} IS NOT NULL AND ${beers.style} != ''`)
-        .groupBy(beers.style)
-        .orderBy(sql`COUNT(*) DESC`)
-        .limit(limit);
+      const rows = await memCached(`beers:popular-styles:${limit}`, 10 * 60 * 1000, () =>
+        db
+          .select({ style: beers.style, count: sql<number>`COUNT(*)::int` })
+          .from(beers)
+          .where(sql`${beers.style} IS NOT NULL AND ${beers.style} != ''`)
+          .groupBy(beers.style)
+          .orderBy(sql`COUNT(*) DESC`)
+          .limit(limit)
+      );
+      res.setHeader('Cache-Control', 'public, max-age=120, stale-while-revalidate=600');
       res.json(rows);
     } catch (error) {
       console.error("Error fetching popular styles:", error);
@@ -1153,12 +1167,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const random = req.query.random === 'true';
       const limit = req.query.limit ? parseInt(req.query.limit as string) : undefined;
-      const result = await storage.getBreweriesWithBeerCount(limit, random);
+      // Always fetch/cache the full sorted list; shuffle in-memory for random requests
+      const full = await memCached("breweries:all", 5 * 60 * 1000, () =>
+        storage.getBreweriesWithBeerCount(undefined, false)
+      );
+      let result: any[] = full;
       if (random) {
-        res.setHeader('Cache-Control', 'no-store');
-      } else {
-        res.setHeader('Cache-Control', 'public, max-age=300, stale-while-revalidate=60');
+        // Fisher-Yates partial shuffle — O(limit) not O(n log n)
+        const arr = full.slice();
+        const n = limit ?? arr.length;
+        for (let i = 0; i < n; i++) {
+          const j = i + Math.floor(Math.random() * (arr.length - i));
+          [arr[i], arr[j]] = [arr[j], arr[i]];
+        }
+        result = arr.slice(0, n);
+      } else if (limit) {
+        result = full.slice(0, limit);
       }
+      res.setHeader('Cache-Control', 'public, max-age=60, stale-while-revalidate=300');
       res.json(result);
     } catch (error) {
       console.error("Error fetching breweries:", error);
@@ -1228,27 +1254,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Database statistics endpoint
   app.get("/api/stats", async (req, res) => {
     try {
-      const [pubCount, breweryCount, beerCount, reviewCount, eventCount, userCount, styleCount] = await Promise.all([
-        db.select({ count: sql<number>`COUNT(*)::int` }).from(pubs),
-        db.select({ count: sql<number>`COUNT(*)::int` }).from(breweries),
-        db.select({ count: sql<number>`COUNT(*)::int` }).from(beers),
-        db.select({ count: sql<number>`COUNT(*)::int` }).from(userBeerTastings).where(sql`rating IS NOT NULL`),
-        db.select({ count: sql<number>`(SELECT COUNT(*) FROM pub_events) + (SELECT COUNT(*) FROM brewery_events)` }),
-        db.select({ count: sql<number>`COUNT(*)::int` }).from(users),
-        db.select({ count: sql<number>`COUNT(DISTINCT style)::int` }).from(beers),
-      ]);
-      const stats = {
-        totalPubs: pubCount[0]?.count || 0,
-        totalBreweries: breweryCount[0]?.count || 0,
-        totalBeers: beerCount[0]?.count || 0,
-        totalReviews: reviewCount[0]?.count || 0,
-        totalEvents: eventCount[0]?.count || 0,
-        totalUsers: userCount[0]?.count || 0,
-        uniqueStyles: styleCount[0]?.count || 0,
-        averageBeersPerBrewery: breweryCount[0]?.count > 0 ? Math.round((beerCount[0]?.count || 0) / breweryCount[0].count) : 0,
-        lastUpdated: new Date().toISOString()
-      };
-      res.setHeader('Cache-Control', 'public, max-age=300, stale-while-revalidate=60');
+      const stats = await memCached("stats:global", 5 * 60 * 1000, async () => {
+        const [pubCount, breweryCount, beerCount, reviewCount, eventCount, userCount, styleCount] = await Promise.all([
+          db.select({ count: sql<number>`COUNT(*)::int` }).from(pubs),
+          db.select({ count: sql<number>`COUNT(*)::int` }).from(breweries),
+          db.select({ count: sql<number>`COUNT(*)::int` }).from(beers),
+          db.select({ count: sql<number>`COUNT(*)::int` }).from(userBeerTastings).where(sql`rating IS NOT NULL`),
+          db.select({ count: sql<number>`(SELECT COUNT(*) FROM pub_events) + (SELECT COUNT(*) FROM brewery_events)` }),
+          db.select({ count: sql<number>`COUNT(*)::int` }).from(users),
+          db.select({ count: sql<number>`COUNT(DISTINCT style)::int` }).from(beers),
+        ]);
+        return {
+          totalPubs: pubCount[0]?.count || 0,
+          totalBreweries: breweryCount[0]?.count || 0,
+          totalBeers: beerCount[0]?.count || 0,
+          totalReviews: reviewCount[0]?.count || 0,
+          totalEvents: eventCount[0]?.count || 0,
+          totalUsers: userCount[0]?.count || 0,
+          uniqueStyles: styleCount[0]?.count || 0,
+          averageBeersPerBrewery: breweryCount[0]?.count > 0 ? Math.round((beerCount[0]?.count || 0) / breweryCount[0].count) : 0,
+          lastUpdated: new Date().toISOString()
+        };
+      });
+      res.setHeader('Cache-Control', 'public, max-age=60, stale-while-revalidate=300');
       res.json(stats);
     } catch (error) {
       console.error("Error fetching database stats:", error);
@@ -6193,51 +6221,58 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // ─── Home: recenti aggiunte alla taplist ─────────────────────────────────────
   app.get("/api/home/taplist-activity", async (_req, res) => {
     try {
-      const rows = await db.execute(sql`
-        SELECT
-          tl.id,
-          p.id  AS pub_id,
-          p.name AS pub_name,
-          p.logo_url AS pub_logo,
-          p.cover_image_url AS pub_cover,
-          p.city AS pub_city,
-          b.id   AS beer_id,
-          b.name AS beer_name,
-          b.style AS beer_style,
-          b.abv,
-          b.image_url AS beer_image,
-          tl.tap_type
-        FROM tap_list tl
-        JOIN pubs  p ON p.id = tl.pub_id  AND p.is_active = true
-        JOIN beers b ON b.id = tl.beer_id
-        WHERE tl.is_active = true
-        ORDER BY tl.id DESC
-        LIMIT 20
-      `);
-      res.json((rows as any).rows ?? rows);
+      const data = await memCached("home:taplist-activity", 2 * 60 * 1000, async () => {
+        const rows = await db.execute(sql`
+          SELECT
+            tl.id,
+            p.id  AS pub_id,
+            p.name AS pub_name,
+            p.logo_url AS pub_logo,
+            p.cover_image_url AS pub_cover,
+            p.city AS pub_city,
+            b.id   AS beer_id,
+            b.name AS beer_name,
+            b.style AS beer_style,
+            b.abv,
+            b.image_url AS beer_image,
+            tl.tap_type
+          FROM tap_list tl
+          JOIN pubs  p ON p.id = tl.pub_id  AND p.is_active = true
+          JOIN beers b ON b.id = tl.beer_id
+          WHERE tl.is_active = true
+          ORDER BY tl.id DESC
+          LIMIT 20
+        `);
+        return (rows as any).rows ?? rows;
+      });
+      res.setHeader('Cache-Control', 'public, max-age=30, stale-while-revalidate=120');
+      res.json(data);
     } catch (e: any) { res.status(500).json({ message: e.message }); }
   });
 
   // ─── Home: recent brewery announcements (all breweries, for home page feed) ──
   app.get("/api/home/announcements", async (_req, res) => {
     try {
-      const rows = await db
-        .select({
-          id: breweryAnnouncements.id,
-          type: breweryAnnouncements.type,
-          title: breweryAnnouncements.title,
-          content: breweryAnnouncements.content,
-          releaseDate: breweryAnnouncements.releaseDate,
-          createdAt: breweryAnnouncements.createdAt,
-          breweryId: breweryAnnouncements.breweryId,
-          breweryName: breweries.name,
-          breweryLogo: breweries.logoUrl,
-        })
-        .from(breweryAnnouncements)
-        .innerJoin(breweries, eq(breweries.id, breweryAnnouncements.breweryId))
-        .where(eq(breweryAnnouncements.isPublished, true))
-        .orderBy(desc(breweryAnnouncements.createdAt))
-        .limit(8);
+      const rows = await memCached("home:announcements", 3 * 60 * 1000, () =>
+        db
+          .select({
+            id: breweryAnnouncements.id,
+            type: breweryAnnouncements.type,
+            title: breweryAnnouncements.title,
+            content: breweryAnnouncements.content,
+            releaseDate: breweryAnnouncements.releaseDate,
+            createdAt: breweryAnnouncements.createdAt,
+            breweryId: breweryAnnouncements.breweryId,
+            breweryName: breweries.name,
+            breweryLogo: breweries.logoUrl,
+          })
+          .from(breweryAnnouncements)
+          .innerJoin(breweries, eq(breweries.id, breweryAnnouncements.breweryId))
+          .where(eq(breweryAnnouncements.isPublished, true))
+          .orderBy(desc(breweryAnnouncements.createdAt))
+          .limit(8)
+      );
+      res.setHeader('Cache-Control', 'public, max-age=60, stale-while-revalidate=180');
       res.json(rows);
     } catch (e: any) { res.status(500).json({ message: e.message }); }
   });

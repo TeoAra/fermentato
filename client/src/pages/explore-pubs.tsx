@@ -101,7 +101,7 @@ export default function ExplorePubs() {
   // Full-screen map mode
   if (viewMode === "map") {
     return (
-      <div className="fixed inset-0 z-40 bg-background">
+      <div className="fixed inset-x-0 bottom-0 top-16 z-40 bg-background">
         {/* Floating header controls */}
         <div className="absolute top-3 left-3 right-3 z-50 flex items-center gap-2 pointer-events-none">
           <button
