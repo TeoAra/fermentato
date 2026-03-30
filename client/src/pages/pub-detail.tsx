@@ -544,7 +544,6 @@ export default function PubDetail() {
 
   const isOpen = isOpenNow((pub as any)?.openingHours);
   const openStatus = getOpenStatus((pub as any)?.openingHours);
-  const activeTapCount = Array.isArray(tapList) ? tapList.filter((t: any) => t.isActive && t.isVisible !== false).length : 0;
 
   // Quick Actions Handlers
   const handleShowOpeningHours = () => {
@@ -600,7 +599,7 @@ export default function PubDetail() {
 
         {/* Logo — top center */}
         <div className="absolute top-8 sm:top-10 inset-x-0 flex justify-center z-20">
-          <Avatar className={`h-28 w-28 sm:h-36 sm:w-36 rounded-full border-[4px] border-white shadow-[0_8px_40px_rgba(0,0,0,0.4)] bg-white overflow-hidden ring-4 ${openStatus.borderColor}`}>
+          <Avatar className="h-28 w-28 sm:h-36 sm:w-36 rounded-full border-[4px] border-white shadow-[0_8px_40px_rgba(0,0,0,0.4)] bg-white overflow-hidden">
             <AvatarImage src={(pub as any)?.logoUrl} alt={(pub as any)?.name} className="object-cover" />
             <AvatarFallback className="bg-stone-800 text-white text-4xl font-bold">
               {(pub as any)?.name?.[0] || 'P'}
@@ -658,16 +657,6 @@ export default function PubDetail() {
               <Clock className="h-3 w-3 opacity-60" />
             </button>
 
-            {/* Tap count pill */}
-            {Array.isArray(tapList) && tapList.filter((t: any) => t.isActive && t.isVisible !== false).length > 0 && (
-              <button
-                onClick={() => setActiveTab('taplist')}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-semibold bg-stone-50 dark:bg-stone-900/20 text-primary dark:text-orange-400 border border-stone-200 dark:border-stone-700/30 hover:bg-stone-100 dark:hover:bg-stone-900/10 transition-colors"
-              >
-                <Wine className="h-3.5 w-3.5" />
-                {tapList.filter((t: any) => t.isActive && t.isVisible !== false).length} alla spina
-              </button>
-            )}
           </div>
 
           {/* Right: action buttons */}
@@ -742,7 +731,7 @@ export default function PubDetail() {
                 <div className="sticky top-14 lg:top-16 z-10 bg-white dark:bg-[hsl(25,14%,10%)] border-b border-stone-100 dark:border-stone-700/30">
                   <div className="flex overflow-x-auto scrollbar-hide px-1">
                     {[
-                      { id: 'taplist', label: 'Spina', icon: <Wine className="h-4 w-4 flex-shrink-0" />, badge: Array.isArray(tapList) ? tapList.filter((t: any) => t.isActive && t.isVisible !== false).length : 0 },
+                      { id: 'taplist', label: 'Spina', icon: <Wine className="h-4 w-4 flex-shrink-0" /> },
                       { id: 'bottles', label: 'Cantina', icon: <Sparkles className="h-4 w-4 flex-shrink-0" /> },
                       { id: 'menu', label: 'Menù', icon: <span className="flex-shrink-0 leading-none text-[15px]">🍽️</span> },
                       ...(Array.isArray(pubEvents) && pubEvents.length > 0 ? [{ id: 'events', label: 'Serate', icon: <Calendar className="h-4 w-4 flex-shrink-0" /> }] : []),

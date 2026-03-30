@@ -62,16 +62,24 @@ interface TapListProps {
   tapList: TapListItem[];
 }
 
-function getBestPrice(tap: TapListItem): string {
+function getAllPrices(tap: TapListItem): string[] {
   if (tap.prices && tap.prices.length > 0) {
-    const valid = tap.prices.filter(p => parseFloat(p.price) > 0);
-    if (valid.length > 0) return formatPrice(valid[0].price);
+    const valid = tap.prices
+      .filter(p => parseFloat(p.price) > 0)
+      .map(p => {
+        const label = p.size ? `${p.size} ${formatPrice(p.price)}` : formatPrice(p.price);
+        return label;
+      });
+    if (valid.length > 0) return valid;
   }
-  const candidates = [tap.priceMedium, tap.priceLarge, tap.priceSmall];
-  for (const p of candidates) {
-    if (p && parseFloat(p) > 0) return formatPrice(p);
-  }
-  return '';
+  const pairs: Array<[string | null, string]> = [
+    [tap.priceSmall, 'piccola'],
+    [tap.priceMedium, 'media'],
+    [tap.priceLarge, 'grande'],
+  ];
+  return pairs
+    .filter(([p]) => p && parseFloat(p as string) > 0)
+    .map(([p]) => formatPrice(p as string));
 }
 
 export default function TapList({ tapList }: TapListProps) {
@@ -107,7 +115,7 @@ export default function TapList({ tapList }: TapListProps) {
 
   const renderRow = (tap: TapListItem, index: number, arr: TapListItem[]) => {
     const styleColor = getBeerStyleColor(tap.beer.style);
-    const price = getBestPrice(tap);
+    const prices = getAllPrices(tap);
     const isLast = index === arr.length - 1;
 
     const metaParts: string[] = [];
@@ -151,11 +159,15 @@ export default function TapList({ tapList }: TapListProps) {
               </p>
             </div>
 
-            {/* Price — orange like CTA */}
-            {price && (
-              <p className="font-bold text-[15px] text-primary dark:text-orange-400 flex-shrink-0 tabular-nums pl-2">
-                {price}
-              </p>
+            {/* Prices — multiple sizes */}
+            {prices.length > 0 && (
+              <div className="flex flex-col items-end gap-0.5 pl-2 flex-shrink-0">
+                {prices.map((p, i) => (
+                  <p key={i} className={`font-bold tabular-nums leading-tight ${i === 0 ? 'text-[15px] text-primary dark:text-orange-400' : 'text-[12px] text-stone-400 dark:text-stone-500'}`}>
+                    {p}
+                  </p>
+                ))}
+              </div>
             )}
           </div>
         </Link>
