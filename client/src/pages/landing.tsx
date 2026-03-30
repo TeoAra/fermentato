@@ -329,13 +329,13 @@ export default function Landing() {
             ].map((card, i) => (
               <Link key={card.title} href={card.href}>
                 <div
-                  className={`interactive-card rounded-3xl p-8 border ${card.accent} flex flex-col h-full`}
+                  className={`interactive-card rounded-3xl p-8 border ${card.accent} flex flex-col h-full group`}
                   style={{ transitionDelay: `${i * 60}ms` }}
                 >
                   <div className="text-5xl mb-5">{card.emoji}</div>
                   <h3 className="text-xl font-bold text-stone-900 dark:text-white mb-3 leading-snug">{card.title}</h3>
                   <p className="text-stone-500 dark:text-stone-400 text-sm leading-relaxed flex-1 mb-6">{card.desc}</p>
-                  <span className={`flex items-center gap-1.5 text-sm font-bold ${card.ctaClass} group`}>
+                  <span className={`flex items-center gap-1.5 text-sm font-bold ${card.ctaClass}`}>
                     {card.cta}
                     <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
                   </span>
