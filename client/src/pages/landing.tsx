@@ -156,7 +156,7 @@ export default function Landing() {
   const businessReveal = useScrollReveal();
 
   return (
-    <div className="min-h-screen bg-[#FFF8F2] dark:bg-[hsl(25,14%,7%)] slide-up">
+    <div className="min-h-screen bg-[#FFF8F2] dark:bg-[hsl(25,14%,7%)] ">
 
       {/* ─── HERO ────────────────────────────────────────────────────────── */}
       <section className="relative overflow-hidden">

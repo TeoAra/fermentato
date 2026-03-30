@@ -288,7 +288,7 @@ export default function ExploreBreweries() {
   }, [countries]);
 
   return (
-    <div className="min-h-screen bg-[#FFF8F2] dark:bg-[hsl(25,14%,7%)] slide-up">
+    <div className="min-h-screen bg-[#FFF8F2] dark:bg-[hsl(25,14%,7%)] ">
       {/* Hero */}
       <div className="relative bg-gradient-to-br from-[hsl(24,93%,49%)] via-[hsl(22,92%,46%)] to-[hsl(20,95%,42%)] dark:from-[hsl(24,80%,28%)] dark:via-[hsl(22,78%,24%)] dark:to-[hsl(20,75%,20%)] overflow-hidden">
         <div className="absolute inset-0 opacity-10" style={{ backgroundImage: "url('/brewery-cover.jpg')", backgroundSize: "cover", backgroundPosition: "center" }} />

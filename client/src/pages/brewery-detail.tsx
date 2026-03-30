@@ -431,7 +431,7 @@ export default function BreweryDetail() {
   const seoUrl = `https://fermenta.to/brewery/${id}`;
 
   return (
-      <div className="min-h-screen bg-[#FFF8F2] dark:bg-background slide-up">
+      <div className="min-h-screen bg-[#FFF8F2] dark:bg-background ">
       <Helmet>
         <title>{seoTitle}</title>
         <meta name="description" content={seoDesc} />

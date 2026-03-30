@@ -253,7 +253,7 @@ export default function Activity() {
   };
 
   return (
-    <div className="container mx-auto px-4 py-6 max-w-4xl pb-24 slide-up">
+    <div className="container mx-auto px-4 py-6 max-w-4xl pb-24 ">
       {/* Pull to refresh indicator */}
       {(isPulling || isRefreshing) && (
         <div className="fixed top-16 left-0 right-0 z-40 flex items-center justify-center py-2.5 bg-amber-50 dark:bg-amber-950/90 border-b border-amber-200 dark:border-amber-800 backdrop-blur-sm">
