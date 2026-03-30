@@ -588,56 +588,59 @@ export default function PubDetail() {
         })}</script>
       </Helmet>
       
-      {/* ── HERO — iOS Settings style ── */}
+      {/* ── HERO ── */}
       <div className="relative bg-white dark:bg-[hsl(25,14%,10%)] border-b border-stone-100 dark:border-stone-700/30 overflow-hidden">
         {/* Cover strip — barely visible */}
         {(pub as any)?.coverImageUrl && (
-          <div className="absolute inset-x-0 top-0 h-20 pointer-events-none">
+          <div className="absolute inset-x-0 top-0 h-24 pointer-events-none">
             <img src={(pub as any).coverImageUrl} alt="" className="w-full h-full object-cover opacity-20 blur-[1px] scale-105" />
             <div className="absolute inset-0 bg-gradient-to-b from-transparent to-white dark:to-[hsl(25,14%,10%)]" />
           </div>
         )}
-        <div className="relative max-w-7xl mx-auto flex items-start gap-4 px-4 py-4" style={(pub as any)?.coverImageUrl ? { paddingTop: '1.5rem' } : {}}>
 
-          {/* Logo — tap to expand */}
-          <button
-            className="flex-shrink-0 active:scale-95 transition-transform"
-            onClick={() => {
-              const src = (pub as any)?.logoUrl;
-              if (src) { (window as any).__lightboxOpen?.(src); }
-            }}
-            aria-label="Espandi logo"
-          >
-            <Avatar className="h-20 w-20 sm:h-24 sm:w-24 rounded-full border border-stone-200 dark:border-stone-700 shadow-sm bg-stone-50 dark:bg-stone-800 overflow-hidden">
-              <AvatarImage src={(pub as any)?.logoUrl} alt={(pub as any)?.name} className="object-cover" />
-              <AvatarFallback className="bg-stone-100 dark:bg-stone-700 text-stone-500 text-3xl font-bold rounded-full">
-                {(pub as any)?.name?.[0] || 'P'}
-              </AvatarFallback>
-            </Avatar>
-          </button>
+        <div className="relative max-w-7xl mx-auto px-5 pt-6 pb-5">
+          <div className="flex items-start gap-5">
 
-          {/* Info */}
-          <div className="flex-1 min-w-0 pt-0.5">
-            <div className="flex items-start justify-between gap-2">
-              <div className="min-w-0">
-                <div className="flex items-center gap-1.5 flex-wrap">
-                  <h1 className="text-xl sm:text-2xl font-bold text-stone-900 dark:text-white leading-tight">
-                    {(pub as any)?.name}
-                  </h1>
-                  {(pub as any)?.isVerified && (
-                    <div title="Pub Verificato" className="flex items-center justify-center bg-emerald-600 rounded-full w-5 h-5 flex-shrink-0">
-                      <ShieldCheck className="h-3 w-3 text-white" />
-                    </div>
-                  )}
-                </div>
-                {(pub as any)?.city && (
-                  <p className="text-sm text-stone-500 dark:text-stone-400 mt-0.5">{(pub as any).city}</p>
+            {/* Logo */}
+            <button
+              className="flex-shrink-0 active:scale-95 transition-transform mt-1"
+              onClick={() => { const s = (pub as any)?.logoUrl; if (s) (window as any).__lightboxOpen?.(s); }}
+              aria-label="Espandi logo"
+            >
+              <Avatar className="h-[88px] w-[88px] rounded-full border-2 border-white dark:border-stone-700 shadow-md bg-stone-50 dark:bg-stone-800 overflow-hidden ring-1 ring-stone-100 dark:ring-stone-700">
+                <AvatarImage src={(pub as any)?.logoUrl} alt={(pub as any)?.name} className="object-cover" />
+                <AvatarFallback className="bg-stone-100 dark:bg-stone-700 text-stone-500 text-3xl font-bold">
+                  {(pub as any)?.name?.[0] || 'P'}
+                </AvatarFallback>
+              </Avatar>
+            </button>
+
+            {/* Info column */}
+            <div className="flex-1 min-w-0">
+
+              {/* Name + verified */}
+              <div className="flex items-center gap-2 flex-wrap">
+                <h1 className="text-2xl font-extrabold text-stone-900 dark:text-white leading-tight tracking-tight">
+                  {(pub as any)?.name}
+                </h1>
+                {(pub as any)?.isVerified && (
+                  <div title="Pub Verificato" className="flex items-center justify-center bg-emerald-600 rounded-full w-5 h-5 flex-shrink-0">
+                    <ShieldCheck className="h-3 w-3 text-white" />
+                  </div>
                 )}
-                {/* Open/closed pill */}
+              </div>
+
+              {/* City */}
+              {(pub as any)?.city && (
+                <p className="text-sm text-stone-500 dark:text-stone-400 mt-1 font-medium">{(pub as any).city}</p>
+              )}
+
+              {/* Open/closed pill */}
+              <div className="mt-3">
                 <button
                   onClick={handleShowOpeningHours}
                   data-testid="button-show-hours"
-                  className={`mt-2 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold border transition-colors ${
+                  className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold border transition-colors ${
                     openStatus.status === 'open'
                       ? 'bg-green-50 dark:bg-green-950 text-green-700 dark:text-green-300 border-green-200 dark:border-green-800'
                       : openStatus.status === 'closing_soon' || openStatus.status === 'opening_soon'
@@ -649,7 +652,7 @@ export default function PubDetail() {
                     openStatus.status === 'open' ? 'bg-green-500' :
                     openStatus.status === 'closing_soon' || openStatus.status === 'opening_soon' ? 'bg-primary' : 'bg-red-500'
                   }`} />
-                  {openStatus.status === 'open' && 'Aperto'}
+                  {openStatus.status === 'open' && 'Aperto ora'}
                   {openStatus.status === 'closing_soon' && 'Sta chiudendo'}
                   {openStatus.status === 'opening_soon' && 'Sta per aprire'}
                   {openStatus.status === 'closed' && 'Chiuso'}
@@ -658,61 +661,45 @@ export default function PubDetail() {
                 </button>
               </div>
 
-              {/* Action buttons — single horizontal row */}
-              <div className="flex items-center gap-1.5 flex-shrink-0">
+              {/* Action buttons row */}
+              <div className="mt-4 flex items-center gap-2">
                 <button
                   onClick={handleSave}
                   disabled={toggleFavoriteMutation.isPending}
                   title={isFavorite ? 'Rimuovi dai preferiti' : 'Aggiungi ai preferiti'}
                   data-testid="button-save"
                   className={`h-9 w-9 flex items-center justify-center rounded-full transition-all ${
-                    isFavorite
-                      ? 'bg-red-50 dark:bg-red-950/40 text-red-500'
-                      : 'bg-stone-100 dark:bg-stone-800 text-stone-500 hover:text-red-500'
+                    isFavorite ? 'bg-red-50 dark:bg-red-950/40 text-red-500' : 'bg-stone-100 dark:bg-stone-800 text-stone-500 hover:text-red-500'
                   }`}
                 >
                   <Heart className={`h-4 w-4 ${isFavorite ? 'fill-current' : ''}`} />
                 </button>
                 {(((pub as any)?.latitude && (pub as any)?.longitude) || (pub as any)?.address) && (
-                  <a
-                    href={getMapNavigationUrl((pub as any).name, (pub as any).address)}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    title="Avvia navigazione"
-                    className="h-9 w-9 flex items-center justify-center rounded-full bg-stone-100 dark:bg-stone-800 text-teal-600 dark:text-teal-400 transition-colors"
-                  >
+                  <a href={getMapNavigationUrl((pub as any).name, (pub as any).address)} target="_blank" rel="noopener noreferrer" title="Avvia navigazione"
+                    className="h-9 w-9 flex items-center justify-center rounded-full bg-stone-100 dark:bg-stone-800 text-teal-600 dark:text-teal-400 transition-colors">
                     <Navigation className="h-4 w-4" />
                   </a>
                 )}
                 {(pub as any)?.phone && (
-                  <a
-                    href={`tel:${(pub as any).phone}`}
-                    title="Chiama"
-                    className="h-9 w-9 flex items-center justify-center rounded-full bg-stone-100 dark:bg-stone-800 text-emerald-600 dark:text-emerald-400 transition-colors"
-                  >
+                  <a href={`tel:${(pub as any).phone}`} title="Chiama"
+                    className="h-9 w-9 flex items-center justify-center rounded-full bg-stone-100 dark:bg-stone-800 text-emerald-600 dark:text-emerald-400 transition-colors">
                     <Phone className="h-4 w-4" />
                   </a>
                 )}
-                <button
-                  onClick={handleShare}
-                  title="Condividi"
-                  data-testid="button-share"
-                  className="h-9 w-9 flex items-center justify-center rounded-full bg-stone-100 dark:bg-stone-800 text-stone-500 dark:text-stone-400 transition-colors"
-                >
+                <button onClick={handleShare} title="Condividi" data-testid="button-share"
+                  className="h-9 w-9 flex items-center justify-center rounded-full bg-stone-100 dark:bg-stone-800 text-stone-500 dark:text-stone-400 transition-colors">
                   <Share2 className="h-4 w-4" />
                 </button>
                 {canManage && (
                   <Link href={isAdmin ? `/admin/edit-pub/${id}` : "/dashboard"}>
-                    <button
-                      title="Gestisci pub"
-                      data-testid="button-manage"
-                      className="h-9 w-9 flex items-center justify-center rounded-full text-white bg-primary hover:bg-primary/90 transition-all shadow-sm"
-                    >
+                    <button title="Gestisci pub" data-testid="button-manage"
+                      className="h-9 w-9 flex items-center justify-center rounded-full text-white bg-primary hover:bg-primary/90 transition-all shadow-sm">
                       <Settings className="h-4 w-4" />
                     </button>
                   </Link>
                 )}
               </div>
+
             </div>
           </div>
         </div>

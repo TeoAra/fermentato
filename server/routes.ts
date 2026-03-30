@@ -423,9 +423,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Get all breweries for explore page
   app.get("/api/breweries/all", async (req, res) => {
     try {
-      const allBreweries = await memCached("breweries:all", 5 * 60 * 1000, () =>
-        storage.getBreweriesWithBeerCount(undefined, false)
-      );
+      const allBreweries = await memCached("breweries:all:200", 5 * 60 * 1000, async () => {
+        const all = await storage.getBreweriesWithBeerCount(undefined, false);
+        // For the map: only include breweries that have GPS coordinates, cap at 200
+        return (all as any[]).filter((b: any) => b.latitude && b.longitude).slice(0, 200);
+      });
       res.setHeader('Cache-Control', 'public, max-age=60, stale-while-revalidate=300');
       res.json(allBreweries);
     } catch (error) {
