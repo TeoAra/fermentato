@@ -247,7 +247,7 @@ export default function Landing() {
               {[
                 { icon: Building2, val: animBreweries.toLocaleString("it-IT"), label: "birrifici" },
                 { icon: Store, val: animPubs.toLocaleString("it-IT"), label: "pub" },
-                { icon: Beer, val: animBeers > 0 ? (animBeers / 1000).toFixed(1) + "k" : "—", label: "birre" },
+                { icon: Beer, val: (() => { if (!animBeers) return "—"; if (animBeers < 1000) return animBeers.toString(); const k = Math.round(animBeers / 100) / 10; return (k % 1 === 0 ? k.toFixed(0) : k.toFixed(1)) + "k"; })(), label: "birre" },
               ].map(({ icon: Icon, val, label }) => (
                 <div key={label} className="flex items-center gap-2 px-4 py-2.5 bg-white dark:bg-white/8 rounded-full border border-stone-100 dark:border-stone-800 shadow-sm tabular-nums">
                   <Icon className="w-4 h-4 text-primary flex-shrink-0" />
