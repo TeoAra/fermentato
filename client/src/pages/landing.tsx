@@ -239,7 +239,7 @@ export default function Landing() {
           </div>
 
           {/* Live stats pills — animated count-up */}
-          {totalBreweries > 0 && (
+          {globalStats && (
             <div
               className="slide-up flex flex-wrap items-center justify-center gap-3"
               style={{ animationDelay: '340ms' }}
