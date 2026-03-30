@@ -349,7 +349,7 @@ export default function Notifications() {
             <div
               key={n.id}
               onClick={() => handleClick(n)}
-              className={`rounded-2xl border cursor-pointer transition-all duration-200 ${
+              className={`interactive-card rounded-2xl border cursor-pointer transition-all duration-200 ${
                 !n.isRead
                   ? 'bg-white dark:bg-[hsl(25,14%,10%)] border-stone-200 dark:border-stone-700/40 shadow-[0_2px_12px_rgba(247,113,4,0.08)]'
                   : 'bg-white dark:bg-[hsl(25,14%,10%)] border-stone-100 dark:border-[hsl(25,12%,16%)] hover:border-stone-200'

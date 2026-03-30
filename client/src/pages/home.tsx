@@ -178,7 +178,7 @@ export default function Home() {
   const typedUser = user as any;
 
   return (
-    <div className="min-h-screen bg-[#FFF8F2] dark:bg-background">
+    <div className="min-h-screen bg-[#FFF8F2] dark:bg-background slide-up">
       {/* Pull to refresh indicator */}
       {(isPulling || isRefreshing) && (
         <div className="fixed top-16 left-0 right-0 z-40 flex items-center justify-center py-2.5 bg-stone-50 dark:bg-stone-900/95 border-b border-stone-300 dark:border-stone-700 backdrop-blur-sm">
