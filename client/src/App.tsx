@@ -12,8 +12,78 @@ import { usePushBadge } from "@/hooks/use-push-badge";
 import { NavigationProgress } from "@/components/navigation-progress";
 import Lightbox from "@/components/lightbox";
 import { PwaInstallPrompt, PushNotificationPrompt, AutoPushSubscriber } from "@/components/pwa-prompt";
+import { MobileHeader } from "@/components/mobile-header";
+import { BottomNavigation } from "@/components/bottom-navigation";
+import { DesktopSidebar } from "@/components/desktop-sidebar";
+import CookieBanner from "@/components/CookieBanner";
+import { ThemeProvider } from "@/lib/theme";
+import type { User } from "@shared/schema";
 
-const BeerDetailLazy = lazy(() => import("@/pages/beer-detail"));
+// ─── Page lazy imports — loaded only when the route is visited ───────────────
+const NotFound           = lazy(() => import("@/pages/not-found"));
+const Landing            = lazy(() => import("@/pages/landing"));
+const Home               = lazy(() => import("@/pages/home"));
+const PubDetail          = lazy(() => import("@/pages/pub-detail"));
+const BreweryDetail      = lazy(() => import("@/pages/brewery-detail"));
+const BeerDetail         = lazy(() => import("@/pages/beer-detail"));
+const SmartPubDashboard  = lazy(() => import("@/pages/smart-pub-dashboard"));
+const BreweryDashboard   = lazy(() => import("@/pages/brewery-dashboard"));
+const UserProfile        = lazy(() => import("@/pages/user-profile-new"));
+const AdminDashboard     = lazy(() => import("@/pages/admin-dashboard"));
+const AdminDashboardNew  = lazy(() => import("@/pages/admin-dashboard-new"));
+const AdminAnalytics     = lazy(() => import("@/pages/admin-analytics"));
+const AdminContent       = lazy(() => import("@/pages/admin-content"));
+const AdminModeration    = lazy(() => import("@/pages/admin-moderation"));
+const AdminSuggestions   = lazy(() => import("@/pages/admin-suggestions"));
+const AdminAdditionRequests = lazy(() => import("@/pages/admin-addition-requests"));
+const AdminPublicanRequests = lazy(() => import("@/pages/admin-publican-requests"));
+const AdminEditPub       = lazy(() => import("@/pages/admin-edit-pub"));
+const AdminEditBrewery   = lazy(() => import("@/pages/admin-edit-brewery"));
+const AdminPages         = lazy(() => import("@/pages/admin-pages"));
+const AdminDuplicates    = lazy(() => import("@/pages/admin-duplicates"));
+const AdminSubscriptions = lazy(() => import("@/pages/admin-subscriptions"));
+const AdminFestivals     = lazy(() => import("@/pages/admin-festivals"));
+const ExplorePubs        = lazy(() => import("@/pages/explore-pubs"));
+const ExploreBreweries   = lazy(() => import("@/pages/explore-breweries"));
+const ExploreBeers       = lazy(() => import("@/pages/explore-beers"));
+const SearchPage         = lazy(() => import("@/pages/search"));
+const ScanPage           = lazy(() => import("@/pages/scan"));
+const ScanHistoryPage    = lazy(() => import("@/pages/scan-history"));
+const AuthPage           = lazy(() => import("@/pages/auth"));
+const DemoLoginPage      = lazy(() => import("@/pages/demo-login-page"));
+const PubRegistration    = lazy(() => import("@/pages/pub-registration"));
+const BecomePublican     = lazy(() => import("@/pages/become-publican"));
+const RegistraPub        = lazy(() => import("@/pages/registra-pub"));
+const AttivaPub          = lazy(() => import("@/pages/attiva-pub"));
+const Onboarding         = lazy(() => import("@/pages/onboarding"));
+const Notifications      = lazy(() => import("@/pages/notifications"));
+const Activity           = lazy(() => import("@/pages/activity"));
+const UserPublicProfile  = lazy(() => import("@/pages/user-public-profile"));
+const UserDashboard      = lazy(() => import("@/pages/user-dashboard"));
+const Dashboard          = lazy(() => import("@/pages/dashboard-simple"));
+const PubDashboard       = lazy(() => import("@/pages/pub-dashboard"));
+const TaplistTV          = lazy(() => import("@/pages/taplist-tv"));
+const FestivalTV         = lazy(() => import("@/pages/festival-tv"));
+const FestivalPublic     = lazy(() => import("@/pages/festival-public"));
+const FestivalDashboard  = lazy(() => import("@/pages/festival-dashboard"));
+const CreaFestival       = lazy(() => import("@/pages/crea-festival"));
+const RegistraFestival   = lazy(() => import("@/pages/registra-festival"));
+const TermsOfService     = lazy(() => import("@/pages/tos"));
+const PrivacyPolicy      = lazy(() => import("@/pages/privacy"));
+const PrezziPageNew      = lazy(() => import("@/pages/prezzi"));
+const ResetPassword      = lazy(() => import("@/pages/reset-password"));
+const ContattiPage       = lazy(() => import("@/pages/static-page").then(m => ({ default: m.ContattiPage })));
+const ChiSiamoPage       = lazy(() => import("@/pages/static-page").then(m => ({ default: m.ChiSiamoPage })));
+const SupportoPage       = lazy(() => import("@/pages/static-page").then(m => ({ default: m.SupportoPage })));
+// ─────────────────────────────────────────────────────────────────────────────
+
+const PageSkeleton = () => (
+  <div className="min-h-screen flex items-center justify-center bg-[#FFF8F2]">
+    <div className="flex flex-col items-center gap-3">
+      <div className="w-10 h-10 rounded-full border-2 border-[#F77104]/30 border-t-[#F77104] animate-spin" />
+    </div>
+  </div>
+);
 
 class RouteErrorBoundary extends Component<{ children: ReactNode }, { hasError: boolean; error: Error | null }> {
   constructor(props: { children: ReactNode }) {
@@ -76,65 +146,6 @@ function ScrollToTop() {
   
   return null;
 }
-import NotFound from "@/pages/not-found";
-import Landing from "@/pages/landing";
-import Home from "@/pages/home";
-import PubDetail from "@/pages/pub-detail";
-import BreweryDetail from "@/pages/brewery-detail";
-import PubDashboard from "@/pages/pub-dashboard";
-import SmartPubDashboard from "@/pages/smart-pub-dashboard";
-import PubRegistration from "@/pages/pub-registration";
-import Notifications from "@/pages/notifications";
-import Activity from "@/pages/activity";
-import Dashboard from "@/pages/dashboard-simple";
-import UserDashboard from "@/pages/user-dashboard";
-import UserProfile from "@/pages/user-profile-new";
-import AdminDashboard from "@/pages/admin-dashboard";
-import AdminDashboardNew from "@/pages/admin-dashboard-new";
-import AdminFestivals from "@/pages/admin-festivals";
-import AdminPublicanRequests from "@/pages/admin-publican-requests";
-import AdminAnalytics from "@/pages/admin-analytics";
-import AdminContent from "@/pages/admin-content";
-import AdminModeration from "@/pages/admin-moderation";
-import AdminSuggestions from "@/pages/admin-suggestions";
-import AdminAdditionRequests from "@/pages/admin-addition-requests";
-import AdminEditPub from "@/pages/admin-edit-pub";
-import AdminEditBrewery from "@/pages/admin-edit-brewery";
-import ExplorePubs from "@/pages/explore-pubs";
-import ExploreBreweries from "@/pages/explore-breweries";
-import ExploreBeers from "@/pages/explore-beers";
-import DemoLoginPage from "@/pages/demo-login-page";
-import AuthPage from "@/pages/auth";
-import BecomePublican from "@/pages/become-publican";
-import BreweryDashboard from "@/pages/brewery-dashboard";
-import TermsOfService from "@/pages/tos";
-import PrivacyPolicy from "@/pages/privacy";
-import TaplistTV from "@/pages/taplist-tv";
-import FestivalTV from "@/pages/festival-tv";
-import Onboarding from "@/pages/onboarding";
-import UserPublicProfile from "@/pages/user-public-profile";
-import SearchPage from "@/pages/search";
-import ScanPage from "@/pages/scan";
-import ScanHistoryPage from "@/pages/scan-history";
-import AdminPages from "@/pages/admin-pages";
-import AdminDuplicates from "@/pages/admin-duplicates";
-import AdminSubscriptions from "@/pages/admin-subscriptions";
-import RegistraPub from "@/pages/registra-pub";
-import PrezziPageNew from "@/pages/prezzi";
-import AttivaPub from "@/pages/attiva-pub";
-import { ContattiPage, ChiSiamoPage, SupportoPage } from "@/pages/static-page";
-import FestivalPublic from "@/pages/festival-public";
-import FestivalDashboard from "@/pages/festival-dashboard";
-import CreaFestival from "@/pages/crea-festival";
-import RegistraFestival from "@/pages/registra-festival";
-import ResetPassword from "@/pages/reset-password";
-import { MobileHeader } from "@/components/mobile-header";
-import { BottomNavigation } from "@/components/bottom-navigation";
-import { DesktopSidebar } from "@/components/desktop-sidebar";
-import CookieBanner from "@/components/CookieBanner";
-import { ThemeProvider } from "@/lib/theme";
-import type { User } from "@shared/schema";
-
 function Router() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const { isAuthenticated, isLoading, user } = useAuth();
@@ -166,6 +177,7 @@ function Router() {
       <div>
       <main className="pt-16 pb-28 lg:pb-8">
         <RouteErrorBoundary>
+        <Suspense fallback={<PageSkeleton />}>
         <Switch>
           <Route path="/" component={isLoading || !isAuthenticated ? Landing : Home} />
           <Route path="/login" component={AuthPage} />
@@ -173,13 +185,7 @@ function Router() {
           <Route path="/demo-login" component={DemoLoginPage} />
           <Route path="/pub/:id" component={PubDetail} />
           <Route path="/brewery/:id" component={BreweryDetail} />
-          <Route path="/beer/:id">
-            {() => (
-              <Suspense fallback={<div className="min-h-screen flex items-center justify-center"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-amber-500" /></div>}>
-                <BeerDetailLazy />
-              </Suspense>
-            )}
-          </Route>
+          <Route path="/beer/:id" component={BeerDetail} />
           <Route path="/explore/pubs" component={ExplorePubs} />
           <Route path="/explore/breweries" component={ExploreBreweries} />
           <Route path="/explore/beers" component={ExploreBeers} />
@@ -236,6 +242,7 @@ function Router() {
           <Route path="/reset-password" component={ResetPassword} />
           <Route component={NotFound} />
         </Switch>
+        </Suspense>
         </RouteErrorBoundary>
       </main>
       </div>
@@ -265,9 +272,11 @@ function App() {
   if (location.startsWith("/tv/")) {
     return (
       <QueryClientProvider client={queryClient}>
-        <Switch>
-          <Route path="/tv/:id" component={TaplistTV} />
-        </Switch>
+        <Suspense fallback={<PageSkeleton />}>
+          <Switch>
+            <Route path="/tv/:id" component={TaplistTV} />
+          </Switch>
+        </Suspense>
       </QueryClientProvider>
     );
   }
@@ -275,9 +284,11 @@ function App() {
   if (location.startsWith("/festival-tv/")) {
     return (
       <QueryClientProvider client={queryClient}>
-        <Switch>
-          <Route path="/festival-tv/:slug" component={FestivalTV} />
-        </Switch>
+        <Suspense fallback={<PageSkeleton />}>
+          <Switch>
+            <Route path="/festival-tv/:slug" component={FestivalTV} />
+          </Switch>
+        </Suspense>
       </QueryClientProvider>
     );
   }
