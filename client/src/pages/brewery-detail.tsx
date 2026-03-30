@@ -471,7 +471,7 @@ export default function BreweryDetail() {
           {/* Logo centered — focal point */}
           <div className="absolute inset-0 flex items-center justify-center z-20">
             <Avatar className="w-36 h-36 sm:w-44 sm:h-44 rounded-full border-[5px] border-white shadow-[0_8px_40px_rgba(0,0,0,0.35)] bg-white overflow-hidden">
-              <AvatarImage src={brewery?.logoUrl} alt={brewery?.name} className="object-contain p-2" />
+              <AvatarImage src={brewery?.logoUrl} alt={brewery?.name} className="object-cover" />
               <AvatarFallback className="bg-stone-800 text-white text-5xl font-bold">
                 {brewery?.name?.[0] || 'B'}
               </AvatarFallback>
@@ -483,17 +483,17 @@ export default function BreweryDetail() {
             <button
               onClick={handleFavoriteToggle}
               disabled={favoriteMutation.isPending}
-              className={`h-10 w-10 flex items-center justify-center rounded-xl backdrop-blur-md border transition-all ${
+              className={`hero-action-btn h-10 w-10 flex items-center justify-center rounded-full border transition-all ${
                 isBreweryFavorited
-                  ? 'bg-red-500/80 border-red-400 text-white'
-                  : 'bg-white/20 border-white/30 text-white hover:bg-white/40'
+                  ? 'bg-red-500/80 border-red-400/60 text-white'
+                  : 'bg-white/15 border-white/25 text-white hover:bg-white/30'
               }`}
             >
               <Heart className={`h-5 w-5 ${isBreweryFavorited ? 'fill-current' : ''}`} />
             </button>
             <button
               onClick={handleShare}
-              className="h-10 w-10 flex items-center justify-center rounded-xl backdrop-blur-md bg-white/20 border border-white/30 text-white hover:bg-white/40 transition-all"
+              className="hero-action-btn h-10 w-10 flex items-center justify-center rounded-full bg-white/15 border border-white/25 text-white hover:bg-white/30 transition-all"
             >
               <Share2 className="h-5 w-5" />
             </button>
@@ -502,17 +502,17 @@ export default function BreweryDetail() {
 
         {/* ── MAIN CONTENT CARD ── */}
         <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 -mt-6 relative z-10 pb-20">
-          <div className="bg-white dark:bg-[hsl(25,14%,10%)] rounded-t-3xl md:rounded-3xl shadow-lg overflow-hidden border border-stone-100 dark:border-[hsl(25,12%,16%)]">
+          <div className="neu-card rounded-t-3xl md:rounded-3xl overflow-hidden">
             {/* Header Info */}
             <div className="p-6 md:p-8">
               <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
                 <div className="space-y-3">
                   <div className="flex items-center gap-2 flex-wrap">
-                    <h1 className="text-2xl md:text-3xl font-bold text-foreground leading-tight">
+                    <h1 className="display-serif text-3xl md:text-4xl text-foreground leading-tight">
                       {brewery?.name}
                     </h1>
                     {(brewery as any)?.hasOwner && (
-                      <div title="Birrificio Verificato" className="flex items-center gap-1 bg-emerald-50 text-emerald-700 dark:text-emerald-400 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider">
+                      <div title="Birrificio Verificato" className="gamified-badge flex items-center gap-1 bg-emerald-50 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-400 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider">
                         <ShieldCheck className="h-3 w-3" />
                         Verificato
                       </div>
@@ -521,22 +521,22 @@ export default function BreweryDetail() {
 
                   <div className="flex items-center gap-2 flex-wrap">
                     {brewery?.location && (
-                      <div className="bg-blue-50 dark:bg-blue-950/30 text-blue-700 dark:text-blue-400 rounded-full text-xs font-semibold px-3 py-1.5 flex items-center gap-1.5">
-                        <MapPin className="h-3.5 w-3.5" />
+                      <div className="neu-pill bg-[hsl(36,22%,95%)] dark:bg-[hsl(25,16%,11%)] text-slate-600 dark:text-slate-400 rounded-full text-xs font-semibold px-3 py-1.5 flex items-center gap-1.5">
+                        <MapPin className="h-3.5 w-3.5 text-primary/70" />
                         {brewery.location}{brewery.region ? ` (${brewery.region})` : ''}
                       </div>
                     )}
                     {beers.length > 0 && (
-                      <div className="bg-amber-50 dark:bg-amber-950/30 text-amber-700 dark:text-amber-400 rounded-full text-xs font-semibold px-3 py-1.5 flex items-center gap-1.5">
+                      <div className="neu-pill gamified-score rounded-full text-xs font-bold px-3 py-1.5 flex items-center gap-1.5 text-violet-700 dark:text-violet-300">
                         <Beer className="h-3.5 w-3.5" />
                         {beers.length} {beers.length === 1 ? 'Birra' : 'Birre'}
                       </div>
                     )}
                     {breweryRating?.avgRating && (
-                      <div className="bg-yellow-50 dark:bg-yellow-950/30 text-yellow-700 dark:text-yellow-400 rounded-full text-xs font-semibold px-3 py-1.5 flex items-center gap-1.5">
+                      <div className="neu-pill bg-[hsl(36,22%,95%)] dark:bg-[hsl(25,16%,11%)] rounded-full text-xs font-bold px-3 py-1.5 flex items-center gap-1.5 text-amber-600 dark:text-amber-400">
                         <Star className="h-3.5 w-3.5 fill-current" />
                         {breweryRating.avgRating.toFixed(1)}
-                        <span className="opacity-60 font-normal">({breweryRating.reviewCount})</span>
+                        <span className="opacity-55 font-normal">({breweryRating.reviewCount})</span>
                       </div>
                     )}
                   </div>

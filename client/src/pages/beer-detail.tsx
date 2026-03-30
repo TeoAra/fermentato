@@ -575,7 +575,7 @@ export default function BeerDetail() {
               <img
                 src={beer?.imageUrl || beer?.bottleImageUrl}
                 alt={beer?.name}
-                className="w-full h-full object-contain p-2"
+                className="w-full h-full object-cover"
               />
             ) : (
               <div className="w-full h-full flex items-center justify-center">
@@ -590,7 +590,7 @@ export default function BeerDetail() {
         {/* Name + brewery at bottom */}
         <div className="absolute bottom-0 left-0 right-0 px-4 pb-4 z-20">
           <div className="flex items-center gap-2 flex-wrap">
-            <h1 className="text-xl sm:text-2xl md:text-3xl text-white font-bold leading-tight drop-shadow-md">
+            <h1 className="display-serif text-2xl sm:text-3xl md:text-4xl text-white leading-tight drop-shadow-md">
               {beer?.name}
             </h1>
             {beerFavCount > 0 && (
@@ -708,10 +708,10 @@ export default function BeerDetail() {
               disabled={favoriteMutation.isPending}
               title={isBeerFavorited ? 'Rimuovi dai preferiti' : 'Aggiungi ai preferiti'}
               data-testid="button-favorite"
-              className={`h-9 w-9 flex items-center justify-center rounded-full border transition-all ${
+              className={`neu-pill h-9 w-9 flex items-center justify-center rounded-full transition-all ${
                 isBeerFavorited
-                  ? 'bg-red-50 dark:bg-red-950 border-red-200 dark:border-red-800 text-red-500'
-                  : 'bg-white dark:bg-[hsl(25,14%,10%)] border-stone-100 dark:border-[hsl(25,12%,16%)] text-muted-foreground hover:border-primary/20'
+                  ? 'bg-red-50 dark:bg-red-950/40 text-red-500'
+                  : 'bg-[hsl(36,22%,95%)] dark:bg-[hsl(25,16%,11%)] text-stone-500 dark:text-stone-400 hover:text-red-500'
               }`}
             >
               <Heart className={`h-4 w-4 ${isBeerFavorited ? 'fill-current' : ''}`} />
@@ -720,7 +720,7 @@ export default function BeerDetail() {
               onClick={handleShare}
               title="Condividi"
               data-testid="button-share"
-              className="h-9 w-9 flex items-center justify-center rounded-full border bg-white dark:bg-[hsl(25,14%,10%)] border-stone-100 dark:border-[hsl(25,12%,16%)] text-muted-foreground hover:border-primary/20 transition-colors"
+              className="neu-pill h-9 w-9 flex items-center justify-center rounded-full bg-[hsl(36,22%,95%)] dark:bg-[hsl(25,16%,11%)] text-stone-500 dark:text-stone-400 transition-colors"
             >
               <Share2 className="h-4 w-4" />
             </button>

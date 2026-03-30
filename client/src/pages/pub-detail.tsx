@@ -599,7 +599,7 @@ export default function PubDetail() {
         {/* Logo centered — focal point */}
         <div className="absolute inset-0 flex items-center justify-center z-20">
           <Avatar className={`h-36 w-36 sm:h-44 sm:w-44 rounded-full border-[5px] border-white shadow-[0_8px_40px_rgba(0,0,0,0.35)] bg-white overflow-hidden ring-4 ${openStatus.borderColor}`}>
-            <AvatarImage src={(pub as any)?.logoUrl} alt={(pub as any)?.name} className="object-contain p-2" />
+            <AvatarImage src={(pub as any)?.logoUrl} alt={(pub as any)?.name} className="object-cover" />
             <AvatarFallback className="bg-stone-800 text-white text-5xl font-bold">
               {(pub as any)?.name?.[0] || 'P'}
             </AvatarFallback>
@@ -609,7 +609,7 @@ export default function PubDetail() {
         {/* Name + badges at bottom */}
         <div className="absolute bottom-0 left-0 right-0 px-4 pb-3 z-20">
           <div className="flex items-center gap-2 flex-wrap">
-            <h1 className="text-xl sm:text-2xl md:text-3xl text-white font-bold leading-tight drop-shadow-md">
+            <h1 className="display-serif text-2xl sm:text-3xl md:text-4xl text-white leading-tight drop-shadow-md">
               {(pub as any)?.name}
             </h1>
             {(pub as any)?.isVerified && (
@@ -689,10 +689,10 @@ export default function PubDetail() {
               disabled={toggleFavoriteMutation.isPending}
               title={isFavorite ? 'Rimuovi dai preferiti' : 'Aggiungi ai preferiti'}
               data-testid="button-save"
-              className={`h-9 w-9 flex items-center justify-center rounded-full border transition-all ${
+              className={`neu-pill h-9 w-9 flex items-center justify-center rounded-full transition-all ${
                 isFavorite
-                  ? 'bg-red-50 dark:bg-red-950 border-red-200 dark:border-red-800 text-red-500'
-                  : 'bg-stone-50 dark:bg-stone-900/20 border-stone-200 dark:border-stone-700/30 text-primary dark:text-orange-400 hover:border-primary'
+                  ? 'bg-red-50 dark:bg-red-950/40 text-red-500'
+                  : 'bg-[hsl(36,22%,95%)] dark:bg-[hsl(25,16%,11%)] text-stone-500 dark:text-stone-400 hover:text-red-500'
               }`}
             >
               <Heart className={`h-4 w-4 ${isFavorite ? 'fill-current' : ''}`} />
@@ -704,7 +704,7 @@ export default function PubDetail() {
                 target="_blank"
                 rel="noopener noreferrer"
                 title="Avvia navigazione"
-                className="h-9 w-9 flex items-center justify-center rounded-full border bg-stone-50 dark:bg-stone-900/20 border-stone-200 dark:border-stone-700/30 text-primary dark:text-orange-400 hover:bg-stone-100 dark:hover:bg-stone-900 transition-colors"
+                className="neu-pill h-9 w-9 flex items-center justify-center rounded-full bg-[hsl(36,22%,95%)] dark:bg-[hsl(25,16%,11%)] text-teal-600 dark:text-teal-400 transition-colors"
               >
                 <Navigation className="h-4 w-4" />
               </a>
@@ -714,7 +714,7 @@ export default function PubDetail() {
               <a
                 href={`tel:${(pub as any).phone}`}
                 title="Chiama"
-                className="h-9 w-9 flex items-center justify-center rounded-full border bg-stone-50 dark:bg-stone-900/20 border-stone-200 dark:border-stone-700/30 text-primary dark:text-orange-400 hover:bg-stone-100 dark:hover:bg-stone-900/30 transition-colors"
+                className="neu-pill h-9 w-9 flex items-center justify-center rounded-full bg-[hsl(36,22%,95%)] dark:bg-[hsl(25,16%,11%)] text-emerald-600 dark:text-emerald-400 transition-colors"
               >
                 <Phone className="h-4 w-4" />
               </a>
@@ -724,7 +724,7 @@ export default function PubDetail() {
               onClick={handleShare}
               title="Condividi"
               data-testid="button-share"
-              className="h-9 w-9 flex items-center justify-center rounded-full border bg-stone-50 dark:bg-stone-900/20 border-stone-200 dark:border-stone-700/30 text-primary dark:text-orange-400 hover:border-primary transition-colors"
+              className="neu-pill h-9 w-9 flex items-center justify-center rounded-full bg-[hsl(36,22%,95%)] dark:bg-[hsl(25,16%,11%)] text-stone-500 dark:text-stone-400 transition-colors"
             >
               <Share2 className="h-4 w-4" />
             </button>
