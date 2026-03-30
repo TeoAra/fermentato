@@ -205,7 +205,7 @@ export default function HomepageMap({ pubs, breweries, userLocation, isLoading }
   }, [geoFilteredPubs, geoFilteredBreweries]);
 
   return (
-    <div className="relative w-full" style={{ height: "clamp(280px, 50vh, 520px)" }}>
+    <div className="relative w-full overflow-hidden" style={{ height: "clamp(280px, 50vh, 520px)" }}>
       {isLoading && (
         <div
           className="absolute inset-0 z-20 flex items-center justify-center"
