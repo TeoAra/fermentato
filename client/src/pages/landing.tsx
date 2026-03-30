@@ -14,14 +14,14 @@ import HomepageMap from "@/components/homepage-map";
 
 function useCountUp(target: number, duration = 1400, startDelay = 300) {
   const [value, setValue] = useState(0);
-  const started = useRef(false);
+  const prevTarget = useRef(0);
   const rafRef = useRef<number>(0);
   useEffect(() => {
-    if (target === 0 || started.current) return;
+    if (target === 0 || target === prevTarget.current) return;
+    prevTarget.current = target;
     const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     if (prefersReduced) { setValue(target); return; }
     const id = setTimeout(() => {
-      started.current = true;
       const t0 = performance.now();
       const tick = (now: number) => {
         const p = Math.min((now - t0) / duration, 1);
@@ -155,7 +155,7 @@ export default function Landing() {
   const businessReveal = useScrollReveal();
 
   return (
-    <div className="min-h-screen bg-[#FFF8F2] dark:bg-[hsl(25,14%,7%)]">
+    <div className="min-h-screen bg-[#FFF8F2] dark:bg-[hsl(25,14%,7%)] slide-up">
 
       {/* ─── HERO ────────────────────────────────────────────────────────── */}
       <section className="relative overflow-hidden">
