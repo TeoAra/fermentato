@@ -20,6 +20,7 @@ function useCountUp(target: number, duration = 1400, startDelay = 300) {
     if (target === prevTarget.current) return;
     prevTarget.current = target;
     if (target === 0) { setValue(0); return; }
+    if (typeof window === 'undefined') { setValue(target); return; }
     const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     if (prefersReduced) { setValue(target); return; }
     const id = setTimeout(() => {
@@ -45,7 +46,7 @@ function useScrollReveal() {
   const [visible, setVisible] = useState(false);
   useEffect(() => {
     const el = ref.current;
-    if (!el) return;
+    if (!el || typeof window === 'undefined' || typeof IntersectionObserver === 'undefined') return;
     const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     if (prefersReduced) { setVisible(true); return; }
     const obs = new IntersectionObserver(
@@ -156,7 +157,7 @@ export default function Landing() {
   const businessReveal = useScrollReveal();
 
   return (
-    <div className="min-h-screen bg-[#FFF8F2] dark:bg-[hsl(25,14%,7%)] slide-up">
+    <div className="min-h-screen bg-[#FFF8F2] dark:bg-[hsl(25,14%,7%)]">
 
       {/* ─── HERO ────────────────────────────────────────────────────────── */}
       <section className="relative overflow-hidden">
