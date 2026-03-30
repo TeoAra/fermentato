@@ -15,20 +15,27 @@ import HomepageMap from "@/components/homepage-map";
 function useCountUp(target: number, duration = 1400, startDelay = 300) {
   const [value, setValue] = useState(0);
   const prevTarget = useRef(0);
+  const startValue = useRef(0);
+  const displayValue = useRef(0);
   const rafRef = useRef<number>(0);
   useEffect(() => {
     if (target === prevTarget.current) return;
+    startValue.current = prevTarget.current === 0 ? 0 : displayValue.current;
     prevTarget.current = target;
     if (target === 0) { setValue(0); return; }
     if (typeof window === 'undefined') { setValue(target); return; }
     const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     if (prefersReduced) { setValue(target); return; }
+    if (rafRef.current) cancelAnimationFrame(rafRef.current);
     const id = setTimeout(() => {
+      const from = startValue.current;
       const t0 = performance.now();
       const tick = (now: number) => {
         const p = Math.min((now - t0) / duration, 1);
         const e = 1 - Math.pow(1 - p, 3);
-        setValue(Math.round(e * target));
+        const next = Math.round(from + (target - from) * e);
+        displayValue.current = next;
+        setValue(next);
         if (p < 1) rafRef.current = requestAnimationFrame(tick);
       };
       rafRef.current = requestAnimationFrame(tick);
