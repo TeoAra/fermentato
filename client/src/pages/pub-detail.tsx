@@ -609,8 +609,8 @@ export default function PubDetail() {
         </div>
 
         {/* Bottom content — name + CTA */}
-        <div className="absolute bottom-0 inset-x-0 px-4 pb-5 z-20 text-center">
-          <div className="flex items-center justify-center gap-2 flex-wrap mb-0.5">
+        <div className="absolute bottom-0 inset-x-0 px-4 pb-6 z-20 text-center">
+          <div className="flex items-center justify-center gap-2 flex-wrap mb-1">
             <h1 className="display-serif text-2xl sm:text-3xl md:text-4xl text-white leading-tight drop-shadow-md">
               {(pub as any)?.name}
             </h1>
@@ -620,22 +620,47 @@ export default function PubDetail() {
               </div>
             )}
           </div>
-          <p className="text-white/75 text-sm drop-shadow flex items-center justify-center gap-2">
-            {(pub as any)?.city && (
-              <span className="flex items-center gap-1">
-                <MapPin className="h-3 w-3 flex-shrink-0" />
-                {(pub as any).city}
-              </span>
-            )}
-            {activeTapCount > 0 && (
-              <>
-                {(pub as any)?.city && <span className="opacity-50">·</span>}
-                <span>{activeTapCount} spine attive oggi</span>
-              </>
-            )}
+          <p className="text-white/80 text-sm drop-shadow mb-1">
+            {(pub as any)?.city && (pub as any).city}
           </p>
+          {activeTapCount > 0 && (
+            <p className="text-white/70 text-sm drop-shadow mb-4">
+              {activeTapCount} spine attive oggi
+            </p>
+          )}
+          {activeTapCount > 0 && (
+            <button
+              onClick={() => setActiveTab('taplist')}
+              className="inline-flex items-center gap-2 px-7 py-2.5 bg-primary hover:bg-primary/90 text-white rounded-full font-bold text-sm shadow-xl active:scale-95 transition-all"
+            >
+              Vedi le spine <ChevronRight className="w-4 h-4" />
+            </button>
+          )}
         </div>
       </div>
+
+      {/* ── LIVE STRIP ── */}
+      {activeTapCount > 0 && (
+        <div className="px-4 pt-4 pb-1 max-w-7xl mx-auto">
+          <button
+            className="w-full flex items-center justify-between bg-white dark:bg-[hsl(25,14%,10%)] rounded-2xl border border-stone-100 dark:border-stone-700/30 px-4 py-3 shadow-sm active:scale-[0.99] transition-transform text-left"
+            onClick={() => setActiveTab('taplist')}
+          >
+            <div className="flex items-center gap-3">
+              <span className="w-2.5 h-2.5 rounded-full bg-primary flex-shrink-0 animate-pulse" />
+              <div>
+                <div className="flex items-center gap-2">
+                  <span className="text-[11px] font-black text-primary tracking-widest uppercase leading-none">LIVE</span>
+                  <span className="text-stone-300 dark:text-stone-600 leading-none">|</span>
+                  <span className="text-sm font-bold text-stone-900 dark:text-white">{activeTapCount} spine disponibili</span>
+                </div>
+                <p className="text-xs text-stone-400 dark:text-stone-500 mt-0.5">Aggiornato ora</p>
+              </div>
+            </div>
+            <ChevronRight className="w-4 h-4 text-stone-400 flex-shrink-0" />
+          </button>
+        </div>
+      )}
 
       {/* ── INFO BAR ── single row: pills left, actions right */}
       <div className="bg-white dark:bg-[hsl(25,14%,10%)] border-b border-stone-100 dark:border-stone-700/30 px-4 py-2.5">

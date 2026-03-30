@@ -111,9 +111,9 @@ export default function TapList({ tapList }: TapListProps) {
     const isLast = index === arr.length - 1;
 
     const metaParts: string[] = [];
-    if (tap.beer.style) metaParts.push(tap.beer.style);
+    if (tap.beer.brewery?.name) metaParts.push(tap.beer.brewery.name);
     if (tap.beer.abv && parseFloat(tap.beer.abv) > 0) {
-      metaParts.push(tap.beer.isAlcoholFree ? '0,0% ABV' : `${tap.beer.abv}%`);
+      metaParts.push(tap.beer.isAlcoholFree ? '0,0%' : `${tap.beer.abv}%`);
     }
     if (tap.beer.ibu && tap.beer.ibu > 0) metaParts.push(`${tap.beer.ibu} IBU`);
     const metaLine = metaParts.join(' · ');
@@ -146,16 +146,14 @@ export default function TapList({ tapList }: TapListProps) {
                 {tap.beer.isGlutenFree && <GlutenFreeSmallBadge size={10} />}
                 {tap.beer.isAlcoholFree && <AlcoholFreeBadge size={10} />}
               </div>
-              {metaLine ? (
-                <p className="text-xs text-stone-400 dark:text-stone-500 mt-0.5 truncate">{metaLine}</p>
-              ) : (
-                <p className="text-xs text-primary/80 dark:text-orange-400/70 mt-0.5 truncate">{tap.beer.brewery.name}</p>
-              )}
+              <p className="text-xs text-stone-400 dark:text-stone-500 mt-0.5 truncate">
+                {metaLine || tap.beer.style}
+              </p>
             </div>
 
-            {/* Price */}
+            {/* Price — orange like CTA */}
             {price && (
-              <p className="font-bold text-[15px] text-stone-900 dark:text-white flex-shrink-0 tabular-nums pl-1">
+              <p className="font-bold text-[15px] text-primary dark:text-orange-400 flex-shrink-0 tabular-nums pl-2">
                 {price}
               </p>
             )}
