@@ -452,123 +452,110 @@ export default function BreweryDetail() {
         })}</script>
       </Helmet>
       
-      {/* ── HERO ── */}
-        <div className="relative h-[280px] sm:h-[360px] md:h-[440px] overflow-hidden">
-          {brewery?.coverImageUrl ? (
-            <img
-              src={brewery.coverImageUrl}
-              alt={`${brewery?.name} - Copertina`}
-              className="w-full h-full object-cover"
-            />
-          ) : (
-            <div className="w-full h-full relative overflow-hidden" style={{ background: 'linear-gradient(135deg, hsl(25,18%,10%) 0%, hsl(20,15%,18%) 50%, hsl(30,12%,24%) 100%)' }}>
-              <div className="absolute inset-0 opacity-[0.04]" style={{ backgroundImage: 'repeating-linear-gradient(45deg, #fff 0, #fff 1px, transparent 0, transparent 50%)', backgroundSize: '18px 18px' }} />
-            </div>
-          )}
-          {/* Gradient overlay */}
-          <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-black/10 to-transparent" />
+      {/* ── HERO — iOS Settings style ── */}
+        <div className="bg-white dark:bg-[hsl(25,14%,10%)] border-b border-stone-100 dark:border-stone-700/30 px-4 py-4">
+          <div className="max-w-7xl mx-auto flex items-start gap-4">
 
-          {/* Logo centered — focal point */}
-          <div className="absolute inset-0 flex items-center justify-center z-20">
-            <Avatar className="w-36 h-36 sm:w-44 sm:h-44 rounded-full border-[5px] border-white shadow-[0_8px_40px_rgba(0,0,0,0.35)] bg-white overflow-hidden">
-              <AvatarImage src={brewery?.logoUrl} alt={brewery?.name} className="object-cover" />
-              <AvatarFallback className="bg-stone-800 text-white text-5xl font-bold">
-                {brewery?.name?.[0] || 'B'}
-              </AvatarFallback>
-            </Avatar>
-          </div>
-
-          {/* Action buttons (top right) */}
-          <div className="absolute top-4 right-4 z-20 flex items-center gap-2">
+            {/* Logo — tap to expand */}
             <button
-              onClick={handleFavoriteToggle}
-              disabled={favoriteMutation.isPending}
-              className={`hero-action-btn h-10 w-10 flex items-center justify-center rounded-full border transition-all ${
-                isBreweryFavorited
-                  ? 'bg-red-500/80 border-red-400/60 text-white'
-                  : 'bg-white/15 border-white/25 text-white hover:bg-white/30'
-              }`}
+              className="flex-shrink-0 active:scale-95 transition-transform"
+              onClick={() => {
+                const src = brewery?.logoUrl;
+                if (src) { (window as any).__lightboxOpen?.(src); }
+              }}
+              aria-label="Espandi logo"
             >
-              <Heart className={`h-5 w-5 ${isBreweryFavorited ? 'fill-current' : ''}`} />
+              <Avatar className="h-20 w-20 sm:h-24 sm:w-24 rounded-2xl border border-stone-200 dark:border-stone-700 shadow-sm bg-stone-50 dark:bg-stone-800 overflow-hidden">
+                <AvatarImage src={brewery?.logoUrl} alt={brewery?.name} className="object-contain p-1" />
+                <AvatarFallback className="bg-stone-100 dark:bg-stone-700 text-stone-500 text-3xl font-bold rounded-2xl">
+                  {brewery?.name?.[0] || 'B'}
+                </AvatarFallback>
+              </Avatar>
             </button>
-            <button
-              onClick={handleShare}
-              className="hero-action-btn h-10 w-10 flex items-center justify-center rounded-full bg-white/15 border border-white/25 text-white hover:bg-white/30 transition-all"
-            >
-              <Share2 className="h-5 w-5" />
-            </button>
-          </div>
-        </div>
 
-        {/* ── MAIN CONTENT CARD ── */}
-        <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 -mt-6 relative z-10 pb-20">
-          <div className="neu-card rounded-t-3xl md:rounded-3xl overflow-hidden">
-            {/* Header Info */}
-            <div className="p-6 md:p-8">
-              <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
-                <div className="space-y-3">
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <h1 className="display-serif text-3xl md:text-4xl text-foreground leading-tight">
+            {/* Info */}
+            <div className="flex-1 min-w-0 pt-0.5">
+              <div className="flex items-start justify-between gap-2">
+                <div className="min-w-0 space-y-1.5">
+                  <div className="flex items-center gap-1.5 flex-wrap">
+                    <h1 className="text-xl sm:text-2xl font-bold text-stone-900 dark:text-white leading-tight">
                       {brewery?.name}
                     </h1>
                     {(brewery as any)?.hasOwner && (
-                      <div title="Birrificio Verificato" className="gamified-badge flex items-center gap-1 bg-emerald-50 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-400 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider">
-                        <ShieldCheck className="h-3 w-3" />
-                        Verificato
+                      <div title="Birrificio Verificato" className="flex items-center justify-center bg-emerald-600 rounded-full w-5 h-5 flex-shrink-0">
+                        <ShieldCheck className="h-3 w-3 text-white" />
                       </div>
                     )}
                   </div>
-
-                  <div className="flex items-center gap-2 flex-wrap">
-                    {brewery?.location && (
-                      <div className="neu-pill bg-[hsl(36,22%,95%)] dark:bg-[hsl(25,16%,11%)] text-slate-600 dark:text-slate-400 rounded-full text-xs font-semibold px-3 py-1.5 flex items-center gap-1.5">
-                        <MapPin className="h-3.5 w-3.5 text-primary/70" />
-                        {brewery.location}{brewery.region ? ` (${brewery.region})` : ''}
-                      </div>
-                    )}
+                  {brewery?.location && (
+                    <p className="text-sm text-stone-500 dark:text-stone-400">
+                      {brewery.location}{brewery.region ? ` · ${brewery.region}` : ''}
+                    </p>
+                  )}
+                  <div className="flex items-center gap-1.5 flex-wrap">
                     {beers.length > 0 && (
-                      <div className="neu-pill gamified-score rounded-full text-xs font-bold px-3 py-1.5 flex items-center gap-1.5 text-violet-700 dark:text-violet-300">
-                        <Beer className="h-3.5 w-3.5" />
+                      <span className="inline-flex items-center gap-1 text-xs font-semibold text-violet-600 dark:text-violet-400 bg-violet-50 dark:bg-violet-950/30 px-2 py-0.5 rounded-full">
+                        <Beer className="h-3 w-3" />
                         {beers.length} {beers.length === 1 ? 'Birra' : 'Birre'}
-                      </div>
+                      </span>
                     )}
                     {breweryRating?.avgRating && (
-                      <div className="neu-pill bg-[hsl(36,22%,95%)] dark:bg-[hsl(25,16%,11%)] rounded-full text-xs font-bold px-3 py-1.5 flex items-center gap-1.5 text-amber-600 dark:text-amber-400">
-                        <Star className="h-3.5 w-3.5 fill-current" />
+                      <span className="inline-flex items-center gap-1 text-xs font-semibold text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/30 px-2 py-0.5 rounded-full">
+                        <Star className="h-3 w-3 fill-current" />
                         {breweryRating.avgRating.toFixed(1)}
-                        <span className="opacity-55 font-normal">({breweryRating.reviewCount})</span>
-                      </div>
+                        <span className="font-normal opacity-70">({breweryRating.reviewCount})</span>
+                      </span>
                     )}
                   </div>
                 </div>
 
-                <div className="flex items-center gap-2">
+                {/* Action buttons */}
+                <div className="flex items-center gap-1.5 flex-shrink-0">
+                  <button
+                    onClick={handleFavoriteToggle}
+                    disabled={favoriteMutation.isPending}
+                    className={`h-9 w-9 flex items-center justify-center rounded-full transition-all ${
+                      isBreweryFavorited
+                        ? 'bg-red-50 dark:bg-red-950/40 text-red-500'
+                        : 'bg-stone-100 dark:bg-stone-800 text-stone-500 hover:text-red-500'
+                    }`}
+                  >
+                    <Heart className={`h-4 w-4 ${isBreweryFavorited ? 'fill-current' : ''}`} />
+                  </button>
+                  <button
+                    onClick={handleShare}
+                    className="h-9 w-9 flex items-center justify-center rounded-full bg-stone-100 dark:bg-stone-800 text-stone-500 dark:text-stone-400 transition-colors"
+                  >
+                    <Share2 className="h-4 w-4" />
+                  </button>
                   {isAdmin && (
                     <Link href={`/admin/edit-brewery/${id}`}>
-                      <Button variant="outline" size="sm" className="rounded-xl border-stone-200 dark:border-stone-700/50">
-                        <Settings className="h-4 w-4 mr-2" />
-                        Gestisci
-                      </Button>
+                      <button className="h-9 w-9 flex items-center justify-center rounded-full text-white bg-primary hover:bg-primary/90 transition-all shadow-sm">
+                        <Settings className="h-4 w-4" />
+                      </button>
                     </Link>
                   )}
                   {isAuthenticated && !isAdmin && (
-                    <Button 
-                      variant="outline" 
-                      size="sm" 
-                      className="rounded-xl border-stone-200 dark:border-stone-700/50"
+                    <button
                       onClick={() => setIsSuggestDialogOpen(true)}
+                      className="h-9 w-9 flex items-center justify-center rounded-full bg-stone-100 dark:bg-stone-800 text-stone-500 dark:text-stone-400 transition-colors"
                     >
-                      <Lightbulb className="h-4 w-4 mr-2" />
-                      Suggerisci
-                    </Button>
+                      <Lightbulb className="h-4 w-4" />
+                    </button>
                   )}
                 </div>
               </div>
             </div>
+          </div>
+        </div>
+
+        {/* ── MAIN CONTENT ── */}
+        <main className="max-w-7xl mx-auto pb-20">
+          <div className="bg-white dark:bg-[hsl(25,14%,10%)]">
 
             {/* Description preview */}
             {(brewery as any)?.description && (
-              <div className="px-6 md:px-8 pb-4">
+              <div className="px-4 pt-3 pb-2 border-b border-stone-100 dark:border-stone-700/30">
                 <p className="text-sm text-muted-foreground dark:text-stone-400 leading-relaxed line-clamp-3">
                   {(brewery as any).description}
                 </p>

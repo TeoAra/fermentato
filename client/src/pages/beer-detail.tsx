@@ -563,187 +563,172 @@ export default function BeerDetail() {
         })}</script>
       </Helmet>
       
-      {/* ── HERO ── neutral dark, beer image as central focal point */}
-      <div className="relative h-[260px] sm:h-[320px] md:h-[380px] overflow-hidden" style={{ background: 'linear-gradient(135deg, hsl(25,18%,10%) 0%, hsl(20,15%,18%) 50%, hsl(30,12%,24%) 100%)' }}>
-        {/* Subtle grid texture */}
-        <div className="absolute inset-0 opacity-[0.04]" style={{ backgroundImage: 'repeating-linear-gradient(45deg, #fff 0, #fff 1px, transparent 0, transparent 50%)', backgroundSize: '18px 18px' }} />
+      {/* ── HERO — iOS Settings style ── */}
+      <div className="bg-white dark:bg-[hsl(25,14%,10%)] border-b border-stone-100 dark:border-stone-700/30 px-4 py-4">
+        <div className="max-w-7xl mx-auto flex items-start gap-4">
 
-        {/* Beer image — centered focal point */}
-        <div className="absolute inset-0 flex items-center justify-center z-10 pointer-events-none pb-10">
-          <div className="w-36 h-36 sm:w-44 sm:h-44 rounded-full border-[5px] border-white shadow-[0_8px_40px_rgba(0,0,0,0.35)] bg-stone-900 overflow-hidden flex-shrink-0">
-            {(beer?.imageUrl || beer?.bottleImageUrl) ? (
-              <img
-                src={beer?.imageUrl || beer?.bottleImageUrl}
-                alt={beer?.name}
-                className="w-full h-full object-cover"
-              />
-            ) : (
-              <div className="w-full h-full flex items-center justify-center">
-                <BeerIcon className="h-16 w-16 text-white/30" />
-              </div>
-            )}
-          </div>
-        </div>
-
-        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
-
-        {/* Name + brewery at bottom */}
-        <div className="absolute bottom-0 left-0 right-0 px-4 pb-4 z-20">
-          <div className="flex items-center gap-2 flex-wrap">
-            <h1 className="display-serif text-2xl sm:text-3xl md:text-4xl text-white leading-tight drop-shadow-md">
-              {beer?.name}
-            </h1>
-            {beerFavCount > 0 && (
-              <div className="flex items-center gap-1 bg-white/20 backdrop-blur-sm border border-white/30 rounded-full px-2 py-0.5 flex-shrink-0">
-                <Heart className="h-3 w-3 text-red-300 fill-current" />
-                <span className="text-white text-xs font-semibold leading-none">{beerFavCount}</span>
-              </div>
-            )}
-          </div>
-          <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
-            {beer?.brewery && (
-              <Link href={`/brewery/${beer.brewery.id}`}>
-                <span className="text-white/80 text-sm hover:text-primary transition-colors font-medium">{beer.brewery.name}</span>
-              </Link>
-            )}
-            {beerCollabs.length > 0 && (
-              <>
-                <span className="text-white/40 text-xs">×</span>
-                {beerCollabs.map((b, i) => (
-                  <span key={b.id} className="inline-flex items-center gap-1">
-                    {i > 0 && <span className="text-white/40 text-xs">×</span>}
-                    <Link href={`/brewery/${b.id}`}>
-                      <span className="text-primary hover:text-primary/80 text-sm font-medium">{b.name}</span>
-                    </Link>
-                  </span>
-                ))}
-                <span className="text-primary/80 text-[10px] font-bold bg-primary/15 px-1.5 py-0.5 rounded-full border border-primary/25">collab</span>
-              </>
-            )}
-          </div>
-        </div>
-      </div>
-
-      {/* ── INFO BAR ── */}
-      <div className="bg-white dark:bg-[hsl(25,14%,10%)] rounded-2xl border border-stone-100 shadow-sm border-b  px-4 py-3">
-        <div className="max-w-7xl mx-auto flex flex-col items-center gap-3">
-          {/* Info pills */}
-          <div className="flex items-center gap-2 flex-wrap justify-center">
-            {beer?.abv && (
-              <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-bold bg-stone-50 dark:bg-stone-900/30 text-stone-700 dark:text-stone-300 border border-stone-200 dark:border-stone-700/30">
-                <Target className="h-3.5 w-3.5" />
-                {beer.abv}% ABV
-              </span>
-            )}
-            {beer?.style && (() => {
-              const sc = getBeerStyleColor(beer.style);
-              return (
-                <Link href={`/search?q=${encodeURIComponent(beer.style)}`} className="max-w-full">
-                  <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-bold cursor-pointer whitespace-normal text-center border transition-colors" style={{ background: sc.bg, color: sc.text, borderColor: `${sc.text}30` }}>
-                    <Sparkles className="h-3.5 w-3.5 flex-shrink-0" />
-                    {beer.style}
-                  </span>
-                </Link>
-              );
-            })()}
-            {reviewsData?.avgRating != null && (
-              <button onClick={() => setActiveTab('recensioni')} className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-semibold bg-yellow-50 dark:bg-yellow-950 text-yellow-700 dark:text-yellow-300 border border-yellow-200 dark:border-yellow-800 hover:bg-yellow-100 dark:hover:bg-yellow-900 transition-colors">
-                <Star className="h-3.5 w-3.5 fill-current" />
-                {Number(reviewsData.avgRating).toFixed(1)}
-                <span className="font-normal opacity-70 text-xs">({reviewsData.reviewCount})</span>
-              </button>
-            )}
-            {totalLocations > 0 && (
-              <button onClick={() => setActiveTab('dove')} className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-semibold bg-green-50 dark:bg-green-950 text-green-700 dark:text-green-300 border border-green-200 dark:border-green-800 hover:bg-green-100 dark:hover:bg-green-900 transition-colors">
-                <MapPin className="h-3.5 w-3.5" />
-                {totalLocations} {totalLocations === 1 ? 'locale' : 'locali'}
-              </button>
-            )}
-            {beer?.isGlutenFree && (
-              <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-semibold bg-green-50 dark:bg-green-950 text-green-700 dark:text-green-300 border border-green-200 dark:border-green-800">
-                <GlutenFreeIcon size={14} className="text-green-600" />
-                Gluten Free
-              </span>
-            )}
-            {beer?.isAlcoholFree && (
-              <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-bold bg-stone-50 text-primary">
-                0.0% Analcolica
-              </span>
-            )}
-          </div>
-          {/* Quick star rating */}
-          {isAuthenticated && (
-            <div className="flex flex-col items-center gap-1">
-                <span className="text-xs text-muted-foreground">
-                  {hasTasted ? "Il tuo voto" : "Dai un voto rapido"}
-                </span>
-                <div className="flex items-center gap-0.5">
-                  {[1, 2, 3, 4, 5].map(s => (
-                    <button
-                      key={s}
-                      onMouseEnter={() => !hasTasted && setHoverRating(s)}
-                      onMouseLeave={() => !hasTasted && setHoverRating(0)}
-                      onClick={() => {
-                        setActiveTab('recensioni');
-                        if (!hasTasted) setQuickRating(s);
-                        setTimeout(() => tastingRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 150);
-                      }}
-                      className="p-0.5 transition-transform hover:scale-110"
-                    >
-                      <Star className={`h-5 w-5 transition-colors ${
-                        s <= (hasTasted ? existingTasting?.rating || 0 : (hoverRating || quickRating))
-                          ? 'text-amber-500 fill-amber-500'
-                          : 'text-stone-300 dark:text-muted-foreground'
-                      }`} />
-                    </button>
-                  ))}
-                </div>
+          {/* Beer image — tap to expand */}
+          <button
+            className="flex-shrink-0 active:scale-95 transition-transform"
+            onClick={() => {
+              const src = beer?.imageUrl || beer?.bottleImageUrl;
+              if (src) { (window as any).__lightboxOpen?.(src); }
+            }}
+            aria-label="Espandi immagine"
+          >
+            <div className="h-20 w-20 sm:h-24 sm:w-24 rounded-2xl border border-stone-200 dark:border-stone-700 shadow-sm bg-stone-50 dark:bg-stone-800 overflow-hidden flex items-center justify-center">
+              {(beer?.imageUrl || beer?.bottleImageUrl) ? (
+                <img
+                  src={beer?.imageUrl || beer?.bottleImageUrl}
+                  alt={beer?.name}
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                <BeerIcon className="h-10 w-10 text-stone-300 dark:text-stone-600" />
+              )}
             </div>
-          )}
+          </button>
 
-          {/* Action buttons – centered */}
-          <div className="flex items-center gap-2 justify-center">
-            <button
-              onClick={handleFavoriteToggle}
-              disabled={favoriteMutation.isPending}
-              title={isBeerFavorited ? 'Rimuovi dai preferiti' : 'Aggiungi ai preferiti'}
-              data-testid="button-favorite"
-              className={`neu-pill h-9 w-9 flex items-center justify-center rounded-full transition-all ${
-                isBeerFavorited
-                  ? 'bg-red-50 dark:bg-red-950/40 text-red-500'
-                  : 'bg-[hsl(36,22%,95%)] dark:bg-[hsl(25,16%,11%)] text-stone-500 dark:text-stone-400 hover:text-red-500'
-              }`}
-            >
-              <Heart className={`h-4 w-4 ${isBeerFavorited ? 'fill-current' : ''}`} />
-            </button>
-            <button
-              onClick={handleShare}
-              title="Condividi"
-              data-testid="button-share"
-              className="neu-pill h-9 w-9 flex items-center justify-center rounded-full bg-[hsl(36,22%,95%)] dark:bg-[hsl(25,16%,11%)] text-stone-500 dark:text-stone-400 transition-colors"
-            >
-              <Share2 className="h-4 w-4" />
-            </button>
-            {isAdmin && (
-              <button
-                onClick={openEditDialog}
-                title="Modifica birra"
-                data-testid="button-admin-edit-beer"
-                className="h-9 w-9 flex items-center justify-center rounded-full border bg-stone-50 dark:bg-stone-900/20 dark:bg-stone-900/30 border-stone-200 dark:border-stone-700/30 dark:border-stone-700/30 text-primary dark:text-orange-400 dark:text-orange-400 hover:bg-stone-50 dark:bg-stone-900/20 dark:hover:bg-stone-900/10 transition-colors"
-              >
-                <Pencil className="h-4 w-4" />
-              </button>
-            )}
-            {isAuthenticated && !isAdmin && (
-              <button
-                onClick={() => setIsSuggestDialogOpen(true)}
-                title="Suggerisci modifica"
-                data-testid="button-suggest-change"
-                className="h-9 w-9 flex items-center justify-center rounded-full border bg-white dark:bg-[hsl(25,14%,10%)] border-stone-100 dark:border-[hsl(25,12%,16%)] text-muted-foreground hover:border-primary/20 transition-colors"
-              >
-                <Lightbulb className="h-4 w-4" />
-              </button>
-            )}
+          {/* Info */}
+          <div className="flex-1 min-w-0 pt-0.5">
+            <div className="flex items-start justify-between gap-2">
+              <div className="min-w-0 space-y-1">
+                <h1 className="text-xl sm:text-2xl font-bold text-stone-900 dark:text-white leading-tight">
+                  {beer?.name}
+                </h1>
+                <div className="flex items-center gap-1 flex-wrap text-sm">
+                  {beer?.brewery && (
+                    <Link href={`/brewery/${beer.brewery.id}`}>
+                      <span className="text-stone-500 dark:text-stone-400 hover:text-primary transition-colors font-medium">{beer.brewery.name}</span>
+                    </Link>
+                  )}
+                  {beerCollabs.length > 0 && (
+                    <>
+                      {beerCollabs.map((b, i) => (
+                        <span key={b.id} className="inline-flex items-center gap-0.5">
+                          <span className="text-stone-300 dark:text-stone-600 text-xs">×</span>
+                          <Link href={`/brewery/${b.id}`}>
+                            <span className="text-primary text-sm font-medium">{b.name}</span>
+                          </Link>
+                        </span>
+                      ))}
+                      <span className="text-[10px] font-bold text-primary bg-primary/10 px-1.5 py-0.5 rounded-full">collab</span>
+                    </>
+                  )}
+                </div>
+                <div className="flex items-center gap-1.5 flex-wrap pt-0.5">
+                  {beer?.abv && (
+                    <span className="inline-flex items-center gap-1 text-xs font-semibold text-stone-600 dark:text-stone-300 bg-stone-100 dark:bg-stone-800 px-2 py-0.5 rounded-full">
+                      {beer.abv}% ABV
+                    </span>
+                  )}
+                  {beer?.style && (() => {
+                    const sc = getBeerStyleColor(beer.style);
+                    return (
+                      <Link href={`/search?q=${encodeURIComponent(beer.style)}`}>
+                        <span className="inline-flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-full border cursor-pointer" style={{ background: sc.bg, color: sc.text, borderColor: `${sc.text}30` }}>
+                          {beer.style}
+                        </span>
+                      </Link>
+                    );
+                  })()}
+                  {reviewsData?.avgRating != null && (
+                    <button onClick={() => setActiveTab('recensioni')} className="inline-flex items-center gap-1 text-xs font-semibold text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/30 px-2 py-0.5 rounded-full">
+                      <Star className="h-3 w-3 fill-current" />
+                      {Number(reviewsData.avgRating).toFixed(1)}
+                      <span className="font-normal opacity-70">({reviewsData.reviewCount})</span>
+                    </button>
+                  )}
+                  {beer?.isGlutenFree && (
+                    <span className="inline-flex items-center gap-1 text-xs font-semibold text-green-700 dark:text-green-400 bg-green-50 dark:bg-green-950/30 px-2 py-0.5 rounded-full">
+                      <GlutenFreeIcon size={10} className="text-green-600" />
+                      GF
+                    </span>
+                  )}
+                  {beer?.isAlcoholFree && (
+                    <span className="inline-flex items-center gap-1 text-xs font-semibold text-stone-600 dark:text-stone-300 bg-stone-100 dark:bg-stone-800 px-2 py-0.5 rounded-full">
+                      0.0%
+                    </span>
+                  )}
+                  {totalLocations > 0 && (
+                    <button onClick={() => setActiveTab('dove')} className="inline-flex items-center gap-1 text-xs font-semibold text-green-700 dark:text-green-400 bg-green-50 dark:bg-green-950/30 px-2 py-0.5 rounded-full">
+                      <MapPin className="h-3 w-3" />
+                      {totalLocations} {totalLocations === 1 ? 'locale' : 'locali'}
+                    </button>
+                  )}
+                </div>
+                {/* Quick star rating */}
+                {isAuthenticated && (
+                  <div className="flex items-center gap-1 pt-0.5">
+                    {[1, 2, 3, 4, 5].map(s => (
+                      <button
+                        key={s}
+                        onMouseEnter={() => !hasTasted && setHoverRating(s)}
+                        onMouseLeave={() => !hasTasted && setHoverRating(0)}
+                        onClick={() => {
+                          setActiveTab('recensioni');
+                          if (!hasTasted) setQuickRating(s);
+                          setTimeout(() => tastingRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 150);
+                        }}
+                        className="transition-transform hover:scale-110"
+                      >
+                        <Star className={`h-4 w-4 transition-colors ${
+                          s <= (hasTasted ? existingTasting?.rating || 0 : (hoverRating || quickRating))
+                            ? 'text-amber-500 fill-amber-500'
+                            : 'text-stone-300 dark:text-stone-600'
+                        }`} />
+                      </button>
+                    ))}
+                    <span className="text-xs text-stone-400 ml-1">{hasTasted ? 'Il tuo voto' : 'Vota'}</span>
+                  </div>
+                )}
+              </div>
+
+              {/* Action buttons */}
+              <div className="flex items-center gap-1.5 flex-shrink-0">
+                <button
+                  onClick={handleFavoriteToggle}
+                  disabled={favoriteMutation.isPending}
+                  title={isBeerFavorited ? 'Rimuovi dai preferiti' : 'Aggiungi ai preferiti'}
+                  data-testid="button-favorite"
+                  className={`h-9 w-9 flex items-center justify-center rounded-full transition-all ${
+                    isBeerFavorited
+                      ? 'bg-red-50 dark:bg-red-950/40 text-red-500'
+                      : 'bg-stone-100 dark:bg-stone-800 text-stone-500 hover:text-red-500'
+                  }`}
+                >
+                  <Heart className={`h-4 w-4 ${isBeerFavorited ? 'fill-current' : ''}`} />
+                </button>
+                <button
+                  onClick={handleShare}
+                  title="Condividi"
+                  data-testid="button-share"
+                  className="h-9 w-9 flex items-center justify-center rounded-full bg-stone-100 dark:bg-stone-800 text-stone-500 dark:text-stone-400 transition-colors"
+                >
+                  <Share2 className="h-4 w-4" />
+                </button>
+                {isAdmin && (
+                  <button
+                    onClick={openEditDialog}
+                    title="Modifica birra"
+                    data-testid="button-admin-edit-beer"
+                    className="h-9 w-9 flex items-center justify-center rounded-full bg-primary text-white transition-colors shadow-sm"
+                  >
+                    <Pencil className="h-4 w-4" />
+                  </button>
+                )}
+                {isAuthenticated && !isAdmin && (
+                  <button
+                    onClick={() => setIsSuggestDialogOpen(true)}
+                    title="Suggerisci modifica"
+                    data-testid="button-suggest-change"
+                    className="h-9 w-9 flex items-center justify-center rounded-full bg-stone-100 dark:bg-stone-800 text-stone-500 dark:text-stone-400 transition-colors"
+                  >
+                    <Lightbulb className="h-4 w-4" />
+                  </button>
+                )}
+              </div>
+            </div>
           </div>
         </div>
       </div>

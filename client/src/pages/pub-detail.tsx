@@ -588,135 +588,130 @@ export default function PubDetail() {
         })}</script>
       </Helmet>
       
-      {/* ── HERO ── */}
-      <div className="relative h-[320px] sm:h-[400px] md:h-[440px] overflow-hidden">
-        <img
-          src={(pub as any)?.coverImageUrl || "https://images.unsplash.com/photo-1514933651103-005eec06c04b?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&h=600"}
-          alt={`${(pub as any)?.name} - Copertina`}
-          className="w-full h-full object-cover"
-        />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-black/10" />
+      {/* ── HERO — iOS Settings style ── */}
+      <div className="bg-white dark:bg-[hsl(25,14%,10%)] border-b border-stone-100 dark:border-stone-700/30 px-4 py-4">
+        <div className="max-w-7xl mx-auto flex items-start gap-4">
 
-        {/* Logo — top center */}
-        <div className="absolute top-8 sm:top-10 inset-x-0 flex justify-center z-20">
-          <Avatar className="h-28 w-28 sm:h-36 sm:w-36 rounded-full border-[4px] border-white shadow-[0_8px_40px_rgba(0,0,0,0.4)] bg-white overflow-hidden">
-            <AvatarImage src={(pub as any)?.logoUrl} alt={(pub as any)?.name} className="object-cover" />
-            <AvatarFallback className="bg-stone-800 text-white text-4xl font-bold">
-              {(pub as any)?.name?.[0] || 'P'}
-            </AvatarFallback>
-          </Avatar>
-        </div>
+          {/* Logo — tap to expand */}
+          <button
+            className="flex-shrink-0 active:scale-95 transition-transform"
+            onClick={() => {
+              const src = (pub as any)?.logoUrl;
+              if (src) { (window as any).__lightboxOpen?.(src); }
+            }}
+            aria-label="Espandi logo"
+          >
+            <Avatar className="h-20 w-20 sm:h-24 sm:w-24 rounded-2xl border border-stone-200 dark:border-stone-700 shadow-sm bg-stone-50 dark:bg-stone-800 overflow-hidden">
+              <AvatarImage src={(pub as any)?.logoUrl} alt={(pub as any)?.name} className="object-contain p-1" />
+              <AvatarFallback className="bg-stone-100 dark:bg-stone-700 text-stone-500 text-3xl font-bold rounded-2xl">
+                {(pub as any)?.name?.[0] || 'P'}
+              </AvatarFallback>
+            </Avatar>
+          </button>
 
-        {/* Bottom content — name + CTA */}
-        <div className="absolute bottom-0 inset-x-0 px-4 pb-6 z-20 text-center">
-          <div className="flex items-center justify-center gap-2 flex-wrap mb-1">
-            <h1 className="display-serif text-2xl sm:text-3xl md:text-4xl text-white leading-tight drop-shadow-md">
-              {(pub as any)?.name}
-            </h1>
-            {(pub as any)?.isVerified && (
-              <div title="Pub Verificato" className="flex items-center justify-center bg-emerald-600 border border-emerald-500 rounded-full w-6 h-6 shadow-sm flex-shrink-0">
-                <ShieldCheck className="h-3.5 w-3.5 text-white" />
-              </div>
-            )}
-          </div>
-          <p className="text-white/80 text-sm drop-shadow mb-1">
-            {(pub as any)?.city && (pub as any).city}
-          </p>
-        </div>
-      </div>
-
-      {/* ── INFO BAR ── single row: pills left, actions right */}
-      <div className="bg-white dark:bg-[hsl(25,14%,10%)] border-b border-stone-100 dark:border-stone-700/30 px-4 py-2.5">
-        <div className="max-w-7xl mx-auto flex items-center justify-between gap-3">
-          {/* Left: status pills */}
-          <div className="flex items-center gap-2 flex-wrap">
-            {/* Open status pill */}
-            <button
-              onClick={handleShowOpeningHours}
-              className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-semibold border transition-colors ${
-                openStatus.status === 'open'
-                  ? 'bg-green-50 dark:bg-green-950 text-green-700 dark:text-green-300 border-green-200 dark:border-green-800'
-                  : openStatus.status === 'closing_soon'
-                  ? 'bg-stone-50 dark:bg-stone-900/20 text-primary dark:text-orange-400 border-stone-200 dark:border-stone-700/30'
-                  : openStatus.status === 'opening_soon'
-                  ? 'bg-stone-50 dark:bg-stone-900/20 text-primary dark:text-orange-400 border-stone-200 dark:border-stone-700/30'
-                  : 'bg-red-50 dark:bg-red-950 text-red-700 dark:text-red-300 border-red-200 dark:border-red-800'
-              }`}
-              data-testid="button-show-hours"
-            >
-              <span className={`w-2 h-2 rounded-full flex-shrink-0 ${
-                openStatus.status === 'open' ? 'bg-green-500' :
-                openStatus.status === 'closing_soon' ? 'bg-primary' :
-                openStatus.status === 'opening_soon' ? 'bg-primary' : 'bg-red-500'
-              }`} />
-              {openStatus.status === 'open' && 'Aperto'}
-              {openStatus.status === 'closing_soon' && 'Sta chiudendo'}
-              {openStatus.status === 'opening_soon' && 'Sta per aprire'}
-              {openStatus.status === 'closed' && 'Chiuso'}
-              {!(pub as any)?.isActive && ' · Temporaneamente chiuso'}
-              <Clock className="h-3 w-3 opacity-60" />
-            </button>
-
-          </div>
-
-          {/* Right: action buttons */}
-          <div className="flex items-center gap-2 flex-shrink-0">
-            <button
-              onClick={handleSave}
-              disabled={toggleFavoriteMutation.isPending}
-              title={isFavorite ? 'Rimuovi dai preferiti' : 'Aggiungi ai preferiti'}
-              data-testid="button-save"
-              className={`neu-pill h-9 w-9 flex items-center justify-center rounded-full transition-all ${
-                isFavorite
-                  ? 'bg-red-50 dark:bg-red-950/40 text-red-500'
-                  : 'bg-[hsl(36,22%,95%)] dark:bg-[hsl(25,16%,11%)] text-stone-500 dark:text-stone-400 hover:text-red-500'
-              }`}
-            >
-              <Heart className={`h-4 w-4 ${isFavorite ? 'fill-current' : ''}`} />
-            </button>
-
-            {(((pub as any)?.latitude && (pub as any)?.longitude) || (pub as any)?.address) && (
-              <a
-                href={getMapNavigationUrl((pub as any).name, (pub as any).address)}
-                target="_blank"
-                rel="noopener noreferrer"
-                title="Avvia navigazione"
-                className="neu-pill h-9 w-9 flex items-center justify-center rounded-full bg-[hsl(36,22%,95%)] dark:bg-[hsl(25,16%,11%)] text-teal-600 dark:text-teal-400 transition-colors"
-              >
-                <Navigation className="h-4 w-4" />
-              </a>
-            )}
-
-            {(pub as any)?.phone && (
-              <a
-                href={`tel:${(pub as any).phone}`}
-                title="Chiama"
-                className="neu-pill h-9 w-9 flex items-center justify-center rounded-full bg-[hsl(36,22%,95%)] dark:bg-[hsl(25,16%,11%)] text-emerald-600 dark:text-emerald-400 transition-colors"
-              >
-                <Phone className="h-4 w-4" />
-              </a>
-            )}
-
-            <button
-              onClick={handleShare}
-              title="Condividi"
-              data-testid="button-share"
-              className="neu-pill h-9 w-9 flex items-center justify-center rounded-full bg-[hsl(36,22%,95%)] dark:bg-[hsl(25,16%,11%)] text-stone-500 dark:text-stone-400 transition-colors"
-            >
-              <Share2 className="h-4 w-4" />
-            </button>
-
-            {canManage && (
-              <Link href={isAdmin ? `/admin/edit-pub/${id}` : "/dashboard"}>
+          {/* Info */}
+          <div className="flex-1 min-w-0 pt-0.5">
+            <div className="flex items-start justify-between gap-2">
+              <div className="min-w-0">
+                <div className="flex items-center gap-1.5 flex-wrap">
+                  <h1 className="text-xl sm:text-2xl font-bold text-stone-900 dark:text-white leading-tight">
+                    {(pub as any)?.name}
+                  </h1>
+                  {(pub as any)?.isVerified && (
+                    <div title="Pub Verificato" className="flex items-center justify-center bg-emerald-600 rounded-full w-5 h-5 flex-shrink-0">
+                      <ShieldCheck className="h-3 w-3 text-white" />
+                    </div>
+                  )}
+                </div>
+                {(pub as any)?.city && (
+                  <p className="text-sm text-stone-500 dark:text-stone-400 mt-0.5">{(pub as any).city}</p>
+                )}
+                {/* Open/closed pill */}
                 <button
-                  title="Gestisci pub"
-                  data-testid="button-manage"
-                  className="h-9 w-9 flex items-center justify-center rounded-full text-white bg-primary hover:bg-primary/90 transition-all shadow-sm"
+                  onClick={handleShowOpeningHours}
+                  data-testid="button-show-hours"
+                  className={`mt-2 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold border transition-colors ${
+                    openStatus.status === 'open'
+                      ? 'bg-green-50 dark:bg-green-950 text-green-700 dark:text-green-300 border-green-200 dark:border-green-800'
+                      : openStatus.status === 'closing_soon' || openStatus.status === 'opening_soon'
+                      ? 'bg-stone-50 dark:bg-stone-900/20 text-primary dark:text-orange-400 border-stone-200 dark:border-stone-700/30'
+                      : 'bg-red-50 dark:bg-red-950 text-red-700 dark:text-red-300 border-red-200 dark:border-red-800'
+                  }`}
                 >
-                  <Settings className="h-4 w-4" />
+                  <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${
+                    openStatus.status === 'open' ? 'bg-green-500' :
+                    openStatus.status === 'closing_soon' || openStatus.status === 'opening_soon' ? 'bg-primary' : 'bg-red-500'
+                  }`} />
+                  {openStatus.status === 'open' && 'Aperto'}
+                  {openStatus.status === 'closing_soon' && 'Sta chiudendo'}
+                  {openStatus.status === 'opening_soon' && 'Sta per aprire'}
+                  {openStatus.status === 'closed' && 'Chiuso'}
+                  {!(pub as any)?.isActive && ' · Chiuso'}
+                  <Clock className="h-3 w-3 opacity-60" />
                 </button>
-              </Link>
-            )}
+              </div>
+
+              {/* Action buttons — stacked right */}
+              <div className="flex flex-col items-end gap-1.5 flex-shrink-0">
+                <div className="flex items-center gap-1.5">
+                  <button
+                    onClick={handleSave}
+                    disabled={toggleFavoriteMutation.isPending}
+                    title={isFavorite ? 'Rimuovi dai preferiti' : 'Aggiungi ai preferiti'}
+                    data-testid="button-save"
+                    className={`h-9 w-9 flex items-center justify-center rounded-full transition-all ${
+                      isFavorite
+                        ? 'bg-red-50 dark:bg-red-950/40 text-red-500'
+                        : 'bg-stone-100 dark:bg-stone-800 text-stone-500 hover:text-red-500'
+                    }`}
+                  >
+                    <Heart className={`h-4 w-4 ${isFavorite ? 'fill-current' : ''}`} />
+                  </button>
+                  <button
+                    onClick={handleShare}
+                    title="Condividi"
+                    data-testid="button-share"
+                    className="h-9 w-9 flex items-center justify-center rounded-full bg-stone-100 dark:bg-stone-800 text-stone-500 dark:text-stone-400 transition-colors"
+                  >
+                    <Share2 className="h-4 w-4" />
+                  </button>
+                  {canManage && (
+                    <Link href={isAdmin ? `/admin/edit-pub/${id}` : "/dashboard"}>
+                      <button
+                        title="Gestisci pub"
+                        data-testid="button-manage"
+                        className="h-9 w-9 flex items-center justify-center rounded-full text-white bg-primary hover:bg-primary/90 transition-all shadow-sm"
+                      >
+                        <Settings className="h-4 w-4" />
+                      </button>
+                    </Link>
+                  )}
+                </div>
+                {/* Secondary: navigation + phone */}
+                <div className="flex items-center gap-1.5">
+                  {(((pub as any)?.latitude && (pub as any)?.longitude) || (pub as any)?.address) && (
+                    <a
+                      href={getMapNavigationUrl((pub as any).name, (pub as any).address)}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      title="Avvia navigazione"
+                      className="h-8 w-8 flex items-center justify-center rounded-full bg-stone-100 dark:bg-stone-800 text-teal-600 dark:text-teal-400 transition-colors"
+                    >
+                      <Navigation className="h-3.5 w-3.5" />
+                    </a>
+                  )}
+                  {(pub as any)?.phone && (
+                    <a
+                      href={`tel:${(pub as any).phone}`}
+                      title="Chiama"
+                      className="h-8 w-8 flex items-center justify-center rounded-full bg-stone-100 dark:bg-stone-800 text-emerald-600 dark:text-emerald-400 transition-colors"
+                    >
+                      <Phone className="h-3.5 w-3.5" />
+                    </a>
+                  )}
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </div>

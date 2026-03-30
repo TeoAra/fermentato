@@ -15,6 +15,13 @@ export default function Lightbox() {
   const [state, setState] = useState<LightboxState | null>(null);
 
   const close = useCallback(() => setState(null), []);
+  const open = useCallback((src: string, alt = "") => setState({ src, alt }), []);
+
+  useEffect(() => {
+    // Expose global opener for hero buttons
+    (window as any).__lightboxOpen = open;
+    return () => { delete (window as any).__lightboxOpen; };
+  }, [open]);
 
   useEffect(() => {
     const handleClick = (e: MouseEvent) => {
