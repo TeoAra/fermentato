@@ -130,7 +130,7 @@ export default function ExplorePubs() {
   }
 
   return (
-    <div className="min-h-screen bg-[#FFF8F2] dark:bg-[hsl(25,14%,7%)] ">
+    <div className="min-h-screen bg-[#FFF8F2] dark:bg-[hsl(25,14%,7%)]">
       {/* Header */}
       <div className="bg-white dark:bg-[hsl(25,14%,8%)] border-b border-stone-100 dark:border-[hsl(25,12%,14%)] shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-5">
