@@ -17,8 +17,9 @@ function useCountUp(target: number, duration = 1400, startDelay = 300) {
   const prevTarget = useRef(0);
   const rafRef = useRef<number>(0);
   useEffect(() => {
-    if (target === 0 || target === prevTarget.current) return;
+    if (target === prevTarget.current) return;
     prevTarget.current = target;
+    if (target === 0) { setValue(0); return; }
     const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     if (prefersReduced) { setValue(target); return; }
     const id = setTimeout(() => {
