@@ -75,7 +75,7 @@ export default function BreweryCard({ brewery, beerCount = 0, distance }: Brewer
 
   return (
     <Link href={`/brewery/${brewery.id}`} onMouseEnter={handlePrefetch} onTouchStart={handlePrefetch}>
-      <div className="group bg-white dark:bg-[hsl(25,14%,10%)] rounded-2xl border border-stone-100 dark:border-[hsl(25,12%,16%)] shadow-sm overflow-hidden cursor-pointer hover:shadow-[0_8px_28px_rgba(247,113,4,0.13)] hover:-translate-y-0.5 transition-all duration-250">
+      <div className="group bg-white dark:bg-[hsl(25,14%,10%)] rounded-2xl border border-stone-100 dark:border-[hsl(25,12%,16%)] shadow-sm overflow-hidden cursor-pointer hover:shadow-[0_8px_28px_rgba(247,113,4,0.13)] hover:-translate-y-0.5 active:scale-[0.98] transition-all duration-200">
         
         {/* Cover / logo strip */}
         <div className="relative h-28 overflow-hidden">

@@ -404,3 +404,21 @@
 
 /* Lightbox: cursore zoom su tutte le immagini attive */
 img.lightbox-img { cursor: zoom-in; }
+
+/* ============================
+   PREFERS-REDUCED-MOTION
+   ============================ */
+@media (prefers-reduced-motion: reduce) {
+  .fade-in, .slide-up, .scale-in, .route-fade {
+    animation: none !important;
+    opacity: 1 !important;
+    transform: none !important;
+  }
+  .skeleton {
+    animation: none !important;
+    background: var(--muted) !important;
+  }
+  .interactive-card {
+    transition: none !important;
+  }
+}
