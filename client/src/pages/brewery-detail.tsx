@@ -466,13 +466,13 @@ export default function BreweryDetail() {
             </div>
           )}
           {/* Gradient overlay */}
-          <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/15 to-transparent" />
-          
-          {/* Brewery logo bottom-left overlapping */}
-          <div className="absolute bottom-4 left-4 z-20">
-            <Avatar className="w-24 h-24 rounded-2xl border-4 border-white shadow-xl bg-white overflow-hidden">
-              <AvatarImage src={brewery?.logoUrl} alt={brewery?.name} className="object-contain p-1.5" />
-              <AvatarFallback className="bg-stone-800 text-white text-3xl font-bold">
+          <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-black/10 to-transparent" />
+
+          {/* Logo centered — focal point */}
+          <div className="absolute inset-0 flex items-center justify-center z-20">
+            <Avatar className="w-36 h-36 sm:w-44 sm:h-44 rounded-3xl border-[5px] border-white shadow-[0_8px_40px_rgba(0,0,0,0.35)] bg-white overflow-hidden">
+              <AvatarImage src={brewery?.logoUrl} alt={brewery?.name} className="object-contain p-2" />
+              <AvatarFallback className="bg-stone-800 text-white text-5xl font-bold">
                 {brewery?.name?.[0] || 'B'}
               </AvatarFallback>
             </Avatar>

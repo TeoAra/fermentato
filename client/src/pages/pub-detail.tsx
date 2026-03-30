@@ -594,44 +594,47 @@ export default function PubDetail() {
           alt={`${(pub as any)?.name} - Copertina`}
           className="w-full h-full object-cover"
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
-        {/* Pub name + logo anchored to bottom-left of image */}
-        <div className="absolute bottom-0 left-0 right-0 px-4 pb-4 flex items-end gap-3">
-          <Avatar className={`h-20 w-20 sm:h-24 sm:w-24 ring-3 ${openStatus.borderColor} flex-shrink-0 bg-white shadow-xl border-2 border-white`}>
-            <AvatarImage src={(pub as any)?.logoUrl} alt={(pub as any)?.name} className="object-contain p-1.5" />
-            <AvatarFallback className="bg-stone-800 text-white text-2xl font-bold">
+        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/10 to-transparent" />
+
+        {/* Logo centered — focal point */}
+        <div className="absolute inset-0 flex items-center justify-center z-20">
+          <Avatar className={`h-36 w-36 sm:h-44 sm:w-44 rounded-3xl border-[5px] border-white shadow-[0_8px_40px_rgba(0,0,0,0.35)] bg-white overflow-hidden ring-4 ${openStatus.borderColor}`}>
+            <AvatarImage src={(pub as any)?.logoUrl} alt={(pub as any)?.name} className="object-contain p-2" />
+            <AvatarFallback className="bg-stone-800 text-white text-5xl font-bold">
               {(pub as any)?.name?.[0] || 'P'}
             </AvatarFallback>
           </Avatar>
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2 flex-wrap">
-              <h1 className="text-xl sm:text-2xl md:text-3xl text-white font-bold leading-tight drop-shadow-md">
-                {(pub as any)?.name}
-              </h1>
-              {(pub as any)?.isVerified && (
-                <div title="Pub Verificato" className="flex items-center justify-center bg-emerald-600 border border-emerald-500 rounded-full w-6 h-6 shadow-sm flex-shrink-0">
-                  <ShieldCheck className="h-3.5 w-3.5 text-white" />
-                </div>
-              )}
-              {isAdmin && (
-                <Badge variant="secondary" className="bg-primary/20 text-white border-primary/30 backdrop-blur-sm text-[10px] py-0 px-1.5 uppercase tracking-wider font-bold">
-                  Admin
-                </Badge>
-              )}
-              {(favoritesCountData as any)?.count > 0 && (
-                <div className="flex items-center gap-1 bg-white/20 backdrop-blur-sm border border-white/30 rounded-full px-2 py-0.5 flex-shrink-0">
-                  <Heart className="h-3 w-3 text-red-300 fill-current" />
-                  <span className="text-white text-xs font-semibold leading-none">{(favoritesCountData as any).count}</span>
-                </div>
-              )}
-            </div>
-            {(pub as any)?.city && (
-              <p className="text-white/80 text-sm mt-0.5 flex items-center gap-1">
-                <MapPin className="h-3 w-3 flex-shrink-0" />
-                {(pub as any).city}
-              </p>
+        </div>
+
+        {/* Name + badges at bottom */}
+        <div className="absolute bottom-0 left-0 right-0 px-4 pb-3 z-20">
+          <div className="flex items-center gap-2 flex-wrap">
+            <h1 className="text-xl sm:text-2xl md:text-3xl text-white font-bold leading-tight drop-shadow-md">
+              {(pub as any)?.name}
+            </h1>
+            {(pub as any)?.isVerified && (
+              <div title="Pub Verificato" className="flex items-center justify-center bg-emerald-600 border border-emerald-500 rounded-full w-6 h-6 shadow-sm flex-shrink-0">
+                <ShieldCheck className="h-3.5 w-3.5 text-white" />
+              </div>
+            )}
+            {isAdmin && (
+              <Badge variant="secondary" className="bg-primary/20 text-white border-primary/30 backdrop-blur-sm text-[10px] py-0 px-1.5 uppercase tracking-wider font-bold">
+                Admin
+              </Badge>
+            )}
+            {(favoritesCountData as any)?.count > 0 && (
+              <div className="flex items-center gap-1 bg-white/20 backdrop-blur-sm border border-white/30 rounded-full px-2 py-0.5 flex-shrink-0">
+                <Heart className="h-3 w-3 text-red-300 fill-current" />
+                <span className="text-white text-xs font-semibold leading-none">{(favoritesCountData as any).count}</span>
+              </div>
             )}
           </div>
+          {(pub as any)?.city && (
+            <p className="text-white/80 text-sm mt-0.5 flex items-center gap-1">
+              <MapPin className="h-3 w-3 flex-shrink-0" />
+              {(pub as any).city}
+            </p>
+          )}
         </div>
       </div>
 

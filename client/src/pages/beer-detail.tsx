@@ -563,62 +563,59 @@ export default function BeerDetail() {
         })}</script>
       </Helmet>
       
-      {/* ── HERO ── neutral dark base, image displayed cleanly */}
-      <div className="relative h-[220px] sm:h-[280px] md:h-[340px] overflow-hidden" style={{ background: 'linear-gradient(135deg, hsl(25,18%,10%) 0%, hsl(20,15%,18%) 50%, hsl(30,12%,24%) 100%)' }}>
+      {/* ── HERO ── neutral dark, beer image as central focal point */}
+      <div className="relative h-[260px] sm:h-[320px] md:h-[380px] overflow-hidden" style={{ background: 'linear-gradient(135deg, hsl(25,18%,10%) 0%, hsl(20,15%,18%) 50%, hsl(30,12%,24%) 100%)' }}>
         {/* Subtle grid texture */}
         <div className="absolute inset-0 opacity-[0.04]" style={{ backgroundImage: 'repeating-linear-gradient(45deg, #fff 0, #fff 1px, transparent 0, transparent 50%)', backgroundSize: '18px 18px' }} />
-        {(beer?.imageUrl || beer?.bottleImageUrl) && (
-          <img
-            src={beer.imageUrl || beer.bottleImageUrl}
-            alt={`${beer?.name} - Immagine`}
-            className="w-full h-full object-cover opacity-30"
-          />
-        )}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
-        <div className="absolute bottom-0 left-0 right-0 px-4 pb-4 flex items-end gap-4">
-          <div className="h-20 w-20 sm:h-24 sm:w-24 rounded-2xl ring-2 ring-white/20 bg-white/5 backdrop-blur-sm flex-shrink-0 overflow-hidden shadow-xl border border-white/10">
-            <ImageWithFallback
+
+        {/* Beer image — centered focal point */}
+        <div className="absolute inset-0 flex items-center justify-center z-10 pointer-events-none pb-10">
+          {(beer?.imageUrl || beer?.bottleImageUrl) ? (
+            <img
               src={beer?.imageUrl || beer?.bottleImageUrl}
               alt={beer?.name}
-              imageType="beer"
-              containerClassName="w-full h-full"
-              className="w-full h-full object-contain p-1"
-              iconSize="lg"
+              className="h-[80%] w-auto max-w-[45%] object-contain drop-shadow-[0_8px_32px_rgba(0,0,0,0.7)]"
             />
+          ) : (
+            <BeerIcon className="h-24 w-24 text-white/15" />
+          )}
+        </div>
+
+        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
+
+        {/* Name + brewery at bottom */}
+        <div className="absolute bottom-0 left-0 right-0 px-4 pb-4 z-20">
+          <div className="flex items-center gap-2 flex-wrap">
+            <h1 className="text-xl sm:text-2xl md:text-3xl text-white font-bold leading-tight drop-shadow-md">
+              {beer?.name}
+            </h1>
+            {beerFavCount > 0 && (
+              <div className="flex items-center gap-1 bg-white/20 backdrop-blur-sm border border-white/30 rounded-full px-2 py-0.5 flex-shrink-0">
+                <Heart className="h-3 w-3 text-red-300 fill-current" />
+                <span className="text-white text-xs font-semibold leading-none">{beerFavCount}</span>
+              </div>
+            )}
           </div>
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2 flex-wrap">
-              <h1 className="text-xl sm:text-2xl md:text-3xl text-white font-bold leading-tight drop-shadow-md">
-                {beer?.name}
-              </h1>
-              {beerFavCount > 0 && (
-                <div className="flex items-center gap-1 bg-white/20 backdrop-blur-sm border border-white/30 rounded-full px-2 py-0.5 flex-shrink-0">
-                  <Heart className="h-3 w-3 text-red-300 fill-current" />
-                  <span className="text-white text-xs font-semibold leading-none">{beerFavCount}</span>
-                </div>
-              )}
-            </div>
-            <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
-              {beer?.brewery && (
-                <Link href={`/brewery/${beer.brewery.id}`}>
-                  <span className="text-white/80 text-sm hover:text-primary transition-colors font-medium">{beer.brewery.name}</span>
-                </Link>
-              )}
-              {beerCollabs.length > 0 && (
-                <>
-                  <span className="text-white/40 text-xs">×</span>
-                  {beerCollabs.map((b, i) => (
-                    <span key={b.id} className="inline-flex items-center gap-1">
-                      {i > 0 && <span className="text-white/40 text-xs">×</span>}
-                      <Link href={`/brewery/${b.id}`}>
-                        <span className="text-primary hover:text-primary/80 text-sm font-medium">{b.name}</span>
-                      </Link>
-                    </span>
-                  ))}
-                  <span className="text-primary/80 text-[10px] font-bold bg-primary/15 px-1.5 py-0.5 rounded-full border border-primary/25">collab</span>
-                </>
-              )}
-            </div>
+          <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
+            {beer?.brewery && (
+              <Link href={`/brewery/${beer.brewery.id}`}>
+                <span className="text-white/80 text-sm hover:text-primary transition-colors font-medium">{beer.brewery.name}</span>
+              </Link>
+            )}
+            {beerCollabs.length > 0 && (
+              <>
+                <span className="text-white/40 text-xs">×</span>
+                {beerCollabs.map((b, i) => (
+                  <span key={b.id} className="inline-flex items-center gap-1">
+                    {i > 0 && <span className="text-white/40 text-xs">×</span>}
+                    <Link href={`/brewery/${b.id}`}>
+                      <span className="text-primary hover:text-primary/80 text-sm font-medium">{b.name}</span>
+                    </Link>
+                  </span>
+                ))}
+                <span className="text-primary/80 text-[10px] font-bold bg-primary/15 px-1.5 py-0.5 rounded-full border border-primary/25">collab</span>
+              </>
+            )}
           </div>
         </div>
       </div>
