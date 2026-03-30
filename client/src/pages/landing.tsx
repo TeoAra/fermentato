@@ -46,7 +46,11 @@ function useScrollReveal() {
   const [visible, setVisible] = useState(false);
   useEffect(() => {
     const el = ref.current;
-    if (!el || typeof window === 'undefined' || typeof IntersectionObserver === 'undefined') return;
+    if (!el) return;
+    if (typeof window === 'undefined' || typeof IntersectionObserver === 'undefined') {
+      setVisible(true);
+      return;
+    }
     const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     if (prefersReduced) { setVisible(true); return; }
     const obs = new IntersectionObserver(
