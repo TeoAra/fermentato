@@ -122,7 +122,7 @@ const ModernBeerCard = ({ beer, prices, className = "" }: {
       <Link href={`/beer/${beer?.id}`} className="flex-shrink-0 self-center">
         <div className="w-14 h-14 rounded-2xl overflow-hidden bg-stone-50 dark:bg-stone-900/40 flex items-center justify-center border border-stone-200 dark:border-stone-700/30">
           <ImageWithFallback
-            src={beer?.imageUrl || beer?.brewery?.logoUrl}
+            src={beer?.imageUrl || beer?.logoUrl || beer?.brewery?.logoUrl}
             alt={beer?.name || 'Beer'}
             imageType="beer"
             containerClassName="w-full h-full"
