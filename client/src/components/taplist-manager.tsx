@@ -156,7 +156,7 @@ export function TapListManager({ pubId, tapList, bottleList = [] }: TapListManag
     },
     onSuccess: () => {
       toast({ title: "Birra aggiunta alla tap list!" });
-      queryClient.invalidateQueries({ queryKey: ["/api/pubs", pubId, "taplist"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/pubs", String(pubId), "taplist"] });
       setIsAddDialogOpen(false);
       resetForm();
     },
@@ -172,7 +172,7 @@ export function TapListManager({ pubId, tapList, bottleList = [] }: TapListManag
     },
     onSuccess: () => {
       toast({ title: "Birra aggiornata!" });
-      queryClient.invalidateQueries({ queryKey: ["/api/pubs", pubId, "taplist"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/pubs", String(pubId), "taplist"] });
       setEditingItem(null);
       setIsChangingBeer(false);
       setSelectedNewBeer(null);
@@ -190,7 +190,7 @@ export function TapListManager({ pubId, tapList, bottleList = [] }: TapListManag
     },
     onSuccess: () => {
       toast({ title: "Birra rimossa dalla tap list!" });
-      queryClient.invalidateQueries({ queryKey: ["/api/pubs", pubId, "taplist"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/pubs", String(pubId), "taplist"] });
     },
     onError: () => {
       toast({ title: "Errore di connessione", description: "Non è stato possibile rimuovere la birra. Riprova.", variant: "destructive" });
@@ -203,7 +203,7 @@ export function TapListManager({ pubId, tapList, bottleList = [] }: TapListManag
       return apiRequest(`/api/pubs/${pubId}/taplist/${id}`, { method: "PATCH" }, { isVisible });
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/pubs", pubId, "taplist"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/pubs", String(pubId), "taplist"] });
     },
     onError: () => {
       toast({ title: "Errore di connessione", description: "Non è stato possibile aggiornare la visibilità. Riprova.", variant: "destructive" });

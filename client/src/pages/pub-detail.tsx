@@ -254,7 +254,8 @@ export default function PubDetail() {
   const { data: tapList, isLoading: tapLoading } = useQuery({
     queryKey: ["/api/pubs", id, "taplist"],
     enabled: !!id,
-    staleTime: 2 * 60_000,
+    staleTime: 0,
+    refetchOnWindowFocus: true,
   });
 
   // Single query for full menu (categories + all items) — eliminates N+1
@@ -272,7 +273,8 @@ export default function PubDetail() {
   const { data: bottles, isLoading: bottlesLoading } = useQuery({
     queryKey: ["/api/pubs", id, "bottles"],
     enabled: !!id,
-    staleTime: 3 * 60_000,
+    staleTime: 0,
+    refetchOnWindowFocus: true,
   });
 
   const { data: pubEvents = [] } = useQuery({
