@@ -167,7 +167,7 @@ export default function HomepageMap({
 
     const map = new maplibregl.Map({
       container: containerRef.current,
-      style: "https://tiles.openfreemap.org/styles/liberty",
+      style: "https://basemaps.cartocdn.com/gl/voyager-gl-style/style.json",
       center: userLocation ? [userLocation.lng, userLocation.lat] : [12.5, 42.0],
       zoom: userLocation ? 11 : 5.4,
       minZoom: 4,
@@ -244,7 +244,7 @@ export default function HomepageMap({
       {isLoading && (
         <div
           className="absolute inset-0 z-20 flex items-center justify-center"
-          style={{ background: "#f0e6d8" }}
+          style={{ background: "#edf0f2" }}
         >
           <div className="flex flex-col items-center gap-3">
             <div
