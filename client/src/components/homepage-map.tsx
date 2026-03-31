@@ -1,6 +1,7 @@
 import { useEffect, useRef, useMemo } from "react";
-import maplibregl, { type StyleSpecification } from "maplibre-gl";
-import "maplibre-gl/dist/maplibre-gl.css";
+import { MapContainer, TileLayer, Marker, Popup, useMap } from "react-leaflet";
+import L from "leaflet";
+import "leaflet/dist/leaflet.css";
 
 const PUB_COLOR = "#F77104";
 const BREWERY_COLOR = "#9B4E10";
@@ -14,76 +15,55 @@ function haversineDist(lat1: number, lon1: number, lat2: number, lon2: number): 
   return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 }
 
-function createMarkerEl(type: "pub" | "brewery", logoUrl?: string | null): HTMLElement {
+function makeIcon(type: "pub" | "brewery", logoUrl?: string | null): L.DivIcon {
   const color = type === "pub" ? PUB_COLOR : BREWERY_COLOR;
   const gradEnd = type === "pub" ? "#f5a623" : "#c46520";
   const emoji = type === "pub" ? "🍻" : "🍺";
+  const imgTag = logoUrl
+    ? `<img src="${logoUrl}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;" onerror="this.style.display='none';this.parentElement.innerText='${emoji}'" />`
+    : emoji;
 
-  const wrapper = document.createElement("div");
-  wrapper.className = "fermenta-marker";
-  wrapper.style.cssText = "width:34px;height:34px;cursor:pointer;position:relative;";
-
-  const inner = document.createElement("div");
-  inner.style.cssText = [
-    "width:34px;height:34px;border-radius:50%;",
-    `background:linear-gradient(135deg,${color},${gradEnd});`,
-    "border:2.5px solid white;",
-    "box-shadow:0 2px 10px rgba(0,0,0,0.22);",
-    "display:flex;align-items:center;justify-content:center;",
-    "overflow:hidden;pointer-events:none;",
-  ].join("");
-
-  if (logoUrl) {
-    const img = document.createElement("img");
-    img.src = logoUrl;
-    img.style.cssText = "width:100%;height:100%;object-fit:cover;";
-    img.onerror = () => {
-      inner.removeChild(img);
-      const s = document.createElement("span");
-      s.style.fontSize = "15px";
-      s.textContent = emoji;
-      inner.appendChild(s);
-    };
-    inner.appendChild(img);
-  } else {
-    const s = document.createElement("span");
-    s.style.fontSize = "15px";
-    s.textContent = emoji;
-    inner.appendChild(s);
-  }
-
-  wrapper.appendChild(inner);
-  return wrapper;
+  return L.divIcon({
+    html: `<div style="
+      width:36px;height:36px;border-radius:50%;
+      background:linear-gradient(135deg,${color},${gradEnd});
+      border:2.5px solid white;
+      box-shadow:0 2px 10px rgba(0,0,0,0.25);
+      display:flex;align-items:center;justify-content:center;
+      font-size:16px;overflow:hidden;cursor:pointer;
+      transition:transform 0.15s ease;
+    ">${imgTag}</div>`,
+    className: "fermenta-leaflet-marker",
+    iconSize: [36, 36],
+    iconAnchor: [18, 18],
+    popupAnchor: [0, -20],
+  });
 }
 
-function createPopupHTML(
-  type: "pub" | "brewery",
-  name: string,
-  sub: string,
-  href: string,
-  logoUrl?: string | null
-): string {
-  const color = type === "pub" ? PUB_COLOR : BREWERY_COLOR;
-  const gradEnd = type === "pub" ? "#f5a623" : "#c46520";
-  const label = type === "pub" ? "PUB" : "BIRRIFICIO";
-  const logo = logoUrl
-    ? `<img src="${logoUrl}" alt="" onerror="this.style.display='none'" style="width:38px;height:38px;border-radius:10px;object-fit:cover;flex-shrink:0;" />`
-    : "";
-  return `
-    <div style="font-family:system-ui,sans-serif;padding:14px;min-width:175px;max-width:220px;">
-      <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
-        ${logo}
-        <div style="min-width:0;flex:1;">
-          <div style="font-weight:700;font-size:13px;color:#1a1107;line-height:1.3;margin-bottom:3px;">${name}</div>
-          <div style="display:inline-block;font-size:9.5px;font-weight:800;letter-spacing:0.06em;color:${color};background:${color}18;padding:1px 7px;border-radius:20px;">${label}</div>
-        </div>
-      </div>
-      ${sub ? `<div style="font-size:11px;color:#9B7B5A;margin-bottom:10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">📍 ${sub}</div>` : ""}
-      <a href="${href}" style="display:block;text-align:center;padding:7px 12px;background:linear-gradient(135deg,${color},${gradEnd});color:white;border-radius:10px;text-decoration:none;font-size:12px;font-weight:700;">
-        Scopri →
-      </a>
-    </div>
-  `;
+function makeUserIcon(): L.DivIcon {
+  return L.divIcon({
+    html: `<div style="
+      width:16px;height:16px;border-radius:50%;
+      background:#3B82F6;border:3px solid white;
+      box-shadow:0 0 0 3px rgba(59,130,246,0.35),0 2px 8px rgba(0,0,0,0.2);
+    "></div>`,
+    className: "",
+    iconSize: [16, 16],
+    iconAnchor: [8, 8],
+  });
+}
+
+function FlyToUser({ userLocation }: { userLocation: { lat: number; lng: number } | null | undefined }) {
+  const map = useMap();
+  const didFly = useRef(false);
+
+  useEffect(() => {
+    if (!userLocation || didFly.current) return;
+    didFly.current = true;
+    map.flyTo([userLocation.lat, userLocation.lng], 13, { duration: 1 });
+  }, [userLocation, map]);
+
+  return null;
 }
 
 interface MapPub {
@@ -126,11 +106,6 @@ export default function HomepageMap({
   showBreweries = true,
   distanceKm,
 }: HomepageMapProps) {
-  const containerRef = useRef<HTMLDivElement>(null);
-  const mapRef = useRef<maplibregl.Map | null>(null);
-  const markersRef = useRef<maplibregl.Marker[]>([]);
-  const didCenterRef = useRef(false);
-
   const geoFilteredPubs = useMemo(() => {
     if (!showPubs) return [];
     const valid = pubs.filter(p =>
@@ -160,129 +135,92 @@ export default function HomepageMap({
   const pubCount = geoFilteredPubs.length;
   const breweryCount = geoFilteredBreweries.length;
 
-  useEffect(() => {
-    if (!containerRef.current || mapRef.current) return;
+  const center: [number, number] = userLocation
+    ? [userLocation.lat, userLocation.lng]
+    : [42.0, 12.5];
+  const zoom = userLocation ? 13 : 5.4;
 
-    // Stile inline con tile raster CARTO Voyager @2x — nessun fetch JSON esterno,
-    // nessun glyph/sprite da caricare → rendering affidabile su tutti i browser mobile
-    const RASTER_STYLE: StyleSpecification = {
-      version: 8,
-      sources: {
-        "carto-voyager": {
-          type: "raster",
-          tiles: [
-            "https://a.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}@2x.png",
-            "https://b.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}@2x.png",
-            "https://c.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}@2x.png",
-            "https://d.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}@2x.png",
-          ],
-          tileSize: 256,
-          attribution: "© <a href='https://carto.com'>CARTO</a> © <a href='https://openstreetmap.org'>OpenStreetMap</a> contributors",
-          maxzoom: 20,
-        },
-      },
-      layers: [{ id: "carto-tiles", type: "raster", source: "carto-voyager", minzoom: 0, maxzoom: 22 }],
-    };
-
-    maplibregl.setMaxParallelImageRequests(16);
-
-    const map = new maplibregl.Map({
-      container: containerRef.current,
-      style: RASTER_STYLE,
-      center: userLocation ? [userLocation.lng, userLocation.lat] : [12.5, 42.0],
-      zoom: userLocation ? 12 : 5.4,
-      minZoom: 4,
-      maxZoom: 19,
-      scrollZoom: false,
-      attributionControl: false,
-      fadeDuration: 150,
-      trackResize: true,
-      renderWorldCopies: false,
-    });
-
-    map.addControl(new maplibregl.AttributionControl({ compact: true }), "bottom-right");
-    map.addControl(new maplibregl.NavigationControl({ showCompass: false }), "bottom-right");
-
-    mapRef.current = map;
-    return () => {
-      map.remove();
-      mapRef.current = null;
-      markersRef.current = [];
-    };
-  }, []);
-
-  useEffect(() => {
-    const map = mapRef.current;
-    if (!map || !userLocation || didCenterRef.current) return;
-    didCenterRef.current = true;
-    map.flyTo({ center: [userLocation.lng, userLocation.lat], zoom: 12, duration: 900, essential: true });
-  }, [userLocation]);
-
-  useEffect(() => {
-    const map = mapRef.current;
-    if (!map) return;
-
-    markersRef.current.forEach(m => m.remove());
-    markersRef.current = [];
-
-    const add = (lat: number, lng: number, el: HTMLElement, html: string) => {
-      const popup = new maplibregl.Popup({
-        offset: [0, -4],
-        closeButton: false,
-        maxWidth: "240px",
-        className: "fermenta-popup",
-      }).setHTML(html);
-      const marker = new maplibregl.Marker({ element: el, anchor: "center" })
-        .setLngLat([lng, lat])
-        .setPopup(popup)
-        .addTo(map);
-      markersRef.current.push(marker);
-    };
-
-    geoFilteredPubs.forEach(pub => {
-      const el = createMarkerEl("pub", pub.logoUrl);
-      const html = createPopupHTML(
-        "pub",
-        pub.name,
-        pub.city || "",
-        pub.slug ? `/pub/${pub.slug}` : `/pub/${pub.id}`,
-        pub.logoUrl
-      );
-      add(parseFloat(pub.latitude!), parseFloat(pub.longitude!), el, html);
-    });
-
-    geoFilteredBreweries.forEach(brewery => {
-      const el = createMarkerEl("brewery", brewery.logoUrl);
-      const sub = [brewery.location, brewery.country].filter(Boolean).join(", ");
-      const html = createPopupHTML("brewery", brewery.name, sub, `/brewery/${brewery.id}`, brewery.logoUrl);
-      add(parseFloat(brewery.latitude!), parseFloat(brewery.longitude!), el, html);
-    });
-  }, [geoFilteredPubs, geoFilteredBreweries]);
+  const userIcon = useMemo(() => makeUserIcon(), []);
 
   return (
     <div className="relative w-full overflow-hidden" style={{ height: "clamp(280px, 50vh, 520px)" }}>
       {isLoading && (
-        <div
-          className="absolute inset-0 z-20 flex items-center justify-center"
-          style={{ background: "#edf0f2" }}
-        >
+        <div className="absolute inset-0 z-20 flex items-center justify-center bg-stone-100 dark:bg-stone-800">
           <div className="flex flex-col items-center gap-3">
-            <div
-              className="w-8 h-8 rounded-full border-4 border-t-transparent animate-spin"
-              style={{ borderColor: "#F77104", borderTopColor: "transparent" }}
-            />
-            <span className="text-sm font-medium" style={{ color: "#9B7B5A" }}>Caricamento mappa...</span>
+            <div className="w-8 h-8 rounded-full border-4 border-t-transparent animate-spin border-primary" />
+            <span className="text-sm font-medium text-muted-foreground">Caricamento mappa...</span>
           </div>
         </div>
       )}
 
-      <div ref={containerRef} className="absolute inset-0" />
+      <MapContainer
+        center={center}
+        zoom={zoom}
+        style={{ width: "100%", height: "100%" }}
+        zoomControl={false}
+        attributionControl={true}
+        scrollWheelZoom={false}
+        className="z-0"
+      >
+        <TileLayer
+          url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}@2x.png"
+          attribution='&copy; <a href="https://carto.com">CARTO</a> &copy; <a href="https://openstreetmap.org">OpenStreetMap</a>'
+          subdomains="abcd"
+          maxZoom={20}
+          tileSize={256}
+        />
 
+        <FlyToUser userLocation={userLocation} />
+
+        {userLocation && (
+          <Marker position={[userLocation.lat, userLocation.lng]} icon={userIcon} />
+        )}
+
+        {geoFilteredPubs.map(pub => {
+          const lat = parseFloat(pub.latitude!);
+          const lng = parseFloat(pub.longitude!);
+          return (
+            <Marker key={`pub-${pub.id}`} position={[lat, lng]} icon={makeIcon("pub", pub.logoUrl)}>
+              <Popup className="fermenta-popup" closeButton={false}>
+                <PopupContent
+                  type="pub"
+                  name={pub.name}
+                  sub={pub.city || ""}
+                  href={pub.slug ? `/pub/${pub.slug}` : `/pub/${pub.id}`}
+                  logoUrl={pub.logoUrl}
+                />
+              </Popup>
+            </Marker>
+          );
+        })}
+
+        {geoFilteredBreweries.map(brewery => {
+          const lat = parseFloat(brewery.latitude!);
+          const lng = parseFloat(brewery.longitude!);
+          const sub = [brewery.location, brewery.country].filter(Boolean).join(", ");
+          return (
+            <Marker key={`brewery-${brewery.id}`} position={[lat, lng]} icon={makeIcon("brewery", brewery.logoUrl)}>
+              <Popup className="fermenta-popup" closeButton={false}>
+                <PopupContent
+                  type="brewery"
+                  name={brewery.name}
+                  sub={sub}
+                  href={`/brewery/${brewery.id}`}
+                  logoUrl={brewery.logoUrl}
+                />
+              </Popup>
+            </Marker>
+          );
+        })}
+      </MapContainer>
+
+      {/* Gradient fade at bottom */}
       <div
-        className="absolute bottom-0 left-0 right-0 h-20 pointer-events-none z-10"
+        className="absolute bottom-0 left-0 right-0 h-16 pointer-events-none z-10"
         style={{ background: "linear-gradient(to bottom, transparent 0%, var(--background) 100%)" }}
       />
 
+      {/* Count badge */}
       {!isLoading && (pubCount + breweryCount > 0) && (
         <div className="absolute bottom-5 left-3 z-20">
           <div
@@ -311,39 +249,98 @@ export default function HomepageMap({
       )}
 
       <style>{`
-        .fermenta-marker {
-          will-change: transform;
-          transition: transform 0.15s ease;
+        .fermenta-leaflet-marker {
+          background: transparent !important;
+          border: none !important;
         }
-        .fermenta-marker:hover {
+        .fermenta-leaflet-marker div:hover {
           transform: scale(1.2);
           z-index: 999 !important;
         }
-        .fermenta-marker:hover > div {
-          box-shadow: 0 4px 18px rgba(247,113,4,0.45) !important;
-        }
-        .fermenta-popup .maplibregl-popup-content {
+        .fermenta-popup .leaflet-popup-content-wrapper {
           border-radius: 14px !important;
           padding: 0 !important;
           box-shadow: 0 8px 32px rgba(0,0,0,0.14) !important;
           border: 1px solid rgba(247,113,4,0.12) !important;
           overflow: hidden;
         }
-        .fermenta-popup .maplibregl-popup-tip { display: none !important; }
-        .maplibregl-ctrl-attrib {
+        .fermenta-popup .leaflet-popup-content {
+          margin: 0 !important;
+        }
+        .fermenta-popup .leaflet-popup-tip-container { display: none !important; }
+        .leaflet-control-attribution {
           background: rgba(255,248,242,0.85) !important;
           border-radius: 8px !important;
           font-size: 10px !important;
         }
-        .maplibregl-ctrl-group {
+        .leaflet-control-zoom {
           border-radius: 10px !important;
           overflow: hidden;
           box-shadow: 0 2px 8px rgba(0,0,0,0.12) !important;
+          border: none !important;
         }
-        .maplibregl-ctrl button {
+        .leaflet-control-zoom a {
           border-radius: 0 !important;
+          border-color: rgba(0,0,0,0.08) !important;
+          color: #5C3D1A !important;
+          font-weight: 700;
+        }
+        .leaflet-control-zoom a:hover {
+          background: #fff8f2 !important;
         }
       `}</style>
+    </div>
+  );
+}
+
+function PopupContent({
+  type, name, sub, href, logoUrl,
+}: {
+  type: "pub" | "brewery";
+  name: string;
+  sub: string;
+  href: string;
+  logoUrl?: string | null;
+}) {
+  const color = type === "pub" ? PUB_COLOR : BREWERY_COLOR;
+  const gradEnd = type === "pub" ? "#f5a623" : "#c46520";
+  const label = type === "pub" ? "PUB" : "BIRRIFICIO";
+
+  return (
+    <div style={{ fontFamily: "system-ui,sans-serif", padding: "14px", minWidth: "175px", maxWidth: "220px" }}>
+      <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "10px" }}>
+        {logoUrl && (
+          <img
+            src={logoUrl}
+            alt=""
+            onError={e => { (e.target as HTMLImageElement).style.display = "none"; }}
+            style={{ width: "38px", height: "38px", borderRadius: "10px", objectFit: "cover", flexShrink: 0 }}
+          />
+        )}
+        <div style={{ minWidth: 0, flex: 1 }}>
+          <div style={{ fontWeight: 700, fontSize: "13px", color: "#1a1107", lineHeight: 1.3, marginBottom: "3px" }}>{name}</div>
+          <div style={{
+            display: "inline-block", fontSize: "9.5px", fontWeight: 800, letterSpacing: "0.06em",
+            color, background: `${color}18`, padding: "1px 7px", borderRadius: "20px",
+          }}>{label}</div>
+        </div>
+      </div>
+      {sub && (
+        <div style={{ fontSize: "11px", color: "#9B7B5A", marginBottom: "10px", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+          📍 {sub}
+        </div>
+      )}
+      <a
+        href={href}
+        style={{
+          display: "block", textAlign: "center", padding: "7px 12px",
+          background: `linear-gradient(135deg,${color},${gradEnd})`,
+          color: "white", borderRadius: "10px", textDecoration: "none",
+          fontSize: "12px", fontWeight: 700,
+        }}
+      >
+        Scopri →
+      </a>
     </div>
   );
 }
