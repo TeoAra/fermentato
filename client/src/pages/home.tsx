@@ -217,64 +217,13 @@ export default function Home() {
           )}
         </div>
 
-        {/* Filter row: distanza · Pub · Birrifici · GPS */}
-        <div className="flex items-center gap-2 flex-wrap">
-          {/* Distance picker */}
-          <div className="relative">
-            <button
-              onClick={() => setShowDistancePicker(v => !v)}
-              className="flex items-center gap-1.5 bg-white dark:bg-card border border-stone-200 dark:border-border rounded-full px-3.5 py-2 text-sm font-bold text-foreground shadow-sm"
-            >
-              {distanceKm} km
-              <ChevronDown className="w-3.5 h-3.5 text-stone-400" />
-            </button>
-            {showDistancePicker && (
-              <div className="absolute top-10 left-0 z-50 bg-white dark:bg-card border border-stone-200 dark:border-border rounded-2xl shadow-xl overflow-hidden min-w-[100px]">
-                {[5, 10, 25, 50, 100].map(d => (
-                  <button
-                    key={d}
-                    onClick={() => { setDistanceKm(d); setShowDistancePicker(false); }}
-                    className={`w-full text-left px-4 py-2.5 text-sm font-semibold transition-colors ${distanceKm === d ? 'text-primary bg-orange-50 dark:bg-orange-900/20' : 'text-foreground hover:bg-stone-50 dark:hover:bg-stone-800/40'}`}
-                  >
-                    {d} km
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
-
-          {/* Visibility toggles */}
-          <button
-            onClick={() => setShowPubs(v => !v)}
-            className={`flex items-center gap-1.5 rounded-full px-3.5 py-2 text-sm font-bold shadow-sm border transition-colors ${
-              showPubs
-                ? 'bg-orange-50 dark:bg-orange-900/20 border-primary/30 text-primary'
-                : 'bg-white dark:bg-card border-stone-200 dark:border-border text-muted-foreground'
-            }`}
-          >
-            <Store className="w-3.5 h-3.5" />
-            Pub
-          </button>
-
-          <button
-            onClick={() => setShowBreweries(v => !v)}
-            className={`flex items-center gap-1.5 rounded-full px-3.5 py-2 text-sm font-bold shadow-sm border transition-colors ${
-              showBreweries
-                ? 'bg-amber-50 dark:bg-amber-900/20 border-amber-400/40 text-amber-700 dark:text-amber-400'
-                : 'bg-white dark:bg-card border-stone-200 dark:border-border text-muted-foreground'
-            }`}
-          >
-            <Building2 className="w-3.5 h-3.5" />
-            Birrifici
-          </button>
-
-          <div className="flex-1" />
-
+        {/* Filter row: [GPS · Bookmark] poi scrollabile [distanza · Pub · Birrifici] */}
+        <div className="flex items-center gap-2">
           {/* GPS button */}
           <button
             onClick={handleRequestLocation}
             title="Aggiorna posizione GPS"
-            className={`w-9 h-9 flex items-center justify-center bg-white dark:bg-card border rounded-full shadow-sm transition-colors ${
+            className={`w-9 h-9 flex-shrink-0 flex items-center justify-center bg-white dark:bg-card border rounded-full shadow-sm transition-colors ${
               locationStatus === 'granted'
                 ? 'border-primary text-primary'
                 : locationStatus === 'requesting'
@@ -285,11 +234,64 @@ export default function Home() {
             <Navigation className="w-4 h-4" />
           </button>
 
-          <Link href="/dashboard?tab=favorites">
+          <Link href="/dashboard?tab=favorites" className="flex-shrink-0">
             <button className="w-9 h-9 flex items-center justify-center bg-white dark:bg-card border border-stone-200 dark:border-border rounded-full shadow-sm text-stone-500 hover:text-primary transition-colors" title="I tuoi preferiti">
               <Bookmark className="w-4 h-4" />
             </button>
           </Link>
+
+          {/* Scrollable filter pills */}
+          <div className="flex items-center gap-2 overflow-x-auto scrollbar-hide flex-1 min-w-0">
+            {/* Distance picker */}
+            <div className="relative flex-shrink-0">
+              <button
+                onClick={() => setShowDistancePicker(v => !v)}
+                className="flex items-center gap-1.5 bg-white dark:bg-card border border-stone-200 dark:border-border rounded-full px-3.5 py-2 text-sm font-bold text-foreground shadow-sm whitespace-nowrap"
+              >
+                {distanceKm} km
+                <ChevronDown className="w-3.5 h-3.5 text-stone-400" />
+              </button>
+              {showDistancePicker && (
+                <div className="absolute top-10 left-0 z-50 bg-white dark:bg-card border border-stone-200 dark:border-border rounded-2xl shadow-xl overflow-hidden min-w-[100px]">
+                  {[5, 10, 25, 50, 100].map(d => (
+                    <button
+                      key={d}
+                      onClick={() => { setDistanceKm(d); setShowDistancePicker(false); }}
+                      className={`w-full text-left px-4 py-2.5 text-sm font-semibold transition-colors ${distanceKm === d ? 'text-primary bg-orange-50 dark:bg-orange-900/20' : 'text-foreground hover:bg-stone-50 dark:hover:bg-stone-800/40'}`}
+                    >
+                      {d} km
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Pub toggle */}
+            <button
+              onClick={() => setShowPubs(v => !v)}
+              className={`flex-shrink-0 flex items-center gap-1.5 rounded-full px-3.5 py-2 text-sm font-bold shadow-sm border transition-colors whitespace-nowrap ${
+                showPubs
+                  ? 'bg-orange-50 dark:bg-orange-900/20 border-primary/30 text-primary'
+                  : 'bg-white dark:bg-card border-stone-200 dark:border-border text-muted-foreground'
+              }`}
+            >
+              <Store className="w-3.5 h-3.5" />
+              Pub
+            </button>
+
+            {/* Birrifici toggle */}
+            <button
+              onClick={() => setShowBreweries(v => !v)}
+              className={`flex-shrink-0 flex items-center gap-1.5 rounded-full px-3.5 py-2 text-sm font-bold shadow-sm border transition-colors whitespace-nowrap ${
+                showBreweries
+                  ? 'bg-amber-50 dark:bg-amber-900/20 border-amber-400/40 text-amber-700 dark:text-amber-400'
+                  : 'bg-white dark:bg-card border-stone-200 dark:border-border text-muted-foreground'
+              }`}
+            >
+              <Building2 className="w-3.5 h-3.5" />
+              Birrifici
+            </button>
+          </div>
         </div>
       </section>
 

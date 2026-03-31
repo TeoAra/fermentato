@@ -154,9 +154,19 @@ export default function TapList({ tapList }: TapListProps) {
                 {tap.beer.isGlutenFree && <GlutenFreeSmallBadge size={10} />}
                 {tap.beer.isAlcoholFree && <AlcoholFreeBadge size={10} />}
               </div>
-              <p className="text-xs text-stone-400 dark:text-stone-500 mt-0.5 truncate">
-                {metaLine || tap.beer.style}
-              </p>
+              {tap.beer.style && (
+                <span
+                  className="inline-block text-[10px] font-bold px-1.5 py-0.5 rounded-full mt-0.5 mb-0.5 leading-tight"
+                  style={{ background: styleColor.bg, color: styleColor.text }}
+                >
+                  {tap.beer.style}
+                </span>
+              )}
+              {metaLine && (
+                <p className="text-xs text-stone-400 dark:text-stone-500 truncate leading-tight">
+                  {metaLine}
+                </p>
+              )}
             </div>
 
             {/* Prices — multiple sizes */}
