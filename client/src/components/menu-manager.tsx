@@ -147,22 +147,22 @@ export function MenuManager({ pubId, menu }: MenuManagerProps) {
     },
     onMutate: async ({ id }) => {
       await queryClient.cancelQueries({ queryKey: ["/api/pubs", String(pubId), "menu"] });
-      const prev = queryClient.getQueryData(["/api/pubs", pubId, "menu"]);
-      queryClient.setQueryData(["/api/pubs", pubId, "menu"], (old: any) =>
+      const prev = queryClient.getQueryData(["/api/pubs", String(pubId), "menu"]);
+      queryClient.setQueryData(["/api/pubs", String(pubId), "menu"], (old: any) =>
         Array.isArray(old) ? old.map((cat: any) => cat.id === id ? { ...cat, isVisible: !cat.isVisible } : cat) : old
       );
       return { prev };
     },
     onSuccess: (data: any, { id }) => {
       if (data?.isVisible !== undefined) {
-        queryClient.setQueryData(["/api/pubs", pubId, "menu"], (old: any) =>
+        queryClient.setQueryData(["/api/pubs", String(pubId), "menu"], (old: any) =>
           Array.isArray(old) ? old.map((cat: any) => cat.id === id ? { ...cat, isVisible: data.isVisible } : cat) : old
         );
       }
       queryClient.invalidateQueries({ queryKey: ["/api/pubs", String(pubId), "menu", "full"] });
     },
     onError: (_e: any, _v: any, ctx: any) => {
-      if (ctx?.prev) queryClient.setQueryData(["/api/pubs", pubId, "menu"], ctx.prev);
+      if (ctx?.prev) queryClient.setQueryData(["/api/pubs", String(pubId), "menu"], ctx.prev);
       toast({ title: "Errore", description: "Impossibile aggiornare la visibilità", variant: "destructive" });
     },
   });
@@ -219,8 +219,8 @@ export function MenuManager({ pubId, menu }: MenuManagerProps) {
     },
     onMutate: async ({ id }) => {
       await queryClient.cancelQueries({ queryKey: ["/api/pubs", String(pubId), "menu"] });
-      const prev = queryClient.getQueryData(["/api/pubs", pubId, "menu"]);
-      queryClient.setQueryData(["/api/pubs", pubId, "menu"], (old: any) =>
+      const prev = queryClient.getQueryData(["/api/pubs", String(pubId), "menu"]);
+      queryClient.setQueryData(["/api/pubs", String(pubId), "menu"], (old: any) =>
         Array.isArray(old) ? old.map((cat: any) => ({
           ...cat,
           items: (cat.items || []).map((item: any) => item.id === id ? { ...item, isVisible: !item.isVisible } : item)
@@ -230,7 +230,7 @@ export function MenuManager({ pubId, menu }: MenuManagerProps) {
     },
     onSuccess: (data: any, { id }) => {
       if (data?.isVisible !== undefined) {
-        queryClient.setQueryData(["/api/pubs", pubId, "menu"], (old: any) =>
+        queryClient.setQueryData(["/api/pubs", String(pubId), "menu"], (old: any) =>
           Array.isArray(old) ? old.map((cat: any) => ({
             ...cat,
             items: (cat.items || []).map((item: any) => item.id === id ? { ...item, isVisible: data.isVisible } : item)
@@ -240,7 +240,7 @@ export function MenuManager({ pubId, menu }: MenuManagerProps) {
       queryClient.invalidateQueries({ queryKey: ["/api/pubs", String(pubId), "menu", "full"] });
     },
     onError: (_e: any, _v: any, ctx: any) => {
-      if (ctx?.prev) queryClient.setQueryData(["/api/pubs", pubId, "menu"], ctx.prev);
+      if (ctx?.prev) queryClient.setQueryData(["/api/pubs", String(pubId), "menu"], ctx.prev);
       toast({ title: "Errore", description: "Impossibile aggiornare la visibilità", variant: "destructive" });
     },
   });
@@ -251,8 +251,8 @@ export function MenuManager({ pubId, menu }: MenuManagerProps) {
     },
     onMutate: async ({ id }) => {
       await queryClient.cancelQueries({ queryKey: ["/api/pubs", String(pubId), "menu"] });
-      const prev = queryClient.getQueryData(["/api/pubs", pubId, "menu"]);
-      queryClient.setQueryData(["/api/pubs", pubId, "menu"], (old: any) =>
+      const prev = queryClient.getQueryData(["/api/pubs", String(pubId), "menu"]);
+      queryClient.setQueryData(["/api/pubs", String(pubId), "menu"], (old: any) =>
         Array.isArray(old) ? old.map((cat: any) => ({
           ...cat,
           items: (cat.items || []).map((item: any) => item.id === id ? { ...item, isAvailable: !item.isAvailable } : item)
@@ -262,7 +262,7 @@ export function MenuManager({ pubId, menu }: MenuManagerProps) {
     },
     onSuccess: (data: any, { id }) => {
       if (data?.isAvailable !== undefined) {
-        queryClient.setQueryData(["/api/pubs", pubId, "menu"], (old: any) =>
+        queryClient.setQueryData(["/api/pubs", String(pubId), "menu"], (old: any) =>
           Array.isArray(old) ? old.map((cat: any) => ({
             ...cat,
             items: (cat.items || []).map((item: any) => item.id === id ? { ...item, isAvailable: data.isAvailable } : item)
@@ -271,7 +271,7 @@ export function MenuManager({ pubId, menu }: MenuManagerProps) {
       }
     },
     onError: (_e: any, _v: any, ctx: any) => {
-      if (ctx?.prev) queryClient.setQueryData(["/api/pubs", pubId, "menu"], ctx.prev);
+      if (ctx?.prev) queryClient.setQueryData(["/api/pubs", String(pubId), "menu"], ctx.prev);
       toast({ title: "Errore", description: "Impossibile aggiornare la disponibilità", variant: "destructive" });
     },
   });

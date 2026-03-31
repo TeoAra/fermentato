@@ -218,10 +218,10 @@ export function TapListManager({ pubId, tapList, bottleList = [] }: TapListManag
     if (!confirm('Sei sicuro di voler rimuovere questa birra dalla tap list?')) return;
     const bottleItem = findBottleItem(item.beer.id);
     await apiRequest(`/api/pubs/${pubId}/taplist/${item.id}`, { method: "DELETE" });
-    queryClient.invalidateQueries({ queryKey: ["/api/pubs", pubId, "taplist"] });
+    queryClient.invalidateQueries({ queryKey: ["/api/pubs", String(pubId), "taplist"] });
     if (bottleItem) {
       await apiRequest(`/api/pubs/${pubId}/bottles/${bottleItem.id}`, { method: "DELETE" });
-      queryClient.invalidateQueries({ queryKey: ["/api/pubs", pubId, "bottles"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/pubs", String(pubId), "bottles"] });
       toast({ title: "Birra rimossa", description: "Rimossa anche dalla cantina" });
     } else {
       toast({ title: "Birra rimossa dalla tap list!" });
@@ -233,11 +233,11 @@ export function TapListManager({ pubId, tapList, bottleList = [] }: TapListManag
     const bottleItem = findBottleItem(item.beer.id);
 
     const applyTap = (v: boolean) =>
-      queryClient.setQueryData(["/api/pubs", pubId, "taplist"], (old: any) =>
+      queryClient.setQueryData(["/api/pubs", String(pubId), "taplist"], (old: any) =>
         Array.isArray(old) ? old.map((t: any) => t.id === item.id ? { ...t, isVisible: v } : t) : old
       );
     const applyBottle = (id: number, v: boolean) =>
-      queryClient.setQueryData(["/api/pubs", pubId, "bottles"], (old: any) =>
+      queryClient.setQueryData(["/api/pubs", String(pubId), "bottles"], (old: any) =>
         Array.isArray(old) ? old.map((b: any) => b.id === id ? { ...b, isVisible: v } : b) : old
       );
 
@@ -360,7 +360,7 @@ export function TapListManager({ pubId, tapList, bottleList = [] }: TapListManag
     },
     onSuccess: () => {
       toast({ title: "Prezzi aggiornati!" });
-      queryClient.invalidateQueries({ queryKey: ["/api/pubs", pubId, "taplist"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/pubs", String(pubId), "taplist"] });
     },
     onError: () => {
       toast({ title: "Errore", description: "Non è stato possibile aggiornare i prezzi", variant: "destructive" });

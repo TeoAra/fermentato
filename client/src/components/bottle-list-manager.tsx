@@ -99,7 +99,7 @@ export function BottleListManager({ pubId, bottleList, tapList = [] }: BottleLis
     },
     onSuccess: () => {
       toast({ title: "Birra aggiunta alla cantina!" });
-      queryClient.invalidateQueries({ queryKey: ["/api/pubs", pubId, "bottles"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/pubs", String(pubId), "bottles"] });
       setIsAddDialogOpen(false);
       resetForm();
     },
@@ -115,7 +115,7 @@ export function BottleListManager({ pubId, bottleList, tapList = [] }: BottleLis
     },
     onSuccess: () => {
       toast({ title: "Birra aggiornata!" });
-      queryClient.invalidateQueries({ queryKey: ["/api/pubs", pubId, "bottles"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/pubs", String(pubId), "bottles"] });
       setEditingItem(null);
       resetForm();
     },
@@ -131,7 +131,7 @@ export function BottleListManager({ pubId, bottleList, tapList = [] }: BottleLis
     },
     onSuccess: () => {
       toast({ title: "Birra rimossa dalla cantina!" });
-      queryClient.invalidateQueries({ queryKey: ["/api/pubs", pubId, "bottles"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/pubs", String(pubId), "bottles"] });
     },
     onError: () => {
       toast({ title: "Errore", description: "Impossibile rimuovere la birra", variant: "destructive" });
@@ -144,23 +144,23 @@ export function BottleListManager({ pubId, bottleList, tapList = [] }: BottleLis
       return apiRequest(`/api/pubs/${pubId}/bottles/${id}`, { method: "PATCH" }, { isVisible });
     },
     onMutate: async ({ id, isVisible }) => {
-      await queryClient.cancelQueries({ queryKey: ["/api/pubs", pubId, "bottles"] });
-      const prev = queryClient.getQueryData(["/api/pubs", pubId, "bottles"]);
-      queryClient.setQueryData(["/api/pubs", pubId, "bottles"], (old: any) =>
+      await queryClient.cancelQueries({ queryKey: ["/api/pubs", String(pubId), "bottles"] });
+      const prev = queryClient.getQueryData(["/api/pubs", String(pubId), "bottles"]);
+      queryClient.setQueryData(["/api/pubs", String(pubId), "bottles"], (old: any) =>
         Array.isArray(old) ? old.map((b: any) => b.id === id ? { ...b, isVisible } : b) : old
       );
       return { prev };
     },
     onSuccess: (data, { id }) => {
       if (data?.isVisible !== undefined) {
-        queryClient.setQueryData(["/api/pubs", pubId, "bottles"], (old: any) =>
+        queryClient.setQueryData(["/api/pubs", String(pubId), "bottles"], (old: any) =>
           Array.isArray(old) ? old.map((b: any) => b.id === id ? { ...b, isVisible: data.isVisible } : b) : old
         );
       }
       queryClient.invalidateQueries({ queryKey: ["/api/pubs", String(pubId), "bottles"] });
     },
     onError: (_e, _v, ctx) => {
-      if (ctx?.prev) queryClient.setQueryData(["/api/pubs", pubId, "bottles"], ctx.prev);
+      if (ctx?.prev) queryClient.setQueryData(["/api/pubs", String(pubId), "bottles"], ctx.prev);
       toast({ title: "Errore", description: "Impossibile aggiornare la visibilità", variant: "destructive" });
     },
   });
@@ -188,10 +188,10 @@ export function BottleListManager({ pubId, bottleList, tapList = [] }: BottleLis
     if (!confirm('Sei sicuro di voler rimuovere questa birra dalla cantina?')) return;
     const tapItem = findTapItem(item.beer?.id);
     await apiRequest(`/api/pubs/${pubId}/bottles/${item.id}`, { method: "DELETE" });
-    queryClient.invalidateQueries({ queryKey: ["/api/pubs", pubId, "bottles"] });
+    queryClient.invalidateQueries({ queryKey: ["/api/pubs", String(pubId), "bottles"] });
     if (tapItem) {
       await apiRequest(`/api/pubs/${pubId}/taplist/${tapItem.id}`, { method: "DELETE" });
-      queryClient.invalidateQueries({ queryKey: ["/api/pubs", pubId, "taplist"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/pubs", String(pubId), "taplist"] });
       toast({ title: "Birra rimossa", description: "Rimossa anche dalla taplist" });
     } else {
       toast({ title: "Birra rimossa dalla cantina!" });
@@ -203,11 +203,11 @@ export function BottleListManager({ pubId, bottleList, tapList = [] }: BottleLis
     const tapItem = findTapItem(item.beer?.id);
 
     const applyBottle = (v: boolean) =>
-      queryClient.setQueryData(["/api/pubs", pubId, "bottles"], (old: any) =>
+      queryClient.setQueryData(["/api/pubs", String(pubId), "bottles"], (old: any) =>
         Array.isArray(old) ? old.map((b: any) => b.id === item.id ? { ...b, isVisible: v } : b) : old
       );
     const applyTap = (id: number, v: boolean) =>
-      queryClient.setQueryData(["/api/pubs", pubId, "taplist"], (old: any) =>
+      queryClient.setQueryData(["/api/pubs", String(pubId), "taplist"], (old: any) =>
         Array.isArray(old) ? old.map((t: any) => t.id === id ? { ...t, isVisible: v } : t) : old
       );
 

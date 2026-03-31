@@ -264,7 +264,7 @@ export default function PubDetail() {
     queryKey: ["/api/pubs", id, "menu", "full"],
     queryFn: () => apiRequest(`/api/pubs/${id}/menu/full`),
     enabled: !!id,
-    staleTime: 30_000,
+    staleTime: 0,
     refetchOnWindowFocus: true,
   });
 
