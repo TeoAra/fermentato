@@ -1,5 +1,5 @@
 import { useEffect, useRef, useMemo } from "react";
-import maplibregl from "maplibre-gl";
+import maplibregl, { type StyleSpecification } from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
 
 const PUB_COLOR = "#F77104";
@@ -163,20 +163,40 @@ export default function HomepageMap({
   useEffect(() => {
     if (!containerRef.current || mapRef.current) return;
 
+    // Stile inline con tile raster CARTO Voyager @2x — nessun fetch JSON esterno,
+    // nessun glyph/sprite da caricare → rendering affidabile su tutti i browser mobile
+    const RASTER_STYLE: StyleSpecification = {
+      version: 8,
+      sources: {
+        "carto-voyager": {
+          type: "raster",
+          tiles: [
+            "https://a.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}@2x.png",
+            "https://b.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}@2x.png",
+            "https://c.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}@2x.png",
+            "https://d.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}@2x.png",
+          ],
+          tileSize: 256,
+          attribution: "© <a href='https://carto.com'>CARTO</a> © <a href='https://openstreetmap.org'>OpenStreetMap</a> contributors",
+          maxzoom: 20,
+        },
+      },
+      layers: [{ id: "carto-tiles", type: "raster", source: "carto-voyager", minzoom: 0, maxzoom: 22 }],
+    };
+
     maplibregl.setMaxParallelImageRequests(16);
 
     const map = new maplibregl.Map({
       container: containerRef.current,
-      style: "https://basemaps.cartocdn.com/gl/voyager-gl-style/style.json",
+      style: RASTER_STYLE,
       center: userLocation ? [userLocation.lng, userLocation.lat] : [12.5, 42.0],
-      zoom: userLocation ? 11 : 5.4,
+      zoom: userLocation ? 12 : 5.4,
       minZoom: 4,
-      maxZoom: 18,
+      maxZoom: 19,
       scrollZoom: false,
       attributionControl: false,
-      fadeDuration: 0,
+      fadeDuration: 150,
       trackResize: true,
-      localIdeographFontFamily: "'DM Sans', sans-serif",
       renderWorldCopies: false,
     });
 
