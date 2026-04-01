@@ -6751,7 +6751,9 @@ ${meta.image ? `<meta name="twitter:image" content="${meta.image}">` : ""}
   app.get("/api/user/following", isAuthenticated, async (req, res) => {
     const userId = (req.user as any).id;
     const { rows } = await pool.query(`
-      SELECT u.id, u.username, u.display_name, u.profile_image_url,
+      SELECT u.id, u.nickname as username,
+             COALESCE(NULLIF(TRIM(COALESCE(u.first_name,'') || ' ' || COALESCE(u.last_name,'')), ''), u.nickname) as display_name,
+             u.profile_image_url,
              uf.created_at as followed_at
       FROM user_follows uf
       JOIN users u ON u.id = uf.following_id
@@ -6764,7 +6766,9 @@ ${meta.image ? `<meta name="twitter:image" content="${meta.image}">` : ""}
   app.get("/api/user/followers", isAuthenticated, async (req, res) => {
     const userId = (req.user as any).id;
     const { rows } = await pool.query(`
-      SELECT u.id, u.username, u.display_name, u.profile_image_url,
+      SELECT u.id, u.nickname as username,
+             COALESCE(NULLIF(TRIM(COALESCE(u.first_name,'') || ' ' || COALESCE(u.last_name,'')), ''), u.nickname) as display_name,
+             u.profile_image_url,
              uf.created_at as followed_at
       FROM user_follows uf
       JOIN users u ON u.id = uf.follower_id
@@ -6799,7 +6803,10 @@ ${meta.image ? `<meta name="twitter:image" content="${meta.image}">` : ""}
     const userId = (req.user as any).id;
     const { rows } = await pool.query(`
       SELECT ubt.id, ubt.rating, ubt.notes, ubt.photo_url, ubt.format, ubt.tasted_at,
-             u.id as user_id, u.username, u.display_name, u.profile_image_url,
+             u.id as user_id,
+             u.nickname as username,
+             COALESCE(NULLIF(TRIM(COALESCE(u.first_name,'') || ' ' || COALESCE(u.last_name,'')), ''), u.nickname) as display_name,
+             u.profile_image_url,
              b.id as beer_id, b.name as beer_name, b.style as beer_style, b.image_url as beer_image,
              br.name as brewery_name
       FROM user_beer_tastings ubt
@@ -6942,7 +6949,10 @@ ${meta.image ? `<meta name="twitter:image" content="${meta.image}">` : ""}
   // ─────────────────────────────────────────────────────────────────────────────
   app.get("/api/users/:userId/profile", async (req, res) => {
     const { rows } = await pool.query(`
-      SELECT u.id, u.username, u.display_name, u.profile_image_url, u.created_at,
+      SELECT u.id,
+             u.nickname as username,
+             COALESCE(NULLIF(TRIM(COALESCE(u.first_name,'') || ' ' || COALESCE(u.last_name,'')), ''), u.nickname) as display_name,
+             u.profile_image_url, u.created_at,
              COUNT(DISTINCT ubt.id) as tasting_count,
              ROUND(AVG(ubt.rating)::numeric, 1) as avg_rating,
              COUNT(DISTINCT uf1.follower_id) as followers_count,
@@ -6952,7 +6962,7 @@ ${meta.image ? `<meta name="twitter:image" content="${meta.image}">` : ""}
       LEFT JOIN user_follows uf1 ON uf1.following_id = u.id
       LEFT JOIN user_follows uf2 ON uf2.follower_id = u.id
       WHERE u.id = $1
-      GROUP BY u.id
+      GROUP BY u.id, u.nickname, u.first_name, u.last_name, u.profile_image_url, u.created_at
     `, [req.params.userId]);
     if (!rows[0]) return res.status(404).json({ message: "Utente non trovato" });
     res.json(rows[0]);
