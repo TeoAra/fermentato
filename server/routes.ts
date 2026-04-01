@@ -1297,13 +1297,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (minIbu !== undefined) filters.minIbu = minIbu;
       if (maxIbu !== undefined) filters.maxIbu = maxIbu;
 
-      const [pubs, breweries, beersResult] = await Promise.all([
+      const [pubs, breweries, beersResult, usersResult] = await Promise.all([
         storage.searchPubs(query),
         storage.searchBreweries(query),
         storage.searchBeers(query, filters),
+        pool.query(
+          `SELECT id, username, display_name, profile_image_url
+           FROM users
+           WHERE username ILIKE $1 OR display_name ILIKE $1
+           ORDER BY display_name NULLS LAST
+           LIMIT 10`,
+          [`%${query}%`]
+        ),
       ]);
 
-      const result = { pubs, breweries, beers: beersResult };
+      const result = { pubs, breweries, beers: beersResult, users: usersResult.rows };
       setCache(cacheKey, result);
       res.setHeader('X-Cache', 'MISS');
       res.json(result);

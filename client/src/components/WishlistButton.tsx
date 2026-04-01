@@ -2,7 +2,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
-import { Heart } from "lucide-react";
+import { Bookmark } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface WishlistButtonProps {
@@ -54,7 +54,7 @@ export function WishlistButton({ beerId, size = "md", className }: WishlistButto
         btnSize,
         "flex items-center justify-center rounded-full transition-all active:scale-90",
         inWishlist
-          ? "bg-red-50 dark:bg-red-500/10 text-red-400"
+          ? "bg-amber-50 dark:bg-amber-500/10 text-amber-500"
           : "bg-stone-100 dark:bg-[hsl(220,5%,22%)] text-stone-400",
         isPending && "opacity-50",
         className
@@ -66,8 +66,9 @@ export function WishlistButton({ beerId, size = "md", className }: WishlistButto
         if (inWishlist) removeMutation.mutate();
         else addMutation.mutate();
       }}
+      title={inWishlist ? "Rimuovi dalla wishlist" : "Aggiungi alla wishlist"}
     >
-      <Heart className={cn(iconSize, inWishlist && "fill-red-400")} />
+      <Bookmark className={cn(iconSize, inWishlist && "fill-amber-400")} />
     </button>
   );
 }

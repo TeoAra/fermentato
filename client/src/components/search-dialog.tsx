@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Search, X, MapPin, Building, Beer, Clock, TrendingUp, ArrowRight, Sparkles, Loader2, ChevronDown, ChevronUp, PlusCircle } from "lucide-react";
+import { Search, X, MapPin, Building, Beer, Clock, TrendingUp, ArrowRight, Sparkles, Loader2, ChevronDown, ChevronUp, PlusCircle, Users } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -142,7 +142,7 @@ export default function SearchDialog({ isOpen, onClose }: SearchDialogProps) {
             </div>
             <Input
               ref={inputRef}
-              placeholder="Cerca pub, birrifici, birre..."
+              placeholder="Cerca pub, birrifici, birre, utenti..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               onKeyDown={handleKeyDown}
@@ -283,7 +283,7 @@ export default function SearchDialog({ isOpen, onClose }: SearchDialogProps) {
             <div className="p-6 space-y-6">
               {/* Results count */}
               <div className="text-sm text-muted-foreground dark:text-stone-400">
-                {(searchResults.pubs?.length || 0) + (searchResults.breweries?.length || 0) + (searchResults.beers?.length || 0)} risultati per 
+                {(searchResults.pubs?.length || 0) + (searchResults.breweries?.length || 0) + (searchResults.beers?.length || 0) + (searchResults.users?.length || 0)} risultati per 
                 <span className="font-medium text-muted-foreground dark:text-stone-300 ml-1">"{debouncedSearch}"</span>
               </div>
 
@@ -494,8 +494,79 @@ export default function SearchDialog({ isOpen, onClose }: SearchDialogProps) {
                 );
               })()}
 
+              {/* User Results */}
+              {searchResults.users?.length > 0 && (() => {
+                const isExpanded = expandedSections.users;
+                const visibleUsers = isExpanded ? searchResults.users : searchResults.users.slice(0, INITIAL_SHOW);
+                const hasMore = searchResults.users.length > INITIAL_SHOW;
+                return (
+                  <>
+                    {(searchResults.pubs?.length > 0 || searchResults.breweries?.length > 0 || searchResults.beers?.length > 0) && (
+                      <Separator className="bg-stone-200 dark:bg-gray-700" />
+                    )}
+                    <div className="space-y-3">
+                      <div className="flex items-center gap-2">
+                        <Users className="h-4 w-4 text-orange-600" />
+                        <h3 className="font-semibold text-foreground dark:text-white">Utenti</h3>
+                        <Badge variant="outline" className="text-xs">{searchResults.users.length}</Badge>
+                      </div>
+                      <div className="space-y-2">
+                        {visibleUsers.map((u: any) => (
+                          <div
+                            key={`user-${u.id}`}
+                            className="group cursor-pointer p-3 rounded-xl border bg-white/50 dark:bg-gray-800/30 border-gray-200 dark:border-gray-700 hover:bg-stone-50 dark:hover:bg-gray-800/50 hover:border-gray-300 dark:hover:border-gray-600 transition-all duration-200"
+                            onClick={() => {
+                              saveSearch(searchTerm);
+                              handleClose();
+                              window.location.href = `/user/${u.username}`;
+                            }}
+                          >
+                            <div className="flex items-center gap-3">
+                              {u.profile_image_url ? (
+                                <img
+                                  src={u.profile_image_url}
+                                  alt={u.display_name ?? u.username}
+                                  className="h-10 w-10 rounded-full object-cover flex-shrink-0"
+                                />
+                              ) : (
+                                <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+                                  <span className="text-primary text-sm font-bold">
+                                    {(u.display_name ?? u.username ?? "?")[0].toUpperCase()}
+                                  </span>
+                                </div>
+                              )}
+                              <div className="flex-1 min-w-0">
+                                <div className="font-medium text-sm text-foreground dark:text-white truncate group-hover:text-orange-600 dark:group-hover:text-orange-400 transition-colors">
+                                  {u.display_name ?? u.username}
+                                </div>
+                                {u.display_name && (
+                                  <div className="text-xs text-muted-foreground dark:text-stone-400">@{u.username}</div>
+                                )}
+                              </div>
+                              <ArrowRight className="h-4 w-4 text-stone-300 group-hover:text-orange-500 flex-shrink-0 opacity-0 group-hover:opacity-100 transition-all duration-200" />
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                      {hasMore && (
+                        <button
+                          onClick={() => toggleSection('users')}
+                          className="flex items-center gap-2 w-full justify-center py-2 text-sm font-medium text-orange-600 hover:text-orange-700 dark:text-orange-400 dark:hover:text-orange-300 transition-colors rounded-lg hover:bg-stone-50 dark:hover:bg-stone-800/30"
+                        >
+                          {isExpanded ? (
+                            <>Mostra meno <ChevronUp className="h-4 w-4" /></>
+                          ) : (
+                            <>Mostra tutti ({searchResults.users.length}) <ChevronDown className="h-4 w-4" /></>
+                          )}
+                        </button>
+                      )}
+                    </div>
+                  </>
+                );
+              })()}
+
               {/* No Results */}
-              {(!searchResults.pubs?.length && !searchResults.breweries?.length && !searchResults.beers?.length) && (
+              {(!searchResults.pubs?.length && !searchResults.breweries?.length && !searchResults.beers?.length && !searchResults.users?.length) && (
                 <div className="text-center py-10">
                   <div className="relative inline-block mb-4">
                     <Search className="h-16 w-16 text-stone-300 dark:text-stone-400 mx-auto" />
