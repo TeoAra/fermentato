@@ -677,6 +677,17 @@ export default function AuthPage() {
                   disabled={registerMutation.isPending || (!!RECAPTCHA_SITE_KEY && !registerRecaptchaToken)}>
                   {registerMutation.isPending ? <><Loader2 className="w-5 h-5 mr-2 animate-spin" /> Creazione in corso...</> : "Crea Account"}
                 </Button>
+
+                <div className="relative my-8">
+                  <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-stone-200 dark:border-border"></div></div>
+                  <div className="relative flex justify-center text-xs uppercase"><span className="bg-white dark:bg-card px-2 text-muted-foreground">Oppure registrati con</span></div>
+                </div>
+
+                <Button type="button" variant="outline" onClick={handleGoogleLogin}
+                  className="w-full h-11 bg-white dark:bg-[hsl(25,14%,12%)] border border-stone-200 dark:border-border text-foreground rounded-xl font-medium hover:bg-stone-50 dark:hover:bg-stone-900/20">
+                  <SiGoogle className="w-4 h-4 mr-2" />
+                  Google
+                </Button>
               </form>
             </Form>
           )}
