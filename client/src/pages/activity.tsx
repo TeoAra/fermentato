@@ -166,23 +166,31 @@ export default function Activity() {
     queryKey: ["/api/festivals/public"],
   });
 
-  const nearbyPubs = userLocation && Array.isArray(allPubs)
-    ? allPubs
-        .map((pub: any) => {
-          if (pub.latitude && pub.longitude) {
-            const distance = calculateDistance(
-              userLocation.lat,
-              userLocation.lng,
-              parseFloat(pub.latitude),
-              parseFloat(pub.longitude)
-            );
-            return { ...pub, distance };
-          }
-          return { ...pub, distance: 9999 };
-        })
-        .filter((pub: any) => pub.distance <= parseFloat(radius))
-        .sort((a: any, b: any) => a.distance - b.distance)
-    : Array.isArray(allPubs) ? allPubs.slice(0, 10) : [];
+  const nearbyPubs = useMemo(() => {
+    if (!Array.isArray(allPubs)) return [];
+    if (!userLocation) return allPubs;
+    const radiusKm = parseFloat(radius);
+    return allPubs
+      .map((pub: any) => {
+        if (pub.latitude && pub.longitude) {
+          const distance = calculateDistance(
+            userLocation.lat,
+            userLocation.lng,
+            parseFloat(pub.latitude),
+            parseFloat(pub.longitude)
+          );
+          return { ...pub, distance };
+        }
+        return { ...pub, distance: null };
+      })
+      .filter((pub: any) => pub.distance === null || pub.distance <= radiusKm)
+      .sort((a: any, b: any) => {
+        if (a.distance === null && b.distance === null) return 0;
+        if (a.distance === null) return 1;
+        if (b.distance === null) return -1;
+        return a.distance - b.distance;
+      });
+  }, [allPubs, userLocation, radius]);
 
   const nearbyEvents = useMemo(() => {
     if (!Array.isArray(upcomingEvents)) return [];
@@ -209,9 +217,8 @@ export default function Activity() {
 
   const nearbyTapChanges = useMemo(() => {
     const filtered = tapChanges.filter(tc => !dismissedIds.has(tc.id));
-    
     if (!userLocation) return filtered;
-    
+    const radiusKm = parseFloat(radius);
     return filtered
       .map(tc => {
         if (tc.pubLatitude && tc.pubLongitude) {
@@ -223,9 +230,9 @@ export default function Activity() {
           );
           return { ...tc, distance };
         }
-        return { ...tc, distance: 9999 };
+        return { ...tc, distance: null };
       })
-      .filter(tc => tc.distance <= parseFloat(radius))
+      .filter(tc => tc.distance === null || tc.distance <= radiusKm)
       .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
   }, [tapChanges, userLocation, radius, dismissedIds]);
 
@@ -270,16 +277,18 @@ export default function Activity() {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6">
         <h1 className="text-2xl font-bold text-foreground dark:text-white">Attività in Zona</h1>
         <div className="flex items-center gap-2">
-          <Select value={radius} onValueChange={setRadius}>
-            <SelectTrigger className="w-24" data-testid="select-radius">
+          <Select value={radius} onValueChange={(v) => { setRadius(v); setShowMorePubs(false); }}>
+            <SelectTrigger className="w-28" data-testid="select-radius">
               <SelectValue placeholder="Raggio" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="1">1 km</SelectItem>
               <SelectItem value="5">5 km</SelectItem>
               <SelectItem value="10">10 km</SelectItem>
-              <SelectItem value="25">25 km</SelectItem>
+              <SelectItem value="15">15 km</SelectItem>
+              <SelectItem value="20">20 km</SelectItem>
+              <SelectItem value="30">30 km</SelectItem>
               <SelectItem value="50">50 km</SelectItem>
+              <SelectItem value="100">100 km</SelectItem>
             </SelectContent>
           </Select>
           <Button 
@@ -352,7 +361,7 @@ export default function Activity() {
             <div className="text-center py-8 bg-gray-50 dark:bg-stone-800/50 rounded-xl">
               <MapPin className="h-10 w-10 text-stone-400 mx-auto mb-3" />
               <p className="text-sm text-muted-foreground dark:text-stone-400">Nessun pub trovato entro {radius} km</p>
-              <Button variant="link" size="sm" onClick={() => setRadius("50")}>Espandi a 50 km</Button>
+              <Button variant="link" size="sm" onClick={() => setRadius("100")}>Espandi a 100 km</Button>
             </div>
           ) : (
             <>
