@@ -179,6 +179,30 @@ export function DesktopSidebar() {
                       Attività
                     </Link>
                   </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link href="/my-stats" className="flex items-center gap-2 text-[13px] cursor-pointer">
+                      <span className="text-sm">📊</span>
+                      Statistiche
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link href="/my-cellar" className="flex items-center gap-2 text-[13px] cursor-pointer">
+                      <span className="text-sm">🍷</span>
+                      Cantina
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link href="/my-wishlist" className="flex items-center gap-2 text-[13px] cursor-pointer">
+                      <span className="text-sm">❤️</span>
+                      Wishlist
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link href="/social-feed" className="flex items-center gap-2 text-[13px] cursor-pointer">
+                      <span className="text-sm">👥</span>
+                      Feed amici
+                    </Link>
+                  </DropdownMenuItem>
 
                   {rolesData && rolesData.roles.length > 1 && (
                     <>

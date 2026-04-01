@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import { Link } from "wouter";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useAuth } from "@/hooks/useAuth";
@@ -620,6 +621,26 @@ export default function UserProfile() {
                 </Card>
               ) : null;
             })()}
+
+            {/* Quick links to new features */}
+            <div className="grid grid-cols-2 gap-3">
+              {[
+                { href: "/my-stats", icon: "📊", label: "Statistiche", sub: "Stili, birrifici, streak" },
+                { href: "/my-cellar", icon: "🍷", label: "Cantina", sub: "Bottiglie a casa tua" },
+                { href: "/my-wishlist", icon: "❤️", label: "Wishlist", sub: "Da assaggiare" },
+                { href: "/social-feed", icon: "👥", label: "Feed amici", sub: "Attività dei tuoi seguiti" },
+              ].map(({ href, icon, label, sub }) => (
+                <Link key={href} href={href}>
+                  <div className="bg-white dark:bg-[hsl(220,5%,18%)] rounded-2xl p-3.5 shadow-sm flex items-center gap-3 active:opacity-80 transition-opacity border border-stone-100 dark:border-[hsl(220,5%,27%)]">
+                    <span className="text-xl">{icon}</span>
+                    <div className="min-w-0">
+                      <p className="text-sm font-semibold text-stone-800 dark:text-stone-100 font-poppins">{label}</p>
+                      <p className="text-[10px] text-stone-400 leading-tight">{sub}</p>
+                    </div>
+                  </div>
+                </Link>
+              ))}
+            </div>
 
             {/* Bio */}
             <Card className="border-0 shadow-md bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl">

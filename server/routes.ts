@@ -389,6 +389,64 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   })();
 
+  // ─── New feature tables migrations ───────────────────────────────────────────
+  (async () => {
+    try {
+      await pool.query(`
+        CREATE TABLE IF NOT EXISTS user_cellar (
+          id SERIAL PRIMARY KEY,
+          user_id VARCHAR NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+          beer_id INTEGER NOT NULL REFERENCES beers(id) ON DELETE CASCADE,
+          quantity INTEGER DEFAULT 1,
+          notes TEXT,
+          vintage VARCHAR(10),
+          purchase_price NUMERIC(8,2),
+          added_at TIMESTAMP DEFAULT NOW(),
+          UNIQUE(user_id, beer_id)
+        )
+      `);
+      await pool.query(`
+        CREATE TABLE IF NOT EXISTS user_wishlist (
+          id SERIAL PRIMARY KEY,
+          user_id VARCHAR NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+          beer_id INTEGER NOT NULL REFERENCES beers(id) ON DELETE CASCADE,
+          added_at TIMESTAMP DEFAULT NOW(),
+          UNIQUE(user_id, beer_id)
+        )
+      `);
+      await pool.query(`
+        CREATE TABLE IF NOT EXISTS next_tap_proposals (
+          id SERIAL PRIMARY KEY,
+          pub_id INTEGER NOT NULL REFERENCES pubs(id) ON DELETE CASCADE,
+          beer_id INTEGER NOT NULL REFERENCES beers(id) ON DELETE CASCADE,
+          description TEXT,
+          is_active BOOLEAN DEFAULT TRUE,
+          created_at TIMESTAMP DEFAULT NOW()
+        )
+      `);
+      await pool.query(`
+        CREATE TABLE IF NOT EXISTS next_tap_votes (
+          id SERIAL PRIMARY KEY,
+          proposal_id INTEGER NOT NULL REFERENCES next_tap_proposals(id) ON DELETE CASCADE,
+          user_id VARCHAR NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+          voted_at TIMESTAMP DEFAULT NOW(),
+          UNIQUE(proposal_id, user_id)
+        )
+      `);
+      await pool.query(`
+        CREATE TABLE IF NOT EXISTS user_follows (
+          id SERIAL PRIMARY KEY,
+          follower_id VARCHAR NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+          following_id VARCHAR NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+          created_at TIMESTAMP DEFAULT NOW(),
+          UNIQUE(follower_id, following_id)
+        )
+      `);
+    } catch (e) {
+      console.error("[migration] new feature tables error:", e);
+    }
+  })();
+
   // Helper: resolve pub ID from numeric id or slug
   async function resolvePubId(param: string): Promise<number | null> {
     const numId = parseInt(param);
@@ -6519,6 +6577,398 @@ ${meta.image ? `<meta name="twitter:image" content="${meta.image}">` : ""}
         }));
       }
     } catch { next(); }
+  });
+
+  // ─────────────────────────────────────────────────────────────────────────────
+  // VIRTUAL CELLAR
+  // ─────────────────────────────────────────────────────────────────────────────
+  app.get("/api/user/cellar", isAuthenticated, async (req, res) => {
+    const userId = (req.user as any).id;
+    const { rows } = await pool.query(`
+      SELECT uc.*, b.name as beer_name, b.style as beer_style, b.abv as beer_abv,
+             b.image_url as beer_image, br.name as brewery_name, br.logo_url as brewery_logo
+      FROM user_cellar uc
+      JOIN beers b ON b.id = uc.beer_id
+      LEFT JOIN breweries br ON br.id = b.brewery_id
+      WHERE uc.user_id = $1
+      ORDER BY uc.added_at DESC
+    `, [userId]);
+    res.json(rows);
+  });
+
+  app.post("/api/user/cellar", isAuthenticated, async (req, res) => {
+    const userId = (req.user as any).id;
+    const { beerId, quantity = 1, notes, vintage, purchasePrice } = req.body;
+    if (!beerId) return res.status(400).json({ message: "beerId richiesto" });
+    try {
+      const { rows } = await pool.query(`
+        INSERT INTO user_cellar (user_id, beer_id, quantity, notes, vintage, purchase_price)
+        VALUES ($1, $2, $3, $4, $5, $6)
+        ON CONFLICT (user_id, beer_id) DO UPDATE
+          SET quantity = $3, notes = $4, vintage = $5, purchase_price = $6
+        RETURNING *
+      `, [userId, beerId, quantity, notes || null, vintage || null, purchasePrice || null]);
+      res.json(rows[0]);
+    } catch (e: any) {
+      res.status(500).json({ message: e.message });
+    }
+  });
+
+  app.delete("/api/user/cellar/:beerId", isAuthenticated, async (req, res) => {
+    const userId = (req.user as any).id;
+    await pool.query(`DELETE FROM user_cellar WHERE user_id = $1 AND beer_id = $2`, [userId, req.params.beerId]);
+    res.json({ ok: true });
+  });
+
+  // ─────────────────────────────────────────────────────────────────────────────
+  // WISHLIST
+  // ─────────────────────────────────────────────────────────────────────────────
+  app.get("/api/user/wishlist", isAuthenticated, async (req, res) => {
+    const userId = (req.user as any).id;
+    const { rows } = await pool.query(`
+      SELECT uw.*, b.name as beer_name, b.style as beer_style, b.abv as beer_abv,
+             b.image_url as beer_image, br.name as brewery_name, br.logo_url as brewery_logo
+      FROM user_wishlist uw
+      JOIN beers b ON b.id = uw.beer_id
+      LEFT JOIN breweries br ON br.id = b.brewery_id
+      WHERE uw.user_id = $1
+      ORDER BY uw.added_at DESC
+    `, [userId]);
+    res.json(rows);
+  });
+
+  app.post("/api/user/wishlist", isAuthenticated, async (req, res) => {
+    const userId = (req.user as any).id;
+    const { beerId } = req.body;
+    if (!beerId) return res.status(400).json({ message: "beerId richiesto" });
+    const { rows } = await pool.query(`
+      INSERT INTO user_wishlist (user_id, beer_id) VALUES ($1, $2)
+      ON CONFLICT (user_id, beer_id) DO NOTHING
+      RETURNING *
+    `, [userId, beerId]);
+    res.json(rows[0] ?? { userId, beerId });
+  });
+
+  app.delete("/api/user/wishlist/:beerId", isAuthenticated, async (req, res) => {
+    const userId = (req.user as any).id;
+    await pool.query(`DELETE FROM user_wishlist WHERE user_id = $1 AND beer_id = $2`, [userId, req.params.beerId]);
+    res.json({ ok: true });
+  });
+
+  // Check if single beer is in wishlist
+  app.get("/api/user/wishlist/:beerId", isAuthenticated, async (req, res) => {
+    const userId = (req.user as any).id;
+    const { rows } = await pool.query(`SELECT id FROM user_wishlist WHERE user_id = $1 AND beer_id = $2`, [userId, req.params.beerId]);
+    res.json({ inWishlist: rows.length > 0 });
+  });
+
+  // ─────────────────────────────────────────────────────────────────────────────
+  // PROSSIMA SPINA (Next Tap Voting)
+  // ─────────────────────────────────────────────────────────────────────────────
+  app.get("/api/pubs/:pubId/next-tap", async (req, res) => {
+    const pubId = await resolvePubId(req.params.pubId);
+    if (!pubId) return res.status(404).json({ message: "Pub non trovato" });
+    const userId = (req.user as any)?.id ?? null;
+    const { rows } = await pool.query(`
+      SELECT ntp.*, b.name as beer_name, b.style as beer_style, b.abv as beer_abv,
+             b.image_url as beer_image, br.name as brewery_name,
+             COUNT(ntv.id) as vote_count,
+             ${userId ? `MAX(CASE WHEN ntv.user_id = $2 THEN 1 ELSE 0 END) = 1 as user_voted` : `false as user_voted`}
+      FROM next_tap_proposals ntp
+      JOIN beers b ON b.id = ntp.beer_id
+      LEFT JOIN breweries br ON br.id = b.brewery_id
+      LEFT JOIN next_tap_votes ntv ON ntv.proposal_id = ntp.id
+      WHERE ntp.pub_id = $1 AND ntp.is_active = true
+      GROUP BY ntp.id, b.name, b.style, b.abv, b.image_url, br.name
+      ORDER BY vote_count DESC
+    `, userId ? [pubId, userId] : [pubId]);
+    res.json(rows);
+  });
+
+  app.post("/api/pubs/:pubId/next-tap", isAuthenticated, async (req, res) => {
+    const pubId = await resolvePubId(req.params.pubId);
+    if (!pubId) return res.status(404).json({ message: "Pub non trovato" });
+    const userId = (req.user as any).id;
+    // Only pub owner or admin can propose
+    const pub = await storage.getPub(pubId);
+    const user = req.user as any;
+    if (!pub) return res.status(404).json({ message: "Pub non trovato" });
+    if (pub.ownerId !== userId && !user.isAdmin) return res.status(403).json({ message: "Non autorizzato" });
+    const { beerId, description } = req.body;
+    if (!beerId) return res.status(400).json({ message: "beerId richiesto" });
+    const { rows } = await pool.query(`
+      INSERT INTO next_tap_proposals (pub_id, beer_id, description)
+      VALUES ($1, $2, $3)
+      RETURNING *
+    `, [pubId, beerId, description || null]);
+    res.json(rows[0]);
+  });
+
+  app.post("/api/next-tap/:proposalId/vote", isAuthenticated, async (req, res) => {
+    const userId = (req.user as any).id;
+    const proposalId = parseInt(req.params.proposalId);
+    try {
+      await pool.query(`
+        INSERT INTO next_tap_votes (proposal_id, user_id) VALUES ($1, $2)
+        ON CONFLICT (proposal_id, user_id) DO NOTHING
+      `, [proposalId, userId]);
+      const { rows } = await pool.query(`SELECT COUNT(*) as votes FROM next_tap_votes WHERE proposal_id = $1`, [proposalId]);
+      res.json({ votes: parseInt(rows[0].votes) });
+    } catch (e: any) {
+      res.status(500).json({ message: e.message });
+    }
+  });
+
+  app.delete("/api/next-tap/:proposalId/vote", isAuthenticated, async (req, res) => {
+    const userId = (req.user as any).id;
+    await pool.query(`DELETE FROM next_tap_votes WHERE proposal_id = $1 AND user_id = $2`, [req.params.proposalId, userId]);
+    const { rows } = await pool.query(`SELECT COUNT(*) as votes FROM next_tap_votes WHERE proposal_id = $1`, [req.params.proposalId]);
+    res.json({ votes: parseInt(rows[0].votes) });
+  });
+
+  app.delete("/api/next-tap/:proposalId", isAuthenticated, async (req, res) => {
+    const userId = (req.user as any).id;
+    const user = req.user as any;
+    const { rows } = await pool.query(`SELECT ntp.*, p.owner_id FROM next_tap_proposals ntp JOIN pubs p ON p.id = ntp.pub_id WHERE ntp.id = $1`, [req.params.proposalId]);
+    if (!rows[0]) return res.status(404).json({ message: "Proposta non trovata" });
+    if (rows[0].owner_id !== userId && !user.isAdmin) return res.status(403).json({ message: "Non autorizzato" });
+    await pool.query(`DELETE FROM next_tap_proposals WHERE id = $1`, [req.params.proposalId]);
+    res.json({ ok: true });
+  });
+
+  // ─────────────────────────────────────────────────────────────────────────────
+  // USER FOLLOWS
+  // ─────────────────────────────────────────────────────────────────────────────
+  app.get("/api/user/following", isAuthenticated, async (req, res) => {
+    const userId = (req.user as any).id;
+    const { rows } = await pool.query(`
+      SELECT u.id, u.username, u.display_name, u.profile_image_url,
+             uf.created_at as followed_at
+      FROM user_follows uf
+      JOIN users u ON u.id = uf.following_id
+      WHERE uf.follower_id = $1
+      ORDER BY uf.created_at DESC
+    `, [userId]);
+    res.json(rows);
+  });
+
+  app.get("/api/user/followers", isAuthenticated, async (req, res) => {
+    const userId = (req.user as any).id;
+    const { rows } = await pool.query(`
+      SELECT u.id, u.username, u.display_name, u.profile_image_url,
+             uf.created_at as followed_at
+      FROM user_follows uf
+      JOIN users u ON u.id = uf.follower_id
+      WHERE uf.following_id = $1
+      ORDER BY uf.created_at DESC
+    `, [userId]);
+    res.json(rows);
+  });
+
+  app.get("/api/users/:userId/follow-status", isAuthenticated, async (req, res) => {
+    const meId = (req.user as any).id;
+    const { rows } = await pool.query(`SELECT id FROM user_follows WHERE follower_id = $1 AND following_id = $2`, [meId, req.params.userId]);
+    res.json({ following: rows.length > 0 });
+  });
+
+  app.post("/api/users/:userId/follow", isAuthenticated, async (req, res) => {
+    const meId = (req.user as any).id;
+    const targetId = req.params.userId;
+    if (meId === targetId) return res.status(400).json({ message: "Non puoi seguire te stesso" });
+    await pool.query(`INSERT INTO user_follows (follower_id, following_id) VALUES ($1, $2) ON CONFLICT DO NOTHING`, [meId, targetId]);
+    res.json({ following: true });
+  });
+
+  app.delete("/api/users/:userId/follow", isAuthenticated, async (req, res) => {
+    const meId = (req.user as any).id;
+    await pool.query(`DELETE FROM user_follows WHERE follower_id = $1 AND following_id = $2`, [meId, req.params.userId]);
+    res.json({ following: false });
+  });
+
+  // Activity feed from people I follow
+  app.get("/api/user/feed", isAuthenticated, async (req, res) => {
+    const userId = (req.user as any).id;
+    const { rows } = await pool.query(`
+      SELECT ubt.id, ubt.rating, ubt.notes, ubt.photo_url, ubt.format, ubt.tasted_at,
+             u.id as user_id, u.username, u.display_name, u.profile_image_url,
+             b.id as beer_id, b.name as beer_name, b.style as beer_style, b.image_url as beer_image,
+             br.name as brewery_name
+      FROM user_beer_tastings ubt
+      JOIN users u ON u.id = ubt.user_id
+      JOIN beers b ON b.id = ubt.beer_id
+      LEFT JOIN breweries br ON br.id = b.brewery_id
+      WHERE ubt.user_id IN (
+        SELECT following_id FROM user_follows WHERE follower_id = $1
+      )
+      ORDER BY ubt.tasted_at DESC
+      LIMIT 50
+    `, [userId]);
+    res.json(rows);
+  });
+
+  // ─────────────────────────────────────────────────────────────────────────────
+  // USER STATS (computed from tastings)
+  // ─────────────────────────────────────────────────────────────────────────────
+  app.get("/api/user/stats", isAuthenticated, async (req, res) => {
+    const userId = (req.user as any).id;
+    const [totalRes, avgRes, styleRes, breweryRes, formatRes, monthlyRes, topBeersRes, streakRes] = await Promise.all([
+      pool.query(`SELECT COUNT(*) as total, AVG(rating) as avg_rating, MAX(rating) as max_rating FROM user_beer_tastings WHERE user_id = $1`, [userId]),
+      pool.query(`SELECT rating, COUNT(*) as cnt FROM user_beer_tastings WHERE user_id = $1 GROUP BY rating ORDER BY cnt DESC LIMIT 1`, [userId]),
+      pool.query(`SELECT b.style, COUNT(*) as cnt FROM user_beer_tastings ubt JOIN beers b ON b.id = ubt.beer_id WHERE ubt.user_id = $1 AND b.style IS NOT NULL GROUP BY b.style ORDER BY cnt DESC LIMIT 5`, [userId]),
+      pool.query(`SELECT br.name, br.logo_url, COUNT(*) as cnt FROM user_beer_tastings ubt JOIN beers b ON b.id = ubt.beer_id LEFT JOIN breweries br ON br.id = b.brewery_id WHERE ubt.user_id = $1 AND br.name IS NOT NULL GROUP BY br.name, br.logo_url ORDER BY cnt DESC LIMIT 5`, [userId]),
+      pool.query(`SELECT format, COUNT(*) as cnt FROM user_beer_tastings WHERE user_id = $1 AND format IS NOT NULL GROUP BY format ORDER BY cnt DESC`, [userId]),
+      pool.query(`SELECT DATE_TRUNC('month', tasted_at) as month, COUNT(*) as cnt FROM user_beer_tastings WHERE user_id = $1 GROUP BY month ORDER BY month DESC LIMIT 12`, [userId]),
+      pool.query(`SELECT b.id, b.name, b.image_url, b.style, ubt.rating FROM user_beer_tastings ubt JOIN beers b ON b.id = ubt.beer_id WHERE ubt.user_id = $1 AND ubt.rating IS NOT NULL ORDER BY ubt.rating DESC, ubt.tasted_at DESC LIMIT 10`, [userId]),
+      pool.query(`
+        WITH daily AS (
+          SELECT DATE_TRUNC('day', tasted_at)::date AS d FROM user_beer_tastings WHERE user_id = $1
+          GROUP BY d ORDER BY d DESC
+        ),
+        streaks AS (
+          SELECT d, d - ROW_NUMBER() OVER (ORDER BY d DESC)::int * INTERVAL '1 day' as grp FROM daily
+        )
+        SELECT COUNT(*) as streak FROM streaks WHERE grp = (SELECT grp FROM streaks LIMIT 1)
+      `, [userId]),
+    ]);
+    res.json({
+      total: parseInt(totalRes.rows[0].total),
+      avgRating: totalRes.rows[0].avg_rating ? parseFloat(parseFloat(totalRes.rows[0].avg_rating).toFixed(1)) : null,
+      topStyles: styleRes.rows,
+      topBreweries: breweryRes.rows,
+      formatBreakdown: formatRes.rows,
+      monthlyActivity: monthlyRes.rows.reverse(),
+      topBeers: topBeersRes.rows,
+      currentStreak: parseInt(streakRes.rows[0]?.streak ?? 0),
+    });
+  });
+
+  // ─────────────────────────────────────────────────────────────────────────────
+  // BADGES (computed from activity)
+  // ─────────────────────────────────────────────────────────────────────────────
+  app.get("/api/user/badges", isAuthenticated, async (req, res) => {
+    const userId = (req.user as any).id;
+    const [countRes, withNotesRes, withPhotoRes, stylesRes, hasMaxRatingRes, followsRes] = await Promise.all([
+      pool.query(`SELECT COUNT(*) as cnt FROM user_beer_tastings WHERE user_id = $1`, [userId]),
+      pool.query(`SELECT COUNT(*) as cnt FROM user_beer_tastings WHERE user_id = $1 AND notes IS NOT NULL AND notes != ''`, [userId]),
+      pool.query(`SELECT COUNT(*) as cnt FROM user_beer_tastings WHERE user_id = $1 AND photo_url IS NOT NULL`, [userId]),
+      pool.query(`SELECT COUNT(DISTINCT b.style) as cnt FROM user_beer_tastings ubt JOIN beers b ON b.id = ubt.beer_id WHERE ubt.user_id = $1 AND b.style IS NOT NULL`, [userId]),
+      pool.query(`SELECT COUNT(*) as cnt FROM user_beer_tastings WHERE user_id = $1 AND rating >= 5.0`, [userId]),
+      pool.query(`SELECT COUNT(*) as cnt FROM user_follows WHERE follower_id = $1`, [userId]),
+    ]);
+    const total = parseInt(countRes.rows[0].cnt);
+    const withNotes = parseInt(withNotesRes.rows[0].cnt);
+    const withPhoto = parseInt(withPhotoRes.rows[0].cnt);
+    const styles = parseInt(stylesRes.rows[0].cnt);
+    const maxRatings = parseInt(hasMaxRatingRes.rows[0].cnt);
+    const follows = parseInt(followsRes.rows[0].cnt);
+
+    const allBadges = [
+      { key: "primo_sorso", name: "Primo Sorso", description: "Primo assaggio registrato", icon: "🍺", earned: total >= 1 },
+      { key: "esploratore", name: "Esploratore", description: "10 assaggi completati", icon: "🧭", earned: total >= 10 },
+      { key: "degustatore", name: "Degustatore", description: "25 assaggi completati", icon: "🎓", earned: total >= 25 },
+      { key: "sommelier", name: "Sommelier", description: "50 assaggi completati", icon: "🏆", earned: total >= 50 },
+      { key: "guru", name: "Guru della Birra", description: "100 assaggi completati", icon: "⭐", earned: total >= 100 },
+      { key: "critico", name: "Critico", description: "10 assaggi con note scritte", icon: "✍️", earned: withNotes >= 10 },
+      { key: "fotografo", name: "Fotografo", description: "Prima foto aggiunta a un assaggio", icon: "📸", earned: withPhoto >= 1 },
+      { key: "cacciatore_stili", name: "Cacciatore di Stili", description: "5 stili diversi assaggiati", icon: "🎯", earned: styles >= 5 },
+      { key: "globe_trotter", name: "Globe Trotter", description: "10 stili diversi assaggiati", icon: "🌍", earned: styles >= 10 },
+      { key: "perfezionista", name: "Perfezionista", description: "Voto 5.0 dato a una birra", icon: "💎", earned: maxRatings >= 1 },
+      { key: "sociale", name: "Sociale", description: "Segui 5 amici", icon: "👥", earned: follows >= 5 },
+    ];
+    res.json(allBadges);
+  });
+
+  // ─────────────────────────────────────────────────────────────────────────────
+  // AI SOMMELIER (algorithmic recommendations)
+  // ─────────────────────────────────────────────────────────────────────────────
+  app.get("/api/user/recommendations", isAuthenticated, async (req, res) => {
+    const userId = (req.user as any).id;
+    // 1. Get user's top styles (from ratings >= 4)
+    const { rows: topStyles } = await pool.query(`
+      SELECT b.style, AVG(ubt.rating) as avg_rating, COUNT(*) as cnt
+      FROM user_beer_tastings ubt
+      JOIN beers b ON b.id = ubt.beer_id
+      WHERE ubt.user_id = $1 AND ubt.rating >= 4 AND b.style IS NOT NULL
+      GROUP BY b.style
+      ORDER BY avg_rating DESC, cnt DESC
+      LIMIT 3
+    `, [userId]);
+
+    // 2. Get beers user hasn't tasted in those styles, sorted by community avg rating
+    const styles = topStyles.map((r: any) => r.style);
+    if (styles.length === 0) {
+      // No preferences yet - recommend most rated beers overall
+      const { rows } = await pool.query(`
+        SELECT b.id, b.name, b.style, b.abv, b.image_url, br.name as brewery_name,
+               AVG(ubt2.rating) as avg_rating, COUNT(ubt2.id) as rating_count
+        FROM beers b
+        LEFT JOIN breweries br ON br.id = b.brewery_id
+        LEFT JOIN user_beer_tastings ubt2 ON ubt2.beer_id = b.id
+        WHERE b.id NOT IN (SELECT beer_id FROM user_beer_tastings WHERE user_id = $1)
+        GROUP BY b.id, br.name
+        HAVING COUNT(ubt2.id) >= 2
+        ORDER BY avg_rating DESC NULLS LAST
+        LIMIT 10
+      `, [userId]);
+      return res.json({ recommendations: rows, reason: "Le birre più apprezzate dalla community" });
+    }
+
+    const { rows } = await pool.query(`
+      SELECT b.id, b.name, b.style, b.abv, b.image_url, br.name as brewery_name,
+             AVG(ubt2.rating) as avg_rating, COUNT(ubt2.id) as rating_count
+      FROM beers b
+      LEFT JOIN breweries br ON br.id = b.brewery_id
+      LEFT JOIN user_beer_tastings ubt2 ON ubt2.beer_id = b.id
+      WHERE b.style = ANY($2::text[])
+        AND b.id NOT IN (SELECT beer_id FROM user_beer_tastings WHERE user_id = $1)
+      GROUP BY b.id, br.name
+      ORDER BY avg_rating DESC NULLS LAST, rating_count DESC
+      LIMIT 10
+    `, [userId, styles]);
+    res.json({ recommendations: rows, topStyles: styles, reason: `Basate sui tuoi stili preferiti: ${styles.slice(0, 2).join(", ")}` });
+  });
+
+  // ─────────────────────────────────────────────────────────────────────────────
+  // PUBLIC USER PROFILE (for social features)
+  // ─────────────────────────────────────────────────────────────────────────────
+  app.get("/api/users/:userId/profile", async (req, res) => {
+    const { rows } = await pool.query(`
+      SELECT u.id, u.username, u.display_name, u.profile_image_url, u.created_at,
+             COUNT(DISTINCT ubt.id) as tasting_count,
+             ROUND(AVG(ubt.rating)::numeric, 1) as avg_rating,
+             COUNT(DISTINCT uf1.follower_id) as followers_count,
+             COUNT(DISTINCT uf2.following_id) as following_count
+      FROM users u
+      LEFT JOIN user_beer_tastings ubt ON ubt.user_id = u.id
+      LEFT JOIN user_follows uf1 ON uf1.following_id = u.id
+      LEFT JOIN user_follows uf2 ON uf2.follower_id = u.id
+      WHERE u.id = $1
+      GROUP BY u.id
+    `, [req.params.userId]);
+    if (!rows[0]) return res.status(404).json({ message: "Utente non trovato" });
+    res.json(rows[0]);
+  });
+
+  app.get("/api/users/:userId/tastings", async (req, res) => {
+    const { rows } = await pool.query(`
+      SELECT ubt.id, ubt.rating, ubt.notes, ubt.photo_url, ubt.format, ubt.tasted_at,
+             b.id as beer_id, b.name as beer_name, b.style as beer_style, b.image_url as beer_image,
+             br.name as brewery_name
+      FROM user_beer_tastings ubt
+      JOIN beers b ON b.id = ubt.beer_id
+      LEFT JOIN breweries br ON br.id = b.brewery_id
+      WHERE ubt.user_id = $1
+      ORDER BY ubt.tasted_at DESC
+      LIMIT 20
+    `, [req.params.userId]);
+    res.json(rows);
+  });
+
+  // Check if beer is in user's cellar
+  app.get("/api/user/cellar/:beerId", isAuthenticated, async (req, res) => {
+    const userId = (req.user as any).id;
+    const { rows } = await pool.query(`SELECT * FROM user_cellar WHERE user_id = $1 AND beer_id = $2`, [userId, req.params.beerId]);
+    res.json(rows[0] ?? null);
   });
 
   const httpServer = createServer(app);

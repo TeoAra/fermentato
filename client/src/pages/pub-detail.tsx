@@ -45,6 +45,7 @@ import { format, isFuture } from "date-fns";
 import { it as itLocale } from "date-fns/locale";
 import { getMapNavigationUrl } from "@/lib/utils";
 import { usePubLiveUpdates } from "@/hooks/usePubLiveUpdates";
+import { NextTapVoting } from "@/components/NextTapVoting";
 
 type OpenStatus = 'open' | 'closing_soon' | 'opening_soon' | 'closed';
 
@@ -761,6 +762,9 @@ export default function PubDetail() {
                     <TapList 
                       tapList={Array.isArray(tapList) ? tapList : []} 
                     />
+                  )}
+                  {pub && (pub as any).id && (
+                    <NextTapVoting pubId={(pub as any).id} isOwner={canManage} />
                   )}
                 </TabsContent>
 

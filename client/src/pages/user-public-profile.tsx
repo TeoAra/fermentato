@@ -18,6 +18,7 @@ import {
   type AchievementData,
 } from "@/lib/badges";
 import ImageWithFallback from "@/components/image-with-fallback";
+import { FollowButton } from "@/components/FollowButton";
 import { format } from "date-fns";
 import { it } from "date-fns/locale";
 
@@ -174,7 +175,10 @@ export default function UserPublicProfile() {
                 </div>
               </div>
               <div className="text-center sm:text-left text-white">
-                <h1 className="text-3xl font-bold mb-1">{displayName}</h1>
+                <div className="flex items-center justify-center sm:justify-start gap-3 mb-1">
+                  <h1 className="text-3xl font-bold">{displayName}</h1>
+                  {profile.id && <FollowButton userId={profile.id} className="border-white/30 text-white hover:bg-white/10" />}
+                </div>
                 <div className="flex items-center justify-center sm:justify-start gap-2 mb-2">
                   <span className="text-white/90 font-semibold text-lg">{badge.name}</span>
                   <span className="bg-white/20 text-white text-xs px-2 py-0.5 rounded-full">Livello {badge.level}</span>

@@ -981,6 +981,56 @@ export const festivalRatings = pgTable("festival_ratings", {
 }, (t) => [unique().on(t.tapId, t.userId)]);
 export type FestivalRating = typeof festivalRatings.$inferSelect;
 
+// ─── Virtual Cellar ───────────────────────────────────────────────────────────
+export const userCellar = pgTable("user_cellar", {
+  id: serial("id").primaryKey(),
+  userId: varchar("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  beerId: integer("beer_id").notNull().references(() => beers.id, { onDelete: "cascade" }),
+  quantity: integer("quantity").default(1),
+  notes: text("notes"),
+  vintage: varchar("vintage", { length: 10 }),
+  purchasePrice: decimal("purchase_price", { precision: 8, scale: 2 }),
+  addedAt: timestamp("added_at").defaultNow(),
+}, (t) => [unique().on(t.userId, t.beerId)]);
+export type UserCellarItem = typeof userCellar.$inferSelect;
+
+// ─── Wishlist ─────────────────────────────────────────────────────────────────
+export const userWishlist = pgTable("user_wishlist", {
+  id: serial("id").primaryKey(),
+  userId: varchar("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  beerId: integer("beer_id").notNull().references(() => beers.id, { onDelete: "cascade" }),
+  addedAt: timestamp("added_at").defaultNow(),
+}, (t) => [unique().on(t.userId, t.beerId)]);
+export type UserWishlistItem = typeof userWishlist.$inferSelect;
+
+// ─── Prossima Spina ───────────────────────────────────────────────────────────
+export const nextTapProposals = pgTable("next_tap_proposals", {
+  id: serial("id").primaryKey(),
+  pubId: integer("pub_id").notNull().references(() => pubs.id, { onDelete: "cascade" }),
+  beerId: integer("beer_id").notNull().references(() => beers.id, { onDelete: "cascade" }),
+  description: text("description"),
+  isActive: boolean("is_active").default(true),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+export type NextTapProposal = typeof nextTapProposals.$inferSelect;
+
+export const nextTapVotes = pgTable("next_tap_votes", {
+  id: serial("id").primaryKey(),
+  proposalId: integer("proposal_id").notNull().references(() => nextTapProposals.id, { onDelete: "cascade" }),
+  userId: varchar("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  votedAt: timestamp("voted_at").defaultNow(),
+}, (t) => [unique().on(t.proposalId, t.userId)]);
+export type NextTapVote = typeof nextTapVotes.$inferSelect;
+
+// ─── User Follows ─────────────────────────────────────────────────────────────
+export const userFollows = pgTable("user_follows", {
+  id: serial("id").primaryKey(),
+  followerId: varchar("follower_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  followingId: varchar("following_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  createdAt: timestamp("created_at").defaultNow(),
+}, (t) => [unique().on(t.followerId, t.followingId)]);
+export type UserFollow = typeof userFollows.$inferSelect;
+
 export const pubRegistrationSchema = insertPubSchema.extend({
   vatNumber: z.string().min(11, "P.IVA deve essere di almeno 11 caratteri"),
   businessName: z.string().min(1, "Ragione sociale è obbligatoria"),

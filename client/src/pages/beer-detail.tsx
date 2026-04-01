@@ -50,6 +50,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import BeerTastingForm from "@/components/BeerTastingForm";
+import { WishlistButton } from "@/components/WishlistButton";
 import ImageWithFallback from "@/components/image-with-fallback";
 import { ImageUpload } from "@/components/image-upload";
 import SuggestChangeDialog from "@/components/SuggestChangeDialog";
@@ -334,6 +335,24 @@ export default function BeerDetail() {
 
   const existingTasting = userTastings.find((tasting: any) => tasting.beerId === parseInt(id || '0'));
   const hasTasted = !!existingTasting;
+
+  // Cellar check
+  const { data: cellarItem, refetch: refetchCellar } = useQuery<any>({
+    queryKey: ["/api/user/cellar", id],
+    queryFn: () => fetch(`/api/user/cellar/${id}`).then(r => r.json()),
+    enabled: isAuthenticated && !!id,
+  });
+  const inCellar = !!cellarItem;
+  const cellarMutation = useMutation({
+    mutationFn: () => inCellar
+      ? apiRequest("DELETE", `/api/user/cellar/${id}`)
+      : apiRequest("POST", "/api/user/cellar", { beerId: parseInt(id!), quantity: 1 }),
+    onSuccess: () => {
+      refetchCellar();
+      queryClient.invalidateQueries({ queryKey: ["/api/user/cellar"] });
+      toast({ title: inCellar ? "Rimossa dalla cantina" : "Aggiunta alla cantina 🍷" });
+    },
+  });
 
   // Beers from the same brewery (for "Potrebbe piacerti")
   const { data: breweryBeers = [] } = useQuery<any[]>({
@@ -666,6 +685,19 @@ export default function BeerDetail() {
                   className={`h-9 w-9 flex items-center justify-center rounded-full transition-all ${isBeerFavorited ? 'bg-red-50 dark:bg-red-950/40 text-red-500' : 'bg-stone-100 dark:bg-stone-800 text-stone-500 hover:text-red-500'}`}>
                   <Heart className={`h-4 w-4 ${isBeerFavorited ? 'fill-current' : ''}`} />
                 </button>
+                {isAuthenticated && id && (
+                  <WishlistButton beerId={parseInt(id)} />
+                )}
+                {isAuthenticated && (
+                  <button
+                    onClick={() => cellarMutation.mutate()}
+                    disabled={cellarMutation.isPending}
+                    title={inCellar ? "Rimuovi dalla cantina" : "Aggiungi alla cantina"}
+                    className={`h-9 w-9 flex items-center justify-center rounded-full transition-all ${inCellar ? "bg-primary/10 text-primary" : "bg-stone-100 dark:bg-stone-800 text-stone-500"}`}
+                  >
+                    <Wine className="h-4 w-4" />
+                  </button>
+                )}
                 <button onClick={handleShare} title="Condividi" data-testid="button-share"
                   className="h-9 w-9 flex items-center justify-center rounded-full bg-stone-100 dark:bg-stone-800 text-stone-500 dark:text-stone-400 transition-colors">
                   <Share2 className="h-4 w-4" />
