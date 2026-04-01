@@ -19,39 +19,59 @@ async function throwIfResNotOk(res: Response) {
   }
 }
 
+/**
+ * Supports two calling conventions:
+ *   apiRequest("POST", "/api/foo", body)          — legacy (method-first)
+ *   apiRequest("/api/foo", { method: "POST" }, body) — new (path-first)
+ */
 export async function apiRequest(
-  path: string,
-  options?: RequestInit,
-  jsonBody?: unknown,
+  pathOrMethod: string,
+  pathOrOptions?: string | RequestInit,
+  jsonBodyOrOptions?: unknown,
 ): Promise<any> {
-  if (options?.method && typeof options.method !== 'string') {
-    console.warn('apiRequest: method should be string, got:', typeof options.method, options.method);
-    const { method, ...cleanOptions } = options;
-    options = { ...cleanOptions, method: 'GET' };
+  let path: string;
+  let options: RequestInit | undefined;
+  let jsonBody: unknown;
+
+  if (
+    typeof pathOrMethod === 'string' &&
+    (pathOrMethod === 'GET' || pathOrMethod === 'POST' || pathOrMethod === 'PUT' ||
+     pathOrMethod === 'PATCH' || pathOrMethod === 'DELETE') &&
+    typeof pathOrOptions === 'string'
+  ) {
+    // Legacy: apiRequest("POST", "/api/foo", bodyObj)
+    path = pathOrOptions;
+    options = { method: pathOrMethod };
+    jsonBody = jsonBodyOrOptions;
+  } else {
+    // New: apiRequest("/api/foo", { method: "POST" }, bodyObj)
+    path = pathOrMethod;
+    options = pathOrOptions as RequestInit | undefined;
+    jsonBody = jsonBodyOrOptions;
   }
 
-  const method = options?.method ? options.method.toUpperCase() : 'GET';
-  
-  let body: BodyInit | undefined;
+  const method = options?.method ? (options.method as string).toUpperCase() : 'GET';
+
+  let fetchBody: BodyInit | undefined;
   let headers: Record<string, string> = { ...(options?.headers as Record<string, string>) };
-  
+
   if (jsonBody !== undefined) {
     if (jsonBody instanceof FormData) {
-      body = jsonBody;
+      fetchBody = jsonBody;
     } else {
-      body = JSON.stringify(jsonBody);
+      fetchBody = JSON.stringify(jsonBody);
       headers = { ...headers, 'Content-Type': 'application/json' };
     }
   } else if (options?.body) {
     if (options.body instanceof FormData) {
-      body = options.body;
+      fetchBody = options.body;
     } else if (typeof options.body === 'string') {
-      body = options.body;
+      fetchBody = options.body;
       if (!headers['Content-Type'] && !headers['content-type']) {
         headers = { ...headers, 'Content-Type': 'application/json' };
       }
     } else {
-      body = JSON.stringify(options.body);
+      fetchBody = JSON.stringify(options.body);
       headers = { ...headers, 'Content-Type': 'application/json' };
     }
   }
@@ -60,16 +80,16 @@ export async function apiRequest(
     ...options,
     method,
     headers,
-    body,
+    body: fetchBody,
     credentials: 'include',
   });
 
   await throwIfResNotOk(res);
-  
+
   if (res.status !== 204 && res.headers.get('content-type')?.includes('application/json')) {
     return await res.json();
   }
-  
+
   return null;
 }
 
