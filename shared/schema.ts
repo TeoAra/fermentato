@@ -294,9 +294,10 @@ export const userBeerTastings = pgTable("user_beer_tastings", {
   id: serial("id").primaryKey(),
   userId: varchar("user_id").references(() => users.id, { onDelete: "cascade" }).notNull(),
   beerId: integer("beer_id").references(() => beers.id).notNull(),
-  rating: integer("rating"), // 1-5 stelle (opzionale)
+  rating: decimal("rating", { precision: 3, scale: 1 }), // 0.5-5.0 scala decimale
   personalNotes: text("personal_notes"), // Note personali dell'utente
   format: varchar("format", { length: 100 }), // Come l'ha bevuta (es. alla spina, bottiglia, etc.)
+  photoUrl: text("photo_url"), // Foto dell'assaggio
   tastedAt: timestamp("tasted_at").defaultNow(),
   pubId: integer("pub_id").references(() => pubs.id), // Dove l'ha assaggiata (opzionale)
   ownerReply: text("owner_reply"), // Risposta del proprietario del birrificio

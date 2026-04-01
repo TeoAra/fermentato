@@ -317,13 +317,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   })();
 
-  // Startup: ensure user_beer_tastings has owner_reply columns
+  // Startup: ensure user_beer_tastings has owner_reply columns + photo + decimal rating
   (async () => {
     try {
       await pool.query(`ALTER TABLE user_beer_tastings ADD COLUMN IF NOT EXISTS owner_reply text`);
       await pool.query(`ALTER TABLE user_beer_tastings ADD COLUMN IF NOT EXISTS owner_reply_at timestamp`);
+      await pool.query(`ALTER TABLE user_beer_tastings ADD COLUMN IF NOT EXISTS photo_url text`);
+      await pool.query(`ALTER TABLE user_beer_tastings ALTER COLUMN rating TYPE numeric(3,1) USING rating::numeric`);
     } catch (e) {
-      console.error("[user_beer_tastings] owner_reply migration error:", e);
+      console.error("[user_beer_tastings] migration error:", e);
     }
   })();
 
@@ -2434,13 +2436,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const userId = (req.user as any).id;
       const tastingId = parseInt(req.params.id);
-      const { personalNotes, rating, pubId, format } = req.body;
+      const { personalNotes, rating, pubId, format, photoUrl } = req.body;
 
       const updateData: any = {};
       if (personalNotes !== undefined) updateData.personalNotes = personalNotes;
       if (rating !== undefined) updateData.rating = rating;
       if (pubId !== undefined) updateData.pubId = pubId;
       if (format !== undefined) updateData.format = format;
+      if (photoUrl !== undefined) updateData.photoUrl = photoUrl;
 
       const updatedTasting = await storage.updateBeerTasting(tastingId, updateData, userId);
       res.json(updatedTasting);
@@ -2448,6 +2451,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.error("Error updating beer tasting:", error);
       res.status(500).json({ message: "Failed to update beer tasting" });
     }
+  });
+
+  // Upload tasting photo
+  app.post('/api/user/beer-tastings/upload-photo', isAuthenticated, (req: any, res, next) => {
+    upload.single('photo')(req, res, async (err) => {
+      if (err) return res.status(400).json({ message: "Upload error: " + err.message });
+      if (!req.file) return res.status(400).json({ message: "No file uploaded" });
+      try {
+        const photoUrl = await uploadImage(req.file.path, 'tasting-photos');
+        res.json({ photoUrl });
+      } catch (error) {
+        console.error("Error uploading tasting photo:", error);
+        res.status(500).json({ message: "Failed to upload photo" });
+      }
+    });
   });
 
   // Admin-only middleware
@@ -3844,6 +3862,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.error("Error adding beer tasting:", error);
       res.status(500).json({ message: "Failed to add beer tasting" });
     }
+  });
+
+  // Upload tasting photo (second registration point)
+  app.post("/api/user/beer-tastings/upload-photo", isAuthenticated, (req: any, res) => {
+    upload.single('photo')(req, res, async (err: any) => {
+      if (err) return res.status(400).json({ message: "Upload error: " + err.message });
+      if (!req.file) return res.status(400).json({ message: "No file uploaded" });
+      try {
+        const photoUrl = await uploadImage(req.file.path, 'tasting-photos');
+        res.json({ photoUrl });
+      } catch (error) {
+        console.error("Error uploading tasting photo:", error);
+        res.status(500).json({ message: "Failed to upload photo" });
+      }
+    });
   });
 
   app.delete("/api/user/beer-tastings/:beerId", isAuthenticated, async (req: any, res) => {
