@@ -1302,10 +1302,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         storage.searchBreweries(query),
         storage.searchBeers(query, filters),
         pool.query(
-          `SELECT id, username, display_name, profile_image_url
+          `SELECT id, nickname, first_name, last_name, profile_image_url
            FROM users
-           WHERE username ILIKE $1 OR display_name ILIKE $1
-           ORDER BY display_name NULLS LAST
+           WHERE nickname ILIKE $1 OR first_name ILIKE $1 OR last_name ILIKE $1
+             OR (first_name || ' ' || last_name) ILIKE $1
+           ORDER BY nickname NULLS LAST
            LIMIT 10`,
           [`%${query}%`]
         ),

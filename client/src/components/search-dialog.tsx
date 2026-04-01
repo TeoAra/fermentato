@@ -518,29 +518,29 @@ export default function SearchDialog({ isOpen, onClose }: SearchDialogProps) {
                             onClick={() => {
                               saveSearch(searchTerm);
                               handleClose();
-                              window.location.href = `/user/${u.username}`;
+                              window.location.href = `/user/${u.nickname ?? u.id}`;
                             }}
                           >
                             <div className="flex items-center gap-3">
                               {u.profile_image_url ? (
                                 <img
                                   src={u.profile_image_url}
-                                  alt={u.display_name ?? u.username}
+                                  alt={u.nickname ?? `${u.first_name} ${u.last_name}`}
                                   className="h-10 w-10 rounded-full object-cover flex-shrink-0"
                                 />
                               ) : (
                                 <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
                                   <span className="text-primary text-sm font-bold">
-                                    {(u.display_name ?? u.username ?? "?")[0].toUpperCase()}
+                                    {(u.nickname ?? u.first_name ?? "?")[0].toUpperCase()}
                                   </span>
                                 </div>
                               )}
                               <div className="flex-1 min-w-0">
                                 <div className="font-medium text-sm text-foreground dark:text-white truncate group-hover:text-orange-600 dark:group-hover:text-orange-400 transition-colors">
-                                  {u.display_name ?? u.username}
+                                  {[u.first_name, u.last_name].filter(Boolean).join(" ") || u.nickname}
                                 </div>
-                                {u.display_name && (
-                                  <div className="text-xs text-muted-foreground dark:text-stone-400">@{u.username}</div>
+                                {u.nickname && (
+                                  <div className="text-xs text-muted-foreground dark:text-stone-400">@{u.nickname}</div>
                                 )}
                               </div>
                               <ArrowRight className="h-4 w-4 text-stone-300 group-hover:text-orange-500 flex-shrink-0 opacity-0 group-hover:opacity-100 transition-all duration-200" />
