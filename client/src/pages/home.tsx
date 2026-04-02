@@ -173,10 +173,16 @@ export default function Home() {
         ...pub,
         _distance: pub.latitude && pub.longitude
           ? haversineDistance(userLocation.lat, userLocation.lng, parseFloat(pub.latitude), parseFloat(pub.longitude))
-          : Infinity,
+          : null,
       }))
-      .filter((pub) => pub._distance <= distanceKm)
-      .sort((a, b) => a._distance - b._distance)
+      // Includi sempre pub senza coordinate (senza GPS), filtra solo quelli con distanza nota > raggio
+      .filter((pub) => pub._distance === null || pub._distance <= distanceKm)
+      .sort((a, b) => {
+        if (a._distance === null && b._distance === null) return 0;
+        if (a._distance === null) return 1;
+        if (b._distance === null) return -1;
+        return a._distance - b._distance;
+      })
       .slice(0, 10);
   }, [pubs, userLocation, distanceKm]);
 
@@ -240,20 +246,21 @@ export default function Home() {
             </button>
           </Link>
 
-          {/* Scrollable filter pills */}
-          <div className="flex items-center gap-2 overflow-x-auto scrollbar-hide flex-1 min-w-0">
-            {/* Distance picker */}
-            <div className="relative flex-shrink-0">
-              <button
-                onClick={() => setShowDistancePicker(v => !v)}
-                className="flex items-center gap-1.5 bg-white dark:bg-card border border-stone-200 dark:border-border rounded-full px-3.5 py-2 text-sm font-bold text-foreground shadow-sm whitespace-nowrap"
-              >
-                {distanceKm} km
-                <ChevronDown className="w-3.5 h-3.5 text-stone-400" />
-              </button>
-              {showDistancePicker && (
-                <div className="absolute top-10 left-0 z-50 bg-white dark:bg-card border border-stone-200 dark:border-border rounded-2xl shadow-xl overflow-hidden min-w-[100px]">
-                  {[5, 10, 25, 50, 100].map(d => (
+          {/* Distance picker — FUORI dal container overflow-x-auto per evitare il clipping */}
+          <div className="relative flex-shrink-0">
+            <button
+              onClick={() => setShowDistancePicker(v => !v)}
+              className="flex items-center gap-1.5 bg-white dark:bg-card border border-stone-200 dark:border-border rounded-full px-3.5 py-2 text-sm font-bold text-foreground shadow-sm whitespace-nowrap"
+            >
+              {distanceKm} km
+              <ChevronDown className="w-3.5 h-3.5 text-stone-400" />
+            </button>
+            {showDistancePicker && (
+              <>
+                {/* Overlay invisibile per chiudere al click esterno */}
+                <div className="fixed inset-0 z-40" onClick={() => setShowDistancePicker(false)} />
+                <div className="absolute top-11 left-0 z-50 bg-white dark:bg-card border border-stone-200 dark:border-border rounded-2xl shadow-xl overflow-hidden min-w-[110px]">
+                  {[5, 10, 15, 20, 30, 50, 100].map(d => (
                     <button
                       key={d}
                       onClick={() => { setDistanceKm(d); setShowDistancePicker(false); }}
@@ -263,9 +270,12 @@ export default function Home() {
                     </button>
                   ))}
                 </div>
-              )}
-            </div>
+              </>
+            )}
+          </div>
 
+          {/* Scrollable filter pills */}
+          <div className="flex items-center gap-2 overflow-x-auto scrollbar-hide flex-1 min-w-0">
             {/* Pub toggle */}
             <button
               onClick={() => setShowPubs(v => !v)}

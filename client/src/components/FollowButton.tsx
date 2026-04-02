@@ -29,8 +29,9 @@ export function FollowButton({ userId, className }: FollowButtonProps) {
       : apiRequest("POST", `/api/users/${userId}/follow`),
     onSuccess: (data) => {
       queryClient.setQueryData(["/api/users", userId, "follow-status"], data);
-      queryClient.invalidateQueries({ queryKey: ["/api/user/following"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/user/feed"] });
+      // Forza refetch immediato ignorando staleTime
+      queryClient.refetchQueries({ queryKey: ["/api/user/following"] });
+      queryClient.refetchQueries({ queryKey: ["/api/user/feed"] });
       toast({ title: following ? "Non stai più seguendo" : "Ora segui questo utente! 👋" });
     },
   });
