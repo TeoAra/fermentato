@@ -641,6 +641,36 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Public beer search — server-side, used by owner beer-proposal dialog
+  app.get("/api/beers/search", async (req, res) => {
+    try {
+      const { q: query = '', limit = '20' } = req.query;
+      const queryStr = (query as string).trim();
+      const limitNum = Math.min(parseInt(limit as string) || 20, 50);
+      if (queryStr.length < 2) return res.json([]);
+      const searchTerms = queryStr.toLowerCase().split(/\s+/).filter((t: string) => t.length > 0);
+      const whereClauses = searchTerms.map((term: string) => {
+        const p = `%${term}%`;
+        return sql`(LOWER(b.name) LIKE ${p} OR LOWER(b.style) LIKE ${p} OR LOWER(br.name) LIKE ${p})`;
+      });
+      const results = await db.execute(sql`
+        SELECT
+          b.id, b.name, b.style, b.abv, b.image_url AS "imageUrl",
+          b.is_gluten_free AS "isGlutenFree", b.is_alcohol_free AS "isAlcoholFree",
+          b.brewery_id AS "breweryId", br.name AS "breweryName", br.logo_url AS "breweryLogo"
+        FROM beers b
+        LEFT JOIN breweries br ON b.brewery_id = br.id
+        WHERE ${sql.join(whereClauses, sql` AND `)}
+        ORDER BY b.name ASC
+        LIMIT ${limitNum}
+      `);
+      res.json(results.rows);
+    } catch (error) {
+      console.error("Error searching beers:", error);
+      res.status(500).json({ message: "Failed to search beers" });
+    }
+  });
+
   // Get beer details by ID
   app.get("/api/beers/:id", async (req, res) => {
     try {
