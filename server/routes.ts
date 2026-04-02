@@ -3456,46 +3456,63 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Admin: batch geocode breweries without coordinates
+  // Strategia: deduplication per location string → poche API call Nominatim (gratuito, no key)
   app.post('/api/admin/breweries/geocode', isAuthenticated, isAdmin, async (req: any, res) => {
-    const apiKey = process.env.GOOGLE_API_KEY || process.env.VITE_GOOGLE_MAPS_API_KEY;
-    if (!apiKey) return res.status(500).json({ message: "Google API key non configurata" });
-
-    const { rows: toGeocode } = await pool.query(`
-      SELECT id, name, location, region, country
+    // Recupera le location UNICHE senza coordinate (un solo geocoding per città/regione)
+    const { rows: uniqueLocs } = await pool.query(`
+      SELECT DISTINCT ON (LOWER(TRIM(location)))
+        LOWER(TRIM(location)) AS loc_key,
+        location,
+        COALESCE(country, 'Italia') AS country
       FROM breweries
-      WHERE (latitude IS NULL OR latitude = '' OR latitude = '0')
-        AND location IS NOT NULL AND location != ''
-      ORDER BY id
-      LIMIT 200
+      WHERE (latitude IS NULL OR latitude::text = '' OR latitude::text = '0')
+        AND location IS NOT NULL AND TRIM(location) != ''
+      LIMIT 60
     `);
 
-    let geocoded = 0, failed = 0;
-    for (const b of toGeocode) {
-      const query = encodeURIComponent(`${b.location}, ${b.country || 'Italia'}`);
+    if (uniqueLocs.length === 0) {
+      return res.json({ total: 0, geocoded: 0, failed: 0, breweriesUpdated: 0 });
+    }
+
+    let geocoded = 0, failed = 0, breweriesUpdated = 0;
+
+    for (const row of uniqueLocs) {
+      const q = encodeURIComponent(`${row.location}, ${row.country}`);
       try {
-        const r = await fetch(`https://maps.googleapis.com/maps/api/geocode/json?address=${query}&key=${apiKey}`);
-        const data = await r.json() as any;
-        if (data.status === 'OK' && data.results?.[0]?.geometry?.location) {
-          const { lat, lng } = data.results[0].geometry.location;
-          await pool.query(
-            `UPDATE breweries SET latitude = $1, longitude = $2 WHERE id = $3`,
-            [String(lat), String(lng), b.id]
+        const r = await fetch(
+          `https://nominatim.openstreetmap.org/search?q=${q}&format=json&limit=1&accept-language=it`,
+          { headers: { 'User-Agent': 'Fermenta.to/1.0 (noreply@fermenta.to)' } }
+        );
+        const data = await r.json() as any[];
+        if (Array.isArray(data) && data[0]?.lat && data[0]?.lon) {
+          const lat = data[0].lat;
+          const lng = data[0].lon;
+          // Aggiorna TUTTI i birrifici con questa location in una sola query
+          const upd = await pool.query(
+            `UPDATE breweries
+             SET latitude = $1, longitude = $2
+             WHERE LOWER(TRIM(location)) = $3
+               AND (latitude IS NULL OR latitude::text = '' OR latitude::text = '0')`,
+            [lat, lng, row.loc_key]
           );
+          breweriesUpdated += upd.rowCount ?? 0;
           geocoded++;
         } else {
           failed++;
         }
-        // Evita rate limiting Google (50ms tra le richieste)
-        await new Promise(ok => setTimeout(ok, 50));
+        // Nominatim: max 1 req/sec
+        await new Promise(ok => setTimeout(ok, 1100));
       } catch {
         failed++;
+        await new Promise(ok => setTimeout(ok, 1100));
       }
     }
-    // Bust cache so la mappa mostri subito i birrifici geocodificati
+
+    // Bust cache → mappa aggiornata immediatamente
     _memCache.delete("breweries:all:200");
     _memCache.delete("breweries:all");
 
-    res.json({ total: toGeocode.length, geocoded, failed });
+    res.json({ total: uniqueLocs.length, geocoded, failed, breweriesUpdated });
   });
 
   // Admin: stats for any brewery

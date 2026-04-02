@@ -10,31 +10,32 @@ import { useQueryClient } from "@tanstack/react-query";
 
 function GeocodeBreweriesButton() {
   const [loading, setLoading] = useState(false);
-  const [result, setResult] = useState<{ total: number; geocoded: number; failed: number } | null>(null);
+  const [result, setResult] = useState<{ total: number; geocoded: number; failed: number; breweriesUpdated: number } | null>(null);
   const { toast } = useToast();
   const qc = useQueryClient();
 
   const handleGeocode = async () => {
     setLoading(true);
     setResult(null);
-    let totalGeocoded = 0, totalFailed = 0, rounds = 0;
+    let totalGeocoded = 0, totalFailed = 0, totalUpdated = 0, rounds = 0;
     try {
-      // Loop finché ci sono birrifici da geocodificare (batch da 200 alla volta)
+      // Loop finché ci sono location uniche da geocodificare (batch da 300 location alla volta)
       while (true) {
         const data = await apiRequest("POST", "/api/admin/breweries/geocode");
         totalGeocoded += data.geocoded;
         totalFailed += data.failed;
+        totalUpdated += data.breweriesUpdated ?? 0;
         rounds++;
-        setResult({ total: totalGeocoded + totalFailed, geocoded: totalGeocoded, failed: totalFailed });
+        setResult({ total: totalGeocoded + totalFailed, geocoded: totalGeocoded, failed: totalFailed, breweriesUpdated: totalUpdated });
         // Se non c'è più nulla da geocodificare, ci fermiamo
         if (data.total === 0 || data.geocoded === 0) break;
-        // Pausa tra i batch per non sovraccaricare l'API
-        await new Promise(ok => setTimeout(ok, 500));
+        // Piccola pausa tra i batch
+        await new Promise(ok => setTimeout(ok, 300));
       }
       qc.invalidateQueries({ queryKey: ["/api/breweries"] });
       toast({
         title: "Geocoding completato",
-        description: `${totalGeocoded} birrifici geocodificati in ${rounds} ${rounds === 1 ? "passaggio" : "passaggi"}`,
+        description: `${totalUpdated} birrifici aggiornati (${totalGeocoded} location uniche geocodificate)`,
       });
     } catch (e: any) {
       toast({ title: "Errore geocoding", description: e.message, variant: "destructive" });
@@ -52,7 +53,7 @@ function GeocodeBreweriesButton() {
         {result && (
           <p className="text-xs text-emerald-700 dark:text-emerald-400 mt-1 flex items-center gap-1">
             <CheckCircle2 className="w-3.5 h-3.5" />
-            {result.geocoded} geocodificati · {result.failed} falliti · {result.total} totali esaminati
+            {result.breweriesUpdated} birrifici aggiornati · {result.geocoded} location uniche · {result.failed} fallite
           </p>
         )}
       </div>
