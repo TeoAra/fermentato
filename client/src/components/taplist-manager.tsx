@@ -217,14 +217,18 @@ export function TapListManager({ pubId, tapList, bottleList = [] }: TapListManag
   const handleDeleteTapItem = async (item: TapItem) => {
     if (!confirm('Sei sicuro di voler rimuovere questa birra dalla tap list?')) return;
     const bottleItem = findBottleItem(item.beer.id);
-    await apiRequest(`/api/pubs/${pubId}/taplist/${item.id}`, { method: "DELETE" });
-    queryClient.invalidateQueries({ queryKey: ["/api/pubs", String(pubId), "taplist"] });
-    if (bottleItem) {
-      await apiRequest(`/api/pubs/${pubId}/bottles/${bottleItem.id}`, { method: "DELETE" });
-      queryClient.invalidateQueries({ queryKey: ["/api/pubs", String(pubId), "bottles"] });
-      toast({ title: "Birra rimossa", description: "Rimossa anche dalla cantina" });
-    } else {
-      toast({ title: "Birra rimossa dalla tap list!" });
+    try {
+      await apiRequest(`/api/pubs/${pubId}/taplist/${item.id}`, { method: "DELETE" });
+      queryClient.invalidateQueries({ queryKey: ["/api/pubs", String(pubId), "taplist"] });
+      if (bottleItem) {
+        await apiRequest(`/api/pubs/${pubId}/bottles/${bottleItem.id}`, { method: "DELETE" });
+        queryClient.invalidateQueries({ queryKey: ["/api/pubs", String(pubId), "bottles"] });
+        toast({ title: "Birra rimossa", description: "Rimossa anche dalla cantina" });
+      } else {
+        toast({ title: "Birra rimossa dalla tap list!" });
+      }
+    } catch {
+      toast({ title: "Errore", description: "Impossibile rimuovere la birra. Riprova.", variant: "destructive" });
     }
   };
 

@@ -1550,10 +1550,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
 
   // Update tap list item (pub owner only)
-  app.patch('/api/pubs/:pubId/taplist/:id', isAuthenticated, async (req, res) => {
+  app.patch('/api/pubs/:pubId/taplist/:id', isAuthenticated, async (req: any, res) => {
     try {
       const { pubId, id } = req.params;
       const data = req.body;
+
+      const userId = (req.user as any)?.id;
+      if (!userId) return res.status(401).json({ message: "Unauthorized" });
+      const canEdit = await isAdminOrPubOwner(userId, parseInt(pubId));
+      if (!canEdit) return res.status(403).json({ message: "Not authorized to modify this pub's tap list" });
       
       console.log('PATCH taplist item:', { pubId, id, data });
 
@@ -1581,9 +1586,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Delete tap list item (pub owner only)
-  app.delete('/api/pubs/:pubId/taplist/:id', isAuthenticated, async (req, res) => {
+  app.delete('/api/pubs/:pubId/taplist/:id', isAuthenticated, async (req: any, res) => {
     try {
       const { pubId, id } = req.params;
+
+      const userId = (req.user as any)?.id;
+      if (!userId) return res.status(401).json({ message: "Unauthorized" });
+      const canEdit = await isAdminOrPubOwner(userId, parseInt(pubId));
+      if (!canEdit) return res.status(403).json({ message: "Not authorized to modify this pub's tap list" });
       
       console.log('DELETE taplist item:', { pubId, id });
 

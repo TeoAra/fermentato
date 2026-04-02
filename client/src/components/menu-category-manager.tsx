@@ -196,9 +196,9 @@ export default function MenuCategoryManager({ pubId, categories }: MenuCategoryM
     },
     onMutate: async ({ id }) => {
       setPendingCategoryToggles(prev => new Set([...prev, id]));
-      await queryClient.cancelQueries({ queryKey: ["/api/pubs", pubId, "menu"] });
-      const prev = queryClient.getQueryData(["/api/pubs", pubId, "menu"]);
-      queryClient.setQueryData(["/api/pubs", pubId, "menu"], (old: any) =>
+      await queryClient.cancelQueries({ queryKey: ["/api/pubs", String(pubId), "menu"] });
+      const prev = queryClient.getQueryData(["/api/pubs", String(pubId), "menu"]);
+      queryClient.setQueryData(["/api/pubs", String(pubId), "menu"], (old: any) =>
         Array.isArray(old) ? old.map((cat: any) => cat.id === id ? { ...cat, isVisible: !cat.isVisible } : cat) : old
       );
       return { prev };
@@ -206,15 +206,16 @@ export default function MenuCategoryManager({ pubId, categories }: MenuCategoryM
     onSuccess: (data: any, { id }) => {
       setPendingCategoryToggles(prev => { const next = new Set(prev); next.delete(id); return next; });
       if (data?.isVisible !== undefined) {
-        queryClient.setQueryData(["/api/pubs", pubId, "menu"], (old: any) =>
+        queryClient.setQueryData(["/api/pubs", String(pubId), "menu"], (old: any) =>
           Array.isArray(old) ? old.map((cat: any) => cat.id === id ? { ...cat, isVisible: data.isVisible } : cat) : old
         );
       }
-      queryClient.invalidateQueries({ queryKey: ["/api/pubs", String(pubId), "menu", "full"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/pubs", String(pubId), "menu"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/pubs", String(pubId), "menu", "all-products"] });
     },
     onError: (_e: any, { id }, ctx: any) => {
       setPendingCategoryToggles(prev => { const next = new Set(prev); next.delete(id); return next; });
-      if (ctx?.prev) queryClient.setQueryData(["/api/pubs", pubId, "menu"], ctx.prev);
+      if (ctx?.prev) queryClient.setQueryData(["/api/pubs", String(pubId), "menu"], ctx.prev);
       toast({ title: "❌ Errore", description: "Impossibile aggiornare la visibilità", variant: "destructive" });
     },
   });
@@ -226,7 +227,7 @@ export default function MenuCategoryManager({ pubId, categories }: MenuCategoryM
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/pubs", String(pubId), "menu"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/pubs", pubId, "menu", "all-products"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/pubs", String(pubId), "menu", "all-products"] });
       setIsEditProductOpen(false);
       setEditingProduct(null);
       toast({ title: "✅ Prodotto aggiornato" });
@@ -242,7 +243,7 @@ export default function MenuCategoryManager({ pubId, categories }: MenuCategoryM
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/pubs", String(pubId), "menu"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/pubs", pubId, "menu", "all-products"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/pubs", String(pubId), "menu", "all-products"] });
       toast({ title: "🗑️ Prodotto eliminato" });
     },
     onError: () => {
@@ -252,7 +253,7 @@ export default function MenuCategoryManager({ pubId, categories }: MenuCategoryM
 
   const patchAllProductsCache = (itemIds: number[], newVisible: boolean) => {
     queryClient.setQueriesData<Record<number, any[]>>(
-      { queryKey: ["/api/pubs", pubId, "menu", "all-products"] },
+      { queryKey: ["/api/pubs", String(pubId), "menu", "all-products"] },
       (old) => {
         if (!old || typeof old !== 'object') return old;
         const updated: Record<number, any[]> = {};
@@ -264,7 +265,7 @@ export default function MenuCategoryManager({ pubId, categories }: MenuCategoryM
         return updated;
       }
     );
-    queryClient.setQueryData(["/api/pubs", pubId, "menu"], (old: any) =>
+    queryClient.setQueryData(["/api/pubs", String(pubId), "menu"], (old: any) =>
       Array.isArray(old) ? old.map((cat: any) => ({
         ...cat,
         items: (cat.items || []).map((item: any) =>
@@ -286,7 +287,8 @@ export default function MenuCategoryManager({ pubId, categories }: MenuCategoryM
       if (data?.isVisible !== undefined) {
         patchAllProductsCache([id], data.isVisible);
       }
-      queryClient.invalidateQueries({ queryKey: ["/api/pubs", String(pubId), "menu", "full"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/pubs", String(pubId), "menu"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/pubs", String(pubId), "menu", "all-products"] });
     },
     onError: (_e: any, { id, isVisible }) => {
       // Revert to original state (opposite of the desired new state)
@@ -302,6 +304,7 @@ export default function MenuCategoryManager({ pubId, categories }: MenuCategoryM
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/pubs", String(pubId), "menu"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/pubs", String(pubId), "menu", "all-products"] });
       setIsAddItemOpen(false);
       setSelectedCategoryIds([]);
       setItemForm({ name: '', description: '', price: '', isVisible: true, allergens: [], isVegetarian: false, isSpicy: false });
@@ -318,7 +321,7 @@ export default function MenuCategoryManager({ pubId, categories }: MenuCategoryM
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/pubs", String(pubId), "menu"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/pubs", pubId, "menu", "all-products"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/pubs", String(pubId), "menu", "all-products"] });
       setIsAddInfoBoxOpen(false);
       setInfoBoxCategoryId(null);
       setInfoBoxText('');
@@ -432,7 +435,8 @@ export default function MenuCategoryManager({ pubId, categories }: MenuCategoryM
           patchAllProductsCache([r.id], r.isVisible);
         }
       });
-      queryClient.invalidateQueries({ queryKey: ["/api/pubs", String(pubId), "menu", "full"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/pubs", String(pubId), "menu"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/pubs", String(pubId), "menu", "all-products"] });
       if (siblings.length > 0) {
         toast({ title: "✅ Visibilità aggiornata", description: `Applicato a ${allIds.length} categorie` });
       }
@@ -464,7 +468,7 @@ export default function MenuCategoryManager({ pubId, categories }: MenuCategoryM
         )
       );
       queryClient.invalidateQueries({ queryKey: ["/api/pubs", String(pubId), "menu"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/pubs", pubId, "menu", "all-products"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/pubs", String(pubId), "menu", "all-products"] });
       toast({
         title: "🗑️ Prodotto eliminato",
         description: total > 1 ? `Rimosso da ${total} categorie` : undefined,
@@ -1178,7 +1182,7 @@ export default function MenuCategoryManager({ pubId, categories }: MenuCategoryM
                         );
                       }
                       queryClient.invalidateQueries({ queryKey: ["/api/pubs", String(pubId), "menu"] });
-                      queryClient.invalidateQueries({ queryKey: ["/api/pubs", String(pubId), "menu", "full"] });
+                      queryClient.invalidateQueries({ queryKey: ["/api/pubs", String(pubId), "menu", "all-products"] });
                       setIsEditProductOpen(false);
                       setEditingProduct(null);
                       setEditCategoryIds([]);
