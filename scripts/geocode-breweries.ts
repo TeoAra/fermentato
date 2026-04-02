@@ -9,8 +9,6 @@
  */
 
 import pg from "pg";
-import * as dotenv from "dotenv";
-dotenv.config();
 
 const pool = new pg.Pool({ connectionString: process.env.DATABASE_URL });
 const BATCH = 50;       // location uniche per batch
