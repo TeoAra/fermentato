@@ -3455,6 +3455,49 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Admin: batch geocode breweries without coordinates
+  app.post('/api/admin/breweries/geocode', isAuthenticated, isAdmin, async (req: any, res) => {
+    const apiKey = process.env.GOOGLE_API_KEY || process.env.VITE_GOOGLE_MAPS_API_KEY;
+    if (!apiKey) return res.status(500).json({ message: "Google API key non configurata" });
+
+    const { rows: toGeocode } = await pool.query(`
+      SELECT id, name, location, region, country
+      FROM breweries
+      WHERE (latitude IS NULL OR latitude = '' OR latitude = '0')
+        AND location IS NOT NULL AND location != ''
+      ORDER BY id
+      LIMIT 200
+    `);
+
+    let geocoded = 0, failed = 0;
+    for (const b of toGeocode) {
+      const query = encodeURIComponent(`${b.location}, ${b.country || 'Italia'}`);
+      try {
+        const r = await fetch(`https://maps.googleapis.com/maps/api/geocode/json?address=${query}&key=${apiKey}`);
+        const data = await r.json() as any;
+        if (data.status === 'OK' && data.results?.[0]?.geometry?.location) {
+          const { lat, lng } = data.results[0].geometry.location;
+          await pool.query(
+            `UPDATE breweries SET latitude = $1, longitude = $2 WHERE id = $3`,
+            [String(lat), String(lng), b.id]
+          );
+          geocoded++;
+        } else {
+          failed++;
+        }
+        // Evita rate limiting Google (50ms tra le richieste)
+        await new Promise(ok => setTimeout(ok, 50));
+      } catch {
+        failed++;
+      }
+    }
+    // Bust cache so la mappa mostri subito i birrifici geocodificati
+    _memCache.delete("breweries:all:200");
+    _memCache.delete("breweries:all");
+
+    res.json({ total: toGeocode.length, geocoded, failed });
+  });
+
   // Admin: stats for any brewery
   app.get('/api/admin/brewery/:id/stats', isAuthenticated, isAdmin, async (req: any, res) => {
     try {

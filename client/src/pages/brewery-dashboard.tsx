@@ -1213,6 +1213,8 @@ export default function BreweryDashboard({ adminBreweryId }: BreweryDashboardPro
                       location: details.formattedAddress,
                       region: details.region,
                       country: details.country,
+                      ...(details.lat !== undefined ? { latitude: String(details.lat) } : {}),
+                      ...(details.lng !== undefined ? { longitude: String(details.lng) } : {}),
                     });
                   }}
                   className="border-stone-200 rounded-xl focus-visible:ring-primary/20 h-11"
