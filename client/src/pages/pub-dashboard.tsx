@@ -165,18 +165,19 @@ export default function PubDashboard() {
   });
 
   // Get pub details when pub is selected
+  // IMPORTANTE: usare sempre String(id) nelle query key per uniformità con le invalidazioni
   const { data: tapList = [], error: tapListError } = useQuery<TapItem[]>({
-    queryKey: ["/api/pubs", selectedPub?.id, "taplist"],
+    queryKey: ["/api/pubs", String(selectedPub?.id ?? ""), "taplist"],
     enabled: !!selectedPub?.id,
   });
 
   const { data: bottleList = [], error: bottleListError } = useQuery<BottleItem[]>({
-    queryKey: ["/api/pubs", selectedPub?.id, "bottles"],
+    queryKey: ["/api/pubs", String(selectedPub?.id ?? ""), "bottles"],
     enabled: !!selectedPub?.id,
   });
 
   const { data: menu = [], error: menuError } = useQuery<MenuCategory[]>({
-    queryKey: ["/api/pubs", selectedPub?.id, "menu"],
+    queryKey: ["/api/pubs", String(selectedPub?.id ?? ""), "menu"],
     enabled: !!selectedPub?.id,
   });
 

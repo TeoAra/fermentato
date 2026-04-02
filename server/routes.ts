@@ -1572,6 +1572,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       broadcastPubUpdate(parseInt(pubId), "taplist");
+      _memCache.delete("home:taplist-activity");
       res.json(item);
     } catch (error) {
       console.error('Error updating tap list item:', error);
@@ -1593,6 +1594,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       console.log('Deleted taplist item:', id);
       broadcastPubUpdate(parseInt(pubId), "taplist");
+      _memCache.delete("home:taplist-activity");
       res.status(200).json({ success: true });
     } catch (error) {
       console.error('Error deleting tap list item:', error);
@@ -1651,6 +1653,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       broadcastPubUpdate(pubId, "taplist");
+      _memCache.delete("home:taplist-activity");
       res.status(201).json(tapItem);
     } catch (error) {
       if (error instanceof z.ZodError) {
@@ -3789,6 +3792,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         notifyTapListChange(pubId, 'tap_change', newBeer.name, newBeer.id);
       }
 
+      broadcastPubUpdate(pubId, "taplist");
+      _memCache.delete("home:taplist-activity");
       res.json(updatedItem);
     } catch (error) {
       console.error("Error replacing beer:", error);

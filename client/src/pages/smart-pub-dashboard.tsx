@@ -293,25 +293,25 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
 
   // Fetch tap list
   const { data: tapList = [] } = useQuery({
-    queryKey: ["/api/pubs", currentPub?.id, "taplist"],
+    queryKey: ["/api/pubs", String(currentPub?.id ?? ""), "taplist"],
     enabled: !!currentPub?.id,
   });
 
   // Fetch bottle list
   const { data: bottleList = [] } = useQuery({
-    queryKey: ["/api/pubs", currentPub?.id, "bottles"],
+    queryKey: ["/api/pubs", String(currentPub?.id ?? ""), "bottles"],
     enabled: !!currentPub?.id,
   });
 
   // Fetch menu data
   const { data: menuData = [] } = useQuery<any[]>({
-    queryKey: ["/api/pubs", currentPub?.id, "menu"],
+    queryKey: ["/api/pubs", String(currentPub?.id ?? ""), "menu"],
     enabled: !!currentPub?.id,
   });
 
   // Fetch all products for all categories in a single query
   const { data: allCategoryProducts, isLoading: productsLoading } = useQuery({
-    queryKey: ["/api/pubs", currentPub?.id, "menu", "all-products", Array.isArray(menuData) ? menuData.map((c: any) => c.id).join(',') : ''],
+    queryKey: ["/api/pubs", String(currentPub?.id ?? ""), "menu", "all-products", Array.isArray(menuData) ? menuData.map((c: any) => c.id).join(',') : ''],
     queryFn: async () => {
       if (!currentPub?.id || !Array.isArray(menuData) || menuData.length === 0) return {};
       
@@ -366,7 +366,7 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
   );
 
   const { data: pubEventsData = [] } = useQuery({
-    queryKey: ["/api/pubs", currentPub?.id, "events"],
+    queryKey: ["/api/pubs", String(currentPub?.id ?? ""), "events"],
     queryFn: () => apiRequest(`/api/pubs/${currentPub?.id}/events`),
     enabled: !!currentPub?.id,
   });
@@ -383,8 +383,8 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
       return apiRequest(`/api/pubs/${currentPub?.id}/taplist/${id}`, { method: 'PATCH' }, data);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/pubs", currentPub?.id, "taplist"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/pubs", currentPub?.id] });
+      queryClient.invalidateQueries({ queryKey: ["/api/pubs", String(currentPub?.id ?? ""), "taplist"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/pubs", String(currentPub?.id ?? "")] });
       setEditingItem(null);
       toast({ title: "Birra aggiornata", description: "Le modifiche sono state salvate" });
     },
@@ -399,8 +399,8 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
     onSuccess: async (result) => {
       console.log('Mutation success:', result);
       // Optimized cache invalidation
-      queryClient.invalidateQueries({ queryKey: ["/api/pubs", currentPub?.id, "taplist"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/pubs", currentPub?.id] });
+      queryClient.invalidateQueries({ queryKey: ["/api/pubs", String(currentPub?.id ?? ""), "taplist"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/pubs", String(currentPub?.id ?? "")] });
       queryClient.invalidateQueries({ queryKey: ["/api/my-pubs"] });
       toast({ title: "Birra aggiunta", description: "Nuova birra aggiunta alla tap list" });
       setShowBeerSearch(false);
@@ -421,8 +421,8 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
     onSuccess: async (data) => {
       console.log('Remove success:', data);
       // Optimized cache invalidation
-      queryClient.invalidateQueries({ queryKey: ["/api/pubs", currentPub?.id, "taplist"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/pubs", currentPub?.id] });
+      queryClient.invalidateQueries({ queryKey: ["/api/pubs", String(currentPub?.id ?? ""), "taplist"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/pubs", String(currentPub?.id ?? "")] });
       queryClient.invalidateQueries({ queryKey: ["/api/my-pubs"] });
       toast({ title: "Birra eliminata", description: "Birra rimossa dalla taplist" });
     },
@@ -440,7 +440,7 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/my-pubs"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/pubs", currentPub?.id] });
+      queryClient.invalidateQueries({ queryKey: ["/api/pubs", String(currentPub?.id ?? "")] });
       setSettingsChanged(false);
       toast({ 
         title: "Impostazioni aggiornate", 
