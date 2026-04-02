@@ -5,7 +5,7 @@ import { MapPin } from "lucide-react";
 
 interface AddressAutocompleteProps {
   value: string;
-  onChange: (address: string, city?: string, region?: string, postalCode?: string) => void;
+  onChange: (address: string, city?: string, region?: string, postalCode?: string, lat?: number, lng?: number) => void;
   placeholder?: string;
   className?: string;
   searchType?: 'address' | 'cities' | 'regions' | 'all';
@@ -98,7 +98,9 @@ export default function AddressAutocomplete({
             finalAddress = placeName;
           }
           
-          onChange(finalAddress, city, region, postalCode);
+          const lat = place.geometry?.location?.lat();
+          const lng = place.geometry?.location?.lng();
+          onChange(finalAddress, city, region, postalCode, lat, lng);
         });
 
       } catch (err) {

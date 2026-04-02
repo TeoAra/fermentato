@@ -70,6 +70,8 @@ export default function PubRegistration() {
       vatNumber: "",
       businessName: "",
       isActive: true,
+      latitude: null,
+      longitude: null,
     },
   });
 
@@ -364,11 +366,13 @@ export default function PubRegistration() {
                         <FormControl>
                           <AddressAutocomplete
                             value={field.value || ""}
-                            onChange={(address, city, region, postalCode) => {
+                            onChange={(address, city, region, postalCode, lat, lng) => {
                               field.onChange(address);
                               if (city) form.setValue("city", city);
                               if (region) form.setValue("region", region);
                               if (postalCode) form.setValue("postalCode", postalCode);
+                              if (lat !== undefined) form.setValue("latitude", String(lat));
+                              if (lng !== undefined) form.setValue("longitude", String(lng));
                             }}
                             placeholder="Via Roma 123, Milano"
                           />
