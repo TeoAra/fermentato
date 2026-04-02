@@ -284,7 +284,6 @@ export default function BeerDetail() {
       queryClient.invalidateQueries({ queryKey: ["/api/beers", id, "collaborations"] });
       collabIds.forEach((bid: number) => {
         queryClient.invalidateQueries({ queryKey: ["/api/breweries", String(bid)] });
-        queryClient.invalidateQueries({ queryKey: ["/api/breweries", bid] });
       });
       setIsEditDialogOpen(false);
       toast({ title: "Birra aggiornata con successo" });

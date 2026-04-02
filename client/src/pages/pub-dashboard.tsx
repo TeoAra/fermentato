@@ -554,7 +554,7 @@ function PubAnalyticsTab({ pubId }: { pubId: number }) {
     today: number; yesterday: number; last7: number; last30: number;
     series: { date: string; views: number }[];
   }>({
-    queryKey: ["/api/pubs", pubId, "analytics"],
+    queryKey: ["/api/pubs", String(pubId), "analytics"],
     queryFn: () => apiRequest(`/api/pubs/${pubId}/analytics`),
     staleTime: 5 * 60_000,
   });

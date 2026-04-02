@@ -99,7 +99,7 @@ function PubMenuInfoBox({ pubId, currentValue }: { pubId: number; currentValue: 
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/my-pubs"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/pubs", pubId] });
+      queryClient.invalidateQueries({ queryKey: ["/api/pubs", String(pubId)] });
       setIsEditing(false);
       toast({ title: "Info box salvata" });
     },
@@ -256,7 +256,7 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
 
   // Fetch pub data - either from admin mode or owner mode
   const { data: userPubs, isLoading: pubsLoading } = useQuery({
-    queryKey: isAdminMode ? ["/api/pubs", adminPubId] : ["/api/my-pubs"],
+    queryKey: isAdminMode ? ["/api/pubs", String(adminPubId)] : ["/api/my-pubs"],
     enabled: isAuthenticated && (isAdminMode || (user as any)?.userType === 'pub_owner' || (user as any)?.userType === 'admin'),
   });
 

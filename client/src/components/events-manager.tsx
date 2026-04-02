@@ -185,14 +185,13 @@ export function EventsManager({ pubId, pubName }: EventsManagerProps) {
   const [form, setForm] = useState<EventForm>(emptyForm);
 
   const { data: events = [], isLoading } = useQuery({
-    queryKey: ["/api/pubs", pubId, "events"],
+    queryKey: ["/api/pubs", String(pubId), "events"],
     queryFn: () => apiRequest(`/api/pubs/${pubId}/events`),
     enabled: !!pubId,
   });
 
   const invalidatePubEvents = () => {
-    queryClient.invalidateQueries({ queryKey: ["/api/pubs", pubId, "events"] });
-    queryClient.invalidateQueries({ queryKey: [`/api/pubs/${pubId}/events`] });
+    queryClient.invalidateQueries({ queryKey: ["/api/pubs", String(pubId), "events"] });
     queryClient.invalidateQueries({ queryKey: ["/api/events/upcoming"] });
   };
 
@@ -571,14 +570,13 @@ export function BreweryEventsManager({ breweryId, breweryName }: BreweryEventsMa
   const [form, setForm] = useState<EventForm>(emptyForm);
 
   const { data: events = [], isLoading } = useQuery({
-    queryKey: ["/api/breweries", breweryId, "events", "all"],
+    queryKey: ["/api/breweries", String(breweryId), "events", "all"],
     queryFn: () => apiRequest(`/api/breweries/${breweryId}/events/all`),
     enabled: !!breweryId,
   });
 
   const invalidateBreweryEvents = () => {
-    queryClient.invalidateQueries({ queryKey: ["/api/breweries", breweryId, "events"] });
-    queryClient.invalidateQueries({ queryKey: [`/api/breweries/${breweryId}/events`] });
+    queryClient.invalidateQueries({ queryKey: ["/api/breweries", String(breweryId), "events"] });
     queryClient.invalidateQueries({ queryKey: ["/api/events/upcoming"] });
   };
 
