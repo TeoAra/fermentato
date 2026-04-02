@@ -51,7 +51,6 @@ const ScanPage           = lazy(() => import("@/pages/scan"));
 const ScanHistoryPage    = lazy(() => import("@/pages/scan-history"));
 const AuthPage           = lazy(() => import("@/pages/auth"));
 const DemoLoginPage      = lazy(() => import("@/pages/demo-login-page"));
-const PubRegistration    = lazy(() => import("@/pages/pub-registration"));
 const BecomePublican     = lazy(() => import("@/pages/become-publican"));
 const RegistraPub        = lazy(() => import("@/pages/registra-pub"));
 const AttivaPub          = lazy(() => import("@/pages/attiva-pub"));
@@ -251,7 +250,7 @@ function Router() {
           <Route path="/admin/subscriptions" component={AdminSubscriptions} />
           <Route path="/admin/festivals" component={AdminFestivals} />
           <Route path="/registra-pub" component={RegistraPub} />
-          <Route path="/pub-registration" component={PubRegistration} />
+          <Route path="/pub-registration" component={RegistraPub} />
           <Route path="/become-publican" component={BecomePublican} />
           <Route path="/brewery-dashboard" component={BreweryDashboard} />
           <Route path="/onboarding" component={Onboarding} />

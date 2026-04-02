@@ -244,7 +244,7 @@ export default function PubDashboard() {
             Non hai ancora registrato nessun pub. Inizia registrando il tuo primo locale.
           </p>
           <Button asChild>
-            <a href="/pub-registration">
+            <a href="/registra-pub">
               <Plus className="w-4 h-4 mr-2" />
               Registra il tuo Pub
             </a>
@@ -272,7 +272,7 @@ export default function PubDashboard() {
         </div>
         <div className="flex items-center gap-2 sm:gap-4">
           <Button asChild variant="outline" size="sm" className="text-xs sm:text-sm">
-            <a href="/pub-registration">
+            <a href="/registra-pub">
               <Plus className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
               <span className="hidden sm:inline">Aggiungi Pub</span>
               <span className="sm:hidden">+ Pub</span>
