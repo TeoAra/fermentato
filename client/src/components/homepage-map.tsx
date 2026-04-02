@@ -1,5 +1,5 @@
 import { useEffect, useRef, useMemo } from "react";
-import { MapContainer, TileLayer, Marker, Popup, useMap } from "react-leaflet";
+import { MapContainer, TileLayer, Marker, Popup, Circle, useMap } from "react-leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 
@@ -62,6 +62,37 @@ function FlyToUser({ userLocation }: { userLocation: { lat: number; lng: number 
     didFly.current = true;
     map.flyTo([userLocation.lat, userLocation.lng], 13, { duration: 1 });
   }, [userLocation, map]);
+
+  return null;
+}
+
+/** Mappa raggio (km) → livello di zoom ottimale per mostrare il cerchio */
+function radiusToZoom(km: number): number {
+  if (km <= 5)  return 13;
+  if (km <= 10) return 12;
+  if (km <= 15) return 11;
+  if (km <= 20) return 11;
+  if (km <= 30) return 10;
+  if (km <= 50) return 9;
+  return 8;
+}
+
+function RadiusZoomController({
+  userLocation,
+  distanceKm,
+}: {
+  userLocation: { lat: number; lng: number } | null | undefined;
+  distanceKm: number | undefined;
+}) {
+  const map = useMap();
+  const prevKm = useRef<number | undefined>(undefined);
+
+  useEffect(() => {
+    if (!userLocation || !distanceKm) return;
+    if (prevKm.current === distanceKm) return; // nessun cambiamento
+    prevKm.current = distanceKm;
+    map.flyTo([userLocation.lat, userLocation.lng], radiusToZoom(distanceKm), { duration: 0.8 });
+  }, [distanceKm, userLocation, map]);
 
   return null;
 }
@@ -171,6 +202,21 @@ export default function HomepageMap({
         />
 
         <FlyToUser userLocation={userLocation} />
+        <RadiusZoomController userLocation={userLocation} distanceKm={distanceKm} />
+
+        {userLocation && distanceKm && (
+          <Circle
+            center={[userLocation.lat, userLocation.lng]}
+            radius={distanceKm * 1000}
+            pathOptions={{
+              color: "#F77104",
+              weight: 1.5,
+              opacity: 0.5,
+              fillColor: "#F77104",
+              fillOpacity: 0.06,
+            }}
+          />
+        )}
 
         {userLocation && (
           <Marker position={[userLocation.lat, userLocation.lng]} icon={userIcon} />
