@@ -17,14 +17,24 @@ function GeocodeBreweriesButton() {
   const handleGeocode = async () => {
     setLoading(true);
     setResult(null);
+    let totalGeocoded = 0, totalFailed = 0, rounds = 0;
     try {
-      const data = await apiRequest("POST", "/api/admin/breweries/geocode");
-      setResult(data);
+      // Loop finché ci sono birrifici da geocodificare (batch da 200 alla volta)
+      while (true) {
+        const data = await apiRequest("POST", "/api/admin/breweries/geocode");
+        totalGeocoded += data.geocoded;
+        totalFailed += data.failed;
+        rounds++;
+        setResult({ total: totalGeocoded + totalFailed, geocoded: totalGeocoded, failed: totalFailed });
+        // Se non c'è più nulla da geocodificare, ci fermiamo
+        if (data.total === 0 || data.geocoded === 0) break;
+        // Pausa tra i batch per non sovraccaricare l'API
+        await new Promise(ok => setTimeout(ok, 500));
+      }
       qc.invalidateQueries({ queryKey: ["/api/breweries"] });
-      qc.invalidateQueries({ queryKey: ["/api/home/map-data"] });
       toast({
         title: "Geocoding completato",
-        description: `${data.geocoded}/${data.total} birrifici geocodificati`,
+        description: `${totalGeocoded} birrifici geocodificati in ${rounds} ${rounds === 1 ? "passaggio" : "passaggi"}`,
       });
     } catch (e: any) {
       toast({ title: "Errore geocoding", description: e.message, variant: "destructive" });
@@ -38,7 +48,7 @@ function GeocodeBreweriesButton() {
       <Globe className="w-5 h-5 text-amber-600 flex-shrink-0" />
       <div className="flex-1 min-w-0">
         <p className="text-sm font-semibold text-amber-800 dark:text-amber-300">Geocodifica birrifici senza coordinate</p>
-        <p className="text-xs text-amber-600 dark:text-amber-400">Assegna automaticamente lat/lng a tutti i birrifici con indirizzo ma senza coordinate (max 200 per volta)</p>
+        <p className="text-xs text-amber-600 dark:text-amber-400">Assegna automaticamente lat/lng a tutti i birrifici con indirizzo ma senza coordinate — gira in automatico fino a completamento</p>
         {result && (
           <p className="text-xs text-emerald-700 dark:text-emerald-400 mt-1 flex items-center gap-1">
             <CheckCircle2 className="w-3.5 h-3.5" />
