@@ -10,7 +10,19 @@
 
 import pg from "pg";
 
-const pool = new pg.Pool({ connectionString: process.env.DATABASE_URL });
+if (!process.env.DATABASE_URL && !process.env.PGHOST) {
+  console.error("Errore: imposta DATABASE_URL oppure le variabili PGHOST/PGUSER/PGPASSWORD/PGDATABASE");
+  process.exit(1);
+}
+const pool = process.env.DATABASE_URL
+  ? new pg.Pool({ connectionString: process.env.DATABASE_URL })
+  : new pg.Pool({
+      host: process.env.PGHOST,
+      port: Number(process.env.PGPORT || 5432),
+      user: process.env.PGUSER,
+      password: process.env.PGPASSWORD,
+      database: process.env.PGDATABASE,
+    });
 const BATCH = 50;       // location uniche per batch
 const DELAY_MS = 1100;  // Nominatim: max 1 req/sec
 
