@@ -1,111 +1,132 @@
-import { db } from "../server/db";
-import { breweries } from "../shared/schema";
-import { isNull, sql } from "drizzle-orm";
+/**
+ * Geocodifica tutti i birrifici senza coordinate usando Nominatim (OpenStreetMap, gratuito).
+ * Strategia: deduplication per location → una sola API call per città, aggiorna tutti i birrifici con quella città.
+ *
+ * Uso sul VPS:
+ *   npx tsx scripts/geocode-breweries.ts
+ *
+ * Può essere interrotto (Ctrl+C) e ripreso in qualsiasi momento.
+ */
 
-const GOOGLE_API_KEY = process.env.VITE_GOOGLE_MAPS_API_KEY;
-const BATCH_SIZE = 50;
-const DELAY_MS = 200;
+import pg from "pg";
+import * as dotenv from "dotenv";
+dotenv.config();
 
-async function geocodeAddress(address: string): Promise<{ lat: number; lng: number } | null> {
-  const url = `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(address)}&key=${GOOGLE_API_KEY}`;
-  try {
-    const res = await fetch(url);
-    const data = await res.json();
-    if (data.status === "OK" && data.results.length > 0) {
-      const { lat, lng } = data.results[0].geometry.location;
-      return { lat, lng };
-    }
-    if (data.status === "OVER_QUERY_LIMIT") {
-      console.log("  Rate limited, waiting 3s...");
-      await new Promise(r => setTimeout(r, 3000));
-      return geocodeAddress(address);
-    }
-    return null;
-  } catch (err) {
-    console.error("  Fetch error:", err);
-    return null;
-  }
+const pool = new pg.Pool({ connectionString: process.env.DATABASE_URL });
+const BATCH = 50;       // location uniche per batch
+const DELAY_MS = 1100;  // Nominatim: max 1 req/sec
+
+async function sleep(ms: number) {
+  return new Promise(ok => setTimeout(ok, ms));
 }
 
-function buildAddress(location: string, region: string | null, country: string | null): string {
-  const parts = [location];
-  if (region && region !== country && region !== "Italia" && region.length > 2) parts.push(region);
-  if (country) parts.push(country);
-  return parts.join(", ");
+async function getStats() {
+  const { rows: [r1] } = await pool.query(`
+    SELECT COUNT(*) AS total FROM breweries
+    WHERE (latitude IS NULL OR latitude::text = '' OR latitude::text = '0')
+      AND location IS NOT NULL AND TRIM(location) != ''
+  `);
+  const { rows: [r2] } = await pool.query(`
+    SELECT COUNT(DISTINCT LOWER(TRIM(location))) AS uniq FROM breweries
+    WHERE (latitude IS NULL OR latitude::text = '' OR latitude::text = '0')
+      AND location IS NOT NULL AND TRIM(location) != ''
+  `);
+  return { total: Number(r1.total), unique: Number(r2.uniq) };
+}
+
+async function processBatch(): Promise<{ locations: number; breweries: number }> {
+  const { rows } = await pool.query(`
+    SELECT DISTINCT ON (LOWER(TRIM(location)))
+      LOWER(TRIM(location)) AS loc_key,
+      location,
+      COALESCE(NULLIF(TRIM(country), ''), 'Italia') AS country
+    FROM breweries
+    WHERE (latitude IS NULL OR latitude::text = '' OR latitude::text = '0')
+      AND location IS NOT NULL AND TRIM(location) != ''
+    LIMIT $1
+  `, [BATCH]);
+
+  if (rows.length === 0) return { locations: 0, breweries: 0 };
+
+  let updated = 0;
+
+  for (const row of rows) {
+    const q = encodeURIComponent(`${row.location}, ${row.country}`);
+    try {
+      const r = await fetch(
+        `https://nominatim.openstreetmap.org/search?q=${q}&format=json&limit=1&accept-language=it`,
+        {
+          headers: { "User-Agent": "Fermenta.to/1.0 (noreply@fermenta.to)" },
+          signal: AbortSignal.timeout(8000),
+        }
+      );
+      const data = await r.json() as any[];
+      if (Array.isArray(data) && data[0]?.lat && data[0]?.lon) {
+        const res = await pool.query(
+          `UPDATE breweries
+           SET latitude = $1, longitude = $2
+           WHERE LOWER(TRIM(location)) = $3
+             AND (latitude IS NULL OR latitude::text = '' OR latitude::text = '0')`,
+          [data[0].lat, data[0].lon, row.loc_key]
+        );
+        const n = res.rowCount ?? 0;
+        updated += n;
+        console.log(`  ✓  ${row.location.padEnd(35)} → ${String(n).padStart(4)} birrifici`);
+      } else {
+        console.log(`  ✗  ${row.location.padEnd(35)} → nessun risultato`);
+      }
+    } catch (err: any) {
+      console.log(`  !  ${row.location.padEnd(35)} → errore: ${err.message}`);
+    }
+    await sleep(DELAY_MS);
+  }
+
+  return { locations: rows.length, breweries: updated };
 }
 
 async function main() {
-  if (!GOOGLE_API_KEY) {
-    console.error("VITE_GOOGLE_MAPS_API_KEY not set");
-    process.exit(1);
+  const stats = await getStats();
+  const eta = Math.ceil(stats.unique * DELAY_MS / 60000);
+
+  console.log(`\n🍺  Fermenta.to — Geocoding Birrifici`);
+  console.log(`    Birrifici senza coordinate : ${stats.total.toLocaleString()}`);
+  console.log(`    Location uniche da geocod. : ${stats.unique.toLocaleString()}`);
+  console.log(`    Stima tempo               : ~${eta} minuti\n`);
+
+  if (stats.unique === 0) {
+    console.log("✅ Tutti i birrifici hanno già le coordinate!");
+    await pool.end();
+    return;
   }
 
-  // Test the API key first with a known address
-  console.log("Testing API key with a known address...");
-  const testUrl = `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent("Roma, Italia")}&key=${GOOGLE_API_KEY}`;
-  const testRes = await fetch(testUrl);
-  const testData = await testRes.json();
-  console.log("Test result status:", testData.status);
-  if (testData.error_message) {
-    console.error("API Error:", testData.error_message);
-    console.error("\n>>> You need to enable the Geocoding API in Google Cloud Console <<<");
-    console.error(">>> Go to: https://console.cloud.google.com/apis/library/geocoding-backend.googleapis.com <<<\n");
-    process.exit(1);
-  }
-  if (testData.status !== "OK") {
-    console.error("Unexpected status:", testData.status);
-    console.error("Full response:", JSON.stringify(testData, null, 2));
-    process.exit(1);
-  }
-  console.log("API key works! Roma coords:", testData.results[0].geometry.location);
+  let totalLocations = 0;
+  let totalBreweries = 0;
+  let batch = 0;
+  const start = Date.now();
 
-  const toGeocode = await db
-    .select({ id: breweries.id, name: breweries.name, location: breweries.location, region: breweries.region, country: breweries.country })
-    .from(breweries)
-    .where(isNull(breweries.latitude));
+  while (true) {
+    batch++;
+    const done = totalLocations;
+    const pct = stats.unique > 0 ? Math.round((done / stats.unique) * 100) : 0;
+    const elapsed = Math.round((Date.now() - start) / 1000);
+    console.log(`[Batch ${batch}]  Progresso: ${done}/${stats.unique} location (${pct}%)  —  elapsed: ${elapsed}s`);
 
-  console.log(`\nFound ${toGeocode.length} breweries without coordinates\n`);
+    const result = await processBatch();
+    if (result.locations === 0) break;
 
-  let updated = 0;
-  let failed = 0;
-  const failedNames: string[] = [];
-
-  for (let i = 0; i < toGeocode.length; i += BATCH_SIZE) {
-    const batch = toGeocode.slice(i, i + BATCH_SIZE);
-    console.log(`Batch ${Math.floor(i / BATCH_SIZE) + 1}/${Math.ceil(toGeocode.length / BATCH_SIZE)} (${i + 1}-${Math.min(i + BATCH_SIZE, toGeocode.length)})`);
-
-    for (const brewery of batch) {
-      if (!brewery.location) {
-        failed++;
-        failedNames.push(`${brewery.name} (no address)`);
-        continue;
-      }
-
-      const address = buildAddress(brewery.location, brewery.region, brewery.country);
-      const coords = await geocodeAddress(address);
-
-      if (coords) {
-        await db.update(breweries)
-          .set({ latitude: coords.lat.toString(), longitude: coords.lng.toString() })
-          .where(sql`id = ${brewery.id}`);
-        updated++;
-        if (updated % 100 === 0) console.log(`  => Updated ${updated} so far...`);
-      } else {
-        failed++;
-        if (failedNames.length < 30) failedNames.push(`${brewery.name} -> "${address}"`);
-      }
-
-      await new Promise(r => setTimeout(r, DELAY_MS));
-    }
+    totalLocations += result.locations;
+    totalBreweries += result.breweries;
+    console.log(`           → +${result.breweries} birrifici aggiornati (totale: ${totalBreweries})\n`);
   }
 
-  console.log(`\n=============================`);
-  console.log(`Done! Updated: ${updated}, Failed: ${failed}`);
-  if (failedNames.length > 0) {
-    console.log(`\nSample failures:`);
-    failedNames.forEach(n => console.log(`  - ${n}`));
-  }
-  process.exit(0);
+  const elapsed = Math.round((Date.now() - start) / 1000);
+  console.log(`\n✅  Completato in ${elapsed}s`);
+  console.log(`    Location geocodificate : ${totalLocations}`);
+  console.log(`    Birrifici aggiornati   : ${totalBreweries}\n`);
+  await pool.end();
 }
 
-main();
+main().catch(err => {
+  console.error("Errore fatale:", err.message);
+  process.exit(1);
+});
