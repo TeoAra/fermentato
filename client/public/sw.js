@@ -1,9 +1,10 @@
-const CACHE_VERSION = 'v5';
+const CACHE_VERSION = 'v6';
 const STATIC_CACHE = `fermenta-static-${CACHE_VERSION}`;
 const PAGE_CACHE = `fermenta-pages-${CACHE_VERSION}`;
 const IMAGE_CACHE = `fermenta-images-${CACHE_VERSION}`;
 const TILE_CACHE = `fermenta-tiles-${CACHE_VERSION}`;
-const API_CACHE = `fermenta-api-${CACHE_VERSION}`;
+// API_CACHE rimosso: React Query gestisce la cache dati lato app.
+// Il SW non intercetta mai le chiamate API per evitare dati obsoleti.
 
 // Tile cache limits (map tiles can be numerous)
 const TILE_MAX_ENTRIES = 600;
@@ -11,10 +12,7 @@ const TILE_MAX_AGE_MS = 30 * 24 * 60 * 60 * 1000; // 30 days
 
 // Image cache limits
 const IMAGE_MAX_ENTRIES = 200;
-const IMAGE_MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000; // 7 days
-
-// API cache TTL for read-heavy endpoints
-const API_CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes
+const IMAGE_MAX_AGE_MS = 3 * 24 * 60 * 60 * 1000; // 3 days (ridotto da 7)
 
 const PRECACHE_ASSETS = [
   '/',
@@ -22,14 +20,6 @@ const PRECACHE_ASSETS = [
   '/icons/icon-192.png',
   '/icons/icon-512.png',
   '/icons/apple-touch-icon.png',
-];
-
-// API endpoints worth short-lived caching
-const CACHEABLE_API_PREFIXES = [
-  '/api/pubs',
-  '/api/breweries',
-  '/api/beers',
-  '/api/festivals/public',
 ];
 
 // ─── Install ──────────────────────────────────────────────────────────────────
@@ -42,8 +32,9 @@ self.addEventListener('install', (event) => {
 
 // ─── Activate: purge old caches ───────────────────────────────────────────────
 self.addEventListener('activate', (event) => {
-  const CURRENT = [STATIC_CACHE, PAGE_CACHE, IMAGE_CACHE, TILE_CACHE, API_CACHE];
+  const CURRENT = [STATIC_CACHE, PAGE_CACHE, IMAGE_CACHE, TILE_CACHE];
   event.waitUntil(
+    // Elimina tutte le cache vecchie incluse le eventuali API cache dei SW precedenti
     caches.keys().then((keys) =>
       Promise.all(keys.filter((k) => !CURRENT.includes(k)).map((k) => caches.delete(k)))
     )
@@ -58,40 +49,36 @@ self.addEventListener('fetch', (event) => {
   const url = new URL(event.request.url);
   const origin = self.location.hostname;
 
-  // 1. Map tiles (OpenFreeMap, OSM, MapTiler, etc.)
+  // 1. Map tiles: cache aggressiva (cambiano di rado, pesano molto)
   if (isMapTileRequest(url)) {
     event.respondWith(tileStrategy(event.request));
     return;
   }
 
-  // 2. API calls
-  if (url.pathname.startsWith('/api/')) {
-    if (isCacheableApi(url.pathname)) {
-      event.respondWith(apiStaleWhileRevalidate(event.request));
-    }
-    // Non-cacheable API = pass through (no caching)
-    return;
-  }
+  // 2. Chiamate API → SEMPRE rete, mai cache SW.
+  //    React Query gestisce la cache dati lato app con invalidazione precisa.
+  //    Caching qui causava dati obsoleti dopo ogni modifica.
+  if (url.pathname.startsWith('/api/')) return;
 
-  // 3. External fonts/CDN: stale-while-revalidate
+  // 3. Font/CDN esterni: stale-while-revalidate
   if (!url.origin.includes(origin)) {
     event.respondWith(staleWhileRevalidate(event.request, STATIC_CACHE));
     return;
   }
 
-  // 4. Images: cache-first with TTL + size limit
+  // 4. Immagini: cache con TTL 3 giorni + limite dimensione
   if (/\.(png|jpg|jpeg|webp|gif|svg|ico)$/.test(url.pathname)) {
     event.respondWith(imageStrategy(event.request));
     return;
   }
 
-  // 5. Static JS/CSS bundles (hashed): cache-first forever
+  // 5. Bundle JS/CSS con hash: cache permanente (l'hash cambia ad ogni deploy)
   if (/\.(js|css|woff2?|ttf|eot)$/.test(url.pathname) || url.pathname.startsWith('/assets/')) {
     event.respondWith(cacheFirst(event.request, STATIC_CACHE));
     return;
   }
 
-  // 6. HTML navigation: network-first, fallback to cached shell
+  // 6. Navigazione HTML: network-first, fallback alla shell cached
   event.respondWith(networkFirstWithFallback(event.request));
 });
 
@@ -103,10 +90,6 @@ function isMapTileRequest(url) {
   ];
   return tileHosts.some((h) => url.hostname.includes(h)) ||
     /\/tiles\/|\.pbf$|\.mvt$/.test(url.pathname);
-}
-
-function isCacheableApi(pathname) {
-  return CACHEABLE_API_PREFIXES.some((prefix) => pathname.startsWith(prefix));
 }
 
 // ─── Strategies ───────────────────────────────────────────────────────────────
@@ -184,29 +167,6 @@ async function imageStrategy(request) {
   }
 }
 
-// API short-lived stale-while-revalidate (5 min TTL)
-async function apiStaleWhileRevalidate(request) {
-  const cache = await caches.open(API_CACHE);
-  const cached = await cache.match(request);
-
-  const isStale = !cached || (() => {
-    const date = cached.headers.get('sw-cached-at');
-    return !date || Date.now() - parseInt(date) > API_CACHE_TTL_MS;
-  })();
-
-  if (cached && !isStale) {
-    // Fresh enough — return immediately
-    return cached;
-  }
-
-  const fetchPromise = fetch(request).then((res) => {
-    if (res.ok) putWithMeta(cache, request, res.clone());
-    return res;
-  }).catch(() => cached);
-
-  // Stale-while-revalidate: return stale if available, else await
-  return cached || fetchPromise;
-}
 
 async function networkFirstWithFallback(request) {
   try {
@@ -241,39 +201,19 @@ async function evictOldEntries(cache, maxEntries) {
 }
 
 // ─── Cache invalidation via postMessage ───────────────────────────────────────
-// L'app manda { type: 'INVALIDATE_CACHE', prefix: '/api/beers/123' }
-// Il SW cancella tutte le voci in API_CACHE che iniziano per quel prefisso.
+// Usato per invalidare le immagini cached dopo un upload.
+// Le API non sono mai in cache SW, quindi non servono altri messaggi.
 self.addEventListener('message', (event) => {
   if (!event.data) return;
 
-  if (event.data.type === 'INVALIDATE_CACHE') {
-    const prefix = event.data.prefix;
-    if (!prefix) return;
-    caches.open(API_CACHE).then((cache) => {
-      cache.keys().then((keys) => {
-        keys.forEach((req) => {
-          if (new URL(req.url).pathname.startsWith(prefix)) {
-            cache.delete(req);
-          }
-        });
+  if (event.data.type === 'INVALIDATE_CACHE' && event.data.clearImages) {
+    caches.open(IMAGE_CACHE).then((cache) => cache.keys().then((keys) => {
+      keys.forEach((req) => {
+        if (new URL(req.url).pathname.startsWith(event.data.clearImages)) {
+          cache.delete(req);
+        }
       });
-    });
-    // Svuota anche IMAGE_CACHE per le immagini del birrificio/birra
-    if (event.data.clearImages) {
-      caches.open(IMAGE_CACHE).then((cache) => cache.keys().then((keys) => {
-        keys.forEach((req) => {
-          if (new URL(req.url).pathname.startsWith(event.data.clearImages)) {
-            cache.delete(req);
-          }
-        });
-      }));
-    }
-    return;
-  }
-
-  if (event.data.type === 'CLEAR_API_CACHE') {
-    caches.delete(API_CACHE);
-    return;
+    }));
   }
 });
 

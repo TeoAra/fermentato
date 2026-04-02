@@ -86,20 +86,6 @@ export async function apiRequest(
 
   await throwIfResNotOk(res);
 
-  // Dopo ogni mutazione, svuota le voci corrispondenti nella cache del Service Worker.
-  // Il SW intercetta /api/pubs, /api/beers, /api/breweries con stale-while-revalidate:
-  // senza questa pulizia il refetch di React Query otterrebbe dati vecchi dal SW.
-  if (method !== 'GET' && navigator.serviceWorker?.controller) {
-    const sw = navigator.serviceWorker.controller;
-    // Estrai la radice del path (es. /api/beers/123/image → /api/beers/123)
-    const parts = path.split('/').filter(Boolean); // ['api','beers','123','image']
-    // Invalida fino al terzo segmento per coprire sia la lista che il dettaglio
-    const prefixes = new Set<string>();
-    if (parts.length >= 2) prefixes.add('/' + parts.slice(0, 2).join('/')); // /api/beers
-    if (parts.length >= 3) prefixes.add('/' + parts.slice(0, 3).join('/')); // /api/beers/123
-    prefixes.forEach(prefix => sw.postMessage({ type: 'INVALIDATE_CACHE', prefix }));
-  }
-
   if (res.status !== 204 && res.headers.get('content-type')?.includes('application/json')) {
     return await res.json();
   }
