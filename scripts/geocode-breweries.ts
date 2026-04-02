@@ -62,31 +62,51 @@ async function processBatch(): Promise<{ locations: number; breweries: number }>
 
   for (const row of rows) {
     const q = encodeURIComponent(`${row.location}, ${row.country}`);
-    try {
-      const r = await fetch(
-        `https://nominatim.openstreetmap.org/search?q=${q}&format=json&limit=1&accept-language=it`,
-        {
-          headers: { "User-Agent": "Fermenta.to/1.0 (noreply@fermenta.to)" },
-          signal: AbortSignal.timeout(8000),
-        }
-      );
-      const data = await r.json() as any[];
-      if (Array.isArray(data) && data[0]?.lat && data[0]?.lon) {
-        const res = await pool.query(
-          `UPDATE breweries
-           SET latitude = $1, longitude = $2
-           WHERE LOWER(TRIM(location)) = $3
-             AND (latitude IS NULL OR latitude::text = '' OR latitude::text = '0')`,
-          [data[0].lat, data[0].lon, row.loc_key]
+    let attempts = 0;
+    while (attempts < 3) {
+      attempts++;
+      try {
+        const r = await fetch(
+          `https://nominatim.openstreetmap.org/search?q=${q}&format=json&limit=1&accept-language=it`,
+          {
+            headers: {
+              "User-Agent": "Fermenta.to/1.0 (noreply@fermenta.to)",
+              "Accept": "application/json",
+            },
+            signal: AbortSignal.timeout(10000),
+          }
         );
-        const n = res.rowCount ?? 0;
-        updated += n;
-        console.log(`  ✓  ${row.location.padEnd(35)} → ${String(n).padStart(4)} birrifici`);
-      } else {
-        console.log(`  ✗  ${row.location.padEnd(35)} → nessun risultato`);
+        const text = await r.text();
+        // Nominatim ha risposto con XML = rate limit o errore → aspetta e riprova
+        if (text.trimStart().startsWith("<")) {
+          const wait = attempts * 5000;
+          console.log(`  ⏳ Rate limit su "${row.location}", attendo ${wait / 1000}s...`);
+          await sleep(wait);
+          continue;
+        }
+        const data = JSON.parse(text) as any[];
+        if (Array.isArray(data) && data[0]?.lat && data[0]?.lon) {
+          const res = await pool.query(
+            `UPDATE breweries
+             SET latitude = $1, longitude = $2
+             WHERE LOWER(TRIM(location)) = $3
+               AND (latitude IS NULL OR latitude::text = '' OR latitude::text = '0')`,
+            [data[0].lat, data[0].lon, row.loc_key]
+          );
+          const n = res.rowCount ?? 0;
+          updated += n;
+          console.log(`  ✓  ${row.location.padEnd(35)} → ${String(n).padStart(4)} birrifici`);
+        } else {
+          console.log(`  ✗  ${row.location.padEnd(35)} → nessun risultato`);
+        }
+        break;
+      } catch (err: any) {
+        if (attempts >= 3) {
+          console.log(`  !  ${row.location.padEnd(35)} → fallito dopo 3 tentativi: ${err.message}`);
+        } else {
+          await sleep(3000);
+        }
       }
-    } catch (err: any) {
-      console.log(`  !  ${row.location.padEnd(35)} → errore: ${err.message}`);
     }
     await sleep(DELAY_MS);
   }
