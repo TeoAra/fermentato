@@ -1,4 +1,4 @@
-const CACHE_VERSION = 'v4';
+const CACHE_VERSION = 'v5';
 const STATIC_CACHE = `fermenta-static-${CACHE_VERSION}`;
 const PAGE_CACHE = `fermenta-pages-${CACHE_VERSION}`;
 const IMAGE_CACHE = `fermenta-images-${CACHE_VERSION}`;
@@ -239,6 +239,43 @@ async function evictOldEntries(cache, maxEntries) {
   const toDelete = keys.slice(0, keys.length - maxEntries);
   await Promise.all(toDelete.map((k) => cache.delete(k)));
 }
+
+// ─── Cache invalidation via postMessage ───────────────────────────────────────
+// L'app manda { type: 'INVALIDATE_CACHE', prefix: '/api/beers/123' }
+// Il SW cancella tutte le voci in API_CACHE che iniziano per quel prefisso.
+self.addEventListener('message', (event) => {
+  if (!event.data) return;
+
+  if (event.data.type === 'INVALIDATE_CACHE') {
+    const prefix = event.data.prefix;
+    if (!prefix) return;
+    caches.open(API_CACHE).then((cache) => {
+      cache.keys().then((keys) => {
+        keys.forEach((req) => {
+          if (new URL(req.url).pathname.startsWith(prefix)) {
+            cache.delete(req);
+          }
+        });
+      });
+    });
+    // Svuota anche IMAGE_CACHE per le immagini del birrificio/birra
+    if (event.data.clearImages) {
+      caches.open(IMAGE_CACHE).then((cache) => cache.keys().then((keys) => {
+        keys.forEach((req) => {
+          if (new URL(req.url).pathname.startsWith(event.data.clearImages)) {
+            cache.delete(req);
+          }
+        });
+      }));
+    }
+    return;
+  }
+
+  if (event.data.type === 'CLEAR_API_CACHE') {
+    caches.delete(API_CACHE);
+    return;
+  }
+});
 
 // ─── Push notifications ───────────────────────────────────────────────────────
 self.addEventListener('push', (event) => {
