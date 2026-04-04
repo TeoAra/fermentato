@@ -24,7 +24,12 @@ function haversineDistance(lat1: number, lon1: number, lat2: number, lon2: numbe
 
 export default function Home() {
   const { user, isAuthenticated } = useAuth();
-  const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
+  const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(() => {
+    try {
+      const cached = localStorage.getItem("fermenta:userLocation");
+      return cached ? JSON.parse(cached) : null;
+    } catch { return null; }
+  });
   const [locationStatus, setLocationStatus] = useState<'idle' | 'requesting' | 'granted' | 'denied'>('idle');
   const [locationAccuracy, setLocationAccuracy] = useState<number | null>(null);
   const [distanceKm, setDistanceKm] = useState(10);
@@ -41,7 +46,9 @@ export default function Home() {
     setLocationAccuracy(accuracy);
     if (accuracy <= ACCURACY_THRESHOLD) {
       gotGoodPositionRef.current = true;
-      setUserLocation({ lat: latitude, lng: longitude });
+      const loc = { lat: latitude, lng: longitude };
+      setUserLocation(loc);
+      try { localStorage.setItem("fermenta:userLocation", JSON.stringify(loc)); } catch {}
       setLocationStatus('granted');
     }
   }, []);
@@ -323,7 +330,7 @@ export default function Home() {
         pubs={Array.isArray(pubs) ? pubs : []}
         breweries={(() => {
           const src = Array.isArray(allBreweries) ? allBreweries : (Array.isArray(breweries) ? breweries : []);
-          return (src as any[]).filter((b: any) => b.latitude && b.longitude).slice(0, 80);
+          return (src as any[]).filter((b: any) => b.latitude && b.longitude);
         })()}
         userLocation={userLocation}
         isLoading={pubsLoading || breweriesLoading}

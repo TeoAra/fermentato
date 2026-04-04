@@ -53,15 +53,22 @@ function makeUserIcon(): L.DivIcon {
   });
 }
 
-function FlyToUser({ userLocation }: { userLocation: { lat: number; lng: number } | null | undefined }) {
+function FlyToUser({ userLocation, distanceKm }: { userLocation: { lat: number; lng: number } | null | undefined; distanceKm?: number }) {
   const map = useMap();
   const didFly = useRef(false);
 
   useEffect(() => {
     if (!userLocation || didFly.current) return;
-    didFly.current = true;
-    map.flyTo([userLocation.lat, userLocation.lng], 13, { duration: 1 });
-  }, [userLocation, map]);
+    const currentCenter = map.getCenter();
+    const dist = haversineDist(currentCenter.lat, currentCenter.lng, userLocation.lat, userLocation.lng);
+    // Fly solo se siamo lontani dalla posizione utente (>500m, es. partendo da Roma fallback)
+    if (dist > 0.5) {
+      didFly.current = true;
+      map.flyTo([userLocation.lat, userLocation.lng], radiusToZoom(distanceKm ?? 10), { duration: 0.8 });
+    } else {
+      didFly.current = true;
+    }
+  }, [userLocation, map, distanceKm]);
 
   return null;
 }
@@ -169,7 +176,7 @@ export default function HomepageMap({
   const center: [number, number] = userLocation
     ? [userLocation.lat, userLocation.lng]
     : [42.0, 12.5];
-  const zoom = userLocation ? 13 : 5.4;
+  const zoom = userLocation ? radiusToZoom(distanceKm ?? 10) : 5.4;
 
   const userIcon = useMemo(() => makeUserIcon(), []);
 
@@ -201,7 +208,7 @@ export default function HomepageMap({
           tileSize={256}
         />
 
-        <FlyToUser userLocation={userLocation} />
+        <FlyToUser userLocation={userLocation} distanceKm={distanceKm} />
         <RadiusZoomController userLocation={userLocation} distanceKm={distanceKm} />
 
         {userLocation && distanceKm && (
