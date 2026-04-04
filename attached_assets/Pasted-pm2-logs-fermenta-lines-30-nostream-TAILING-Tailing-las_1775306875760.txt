@@ -1,0 +1,67 @@
+pm2 logs fermenta --lines 30 --nostream
+[TAILING] Tailing last 30 lines for [fermenta] process (change the value with --lines option)
+/root/.pm2/logs/fermenta-error.log last 30 lines:
+1|fermenta | 2026-04-04T11:28:08: npm warn config init.module Use `--init-module` instead.
+1|fermenta | 2026-04-04T12:34:30: npm warn config init.module Use `--init-module` instead.
+1|fermenta | 2026-04-04T12:44:57: npm warn config init.module Use `--init-module` instead.
+1|fermenta | 2026-04-04T12:45:02: 12:45:02 PM [vite] Pre-transform error: Failed to load url /src/main.tsx?v=XN-B0H3ihMq2lPhKJwIrO (resolved id: /src/main.tsx?v=XN-B0H3ihMq2lPhKJwIrO). Does the file exist?
+1|fermenta | 2026-04-04T12:45:02: npm warn config init.module Use `--init-module` instead.
+1|fermenta | 2026-04-04T12:45:07: 12:45:07 PM [vite] Pre-transform error: Failed to load url /src/main.tsx?v=TF0_IofKLAlpaDPw3sB7k (resolved id: /src/main.tsx?v=TF0_IofKLAlpaDPw3sB7k). Does the file exist?
+1|fermenta | 2026-04-04T12:45:07: npm warn config init.module Use `--init-module` instead.
+1|fermenta | 2026-04-04T12:45:12: 12:45:12 PM [vite] Pre-transform error: Failed to load url /src/main.tsx?v=Ade9qP3nYEx_QW1QgI9Wy (resolved id: /src/main.tsx?v=Ade9qP3nYEx_QW1QgI9Wy). Does the file exist?
+1|fermenta | 2026-04-04T12:45:12: npm warn config init.module Use `--init-module` instead.
+1|fermenta | 2026-04-04T12:45:16: 12:45:16 PM [vite] Pre-transform error: Failed to load url /src/main.tsx?v=yUNopRBkEvSSxtyZv0Og7 (resolved id: /src/main.tsx?v=yUNopRBkEvSSxtyZv0Og7). Does the file exist?
+1|fermenta | 2026-04-04T12:45:16: npm warn config init.module Use `--init-module` instead.
+1|fermenta | 2026-04-04T12:45:31: 12:45:31 PM [vite] Pre-transform error: Failed to load url /src/main.tsx?v=HNTSK0AVAnh7Ipn7GCFGs (resolved id: /src/main.tsx?v=HNTSK0AVAnh7Ipn7GCFGs). Does the file exist?
+1|fermenta | 2026-04-04T12:45:31: npm warn config init.module Use `--init-module` instead.
+1|fermenta | 2026-04-04T12:45:41: 12:45:41 PM [vite] Pre-transform error: Failed to load url /src/main.tsx?v=aR8TqV8lvicZ5mFSPACke (resolved id: /src/main.tsx?v=aR8TqV8lvicZ5mFSPACke). Does the file exist?
+1|fermenta | 2026-04-04T12:45:41: npm warn config init.module Use `--init-module` instead.
+1|fermenta | 2026-04-04T12:45:45: 12:45:45 PM [vite] Pre-transform error: Failed to load url /src/main.tsx?v=Wm8P73mJ5srR6Q-WYz2t9 (resolved id: /src/main.tsx?v=Wm8P73mJ5srR6Q-WYz2t9). Does the file exist?
+1|fermenta | 2026-04-04T12:45:45: npm warn config init.module Use `--init-module` instead.
+1|fermenta | 2026-04-04T12:46:16: 12:46:16 PM [vite] Pre-transform error: Failed to load url /src/main.tsx?v=a0YRGkiyxCrib66hzI_Gw (resolved id: /src/main.tsx?v=a0YRGkiyxCrib66hzI_Gw). Does the file exist?
+1|fermenta | 2026-04-04T12:46:17: npm warn config init.module Use `--init-module` instead.
+1|fermenta | 2026-04-04T12:46:21: 12:46:21 PM [vite] Pre-transform error: Failed to load url /src/main.tsx?v=j07pk16bZzgdHFd9KPzCr (resolved id: /src/main.tsx?v=j07pk16bZzgdHFd9KPzCr). Does the file exist?
+1|fermenta | 2026-04-04T12:46:21: npm warn config init.module Use `--init-module` instead.
+1|fermenta | 2026-04-04T12:46:25: 12:46:25 PM [vite] Pre-transform error: Failed to load url /src/main.tsx?v=hIt8lO78dIx2ALJiwj9LU (resolved id: /src/main.tsx?v=hIt8lO78dIx2ALJiwj9LU). Does the file exist?
+1|fermenta | 2026-04-04T12:46:26: npm warn config init.module Use `--init-module` instead.
+1|fermenta | 2026-04-04T12:46:29: 12:46:29 PM [vite] Pre-transform error: Failed to load url /src/main.tsx?v=-xyLNYuEn7L9Mn2Nm9GZ- (resolved id: /src/main.tsx?v=-xyLNYuEn7L9Mn2Nm9GZ-). Does the file exist?
+1|fermenta | 2026-04-04T12:46:30: npm warn config init.module Use `--init-module` instead.
+1|fermenta | 2026-04-04T12:46:40: npm warn config init.module Use `--init-module` instead.
+1|fermenta | 2026-04-04T12:47:12: 12:47:12 PM [vite] Pre-transform error: Failed to load url /src/main.tsx?v=S8d9Tm1BJmfpIKQTQTtnE (resolved id: /src/main.tsx?v=S8d9Tm1BJmfpIKQTQTtnE). Does the file exist?
+1|fermenta | 2026-04-04T12:47:12: npm warn config init.module Use `--init-module` instead.
+1|fermenta | 2026-04-04T12:47:30: 12:47:30 PM [vite] Pre-transform error: Failed to load url /src/main.tsx?v=6Vpi6v4xJ5Ku4VO3vtc8k (resolved id: /src/main.tsx?v=6Vpi6v4xJ5Ku4VO3vtc8k). Does the file exist?
+1|fermenta | 2026-04-04T12:47:30: npm warn config init.module Use `--init-module` instead.
+
+/root/.pm2/logs/fermenta-out.log last 30 lines:
+1|fermenta | 2026-04-04T12:46:43: Web Push configured with VAPID keys
+1|fermenta | 2026-04-04T12:46:43: Google OAuth callback URL: https://fermenta.to/api/auth/google/callback
+1|fermenta | 2026-04-04T12:46:43: Authentication system initialized successfully
+1|fermenta | 2026-04-04T12:46:43: [email] SMTP config: host=localhost port=465 secure=true user=noreply@fermenta.to
+1|fermenta | 2026-04-04T12:46:43: 12:46:43 PM [express] serving on port 5000
+1|fermenta | 2026-04-04T12:46:43: [email] ✓ SMTP connection verified successfully
+1|fermenta | 2026-04-04T12:46:43: 12:46:43 PM [express] Stripe schema ready
+1|fermenta | 2026-04-04T12:46:43: { autoExpandLists: undefined, stripeApiVersion: undefined } StripeSync initialized
+1|fermenta | 2026-04-04T12:46:44: 12:46:44 PM [express] Stripe data synced
+1|fermenta | 2026-04-04T12:46:44: 12:46:44 PM [express] Stripe webhook configured
+1|fermenta | 2026-04-04T12:47:15: Web Push configured with VAPID keys
+1|fermenta | 2026-04-04T12:47:15: Google OAuth callback URL: https://fermenta.to/api/auth/google/callback
+1|fermenta | 2026-04-04T12:47:15: Authentication system initialized successfully
+1|fermenta | 2026-04-04T12:47:15: [email] SMTP config: host=localhost port=465 secure=true user=noreply@fermenta.to
+1|fermenta | 2026-04-04T12:47:15: 12:47:15 PM [express] serving on port 5000
+1|fermenta | 2026-04-04T12:47:15: [email] ✓ SMTP connection verified successfully
+1|fermenta | 2026-04-04T12:47:15: 12:47:15 PM [express] Stripe schema ready
+1|fermenta | 2026-04-04T12:47:15: { autoExpandLists: undefined, stripeApiVersion: undefined } StripeSync initialized
+1|fermenta | 2026-04-04T12:47:16: 12:47:16 PM [express] Stripe data synced
+1|fermenta | 2026-04-04T12:47:16: 12:47:16 PM [express] Stripe webhook configured
+1|fermenta | 2026-04-04T12:47:33: Web Push configured with VAPID keys
+1|fermenta | 2026-04-04T12:47:33: Google OAuth callback URL: https://fermenta.to/api/auth/google/callback
+1|fermenta | 2026-04-04T12:47:33: Authentication system initialized successfully
+1|fermenta | 2026-04-04T12:47:33: [email] SMTP config: host=localhost port=465 secure=true user=noreply@fermenta.to
+1|fermenta | 2026-04-04T12:47:33: 12:47:33 PM [express] serving on port 5000
+1|fermenta | 2026-04-04T12:47:33: [email] ✓ SMTP connection verified successfully
+1|fermenta | 2026-04-04T12:47:33: 12:47:33 PM [express] Stripe schema ready
+1|fermenta | 2026-04-04T12:47:34: { autoExpandLists: undefined, stripeApiVersion: undefined } StripeSync initialized
+1|fermenta | 2026-04-04T12:47:34: 12:47:34 PM [express] Stripe data synced
+1|fermenta | 2026-04-04T12:47:34: 12:47:34 PM [express] Stripe webhook configured
+
+root@luppolino:/www/nodeapps/fermenta#
