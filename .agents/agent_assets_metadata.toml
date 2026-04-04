@@ -1,5 +1,64 @@
 uploads = []
-generated = []
+
+[[generated]]
+id = "35bneRsr7tGqoaAV01L7P"
+uri = "file://attached_assets/generated_images/carousel_01_cover.png"
+type = "image"
+title = "generated_image"
+
+[[generated]]
+id = "V7d-N7rzzJpqjLUMA37p-"
+uri = "file://attached_assets/generated_images/carousel_02_utente_esplora.png"
+type = "image"
+title = "generated_image"
+
+[[generated]]
+id = "syoKur73ImvM1Z8iW4hvN"
+uri = "file://attached_assets/generated_images/carousel_03_utente_scopri_birre.png"
+type = "image"
+title = "generated_image"
+
+[[generated]]
+id = "nIz0jZVDVtur68_pDWAej"
+uri = "file://attached_assets/generated_images/carousel_04_utente_taplist.png"
+type = "image"
+title = "generated_image"
+
+[[generated]]
+id = "PBye0cAukwQvroAjcEtD_"
+uri = "file://attached_assets/generated_images/carousel_05_pub_dashboard.png"
+type = "image"
+title = "generated_image"
+
+[[generated]]
+id = "7jFB-D8aIRr1SK-NxkbRT"
+uri = "file://attached_assets/generated_images/carousel_06_pub_orari.png"
+type = "image"
+title = "generated_image"
+
+[[generated]]
+id = "fKfCJhW7yXhc-m8AP8xFU"
+uri = "file://attached_assets/generated_images/carousel_07_pub_eventi.png"
+type = "image"
+title = "generated_image"
+
+[[generated]]
+id = "YHYy2ZBGkfHBGNxuH_OHA"
+uri = "file://attached_assets/generated_images/carousel_08_birrificio_catalogo.png"
+type = "image"
+title = "generated_image"
+
+[[generated]]
+id = "pC9Zc10tgK74BKLCXmZRP"
+uri = "file://attached_assets/generated_images/carousel_09_festival.png"
+type = "image"
+title = "generated_image"
+
+[[generated]]
+id = "7KIVt9xpqet-mKk6aqRRB"
+uri = "file://attached_assets/generated_images/carousel_10_community.png"
+type = "image"
+title = "generated_image"
 
 [[outputs]]
 id = "jutqatHGcTLSUEk2_6slS"
@@ -12,3 +71,63 @@ id = "YVYPY6qvq5QpD9yjUdC6I"
 uri = "file://exports/fermenta-figma-screens.zip"
 type = "unspecified"
 title = "Fermenta.to – 20 screenshot reali (desktop + mobile)"
+
+[[outputs]]
+id = "zTVmeWUdWlDkYrVntFLAE"
+uri = "file://attached_assets/generated_images/carousel_01_cover.png"
+type = "image"
+title = "Slide 1 — Cover (Birra artigianale italiana)"
+
+[[outputs]]
+id = "_CmghyGkq4yxyafcJaTLD"
+uri = "file://attached_assets/generated_images/carousel_02_utente_esplora.png"
+type = "image"
+title = "Slide 2 — Utente: Esplora pub vicino a te"
+
+[[outputs]]
+id = "UXz4i2bbH7lRTtS7rzo1r"
+uri = "file://attached_assets/generated_images/carousel_03_utente_scopri_birre.png"
+type = "image"
+title = "Slide 3 — Utente: Scopri nuove birre"
+
+[[outputs]]
+id = "vqDYTBwXNspVro_Vagom9"
+uri = "file://attached_assets/generated_images/carousel_04_utente_taplist.png"
+type = "image"
+title = "Slide 4 — Utente: La tua taplist personale"
+
+[[outputs]]
+id = "LlH70KBPYbYZWN2BmfEQr"
+uri = "file://attached_assets/generated_images/carousel_05_pub_dashboard.png"
+type = "image"
+title = "Slide 5 — Pub: Gestisci la taplist in tempo reale"
+
+[[outputs]]
+id = "DdCm0xkXSrRXykoLiC4Xb"
+uri = "file://attached_assets/generated_images/carousel_06_pub_orari.png"
+type = "image"
+title = "Slide 6 — Pub: Orari sempre aggiornati"
+
+[[outputs]]
+id = "R4GaWxZpSon4EtOBU1xR9"
+uri = "file://attached_assets/generated_images/carousel_07_pub_eventi.png"
+type = "image"
+title = "Slide 7 — Pub: Promuovi i tuoi eventi"
+
+[[outputs]]
+id = "Ax4zgphk9XsMRdSrua04i"
+uri = "file://attached_assets/generated_images/carousel_08_birrificio_catalogo.png"
+type = "image"
+title = "Slide 8 — Birrificio: Mostra il tuo catalogo"
+
+[[outputs]]
+id = "onR_--Lcelk92fAY-AFoM"
+uri = "file://attached_assets/generated_images/carousel_09_festival.png"
+type = "image"
+title = "Slide 9 — Festival: Crea e promuovi eventi"
+
+[[outputs]]
+id = "s4oD4fM1Yz_SoncHrkeba"
+uri = "file://attached_assets/generated_images/carousel_10_community.png"
+type = "image"
+title = "Slide 10 — Community: Unisciti a noi"
