@@ -200,6 +200,7 @@ export interface IStorage {
 
   // Brewery operations
   getBreweries(): Promise<Brewery[]>;
+  getBreweriesForMap(): Promise<{ id: number; name: string; latitude: string; longitude: string; logoUrl: string | null; location: string; country: string | null }[]>;
   getBreweriesWithBeerCount(limit?: number, random?: boolean): Promise<any[]>;
   getBrewery(id: number): Promise<Brewery | undefined>;
   getRandomBreweries(limit?: number): Promise<Brewery[]>;
@@ -448,6 +449,14 @@ export class DatabaseStorage implements IStorage {
   // Brewery operations
   async getBreweries(): Promise<Brewery[]> {
     return await db.select().from(breweries).orderBy(asc(breweries.name));
+  }
+
+  async getBreweriesForMap(): Promise<{ id: number; name: string; latitude: string; longitude: string; logoUrl: string | null; location: string; country: string | null }[]> {
+    return await db
+      .select({ id: breweries.id, name: breweries.name, latitude: breweries.latitude, longitude: breweries.longitude, logoUrl: breweries.logoUrl, location: breweries.location, country: breweries.country })
+      .from(breweries)
+      .where(sql`${breweries.latitude} IS NOT NULL AND ${breweries.longitude} IS NOT NULL`)
+      .orderBy(asc(breweries.name)) as any;
   }
 
   async getBreweriesWithBeerCount(limit?: number, random?: boolean): Promise<any[]> {
@@ -1876,6 +1885,18 @@ class StorageWrapper implements IStorage {
     return this.dbCall(
       () => this.databaseStorage.getBreweries(),
       () => memoryStorageInstance.getBreweries()
+    );
+  }
+
+  async getBreweriesForMap(): Promise<{ id: number; name: string; latitude: string; longitude: string; logoUrl: string | null; location: string; country: string | null }[]> {
+    return this.dbCall(
+      () => this.databaseStorage.getBreweriesForMap(),
+      async () => {
+        const all = await memoryStorageInstance.getBreweries();
+        return (all as any[])
+          .filter((b: any) => b.latitude && b.longitude)
+          .map((b: any) => ({ id: b.id, name: b.name, latitude: b.latitude, longitude: b.longitude, logoUrl: b.logoUrl ?? null, location: b.location ?? '', country: b.country ?? null }));
+      }
     );
   }
 

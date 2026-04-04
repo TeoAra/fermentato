@@ -41,11 +41,16 @@ export default function Home() {
   // Soglia: ignora posizioni con errore > 3 km (IP geolocation può essere > 50 km)
   const ACCURACY_THRESHOLD = 3000;
   const gotGoodPositionRef = useRef(false);
+  const lastAccuracyRef = useRef<number>(Infinity);
+  const autoWatchRef = useRef<number | null>(null);   // watch avviato all'avvio
+  const manualWatchRef = useRef<number | null>(null); // watch avviato dal pulsante GPS
 
+  // Applica la posizione solo se è significativamente migliore dell'ultima
   const applyPosition = useCallback((pos: GeolocationPosition) => {
     const { latitude, longitude, accuracy } = pos.coords;
     setLocationAccuracy(accuracy);
-    if (accuracy <= ACCURACY_THRESHOLD) {
+    if (accuracy <= ACCURACY_THRESHOLD && accuracy < lastAccuracyRef.current * 1.5) {
+      lastAccuracyRef.current = accuracy;
       gotGoodPositionRef.current = true;
       const loc = { lat: latitude, lng: longitude };
       setUserLocation(loc);
@@ -54,58 +59,64 @@ export default function Home() {
     }
   }, []);
 
+  // Avvio automatico GPS all'apertura (una sola chiamata, si ferma quando accuratezza < 100m)
   useEffect(() => {
-    if (!navigator.geolocation) {
-      setLocationStatus('denied');
-      return;
-    }
+    if (!navigator.geolocation) { setLocationStatus('denied'); return; }
     setLocationStatus('requesting');
-    let watchId: number | null = null;
 
-    // Fase 1: posizione veloce da cache di rete (solo se accurata)
+    // Fase 1: posizione veloce da cache di rete
     navigator.geolocation.getCurrentPosition(
       applyPosition,
-      () => { /* la fase 2 gestisce l'errore */ },
+      () => {},
       { enableHighAccuracy: false, maximumAge: 60000, timeout: 5000 }
     );
 
-    // Fase 2: raffinamento GPS continuo
-    watchId = navigator.geolocation.watchPosition(
+    // Fase 2: raffinamento GPS — si ferma da solo quando accuratezza < 100m
+    const wid = navigator.geolocation.watchPosition(
       (pos) => {
         applyPosition(pos);
-        if (pos.coords.accuracy <= 100 && watchId !== null) {
-          navigator.geolocation.clearWatch(watchId);
-          watchId = null;
-        }
-      },
-      () => {
-        // Nega solo se non abbiamo mai ottenuto una posizione accurata
-        if (!gotGoodPositionRef.current) setLocationStatus('denied');
-      },
-      { enableHighAccuracy: true, maximumAge: 0, timeout: 25000 }
-    );
-
-    return () => {
-      if (watchId !== null) navigator.geolocation.clearWatch(watchId);
-    };
-  }, [applyPosition]);
-
-  const handleRequestLocation = useCallback(() => {
-    if (!navigator.geolocation) return;
-    setLocationStatus('requesting');
-    let watchId: number | null = null;
-
-    watchId = navigator.geolocation.watchPosition(
-      (pos) => {
-        applyPosition(pos);
-        if (pos.coords.accuracy <= 100 && watchId !== null) {
-          navigator.geolocation.clearWatch(watchId);
-          watchId = null;
+        if (pos.coords.accuracy <= 100) {
+          navigator.geolocation.clearWatch(wid);
+          autoWatchRef.current = null;
         }
       },
       () => { if (!gotGoodPositionRef.current) setLocationStatus('denied'); },
       { enableHighAccuracy: true, maximumAge: 0, timeout: 25000 }
     );
+    autoWatchRef.current = wid;
+
+    return () => {
+      navigator.geolocation.clearWatch(wid);
+      autoWatchRef.current = null;
+    };
+  }, []); // Dipendenze vuote: si esegue solo al mount, applyPosition è stabile
+
+  const handleRequestLocation = useCallback(() => {
+    if (!navigator.geolocation) return;
+    // Cancella eventuali watch precedenti per evitare aggiornamenti sovrapposti
+    if (autoWatchRef.current !== null) {
+      navigator.geolocation.clearWatch(autoWatchRef.current);
+      autoWatchRef.current = null;
+    }
+    if (manualWatchRef.current !== null) {
+      navigator.geolocation.clearWatch(manualWatchRef.current);
+      manualWatchRef.current = null;
+    }
+    lastAccuracyRef.current = Infinity; // reset soglia per accettare qualsiasi posizione
+    setLocationStatus('requesting');
+
+    const wid = navigator.geolocation.watchPosition(
+      (pos) => {
+        applyPosition(pos);
+        if (pos.coords.accuracy <= 100) {
+          navigator.geolocation.clearWatch(wid);
+          manualWatchRef.current = null;
+        }
+      },
+      () => { if (!gotGoodPositionRef.current) setLocationStatus('denied'); },
+      { enableHighAccuracy: true, maximumAge: 0, timeout: 25000 }
+    );
+    manualWatchRef.current = wid;
   }, [applyPosition]);
 
   const queryClient = useQueryClient();
@@ -150,8 +161,8 @@ export default function Home() {
   });
 
   const { data: allBreweries } = useQuery({
-    queryKey: ["/api/breweries/all"],
-    staleTime: 5 * 60 * 1000,
+    queryKey: ["/api/breweries/map"],
+    staleTime: 10 * 60 * 1000,
   });
 
   const { data: favorites } = useQuery({

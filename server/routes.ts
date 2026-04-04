@@ -485,7 +485,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const allBreweries = await memCached("breweries:all:gps", 5 * 60 * 1000, async () => {
         const all = await storage.getBreweriesWithBeerCount(undefined, false);
-        // For the map: only include breweries that have GPS coordinates (no arbitrary cap)
         return (all as any[]).filter((b: any) => b.latitude && b.longitude);
       });
       res.setHeader('Cache-Control', 'public, max-age=60, stale-while-revalidate=300');
@@ -493,6 +492,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error fetching all breweries:", error);
       res.status(500).json({ message: "Failed to fetch all breweries" });
+    }
+  });
+
+  // Lightweight map-only endpoint: only id, name, lat, lng, logoUrl — no JOINs, very fast
+  app.get("/api/breweries/map", async (req, res) => {
+    try {
+      const mapData = await memCached("breweries:map:v1", 10 * 60 * 1000, async () => {
+        return storage.getBreweriesForMap();
+      });
+      res.setHeader('Cache-Control', 'public, max-age=120, stale-while-revalidate=600');
+      res.json(mapData);
+    } catch (error) {
+      console.error("Error fetching breweries for map:", error);
+      res.status(500).json({ message: "Failed to fetch breweries for map" });
     }
   });
 
