@@ -1,3 +1,4 @@
+import { Helmet } from "react-helmet-async";
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { Link } from "wouter";
@@ -86,6 +87,17 @@ export default function ExplorePubs() {
 
   return (
     <div className="min-h-screen bg-background slide-up">
+      <Helmet>
+        <title>Pub e Birrerie Artigianali in Italia | Fermenta.to</title>
+        <meta name="description" content="Trova pub, birrerie e locali che servono birra artigianale in Italia. Consulta orari, taplist live e posizione su mappa." />
+        <meta property="og:title" content="Pub e Birrerie Artigianali in Italia | Fermenta.to" />
+        <meta property="og:description" content="Trova pub, birrerie e locali che servono birra artigianale in Italia. Consulta orari, taplist live e posizione su mappa." />
+        <meta property="og:type" content="website" />
+        <meta property="og:url" content="https://fermenta.to/explore/pubs" />
+        <meta property="og:site_name" content="Fermenta.to" />
+        <meta name="twitter:card" content="summary" />
+        <link rel="canonical" href="https://fermenta.to/explore/pubs" />
+      </Helmet>
       {/* Header */}
       <div className="bg-white dark:bg-[hsl(25,14%,8%)] border-b border-stone-100 dark:border-[hsl(25,12%,14%)]">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">

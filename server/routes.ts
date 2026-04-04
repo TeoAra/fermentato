@@ -6609,8 +6609,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         db.select({ id: beers.id }).from(beers).limit(10000),
       ]);
       const base = "https://fermenta.to";
-      const url = (loc: string, priority: string, freq: string) =>
-        `  <url><loc>${loc}</loc><changefreq>${freq}</changefreq><priority>${priority}</priority></url>`;
+      const todayISO = new Date().toISOString().slice(0, 10);
+      const url = (loc: string, priority: string, freq: string, lastmod?: string) =>
+        `  <url><loc>${loc}</loc><lastmod>${lastmod ?? todayISO}</lastmod><changefreq>${freq}</changefreq><priority>${priority}</priority></url>`;
       const lines = [
         `<?xml version="1.0" encoding="UTF-8"?>`,
         `<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">`,
@@ -6618,7 +6619,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         url(base + "/explore/pubs", "0.9", "daily"),
         url(base + "/explore/breweries", "0.9", "weekly"),
         url(base + "/explore/beers", "0.9", "weekly"),
-        ...allPubs.map(p => url(`${base}/pub/${p.id}`, "0.8", "daily")),
+        ...allPubs.map(p => url(`${base}/pub/${p.id}`, "0.8", "daily", p.updatedAt ? new Date(p.updatedAt).toISOString().slice(0, 10) : undefined)),
         ...allBreweries.map(b => url(`${base}/brewery/${b.id}`, "0.7", "weekly")),
         ...allBeers.map(b => url(`${base}/beer/${b.id}`, "0.6", "monthly")),
         `</urlset>`,

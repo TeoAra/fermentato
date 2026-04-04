@@ -49,47 +49,44 @@ import { NextTapVoting } from "@/components/NextTapVoting";
 
 type OpenStatus = 'open' | 'closing_soon' | 'opening_soon' | 'closed';
 
-function getOpenStatus(openingHours: any): { status: OpenStatus; borderColor: string; bgColor: string } {
-  if (!openingHours) return { status: 'closed', borderColor: 'ring-stone-400', bgColor: 'bg-stone-400' };
-  
-  const now = new Date();
-  const currentDay = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'][now.getDay()];
-  const currentTime = now.getHours() * 60 + now.getMinutes();
-  
-  const todayHours = openingHours[currentDay];
-  if (!todayHours || todayHours.isClosed) {
-    return { status: 'closed', borderColor: 'ring-red-500', bgColor: 'bg-red-500' };
-  }
-  
-  if (todayHours.open && todayHours.close) {
-    const [openHour, openMin] = todayHours.open.split(':').map(Number);
-    const [closeHour, closeMin] = todayHours.close.split(':').map(Number);
+function computeOpenStatus(hours: { open?: string; close?: string; isClosed?: boolean } | null | undefined, currentTime: number): { status: OpenStatus; borderColor: string; bgColor: string } {
+  if (!hours || hours.isClosed) return { status: 'closed', borderColor: 'ring-red-500', bgColor: 'bg-red-500' };
+  if (hours.open && hours.close) {
+    const [openHour, openMin] = hours.open.split(':').map(Number);
+    const [closeHour, closeMin] = hours.close.split(':').map(Number);
     const openTime = openHour * 60 + openMin;
     const closeTime = closeHour * 60 + closeMin;
-    
-    const isOpen = closeTime < openTime 
+    const isOpen = closeTime < openTime
       ? (currentTime >= openTime || currentTime <= closeTime)
       : (currentTime >= openTime && currentTime <= closeTime);
-    
     if (isOpen) {
-      const minutesToClose = closeTime < openTime 
+      const minutesToClose = closeTime < openTime
         ? (currentTime >= openTime ? (24 * 60 - currentTime + closeTime) : (closeTime - currentTime))
         : (closeTime - currentTime);
-      
-      if (minutesToClose <= 30) {
-        return { status: 'closing_soon', borderColor: 'ring-orange-500', bgColor: 'bg-orange-500' };
-      }
+      if (minutesToClose <= 30) return { status: 'closing_soon', borderColor: 'ring-orange-500', bgColor: 'bg-orange-500' };
       return { status: 'open', borderColor: 'ring-green-500', bgColor: 'bg-green-500' };
     } else {
       const minutesToOpen = openTime - currentTime;
-      if (minutesToOpen > 0 && minutesToOpen <= 60) {
-        return { status: 'opening_soon', borderColor: 'ring-primary', bgColor: 'bg-primary' };
-      }
+      if (minutesToOpen > 0 && minutesToOpen <= 60) return { status: 'opening_soon', borderColor: 'ring-primary', bgColor: 'bg-primary' };
       return { status: 'closed', borderColor: 'ring-red-500', bgColor: 'bg-red-500' };
     }
   }
-  
   return { status: 'open', borderColor: 'ring-green-500', bgColor: 'bg-green-500' };
+}
+
+function getOpenStatus(openingHours: any): { status: OpenStatus; borderColor: string; bgColor: string } {
+  if (!openingHours) return { status: 'closed', borderColor: 'ring-stone-400', bgColor: 'bg-stone-400' };
+  const now = new Date();
+  const currentTime = now.getHours() * 60 + now.getMinutes();
+
+  // Check special days first
+  const todayDate = now.toISOString().slice(0, 10);
+  const specialDays: any[] = openingHours.specialDays ?? [];
+  const specialToday = specialDays.find((s: any) => s.date === todayDate);
+  if (specialToday) return computeOpenStatus(specialToday, currentTime);
+
+  const currentDay = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'][now.getDay()];
+  return computeOpenStatus(openingHours[currentDay], currentTime);
 }
 
 function isOpenNow(openingHours: any) {
@@ -579,6 +576,7 @@ export default function PubDetail() {
         <meta name="twitter:title" content={seoTitle} />
         <meta name="twitter:description" content={seoDesc} />
         {seoImage && <meta name="twitter:image" content={seoImage} />}
+        <link rel="canonical" href={seoUrl} />
         <script type="application/ld+json">{JSON.stringify({
           "@context": "https://schema.org",
           "@type": "BarOrPub",
@@ -586,8 +584,22 @@ export default function PubDetail() {
           "description": pubData?.description,
           "url": seoUrl,
           "image": seoImage,
-          "address": pubData?.address ? { "@type": "PostalAddress", "streetAddress": pubData.address, "addressCountry": "IT" } : undefined,
           "telephone": pubData?.phone,
+          "address": pubData?.address ? { "@type": "PostalAddress", "streetAddress": pubData.address, "addressLocality": pubData.city, "addressCountry": "IT" } : undefined,
+          ...(pubData?.latitude && pubData?.longitude ? { "geo": { "@type": "GeoCoordinates", "latitude": pubData.latitude, "longitude": pubData.longitude } } : {}),
+          ...(pubData?.website ? { "url": pubData.website, "sameAs": pubData.website } : {}),
+          "servesCuisine": "Craft Beer",
+          "openingHoursSpecification": (() => {
+            const days: Record<string, string> = { monday: "Monday", tuesday: "Tuesday", wednesday: "Wednesday", thursday: "Thursday", friday: "Friday", saturday: "Saturday", sunday: "Sunday" };
+            const hours = pubData?.openingHours;
+            if (!hours) return undefined;
+            return Object.entries(days).filter(([k]) => hours[k] && !hours[k].isClosed && hours[k].open && hours[k].close).map(([k, dayName]) => ({
+              "@type": "OpeningHoursSpecification",
+              "dayOfWeek": `https://schema.org/${dayName}`,
+              "opens": hours[k].open,
+              "closes": hours[k].close,
+            }));
+          })(),
         })}</script>
       </Helmet>
       

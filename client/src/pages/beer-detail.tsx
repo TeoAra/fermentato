@@ -570,6 +570,7 @@ export default function BeerDetail() {
         <meta property="og:site_name" content="Fermenta.to" />
         {seoImage && <meta property="og:image" content={seoImage} />}
         <meta name="twitter:card" content="summary_large_image" />
+        <link rel="canonical" href={seoUrl} />
         <script type="application/ld+json">{JSON.stringify({
           "@context": "https://schema.org",
           "@type": "Product",
@@ -578,6 +579,8 @@ export default function BeerDetail() {
           "url": seoUrl,
           "image": seoImage,
           "brand": { "@type": "Brand", "name": (beer as any)?.brewery?.name },
+          "category": (beer as any)?.style,
+          ...(beer?.abv ? { "additionalProperty": [{ "@type": "PropertyValue", "name": "Gradazione alcolica", "value": `${beer.abv}% ABV` }] } : {}),
         })}</script>
       </Helmet>
       

@@ -167,6 +167,104 @@ function PubMenuInfoBox({ pubId, currentValue }: { pubId: number; currentValue: 
   );
 }
 
+// ─── Special Days Editor ─────────────────────────────────────────────────────
+function SpecialDaysEditor({ specialDays, onChange }: { specialDays: any[]; onChange: (days: any[]) => void }) {
+  const emptyForm = { date: "", label: "", isClosed: true, open: "18:00", close: "23:00" };
+  const [form, setForm] = useState(emptyForm);
+  const [showForm, setShowForm] = useState(false);
+
+  const todayStr = new Date().toISOString().slice(0, 10);
+
+  const upcoming = [...(specialDays ?? [])]
+    .filter(d => d.date >= todayStr)
+    .sort((a, b) => a.date.localeCompare(b.date));
+
+  const addDay = () => {
+    if (!form.date) return;
+    const existing = (specialDays ?? []).filter(d => d.date !== form.date);
+    const newDay = form.isClosed
+      ? { date: form.date, label: form.label, isClosed: true }
+      : { date: form.date, label: form.label, isClosed: false, open: form.open, close: form.close };
+    onChange([...existing, newDay]);
+    setForm(emptyForm);
+    setShowForm(false);
+  };
+
+  const removeDay = (date: string) => onChange((specialDays ?? []).filter(d => d.date !== date));
+
+  const formatDate = (dateStr: string) => {
+    try { return new Date(dateStr + "T12:00:00").toLocaleDateString("it-IT", { weekday: "short", day: "numeric", month: "long", year: "numeric" }); }
+    catch { return dateStr; }
+  };
+
+  return (
+    <Card className="p-6 mt-4">
+      <h3 className="text-lg font-semibold mb-1 flex items-center">
+        <CalendarDays className="h-5 w-5 mr-2 text-primary" />
+        Giorni Speciali e Chiusure Straordinarie
+      </h3>
+      <p className="text-sm text-muted-foreground mb-4">
+        Aggiungi chiusure straordinarie o orari diversi per festività, eventi speciali o ferie. Hanno priorità sugli orari settimanali.
+      </p>
+
+      {upcoming.length > 0 && (
+        <div className="space-y-2 mb-4">
+          {upcoming.map(day => (
+            <div key={day.date} className="flex items-center justify-between p-3 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700/50 rounded-xl">
+              <div className="min-w-0">
+                <p className="text-sm font-semibold text-stone-800 dark:text-stone-200">{day.label || "Giorno speciale"}</p>
+                <p className="text-xs text-stone-500 dark:text-stone-400">{formatDate(day.date)}</p>
+                <p className="text-xs font-medium mt-0.5">
+                  {day.isClosed
+                    ? <span className="text-red-600 dark:text-red-400">Chiuso</span>
+                    : <span className="text-green-600 dark:text-green-400">Orario speciale: {day.open} – {day.close}</span>}
+                </p>
+              </div>
+              <button onClick={() => removeDay(day.date)} className="ml-3 p-1.5 rounded-lg text-stone-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors flex-shrink-0">
+                <Trash2 className="h-4 w-4" />
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {showForm ? (
+        <div className="p-4 border border-stone-200 dark:border-border rounded-xl space-y-3 bg-stone-50 dark:bg-stone-900/30">
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <Label className="text-xs text-muted-foreground mb-1 block">Data</Label>
+              <Input type="date" value={form.date} min={todayStr} onChange={e => setForm(f => ({ ...f, date: e.target.value }))} className="rounded-xl text-sm" />
+            </div>
+            <div>
+              <Label className="text-xs text-muted-foreground mb-1 block">Etichetta</Label>
+              <Input placeholder="es. Natale, Chiusura estiva…" value={form.label} onChange={e => setForm(f => ({ ...f, label: e.target.value }))} className="rounded-xl text-sm" />
+            </div>
+          </div>
+          <div className="flex items-center gap-3">
+            <Switch checked={form.isClosed} onCheckedChange={v => setForm(f => ({ ...f, isClosed: v }))} />
+            <Label className="text-sm">{form.isClosed ? "Chiuso tutto il giorno" : "Orario personalizzato"}</Label>
+          </div>
+          {!form.isClosed && (
+            <div className="flex items-center gap-2">
+              <Input type="time" value={form.open} onChange={e => setForm(f => ({ ...f, open: e.target.value }))} className="flex-1 rounded-xl text-sm" />
+              <span className="text-muted-foreground text-sm">—</span>
+              <Input type="time" value={form.close} onChange={e => setForm(f => ({ ...f, close: e.target.value }))} className="flex-1 rounded-xl text-sm" />
+            </div>
+          )}
+          <div className="flex gap-2">
+            <Button size="sm" onClick={addDay} disabled={!form.date} className="flex-1 rounded-xl bg-primary text-white">Salva giorno speciale</Button>
+            <Button size="sm" variant="outline" onClick={() => { setForm(emptyForm); setShowForm(false); }} className="rounded-xl"><X className="h-4 w-4" /></Button>
+          </div>
+        </div>
+      ) : (
+        <Button variant="outline" onClick={() => setShowForm(true)} className="w-full border-dashed rounded-xl text-sm text-primary dark:text-orange-400">
+          <Plus className="h-4 w-4 mr-2" /> Aggiungi giorno speciale
+        </Button>
+      )}
+    </Card>
+  );
+}
+
 type DashboardSection = 'overview' | 'taplist' | 'bottles' | 'menu' | 'events' | 'analytics' | 'settings' | 'profile';
 
 interface SmartPubDashboardProps {
@@ -1171,6 +1269,10 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
           </p>
         </div>
       </Card>
+      <SpecialDaysEditor
+        specialDays={settingsData.openingHours?.specialDays ?? []}
+        onChange={(days) => updateSettingsField('openingHours', { ...settingsData.openingHours, specialDays: days })}
+      />
     </div>
   );
 
@@ -1459,6 +1561,11 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
             })}
           </div>
         </Card>
+
+        <SpecialDaysEditor
+          specialDays={settingsData.openingHours?.specialDays ?? []}
+          onChange={(days) => updateSettingsField('openingHours', { ...settingsData.openingHours, specialDays: days })}
+        />
 
         {/* Social Media Links */}
         <Card className="p-6">

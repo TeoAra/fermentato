@@ -442,6 +442,7 @@ export default function BreweryDetail() {
         <meta property="og:site_name" content="Fermenta.to" />
         {seoImage && <meta property="og:image" content={seoImage} />}
         <meta name="twitter:card" content="summary_large_image" />
+        <link rel="canonical" href={seoUrl} />
         <script type="application/ld+json">{JSON.stringify({
           "@context": "https://schema.org",
           "@type": "Brewery",
@@ -449,6 +450,9 @@ export default function BreweryDetail() {
           "description": (brewery as any)?.description,
           "url": seoUrl,
           "image": seoImage,
+          ...(brewery?.logoUrl ? { "logo": brewery.logoUrl } : {}),
+          ...(brewery?.location ? { "address": { "@type": "PostalAddress", "addressLocality": brewery.location, "addressCountry": (brewery as any)?.country === "Italy" ? "IT" : (brewery as any)?.country } } : {}),
+          ...(brewery?.website ? { "sameAs": brewery.website } : {}),
         })}</script>
       </Helmet>
       

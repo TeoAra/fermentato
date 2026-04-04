@@ -1,3 +1,4 @@
+import { Helmet } from "react-helmet-async";
 import { useQuery } from "@tanstack/react-query";
 import { useState, useMemo, useEffect, useCallback } from "react";
 import { Link } from "wouter";
@@ -289,6 +290,17 @@ export default function ExploreBreweries() {
 
   return (
     <div className="min-h-screen bg-background slide-up">
+      <Helmet>
+        <title>Birrifici Artigianali Italiani | Fermenta.to</title>
+        <meta name="description" content="Esplora i migliori birrifici artigianali d'Italia. Scopri le birre, la storia dei produttori e i locali dove trovarle vicino a te." />
+        <meta property="og:title" content="Birrifici Artigianali Italiani | Fermenta.to" />
+        <meta property="og:description" content="Esplora i migliori birrifici artigianali d'Italia. Scopri le birre, la storia dei produttori e i locali dove trovarle vicino a te." />
+        <meta property="og:type" content="website" />
+        <meta property="og:url" content="https://fermenta.to/explore/breweries" />
+        <meta property="og:site_name" content="Fermenta.to" />
+        <meta name="twitter:card" content="summary" />
+        <link rel="canonical" href="https://fermenta.to/explore/breweries" />
+      </Helmet>
       {/* Header */}
       <div className="bg-white dark:bg-[hsl(25,14%,8%)] border-b border-stone-100 dark:border-[hsl(25,12%,14%)]">
         <div className="max-w-5xl mx-auto px-4 sm:px-6 py-4">

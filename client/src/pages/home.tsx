@@ -1,3 +1,4 @@
+import { Helmet } from "react-helmet-async";
 import { useAuth } from "@/hooks/useAuth";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link } from "wouter";
@@ -190,6 +191,18 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-background slide-up">
+      <Helmet>
+        <title>Fermenta.to — Birre Artigianali, Pub e Birrifici in Italia</title>
+        <meta name="description" content="Scopri i migliori pub e birrifici artigianali d'Italia. Consulta taplist in tempo reale, orari di apertura e assaggia le migliori birre craft." />
+        <meta property="og:title" content="Fermenta.to — Birre Artigianali, Pub e Birrifici in Italia" />
+        <meta property="og:description" content="Scopri i migliori pub e birrifici artigianali d'Italia. Consulta taplist in tempo reale, orari di apertura e assaggia le migliori birre craft." />
+        <meta property="og:type" content="website" />
+        <meta property="og:url" content="https://fermenta.to/" />
+        <meta property="og:site_name" content="Fermenta.to" />
+        <meta property="og:image" content="https://fermenta.to/logo-full.png" />
+        <meta name="twitter:card" content="summary_large_image" />
+        <link rel="canonical" href="https://fermenta.to/" />
+      </Helmet>
       {/* Pull to refresh indicator */}
       {(isPulling || isRefreshing) && (
         <div className="fixed top-16 left-0 right-0 z-40 flex items-center justify-center py-2.5 bg-stone-50 dark:bg-stone-900/95 border-b border-stone-300 dark:border-stone-700 backdrop-blur-sm">

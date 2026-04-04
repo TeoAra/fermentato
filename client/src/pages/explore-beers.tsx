@@ -1,3 +1,4 @@
+import { Helmet } from "react-helmet-async";
 import { useQuery } from "@tanstack/react-query";
 import { useState, useEffect } from "react";
 import { Link } from "wouter";
@@ -69,6 +70,17 @@ export default function ExploreBeers() {
 
   return (
     <div className="min-h-screen bg-background slide-up">
+      <Helmet>
+        <title>Catalogo Birre Artigianali | Fermenta.to</title>
+        <meta name="description" content="Sfoglia migliaia di birre artigianali italiane. Filtra per stile, cerca per nome o birrificio e scopri le tue preferite." />
+        <meta property="og:title" content="Catalogo Birre Artigianali | Fermenta.to" />
+        <meta property="og:description" content="Sfoglia migliaia di birre artigianali italiane. Filtra per stile, cerca per nome o birrificio e scopri le tue preferite." />
+        <meta property="og:type" content="website" />
+        <meta property="og:url" content="https://fermenta.to/explore/beers" />
+        <meta property="og:site_name" content="Fermenta.to" />
+        <meta name="twitter:card" content="summary" />
+        <link rel="canonical" href="https://fermenta.to/explore/beers" />
+      </Helmet>
       {/* Page header */}
       <div className="bg-white dark:bg-[hsl(25,14%,8%)] border-b border-stone-100 dark:border-[hsl(25,12%,14%)]">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">

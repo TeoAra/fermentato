@@ -1,3 +1,4 @@
+import { Helmet } from "react-helmet-async";
 import { Link } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import { useState, useEffect, useMemo, useRef } from "react";
@@ -164,6 +165,18 @@ export default function Landing() {
 
   return (
     <div className="min-h-screen bg-background slide-up">
+      <Helmet>
+        <title>Fermenta.to — La community italiana della birra artigianale</title>
+        <meta name="description" content="Iscriviti a Fermenta.to, la piattaforma per chi ama la birra artigianale. Trova pub e birrifici, assaggia, recensisci e condividi con la community." />
+        <meta property="og:title" content="Fermenta.to — La community italiana della birra artigianale" />
+        <meta property="og:description" content="Iscriviti a Fermenta.to, la piattaforma per chi ama la birra artigianale. Trova pub e birrifici, assaggia, recensisci e condividi con la community." />
+        <meta property="og:type" content="website" />
+        <meta property="og:url" content="https://fermenta.to/" />
+        <meta property="og:site_name" content="Fermenta.to" />
+        <meta property="og:image" content="https://fermenta.to/logo-full.png" />
+        <meta name="twitter:card" content="summary_large_image" />
+        <link rel="canonical" href="https://fermenta.to/" />
+      </Helmet>
 
       {/* ─── HERO ────────────────────────────────────────────────────────── */}
       <section className="relative overflow-hidden">
