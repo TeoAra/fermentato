@@ -38,7 +38,6 @@ import { apiRequest } from "@/lib/queryClient";
 import OpeningHoursDialog from "@/components/OpeningHoursDialog";
 import ImageWithFallback from "@/components/image-with-fallback";
 import { PubQRCode } from "@/components/pub-qr-code";
-import { MenuPdfDownload } from "@/components/menu-pdf-download";
 import { EventCategoryBadge, EventShareButtons, EventInterestButton } from "@/components/events-manager";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { format, isFuture } from "date-fns";

@@ -2,14 +2,15 @@ import { Helmet } from "react-helmet-async";
 import { useAuth } from "@/hooks/useAuth";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link } from "wouter";
-import { useState, useEffect, useMemo, useCallback, useRef } from "react";
+import { useState, useEffect, useMemo, useCallback, useRef, lazy, Suspense } from "react";
 import { usePullToRefresh } from "@/hooks/use-pull-to-refresh";
 import { Beer, MapPin, Heart, Store, TrendingUp, Navigation, Building2, ChevronRight, Zap, List, CalendarDays, Megaphone, Newspaper, Rocket, Users, Droplets, Bell, Bookmark, ChevronDown } from "lucide-react";
 import Footer from "@/components/footer";
 import PubCard from "@/components/pub-card";
 import BreweryCard from "@/components/brewery-card";
-import HomepageMap from "@/components/homepage-map";
 import { Button } from "@/components/ui/button";
+
+const HomepageMap = lazy(() => import("@/components/homepage-map"));
 
 function haversineDistance(lat1: number, lon1: number, lat2: number, lon2: number): number {
   const R = 6371;
@@ -326,22 +327,24 @@ export default function Home() {
       </section>
 
       {/* ─── Mappa ────────────────────────────────────────────────────────── */}
-      <HomepageMap
-        pubs={Array.isArray(pubs) ? pubs : []}
-        breweries={(() => {
-          const src = Array.isArray(allBreweries) ? allBreweries : (Array.isArray(breweries) ? breweries : []);
-          return (src as any[]).filter((b: any) => b.latitude && b.longitude);
-        })()}
-        userLocation={userLocation}
-        isLoading={pubsLoading || breweriesLoading}
-        showPubs={showPubs}
-        showBreweries={showBreweries}
-        distanceKm={userLocation ? distanceKm : undefined}
-        onLocate={(loc) => {
-          setUserLocation(loc);
-          setLocationStatus('granted');
-        }}
-      />
+      <Suspense fallback={<div className="h-64 bg-stone-100 dark:bg-stone-800 animate-pulse rounded-2xl mx-4" />}>
+        <HomepageMap
+          pubs={Array.isArray(pubs) ? pubs : []}
+          breweries={(() => {
+            const src = Array.isArray(allBreweries) ? allBreweries : (Array.isArray(breweries) ? breweries : []);
+            return (src as any[]).filter((b: any) => b.latitude && b.longitude);
+          })()}
+          userLocation={userLocation}
+          isLoading={pubsLoading || breweriesLoading}
+          showPubs={showPubs}
+          showBreweries={showBreweries}
+          distanceKm={userLocation ? distanceKm : undefined}
+          onLocate={(loc) => {
+            setUserLocation(loc);
+            setLocationStatus('granted');
+          }}
+        />
+      </Suspense>
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-4 pb-10 lg:pt-6 lg:pb-12">
 

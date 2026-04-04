@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, lazy, Suspense } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Link } from "wouter";
 import { useAuth } from "@/hooks/useAuth";
@@ -79,11 +79,15 @@ import { PubOwnerTopBar } from "@/components/pub-owner-top-bar";
 import { ImageUpload } from "@/components/image-upload";
 import { EventsManager } from "@/components/events-manager";
 import { PubQRCode } from "@/components/pub-qr-code";
-import { MenuPdfDownload } from "@/components/menu-pdf-download";
 import { Cast, Share2, Link as LinkIcon, Tv, Info, QrCode } from "lucide-react";
+
 import { AddressAutocomplete } from "@/components/AddressAutocomplete";
 import { SiFacebook, SiInstagram, SiX, SiTiktok } from "react-icons/si";
 import { RoleSwitcherBanner } from "@/components/role-switcher-banner";
+
+const MenuPdfDownload = lazy(() =>
+  import("@/components/menu-pdf-download").then(m => ({ default: m.MenuPdfDownload }))
+);
 
 function PubMenuInfoBox({ pubId, currentValue }: { pubId: number; currentValue: string }) {
   const [text, setText] = useState(currentValue);
@@ -725,14 +729,16 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
           <PubQRCode pubId={currentPub?.id} pubName={currentPub?.name || ""} pubSlug={(currentPub as any)?.slug} compact />
 
           {/* PDF Menu */}
-          <MenuPdfDownload
-            pubName={currentPub?.name || ""}
-            tapList={typedTapList}
-            bottleList={typedBottleList}
-            menuCategories={categoriesWithItems}
-            menuInfoBox={currentPub?.menuInfoBox}
-            compact
-          />
+          <Suspense fallback={<div className="h-20 bg-stone-100 dark:bg-stone-800 animate-pulse rounded-2xl" />}>
+            <MenuPdfDownload
+              pubName={currentPub?.name || ""}
+              tapList={typedTapList}
+              bottleList={typedBottleList}
+              menuCategories={categoriesWithItems}
+              menuInfoBox={currentPub?.menuInfoBox}
+              compact
+            />
+          </Suspense>
 
           {/* Festival Mode */}
           <Link href="/festival">
