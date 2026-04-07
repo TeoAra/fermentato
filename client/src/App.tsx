@@ -126,6 +126,19 @@ class RouteErrorBoundary extends Component<{ children: ReactNode }, { hasError: 
     return { hasError: true, error };
   }
   componentDidCatch(error: Error, info: any) {
+    // Chunk load error dopo un nuovo deploy → ricarica la pagina automaticamente
+    const isChunkError = error.message?.includes('Failed to fetch dynamically imported module')
+      || error.message?.includes('Loading chunk')
+      || error.name === 'ChunkLoadError';
+    if (isChunkError) {
+      const lastReload = sessionStorage.getItem('_chunk_reload');
+      const now = Date.now();
+      if (!lastReload || now - parseInt(lastReload) > 10000) {
+        sessionStorage.setItem('_chunk_reload', String(now));
+        window.location.reload();
+        return;
+      }
+    }
     console.error("[RouteErrorBoundary] ERROR:", error.message);
     console.error("[RouteErrorBoundary] STACK:", error.stack);
     console.error("[RouteErrorBoundary] COMPONENT STACK:", info?.componentStack);
