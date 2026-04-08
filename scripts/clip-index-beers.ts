@@ -4,17 +4,42 @@
  * downloads + GPU/CPU batch inference internally.
  *
  * Usage (run ON THE VPS):
- *   npx tsx scripts/clip-index-beers.ts [--batch 50] [--limit 5000] [--country Italia]
+ *   npx tsx scripts/clip-index-beers.ts [--batch=50] [--limit=5000] [--country=Italia]
  *
  * Options:
- *   --batch N     Items per /index-batch call (default: 50)
- *   --limit N     Max beers to process (default: all)
- *   --country X   Filter by brewery country (optional, e.g. "Italia")
- *   --delay N     Ms between batches (default: 500)
+ *   --batch=N     Items per /index-batch call (default: 50)
+ *   --limit=N     Max beers to process (default: all)
+ *   --country=X   Filter by brewery country (optional, e.g. "Italia")
+ *   --delay=N     Ms between batches (default: 500)
  */
 
-import "dotenv/config";
-import { pool } from "../server/db";
+import pg from "pg";
+import fs from "fs";
+import path from "path";
+
+// ── Load .env manually (dotenv not required) ──────────────────────────────────
+if (!process.env.DATABASE_URL) {
+  const envPath = path.resolve(process.cwd(), ".env");
+  if (fs.existsSync(envPath)) {
+    for (const line of fs.readFileSync(envPath, "utf8").split("\n")) {
+      const t = line.trim();
+      if (!t || t.startsWith("#")) continue;
+      const eq = t.indexOf("=");
+      if (eq < 0) continue;
+      const k = t.slice(0, eq).trim();
+      const v = t.slice(eq + 1).trim().replace(/^["']|["']$/g, "");
+      if (k && !process.env[k]) process.env[k] = v;
+    }
+  }
+}
+
+const DATABASE_URL = process.env.DATABASE_URL;
+if (!DATABASE_URL) {
+  console.error("❌  DATABASE_URL not set. Check .env file or environment.");
+  process.exit(1);
+}
+
+const pool = new pg.Pool({ connectionString: DATABASE_URL });
 
 const CLIP_URL = process.env.CLIP_SERVICE_URL ?? "http://127.0.0.1:5002";
 const BATCH    = parseInt(process.argv.find(a => a.startsWith("--batch="))?.split("=")[1] ?? "50") || 50;
@@ -51,7 +76,7 @@ async function main() {
   const { rows: [{ cnt }] } = await pool.query(countQ, COUNTRY ? [`%${COUNTRY}%`] : []);
   const total = LIMIT ? Math.min(cnt, LIMIT) : cnt;
 
-  console.log(`📦  ${total} beers to index${COUNTRY ? ` (country: ${COUNTRY})` : ""}  |  batch=${BATCH}`);
+  console.log(`📦  ${total} beers to index${COUNTRY ? ` (country: ${COUNTRY})` : ""}  |  batch=${BATCH}  delay=${DELAY_MS}ms`);
   if (total === 0) { await pool.end(); return; }
 
   let processed = 0;
@@ -68,7 +93,7 @@ async function main() {
 
     if (rows.length === 0) break;
 
-    const items = rows.map(r => ({ id: r.id, url: r.url }));
+    const items = rows.map((r: any) => ({ id: r.id, url: r.url }));
 
     try {
       const r = await fetch(`${CLIP_URL}/index-batch`, {
