@@ -469,6 +469,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Public pub search — used by check-in modal
+  app.get("/api/pubs/search", async (req, res) => {
+    try {
+      const q = String(req.query.q ?? "").trim();
+      if (!q) return res.json([]);
+      const results = await storage.searchPubs(q);
+      res.json(results.slice(0, 15));
+    } catch (error) {
+      console.error("Error searching pubs:", error);
+      res.status(500).json({ message: "Failed to search pubs" });
+    }
+  });
+
   // Get all pubs for explore page
   app.get("/api/pubs/all", async (req, res) => {
     try {
