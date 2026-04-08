@@ -28,6 +28,9 @@ interface BeerResult {
   abv?: string;
   imageUrl?: string;
   breweryName?: string;
+  memoryMatch?: boolean;
+  memorySimilarity?: number;
+  memoryConfirmCount?: number;
 }
 
 interface BreweryResult {
@@ -109,10 +112,12 @@ async function searchWithFallback(text: string): Promise<{
   beers: BeerResult[];
   breweries: BreweryResult[];
   usedQuery: string;
+  memoryMatch?: boolean;
 }> {
   // ── Strategy 1: dedicated OR-based scan search endpoint ──────────────────
   // Sends the full OCR text, server extracts words and uses LIKE ANY (OR logic)
   // so ANY meaningful word matching is enough to surface a result.
+  // The server also checks scan memory (pg_trgm) for confirmed past matches.
   try {
     const res = await fetch("/api/scan/search", {
       method: "POST",
@@ -126,10 +131,13 @@ async function searchWithFallback(text: string): Promise<{
       const beers: BeerResult[] = (data.beers ?? []).map((b: any) => ({
         id: b.id, name: b.name, style: b.style, abv: b.abv,
         imageUrl: b.imageUrl, breweryName: b.breweryName,
+        memoryMatch: b.memoryMatch ?? false,
+        memorySimilarity: b.memorySimilarity,
+        memoryConfirmCount: b.memoryConfirmCount,
       }));
       const breweries: BreweryResult[] = data.breweries ?? [];
       if (beers.length + breweries.length > 0) {
-        return { beers, breweries, usedQuery: text };
+        return { beers, breweries, usedQuery: text, memoryMatch: data.memoryMatch ?? false };
       }
     }
   } catch { /* fall through to legacy */ }
@@ -243,25 +251,53 @@ export default function ScanPage() {
     setScanState("searching");
     const t0 = Date.now();
     try {
-      const { beers: b, breweries: br, usedQuery: uq } = await searchWithFallback(query.trim());
-      setBeers(b);
-      setBreweries(br);
-      setUsedQuery(uq);
-      const found = b.length + br.length > 0;
-      setScanState(found ? "results" : "notfound");
+      const { beers: b, breweries: br, usedQuery: uq, memoryMatch } = await searchWithFallback(query.trim());
+      const latency = Date.now() - t0;
 
       // Fire-and-forget scan log
       const candidates = [
         ...b.slice(0, 5).map(x => ({ id: x.id, name: x.name, type: "beer" })),
         ...br.slice(0, 3).map(x => ({ id: x.id, name: x.name, type: "brewery" })),
       ];
-      createScanLog(currentOcrTextRef.current, source || detectedSource, uq, candidates, Date.now() - t0);
+      createScanLog(currentOcrTextRef.current, source || detectedSource, uq, candidates, latency);
+
+      // ── Auto-redirect: single unambiguous result ─────────────────────────
+      // If there's exactly 1 beer (no breweries), jump directly to its page.
+      // Memory matches (confirmed past scans) also trigger immediate redirect.
+      const isHighConfidence = (b.length === 1 && br.length === 0) || (memoryMatch === true && b.length >= 1);
+      if (isHighConfidence) {
+        const beer = b[0];
+        // Save context to sessionStorage so beer-detail can show "Non è questa?" banner
+        sessionStorage.setItem("scan_redirect", JSON.stringify({
+          beerId: beer.id,
+          beerName: beer.name,
+          breweryName: beer.breweryName || "",
+          query: query.trim(),
+          ocrText: currentOcrTextRef.current,
+          memoryMatch: beer.memoryMatch ?? false,
+          memorySimilarity: beer.memorySimilarity,
+        }));
+        // Save feedback asynchronously (logId set after createScanLog resolves)
+        setTimeout(() => {
+          if (currentLogIdRef.current) {
+            saveFeedback(beer.id);
+          }
+        }, 1500);
+        navigate(`/beer/${beer.id}?from=scan`);
+        return;
+      }
+
+      setBeers(b);
+      setBreweries(br);
+      setUsedQuery(uq);
+      const found = b.length + br.length > 0;
+      setScanState(found ? "results" : "notfound");
     } catch {
       setScanState("notfound");
     } finally {
       setIsSearching(false);
     }
-  }, [detectedSource, createScanLog]);
+  }, [detectedSource, createScanLog, navigate, saveFeedback]);
 
   const runImageSearch = useCallback(async (imageDataUrl: string) => {
     setIsImageSearching(true);
@@ -280,6 +316,26 @@ export default function ScanPage() {
     } catch { /* service not available, ignore silently */ }
     finally { setIsImageSearching(false); }
   }, []);
+
+  // ── Retry from "Non è questa?" banner ─────────────────────────────────────
+  // If the user rejected a scan redirect and came back, restore the previous search
+  useEffect(() => {
+    const raw = sessionStorage.getItem("scan_retry");
+    if (!raw) return;
+    sessionStorage.removeItem("scan_retry");
+    try {
+      const { query, ocrText } = JSON.parse(raw);
+      if (query) {
+        const q = query as string;
+        const ocr = (ocrText || q) as string;
+        currentOcrTextRef.current = ocr;
+        setDetectedText(ocr);
+        setSearchQuery(q);
+        setManualQuery(q);
+        runSearch(q, "retry");
+      }
+    } catch { /* ignore */ }
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleBarcodeFound = useCallback((ean: string, offImageUrl: string | null) => {
     pendingEanRef.current = ean;
@@ -536,7 +592,19 @@ export default function ScanPage() {
                   {beers.map(beer => (
                     <div
                       key={beer.id}
-                      onClick={() => { saveFeedback(beer.id, undefined); enrichBarcodeData(beer.id); navigate(`/beer/${beer.id}`); }}
+                      onClick={() => {
+                        saveFeedback(beer.id, undefined);
+                        enrichBarcodeData(beer.id);
+                        sessionStorage.setItem("scan_redirect", JSON.stringify({
+                          beerId: beer.id,
+                          beerName: beer.name,
+                          breweryName: beer.breweryName || "",
+                          query: searchQuery,
+                          ocrText: currentOcrTextRef.current,
+                          memoryMatch: beer.memoryMatch ?? false,
+                        }));
+                        navigate(`/beer/${beer.id}?from=scan`);
+                      }}
                       className="flex items-center gap-3 bg-white dark:bg-gray-900 rounded-2xl p-3 shadow-sm border border-gray-100 dark:border-gray-800 active:scale-[0.98] transition-transform cursor-pointer hover:border-amber-200 dark:hover:border-amber-900"
                     >
                       <div className="w-12 h-12 rounded-xl bg-amber-50 dark:bg-amber-900/20 flex items-center justify-center overflow-hidden shrink-0">
@@ -547,7 +615,14 @@ export default function ScanPage() {
                         )}
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="font-semibold text-foreground dark:text-white truncate text-sm">{beer.name}</p>
+                        <div className="flex items-center gap-1.5">
+                          <p className="font-semibold text-foreground dark:text-white truncate text-sm">{beer.name}</p>
+                          {beer.memoryMatch && (
+                            <span className="shrink-0 text-[10px] font-bold bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-400 px-1.5 py-0.5 rounded-full border border-amber-200 dark:border-amber-800 leading-none">
+                              Ricordato
+                            </span>
+                          )}
+                        </div>
                         {beer.breweryName && (
                           <p className="text-xs text-muted-foreground dark:text-stone-400 truncate">{beer.breweryName}</p>
                         )}

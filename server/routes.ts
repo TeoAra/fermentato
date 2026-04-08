@@ -5873,6 +5873,43 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.json({ beers: [], breweries: [] });
       }
 
+      // ── Scan Memory: check if we have a confirmed match for similar OCR text ──
+      // Uses pg_trgm similarity to find previous scans with same label
+      try {
+        const memRes = await pool.query(`
+          SELECT sl.chosen_beer_id, COUNT(*) as confirm_count,
+                 MAX(similarity(lower(unaccent(sl.ocr_text)), lower(unaccent($1)))) as best_sim
+          FROM scan_logs sl
+          WHERE sl.chosen_beer_id IS NOT NULL
+            AND sl.was_correct IS NOT FALSE
+            AND sl.ocr_text IS NOT NULL
+            AND similarity(lower(unaccent(sl.ocr_text)), lower(unaccent($1))) > 0.65
+          GROUP BY sl.chosen_beer_id
+          ORDER BY confirm_count DESC, best_sim DESC
+          LIMIT 1
+        `, [text.trim()]);
+
+        if (memRes.rows.length > 0) {
+          const { chosen_beer_id, confirm_count, best_sim } = memRes.rows[0];
+          const beerRes = await pool.query(`
+            SELECT b.id, b.name, b.style, b.abv, b.image_url as "imageUrl",
+                   b.brewery_id as "breweryId", br.name as "breweryName", br.logo_url as "breweryLogoUrl"
+            FROM beers b
+            LEFT JOIN breweries br ON b.brewery_id = br.id
+            WHERE b.id = $1
+          `, [chosen_beer_id]);
+
+          if (beerRes.rows.length > 0) {
+            return res.json({
+              beers: [{ ...beerRes.rows[0], memoryMatch: true, memorySimilarity: parseFloat(best_sim), memoryConfirmCount: parseInt(confirm_count) }],
+              breweries: [],
+              words: [],
+              memoryMatch: true,
+            });
+          }
+        }
+      } catch { /* pg_trgm may not be installed — fall through to regular search */ }
+
       const SCAN_STOP = new Set([
         "birra","beer","bianca","rossa","scura","chiara","artigianale","craft",
         "italiana","birrificio","brewery","brewing","birreria","brasserie",

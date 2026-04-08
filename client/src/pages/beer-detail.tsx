@@ -3,7 +3,7 @@ import { useState, useMemo, useRef, useCallback, useEffect, lazy, Suspense } fro
 const CheckinModal = lazy(() => import("@/components/checkin-modal"));
 import { Helmet } from "react-helmet-async";
 import { getBadgeForCount } from "@/lib/badges";
-import { useParams, Link } from "wouter";
+import { useParams, Link, useLocation } from "wouter";
 import { GlutenFreeIcon } from "@/components/beer-badges";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { 
@@ -137,11 +137,37 @@ const BeerStatsCard = ({ icon: Icon, value, label, gradient }: any) => (
   </div>
 );
 
+interface ScanRedirectContext {
+  beerId: number;
+  beerName: string;
+  breweryName: string;
+  query: string;
+  ocrText: string;
+  memoryMatch: boolean;
+  memorySimilarity?: number;
+}
+
 export default function BeerDetail() {
   const { id } = useParams();
+  const [, navigate] = useLocation();
   const { user, isAuthenticated } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
+
+  // ── Scan redirect banner ─────────────────────────────────────────────────
+  const [scanCtx, setScanCtx] = useState<ScanRedirectContext | null>(null);
+  const [scanBannerDismissed, setScanBannerDismissed] = useState(false);
+  useEffect(() => {
+    const fromScan = new URLSearchParams(window.location.search).get("from") === "scan";
+    if (!fromScan) return;
+    try {
+      const raw = sessionStorage.getItem("scan_redirect");
+      if (raw) {
+        const ctx = JSON.parse(raw) as ScanRedirectContext;
+        if (ctx.beerId === parseInt(id as string)) setScanCtx(ctx);
+      }
+    } catch { /* ignore */ }
+  }, [id]);
   const [activeTab, setActiveTab] = useState("scheda");
   const [showTastingForm, setShowTastingForm] = useState(false);
   const [quickRating, setQuickRating] = useState(0);
@@ -587,6 +613,45 @@ export default function BeerDetail() {
         })}</script>
       </Helmet>
       
+      {/* ── Scan redirect banner ── */}
+      {scanCtx && !scanBannerDismissed && (
+        <div className="fixed bottom-20 left-0 right-0 z-50 flex justify-center px-4 pointer-events-none">
+          <div className="bg-gray-900 dark:bg-gray-800 text-white rounded-2xl shadow-xl px-4 py-3 flex items-center gap-3 max-w-sm w-full pointer-events-auto border border-white/10">
+            <div className="flex-1 min-w-0">
+              <p className="text-xs text-gray-300 leading-tight">Trovata via scansione</p>
+              <p className="text-sm font-semibold truncate leading-tight mt-0.5">
+                {scanCtx.memoryMatch ? "📌 " : "🔍 "}{scanCtx.beerName}
+              </p>
+            </div>
+            <button
+              onClick={() => {
+                if (scanCtx) {
+                  sessionStorage.setItem("scan_retry", JSON.stringify({
+                    query: scanCtx.query,
+                    ocrText: scanCtx.ocrText,
+                  }));
+                }
+                sessionStorage.removeItem("scan_redirect");
+                navigate("/scan");
+              }}
+              className="shrink-0 bg-amber-500 hover:bg-amber-600 active:bg-amber-700 text-white text-xs font-semibold px-3 py-1.5 rounded-xl transition-colors"
+            >
+              Non è questa?
+            </button>
+            <button
+              onClick={() => {
+                setScanBannerDismissed(true);
+                sessionStorage.removeItem("scan_redirect");
+              }}
+              className="shrink-0 p-1 text-gray-400 hover:text-white transition-colors rounded-lg"
+              aria-label="Chiudi"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* ── HERO ── */}
       <div className="bg-white dark:bg-card border-b border-stone-100 dark:border-stone-700/30">
         <div className="max-w-7xl mx-auto px-5 pt-6 pb-5">
