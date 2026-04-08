@@ -6044,7 +6044,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Query 2: match breweries by name — AND (all words must be in brewery name)
       const breweryResult = await pool.query(`
-        SELECT br.id, br.name, br.country, br.logo_url as "logoUrl", br.city
+        SELECT br.id, br.name, br.country, br.logo_url as "logoUrl", br.location as "city"
         FROM breweries br
         WHERE ${nameOrConds("br", "name")}
         ORDER BY length(br.name) ASC, br.name ASC

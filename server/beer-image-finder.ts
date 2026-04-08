@@ -155,7 +155,8 @@ async function fetchBreweryOgImage(websiteUrl: string, beerName: string): Promis
 
 // ─── 3. DuckDuckGo image search ──────────────────────────────────────────────
 
-interface DdgImage { url: string; width: number; height: number; }
+// DuckDuckGo image result: `image` is the direct image URL, `url` is the source page
+interface DdgImage { image: string; url: string; width: number; height: number; }
 
 async function ddgSearchImages(query: string, limit = 8): Promise<DdgImage[]> {
   try {
@@ -276,10 +277,10 @@ export async function findAndUpdateBeerImage(
       candidates.unshift(breweryOg); // highest priority — official source
     }
 
-    // DuckDuckGo images (filter small/low-quality)
+    // DuckDuckGo images — use r.image (direct image URL), not r.url (source page)
     for (const r of ddgResults) {
-      if (r.url?.startsWith("http") && r.width >= 300 && r.height >= 300 && !candidates.includes(r.url)) {
-        candidates.push(r.url);
+      if (r.image?.startsWith("http") && r.width >= 300 && r.height >= 300 && !candidates.includes(r.image)) {
+        candidates.push(r.image);
         if (candidates.length >= 8) break;
       }
     }
