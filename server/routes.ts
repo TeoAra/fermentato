@@ -33,6 +33,7 @@ import webpush from "web-push";
 import { initVapid, sendPushToUser, sendPushToUserImmediate, sendPushToAdmins } from "./push-utils";
 import { testSmtpConnection } from "./email";
 import { translateToItalian, looksItalian } from "./translate";
+import { generateEmbedding, pgVector, beerEmbedText } from "./embeddings";
 
 const VAPID_PUBLIC_KEY = process.env.VAPID_PUBLIC_KEY || '';
 
@@ -5910,6 +5911,76 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       } catch { /* pg_trgm may not be installed — fall through to regular search */ }
 
+      // ── Vector Memory: semantic similarity via pgvector (fallback to pg_trgm) ──
+      // Only runs if pg_trgm didn't find anything above. Generates a Gemini
+      // embedding for the current OCR text and finds the closest confirmed scan.
+      try {
+        const vec = await generateEmbedding(text.trim());
+        if (vec) {
+          const vecMem = await pool.query(`
+            SELECT sl.chosen_beer_id,
+                   1 - (sl.ocr_embedding <=> $1::vector) AS similarity
+            FROM scan_logs sl
+            WHERE sl.chosen_beer_id IS NOT NULL
+              AND sl.was_correct IS NOT FALSE
+              AND sl.ocr_embedding IS NOT NULL
+              AND 1 - (sl.ocr_embedding <=> $1::vector) > 0.88
+            ORDER BY similarity DESC
+            LIMIT 1
+          `, [pgVector(vec)]);
+
+          if (vecMem.rows.length > 0) {
+            const { chosen_beer_id, similarity } = vecMem.rows[0];
+            const beerRes = await pool.query(`
+              SELECT b.id, b.name, b.style, b.abv, b.image_url as "imageUrl",
+                     b.brewery_id as "breweryId", br.name as "breweryName", br.logo_url as "breweryLogoUrl"
+              FROM beers b
+              LEFT JOIN breweries br ON b.brewery_id = br.id
+              WHERE b.id = $1
+            `, [chosen_beer_id]);
+
+            if (beerRes.rows.length > 0) {
+              return res.json({
+                beers: [{ ...beerRes.rows[0], memoryMatch: true, memorySimilarity: parseFloat(similarity), memorySource: "vector" }],
+                breweries: [],
+                words: [],
+                memoryMatch: true,
+              });
+            }
+          }
+
+          // ── Beer-name vector search (if beer_embeddings table is populated) ──
+          // Finds the closest beer by name embedding, even when text differs.
+          const beerVec = await pool.query(`
+            SELECT be.beer_id,
+                   1 - (be.embedding <=> $1::vector) AS similarity
+            FROM beer_embeddings be
+            WHERE 1 - (be.embedding <=> $1::vector) > 0.91
+            ORDER BY similarity DESC
+            LIMIT 5
+          `, [pgVector(vec)]);
+
+          if (beerVec.rows.length > 0) {
+            const ids = beerVec.rows.map((r: any) => r.beer_id);
+            const simMap = Object.fromEntries(beerVec.rows.map((r: any) => [r.beer_id, parseFloat(r.similarity)]));
+            const beerRows = await pool.query(`
+              SELECT b.id, b.name, b.style, b.abv, b.image_url as "imageUrl",
+                     b.brewery_id as "breweryId", br.name as "breweryName", br.logo_url as "breweryLogoUrl"
+              FROM beers b
+              LEFT JOIN breweries br ON b.brewery_id = br.id
+              WHERE b.id = ANY($1::int[])
+            `, [ids]);
+
+            if (beerRows.rows.length > 0) {
+              const sorted = beerRows.rows
+                .map((b: any) => ({ ...b, vectorSimilarity: simMap[b.id] }))
+                .sort((a: any, b: any) => b.vectorSimilarity - a.vectorSimilarity);
+              return res.json({ beers: sorted, breweries: [], words: [], vectorMatch: true });
+            }
+          }
+        }
+      } catch { /* pgvector not yet installed — fall through */ }
+
       const SCAN_STOP = new Set([
         "birra","beer","bianca","rossa","scura","chiara","artigianale","craft",
         "italiana","birrificio","brewery","brewing","birreria","brasserie",
@@ -6368,6 +6439,34 @@ export async function registerRoutes(app: Express): Promise<Server> {
         wasCorrect: wasCorrect ?? null,
         correctedBeerId: correctedBeerId || null,
       }).where(eq(scanLogs.id, logId));
+
+      // ── Store OCR embedding in background when confirmed correct ────────────
+      // wasCorrect=true OR correctedBeerId set (manual correction) both count.
+      if (wasCorrect !== false) {
+        const targetBeer = chosenBeerId || correctedBeerId;
+        if (targetBeer) {
+          setImmediate(async () => {
+            try {
+              const [logRow] = await db.select({ ocrText: scanLogs.ocrText })
+                .from(scanLogs).where(eq(scanLogs.id, logId)).limit(1);
+              if (!logRow?.ocrText) return;
+
+              const vec = await generateEmbedding(logRow.ocrText);
+              if (!vec) return;
+
+              await pool.query(
+                `UPDATE scan_logs SET ocr_embedding = $1::vector WHERE id = $2`,
+                [pgVector(vec), logId]
+              );
+            } catch (e: any) {
+              // pgvector not yet installed — silent, no crash
+              if (!e?.message?.includes("column") && !e?.message?.includes("vector")) {
+                console.error("embedding store error:", e?.message?.substring(0, 80));
+              }
+            }
+          });
+        }
+      }
 
       res.json({ ok: true });
     } catch (error) {
