@@ -433,14 +433,15 @@ export class DatabaseStorage implements IStorage {
   }
 
   async searchPubs(query: string): Promise<Pub[]> {
+    const q = `%${query}%`;
     return await db
       .select()
       .from(pubs)
       .where(or(
-        ilike(pubs.name, `%${query}%`),
-        ilike(pubs.address, `%${query}%`),
-        ilike(pubs.city, `%${query}%`),
-        ilike(pubs.description, `%${query}%`)
+        sql`unaccent(lower(${pubs.name})) LIKE unaccent(lower(${q}))`,
+        sql`unaccent(lower(${pubs.city})) LIKE unaccent(lower(${q}))`,
+        ilike(pubs.address, q),
+        ilike(pubs.description, q)
       ))
       .orderBy(asc(pubs.name))
       .limit(10);
@@ -519,14 +520,15 @@ export class DatabaseStorage implements IStorage {
   }
 
   async searchBreweries(query: string): Promise<Brewery[]> {
+    const q = `%${query}%`;
     const breweriesRanked = await db
       .select({ id: breweries.id, beerCount: sql<number>`COUNT(${beers.id})` })
       .from(breweries)
       .leftJoin(beers, eq(breweries.id, beers.breweryId))
       .where(or(
-        ilike(breweries.name, `%${query}%`),
-        ilike(breweries.location, `%${query}%`),
-        ilike(breweries.description, `%${query}%`)
+        sql`unaccent(lower(${breweries.name})) LIKE unaccent(lower(${q}))`,
+        ilike(breweries.location, q),
+        ilike(breweries.description, q)
       ))
       .groupBy(breweries.id)
       .orderBy(desc(sql`COUNT(${beers.id})`), asc(breweries.name))
@@ -620,13 +622,14 @@ export class DatabaseStorage implements IStorage {
     const words = query.trim().split(/\s+/).filter(w => w.length > 0);
     const hasFilters = filters && Object.values(filters).some(v => v !== undefined && v !== false && v !== "");
     if (words.length === 0 && !hasFilters) return [];
-    const wordConditions = words.map(word => 
-      or(
-        ilike(beers.name, `%${word}%`),
-        ilike(breweries.name, `%${word}%`),
-        ilike(beers.style, `%${word}%`)
-      )
-    );
+    const wordConditions = words.map(word => {
+      const q = `%${word}%`;
+      return or(
+        sql`unaccent(lower(${beers.name})) LIKE unaccent(lower(${q}))`,
+        sql`unaccent(lower(${breweries.name})) LIKE unaccent(lower(${q}))`,
+        ilike(beers.style, q)
+      );
+    });
     const conditions = [...wordConditions];
     if (filters?.glutenFree) conditions.push(eq(beers.isGlutenFree, true));
     if (filters?.alcoholFree) conditions.push(eq(beers.isAlcoholFree, true));

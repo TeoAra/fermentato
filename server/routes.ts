@@ -664,7 +664,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const searchTerms = queryStr.toLowerCase().split(/\s+/).filter((t: string) => t.length > 0);
       const whereClauses = searchTerms.map((term: string) => {
         const p = `%${term}%`;
-        return sql`(LOWER(b.name) LIKE ${p} OR LOWER(b.style) LIKE ${p} OR LOWER(br.name) LIKE ${p})`;
+        return sql`(unaccent(lower(b.name)) LIKE unaccent(lower(${p})) OR LOWER(b.style) LIKE ${p} OR unaccent(lower(br.name)) LIKE unaccent(lower(${p})))`;
       });
       const results = await db.execute(sql`
         SELECT
@@ -1347,8 +1347,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         pool.query(
           `SELECT id, nickname, first_name, last_name, profile_image_url
            FROM users
-           WHERE nickname ILIKE $1 OR first_name ILIKE $1 OR last_name ILIKE $1
-             OR (first_name || ' ' || last_name) ILIKE $1
+           WHERE unaccent(lower(COALESCE(nickname,''))) LIKE unaccent(lower($1))
+              OR unaccent(lower(COALESCE(first_name,''))) LIKE unaccent(lower($1))
+              OR unaccent(lower(COALESCE(last_name,''))) LIKE unaccent(lower($1))
            ORDER BY nickname NULLS LAST
            LIMIT 10`,
           [`%${query}%`]
@@ -6956,6 +6957,31 @@ ${meta.image ? `<meta name="twitter:image" content="${meta.image}">` : ""}
     const meId = (req.user as any).id;
     await pool.query(`DELETE FROM user_follows WHERE follower_id = $1 AND following_id = $2`, [meId, req.params.userId]);
     res.json({ following: false });
+  });
+
+  // Public user search (for social discovery)
+  app.get("/api/users/search", async (req, res) => {
+    try {
+      const q = ((req.query.q as string) || "").trim();
+      if (q.length < 2) return res.json([]);
+      const { rows } = await pool.query(
+        `SELECT id, nickname, first_name, last_name, profile_image_url
+         FROM users
+         WHERE is_public IS NOT FALSE
+           AND (
+             unaccent(lower(COALESCE(nickname,''))) LIKE unaccent(lower($1))
+             OR unaccent(lower(COALESCE(first_name,''))) LIKE unaccent(lower($1))
+             OR unaccent(lower(COALESCE(last_name,''))) LIKE unaccent(lower($1))
+           )
+         ORDER BY nickname NULLS LAST
+         LIMIT 20`,
+        [`%${q}%`]
+      );
+      res.json(rows);
+    } catch (err) {
+      console.error("User search error:", err);
+      res.status(500).json({ message: "Search failed" });
+    }
   });
 
   // Activity feed from people I follow
