@@ -6121,7 +6121,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         clipResp = await fetch(`${CLIP_SERVICE_URL}/search`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ image_b64: base64, limit: maxLimit, min_similarity: 0.5 }),
+          body: JSON.stringify({ image_b64: base64, limit: maxLimit, min_similarity: 0.60 }),
           signal: controller.signal,
         });
         clearTimeout(timer);
@@ -6464,6 +6464,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
                 console.error("embedding store error:", e?.message?.substring(0, 80));
               }
             }
+          });
+        }
+      }
+
+      // ── Index confirmed scan photo in CLIP service (visual fingerprint) ─────
+      // Grows the CLIP index organically: each confirmed label photo is stored
+      // under the confirmed beer_id, so future scans of the same label are found
+      // instantly by visual similarity — no OCR required.
+      if (wasCorrect !== false) {
+        const targetBeer = chosenBeerId || correctedBeerId;
+        if (targetBeer) {
+          setImmediate(async () => {
+            try {
+              const [logRow] = await db.select({ imageUrl: scanLogs.imageUrl })
+                .from(scanLogs).where(eq(scanLogs.id, logId)).limit(1);
+              if (!logRow?.imageUrl || !logRow.imageUrl.startsWith("http")) return;
+
+              await fetch(`${CLIP_SERVICE_URL}/index`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ id: targetBeer, url: logRow.imageUrl }),
+                signal: AbortSignal.timeout(30000),
+              });
+              console.log(`[clip] indexed scan photo for beer ${targetBeer}`);
+            } catch { /* CLIP not running — silent */ }
           });
         }
       }

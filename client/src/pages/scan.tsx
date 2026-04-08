@@ -349,11 +349,26 @@ export default function ScanPage() {
       if (!res.ok) return;
       const data = await res.json();
       if (data.available && data.results?.length > 0) {
-        setImageSimilarResults(data.results.filter((r: ImageSearchResult) => r.similarity >= 0.6));
+        const filtered = (data.results as ImageSearchResult[]).filter(r => r.similarity >= 0.60);
+        setImageSimilarResults(filtered);
+
+        // ── Auto-redirect on high-confidence CLIP match ──────────────────────
+        // If the top result is clearly dominant (>82%) and the text search
+        // hasn't already redirected us, navigate directly to that beer.
+        const top = filtered[0];
+        const second = filtered[1];
+        const isHighConf = top && top.similarity >= 0.82 && (!second || top.similarity - second.similarity >= 0.07);
+        if (isHighConf) {
+          // Save feedback in background
+          setTimeout(() => {
+            if (currentLogIdRef.current) saveFeedback(top.id, undefined, true);
+          }, 800);
+          navigate(`/beer/${top.id}?from=scan`);
+        }
       }
     } catch { /* service not available, ignore silently */ }
     finally { setIsImageSearching(false); }
-  }, []);
+  }, [navigate, saveFeedback]);
 
   // ── Retry from "Non è questa?" banner ─────────────────────────────────────
   // If the user rejected a scan redirect and came back, restore the previous search
