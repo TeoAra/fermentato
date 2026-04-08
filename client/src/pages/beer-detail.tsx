@@ -707,7 +707,7 @@ export default function BeerDetail() {
                   <button
                     onClick={() => setCheckinOpen(true)}
                     title="Sto bevendo questa"
-                    className="h-9 w-9 flex items-center justify-center rounded-full bg-primary/10 text-primary hover:bg-primary/20 active:scale-95 transition-all"
+                    className="h-9 w-9 flex items-center justify-center rounded-full bg-stone-100 dark:bg-stone-800 text-stone-500 dark:text-stone-400 hover:text-primary transition-all"
                   >
                     <BeerIcon className="h-4 w-4" />
                   </button>

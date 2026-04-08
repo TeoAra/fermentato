@@ -1,0 +1,266 @@
+Sì, ma la prima cosa da chiarire è questa: **la funzione “scan” tipo Vivino non è solo OCR**. In pratica è quasi sempre una pipeline composta da **camera + pulizia immagine + riconoscimento visivo della bottiglia/etichetta + OCR del testo + matching sul catalogo + feedback utente**. Vivino stesso parla di scansione di etichette, scaffali e wine list per mostrare subito rating e schede; inoltre basa il valore su una base enorme di scansioni e catalogo, quindi il matching conta almeno quanto l’OCR. ([Vivino][1])
+
+Per la tua PWA, quindi, l’idea giusta non è “costruisco un OCR che si auto-addestra da solo”, ma:
+
+**“costruisco un sistema di riconoscimento che usa anche OCR, e migliora con feedback verificato.”**
+
+## La risposta pratica
+
+### Architettura consigliata
+
+Per una PWA io farei così:
+
+1. **Acquisizione foto dal browser**
+   Usa `getUserMedia()` per aprire la camera. Sulla web platform è l’API standard per ottenere un flusso video dalla fotocamera, ed è disponibile in secure context/HTTPS. ([MDN Web Docs][2])
+
+2. **Pre-processing immagine**
+   Prima di fare OCR, correggi:
+
+   * ritaglio dell’etichetta
+   * deskew/prospettiva
+   * contrasto
+   * denoise
+   * sharpening leggero
+
+   OpenCV documenta proprio le basi che ti servono: trasformazioni geometriche, thresholding, smoothing, edge detection e Hough lines per trovare linee/contorni. ([OpenCV Documentazione][3])
+
+3. **Riconoscimento a 2 livelli**
+   Non affidarti solo al testo:
+
+   * **Livello A: visual matching** dell’etichetta/foto contro il tuo catalogo
+   * **Livello B: OCR** su nome birra, birrificio, ABV, stile, formato
+
+   Questo è il punto chiave per avvicinarti a Vivino: il visual matching risolve i casi in cui il testo è parziale, storto o riflesso; l’OCR rifinisce e disambigua.
+
+4. **Matching sul tuo database**
+   Una volta estratto testo e feature visive:
+
+   * fai candidate retrieval sul catalogo
+   * poi fai ranking con score combinato:
+
+     * similarità immagine
+     * similarità testo
+     * marca/birrificio
+     * stile
+     * paese
+     * formato/ABV
+
+5. **Feedback utente**
+   Dopo il risultato:
+
+   * “È questa la birra?”
+   * “No, scegli quella giusta”
+   * “Manca dal catalogo”
+
+   Questo è il tuo motore di miglioramento.
+
+---
+
+## Cosa usare davvero nella PWA
+
+### Opzione 1: OCR nel browser
+
+Se vuoi stare in puro web, puoi usare un engine browser-side come **Tesseract.js**, che è una libreria JavaScript OCR basata su Tesseract. Tesseract open source usa un engine LSTM dal ramo moderno del progetto. Per eseguire modelli nel browser puoi anche appoggiarti a **WebAssembly** o a runtime come **ONNX Runtime Web**. ([GitHub][4])
+
+Questa opzione è buona per:
+
+* prototipo rapido
+* offline parziale
+* privacy migliore
+
+Ma di solito è **peggiore di una pipeline server-side** su immagini sporche reali.
+
+### Opzione 2: OCR server-side
+
+Per accuratezza più alta, puoi usare un OCR server-side come:
+
+* **Google Cloud Vision OCR**, che supporta text detection e dense document text detection. Google indica anche che per documenti scansionati/strutturati spesso conviene Document AI. ([Google Cloud Documentation][5])
+* **PaddleOCR**, toolkit open source molto usato per conversione di immagini/PDF in testo strutturato e supporto multilingua. ([GitHub][6])
+
+Per il tuo caso, io farei:
+
+* **browser**: preview, crop, guida inquadratura, maybe barcode
+* **server**: OCR + visual matching + ranking
+
+### Barcode come scorciatoia
+
+Se alcune birre hanno EAN leggibile, il browser ha una **Barcode Detection API**, ma MDN la segna come **experimental**, quindi non la userei come unica soluzione in produzione. Al massimo come acceleratore quando disponibile. ([MDN Web Docs][7])
+
+---
+
+## “Si migliora in automatico”: sì, ma non nel modo che immagini
+
+La parte importante: **non far aggiornare il modello direttamente da ogni scansione in produzione**.
+Quello che funziona davvero è questo ciclo:
+
+### Loop corretto
+
+1. L’utente scansiona
+2. Il sistema propone un risultato con confidence
+3. Se confidence alta, mostra subito
+4. Se confidence media/bassa, chiedi conferma o scelta manuale
+5. Salvi:
+
+   * immagine
+   * OCR raw
+   * prediction
+   * correzione utente
+   * contesto dispositivo/browser
+6. Ogni settimana/giorno:
+
+   * crei dataset pulito
+   * riaddestri o aggiorni il ranker
+   * testi su benchmark
+   * pubblichi nuova versione solo se migliora
+
+Questo è **continuous learning con human-in-the-loop**, non auto-training “cieco”.
+
+### Cosa puoi migliorare automaticamente davvero
+
+Puoi automatizzare:
+
+* soglie di confidence
+* ranking
+* dizionario marchi/birrifici
+* correzione OCR basata sul catalogo
+* retrieval embeddings
+* modello di classificazione etichette
+
+Non automatizzerei senza review:
+
+* retraining diretto del core OCR
+* aggiunta automatica di nuove birre da input utente non verificato
+* overwrite del catalogo
+
+---
+
+## Il trucco che ti farà fare il salto di qualità
+
+Per birre e etichette, l’accuratezza aumenta tantissimo se usi **catalog-aware OCR**.
+
+In pratica, dopo l’OCR grezzo, fai post-processing con il tuo database:
+
+* “B1RRA DEL DUCAT0” → “Birra del Ducato”
+* “IPA 6,4” → IPA 6.4%
+* “Lambrate” corretto da dizionario brand
+* matching fuzzy su nome + birrificio
+
+Questa parte spesso vale più del cambiare OCR engine.
+
+---
+
+## Pipeline ideale per Fermenta
+
+Io la costruirei così:
+
+### MVP forte
+
+* Camera via `getUserMedia()` ([MDN Web Docs][2])
+* Crop guidato dell’etichetta
+* Preprocessing con OpenCV/OpenCV.js ([OpenCV Documentazione][3])
+* OCR server-side con PaddleOCR o Cloud Vision ([Google Cloud Documentation][5])
+* Fuzzy match su catalogo Fermenta
+* Feedback utente “giusto/sbagliato”
+
+### V2 che somiglia davvero a Vivino
+
+* Embeddings immagine etichetta
+* nearest-neighbor search sul catalogo
+* OCR usato come feature, non come unica fonte
+* supporto scan multiplo da scaffale
+* ranking personalizzato sulle preferenze utente
+
+---
+
+## Strategia modelli: cosa allenare davvero
+
+Non partire allenando un OCR da zero. È quasi sempre una perdita di tempo.
+
+Allena invece:
+
+1. **Detector dell’etichetta**
+   per trovare e ritagliare bene la zona giusta
+2. **Image embedder / classifier**
+   per riconoscere la birra dall’aspetto
+3. **Ranker finale**
+   che combina immagine + OCR + catalogo + feedback
+
+L’OCR di base puoi comprarlo o usare open source; il tuo vantaggio competitivo sta nel **matching sul catalogo birra italiano**.
+
+---
+
+## Stack concreto
+
+Per una PWA moderna sceglierei uno di questi:
+
+### Stack pragmatico
+
+* Frontend PWA: Next.js / React
+* Camera: `getUserMedia()`
+* Preprocessing: OpenCV.js
+* OCR: PaddleOCR o Google Cloud Vision
+* Inference web opzionale: ONNX Runtime Web
+* Backend: Python FastAPI o Node
+* Vector search: pgvector / Qdrant / Weaviate
+* DB catalogo: Postgres
+
+### Stack ultra-lean MVP
+
+* PWA React
+* upload frame
+* Cloud Vision OCR
+* matching testuale fuzzy su Postgres
+* feedback utente salvato
+* dashboard interna per correggere i casi dubbi
+
+Questo secondo approccio ti porta live molto prima.
+
+---
+
+## Metriche da guardare
+
+Se vuoi che “si migliori da sola”, devi misurare queste:
+
+* **Top-1 accuracy**
+* **Top-3 accuracy**
+* **precision/recall** sui match
+* **OCR character error rate**
+* **tempo medio scan → risultato**
+* **percentuale di scansioni che richiedono conferma**
+* **percentuale di correzioni utente**
+* **accuracy per dispositivo/browser**
+
+Se non misuri questo, non stai migliorando: stai solo accumulando foto.
+
+---
+
+## La verità scomoda
+
+Per battere una funzione tipo Vivino, il collo di bottiglia iniziale non è l’AI.
+È quasi sempre:
+
+* catalogo incompleto
+* immagini sporche
+* etichette simili
+* assenza di feedback verificato
+* matching debole
+
+Quindi la sequenza giusta è:
+
+**catalogo buono → pipeline semplice ma solida → feedback loop → miglioramento modelli**
+
+non il contrario.
+
+## In una frase
+
+Per la tua PWA devi costruire **un sistema di riconoscimento assistito dal catalogo**, non un semplice OCR. E il “migliora da solo” corretto è **active learning con conferma utente e retraining periodico**, non auto-addestramento immediato in produzione.
+
+Se vuoi, nel prossimo messaggio ti posso scrivere una **architettura completa MVP per Fermenta Scan** con componenti, schema DB e flusso API.
+
+[1]: https://www.vivino.com/en/wine-news/vivino-wine-scanner?srsltid=AfmBOoqkh979UtW-49X99E_xl0W17ie2aN23c9zCqfHtiRC93vdHE75a&utm_source=chatgpt.com "Vivino wine scanner"
+[2]: https://developer.mozilla.org/en-US/docs/Web/API/MediaDevices/getUserMedia?utm_source=chatgpt.com "MediaDevices: getUserMedia() method - Web APIs | MDN"
+[3]: https://docs.opencv.org/4.x/pages.html?utm_source=chatgpt.com "OpenCV: Related Pages"
+[4]: https://github.com/naptha/tesseract.js/?utm_source=chatgpt.com "naptha/tesseract.js: Pure Javascript OCR for more than 100 ..."
+[5]: https://docs.cloud.google.com/vision/docs/ocr?utm_source=chatgpt.com "Detect and extract text from images | Cloud Vision API"
+[6]: https://github.com/PADDLEPADDLE/PADDLEOCR?utm_source=chatgpt.com "PaddlePaddle/PaddleOCR: Turn any PDF or image ..."
+[7]: https://developer.mozilla.org/en-US/docs/Web/API/Barcode_Detection_API?utm_source=chatgpt.com "Barcode Detection API - MDN Web Docs"

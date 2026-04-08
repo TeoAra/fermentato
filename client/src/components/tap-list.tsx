@@ -190,11 +190,11 @@ export default function TapList({ tapList, pub }: TapListProps) {
             {isAuthenticated && (
               <button
                 onClick={(e) => { e.preventDefault(); e.stopPropagation(); setCheckinBeer(tap.beer); }}
-                className="w-8 h-8 rounded-full flex items-center justify-center bg-primary/10 hover:bg-primary/20 active:scale-95 transition-all flex-shrink-0"
+                className="w-8 h-8 rounded-full flex items-center justify-center bg-stone-100 dark:bg-stone-800 text-stone-500 dark:text-stone-400 hover:text-primary hover:bg-stone-200 dark:hover:bg-stone-700 active:scale-95 transition-all flex-shrink-0"
                 aria-label="Check-in"
                 title="Sto bevendo questa"
               >
-                <Beer className="w-4 h-4 text-primary" />
+                <Beer className="w-4 h-4" />
               </button>
             )}
           </div>
