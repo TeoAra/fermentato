@@ -626,23 +626,39 @@ export class DatabaseStorage implements IStorage {
     // Build patterns for ILIKE (case-insensitive LIKE).
     // ILIKE on raw columns uses the existing GIN trgm indexes (gin_trgm_ops).
     const patterns = words.map(w => `%${w}%`);
+    // Full-phrase pattern for highest-priority match (e.g. "true tricks wild raccoon")
+    const fullPhrase = `%${query.trim().toLowerCase().replace(/\s+/g, " ")}%`;
 
-    // Text WHERE: ILIKE on raw columns (not LIKE with function wrapper).
-    // ILIKE uses the existing GIN trgm index (idx_beers_name_trgm, etc.)
-    // directly. Applying unaccent/lower as a function on the column side
-    // would prevent index use since the index expression wouldn't match.
+    // Text WHERE strategy:
+    //   - Per-column name match uses AND between words (all words must appear in name)
+    //     → prevents "wild" alone matching "Sour/Wild Beer" when searching 4-word beer names
+    //   - OR between columns (can match via beer name OR brewery name OR style)
+    //   - Score: 3 = full phrase in name, 2 = all words AND in name, 1 = other field match
     let paramIdx = 1;
     const textWhereOrParts: string[] = [];
+    let textWhere = "";
+    let scoreExpr = "1";
     if (words.length > 0) {
-      const bNameLikes = patterns.map((_, i) => `b.name ILIKE $${paramIdx + i}`).join(" OR ");
-      const brNameLikes = patterns.map((_, i) => `br.name ILIKE $${paramIdx + i}`).join(" OR ");
-      const styleLikes = patterns.map((_, i) => `b.style ILIKE $${paramIdx + i}`).join(" OR ");
-      textWhereOrParts.push(`(${bNameLikes})`);
-      textWhereOrParts.push(`(${brNameLikes})`);
-      textWhereOrParts.push(`(${styleLikes})`);
+      const bNameAnds  = patterns.map((_, i) => `b.name ILIKE $${paramIdx + i}`).join(" AND ");
+      const brNameAnds = patterns.map((_, i) => `br.name ILIKE $${paramIdx + i}`).join(" AND ");
+      const styleAnds  = patterns.map((_, i) => `b.style ILIKE $${paramIdx + i}`).join(" AND ");
+      // OR-based fallback for inclusion (any word in any field)
+      const bNameOrs  = patterns.map((_, i) => `b.name ILIKE $${paramIdx + i}`).join(" OR ");
+      const brNameOrs = patterns.map((_, i) => `br.name ILIKE $${paramIdx + i}`).join(" OR ");
+      const styleOrs  = patterns.map((_, i) => `b.style ILIKE $${paramIdx + i}`).join(" OR ");
+      textWhereOrParts.push(`(${bNameOrs})`);
+      textWhereOrParts.push(`(${brNameOrs})`);
+      textWhereOrParts.push(`(${styleOrs})`);
+      const fullPhraseIdx = paramIdx + patterns.length;
+      scoreExpr = `CASE
+        WHEN b.name ILIKE $${fullPhraseIdx} THEN 3
+        WHEN (${bNameAnds}) THEN 2
+        WHEN (${brNameAnds}) OR (${styleAnds}) THEN 1
+        ELSE 0 END`;
       paramIdx += patterns.length;
     }
-    const textWhere = textWhereOrParts.length > 0 ? `AND (${textWhereOrParts.join(" OR ")})` : "";
+    const textWhere2 = textWhereOrParts.length > 0 ? `AND (${textWhereOrParts.join(" OR ")})` : "";
+    textWhere = textWhere2;
 
     // Extra SQL filter clauses for optional filters
     const extraClauses: string[] = [];
@@ -686,17 +702,18 @@ export class DatabaseStorage implements IStorage {
         b.is_gluten_free AS "isGlutenFree",
         b.is_alcohol_free AS "isAlcoholFree",
         br.name          AS "breweryName",
-        br.logo_url      AS "breweryLogoUrl"
+        br.logo_url      AS "breweryLogoUrl",
+        (${scoreExpr}) AS _score
       FROM beers b
       LEFT JOIN breweries br ON b.brewery_id = br.id
       WHERE 1=1
         ${textWhere}
         ${extraWhere}
-      ORDER BY length(b.name) ASC, b.name ASC
+      ORDER BY (${scoreExpr}) DESC, length(b.name) ASC, b.name ASC
       LIMIT 50
     `;
 
-    const queryParams = [...patterns, ...extraParams];
+    const queryParams = [...patterns, ...(words.length > 0 ? [fullPhrase] : []), ...extraParams];
     const result = await pool.query(sqlText, queryParams);
 
     return result.rows.map((row: any) => ({

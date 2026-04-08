@@ -5939,35 +5939,42 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Deduplicate, sort longest-first (most distinctive), cap at 3
       const uniqueWords = [...new Set(words)]
         .sort((a, b) => b.length - a.length)
-        .slice(0, 3);
+        .slice(0, 4);
       const patterns = uniqueWords.map(w => `%${w}%`);
 
-      // ── Split-query strategy (avoids expensive JOIN during filter) ─────────
-      // Benchmark showed: JOIN on 395K beers × 50K breweries = 3+ sec seq scan.
-      // Instead: 3 separate index-friendly queries, merge in JS.
-      //
-      // Pattern: ILIKE on raw columns → uses existing gin_trgm_ops indexes
-      // (idx_beers_name_trgm, idx_beers_style_trgm, idx_breweries_name_trgm)
-      // without any function wrapper that would prevent index use.
+      // Full phrase pattern — highest priority when it matches exactly
+      const fullPhrase = `%${text.trim().toLowerCase().replace(/\s+/g, " ")}%`;
+      const fullPhraseParam = patterns.length + 1;
 
-      const nameLikeConds = (alias: string, col: string) =>
-        patterns.map((_, i) => `${alias}.${col} ILIKE $${i + 1}`).join(" OR ");
+      // AND-conditions: ALL words must appear in the column (precise multi-word)
+      // OR-conditions:  ANY word matches (fallback, used in WHERE for inclusion)
+      const nameAndConds = (alias: string, col: string, offset = 0) =>
+        patterns.map((_, i) => `${alias}.${col} ILIKE $${i + 1 + offset}`).join(" AND ");
+      const nameOrConds = (alias: string, col: string, offset = 0) =>
+        patterns.map((_, i) => `${alias}.${col} ILIKE $${i + 1 + offset}`).join(" OR ");
 
-      // Query 1: match beers by name or style (each uses trgm index separately)
+      // ── Split-query strategy ──────────────────────────────────────────────
+      // Score: 3 = full phrase in name, 2 = all words in name (AND), 1 = any word
+      // This puts "True Tricks Wild Raccoon" above unrelated "Wild" beers.
       const beersByNameQ = await pool.query(`
-        SELECT b.id, b.name, b.style, b.abv, b.image_url as "imageUrl", b.brewery_id as "breweryId"
+        SELECT b.id, b.name, b.style, b.abv, b.image_url as "imageUrl", b.brewery_id as "breweryId",
+          CASE
+            WHEN b.name ILIKE $${fullPhraseParam} THEN 3
+            WHEN (${nameAndConds("b", "name")}) THEN 2
+            ELSE 1
+          END AS _score
         FROM beers b
-        WHERE (${nameLikeConds("b", "name")})
-           OR (${nameLikeConds("b", "style")})
-        ORDER BY length(b.name) ASC, b.name ASC
+        WHERE (${nameOrConds("b", "name")})
+           OR (${nameOrConds("b", "style")})
+        ORDER BY _score DESC, length(b.name) ASC, b.name ASC
         LIMIT 20
-      `, patterns);
+      `, [...patterns, fullPhrase]);
 
-      // Query 2: match breweries by name (trgm index on breweries.name)
+      // Query 2: match breweries by name — AND (all words must be in brewery name)
       const breweryResult = await pool.query(`
         SELECT br.id, br.name, br.country, br.logo_url as "logoUrl", br.city
         FROM breweries br
-        WHERE ${nameLikeConds("br", "name")}
+        WHERE ${nameOrConds("br", "name")}
         ORDER BY length(br.name) ASC, br.name ASC
         LIMIT 5
       `, patterns);
@@ -5986,13 +5993,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
         beersByBreweryRows = brBeers.rows;
       }
 
-      // Merge + deduplicate beer results
+      // Merge + deduplicate beer results; brewery-matched beers get score 1 (no phrase/AND bonus)
       const seenIds = new Set<number>();
       const mergedBeers: any[] = [];
       for (const b of [...beersByNameQ.rows, ...beersByBreweryRows]) {
-        if (!seenIds.has(b.id)) { seenIds.add(b.id); mergedBeers.push(b); }
+        if (!seenIds.has(b.id)) {
+          seenIds.add(b.id);
+          mergedBeers.push({ ...b, _score: b._score ?? 1 });
+        }
       }
-      mergedBeers.sort((a, b) => a.name.length - b.name.length || a.name.localeCompare(b.name));
+      // Sort: highest score first, then shortest name (most specific)
+      mergedBeers.sort((a, b) =>
+        (b._score - a._score) || (a.name.length - b.name.length) || a.name.localeCompare(b.name)
+      );
 
       // Enrich with brewery info (single IN query on small result set)
       const brMap: Record<number, any> = {};
