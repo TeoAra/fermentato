@@ -220,6 +220,28 @@ export default function ScanPage() {
 
   const [confirmedBeerIds, setConfirmedBeerIds] = useState<Set<number>>(new Set());
 
+  // Manual search panel (shown when beer not found in scan results)
+  const [showManualSearch, setShowManualSearch] = useState(false);
+  const [manualQuery, setManualQuery] = useState("");
+  const [manualResults, setManualResults] = useState<BeerResult[]>([]);
+  const [isManualSearching, setIsManualSearching] = useState(false);
+  const [manualConfirmedBeer, setManualConfirmedBeer] = useState<BeerResult | null>(null);
+  const manualTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const handleManualQueryChange = useCallback((q: string) => {
+    setManualQuery(q);
+    if (manualTimerRef.current) clearTimeout(manualTimerRef.current);
+    if (q.trim().length < 2) { setManualResults([]); return; }
+    manualTimerRef.current = setTimeout(async () => {
+      setIsManualSearching(true);
+      try {
+        const res = await fetch(`/api/beers/search?q=${encodeURIComponent(q.trim())}&limit=20`);
+        if (res.ok) setManualResults(await res.json());
+      } catch { /* ignore */ }
+      setIsManualSearching(false);
+    }, 300);
+  }, []);
+
   const saveFeedback = useCallback(async (chosenBeerId?: number, chosenBreweryId?: number, wasCorrect?: boolean) => {
     const logId = currentLogIdRef.current;
     if (!logId) return;
@@ -247,8 +269,22 @@ export default function ScanPage() {
     } catch { /* fire-and-forget */ }
   }, []);
 
+  const confirmManualBeer = useCallback(async (beer: BeerResult) => {
+    setManualConfirmedBeer(beer);
+    setShowManualSearch(false);
+    setManualQuery("");
+    setManualResults([]);
+    await saveFeedback(beer.id, undefined, true);
+  }, [saveFeedback]);
+
   const runSearch = useCallback(async (query: string, source?: string) => {
     if (query.trim().length < 2) return;
+    // Reset manual search on new scan
+    setShowManualSearch(false);
+    setManualConfirmedBeer(null);
+    setManualQuery("");
+    setManualResults([]);
+    setConfirmedBeerIds(new Set());
     setIsSearching(true);
     setScanState("searching");
     const t0 = Date.now();
@@ -709,6 +745,95 @@ export default function ScanPage() {
             )}
 
           </>
+        )}
+
+        {/* ── Non la trovo: manual search fallback ──────────────────────── */}
+        {(scanState === "results" || scanState === "notfound") && !isSearching && (
+          <div className="mb-4">
+            {/* Success: beer confirmed via manual search */}
+            {manualConfirmedBeer ? (
+              <div className="flex items-center gap-3 bg-green-50 dark:bg-green-950/30 border border-green-300 dark:border-green-800 rounded-2xl p-3">
+                <div className="w-10 h-10 rounded-xl bg-white dark:bg-gray-900 flex items-center justify-center overflow-hidden shrink-0 border border-green-200 dark:border-green-800">
+                  {manualConfirmedBeer.imageUrl
+                    ? <img src={manualConfirmedBeer.imageUrl} alt={manualConfirmedBeer.name} className="w-full h-full object-cover rounded-xl" />
+                    : <Beer className="h-5 w-5 text-amber-400" />}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs font-bold text-green-700 dark:text-green-400 mb-0.5">✓ Abbinamento salvato!</p>
+                  <p className="text-sm font-semibold text-foreground dark:text-white truncate">{manualConfirmedBeer.name}</p>
+                  {manualConfirmedBeer.breweryName && (
+                    <p className="text-xs text-muted-foreground dark:text-stone-400 truncate">{manualConfirmedBeer.breweryName}</p>
+                  )}
+                </div>
+                <button
+                  onClick={() => setManualConfirmedBeer(null)}
+                  className="shrink-0 text-green-400 hover:text-green-600"
+                  aria-label="Chiudi"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              </div>
+            ) : showManualSearch ? (
+              /* Search panel */
+              <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-2xl p-3 shadow-sm">
+                <div className="flex items-center gap-2 mb-3">
+                  <p className="text-xs font-semibold text-foreground dark:text-white flex-1">Cerca la birra giusta</p>
+                  <button onClick={() => { setShowManualSearch(false); setManualQuery(""); setManualResults([]); }} className="text-muted-foreground hover:text-foreground">
+                    <X className="h-4 w-4" />
+                  </button>
+                </div>
+                <div className="relative mb-3">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+                  <input
+                    autoFocus
+                    value={manualQuery}
+                    onChange={e => handleManualQueryChange(e.target.value)}
+                    placeholder="Nome birra o birrificio..."
+                    className="w-full pl-8 pr-3 py-2 text-sm bg-stone-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl outline-none focus:ring-1 focus:ring-amber-400 dark:focus:ring-amber-600"
+                  />
+                  {isManualSearching && (
+                    <span className="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 border-2 border-amber-400 border-t-transparent rounded-full animate-spin" />
+                  )}
+                </div>
+                {manualResults.length > 0 && (
+                  <div className="space-y-1.5 max-h-72 overflow-y-auto">
+                    {manualResults.map(beer => (
+                      <div key={beer.id} className="flex items-center gap-2.5 p-2 rounded-xl hover:bg-stone-50 dark:hover:bg-gray-800 cursor-pointer group">
+                        <div className="w-9 h-9 rounded-lg bg-amber-50 dark:bg-amber-900/20 flex items-center justify-center overflow-hidden shrink-0">
+                          {beer.imageUrl
+                            ? <img src={beer.imageUrl} alt={beer.name} className="w-full h-full object-cover rounded-lg" />
+                            : <Beer className="h-4 w-4 text-amber-400" />}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-semibold text-foreground dark:text-white truncate leading-tight">{beer.name}</p>
+                          <p className="text-xs text-muted-foreground dark:text-stone-400 truncate">{beer.breweryName || beer.style || ""}</p>
+                        </div>
+                        <button
+                          onClick={() => confirmManualBeer(beer)}
+                          className="shrink-0 flex items-center gap-1 text-xs font-semibold text-green-600 dark:text-green-400 border border-green-300 dark:border-green-700 rounded-lg px-2 py-1 hover:bg-green-50 dark:hover:bg-green-950/40 transition-colors"
+                        >
+                          <CheckCircle2 className="h-3.5 w-3.5" />
+                          È questa
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+                {manualQuery.trim().length >= 2 && !isManualSearching && manualResults.length === 0 && (
+                  <p className="text-xs text-muted-foreground dark:text-stone-500 text-center py-3">Nessun risultato — prova con parole diverse</p>
+                )}
+              </div>
+            ) : (
+              /* Toggle button */
+              <button
+                onClick={() => setShowManualSearch(true)}
+                className="w-full flex items-center justify-center gap-2 py-2.5 text-xs text-muted-foreground dark:text-stone-500 border border-dashed border-gray-200 dark:border-gray-700 rounded-2xl hover:border-amber-300 hover:text-amber-600 dark:hover:border-amber-700 dark:hover:text-amber-400 transition-colors"
+              >
+                <Search className="h-3.5 w-3.5" />
+                Non la trovo — cerca manualmente
+              </button>
+            )}
+          </div>
         )}
 
         {/* Visual Similarity Results — shown regardless of OCR result */}
