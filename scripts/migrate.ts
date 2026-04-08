@@ -42,22 +42,57 @@ if (!fs.existsSync(sqlPath)) {
   process.exit(1);
 }
 
+// Split SQL into individual statements (handles CREATE INDEX CONCURRENTLY
+// which cannot run inside a transaction block).
+function splitStatements(sql: string): string[] {
+  return sql
+    .split(/;(?:\s*\n|\s*$)/m)
+    .map(s => s.trim())
+    .filter(s => s.length > 0 && !s.startsWith("--") && s !== "");
+}
+
 const pool = new pg.Pool({ connectionString: DATABASE_URL });
 
 async function run() {
-  const sql = fs.readFileSync(sqlPath, "utf8");
+  const raw = fs.readFileSync(sqlPath, "utf8");
+  const statements = splitStatements(raw);
   const client = await pool.connect();
-  try {
-    console.log(`⚡ Applying: ${migrationFile}`);
-    await client.query(sql);
-    console.log("✅  Migration applied successfully");
-  } catch (err: any) {
-    console.error("❌  Migration failed:", err.message);
-    process.exit(1);
-  } finally {
-    client.release();
-    await pool.end();
+
+  console.log(`⚡ Applying: ${migrationFile} (${statements.length} statements)`);
+  let ok = 0;
+  let skipped = 0;
+  let failed = 0;
+
+  for (const stmt of statements) {
+    // Skip pure comment blocks
+    const stripped = stmt.replace(/--[^\n]*/g, "").trim();
+    if (!stripped) { skipped++; continue; }
+
+    try {
+      await client.query(stmt);
+      const label = stripped.slice(0, 60).replace(/\s+/g, " ");
+      console.log(`  ✓  ${label}${stripped.length > 60 ? "…" : ""}`);
+      ok++;
+    } catch (err: any) {
+      // "already exists" errors are safe to ignore (IF NOT EXISTS might not cover all cases)
+      if (err.message?.includes("already exists")) {
+        const label = stripped.slice(0, 60).replace(/\s+/g, " ");
+        console.log(`  ⚠  already exists — skip: ${label}…`);
+        skipped++;
+      } else {
+        console.error(`  ❌  FAILED: ${stripped.slice(0, 80)}`);
+        console.error(`     ${err.message}`);
+        failed++;
+        // Continue applying remaining statements (don't abort)
+      }
+    }
   }
+
+  client.release();
+  await pool.end();
+
+  console.log(`\n${failed === 0 ? "✅" : "⚠️ "} Done: ${ok} applied, ${skipped} skipped, ${failed} failed`);
+  if (failed > 0) process.exit(1);
 }
 
 run();

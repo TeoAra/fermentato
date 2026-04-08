@@ -1,4 +1,10 @@
 -- pgtuner-style performance tuning for Fermenta.to
+
+-- ─── 0. Required extensions ─────────────────────────────────────────────────
+CREATE EXTENSION IF NOT EXISTS unaccent;
+CREATE EXTENSION IF NOT EXISTS pg_trgm;
+
+
 -- EXPLAIN ANALYZE baseline (measured 2025-04):
 --   searchBeers LIKE ANY : ~3162 ms  → seq scan on 395K rows, no usable index
 --   exploreBreweries     :  ~716 ms  → seq scan, same cause
