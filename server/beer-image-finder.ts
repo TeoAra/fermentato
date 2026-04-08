@@ -233,6 +233,42 @@ async function uploadBestImage(imageUrl: string, beerId: number): Promise<string
   }
 }
 
+// ─── Validate that a URL actually points to an image ─────────────────────────
+// Checks extension first (fast), then does a HEAD request for ambiguous URLs.
+
+function hasImageExtension(url: string): boolean {
+  const clean = url.split("?")[0].split("#")[0].toLowerCase();
+  return /\.(jpe?g|png|webp|gif|avif|bmp|tiff?)$/.test(clean);
+}
+
+const IMAGE_CDN_PATTERNS = [
+  /res\.cloudinary\.com/,
+  /images\.(squarespace|shopify|wixstatic)\.com/,
+  /wp-content\/uploads/,
+  /\/media\//,
+  /\/images\//,
+  /imgix\.net/,
+  /cdn\./,
+  /static\./,
+  /assets\./,
+];
+
+async function isImageUrl(url: string): Promise<boolean> {
+  if (hasImageExtension(url)) return true;
+  // Check CDN patterns (likely image even without extension)
+  if (IMAGE_CDN_PATTERNS.some(p => p.test(url))) return true;
+  // HEAD request to confirm content-type (for og:images without extension)
+  try {
+    const r = await fetch(url, {
+      method: "HEAD",
+      headers: { "User-Agent": "Mozilla/5.0" },
+      signal: AbortSignal.timeout(5000),
+    });
+    const ct = r.headers.get("content-type") ?? "";
+    return ct.startsWith("image/");
+  } catch { return false; }
+}
+
 // ─── Main entry point ────────────────────────────────────────────────────────
 
 /**
@@ -268,13 +304,20 @@ export async function findAndUpdateBeerImage(
 
     // Extract og:images from Google result pages (best quality source)
     const googleImages = await extractOgImages(googlePages);
-    for (const img of googleImages) {
-      if (img.startsWith("http") && !candidates.includes(img)) candidates.push(img);
+    const googleChecks = await Promise.all(
+      googleImages
+        .filter(img => img.startsWith("http") && !candidates.includes(img))
+        .map(async img => ({ img, ok: await isImageUrl(img) }))
+    );
+    for (const { img, ok } of googleChecks) {
+      if (ok) candidates.push(img);
     }
 
-    // Brewery website og:image
+    // Brewery website og:image — validate it's actually an image URL
     if (breweryOg && breweryOg.startsWith("http") && !candidates.includes(breweryOg)) {
-      candidates.unshift(breweryOg); // highest priority — official source
+      if (await isImageUrl(breweryOg)) {
+        candidates.unshift(breweryOg); // highest priority — official source
+      }
     }
 
     // DuckDuckGo images — use r.image (direct image URL), not r.url (source page)
