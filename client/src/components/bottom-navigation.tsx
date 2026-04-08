@@ -1,4 +1,4 @@
-import { Search, User, Home, ScanLine, Bell } from "lucide-react";
+import { Search, User, Home, ScanLine, Bell, Activity } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import { useAuth } from "@/hooks/useAuth";
 import { useState, type ReactNode } from "react";
@@ -28,12 +28,13 @@ export function BottomNavigation() {
   };
 
   const homeActive     = isActive("/");
-  const notifActive    = isActive("/notifications");
+  const attivitaActive = isActive("/social-feed") || isActive("/activity");
   const cercaActive    = searchOpen;
   const scanActive     = isActive("/scan");
   const accountActive  = isActive("/profile");
 
-  const TabInner = ({
+  // Standard tab (icon + label)
+  const Tab = ({
     active,
     children,
   }: {
@@ -41,7 +42,7 @@ export function BottomNavigation() {
     children: ReactNode;
   }) => (
     <div
-      className={`flex flex-col items-center justify-center gap-[3px] flex-1 py-2 min-h-[52px] transition-colors active:scale-95 relative w-full ${
+      className={`flex flex-col items-center justify-center gap-[3px] flex-1 pt-2 pb-1 min-h-[52px] transition-colors active:scale-95 relative ${
         active ? "text-primary" : "text-stone-400 dark:text-stone-500"
       }`}
     >
@@ -60,10 +61,25 @@ export function BottomNavigation() {
         className="lg:hidden fixed bottom-0 left-0 right-0 z-50 bg-white dark:bg-[hsl(25,14%,9%)] border-t border-stone-100 dark:border-border"
         style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
       >
+        {/* Cerca — raised pill above the bar, full-width centered */}
+        <div className="absolute left-0 right-0 -top-[26px] flex justify-center pointer-events-none">
+          <button
+            onClick={() => setSearchOpen(true)}
+            className={`pointer-events-auto flex items-center gap-2 px-6 py-2.5 rounded-full shadow-lg shadow-black/10 border transition-all active:scale-95 ${
+              cercaActive
+                ? "bg-primary text-white border-primary shadow-primary/30"
+                : "bg-white dark:bg-stone-900 border-stone-200 dark:border-stone-700 text-stone-600 dark:text-stone-300"
+            }`}
+          >
+            <Search className="h-[17px] w-[17px]" strokeWidth={2.2} />
+            <span className="text-[13px] font-bold tracking-tight">Cerca</span>
+          </button>
+        </div>
+
         <div className="flex items-stretch">
           {/* Home */}
           <Link href="/" className="flex-1 flex">
-            <TabInner active={homeActive}>
+            <Tab active={homeActive}>
               <Home
                 className="h-[22px] w-[22px]"
                 strokeWidth={homeActive ? 2.4 : 1.8}
@@ -71,53 +87,26 @@ export function BottomNavigation() {
                 style={homeActive ? { fillOpacity: 0.15, strokeOpacity: 1 } : {}}
               />
               <span className="text-[10px] font-semibold leading-none">Home</span>
-            </TabInner>
+            </Tab>
           </Link>
 
-          {/* Notifiche */}
-          <Link href="/notifications" className="flex-1 flex">
-            <TabInner active={notifActive}>
-              <div className="relative">
-                <Bell
-                  className="h-[22px] w-[22px]"
-                  strokeWidth={notifActive ? 2.4 : 1.8}
-                  fill={notifActive ? "currentColor" : "none"}
-                  style={notifActive ? { fillOpacity: 0.15, strokeOpacity: 1 } : {}}
-                />
-                {unreadCount > 0 && (
-                  <span className="absolute -top-1 -right-1.5 min-w-[14px] h-[14px] bg-red-500 text-white text-[9px] font-black rounded-full flex items-center justify-center px-[3px] leading-none">
-                    {unreadCount > 9 ? "9+" : unreadCount}
-                  </span>
-                )}
-              </div>
-              <span className="text-[10px] font-semibold leading-none">Notifiche</span>
-            </TabInner>
+          {/* Attività */}
+          <Link href="/social-feed" className="flex-1 flex">
+            <Tab active={attivitaActive}>
+              <Activity
+                className="h-[22px] w-[22px]"
+                strokeWidth={attivitaActive ? 2.4 : 1.8}
+              />
+              <span className="text-[10px] font-semibold leading-none">Attività</span>
+            </Tab>
           </Link>
 
-          {/* Cerca — center */}
-          <button
-            onClick={() => setSearchOpen(true)}
-            className="flex-1 flex active:scale-95 transition-transform"
-          >
-            <TabInner active={cercaActive}>
-              <div
-                className={`w-10 h-10 rounded-full flex items-center justify-center transition-colors ${
-                  cercaActive
-                    ? "bg-primary text-white"
-                    : "bg-stone-100 dark:bg-stone-800 text-stone-500 dark:text-stone-400"
-                }`}
-              >
-                <Search className="h-[18px] w-[18px]" strokeWidth={2.2} />
-              </div>
-              <span className={`text-[10px] font-semibold leading-none ${cercaActive ? "text-primary" : "text-stone-400 dark:text-stone-500"}`}>
-                Cerca
-              </span>
-            </TabInner>
-          </button>
+          {/* Center spacer — the raised Cerca button lives above here */}
+          <div className="flex-[1.2]" />
 
           {/* Scan */}
           <Link href="/scan" className="flex-1 flex">
-            <TabInner active={scanActive}>
+            <Tab active={scanActive}>
               <div className="relative">
                 <ScanLine
                   className="h-[22px] w-[22px]"
@@ -126,12 +115,12 @@ export function BottomNavigation() {
                 <span className="absolute -top-1 -right-2.5 bg-primary text-white text-[7px] font-black px-[3px] py-[1px] rounded-full leading-none tracking-tight">β</span>
               </div>
               <span className="text-[10px] font-semibold leading-none">Scan</span>
-            </TabInner>
+            </Tab>
           </Link>
 
           {/* Account */}
           <Link href="/profile" className="flex-1 flex">
-            <TabInner active={accountActive}>
+            <Tab active={accountActive}>
               {avatarUrl ? (
                 <img
                   src={avatarUrl}
@@ -149,7 +138,7 @@ export function BottomNavigation() {
                 />
               )}
               <span className="text-[10px] font-semibold leading-none">Account</span>
-            </TabInner>
+            </Tab>
           </Link>
         </div>
       </nav>
