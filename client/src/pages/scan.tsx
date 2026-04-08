@@ -119,6 +119,7 @@ async function searchWithFallback(text: string): Promise<{
       headers: { "Content-Type": "application/json" },
       credentials: "include",
       body: JSON.stringify({ text }),
+      signal: AbortSignal.timeout(4000),
     });
     if (res.ok) {
       const data = await res.json();
