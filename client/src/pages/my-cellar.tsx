@@ -1,10 +1,10 @@
-import { useState } from "react";
+import { lazy, Suspense, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { Link } from "wouter";
-import { Minus, Plus, Trash2, Wine, ChevronRight, Package } from "lucide-react";
+import { Minus, Plus, Trash2, Wine, ChevronRight, Package, Beer } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -17,11 +17,14 @@ import {
 } from "@/components/ui/dialog";
 import { Helmet } from "react-helmet-async";
 
+const CheckinModal = lazy(() => import("@/components/checkin-modal"));
+
 export default function MyCellar() {
   const { isAuthenticated } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [editItem, setEditItem] = useState<any>(null);
+  const [checkinItem, setCheckinItem] = useState<any>(null);
 
   const { data: cellar = [], isLoading } = useQuery<any[]>({
     queryKey: ["/api/user/cellar"],
@@ -139,6 +142,13 @@ export default function MyCellar() {
               <div className="border-t border-stone-50 dark:border-[hsl(220,5%,22%)] flex divide-x divide-stone-50 dark:divide-[hsl(220,5%,22%)]">
                 <button
                   className="flex-1 py-2.5 text-xs text-stone-500 flex items-center justify-center gap-1.5 active:bg-stone-50 dark:active:bg-[hsl(220,5%,22%)]"
+                  onClick={() => setCheckinItem(item)}
+                >
+                  <Beer className="w-3.5 h-3.5" />
+                  Check-in
+                </button>
+                <button
+                  className="flex-1 py-2.5 text-xs text-stone-500 flex items-center justify-center gap-1.5 active:bg-stone-50 dark:active:bg-[hsl(220,5%,22%)]"
                   onClick={() => setEditItem(item)}
                 >
                   <ChevronRight className="w-3.5 h-3.5" />
@@ -212,6 +222,23 @@ export default function MyCellar() {
           )}
         </DialogContent>
       </Dialog>
+
+      {/* Check-in modal */}
+      {checkinItem && (
+        <Suspense fallback={null}>
+          <CheckinModal
+            open={!!checkinItem}
+            onClose={() => setCheckinItem(null)}
+            beer={{
+              id: checkinItem.beer_id,
+              name: checkinItem.beer_name,
+              style: checkinItem.style ?? null,
+              breweryName: checkinItem.brewery_name ?? null,
+            }}
+            tapType="bottiglia"
+          />
+        </Suspense>
+      )}
     </div>
   );
 }
