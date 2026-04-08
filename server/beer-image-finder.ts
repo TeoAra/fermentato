@@ -2,10 +2,11 @@
  * Beer Image Finder — finds the best web image for a beer after scan confirmation.
  *
  * Strategy (in order):
- *  1. DuckDuckGo image search (free, no API key) → top results for "{name} {brewery} birra"
- *  2. Brewery website og:image (if website_url available) → official product photo
- *  3. Gemini Vision picks the best match from candidates
- *  4. Upload winner to Cloudinary + update beers.image_url
+ *  1. Gemini + Google Search grounding → top Google result pages → og:image
+ *  2. Brewery website og:image (official product photo)
+ *  3. DuckDuckGo image search (free, no API key, fallback)
+ *  4. Gemini Vision picks the best match from all candidates
+ *  5. Upload winner to Cloudinary + update beers.image_url
  *
  * The function is fire-and-forget: call without await in confirmation handler.
  */
@@ -16,56 +17,77 @@ import { pool } from "./db";
 const GEMINI_API_KEY = () => process.env.GEMINI_API_KEY ?? "";
 const GEMINI_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent";
 
-// ─── DuckDuckGo image search ─────────────────────────────────────────────────
+// ─── 1. Google Search via Gemini grounding ────────────────────────────────────
+// Uses the google_search tool included in Gemini — no extra API key needed.
+// Returns the top Google result page URLs for the query.
 
-interface DdgImage {
-  url: string;
-  width: number;
-  height: number;
-  thumbnail: string;
-  title: string;
-}
+async function googleViaGeminiGrounding(beerName: string, breweryName: string): Promise<string[]> {
+  const key = GEMINI_API_KEY();
+  if (!key) return [];
 
-async function ddgSearchImages(query: string, limit = 8): Promise<DdgImage[]> {
+  const query = `${beerName} ${breweryName} birra artigianale bottiglia foto prodotto`;
+
   try {
-    // Step 1: get vqd token from DDG search page
-    const pageRes = await fetch(
-      `https://duckduckgo.com/?q=${encodeURIComponent(query)}&iax=images&ia=images`,
-      { headers: { "User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36" }, signal: AbortSignal.timeout(8000) }
-    );
-    if (!pageRes.ok) return [];
-    const html = await pageRes.text();
-    const vqd = html.match(/vqd=['"]([^'"]+)['"]/)?.[1];
-    if (!vqd) return [];
+    const res = await fetch(`${GEMINI_URL}?key=${key}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        contents: [{ parts: [{ text: `Cerca immagini del prodotto: ${query}` }] }],
+        tools: [{ google_search: {} }],
+        generationConfig: { temperature: 0, maxOutputTokens: 64 },
+      }),
+      signal: AbortSignal.timeout(20000),
+    });
+    if (!res.ok) return [];
+    const data: any = await res.json();
 
-    // Step 2: fetch image results JSON
-    const imgRes = await fetch(
-      `https://duckduckgo.com/i.js?l=it-it&o=json&q=${encodeURIComponent(query)}&vqd=${encodeURIComponent(vqd)}&f=,,,,,`,
-      { headers: { "User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36" }, signal: AbortSignal.timeout(8000) }
-    );
-    if (!imgRes.ok) return [];
-    const data: any = await imgRes.json();
-    return (data.results ?? []).slice(0, limit) as DdgImage[];
-  } catch {
+    // Grounding metadata contains the actual Google result page URLs
+    const chunks: any[] = data?.candidates?.[0]?.groundingMetadata?.groundingChunks ?? [];
+    const urls = chunks
+      .map((c: any) => c.web?.uri)
+      .filter((u: any) => typeof u === "string" && u.startsWith("http") && !u.includes("google.com"));
+
+    console.log(`[beer-img] google grounding found ${urls.length} pages for "${beerName}"`);
+    return urls.slice(0, 6);
+  } catch (e: any) {
+    console.warn(`[beer-img] gemini grounding error: ${e?.message?.substring(0, 60)}`);
     return [];
   }
 }
 
-// ─── Brewery website og:image ─────────────────────────────────────────────────
+// ─── Extract og:image from a list of page URLs ────────────────────────────────
 
-async function fetchOgImage(websiteUrl: string, beerName: string): Promise<string | null> {
+async function extractOgImages(pageUrls: string[]): Promise<string[]> {
+  const images: string[] = [];
+  await Promise.allSettled(pageUrls.map(async (url) => {
+    try {
+      const res = await fetch(url, {
+        headers: { "User-Agent": "Mozilla/5.0 (compatible; Fermentato-Bot/1.0; +https://fermenta.to)" },
+        signal: AbortSignal.timeout(7000),
+      });
+      if (!res.ok) return;
+      const html = await res.text();
+      const ogImg =
+        html.match(/<meta[^>]+property=["']og:image["'][^>]+content=["']([^"']+)["']/i)?.[1] ??
+        html.match(/<meta[^>]+content=["']([^"']+)["'][^>]+property=["']og:image["']/i)?.[1];
+      if (ogImg && ogImg.startsWith("http")) images.push(ogImg);
+    } catch { /* skip */ }
+  }));
+  return images;
+}
+
+// ─── 2. Brewery website og:image ─────────────────────────────────────────────
+
+async function fetchBreweryOgImage(websiteUrl: string, beerName: string): Promise<string | null> {
   if (!websiteUrl?.startsWith("http")) return null;
   const base = websiteUrl.replace(/\/$/, "");
 
-  // Slugified beer name for URL pattern matching
   const slug = beerName.toLowerCase()
     .replace(/[àáâã]/g, "a").replace(/[èéê]/g, "e").replace(/[ìíî]/g, "i")
     .replace(/[òóô]/g, "o").replace(/[ùúû]/g, "u").replace(/[^a-z0-9]/g, "-")
     .replace(/-+/g, "-").replace(/^-|-$/g, "");
-
   const beerWords = slug.split("-").filter(w => w.length > 2);
 
-  // Pages to try: homepage + common beer-list + guessed product page
   const urlsToTry = [
     base,
     `${base}/birre`,
@@ -79,26 +101,25 @@ async function fetchOgImage(websiteUrl: string, beerName: string): Promise<strin
   for (const url of urlsToTry) {
     try {
       const res = await fetch(url, {
-        headers: { "User-Agent": "Mozilla/5.0 (compatible; Fermentato-Bot/1.0; +https://fermenta.to)" },
-        signal: AbortSignal.timeout(8000),
+        headers: { "User-Agent": "Mozilla/5.0 (compatible; Fermentato-Bot/1.0)" },
+        signal: AbortSignal.timeout(7000),
       });
       if (!res.ok) continue;
       const html = await res.text();
 
-      // og:title matching: if this page is specifically about our beer
-      const ogTitle = html.match(/<meta[^>]+property=["']og:title["'][^>]+content=["']([^"']+)["']/i)?.[1]
-        ?? html.match(/<meta[^>]+content=["']([^"']+)["'][^>]+property=["']og:title["']/i)?.[1]
-        ?? "";
+      const ogTitle =
+        html.match(/<meta[^>]+property=["']og:title["'][^>]+content=["']([^"']+)["']/i)?.[1] ??
+        html.match(/<meta[^>]+content=["']([^"']+)["'][^>]+property=["']og:title["']/i)?.[1] ?? "";
       const titleWords = ogTitle.toLowerCase();
       const matchScore = beerWords.filter(w => titleWords.includes(w)).length / Math.max(beerWords.length, 1);
 
-      const ogImage = html.match(/<meta[^>]+property=["']og:image["'][^>]+content=["']([^"']+)["']/i)?.[1]
-        ?? html.match(/<meta[^>]+content=["']([^"']+)["'][^>]+property=["']og:image["']/i)?.[1];
+      const ogImage =
+        html.match(/<meta[^>]+property=["']og:image["'][^>]+content=["']([^"']+)["']/i)?.[1] ??
+        html.match(/<meta[^>]+content=["']([^"']+)["'][^>]+property=["']og:image["']/i)?.[1];
 
-      // Good match: at least half the beer name words in the page title
       if (matchScore >= 0.5 && ogImage) return ogImage;
 
-      // Fallback: find links to the beer's specific product page
+      // Follow links to beer-specific product page
       if (matchScore < 0.3) {
         const linkRe = /<a[^>]+href=["']([^"'#?]+)["'][^>]*>([^<]{1,80})<\/a>/gi;
         let m: RegExpExecArray | null;
@@ -113,15 +134,18 @@ async function fetchOgImage(websiteUrl: string, beerName: string): Promise<strin
         }
         links.sort((a, b) => b.score - a.score);
         for (const link of links.slice(0, 2)) {
-          const pg = await fetch(link.url, {
-            headers: { "User-Agent": "Mozilla/5.0" },
-            signal: AbortSignal.timeout(6000),
-          });
-          if (!pg.ok) continue;
-          const pgHtml = await pg.text();
-          const pgOg = pgHtml.match(/<meta[^>]+property=["']og:image["'][^>]+content=["']([^"']+)["']/i)?.[1]
-            ?? pgHtml.match(/<meta[^>]+content=["']([^"']+)["'][^>]+property=["']og:image["']/i)?.[1];
-          if (pgOg) return pgOg;
+          try {
+            const pg = await fetch(link.url, {
+              headers: { "User-Agent": "Mozilla/5.0" },
+              signal: AbortSignal.timeout(6000),
+            });
+            if (!pg.ok) continue;
+            const pgHtml = await pg.text();
+            const pgOg =
+              pgHtml.match(/<meta[^>]+property=["']og:image["'][^>]+content=["']([^"']+)["']/i)?.[1] ??
+              pgHtml.match(/<meta[^>]+content=["']([^"']+)["'][^>]+property=["']og:image["']/i)?.[1];
+            if (pgOg) return pgOg;
+          } catch { continue; }
         }
       }
     } catch { continue; }
@@ -129,13 +153,34 @@ async function fetchOgImage(websiteUrl: string, beerName: string): Promise<strin
   return null;
 }
 
-// ─── Gemini image picker ──────────────────────────────────────────────────────
+// ─── 3. DuckDuckGo image search ──────────────────────────────────────────────
 
-async function geminiPickBestImage(
-  beerName: string,
-  breweryName: string,
-  candidates: string[]
-): Promise<string | null> {
+interface DdgImage { url: string; width: number; height: number; }
+
+async function ddgSearchImages(query: string, limit = 8): Promise<DdgImage[]> {
+  try {
+    const pageRes = await fetch(
+      `https://duckduckgo.com/?q=${encodeURIComponent(query)}&iax=images&ia=images`,
+      { headers: { "User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36" }, signal: AbortSignal.timeout(8000) }
+    );
+    if (!pageRes.ok) return [];
+    const html = await pageRes.text();
+    const vqd = html.match(/vqd=['"]([^'"]+)['"]/)?.[1];
+    if (!vqd) return [];
+
+    const imgRes = await fetch(
+      `https://duckduckgo.com/i.js?l=it-it&o=json&q=${encodeURIComponent(query)}&vqd=${encodeURIComponent(vqd)}&f=,,,,,`,
+      { headers: { "User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36" }, signal: AbortSignal.timeout(8000) }
+    );
+    if (!imgRes.ok) return [];
+    const data: any = await imgRes.json();
+    return (data.results ?? []).slice(0, limit) as DdgImage[];
+  } catch { return []; }
+}
+
+// ─── 4. Gemini image picker ───────────────────────────────────────────────────
+
+async function geminiPickBestImage(beerName: string, breweryName: string, candidates: string[]): Promise<string | null> {
   const key = GEMINI_API_KEY();
   if (!key || candidates.length === 0) return candidates[0] ?? null;
   if (candidates.length === 1) return candidates[0];
@@ -145,9 +190,9 @@ async function geminiPickBestImage(
 
 Beer: "${beerName}" by "${breweryName}"
 
-Analyze these ${candidates.length} image URLs and pick the one that is most likely to be a clear, high-quality photo of the beer bottle, can, or label. Prefer official product photos over blog/social media photos.
+Analyze these ${candidates.length} image URLs and pick the one most likely to be a clear, high-quality photo of the beer bottle, can, or label. Prefer official product photos over blog/social media photos. Avoid logos, general photos or photos with people.
 
-Return ONLY the index (0-based) of the best image, or -1 if none are suitable. No explanation.
+Return ONLY the 0-based index of the best image, or -1 if none are suitable. No explanation.
 
 URLs:
 ${candidates.map((u, i) => `${i}: ${u}`).join("\n")}`;
@@ -167,12 +212,10 @@ ${candidates.map((u, i) => `${i}: ${u}`).join("\n")}`;
     const idx = parseInt(raw);
     if (!isNaN(idx) && idx >= 0 && idx < candidates.length) return candidates[idx];
     return candidates[0];
-  } catch {
-    return candidates[0];
-  }
+  } catch { return candidates[0]; }
 }
 
-// ─── Cloudinary upload ───────────────────────────────────────────────────────
+// ─── 5. Cloudinary upload ────────────────────────────────────────────────────
 
 async function uploadBestImage(imageUrl: string, beerId: number): Promise<string | null> {
   try {
@@ -204,7 +247,6 @@ export async function findAndUpdateBeerImage(
   forceUpdate = false
 ): Promise<void> {
   try {
-    // Check if beer already has an image (don't overwrite unless forced)
     if (!forceUpdate) {
       const { rows } = await pool.query("SELECT image_url FROM beers WHERE id = $1", [beerId]);
       if (rows[0]?.image_url) {
@@ -213,21 +255,32 @@ export async function findAndUpdateBeerImage(
       }
     }
 
-    console.log(`[beer-img] searching web image for "${beerName}" (id=${beerId})`);
-
+    console.log(`[beer-img] searching image for "${beerName}" by "${breweryName}" (id=${beerId})`);
     const candidates: string[] = [];
 
-    // Source 1: Brewery website og:image (most accurate)
-    const webOg = await fetchOgImage(breweryWebsite ?? "", beerName);
-    if (webOg && webOg.startsWith("http")) candidates.push(webOg);
+    // ── Run all 3 sources in parallel ────────────────────────────────────────
+    const [googlePages, breweryOg, ddgResults] = await Promise.all([
+      googleViaGeminiGrounding(beerName, breweryName),
+      fetchBreweryOgImage(breweryWebsite ?? "", beerName),
+      ddgSearchImages(`${beerName} ${breweryName} birra artigianale`, 10),
+    ]);
 
-    // Source 2: DuckDuckGo image search
-    const query = `${beerName} ${breweryName} birra artigianale`;
-    const ddgResults = await ddgSearchImages(query, 8);
+    // Extract og:images from Google result pages (best quality source)
+    const googleImages = await extractOgImages(googlePages);
+    for (const img of googleImages) {
+      if (img.startsWith("http") && !candidates.includes(img)) candidates.push(img);
+    }
+
+    // Brewery website og:image
+    if (breweryOg && breweryOg.startsWith("http") && !candidates.includes(breweryOg)) {
+      candidates.unshift(breweryOg); // highest priority — official source
+    }
+
+    // DuckDuckGo images (filter small/low-quality)
     for (const r of ddgResults) {
-      if (r.url?.startsWith("http") && r.width >= 400 && r.height >= 400) {
+      if (r.url?.startsWith("http") && r.width >= 300 && r.height >= 300 && !candidates.includes(r.url)) {
         candidates.push(r.url);
-        if (candidates.length >= 5) break;
+        if (candidates.length >= 8) break;
       }
     }
 
@@ -236,14 +289,13 @@ export async function findAndUpdateBeerImage(
       return;
     }
 
-    // Deduplicate
-    const unique = [...new Set(candidates)];
+    console.log(`[beer-img] ${candidates.length} candidates for beer ${beerId}, asking Gemini to pick best`);
 
-    // Gemini picks the best
-    const bestUrl = await geminiPickBestImage(beerName, breweryName, unique.slice(0, 5));
+    // Gemini picks the best from all candidates
+    const bestUrl = await geminiPickBestImage(beerName, breweryName, candidates.slice(0, 6));
     if (!bestUrl) return;
 
-    console.log(`[beer-img] best candidate for beer ${beerId}: ${bestUrl.substring(0, 80)}`);
+    console.log(`[beer-img] best for beer ${beerId}: ${bestUrl.substring(0, 80)}`);
 
     // Upload to Cloudinary
     const cloudUrl = await uploadBestImage(bestUrl, beerId);
@@ -251,7 +303,7 @@ export async function findAndUpdateBeerImage(
 
     // Update beer record
     await pool.query("UPDATE beers SET image_url = $1 WHERE id = $2", [cloudUrl, beerId]);
-    console.log(`[beer-img] ✓ updated beer ${beerId} image: ${cloudUrl.substring(0, 80)}`);
+    console.log(`[beer-img] ✓ beer ${beerId} image updated: ${cloudUrl.substring(0, 80)}`);
   } catch (e: any) {
     console.error(`[beer-img] error for beer ${beerId}: ${e?.message?.substring(0, 100)}`);
   }
