@@ -372,6 +372,7 @@ export default function ScanPage() {
 
   // ── Retry from "Non è questa?" banner ─────────────────────────────────────
   // If the user rejected a scan redirect and came back, restore the previous search
+  // and immediately open the manual search panel so they can type the correct name.
   useEffect(() => {
     const raw = sessionStorage.getItem("scan_retry");
     if (!raw) return;
@@ -385,6 +386,12 @@ export default function ScanPage() {
         setDetectedText(ocr);
         setSearchQuery(q);
         setManualQuery(q);
+        // Auto-open the manual search panel so the user can immediately
+        // type the correct beer name without extra taps.
+        setShowManualSearch(true);
+        setFallbackQuery(q);
+        // Kick off fallback search with the same query
+        handleFallbackQueryChange(q);
         runSearch(q, "retry");
       }
     } catch { /* ignore */ }
@@ -835,17 +842,28 @@ export default function ScanPage() {
                   </div>
                 )}
                 {fallbackQuery.trim().length >= 2 && !isFallbackSearching && fallbackResults.length === 0 && (
-                  <p className="text-xs text-muted-foreground dark:text-stone-500 text-center py-3">Nessun risultato — prova con parole diverse</p>
+                  <div className="text-center py-3 space-y-2">
+                    <p className="text-xs text-muted-foreground dark:text-stone-500">
+                      Nessuna birra trovata per &ldquo;{fallbackQuery}&rdquo;
+                    </p>
+                    <button
+                      onClick={() => { setShowManualSearch(false); setAdditionModalOpen(true); }}
+                      className="flex items-center gap-1.5 mx-auto text-xs font-semibold text-amber-600 dark:text-amber-400 border border-amber-300 dark:border-amber-700 rounded-xl px-3 py-1.5 hover:bg-amber-50 dark:hover:bg-amber-950/40 transition-colors"
+                    >
+                      <PlusCircle className="h-3.5 w-3.5" />
+                      Crea &ldquo;{fallbackQuery}&rdquo;
+                    </button>
+                  </div>
                 )}
               </div>
             ) : (
               /* Toggle button */
               <button
                 onClick={() => setShowManualSearch(true)}
-                className="w-full flex items-center justify-center gap-2 py-2.5 text-xs text-muted-foreground dark:text-stone-500 border border-dashed border-gray-200 dark:border-gray-700 rounded-2xl hover:border-amber-300 hover:text-amber-600 dark:hover:border-amber-700 dark:hover:text-amber-400 transition-colors"
+                className="w-full flex items-center justify-center gap-2 py-2.5 text-xs font-medium text-muted-foreground dark:text-stone-400 border border-dashed border-gray-200 dark:border-gray-700 rounded-2xl hover:border-amber-300 hover:text-amber-600 dark:hover:border-amber-700 dark:hover:text-amber-400 transition-colors"
               >
                 <Search className="h-3.5 w-3.5" />
-                Non la trovo — cerca manualmente
+                {scanState === "results" ? "Nessuna di queste? Cerca o crea" : "Cerca manualmente o crea"}
               </button>
             )}
           </div>
@@ -896,7 +914,7 @@ export default function ScanPage() {
       <AdditionRequestModal
         open={additionModalOpen}
         onClose={() => setAdditionModalOpen(false)}
-        initialBeerName={manualQuery}
+        initialBeerName={fallbackQuery || manualQuery}
         defaultTab="beer"
       />
     </div>
