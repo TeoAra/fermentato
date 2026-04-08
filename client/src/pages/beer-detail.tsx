@@ -156,6 +156,7 @@ export default function BeerDetail() {
 
   // ── Scan redirect banner ─────────────────────────────────────────────────
   const [scanCtx, setScanCtx] = useState<ScanRedirectContext | null>(null);
+  const [isSearchingImage, setIsSearchingImage] = useState(false);
   const [scanBannerDismissed, setScanBannerDismissed] = useState(false);
   useEffect(() => {
     const fromScan = new URLSearchParams(window.location.search).get("from") === "scan";
@@ -537,6 +538,21 @@ export default function BeerDetail() {
     }
   };
 
+  const handleFindWebImage = async () => {
+    if (!id || isSearchingImage) return;
+    setIsSearchingImage(true);
+    try {
+      await apiRequest("POST", `/api/beers/${id}/find-web-image`, { force: false });
+      // Poll for image after ~15s (finder is fire-and-forget)
+      setTimeout(() => {
+        queryClient.invalidateQueries({ queryKey: ["/api/beers", id] });
+        setIsSearchingImage(false);
+      }, 15000);
+    } catch {
+      setIsSearchingImage(false);
+    }
+  };
+
   if (beerLoading) {
     return (
       <div className="min-h-screen bg-background dark:bg-background ">
@@ -658,19 +674,32 @@ export default function BeerDetail() {
           <div className="flex items-start gap-5">
 
             {/* Beer image — tap to expand */}
-            <button
-              className="flex-shrink-0 active:scale-95 transition-transform mt-1"
-              onClick={() => { const s = beer?.imageUrl || beer?.bottleImageUrl; if (s) (window as any).__lightboxOpen?.(s); }}
-              aria-label="Espandi immagine"
-            >
-              <div className="h-[88px] w-[88px] rounded-full border-2 border-white dark:border-stone-700 shadow-md bg-stone-50 dark:bg-stone-800 overflow-hidden flex items-center justify-center ring-1 ring-stone-100 dark:ring-stone-700">
-                {(beer?.imageUrl || beer?.bottleImageUrl) ? (
-                  <img src={beer?.imageUrl || beer?.bottleImageUrl} alt={beer?.name} className="w-full h-full object-cover" />
-                ) : (
-                  <BeerIcon className="h-10 w-10 text-stone-300 dark:text-stone-600" />
-                )}
-              </div>
-            </button>
+            <div className="flex flex-col items-center gap-1.5 flex-shrink-0 mt-1">
+              <button
+                className="active:scale-95 transition-transform"
+                onClick={() => { const s = beer?.imageUrl || beer?.bottleImageUrl; if (s) (window as any).__lightboxOpen?.(s); }}
+                aria-label="Espandi immagine"
+              >
+                <div className="h-[88px] w-[88px] rounded-full border-2 border-white dark:border-stone-700 shadow-md bg-stone-50 dark:bg-stone-800 overflow-hidden flex items-center justify-center ring-1 ring-stone-100 dark:ring-stone-700">
+                  {(beer?.imageUrl || beer?.bottleImageUrl) ? (
+                    <img src={beer?.imageUrl || beer?.bottleImageUrl} alt={beer?.name} className="w-full h-full object-cover" />
+                  ) : isSearchingImage ? (
+                    <Loader2 className="h-8 w-8 text-primary animate-spin" />
+                  ) : (
+                    <BeerIcon className="h-10 w-10 text-stone-300 dark:text-stone-600" />
+                  )}
+                </div>
+              </button>
+              {!beer?.imageUrl && !beer?.bottleImageUrl && isAuthenticated && (
+                <button
+                  onClick={handleFindWebImage}
+                  disabled={isSearchingImage}
+                  className="text-[10px] text-primary font-medium leading-none disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {isSearchingImage ? "Cerco…" : "Cerca immagine"}
+                </button>
+              )}
+            </div>
 
             {/* Info column */}
             <div className="flex-1 min-w-0">
