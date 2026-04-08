@@ -36,7 +36,7 @@ function UserAvatar({ user, size = 9 }: { user: any; size?: number }) {
 
 function UserRow({ user, followingIds, onToggle }: { user: any; followingIds: Set<string>; onToggle: (id: string, following: boolean) => void }) {
   const handle = user.username ?? user.nickname;
-  const name = user.display_name ?? [user.first_name, user.last_name].filter(Boolean).join(" ") || handle;
+  const name = user.display_name ?? ([user.first_name, user.last_name].filter(Boolean).join(" ") || handle);
   const isFollowing = followingIds.has(user.id);
   return (
     <div className="flex items-center gap-3 py-3 px-1">
