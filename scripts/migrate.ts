@@ -5,9 +5,27 @@ import { fileURLToPath } from "url";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
+// Try to load .env if DATABASE_URL not already set
+if (!process.env.DATABASE_URL) {
+  const envPath = path.resolve(process.cwd(), ".env");
+  if (fs.existsSync(envPath)) {
+    const lines = fs.readFileSync(envPath, "utf8").split("\n");
+    for (const line of lines) {
+      const trimmed = line.trim();
+      if (!trimmed || trimmed.startsWith("#")) continue;
+      const eqIdx = trimmed.indexOf("=");
+      if (eqIdx < 0) continue;
+      const key = trimmed.slice(0, eqIdx).trim();
+      const val = trimmed.slice(eqIdx + 1).trim().replace(/^["']|["']$/g, "");
+      if (key && !process.env[key]) process.env[key] = val;
+    }
+  }
+}
+
 const DATABASE_URL = process.env.DATABASE_URL;
 if (!DATABASE_URL) {
-  console.error("❌  DATABASE_URL not set");
+  console.error("❌  DATABASE_URL not set (checked environment and .env file)");
+  console.error("    Run: DATABASE_URL=<your-url> npx tsx scripts/migrate.ts <file.sql>");
   process.exit(1);
 }
 
