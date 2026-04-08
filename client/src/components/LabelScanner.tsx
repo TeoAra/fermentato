@@ -106,6 +106,8 @@ async function callOcrApi(dataUrl: string): Promise<{ text: string; engine: stri
   return { text: (data.text as string) || "", engine: (data.engine as string) || "unknown" };
 }
 
+// Keep up to 20 words, minimum length 3 chars, exclude pure numbers
+// Keeps as many OCR words as possible so buildQueryList in scan.tsx can pick the best ones
 function cleanOcrText(raw: string): string {
   return raw
     .replace(/\r?\n/g, " ")
@@ -113,8 +115,8 @@ function cleanOcrText(raw: string): string {
     .replace(/\s+/g, " ")
     .trim()
     .split(" ")
-    .filter(w => w.length >= 2)
-    .slice(0, 10)
+    .filter(w => w.length >= 3 && !/^\d+(\.\d+)?(%)?$/.test(w))
+    .slice(0, 20)
     .join(" ");
 }
 
@@ -327,7 +329,7 @@ export default function LabelScanner({ onResult, onClose, onBarcodeFound }: Labe
   const isScanning = mode === "scanning" || mode === "idle";
 
   return (
-    <div className="fixed inset-0 z-50 bg-black flex flex-col select-none">
+    <div className="fixed inset-0 z-[60] bg-black flex flex-col select-none">
 
       {/* ── Top bar ─────────────────────────────────────────────── */}
       <div className="absolute top-0 left-0 right-0 z-20 flex items-center justify-between px-4 pt-safe-top pt-3 pb-3 bg-gradient-to-b from-black/80 to-transparent">
@@ -516,7 +518,7 @@ export default function LabelScanner({ onResult, onClose, onBarcodeFound }: Labe
       </div>
 
       {/* ── Bottom controls ─────────────────────────────────────── */}
-      <div className="bg-black px-6 pt-5 pb-10 safe-area-pb">
+      <div className="bg-black px-6 pt-5" style={{ paddingBottom: "calc(2.5rem + env(safe-area-inset-bottom))" }}>
         <div className="flex items-center justify-between max-w-xs mx-auto">
 
           {/* Gallery */}

@@ -45,24 +45,62 @@ interface SearchResult {
 
 type ScanState = "camera" | "searching" | "results" | "notfound";
 
-// Build a ranked list of queries from OCR text:
-// 1. Full text
-// 2. First 3 significant words
-// 3. First 2 words
-// 4. First word only (if length ≥ 4)
+// Italian/English stop words to exclude from scan search
+const STOP_WORDS = new Set([
+  "birra","beer","bianca","rossa","scura","chiara","artigianale","craft","italiana","italiana",
+  "birrificio","brewery","brewing","birreria","brasserie","brasseria",
+  "il","lo","la","le","gli","di","da","del","della","dei","degli","dello",
+  "un","una","delle","con","per","nel","nella","al","alla","ai","agli",
+  "in","su","se","ma","ed","et","and","the","of","by","from","ale","lager",
+  "ipa","apa","aba","aab","vol","abv","alc","cl","ml","lt","kg","bott",
+  "bottiglia","lattina","fusto","spina","fresca","fredda","new","old",
+  "original","classic","special","premium","gold","silver","red","white","black","blue",
+  "rosso","verde","blu","giallo","nero","bianco","dorata","dorato",
+]);
+
+// Build a ranked list of queries from OCR text — multi-strategy fallback:
+// 1. All significant words joined
+// 2. Top 3 longest words (most distinctive)
+// 3. First 3 significant words
+// 4. Top 2 longest words
+// 5. First 2 words
+// 6. Every individual word >= 5 chars
+// 7. Every individual word >= 4 chars
 function buildQueryList(text: string): string[] {
-  const words = text
+  const rawWords = text
     .split(/\s+/)
-    .map(w => w.trim())
-    .filter(w => w.length >= 2 && !/^\d+$/.test(w)); // exclude pure numbers
+    .map(w => w.trim().toLowerCase())
+    .filter(w => w.length >= 3 && !/^\d+(\.\d+)?$/.test(w)); // exclude pure numbers/decimals
+
+  // Remove stop words for "smart" queries
+  const meaningful = rawWords.filter(w => !STOP_WORDS.has(w));
+  // Sort by length descending (longer = more distinctive)
+  const byLength = [...meaningful].sort((a, b) => b.length - a.length);
 
   const queries: string[] = [];
-  const add = (q: string) => { if (q.length >= 2 && !queries.includes(q)) queries.push(q); };
+  const add = (q: string) => {
+    const c = q.trim();
+    if (c.length >= 3 && !queries.includes(c)) queries.push(c);
+  };
 
-  add(words.join(" ")); // full
-  if (words.length > 3) add(words.slice(0, 3).join(" "));
-  if (words.length > 2) add(words.slice(0, 2).join(" "));
-  if (words[0] && words[0].length >= 3) add(words[0]);
+  // Strategy 1: all meaningful words
+  if (meaningful.length > 0) add(meaningful.join(" "));
+  // Strategy 2: top 3 longest distinctive words
+  if (byLength.length >= 3) add(byLength.slice(0, 3).join(" "));
+  // Strategy 3: first 3 meaningful words (order-sensitive)
+  if (meaningful.length >= 3) add(meaningful.slice(0, 3).join(" "));
+  // Strategy 4: top 2 longest
+  if (byLength.length >= 2) add(byLength.slice(0, 2).join(" "));
+  // Strategy 5: first 2 meaningful words
+  if (meaningful.length >= 2) add(meaningful.slice(0, 2).join(" "));
+  // Strategy 6: each distinctive word >= 5 chars individually
+  byLength.filter(w => w.length >= 5).forEach(w => add(w));
+  // Strategy 7: each word >= 4 chars
+  byLength.filter(w => w.length >= 4).forEach(w => add(w));
+  // Strategy 8: fallback with raw words if meaningful list empty
+  if (queries.length === 0) {
+    rawWords.forEach(w => add(w));
+  }
 
   return queries;
 }
