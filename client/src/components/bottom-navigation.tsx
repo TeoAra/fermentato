@@ -82,12 +82,12 @@ export function BottomNavigation() {
             </Tab>
           </Link>
 
-          {/* Cerca — orange circle, inline, same height as other tabs */}
+          {/* Cerca — uniform, same style as all other tabs */}
           <button onClick={() => setSearchOpen(true)} className="flex-1 flex">
             <Tab active={cercaActive}>
-              <div className="w-[28px] h-[28px] rounded-full bg-primary flex items-center justify-center shadow-sm shadow-primary/20">
-                <Search className="h-[14px] w-[14px] text-white" strokeWidth={2.5} />
-              </div>
+              <Search className="h-[22px] w-[22px]" strokeWidth={cercaActive ? 2.4 : 1.8}
+                fill={cercaActive ? "currentColor" : "none"}
+                style={cercaActive ? { fillOpacity: 0.15 } : {}} />
               <span className="text-[10px] font-semibold leading-none">Cerca</span>
             </Tab>
           </button>
