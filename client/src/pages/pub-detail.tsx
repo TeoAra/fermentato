@@ -772,6 +772,7 @@ export default function PubDetail() {
                   ) : (
                     <TapList 
                       tapList={Array.isArray(tapList) ? tapList : []} 
+                      pub={pub && (pub as any).id ? { id: (pub as any).id, name: (pub as any).name } : null}
                     />
                   )}
                   {pub && (pub as any).id && (

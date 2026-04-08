@@ -4043,6 +4043,47 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const tastingData = { ...req.body, userId };
       const tasting = await storage.addBeerTasting(tastingData);
       res.status(201).json(tasting);
+
+      // Notify followers asynchronously
+      try {
+        const user = req.user as any;
+        const displayName = [user.firstName, user.lastName].filter(Boolean).join(" ") || user.nickname || "Qualcuno";
+        const beerId = tastingData.beerId;
+        const pubId = tastingData.pubId;
+
+        let beerName = "una birra";
+        let pubName: string | null = null;
+
+        if (beerId) {
+          const beerRow = await pool.query(`SELECT name FROM beers WHERE id = $1`, [beerId]);
+          if (beerRow.rows[0]) beerName = beerRow.rows[0].name;
+        }
+        if (pubId) {
+          const pubRow = await pool.query(`SELECT name FROM pubs WHERE id = $1`, [pubId]);
+          if (pubRow.rows[0]) pubName = pubRow.rows[0].name;
+        }
+
+        const { rows: followers } = await pool.query(
+          `SELECT follower_id FROM user_follows WHERE following_id = $1`,
+          [userId]
+        );
+
+        const body = pubName
+          ? `${displayName} sta bevendo ${beerName} al ${pubName}`
+          : `${displayName} sta bevendo ${beerName}`;
+
+        for (const { follower_id } of followers) {
+          sendPushToUser(follower_id, {
+            title: "🍺 Check-in amico",
+            body,
+            url: `/user/${user.nickname}`,
+            type: "checkin",
+            tag: `checkin-${userId}`,
+          });
+        }
+      } catch (pushErr) {
+        console.error("Error sending checkin push:", pushErr);
+      }
     } catch (error) {
       console.error("Error adding beer tasting:", error);
       res.status(500).json({ message: "Failed to add beer tasting" });
@@ -6921,17 +6962,19 @@ ${meta.image ? `<meta name="twitter:image" content="${meta.image}">` : ""}
   app.get("/api/user/feed", isAuthenticated, async (req, res) => {
     const userId = (req.user as any).id;
     const { rows } = await pool.query(`
-      SELECT ubt.id, ubt.rating, ubt.notes, ubt.photo_url, ubt.format, ubt.tasted_at,
+      SELECT ubt.id, ubt.rating, ubt.personal_notes as notes, ubt.photo_url, ubt.format, ubt.tasted_at,
              u.id as user_id,
              u.nickname as username,
              COALESCE(NULLIF(TRIM(COALESCE(u.first_name,'') || ' ' || COALESCE(u.last_name,'')), ''), u.nickname) as display_name,
              u.profile_image_url,
              b.id as beer_id, b.name as beer_name, b.style as beer_style, b.image_url as beer_image,
-             br.name as brewery_name
+             br.name as brewery_name,
+             p.id as pub_id, p.name as pub_name, p.city as pub_city
       FROM user_beer_tastings ubt
       JOIN users u ON u.id = ubt.user_id
       JOIN beers b ON b.id = ubt.beer_id
       LEFT JOIN breweries br ON br.id = b.brewery_id
+      LEFT JOIN pubs p ON p.id = ubt.pub_id
       WHERE ubt.user_id IN (
         SELECT following_id FROM user_follows WHERE follower_id = $1
       )

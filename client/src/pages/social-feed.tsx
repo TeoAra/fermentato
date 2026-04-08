@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/useAuth";
 import { Link } from "wouter";
-import { Users, Package } from "lucide-react";
+import { Users, Package, MapPin } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Helmet } from "react-helmet-async";
@@ -109,6 +109,14 @@ export default function SocialFeed() {
                     <p className="font-semibold text-stone-900 dark:text-stone-50 text-sm">{item.beer_name}</p>
                   </Link>
                   <p className="text-xs text-stone-400 mt-0.5">{item.brewery_name}</p>
+                  {item.pub_id && item.pub_name && (
+                    <Link href={`/pub/${item.pub_id}`}>
+                      <p className="text-xs text-primary font-medium mt-1 flex items-center gap-1">
+                        <MapPin className="w-3 h-3" />
+                        {item.pub_name}{item.pub_city ? `, ${item.pub_city}` : ""}
+                      </p>
+                    </Link>
+                  )}
                   {item.rating && <div className="mt-1"><RatingStars rating={item.rating} /></div>}
                   {item.notes && <p className="text-xs text-stone-500 dark:text-stone-400 mt-1 line-clamp-2 italic">"{item.notes}"</p>}
                   {item.photo_url && (

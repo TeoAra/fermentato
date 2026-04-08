@@ -1,4 +1,6 @@
-import { useState, useMemo, useRef, useCallback, useEffect } from "react";
+import { useState, useMemo, useRef, useCallback, useEffect, lazy, Suspense } from "react";
+
+const CheckinModal = lazy(() => import("@/components/checkin-modal"));
 import { Helmet } from "react-helmet-async";
 import { getBadgeForCount } from "@/lib/badges";
 import { useParams, Link } from "wouter";
@@ -147,6 +149,7 @@ export default function BeerDetail() {
   const tastingRef = useRef<HTMLDivElement>(null);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isSuggestDialogOpen, setIsSuggestDialogOpen] = useState(false);
+  const [checkinOpen, setCheckinOpen] = useState(false);
   const [reviewFilterRating, setReviewFilterRating] = useState<number | null>(null);
   const [reviewSortBy, setReviewSortBy] = useState<'recent' | 'highest' | 'lowest'>('recent');
   const [showAllReviews, setShowAllReviews] = useState(false);
@@ -698,6 +701,15 @@ export default function BeerDetail() {
                     className={`h-9 w-9 flex items-center justify-center rounded-full transition-all ${inCellar ? "bg-primary/10 text-primary" : "bg-stone-100 dark:bg-stone-800 text-stone-500"}`}
                   >
                     <Wine className="h-4 w-4" />
+                  </button>
+                )}
+                {isAuthenticated && (
+                  <button
+                    onClick={() => setCheckinOpen(true)}
+                    title="Sto bevendo questa"
+                    className="h-9 w-9 flex items-center justify-center rounded-full bg-primary/10 text-primary hover:bg-primary/20 active:scale-95 transition-all"
+                  >
+                    <BeerIcon className="h-4 w-4" />
                   </button>
                 )}
                 <button onClick={handleShare} title="Condividi" data-testid="button-share"
@@ -1521,6 +1533,22 @@ export default function BeerDetail() {
       )}
 
       <Footer />
+
+      {isAuthenticated && beer && checkinOpen && (
+        <Suspense fallback={null}>
+          <CheckinModal
+            open={checkinOpen}
+            onClose={() => setCheckinOpen(false)}
+            beer={{
+              id: beer.id,
+              name: beer.name,
+              style: beer.style ?? null,
+              breweryName: (beer as any)?.brewery?.name ?? null,
+            }}
+            pub={null}
+          />
+        </Suspense>
+      )}
     </div>
   );
 }

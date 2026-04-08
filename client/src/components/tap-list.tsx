@@ -1,8 +1,11 @@
-import { useMemo } from "react";
+import { useMemo, useState, lazy, Suspense } from "react";
 import { Link } from "wouter";
-import { Wine } from "lucide-react";
+import { Wine, Beer } from "lucide-react";
 import ImageWithFallback from "@/components/image-with-fallback";
 import { GlutenFreeSmallBadge, AlcoholFreeBadge } from "@/components/beer-badges";
+import { useAuth } from "@/hooks/useAuth";
+
+const CheckinModal = lazy(() => import("@/components/checkin-modal"));
 
 function getBeerStyleColor(style: string): { bg: string; text: string } {
   const s = style?.toLowerCase() || '';
@@ -60,6 +63,7 @@ type TapListItem = {
 
 interface TapListProps {
   tapList: TapListItem[];
+  pub?: { id: number; name: string } | null;
 }
 
 function getAllPrices(tap: TapListItem): string[] {
@@ -82,7 +86,9 @@ function getAllPrices(tap: TapListItem): string[] {
     .map(([p]) => formatPrice(p as string));
 }
 
-export default function TapList({ tapList }: TapListProps) {
+export default function TapList({ tapList, pub }: TapListProps) {
+  const { isAuthenticated } = useAuth();
+  const [checkinBeer, setCheckinBeer] = useState<TapListItem["beer"] | null>(null);
   const sorted = useMemo(() => {
     if (!tapList) return [];
     return [...tapList].sort((a, b) => {
@@ -128,8 +134,8 @@ export default function TapList({ tapList }: TapListProps) {
 
     return (
       <div key={tap.id} className={tap.isVisible === false ? 'opacity-50' : ''}>
-        <Link href={`/beer/${tap.beer.id}`}>
-          <div className="flex items-center gap-3.5 px-4 py-3.5 active:bg-stone-50 dark:active:bg-stone-800/30 cursor-pointer transition-colors">
+        <div className="flex items-center gap-3.5 px-4 py-3.5 active:bg-stone-50 dark:active:bg-stone-800/30 transition-colors">
+          <Link href={`/beer/${tap.beer.id}`} className="flex items-center gap-3.5 flex-1 min-w-0">
             {/* Style-tinted icon */}
             <div
               className="w-11 h-11 rounded-xl overflow-hidden flex-shrink-0"
@@ -168,10 +174,12 @@ export default function TapList({ tapList }: TapListProps) {
                 </p>
               )}
             </div>
+          </Link>
 
-            {/* Prices — multiple sizes */}
+          {/* Prices + check-in */}
+          <div className="flex items-center gap-2 flex-shrink-0 pl-1">
             {prices.length > 0 && (
-              <div className="flex flex-col items-end gap-0.5 pl-2 flex-shrink-0">
+              <div className="flex flex-col items-end gap-0.5">
                 {prices.map((p, i) => (
                   <p key={i} className="text-[13px] font-semibold tabular-nums leading-tight text-stone-600 dark:text-stone-400">
                     {p}
@@ -179,8 +187,18 @@ export default function TapList({ tapList }: TapListProps) {
                 ))}
               </div>
             )}
+            {isAuthenticated && (
+              <button
+                onClick={(e) => { e.preventDefault(); e.stopPropagation(); setCheckinBeer(tap.beer); }}
+                className="w-8 h-8 rounded-full flex items-center justify-center bg-primary/10 hover:bg-primary/20 active:scale-95 transition-all flex-shrink-0"
+                aria-label="Check-in"
+                title="Sto bevendo questa"
+              >
+                <Beer className="w-4 h-4 text-primary" />
+              </button>
+            )}
           </div>
-        </Link>
+        </div>
         {!isLast && (
           <div className="h-px bg-stone-100 dark:bg-stone-800/60 ml-[3.75rem] mr-4" />
         )}
@@ -203,18 +221,42 @@ export default function TapList({ tapList }: TapListProps) {
     </div>
   );
 
+  const modal = checkinBeer ? (
+    <Suspense fallback={null}>
+      <CheckinModal
+        open={!!checkinBeer}
+        onClose={() => setCheckinBeer(null)}
+        beer={{
+          id: checkinBeer.id,
+          name: checkinBeer.name,
+          style: checkinBeer.style,
+          breweryName: checkinBeer.brewery?.name,
+        }}
+        pub={pub ?? null}
+      />
+    </Suspense>
+  ) : null;
+
   if (pompaItems.length === 0) {
-    return <Section items={spinaItems} />;
+    return (
+      <>
+        <Section items={spinaItems} />
+        {modal}
+      </>
+    );
   }
 
   return (
-    <div className="space-y-4">
-      {spinaItems.length > 0 && (
-        <Section items={spinaItems} label="In Spina" accent="text-primary dark:text-orange-400" />
-      )}
-      {pompaItems.length > 0 && (
-        <Section items={pompaItems} label="In Pompa" accent="text-violet-600 dark:text-violet-400" />
-      )}
-    </div>
+    <>
+      <div className="space-y-4">
+        {spinaItems.length > 0 && (
+          <Section items={spinaItems} label="In Spina" accent="text-primary dark:text-orange-400" />
+        )}
+        {pompaItems.length > 0 && (
+          <Section items={pompaItems} label="In Pompa" accent="text-violet-600 dark:text-violet-400" />
+        )}
+      </div>
+      {modal}
+    </>
   );
 }
