@@ -237,6 +237,15 @@ async function uploadBestImage(imageUrl: string, beerId: number): Promise<string
   }
 }
 
+// ─── Detect placeholder/generic images that should be replaced ───────────────
+// These are stock photo URLs inserted in bulk — not real beer imagery.
+const PLACEHOLDER_DOMAINS = ["unsplash.com", "images.unsplash.com", "plus.unsplash.com"];
+
+export function isPlaceholderImage(url: string | null | undefined): boolean {
+  if (!url) return true;
+  return PLACEHOLDER_DOMAINS.some(d => url.includes(d));
+}
+
 // ─── Validate that a URL actually points to an image ─────────────────────────
 // Checks extension first (fast), then does a HEAD request for ambiguous URLs.
 
@@ -290,10 +299,12 @@ export async function findAndUpdateBeerImage(
   try {
     if (!forceUpdate) {
       const { rows } = await pool.query("SELECT image_url FROM beers WHERE id = $1", [beerId]);
-      if (rows[0]?.image_url) {
-        console.log(`[beer-img] beer ${beerId} already has image, skipping`);
+      const existing = rows[0]?.image_url;
+      if (existing && !isPlaceholderImage(existing)) {
+        console.log(`[beer-img] beer ${beerId} already has real image, skipping`);
         return;
       }
+      if (existing) console.log(`[beer-img] beer ${beerId} has placeholder image (Unsplash), replacing`);
     }
 
     console.log(`[beer-img] searching image for "${beerName}" by "${breweryName}" (id=${beerId})`);

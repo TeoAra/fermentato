@@ -34,7 +34,7 @@ import { initVapid, sendPushToUser, sendPushToUserImmediate, sendPushToAdmins } 
 import { testSmtpConnection } from "./email";
 import { translateToItalian, looksItalian } from "./translate";
 import { generateEmbedding, pgVector, beerEmbedText } from "./embeddings";
-import { findAndUpdateBeerImage } from "./beer-image-finder";
+import { findAndUpdateBeerImage, isPlaceholderImage } from "./beer-image-finder";
 
 const VAPID_PUBLIC_KEY = process.env.VAPID_PUBLIC_KEY || '';
 
@@ -6437,7 +6437,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       `, [beerId]);
       const info = beerInfo.rows[0];
       if (!info) return res.status(404).json({ error: "beer not found" });
-      if (info.image_url && !force) return res.json({ status: "skipped", reason: "already has image" });
+      if (info.image_url && !isPlaceholderImage(info.image_url) && !force) return res.json({ status: "skipped", reason: "already has image" });
 
       // Acknowledge immediately; search runs in background
       res.json({ status: "searching", beerName: info.name });
@@ -6538,7 +6538,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
                 WHERE b.id = $1
               `, [targetBeer]);
               const info = beerInfo.rows[0];
-              if (!info || info.image_url) return; // already has image — skip
+              if (!info || (info.image_url && !isPlaceholderImage(info.image_url))) return; // already has real image — skip
               await findAndUpdateBeerImage(targetBeer, info.name, info.brewery_name ?? "", info.website_url);
             } catch { /* silent */ }
           });
