@@ -1,6 +1,6 @@
 import { useState, useCallback, useEffect, useRef } from "react";
 import { useLocation } from "wouter";
-import { Scan, Beer, Building2, ArrowLeft, Search, X, Lock, LogIn, PlusCircle, History, Sparkles } from "lucide-react";
+import { Scan, Beer, Building2, ArrowLeft, Search, X, Lock, LogIn, PlusCircle, History, Sparkles, CheckCircle2, Circle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import LabelScanner from "@/components/LabelScanner";
@@ -218,7 +218,9 @@ export default function ScanPage() {
     } catch { /* fire-and-forget, ignore errors */ }
   }, []);
 
-  const saveFeedback = useCallback(async (chosenBeerId?: number, chosenBreweryId?: number) => {
+  const [confirmedBeerIds, setConfirmedBeerIds] = useState<Set<number>>(new Set());
+
+  const saveFeedback = useCallback(async (chosenBeerId?: number, chosenBreweryId?: number, wasCorrect?: boolean) => {
     const logId = currentLogIdRef.current;
     if (!logId) return;
     try {
@@ -226,7 +228,7 @@ export default function ScanPage() {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
-        body: JSON.stringify({ chosenBeerId, chosenBreweryId }),
+        body: JSON.stringify({ chosenBeerId, chosenBreweryId, wasCorrect }),
       });
     } catch { /* ignore */ }
   }, []);
@@ -584,59 +586,89 @@ export default function ScanPage() {
             {/* Beers */}
             {beers.length > 0 && (
               <section className="mb-6">
-                <h2 className="flex items-center gap-2 text-xs font-bold text-muted-foreground dark:text-stone-400 uppercase tracking-wider mb-3">
+                <h2 className="flex items-center gap-2 text-xs font-bold text-muted-foreground dark:text-stone-400 uppercase tracking-wider mb-2">
                   <Beer className="h-3.5 w-3.5 text-amber-500" />
                   Birre ({beers.length})
                 </h2>
+                {/* Scan hint — shown only when in scan context */}
+                {scanState === "results" && currentLogIdRef.current && (
+                  <p className="text-[11px] text-muted-foreground dark:text-stone-500 mb-3 pl-0.5">
+                    Tocca <CheckCircle2 className="inline h-3 w-3 text-green-500 mx-0.5" /> per confermare la tua birra e addestrare il sistema
+                  </p>
+                )}
                 <div className="space-y-2">
-                  {beers.map(beer => (
-                    <div
-                      key={beer.id}
-                      onClick={() => {
-                        saveFeedback(beer.id, undefined);
-                        enrichBarcodeData(beer.id);
-                        sessionStorage.setItem("scan_redirect", JSON.stringify({
-                          beerId: beer.id,
-                          beerName: beer.name,
-                          breweryName: beer.breweryName || "",
-                          query: searchQuery,
-                          ocrText: currentOcrTextRef.current,
-                          memoryMatch: beer.memoryMatch ?? false,
-                        }));
-                        navigate(`/beer/${beer.id}?from=scan`);
-                      }}
-                      className="flex items-center gap-3 bg-white dark:bg-gray-900 rounded-2xl p-3 shadow-sm border border-gray-100 dark:border-gray-800 active:scale-[0.98] transition-transform cursor-pointer hover:border-amber-200 dark:hover:border-amber-900"
-                    >
-                      <div className="w-12 h-12 rounded-xl bg-amber-50 dark:bg-amber-900/20 flex items-center justify-center overflow-hidden shrink-0">
-                        {beer.imageUrl ? (
-                          <img src={beer.imageUrl} alt={beer.name} className="w-full h-full object-cover rounded-xl" />
-                        ) : (
-                          <Beer className="h-6 w-6 text-amber-400" />
-                        )}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-1.5">
-                          <p className="font-semibold text-foreground dark:text-white truncate text-sm">{beer.name}</p>
-                          {beer.memoryMatch && (
-                            <span className="shrink-0 text-[10px] font-bold bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-400 px-1.5 py-0.5 rounded-full border border-amber-200 dark:border-amber-800 leading-none">
-                              Ricordato
-                            </span>
+                  {beers.map(beer => {
+                    const isConfirmed = confirmedBeerIds.has(beer.id);
+                    return (
+                      <div
+                        key={beer.id}
+                        onClick={() => {
+                          saveFeedback(beer.id, undefined);
+                          enrichBarcodeData(beer.id);
+                          sessionStorage.setItem("scan_redirect", JSON.stringify({
+                            beerId: beer.id,
+                            beerName: beer.name,
+                            breweryName: beer.breweryName || "",
+                            query: searchQuery,
+                            ocrText: currentOcrTextRef.current,
+                            memoryMatch: beer.memoryMatch ?? false,
+                          }));
+                          navigate(`/beer/${beer.id}?from=scan`);
+                        }}
+                        className={`flex items-center gap-3 bg-white dark:bg-gray-900 rounded-2xl p-3 shadow-sm border active:scale-[0.98] transition-all cursor-pointer ${
+                          isConfirmed
+                            ? "border-green-400 dark:border-green-600 ring-1 ring-green-300 dark:ring-green-700"
+                            : "border-gray-100 dark:border-gray-800 hover:border-amber-200 dark:hover:border-amber-900"
+                        }`}
+                      >
+                        <div className="w-12 h-12 rounded-xl bg-amber-50 dark:bg-amber-900/20 flex items-center justify-center overflow-hidden shrink-0">
+                          {beer.imageUrl ? (
+                            <img src={beer.imageUrl} alt={beer.name} className="w-full h-full object-cover rounded-xl" />
+                          ) : (
+                            <Beer className="h-6 w-6 text-amber-400" />
                           )}
                         </div>
-                        {beer.breweryName && (
-                          <p className="text-xs text-muted-foreground dark:text-stone-400 truncate">{beer.breweryName}</p>
-                        )}
-                        <div className="flex items-center gap-2 mt-1 flex-wrap">
-                          {beer.style && (
-                            <Badge variant="secondary" className="text-xs py-0 px-1.5">{beer.style}</Badge>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-1.5">
+                            <p className="font-semibold text-foreground dark:text-white truncate text-sm">{beer.name}</p>
+                            {beer.memoryMatch && (
+                              <span className="shrink-0 text-[10px] font-bold bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-400 px-1.5 py-0.5 rounded-full border border-amber-200 dark:border-amber-800 leading-none">
+                                Ricordato
+                              </span>
+                            )}
+                          </div>
+                          {beer.breweryName && (
+                            <p className="text-xs text-muted-foreground dark:text-stone-400 truncate">{beer.breweryName}</p>
                           )}
-                          {beer.abv && (
-                            <span className="text-xs text-amber-600 dark:text-amber-400 font-medium">{beer.abv}% ABV</span>
-                          )}
+                          <div className="flex items-center gap-2 mt-1 flex-wrap">
+                            {beer.style && (
+                              <Badge variant="secondary" className="text-xs py-0 px-1.5">{beer.style}</Badge>
+                            )}
+                            {beer.abv && (
+                              <span className="text-xs text-amber-600 dark:text-amber-400 font-medium">{beer.abv}% ABV</span>
+                            )}
+                          </div>
                         </div>
+                        {/* Confirm button — confirms this is the scanned beer */}
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            if (isConfirmed) return;
+                            setConfirmedBeerIds(prev => new Set([...prev, beer.id]));
+                            saveFeedback(beer.id, undefined, true);
+                          }}
+                          className={`shrink-0 flex items-center justify-center w-8 h-8 rounded-full transition-all ${
+                            isConfirmed
+                              ? "bg-green-500 text-white shadow-sm"
+                              : "border-2 border-gray-200 dark:border-gray-700 text-gray-300 dark:text-gray-600 hover:border-green-400 hover:text-green-400 dark:hover:border-green-500 dark:hover:text-green-500"
+                          }`}
+                          aria-label={isConfirmed ? "Confermata" : "Conferma questa birra"}
+                        >
+                          <CheckCircle2 className="h-4 w-4" />
+                        </button>
                       </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </section>
             )}
