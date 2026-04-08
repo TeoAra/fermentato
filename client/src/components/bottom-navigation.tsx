@@ -82,23 +82,14 @@ export function BottomNavigation() {
             </Tab>
           </Link>
 
-          {/* Cerca — orange circle, inline */}
-          <button onClick={() => setSearchOpen(true)} className="flex-1 flex active:scale-95 transition-transform">
-            <div className="flex flex-col items-center justify-center gap-[3px] flex-1 py-2 min-h-[52px] relative">
-              {cercaActive && (
-                <span className="absolute top-0 left-1/2 -translate-x-1/2 w-6 h-[2.5px] rounded-full bg-primary" />
-              )}
-              <div className={`w-9 h-9 rounded-full flex items-center justify-center transition-colors ${
-                cercaActive
-                  ? "bg-primary shadow-sm shadow-primary/30"
-                  : "bg-primary"
-              }`}>
-                <Search className="h-[18px] w-[18px] text-white" strokeWidth={2.3} />
+          {/* Cerca — orange circle, inline, same height as other tabs */}
+          <button onClick={() => setSearchOpen(true)} className="flex-1 flex">
+            <Tab active={cercaActive}>
+              <div className="w-[28px] h-[28px] rounded-full bg-primary flex items-center justify-center shadow-sm shadow-primary/20">
+                <Search className="h-[14px] w-[14px] text-white" strokeWidth={2.5} />
               </div>
-              <span className={`text-[10px] font-semibold leading-none ${cercaActive ? "text-primary" : "text-stone-500 dark:text-stone-400"}`}>
-                Cerca
-              </span>
-            </div>
+              <span className="text-[10px] font-semibold leading-none">Cerca</span>
+            </Tab>
           </button>
 
           {/* Scan — inline, β badge */}
