@@ -35,7 +35,7 @@ export function BottomNavigation() {
   const accountActive  = isActive("/profile");
 
   const Tab = ({ active, children }: { active: boolean; children: ReactNode }) => (
-    <div className={`flex flex-col items-center justify-center gap-[3px] flex-1 pt-2 pb-1 min-h-[52px] transition-colors active:scale-95 relative ${
+    <div className={`flex flex-col items-center justify-center gap-[3px] flex-1 py-2 min-h-[52px] transition-colors active:scale-95 relative ${
       active ? "text-primary" : "text-stone-400 dark:text-stone-500"
     }`}>
       {active && (
@@ -53,61 +53,25 @@ export function BottomNavigation() {
         className="lg:hidden fixed bottom-0 left-0 right-0 z-50 bg-white dark:bg-[hsl(25,14%,9%)] border-t border-stone-100 dark:border-border"
         style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
       >
-        {/* ── Raised center buttons: Cerca (orange circle) + Scan ── */}
-        <div className="absolute left-1/2 -translate-x-1/2 -top-[46px] flex items-end gap-2.5 pointer-events-none">
-
-          {/* Cerca — orange circle */}
-          <button
-            onClick={() => setSearchOpen(true)}
-            className={`pointer-events-auto w-[52px] h-[52px] rounded-full flex items-center justify-center shadow-lg transition-all active:scale-90 ${
-              cercaActive
-                ? "bg-primary shadow-primary/40 scale-105"
-                : "bg-primary shadow-primary/25 hover:bg-primary/90"
-            }`}
-          >
-            <Search className="h-[22px] w-[22px] text-white" strokeWidth={2.3} />
-          </button>
-
-          {/* Scan — smaller secondary circle */}
-          <Link href="/scan" className="pointer-events-auto relative">
-            <div className={`w-[44px] h-[44px] rounded-full flex items-center justify-center shadow-md transition-all active:scale-90 ${
-              scanActive
-                ? "bg-stone-800 dark:bg-stone-700 shadow-black/30"
-                : "bg-stone-100 dark:bg-stone-800 shadow-black/10 hover:bg-stone-200 dark:hover:bg-stone-700"
-            }`}>
-              <ScanLine
-                className={`h-[20px] w-[20px] ${scanActive ? "text-white" : "text-stone-500 dark:text-stone-400"}`}
-                strokeWidth={2.2}
-              />
-            </div>
-            <span className="absolute -top-0.5 -right-0.5 bg-primary text-white text-[7px] font-black px-[3px] py-[1.5px] rounded-full leading-none tracking-tight">β</span>
-          </Link>
-        </div>
-
         <div className="flex items-stretch">
-          {/* ── LEFT: Home ── */}
+
+          {/* Home */}
           <Link href="/" className="flex-1 flex">
             <Tab active={homeActive}>
-              <Home
-                className="h-[22px] w-[22px]"
-                strokeWidth={homeActive ? 2.4 : 1.8}
+              <Home className="h-[22px] w-[22px]" strokeWidth={homeActive ? 2.4 : 1.8}
                 fill={homeActive ? "currentColor" : "none"}
-                style={homeActive ? { fillOpacity: 0.15, strokeOpacity: 1 } : {}}
-              />
+                style={homeActive ? { fillOpacity: 0.15 } : {}} />
               <span className="text-[10px] font-semibold leading-none">Home</span>
             </Tab>
           </Link>
 
-          {/* ── LEFT: Notifiche ── */}
+          {/* Notifiche */}
           <Link href="/notifications" className="flex-1 flex">
             <Tab active={notifActive}>
               <div className="relative">
-                <Bell
-                  className="h-[22px] w-[22px]"
-                  strokeWidth={notifActive ? 2.4 : 1.8}
+                <Bell className="h-[22px] w-[22px]" strokeWidth={notifActive ? 2.4 : 1.8}
                   fill={notifActive ? "currentColor" : "none"}
-                  style={notifActive ? { fillOpacity: 0.15, strokeOpacity: 1 } : {}}
-                />
+                  style={notifActive ? { fillOpacity: 0.15 } : {}} />
                 {unreadCount > 0 && (
                   <span className="absolute -top-1 -right-1.5 min-w-[14px] h-[14px] bg-red-500 text-white text-[9px] font-black rounded-full flex items-center justify-center px-[3px] leading-none">
                     {unreadCount > 9 ? "9+" : unreadCount}
@@ -118,42 +82,61 @@ export function BottomNavigation() {
             </Tab>
           </Link>
 
-          {/* ── CENTER spacer — raised buttons sit above here ── */}
-          <div className="flex-[1.6]" />
+          {/* Cerca — orange circle, inline */}
+          <button onClick={() => setSearchOpen(true)} className="flex-1 flex active:scale-95 transition-transform">
+            <div className="flex flex-col items-center justify-center gap-[3px] flex-1 py-2 min-h-[52px] relative">
+              {cercaActive && (
+                <span className="absolute top-0 left-1/2 -translate-x-1/2 w-6 h-[2.5px] rounded-full bg-primary" />
+              )}
+              <div className={`w-9 h-9 rounded-full flex items-center justify-center transition-colors ${
+                cercaActive
+                  ? "bg-primary shadow-sm shadow-primary/30"
+                  : "bg-primary"
+              }`}>
+                <Search className="h-[18px] w-[18px] text-white" strokeWidth={2.3} />
+              </div>
+              <span className={`text-[10px] font-semibold leading-none ${cercaActive ? "text-primary" : "text-stone-500 dark:text-stone-400"}`}>
+                Cerca
+              </span>
+            </div>
+          </button>
 
-          {/* ── RIGHT: Attività ── */}
+          {/* Scan — inline, β badge */}
+          <Link href="/scan" className="flex-1 flex">
+            <Tab active={scanActive}>
+              <div className="relative">
+                <ScanLine className="h-[22px] w-[22px]" strokeWidth={scanActive ? 2.4 : 1.8} />
+                <span className="absolute -top-1 -right-2 bg-primary text-white text-[7px] font-black px-[3px] py-[1px] rounded-full leading-none">β</span>
+              </div>
+              <span className="text-[10px] font-semibold leading-none">Scan</span>
+            </Tab>
+          </Link>
+
+          {/* Attività */}
           <Link href="/social-feed" className="flex-1 flex">
             <Tab active={attivitaActive}>
-              <Activity
-                className="h-[22px] w-[22px]"
-                strokeWidth={attivitaActive ? 2.4 : 1.8}
-              />
+              <Activity className="h-[22px] w-[22px]" strokeWidth={attivitaActive ? 2.4 : 1.8} />
               <span className="text-[10px] font-semibold leading-none">Attività</span>
             </Tab>
           </Link>
 
-          {/* ── RIGHT: Account ── */}
+          {/* Account */}
           <Link href="/profile" className="flex-1 flex">
             <Tab active={accountActive}>
               {avatarUrl ? (
-                <img
-                  src={avatarUrl}
-                  alt="profilo"
+                <img src={avatarUrl} alt="profilo"
                   className={`h-[22px] w-[22px] rounded-full object-cover border-2 transition-colors ${
                     accountActive ? "border-primary" : "border-stone-200 dark:border-stone-600"
-                  }`}
-                />
+                  }`} />
               ) : (
-                <User
-                  className="h-[22px] w-[22px]"
-                  strokeWidth={accountActive ? 2.4 : 1.8}
+                <User className="h-[22px] w-[22px]" strokeWidth={accountActive ? 2.4 : 1.8}
                   fill={accountActive ? "currentColor" : "none"}
-                  style={accountActive ? { fillOpacity: 0.15, strokeOpacity: 1 } : {}}
-                />
+                  style={accountActive ? { fillOpacity: 0.15 } : {}} />
               )}
               <span className="text-[10px] font-semibold leading-none">Account</span>
             </Tab>
           </Link>
+
         </div>
       </nav>
     </>

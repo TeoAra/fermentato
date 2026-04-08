@@ -5864,6 +5864,96 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   }
 
+  // ── Scan text search: OR-based, word-by-word, sorted by match count ────────
+  // Much more robust than /api/search for noisy OCR text
+  app.post("/api/scan/search", isAuthenticated, async (req: any, res) => {
+    try {
+      const { text } = req.body as { text?: string };
+      if (!text || typeof text !== "string" || text.trim().length < 2) {
+        return res.json({ beers: [], breweries: [] });
+      }
+
+      const SCAN_STOP = new Set([
+        "birra","beer","bianca","rossa","scura","chiara","artigianale","craft",
+        "italiana","birrificio","brewery","brewing","birreria","brasserie",
+        "birra","bottiglia","lattina","fusto","spina","fresca","fredda",
+        "ipa","apa","stout","lager","porter","weizen","saison","pilsner","pilsen",
+        "vol","abv","alc","alcohole","alcol","gradazione","contiene","conservare",
+        "ingredienti","acqua","orzo","malto","luppolo","lievito","frumento",
+        "prodotto","prodotta","prodotte","prodotti","italia","italian","made",
+        "from","with","the","and","for","ale","new","old","special","premium",
+        "limited","edition","batch","numero","numero","serie","single",
+        "original","classic","gold","silver","red","white","black","blue",
+        "verde","blu","giallo","nero","bianco","dorata","dorato",
+        "rosso","verde","chiara","scura","ambrata","ambrato",
+      ]);
+
+      // Extract meaningful words from the OCR text
+      const words = text
+        .toLowerCase()
+        .replace(/[^a-zàèéìòùa-z0-9\s]/gi, " ")
+        .split(/\s+/)
+        .map(w => w.trim())
+        .filter(w => w.length >= 3 && !/^\d+(\.\d+)?%?$/.test(w) && !SCAN_STOP.has(w));
+
+      if (words.length === 0) return res.json({ beers: [], breweries: [] });
+
+      // Deduplicate words
+      const uniqueWords = [...new Set(words)].slice(0, 12);
+      const patterns = uniqueWords.map(w => `%${w}%`);
+
+      // OR-based beer search: match ANY of the words, score by how many match
+      const beerResult = await pool.query(`
+        SELECT
+          b.id, b.name, b.style, b.abv, b.image_url as "imageUrl",
+          b.brewery_id as "breweryId", br.name as "breweryName", br.logo_url as "breweryLogoUrl",
+          (
+            SELECT COUNT(*)::int FROM unnest($1::text[]) pat
+            WHERE unaccent(lower(b.name)) LIKE unaccent(lower(pat))
+               OR unaccent(lower(COALESCE(br.name,''))) LIKE unaccent(lower(pat))
+               OR lower(COALESCE(b.style,'')) LIKE lower(pat)
+          ) AS match_count
+        FROM beers b
+        LEFT JOIN breweries br ON b.brewery_id = br.id
+        WHERE EXISTS (
+          SELECT 1 FROM unnest($1::text[]) pat
+          WHERE unaccent(lower(b.name)) LIKE unaccent(lower(pat))
+             OR unaccent(lower(COALESCE(br.name,''))) LIKE unaccent(lower(pat))
+             OR lower(COALESCE(b.style,'')) LIKE lower(pat)
+        )
+        ORDER BY match_count DESC, length(b.name) ASC, b.name ASC
+        LIMIT 15
+      `, [patterns]);
+
+      // OR-based brewery search
+      const breweryResult = await pool.query(`
+        SELECT
+          br.id, br.name, br.country, br.logo_url as "logoUrl", br.city,
+          (
+            SELECT COUNT(*)::int FROM unnest($1::text[]) pat
+            WHERE unaccent(lower(br.name)) LIKE unaccent(lower(pat))
+               OR unaccent(lower(COALESCE(br.city,''))) LIKE unaccent(lower(pat))
+          ) AS match_count
+        FROM breweries br
+        WHERE EXISTS (
+          SELECT 1 FROM unnest($1::text[]) pat
+          WHERE unaccent(lower(br.name)) LIKE unaccent(lower(pat))
+        )
+        ORDER BY match_count DESC, br.name ASC
+        LIMIT 5
+      `, [patterns]);
+
+      res.json({
+        beers: beerResult.rows,
+        breweries: breweryResult.rows,
+        words: uniqueWords,
+      });
+    } catch (error) {
+      console.error("[scan/search] error:", error);
+      res.status(500).json({ beers: [], breweries: [] });
+    }
+  });
+
   app.post("/api/scan/image-search", isAuthenticated, async (req: any, res) => {
     try {
       const { image, limit = 5 } = req.body as { image?: string; limit?: number };

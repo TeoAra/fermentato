@@ -110,20 +110,45 @@ async function searchWithFallback(text: string): Promise<{
   breweries: BreweryResult[];
   usedQuery: string;
 }> {
-  const queries = buildQueryList(text);
-
-  for (const q of queries) {
-    const res = await fetch(`/api/search?q=${encodeURIComponent(q)}&limit=12`);
-    if (!res.ok) continue;
-    const data: SearchResult = await res.json();
-    const total = (data.beers?.length ?? 0) + (data.breweries?.length ?? 0);
-    if (total > 0) {
-      const beers = (data.beers ?? []).map((b: any) => ({
-        ...b,
-        breweryName: b.breweryName || b.brewery?.name || null,
+  // ── Strategy 1: dedicated OR-based scan search endpoint ──────────────────
+  // Sends the full OCR text, server extracts words and uses LIKE ANY (OR logic)
+  // so ANY meaningful word matching is enough to surface a result.
+  try {
+    const res = await fetch("/api/scan/search", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      credentials: "include",
+      body: JSON.stringify({ text }),
+    });
+    if (res.ok) {
+      const data = await res.json();
+      const beers: BeerResult[] = (data.beers ?? []).map((b: any) => ({
+        id: b.id, name: b.name, style: b.style, abv: b.abv,
+        imageUrl: b.imageUrl, breweryName: b.breweryName,
       }));
-      return { beers, breweries: data.breweries ?? [], usedQuery: q };
+      const breweries: BreweryResult[] = data.breweries ?? [];
+      if (beers.length + breweries.length > 0) {
+        return { beers, breweries, usedQuery: text };
+      }
     }
+  } catch { /* fall through to legacy */ }
+
+  // ── Strategy 2: legacy AND-based fallback with progressively shorter queries ─
+  const queries = buildQueryList(text);
+  for (const q of queries) {
+    try {
+      const res = await fetch(`/api/search?q=${encodeURIComponent(q)}&limit=12`);
+      if (!res.ok) continue;
+      const data: SearchResult = await res.json();
+      const total = (data.beers?.length ?? 0) + (data.breweries?.length ?? 0);
+      if (total > 0) {
+        const beers = (data.beers ?? []).map((b: any) => ({
+          ...b,
+          breweryName: b.breweryName || b.brewery?.name || null,
+        }));
+        return { beers, breweries: data.breweries ?? [], usedQuery: q };
+      }
+    } catch { continue; }
   }
   return { beers: [], breweries: [], usedQuery: queries[0] ?? text };
 }
