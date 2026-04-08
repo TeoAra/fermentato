@@ -220,25 +220,25 @@ export default function ScanPage() {
 
   const [confirmedBeerIds, setConfirmedBeerIds] = useState<Set<number>>(new Set());
 
-  // Manual search panel (shown when beer not found in scan results)
+  // Fallback search panel (shown when beer not found in scan results)
   const [showManualSearch, setShowManualSearch] = useState(false);
-  const [manualQuery, setManualQuery] = useState("");
-  const [manualResults, setManualResults] = useState<BeerResult[]>([]);
-  const [isManualSearching, setIsManualSearching] = useState(false);
+  const [fallbackQuery, setFallbackQuery] = useState("");
+  const [fallbackResults, setFallbackResults] = useState<BeerResult[]>([]);
+  const [isFallbackSearching, setIsFallbackSearching] = useState(false);
   const [manualConfirmedBeer, setManualConfirmedBeer] = useState<BeerResult | null>(null);
-  const manualTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const fallbackTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const handleManualQueryChange = useCallback((q: string) => {
-    setManualQuery(q);
-    if (manualTimerRef.current) clearTimeout(manualTimerRef.current);
-    if (q.trim().length < 2) { setManualResults([]); return; }
-    manualTimerRef.current = setTimeout(async () => {
-      setIsManualSearching(true);
+  const handleFallbackQueryChange = useCallback((q: string) => {
+    setFallbackQuery(q);
+    if (fallbackTimerRef.current) clearTimeout(fallbackTimerRef.current);
+    if (q.trim().length < 2) { setFallbackResults([]); return; }
+    fallbackTimerRef.current = setTimeout(async () => {
+      setIsFallbackSearching(true);
       try {
         const res = await fetch(`/api/beers/search?q=${encodeURIComponent(q.trim())}&limit=20`);
-        if (res.ok) setManualResults(await res.json());
+        if (res.ok) setFallbackResults(await res.json());
       } catch { /* ignore */ }
-      setIsManualSearching(false);
+      setIsFallbackSearching(false);
     }, 300);
   }, []);
 
@@ -272,18 +272,18 @@ export default function ScanPage() {
   const confirmManualBeer = useCallback(async (beer: BeerResult) => {
     setManualConfirmedBeer(beer);
     setShowManualSearch(false);
-    setManualQuery("");
-    setManualResults([]);
+    setFallbackQuery("");
+    setFallbackResults([]);
     await saveFeedback(beer.id, undefined, true);
   }, [saveFeedback]);
 
   const runSearch = useCallback(async (query: string, source?: string) => {
     if (query.trim().length < 2) return;
-    // Reset manual search on new scan
+    // Reset fallback search on new scan
     setShowManualSearch(false);
     setManualConfirmedBeer(null);
-    setManualQuery("");
-    setManualResults([]);
+    setFallbackQuery("");
+    setFallbackResults([]);
     setConfirmedBeerIds(new Set());
     setIsSearching(true);
     setScanState("searching");
@@ -786,18 +786,18 @@ export default function ScanPage() {
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
                   <input
                     autoFocus
-                    value={manualQuery}
-                    onChange={e => handleManualQueryChange(e.target.value)}
+                    value={fallbackQuery}
+                    onChange={e => handleFallbackQueryChange(e.target.value)}
                     placeholder="Nome birra o birrificio..."
                     className="w-full pl-8 pr-3 py-2 text-sm bg-stone-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl outline-none focus:ring-1 focus:ring-amber-400 dark:focus:ring-amber-600"
                   />
-                  {isManualSearching && (
+                  {isFallbackSearching && (
                     <span className="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 border-2 border-amber-400 border-t-transparent rounded-full animate-spin" />
                   )}
                 </div>
-                {manualResults.length > 0 && (
+                {fallbackResults.length > 0 && (
                   <div className="space-y-1.5 max-h-72 overflow-y-auto">
-                    {manualResults.map(beer => (
+                    {fallbackResults.map(beer => (
                       <div key={beer.id} className="flex items-center gap-2.5 p-2 rounded-xl hover:bg-stone-50 dark:hover:bg-gray-800 cursor-pointer group">
                         <div className="w-9 h-9 rounded-lg bg-amber-50 dark:bg-amber-900/20 flex items-center justify-center overflow-hidden shrink-0">
                           {beer.imageUrl
@@ -819,7 +819,7 @@ export default function ScanPage() {
                     ))}
                   </div>
                 )}
-                {manualQuery.trim().length >= 2 && !isManualSearching && manualResults.length === 0 && (
+                {fallbackQuery.trim().length >= 2 && !isFallbackSearching && fallbackResults.length === 0 && (
                   <p className="text-xs text-muted-foreground dark:text-stone-500 text-center py-3">Nessun risultato — prova con parole diverse</p>
                 )}
               </div>
