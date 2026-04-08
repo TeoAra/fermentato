@@ -15,7 +15,7 @@ RETURNS text
 LANGUAGE sql
 IMMUTABLE
 PARALLEL SAFE
-AS 'SELECT unaccent($1)';
+AS 'SELECT public.unaccent($1)';
 
 -- ─── 2. GIN trigram indexes on unaccented columns ────────────────────────────
 
