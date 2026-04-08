@@ -1,0 +1,619 @@
+Sì: il tuo collo di bottiglia vero non è l’OCR, è **l’ingestione immagini + associazione affidabile al catalogo**.
+
+Quindi io imposterei **Fermenta Scan** così:
+
+# Obiettivo realistico
+
+Non provare a “riconoscere tutto da zero”.
+
+Prima costruisci un sistema che faccia bene queste 4 cose:
+
+1. **raccogliere immagini in massa**
+2. **associare ogni immagine a una birra del tuo DB**
+3. **misurare la qualità del match**
+4. **usare quelle immagini per migliorare lo scan**
+
+La cosa importante è che, con tanto database testuale e poche immagini, devi partire da una pipeline di **image acquisition**, non da training pesante.
+
+---
+
+# La strategia giusta: 4 canali immagini
+
+## 1. Immagini caricate dai birrifici e locali
+
+Questo deve diventare il tuo canale principale.
+
+Fagli caricare:
+
+* etichetta frontale
+* bottiglia/lattina intera
+* packshot su sfondo neutro
+* foto “shelf” o banco se possibile
+
+### Perché è il migliore
+
+* associazione quasi certa
+* qualità più alta
+* meno problemi legali
+* aggiornamento continuo
+
+### Come farlo bene
+
+Crea un pannello “Claim your brewery / claim your venue” con:
+
+* upload drag & drop
+* preview
+* auto-suggerimento della birra corretta
+* approvazione finale
+* richiesta di 3 immagini standard per birra
+
+### Incentivo
+
+Non chiedere “carica immagini per noi”.
+Chiedi:
+
+* “ottieni scheda migliore”
+* “appari nei risultati scan”
+* “più visibilità nella ricerca”
+* “vetrina più bella nei locali”
+
+Questa è la fonte più sana nel lungo periodo.
+
+---
+
+## 2. Immagini dagli utenti
+
+È il secondo canale migliore, ma con moderazione.
+
+Quando l’utente fa scan o visita una scheda:
+
+* proponi “aggiungi foto”
+* proponi “foto etichetta leggibile”
+* proponi “manca la bottiglia? aggiungila”
+
+### Fondamentale
+
+Non mandare tutto live subito.
+
+Metti tre stati:
+
+* `pending`
+* `verified`
+* `rejected`
+
+E assegna un punteggio qualità:
+
+* etichetta visibile?
+* immagine nitida?
+* riflessi forti?
+* sfondo pulito?
+* duplicato?
+
+---
+
+## 3. Fonti aperte e riusabili
+
+Qui puoi riempire il catalogo più velocemente, ma solo dove la licenza è chiara.
+
+### Open Food Facts
+
+Open Food Facts è open data e documenta API e immagini; il database è riusabile e le immagini sono indicate come disponibili con licenza CC BY-SA, con l’avvertenza che possono contenere elementi grafici soggetti a diritti. Inoltre documentano come recuperare gli URL delle immagini dal prodotto/API. ([Open Food Facts][1])
+
+Tradotto:
+
+* è una fonte utile
+* ma devi comunque fare una review legale minima
+* per la birra può coprirti una parte dei prodotti con barcode
+
+### Wikimedia Commons
+
+Wikimedia Commons espone API per recuperare file, categorie e metadati tramite MediaWiki API e `imageinfo`, quindi puoi usarla come fonte strutturata per immagini con metadati/licenze verificabili. ([Wikimedia Commons][2])
+
+Tradotto:
+
+* ottima per immagini con licenza chiara
+* utile più per brand, loghi, foto pubbliche, contenuti editoriali
+* meno completa per tutte le singole birre
+
+---
+
+## 4. Web ingestion controllata
+
+Puoi fare raccolta semi-automatica dal web, ma come **candidate discovery**, non come import automatico cieco.
+
+Per esempio:
+
+* cerchi il nome birra + birrificio
+* raccogli candidate image URLs
+* fai deduplica
+* mostri in pannello admin
+* approvi solo quelle buone
+
+Google aveva una Custom Search JSON API per recuperare risultati web e immagini in JSON, ma oggi è chiusa ai nuovi clienti e gli esistenti devono migrare entro il 1° gennaio 2027. ([Google for Developers][3])
+
+Quindi oggi la logica migliore è:
+
+* usare fonti aperte o partner
+* oppure un tuo crawler molto prudente solo su siti autorizzati
+* non basarti su API di image search che rischiano di non essere più accessibili o sostenibili
+
+---
+
+# Quello che NON farei
+
+## Non copiare in massa da Untappd, Yhop, Google Images, e-commerce a caso
+
+Per 3 motivi:
+
+* rischio legale/licenze
+* associazioni sbagliate
+* immagini duplicate/sporche
+
+Puoi usare il web per **scoprire** candidate sources, ma non come import “alla cieca”.
+
+---
+
+# Architettura MVP concreta per Fermenta Scan
+
+## 1. Database
+
+Ti servono queste tabelle minime.
+
+### `beers`
+
+* `id`
+* `brewery_id`
+* `name`
+* `normalized_name`
+* `style`
+* `abv`
+* `volume_ml`
+* `ean`
+* `country`
+* `is_active`
+
+### `beer_aliases`
+
+Serve tantissimo.
+
+* `id`
+* `beer_id`
+* `alias`
+* `source`
+
+Esempi:
+
+* “Punk IPA”
+* “Punk Ipa”
+* “PUNK IPA”
+* “Punk IPA 330”
+* “Punk IPA lattina”
+
+### `beer_images`
+
+* `id`
+* `beer_id`
+* `source_type` (`brewery`, `user`, `open_data`, `partner`, `manual`)
+* `source_url`
+* `storage_url`
+* `image_kind` (`label`, `bottle`, `can`, `packshot`, `shelf`, `menu`)
+* `status` (`pending`, `verified`, `rejected`)
+* `license_type`
+* `copyright_note`
+* `width`
+* `height`
+* `phash`
+* `quality_score`
+* `verified_by`
+* `created_at`
+
+### `scan_events`
+
+* `id`
+* `user_id`
+* `uploaded_image_url`
+* `ocr_text`
+* `top_candidate_id`
+* `top_candidate_score`
+* `confirmed_beer_id`
+* `was_correct`
+* `device_info`
+* `created_at`
+
+### `image_matches`
+
+* `id`
+* `image_id`
+* `beer_id`
+* `match_method` (`ean`, `ocr`, `visual`, `manual`)
+* `match_score`
+* `is_final`
+
+---
+
+# 2. Pipeline di acquisizione immagini
+
+## A. Upload partner
+
+Flusso:
+
+1. birrificio carica immagine
+2. sistema prova match automatico
+3. propone birra
+4. partner conferma
+5. immagine diventa `verified`
+
+### Matching automatico iniziale
+
+Prima ancora di usare AI pesante:
+
+* match per EAN
+* match per nome file
+* match per testo nel form
+* match fuzzy su nome birra + birrificio
+
+Questo già ti risolve tantissimo.
+
+---
+
+## B. Import da open data
+
+Flusso:
+
+1. prendi record con barcode o nome
+2. cerca candidati da Open Food Facts / Commons
+3. scarica metadati
+4. deduplica con perceptual hash
+5. auto-match se score alto
+6. review umana per casi dubbi
+
+---
+
+## C. Upload utenti
+
+Flusso:
+
+1. utente fotografa
+2. OCR + candidate retrieval
+3. se conferma il prodotto
+4. chiedi “vuoi contribuire questa immagine?”
+5. salvi e mandi in review
+
+Questo ti trasforma ogni scan in un potenziale arricchimento catalogo.
+
+---
+
+# 3. Matching: come associare immagini alle birre
+
+Qui il trucco è usare **più livelli di matching**.
+
+## Livello 1 — deterministic match
+
+Il più affidabile.
+
+* barcode/EAN
+* brewery_id + exact beer name
+* SKU partner
+* URL naming convention
+
+## Livello 2 — text match
+
+Estrai testo dall’immagine.
+
+Cloud Vision distingue `TEXT_DETECTION` e `DOCUMENT_TEXT_DETECTION` per estrarre testo e bounding boxes da immagini; per mobile suggerisce anche ML Kit/on-device per certi use case. ([Google Cloud Documentation][4])
+
+Per te, lato server:
+
+* OCR su etichetta
+* normalizzazione testo
+* fuzzy match su:
+
+  * nome birra
+  * birrificio
+  * stile
+  * ABV
+  * volume
+
+### Esempio score
+
+* birrificio match: 0.45
+* nome birra match: 0.35
+* ABV match: 0.10
+* formato match: 0.10
+
+Se score > soglia, auto-associa.
+
+## Livello 3 — visual match
+
+Quando avrai più immagini:
+
+* embedding della label
+* nearest neighbor search
+* ranking finale con OCR + visual
+
+Ma non partire da qui.
+
+---
+
+# 4. Il vero MVP: “catalog-aware OCR”
+
+Questa è la parte che ti farà sembrare intelligente subito.
+
+Pipeline:
+
+1. utente scatta foto
+2. ritagli etichetta
+3. OCR estrae testo sporco
+4. confronti quel testo solo contro **il tuo catalogo birra**
+5. correggi OCR usando:
+
+   * dizionario birrifici
+   * alias birre
+   * stili
+   * ABV frequenti
+
+### Esempio
+
+OCR legge:
+`BALADIN NAZIONALE 6,5`
+
+Il tuo DB sa già:
+
+* Baladin
+* Nazionale
+* 6.5%
+
+quindi il match diventa fortissimo anche con OCR imperfetto.
+
+Questo vale più di mille fine-tuning iniziali.
+
+---
+
+# 5. Come “auto-migliorarsi” davvero
+
+Non fare self-training in tempo reale.
+
+Fai questo loop:
+
+## Ogni scan salva
+
+* immagine originale
+* crop etichetta
+* OCR raw
+* top 5 candidati
+* scelta finale utente
+* confidence
+* tempo di risposta
+
+## Ogni settimana
+
+crei dataset:
+
+* scans corrette
+* scans corrette dopo correzione utente
+* falsi positivi
+* immagini duplicate
+* birre spesso confuse
+
+## Poi migliori
+
+in ordine:
+
+1. alias del catalogo
+2. soglie confidence
+3. ranker testo
+4. quality filter immagini
+5. modello visuale
+
+Il primo salto non arriverà dal training del modello, ma dal miglioramento del catalogo e delle regole di ranking.
+
+---
+
+# 6. Come caricare immagini “automaticamente e velocemente”
+
+Io farei un sistema in 3 binari.
+
+## Binario 1 — backfill automatico
+
+Per ogni birra nel DB:
+
+* se ha EAN: prova fonte open/partner
+* se ha brewery name + beer name: cerca candidate da fonti approvate
+* se trova 1 match forte: auto-import pending
+* se trova più candidati: review queue
+
+## Binario 2 — partner portal
+
+Per ogni birrificio:
+
+* import CSV / form
+* upload multiplo immagini
+* auto-suggerimento associazione
+* conferma rapida
+
+## Binario 3 — scan-to-catalog
+
+Ogni scan riuscito:
+
+* propone contributo immagine
+* collega la foto al prodotto confermato
+* arricchisce il dataset
+
+Questo trio è molto meglio di aspettare un singolo crawler magico.
+
+---
+
+# 7. Coda di review: pezzo essenziale
+
+Devi avere una dashboard interna con questa vista:
+
+### Queue
+
+* immagine
+* birra proposta
+* punteggio
+* sorgente
+* licenza
+* duplicato sì/no
+* pulsanti:
+
+  * Approva
+  * Cambia birra
+  * Rifiuta
+  * Segna duplicato
+
+### Shortcut utili
+
+* approvazione bulk
+* filtro per birrificio
+* filtro per “score > 0.92”
+* filtro “missing primary image”
+
+Senza queue di review, il catalogo si sporca subito.
+
+---
+
+# 8. Priorità tecnica: cosa costruire prima
+
+## Fase 1 — subito
+
+* `beer_images`
+* upload partner
+* upload utente
+* OCR base
+* fuzzy matching
+* admin review
+* deduplica con perceptual hash
+
+## Fase 2
+
+* import da Open Food Facts / Commons
+* ranker migliori
+* auto-suggestion nel pannello
+
+## Fase 3
+
+* embedding visuali
+* ricerca per similitudine etichetta
+* scan scaffale multiprodotto
+
+---
+
+# 9. Stack pragmatico
+
+## Frontend
+
+* Next.js / React PWA
+* camera via browser
+* crop guidato
+
+## Backend
+
+* FastAPI o Node
+* job queue per OCR/import
+* Postgres
+
+## Storage
+
+* S3 o Cloudflare R2
+
+## Processing
+
+* OpenCV per crop/deskew
+* OCR server-side
+* phash/perceptual hash
+* embeddings in seconda fase
+
+## Search
+
+* Postgres trigram + full text per MVP
+* vector DB solo dopo
+
+---
+
+# 10. La verità pratica: dove hai più ROI adesso
+
+Con il tuo contesto, io non investirei subito in “allenare l’AI”.
+
+Investirei in questo ordine:
+
+### 1.
+
+**portale di caricamento immagini per birrifici/locali**
+
+### 2.
+
+**OCR + matching sul tuo catalogo**
+
+### 3.
+
+**review queue interna**
+
+### 4.
+
+**raccolta immagini dagli scan utenti**
+
+### 5.
+
+**solo dopo: visual model serio**
+
+Perché oggi il tuo vantaggio non sarà “abbiamo il miglior OCR”.
+Sarà:
+
+**“abbiamo il miglior catalogo birra italiano con immagini affidabili e match puliti.”**
+
+---
+
+# Piano ultra concreto di 30 giorni
+
+## Settimana 1
+
+* crea tabella `beer_images`
+* crea upload admin e partner
+* definisci 3 tipi immagini standard
+
+## Settimana 2
+
+* collega OCR
+* implementa fuzzy match su nome/birrificio/ABV
+* salva confidence
+
+## Settimana 3
+
+* dashboard review
+* deduplica immagini
+* primary image per birra
+
+## Settimana 4
+
+* flusso “contribuisci foto dopo scan”
+* import da una fonte open piccola e pulita
+* benchmark accuracy
+
+---
+
+# In sintesi
+
+Il sistema giusto per te è:
+
+**database testuale forte + pipeline immagini semi-automatica + review + feedback scan**
+
+non:
+
+**modello magico che si auto-addestra senza immagini**
+
+Per te il salto vero arriva se trasformi ogni birra in:
+
+* record testuale pulito
+* 1 immagine primaria verificata
+* 2-3 immagini secondarie
+* alias forti
+* storico scan/correzioni
+
+Se vuoi, nel prossimo messaggio ti scrivo proprio:
+**schema SQL iniziale + endpoint API MVP + logica di matching score**.
+
+[1]: https://openfoodfacts.github.io/openfoodfacts-server/api/ "Introduction to Open Food Facts API documentation - Product Opener (Open Food Facts Server)"
+[2]: https://commons.wikimedia.org/wiki/Commons%3AAPI/MediaWiki "Commons:API/MediaWiki - Wikimedia Commons"
+[3]: https://developers.google.com/custom-search/v1/overview "Custom Search JSON API  |  Google for Developers"
+[4]: https://docs.cloud.google.com/vision/docs/ocr "Detect and extract text from images  |  Cloud Vision API  |  Google Cloud Documentation"
