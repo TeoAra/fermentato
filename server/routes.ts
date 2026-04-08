@@ -34,6 +34,7 @@ import { initVapid, sendPushToUser, sendPushToUserImmediate, sendPushToAdmins } 
 import { testSmtpConnection } from "./email";
 import { translateToItalian, looksItalian } from "./translate";
 import { generateEmbedding, pgVector, beerEmbedText } from "./embeddings";
+import { findAndUpdateBeerImage } from "./beer-image-finder";
 
 const VAPID_PUBLIC_KEY = process.env.VAPID_PUBLIC_KEY || '';
 
@@ -6420,6 +6421,35 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Manually trigger web image search for a beer (admin or beer owner)
+  // POST /api/beers/:id/find-web-image   body: { force?: boolean }
+  app.post("/api/beers/:id/find-web-image", isAuthenticated, async (req: any, res) => {
+    try {
+      const beerId = parseInt(req.params.id);
+      const force = req.body?.force === true;
+      if (isNaN(beerId)) return res.status(400).json({ error: "invalid id" });
+
+      const beerInfo = await pool.query(`
+        SELECT b.name, b.image_url, br.name AS brewery_name, br.website_url
+        FROM beers b
+        LEFT JOIN breweries br ON br.id = b.brewery_id
+        WHERE b.id = $1
+      `, [beerId]);
+      const info = beerInfo.rows[0];
+      if (!info) return res.status(404).json({ error: "beer not found" });
+      if (info.image_url && !force) return res.json({ status: "skipped", reason: "already has image" });
+
+      // Acknowledge immediately; search runs in background
+      res.json({ status: "searching", beerName: info.name });
+
+      setImmediate(() =>
+        findAndUpdateBeerImage(beerId, info.name, info.brewery_name ?? "", info.website_url, force)
+      );
+    } catch (e: any) {
+      res.status(500).json({ error: e.message });
+    }
+  });
+
   // Save user feedback for a scan log (chosen result + correctness)
   app.patch("/api/scan-logs/:id/feedback", isAuthenticated, async (req: any, res) => {
     try {
@@ -6489,6 +6519,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
               });
               console.log(`[clip] indexed scan photo for beer ${targetBeer}`);
             } catch { /* CLIP not running — silent */ }
+          });
+        }
+      }
+
+      // ── Find best web image for the confirmed beer (if it has none) ──────────
+      // Searches DuckDuckGo images + brewery website og:image, picks best with
+      // Gemini Vision, uploads to Cloudinary, and updates beers.image_url.
+      if (wasCorrect !== false) {
+        const targetBeer = chosenBeerId || correctedBeerId;
+        if (targetBeer) {
+          setImmediate(async () => {
+            try {
+              const beerInfo = await pool.query(`
+                SELECT b.name, b.image_url, br.name AS brewery_name, br.website_url
+                FROM beers b
+                LEFT JOIN breweries br ON br.id = b.brewery_id
+                WHERE b.id = $1
+              `, [targetBeer]);
+              const info = beerInfo.rows[0];
+              if (!info || info.image_url) return; // already has image — skip
+              await findAndUpdateBeerImage(targetBeer, info.name, info.brewery_name ?? "", info.website_url);
+            } catch { /* silent */ }
           });
         }
       }
