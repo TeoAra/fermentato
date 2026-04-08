@@ -88,14 +88,14 @@ function getAllPrices(tap: TapListItem): string[] {
 
 export default function TapList({ tapList, pub }: TapListProps) {
   const { isAuthenticated } = useAuth();
-  const [checkinBeer, setCheckinBeer] = useState<TapListItem["beer"] | null>(null);
+  const [checkinTap, setCheckinTap] = useState<TapListItem | null>(null);
   const sorted = useMemo(() => {
     if (!tapList) return [];
+    const ORDER: Record<string, number> = { spina: 0, pompa: 1, botte: 2 };
     return [...tapList].sort((a, b) => {
-      const aIsSpina = !a.tapType || a.tapType === "spina";
-      const bIsSpina = !b.tapType || b.tapType === "spina";
-      if (aIsSpina && !bIsSpina) return -1;
-      if (!aIsSpina && bIsSpina) return 1;
+      const aOrd = ORDER[a.tapType ?? "spina"] ?? 0;
+      const bOrd = ORDER[b.tapType ?? "spina"] ?? 0;
+      if (aOrd !== bOrd) return aOrd - bOrd;
       return (a.tapNumber ?? 999) - (b.tapNumber ?? 999);
     });
   }, [tapList]);
@@ -118,6 +118,7 @@ export default function TapList({ tapList, pub }: TapListProps) {
 
   const spinaItems = sorted.filter(t => !t.tapType || t.tapType === "spina");
   const pompaItems = sorted.filter(t => t.tapType === "pompa");
+  const botteItems = sorted.filter(t => t.tapType === "botte");
 
   const renderRow = (tap: TapListItem, index: number, arr: TapListItem[]) => {
     const styleColor = getBeerStyleColor(tap.beer.style);
@@ -189,7 +190,7 @@ export default function TapList({ tapList, pub }: TapListProps) {
             )}
             {isAuthenticated && (
               <button
-                onClick={(e) => { e.preventDefault(); e.stopPropagation(); setCheckinBeer(tap.beer); }}
+                onClick={(e) => { e.preventDefault(); e.stopPropagation(); setCheckinTap(tap); }}
                 className="w-8 h-8 rounded-full flex items-center justify-center bg-stone-100 dark:bg-stone-800 text-stone-500 dark:text-stone-400 hover:text-primary hover:bg-stone-200 dark:hover:bg-stone-700 active:scale-95 transition-all flex-shrink-0"
                 aria-label="Check-in"
                 title="Sto bevendo questa"
@@ -221,26 +222,29 @@ export default function TapList({ tapList, pub }: TapListProps) {
     </div>
   );
 
-  const modal = checkinBeer ? (
+  const modal = checkinTap ? (
     <Suspense fallback={null}>
       <CheckinModal
-        open={!!checkinBeer}
-        onClose={() => setCheckinBeer(null)}
+        open={!!checkinTap}
+        onClose={() => setCheckinTap(null)}
         beer={{
-          id: checkinBeer.id,
-          name: checkinBeer.name,
-          style: checkinBeer.style,
-          breweryName: checkinBeer.brewery?.name,
+          id: checkinTap.beer.id,
+          name: checkinTap.beer.name,
+          style: checkinTap.beer.style,
+          breweryName: checkinTap.beer.brewery?.name,
         }}
         pub={pub ?? null}
+        tapType={checkinTap.tapType ?? "spina"}
       />
     </Suspense>
   ) : null;
 
-  if (pompaItems.length === 0) {
+  const hasMultipleSections = (spinaItems.length > 0 ? 1 : 0) + (pompaItems.length > 0 ? 1 : 0) + (botteItems.length > 0 ? 1 : 0) > 1;
+
+  if (!hasMultipleSections) {
     return (
       <>
-        <Section items={spinaItems} />
+        <Section items={spinaItems.length ? spinaItems : pompaItems.length ? pompaItems : botteItems} />
         {modal}
       </>
     );
@@ -254,6 +258,9 @@ export default function TapList({ tapList, pub }: TapListProps) {
         )}
         {pompaItems.length > 0 && (
           <Section items={pompaItems} label="In Pompa" accent="text-violet-600 dark:text-violet-400" />
+        )}
+        {botteItems.length > 0 && (
+          <Section items={botteItems} label="Alla Botte" accent="text-amber-700 dark:text-amber-400" />
         )}
       </div>
       {modal}

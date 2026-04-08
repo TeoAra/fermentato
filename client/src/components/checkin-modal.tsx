@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
@@ -6,64 +6,143 @@ import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
-import { Beer, MapPin, Star, CheckCircle2, Search, X, ChevronRight } from "lucide-react";
+import { Beer, MapPin, CheckCircle2, Search, X, ChevronRight } from "lucide-react";
 
-interface PubResult {
-  id: number;
-  name: string;
-  city?: string | null;
-  address?: string | null;
+// ─── Rating labels (same scale as BeerTastingForm) ─────────────────────────
+const RATING_LABELS: Record<number, string> = {
+  0.5: "Pessima", 1.0: "Scarsa", 1.5: "Mediocre", 2.0: "Discreta",
+  2.5: "Nella media", 3.0: "Buona", 3.5: "Molto buona",
+  4.0: "Ottima", 4.5: "Eccellente", 5.0: "Perfetta!",
+};
+const RATING_STEPS = [0.5, 1.0, 1.5, 2.0, 2.5, 3.0, 3.5, 4.0, 4.5, 5.0];
+
+function RatingSlider({ value, onChange }: { value: number; onChange: (v: number) => void }) {
+  const trackRef = useRef<HTMLDivElement>(null);
+
+  const getValueFromX = useCallback((clientX: number) => {
+    if (!trackRef.current) return value;
+    const rect = trackRef.current.getBoundingClientRect();
+    const pct = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
+    return RATING_STEPS[Math.round(pct * (RATING_STEPS.length - 1))];
+  }, [value]);
+
+  const handlePointerDown = useCallback((e: React.PointerEvent) => {
+    (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
+    onChange(getValueFromX(e.clientX));
+  }, [getValueFromX, onChange]);
+
+  const handlePointerMove = useCallback((e: React.PointerEvent) => {
+    if (e.buttons === 0) return;
+    onChange(getValueFromX(e.clientX));
+  }, [getValueFromX, onChange]);
+
+  const activeIdx = RATING_STEPS.indexOf(value);
+  const fillPct = (activeIdx / (RATING_STEPS.length - 1)) * 100;
+
+  return (
+    <div className="space-y-2">
+      <div className="flex items-baseline justify-between">
+        <div className="flex items-baseline gap-1">
+          <span className="text-3xl font-black text-primary tabular-nums leading-none">{value.toFixed(1)}</span>
+          <span className="text-xs font-semibold text-stone-400">/5</span>
+        </div>
+        <span className="text-sm font-bold text-stone-700 dark:text-stone-200">{RATING_LABELS[value]}</span>
+      </div>
+
+      <div
+        ref={trackRef}
+        className="relative h-10 flex items-center cursor-pointer select-none touch-none"
+        onPointerDown={handlePointerDown}
+        onPointerMove={handlePointerMove}
+      >
+        <div className="absolute inset-x-0 h-2 bg-stone-100 dark:bg-stone-800 rounded-full" />
+        <div className="absolute left-0 h-2 bg-primary rounded-full transition-all duration-100" style={{ width: `${fillPct}%` }} />
+        {RATING_STEPS.map((step, i) => {
+          const isActive = i <= activeIdx;
+          const isCurrent = i === activeIdx;
+          return (
+            <div key={step} className="absolute flex items-center justify-center"
+              style={{ left: `${(i / (RATING_STEPS.length - 1)) * 100}%`, transform: "translateX(-50%)" }}>
+              <div className={`rounded-full border-2 transition-all duration-100 ${
+                isCurrent ? "w-5 h-5 bg-primary border-primary shadow-lg shadow-primary/40"
+                  : isActive ? "w-3 h-3 bg-primary border-primary"
+                  : "w-3 h-3 bg-white dark:bg-stone-700 border-stone-200 dark:border-stone-600"
+              }`} />
+            </div>
+          );
+        })}
+      </div>
+      <div className="flex justify-between px-0.5">
+        <span className="text-[10px] text-stone-400 font-medium">0.5</span>
+        <span className="text-[10px] text-stone-400 font-medium">5.0</span>
+      </div>
+    </div>
+  );
 }
 
+// ─── Format options ──────────────────────────────────────────────────────────
+const FORMAT_OPTIONS = [
+  { label: "Alla spina", icon: "🍺", tapTypes: ["spina"] },
+  { label: "Pompa",      icon: "🔧", tapTypes: ["pompa"] },
+  { label: "Botte",      icon: "🛢️",  tapTypes: ["botte"] },
+  { label: "Bottiglia",  icon: "🍾", tapTypes: [] },
+  { label: "Lattina",    icon: "🥫", tapTypes: [] },
+  { label: "Growler",    icon: "🫙", tapTypes: [] },
+];
+
+function tapTypeToFormat(tapType?: string | null): string {
+  if (!tapType) return "";
+  const match = FORMAT_OPTIONS.find(f => f.tapTypes.includes(tapType));
+  return match?.label ?? "";
+}
+
+// ─── Pub search ──────────────────────────────────────────────────────────────
+interface PubResult { id: number; name: string; city?: string | null; address?: string | null; }
+
+// ─── Props ───────────────────────────────────────────────────────────────────
 interface CheckinModalProps {
   open: boolean;
   onClose: () => void;
-  beer: {
-    id: number;
-    name: string;
-    style?: string | null;
-    breweryName?: string | null;
-  };
-  pub?: {
-    id: number;
-    name: string;
-    city?: string | null;
-  } | null;
+  beer: { id: number; name: string; style?: string | null; breweryName?: string | null; };
+  pub?: { id: number; name: string; city?: string | null; } | null;
+  tapType?: string | null;
 }
 
-export default function CheckinModal({ open, onClose, beer, pub: initialPub }: CheckinModalProps) {
-  const [rating, setRating]       = useState<number>(0);
-  const [hovered, setHovered]     = useState<number>(0);
-  const [note, setNote]           = useState("");
-  const [done, setDone]           = useState(false);
+export default function CheckinModal({ open, onClose, beer, pub: initialPub, tapType }: CheckinModalProps) {
+  const [rating, setRating]     = useState<number>(3.0);
+  const [note, setNote]         = useState("");
+  const [format, setFormat]     = useState(() => tapTypeToFormat(tapType));
+  const [done, setDone]         = useState(false);
 
-  // Pub state
-  const [selectedPub, setSelectedPub]       = useState<PubResult | null>(initialPub ?? null);
-  const [pubSearchOpen, setPubSearchOpen]   = useState(false);
-  const [pubQuery, setPubQuery]             = useState("");
-  const [pubResults, setPubResults]         = useState<PubResult[]>([]);
-  const [pubSearching, setPubSearching]     = useState(false);
-  const debounceRef                         = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const searchInputRef                      = useRef<HTMLInputElement>(null);
+  // Pub search state
+  const [selectedPub, setSelectedPub]     = useState<PubResult | null>(initialPub ?? null);
+  const [pubSearchOpen, setPubSearchOpen] = useState(false);
+  const [pubQuery, setPubQuery]           = useState("");
+  const [pubResults, setPubResults]       = useState<PubResult[]>([]);
+  const [pubSearching, setPubSearching]   = useState(false);
+  const debounceRef                       = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const searchInputRef                    = useRef<HTMLInputElement>(null);
 
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  // Sync pre-filled pub when modal opens
+  // Reset when modal opens
   useEffect(() => {
     if (open) {
+      setRating(3.0);
+      setNote("");
+      setFormat(tapTypeToFormat(tapType));
       setSelectedPub(initialPub ?? null);
       setPubSearchOpen(false);
       setPubQuery("");
       setPubResults([]);
+      setDone(false);
     }
-  }, [open, initialPub]);
+  }, [open, initialPub, tapType]);
 
-  // Focus search input when opened
+  // Focus search on open
   useEffect(() => {
-    if (pubSearchOpen) {
-      setTimeout(() => searchInputRef.current?.focus(), 80);
-    }
+    if (pubSearchOpen) setTimeout(() => searchInputRef.current?.focus(), 80);
   }, [pubSearchOpen]);
 
   // Debounced pub search
@@ -75,9 +154,7 @@ export default function CheckinModal({ open, onClose, beer, pub: initialPub }: C
       try {
         const res = await fetch(`/api/pubs/search?q=${encodeURIComponent(pubQuery)}`);
         if (res.ok) setPubResults(await res.json());
-      } finally {
-        setPubSearching(false);
-      }
+      } finally { setPubSearching(false); }
     }, 280);
     return () => { if (debounceRef.current) clearTimeout(debounceRef.current); };
   }, [pubQuery]);
@@ -88,19 +165,17 @@ export default function CheckinModal({ open, onClose, beer, pub: initialPub }: C
         method: "POST",
         body: JSON.stringify({
           beerId: beer.id,
-          rating: rating > 0 ? rating : null,
+          rating,
           personalNotes: note.trim() || null,
           pubId: selectedPub?.id ?? null,
+          format: format || null,
         }),
       }),
     onSuccess: () => {
       setDone(true);
       queryClient.invalidateQueries({ queryKey: ["/api/user/beer-tastings"] });
       queryClient.invalidateQueries({ queryKey: ["/api/user/feed"] });
-      setTimeout(() => {
-        setDone(false); setRating(0); setNote("");
-        onClose();
-      }, 1600);
+      setTimeout(() => { setDone(false); onClose(); }, 1600);
     },
     onError: () => {
       toast({ title: "Errore check-in", description: "Riprova tra poco", variant: "destructive" });
@@ -109,20 +184,11 @@ export default function CheckinModal({ open, onClose, beer, pub: initialPub }: C
 
   const handleClose = () => {
     if (checkinMutation.isPending) return;
-    setDone(false); setRating(0); setNote("");
-    setPubSearchOpen(false); setPubQuery(""); setPubResults([]);
-    onClose();
+    setDone(false); onClose();
   };
 
   const selectPub = (p: PubResult) => {
     setSelectedPub(p);
-    setPubSearchOpen(false);
-    setPubQuery("");
-    setPubResults([]);
-  };
-
-  const removePub = () => {
-    setSelectedPub(null);
     setPubSearchOpen(false);
     setPubQuery("");
     setPubResults([]);
@@ -145,7 +211,7 @@ export default function CheckinModal({ open, onClose, beer, pub: initialPub }: C
             <p className="text-sm text-stone-400">I tuoi follower lo vedranno nel feed</p>
           </div>
         ) : (
-          <div className="space-y-4">
+          <div className="space-y-5">
 
             {/* Beer info */}
             <div className="bg-stone-50 dark:bg-stone-800/50 rounded-2xl px-4 py-3">
@@ -155,85 +221,92 @@ export default function CheckinModal({ open, onClose, beer, pub: initialPub }: C
               </p>
             </div>
 
-            {/* ── Dove stai bevendo? ── */}
+            {/* Rating slider */}
+            <div>
+              <p className="text-xs font-semibold text-stone-500 dark:text-stone-400 uppercase tracking-wide mb-3">
+                Il tuo voto
+              </p>
+              <RatingSlider value={rating} onChange={setRating} />
+            </div>
+
+            {/* Format */}
+            <div>
+              <p className="text-xs font-semibold text-stone-500 dark:text-stone-400 uppercase tracking-wide mb-2">
+                Come stai bevendo?
+              </p>
+              <div className="flex gap-2 flex-wrap">
+                {FORMAT_OPTIONS.map((f) => (
+                  <button
+                    key={f.label}
+                    onClick={() => setFormat(format === f.label ? "" : f.label)}
+                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold border transition-colors ${
+                      format === f.label
+                        ? "bg-primary text-white border-primary"
+                        : "bg-stone-50 dark:bg-stone-800 text-stone-500 dark:text-stone-400 border-stone-200 dark:border-stone-700 hover:border-stone-300"
+                    }`}
+                  >
+                    <span>{f.icon}</span>
+                    {f.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Pub */}
             <div>
               <p className="text-xs font-semibold text-stone-500 dark:text-stone-400 uppercase tracking-wide mb-2">
                 Dove stai bevendo?
               </p>
 
-              {/* Selected pub pill */}
               {selectedPub && !pubSearchOpen && (
                 <div className="flex items-center gap-2 bg-primary/8 dark:bg-primary/15 border border-primary/20 rounded-xl px-3 py-2.5">
                   <MapPin className="w-4 h-4 text-primary flex-shrink-0" />
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-semibold text-stone-800 dark:text-stone-100 truncate">{selectedPub.name}</p>
-                    {selectedPub.city && (
-                      <p className="text-xs text-stone-400 truncate">{selectedPub.city}</p>
-                    )}
+                    {selectedPub.city && <p className="text-xs text-stone-400 truncate">{selectedPub.city}</p>}
                   </div>
-                  <button
-                    onClick={removePub}
-                    className="p-1 rounded-full hover:bg-stone-200/60 dark:hover:bg-stone-700/60 transition-colors"
-                    aria-label="Rimuovi locale"
-                  >
+                  <button onClick={() => setSelectedPub(null)}
+                    className="p-1 rounded-full hover:bg-stone-200/60 dark:hover:bg-stone-700/60 transition-colors">
                     <X className="w-3.5 h-3.5 text-stone-400" />
                   </button>
                 </div>
               )}
 
-              {/* Search toggle button */}
               {!selectedPub && !pubSearchOpen && (
-                <button
-                  onClick={() => setPubSearchOpen(true)}
-                  className="w-full flex items-center gap-3 rounded-xl border border-stone-200 dark:border-stone-700 px-3 py-2.5 text-sm text-stone-400 hover:border-stone-300 dark:hover:border-stone-600 transition-colors"
-                >
+                <button onClick={() => setPubSearchOpen(true)}
+                  className="w-full flex items-center gap-3 rounded-xl border border-stone-200 dark:border-stone-700 px-3 py-2.5 text-sm text-stone-400 hover:border-stone-300 dark:hover:border-stone-600 transition-colors">
                   <Search className="w-4 h-4 flex-shrink-0" />
                   <span className="flex-1 text-left">Cerca un locale…</span>
                   <ChevronRight className="w-4 h-4 opacity-40" />
                 </button>
               )}
 
-              {/* Change button when pub is pre-selected */}
               {selectedPub && !pubSearchOpen && (
-                <button
-                  onClick={() => setPubSearchOpen(true)}
-                  className="mt-1.5 text-xs text-stone-400 hover:text-stone-600 dark:hover:text-stone-300 transition-colors"
-                >
+                <button onClick={() => setPubSearchOpen(true)}
+                  className="mt-1.5 text-xs text-stone-400 hover:text-stone-600 dark:hover:text-stone-300 transition-colors">
                   Cambia locale
                 </button>
               )}
 
-              {/* Inline search */}
               {pubSearchOpen && (
                 <div className="rounded-2xl border border-stone-200 dark:border-stone-700 overflow-hidden">
                   <div className="flex items-center gap-2 px-3 py-2.5 border-b border-stone-100 dark:border-stone-700">
                     <Search className="w-4 h-4 text-stone-400 flex-shrink-0" />
-                    <Input
-                      ref={searchInputRef}
-                      value={pubQuery}
-                      onChange={(e) => setPubQuery(e.target.value)}
+                    <Input ref={searchInputRef} value={pubQuery} onChange={(e) => setPubQuery(e.target.value)}
                       placeholder="Nome del locale, città…"
-                      className="border-0 bg-transparent p-0 h-auto text-sm focus-visible:ring-0 focus-visible:ring-offset-0 shadow-none"
-                    />
+                      className="border-0 bg-transparent p-0 h-auto text-sm focus-visible:ring-0 focus-visible:ring-offset-0 shadow-none" />
                     <button onClick={() => { setPubSearchOpen(false); setPubQuery(""); setPubResults([]); }}>
                       <X className="w-4 h-4 text-stone-400" />
                     </button>
                   </div>
-
-                  {/* Results */}
-                  <div className="max-h-44 overflow-y-auto">
-                    {pubSearching && (
-                      <p className="px-4 py-3 text-xs text-stone-400">Ricerca…</p>
-                    )}
+                  <div className="max-h-40 overflow-y-auto">
+                    {pubSearching && <p className="px-4 py-3 text-xs text-stone-400">Ricerca…</p>}
                     {!pubSearching && pubQuery && pubResults.length === 0 && (
                       <p className="px-4 py-3 text-xs text-stone-400">Nessun locale trovato</p>
                     )}
                     {pubResults.map((p) => (
-                      <button
-                        key={p.id}
-                        onClick={() => selectPub(p)}
-                        className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-stone-50 dark:hover:bg-stone-800 transition-colors text-left"
-                      >
+                      <button key={p.id} onClick={() => selectPub(p)}
+                        className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-stone-50 dark:hover:bg-stone-800 transition-colors text-left">
                         <MapPin className="w-3.5 h-3.5 text-stone-400 flex-shrink-0 mt-0.5" />
                         <div className="min-w-0">
                           <p className="text-sm font-medium text-stone-800 dark:text-stone-100 truncate">{p.name}</p>
@@ -243,38 +316,10 @@ export default function CheckinModal({ open, onClose, beer, pub: initialPub }: C
                         </div>
                       </button>
                     ))}
-                    {!pubQuery && (
-                      <p className="px-4 py-3 text-xs text-stone-400">Digita per cercare un locale…</p>
-                    )}
+                    {!pubQuery && <p className="px-4 py-3 text-xs text-stone-400">Digita per cercare un locale…</p>}
                   </div>
                 </div>
               )}
-            </div>
-
-            {/* Star rating */}
-            <div>
-              <p className="text-xs font-semibold text-stone-500 dark:text-stone-400 uppercase tracking-wide mb-2">
-                Voto (opzionale)
-              </p>
-              <div className="flex gap-1.5">
-                {[1, 2, 3, 4, 5].map((s) => (
-                  <button
-                    key={s}
-                    onMouseEnter={() => setHovered(s)}
-                    onMouseLeave={() => setHovered(0)}
-                    onClick={() => setRating(s === rating ? 0 : s)}
-                    className="focus:outline-none"
-                    aria-label={`${s} stelle`}
-                  >
-                    <Star
-                      className="w-9 h-9 transition-colors"
-                      fill={(hovered || rating) >= s ? "#f77104" : "none"}
-                      stroke={(hovered || rating) >= s ? "#f77104" : "#d4ccc5"}
-                      strokeWidth={1.5}
-                    />
-                  </button>
-                ))}
-              </div>
             </div>
 
             {/* Note */}
@@ -282,22 +327,14 @@ export default function CheckinModal({ open, onClose, beer, pub: initialPub }: C
               <p className="text-xs font-semibold text-stone-500 dark:text-stone-400 uppercase tracking-wide mb-2">
                 Note (opzionale)
               </p>
-              <Textarea
-                value={note}
-                onChange={(e) => setNote(e.target.value.slice(0, 140))}
-                placeholder="Cosa ne pensi?"
-                rows={2}
-                className="resize-none rounded-xl text-sm"
-              />
+              <Textarea value={note} onChange={(e) => setNote(e.target.value.slice(0, 140))}
+                placeholder="Cosa ne pensi?" rows={2} className="resize-none rounded-xl text-sm" />
               <p className="text-right text-xs text-stone-300 mt-1">{note.length}/140</p>
             </div>
 
             {/* CTA */}
-            <Button
-              className="w-full rounded-2xl h-12 text-base font-semibold"
-              onClick={() => checkinMutation.mutate()}
-              disabled={checkinMutation.isPending}
-            >
+            <Button className="w-full rounded-2xl h-12 text-base font-semibold"
+              onClick={() => checkinMutation.mutate()} disabled={checkinMutation.isPending}>
               {checkinMutation.isPending ? "Registro…" : "🍺 Check-in!"}
             </Button>
           </div>

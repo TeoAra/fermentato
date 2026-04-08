@@ -263,7 +263,7 @@ export default function BeerTastingForm({
         <div>
           <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2">Come?</p>
           <div className="flex gap-2 flex-wrap">
-            {["Alla spina", "Bottiglia", "Lattina", "Growler"].map((f) => (
+            {["Alla spina", "Pompa", "Botte", "Bottiglia", "Lattina", "Growler"].map((f) => (
               <button
                 key={f}
                 type="button"
