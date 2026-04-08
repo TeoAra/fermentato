@@ -69,7 +69,7 @@ async function writeTempImage(dataUrl: string): Promise<{ path: string; ext: str
 // Uses gemini-2.0-flash (stable, strong vision). Returns structured JSON so
 // we get: beerName, breweryName AND the full raw text — giving fuzzy search
 // more material to work with even when label interpretation is uncertain.
-const GEMINI_MODEL = "gemini-2.0-flash";
+const GEMINI_MODEL = "gemini-2.5-flash";
 const GEMINI_API_URL = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent`;
 
 const GEMINI_PROMPT = `You are analyzing an Italian craft beer label, can or bottle.

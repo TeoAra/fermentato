@@ -15,7 +15,7 @@ import { v2 as cloudinary } from "cloudinary";
 import { pool } from "./db";
 
 const GEMINI_API_KEY = () => process.env.GEMINI_API_KEY ?? "";
-const GEMINI_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent";
+const GEMINI_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent";
 
 // ─── 1. Google Search via Gemini grounding ────────────────────────────────────
 // Uses the google_search tool included in Gemini — no extra API key needed.

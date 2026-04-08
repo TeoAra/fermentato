@@ -1,8 +1,9 @@
-// Gemini text-embedding-004 — 768-dim vectors, free within API quota
+// Gemini gemini-embedding-001 — 768-dim vectors (via outputDimensionality), free within API quota
 // Used for semantic scan memory and (optionally) beer name search.
+// Note: native dim is 3072; we request 768 for compatibility with existing schema.
 
 const GEMINI_EMBED_URL =
-  "https://generativelanguage.googleapis.com/v1beta/models/text-embedding-004:embedContent";
+  "https://generativelanguage.googleapis.com/v1beta/models/gemini-embedding-001:embedContent";
 
 export async function generateEmbedding(text: string): Promise<number[] | null> {
   const apiKey = process.env.GEMINI_API_KEY;
@@ -12,7 +13,7 @@ export async function generateEmbedding(text: string): Promise<number[] | null> 
     const res = await fetch(`${GEMINI_EMBED_URL}?key=${apiKey}`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ content: { parts: [{ text: text.trim() }] } }),
+      body: JSON.stringify({ content: { parts: [{ text: text.trim() }] }, outputDimensionality: 768 }),
       signal: AbortSignal.timeout(8000),
     });
     if (!res.ok) return null;

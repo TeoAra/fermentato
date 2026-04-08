@@ -58,7 +58,7 @@ const DELAY_MS    = parseInt(arg("delay") || "500") || 500;
 
 // ── Inline embedding helpers ──────────────────────────────────────────────────
 const GEMINI_EMBED_URL =
-  "https://generativelanguage.googleapis.com/v1beta/models/text-embedding-004:embedContent";
+  "https://generativelanguage.googleapis.com/v1beta/models/gemini-embedding-001:embedContent";
 
 async function generateEmbedding(text: string): Promise<number[] | null> {
   const apiKey = process.env.GEMINI_API_KEY;
@@ -67,7 +67,7 @@ async function generateEmbedding(text: string): Promise<number[] | null> {
     const res = await fetch(`${GEMINI_EMBED_URL}?key=${apiKey}`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ content: { parts: [{ text: text.trim() }] } }),
+      body: JSON.stringify({ content: { parts: [{ text: text.trim() }] }, outputDimensionality: 768 }),
       signal: AbortSignal.timeout(10000),
     });
     if (!res.ok) {
@@ -199,7 +199,7 @@ async function main() {
 
     // Stop early if too many consecutive errors (bad API key)
     if (errors > 0 && stored === 0 && done >= Math.min(BATCH, 5)) {
-      console.error("\n\n❌  All embedding calls failing — check GEMINI_API_KEY is valid and has access to text-embedding-004.");
+      console.error("\n\n❌  All embedding calls failing — check GEMINI_API_KEY is valid and has access to gemini-embedding-001.");
       break;
     }
   }
