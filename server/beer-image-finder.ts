@@ -25,14 +25,14 @@ async function googleViaGeminiGrounding(beerName: string, breweryName: string): 
   const key = GEMINI_API_KEY();
   if (!key) return [];
 
-  const query = `${beerName} ${breweryName} birra artigianale bottiglia foto prodotto`;
+  const query = `${beerName} ${breweryName} birra artigianale medaglione etichetta`;
 
   try {
     const res = await fetch(`${GEMINI_URL}?key=${key}`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        contents: [{ parts: [{ text: `Cerca immagini del prodotto: ${query}` }] }],
+        contents: [{ parts: [{ text: `Cerca immagini del medaglione o etichetta rotonda della birra: ${query}` }] }],
         tools: [{ google_search: {} }],
         generationConfig: { temperature: 0, maxOutputTokens: 64 },
       }),
@@ -191,7 +191,11 @@ async function geminiPickBestImage(beerName: string, breweryName: string, candid
 
 Beer: "${beerName}" by "${breweryName}"
 
-Analyze these ${candidates.length} image URLs and pick the one most likely to be a clear, high-quality photo of the beer bottle, can, or label. Prefer official product photos over blog/social media photos. Avoid logos, general photos or photos with people.
+Analyze these ${candidates.length} image URLs and pick the best one following this priority order:
+1. BEST: Round tap badge / medallion (medaglione) — the circular label used for draft beer taps
+2. GOOD: Official label artwork (etichetta) — the rectangular or shaped label from a bottle/can
+3. OK: Clear bottle or can product photo with visible label
+4. AVOID: Logos without label art, generic beer photos, photos with people, social media posts
 
 Return ONLY the 0-based index of the best image, or -1 if none are suitable. No explanation.
 
@@ -299,7 +303,7 @@ export async function findAndUpdateBeerImage(
     const [googlePages, breweryOg, ddgResults] = await Promise.all([
       googleViaGeminiGrounding(beerName, breweryName),
       fetchBreweryOgImage(breweryWebsite ?? "", beerName),
-      ddgSearchImages(`${beerName} ${breweryName} birra artigianale`, 10),
+      ddgSearchImages(`${beerName} ${breweryName} birra medaglione etichetta rotonda`, 10),
     ]);
 
     // Extract og:images from Google result pages (best quality source)
