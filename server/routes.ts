@@ -5942,31 +5942,74 @@ export async function registerRoutes(app: Express): Promise<Server> {
         .slice(0, 3);
       const patterns = uniqueWords.map(w => `%${w}%`);
 
-      // OR-based beer search using LIKE ANY(array) — single pass, no correlated subquery
-      const beerResult = await pool.query(`
-        SELECT
-          b.id, b.name, b.style, b.abv, b.image_url as "imageUrl",
-          b.brewery_id as "breweryId", br.name as "breweryName", br.logo_url as "breweryLogoUrl"
-        FROM beers b
-        LEFT JOIN breweries br ON b.brewery_id = br.id
-        WHERE unaccent(lower(b.name))           LIKE ANY($1::text[])
-           OR unaccent(lower(COALESCE(br.name,''))) LIKE ANY($1::text[])
-           OR lower(COALESCE(b.style,''))        LIKE ANY($1::text[])
-        ORDER BY length(b.name) ASC, b.name ASC
-        LIMIT 15
-      `, [patterns]);
+      // ── Split-query strategy (avoids expensive JOIN during filter) ─────────
+      // Benchmark showed: JOIN on 395K beers × 50K breweries = 3+ sec seq scan.
+      // Instead: 3 separate index-friendly queries, merge in JS.
+      //
+      // Pattern: ILIKE on raw columns → uses existing gin_trgm_ops indexes
+      // (idx_beers_name_trgm, idx_beers_style_trgm, idx_breweries_name_trgm)
+      // without any function wrapper that would prevent index use.
 
-      // OR-based brewery search
+      const nameLikeConds = (alias: string, col: string) =>
+        patterns.map((_, i) => `${alias}.${col} ILIKE $${i + 1}`).join(" OR ");
+
+      // Query 1: match beers by name or style (each uses trgm index separately)
+      const beersByNameQ = await pool.query(`
+        SELECT b.id, b.name, b.style, b.abv, b.image_url as "imageUrl", b.brewery_id as "breweryId"
+        FROM beers b
+        WHERE (${nameLikeConds("b", "name")})
+           OR (${nameLikeConds("b", "style")})
+        ORDER BY length(b.name) ASC, b.name ASC
+        LIMIT 20
+      `, patterns);
+
+      // Query 2: match breweries by name (trgm index on breweries.name)
       const breweryResult = await pool.query(`
         SELECT br.id, br.name, br.country, br.logo_url as "logoUrl", br.city
         FROM breweries br
-        WHERE unaccent(lower(br.name)) LIKE ANY($1::text[])
+        WHERE ${nameLikeConds("br", "name")}
         ORDER BY length(br.name) ASC, br.name ASC
         LIMIT 5
-      `, [patterns]);
+      `, patterns);
+
+      // Query 3: beers from matched breweries (uses idx_beers_brewery_id)
+      let beersByBreweryRows: any[] = [];
+      if (breweryResult.rows.length > 0) {
+        const brIds = breweryResult.rows.map((r: any) => r.id);
+        const brBeers = await pool.query(`
+          SELECT b.id, b.name, b.style, b.abv, b.image_url as "imageUrl", b.brewery_id as "breweryId"
+          FROM beers b
+          WHERE b.brewery_id = ANY($1::int[])
+          ORDER BY b.name ASC
+          LIMIT 20
+        `, [brIds]);
+        beersByBreweryRows = brBeers.rows;
+      }
+
+      // Merge + deduplicate beer results
+      const seenIds = new Set<number>();
+      const mergedBeers: any[] = [];
+      for (const b of [...beersByNameQ.rows, ...beersByBreweryRows]) {
+        if (!seenIds.has(b.id)) { seenIds.add(b.id); mergedBeers.push(b); }
+      }
+      mergedBeers.sort((a, b) => a.name.length - b.name.length || a.name.localeCompare(b.name));
+
+      // Enrich with brewery info (single IN query on small result set)
+      const brMap: Record<number, any> = {};
+      breweryResult.rows.forEach((br: any) => { brMap[br.id] = br; });
+      const unknownBrIds = [...new Set(mergedBeers.map(b => b.breweryId).filter(id => id && !brMap[id]))];
+      if (unknownBrIds.length > 0) {
+        const extra = await pool.query(`SELECT id, name, logo_url as "logoUrl" FROM breweries WHERE id = ANY($1::int[])`, [unknownBrIds]);
+        extra.rows.forEach((br: any) => { brMap[br.id] = br; });
+      }
+      const enriched = mergedBeers.slice(0, 15).map(b => ({
+        ...b,
+        breweryName: brMap[b.breweryId]?.name ?? null,
+        breweryLogoUrl: brMap[b.breweryId]?.logoUrl ?? null,
+      }));
 
       res.json({
-        beers: beerResult.rows,
+        beers: enriched,
         breweries: breweryResult.rows,
         words: uniqueWords,
       });

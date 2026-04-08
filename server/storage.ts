@@ -623,15 +623,30 @@ export class DatabaseStorage implements IStorage {
     const hasFilters = filters && Object.values(filters).some(v => v !== undefined && v !== false && v !== "");
     if (words.length === 0 && !hasFilters) return [];
 
-    // Build OR-based patterns: any beer matching ANY word is returned.
-    // Avoids AND logic that fails when words are split across name/brewery.
+    // Build patterns for ILIKE (case-insensitive LIKE).
+    // ILIKE on raw columns uses the existing GIN trgm indexes (gin_trgm_ops).
     const patterns = words.map(w => `%${w}%`);
+
+    // Text WHERE: ILIKE on raw columns (not LIKE with function wrapper).
+    // ILIKE uses the existing GIN trgm index (idx_beers_name_trgm, etc.)
+    // directly. Applying unaccent/lower as a function on the column side
+    // would prevent index use since the index expression wouldn't match.
+    let paramIdx = 1;
+    const textWhereOrParts: string[] = [];
+    if (words.length > 0) {
+      const bNameLikes = patterns.map((_, i) => `b.name ILIKE $${paramIdx + i}`).join(" OR ");
+      const brNameLikes = patterns.map((_, i) => `br.name ILIKE $${paramIdx + i}`).join(" OR ");
+      const styleLikes = patterns.map((_, i) => `b.style ILIKE $${paramIdx + i}`).join(" OR ");
+      textWhereOrParts.push(`(${bNameLikes})`);
+      textWhereOrParts.push(`(${brNameLikes})`);
+      textWhereOrParts.push(`(${styleLikes})`);
+      paramIdx += patterns.length;
+    }
+    const textWhere = textWhereOrParts.length > 0 ? `AND (${textWhereOrParts.join(" OR ")})` : "";
 
     // Extra SQL filter clauses for optional filters
     const extraClauses: string[] = [];
     const extraParams: any[] = [];
-    // $1 = patterns array (only if words.length > 0), so extra params start at $2 or $1
-    let paramIdx = words.length > 0 ? 2 : 1;
 
     if (filters?.glutenFree) { extraClauses.push(`b.is_gluten_free = true`); }
     if (filters?.alcoholFree) { extraClauses.push(`b.is_alcohol_free = true`); }
@@ -663,15 +678,6 @@ export class DatabaseStorage implements IStorage {
 
     const extraWhere = extraClauses.length > 0 ? `AND ${extraClauses.join(" AND ")}` : "";
 
-    // If no text query but has filters, match everything
-    const textWhere = words.length > 0
-      ? `AND (
-          unaccent(lower(b.name))              LIKE ANY($1::text[])
-          OR unaccent(lower(COALESCE(br.name,''))) LIKE ANY($1::text[])
-          OR lower(COALESCE(b.style,''))         LIKE ANY($1::text[])
-        )`
-      : "";
-
     const sqlText = `
       SELECT
         b.id, b.name, b.style, b.abv, b.ibu, b.description,
@@ -690,7 +696,7 @@ export class DatabaseStorage implements IStorage {
       LIMIT 50
     `;
 
-    const queryParams = words.length > 0 ? [patterns, ...extraParams] : extraParams;
+    const queryParams = [...patterns, ...extraParams];
     const result = await pool.query(sqlText, queryParams);
 
     return result.rows.map((row: any) => ({
