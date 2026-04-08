@@ -58,7 +58,7 @@ import {
   pubEventInterests,
   breweryEventInterests,
 } from "@shared/schema";
-import { db } from "./db";
+import { db, pool } from "./db";
 import { eq, and, desc, like, inArray, sql, or, asc, ilike, isNotNull, ne } from "drizzle-orm";
 import { memoryStorageInstance } from "./memoryStorage";
 
@@ -619,47 +619,81 @@ export class DatabaseStorage implements IStorage {
   }
 
   async searchBeers(query: string, filters?: { glutenFree?: boolean; alcoholFree?: boolean; style?: string; minAbv?: number; maxAbv?: number; minIbu?: number; maxIbu?: number }): Promise<any[]> {
-    const words = query.trim().split(/\s+/).filter(w => w.length > 0);
+    const words = query.trim().toLowerCase().split(/\s+/).filter(w => w.length > 0);
     const hasFilters = filters && Object.values(filters).some(v => v !== undefined && v !== false && v !== "");
     if (words.length === 0 && !hasFilters) return [];
-    const wordConditions = words.map(word => {
-      const q = `%${word}%`;
-      return or(
-        sql`unaccent(lower(${beers.name})) LIKE unaccent(lower(${q}))`,
-        sql`unaccent(lower(${breweries.name})) LIKE unaccent(lower(${q}))`,
-        ilike(beers.style, q)
-      );
-    });
-    const conditions = [...wordConditions];
-    if (filters?.glutenFree) conditions.push(eq(beers.isGlutenFree, true));
-    if (filters?.alcoholFree) conditions.push(eq(beers.isAlcoholFree, true));
-    if (filters?.style) conditions.push(ilike(beers.style, `%${filters.style}%`));
-    if (filters?.minAbv !== undefined) conditions.push(sql`${beers.abv}::numeric >= ${filters.minAbv}`);
-    if (filters?.maxAbv !== undefined) conditions.push(sql`${beers.abv}::numeric <= ${filters.maxAbv}`);
-    if (filters?.minIbu !== undefined) conditions.push(sql`${beers.ibu}::numeric >= ${filters.minIbu}`);
-    if (filters?.maxIbu !== undefined) conditions.push(sql`${beers.ibu}::numeric <= ${filters.maxIbu}`);
 
-    const results = await db
-      .select({
-        id: beers.id,
-        name: beers.name,
-        style: beers.style,
-        abv: beers.abv,
-        ibu: beers.ibu,
-        description: beers.description,
-        imageUrl: beers.imageUrl,
-        breweryId: beers.breweryId,
-        breweryName: breweries.name,
-        breweryLogoUrl: breweries.logoUrl,
-        isGlutenFree: beers.isGlutenFree,
-        isAlcoholFree: beers.isAlcoholFree,
-      })
-      .from(beers)
-      .leftJoin(breweries, eq(beers.breweryId, breweries.id))
-      .where(and(...conditions))
-      .limit(50);
-    
-    return results.map(row => ({
+    // Build OR-based patterns: any beer matching ANY word is returned.
+    // Avoids AND logic that fails when words are split across name/brewery.
+    const patterns = words.map(w => `%${w}%`);
+
+    // Extra SQL filter clauses for optional filters
+    const extraClauses: string[] = [];
+    const extraParams: any[] = [];
+    // $1 = patterns array (only if words.length > 0), so extra params start at $2 or $1
+    let paramIdx = words.length > 0 ? 2 : 1;
+
+    if (filters?.glutenFree) { extraClauses.push(`b.is_gluten_free = true`); }
+    if (filters?.alcoholFree) { extraClauses.push(`b.is_alcohol_free = true`); }
+    if (filters?.style) {
+      extraClauses.push(`lower(b.style) LIKE $${paramIdx}`);
+      extraParams.push(`%${filters.style.toLowerCase()}%`);
+      paramIdx++;
+    }
+    if (filters?.minAbv !== undefined) {
+      extraClauses.push(`b.abv::numeric >= $${paramIdx}`);
+      extraParams.push(filters.minAbv);
+      paramIdx++;
+    }
+    if (filters?.maxAbv !== undefined) {
+      extraClauses.push(`b.abv::numeric <= $${paramIdx}`);
+      extraParams.push(filters.maxAbv);
+      paramIdx++;
+    }
+    if (filters?.minIbu !== undefined) {
+      extraClauses.push(`b.ibu::numeric >= $${paramIdx}`);
+      extraParams.push(filters.minIbu);
+      paramIdx++;
+    }
+    if (filters?.maxIbu !== undefined) {
+      extraClauses.push(`b.ibu::numeric <= $${paramIdx}`);
+      extraParams.push(filters.maxIbu);
+      paramIdx++;
+    }
+
+    const extraWhere = extraClauses.length > 0 ? `AND ${extraClauses.join(" AND ")}` : "";
+
+    // If no text query but has filters, match everything
+    const textWhere = words.length > 0
+      ? `AND (
+          unaccent(lower(b.name))              LIKE ANY($1::text[])
+          OR unaccent(lower(COALESCE(br.name,''))) LIKE ANY($1::text[])
+          OR lower(COALESCE(b.style,''))         LIKE ANY($1::text[])
+        )`
+      : "";
+
+    const sqlText = `
+      SELECT
+        b.id, b.name, b.style, b.abv, b.ibu, b.description,
+        b.image_url      AS "imageUrl",
+        b.brewery_id     AS "breweryId",
+        b.is_gluten_free AS "isGlutenFree",
+        b.is_alcohol_free AS "isAlcoholFree",
+        br.name          AS "breweryName",
+        br.logo_url      AS "breweryLogoUrl"
+      FROM beers b
+      LEFT JOIN breweries br ON b.brewery_id = br.id
+      WHERE 1=1
+        ${textWhere}
+        ${extraWhere}
+      ORDER BY length(b.name) ASC, b.name ASC
+      LIMIT 50
+    `;
+
+    const queryParams = words.length > 0 ? [patterns, ...extraParams] : extraParams;
+    const result = await pool.query(sqlText, queryParams);
+
+    return result.rows.map((row: any) => ({
       id: row.id,
       name: row.name,
       style: row.style,
@@ -670,11 +704,12 @@ export class DatabaseStorage implements IStorage {
       breweryId: row.breweryId,
       isGlutenFree: row.isGlutenFree,
       isAlcoholFree: row.isAlcoholFree,
+      breweryName: row.breweryName,
       brewery: {
         id: row.breweryId,
         name: row.breweryName,
-        logoUrl: row.breweryLogoUrl
-      }
+        logoUrl: row.breweryLogoUrl,
+      },
     }));
   }
 
