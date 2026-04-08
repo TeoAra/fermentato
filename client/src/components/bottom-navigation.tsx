@@ -1,4 +1,4 @@
-import { Search, User, Home, Activity, Bell } from "lucide-react";
+import { Search, User, Home, ScanLine, Bell } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import { useAuth } from "@/hooks/useAuth";
 import { useState, type ReactNode } from "react";
@@ -30,7 +30,7 @@ export function BottomNavigation() {
   const homeActive     = isActive("/");
   const notifActive    = isActive("/notifications");
   const cercaActive    = searchOpen;
-  const attivitaActive = isActive("/activity");
+  const scanActive     = isActive("/scan");
   const accountActive  = isActive("/profile");
 
   const TabInner = ({
@@ -115,14 +115,17 @@ export function BottomNavigation() {
             </TabInner>
           </button>
 
-          {/* Attività */}
-          <Link href="/activity" className="flex-1 flex">
-            <TabInner active={attivitaActive}>
-              <Activity
-                className="h-[22px] w-[22px]"
-                strokeWidth={attivitaActive ? 2.4 : 1.8}
-              />
-              <span className="text-[10px] font-semibold leading-none">Attività</span>
+          {/* Scan */}
+          <Link href="/scan" className="flex-1 flex">
+            <TabInner active={scanActive}>
+              <div className="relative">
+                <ScanLine
+                  className="h-[22px] w-[22px]"
+                  strokeWidth={scanActive ? 2.4 : 1.8}
+                />
+                <span className="absolute -top-1 -right-2.5 bg-primary text-white text-[7px] font-black px-[3px] py-[1px] rounded-full leading-none tracking-tight">β</span>
+              </div>
+              <span className="text-[10px] font-semibold leading-none">Scan</span>
             </TabInner>
           </Link>
 

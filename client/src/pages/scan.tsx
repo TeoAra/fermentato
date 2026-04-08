@@ -351,7 +351,10 @@ export default function ScanPage() {
             <ArrowLeft className="h-5 w-5" />
           </button>
           <div className="flex-1 min-w-0">
-            <h1 className="font-semibold text-foreground dark:text-white text-sm">Risultati Scansione</h1>
+            <div className="flex items-center gap-1.5">
+              <h1 className="font-semibold text-foreground dark:text-white text-sm">Risultati Scansione</h1>
+              <span className="bg-primary/10 text-primary text-[9px] font-black px-1.5 py-[2px] rounded-full leading-none tracking-wide uppercase border border-primary/20">Beta</span>
+            </div>
             <p className="text-xs text-muted-foreground dark:text-stone-400 truncate">
               {detectedSource === "barcode" ? "📊 Barcode" : "🔍 OCR"}: "{detectedText}"
             </p>

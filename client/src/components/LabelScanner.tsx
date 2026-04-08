@@ -336,8 +336,11 @@ export default function LabelScanner({ onResult, onClose, onBarcodeFound }: Labe
             <Scan className="h-4 w-4 text-amber-400" />
           </div>
           <div>
-            <p className="text-white text-sm font-semibold leading-none">Scanner</p>
-            <p className="text-white/40 text-[10px] mt-0.5">Etichetta · Barcode</p>
+            <div className="flex items-center gap-1.5">
+              <p className="text-white text-sm font-semibold leading-none">Scanner</p>
+              <span className="bg-amber-500/30 border border-amber-400/50 text-amber-300 text-[9px] font-black px-1.5 py-[2px] rounded-full leading-none tracking-wide uppercase">Beta</span>
+            </div>
+            <p className="text-white/40 text-[10px] mt-0.5">AI · Barcode · Etichetta</p>
           </div>
         </div>
         <div className="flex items-center gap-1">
@@ -456,6 +459,12 @@ export default function LabelScanner({ onResult, onClose, onBarcodeFound }: Labe
                 <p className="absolute bottom-28 left-0 right-0 text-center text-white/40 text-xs px-8 tracking-wide">
                   Barcode rilevato automaticamente · tocca per scattare
                 </p>
+
+                {/* Beta disclaimer */}
+                <div className="absolute bottom-16 left-1/2 -translate-x-1/2 flex items-center gap-1.5 bg-black/50 backdrop-blur-sm border border-white/10 rounded-full px-3 py-1.5 whitespace-nowrap">
+                  <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse" />
+                  <span className="text-white/50 text-[10px] font-medium">Funzione sperimentale — risultati in miglioramento</span>
+                </div>
               </div>
             )}
 
