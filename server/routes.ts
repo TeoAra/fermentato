@@ -681,17 +681,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const searchTerms = queryStr.toLowerCase().split(/\s+/).filter((t: string) => t.length > 0);
 
       // Each term must match at least one of: beer name, style, or brewery name.
-      // We also try matching the compact (no-space) brewery/beer name so e.g.
-      // "canediguerra" finds "Cane di Guerra".
+      // Expressions mirror the GIN indexes exactly so the planner can use them:
+      //   idx_beers_name_unaccent_trgm      → unaccent_immutable(lower(b.name))
+      //   idx_beers_style_lower_trgm        → lower(COALESCE(b.style,''))
+      //   idx_breweries_name_unaccent_trgm  → unaccent_immutable(lower(br.name))
+      //   idx_beers_name_compact_trgm       → regexp_replace(lower(b.name::text),'\s+','','g')
+      //   idx_breweries_name_compact_trgm   → regexp_replace(lower(br.name::text),'\s+','','g')
+      // Patterns are already lowercased so no need to wrap in lower() on the param side.
       const whereClauses = searchTerms.map((term: string) => {
         const p = `%${term}%`;
         const pCompact = `%${term.replace(/[\s\-']/g, '')}%`;
         return sql`(
-          unaccent(lower(b.name)) LIKE unaccent(lower(${p}))
-          OR lower(b.style) LIKE lower(${p})
-          OR unaccent(lower(br.name)) LIKE unaccent(lower(${p}))
-          OR regexp_replace(unaccent(lower(br.name)), '\s+', '', 'g') LIKE unaccent(lower(${pCompact}))
-          OR regexp_replace(unaccent(lower(b.name)),  '\s+', '', 'g') LIKE unaccent(lower(${pCompact}))
+          unaccent_immutable(lower(b.name)) LIKE ${p}
+          OR lower(COALESCE(b.style, '')) LIKE ${p}
+          OR unaccent_immutable(lower(br.name)) LIKE ${p}
+          OR regexp_replace(lower(b.name::text),  E'\\\\s+', '', 'g') LIKE ${pCompact}
+          OR regexp_replace(lower(br.name::text), E'\\\\s+', '', 'g') LIKE ${pCompact}
         )`;
       });
 
@@ -702,10 +707,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Extra +2 if the full query appears in the beer name (phrase match)
       const scoreExprs = searchTerms.map((term: string) => {
         const p = `%${term}%`;
+        const pCompact = `%${term.replace(/[\s\-']/g, '')}%`;
         return sql`
-          (CASE WHEN unaccent(lower(b.name)) LIKE unaccent(lower(${p})) THEN 4 ELSE 0 END) +
-          (CASE WHEN unaccent(lower(br.name)) LIKE unaccent(lower(${p})) THEN 3 ELSE 0 END) +
-          (CASE WHEN lower(b.style) LIKE lower(${p}) THEN 1 ELSE 0 END)
+          (CASE WHEN unaccent_immutable(lower(b.name)) LIKE ${p} THEN 4 ELSE 0 END) +
+          (CASE WHEN unaccent_immutable(lower(br.name)) LIKE ${p}
+                  OR regexp_replace(lower(br.name::text), E'\\\\s+', '', 'g') LIKE ${pCompact} THEN 3 ELSE 0 END) +
+          (CASE WHEN lower(COALESCE(b.style, '')) LIKE ${p} THEN 1 ELSE 0 END)
         `;
       });
       const fullPhrase = `%${queryStr.toLowerCase()}%`;
@@ -717,7 +724,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           b.brewery_id AS "breweryId", br.name AS "breweryName", br.logo_url AS "breweryLogo",
           (
             ${sql.join(scoreExprs, sql` + `)}
-            + (CASE WHEN unaccent(lower(b.name || ' ' || coalesce(br.name,''))) LIKE unaccent(lower(${fullPhrase})) THEN 2 ELSE 0 END)
+            + (CASE WHEN unaccent_immutable(lower(b.name || ' ' || COALESCE(br.name,''))) LIKE ${fullPhrase} THEN 2 ELSE 0 END)
           ) AS _score
         FROM beers b
         LEFT JOIN breweries br ON b.brewery_id = br.id

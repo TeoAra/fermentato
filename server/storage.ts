@@ -662,16 +662,22 @@ export class DatabaseStorage implements IStorage {
     const fullPhrase = `%${query.trim().toLowerCase()}%`;
     queryParams.push(fullPhrase); // $[2N+1]
 
-    // WHERE: every term must match at least one of beer name / brewery name (or compact) / style
+    // WHERE: every term must match at least one of beer name / brewery name (or compact) / style.
+    // Expressions match the GIN indexes exactly so the planner uses them:
+    //   idx_beers_name_unaccent_trgm   → unaccent_immutable(lower(b.name))
+    //   idx_beers_style_lower_trgm     → lower(COALESCE(b.style,''))
+    //   idx_breweries_name_unaccent_trgm → unaccent_immutable(lower(br.name))
+    //   idx_beers_name_compact_trgm    → regexp_replace(lower(b.name::text),'\s+','','g')
+    //   idx_breweries_name_compact_trgm → regexp_replace(lower(br.name::text),'\s+','','g')
     const termWhereClauses = words.map((_, i) => {
-      const pi = 2 * i + 1; // regular pattern param index
-      const ci = 2 * i + 2; // compact pattern param index
+      const pi = 2 * i + 1;
+      const ci = 2 * i + 2;
       return `(
-        unaccent(lower(b.name)) LIKE unaccent($${pi})
-        OR lower(b.style) LIKE $${pi}
-        OR unaccent(lower(COALESCE(br.name,''))) LIKE unaccent($${pi})
-        OR regexp_replace(unaccent(lower(COALESCE(br.name,''))), '\\s+', '', 'g') LIKE unaccent($${ci})
-        OR regexp_replace(unaccent(lower(b.name)), '\\s+', '', 'g') LIKE unaccent($${ci})
+        unaccent_immutable(lower(b.name)) LIKE $${pi}
+        OR lower(COALESCE(b.style, '')) LIKE $${pi}
+        OR unaccent_immutable(lower(br.name)) LIKE $${pi}
+        OR regexp_replace(lower(b.name::text), '\\s+', '', 'g') LIKE $${ci}
+        OR regexp_replace(lower(br.name::text), '\\s+', '', 'g') LIKE $${ci}
       )`;
     });
 
@@ -680,16 +686,16 @@ export class DatabaseStorage implements IStorage {
       const pi = 2 * i + 1;
       const ci = 2 * i + 2;
       return `(
-        CASE WHEN unaccent(lower(b.name)) LIKE unaccent($${pi}) THEN 4 ELSE 0 END
-        + CASE WHEN unaccent(lower(COALESCE(br.name,''))) LIKE unaccent($${pi})
-                  OR regexp_replace(unaccent(lower(COALESCE(br.name,''))), '\\s+', '', 'g') LIKE unaccent($${ci}) THEN 3 ELSE 0 END
-        + CASE WHEN lower(b.style) LIKE $${pi} THEN 1 ELSE 0 END
+        CASE WHEN unaccent_immutable(lower(b.name)) LIKE $${pi} THEN 4 ELSE 0 END
+        + CASE WHEN unaccent_immutable(lower(br.name)) LIKE $${pi}
+                  OR regexp_replace(lower(br.name::text), '\\s+', '', 'g') LIKE $${ci} THEN 3 ELSE 0 END
+        + CASE WHEN lower(COALESCE(b.style, '')) LIKE $${pi} THEN 1 ELSE 0 END
       )`;
     });
 
     const phraseIdx = 2 * words.length + 1;
     const scoreExpr = words.length > 0
-      ? `(${termScoreExprs.join(' + ')} + CASE WHEN unaccent(lower(b.name || ' ' || COALESCE(br.name,''))) LIKE unaccent($${phraseIdx}) THEN 2 ELSE 0 END)`
+      ? `(${termScoreExprs.join(' + ')} + CASE WHEN unaccent_immutable(lower(b.name || ' ' || COALESCE(br.name,''))) LIKE $${phraseIdx} THEN 2 ELSE 0 END)`
       : "1";
 
     const textWhere = words.length > 0
