@@ -407,12 +407,9 @@ Return ONLY the image number (0-based index), or -1 if none match. No explanatio
           console.log(`[beer-img] gemini vision picked index ${idx}: ${chosen.substring(0, 60)}`);
           return chosen;
         }
-        if (raw === "-1") {
-          console.log(`[beer-img] gemini vision: none of the ${visionParts.length} top candidates match "${beerName}" — checking remaining`);
-          // Check remaining candidates with URL-only fallback
-          const remaining = candidates.slice(4);
-          if (remaining.length > 0) return remaining[0];
-          return null;
+        if (raw === "-1" || isNaN(idx)) {
+          console.log(`[beer-img] gemini vision: none of top ${visionParts.length} match "${beerName}" — running URL-only on all ${candidates.length} candidates`);
+          // Fall through to URL-only picker below (covers all candidates, not just remaining)
         }
       }
     } catch (e: any) {
@@ -426,15 +423,16 @@ Return ONLY the image number (0-based index), or -1 if none match. No explanatio
 
 Beer: "${beerName}" by "${breweryName}"
 
-IMPORTANT: The image must be for THIS specific beer ("${beerName}"), not a different beer by the same brewery.
+IMPORTANT: The image MUST be for THIS specific beer ("${beerName}"), not a different beer by the same brewery.
+If you are not confident the URL belongs to "${beerName}", return -1.
 
 PRIORITY (choose highest):
-1. Round tap badge / medallion with "${beerName}" label
+1. Round tap badge / medallion with "${beerName}" in filename or domain
 2. Official product label artwork for "${beerName}"
-3. Bottle or can photo showing "${beerName}" label clearly
-REJECT: Different beer, glass pour, lifestyle, generic logo
+3. Bottle or can photo for "${beerName}"
+REJECT: Different beer, glass pour, lifestyle, generic logo, brewery homepage images
 
-Return ONLY the 0-based index of the best image, or -1 if none suitable.
+Return ONLY the 0-based index of the best image, or -1 if none are clearly for "${beerName}".
 
 URLs:
 ${candidates.map((u, i) => `${i}: ${u}`).join("\n")}`;
@@ -448,13 +446,17 @@ ${candidates.map((u, i) => `${i}: ${u}`).join("\n")}`;
       }),
       signal: AbortSignal.timeout(10000),
     });
-    if (!res.ok) return candidates[0];
+    if (!res.ok) return null;
     const data: any = await res.json();
     const raw = data?.candidates?.[0]?.content?.parts?.[0]?.text?.trim() ?? "";
     const idx = parseInt(raw);
-    if (!isNaN(idx) && idx >= 0 && idx < candidates.length) return candidates[idx];
-    return candidates[0];
-  } catch { return candidates[0]; }
+    if (!isNaN(idx) && idx >= 0 && idx < candidates.length) {
+      console.log(`[beer-img] gemini url-only picked index ${idx}: ${candidates[idx].substring(0, 60)}`);
+      return candidates[idx];
+    }
+    console.log(`[beer-img] gemini url-only returned no match (raw="${raw}") for "${beerName}" — skipping image assignment`);
+    return null;
+  } catch { return null; }
 }
 
 // ─── 6. Cloudinary upload ────────────────────────────────────────────────────
@@ -544,7 +546,7 @@ export async function findAndUpdateBeerImage(
     const candidates: string[] = [];
 
     // ── Run all sources in parallel ─────────────────────────────────────────
-    const [breweryOg, ratebeerImg, whataBeerImg, googlePages, ddgMedaglione, ddgLabel] = await Promise.all([
+    const [breweryOg, ratebeerImg, whataBeerImg, googlePages, ddgMedaglione, ddgLabel, ddgBeerOnly] = await Promise.all([
       fetchBreweryOgImage(breweryWebsite ?? "", beerName),
       fetchRatebeerImage(beerName, breweryName),
       fetchWhataBeerImage(beerName, breweryName),
@@ -552,6 +554,8 @@ export async function findAndUpdateBeerImage(
       // Two targeted DDG queries: medallion first, then label
       ddgSearchImages(`"${beerName}" "${breweryName}" beer label logo medaglione`, 10),
       ddgSearchImages(`"${beerName}" "${breweryName}" birra etichetta badge`, 6),
+      // Extra query: beer name only (catches collab beers not indexed under primary brewery)
+      ddgSearchImages(`"${beerName}" birra artigianale etichetta label medaglione`, 6),
     ]);
 
     // Priority 1: brewery official website (highest trust)
@@ -592,7 +596,7 @@ export async function findAndUpdateBeerImage(
     }
 
     // Priority 4: DuckDuckGo — scored and sorted to prefer square/medallion images
-    const allDdg = [...ddgMedaglione, ...ddgLabel];
+    const allDdg = [...ddgMedaglione, ...ddgLabel, ...ddgBeerOnly];
     const scoredDdg = allDdg
       .filter(r => r.image?.startsWith("http") && !candidates.includes(r.image))
       .map(r => ({ r, score: scoreDdgImage(r) }))
