@@ -98,52 +98,6 @@ async function fetchBreweryOgImage(websiteUrl: string, beerName: string): Promis
   return null;
 }
 
-// ─── 2. Ratebeer — og:image on the beer page is almost always the medallion ──
-
-async function fetchRatebeerImage(beerName: string, breweryName: string): Promise<string | null> {
-  try {
-    const q = encodeURIComponent(`${beerName} ${breweryName}`);
-    const searchUrl = `https://www.ratebeer.com/search?beername=${q}`;
-    const res = await fetch(searchUrl, {
-      headers: {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
-        "Accept": "text/html,application/xhtml+xml",
-        "Accept-Language": "en-US,en;q=0.9",
-      },
-      signal: AbortSignal.timeout(10000),
-    });
-    if (!res.ok) return null;
-    const html = await res.text();
-
-    // Find first beer result link — /beer/<name>/<id>/
-    const beerLinkMatch = html.match(/href="(\/beer\/[^"]+\/\d+\/?)"/);
-    if (!beerLinkMatch) return null;
-
-    const beerPage = await fetch(`https://www.ratebeer.com${beerLinkMatch[1]}`, {
-      headers: {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
-        "Accept": "text/html",
-      },
-      signal: AbortSignal.timeout(10000),
-    });
-    if (!beerPage.ok) return null;
-    const beerHtml = await beerPage.text();
-
-    const ogImage =
-      beerHtml.match(/<meta[^>]+property=["']og:image["'][^>]+content=["']([^"']+)["']/i)?.[1] ??
-      beerHtml.match(/<meta[^>]+content=["']([^"']+)["'][^>]+property=["']og:image["']/i)?.[1];
-
-    if (ogImage && ogImage.startsWith("http") && !ogImage.includes("ratebeer-assets")) {
-      console.log(`[beer-img] ratebeer image found for "${beerName}"`);
-      return ogImage;
-    }
-    return null;
-  } catch (e: any) {
-    console.warn(`[beer-img] ratebeer scrape failed: ${e?.message?.substring(0, 60)}`);
-    return null;
-  }
-}
-
 // ─── 3. WhataBeer — Italian craft beer database (cdn1.whatabeer.com/beers/) ──
 
 async function fetchWhataBeerImage(beerName: string, breweryName: string): Promise<string | null> {
@@ -366,8 +320,7 @@ function scoreDdgImage(img: DdgImage): number {
   if (img.width >= 400 && img.height >= 400) score += 2;
   else if (img.width >= 300 && img.height >= 300) score += 1;
   // Trusted domains for beer imagery
-  if (url.includes("ratebeer.com")) score += 4;
-  if (url.includes("untappd.com") || url.includes("untappd-assets.com")) score += 4;
+  if (url.includes("untappd.com") || url.includes("assets.untappd.com")) score += 4;
   if (url.includes("cdn1.whatabeer.com/beers/")) score += 4;
   if (url.includes("beeradvocate.com")) score += 3;
   if (url.includes("beerpulse.com")) score += 2;
@@ -593,10 +546,9 @@ export async function findAndUpdateBeerImage(
     const candidates: string[] = [];
 
     // ── Run all sources in parallel ─────────────────────────────────────────
-    const [whataBeerImg, untappdImg, ratebeerImg, breweryOg, googlePages, ddgMedaglione, ddgLabel, ddgBeerOnly] = await Promise.all([
+    const [whataBeerImg, untappdImg, breweryOg, googlePages, ddgMedaglione, ddgLabel, ddgBeerOnly] = await Promise.all([
       fetchWhataBeerImage(beerName, breweryName),
       fetchUntappdImage(beerName, breweryName),
-      fetchRatebeerImage(beerName, breweryName),
       fetchBreweryOgImage(breweryWebsite ?? "", beerName),
       googleViaGeminiGrounding(beerName, breweryName),
       // Two targeted DDG queries: medallion first, then label
@@ -622,15 +574,7 @@ export async function findAndUpdateBeerImage(
       }
     }
 
-    // Priority 3: Ratebeer — almost always a medallion
-    if (ratebeerImg && ratebeerImg.startsWith("http") && !candidates.includes(ratebeerImg)) {
-      if (await isImageUrl(ratebeerImg)) {
-        candidates.push(ratebeerImg);
-        console.log(`[beer-img] ✓ ratebeer candidate: ${ratebeerImg.substring(0, 60)}`);
-      }
-    }
-
-    // Priority 4: Brewery official website
+    // Priority 3: Brewery official website
     if (breweryOg && breweryOg.startsWith("http") && !candidates.includes(breweryOg)) {
       if (await isImageUrl(breweryOg)) {
         candidates.push(breweryOg);
