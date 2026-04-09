@@ -216,7 +216,64 @@ async function fetchWhataBeerImage(beerName: string, breweryName: string): Promi
   }
 }
 
-// ─── 4. Google Search via Gemini grounding ────────────────────────────────────
+// ─── 4. Untappd ──────────────────────────────────────────────────────────────
+
+async function fetchUntappdImage(beerName: string, breweryName: string): Promise<string | null> {
+  try {
+    // Find the Untappd beer page via DDG text search (site: only supports domain, not path)
+    const query = `site:untappd.com "${beerName}" "${breweryName}" beer`;
+    const ddgRes = await fetch(
+      `https://duckduckgo.com/html/?q=${encodeURIComponent(query)}`,
+      {
+        headers: {
+          "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+          "Accept": "text/html,application/xhtml+xml",
+          "Accept-Language": "it-IT,it;q=0.9",
+        },
+        signal: AbortSignal.timeout(10000),
+      }
+    );
+    if (!ddgRes.ok) return null;
+    const ddgHtml = await ddgRes.text();
+
+    // Extract the Untappd /b/ beer page URL
+    const urlMatch = ddgHtml.match(/untappd\.com(\/b\/[^"'\s&>?#]+\/\d+)/);
+    if (!urlMatch) return null;
+    const beerPath = urlMatch[1];
+
+    const beerPageUrl = `https://untappd.com${beerPath}`;
+    console.log(`[beer-img] untappd page: ${beerPageUrl}`);
+
+    const pageRes = await fetch(beerPageUrl, {
+      headers: {
+        "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+        "Accept": "text/html,application/xhtml+xml",
+        "Accept-Language": "en-US,en;q=0.9",
+      },
+      signal: AbortSignal.timeout(10000),
+    });
+    if (!pageRes.ok) return null;
+    const html = await pageRes.text();
+
+    // Untappd og:image is the beer label image
+    const ogImage =
+      html.match(/<meta[^>]+property=["']og:image["'][^>]+content=["']([^"']+)["']/i)?.[1] ??
+      html.match(/<meta[^>]+content=["']([^"']+)["'][^>]+property=["']og:image["']/i)?.[1];
+
+    if (ogImage && ogImage.includes("assets.untappd.com")) {
+      // Upgrade to hires if available (replace _sm with _hd or just strip suffix)
+      const hires = ogImage.replace(/_sm\.jpeg/, ".jpeg").replace(/_sm\.jpg/, ".jpg");
+      console.log(`[beer-img] untappd image found: ${hires.substring(0, 80)}`);
+      return hires;
+    }
+    return null;
+  } catch (e: any) {
+    console.warn(`[beer-img] untappd scrape failed: ${e?.message?.substring(0, 60)}`);
+    return null;
+  }
+}
+
+// ─── 5. Google Search via Gemini grounding ────────────────────────────────────
 
 async function googleViaGeminiGrounding(beerName: string, breweryName: string): Promise<string[]> {
   const key = GEMINI_API_KEY();
@@ -536,10 +593,11 @@ export async function findAndUpdateBeerImage(
     const candidates: string[] = [];
 
     // ── Run all sources in parallel ─────────────────────────────────────────
-    const [breweryOg, ratebeerImg, whataBeerImg, googlePages, ddgMedaglione, ddgLabel, ddgBeerOnly] = await Promise.all([
-      fetchBreweryOgImage(breweryWebsite ?? "", beerName),
-      fetchRatebeerImage(beerName, breweryName),
+    const [whataBeerImg, untappdImg, ratebeerImg, breweryOg, googlePages, ddgMedaglione, ddgLabel, ddgBeerOnly] = await Promise.all([
       fetchWhataBeerImage(beerName, breweryName),
+      fetchUntappdImage(beerName, breweryName),
+      fetchRatebeerImage(beerName, breweryName),
+      fetchBreweryOgImage(breweryWebsite ?? "", beerName),
       googleViaGeminiGrounding(beerName, breweryName),
       // Two targeted DDG queries: medallion first, then label
       ddgSearchImages(`"${beerName}" "${breweryName}" beer label logo medaglione`, 10),
@@ -548,33 +606,39 @@ export async function findAndUpdateBeerImage(
       ddgSearchImages(`"${beerName}" birra artigianale etichetta label medaglione`, 6),
     ]);
 
-    // Priority 1: brewery official website (highest trust)
-    if (breweryOg && breweryOg.startsWith("http")) {
+    // Priority 1: WhataBeer — Italian craft beer DB with beer-specific CDN images
+    if (whataBeerImg && whataBeerImg.startsWith("http")) {
+      if (await isImageUrl(whataBeerImg)) {
+        candidates.push(whataBeerImg);
+        console.log(`[beer-img] ✓ whatabeer candidate: ${whataBeerImg.substring(0, 60)}`);
+      }
+    }
+
+    // Priority 2: Untappd — biggest beer DB, always a label image
+    if (untappdImg && untappdImg.startsWith("http") && !candidates.includes(untappdImg)) {
+      if (await isImageUrl(untappdImg)) {
+        candidates.push(untappdImg);
+        console.log(`[beer-img] ✓ untappd candidate: ${untappdImg.substring(0, 60)}`);
+      }
+    }
+
+    // Priority 3: Ratebeer — almost always a medallion
+    if (ratebeerImg && ratebeerImg.startsWith("http") && !candidates.includes(ratebeerImg)) {
+      if (await isImageUrl(ratebeerImg)) {
+        candidates.push(ratebeerImg);
+        console.log(`[beer-img] ✓ ratebeer candidate: ${ratebeerImg.substring(0, 60)}`);
+      }
+    }
+
+    // Priority 4: Brewery official website
+    if (breweryOg && breweryOg.startsWith("http") && !candidates.includes(breweryOg)) {
       if (await isImageUrl(breweryOg)) {
         candidates.push(breweryOg);
         console.log(`[beer-img] brewery site candidate: ${breweryOg.substring(0, 60)}`);
       }
     }
 
-    // Priority 2: Ratebeer (almost always a medallion)
-    if (ratebeerImg && ratebeerImg.startsWith("http") && !candidates.includes(ratebeerImg)) {
-      if (await isImageUrl(ratebeerImg)) {
-        candidates.unshift(ratebeerImg); // put at front — very reliable
-        console.log(`[beer-img] ratebeer candidate: ${ratebeerImg.substring(0, 60)}`);
-      }
-    }
-
-    // Priority 3: WhataBeer (Italian craft beers — beer-specific CDN images)
-    if (whataBeerImg && whataBeerImg.startsWith("http") && !candidates.includes(whataBeerImg)) {
-      if (await isImageUrl(whataBeerImg)) {
-        // Add after ratebeer (insert at position 1 if ratebeer found, else 0)
-        const insertAt = candidates.length > 0 ? 1 : 0;
-        candidates.splice(insertAt, 0, whataBeerImg);
-        console.log(`[beer-img] whatabeer candidate: ${whataBeerImg.substring(0, 60)}`);
-      }
-    }
-
-    // Priority 4: Google grounding → extract og:images
+    // Priority 5: Google grounding → extract og:images
     const googleImages = await extractOgImages(googlePages);
     const googleChecks = await Promise.all(
       googleImages
@@ -585,7 +649,7 @@ export async function findAndUpdateBeerImage(
       if (ok) candidates.push(img);
     }
 
-    // Priority 4: DuckDuckGo — scored and sorted to prefer square/medallion images
+    // Priority 6: DuckDuckGo — scored and sorted to prefer square/medallion images
     const allDdg = [...ddgMedaglione, ...ddgLabel, ...ddgBeerOnly];
     const scoredDdg = allDdg
       .filter(r => r.image?.startsWith("http") && !candidates.includes(r.image))
