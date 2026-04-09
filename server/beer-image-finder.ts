@@ -191,7 +191,7 @@ async function fetchUntappdImage(beerName: string, breweryName: string): Promise
       html.match(/<meta[^>]+property=["']og:image["'][^>]+content=["']([^"']+)["']/i)?.[1] ??
       html.match(/<meta[^>]+content=["']([^"']+)["'][^>]+property=["']og:image["']/i)?.[1];
 
-    if (ogImage && ogImage.includes("assets.untappd.com")) {
+    if (ogImage && ogImage.includes("untappd.com")) {
       const hires = ogImage.replace(/_sm\.jpeg/, ".jpeg").replace(/_sm\.jpg/, ".jpg");
       console.log(`[beer-img] untappd image found: ${hires.substring(0, 80)}`);
       return hires;
@@ -296,7 +296,7 @@ function scoreDdgImage(img: DdgImage): number {
   if (img.width >= 400 && img.height >= 400) score += 2;
   else if (img.width >= 300 && img.height >= 300) score += 1;
   // Trusted domains for beer imagery
-  if (url.includes("untappd.com") || url.includes("assets.untappd.com")) score += 4;
+  if (url.includes("untappd.com")) score += 4;
   if (url.includes("cdn1.whatabeer.com/beers/")) score += 4;
   if (url.includes("beeradvocate.com")) score += 3;
   if (url.includes("beerpulse.com")) score += 2;
