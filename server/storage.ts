@@ -607,10 +607,12 @@ export class DatabaseStorage implements IStorage {
     const rest = { ...updates } as Record<string, any>;
 
     if ('imageUrl' in rest && rest.imageUrl === null) {
+      console.log(`[updateBeer] clearing image_url for beer ${id}`);
       await db.execute(sql`UPDATE beers SET image_url = NULL WHERE id = ${id}`);
       delete rest.imageUrl;
     }
     if ('bottleImageUrl' in rest && rest.bottleImageUrl === null) {
+      console.log(`[updateBeer] clearing bottle_image_url for beer ${id}`);
       await db.execute(sql`UPDATE beers SET bottle_image_url = NULL WHERE id = ${id}`);
       delete rest.bottleImageUrl;
     }
