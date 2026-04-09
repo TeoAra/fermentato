@@ -186,15 +186,15 @@ async function fetchUntappdImage(beerName: string, breweryName: string): Promise
     if (!pageRes.ok) return null;
     const html = await pageRes.text();
 
-    // Untappd og:image is always the beer label
-    const ogImage =
-      html.match(/<meta[^>]+property=["']og:image["'][^>]+content=["']([^"']+)["']/i)?.[1] ??
-      html.match(/<meta[^>]+content=["']([^"']+)["'][^>]+property=["']og:image["']/i)?.[1];
-
-    if (ogImage && ogImage.includes("untappd.com")) {
-      const hires = ogImage.replace(/_sm\.jpeg/, ".jpeg").replace(/_sm\.jpg/, ".jpg");
-      console.log(`[beer-img] untappd image found: ${hires.substring(0, 80)}`);
-      return hires;
+    // Prefer HD beer label (beer_logos_hd), fall back to standard (beer_logos)
+    // These are the actual medallion/label images, NOT the og:image composite
+    const hdMatch = html.match(/assets\.untappd\.com\/site\/beer_logos_hd\/[^\s"'<>]+/);
+    const smMatch = html.match(/assets\.untappd\.com\/site\/beer_logos\/[^\s"'<>]+/);
+    const labelUrl = hdMatch?.[0] ?? smMatch?.[0];
+    if (labelUrl) {
+      const url = `https://${labelUrl}`;
+      console.log(`[beer-img] untappd label found: ${url.substring(0, 80)}`);
+      return url;
     }
     return null;
   } catch (e: any) {
