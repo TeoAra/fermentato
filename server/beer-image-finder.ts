@@ -403,10 +403,12 @@ async function geminiPickBestImage(
       if (res.ok) {
         const data: any = await res.json();
         const raw = (data?.candidates?.[0]?.content?.parts?.[0]?.text?.trim() ?? "").toUpperCase();
-        const letterIdx = letters.indexOf(raw);
+        // Extract first letter from response (Gemini may reply "A.", "**A**", "Image A", etc.)
+        const firstLetter = raw.match(/\b([A-H])\b/)?.[1] ?? raw.match(/^([A-H])/)?.[1] ?? null;
+        const letterIdx = firstLetter ? letters.indexOf(firstLetter) : -1;
         if (letterIdx >= 0 && letterIdx < visionParts.length) {
           const chosen = visionParts[letterIdx].url;
-          console.log(`[beer-img] gemini vision picked "${raw}": ${chosen.substring(0, 60)}`);
+          console.log(`[beer-img] gemini vision picked "${firstLetter}" (raw="${raw}"): ${chosen.substring(0, 60)}`);
           return chosen;
         }
         // NONE or unrecognised → fall through to URL-only
@@ -613,8 +615,22 @@ export async function findAndUpdateBeerImage(
 
     console.log(`[beer-img] ${candidates.length} candidates for beer ${beerId}, asking Gemini to pick best`);
 
-    const bestUrl = await geminiPickBestImage(beerName, breweryName, candidates.slice(0, 8));
-    if (!bestUrl) return;
+    let bestUrl = await geminiPickBestImage(beerName, breweryName, candidates.slice(0, 8));
+
+    // Trusted fallback: if Gemini can't decide, use WhataBeer or Untappd directly —
+    // these are beer-specific DBs whose images are always per-beer, no Gemini needed.
+    if (!bestUrl) {
+      const trustedFallback = [whataBeerImg, untappdImg].find(u => u && u.startsWith("http"));
+      if (trustedFallback) {
+        console.log(`[beer-img] using trusted fallback for beer ${beerId}: ${trustedFallback.substring(0, 60)}`);
+        bestUrl = trustedFallback;
+      }
+    }
+
+    if (!bestUrl) {
+      console.log(`[beer-img] no suitable image found for beer ${beerId}`);
+      return;
+    }
 
     console.log(`[beer-img] best for beer ${beerId}: ${bestUrl.substring(0, 80)}`);
 
