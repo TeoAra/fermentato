@@ -368,49 +368,39 @@ async function geminiPickBestImage(
 
   if (visionParts.length >= 2) {
     try {
-      const visionPrompt = `You are selecting the correct product image for a specific craft beer.
+      const letters = ["A", "B", "C", "D", "E", "F", "G", "H"];
 
-Beer name: "${beerName}"
-Brewery: "${breweryName}"
-
-Below are ${visionParts.length} images (labeled 0 to ${visionParts.length - 1}).
-
-Your task:
-1. FIRST check which image(s) actually show the beer named "${beerName}" — look for the beer name on the label, can, or bottle.
-2. If multiple show the correct beer, prefer: round medallion/badge > label art > bottle/can photo.
-3. REJECT any image that shows a DIFFERENT beer, a beer poured in a glass, lifestyle photos, or a generic brewery logo without beer name.
-4. If NONE show the correct beer "${beerName}", return -1.
-
-Return ONLY the image number (0-based index), or -1 if none match. No explanation.`;
-
-      const parts: any[] = [{ text: visionPrompt }];
-      for (const { part } of visionParts) {
-        parts.push(part);
+      // Interleave: label text + image for each candidate so Gemini maps letters unambiguously
+      const parts: any[] = [
+        { text: `You are selecting the correct product image for a specific craft beer.\n\nBeer name: "${beerName}"\nBrewery: "${breweryName}"\n\nBelow are ${visionParts.length} images, each labelled with a letter.\nIMPORTANT: The letters A/B/C/D are IMAGE LABELS — they have NOTHING to do with any number in the beer name.\n` }
+      ];
+      for (let i = 0; i < visionParts.length; i++) {
+        parts.push({ text: `Image ${letters[i]}:` });
+        parts.push(visionParts[i].part);
       }
+      parts.push({ text: `\nYour task:\n1. Examine each image's label/text. Which image shows the beer EXACTLY named "${beerName}"?\n2. If multiple match, prefer: round medallion/badge > label art > bottle/can photo.\n3. REJECT any image showing a DIFFERENT beer, a glass pour, lifestyle photo, or a generic brewery logo.\n4. If NONE match "${beerName}", reply NONE.\n\nReply with ONLY the letter (A, B, C, D...) of the correct image, or NONE. No other text.` });
 
       const res = await fetch(`${GEMINI_URL}?key=${key}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           contents: [{ parts }],
-          generationConfig: { temperature: 0, maxOutputTokens: 8 },
+          generationConfig: { temperature: 0, maxOutputTokens: 4 },
         }),
-        signal: AbortSignal.timeout(20000),
+        signal: AbortSignal.timeout(25000),
       });
 
       if (res.ok) {
         const data: any = await res.json();
-        const raw = data?.candidates?.[0]?.content?.parts?.[0]?.text?.trim() ?? "";
-        const idx = parseInt(raw);
-        if (!isNaN(idx) && idx >= 0 && idx < visionParts.length) {
-          const chosen = visionParts[idx].url;
-          console.log(`[beer-img] gemini vision picked index ${idx}: ${chosen.substring(0, 60)}`);
+        const raw = (data?.candidates?.[0]?.content?.parts?.[0]?.text?.trim() ?? "").toUpperCase();
+        const letterIdx = letters.indexOf(raw);
+        if (letterIdx >= 0 && letterIdx < visionParts.length) {
+          const chosen = visionParts[letterIdx].url;
+          console.log(`[beer-img] gemini vision picked "${raw}": ${chosen.substring(0, 60)}`);
           return chosen;
         }
-        if (raw === "-1" || isNaN(idx)) {
-          console.log(`[beer-img] gemini vision: none of top ${visionParts.length} match "${beerName}" — running URL-only on all ${candidates.length} candidates`);
-          // Fall through to URL-only picker below (covers all candidates, not just remaining)
-        }
+        // NONE or unrecognised → fall through to URL-only
+        console.log(`[beer-img] gemini vision: no match for "${beerName}" (raw="${raw}") — running URL-only on all ${candidates.length} candidates`);
       }
     } catch (e: any) {
       console.warn(`[beer-img] gemini vision failed: ${e?.message?.substring(0, 60)} — falling back to URL picking`);
