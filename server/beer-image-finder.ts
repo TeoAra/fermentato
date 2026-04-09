@@ -102,27 +102,26 @@ async function fetchBreweryOgImage(websiteUrl: string, beerName: string): Promis
 
 async function fetchWhataBeerImage(beerName: string, breweryName: string): Promise<string | null> {
   try {
-    // Find the WhataBeer page via DDG text search restricted to site:whatabeer.com
-    const query = `site:whatabeer.com "${beerName}" "${breweryName}"`;
-    const ddgRes = await fetch(
-      `https://duckduckgo.com/html/?q=${encodeURIComponent(query)}`,
-      {
-        headers: {
-          "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-          "Accept": "text/html,application/xhtml+xml",
-          "Accept-Language": "it-IT,it;q=0.9",
-        },
-        signal: AbortSignal.timeout(10000),
-      }
-    );
-    if (!ddgRes.ok) return null;
-    const ddgHtml = await ddgRes.text();
+    // Find WhataBeer page via Gemini grounding (Google Search) — no DDG needed
+    const key = GEMINI_API_KEY();
+    if (!key) return null;
+    const gRes = await fetch(`${GEMINI_URL}?key=${key}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        contents: [{ parts: [{ text: `site:whatabeer.com "${beerName}" "${breweryName}"` }] }],
+        tools: [{ google_search: {} }],
+        generationConfig: { temperature: 0, maxOutputTokens: 32 },
+      }),
+      signal: AbortSignal.timeout(15000),
+    });
+    if (!gRes.ok) return null;
+    const gData: any = await gRes.json();
+    const chunks: any[] = gData?.candidates?.[0]?.groundingMetadata?.groundingChunks ?? [];
+    const wbUrl = chunks.map((c: any) => c.web?.uri as string).find(u => u?.includes("whatabeer.com/birrifici/"));
+    if (!wbUrl) return null;
 
-    // Extract /birrifici/ URL from DDG result links
-    const urlMatch = ddgHtml.match(/whatabeer\.com(\/birrifici\/[^"'\s&>]+)/);
-    if (!urlMatch) return null;
-
-    const beerPageUrl = `https://whatabeer.com${urlMatch[1].replace(/&amp;.*/, "").replace(/[^/\w-]$/, "")}`;
+    const beerPageUrl = wbUrl.split("?")[0];
     console.log(`[beer-img] whatabeer page: ${beerPageUrl}`);
 
     // Fetch the beer page (server-side rendered, no JS needed)
@@ -174,28 +173,25 @@ async function fetchWhataBeerImage(beerName: string, breweryName: string): Promi
 
 async function fetchUntappdImage(beerName: string, breweryName: string): Promise<string | null> {
   try {
-    // Find the Untappd beer page via DDG text search (site: only supports domain, not path)
-    const query = `site:untappd.com "${beerName}" "${breweryName}" beer`;
-    const ddgRes = await fetch(
-      `https://duckduckgo.com/html/?q=${encodeURIComponent(query)}`,
-      {
-        headers: {
-          "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-          "Accept": "text/html,application/xhtml+xml",
-          "Accept-Language": "it-IT,it;q=0.9",
-        },
-        signal: AbortSignal.timeout(10000),
-      }
-    );
-    if (!ddgRes.ok) return null;
-    const ddgHtml = await ddgRes.text();
+    // Use Untappd's own search — no DDG needed
+    const q = `${beerName} ${breweryName}`;
+    const searchUrl = `https://untappd.com/search?q=${encodeURIComponent(q)}&type=beer`;
+    const searchRes = await fetch(searchUrl, {
+      headers: {
+        "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+        "Accept": "text/html,application/xhtml+xml",
+        "Accept-Language": "en-US,en;q=0.9",
+      },
+      signal: AbortSignal.timeout(12000),
+    });
+    if (!searchRes.ok) return null;
+    const searchHtml = await searchRes.text();
 
-    // Extract the Untappd /b/ beer page URL
-    const urlMatch = ddgHtml.match(/untappd\.com(\/b\/[^"'\s&>?#]+\/\d+)/);
-    if (!urlMatch) return null;
-    const beerPath = urlMatch[1];
+    // Find the first beer result link: /b/<slug>/<id>
+    const linkMatch = searchHtml.match(/href="(\/b\/[^"]+\/\d+)"/);
+    if (!linkMatch) return null;
 
-    const beerPageUrl = `https://untappd.com${beerPath}`;
+    const beerPageUrl = `https://untappd.com${linkMatch[1]}`;
     console.log(`[beer-img] untappd page: ${beerPageUrl}`);
 
     const pageRes = await fetch(beerPageUrl, {
@@ -204,18 +200,17 @@ async function fetchUntappdImage(beerName: string, breweryName: string): Promise
         "Accept": "text/html,application/xhtml+xml",
         "Accept-Language": "en-US,en;q=0.9",
       },
-      signal: AbortSignal.timeout(10000),
+      signal: AbortSignal.timeout(12000),
     });
     if (!pageRes.ok) return null;
     const html = await pageRes.text();
 
-    // Untappd og:image is the beer label image
+    // Untappd og:image is always the beer label
     const ogImage =
       html.match(/<meta[^>]+property=["']og:image["'][^>]+content=["']([^"']+)["']/i)?.[1] ??
       html.match(/<meta[^>]+content=["']([^"']+)["'][^>]+property=["']og:image["']/i)?.[1];
 
     if (ogImage && ogImage.includes("assets.untappd.com")) {
-      // Upgrade to hires if available (replace _sm with _hd or just strip suffix)
       const hires = ogImage.replace(/_sm\.jpeg/, ".jpeg").replace(/_sm\.jpg/, ".jpg");
       console.log(`[beer-img] untappd image found: ${hires.substring(0, 80)}`);
       return hires;
@@ -291,7 +286,7 @@ async function ddgSearchImages(query: string, limit = 8): Promise<DdgImage[]> {
   try {
     const pageRes = await fetch(
       `https://duckduckgo.com/?q=${encodeURIComponent(query)}&iax=images&ia=images`,
-      { headers: { "User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36" }, signal: AbortSignal.timeout(8000) }
+      { headers: { "User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36" }, signal: AbortSignal.timeout(3000) }
     );
     if (!pageRes.ok) return [];
     const html = await pageRes.text();
@@ -300,7 +295,7 @@ async function ddgSearchImages(query: string, limit = 8): Promise<DdgImage[]> {
 
     const imgRes = await fetch(
       `https://duckduckgo.com/i.js?l=it-it&o=json&q=${encodeURIComponent(query)}&vqd=${encodeURIComponent(vqd)}&f=,,,,,`,
-      { headers: { "User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36" }, signal: AbortSignal.timeout(8000) }
+      { headers: { "User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36" }, signal: AbortSignal.timeout(3000) }
     );
     if (!imgRes.ok) return [];
     const data: any = await imgRes.json();
