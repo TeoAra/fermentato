@@ -1449,7 +1449,7 @@ export default function BeerDetail() {
                 label="Immagine Birra"
                 description="Immagine principale della birra"
                 currentImageUrl={editForm.imageUrl || undefined}
-                onImageChange={(url) => setEditForm({ ...editForm, imageUrl: url || '' })}
+                onImageChange={(url) => setEditForm(prev => ({ ...prev, imageUrl: url ?? '' }))}
                 folder="beer-images"
                 aspectRatio="square"
                 maxSize={5}
@@ -1459,7 +1459,7 @@ export default function BeerDetail() {
                 label="Immagine Bottiglia"
                 description="Foto della bottiglia"
                 currentImageUrl={editForm.bottleImageUrl || undefined}
-                onImageChange={(url) => setEditForm({ ...editForm, bottleImageUrl: url || '' })}
+                onImageChange={(url) => setEditForm(prev => ({ ...prev, bottleImageUrl: url ?? '' }))}
                 folder="beer-bottles"
                 aspectRatio="portrait"
                 maxSize={5}

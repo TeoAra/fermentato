@@ -602,9 +602,14 @@ export class DatabaseStorage implements IStorage {
   }
 
   async updateBeer(id: number, updates: Partial<InsertBeer>): Promise<Beer> {
+    // Convert explicit null values to sql`NULL` so Drizzle doesn't skip them
+    const setValues: Record<string, any> = {};
+    for (const [k, v] of Object.entries(updates)) {
+      setValues[k] = v === null ? sql`NULL` : v;
+    }
     const [beer] = await db
       .update(beers)
-      .set(updates)
+      .set(setValues as any)
       .where(eq(beers.id, id))
       .returning();
     return beer;
