@@ -36,7 +36,9 @@ import {
   Users,
   Loader2,
   Trophy,
-  MessageSquare
+  MessageSquare,
+  Trash2,
+  AlertTriangle
 } from "lucide-react";
 import Footer from "@/components/footer";
 import { Card, CardContent } from "@/components/ui/card";
@@ -181,6 +183,8 @@ export default function BeerDetail() {
   const [reportReason, setReportReason] = useState("inappropriato");
   const [reportDescription, setReportDescription] = useState("");
   const [isSavingBeer, setIsSavingBeer] = useState(false);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [isDeletingBeer, setIsDeletingBeer] = useState(false);
   const [editForm, setEditForm] = useState({
     name: '',
     style: '',
@@ -285,7 +289,6 @@ export default function BeerDetail() {
 
   const handleSaveEdit = async () => {
     const collabIds = editForm.isCollaboration ? editCollabBreweries.map(b => b.id) : [];
-    console.log('[BeerEdit] isCollaboration:', editForm.isCollaboration, 'collabBreweries:', editCollabBreweries, 'ids:', collabIds);
     const updates: Record<string, any> = {
       name: editForm.name,
       style: editForm.style,
@@ -298,6 +301,7 @@ export default function BeerDetail() {
       isGlutenFree: editForm.isGlutenFree,
       isAlcoholFree: editForm.isAlcoholFree,
     };
+    console.log('[BeerEdit] saving updates — imageUrl:', JSON.stringify(updates.imageUrl), 'bottleImageUrl:', JSON.stringify(updates.bottleImageUrl));
     if (editForm.ibu) {
       updates.ibu = parseInt(editForm.ibu);
     }
@@ -318,6 +322,25 @@ export default function BeerDetail() {
       toast({ title: "Errore nell'aggiornamento", description: err?.message, variant: "destructive" });
     } finally {
       setIsSavingBeer(false);
+    }
+  };
+
+  const handleDeleteBeer = async () => {
+    if (!beer) return;
+    setIsDeletingBeer(true);
+    try {
+      await apiRequest(`/api/admin/beers/${id}`, { method: 'DELETE' });
+      toast({ title: `Birra "${beer.name}" eliminata` });
+      const breweryId = (beer as any)?.brewery?.id ?? (beer as any)?.breweryId;
+      if (breweryId) {
+        setLocation(`/breweries/${breweryId}`);
+      } else {
+        setLocation('/');
+      }
+    } catch (err: any) {
+      toast({ title: "Errore nell'eliminazione", description: err?.message, variant: "destructive" });
+      setIsDeletingBeer(false);
+      setIsDeleteDialogOpen(false);
     }
   };
 
@@ -677,13 +700,14 @@ export default function BeerDetail() {
                 onClick={() => { const s = beer?.imageUrl || beer?.bottleImageUrl; if (s) (window as any).__lightboxOpen?.(s); }}
                 aria-label="Espandi immagine"
               >
-                <div className="h-[88px] w-[88px] rounded-full border-2 border-white dark:border-stone-700 shadow-md bg-stone-50 dark:bg-stone-800 overflow-hidden flex items-center justify-center ring-1 ring-stone-100 dark:ring-stone-700">
+                <div className="h-[88px] w-[88px] rounded-full border-2 border-white dark:border-stone-700 shadow-md overflow-hidden flex items-center justify-center ring-1 ring-stone-100 dark:ring-stone-700"
+                  style={(beer?.imageUrl || beer?.bottleImageUrl) ? {} : { background: 'linear-gradient(135deg, #fef3e2 0%, #fde8c2 100%)' }}>
                   {(beer?.imageUrl || beer?.bottleImageUrl) ? (
                     <img src={beer?.imageUrl || beer?.bottleImageUrl} alt={beer?.name} className="w-full h-full object-cover" />
                   ) : isSearchingImage ? (
                     <Loader2 className="h-8 w-8 text-primary animate-spin" />
                   ) : (
-                    <BeerIcon className="h-10 w-10 text-stone-300 dark:text-stone-600" />
+                    <BeerIcon className="h-10 w-10 text-amber-300" />
                   )}
                 </div>
               </button>
@@ -812,10 +836,16 @@ export default function BeerDetail() {
                   <Share2 className="h-4 w-4" />
                 </button>
                 {isAdmin && (
-                  <button onClick={openEditDialog} title="Modifica birra" data-testid="button-admin-edit-beer"
-                    className="h-9 w-9 flex items-center justify-center rounded-full bg-primary text-white transition-colors shadow-sm">
-                    <Pencil className="h-4 w-4" />
-                  </button>
+                  <>
+                    <button onClick={openEditDialog} title="Modifica birra" data-testid="button-admin-edit-beer"
+                      className="h-9 w-9 flex items-center justify-center rounded-full bg-primary text-white transition-colors shadow-sm">
+                      <Pencil className="h-4 w-4" />
+                    </button>
+                    <button onClick={() => setIsDeleteDialogOpen(true)} title="Elimina birra"
+                      className="h-9 w-9 flex items-center justify-center rounded-full bg-red-500 text-white transition-colors shadow-sm hover:bg-red-600">
+                      <Trash2 className="h-4 w-4" />
+                    </button>
+                  </>
                 )}
                 {isAuthenticated && !isAdmin && (
                   <button onClick={() => setIsSuggestDialogOpen(true)} title="Suggerisci modifica" data-testid="button-suggest-change"
@@ -1492,6 +1522,39 @@ export default function BeerDetail() {
         </DialogContent>
       </Dialog>
 
+
+      {/* Delete Beer Confirmation Dialog */}
+      <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-red-600">
+              <AlertTriangle className="w-5 h-5" />
+              Elimina birra
+            </DialogTitle>
+          </DialogHeader>
+          <div className="py-2 space-y-3">
+            <p className="text-sm text-foreground">
+              Sei sicuro di voler eliminare <span className="font-bold">{beer?.name}</span>?
+            </p>
+            <p className="text-xs text-muted-foreground">
+              Questa azione è irreversibile. La birra verrà rimossa anche da tutte le tap list e bottle list dei pub.
+            </p>
+          </div>
+          <div className="flex justify-end gap-3 pt-1">
+            <Button variant="outline" onClick={() => setIsDeleteDialogOpen(false)} disabled={isDeletingBeer}>
+              Annulla
+            </Button>
+            <Button
+              onClick={handleDeleteBeer}
+              disabled={isDeletingBeer}
+              className="bg-red-500 hover:bg-red-600 text-white border-none"
+            >
+              <Trash2 className="h-4 w-4 mr-2" />
+              {isDeletingBeer ? 'Eliminazione...' : 'Elimina'}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {/* Report Review Dialog */}
       <Dialog open={reportDialogReviewId !== null} onOpenChange={(open) => { if (!open) setReportDialogReviewId(null); }}>
