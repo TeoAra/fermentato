@@ -676,20 +676,53 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const queryStr = (query as string).trim();
       const limitNum = Math.min(parseInt(limit as string) || 20, 50);
       if (queryStr.length < 2) return res.json([]);
+
+      // Split into terms; also build a compact version (no spaces/apostrophes) for fuzzy brewery/beer matching
       const searchTerms = queryStr.toLowerCase().split(/\s+/).filter((t: string) => t.length > 0);
+
+      // Each term must match at least one of: beer name, style, or brewery name.
+      // We also try matching the compact (no-space) brewery/beer name so e.g.
+      // "canediguerra" finds "Cane di Guerra".
       const whereClauses = searchTerms.map((term: string) => {
         const p = `%${term}%`;
-        return sql`(unaccent(lower(b.name)) LIKE unaccent(lower(${p})) OR LOWER(b.style) LIKE ${p} OR unaccent(lower(br.name)) LIKE unaccent(lower(${p})))`;
+        const pCompact = `%${term.replace(/[\s\-']/g, '')}%`;
+        return sql`(
+          unaccent(lower(b.name)) LIKE unaccent(lower(${p}))
+          OR lower(b.style) LIKE lower(${p})
+          OR unaccent(lower(br.name)) LIKE unaccent(lower(${p}))
+          OR regexp_replace(unaccent(lower(br.name)), '\s+', '', 'g') LIKE unaccent(lower(${pCompact}))
+          OR regexp_replace(unaccent(lower(b.name)),  '\s+', '', 'g') LIKE unaccent(lower(${pCompact}))
+        )`;
       });
+
+      // Relevance score: higher = better match.
+      // +4 for each term that matches the beer name (exact substring)
+      // +3 for each term that matches brewery name
+      // +1 for each term that matches style only
+      // Extra +2 if the full query appears in the beer name (phrase match)
+      const scoreExprs = searchTerms.map((term: string) => {
+        const p = `%${term}%`;
+        return sql`
+          (CASE WHEN unaccent(lower(b.name)) LIKE unaccent(lower(${p})) THEN 4 ELSE 0 END) +
+          (CASE WHEN unaccent(lower(br.name)) LIKE unaccent(lower(${p})) THEN 3 ELSE 0 END) +
+          (CASE WHEN lower(b.style) LIKE lower(${p}) THEN 1 ELSE 0 END)
+        `;
+      });
+      const fullPhrase = `%${queryStr.toLowerCase()}%`;
+
       const results = await db.execute(sql`
         SELECT
           b.id, b.name, b.style, b.abv, b.image_url AS "imageUrl",
           b.is_gluten_free AS "isGlutenFree", b.is_alcohol_free AS "isAlcoholFree",
-          b.brewery_id AS "breweryId", br.name AS "breweryName", br.logo_url AS "breweryLogo"
+          b.brewery_id AS "breweryId", br.name AS "breweryName", br.logo_url AS "breweryLogo",
+          (
+            ${sql.join(scoreExprs, sql` + `)}
+            + (CASE WHEN unaccent(lower(b.name || ' ' || coalesce(br.name,''))) LIKE unaccent(lower(${fullPhrase})) THEN 2 ELSE 0 END)
+          ) AS _score
         FROM beers b
         LEFT JOIN breweries br ON b.brewery_id = br.id
         WHERE ${sql.join(whereClauses, sql` AND `)}
-        ORDER BY b.name ASC
+        ORDER BY _score DESC, b.name ASC
         LIMIT ${limitNum}
       `);
       res.json(results.rows);
