@@ -100,28 +100,9 @@ async function fetchBreweryOgImage(websiteUrl: string, beerName: string): Promis
 
 // ─── 3. WhataBeer — Italian craft beer database (cdn1.whatabeer.com/beers/) ──
 
-async function fetchWhataBeerImage(beerName: string, breweryName: string): Promise<string | null> {
+/** Scrape WhataBeer beer page and return the best CDN image. Called after finding the URL via Gemini grounding. */
+async function scrapeWhataBeerPage(beerPageUrl: string, beerName: string): Promise<string | null> {
   try {
-    // Find WhataBeer page via Gemini grounding (Google Search) — no DDG needed
-    const key = GEMINI_API_KEY();
-    if (!key) return null;
-    const gRes = await fetch(`${GEMINI_URL}?key=${key}`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        contents: [{ parts: [{ text: `site:whatabeer.com "${beerName}" "${breweryName}"` }] }],
-        tools: [{ google_search: {} }],
-        generationConfig: { temperature: 0, maxOutputTokens: 32 },
-      }),
-      signal: AbortSignal.timeout(15000),
-    });
-    if (!gRes.ok) return null;
-    const gData: any = await gRes.json();
-    const chunks: any[] = gData?.candidates?.[0]?.groundingMetadata?.groundingChunks ?? [];
-    const wbUrl = chunks.map((c: any) => c.web?.uri as string).find(u => u?.includes("whatabeer.com/birrifici/"));
-    if (!wbUrl) return null;
-
-    const beerPageUrl = wbUrl.split("?")[0];
     console.log(`[beer-img] whatabeer page: ${beerPageUrl}`);
 
     // Fetch the beer page (server-side rendered, no JS needed)
@@ -235,7 +216,7 @@ async function googleViaGeminiGrounding(beerName: string, breweryName: string): 
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        contents: [{ parts: [{ text: `Cerca l'immagine ufficiale del medaglione o etichetta della birra: ${query}. Cerca sul sito ufficiale del birrificio o su ratebeer.com, untappd.com, beeradvocate.com` }] }],
+        contents: [{ parts: [{ text: `Cerca l'immagine ufficiale del medaglione o etichetta della birra: ${query}. Cerca sul sito ufficiale del birrificio o su ratebeer.com, untappd.com, whatabeer.com, beeradvocate.com` }] }],
         tools: [{ google_search: {} }],
         generationConfig: { temperature: 0, maxOutputTokens: 64 },
       }),
@@ -250,7 +231,7 @@ async function googleViaGeminiGrounding(beerName: string, breweryName: string): 
       .filter((u: any) => typeof u === "string" && u.startsWith("http") && !u.includes("google.com"));
 
     console.log(`[beer-img] google grounding found ${urls.length} pages for "${beerName}"`);
-    return urls.slice(0, 6);
+    return urls.slice(0, 8);
   } catch (e: any) {
     console.warn(`[beer-img] gemini grounding error: ${e?.message?.substring(0, 60)}`);
     return [];
@@ -542,20 +523,25 @@ export async function findAndUpdateBeerImage(
     console.log(`[beer-img] searching image for "${beerName}" by "${breweryName}" (id=${beerId})`);
     const candidates: string[] = [];
 
-    // ── Run all sources in parallel ─────────────────────────────────────────
-    const [whataBeerImg, untappdImg, breweryOg, googlePages, ddgMedaglione, ddgLabel, ddgBeerOnly] = await Promise.all([
-      fetchWhataBeerImage(beerName, breweryName),
+    // ── Run all sources in parallel — ONE Gemini call only ──────────────────
+    const [untappdImg, breweryOg, googlePages, ddgMedaglione, ddgLabel, ddgBeerOnly] = await Promise.all([
       fetchUntappdImage(beerName, breweryName),
       fetchBreweryOgImage(breweryWebsite ?? "", beerName),
       googleViaGeminiGrounding(beerName, breweryName),
-      // Two targeted DDG queries: medallion first, then label
+      // DDG image search (fails fast in 3s if rate-limited)
       ddgSearchImages(`"${beerName}" "${breweryName}" beer label logo medaglione`, 10),
       ddgSearchImages(`"${beerName}" "${breweryName}" birra etichetta badge`, 6),
-      // Extra query: beer name only (catches collab beers not indexed under primary brewery)
       ddgSearchImages(`"${beerName}" birra artigianale etichetta label medaglione`, 6),
     ]);
 
-    // Priority 1: WhataBeer — Italian craft beer DB with beer-specific CDN images
+    // Priority 1: WhataBeer — scrape any WhataBeer /birrifici/ pages from Gemini results
+    const wbUrls = googlePages.filter(u => u.includes("whatabeer.com/birrifici/"));
+    const nonWbPages = googlePages.filter(u => !u.includes("whatabeer.com"));
+    let whataBeerImg: string | null = null;
+    for (const wbUrl of wbUrls.slice(0, 2)) {
+      whataBeerImg = await scrapeWhataBeerPage(wbUrl.split("?")[0], beerName);
+      if (whataBeerImg) break;
+    }
     if (whataBeerImg && whataBeerImg.startsWith("http")) {
       if (await isImageUrl(whataBeerImg)) {
         candidates.push(whataBeerImg);
@@ -579,8 +565,8 @@ export async function findAndUpdateBeerImage(
       }
     }
 
-    // Priority 5: Google grounding → extract og:images
-    const googleImages = await extractOgImages(googlePages);
+    // Priority 4: Google grounding → extract og:images from non-WhataBeer pages
+    const googleImages = await extractOgImages(nonWbPages);
     const googleChecks = await Promise.all(
       googleImages
         .filter(img => img.startsWith("http") && !candidates.includes(img))
