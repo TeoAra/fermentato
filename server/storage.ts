@@ -650,72 +650,81 @@ export class DatabaseStorage implements IStorage {
     const hasFilters = filters && Object.values(filters).some(v => v !== undefined && v !== false && v !== "");
     if (words.length === 0 && !hasFilters) return [];
 
-    // Build patterns for ILIKE (case-insensitive LIKE).
-    // ILIKE on raw columns uses the existing GIN trgm indexes (gin_trgm_ops).
-    const patterns = words.map(w => `%${w}%`);
-    // Full-phrase pattern for highest-priority match (e.g. "true tricks wild raccoon")
-    const fullPhrase = `%${query.trim().toLowerCase().replace(/\s+/g, " ")}%`;
+    // Parameters layout:
+    //   For each term i: $[2i+1] = '%term%', $[2i+2] = '%termNospace%'
+    //   $[2N+1] = full phrase pattern
+    //   then extra filter params
+    const queryParams: any[] = [];
+    words.forEach(w => {
+      queryParams.push(`%${w}%`);                        // regular pattern
+      queryParams.push(`%${w.replace(/\s+/g, '')}%`);   // compact (no-space) pattern
+    });
+    const fullPhrase = `%${query.trim().toLowerCase()}%`;
+    queryParams.push(fullPhrase); // $[2N+1]
 
-    // Text WHERE strategy:
-    //   - Per-column name match uses AND between words (all words must appear in name)
-    //     → prevents "wild" alone matching "Sour/Wild Beer" when searching 4-word beer names
-    //   - OR between columns (can match via beer name OR brewery name OR style)
-    //   - Score: 3 = full phrase in name, 2 = all words AND in name, 1 = other field match
-    let paramIdx = 1;
-    const textWhereOrParts: string[] = [];
-    let textWhere = "";
-    let scoreExpr = "1";
-    if (words.length > 0) {
-      const bNameAnds  = patterns.map((_, i) => `b.name ILIKE $${paramIdx + i}`).join(" AND ");
-      const brNameAnds = patterns.map((_, i) => `br.name ILIKE $${paramIdx + i}`).join(" AND ");
-      const styleAnds  = patterns.map((_, i) => `b.style ILIKE $${paramIdx + i}`).join(" AND ");
-      // OR-based fallback for inclusion (any word in any field)
-      const bNameOrs  = patterns.map((_, i) => `b.name ILIKE $${paramIdx + i}`).join(" OR ");
-      const brNameOrs = patterns.map((_, i) => `br.name ILIKE $${paramIdx + i}`).join(" OR ");
-      const styleOrs  = patterns.map((_, i) => `b.style ILIKE $${paramIdx + i}`).join(" OR ");
-      textWhereOrParts.push(`(${bNameOrs})`);
-      textWhereOrParts.push(`(${brNameOrs})`);
-      textWhereOrParts.push(`(${styleOrs})`);
-      const fullPhraseIdx = paramIdx + patterns.length;
-      scoreExpr = `CASE
-        WHEN b.name ILIKE $${fullPhraseIdx} THEN 3
-        WHEN (${bNameAnds}) THEN 2
-        WHEN (${brNameAnds}) OR (${styleAnds}) THEN 1
-        ELSE 0 END`;
-      paramIdx += patterns.length;
-    }
-    const textWhere2 = textWhereOrParts.length > 0 ? `AND (${textWhereOrParts.join(" OR ")})` : "";
-    textWhere = textWhere2;
+    // WHERE: every term must match at least one of beer name / brewery name (or compact) / style
+    const termWhereClauses = words.map((_, i) => {
+      const pi = 2 * i + 1; // regular pattern param index
+      const ci = 2 * i + 2; // compact pattern param index
+      return `(
+        unaccent(lower(b.name)) LIKE unaccent($${pi})
+        OR lower(b.style) LIKE $${pi}
+        OR unaccent(lower(COALESCE(br.name,''))) LIKE unaccent($${pi})
+        OR regexp_replace(unaccent(lower(COALESCE(br.name,''))), '\\s+', '', 'g') LIKE unaccent($${ci})
+        OR regexp_replace(unaccent(lower(b.name)), '\\s+', '', 'g') LIKE unaccent($${ci})
+      )`;
+    });
+
+    // SCORE: per-term contribution → prioritises beer name (4), then brewery (3), then style (1)
+    const termScoreExprs = words.map((_, i) => {
+      const pi = 2 * i + 1;
+      const ci = 2 * i + 2;
+      return `(
+        CASE WHEN unaccent(lower(b.name)) LIKE unaccent($${pi}) THEN 4 ELSE 0 END
+        + CASE WHEN unaccent(lower(COALESCE(br.name,''))) LIKE unaccent($${pi})
+                  OR regexp_replace(unaccent(lower(COALESCE(br.name,''))), '\\s+', '', 'g') LIKE unaccent($${ci}) THEN 3 ELSE 0 END
+        + CASE WHEN lower(b.style) LIKE $${pi} THEN 1 ELSE 0 END
+      )`;
+    });
+
+    const phraseIdx = 2 * words.length + 1;
+    const scoreExpr = words.length > 0
+      ? `(${termScoreExprs.join(' + ')} + CASE WHEN unaccent(lower(b.name || ' ' || COALESCE(br.name,''))) LIKE unaccent($${phraseIdx}) THEN 2 ELSE 0 END)`
+      : "1";
+
+    const textWhere = words.length > 0
+      ? `AND ${termWhereClauses.join(' AND ')}`
+      : "";
 
     // Extra SQL filter clauses for optional filters
     const extraClauses: string[] = [];
-    const extraParams: any[] = [];
+    let paramIdx = 2 * words.length + 2; // next free param index
 
     if (filters?.glutenFree) { extraClauses.push(`b.is_gluten_free = true`); }
     if (filters?.alcoholFree) { extraClauses.push(`b.is_alcohol_free = true`); }
     if (filters?.style) {
       extraClauses.push(`lower(b.style) LIKE $${paramIdx}`);
-      extraParams.push(`%${filters.style.toLowerCase()}%`);
+      queryParams.push(`%${filters.style.toLowerCase()}%`);
       paramIdx++;
     }
     if (filters?.minAbv !== undefined) {
       extraClauses.push(`b.abv::numeric >= $${paramIdx}`);
-      extraParams.push(filters.minAbv);
+      queryParams.push(filters.minAbv);
       paramIdx++;
     }
     if (filters?.maxAbv !== undefined) {
       extraClauses.push(`b.abv::numeric <= $${paramIdx}`);
-      extraParams.push(filters.maxAbv);
+      queryParams.push(filters.maxAbv);
       paramIdx++;
     }
     if (filters?.minIbu !== undefined) {
       extraClauses.push(`b.ibu::numeric >= $${paramIdx}`);
-      extraParams.push(filters.minIbu);
+      queryParams.push(filters.minIbu);
       paramIdx++;
     }
     if (filters?.maxIbu !== undefined) {
       extraClauses.push(`b.ibu::numeric <= $${paramIdx}`);
-      extraParams.push(filters.maxIbu);
+      queryParams.push(filters.maxIbu);
       paramIdx++;
     }
 
@@ -724,13 +733,13 @@ export class DatabaseStorage implements IStorage {
     const sqlText = `
       SELECT
         b.id, b.name, b.style, b.abv, b.ibu, b.description,
-        b.image_url      AS "imageUrl",
-        b.brewery_id     AS "breweryId",
-        b.is_gluten_free AS "isGlutenFree",
+        b.image_url       AS "imageUrl",
+        b.brewery_id      AS "breweryId",
+        b.is_gluten_free  AS "isGlutenFree",
         b.is_alcohol_free AS "isAlcoholFree",
-        br.name          AS "breweryName",
-        br.logo_url      AS "breweryLogoUrl",
-        (${scoreExpr}) AS _score
+        br.name           AS "breweryName",
+        br.logo_url       AS "breweryLogoUrl",
+        (${scoreExpr})    AS _score
       FROM beers b
       LEFT JOIN breweries br ON b.brewery_id = br.id
       WHERE 1=1
@@ -740,7 +749,6 @@ export class DatabaseStorage implements IStorage {
       LIMIT 50
     `;
 
-    const queryParams = [...patterns, ...(words.length > 0 ? [fullPhrase] : []), ...extraParams];
     const result = await pool.query(sqlText, queryParams);
 
     return result.rows.map((row: any) => ({
