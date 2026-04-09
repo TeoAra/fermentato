@@ -1,9 +1,8 @@
-import React from "react";
+import React, { lazy, Suspense, useState, useMemo, useEffect } from "react";
 import { Helmet } from "react-helmet-async";
 import { useParams, Link } from "wouter";
 import { GlutenFreeSmallBadge, AlcoholFreeBadge } from "@/components/beer-badges";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useState, useMemo, useEffect } from "react";
 import { 
   Clock, 
   Phone, 
@@ -23,6 +22,7 @@ import {
   MapPin,
   ShieldCheck,
   ChevronRight,
+  Beer as BeerIcon,
 } from "lucide-react";
 import Footer from "@/components/footer";
 import TapList from "@/components/tap-list";
@@ -45,6 +45,8 @@ import { it as itLocale } from "date-fns/locale";
 import { getMapNavigationUrl } from "@/lib/utils";
 import { usePubLiveUpdates } from "@/hooks/usePubLiveUpdates";
 import { NextTapVoting } from "@/components/NextTapVoting";
+
+const CheckinModal = lazy(() => import("@/components/checkin-modal"));
 
 type OpenStatus = 'open' | 'closing_soon' | 'opening_soon' | 'closed';
 
@@ -109,11 +111,14 @@ function getBeerStyleColor(style: string): { bg: string; text: string } {
 }
 
 // Modern Beer Card Component
-const ModernBeerCard = ({ beer, prices, className = "" }: { 
+const ModernBeerCard = ({ beer, prices, className = "", onCheckin }: { 
   beer: any; 
   prices?: any[];
   className?: string;
-}) => (
+  onCheckin?: () => void;
+}) => {
+  const { isAuthenticated } = useAuth();
+  return (
   <div className={`bg-white dark:bg-card rounded-2xl border border-stone-100 dark:border-border shadow-[0_4px_20px_rgba(247,113,4,0.06)] hover:shadow-[0_6px_24px_rgba(247,113,4,0.12)] hover:border-stone-300 dark:hover:border-orange-800/40 transition-all duration-300 cursor-pointer ${className}`}>
     <div className="flex gap-3 p-4">
       <Link href={`/beer/${beer?.id}`} className="flex-shrink-0 self-center">
@@ -164,26 +169,39 @@ const ModernBeerCard = ({ beer, prices, className = "" }: {
           </div>
         </div>
 
-        {prices && prices.length > 0 && (
-          <div className="flex-shrink-0 text-right self-center">
-            <div className="space-y-1">
-              {prices.map((price: any, index: number) => (
-                <div key={index}>
-                  <div className="text-[10px] text-muted-foreground">
-                    {typeof price === 'object' ? (price as any).size : price}
+        <div className="flex flex-col items-end justify-between gap-1 flex-shrink-0">
+          {prices && prices.length > 0 && (
+            <div className="text-right">
+              <div className="space-y-1">
+                {prices.map((price: any, index: number) => (
+                  <div key={index}>
+                    <div className="text-[10px] text-muted-foreground">
+                      {typeof price === 'object' ? (price as any).size : price}
+                    </div>
+                    <div className="text-base font-black text-foreground">
+                      €{typeof price === 'object' ? parseFloat((price as any).price).toFixed(2) : parseFloat(price).toFixed(2)}
+                    </div>
                   </div>
-                  <div className="text-base font-black text-foreground">
-                    €{typeof price === 'object' ? parseFloat((price as any).price).toFixed(2) : parseFloat(price).toFixed(2)}
-                  </div>
-                </div>
-              ))}
+                ))}
+              </div>
             </div>
-          </div>
-        )}
+          )}
+          {isAuthenticated && onCheckin && (
+            <button
+              onClick={(e) => { e.preventDefault(); e.stopPropagation(); onCheckin(); }}
+              className="w-8 h-8 rounded-full flex items-center justify-center bg-stone-100 dark:bg-stone-800 text-stone-500 dark:text-stone-400 hover:text-primary hover:bg-stone-200 dark:hover:bg-stone-700 active:scale-95 transition-all"
+              aria-label="Check-in"
+              title="Sto bevendo questa"
+            >
+              <BeerIcon className="w-4 h-4" />
+            </button>
+          )}
+        </div>
       </div>
     </div>
   </div>
-);
+  );
+};
 
 // Modern Stats Card Component  
 const PubStatsCard = ({ 
@@ -223,6 +241,7 @@ export default function PubDetail() {
   const [activeTab, setActiveTab] = useState("taplist");
   const [showOpeningHours, setShowOpeningHours] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState<any>(null);
+  const [checkinBottle, setCheckinBottle] = useState<any>(null);
 
   // Fire-and-forget: track pub page view for analytics
   useEffect(() => {
@@ -801,6 +820,7 @@ export default function PubDetail() {
                           key={bottle.id}
                           beer={bottle.beer}
                           prices={bottle.prices}
+                          onCheckin={() => setCheckinBottle(bottle.beer)}
                         />
                       ))}
                     </div>
@@ -1076,7 +1096,26 @@ export default function PubDetail() {
       </main>
 
       <Footer />
-      
+
+      {/* Cantina Check-in Modal */}
+      {checkinBottle && (
+        <Suspense fallback={null}>
+          <CheckinModal
+            open={!!checkinBottle}
+            onClose={() => setCheckinBottle(null)}
+            beer={{
+              id: checkinBottle.id,
+              name: checkinBottle.name,
+              style: checkinBottle.style,
+              breweryName: checkinBottle.brewery?.name || checkinBottle.breweryName,
+              imageUrl: checkinBottle.imageUrl,
+            }}
+            pub={pub ?? null}
+            tapType="bottiglia"
+          />
+        </Suspense>
+      )}
+
       {/* Event Detail Dialog */}
       <Dialog open={!!selectedEvent} onOpenChange={(open) => { if (!open) setSelectedEvent(null); }}>
         <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto p-0">

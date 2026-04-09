@@ -171,9 +171,6 @@ export default function BeerDetail() {
   }, [id]);
   const [activeTab, setActiveTab] = useState("scheda");
   const [showTastingForm, setShowTastingForm] = useState(false);
-  const [quickRating, setQuickRating] = useState(0);
-  const [hoverRating, setHoverRating] = useState(0);
-  const tastingRef = useRef<HTMLDivElement>(null);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isSuggestDialogOpen, setIsSuggestDialogOpen] = useState(false);
   const [checkinOpen, setCheckinOpen] = useState(false);
@@ -822,20 +819,6 @@ export default function BeerDetail() {
                     <Lightbulb className="h-4 w-4" />
                   </button>
                 )}
-                {/* Quick star rating — separator + stars */}
-                {isAuthenticated && (
-                  <div className="flex items-center gap-0.5 ml-1 pl-3 border-l border-stone-200 dark:border-stone-700">
-                    {[1, 2, 3, 4, 5].map(s => (
-                      <button key={s}
-                        onMouseEnter={() => !hasTasted && setHoverRating(s)}
-                        onMouseLeave={() => !hasTasted && setHoverRating(0)}
-                        onClick={() => { setActiveTab('recensioni'); if (!hasTasted) setQuickRating(s); setTimeout(() => tastingRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 150); }}
-                        className="transition-transform hover:scale-110">
-                        <Star className={`h-5 w-5 transition-colors ${s <= (hasTasted ? existingTasting?.rating || 0 : (hoverRating || quickRating)) ? 'text-amber-500 fill-amber-500' : 'text-stone-300 dark:text-stone-600'}`} />
-                      </button>
-                    ))}
-                  </div>
-                )}
               </div>
 
             </div>
@@ -1105,19 +1088,15 @@ export default function BeerDetail() {
                   )}
                 </div>
 
-              <div ref={tastingRef} />
               {showTastingForm || !hasTasted ? (
                 <BeerTastingForm
                   beerId={parseInt(id || '0')}
                   existingTasting={existingTasting}
-                  initialRating={quickRating || undefined}
-                  autoOpen={quickRating > 0}
                   onSuccess={() => {
                     setShowTastingForm(false);
-                    setQuickRating(0);
                     queryClient.invalidateQueries({ queryKey: ["/api/user/beer-tastings"] });
                   }}
-                  onCancel={() => { setShowTastingForm(false); setQuickRating(0); }}
+                  onCancel={() => { setShowTastingForm(false); }}
                 />
               ) : (
                 <div className="space-y-3">
