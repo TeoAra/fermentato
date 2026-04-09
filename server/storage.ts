@@ -650,63 +650,73 @@ export class DatabaseStorage implements IStorage {
     const hasFilters = filters && Object.values(filters).some(v => v !== undefined && v !== false && v !== "");
     if (words.length === 0 && !hasFilters) return [];
 
-    // Parameters layout:
+    // Strategy: CTE + INTERSECT approach.
+    // For each term, build a UNION of sub-queries each using a single GIN index.
+    // INTERSECT between terms enforces AND (every term must match).
+    // This avoids OR conditions on different columns that force seq scans.
+    //
+    // Params layout:
     //   For each term i: $[2i+1] = '%term%', $[2i+2] = '%termNospace%'
     //   $[2N+1] = full phrase pattern
-    //   then extra filter params
+    //   Extra filter params start at $[2N+2]
     const queryParams: any[] = [];
     words.forEach(w => {
-      queryParams.push(`%${w}%`);                        // regular pattern
-      queryParams.push(`%${w.replace(/\s+/g, '')}%`);   // compact (no-space) pattern
+      queryParams.push(`%${w}%`);
+      queryParams.push(`%${w.replace(/\s+/g, '')}%`);
     });
     const fullPhrase = `%${query.trim().toLowerCase()}%`;
     queryParams.push(fullPhrase); // $[2N+1]
 
-    // WHERE: every term must match at least one of beer name / brewery name (or compact) / style.
-    // Expressions match the GIN indexes exactly so the planner uses them:
-    //   idx_beers_name_unaccent_trgm   → unaccent_immutable(lower(b.name))
-    //   idx_beers_style_lower_trgm     → lower(COALESCE(b.style,''))
-    //   idx_breweries_name_unaccent_trgm → unaccent_immutable(lower(br.name))
-    //   idx_beers_name_compact_trgm    → regexp_replace(lower(b.name::text),'\s+','','g')
-    //   idx_breweries_name_compact_trgm → regexp_replace(lower(br.name::text),'\s+','','g')
-    const termWhereClauses = words.map((_, i) => {
-      const pi = 2 * i + 1;
-      const ci = 2 * i + 2;
-      return `(
-        unaccent_immutable(lower(b.name)) LIKE $${pi}
-        OR lower(COALESCE(b.style, '')) LIKE $${pi}
-        OR unaccent_immutable(lower(br.name)) LIKE $${pi}
-        OR regexp_replace(lower(b.name::text), '\\s+', '', 'g') LIKE $${ci}
-        OR regexp_replace(lower(br.name::text), '\\s+', '', 'g') LIKE $${ci}
-      )`;
+    // Build one CTE per term. Each CTE UNIONs indexed sub-queries so the planner
+    // picks up idx_beers_name_unaccent_trgm, idx_beers_style_lower_trgm,
+    // idx_breweries_name_unaccent_trgm, idx_beers_name_compact_trgm,
+    // idx_breweries_name_compact_trgm for each condition independently.
+    const termCTEs = words.map((_, i) => {
+      const pi = 2 * i + 1; // '%term%'
+      const ci = 2 * i + 2; // '%termNospace%'
+      return `
+        t${i} AS (
+          SELECT b.id FROM beers b WHERE unaccent_immutable(lower(b.name::text)) LIKE $${pi}
+          UNION
+          SELECT b.id FROM beers b WHERE lower(COALESCE(b.style, '')::text) LIKE $${pi}
+          UNION
+          SELECT b.id FROM beers b JOIN breweries br ON b.brewery_id = br.id
+            WHERE unaccent_immutable(lower(br.name::text)) LIKE $${pi}
+          UNION
+          SELECT b.id FROM beers b WHERE regexp_replace(lower(b.name::text), '\\s+', '', 'g') LIKE $${ci}
+          UNION
+          SELECT b.id FROM beers b JOIN breweries br ON b.brewery_id = br.id
+            WHERE regexp_replace(lower(br.name::text), '\\s+', '', 'g') LIKE $${ci}
+        )`;
     });
 
-    // SCORE: per-term contribution → prioritises beer name (4), then brewery (3), then style (1)
+    // INTERSECT enforces AND: candidate must match every term
+    const candidateSQL = words.length > 0
+      ? `candidate_ids AS (${words.map((_, i) => `SELECT id FROM t${i}`).join(' INTERSECT ')})`
+      : `candidate_ids AS (SELECT id FROM beers LIMIT 5000)`;
+
+    // Score: evaluated only on candidate rows (few), so OR/CASE is fine here
     const termScoreExprs = words.map((_, i) => {
       const pi = 2 * i + 1;
       const ci = 2 * i + 2;
       return `(
-        CASE WHEN unaccent_immutable(lower(b.name)) LIKE $${pi} THEN 4 ELSE 0 END
-        + CASE WHEN unaccent_immutable(lower(br.name)) LIKE $${pi}
+        CASE WHEN unaccent_immutable(lower(b.name::text)) LIKE $${pi} THEN 4 ELSE 0 END
+        + CASE WHEN unaccent_immutable(lower(br.name::text)) LIKE $${pi}
                   OR regexp_replace(lower(br.name::text), '\\s+', '', 'g') LIKE $${ci} THEN 3 ELSE 0 END
-        + CASE WHEN lower(COALESCE(b.style, '')) LIKE $${pi} THEN 1 ELSE 0 END
+        + CASE WHEN lower(COALESCE(b.style, '')::text) LIKE $${pi} THEN 1 ELSE 0 END
       )`;
     });
 
     const phraseIdx = 2 * words.length + 1;
     const scoreExpr = words.length > 0
-      ? `(${termScoreExprs.join(' + ')} + CASE WHEN unaccent_immutable(lower(b.name || ' ' || COALESCE(br.name,''))) LIKE $${phraseIdx} THEN 2 ELSE 0 END)`
+      ? `(${termScoreExprs.join(' + ')} + CASE WHEN unaccent_immutable(lower(b.name::text || ' ' || COALESCE(br.name::text, ''))) LIKE $${phraseIdx} THEN 2 ELSE 0 END)`
       : "1";
 
-    const textWhere = words.length > 0
-      ? `AND ${termWhereClauses.join(' AND ')}`
-      : "";
-
-    // Extra SQL filter clauses for optional filters
+    // Extra filter clauses (applied in the final SELECT)
     const extraClauses: string[] = [];
-    let paramIdx = 2 * words.length + 2; // next free param index
+    let paramIdx = 2 * words.length + 2;
 
-    if (filters?.glutenFree) { extraClauses.push(`b.is_gluten_free = true`); }
+    if (filters?.glutenFree)  { extraClauses.push(`b.is_gluten_free = true`); }
     if (filters?.alcoholFree) { extraClauses.push(`b.is_alcohol_free = true`); }
     if (filters?.style) {
       extraClauses.push(`lower(b.style) LIKE $${paramIdx}`);
@@ -736,7 +746,10 @@ export class DatabaseStorage implements IStorage {
 
     const extraWhere = extraClauses.length > 0 ? `AND ${extraClauses.join(" AND ")}` : "";
 
+    const cteList = [...termCTEs, candidateSQL].join(',\n');
+
     const sqlText = `
+      WITH ${cteList}
       SELECT
         b.id, b.name, b.style, b.abv, b.ibu, b.description,
         b.image_url       AS "imageUrl",
@@ -746,10 +759,10 @@ export class DatabaseStorage implements IStorage {
         br.name           AS "breweryName",
         br.logo_url       AS "breweryLogoUrl",
         (${scoreExpr})    AS _score
-      FROM beers b
+      FROM candidate_ids ci
+      JOIN beers b ON b.id = ci.id
       LEFT JOIN breweries br ON b.brewery_id = br.id
       WHERE 1=1
-        ${textWhere}
         ${extraWhere}
       ORDER BY (${scoreExpr}) DESC, length(b.name) ASC, b.name ASC
       LIMIT 50

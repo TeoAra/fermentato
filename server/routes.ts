@@ -680,58 +680,65 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Split into terms; also build a compact version (no spaces/apostrophes) for fuzzy brewery/beer matching
       const searchTerms = queryStr.toLowerCase().split(/\s+/).filter((t: string) => t.length > 0);
 
-      // Each term must match at least one of: beer name, style, or brewery name.
-      // Expressions mirror the GIN indexes exactly so the planner can use them:
-      //   idx_beers_name_unaccent_trgm      → unaccent_immutable(lower(b.name))
-      //   idx_beers_style_lower_trgm        → lower(COALESCE(b.style,''))
-      //   idx_breweries_name_unaccent_trgm  → unaccent_immutable(lower(br.name))
-      //   idx_beers_name_compact_trgm       → regexp_replace(lower(b.name::text),'\s+','','g')
-      //   idx_breweries_name_compact_trgm   → regexp_replace(lower(br.name::text),'\s+','','g')
-      // Patterns are already lowercased so no need to wrap in lower() on the param side.
-      const whereClauses = searchTerms.map((term: string) => {
-        const p = `%${term}%`;
-        const pCompact = `%${term.replace(/[\s\-']/g, '')}%`;
-        return sql`(
-          unaccent_immutable(lower(b.name)) LIKE ${p}
-          OR lower(COALESCE(b.style, '')) LIKE ${p}
-          OR unaccent_immutable(lower(br.name)) LIKE ${p}
-          OR regexp_replace(lower(b.name::text),  E'\\\\s+', '', 'g') LIKE ${pCompact}
-          OR regexp_replace(lower(br.name::text), E'\\\\s+', '', 'g') LIKE ${pCompact}
+      // CTE + INTERSECT approach: each term gets its own CTE that UNIONs
+      // sub-queries each using a single GIN index. INTERSECT enforces AND.
+      // Params: $[2i+1]='%term%', $[2i+2]='%termNospace%', $[2N+1]=fullPhrase
+      const qp: any[] = [];
+      searchTerms.forEach((t: string) => {
+        qp.push(`%${t}%`);
+        qp.push(`%${t.replace(/[\s\-']/g, '')}%`);
+      });
+      const fullPhrase = `%${queryStr.toLowerCase()}%`;
+      qp.push(fullPhrase);
+
+      const termCTEs = searchTerms.map((_, i: number) => {
+        const pi = 2 * i + 1;
+        const ci = 2 * i + 2;
+        return `t${i} AS (
+          SELECT b.id FROM beers b WHERE unaccent_immutable(lower(b.name::text)) LIKE $${pi}
+          UNION
+          SELECT b.id FROM beers b WHERE lower(COALESCE(b.style, '')::text) LIKE $${pi}
+          UNION
+          SELECT b.id FROM beers b JOIN breweries br ON b.brewery_id = br.id
+            WHERE unaccent_immutable(lower(br.name::text)) LIKE $${pi}
+          UNION
+          SELECT b.id FROM beers b WHERE regexp_replace(lower(b.name::text), '\\s+', '', 'g') LIKE $${ci}
+          UNION
+          SELECT b.id FROM beers b JOIN breweries br ON b.brewery_id = br.id
+            WHERE regexp_replace(lower(br.name::text), '\\s+', '', 'g') LIKE $${ci}
         )`;
       });
 
-      // Relevance score: higher = better match.
-      // +4 for each term that matches the beer name (exact substring)
-      // +3 for each term that matches brewery name
-      // +1 for each term that matches style only
-      // Extra +2 if the full query appears in the beer name (phrase match)
-      const scoreExprs = searchTerms.map((term: string) => {
-        const p = `%${term}%`;
-        const pCompact = `%${term.replace(/[\s\-']/g, '')}%`;
-        return sql`
-          (CASE WHEN unaccent_immutable(lower(b.name)) LIKE ${p} THEN 4 ELSE 0 END) +
-          (CASE WHEN unaccent_immutable(lower(br.name)) LIKE ${p}
-                  OR regexp_replace(lower(br.name::text), E'\\\\s+', '', 'g') LIKE ${pCompact} THEN 3 ELSE 0 END) +
-          (CASE WHEN lower(COALESCE(b.style, '')) LIKE ${p} THEN 1 ELSE 0 END)
-        `;
-      });
-      const fullPhrase = `%${queryStr.toLowerCase()}%`;
+      const candidateCTE = `candidate_ids AS (${searchTerms.map((_: string, i: number) => `SELECT id FROM t${i}`).join(' INTERSECT ')})`;
 
-      const results = await db.execute(sql`
+      const scoreExprs = searchTerms.map((_: string, i: number) => {
+        const pi = 2 * i + 1;
+        const ci = 2 * i + 2;
+        return `(
+          CASE WHEN unaccent_immutable(lower(b.name::text)) LIKE $${pi} THEN 4 ELSE 0 END
+          + CASE WHEN unaccent_immutable(lower(br.name::text)) LIKE $${pi}
+                    OR regexp_replace(lower(br.name::text), '\\s+', '', 'g') LIKE $${ci} THEN 3 ELSE 0 END
+          + CASE WHEN lower(COALESCE(b.style, '')::text) LIKE $${pi} THEN 1 ELSE 0 END
+        )`;
+      });
+      const phraseIdx = 2 * searchTerms.length + 1;
+      const scoreExpr = `(${scoreExprs.join(' + ')} + CASE WHEN unaccent_immutable(lower(b.name::text || ' ' || COALESCE(br.name::text, ''))) LIKE $${phraseIdx} THEN 2 ELSE 0 END)`;
+
+      const sqlText = `
+        WITH ${[...termCTEs, candidateCTE].join(',\n')}
         SELECT
           b.id, b.name, b.style, b.abv, b.image_url AS "imageUrl",
           b.is_gluten_free AS "isGlutenFree", b.is_alcohol_free AS "isAlcoholFree",
           b.brewery_id AS "breweryId", br.name AS "breweryName", br.logo_url AS "breweryLogo",
-          (
-            ${sql.join(scoreExprs, sql` + `)}
-            + (CASE WHEN unaccent_immutable(lower(b.name || ' ' || COALESCE(br.name,''))) LIKE ${fullPhrase} THEN 2 ELSE 0 END)
-          ) AS _score
-        FROM beers b
+          (${scoreExpr}) AS _score
+        FROM candidate_ids ci
+        JOIN beers b ON b.id = ci.id
         LEFT JOIN breweries br ON b.brewery_id = br.id
-        WHERE ${sql.join(whereClauses, sql` AND `)}
-        ORDER BY _score DESC, b.name ASC
+        ORDER BY (${scoreExpr}) DESC, b.name ASC
         LIMIT ${limitNum}
-      `);
+      `;
+
+      const results = await pool.query(sqlText, qp);
       res.json(results.rows);
     } catch (error) {
       console.error("Error searching beers:", error);
