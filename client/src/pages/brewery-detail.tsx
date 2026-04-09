@@ -35,6 +35,9 @@ import {
   Mail,
   Phone,
   Settings,
+  Trash2,
+  AlertTriangle,
+  Building2,
 } from "lucide-react";
 import { SiInstagram, SiFacebook, SiTiktok } from "react-icons/si";
 import { EventCategoryBadge, EventInterestButton } from "@/components/events-manager";
@@ -51,12 +54,13 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import ImageWithFallback from "@/components/image-with-fallback";
 import { ImageUpload } from "@/components/image-upload";
 import SuggestChangeDialog from "@/components/SuggestChangeDialog";
 import AddressAutocomplete from "@/components/address-autocomplete";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Textarea } from "@/components/ui/textarea";
 
 function getBeerStyleColor(style: string): { bg: string; text: string } {
   const s = style?.toLowerCase() || '';
@@ -204,6 +208,117 @@ export default function BreweryDetail() {
     };
     updateBreweryMutation.mutate(updates);
   };
+
+  // ── Beer edit state ──────────────────────────────────────────────────────
+  const [isBeerEditOpen, setIsBeerEditOpen] = useState(false);
+  const [editingBeerId, setEditingBeerId] = useState<number | null>(null);
+  const [isSavingBeer, setIsSavingBeer] = useState(false);
+  const [isDeleteBeerOpen, setIsDeleteBeerOpen] = useState(false);
+  const [isDeletingBeer, setIsDeletingBeer] = useState(false);
+  const [beerEditForm, setBeerEditForm] = useState({
+    name: '', style: '', abv: '', ibu: '', color: '', description: '',
+    imageUrl: '', bottleImageUrl: '', logoUrl: '',
+    isGlutenFree: false, isAlcoholFree: false, isCollaboration: false,
+  });
+  const [beerEditCollabBreweries, setBeerEditCollabBreweries] = useState<{ id: number; name: string }[]>([]);
+  const [beerCollabQuery, setBeerCollabQuery] = useState('');
+  const [beerCollabResults, setBeerCollabResults] = useState<any[]>([]);
+  const [showBeerCollabResults, setShowBeerCollabResults] = useState(false);
+  const beerCollabDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const searchBeerCollabBreweries = useCallback((q: string, excludeId: number | undefined, selected: { id: number; name: string }[]) => {
+    if (beerCollabDebounceRef.current) clearTimeout(beerCollabDebounceRef.current);
+    if (!q.trim()) { setBeerCollabResults([]); setShowBeerCollabResults(false); return; }
+    beerCollabDebounceRef.current = setTimeout(async () => {
+      try {
+        const res = await fetch(`/api/breweries/search?q=${encodeURIComponent(q)}&limit=8`);
+        const data = await res.json();
+        const filtered = (Array.isArray(data) ? data : []).filter(
+          (b: any) => b.id !== excludeId && !selected.some((s) => s.id === b.id)
+        );
+        setBeerCollabResults(filtered);
+        setShowBeerCollabResults(filtered.length > 0);
+      } catch { setBeerCollabResults([]); }
+    }, 250);
+  }, []);
+
+  const openBeerEditDialog = useCallback(async (beer: Beer) => {
+    setEditingBeerId(beer.id);
+    setBeerEditForm({
+      name: beer.name || '',
+      style: beer.style || '',
+      abv: (beer as any).abv || '',
+      ibu: (beer as any).ibu ? String((beer as any).ibu) : '',
+      color: (beer as any).color || '',
+      description: (beer as any).description || '',
+      imageUrl: (beer as any).imageUrl || '',
+      bottleImageUrl: (beer as any).bottleImageUrl || '',
+      logoUrl: (beer as any).logoUrl || '',
+      isGlutenFree: !!(beer as any).isGlutenFree,
+      isAlcoholFree: !!(beer as any).isAlcoholFree,
+      isCollaboration: !!(beer as any).isCollaboration,
+    });
+    // Fetch collaboration breweries
+    try {
+      const res = await fetch(`/api/beers/${beer.id}/collaborations`);
+      const collabs = await res.json();
+      setBeerEditCollabBreweries(Array.isArray(collabs) ? collabs.map((b: any) => ({ id: b.id, name: b.name })) : []);
+    } catch { setBeerEditCollabBreweries([]); }
+    setBeerCollabQuery('');
+    setBeerCollabResults([]);
+    setIsBeerEditOpen(true);
+  }, []);
+
+  const handleSaveBeerEdit = async () => {
+    if (!editingBeerId) return;
+    const collabIds = beerEditForm.isCollaboration ? beerEditCollabBreweries.map(b => b.id) : [];
+    const updates: Record<string, any> = {
+      name: beerEditForm.name,
+      style: beerEditForm.style,
+      abv: beerEditForm.abv,
+      description: beerEditForm.description || null,
+      color: beerEditForm.color || null,
+      logoUrl: beerEditForm.logoUrl || null,
+      imageUrl: beerEditForm.imageUrl || null,
+      bottleImageUrl: beerEditForm.bottleImageUrl || null,
+      isGlutenFree: beerEditForm.isGlutenFree,
+      isAlcoholFree: beerEditForm.isAlcoholFree,
+      collaborationBreweryIds: collabIds,
+      isCollaboration: beerEditForm.isCollaboration,
+    };
+    if (beerEditForm.ibu) updates.ibu = parseInt(beerEditForm.ibu);
+    setIsSavingBeer(true);
+    try {
+      const endpoint = isAdmin ? `/api/admin/beers/${editingBeerId}` : `/api/brewery/beers/${editingBeerId}`;
+      await apiRequest(endpoint, { method: 'PATCH' }, updates);
+      queryClient.invalidateQueries({ queryKey: ["/api/breweries", id, "beers"] });
+      setIsBeerEditOpen(false);
+      toast({ title: "Birra aggiornata" });
+    } catch (err: any) {
+      toast({ title: "Errore nell'aggiornamento", description: err?.message, variant: "destructive" });
+    } finally {
+      setIsSavingBeer(false);
+    }
+  };
+
+  const handleDeleteBeer = async () => {
+    if (!editingBeerId) return;
+    setIsDeletingBeer(true);
+    try {
+      const endpoint = isAdmin ? `/api/admin/beers/${editingBeerId}` : `/api/brewery/beers/${editingBeerId}`;
+      await apiRequest(endpoint, { method: 'DELETE' });
+      queryClient.invalidateQueries({ queryKey: ["/api/breweries", id, "beers"] });
+      setIsDeleteBeerOpen(false);
+      setIsBeerEditOpen(false);
+      toast({ title: "Birra eliminata" });
+    } catch (err: any) {
+      toast({ title: "Errore nell'eliminazione", description: err?.message, variant: "destructive" });
+    } finally {
+      setIsDeletingBeer(false);
+    }
+  };
+
+  const canEditBeers = isAdmin || !!(user as any)?.breweryId;
 
   const { data: beers = [], isLoading: beersLoading } = useQuery<Beer[]>({
     queryKey: ["/api/breweries", id, "beers"],
@@ -705,6 +820,16 @@ export default function BreweryDetail() {
                                   </div>
                                 </div>
                                 
+                                <div className="flex items-center gap-1">
+                                {canEditBeers && (
+                                  <button
+                                    onClick={e => { e.preventDefault(); e.stopPropagation(); openBeerEditDialog(beer); }}
+                                    className="h-8 w-8 flex items-center justify-center rounded-xl transition-all opacity-0 group-hover:opacity-100 hover:bg-primary/10"
+                                    title="Modifica birra"
+                                  >
+                                    <Pencil className="h-3.5 w-3.5 text-primary" />
+                                  </button>
+                                )}
                                 <button
                                   onClick={e => {
                                     e.preventDefault();
@@ -716,6 +841,7 @@ export default function BreweryDetail() {
                                 >
                                   <Heart className={`h-4 w-4 ${isBeerFavorited(beer.id) ? 'fill-primary text-primary' : 'text-muted-foreground'}`} />
                                 </button>
+                              </div>
                               </div>
                             </Link>
                           ))}
@@ -1089,6 +1215,235 @@ export default function BreweryDetail() {
           }}
         />
       )}
+
+      {/* Beer Edit Dialog */}
+      <Dialog open={isBeerEditOpen} onOpenChange={setIsBeerEditOpen}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <div className="flex items-center justify-between">
+              <DialogTitle className="flex items-center gap-2">
+                <Pencil className="h-5 w-5" />
+                Modifica Birra
+              </DialogTitle>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="text-red-500 hover:bg-red-50 hover:text-red-600 rounded-xl"
+                onClick={() => setIsDeleteBeerOpen(true)}
+              >
+                <Trash2 className="h-4 w-4 mr-1.5" />
+                Elimina
+              </Button>
+            </div>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="bedit-name">Nome</Label>
+                <Input
+                  id="bedit-name"
+                  value={beerEditForm.name}
+                  onChange={e => setBeerEditForm({ ...beerEditForm, name: e.target.value })}
+                  placeholder="Nome della birra"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="bedit-style">Stile</Label>
+                <Input
+                  id="bedit-style"
+                  value={beerEditForm.style}
+                  onChange={e => setBeerEditForm({ ...beerEditForm, style: e.target.value })}
+                  placeholder="Es. IPA, Lager, Stout..."
+                />
+              </div>
+            </div>
+            <div className="grid grid-cols-3 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="bedit-abv">ABV (%)</Label>
+                <Input
+                  id="bedit-abv"
+                  value={beerEditForm.abv}
+                  onChange={e => setBeerEditForm({ ...beerEditForm, abv: e.target.value })}
+                  placeholder="5.5"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="bedit-ibu">IBU</Label>
+                <Input
+                  id="bedit-ibu"
+                  type="number"
+                  value={beerEditForm.ibu}
+                  onChange={e => setBeerEditForm({ ...beerEditForm, ibu: e.target.value })}
+                  placeholder="40"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="bedit-color">Colore</Label>
+                <Input
+                  id="bedit-color"
+                  value={beerEditForm.color}
+                  onChange={e => setBeerEditForm({ ...beerEditForm, color: e.target.value })}
+                  placeholder="Ambrato, Scuro..."
+                />
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="bedit-desc">Descrizione</Label>
+              <Textarea
+                id="bedit-desc"
+                value={beerEditForm.description}
+                onChange={e => setBeerEditForm({ ...beerEditForm, description: e.target.value })}
+                placeholder="Descrizione della birra..."
+                rows={4}
+              />
+            </div>
+            <div className="flex items-center gap-6 flex-wrap">
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={beerEditForm.isGlutenFree}
+                  onChange={e => setBeerEditForm({ ...beerEditForm, isGlutenFree: e.target.checked })}
+                  className="w-4 h-4 rounded border-gray-300 text-green-600 focus:ring-green-500"
+                />
+                <span className="text-sm font-medium text-green-700 dark:text-green-400">Gluten Free</span>
+              </label>
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={beerEditForm.isAlcoholFree}
+                  onChange={e => setBeerEditForm({ ...beerEditForm, isAlcoholFree: e.target.checked })}
+                  className="w-4 h-4 rounded border-stone-100 text-primary focus:ring-primary"
+                />
+                <span className="text-sm font-bold text-primary">0.0% Analcolica</span>
+              </label>
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={beerEditForm.isCollaboration}
+                  onChange={e => { setBeerEditForm({ ...beerEditForm, isCollaboration: e.target.checked }); if (!e.target.checked) setBeerEditCollabBreweries([]); }}
+                  className="w-4 h-4 rounded border-stone-100 text-primary focus:ring-primary"
+                />
+                <span className="text-sm font-bold text-primary flex items-center gap-1">
+                  <Users className="w-3.5 h-3.5" />Birra in Collaborazione
+                </span>
+              </label>
+            </div>
+            {beerEditForm.isCollaboration && (
+              <div className="space-y-2 p-3 rounded-lg border border-stone-200 bg-stone-50 dark:bg-[hsl(24,93%,15%)]">
+                <Label className="text-primary font-bold flex items-center gap-1.5">
+                  <Building2 className="w-4 h-4" />Birrifici Partner
+                </Label>
+                {beerEditCollabBreweries.length > 0 && (
+                  <div className="flex flex-wrap gap-2">
+                    {beerEditCollabBreweries.map(b => (
+                      <span key={b.id} className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-sm font-bold bg-white dark:bg-card border border-stone-100 dark:border-stone-700/30 text-primary">
+                        <Building2 className="w-3 h-3" />{b.name}
+                        <button type="button" onClick={() => setBeerEditCollabBreweries(beerEditCollabBreweries.filter(x => x.id !== b.id))} className="ml-0.5 hover:text-primary/80">×</button>
+                      </span>
+                    ))}
+                  </div>
+                )}
+                <div className="relative">
+                  <Input
+                    value={beerCollabQuery}
+                    onChange={e => { setBeerCollabQuery(e.target.value); searchBeerCollabBreweries(e.target.value, brewery?.id, beerEditCollabBreweries); }}
+                    onBlur={() => setTimeout(() => setShowBeerCollabResults(false), 200)}
+                    placeholder="Cerca birrificio partner..."
+                    autoComplete="off"
+                  />
+                  {showBeerCollabResults && beerCollabResults.length > 0 && (
+                    <div className="absolute z-50 w-full mt-1 bg-white dark:bg-card border border-stone-100 rounded-md shadow-xl max-h-40 overflow-y-auto">
+                      {beerCollabResults.map((b: any) => (
+                        <button key={b.id} type="button"
+                          onMouseDown={e => { e.preventDefault(); setBeerEditCollabBreweries([...beerEditCollabBreweries, { id: b.id, name: b.name }]); setBeerCollabQuery(''); setBeerCollabResults([]); setShowBeerCollabResults(false); }}
+                          className="w-full px-3 py-2 text-left hover:bg-stone-50 dark:hover:bg-stone-900/20 border-b last:border-b-0 flex items-center gap-2 text-sm text-foreground">
+                          {b.logoUrl ? <img src={b.logoUrl} alt="" className="w-5 h-5 rounded-full object-cover" /> : <Building2 className="w-4 h-4 text-primary" />}
+                          <span>{b.name}</span>
+                          <span className="text-xs text-muted-foreground ml-auto">{b.location}</span>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+            {/* Images */}
+            <div className="space-y-3 border-t border-stone-100 dark:border-stone-700/20 pt-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <ImageUpload
+                  label="Immagine Birra"
+                  description="Immagine principale (etichetta)"
+                  currentImageUrl={beerEditForm.imageUrl || undefined}
+                  onImageChange={url => setBeerEditForm(f => ({ ...f, imageUrl: url ?? '' }))}
+                  folder="beer-images"
+                  aspectRatio="square"
+                  maxSize={5}
+                  recommendedDimensions="400x400px"
+                />
+                <ImageUpload
+                  label="Immagine Bottiglia"
+                  description="Foto della bottiglia"
+                  currentImageUrl={beerEditForm.bottleImageUrl || undefined}
+                  onImageChange={url => setBeerEditForm(f => ({ ...f, bottleImageUrl: url ?? '' }))}
+                  folder="beer-bottles"
+                  aspectRatio="portrait"
+                  maxSize={5}
+                  recommendedDimensions="300x450px"
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-xs text-muted-foreground">URL Logo birra (opzionale)</Label>
+                <Input
+                  value={beerEditForm.logoUrl}
+                  onChange={e => setBeerEditForm(f => ({ ...f, logoUrl: e.target.value }))}
+                  placeholder="https://..."
+                />
+              </div>
+            </div>
+            <div className="flex justify-end gap-2 pt-2 border-t border-stone-100 dark:border-stone-700/20">
+              <Button variant="outline" className="rounded-xl" onClick={() => setIsBeerEditOpen(false)}>
+                <X className="h-4 w-4 mr-1.5" />Annulla
+              </Button>
+              <Button
+                className="bg-primary hover:bg-primary/90 text-white rounded-xl font-semibold"
+                onClick={handleSaveBeerEdit}
+                disabled={isSavingBeer}
+              >
+                <Save className="h-4 w-4 mr-1.5" />
+                {isSavingBeer ? 'Salvataggio...' : 'Salva'}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Confirm Delete Beer Dialog */}
+      <Dialog open={isDeleteBeerOpen} onOpenChange={setIsDeleteBeerOpen}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-red-600">
+              <AlertTriangle className="h-5 w-5" />
+              Elimina Birra
+            </DialogTitle>
+          </DialogHeader>
+          <p className="text-sm text-muted-foreground py-2">
+            Sei sicuro di voler eliminare questa birra? L'operazione non può essere annullata.
+          </p>
+          <div className="flex justify-end gap-2 pt-2">
+            <Button variant="outline" className="rounded-xl" onClick={() => setIsDeleteBeerOpen(false)}>
+              Annulla
+            </Button>
+            <Button
+              className="bg-red-600 hover:bg-red-700 text-white rounded-xl"
+              onClick={handleDeleteBeer}
+              disabled={isDeletingBeer}
+            >
+              <Trash2 className="h-4 w-4 mr-1.5" />
+              {isDeletingBeer ? 'Eliminazione...' : 'Elimina'}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       <Footer />
     </div>
