@@ -539,7 +539,7 @@ export default function BeerDetail() {
     if (!id || isSearchingImage) return;
     setIsSearchingImage(true);
     try {
-      await apiRequest("POST", `/api/beers/${id}/find-web-image`, { force: false });
+      await apiRequest("POST", `/api/beers/${id}/find-web-image`, { force: true });
       // Poll for image after ~15s (finder is fire-and-forget)
       setTimeout(() => {
         queryClient.invalidateQueries({ queryKey: ["/api/beers", id] });
@@ -687,13 +687,17 @@ export default function BeerDetail() {
                   )}
                 </div>
               </button>
-              {!beer?.imageUrl && !beer?.bottleImageUrl && isAuthenticated && (
+              {isAuthenticated && ((!beer?.imageUrl && !beer?.bottleImageUrl) || isAdmin) && (
                 <button
                   onClick={handleFindWebImage}
                   disabled={isSearchingImage}
                   className="text-[10px] text-primary font-medium leading-none disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  {isSearchingImage ? "Cerco…" : "Cerca immagine"}
+                  {isSearchingImage
+                    ? "Cerco…"
+                    : (beer?.imageUrl || beer?.bottleImageUrl)
+                      ? "Re-cerca immagine"
+                      : "Cerca immagine"}
                 </button>
               )}
             </div>

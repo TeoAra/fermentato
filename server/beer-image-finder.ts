@@ -2,11 +2,12 @@
  * Beer Image Finder — finds the best web image for a beer after scan confirmation.
  *
  * Strategy (in order):
- *  1. Gemini + Google Search grounding → top Google result pages → og:image
- *  2. Brewery website og:image (official product photo)
- *  3. DuckDuckGo image search (free, no API key, fallback)
- *  4. Gemini Vision picks the best match from all candidates
- *  5. Upload winner to Cloudinary + update beers.image_url
+ *  1. Brewery website — scrape beer product page og:image
+ *  2. Ratebeer — search for the beer, grab og:image (usually a medallion)
+ *  3. Gemini + Google Search grounding → top Google result pages → og:image
+ *  4. DuckDuckGo image search (multiple targeted queries, prefers square/medallion)
+ *  5. Gemini Vision picks the best match from all candidates
+ *  6. Upload winner to Cloudinary + update beers.image_url
  *
  * The function is fire-and-forget: call without await in confirmation handler.
  */
@@ -17,66 +18,7 @@ import { pool } from "./db";
 const GEMINI_API_KEY = () => process.env.GEMINI_API_KEY ?? "";
 const GEMINI_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent";
 
-// ─── 1. Google Search via Gemini grounding ────────────────────────────────────
-// Uses the google_search tool included in Gemini — no extra API key needed.
-// Returns the top Google result page URLs for the query.
-
-async function googleViaGeminiGrounding(beerName: string, breweryName: string): Promise<string[]> {
-  const key = GEMINI_API_KEY();
-  if (!key) return [];
-
-  const query = `${beerName} ${breweryName} birra artigianale medaglione etichetta`;
-
-  try {
-    const res = await fetch(`${GEMINI_URL}?key=${key}`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        contents: [{ parts: [{ text: `Cerca immagini del medaglione o etichetta rotonda della birra: ${query}` }] }],
-        tools: [{ google_search: {} }],
-        generationConfig: { temperature: 0, maxOutputTokens: 64 },
-      }),
-      signal: AbortSignal.timeout(20000),
-    });
-    if (!res.ok) return [];
-    const data: any = await res.json();
-
-    // Grounding metadata contains the actual Google result page URLs
-    const chunks: any[] = data?.candidates?.[0]?.groundingMetadata?.groundingChunks ?? [];
-    const urls = chunks
-      .map((c: any) => c.web?.uri)
-      .filter((u: any) => typeof u === "string" && u.startsWith("http") && !u.includes("google.com"));
-
-    console.log(`[beer-img] google grounding found ${urls.length} pages for "${beerName}"`);
-    return urls.slice(0, 6);
-  } catch (e: any) {
-    console.warn(`[beer-img] gemini grounding error: ${e?.message?.substring(0, 60)}`);
-    return [];
-  }
-}
-
-// ─── Extract og:image from a list of page URLs ────────────────────────────────
-
-async function extractOgImages(pageUrls: string[]): Promise<string[]> {
-  const images: string[] = [];
-  await Promise.allSettled(pageUrls.map(async (url) => {
-    try {
-      const res = await fetch(url, {
-        headers: { "User-Agent": "Mozilla/5.0 (compatible; Fermentato-Bot/1.0; +https://fermenta.to)" },
-        signal: AbortSignal.timeout(7000),
-      });
-      if (!res.ok) return;
-      const html = await res.text();
-      const ogImg =
-        html.match(/<meta[^>]+property=["']og:image["'][^>]+content=["']([^"']+)["']/i)?.[1] ??
-        html.match(/<meta[^>]+content=["']([^"']+)["'][^>]+property=["']og:image["']/i)?.[1];
-      if (ogImg && ogImg.startsWith("http")) images.push(ogImg);
-    } catch { /* skip */ }
-  }));
-  return images;
-}
-
-// ─── 2. Brewery website og:image ─────────────────────────────────────────────
+// ─── 1. Brewery website og:image ─────────────────────────────────────────────
 
 async function fetchBreweryOgImage(websiteUrl: string, beerName: string): Promise<string | null> {
   if (!websiteUrl?.startsWith("http")) return null;
@@ -96,6 +38,8 @@ async function fetchBreweryOgImage(websiteUrl: string, beerName: string): Promis
     `${base}/prodotti`,
     `${base}/birre/${slug}`,
     `${base}/beer/${slug}`,
+    `${base}/bières`,
+    `${base}/bieres`,
   ];
 
   for (const url of urlsToTry) {
@@ -153,9 +97,110 @@ async function fetchBreweryOgImage(websiteUrl: string, beerName: string): Promis
   return null;
 }
 
-// ─── 3. DuckDuckGo image search ──────────────────────────────────────────────
+// ─── 2. Ratebeer — og:image on the beer page is almost always the medallion ──
 
-// DuckDuckGo image result: `image` is the direct image URL, `url` is the source page
+async function fetchRatebeerImage(beerName: string, breweryName: string): Promise<string | null> {
+  try {
+    const q = encodeURIComponent(`${beerName} ${breweryName}`);
+    const searchUrl = `https://www.ratebeer.com/search?beername=${q}`;
+    const res = await fetch(searchUrl, {
+      headers: {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+        "Accept": "text/html,application/xhtml+xml",
+        "Accept-Language": "en-US,en;q=0.9",
+      },
+      signal: AbortSignal.timeout(10000),
+    });
+    if (!res.ok) return null;
+    const html = await res.text();
+
+    // Find first beer result link — /beer/<name>/<id>/
+    const beerLinkMatch = html.match(/href="(\/beer\/[^"]+\/\d+\/?)"/);
+    if (!beerLinkMatch) return null;
+
+    const beerPage = await fetch(`https://www.ratebeer.com${beerLinkMatch[1]}`, {
+      headers: {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+        "Accept": "text/html",
+      },
+      signal: AbortSignal.timeout(10000),
+    });
+    if (!beerPage.ok) return null;
+    const beerHtml = await beerPage.text();
+
+    const ogImage =
+      beerHtml.match(/<meta[^>]+property=["']og:image["'][^>]+content=["']([^"']+)["']/i)?.[1] ??
+      beerHtml.match(/<meta[^>]+content=["']([^"']+)["'][^>]+property=["']og:image["']/i)?.[1];
+
+    if (ogImage && ogImage.startsWith("http") && !ogImage.includes("ratebeer-assets")) {
+      console.log(`[beer-img] ratebeer image found for "${beerName}"`);
+      return ogImage;
+    }
+    return null;
+  } catch (e: any) {
+    console.warn(`[beer-img] ratebeer scrape failed: ${e?.message?.substring(0, 60)}`);
+    return null;
+  }
+}
+
+// ─── 3. Google Search via Gemini grounding ────────────────────────────────────
+
+async function googleViaGeminiGrounding(beerName: string, breweryName: string): Promise<string[]> {
+  const key = GEMINI_API_KEY();
+  if (!key) return [];
+
+  const query = `"${beerName}" "${breweryName}" birra medaglione logo etichetta label`;
+
+  try {
+    const res = await fetch(`${GEMINI_URL}?key=${key}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        contents: [{ parts: [{ text: `Cerca l'immagine ufficiale del medaglione o etichetta della birra: ${query}. Cerca sul sito ufficiale del birrificio o su ratebeer.com, untappd.com, beeradvocate.com` }] }],
+        tools: [{ google_search: {} }],
+        generationConfig: { temperature: 0, maxOutputTokens: 64 },
+      }),
+      signal: AbortSignal.timeout(20000),
+    });
+    if (!res.ok) return [];
+    const data: any = await res.json();
+
+    const chunks: any[] = data?.candidates?.[0]?.groundingMetadata?.groundingChunks ?? [];
+    const urls = chunks
+      .map((c: any) => c.web?.uri)
+      .filter((u: any) => typeof u === "string" && u.startsWith("http") && !u.includes("google.com"));
+
+    console.log(`[beer-img] google grounding found ${urls.length} pages for "${beerName}"`);
+    return urls.slice(0, 6);
+  } catch (e: any) {
+    console.warn(`[beer-img] gemini grounding error: ${e?.message?.substring(0, 60)}`);
+    return [];
+  }
+}
+
+// ─── Extract og:image from a list of page URLs ────────────────────────────────
+
+async function extractOgImages(pageUrls: string[]): Promise<string[]> {
+  const images: string[] = [];
+  await Promise.allSettled(pageUrls.map(async (url) => {
+    try {
+      const res = await fetch(url, {
+        headers: { "User-Agent": "Mozilla/5.0 (compatible; Fermentato-Bot/1.0; +https://fermenta.to)" },
+        signal: AbortSignal.timeout(7000),
+      });
+      if (!res.ok) return;
+      const html = await res.text();
+      const ogImg =
+        html.match(/<meta[^>]+property=["']og:image["'][^>]+content=["']([^"']+)["']/i)?.[1] ??
+        html.match(/<meta[^>]+content=["']([^"']+)["'][^>]+property=["']og:image["']/i)?.[1];
+      if (ogImg && ogImg.startsWith("http")) images.push(ogImg);
+    } catch { /* skip */ }
+  }));
+  return images;
+}
+
+// ─── 4. DuckDuckGo image search ──────────────────────────────────────────────
+
 interface DdgImage { image: string; url: string; width: number; height: number; }
 
 async function ddgSearchImages(query: string, limit = 8): Promise<DdgImage[]> {
@@ -179,7 +224,30 @@ async function ddgSearchImages(query: string, limit = 8): Promise<DdgImage[]> {
   } catch { return []; }
 }
 
-// ─── 4. Gemini image picker ───────────────────────────────────────────────────
+/** Score a DDG image by how likely it is to be a medallion/label (not a glass). */
+function scoreDdgImage(img: DdgImage): number {
+  let score = 0;
+  const url = img.url.toLowerCase();
+  // Square-ish images are likely medallions or product shots (not lifestyle)
+  const ratio = img.width > 0 && img.height > 0 ? img.width / img.height : 1;
+  if (ratio >= 0.8 && ratio <= 1.25) score += 3;   // square/near-square → medallion
+  else if (ratio >= 0.6 && ratio <= 1.5) score += 1; // portrait/slight landscape → label
+  // Good image size
+  if (img.width >= 400 && img.height >= 400) score += 2;
+  else if (img.width >= 300 && img.height >= 300) score += 1;
+  // Trusted domains for beer imagery
+  if (url.includes("ratebeer.com")) score += 4;
+  if (url.includes("untappd.com") || url.includes("untappd-assets.com")) score += 4;
+  if (url.includes("beeradvocate.com")) score += 3;
+  if (url.includes("beerpulse.com")) score += 2;
+  if (url.includes("wp-content/uploads") || url.includes("cdn.")) score += 1;
+  // Penalise likely lifestyle/glass images
+  if (url.includes("glass") || url.includes("bicchiere") || url.includes("poured") ||
+      url.includes("lifestyle") || url.includes("drinking") || url.includes("draft")) score -= 5;
+  return score;
+}
+
+// ─── 5. Gemini image picker ───────────────────────────────────────────────────
 
 async function geminiPickBestImage(beerName: string, breweryName: string, candidates: string[]): Promise<string | null> {
   const key = GEMINI_API_KEY();
@@ -187,15 +255,20 @@ async function geminiPickBestImage(beerName: string, breweryName: string, candid
   if (candidates.length === 1) return candidates[0];
 
   try {
-    const prompt = `You are selecting the best product image for an Italian craft beer.
+    const prompt = `You are selecting the best product image for a craft beer to display in an app.
 
 Beer: "${beerName}" by "${breweryName}"
 
-Analyze these ${candidates.length} image URLs and pick the best one following this priority order:
-1. BEST: Round tap badge / medallion (medaglione) — the circular label used for draft beer taps
-2. GOOD: Official label artwork (etichetta) — the rectangular or shaped label from a bottle/can
-3. OK: Clear bottle or can product photo with visible label
-4. AVOID: Logos without label art, generic beer photos, photos with people, social media posts
+PRIORITY ORDER (choose the highest available):
+1. BEST: Round tap badge / medallion (medaglione) — circular logo used on tap handles or labels
+2. BEST: Official product label artwork (etichetta) — the label art from bottle/can, usually square or portrait
+3. OK: Clear bottle or can product photo where the label is clearly visible and fills most of the frame
+4. REJECT: Beer poured in a glass or mug — DO NOT choose these
+5. REJECT: Lifestyle photos, people holding beer, pub/bar scenes
+6. REJECT: Generic brand logos without label art
+7. REJECT: Low quality, blurry, or very small images
+
+Important: images from ratebeer.com, untappd.com or the brewery's own website are usually good.
 
 Return ONLY the 0-based index of the best image, or -1 if none are suitable. No explanation.
 
@@ -220,7 +293,7 @@ ${candidates.map((u, i) => `${i}: ${u}`).join("\n")}`;
   } catch { return candidates[0]; }
 }
 
-// ─── 5. Cloudinary upload ────────────────────────────────────────────────────
+// ─── 6. Cloudinary upload ────────────────────────────────────────────────────
 
 async function uploadBestImage(imageUrl: string, beerId: number): Promise<string | null> {
   try {
@@ -238,7 +311,6 @@ async function uploadBestImage(imageUrl: string, beerId: number): Promise<string
 }
 
 // ─── Detect placeholder/generic images that should be replaced ───────────────
-// These are stock photo URLs inserted in bulk — not real beer imagery.
 const PLACEHOLDER_DOMAINS = ["unsplash.com", "images.unsplash.com", "plus.unsplash.com"];
 
 export function isPlaceholderImage(url: string | null | undefined): boolean {
@@ -247,7 +319,6 @@ export function isPlaceholderImage(url: string | null | undefined): boolean {
 }
 
 // ─── Validate that a URL actually points to an image ─────────────────────────
-// Checks extension first (fast), then does a HEAD request for ambiguous URLs.
 
 function hasImageExtension(url: string): boolean {
   const clean = url.split("?")[0].split("#")[0].toLowerCase();
@@ -268,9 +339,7 @@ const IMAGE_CDN_PATTERNS = [
 
 async function isImageUrl(url: string): Promise<boolean> {
   if (hasImageExtension(url)) return true;
-  // Check CDN patterns (likely image even without extension)
   if (IMAGE_CDN_PATTERNS.some(p => p.test(url))) return true;
-  // HEAD request to confirm content-type (for og:images without extension)
   try {
     const r = await fetch(url, {
       method: "HEAD",
@@ -310,14 +379,33 @@ export async function findAndUpdateBeerImage(
     console.log(`[beer-img] searching image for "${beerName}" by "${breweryName}" (id=${beerId})`);
     const candidates: string[] = [];
 
-    // ── Run all 3 sources in parallel ────────────────────────────────────────
-    const [googlePages, breweryOg, ddgResults] = await Promise.all([
-      googleViaGeminiGrounding(beerName, breweryName),
+    // ── Run all sources in parallel ─────────────────────────────────────────
+    const [breweryOg, ratebeerImg, googlePages, ddgMedaglione, ddgLabel] = await Promise.all([
       fetchBreweryOgImage(breweryWebsite ?? "", beerName),
-      ddgSearchImages(`${beerName} ${breweryName} birra medaglione etichetta rotonda`, 10),
+      fetchRatebeerImage(beerName, breweryName),
+      googleViaGeminiGrounding(beerName, breweryName),
+      // Two targeted DDG queries: medallion first, then label
+      ddgSearchImages(`"${beerName}" "${breweryName}" beer label logo medaglione`, 10),
+      ddgSearchImages(`"${beerName}" "${breweryName}" birra etichetta badge`, 6),
     ]);
 
-    // Extract og:images from Google result pages (best quality source)
+    // Priority 1: brewery official website (highest trust)
+    if (breweryOg && breweryOg.startsWith("http")) {
+      if (await isImageUrl(breweryOg)) {
+        candidates.push(breweryOg);
+        console.log(`[beer-img] brewery site candidate: ${breweryOg.substring(0, 60)}`);
+      }
+    }
+
+    // Priority 2: Ratebeer (almost always a medallion)
+    if (ratebeerImg && ratebeerImg.startsWith("http") && !candidates.includes(ratebeerImg)) {
+      if (await isImageUrl(ratebeerImg)) {
+        candidates.unshift(ratebeerImg); // put at front — very reliable
+        console.log(`[beer-img] ratebeer candidate: ${ratebeerImg.substring(0, 60)}`);
+      }
+    }
+
+    // Priority 3: Google grounding → extract og:images
     const googleImages = await extractOgImages(googlePages);
     const googleChecks = await Promise.all(
       googleImages
@@ -328,19 +416,17 @@ export async function findAndUpdateBeerImage(
       if (ok) candidates.push(img);
     }
 
-    // Brewery website og:image — validate it's actually an image URL
-    if (breweryOg && breweryOg.startsWith("http") && !candidates.includes(breweryOg)) {
-      if (await isImageUrl(breweryOg)) {
-        candidates.unshift(breweryOg); // highest priority — official source
-      }
-    }
+    // Priority 4: DuckDuckGo — scored and sorted to prefer square/medallion images
+    const allDdg = [...ddgMedaglione, ...ddgLabel];
+    const scoredDdg = allDdg
+      .filter(r => r.image?.startsWith("http") && !candidates.includes(r.image))
+      .map(r => ({ r, score: scoreDdgImage(r) }))
+      .filter(({ score }) => score >= 0) // reject clearly bad images
+      .sort((a, b) => b.score - a.score);
 
-    // DuckDuckGo images — use r.image (direct image URL), not r.url (source page)
-    for (const r of ddgResults) {
-      if (r.image?.startsWith("http") && r.width >= 300 && r.height >= 300 && !candidates.includes(r.image)) {
-        candidates.push(r.image);
-        if (candidates.length >= 8) break;
-      }
+    for (const { r } of scoredDdg) {
+      if (candidates.length >= 8) break;
+      candidates.push(r.image);
     }
 
     if (candidates.length === 0) {
@@ -350,17 +436,14 @@ export async function findAndUpdateBeerImage(
 
     console.log(`[beer-img] ${candidates.length} candidates for beer ${beerId}, asking Gemini to pick best`);
 
-    // Gemini picks the best from all candidates
-    const bestUrl = await geminiPickBestImage(beerName, breweryName, candidates.slice(0, 6));
+    const bestUrl = await geminiPickBestImage(beerName, breweryName, candidates.slice(0, 8));
     if (!bestUrl) return;
 
     console.log(`[beer-img] best for beer ${beerId}: ${bestUrl.substring(0, 80)}`);
 
-    // Upload to Cloudinary
     const cloudUrl = await uploadBestImage(bestUrl, beerId);
     if (!cloudUrl) return;
 
-    // Update beer record
     await pool.query("UPDATE beers SET image_url = $1 WHERE id = $2", [cloudUrl, beerId]);
     console.log(`[beer-img] ✓ beer ${beerId} image updated: ${cloudUrl.substring(0, 80)}`);
   } catch (e: any) {
