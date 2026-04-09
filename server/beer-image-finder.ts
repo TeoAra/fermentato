@@ -321,30 +321,120 @@ function scoreDdgImage(img: DdgImage): number {
   return score;
 }
 
-// ─── 5. Gemini image picker ───────────────────────────────────────────────────
+// ─── 5. Gemini image picker (Vision) ─────────────────────────────────────────
 
-async function geminiPickBestImage(beerName: string, breweryName: string, candidates: string[]): Promise<string | null> {
+/** Fetch an image URL and return { mimeType, base64 } — null on failure. */
+async function fetchImageBase64(
+  url: string
+): Promise<{ mimeType: string; data: string } | null> {
+  try {
+    const res = await fetch(url, {
+      headers: { "User-Agent": "Mozilla/5.0" },
+      signal: AbortSignal.timeout(8000),
+    });
+    if (!res.ok) return null;
+    const ct = res.headers.get("content-type") ?? "image/jpeg";
+    const mimeType = ct.split(";")[0].trim();
+    if (!mimeType.startsWith("image/")) return null;
+    const buf = await res.arrayBuffer();
+    if (buf.byteLength > 3_000_000) return null; // skip >3 MB
+    return { mimeType, data: Buffer.from(buf).toString("base64") };
+  } catch { return null; }
+}
+
+/**
+ * Use Gemini Vision to pick the best candidate image.
+ * Downloads up to 4 candidates and asks Gemini to visually identify the correct beer.
+ * Falls back to URL-only picking if images can't be fetched.
+ */
+async function geminiPickBestImage(
+  beerName: string,
+  breweryName: string,
+  candidates: string[]
+): Promise<string | null> {
   const key = GEMINI_API_KEY();
   if (!key || candidates.length === 0) return candidates[0] ?? null;
   if (candidates.length === 1) return candidates[0];
 
+  // ── Try vision-based picking first (top 4 candidates) ───────────────────
+  const topCandidates = candidates.slice(0, 4);
+  const fetchResults = await Promise.all(topCandidates.map(fetchImageBase64));
+  const visionParts: Array<{ url: string; part: { inlineData: { mimeType: string; data: string } }; originalIdx: number }> = [];
+
+  for (let i = 0; i < topCandidates.length; i++) {
+    const img = fetchResults[i];
+    if (img) visionParts.push({ url: topCandidates[i], part: { inlineData: img }, originalIdx: i });
+  }
+
+  if (visionParts.length >= 2) {
+    try {
+      const visionPrompt = `You are selecting the correct product image for a specific craft beer.
+
+Beer name: "${beerName}"
+Brewery: "${breweryName}"
+
+Below are ${visionParts.length} images (labeled 0 to ${visionParts.length - 1}).
+
+Your task:
+1. FIRST check which image(s) actually show the beer named "${beerName}" — look for the beer name on the label, can, or bottle.
+2. If multiple show the correct beer, prefer: round medallion/badge > label art > bottle/can photo.
+3. REJECT any image that shows a DIFFERENT beer, a beer poured in a glass, lifestyle photos, or a generic brewery logo without beer name.
+4. If NONE show the correct beer "${beerName}", return -1.
+
+Return ONLY the image number (0-based index), or -1 if none match. No explanation.`;
+
+      const parts: any[] = [{ text: visionPrompt }];
+      for (const { part } of visionParts) {
+        parts.push(part);
+      }
+
+      const res = await fetch(`${GEMINI_URL}?key=${key}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          contents: [{ parts }],
+          generationConfig: { temperature: 0, maxOutputTokens: 8 },
+        }),
+        signal: AbortSignal.timeout(20000),
+      });
+
+      if (res.ok) {
+        const data: any = await res.json();
+        const raw = data?.candidates?.[0]?.content?.parts?.[0]?.text?.trim() ?? "";
+        const idx = parseInt(raw);
+        if (!isNaN(idx) && idx >= 0 && idx < visionParts.length) {
+          const chosen = visionParts[idx].url;
+          console.log(`[beer-img] gemini vision picked index ${idx}: ${chosen.substring(0, 60)}`);
+          return chosen;
+        }
+        if (raw === "-1") {
+          console.log(`[beer-img] gemini vision: none of the ${visionParts.length} top candidates match "${beerName}" — checking remaining`);
+          // Check remaining candidates with URL-only fallback
+          const remaining = candidates.slice(4);
+          if (remaining.length > 0) return remaining[0];
+          return null;
+        }
+      }
+    } catch (e: any) {
+      console.warn(`[beer-img] gemini vision failed: ${e?.message?.substring(0, 60)} — falling back to URL picking`);
+    }
+  }
+
+  // ── Fallback: URL-only picking ───────────────────────────────────────────
   try {
     const prompt = `You are selecting the best product image for a craft beer to display in an app.
 
 Beer: "${beerName}" by "${breweryName}"
 
-PRIORITY ORDER (choose the highest available):
-1. BEST: Round tap badge / medallion (medaglione) — circular logo used on tap handles or labels
-2. BEST: Official product label artwork (etichetta) — the label art from bottle/can, usually square or portrait
-3. OK: Clear bottle or can product photo where the label is clearly visible and fills most of the frame
-4. REJECT: Beer poured in a glass or mug — DO NOT choose these
-5. REJECT: Lifestyle photos, people holding beer, pub/bar scenes
-6. REJECT: Generic brand logos without label art
-7. REJECT: Low quality, blurry, or very small images
+IMPORTANT: The image must be for THIS specific beer ("${beerName}"), not a different beer by the same brewery.
 
-Important: images from ratebeer.com, untappd.com, whatabeer.com or the brewery's own website are usually good.
+PRIORITY (choose highest):
+1. Round tap badge / medallion with "${beerName}" label
+2. Official product label artwork for "${beerName}"
+3. Bottle or can photo showing "${beerName}" label clearly
+REJECT: Different beer, glass pour, lifestyle, generic logo
 
-Return ONLY the 0-based index of the best image, or -1 if none are suitable. No explanation.
+Return ONLY the 0-based index of the best image, or -1 if none suitable.
 
 URLs:
 ${candidates.map((u, i) => `${i}: ${u}`).join("\n")}`;
