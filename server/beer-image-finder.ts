@@ -4,10 +4,11 @@
  * Strategy (in order):
  *  1. Brewery website — scrape beer product page og:image
  *  2. Ratebeer — search for the beer, grab og:image (usually a medallion)
- *  3. Gemini + Google Search grounding → top Google result pages → og:image
- *  4. DuckDuckGo image search (multiple targeted queries, prefers square/medallion)
- *  5. Gemini Vision picks the best match from all candidates
- *  6. Upload winner to Cloudinary + update beers.image_url
+ *  3. WhataBeer — Italian craft beer DB (cdn1.whatabeer.com/beers/)
+ *  4. Gemini + Google Search grounding → top Google result pages → og:image
+ *  5. DuckDuckGo image search (multiple targeted queries, prefers square/medallion)
+ *  6. Gemini Vision picks the best match from all candidates
+ *  7. Upload winner to Cloudinary + update beers.image_url
  *
  * The function is fire-and-forget: call without await in confirmation handler.
  */
@@ -143,7 +144,79 @@ async function fetchRatebeerImage(beerName: string, breweryName: string): Promis
   }
 }
 
-// ─── 3. Google Search via Gemini grounding ────────────────────────────────────
+// ─── 3. WhataBeer — Italian craft beer database (cdn1.whatabeer.com/beers/) ──
+
+async function fetchWhataBeerImage(beerName: string, breweryName: string): Promise<string | null> {
+  try {
+    // Find the WhataBeer page via DDG text search restricted to site:whatabeer.com
+    const query = `site:whatabeer.com "${beerName}" "${breweryName}"`;
+    const ddgRes = await fetch(
+      `https://duckduckgo.com/html/?q=${encodeURIComponent(query)}`,
+      {
+        headers: {
+          "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+          "Accept": "text/html,application/xhtml+xml",
+          "Accept-Language": "it-IT,it;q=0.9",
+        },
+        signal: AbortSignal.timeout(10000),
+      }
+    );
+    if (!ddgRes.ok) return null;
+    const ddgHtml = await ddgRes.text();
+
+    // Extract /birrifici/ URL from DDG result links
+    const urlMatch = ddgHtml.match(/whatabeer\.com(\/birrifici\/[^"'\s&>]+)/);
+    if (!urlMatch) return null;
+
+    const beerPageUrl = `https://whatabeer.com${urlMatch[1].replace(/&amp;.*/, "").replace(/[^/\w-]$/, "")}`;
+    console.log(`[beer-img] whatabeer page: ${beerPageUrl}`);
+
+    // Fetch the beer page (server-side rendered, no JS needed)
+    const pageRes = await fetch(beerPageUrl, {
+      headers: {
+        "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+        "Accept": "text/html,application/xhtml+xml",
+        "Accept-Language": "it-IT,it;q=0.9",
+      },
+      signal: AbortSignal.timeout(10000),
+    });
+    if (!pageRes.ok) return null;
+    const pageHtml = await pageRes.text();
+
+    const beerWords = beerName.toLowerCase().split(/\s+/).filter(w => w.length > 2);
+
+    // Look for beer-specific CDN images (not brewery images) matching the beer name
+    const imgRe = /<img[^>]+src=["'](https:\/\/cdn1\.whatabeer\.com\/beers\/[^"']+)["'][^>]*(?:alt=["']([^"']*)["'])?/gi;
+    let m: RegExpExecArray | null;
+    const beerImgs: Array<{ src: string; score: number }> = [];
+    while ((m = imgRe.exec(pageHtml)) !== null) {
+      const src = m[1];
+      const alt = (m[2] ?? "").toLowerCase();
+      const score = beerWords.filter(w => alt.includes(w)).length;
+      beerImgs.push({ src, score });
+    }
+    // Sort by name match, prefer details/ > list/ > widget/
+    beerImgs.sort((a, b) => {
+      if (b.score !== a.score) return b.score - a.score;
+      const rank = (s: string) => s.includes("/details/") ? 2 : s.includes("/list/") ? 1 : 0;
+      return rank(b.src) - rank(a.src);
+    });
+    if (beerImgs.length > 0) {
+      const img = beerImgs[0];
+      // Upgrade widget/ → list/ for better quality
+      const src = img.src.replace(/\/widget\//, "/list/");
+      console.log(`[beer-img] whatabeer image found (score=${img.score}): ${src.substring(0, 80)}`);
+      return src;
+    }
+
+    return null;
+  } catch (e: any) {
+    console.warn(`[beer-img] whatabeer scrape failed: ${e?.message?.substring(0, 60)}`);
+    return null;
+  }
+}
+
+// ─── 4. Google Search via Gemini grounding ────────────────────────────────────
 
 async function googleViaGeminiGrounding(beerName: string, breweryName: string): Promise<string[]> {
   const key = GEMINI_API_KEY();
@@ -238,6 +311,7 @@ function scoreDdgImage(img: DdgImage): number {
   // Trusted domains for beer imagery
   if (url.includes("ratebeer.com")) score += 4;
   if (url.includes("untappd.com") || url.includes("untappd-assets.com")) score += 4;
+  if (url.includes("cdn1.whatabeer.com/beers/")) score += 4;
   if (url.includes("beeradvocate.com")) score += 3;
   if (url.includes("beerpulse.com")) score += 2;
   if (url.includes("wp-content/uploads") || url.includes("cdn.")) score += 1;
@@ -268,7 +342,7 @@ PRIORITY ORDER (choose the highest available):
 6. REJECT: Generic brand logos without label art
 7. REJECT: Low quality, blurry, or very small images
 
-Important: images from ratebeer.com, untappd.com or the brewery's own website are usually good.
+Important: images from ratebeer.com, untappd.com, whatabeer.com or the brewery's own website are usually good.
 
 Return ONLY the 0-based index of the best image, or -1 if none are suitable. No explanation.
 
@@ -380,9 +454,10 @@ export async function findAndUpdateBeerImage(
     const candidates: string[] = [];
 
     // ── Run all sources in parallel ─────────────────────────────────────────
-    const [breweryOg, ratebeerImg, googlePages, ddgMedaglione, ddgLabel] = await Promise.all([
+    const [breweryOg, ratebeerImg, whataBeerImg, googlePages, ddgMedaglione, ddgLabel] = await Promise.all([
       fetchBreweryOgImage(breweryWebsite ?? "", beerName),
       fetchRatebeerImage(beerName, breweryName),
+      fetchWhataBeerImage(beerName, breweryName),
       googleViaGeminiGrounding(beerName, breweryName),
       // Two targeted DDG queries: medallion first, then label
       ddgSearchImages(`"${beerName}" "${breweryName}" beer label logo medaglione`, 10),
@@ -405,7 +480,17 @@ export async function findAndUpdateBeerImage(
       }
     }
 
-    // Priority 3: Google grounding → extract og:images
+    // Priority 3: WhataBeer (Italian craft beers — beer-specific CDN images)
+    if (whataBeerImg && whataBeerImg.startsWith("http") && !candidates.includes(whataBeerImg)) {
+      if (await isImageUrl(whataBeerImg)) {
+        // Add after ratebeer (insert at position 1 if ratebeer found, else 0)
+        const insertAt = candidates.length > 0 ? 1 : 0;
+        candidates.splice(insertAt, 0, whataBeerImg);
+        console.log(`[beer-img] whatabeer candidate: ${whataBeerImg.substring(0, 60)}`);
+      }
+    }
+
+    // Priority 4: Google grounding → extract og:images
     const googleImages = await extractOgImages(googlePages);
     const googleChecks = await Promise.all(
       googleImages
