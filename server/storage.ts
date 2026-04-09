@@ -602,16 +602,36 @@ export class DatabaseStorage implements IStorage {
   }
 
   async updateBeer(id: number, updates: Partial<InsertBeer>): Promise<Beer> {
-    // Convert explicit null values to sql`NULL` so Drizzle doesn't skip them
-    const setValues: Record<string, any> = {};
-    for (const [k, v] of Object.entries(updates)) {
-      setValues[k] = v === null ? sql`NULL` : v;
+    // Drizzle may silently skip null values in .set(), so we handle nullable
+    // image/URL fields with explicit SQL when they're set to null.
+    const rest = { ...updates } as Record<string, any>;
+
+    if ('imageUrl' in rest && rest.imageUrl === null) {
+      await db.execute(sql`UPDATE beers SET image_url = NULL WHERE id = ${id}`);
+      delete rest.imageUrl;
     }
-    const [beer] = await db
-      .update(beers)
-      .set(setValues as any)
-      .where(eq(beers.id, id))
-      .returning();
+    if ('bottleImageUrl' in rest && rest.bottleImageUrl === null) {
+      await db.execute(sql`UPDATE beers SET bottle_image_url = NULL WHERE id = ${id}`);
+      delete rest.bottleImageUrl;
+    }
+    if ('logoUrl' in rest && rest.logoUrl === null) {
+      await db.execute(sql`UPDATE beers SET logo_url = NULL WHERE id = ${id}`);
+      delete rest.logoUrl;
+    }
+    if ('coverImageUrl' in rest && rest.coverImageUrl === null) {
+      await db.execute(sql`UPDATE beers SET cover_image_url = NULL WHERE id = ${id}`);
+      delete rest.coverImageUrl;
+    }
+    if ('description' in rest && rest.description === null) {
+      await db.execute(sql`UPDATE beers SET description = NULL WHERE id = ${id}`);
+      delete rest.description;
+    }
+
+    if (Object.keys(rest).length > 0) {
+      await db.update(beers).set(rest as any).where(eq(beers.id, id));
+    }
+
+    const [beer] = await db.select().from(beers).where(eq(beers.id, id)).limit(1);
     return beer;
   }
 
