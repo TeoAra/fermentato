@@ -241,7 +241,7 @@ export default function Activity() {
   }), []);
   const earnedBadges = badges.filter((b: any) => b.earned);
   const { data: allPubs, isLoading: loadingPubs } = useQuery({ queryKey: ["/api/pubs"] });
-  const { data: tapChanges = [], isLoading: loadingTapChanges } = useQuery<TapChange[]>({ queryKey: ["/api/recent-tap-changes"] });
+  const { data: favoriteBeers = [], isLoading: loadingFavoriteBeers } = useQuery<any[]>({ queryKey: ["/api/favorites/beer"], enabled: auth });
   const { data: upcomingEvents = [], isLoading: loadingEvents } = useQuery<any[]>({ queryKey: ["/api/events/upcoming"] });
   const { data: activeFestivals = [], isLoading: loadingFestivals } = useQuery<any[]>({ queryKey: ["/api/festivals/public"] });
   const nearbyPubs = useMemo(() => {
@@ -280,40 +280,27 @@ export default function Activity() {
       .sort((a: any, b: any) => new Date(a.eventDate).getTime() - new Date(b.eventDate).getTime());
   }, [upcomingEvents, userLocation, radius]);
 
-  const nearbyTapChanges = useMemo(() => {
-    const filtered = tapChanges.filter(tc => !dismissedIds.has(tc.id));
-    if (!userLocation) return filtered;
+  const favoriteBeersNearby = useMemo(() => {
+    if (!Array.isArray(favoriteBeers) || !userLocation) return [];
     const radiusKm = parseFloat(radius);
-    return filtered
-      .map(tc => {
-        if (tc.pubLatitude && tc.pubLongitude) {
-          const distance = calculateDistance(userLocation.lat, userLocation.lng, parseFloat(tc.pubLatitude), parseFloat(tc.pubLongitude));
-          return { ...tc, distance };
-        }
-        return { ...tc, distance: null };
+    return favoriteBeers
+      .map((fav: any) => {
+        const beer = fav.beer ?? fav;
+        const pub = beer?.pub ?? beer?.brewery?.pub ?? beer?.breweryPub ?? beer?.pub;
+        const lat = pub?.latitude ?? beer?.pubLatitude ?? beer?.brewery?.latitude;
+        const lng = pub?.longitude ?? beer?.pubLongitude ?? beer?.brewery?.longitude;
+        if (!lat || !lng) return null;
+        const distance = calculateDistance(userLocation.lat, userLocation.lng, parseFloat(lat), parseFloat(lng));
+        return distance <= radiusKm ? { ...fav, beer, pub, distance } : null;
       })
-      .filter(tc => (tc as any).distance === null || (tc as any).distance <= radiusKm)
-      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-  }, [tapChanges, userLocation, radius, dismissedIds]);
+      .filter(Boolean)
+      .sort((a: any, b: any) => a.distance - b.distance);
+  }, [favoriteBeers, userLocation, radius]);
 
   const dismissChange = (id: number) => {
     setDismissedIds(prev => {
       const next = new Set(prev);
       next.add(id);
-      localStorage.setItem('dismissedTapChanges', JSON.stringify(Array.from(next)));
-      return next;
-    });
-  };
-
-  const clearAllDismissed = () => {
-    setDismissedIds(new Set());
-    localStorage.removeItem('dismissedTapChanges');
-  };
-
-  const dismissAll = () => {
-    const allIds = nearbyTapChanges.map(tc => tc.id);
-    setDismissedIds(prev => {
-      const next = new Set(Array.from(prev).concat(allIds));
       localStorage.setItem('dismissedTapChanges', JSON.stringify(Array.from(next)));
       return next;
     });
@@ -513,19 +500,36 @@ export default function Activity() {
             <h2 className="text-base font-semibold text-foreground dark:text-white mb-3 flex items-center gap-2">
               <Beer className="h-4 w-4 text-orange-600" />
               Birre preferite in zona
-              {nearbyTapChanges.length > 0 && (
-                <Badge className="ml-1 bg-orange-500 text-white text-xs px-1.5 py-0">{nearbyTapChanges.length}</Badge>
+              {favoriteBeersNearby.length > 0 && (
+                <Badge className="ml-1 bg-orange-500 text-white text-xs px-1.5 py-0">{favoriteBeersNearby.length}</Badge>
               )}
             </h2>
-            {nearbyTapChanges.length === 0 ? (
+            {loadingFavoriteBeers ? (
+              <div className="flex items-center justify-center py-8">
+                <Loader2 className="h-7 w-7 animate-spin text-orange-600" />
+              </div>
+            ) : favoriteBeersNearby.length === 0 ? (
               <div className="text-center py-6 bg-stone-50 dark:bg-stone-800/50 rounded-xl">
                 <Beer className="h-9 w-9 text-stone-400 mx-auto mb-2" />
                 <p className="text-sm text-muted-foreground">Nessuna birra preferita trovata entro {radius} km</p>
               </div>
             ) : (
               <div className="space-y-3">
-                {nearbyTapChanges.slice(0, 5).map((tc: any) => (
-                  <TapChangeCard key={tc.id} tc={tc} />
+                {favoriteBeersNearby.slice(0, 5).map((item: any) => (
+                  <Card key={item.id} className="hover:shadow-sm transition-shadow">
+                    <CardContent className="p-4">
+                      <div className="flex items-start gap-3">
+                        <div className="w-10 h-10 rounded-lg bg-stone-100 dark:bg-orange-900/20 flex items-center justify-center flex-shrink-0">
+                          <Beer className="h-5 w-5 text-orange-600" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-semibold text-foreground dark:text-white truncate">{item.beer?.name ?? item.name}</p>
+                          <p className="text-xs text-stone-400 truncate">{item.pub?.name ?? item.beer?.brewery?.name ?? ""}</p>
+                          <p className="text-xs font-medium text-blue-600 dark:text-blue-400 mt-1">{formatDistance(item.distance)}</p>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
                 ))}
               </div>
             )}
