@@ -1,12 +1,13 @@
 import { useState, useEffect, useMemo, useCallback } from "react";
 import { usePullToRefresh } from "@/hooks/use-pull-to-refresh";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { MapPin, Loader2, Navigation, Clock, AlertCircle, Beer, Trash2, X, Calendar, CalendarDays, ChevronDown } from "lucide-react";
+import { MapPin, Loader2, Navigation, Clock, AlertCircle, Beer, Trash2, X, Calendar, CalendarDays, ChevronDown, Heart } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Link } from "wouter";
 import { formatDistanceToNow, format } from "date-fns";
 import { it } from "date-fns/locale";
@@ -114,16 +115,11 @@ export default function Activity() {
       setLocationError("La geolocalizzazione non è supportata dal tuo browser");
       return;
     }
-
     setRequestingLocation(true);
     setLocationError(null);
-
     navigator.geolocation.getCurrentPosition(
       (position) => {
-        setUserLocation({
-          lat: position.coords.latitude,
-          lng: position.coords.longitude
-        });
+        setUserLocation({ lat: position.coords.latitude, lng: position.coords.longitude });
         setRequestingLocation(false);
       },
       (error) => {
@@ -150,35 +146,28 @@ export default function Activity() {
     requestLocation();
   }, []);
 
-  const { data: allPubs, isLoading: loadingPubs } = useQuery({
-    queryKey: ["/api/pubs"],
+  const { data: currentUser } = useQuery<any>({ queryKey: ["/api/auth/user"], retry: false });
+  const isAuthenticated = !!currentUser;
+
+  const { data: allPubs, isLoading: loadingPubs } = useQuery({ queryKey: ["/api/pubs"] });
+  const { data: tapChanges = [], isLoading: loadingTapChanges } = useQuery<TapChange[]>({ queryKey: ["/api/recent-tap-changes"] });
+  const { data: upcomingEvents = [], isLoading: loadingEvents } = useQuery<any[]>({ queryKey: ["/api/events/upcoming"] });
+  const { data: activeFestivals = [], isLoading: loadingFestivals } = useQuery<any[]>({ queryKey: ["/api/festivals/public"] });
+  const { data: likedBeers = [] } = useQuery<any[]>({
+    queryKey: ["/api/favorites/beer"],
+    enabled: isAuthenticated,
   });
 
-  const { data: tapChanges = [], isLoading: loadingTapChanges } = useQuery<TapChange[]>({
-    queryKey: ["/api/recent-tap-changes"],
-  });
-
-  const { data: upcomingEvents = [], isLoading: loadingEvents } = useQuery<any[]>({
-    queryKey: ["/api/events/upcoming"],
-  });
-
-  const { data: activeFestivals = [], isLoading: loadingFestivals } = useQuery<any[]>({
-    queryKey: ["/api/festivals/public"],
-  });
+  const likedBeerIds = useMemo(() => new Set((likedBeers as any[]).map((f: any) => f.itemId ?? f.id)), [likedBeers]);
 
   const nearbyPubs = useMemo(() => {
     if (!Array.isArray(allPubs)) return [];
     if (!userLocation) return allPubs;
     const radiusKm = parseFloat(radius);
-    return allPubs
+    return (allPubs as any[])
       .map((pub: any) => {
         if (pub.latitude && pub.longitude) {
-          const distance = calculateDistance(
-            userLocation.lat,
-            userLocation.lng,
-            parseFloat(pub.latitude),
-            parseFloat(pub.longitude)
-          );
+          const distance = calculateDistance(userLocation.lat, userLocation.lng, parseFloat(pub.latitude), parseFloat(pub.longitude));
           return { ...pub, distance };
         }
         return { ...pub, distance: null };
@@ -194,21 +183,13 @@ export default function Activity() {
 
   const nearbyEvents = useMemo(() => {
     if (!Array.isArray(upcomingEvents)) return [];
-    
     if (!userLocation) return upcomingEvents.slice(0, 10);
-    
-    return upcomingEvents
+    return (upcomingEvents as any[])
       .map((ev: any) => {
         if (ev.pub?.latitude && ev.pub?.longitude) {
-          const distance = calculateDistance(
-            userLocation.lat,
-            userLocation.lng,
-            parseFloat(ev.pub.latitude),
-            parseFloat(ev.pub.longitude)
-          );
+          const distance = calculateDistance(userLocation.lat, userLocation.lng, parseFloat(ev.pub.latitude), parseFloat(ev.pub.longitude));
           return { ...ev, distance };
         }
-        // Pub without coordinates: include it without distance filter
         return { ...ev, distance: null };
       })
       .filter((ev: any) => ev.distance === null || ev.distance <= parseFloat(radius))
@@ -222,19 +203,19 @@ export default function Activity() {
     return filtered
       .map(tc => {
         if (tc.pubLatitude && tc.pubLongitude) {
-          const distance = calculateDistance(
-            userLocation.lat,
-            userLocation.lng,
-            parseFloat(tc.pubLatitude),
-            parseFloat(tc.pubLongitude)
-          );
+          const distance = calculateDistance(userLocation.lat, userLocation.lng, parseFloat(tc.pubLatitude), parseFloat(tc.pubLongitude));
           return { ...tc, distance };
         }
         return { ...tc, distance: null };
       })
-      .filter(tc => tc.distance === null || tc.distance <= radiusKm)
+      .filter(tc => (tc as any).distance === null || (tc as any).distance <= radiusKm)
       .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
   }, [tapChanges, userLocation, radius, dismissedIds]);
+
+  const likedBeersNearby = useMemo(() => {
+    if (!isAuthenticated || likedBeerIds.size === 0) return [];
+    return nearbyTapChanges.filter(tc => tc.beerId && likedBeerIds.has(tc.beerId));
+  }, [nearbyTapChanges, likedBeerIds, isAuthenticated]);
 
   const dismissChange = (id: number) => {
     setDismissedIds(prev => {
@@ -259,9 +240,45 @@ export default function Activity() {
     });
   };
 
+  const TapChangeCard = ({ tc, showDismiss = false }: { tc: any; showDismiss?: boolean }) => (
+    <Card key={tc.id} className="hover:shadow-sm transition-shadow group">
+      <CardContent className="p-4">
+        <div className="flex items-start gap-3">
+          <div className={`w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 ${tc.type === 'beer_removed' ? 'bg-red-100 dark:bg-red-900/20' : 'bg-stone-100 dark:bg-orange-900/20'}`}>
+            <Beer className={`h-5 w-5 ${tc.type === 'beer_removed' ? 'text-red-600' : 'text-orange-600'}`} />
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-medium text-foreground dark:text-white">{tc.message}</p>
+            <div className="flex items-center gap-2 mt-1 flex-wrap">
+              <Link href={`/pub/${tc.pubId}`}>
+                <span className="text-xs text-orange-600 hover:underline font-medium cursor-pointer">{tc.pubName}</span>
+              </Link>
+              {tc.pubCity && <span className="text-xs text-stone-400">• {tc.pubCity}</span>}
+              {'distance' in tc && (tc as any).distance !== null && (tc as any).distance !== 9999 && (
+                <span className="text-xs font-medium text-blue-600 dark:text-blue-400">{formatDistance((tc as any).distance)}</span>
+              )}
+            </div>
+            <span className="text-xs text-stone-400 mt-1 block">
+              {formatDistanceToNow(new Date(tc.createdAt), { addSuffix: true, locale: it })}
+            </span>
+          </div>
+          {showDismiss && (
+            <Button
+              variant="ghost"
+              size="icon"
+              className="flex-shrink-0 h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity text-stone-400 hover:text-red-500"
+              onClick={() => dismissChange(tc.id)}
+            >
+              <X className="h-4 w-4" />
+            </Button>
+          )}
+        </div>
+      </CardContent>
+    </Card>
+  );
+
   return (
     <div className="container mx-auto px-4 py-6 max-w-4xl pb-24 slide-up">
-      {/* Pull to refresh indicator */}
       {(isPulling || isRefreshing) && (
         <div className="fixed top-16 left-0 right-0 z-40 flex items-center justify-center py-2.5 bg-amber-50 dark:bg-amber-950/90 border-b border-amber-200 dark:border-amber-800 backdrop-blur-sm">
           {isRefreshing ? (
@@ -274,11 +291,12 @@ export default function Activity() {
           )}
         </div>
       )}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6">
+
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
         <h1 className="text-2xl font-bold text-foreground dark:text-white">Attività in Zona</h1>
         <div className="flex items-center gap-2">
           <Select value={radius} onValueChange={(v) => { setRadius(v); setShowMorePubs(false); }}>
-            <SelectTrigger className="w-28" data-testid="select-radius">
+            <SelectTrigger className="w-28">
               <SelectValue placeholder="Raggio" />
             </SelectTrigger>
             <SelectContent>
@@ -291,18 +309,8 @@ export default function Activity() {
               <SelectItem value="100">100 km</SelectItem>
             </SelectContent>
           </Select>
-          <Button 
-            variant="outline" 
-            size="sm" 
-            onClick={requestLocation}
-            disabled={requestingLocation}
-            data-testid="button-refresh-location"
-          >
-            {requestingLocation ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
-            ) : (
-              <Navigation className="h-4 w-4" />
-            )}
+          <Button variant="outline" size="sm" onClick={requestLocation} disabled={requestingLocation}>
+            {requestingLocation ? <Loader2 className="h-4 w-4 animate-spin" /> : <Navigation className="h-4 w-4" />}
           </Button>
         </div>
       </div>
@@ -312,20 +320,13 @@ export default function Activity() {
           <AlertCircle className="h-5 w-5 text-yellow-600 flex-shrink-0 mt-0.5" />
           <div>
             <p className="text-sm text-yellow-800 dark:text-yellow-200">{locationError}</p>
-            <Button 
-              variant="link" 
-              size="sm" 
-              className="p-0 h-auto text-yellow-700 dark:text-yellow-300"
-              onClick={requestLocation}
-            >
-              Riprova
-            </Button>
+            <Button variant="link" size="sm" className="p-0 h-auto text-yellow-700 dark:text-yellow-300" onClick={requestLocation}>Riprova</Button>
           </div>
         </div>
       )}
 
       {!userLocation && !requestingLocation && !locationError && (
-        <div className="mb-6 p-4 rounded-2xl bg-white dark:bg-card border border-stone-100 dark:border-border flex items-center gap-3 shadow-sm">
+        <div className="mb-4 p-4 rounded-2xl bg-white dark:bg-card border border-stone-100 dark:border-border flex items-center gap-3 shadow-sm">
           <div className="w-10 h-10 rounded-full bg-stone-100 dark:bg-stone-800 flex items-center justify-center flex-shrink-0">
             <Navigation className="h-5 w-5 text-stone-500 dark:text-stone-400" />
           </div>
@@ -346,318 +347,302 @@ export default function Activity() {
         </div>
       )}
 
-      <div className="space-y-8">
-        {/* SECTION 1: Locali Vicini */}
-        <section>
-          <h2 className="text-lg font-semibold text-foreground dark:text-white mb-4 flex items-center gap-2">
-            <MapPin className="h-5 w-5 text-orange-600" />
-            Locali Vicini
-          </h2>
-          {loadingPubs ? (
-            <div className="flex items-center justify-center py-8">
-              <Loader2 className="h-8 w-8 animate-spin text-orange-600" />
-            </div>
-          ) : nearbyPubs.length === 0 ? (
-            <div className="text-center py-8 bg-gray-50 dark:bg-stone-800/50 rounded-xl">
-              <MapPin className="h-10 w-10 text-stone-400 mx-auto mb-3" />
-              <p className="text-sm text-muted-foreground dark:text-stone-400">Nessun pub trovato entro {radius} km</p>
-              <Button variant="link" size="sm" onClick={() => setRadius("100")}>Espandi a 100 km</Button>
-            </div>
-          ) : (
-            <>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {(showMorePubs ? nearbyPubs : nearbyPubs.slice(0, 10)).map((pub: any) => {
-                  const openStatus = getOpenStatus(pub.openingHours);
-                  return (
-                    <Link key={pub.id} href={`/pub/${pub.id}`}>
-                      <Card className="hover:shadow-lg hover:scale-[1.02] transition-all duration-200 cursor-pointer h-full">
-                        <CardContent className="p-4">
-                          <div className="flex items-start gap-3">
-                            <div className="w-12 h-12 bg-stone-100 dark:bg-orange-900/20 rounded-lg flex items-center justify-center flex-shrink-0">
-                              <MapPin className="h-6 w-6 text-orange-600" />
-                            </div>
-                            <div className="flex-1 min-w-0">
-                              <h3 className="font-semibold text-sm mb-1 truncate">{pub.name}</h3>
-                              <p className="text-xs text-muted-foreground mb-2 flex items-center gap-1">
-                                <MapPin className="w-3 h-3 flex-shrink-0" />
-                                <span className="line-clamp-1">
-                                  {userLocation && pub.distance !== 9999 ? pub.city || pub.address?.split(',').pop()?.trim() : pub.address}
-                                </span>
-                                {userLocation && pub.distance !== 9999 && (
-                                  <span className="font-medium text-blue-600 dark:text-blue-400 whitespace-nowrap">
-                                    {formatDistance(pub.distance)}
-                                  </span>
-                                )}
-                              </p>
-                              <div className="flex items-center gap-2 flex-wrap">
+      <Tabs defaultValue="inzona">
+        <TabsList className="w-full mb-6 bg-stone-100 dark:bg-stone-800/60 p-1 rounded-xl h-auto">
+          <TabsTrigger value="inzona" className="flex-1 rounded-lg text-xs font-semibold data-[state=active]:bg-white dark:data-[state=active]:bg-stone-700 data-[state=active]:shadow-sm py-2">
+            <MapPin className="h-3.5 w-3.5 mr-1" />
+            In Zona
+          </TabsTrigger>
+          <TabsTrigger value="birre" className="flex-1 rounded-lg text-xs font-semibold data-[state=active]:bg-white dark:data-[state=active]:bg-stone-700 data-[state=active]:shadow-sm py-2">
+            <Beer className="h-3.5 w-3.5 mr-1" />
+            Birre
+            {nearbyTapChanges.length > 0 && (
+              <Badge className="ml-1 bg-orange-500 text-white text-[10px] px-1 py-0 h-4">{nearbyTapChanges.length}</Badge>
+            )}
+          </TabsTrigger>
+          <TabsTrigger value="festival" className="flex-1 rounded-lg text-xs font-semibold data-[state=active]:bg-white dark:data-[state=active]:bg-stone-700 data-[state=active]:shadow-sm py-2">
+            <CalendarDays className="h-3.5 w-3.5 mr-1" />
+            Festival
+          </TabsTrigger>
+        </TabsList>
+
+        {/* TAB: IN ZONA */}
+        <TabsContent value="inzona" className="space-y-8 mt-0">
+
+          {/* Locali Vicini */}
+          <section>
+            <h2 className="text-base font-semibold text-foreground dark:text-white mb-3 flex items-center gap-2">
+              <MapPin className="h-4 w-4 text-orange-600" />
+              Locali Vicini
+            </h2>
+            {loadingPubs ? (
+              <div className="flex items-center justify-center py-8">
+                <Loader2 className="h-7 w-7 animate-spin text-orange-600" />
+              </div>
+            ) : nearbyPubs.length === 0 ? (
+              <div className="text-center py-6 bg-stone-50 dark:bg-stone-800/50 rounded-xl">
+                <MapPin className="h-9 w-9 text-stone-400 mx-auto mb-2" />
+                <p className="text-sm text-muted-foreground">Nessun pub trovato entro {radius} km</p>
+                <Button variant="link" size="sm" onClick={() => setRadius("100")}>Espandi a 100 km</Button>
+              </div>
+            ) : (
+              <>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                  {(showMorePubs ? nearbyPubs : nearbyPubs.slice(0, 6)).map((pub: any) => {
+                    const openStatus = getOpenStatus(pub.openingHours);
+                    return (
+                      <Link key={pub.id} href={`/pub/${pub.id}`}>
+                        <Card className="hover:shadow-lg hover:scale-[1.02] transition-all duration-200 cursor-pointer h-full">
+                          <CardContent className="p-4">
+                            <div className="flex items-start gap-3">
+                              {pub.imageUrl ? (
+                                <img src={pub.imageUrl} alt={pub.name} className="w-11 h-11 rounded-lg object-cover flex-shrink-0" />
+                              ) : (
+                                <div className="w-11 h-11 bg-stone-100 dark:bg-orange-900/20 rounded-lg flex items-center justify-center flex-shrink-0">
+                                  <MapPin className="h-5 w-5 text-orange-600" />
+                                </div>
+                              )}
+                              <div className="flex-1 min-w-0">
+                                <h3 className="font-semibold text-sm mb-1 truncate">{pub.name}</h3>
+                                <p className="text-xs text-muted-foreground mb-2 flex items-center gap-1">
+                                  <span className="line-clamp-1">{pub.city || pub.address?.split(',').pop()?.trim()}</span>
+                                  {userLocation && pub.distance !== null && (
+                                    <span className="font-medium text-blue-600 dark:text-blue-400 whitespace-nowrap">{formatDistance(pub.distance)}</span>
+                                  )}
+                                </p>
                                 <Badge className={`text-xs ${openStatus.color}`}>
                                   <Clock className="h-3 w-3 mr-1" />
                                   {openStatus.label}
                                 </Badge>
                               </div>
                             </div>
-                          </div>
-                        </CardContent>
-                      </Card>
-                    </Link>
-                  );
-                })}
-              </div>
-              {nearbyPubs.length > 10 && !showMorePubs && (
-                <Button
-                  variant="outline"
-                  className="w-full mt-4"
-                  onClick={() => setShowMorePubs(true)}
-                >
-                  <ChevronDown className="h-4 w-4 mr-2" />
-                  Mostra di più ({nearbyPubs.length - 10} altri locali)
-                </Button>
+                          </CardContent>
+                        </Card>
+                      </Link>
+                    );
+                  })}
+                </div>
+                {nearbyPubs.length > 6 && !showMorePubs && (
+                  <Button variant="outline" className="w-full mt-3" onClick={() => setShowMorePubs(true)}>
+                    <ChevronDown className="h-4 w-4 mr-2" />
+                    Mostra di più ({nearbyPubs.length - 6} altri locali)
+                  </Button>
+                )}
+              </>
+            )}
+          </section>
+
+          {/* Birre che mi piacciono in zona */}
+          {isAuthenticated && (
+            <section>
+              <h2 className="text-base font-semibold text-foreground dark:text-white mb-3 flex items-center gap-2">
+                <Heart className="h-4 w-4 text-rose-500" />
+                Birre che mi piacciono in zona
+              </h2>
+              {likedBeersNearby.length === 0 ? (
+                <div className="text-center py-6 bg-stone-50 dark:bg-stone-800/50 rounded-xl">
+                  <Heart className="h-9 w-9 text-stone-400 mx-auto mb-2" />
+                  <p className="text-sm text-muted-foreground">
+                    {likedBeerIds.size === 0
+                      ? "Aggiungi birre ai preferiti per vederle qui quando sono in zona"
+                      : `Nessuna delle tue birre preferite è stata aggiunta o rimossa entro ${radius} km`}
+                  </p>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {likedBeersNearby.map((tc) => (
+                    <TapChangeCard key={tc.id} tc={tc} showDismiss={false} />
+                  ))}
+                </div>
               )}
-            </>
+            </section>
           )}
-        </section>
 
-        {/* SECTION 2: Eventi in Zona */}
-        <section>
-          <h2 className="text-lg font-semibold text-foreground dark:text-white mb-4 flex items-center gap-2">
-            <CalendarDays className="h-5 w-5 text-pink-600" />
-            Eventi in Zona
-            {nearbyEvents.length > 0 && (
-              <Badge className="ml-1 bg-pink-600 text-white text-xs px-1.5 py-0">{nearbyEvents.length}</Badge>
-            )}
-          </h2>
-          {loadingEvents ? (
-            <div className="flex items-center justify-center py-8">
-              <Loader2 className="h-8 w-8 animate-spin text-pink-600" />
-            </div>
-          ) : nearbyEvents.length === 0 ? (
-            <div className="text-center py-8 bg-gray-50 dark:bg-stone-800/50 rounded-xl">
-              <CalendarDays className="h-10 w-10 text-stone-400 mx-auto mb-3" />
-              <p className="text-sm text-muted-foreground dark:text-stone-400">Nessun evento in programma entro {radius} km</p>
-            </div>
-          ) : (
-            <div className="space-y-3">
-              {nearbyEvents.map((ev: any) => (
-                <Card 
-                  key={ev.id} 
-                  className="hover:shadow-md transition-shadow cursor-pointer"
-                  onClick={() => setSelectedEvent(ev)}
-                >
-                  <CardContent className="p-4">
-                    <div className="flex items-start gap-3">
-                      {ev.imageUrl ? (
-                        <img src={ev.imageUrl} alt={ev.title} className="w-14 h-14 rounded-lg object-cover flex-shrink-0" />
-                      ) : (
-                        <div className="w-14 h-14 bg-pink-100 dark:bg-pink-900/20 rounded-lg flex items-center justify-center flex-shrink-0">
-                          <CalendarDays className="h-6 w-6 text-pink-600" />
-                        </div>
-                      )}
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 flex-wrap mb-1">
-                          <EventCategoryBadge category={ev.category} />
-                          <h3 className="font-semibold text-sm truncate">{ev.title}</h3>
-                        </div>
-                        <div className="flex items-center text-xs text-pink-600 dark:text-pink-400 gap-1 mb-1">
-                          <Calendar className="h-3 w-3" />
-                          <span>{format(new Date(ev.eventDate), "EEE d MMM 'alle' HH:mm", { locale: it })}</span>
-                        </div>
-                        <div className="flex items-center gap-2 text-xs text-muted-foreground flex-wrap mb-1.5">
-                          <Link href={`/pub/${ev.pubId}`} onClick={(e: any) => e.stopPropagation()}>
-                            <span className="text-orange-600 hover:underline font-medium cursor-pointer">{ev.pub?.name}</span>
-                          </Link>
-                          {ev.pub?.city && <span>• {ev.pub.city}</span>}
-                          {ev.distance !== undefined && ev.distance !== null && (
-                            <span className="font-medium text-blue-600 dark:text-blue-400">{formatDistance(ev.distance)}</span>
-                          )}
-                        </div>
-                        <EventInterestButton eventId={ev.id} type="pub" />
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          )}
-        </section>
-
-        {/* SECTION 3: Festival in Evidenza */}
-        <section>
-          <h2 className="text-lg font-semibold text-foreground dark:text-white mb-4 flex items-center gap-2">
-            <CalendarDays className="h-5 w-5 text-amber-600" />
-            Festival in Evidenza
-            {Array.isArray(activeFestivals) && activeFestivals.length > 0 && (
-              <Badge className="ml-1 bg-amber-600 text-white text-xs px-1.5 py-0">{activeFestivals.length}</Badge>
-            )}
-          </h2>
-          {loadingFestivals ? (
-            <div className="flex items-center justify-center py-8">
-              <Loader2 className="h-8 w-8 animate-spin text-amber-600" />
-            </div>
-          ) : !Array.isArray(activeFestivals) || activeFestivals.length === 0 ? (
-            <div className="text-center py-8 bg-gray-50 dark:bg-stone-800/50 rounded-xl">
-              <CalendarDays className="h-10 w-10 text-stone-400 mx-auto mb-3" />
-              <p className="text-sm text-muted-foreground dark:text-stone-400">Nessun festival attivo al momento</p>
-              <Link href="/festival">
-                <Button variant="link" size="sm">Scopri i festival →</Button>
-              </Link>
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {activeFestivals.map((fest: any) => {
-                const startDate = fest.startDate
-                  ? new Date(fest.startDate).toLocaleDateString("it-IT", { day: "numeric", month: "short", year: "numeric" })
-                  : null;
-                const endDate = fest.endDate
-                  ? new Date(fest.endDate).toLocaleDateString("it-IT", { day: "numeric", month: "short", year: "numeric" })
-                  : null;
-                const festUrl = `${window.location.origin}/festival/${fest.slug}`;
-                return (
-                  <Card key={fest.id} className="hover:shadow-lg transition-all duration-200 overflow-hidden">
-                    {fest.coverImageUrl && (
-                      <div className="relative h-28 overflow-hidden">
-                        <img src={fest.coverImageUrl} alt={fest.name} className="w-full h-full object-cover" />
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
-                      </div>
-                    )}
+          {/* Eventi vicini */}
+          <section>
+            <h2 className="text-base font-semibold text-foreground dark:text-white mb-3 flex items-center gap-2">
+              <CalendarDays className="h-4 w-4 text-pink-600" />
+              Eventi vicini
+              {nearbyEvents.length > 0 && (
+                <Badge className="ml-1 bg-pink-600 text-white text-xs px-1.5 py-0">{nearbyEvents.length}</Badge>
+              )}
+            </h2>
+            {loadingEvents ? (
+              <div className="flex items-center justify-center py-8">
+                <Loader2 className="h-7 w-7 animate-spin text-pink-600" />
+              </div>
+            ) : nearbyEvents.length === 0 ? (
+              <div className="text-center py-6 bg-stone-50 dark:bg-stone-800/50 rounded-xl">
+                <CalendarDays className="h-9 w-9 text-stone-400 mx-auto mb-2" />
+                <p className="text-sm text-muted-foreground">Nessun evento in programma entro {radius} km</p>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {nearbyEvents.slice(0, 5).map((ev: any) => (
+                  <Card key={ev.id} className="hover:shadow-md transition-shadow cursor-pointer" onClick={() => setSelectedEvent(ev)}>
                     <CardContent className="p-4">
                       <div className="flex items-start gap-3">
-                        {fest.logoUrl && (
-                          <img src={fest.logoUrl} alt="" className="w-10 h-10 rounded-xl object-cover flex-shrink-0 border border-gray-100 dark:border-gray-700" />
+                        {ev.imageUrl ? (
+                          <img src={ev.imageUrl} alt={ev.title} className="w-12 h-12 rounded-lg object-cover flex-shrink-0" />
+                        ) : (
+                          <div className="w-12 h-12 bg-pink-100 dark:bg-pink-900/20 rounded-lg flex items-center justify-center flex-shrink-0">
+                            <CalendarDays className="h-5 w-5 text-pink-600" />
+                          </div>
                         )}
                         <div className="flex-1 min-w-0">
-                          <h3 className="font-semibold text-sm truncate">{fest.name}</h3>
-                          {fest.location && (
-                            <p className="text-xs text-muted-foreground flex items-center gap-1 mt-0.5">
-                              <MapPin className="w-3 h-3 flex-shrink-0" />{fest.location}
-                            </p>
-                          )}
-                          {(startDate || endDate) && (
-                            <p className="text-xs text-amber-600 flex items-center gap-1 mt-0.5">
-                              <Calendar className="w-3 h-3 flex-shrink-0" />
-                              {startDate}{startDate && endDate && startDate !== endDate ? ` — ${endDate}` : ""}
-                            </p>
-                          )}
+                          <div className="flex items-center gap-2 flex-wrap mb-1">
+                            <EventCategoryBadge category={ev.category} />
+                            <h3 className="font-semibold text-sm truncate">{ev.title}</h3>
+                          </div>
+                          <div className="flex items-center text-xs text-pink-600 dark:text-pink-400 gap-1 mb-1">
+                            <Calendar className="h-3 w-3" />
+                            <span>{format(new Date(ev.eventDate), "EEE d MMM 'alle' HH:mm", { locale: it })}</span>
+                          </div>
+                          <div className="flex items-center gap-2 text-xs text-muted-foreground flex-wrap">
+                            <Link href={`/pub/${ev.pubId}`} onClick={(e: any) => e.stopPropagation()}>
+                              <span className="text-orange-600 hover:underline font-medium cursor-pointer">{ev.pub?.name}</span>
+                            </Link>
+                            {ev.pub?.city && <span>• {ev.pub.city}</span>}
+                            {ev.distance !== undefined && ev.distance !== null && (
+                              <span className="font-medium text-blue-600 dark:text-blue-400">{formatDistance(ev.distance)}</span>
+                            )}
+                          </div>
                         </div>
-                      </div>
-                      <div className="flex gap-2 mt-3">
-                        <Link href={`/festival/${fest.slug}`} className="flex-1">
-                          <Button size="sm" className="w-full bg-amber-500 hover:bg-amber-600 text-white text-xs">
-                            Vedi taplist
-                          </Button>
-                        </Link>
-                        <FestivalLikeButton festivalId={fest.id} showLabel={false} />
-                        <ShareButton
-                          title={fest.name}
-                          text={`Scopri le birre al festival ${fest.name}!`}
-                          url={festUrl}
-                          size="sm"
-                          variant="outline"
-                        />
                       </div>
                     </CardContent>
                   </Card>
-                );
-              })}
-            </div>
-          )}
-        </section>
-
-        {/* SECTION 4: Birre in Zona */}
-        <section>
-          <h2 className="text-lg font-semibold text-foreground dark:text-white mb-4 flex items-center gap-2">
-            <Beer className="h-5 w-5 text-amber-600" />
-            Birre in Zona
-            {nearbyTapChanges.length > 0 && (
-              <Badge className="ml-1 bg-orange-600 text-white text-xs px-1.5 py-0">{nearbyTapChanges.length}</Badge>
+                ))}
+              </div>
             )}
-          </h2>
+          </section>
+        </TabsContent>
 
-          {nearbyTapChanges.length > 0 && (
-            <div className="flex items-center justify-end gap-2 mb-3">
-              {dismissedIds.size > 0 && (
-                <Button variant="ghost" size="sm" onClick={clearAllDismissed} className="text-xs text-muted-foreground">
-                  Ripristina nascoste
+        {/* TAB: BIRRE */}
+        <TabsContent value="birre" className="mt-0">
+          <section>
+            <h2 className="text-base font-semibold text-foreground dark:text-white mb-3 flex items-center gap-2">
+              <Beer className="h-4 w-4 text-amber-600" />
+              Birre in Zona
+              {nearbyTapChanges.length > 0 && (
+                <Badge className="ml-1 bg-orange-600 text-white text-xs px-1.5 py-0">{nearbyTapChanges.length}</Badge>
+              )}
+            </h2>
+            {nearbyTapChanges.length > 0 && (
+              <div className="flex items-center justify-end gap-2 mb-3">
+                {dismissedIds.size > 0 && (
+                  <Button variant="ghost" size="sm" onClick={clearAllDismissed} className="text-xs text-muted-foreground">
+                    Ripristina nascoste
+                  </Button>
+                )}
+                <Button variant="outline" size="sm" onClick={dismissAll} className="text-xs">
+                  <Trash2 className="h-3 w-3 mr-1" />
+                  Nascondi tutte
                 </Button>
-              )}
-              <Button variant="outline" size="sm" onClick={dismissAll} className="text-xs">
-                <Trash2 className="h-3 w-3 mr-1" />
-                Nascondi tutte
-              </Button>
-            </div>
-          )}
+              </div>
+            )}
+            {loadingTapChanges ? (
+              <div className="flex items-center justify-center py-8">
+                <Loader2 className="h-7 w-7 animate-spin text-orange-600" />
+              </div>
+            ) : nearbyTapChanges.length === 0 ? (
+              <div className="text-center py-8 bg-stone-50 dark:bg-stone-800/50 rounded-xl">
+                <Beer className="h-10 w-10 text-stone-400 mx-auto mb-3" />
+                <p className="text-sm text-muted-foreground">
+                  {dismissedIds.size > 0
+                    ? "Hai nascosto tutte le notifiche."
+                    : `Nessuna birra aggiunta o rimossa entro ${radius} km negli ultimi 30 giorni.`}
+                </p>
+                {dismissedIds.size > 0 ? (
+                  <Button variant="link" size="sm" onClick={clearAllDismissed}>Ripristina nascoste</Button>
+                ) : (
+                  <Button variant="link" size="sm" onClick={() => setRadius("50")}>Espandi a 50 km</Button>
+                )}
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {nearbyTapChanges.map((tc) => (
+                  <TapChangeCard key={tc.id} tc={tc} showDismiss={true} />
+                ))}
+              </div>
+            )}
+          </section>
+        </TabsContent>
 
-          {loadingTapChanges ? (
-            <div className="flex items-center justify-center py-8">
-              <Loader2 className="h-8 w-8 animate-spin text-orange-600" />
-            </div>
-          ) : nearbyTapChanges.length === 0 ? (
-            <div className="text-center py-8 bg-gray-50 dark:bg-stone-800/50 rounded-xl">
-              <Beer className="h-10 w-10 text-stone-400 mx-auto mb-3" />
-              <p className="text-sm text-muted-foreground dark:text-stone-400">
-                {dismissedIds.size > 0
-                  ? "Hai nascosto tutte le notifiche."
-                  : `Nessuna birra aggiunta o rimossa entro ${radius} km negli ultimi 30 giorni.`}
-              </p>
-              {dismissedIds.size > 0 ? (
-                <Button variant="link" size="sm" onClick={clearAllDismissed}>Ripristina nascoste</Button>
-              ) : (
-                <Button variant="link" size="sm" onClick={() => setRadius("50")}>Espandi a 50 km</Button>
+        {/* TAB: FESTIVAL */}
+        <TabsContent value="festival" className="mt-0">
+          <section>
+            <h2 className="text-base font-semibold text-foreground dark:text-white mb-3 flex items-center gap-2">
+              <CalendarDays className="h-4 w-4 text-amber-600" />
+              Festival in Evidenza
+              {Array.isArray(activeFestivals) && activeFestivals.length > 0 && (
+                <Badge className="ml-1 bg-amber-600 text-white text-xs px-1.5 py-0">{activeFestivals.length}</Badge>
               )}
-            </div>
-          ) : (
-            <div className="space-y-3">
-              {nearbyTapChanges.map((tc) => (
-                <Card key={tc.id} className="hover:shadow-sm transition-shadow group">
-                  <CardContent className="p-4">
-                    <div className="flex items-start gap-3">
-                      <div className={`w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 ${
-                        tc.type === 'beer_removed' 
-                          ? 'bg-red-100 dark:bg-red-900/20' 
-                          : 'bg-stone-100 dark:bg-orange-900/20'
-                      }`}>
-                        <Beer className={`h-5 w-5 ${
-                          tc.type === 'beer_removed' ? 'text-red-600' : 'text-orange-600'
-                        }`} />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-foreground dark:text-white">
-                          {tc.message}
-                        </p>
-                        <div className="flex items-center gap-2 mt-1 flex-wrap">
-                          <Link href={`/pub/${tc.pubId}`}>
-                            <span className="text-xs text-orange-600 hover:underline font-medium cursor-pointer">
-                              {tc.pubName}
-                            </span>
-                          </Link>
-                          {tc.pubCity && (
-                            <span className="text-xs text-stone-400">• {tc.pubCity}</span>
-                          )}
-                          {'distance' in tc && (tc as any).distance !== 9999 && (
-                            <span className="text-xs font-medium text-blue-600 dark:text-blue-400">
-                              {formatDistance((tc as any).distance)}
-                            </span>
-                          )}
+            </h2>
+            {loadingFestivals ? (
+              <div className="flex items-center justify-center py-8">
+                <Loader2 className="h-7 w-7 animate-spin text-amber-600" />
+              </div>
+            ) : !Array.isArray(activeFestivals) || activeFestivals.length === 0 ? (
+              <div className="text-center py-8 bg-stone-50 dark:bg-stone-800/50 rounded-xl">
+                <CalendarDays className="h-10 w-10 text-stone-400 mx-auto mb-3" />
+                <p className="text-sm text-muted-foreground">Nessun festival attivo al momento</p>
+                <Link href="/festival">
+                  <Button variant="link" size="sm">Scopri i festival →</Button>
+                </Link>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {(activeFestivals as any[]).map((fest: any) => {
+                  const startDate = fest.startDate
+                    ? new Date(fest.startDate).toLocaleDateString("it-IT", { day: "numeric", month: "short", year: "numeric" })
+                    : null;
+                  const endDate = fest.endDate
+                    ? new Date(fest.endDate).toLocaleDateString("it-IT", { day: "numeric", month: "short", year: "numeric" })
+                    : null;
+                  const festUrl = `${window.location.origin}/festival/${fest.slug}`;
+                  return (
+                    <Card key={fest.id} className="hover:shadow-lg transition-all duration-200 overflow-hidden">
+                      {fest.coverImageUrl && (
+                        <div className="relative h-28 overflow-hidden">
+                          <img src={fest.coverImageUrl} alt={fest.name} className="w-full h-full object-cover" />
+                          <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
                         </div>
-                        <span className="text-xs text-stone-400 mt-1 block">
-                          {formatDistanceToNow(new Date(tc.createdAt), { addSuffix: true, locale: it })}
-                        </span>
-                      </div>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="flex-shrink-0 h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity text-stone-400 hover:text-red-500"
-                        onClick={() => dismissChange(tc.id)}
-                      >
-                        <X className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          )}
-        </section>
-      </div>
+                      )}
+                      <CardContent className="p-4">
+                        <h3 className="font-bold text-base mb-1 truncate">{fest.name}</h3>
+                        {(startDate || endDate) && (
+                          <p className="text-xs text-muted-foreground mb-1 flex items-center gap-1">
+                            <Calendar className="h-3 w-3" />
+                            {startDate}{endDate && startDate !== endDate ? ` → ${endDate}` : ""}
+                          </p>
+                        )}
+                        {fest.location && (
+                          <p className="text-xs text-muted-foreground mb-2 flex items-center gap-1">
+                            <MapPin className="h-3 w-3" />
+                            {fest.location}
+                          </p>
+                        )}
+                        {fest.description && (
+                          <p className="text-xs text-muted-foreground line-clamp-2 mb-3">{fest.description}</p>
+                        )}
+                        <div className="flex gap-2 mt-1">
+                          <Link href={`/festival/${fest.slug}`} className="flex-1">
+                            <Button size="sm" className="w-full bg-amber-500 hover:bg-amber-600 text-white text-xs">
+                              Vedi taplist
+                            </Button>
+                          </Link>
+                          <FestivalLikeButton festivalId={fest.id} showLabel={false} />
+                          <ShareButton title={fest.name} text={`Scopri le birre al festival ${fest.name}!`} url={festUrl} size="sm" variant="outline" />
+                        </div>
+                      </CardContent>
+                    </Card>
+                  );
+                })}
+              </div>
+            )}
+          </section>
+        </TabsContent>
+      </Tabs>
 
       {/* Event Detail Popup */}
       <Dialog open={!!selectedEvent} onOpenChange={(open) => { if (!open) setSelectedEvent(null); }}>
@@ -666,11 +651,7 @@ export default function Activity() {
             <>
               {selectedEvent.imageUrl && (
                 <div className="relative h-48 sm:h-56">
-                  <img 
-                    src={selectedEvent.imageUrl} 
-                    alt={selectedEvent.title}
-                    className="w-full h-full object-cover"
-                  />
+                  <img src={selectedEvent.imageUrl} alt={selectedEvent.title} className="w-full h-full object-cover" />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
                   <div className="absolute top-3 left-3">
                     <EventCategoryBadge category={selectedEvent.category} />
@@ -700,9 +681,7 @@ export default function Activity() {
                 <div className="flex items-center gap-2 pt-2">
                   <MapPin className="h-4 w-4 text-orange-600 flex-shrink-0" />
                   <Link href={`/pub/${selectedEvent.pubId}`} onClick={() => setSelectedEvent(null)}>
-                    <span className="text-sm text-orange-600 hover:underline font-semibold cursor-pointer">
-                      {selectedEvent.pub?.name}
-                    </span>
+                    <span className="text-sm text-orange-600 hover:underline font-semibold cursor-pointer">{selectedEvent.pub?.name}</span>
                   </Link>
                   {selectedEvent.pub?.city && (
                     <span className="text-sm text-muted-foreground">• {selectedEvent.pub.city}</span>
