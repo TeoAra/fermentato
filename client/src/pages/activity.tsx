@@ -509,7 +509,28 @@ export default function Activity() {
             )}
           </section>
 
-          {/* Birre che mi piacciono in zona */}
+          <section>
+            <h2 className="text-base font-semibold text-foreground dark:text-white mb-3 flex items-center gap-2">
+              <Beer className="h-4 w-4 text-orange-600" />
+              Birre preferite in zona
+              {nearbyTapChanges.length > 0 && (
+                <Badge className="ml-1 bg-orange-500 text-white text-xs px-1.5 py-0">{nearbyTapChanges.length}</Badge>
+              )}
+            </h2>
+            {nearbyTapChanges.length === 0 ? (
+              <div className="text-center py-6 bg-stone-50 dark:bg-stone-800/50 rounded-xl">
+                <Beer className="h-9 w-9 text-stone-400 mx-auto mb-2" />
+                <p className="text-sm text-muted-foreground">Nessuna birra preferita trovata entro {radius} km</p>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {nearbyTapChanges.slice(0, 5).map((tc: any) => (
+                  <TapChangeCard key={tc.id} tc={tc} />
+                ))}
+              </div>
+            )}
+          </section>
+
           {/* Eventi vicini */}
           <section>
             <h2 className="text-base font-semibold text-foreground dark:text-white mb-3 flex items-center gap-2">
