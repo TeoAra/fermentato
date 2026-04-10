@@ -1,11 +1,10 @@
 import { useState, useEffect, useMemo, useCallback } from "react";
 import { usePullToRefresh } from "@/hooks/use-pull-to-refresh";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { MapPin, Loader2, Navigation, Clock, AlertCircle, Beer, Trash2, X, Calendar, CalendarDays, ChevronDown, Heart, Users, Package, Search, UserPlus, UserMinus, BarChart3, Award, TrendingUp, Star } from "lucide-react";
+import { MapPin, Loader2, Navigation, Clock, AlertCircle, Beer, Trash2, X, Calendar, CalendarDays, ChevronDown, Users, Package, Search, UserPlus, UserMinus, BarChart3, Award, TrendingUp, Star } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
@@ -16,8 +15,6 @@ import { EventCategoryBadge, EventShareButtons, EventInterestButton } from "@/co
 import { FestivalLikeButton } from "@/components/festival-like-button";
 import { ShareButton } from "@/components/share-button";
 import { Helmet } from "react-helmet-async";
-import { apiRequest } from "@/lib/queryClient";
-import { useToast } from "@/hooks/use-toast";
 
 type OpenStatus = 'open' | 'closing_soon' | 'opening_soon' | 'closed';
 
@@ -92,30 +89,7 @@ function RatingStars({ rating }: { rating: number }) {
   const r = parseFloat(rating.toString());
   return <span className="text-primary font-bold text-xs">{"★".repeat(Math.round(r))}{"☆".repeat(5 - Math.round(r))} {r.toFixed(1)}</span>;
 }
-function UserAvatar({ user, size = 9 }: { user: any; size?: number }) {
-  const name = user.display_name ?? user.nickname ?? "?";
-  const sz = `w-${size} h-${size}`;
-  return user.profile_image_url ? <img src={user.profile_image_url} alt={name} className={`${sz} rounded-full object-cover flex-shrink-0`} /> : <div className={`${sz} rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0`}><span className="text-primary text-sm font-bold">{name[0].toUpperCase()}</span></div>;
-}
-function UserRow({ user, followingIds, onToggle }: { user: any; followingIds: Set<string>; onToggle: (id: string, following: boolean) => void }) {
-  const handle = user.username ?? user.nickname;
-  const name = user.display_name ?? ([user.first_name, user.last_name].filter(Boolean).join(" ") || handle);
-  const isFollowing = followingIds.has(user.id);
-  return <div className="flex items-center gap-3 py-3 px-1">
-    <Link href={`/user/${handle}`}><UserAvatar user={{ ...user, display_name: name }} size={10} /></Link>
-    <div className="flex-1 min-w-0"><Link href={`/user/${handle}`}><p className="font-semibold text-stone-800 dark:text-stone-100 text-sm truncate">{name}</p>{handle && <p className="text-xs text-stone-400 truncate">@{handle}</p>}</Link></div>
-    <button onClick={() => onToggle(user.id, isFollowing)} className={`flex items-center gap-1 text-xs font-semibold px-3 py-1.5 rounded-full transition-all ${isFollowing ? "bg-stone-100 dark:bg-stone-800 text-stone-600 dark:text-stone-300" : "bg-primary text-white"}`}>
-      {isFollowing ? <UserMinus className="w-3 h-3" /> : <UserPlus className="w-3 h-3" />}{isFollowing ? "Segui già" : "Segui"}
-    </button>
-  </div>;
-}
 const FORMAT_LABELS: Record<string, string> = { spina: "Alla spina", bottiglia: "Bottiglia", lattina: "Lattina", growler: "Growler" };
-const BADGE_DEFS = [
-  { key: "primo_sorso", icon: "🍺", name: "Primo Sorso" }, { key: "esploratore", icon: "🧭", name: "Esploratore" }, { key: "degustatore", icon: "🎓", name: "Degustatore" }, { key: "sommelier", icon: "🏆", name: "Sommelier" }, { key: "guru", icon: "⭐", name: "Guru della Birra" }, { key: "critico", icon: "✍️", name: "Critico" }, { key: "fotografo", icon: "📸", name: "Fotografo" }, { key: "cacciatore_stili", icon: "🎯", name: "Cacciatore di Stili" }, { key: "globe_trotter", icon: "🌍", name: "Globe Trotter" }, { key: "perfezionista", icon: "💎", name: "Perfezionista" }, { key: "sociale", icon: "👥", name: "Sociale" },
-];
-function StatCard({ label, value, sub }: { label: string; value: string | number; sub?: string }) {
-  return <div className="bg-white dark:bg-[hsl(220,5%,18%)] rounded-2xl p-4 shadow-sm text-center"><p className="text-2xl font-bold text-stone-900 dark:text-stone-50 font-poppins">{value}</p><p className="text-xs text-stone-500 mt-0.5 font-medium">{label}</p>{sub && <p className="text-xs text-primary mt-0.5">{sub}</p>}</div>;
-}
 
 function formatDistance(distance: number): string {
   if (distance < 1) return `${Math.round(distance * 1000)}m`;
@@ -201,13 +175,6 @@ export default function Activity() {
   const { data: tapChanges = [], isLoading: loadingTapChanges } = useQuery<TapChange[]>({ queryKey: ["/api/recent-tap-changes"] });
   const { data: upcomingEvents = [], isLoading: loadingEvents } = useQuery<any[]>({ queryKey: ["/api/events/upcoming"] });
   const { data: activeFestivals = [], isLoading: loadingFestivals } = useQuery<any[]>({ queryKey: ["/api/festivals/public"] });
-  const { data: likedBeers = [] } = useQuery<any[]>({
-    queryKey: ["/api/favorites/beer"],
-    enabled: isAuthenticated,
-  });
-
-  const likedBeerIds = useMemo(() => new Set((likedBeers as any[]).map((f: any) => f.itemId ?? f.id)), [likedBeers]);
-
   const nearbyPubs = useMemo(() => {
     if (!Array.isArray(allPubs)) return [];
     if (!userLocation) return allPubs;
@@ -259,11 +226,6 @@ export default function Activity() {
       .filter(tc => (tc as any).distance === null || (tc as any).distance <= radiusKm)
       .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
   }, [tapChanges, userLocation, radius, dismissedIds]);
-
-  const likedBeersNearby = useMemo(() => {
-    if (!isAuthenticated || likedBeerIds.size === 0) return [];
-    return nearbyTapChanges.filter(tc => tc.beerId && likedBeerIds.has(tc.beerId));
-  }, [nearbyTapChanges, likedBeerIds, isAuthenticated]);
 
   const dismissChange = (id: number) => {
     setDismissedIds(prev => {
@@ -486,31 +448,6 @@ export default function Activity() {
           </section>
 
           {/* Birre che mi piacciono in zona */}
-          {isAuthenticated && (
-            <section>
-              <h2 className="text-base font-semibold text-foreground dark:text-white mb-3 flex items-center gap-2">
-                <Heart className="h-4 w-4 text-rose-500" />
-                Birre che mi piacciono in zona
-              </h2>
-              {likedBeersNearby.length === 0 ? (
-                <div className="text-center py-6 bg-stone-50 dark:bg-stone-800/50 rounded-xl">
-                  <Heart className="h-9 w-9 text-stone-400 mx-auto mb-2" />
-                  <p className="text-sm text-muted-foreground">
-                    {likedBeerIds.size === 0
-                      ? "Aggiungi birre ai preferiti per vederle qui quando sono in zona"
-                      : `Nessuna delle tue birre preferite è stata aggiunta o rimossa entro ${radius} km`}
-                  </p>
-                </div>
-              ) : (
-                <div className="space-y-3">
-                  {likedBeersNearby.map((tc) => (
-                    <TapChangeCard key={tc.id} tc={tc} showDismiss={false} />
-                  ))}
-                </div>
-              )}
-            </section>
-          )}
-
           {/* Eventi vicini */}
           <section>
             <h2 className="text-base font-semibold text-foreground dark:text-white mb-3 flex items-center gap-2">
