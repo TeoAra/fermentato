@@ -1,13 +1,14 @@
 import { useState, useEffect, useMemo, useCallback } from "react";
 import { usePullToRefresh } from "@/hooks/use-pull-to-refresh";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { MapPin, Loader2, Navigation, Clock, AlertCircle, Beer, Trash2, X, Calendar, CalendarDays, ChevronDown, Users, Package, Search, UserPlus, UserMinus, BarChart3, Award, TrendingUp, Star } from "lucide-react";
+import { MapPin, Loader2, Navigation, Clock, AlertCircle, Beer, Trash2, X, Calendar, CalendarDays, ChevronDown } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { Input } from "@/components/ui/input";
 import { Link } from "wouter";
 import { formatDistanceToNow, format } from "date-fns";
 import { it } from "date-fns/locale";
@@ -15,6 +16,8 @@ import { EventCategoryBadge, EventShareButtons, EventInterestButton } from "@/co
 import { FestivalLikeButton } from "@/components/festival-like-button";
 import { ShareButton } from "@/components/share-button";
 import { Helmet } from "react-helmet-async";
+import { apiRequest } from "@/lib/queryClient";
+import { useToast } from "@/hooks/use-toast";
 
 type OpenStatus = 'open' | 'closing_soon' | 'opening_soon' | 'closed';
 
@@ -89,6 +92,70 @@ function RatingStars({ rating }: { rating: number }) {
   const r = parseFloat(rating.toString());
   return <span className="text-primary font-bold text-xs">{"★".repeat(Math.round(r))}{"☆".repeat(5 - Math.round(r))} {r.toFixed(1)}</span>;
 }
+
+function UserAvatar({ user, size = 9 }: { user: any; size?: number }) {
+  const name = user.display_name ?? user.nickname ?? "?";
+  const sizeClass = `w-${size} h-${size}`;
+  return user.profile_image_url ? (
+    <img src={user.profile_image_url} alt={name} className={`${sizeClass} rounded-full object-cover flex-shrink-0`} />
+  ) : (
+    <div className={`${sizeClass} rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0`}>
+      <span className="text-primary text-sm font-bold">{name[0].toUpperCase()}</span>
+    </div>
+  );
+}
+
+function UserRow({ user, followingIds, onToggle }: { user: any; followingIds: Set<string>; onToggle: (id: string, following: boolean) => void }) {
+  const handle = user.username ?? user.nickname;
+  const name = user.display_name ?? ([user.first_name, user.last_name].filter(Boolean).join(" ") || handle);
+  const isFollowing = followingIds.has(user.id);
+  return (
+    <div className="flex items-center gap-3 py-3 px-1">
+      <Link href={`/user/${handle}`}>
+        <UserAvatar user={{ ...user, display_name: name }} size={10} />
+      </Link>
+      <div className="flex-1 min-w-0">
+        <Link href={`/user/${handle}`}>
+          <p className="font-semibold text-stone-800 dark:text-stone-100 text-sm truncate">{name}</p>
+          {handle && <p className="text-xs text-stone-400 truncate">@{handle}</p>}
+        </Link>
+      </div>
+      <button
+        onClick={() => onToggle(user.id, isFollowing)}
+        className={`flex items-center gap-1 text-xs font-semibold px-3 py-1.5 rounded-full transition-all ${
+          isFollowing ? "bg-stone-100 dark:bg-stone-800 text-stone-600 dark:text-stone-300" : "bg-primary text-white"
+        }`}
+      >
+        {isFollowing ? <UserMinus className="w-3 h-3" /> : <UserPlus className="w-3 h-3" />}
+        {isFollowing ? "Segui già" : "Segui"}
+      </button>
+    </div>
+  );
+}
+
+const BADGE_DEFS = [
+  { key: "primo_sorso", icon: "🍺", name: "Primo Sorso" },
+  { key: "esploratore", icon: "🧭", name: "Esploratore" },
+  { key: "degustatore", icon: "🎓", name: "Degustatore" },
+  { key: "sommelier", icon: "🏆", name: "Sommelier" },
+  { key: "guru", icon: "⭐", name: "Guru della Birra" },
+  { key: "critico", icon: "✍️", name: "Critico" },
+  { key: "fotografo", icon: "📸", name: "Fotografo" },
+  { key: "cacciatore_stili", icon: "🎯", name: "Cacciatore di Stili" },
+  { key: "globe_trotter", icon: "🌍", name: "Globe Trotter" },
+  { key: "perfezionista", icon: "💎", name: "Perfezionista" },
+  { key: "sociale", icon: "👥", name: "Sociale" },
+];
+
+function StatCard({ label, value, sub }: { label: string; value: string | number; sub?: string }) {
+  return (
+    <div className="bg-white dark:bg-[hsl(220,5%,18%)] rounded-2xl p-4 shadow-sm text-center">
+      <p className="text-2xl font-bold text-stone-900 dark:text-stone-50 font-poppins">{value}</p>
+      <p className="text-xs text-stone-500 mt-0.5 font-medium">{label}</p>
+      {sub && <p className="text-xs text-primary mt-0.5">{sub}</p>}
+    </div>
+  );
+}
 const FORMAT_LABELS: Record<string, string> = { spina: "Alla spina", bottiglia: "Bottiglia", lattina: "Lattina", growler: "Growler" };
 
 function formatDistance(distance: number): string {
@@ -97,7 +164,8 @@ function formatDistance(distance: number): string {
 }
 
 export default function Activity() {
-  const { isAuthenticated } = useQuery<any>({ queryKey: ["/api/auth/user"], retry: false }).data ? { isAuthenticated: true } as any : { isAuthenticated: false } as any;
+  const { data: currentUser } = useQuery<any>({ queryKey: ["/api/auth/user"], retry: false });
+  const isAuthenticated = !!currentUser;
   const { toast } = useToast();
   const [radius, setRadius] = useState("10");
   const [userSearch, setUserSearch] = useState("");
@@ -161,7 +229,11 @@ export default function Activity() {
   const auth = !!currentUser;
   const { data: feed = [], isLoading: feedLoading } = useQuery<any[]>({ queryKey: ["/api/user/feed"], enabled: auth });
   const { data: following = [], isLoading: followingLoading } = useQuery<any[]>({ queryKey: ["/api/user/following"], enabled: auth });
-  const { data: searchResults = [], isLoading: searchLoading } = useQuery<any[]>({ queryKey: ["/api/users/search", debouncedSearch], queryFn: () => fetch(`/api/users/search?q=${encodeURIComponent(debouncedSearch)}`).then(r => r.json()), enabled: debouncedSearch.length >= 2 });
+  const { data: searchResults = [], isLoading: searchLoading } = useQuery<any[]>({
+    queryKey: ["/api/users/search", debouncedSearch],
+    queryFn: () => fetch(`/api/users/search?q=${encodeURIComponent(debouncedSearch)}`).then(r => r.json()),
+    enabled: debouncedSearch.length >= 2,
+  });
   const { data: stats, isLoading: statsLoading } = useQuery<any>({ queryKey: ["/api/user/stats"], enabled: auth });
   const { data: badges = [], isLoading: badgesLoading } = useQuery<any[]>({ queryKey: ["/api/user/badges"], enabled: auth });
   const followingIds = new Set<string>((following as any[]).map((u: any) => u.id));
@@ -169,7 +241,7 @@ export default function Activity() {
     mutate: ({ id, following }: { id: string; following: boolean }) => apiRequest(`/api/users/${id}/follow`, { method: following ? "DELETE" : "POST" })
   }), []);
   const earnedBadges = badges.filter((b: any) => b.earned);
-  const totalFormat = (stats?.formatBreakdown ?? []).reduce((s: number, f: any) => s + parseInt(f.cnt), 0);
+  const earnedBadges = badges.filter((b: any) => b.earned);
 
   const { data: allPubs, isLoading: loadingPubs } = useQuery({ queryKey: ["/api/pubs"] });
   const { data: tapChanges = [], isLoading: loadingTapChanges } = useQuery<TapChange[]>({ queryKey: ["/api/recent-tap-changes"] });
@@ -633,20 +705,6 @@ export default function Activity() {
           </section>
         </TabsContent>
 
-        <TabsContent value="sociale" className="mt-0">
-          <div className="p-4 space-y-5">
-            <div className="bg-white dark:bg-[hsl(220,5%,18%)] rounded-2xl shadow-sm p-4">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-stone-400" />
-                <Input value={userSearch} onChange={e => setUserSearch(e.target.value)} placeholder="Cerca per nome o nickname…" className="pl-9 rounded-xl" />
-              </div>
-              {debouncedSearch.length >= 2 && <div className="mt-3 divide-y divide-stone-100 dark:divide-stone-700/30">{searchLoading ? <div className="py-4 text-sm text-stone-400">Caricamento...</div> : searchResults.map((u: any) => <UserRow key={u.id} user={u} followingIds={followingIds} onToggle={() => {}} />)}</div>}
-            </div>
-            <div className="grid grid-cols-3 gap-3">{statsLoading ? null : <><StatCard label="Assaggi" value={stats?.total ?? 0} /><StatCard label="Voto medio" value={stats?.avgRating ? `${stats.avgRating} ★` : "—"} /><StatCard label="Streak" value={stats?.currentStreak ? `${stats.currentStreak}🔥` : "—"} /></>}</div>
-            <div className="bg-white dark:bg-[hsl(220,5%,18%)] rounded-2xl p-4 shadow-sm"><p className="text-xs font-black uppercase tracking-widest text-stone-400 mb-3">Feed amici</p>{feedLoading ? <div className="text-sm text-stone-400">Caricamento...</div> : feed.length === 0 ? <p className="text-sm text-stone-400">Nessuna attività recente</p> : feed.map((item: any) => <div key={item.id} className="py-3 border-t first:border-t-0 border-stone-100 dark:border-stone-700/30"><p className="text-sm font-semibold">{item.beer_name}</p><p className="text-xs text-stone-400">{item.brewery_name}</p>{item.notes && <p className="text-xs italic text-stone-500">"{item.notes}"</p>}</div>)}</div>
-            <div className="bg-white dark:bg-[hsl(220,5%,18%)] rounded-2xl p-4 shadow-sm"><p className="text-xs font-black uppercase tracking-widest text-stone-400 mb-3">Badge · {earnedBadges.length}/{BADGE_DEFS.length}</p><div className="grid grid-cols-4 gap-2">{BADGE_DEFS.map(def => { const earned = badges.find((b: any) => b.key === def.key)?.earned; return <div key={def.key} className={`flex flex-col items-center gap-1 p-2 rounded-xl text-center ${earned ? "bg-primary/10" : "bg-stone-50 dark:bg-stone-800 opacity-40"}`}><span className="text-2xl">{def.icon}</span><p className="text-[9px] font-bold text-stone-600 dark:text-stone-300 leading-tight">{def.name}</p></div>; })}</div></div>
-          </div>
-        </TabsContent>
       </Tabs>
 
       {/* Event Detail Popup */}
