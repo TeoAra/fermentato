@@ -29,7 +29,7 @@ export function BottomNavigation() {
 
   const homeActive     = isActive("/");
   const notifActive    = isActive("/notifications");
-  const attivitaActive = isActive("/social-feed") || isActive("/activity");
+  const attivitaActive = isActive("/activity") || isActive("/social-feed");
   const cercaActive    = searchOpen;
   const scanActive     = isActive("/scan");
   const accountActive  = isActive("/profile");
@@ -104,7 +104,7 @@ export function BottomNavigation() {
           </Link>
 
           {/* Attività */}
-          <Link href="/social-feed" className="flex-1 flex">
+          <Link href="/activity" className="flex-1 flex">
             <Tab active={attivitaActive}>
               <Activity className="h-[22px] w-[22px]" strokeWidth={attivitaActive ? 2.4 : 1.8} />
               <span className="text-[10px] font-semibold leading-none">Attività</span>
