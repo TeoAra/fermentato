@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo, useCallback } from "react";
 import { usePullToRefresh } from "@/hooks/use-pull-to-refresh";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { MapPin, Loader2, Navigation, Clock, AlertCircle, Beer, Trash2, X, Calendar, CalendarDays, ChevronDown } from "lucide-react";
+import { MapPin, Loader2, Navigation, Clock, AlertCircle, Beer, Trash2, X, Calendar, CalendarDays, ChevronDown, Users, Package, Search, UserPlus, UserMinus, BarChart3, Award, TrendingUp, Star } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -225,7 +225,6 @@ export default function Activity() {
     requestLocation();
   }, []);
 
-  const { data: currentUser } = useQuery<any>({ queryKey: ["/api/auth/user"], retry: false });
   const auth = !!currentUser;
   const { data: feed = [], isLoading: feedLoading } = useQuery<any[]>({ queryKey: ["/api/user/feed"], enabled: auth });
   const { data: following = [], isLoading: followingLoading } = useQuery<any[]>({ queryKey: ["/api/user/following"], enabled: auth });
@@ -241,8 +240,6 @@ export default function Activity() {
     mutate: ({ id, following }: { id: string; following: boolean }) => apiRequest(`/api/users/${id}/follow`, { method: following ? "DELETE" : "POST" })
   }), []);
   const earnedBadges = badges.filter((b: any) => b.earned);
-  const earnedBadges = badges.filter((b: any) => b.earned);
-
   const { data: allPubs, isLoading: loadingPubs } = useQuery({ queryKey: ["/api/pubs"] });
   const { data: tapChanges = [], isLoading: loadingTapChanges } = useQuery<TapChange[]>({ queryKey: ["/api/recent-tap-changes"] });
   const { data: upcomingEvents = [], isLoading: loadingEvents } = useQuery<any[]>({ queryKey: ["/api/events/upcoming"] });
@@ -579,55 +576,65 @@ export default function Activity() {
           </section>
         </TabsContent>
 
-        {/* TAB: BIRRE */}
-        <TabsContent value="birre" className="mt-0">
-          <section>
-            <h2 className="text-base font-semibold text-foreground dark:text-white mb-3 flex items-center gap-2">
-              <Beer className="h-4 w-4 text-amber-600" />
-              Birre in Zona
-              {nearbyTapChanges.length > 0 && (
-                <Badge className="ml-1 bg-orange-600 text-white text-xs px-1.5 py-0">{nearbyTapChanges.length}</Badge>
+        <TabsContent value="sociale" className="mt-0">
+          <div className="p-4 space-y-5">
+            <div className="bg-white dark:bg-[hsl(220,5%,18%)] rounded-2xl shadow-sm p-4">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-stone-400" />
+                <Input value={userSearch} onChange={e => setUserSearch(e.target.value)} placeholder="Cerca per nome o nickname…" className="pl-9 rounded-xl" />
+              </div>
+              {debouncedSearch.length >= 2 && (
+                <div className="mt-3 divide-y divide-stone-100 dark:divide-stone-700/30">
+                  {searchLoading ? (
+                    <div className="py-4 text-sm text-stone-400">Caricamento...</div>
+                  ) : (
+                    searchResults.map((u: any) => (
+                      <UserRow key={u.id} user={u} followingIds={followingIds} onToggle={(id, following) => followMutation.mutate({ id, following })} />
+                    ))
+                  )}
+                </div>
               )}
-            </h2>
-            {nearbyTapChanges.length > 0 && (
-              <div className="flex items-center justify-end gap-2 mb-3">
-                {dismissedIds.size > 0 && (
-                  <Button variant="ghost" size="sm" onClick={clearAllDismissed} className="text-xs text-muted-foreground">
-                    Ripristina nascoste
-                  </Button>
-                )}
-                <Button variant="outline" size="sm" onClick={dismissAll} className="text-xs">
-                  <Trash2 className="h-3 w-3 mr-1" />
-                  Nascondi tutte
-                </Button>
+            </div>
+            <div className="grid grid-cols-3 gap-3">
+              {statsLoading ? null : (
+                <>
+                  <StatCard label="Assaggi" value={stats?.total ?? 0} />
+                  <StatCard label="Voto medio" value={stats?.avgRating ? `${stats.avgRating} ★` : "—"} />
+                  <StatCard label="Streak" value={stats?.currentStreak ? `${stats.currentStreak}🔥` : "—"} />
+                </>
+              )}
+            </div>
+            <div className="bg-white dark:bg-[hsl(220,5%,18%)] rounded-2xl p-4 shadow-sm">
+              <p className="text-xs font-black uppercase tracking-widest text-stone-400 mb-3">Feed amici</p>
+              {feedLoading ? (
+                <div className="text-sm text-stone-400">Caricamento...</div>
+              ) : feed.length === 0 ? (
+                <p className="text-sm text-stone-400">Nessuna attività recente</p>
+              ) : (
+                feed.map((item: any) => (
+                  <div key={item.id} className="py-3 border-t first:border-t-0 border-stone-100 dark:border-stone-700/30">
+                    <p className="text-sm font-semibold">{item.beer_name}</p>
+                    <p className="text-xs text-stone-400">{item.brewery_name}</p>
+                    {item.notes && <p className="text-xs italic text-stone-500">"{item.notes}"</p>}
+                  </div>
+                ))
+              )}
+            </div>
+            <div className="bg-white dark:bg-[hsl(220,5%,18%)] rounded-2xl p-4 shadow-sm">
+              <p className="text-xs font-black uppercase tracking-widest text-stone-400 mb-3">Badge · {earnedBadges.length}/{BADGE_DEFS.length}</p>
+              <div className="grid grid-cols-4 gap-2">
+                {BADGE_DEFS.map((def: any) => {
+                  const earned = badges.find((b: any) => b.key === def.key)?.earned;
+                  return (
+                    <div key={def.key} className={`flex flex-col items-center gap-1 p-2 rounded-xl text-center ${earned ? "bg-primary/10" : "bg-stone-50 dark:bg-stone-800 opacity-40"}`}>
+                      <span className="text-2xl">{def.icon}</span>
+                      <p className="text-[9px] font-bold text-stone-600 dark:text-stone-300 leading-tight">{def.name}</p>
+                    </div>
+                  );
+                })}
               </div>
-            )}
-            {loadingTapChanges ? (
-              <div className="flex items-center justify-center py-8">
-                <Loader2 className="h-7 w-7 animate-spin text-orange-600" />
-              </div>
-            ) : nearbyTapChanges.length === 0 ? (
-              <div className="text-center py-8 bg-stone-50 dark:bg-stone-800/50 rounded-xl">
-                <Beer className="h-10 w-10 text-stone-400 mx-auto mb-3" />
-                <p className="text-sm text-muted-foreground">
-                  {dismissedIds.size > 0
-                    ? "Hai nascosto tutte le notifiche."
-                    : `Nessuna birra aggiunta o rimossa entro ${radius} km negli ultimi 30 giorni.`}
-                </p>
-                {dismissedIds.size > 0 ? (
-                  <Button variant="link" size="sm" onClick={clearAllDismissed}>Ripristina nascoste</Button>
-                ) : (
-                  <Button variant="link" size="sm" onClick={() => setRadius("50")}>Espandi a 50 km</Button>
-                )}
-              </div>
-            ) : (
-              <div className="space-y-3">
-                {nearbyTapChanges.map((tc) => (
-                  <TapChangeCard key={tc.id} tc={tc} showDismiss={true} />
-                ))}
-              </div>
-            )}
-          </section>
+            </div>
+          </div>
         </TabsContent>
 
         {/* TAB: FESTIVAL */}
