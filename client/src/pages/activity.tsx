@@ -433,13 +433,6 @@ export default function Activity() {
             <MapPin className="h-3.5 w-3.5 mr-1" />
             In Zona
           </TabsTrigger>
-          <TabsTrigger value="birre" className="flex-1 rounded-lg text-xs font-semibold data-[state=active]:bg-white dark:data-[state=active]:bg-stone-700 data-[state=active]:shadow-sm py-2">
-            <Beer className="h-3.5 w-3.5 mr-1" />
-            Birre
-            {nearbyTapChanges.length > 0 && (
-              <Badge className="ml-1 bg-orange-500 text-white text-[10px] px-1 py-0 h-4">{nearbyTapChanges.length}</Badge>
-            )}
-          </TabsTrigger>
           <TabsTrigger value="festival" className="flex-1 rounded-lg text-xs font-semibold data-[state=active]:bg-white dark:data-[state=active]:bg-stone-700 data-[state=active]:shadow-sm py-2">
             <CalendarDays className="h-3.5 w-3.5 mr-1" />
             Festival
