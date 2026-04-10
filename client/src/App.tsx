@@ -77,7 +77,6 @@ const SupportoPage       = lazy(() => import("@/pages/static-page").then(m => ({
 const MyCellar           = lazy(() => import("@/pages/my-cellar"));
 const MyWishlist         = lazy(() => import("@/pages/my-wishlist"));
 const MyStats            = lazy(() => import("@/pages/my-stats"));
-const SocialFeed         = lazy(() => import("@/pages/social-feed"));
 // ─────────────────────────────────────────────────────────────────────────────
 
 const PageSkeleton = () => (
@@ -279,7 +278,6 @@ function Router() {
           <Route path="/my-cellar" component={MyCellar} />
           <Route path="/my-wishlist" component={MyWishlist} />
           <Route path="/my-stats" component={MyStats} />
-          <Route path="/social-feed" component={SocialFeed} />
           <Route path="/contatti" component={ContattiPage} />
           <Route path="/chi-siamo" component={ChiSiamoPage} />
           <Route path="/prezzi" component={PrezziPageNew} />

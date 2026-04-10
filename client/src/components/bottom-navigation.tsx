@@ -29,7 +29,7 @@ export function BottomNavigation() {
 
   const homeActive     = isActive("/");
   const notifActive    = isActive("/notifications");
-  const attivitaActive = isActive("/activity") || isActive("/social-feed");
+  const attivitaActive = isActive("/activity");
   const cercaActive    = searchOpen;
   const scanActive     = isActive("/scan");
   const accountActive  = isActive("/profile");

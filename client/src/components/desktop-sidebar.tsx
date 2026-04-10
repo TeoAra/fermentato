@@ -198,7 +198,7 @@ export function DesktopSidebar() {
                     </Link>
                   </DropdownMenuItem>
                   <DropdownMenuItem asChild>
-                    <Link href="/social-feed" className="flex items-center gap-2 text-[13px] cursor-pointer">
+                    <Link href="/activity" className="flex items-center gap-2 text-[13px] cursor-pointer">
                       <span className="text-sm">👥</span>
                       Feed amici
                     </Link>

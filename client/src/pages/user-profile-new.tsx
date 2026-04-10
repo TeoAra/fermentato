@@ -628,7 +628,7 @@ export default function UserProfile() {
                 { href: "/my-stats", icon: "📊", label: "Statistiche", sub: "Stili, birrifici, streak" },
                 { href: "/my-cellar", icon: "🍷", label: "Cantina", sub: "Bottiglie a casa tua" },
                 { href: "/my-wishlist", icon: "❤️", label: "Wishlist", sub: "Da assaggiare" },
-                { href: "/social-feed", icon: "👥", label: "Feed amici", sub: "Attività dei tuoi seguiti" },
+                { href: "/activity", icon: "👥", label: "Attività", sub: "Feed, amici e zona" },
               ].map(({ href, icon, label, sub }) => (
                 <Link key={href} href={href}>
                   <div className="bg-white dark:bg-[hsl(220,5%,18%)] rounded-2xl p-3.5 shadow-sm flex items-center gap-3 active:opacity-80 transition-opacity border border-stone-100 dark:border-[hsl(220,5%,27%)]">
