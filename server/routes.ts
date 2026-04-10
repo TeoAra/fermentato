@@ -7459,7 +7459,7 @@ ${meta.image ? `<meta name="twitter:image" content="${meta.image}">` : ""}
     const userId = (req.user as any).id;
     const [countRes, withNotesRes, withPhotoRes, stylesRes, hasMaxRatingRes, followsRes] = await Promise.all([
       pool.query(`SELECT COUNT(*) as cnt FROM user_beer_tastings WHERE user_id = $1`, [userId]),
-      pool.query(`SELECT COUNT(*) as cnt FROM user_beer_tastings WHERE user_id = $1 AND notes IS NOT NULL AND notes != ''`, [userId]),
+      pool.query(`SELECT COUNT(*) as cnt FROM user_beer_tastings WHERE user_id = $1 AND personal_notes IS NOT NULL AND personal_notes != ''`, [userId]),
       pool.query(`SELECT COUNT(*) as cnt FROM user_beer_tastings WHERE user_id = $1 AND photo_url IS NOT NULL`, [userId]),
       pool.query(`SELECT COUNT(DISTINCT b.style) as cnt FROM user_beer_tastings ubt JOIN beers b ON b.id = ubt.beer_id WHERE ubt.user_id = $1 AND b.style IS NOT NULL`, [userId]),
       pool.query(`SELECT COUNT(*) as cnt FROM user_beer_tastings WHERE user_id = $1 AND rating >= 5.0`, [userId]),
