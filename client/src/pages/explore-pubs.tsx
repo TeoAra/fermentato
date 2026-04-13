@@ -89,7 +89,7 @@ export default function ExplorePubs() {
     <div className="min-h-screen bg-background slide-up">
       <Helmet>
         <title>Pub e Birrerie Artigianali in Italia | Fermenta.to</title>
-        <meta name="description" content="Trova pub, birrerie e locali che servono birra artigianale in Italia. Consulta orari, taplist live e posizione su mappa." />
+        <meta name="description" content="Trova pub, birrerie e locali craft beer in Italia. Consulta taplist in tempo reale, orari di apertura, posizione su mappa e distanza da te su Fermenta.to." />
         <meta property="og:title" content="Pub e Birrerie Artigianali in Italia | Fermenta.to" />
         <meta property="og:description" content="Trova pub, birrerie e locali che servono birra artigianale in Italia. Consulta orari, taplist live e posizione su mappa." />
         <meta property="og:type" content="website" />
@@ -97,6 +97,33 @@ export default function ExplorePubs() {
         <meta property="og:site_name" content="Fermenta.to" />
         <meta name="twitter:card" content="summary" />
         <link rel="canonical" href="https://fermenta.to/explore/pubs" />
+        <script type="application/ld+json">{JSON.stringify([
+          {
+            "@context": "https://schema.org",
+            "@type": "BreadcrumbList",
+            "itemListElement": [
+              { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://fermenta.to/" },
+              { "@type": "ListItem", "position": 2, "name": "Pub Craft Beer", "item": "https://fermenta.to/explore/pubs" },
+            ],
+          },
+          {
+            "@context": "https://schema.org",
+            "@type": "CollectionPage",
+            "@id": "https://fermenta.to/explore/pubs",
+            "name": "Pub e Birrerie Artigianali in Italia",
+            "description": "La directory dei migliori pub e birrerie craft in Italia. Taplist live, orari aggiornati e info complete.",
+            "url": "https://fermenta.to/explore/pubs",
+            "publisher": { "@id": "https://fermenta.to/#organization" },
+            ...(Array.isArray(allPubs) && allPubs.length > 0 ? {
+              "hasPart": (allPubs as any[]).slice(0, 10).map((p: any) => ({
+                "@type": "BarOrPub",
+                "name": p.name,
+                "url": `https://fermenta.to/pub/${p.id}`,
+                ...(p.city ? { "address": { "@type": "PostalAddress", "addressLocality": p.city, "addressCountry": "IT" } } : {}),
+              }))
+            } : {}),
+          }
+        ])}</script>
       </Helmet>
       {/* Header */}
       <div className="bg-white dark:bg-[hsl(25,14%,8%)] border-b border-stone-100 dark:border-[hsl(25,12%,14%)]">

@@ -72,7 +72,7 @@ export default function ExploreBeers() {
     <div className="min-h-screen bg-background slide-up">
       <Helmet>
         <title>Catalogo Birre Artigianali | Fermenta.to</title>
-        <meta name="description" content="Sfoglia migliaia di birre artigianali italiane. Filtra per stile, cerca per nome o birrificio e scopri le tue preferite." />
+        <meta name="description" content="Sfoglia migliaia di birre artigianali italiane e internazionali. Filtra per stile (IPA, Stout, Weizen, Lager…), cerca per nome o birrificio e scopri le tue preferite su Fermenta.to." />
         <meta property="og:title" content="Catalogo Birre Artigianali | Fermenta.to" />
         <meta property="og:description" content="Sfoglia migliaia di birre artigianali italiane. Filtra per stile, cerca per nome o birrificio e scopri le tue preferite." />
         <meta property="og:type" content="website" />
@@ -80,6 +80,34 @@ export default function ExploreBeers() {
         <meta property="og:site_name" content="Fermenta.to" />
         <meta name="twitter:card" content="summary" />
         <link rel="canonical" href="https://fermenta.to/explore/beers" />
+        <script type="application/ld+json">{JSON.stringify([
+          {
+            "@context": "https://schema.org",
+            "@type": "BreadcrumbList",
+            "itemListElement": [
+              { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://fermenta.to/" },
+              { "@type": "ListItem", "position": 2, "name": "Catalogo Birre", "item": "https://fermenta.to/explore/beers" },
+            ],
+          },
+          {
+            "@context": "https://schema.org",
+            "@type": "CollectionPage",
+            "@id": "https://fermenta.to/explore/beers",
+            "name": "Catalogo Birre Artigianali",
+            "description": "Il più completo catalogo di birre artigianali italiane e internazionali. Cerca per stile, birrificio o nome.",
+            "url": "https://fermenta.to/explore/beers",
+            "publisher": { "@id": "https://fermenta.to/#organization" },
+            ...(Array.isArray(styleBeers) && styleBeers.length > 0 ? {
+              "hasPart": styleBeers.slice(0, 10).map((b: any) => ({
+                "@type": "Product",
+                "name": b.name,
+                "url": `https://fermenta.to/beer/${b.id}`,
+                ...(b.style ? { "category": b.style } : {}),
+                ...(b.imageUrl ? { "image": b.imageUrl } : {}),
+              }))
+            } : {}),
+          }
+        ])}</script>
       </Helmet>
       {/* Page header */}
       <div className="bg-white dark:bg-[hsl(25,14%,8%)] border-b border-stone-100 dark:border-[hsl(25,12%,14%)]">

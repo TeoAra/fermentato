@@ -176,6 +176,49 @@ export default function Landing() {
         <meta property="og:image" content="https://fermenta.to/logo-full.png" />
         <meta name="twitter:card" content="summary_large_image" />
         <link rel="canonical" href="https://fermenta.to/" />
+        <script type="application/ld+json">{JSON.stringify([
+          {
+            "@context": "https://schema.org",
+            "@type": "FAQPage",
+            "mainEntity": [
+              {
+                "@type": "Question",
+                "name": "Cos'è Fermenta.to?",
+                "acceptedAnswer": { "@type": "Answer", "text": "Fermenta.to è la piattaforma italiana dedicata alla birra artigianale. Permette di scoprire pub, birrifici e birre craft, consultare taplist in tempo reale, assaggiare e recensire birre, partecipare ai festival e connettersi con la community dei beer lovers italiani." }
+              },
+              {
+                "@type": "Question",
+                "name": "Come posso trovare pub con birre artigianali vicino a me?",
+                "acceptedAnswer": { "@type": "Answer", "text": "Su Fermenta.to puoi usare la sezione 'Esplora Pub' per trovare i locali craft beer più vicini. L'app utilizza la geolocalizzazione per mostrare pub ordinati per distanza, con taplist aggiornata in tempo reale e orari di apertura." }
+              },
+              {
+                "@type": "Question",
+                "name": "Come funziona la taplist in tempo reale?",
+                "acceptedAnswer": { "@type": "Answer", "text": "I gestori dei pub aggiornano direttamente la taplist dal loro pannello. Gli utenti vedono subito quali birre sono disponibili alla spina, in bottiglia o in lattina, con informazioni su ABV, stile e birrificio." }
+              },
+              {
+                "@type": "Question",
+                "name": "Posso recensire le birre su Fermenta.to?",
+                "acceptedAnswer": { "@type": "Answer", "text": "Sì. Ogni birra nel catalogo può essere valutata con un voto da 1 a 5 stelle e una recensione testuale. Le recensioni contribuiscono al punteggio medio della birra visibile nella scheda prodotto." }
+              },
+              {
+                "@type": "Question",
+                "name": "Come faccio a registrare il mio pub su Fermenta.to?",
+                "acceptedAnswer": { "@type": "Answer", "text": "I proprietari di pub possono registrarsi gratuitamente come gestore. Dopo la verifica, potranno aggiornare la taplist, inserire orari, eventi e promozioni direttamente dalla dashboard." }
+              },
+              {
+                "@type": "Question",
+                "name": "Come faccio a registrare il mio birrificio su Fermenta.to?",
+                "acceptedAnswer": { "@type": "Answer", "text": "I birrifici artigianali possono richiedere la propria pagina su Fermenta.to. Una volta verificati, potranno gestire il catalogo birre, aggiungere informazioni, aggiornare immagini e comunicare direttamente con la community." }
+              },
+              {
+                "@type": "Question",
+                "name": "Fermenta.to è disponibile come app?",
+                "acceptedAnswer": { "@type": "Answer", "text": "Fermenta.to è una Progressive Web App (PWA): può essere installata su iOS e Android direttamente dal browser, senza passare per l'App Store o Play Store, e funziona come un'app nativa." }
+              },
+            ]
+          }
+        ])}</script>
       </Helmet>
 
       {/* ─── HERO ────────────────────────────────────────────────────────── */}

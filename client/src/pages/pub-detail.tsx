@@ -595,30 +595,55 @@ export default function PubDetail() {
         <meta name="twitter:description" content={seoDesc} />
         {seoImage && <meta name="twitter:image" content={seoImage} />}
         <link rel="canonical" href={seoUrl} />
-        <script type="application/ld+json">{JSON.stringify({
-          "@context": "https://schema.org",
-          "@type": "BarOrPub",
-          "name": pubData?.name,
-          "description": pubData?.description,
-          "url": seoUrl,
-          "image": seoImage,
-          "telephone": pubData?.phone,
-          "address": pubData?.address ? { "@type": "PostalAddress", "streetAddress": pubData.address, "addressLocality": pubData.city, "addressCountry": "IT" } : undefined,
-          ...(pubData?.latitude && pubData?.longitude ? { "geo": { "@type": "GeoCoordinates", "latitude": pubData.latitude, "longitude": pubData.longitude } } : {}),
-          ...(pubData?.website ? { "url": pubData.website, "sameAs": pubData.website } : {}),
-          "servesCuisine": "Craft Beer",
-          "openingHoursSpecification": (() => {
-            const days: Record<string, string> = { monday: "Monday", tuesday: "Tuesday", wednesday: "Wednesday", thursday: "Thursday", friday: "Friday", saturday: "Saturday", sunday: "Sunday" };
-            const hours = pubData?.openingHours;
-            if (!hours) return undefined;
-            return Object.entries(days).filter(([k]) => hours[k] && !hours[k].isClosed && hours[k].open && hours[k].close).map(([k, dayName]) => ({
-              "@type": "OpeningHoursSpecification",
-              "dayOfWeek": `https://schema.org/${dayName}`,
-              "opens": hours[k].open,
-              "closes": hours[k].close,
-            }));
-          })(),
-        })}</script>
+        <script type="application/ld+json">{JSON.stringify([
+          {
+            "@context": "https://schema.org",
+            "@type": "BreadcrumbList",
+            "itemListElement": [
+              { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://fermenta.to/" },
+              { "@type": "ListItem", "position": 2, "name": "Pub", "item": "https://fermenta.to/explore/pubs" },
+              ...(pubData?.city ? [{ "@type": "ListItem", "position": 3, "name": pubData.city, "item": `https://fermenta.to/explore/pubs?city=${encodeURIComponent(pubData.city)}` }] : []),
+              { "@type": "ListItem", "position": pubData?.city ? 4 : 3, "name": pubData?.name, "item": seoUrl },
+            ],
+          },
+          {
+            "@context": "https://schema.org",
+            "@type": "BarOrPub",
+            "@id": seoUrl,
+            "name": pubData?.name,
+            "description": pubData?.description || `${pubData?.name} è un pub con birre artigianali${pubData?.city ? ` a ${pubData.city}` : ""}. Scopri taplist, orari e info su Fermenta.to.`,
+            "url": seoUrl,
+            "image": seoImage,
+            "telephone": pubData?.phone,
+            "priceRange": "€€",
+            "servesCuisine": "Craft Beer",
+            "address": pubData?.address ? {
+              "@type": "PostalAddress",
+              "streetAddress": pubData.address,
+              "addressLocality": pubData.city,
+              "addressCountry": "IT",
+            } : undefined,
+            ...(pubData?.latitude && pubData?.longitude ? {
+              "geo": {
+                "@type": "GeoCoordinates",
+                "latitude": pubData.latitude,
+                "longitude": pubData.longitude,
+              }
+            } : {}),
+            ...(pubData?.website ? { "sameAs": [pubData.website] } : {}),
+            "openingHoursSpecification": (() => {
+              const days: Record<string, string> = { monday: "Monday", tuesday: "Tuesday", wednesday: "Wednesday", thursday: "Thursday", friday: "Friday", saturday: "Saturday", sunday: "Sunday" };
+              const hours = pubData?.openingHours;
+              if (!hours) return undefined;
+              return Object.entries(days).filter(([k]) => hours[k] && !hours[k].isClosed && hours[k].open && hours[k].close).map(([k, dayName]) => ({
+                "@type": "OpeningHoursSpecification",
+                "dayOfWeek": `https://schema.org/${dayName}`,
+                "opens": hours[k].open,
+                "closes": hours[k].close,
+              }));
+            })(),
+          }
+        ])}</script>
       </Helmet>
       
       {/* ── HERO ── */}

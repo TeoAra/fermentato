@@ -292,7 +292,7 @@ export default function ExploreBreweries() {
     <div className="min-h-screen bg-background slide-up">
       <Helmet>
         <title>Birrifici Artigianali Italiani | Fermenta.to</title>
-        <meta name="description" content="Esplora i migliori birrifici artigianali d'Italia. Scopri le birre, la storia dei produttori e i locali dove trovarle vicino a te." />
+        <meta name="description" content="Esplora oltre 1.000 birrifici artigianali italiani e internazionali. Scopri le birre, la storia dei produttori e i locali dove trovarle vicino a te su Fermenta.to." />
         <meta property="og:title" content="Birrifici Artigianali Italiani | Fermenta.to" />
         <meta property="og:description" content="Esplora i migliori birrifici artigianali d'Italia. Scopri le birre, la storia dei produttori e i locali dove trovarle vicino a te." />
         <meta property="og:type" content="website" />
@@ -300,6 +300,34 @@ export default function ExploreBreweries() {
         <meta property="og:site_name" content="Fermenta.to" />
         <meta name="twitter:card" content="summary" />
         <link rel="canonical" href="https://fermenta.to/explore/breweries" />
+        <script type="application/ld+json">{JSON.stringify([
+          {
+            "@context": "https://schema.org",
+            "@type": "BreadcrumbList",
+            "itemListElement": [
+              { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://fermenta.to/" },
+              { "@type": "ListItem", "position": 2, "name": "Birrifici Artigianali", "item": "https://fermenta.to/explore/breweries" },
+            ],
+          },
+          {
+            "@context": "https://schema.org",
+            "@type": "CollectionPage",
+            "@id": "https://fermenta.to/explore/breweries",
+            "name": "Birrifici Artigianali Italiani",
+            "description": "La directory completa dei birrifici artigianali italiani e internazionali. Scopri storia, birre prodotte e dove trovarle.",
+            "url": "https://fermenta.to/explore/breweries",
+            "publisher": { "@id": "https://fermenta.to/#organization" },
+            ...(breweries.length > 0 ? {
+              "hasPart": breweries.slice(0, 10).map((b: any) => ({
+                "@type": "Brewery",
+                "name": b.name,
+                "url": `https://fermenta.to/brewery/${b.id}`,
+                ...(b.location ? { "address": { "@type": "PostalAddress", "addressLocality": b.location, "addressCountry": "IT" } } : {}),
+                ...(b.logoUrl ? { "logo": b.logoUrl } : {}),
+              }))
+            } : {}),
+          }
+        ])}</script>
       </Helmet>
       {/* Header */}
       <div className="bg-white dark:bg-[hsl(25,14%,8%)] border-b border-stone-100 dark:border-[hsl(25,12%,14%)]">

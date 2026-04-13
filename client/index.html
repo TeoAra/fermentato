@@ -45,6 +45,9 @@
     <meta name="description" content="Scopri pub, birrifici e birre artigianali. Fermenta.to è la piattaforma per gli amanti della birra craft." />
     <meta name="keywords" content="birra artigianale, craft beer, pub, birrificio, beer" />
     <link rel="canonical" href="https://fermenta.to" />
+    <link rel="alternate" hreflang="it" href="https://fermenta.to" />
+    <link rel="alternate" hreflang="x-default" href="https://fermenta.to" />
+    <link rel="sitemap" type="application/xml" href="https://fermenta.to/sitemap.xml" />
 
     <!-- ─── Open Graph ──────────────────────────────────────────────────── -->
     <meta property="og:type" content="website" />
@@ -65,6 +68,74 @@
 
     <!-- ─── Manifest ───────────────────────────────────────────────────── -->
     <link rel="manifest" href="/manifest.json" />
+
+    <!-- ─── Structured Data: Organization + WebSite + SearchAction ────── -->
+    <script type="application/ld+json">
+    [
+      {
+        "@context": "https://schema.org",
+        "@type": "Organization",
+        "@id": "https://fermenta.to/#organization",
+        "name": "Fermenta.to",
+        "url": "https://fermenta.to",
+        "logo": {
+          "@type": "ImageObject",
+          "url": "https://fermenta.to/icons/icon-512.png",
+          "width": 512,
+          "height": 512
+        },
+        "description": "Fermenta.to è la piattaforma italiana dedicata alla birra artigianale. Scopri pub, birrifici, birre craft, taplist in tempo reale, festival della birra e la community degli appassionati.",
+        "inLanguage": "it-IT",
+        "areaServed": {
+          "@type": "Country",
+          "name": "Italy",
+          "identifier": "IT"
+        },
+        "knowsAbout": [
+          "Birra artigianale", "Craft beer", "Birrifici artigianali", "Pub", "Taplist",
+          "Festival della birra", "Degustazione birra", "Stili birra", "ABV", "IBU",
+          "Birra italiana", "Homebrewing", "Beer tasting"
+        ],
+        "sameAs": [
+          "https://www.instagram.com/fermenta.to",
+          "https://www.facebook.com/fermentato"
+        ]
+      },
+      {
+        "@context": "https://schema.org",
+        "@type": "WebSite",
+        "@id": "https://fermenta.to/#website",
+        "url": "https://fermenta.to",
+        "name": "Fermenta.to",
+        "description": "La piattaforma italiana per gli amanti della birra artigianale",
+        "publisher": { "@id": "https://fermenta.to/#organization" },
+        "inLanguage": "it-IT",
+        "potentialAction": {
+          "@type": "SearchAction",
+          "target": {
+            "@type": "EntryPoint",
+            "urlTemplate": "https://fermenta.to/search?q={search_term_string}"
+          },
+          "query-input": "required name=search_term_string"
+        }
+      },
+      {
+        "@context": "https://schema.org",
+        "@type": "SoftwareApplication",
+        "name": "Fermenta.to",
+        "applicationCategory": "FoodApplication",
+        "operatingSystem": "iOS, Android, Web",
+        "description": "App per scoprire birre artigianali, pub e birrifici in Italia. Taplist in tempo reale, scanner etichette, community di appassionati.",
+        "url": "https://fermenta.to",
+        "publisher": { "@id": "https://fermenta.to/#organization" },
+        "offers": {
+          "@type": "Offer",
+          "price": "0",
+          "priceCurrency": "EUR"
+        }
+      }
+    ]
+    </script>
 
     <!-- ─── Preconnect tile servers (mappa) ───────────────────────────── -->
     <link rel="preconnect" href="https://tiles.openfreemap.org" crossorigin />

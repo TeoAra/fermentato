@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import { FestivalLikeButton } from "@/components/festival-like-button";
 import { ShareButton } from "@/components/share-button";
+import { Helmet } from "react-helmet-async";
 
 const ALLERGEN_LABELS: Record<string, string> = {
   glutine: "Glutine", crostacei: "Crostacei", uova: "Uova", pesce: "Pesce",
@@ -531,8 +532,71 @@ export default function FestivalPublic() {
   const formatDate = (d: string) =>
     new Date(d).toLocaleDateString("it-IT", { day: "numeric", month: "short", year: "numeric" });
 
+  const seoFestivalUrl = `https://fermenta.to/festival/${slug}`;
+  const seoFestivalTitle = `${festival.name} — Festival Birra Artigianale | Fermenta.to`;
+  const seoFestivalDesc = festival.description
+    ? festival.description.slice(0, 155)
+    : `Scopri le birre e i birrifici al festival ${festival.name}${festival.location ? ` a ${festival.location}` : ""}. Taplist, voti e programma su Fermenta.to.`;
+
   return (
     <div className="min-h-screen bg-background">
+      <Helmet>
+        <title>{seoFestivalTitle}</title>
+        <meta name="description" content={seoFestivalDesc} />
+        <meta property="og:title" content={seoFestivalTitle} />
+        <meta property="og:description" content={seoFestivalDesc} />
+        <meta property="og:type" content="website" />
+        <meta property="og:url" content={seoFestivalUrl} />
+        <meta property="og:site_name" content="Fermenta.to" />
+        {(festival.coverImageUrl || festival.logoUrl) && <meta property="og:image" content={(festival.coverImageUrl || festival.logoUrl)!} />}
+        <meta name="twitter:card" content="summary_large_image" />
+        <link rel="canonical" href={seoFestivalUrl} />
+        <script type="application/ld+json">{JSON.stringify([
+          {
+            "@context": "https://schema.org",
+            "@type": "BreadcrumbList",
+            "itemListElement": [
+              { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://fermenta.to/" },
+              { "@type": "ListItem", "position": 2, "name": "Festival", "item": "https://fermenta.to/explore/pubs" },
+              { "@type": "ListItem", "position": 3, "name": festival.name, "item": seoFestivalUrl },
+            ],
+          },
+          {
+            "@context": "https://schema.org",
+            "@type": "Event",
+            "@id": seoFestivalUrl,
+            "name": festival.name,
+            "description": seoFestivalDesc,
+            "url": seoFestivalUrl,
+            "eventStatus": "https://schema.org/EventScheduled",
+            "eventAttendanceMode": "https://schema.org/OfflineEventAttendanceMode",
+            ...(festival.startDate ? { "startDate": festival.startDate } : {}),
+            ...(festival.endDate ? { "endDate": festival.endDate } : {}),
+            ...(festival.location ? {
+              "location": {
+                "@type": "Place",
+                "name": festival.location,
+                "address": {
+                  "@type": "PostalAddress",
+                  "addressLocality": festival.location,
+                  "addressCountry": "IT",
+                },
+              }
+            } : {}),
+            ...(festival.logoUrl || festival.coverImageUrl ? { "image": festival.coverImageUrl || festival.logoUrl } : {}),
+            "organizer": { "@id": "https://fermenta.to/#organization" },
+            ...(taps.length > 0 ? {
+              "about": taps.slice(0, 5).filter(t => t.beerName).map(t => ({
+                "@type": "Product",
+                "name": t.beerName,
+                ...(t.breweryName ? { "brand": { "@type": "Brand", "name": t.breweryName } } : {}),
+                ...(t.beerStyle ? { "category": t.beerStyle } : {}),
+                ...(t.beerAbv ? { "additionalProperty": [{ "@type": "PropertyValue", "name": "ABV", "value": `${t.beerAbv}%` }] } : {}),
+              }))
+            } : {}),
+          }
+        ])}</script>
+      </Helmet>
       {/* Hero section with gradient and decorative circles */}
       <div className="relative overflow-hidden bg-gradient-to-br from-[hsl(24,93%,49%)] via-[hsl(22,92%,46%)] to-[hsl(20,95%,42%)] dark:from-[hsl(24,80%,28%)] dark:to-[hsl(20,75%,20%)] pt-12 pb-20 px-4">
         <div className="absolute -top-20 -right-20 w-72 h-72 rounded-full bg-white/10 blur-3xl" />

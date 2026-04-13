@@ -7061,31 +7061,75 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (e: any) { res.status(500).json({ message: e.message }); }
   });
 
+  // ─── Robots.txt ─────────────────────────────────────────────────────────────
+  app.get("/robots.txt", (_req, res) => {
+    res.setHeader("Content-Type", "text/plain");
+    res.setHeader("Cache-Control", "public, max-age=86400");
+    res.send([
+      "User-agent: *",
+      "Allow: /",
+      "Disallow: /admin/",
+      "Disallow: /dashboard/",
+      "Disallow: /api/",
+      "Disallow: /auth",
+      "Disallow: /onboarding",
+      "Disallow: /scan",
+      "Disallow: /tv/",
+      "Disallow: /festival-tv/",
+      "",
+      "# AI crawlers — allow indexing for GEO/AEO",
+      "User-agent: GPTBot",
+      "Allow: /",
+      "Disallow: /api/",
+      "Disallow: /admin/",
+      "",
+      "User-agent: PerplexityBot",
+      "Allow: /",
+      "Disallow: /api/",
+      "Disallow: /admin/",
+      "",
+      "User-agent: ClaudeBot",
+      "Allow: /",
+      "Disallow: /api/",
+      "Disallow: /admin/",
+      "",
+      "User-agent: Googlebot",
+      "Allow: /",
+      "Disallow: /api/",
+      "Disallow: /admin/",
+      "",
+      "Sitemap: https://fermenta.to/sitemap.xml",
+    ].join("\n"));
+  });
+
   // ─── Sitemap ────────────────────────────────────────────────────────────────
   app.get("/sitemap.xml", async (_req, res) => {
     try {
-      const [allPubs, allBreweries, allBeers] = await Promise.all([
+      const [allPubs, allBreweries, allBeers, allFestivals] = await Promise.all([
         db.select({ id: pubs.id, updatedAt: pubs.updatedAt }).from(pubs).where(eq(pubs.isActive, true)).limit(5000),
-        db.select({ id: breweries.id }).from(breweries).limit(5000),
+        db.select({ id: breweries.id, updatedAt: sql<string>`NOW()` }).from(breweries).limit(5000),
         db.select({ id: beers.id }).from(beers).limit(10000),
+        db.select({ slug: festivals.slug, updatedAt: sql<string>`NOW()` }).from(festivals).limit(1000),
       ]);
       const base = "https://fermenta.to";
       const todayISO = new Date().toISOString().slice(0, 10);
       const url = (loc: string, priority: string, freq: string, lastmod?: string) =>
-        `  <url><loc>${loc}</loc><lastmod>${lastmod ?? todayISO}</lastmod><changefreq>${freq}</changefreq><priority>${priority}</priority></url>`;
+        `  <url><loc>${base}${loc}</loc><lastmod>${lastmod ?? todayISO}</lastmod><changefreq>${freq}</changefreq><priority>${priority}</priority></url>`;
       const lines = [
         `<?xml version="1.0" encoding="UTF-8"?>`,
-        `<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">`,
-        url(base + "/", "1.0", "daily"),
-        url(base + "/explore/pubs", "0.9", "daily"),
-        url(base + "/explore/breweries", "0.9", "weekly"),
-        url(base + "/explore/beers", "0.9", "weekly"),
-        ...allPubs.map(p => url(`${base}/pub/${p.id}`, "0.8", "daily", p.updatedAt ? new Date(p.updatedAt).toISOString().slice(0, 10) : undefined)),
-        ...allBreweries.map(b => url(`${base}/brewery/${b.id}`, "0.7", "weekly")),
-        ...allBeers.map(b => url(`${base}/beer/${b.id}`, "0.6", "monthly")),
+        `<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.sitemaps.org/schemas/sitemap/0.9 http://www.sitemaps.org/schemas/sitemap/0.9/sitemap.xsd">`,
+        url("/", "1.0", "daily"),
+        url("/explore/pubs", "0.9", "daily"),
+        url("/explore/breweries", "0.9", "weekly"),
+        url("/explore/beers", "0.9", "weekly"),
+        url("/search", "0.7", "weekly"),
+        ...allPubs.map(p => url(`/pub/${p.id}`, "0.8", "daily", p.updatedAt ? new Date(p.updatedAt).toISOString().slice(0, 10) : undefined)),
+        ...allBreweries.map(b => url(`/brewery/${b.id}`, "0.7", "weekly")),
+        ...allBeers.map(b => url(`/beer/${b.id}`, "0.6", "monthly")),
+        ...allFestivals.filter(f => f.slug).map(f => url(`/festival/${f.slug}`, "0.8", "weekly")),
         `</urlset>`,
       ];
-      res.setHeader("Content-Type", "application/xml");
+      res.setHeader("Content-Type", "application/xml; charset=utf-8");
       res.setHeader("Cache-Control", "public, max-age=3600");
       res.send(lines.join("\n"));
     } catch (err: any) {
@@ -7094,24 +7138,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // ─── Social crawler OG tag injection ────────────────────────────────────────
-  const SOCIAL_BOTS = /whatsapp|telegram|twitterbot|facebookexternalhit|linkedinbot|slackbot|discordbot|pinterest|googlebot|bingbot/i;
+  // ─── Social + AI crawler OG tag injection ───────────────────────────────────
+  const SOCIAL_BOTS = /whatsapp|telegram|twitterbot|facebookexternalhit|linkedinbot|slackbot|discordbot|pinterest|googlebot|bingbot|gptbot|perplexitybot|claudebot|anthropic|applebot|yandex|duckduckbot|bytespider/i;
 
-  const ogHtml = (meta: { title: string; description: string; image?: string; url: string; type?: string }) => `<!DOCTYPE html>
+  const ogHtml = (meta: { title: string; description: string; image?: string; url: string; type?: string; jsonld?: object | object[] }) => `<!DOCTYPE html>
 <html lang="it"><head>
 <meta charset="UTF-8">
 <title>${meta.title}</title>
-<meta name="description" content="${meta.description}">
-<meta property="og:title" content="${meta.title}">
-<meta property="og:description" content="${meta.description}">
+<meta name="description" content="${meta.description.replace(/"/g, '&quot;')}">
+<link rel="canonical" href="${meta.url}">
+<meta property="og:title" content="${meta.title.replace(/"/g, '&quot;')}">
+<meta property="og:description" content="${meta.description.replace(/"/g, '&quot;')}">
 <meta property="og:url" content="${meta.url}">
 <meta property="og:type" content="${meta.type ?? "website"}">
 <meta property="og:site_name" content="Fermenta.to">
+<meta property="og:locale" content="it_IT">
 ${meta.image ? `<meta property="og:image" content="${meta.image}">` : ""}
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="${meta.title}">
-<meta name="twitter:description" content="${meta.description}">
+<meta name="twitter:site" content="@fermentato">
+<meta name="twitter:title" content="${meta.title.replace(/"/g, '&quot;')}">
+<meta name="twitter:description" content="${meta.description.replace(/"/g, '&quot;')}">
 ${meta.image ? `<meta name="twitter:image" content="${meta.image}">` : ""}
+${meta.jsonld ? `<script type="application/ld+json">${JSON.stringify(meta.jsonld)}</script>` : ""}
 </head><body></body></html>`;
 
   app.get(["/pub/:id", "/brewery/:id", "/beer/:id"], async (req, res, next) => {
@@ -7124,32 +7172,47 @@ ${meta.image ? `<meta name="twitter:image" content="${meta.image}">` : ""}
         const pub = await storage.getPub(id);
         if (!pub) return next();
         const p = pub as any;
+        const pubUrl = `${base}/pub/${id}`;
         res.send(ogHtml({
           title: `${p.name} — Birre artigianali | Fermenta.to`,
-          description: p.description ? p.description.slice(0, 155) : `Scopri la taplist di ${p.name} su Fermenta.to`,
-          image: p.coverImageUrl || p.logoUrl,
-          url: `${base}/pub/${id}`,
+          description: p.description ? p.description.slice(0, 155) : `Scopri la taplist di ${p.name} su Fermenta.to. Orari, posizione e birre artigianali disponibili.`,
+          image: p.coverImageUrl || p.imageUrl,
+          url: pubUrl,
           type: "website",
+          jsonld: [
+            { "@context": "https://schema.org", "@type": "BreadcrumbList", "itemListElement": [{ "@type": "ListItem", "position": 1, "name": "Home", "item": base + "/" }, { "@type": "ListItem", "position": 2, "name": "Pub", "item": base + "/explore/pubs" }, { "@type": "ListItem", "position": 3, "name": p.name, "item": pubUrl }] },
+            { "@context": "https://schema.org", "@type": "BarOrPub", "@id": pubUrl, "name": p.name, "description": p.description?.slice(0, 200) || `Pub con birre artigianali a ${p.city ?? "Italia"}`, "url": pubUrl, "image": p.coverImageUrl || p.imageUrl, "priceRange": "€€", "servesCuisine": "Craft Beer", "telephone": p.phone, ...(p.address ? { "address": { "@type": "PostalAddress", "streetAddress": p.address, "addressLocality": p.city, "addressCountry": "IT" } } : {}), ...(p.latitude && p.longitude ? { "geo": { "@type": "GeoCoordinates", "latitude": p.latitude, "longitude": p.longitude } } : {}) }
+          ],
         }));
       } else if (req.path.startsWith("/brewery/")) {
         const br = await storage.getBrewery(id);
         if (!br) return next();
         const b = br as any;
+        const brewUrl = `${base}/brewery/${id}`;
         res.send(ogHtml({
           title: `${b.name} — Birrificio artigianale | Fermenta.to`,
-          description: b.description ? b.description.slice(0, 155) : `Scopri le birre di ${b.name} su Fermenta.to`,
+          description: b.description ? b.description.slice(0, 155) : `Scopri le birre di ${b.name}${b.location ? ` a ${b.location}` : ""} su Fermenta.to.`,
           image: b.coverImageUrl || b.logoUrl,
-          url: `${base}/brewery/${id}`,
+          url: brewUrl,
+          jsonld: [
+            { "@context": "https://schema.org", "@type": "BreadcrumbList", "itemListElement": [{ "@type": "ListItem", "position": 1, "name": "Home", "item": base + "/" }, { "@type": "ListItem", "position": 2, "name": "Birrifici", "item": base + "/explore/breweries" }, { "@type": "ListItem", "position": 3, "name": b.name, "item": brewUrl }] },
+            { "@context": "https://schema.org", "@type": "Brewery", "@id": brewUrl, "name": b.name, "description": b.description?.slice(0, 200) || `Birrificio artigianale${b.location ? ` a ${b.location}` : ""}`, "url": brewUrl, "image": b.coverImageUrl || b.logoUrl, ...(b.logoUrl ? { "logo": { "@type": "ImageObject", "url": b.logoUrl } } : {}), ...(b.location ? { "address": { "@type": "PostalAddress", "addressLocality": b.location, "addressCountry": "IT" } } : {}), ...(b.website ? { "sameAs": [b.website] } : {}) }
+          ],
         }));
       } else {
         const beer = await storage.getBeer(id);
         if (!beer) return next();
         const beerData = beer as any;
+        const beerUrl = `${base}/beer/${id}`;
         res.send(ogHtml({
           title: `${beerData.name} — ${beerData.style ?? "Birra artigianale"} | Fermenta.to`,
-          description: beerData.description ? beerData.description.slice(0, 155) : `Scopri ${beerData.name} su Fermenta.to`,
+          description: beerData.description ? beerData.description.slice(0, 155) : `${beerData.name} è una ${beerData.style ?? "birra artigianale"}${beerData.brewery?.name ? ` di ${beerData.brewery.name}` : ""}${beerData.abv ? `. Gradazione: ${beerData.abv}% ABV` : ""}. Scoprila su Fermenta.to.`,
           image: beerData.imageUrl,
-          url: `${base}/beer/${id}`,
+          url: beerUrl,
+          jsonld: [
+            { "@context": "https://schema.org", "@type": "BreadcrumbList", "itemListElement": [{ "@type": "ListItem", "position": 1, "name": "Home", "item": base + "/" }, { "@type": "ListItem", "position": 2, "name": "Birre", "item": base + "/explore/beers" }, ...(beerData.brewery?.name ? [{ "@type": "ListItem", "position": 3, "name": beerData.brewery.name, "item": base + "/brewery/" + beerData.brewery.id }] : []), { "@type": "ListItem", "position": beerData.brewery?.name ? 4 : 3, "name": beerData.name, "item": beerUrl }] },
+            { "@context": "https://schema.org", "@type": "Product", "@id": beerUrl, "name": beerData.name, "description": beerData.description?.slice(0, 200) || `${beerData.name} — ${beerData.style ?? "birra artigianale"}`, "url": beerUrl, "image": beerData.imageUrl, "category": beerData.style, "brand": beerData.brewery?.name ? { "@type": "Brand", "name": beerData.brewery.name } : undefined, "additionalProperty": [...(beerData.abv ? [{ "@type": "PropertyValue", "name": "ABV", "value": `${beerData.abv}%` }] : []), ...(beerData.ibu ? [{ "@type": "PropertyValue", "name": "IBU", "value": String(beerData.ibu) }] : [])] }
+          ],
         }));
       }
     } catch { next(); }

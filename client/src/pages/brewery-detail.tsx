@@ -558,17 +558,48 @@ export default function BreweryDetail() {
         {seoImage && <meta property="og:image" content={seoImage} />}
         <meta name="twitter:card" content="summary_large_image" />
         <link rel="canonical" href={seoUrl} />
-        <script type="application/ld+json">{JSON.stringify({
-          "@context": "https://schema.org",
-          "@type": "Brewery",
-          "name": brewery?.name,
-          "description": (brewery as any)?.description,
-          "url": seoUrl,
-          "image": seoImage,
-          ...(brewery?.logoUrl ? { "logo": brewery.logoUrl } : {}),
-          ...(brewery?.location ? { "address": { "@type": "PostalAddress", "addressLocality": brewery.location, "addressCountry": (brewery as any)?.country === "Italy" ? "IT" : (brewery as any)?.country } } : {}),
-          ...(brewery?.website ? { "sameAs": brewery.website } : {}),
-        })}</script>
+        <script type="application/ld+json">{JSON.stringify([
+          {
+            "@context": "https://schema.org",
+            "@type": "BreadcrumbList",
+            "itemListElement": [
+              { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://fermenta.to/" },
+              { "@type": "ListItem", "position": 2, "name": "Birrifici", "item": "https://fermenta.to/explore/breweries" },
+              { "@type": "ListItem", "position": 3, "name": brewery?.name, "item": seoUrl },
+            ],
+          },
+          {
+            "@context": "https://schema.org",
+            "@type": "Brewery",
+            "@id": seoUrl,
+            "name": brewery?.name,
+            "description": (brewery as any)?.description || `${brewery?.name} è un birrificio artigianale${brewery?.location ? ` con sede a ${brewery.location}` : ""} che produce birre di qualità.`,
+            "url": seoUrl,
+            "image": seoImage,
+            ...(brewery?.logoUrl ? { "logo": { "@type": "ImageObject", "url": brewery.logoUrl } } : {}),
+            ...(brewery?.location ? {
+              "address": {
+                "@type": "PostalAddress",
+                "addressLocality": brewery.location,
+                "addressCountry": "IT",
+              }
+            } : {}),
+            ...((brewery as any)?.foundingYear ? { "foundingDate": String((brewery as any).foundingYear) } : {}),
+            ...(brewery?.website ? { "sameAs": [brewery.website] } : {}),
+            "additionalProperty": [
+              ...((brewery as any)?.country ? [{ "@type": "PropertyValue", "name": "Paese", "value": (brewery as any).country }] : []),
+            ].filter(p => p),
+            ...(breweryRating?.avgRating && breweryRating.reviewCount > 0 ? {
+              "aggregateRating": {
+                "@type": "AggregateRating",
+                "ratingValue": Number(breweryRating.avgRating).toFixed(1),
+                "bestRating": "5",
+                "worstRating": "1",
+                "ratingCount": breweryRating.reviewCount,
+              }
+            } : {}),
+          }
+        ])}</script>
       </Helmet>
       
       {/* ── HERO ── */}

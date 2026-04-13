@@ -221,6 +221,24 @@ export default function Home() {
         <meta property="og:image" content="https://fermenta.to/logo-full.png" />
         <meta name="twitter:card" content="summary_large_image" />
         <link rel="canonical" href="https://fermenta.to/" />
+        <script type="application/ld+json">{JSON.stringify({
+          "@context": "https://schema.org",
+          "@type": "WebSite",
+          "@id": "https://fermenta.to/#website",
+          "url": "https://fermenta.to",
+          "name": "Fermenta.to",
+          "description": "La piattaforma italiana per gli amanti della birra artigianale",
+          "publisher": { "@id": "https://fermenta.to/#organization" },
+          "inLanguage": "it-IT",
+          "potentialAction": {
+            "@type": "SearchAction",
+            "target": {
+              "@type": "EntryPoint",
+              "urlTemplate": "https://fermenta.to/search?q={search_term_string}"
+            },
+            "query-input": "required name=search_term_string"
+          }
+        })}</script>
       </Helmet>
       {/* Pull to refresh indicator */}
       {(isPulling || isRefreshing) && (

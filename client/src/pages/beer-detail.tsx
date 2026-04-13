@@ -636,17 +636,45 @@ export default function BeerDetail() {
         {seoImage && <meta property="og:image" content={seoImage} />}
         <meta name="twitter:card" content="summary_large_image" />
         <link rel="canonical" href={seoUrl} />
-        <script type="application/ld+json">{JSON.stringify({
-          "@context": "https://schema.org",
-          "@type": "Product",
-          "name": beer?.name,
-          "description": (beer as any)?.description,
-          "url": seoUrl,
-          "image": seoImage,
-          "brand": { "@type": "Brand", "name": (beer as any)?.brewery?.name },
-          "category": (beer as any)?.style,
-          ...(beer?.abv ? { "additionalProperty": [{ "@type": "PropertyValue", "name": "Gradazione alcolica", "value": `${beer.abv}% ABV` }] } : {}),
-        })}</script>
+        <script type="application/ld+json">{JSON.stringify([
+          {
+            "@context": "https://schema.org",
+            "@type": "BreadcrumbList",
+            "itemListElement": [
+              { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://fermenta.to/" },
+              { "@type": "ListItem", "position": 2, "name": "Birre", "item": "https://fermenta.to/explore/beers" },
+              ...(beer as any)?.brewery?.name ? [{ "@type": "ListItem", "position": 3, "name": (beer as any).brewery.name, "item": `https://fermenta.to/brewery/${(beer as any).brewery.id}` }] : [],
+              { "@type": "ListItem", "position": (beer as any)?.brewery?.name ? 4 : 3, "name": beer?.name, "item": seoUrl },
+            ],
+          },
+          {
+            "@context": "https://schema.org",
+            "@type": "Product",
+            "@id": seoUrl,
+            "name": beer?.name,
+            "description": (beer as any)?.description || `${beer?.name} è una ${beer?.style ?? "birra artigianale"} prodotta da ${(beer as any)?.brewery?.name ?? "un birrificio artigianale"}.${beer?.abv ? ` Gradazione alcolica: ${beer.abv}% ABV.` : ""}${(beer as any)?.ibu ? ` Amaro: ${(beer as any).ibu} IBU.` : ""}`,
+            "url": seoUrl,
+            "image": seoImage,
+            "brand": { "@type": "Brand", "name": (beer as any)?.brewery?.name },
+            "category": beer?.style,
+            "additionalProperty": [
+              ...(beer?.abv ? [{ "@type": "PropertyValue", "name": "Gradazione alcolica (ABV)", "value": `${beer.abv}%` }] : []),
+              ...((beer as any)?.ibu ? [{ "@type": "PropertyValue", "name": "Amaro (IBU)", "value": String((beer as any).ibu) }] : []),
+              ...((beer as any)?.ebc ? [{ "@type": "PropertyValue", "name": "Colore (EBC)", "value": String((beer as any).ebc) }] : []),
+              ...((beer as any)?.style ? [{ "@type": "PropertyValue", "name": "Stile", "value": (beer as any).style }] : []),
+              ...((beer as any)?.country ? [{ "@type": "PropertyValue", "name": "Paese di produzione", "value": (beer as any).country }] : []),
+            ].filter(p => p),
+            ...(reviewsData?.avgRating && reviewsData.reviewCount > 0 ? {
+              "aggregateRating": {
+                "@type": "AggregateRating",
+                "ratingValue": Number(reviewsData.avgRating).toFixed(1),
+                "bestRating": "5",
+                "worstRating": "1",
+                "ratingCount": reviewsData.reviewCount,
+              }
+            } : {}),
+          }
+        ])}</script>
       </Helmet>
       
       {/* ── Scan redirect banner ── */}
