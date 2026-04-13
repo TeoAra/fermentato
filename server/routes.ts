@@ -54,6 +54,7 @@ function setCache(key: string, data: any) {
   }
   searchCache.set(key, { data, ts: Date.now() });
 }
+function clearSearchCache() { searchCache.clear(); }
 
 // ── Shared helper: base64 dataURL → temp file ───────────────────────────────
 async function writeTempImage(dataUrl: string): Promise<{ path: string; ext: string } | null> {
@@ -4628,6 +4629,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         isGlutenFree: req.body.isGlutenFree === true,
         isAlcoholFree: req.body.isAlcoholFree === true,
       });
+      clearSearchCache();
       res.json(beer);
     } catch (error) {
       console.error("Error creating beer (owner):", error);
@@ -4660,6 +4662,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         } catch { /* column may not exist on older DB, non-blocking */ }
       }
 
+      clearSearchCache();
       res.json(beer);
     } catch (error) {
       console.error("Error creating beer:", error);
@@ -5087,6 +5090,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           await db.execute(sql`UPDATE beers SET is_collaboration = true WHERE id = ${beer.id}`);
         } catch { /* column may not exist on older DB */ }
       }
+      clearSearchCache();
       res.status(201).json(beer);
     } catch (error) {
       console.error("Error creating beer:", error);

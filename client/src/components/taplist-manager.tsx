@@ -92,6 +92,7 @@ export function TapListManager({ pubId, tapList, bottleList = [] }: TapListManag
     isVisible: true,
   });
 
+  const [selectedBeerDetails, setSelectedBeerDetails] = useState<{ id: number; name: string; style: string; abv: string; breweryName: string } | null>(null);
   const [creatingBeer, setCreatingBeer] = useState(false);
   const [creatingBrewery, setCreatingBrewery] = useState(false);
   const [brewerySearchTerm, setBrewerySearchTerm] = useState("");
@@ -333,7 +334,15 @@ export function TapListManager({ pubId, tapList, bottleList = [] }: TapListManag
     },
     onSuccess: (beer: any) => {
       toast({ title: "Birra creata!" });
+      const beerDetails = {
+        id: beer.id,
+        name: beer.name,
+        style: beer.style || '',
+        abv: beer.abv || '',
+        breweryName: beer.brewery?.name || newBeerData.breweryName || 'Birrificio',
+      };
       setFormData(prev => ({ ...prev, beerId: beer.id.toString() }));
+      setSelectedBeerDetails(beerDetails);
       setCreatingBeer(false);
       setBeerImageFile(null);
       setBeerImagePreview("");
@@ -341,13 +350,7 @@ export function TapListManager({ pubId, tapList, bottleList = [] }: TapListManag
       setStyleDropdownOpen(false);
       queryClient.invalidateQueries({ queryKey: ["/api/search"] });
       if (editingItem && isChangingBeer) {
-        setSelectedNewBeer({
-          id: beer.id,
-          name: beer.name,
-          style: beer.style || '',
-          abv: beer.abv || '',
-          breweryName: beer.brewery?.name || newBeerData.breweryName || 'Birrificio',
-        });
+        setSelectedNewBeer(beerDetails);
         setIsChangingBeer(false);
         setSearchTerm('');
       }
@@ -438,6 +441,7 @@ export function TapListManager({ pubId, tapList, bottleList = [] }: TapListManag
       isVisible: true,
     });
     setSearchTerm("");
+    setSelectedBeerDetails(null);
     setCreatingBeer(false);
     setCreatingBrewery(false);
     setBrewerySearchTerm("");
@@ -550,10 +554,10 @@ export function TapListManager({ pubId, tapList, bottleList = [] }: TapListManag
                     </Label>
                     
                     {/* Mostra birra selezionata */}
-                    {formData.beerId && searchResults?.beers?.find((b: any) => b.id.toString() === formData.beerId) ? (
+                    {formData.beerId && (selectedBeerDetails || searchResults?.beers?.find((b: any) => b.id.toString() === formData.beerId)) ? (
                       <div className="p-4 bg-stone-50 border border-stone-200 rounded-2xl">
                         {(() => {
-                          const selectedBeer = searchResults.beers.find((b: any) => b.id.toString() === formData.beerId);
+                          const beer = selectedBeerDetails || searchResults?.beers?.find((b: any) => b.id.toString() === formData.beerId);
                           return (
                             <div className="flex items-center justify-between gap-4">
                               <div className="flex items-center gap-4">
@@ -561,9 +565,9 @@ export function TapListManager({ pubId, tapList, bottleList = [] }: TapListManag
                                   <Beer className="w-6 h-6" />
                                 </div>
                                 <div>
-                                  <div className="font-bold text-foreground">{selectedBeer?.name}</div>
+                                  <div className="font-bold text-foreground">{beer?.name}</div>
                                   <div className="text-xs text-muted-foreground mt-0.5">
-                                    {selectedBeer?.brewery?.name || 'Birrificio sconosciuto'} • {selectedBeer?.style} • {selectedBeer?.abv}% ABV
+                                    {beer?.breweryName || beer?.brewery?.name || 'Birrificio sconosciuto'} • {beer?.style} • {beer?.abv ? `${beer.abv}% ABV` : ''}
                                   </div>
                                 </div>
                               </div>
@@ -574,6 +578,7 @@ export function TapListManager({ pubId, tapList, bottleList = [] }: TapListManag
                                 className="border-stone-200 text-primary hover:bg-stone-50 rounded-xl"
                                 onClick={() => {
                                   setFormData({ ...formData, beerId: '' });
+                                  setSelectedBeerDetails(null);
                                   setSearchTerm('');
                                 }}
                               >
@@ -609,6 +614,13 @@ export function TapListManager({ pubId, tapList, bottleList = [] }: TapListManag
                                     className="p-4 hover:bg-stone-50/50 dark:hover:bg-stone-800/30 cursor-pointer transition-colors"
                                     onClick={() => {
                                       setFormData({ ...formData, beerId: beer.id.toString() });
+                                      setSelectedBeerDetails({
+                                        id: beer.id,
+                                        name: beer.name,
+                                        style: beer.style || '',
+                                        abv: beer.abv || '',
+                                        breweryName: beer.brewery?.name || beer.breweryName || 'Birrificio sconosciuto',
+                                      });
                                     }}
                                   >
                                     <div className="font-medium text-foreground">{beer.name}</div>
