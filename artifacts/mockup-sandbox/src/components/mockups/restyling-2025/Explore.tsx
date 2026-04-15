@@ -1,138 +1,182 @@
-import React from "react";
-import { SlidersHorizontal, Search, Home, Bell, ScanLine, Activity, User, ChevronRight } from "lucide-react";
+import { Search, SlidersHorizontal, ChevronRight, Star, Beer, MapPin } from "lucide-react";
+import { BottomNav } from "./_shared/BottomNav";
+
+const STYLES = [
+  { name: "IPA", emoji: "🍊", count: 3240, bg: "#fef3c7" },
+  { name: "Stout", emoji: "🖤", count: 1820, bg: "#292524" },
+  { name: "Saison", emoji: "🌾", count: 980, bg: "#fef9c3" },
+  { name: "Lager", emoji: "🍺", count: 2450, bg: "#ecfeff" },
+  { name: "Sour", emoji: "🍋", count: 760, bg: "#fef3c7" },
+  { name: "Porter", emoji: "☕", count: 920, bg: "#44403c" },
+  { name: "Wit", emoji: "🌿", count: 680, bg: "#f0fdf4" },
+  { name: "Barleywine", emoji: "🔥", count: 340, bg: "#fef2f2" },
+];
+
+const TRENDING_BEERS = [
+  { name: "Tipopils", brewery: "Birrificio Italiano", style: "Pilsner", rating: 4.5 },
+  { name: "Isaac", brewery: "Baladin", style: "Witbier", rating: 4.3 },
+  { name: "ReAle Extra", brewery: "Birra del Borgo", style: "IPA", rating: 4.4 },
+];
+
+const BREWERIES = [
+  { name: "Birrificio Italiano", city: "Lurago Marinone (CO)", beers: 24, flag: "🇮🇹" },
+  { name: "Baladin", city: "Piozzo (CN)", beers: 32, flag: "🇮🇹" },
+  { name: "Toccalmatto", city: "Fidenza (PR)", beers: 18, flag: "🇮🇹" },
+];
 
 export function Explore() {
-  const styles = [
-    { name: "India Pale Ale", emoji: "🍺", img: "https://placehold.co/40x40/e2d4c4/7c6e5a?text=IPA" },
-    { name: "Stout", emoji: "🖤", img: "https://placehold.co/40x40/2d1b0e/f5f0eb?text=ST" },
-    { name: "Saison", emoji: "🌾", img: "https://placehold.co/40x40/e2d4c4/7c6e5a?text=SA" },
-    { name: "Wit Bier", emoji: "🌿", img: "https://placehold.co/40x40/e2d4c4/7c6e5a?text=WIT" },
-    { name: "Lager", emoji: "🇩🇪", img: "https://placehold.co/40x40/e2d4c4/7c6e5a?text=LAG" },
-    { name: "Barleywine", emoji: "🔥", img: "https://placehold.co/40x40/2d1b0e/f5f0eb?text=BW" },
-    { name: "Sour", emoji: "🍋", img: "https://placehold.co/40x40/e2d4c4/7c6e5a?text=SOU" },
-    { name: "Porter", emoji: "🌑", img: "https://placehold.co/40x40/2d1b0e/f5f0eb?text=POR" },
-  ];
-
-  const breweries = [
-    { name: "Birrificio del Ducato", city: "Parma", beers: "34 birre", img: "https://placehold.co/64x64/e2d4c4/7c6e5a?text=BDD" },
-    { name: "Baladin", city: "Cuneo", beers: "56 birre", img: "https://placehold.co/64x64/e2d4c4/7c6e5a?text=BAL" },
-    { name: "Opperbacco", city: "Loreto Aprutino", beers: "22 birre", img: "https://placehold.co/64x64/e2d4c4/7c6e5a?text=OPP" },
-  ];
-
   return (
-    <div className="relative w-[390px] min-h-[844px] bg-[#f5f0eb] text-[#1c1209] overflow-hidden font-['Poppins',sans-serif]">
-      {/* Top Bar */}
-      <div className="sticky top-0 z-10 bg-white px-5 pt-14 pb-3 flex items-center justify-between shadow-sm">
-        <h1 className="font-['Fraunces',serif] text-[22px] font-semibold tracking-tight">Esplora</h1>
-        <button className="p-2 -mr-2 text-[#1c1209]">
-          <SlidersHorizontal size={24} strokeWidth={2} />
-        </button>
-      </div>
-
-      <div className="px-5 py-4 pb-28 h-full overflow-y-auto no-scrollbar space-y-8">
-        
-        {/* Search */}
-        <div className="relative">
-          <div className="absolute left-4 top-1/2 -translate-y-1/2 text-[#7c6e5a]">
-            <Search size={20} strokeWidth={2} />
+    <div
+      className="relative bg-[#f5f0eb] overflow-hidden"
+      style={{ width: 390, minHeight: 844, fontFamily: "'Poppins', sans-serif" }}
+    >
+      <div className="overflow-y-auto" style={{ height: 844, paddingBottom: 70 }}>
+        {/* ── Top Bar ── */}
+        <div className="sticky top-0 z-20 bg-white/95 backdrop-blur-xl border-b border-[#ece5dc]/60">
+          <div className="flex items-center justify-between px-5 h-[52px]">
+            <h1
+              className="text-[20px] font-bold text-[#1a1207] tracking-tight"
+              style={{ fontFamily: "'Fraunces', Georgia, serif" }}
+            >
+              Esplora
+            </h1>
+            <button className="w-9 h-9 flex items-center justify-center rounded-full hover:bg-[#f5f0eb] transition-colors">
+              <SlidersHorizontal className="w-[18px] h-[18px] text-[#7c7065]" strokeWidth={2} />
+            </button>
           </div>
-          <input 
-            type="text" 
-            placeholder="Cerca birra, pub, birrificio..." 
-            className="w-full bg-white border border-[#e2d4c4] rounded-xl py-3 pl-11 pr-4 text-[15px] outline-none focus:border-[#ea580c] focus:ring-1 focus:ring-[#ea580c] placeholder-[#9e8d78] transition-all shadow-sm"
-          />
         </div>
 
-        {/* Stili di birra */}
-        <section>
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="font-['Fraunces',serif] text-[20px] font-bold">Stili di birra</h2>
-            <button className="text-[#ea580c] text-[14px] font-medium flex items-center gap-0.5">
-              16 stili <ChevronRight size={16} />
-            </button>
+        {/* ── Search Bar ── */}
+        <div className="px-5 pt-4 pb-1">
+          <div className="flex items-center gap-3 bg-white rounded-2xl px-4 h-[48px] border border-[#ece5dc] shadow-[0_1px_4px_rgba(0,0,0,0.03)]">
+            <Search className="w-[18px] h-[18px] text-[#a39889] flex-shrink-0" strokeWidth={1.8} />
+            <span className="text-[14px] text-[#a39889]">Cerca birra, pub, birrificio…</span>
           </div>
-          <div className="overflow-x-auto -mx-5 px-5 pb-4 pt-1 no-scrollbar">
-            <div className="grid grid-rows-2 grid-flow-col gap-3 w-max">
-              {styles.map((style, idx) => (
-                <div key={idx} className="bg-white rounded-xl shadow-sm p-2 pr-4 flex items-center gap-3 w-[160px] active:scale-95 transition-transform">
-                  <img src={style.img} alt={style.name} className="w-10 h-10 rounded-lg object-cover bg-[#f5f0eb]" />
-                  <span className="text-[13px] font-semibold leading-tight line-clamp-2">
-                    {style.name} {style.emoji}
+        </div>
+
+        {/* ── Scope Tabs ── */}
+        <div className="flex gap-2 px-5 mt-3 mb-4">
+          {["Birre", "Pub", "Birrifici"].map((t, i) => (
+            <button
+              key={t}
+              className={`flex-1 text-[12px] font-semibold py-2 rounded-xl transition-all ${
+                i === 0
+                  ? "bg-[#1a1207] text-white shadow-sm"
+                  : "bg-white text-[#7c7065] border border-[#ece5dc]"
+              }`}
+            >
+              {t}
+            </button>
+          ))}
+        </div>
+
+        {/* ── Stili di Birra ── */}
+        <section className="mb-5">
+          <div className="flex items-baseline justify-between px-5 mb-3">
+            <h2
+              className="text-[17px] font-bold text-[#1a1207]"
+              style={{ fontFamily: "'Fraunces', Georgia, serif" }}
+            >
+              Stili
+            </h2>
+            <button className="text-[12px] font-semibold text-[#ea580c]">Tutti →</button>
+          </div>
+          <div className="grid grid-cols-4 gap-2 px-5">
+            {STYLES.map((style) => {
+              const isDark = style.bg === "#292524" || style.bg === "#44403c";
+              return (
+                <button
+                  key={style.name}
+                  className="flex flex-col items-center justify-center py-3 rounded-2xl border border-[#ece5dc] transition-all active:scale-95 shadow-[0_1px_3px_rgba(0,0,0,0.04)]"
+                  style={{ background: style.bg }}
+                >
+                  <span className="text-xl mb-1">{style.emoji}</span>
+                  <span className={`text-[11px] font-semibold leading-tight ${isDark ? "text-white" : "text-[#1a1207]"}`}>
+                    {style.name}
                   </span>
-                </div>
-              ))}
-            </div>
+                  <span className={`text-[9px] mt-0.5 ${isDark ? "text-white/60" : "text-[#a39889]"}`}>
+                    {(style.count / 1000).toFixed(1)}k
+                  </span>
+                </button>
+              );
+            })}
           </div>
         </section>
 
-        {/* Birrifici italiani */}
-        <section>
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="font-['Fraunces',serif] text-[20px] font-bold">Birrifici italiani</h2>
-            <button className="text-[#ea580c]">
-              <ChevronRight size={20} />
-            </button>
+        {/* ── Trending ── */}
+        <section className="mb-5">
+          <div className="flex items-baseline justify-between px-5 mb-3">
+            <h2
+              className="text-[17px] font-bold text-[#1a1207]"
+              style={{ fontFamily: "'Fraunces', Georgia, serif" }}
+            >
+              Di tendenza
+            </h2>
+            <span className="text-[11px] text-[#a39889]">questa settimana</span>
           </div>
-          <div className="overflow-x-auto -mx-5 px-5 pb-4 pt-1 no-scrollbar">
-            <div className="flex gap-4 w-max">
-              {breweries.map((brewery, idx) => (
-                <div key={idx} className="bg-white rounded-2xl shadow-sm p-4 w-[160px] flex flex-col items-center text-center active:scale-95 transition-transform">
-                  <img src={brewery.img} alt={brewery.name} className="w-16 h-16 rounded-full mb-3 object-cover shadow-sm" />
-                  <h3 className="text-[15px] font-semibold leading-tight mb-1">{brewery.name}</h3>
-                  <p className="text-[13px] text-[#7c6e5a] mb-3">{brewery.city}</p>
-                  <span className="bg-[#f5f0eb] text-[#1c1209] text-[11px] font-medium px-3 py-1 rounded-full w-full">
-                    {brewery.beers}
-                  </span>
-                </div>
-              ))}
-            </div>
-          </div>
-        </section>
-
-        {/* Festival e eventi */}
-        <section>
-          <h2 className="font-['Fraunces',serif] text-[20px] font-bold mb-4">Festival e eventi</h2>
-          <div className="overflow-x-auto -mx-5 px-5 pb-4 pt-1 no-scrollbar">
-            <div className="flex gap-4 w-max">
-              {[1, 2].map((_, idx) => (
-                <div key={idx} className="relative rounded-2xl overflow-hidden w-[240px] h-[140px] shadow-sm active:scale-95 transition-transform">
-                  <img 
-                    src={`https://placehold.co/240x140/2d1b0e/f5f0eb?text=BirrExpo+2025`} 
-                    alt="Event" 
-                    className="absolute inset-0 w-full h-full object-cover" 
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-[#1c1209]/80 to-transparent flex flex-col justify-end p-4">
-                    <span className="bg-[#ea580c] text-white text-[10px] font-bold px-2.5 py-1 rounded-full w-max mb-2 uppercase tracking-wide">
-                      12-14 Maggio
+          <div className="mx-5 bg-white rounded-2xl border border-[#ece5dc] shadow-[0_1px_4px_rgba(0,0,0,0.04)] overflow-hidden">
+            {TRENDING_BEERS.map((beer, i) => (
+              <div key={beer.name}>
+                <div className="flex items-center gap-3 px-4 py-3">
+                  <div className="w-7 h-7 rounded-full bg-[#f5f0eb] flex items-center justify-center flex-shrink-0">
+                    <span className="text-[13px] font-bold text-[#7c7065]" style={{ fontFamily: "'Fraunces', serif" }}>
+                      {i + 1}
                     </span>
-                    <h3 className="font-['Fraunces',serif] text-white text-[18px] font-medium leading-tight">
-                      BirrExpo 2025
-                    </h3>
+                  </div>
+                  <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-[#d4a96a] to-[#c17f59] flex items-center justify-center flex-shrink-0">
+                    <span className="text-sm">🍺</span>
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-[13px] font-semibold text-[#1a1207] truncate">{beer.name}</p>
+                    <p className="text-[11px] text-[#a39889] truncate">{beer.brewery} · {beer.style}</p>
+                  </div>
+                  <div className="flex items-center gap-1 flex-shrink-0">
+                    <Star className="w-3 h-3 text-[#d97706] fill-current" />
+                    <span className="text-[12px] font-bold text-[#1a1207]">{beer.rating}</span>
                   </div>
                 </div>
-              ))}
-            </div>
+                {i < TRENDING_BEERS.length - 1 && <div className="h-px bg-[#f2ede6] ml-[4.75rem]" />}
+              </div>
+            ))}
           </div>
         </section>
 
+        {/* ── Birrifici in primo piano ── */}
+        <section className="mb-6">
+          <div className="flex items-baseline justify-between px-5 mb-3">
+            <h2
+              className="text-[17px] font-bold text-[#1a1207]"
+              style={{ fontFamily: "'Fraunces', Georgia, serif" }}
+            >
+              Birrifici italiani
+            </h2>
+            <button className="text-[12px] font-semibold text-[#ea580c]">Vedi tutti →</button>
+          </div>
+          <div className="flex gap-3 px-5 overflow-x-auto pb-1" style={{ scrollbarWidth: "none" }}>
+            {BREWERIES.map((b) => (
+              <div
+                key={b.name}
+                className="flex-shrink-0 w-[180px] bg-white rounded-2xl border border-[#ece5dc] p-4 shadow-[0_1px_4px_rgba(0,0,0,0.04)]"
+              >
+                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[#2d1b0e] to-[#4a3020] flex items-center justify-center mb-3 shadow-md">
+                  <span className="text-xl">🏭</span>
+                </div>
+                <p className="text-[13px] font-semibold text-[#1a1207] leading-tight">{b.name}</p>
+                <p className="text-[11px] text-[#a39889] mt-0.5 flex items-center gap-1">
+                  <span>{b.flag}</span>
+                  {b.city}
+                </p>
+                <div className="flex items-center gap-1 mt-2">
+                  <Beer className="w-3 h-3 text-[#7c7065]" />
+                  <span className="text-[10px] font-semibold text-[#7c7065]">{b.beers} birre</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
       </div>
 
-      {/* Bottom Nav */}
-      <div className="absolute bottom-0 inset-x-0 bg-white border-t border-[#e2d4c4]/50 pb-safe pt-3 px-6 pb-6 flex items-center justify-between z-10 shadow-[0_-4px_20px_rgba(0,0,0,0.03)]">
-        {[
-          { icon: Home, active: false },
-          { icon: Bell, active: false },
-          { icon: Search, active: true },
-          { icon: ScanLine, active: false },
-          { icon: Activity, active: false },
-          { icon: User, active: false },
-        ].map((item, i) => (
-          <button key={i} className={`flex flex-col items-center justify-center w-10 h-10 rounded-full transition-colors ${item.active ? 'text-[#ea580c] bg-[#ea580c]/10' : 'text-[#9e8d78] hover:text-[#7c6e5a]'}`}>
-            <item.icon size={item.active ? 24 : 22} strokeWidth={item.active ? 2.5 : 2} />
-          </button>
-        ))}
-      </div>
-
+      <BottomNav active="cerca" />
     </div>
   );
 }

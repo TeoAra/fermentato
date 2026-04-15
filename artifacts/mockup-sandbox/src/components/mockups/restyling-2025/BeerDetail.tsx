@@ -1,180 +1,184 @@
-import React, { useState } from 'react';
-import { ChevronLeft, Share2, Home, Bell, Search, ScanLine, Activity, User, Star, MapPin, ChevronDown, ChevronUp } from 'lucide-react';
+import { ChevronLeft, Share2, Heart, Star, MapPin, Beer, Droplets, Thermometer, GlassWater, ChevronRight } from "lucide-react";
+import { BottomNav } from "./_shared/BottomNav";
+
+const STATS = [
+  { icon: Droplets, label: "IBU", value: "55", color: "#d97706" },
+  { icon: Beer, label: "ABV", value: "6.2%", color: "#ea580c" },
+  { icon: Thermometer, label: "Temp", value: "8-10°C", color: "#0e7490" },
+  { icon: GlassWater, label: "Bicchiere", value: "Tulipano", color: "#7c3aed" },
+];
+
+const WHERE_TO_FIND = [
+  { name: "Lambiczoon", city: "Milano", dist: "0.3 km", type: "Alla spina", price: "€6.00" },
+  { name: "Baladin Milano", city: "Milano", dist: "1.4 km", type: "Alla spina", price: "€7.00" },
+  { name: "Hop Skin", city: "Milano", dist: "0.9 km", type: "Bottiglia", price: "€5.50" },
+];
 
 export function BeerDetail() {
-  const [descExpanded, setDescExpanded] = useState(false);
-
   return (
-    <div className="w-[390px] min-h-[844px] bg-[#f5f0eb] flex flex-col font-['Poppins',sans-serif] text-[#1c1209] overflow-y-auto overflow-x-hidden pb-24 relative shadow-[0_0_40px_rgba(0,0,0,0.1)]">
-      {/* Google Fonts */}
-      <style dangerouslySetInlineStyle={{__html: `
-        @import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,100..900;1,9..144,100..900&family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap');
-      `}} />
-
-      {/* Top Bar */}
-      <div className="h-14 bg-white flex items-center justify-between px-4 sticky top-0 z-50 shadow-sm">
-        <button className="p-2 -ml-2 text-[#1c1209]">
-          <ChevronLeft className="w-6 h-6" />
-        </button>
-        <span className="font-semibold text-[15px]">Dettaglio Birra</span>
-        <button className="p-2 -mr-2 text-[#1c1209]">
-          <Share2 className="w-5 h-5" />
-        </button>
-      </div>
-
-      {/* Hero Image */}
-      <div className="w-full h-[220px]">
-        <img 
-          src="https://placehold.co/390x220/d4a96a/1c1209?text=Nebbia+IPA" 
-          alt="Nebbia IPA" 
-          className="w-full h-full object-cover"
-        />
-      </div>
-
-      {/* Info Card */}
-      <div className="bg-white rounded-t-[24px] -mt-4 relative z-10 px-5 pt-6 pb-6 shadow-[0_2px_12px_rgba(0,0,0,0.07)]">
-        <h1 className="font-['Fraunces',serif] text-[26px] font-bold leading-tight mb-1 text-[#1c1209]">
-          Nebbia IPA
-        </h1>
-        
-        <button className="text-[#ea580c] font-semibold text-[15px] mb-4 flex items-center">
-          Birrificio del Ducato
-          <span className="ml-1 text-lg leading-none">→</span>
-        </button>
-
-        {/* Badges */}
-        <div className="flex flex-wrap gap-2 mb-4">
-          <span className="px-3 py-1 bg-white border border-[#e8e0d4] rounded-full text-[13px] font-medium text-[#7c6e5a]">
-            India Pale Ale
-          </span>
-          <span className="px-3 py-1 bg-white border border-[#e8e0d4] rounded-full text-[13px] font-bold text-[#1c1209]">
-            6.2% ABV
-          </span>
-        </div>
-
-        {/* Rating */}
-        <div className="flex items-center gap-2 mb-6">
-          <div className="flex items-center text-[#d4a96a]">
-            <span className="font-bold text-[16px] mr-1 text-[#1c1209]">4.3</span>
-            <Star className="w-4 h-4 fill-current" />
-          </div>
-          <span className="text-[13px] text-[#7c6e5a]">(1.247 assaggi)</span>
-        </div>
-
-        {/* Stat Chips */}
-        <div className="grid grid-cols-3 gap-3 mb-6">
-          <div className="bg-[#f5f0eb] rounded-xl p-3 flex flex-col items-center justify-center">
-            <span className="text-[11px] text-[#7c6e5a] font-medium uppercase tracking-wider mb-1">IBU</span>
-            <span className="font-bold text-[16px] text-[#1c1209]">55</span>
-          </div>
-          <div className="bg-[#f5f0eb] rounded-xl p-3 flex flex-col items-center justify-center">
-            <span className="text-[11px] text-[#7c6e5a] font-medium uppercase tracking-wider mb-1">SRM</span>
-            <span className="font-bold text-[16px] text-[#1c1209]">8</span>
-          </div>
-          <div className="bg-[#f5f0eb] rounded-xl p-3 flex flex-col items-center justify-center">
-            <span className="text-[11px] text-[#7c6e5a] font-medium uppercase tracking-wider mb-1">OG</span>
-            <span className="font-bold text-[16px] text-[#1c1209]">1.062</span>
+    <div
+      className="relative bg-[#f5f0eb] overflow-hidden"
+      style={{ width: 390, minHeight: 844, fontFamily: "'Poppins', sans-serif" }}
+    >
+      <div className="overflow-y-auto" style={{ height: 844, paddingBottom: 70 }}>
+        {/* ── Top Bar (transparent over hero) ── */}
+        <div className="absolute top-0 left-0 right-0 z-30 flex items-center justify-between px-4 h-[52px]">
+          <button className="w-9 h-9 rounded-full bg-black/30 backdrop-blur-md flex items-center justify-center">
+            <ChevronLeft className="w-5 h-5 text-white" />
+          </button>
+          <div className="flex gap-2">
+            <button className="w-9 h-9 rounded-full bg-black/30 backdrop-blur-md flex items-center justify-center">
+              <Heart className="w-[18px] h-[18px] text-white" strokeWidth={2} />
+            </button>
+            <button className="w-9 h-9 rounded-full bg-black/30 backdrop-blur-md flex items-center justify-center">
+              <Share2 className="w-[18px] h-[18px] text-white" strokeWidth={2} />
+            </button>
           </div>
         </div>
 
-        {/* CTA */}
-        <button className="w-full bg-[#ea580c] text-white rounded-xl py-3.5 font-semibold text-[15px] shadow-sm active:scale-[0.98] transition-transform">
-          Aggiungi assaggio
-        </button>
-      </div>
+        {/* ── Hero Image ── */}
+        <div className="h-[220px] bg-gradient-to-b from-[#2d1b0e] via-[#4a3020] to-[#6b4d34] flex items-center justify-center relative">
+          <div className="w-[110px] h-[110px] rounded-full bg-gradient-to-br from-[#d4a96a]/30 to-[#c17f59]/30 border-2 border-white/20 flex items-center justify-center shadow-2xl">
+            <span className="text-5xl">🍺</span>
+          </div>
+          <div className="absolute bottom-0 left-0 right-0 h-16 bg-gradient-to-t from-[#f5f0eb] to-transparent" />
+        </div>
 
-      {/* Descrizione Section */}
-      <div className="px-5 py-6">
-        <h2 className="font-['Fraunces',serif] text-[18px] font-bold text-[#1c1209] mb-3">
-          Descrizione
-        </h2>
-        <div className="text-[14px] leading-relaxed text-[#7c6e5a]">
-          <p className={descExpanded ? "" : "line-clamp-3"}>
-            Una India Pale Ale dal colore dorato intenso con riflessi aranciati e una schiuma bianca, fine e persistente. Al naso esplode con un bouquet tropicale di mango, frutto della passione e ananas, seguito da note agrumate di pompelmo e un leggero tocco resinoso dato dal dry hopping generoso. In bocca l'attacco è morbido e maltato, con sentori di biscotto e caramello che bilanciano perfettamente l'amaro finale, netto e pulito. Un corpo medio e una carbonazione vivace la rendono estremamente beverina, nascondendo bene i suoi 6.2 gradi.
-          </p>
-          <button 
-            onClick={() => setDescExpanded(!descExpanded)}
-            className="text-[#ea580c] font-medium mt-1 flex items-center"
-          >
-            {descExpanded ? (
-              <>Meno dettagli <ChevronUp className="w-4 h-4 ml-1" /></>
-            ) : (
-              <>Leggi tutto <ChevronDown className="w-4 h-4 ml-1" /></>
-            )}
+        {/* ── Beer Info Card ── */}
+        <div className="relative -mt-4 mx-4 bg-white rounded-2xl border border-[#ece5dc] shadow-[0_2px_16px_rgba(0,0,0,0.06)] overflow-hidden">
+          <div className="p-5 pb-4">
+            <h1
+              className="text-[24px] font-bold text-[#1a1207] leading-tight tracking-tight"
+              style={{ fontFamily: "'Fraunces', Georgia, serif" }}
+            >
+              Nebbia IPA
+            </h1>
+            <button className="flex items-center gap-1 mt-1">
+              <span className="text-[13px] font-semibold text-[#ea580c]">Birrificio del Ducato</span>
+              <ChevronRight className="w-3.5 h-3.5 text-[#ea580c]" />
+            </button>
+
+            {/* Style + ABV pills */}
+            <div className="flex items-center gap-2 mt-3">
+              <span className="text-[11px] font-semibold text-[#92400e] bg-[#fef3c7] px-2.5 py-1 rounded-full">
+                India Pale Ale
+              </span>
+              <span className="text-[11px] font-semibold text-[#7c7065] bg-[#f5f0eb] px-2.5 py-1 rounded-full">
+                6.2% ABV
+              </span>
+              <span className="text-[11px] font-semibold text-[#7c7065] bg-[#f5f0eb] px-2.5 py-1 rounded-full">
+                55 IBU
+              </span>
+            </div>
+
+            {/* Rating */}
+            <div className="flex items-center gap-3 mt-4 pt-4 border-t border-[#f2ede6]">
+              <div className="flex items-center gap-1">
+                {[1, 2, 3, 4].map((i) => (
+                  <Star key={i} className="w-4 h-4 text-[#d97706] fill-current" />
+                ))}
+                <Star className="w-4 h-4 text-[#d97706]" strokeWidth={2} fill="none" style={{ clipPath: "inset(0 70% 0 0)" }} />
+                <Star className="w-4 h-4 text-[#ece5dc]" strokeWidth={1.5} />
+              </div>
+              <span className="text-[15px] font-bold text-[#1a1207]" style={{ fontFamily: "'Fraunces', serif" }}>
+                4.3
+              </span>
+              <span className="text-[11px] text-[#a39889]">1.247 assaggi</span>
+            </div>
+          </div>
+
+          {/* ── Stats Strip ── */}
+          <div className="flex border-t border-[#f2ede6]">
+            {STATS.map((stat, i) => {
+              const Icon = stat.icon;
+              return (
+                <div
+                  key={stat.label}
+                  className={`flex-1 flex flex-col items-center py-3.5 ${
+                    i < STATS.length - 1 ? "border-r border-[#f2ede6]" : ""
+                  }`}
+                >
+                  <Icon className="w-4 h-4 mb-1" style={{ color: stat.color }} strokeWidth={1.8} />
+                  <span className="text-[9px] text-[#a39889] uppercase tracking-wider font-medium">{stat.label}</span>
+                  <span className="text-[13px] font-bold text-[#1a1207] mt-0.5" style={{ fontFamily: "'Fraunces', serif" }}>
+                    {stat.value}
+                  </span>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* ── CTA: Aggiungi assaggio ── */}
+        <div className="mx-4 mt-4">
+          <button className="w-full h-[48px] bg-[#ea580c] hover:bg-[#dc4f07] text-white font-semibold text-[14px] rounded-2xl transition-colors shadow-[0_4px_16px_rgba(234,88,12,0.25)]">
+            Aggiungi assaggio
           </button>
         </div>
-      </div>
 
-      {/* Dove Trovarla Section */}
-      <div className="px-5 pb-8">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="font-['Fraunces',serif] text-[18px] font-bold text-[#1c1209]">
-            Dove trovarla
+        {/* ── Dove trovarla ── */}
+        <section className="mt-6 mx-4">
+          <div className="flex items-baseline justify-between mb-3">
+            <h2
+              className="text-[17px] font-bold text-[#1a1207]"
+              style={{ fontFamily: "'Fraunces', Georgia, serif" }}
+            >
+              Dove trovarla
+            </h2>
+            <span className="text-[11px] font-semibold text-[#0e7490] bg-[#ecfeff] px-2 py-0.5 rounded-full">
+              {WHERE_TO_FIND.length} locali
+            </span>
+          </div>
+          <div className="bg-white rounded-2xl border border-[#ece5dc] shadow-[0_1px_4px_rgba(0,0,0,0.04)] overflow-hidden">
+            {WHERE_TO_FIND.map((pub, i) => (
+              <div key={pub.name}>
+                <div className="flex items-center gap-3 px-4 py-3">
+                  <div className="w-10 h-10 rounded-xl bg-[#2d1b0e] flex items-center justify-center flex-shrink-0">
+                    <span className="text-sm">🍻</span>
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-[13px] font-semibold text-[#1a1207] truncate">{pub.name}</p>
+                    <div className="flex items-center gap-1.5 mt-0.5">
+                      <span className="text-[11px] text-[#a39889] flex items-center gap-0.5">
+                        <MapPin className="w-2.5 h-2.5" />{pub.city}
+                      </span>
+                      <span className="text-[11px] font-bold text-[#0e7490]">{pub.dist}</span>
+                    </div>
+                  </div>
+                  <div className="flex flex-col items-end gap-1 flex-shrink-0">
+                    <span className="text-[10px] font-semibold text-[#15803d] bg-[#f0fdf4] px-2 py-0.5 rounded-full">
+                      {pub.type}
+                    </span>
+                    <span className="text-[12px] font-bold text-[#1a1207]">{pub.price}</span>
+                  </div>
+                </div>
+                {i < WHERE_TO_FIND.length - 1 && <div className="h-px bg-[#f2ede6] ml-[4rem]" />}
+              </div>
+            ))}
+          </div>
+        </section>
+
+        {/* ── Descrizione ── */}
+        <section className="mt-6 mx-4 mb-6">
+          <h2
+            className="text-[17px] font-bold text-[#1a1207] mb-3"
+            style={{ fontFamily: "'Fraunces', Georgia, serif" }}
+          >
+            Descrizione
           </h2>
-          <button className="text-[13px] font-medium text-[#ea580c]">Vedi mappa</button>
-        </div>
-
-        <div className="space-y-3">
-          {/* Pub Card 1 */}
-          <div className="bg-white p-4 rounded-2xl shadow-[0_2px_12px_rgba(0,0,0,0.05)] flex items-start gap-3">
-            <div className="w-10 h-10 rounded-full bg-[#f5f0eb] flex items-center justify-center flex-shrink-0">
-              <MapPin className="w-5 h-5 text-[#7c6e5a]" />
-            </div>
-            <div className="flex-1 min-w-0">
-              <h3 className="font-bold text-[15px] text-[#1c1209] truncate">Luppolo Station</h3>
-              <p className="text-[13px] text-[#7c6e5a] mb-2 truncate">Via Flaminia 12, Roma</p>
-              <div className="flex items-center gap-2">
-                <span className="px-2 py-0.5 bg-[#f0f9ff] text-[#0369a1] text-[11px] font-bold rounded">1.2 km</span>
-                <span className="px-2 py-0.5 bg-[#f5f0eb] text-[#7c6e5a] text-[11px] font-medium rounded">Alla spina</span>
-              </div>
-            </div>
+          <div className="bg-white rounded-2xl border border-[#ece5dc] p-4 shadow-[0_1px_4px_rgba(0,0,0,0.04)]">
+            <p className="text-[13px] text-[#5c5147] leading-relaxed">
+              Un'IPA d'ispirazione americana con un profilo aromatico complesso
+              dominato da sentori di agrumi tropicali, pompelmo e mango.
+              Il corpo medio e la carbonazione vivace sostengono
+              un finale amaro ben bilanciato. Malti Pale e Caramello,
+              luppoli Citra, Mosaic e Simcoe.
+            </p>
           </div>
-
-          {/* Pub Card 2 */}
-          <div className="bg-white p-4 rounded-2xl shadow-[0_2px_12px_rgba(0,0,0,0.05)] flex items-start gap-3">
-            <div className="w-10 h-10 rounded-full bg-[#f5f0eb] flex items-center justify-center flex-shrink-0">
-              <MapPin className="w-5 h-5 text-[#7c6e5a]" />
-            </div>
-            <div className="flex-1 min-w-0">
-              <h3 className="font-bold text-[15px] text-[#1c1209] truncate">Pork'n'Roll</h3>
-              <p className="text-[13px] text-[#7c6e5a] mb-2 truncate">Via Carlo Caneva 15, Roma</p>
-              <div className="flex items-center gap-2">
-                <span className="px-2 py-0.5 bg-[#f0f9ff] text-[#0369a1] text-[11px] font-bold rounded">3.4 km</span>
-                <span className="px-2 py-0.5 bg-[#f5f0eb] text-[#7c6e5a] text-[11px] font-medium rounded">In lattina</span>
-              </div>
-            </div>
-          </div>
-        </div>
+        </section>
       </div>
 
-      {/* Bottom Nav */}
-      <div className="fixed bottom-0 left-0 w-[390px] h-[80px] bg-white border-t border-[#e8e0d4] flex justify-around items-center px-2 pb-5 z-50">
-        <div className="flex flex-col items-center justify-center w-14 gap-1">
-          <Home className="w-6 h-6 text-[#9e8d78]" strokeWidth={2} />
-          <span className="text-[9px] text-[#9e8d78] font-medium">Home</span>
-        </div>
-        <div className="flex flex-col items-center justify-center w-14 gap-1">
-          <Bell className="w-6 h-6 text-[#9e8d78]" strokeWidth={2} />
-          <span className="text-[9px] text-[#9e8d78] font-medium">Notifiche</span>
-        </div>
-        <div className="flex flex-col items-center justify-center w-14 gap-1">
-          <Search className="w-6 h-6 text-[#9e8d78]" strokeWidth={2} />
-          <span className="text-[9px] text-[#9e8d78] font-medium">Cerca</span>
-        </div>
-        <div className="flex flex-col items-center justify-center w-14 gap-1 relative -top-3">
-          <div className="w-12 h-12 bg-[#1c1209] rounded-full flex items-center justify-center shadow-lg">
-            <ScanLine className="w-6 h-6 text-white" strokeWidth={2} />
-          </div>
-        </div>
-        <div className="flex flex-col items-center justify-center w-14 gap-1">
-          <Activity className="w-6 h-6 text-[#ea580c]" strokeWidth={2.5} />
-          <span className="text-[9px] text-[#ea580c] font-bold">Attività</span>
-        </div>
-        <div className="flex flex-col items-center justify-center w-14 gap-1">
-          <User className="w-6 h-6 text-[#9e8d78]" strokeWidth={2} />
-          <span className="text-[9px] text-[#9e8d78] font-medium">Profilo</span>
-        </div>
-      </div>
+      <BottomNav active="home" />
     </div>
   );
 }
