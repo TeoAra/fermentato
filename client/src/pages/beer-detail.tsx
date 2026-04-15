@@ -758,7 +758,7 @@ export default function BeerDetail() {
             <div className="flex-1 min-w-0">
 
               {/* Name */}
-              <h1 className="text-2xl font-extrabold text-stone-900 dark:text-white leading-tight tracking-tight">
+              <h1 className="font-display text-2xl font-extrabold text-stone-900 dark:text-white leading-tight tracking-tight">
                 {beer?.name}
               </h1>
 

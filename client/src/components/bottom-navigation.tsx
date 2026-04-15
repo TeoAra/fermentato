@@ -34,13 +34,20 @@ export function BottomNavigation() {
   const scanActive     = isActive("/scan");
   const accountActive  = isActive("/profile");
 
-  const Tab = ({ active, children }: { active: boolean; children: ReactNode }) => (
-    <div className={`flex flex-col items-center justify-center gap-[3px] flex-1 py-2 min-h-[52px] transition-colors active:scale-95 relative ${
-      active ? "text-primary" : "text-stone-400 dark:text-stone-500"
-    }`}>
-      {active && (
-        <span className="absolute top-0 left-1/2 -translate-x-1/2 w-6 h-[2.5px] rounded-full bg-primary" />
-      )}
+  const Tab = ({
+    active,
+    children,
+    onClick,
+  }: {
+    active: boolean;
+    children: ReactNode;
+    onClick?: () => void;
+  }) => (
+    <div
+      className={`bottom-nav-tab ${active ? "tab-active" : ""}`}
+      onClick={onClick}
+    >
+      <div className="bottom-nav-pill" />
       {children}
     </div>
   );
@@ -50,7 +57,7 @@ export function BottomNavigation() {
       <SearchDialog isOpen={searchOpen} onClose={() => setSearchOpen(false)} />
 
       <nav
-        className="lg:hidden fixed bottom-0 left-0 right-0 z-50 bg-white dark:bg-[hsl(25,14%,9%)] border-t border-stone-100 dark:border-border"
+        className="lg:hidden fixed bottom-0 left-0 right-0 z-50 bg-white/95 dark:bg-[hsl(220,5%,12%)]/95 backdrop-blur-xl border-t border-stone-100/80 dark:border-white/[0.06]"
         style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
       >
         <div className="flex items-stretch">
@@ -58,73 +65,98 @@ export function BottomNavigation() {
           {/* Home */}
           <Link href="/" className="flex-1 flex">
             <Tab active={homeActive}>
-              <Home className="h-[22px] w-[22px]" strokeWidth={homeActive ? 2.4 : 1.8}
-                fill={homeActive ? "currentColor" : "none"}
-                style={homeActive ? { fillOpacity: 0.15 } : {}} />
-              <span className="text-[10px] font-semibold leading-none">Home</span>
+              <span className="nav-icon">
+                <Home
+                  className="h-[22px] w-[22px]"
+                  strokeWidth={homeActive ? 2.5 : 1.8}
+                  fill={homeActive ? "currentColor" : "none"}
+                  style={homeActive ? { fillOpacity: 0.12 } : {}}
+                />
+              </span>
+              <span className="nav-label">Home</span>
             </Tab>
           </Link>
 
           {/* Notifiche */}
           <Link href="/notifications" className="flex-1 flex">
             <Tab active={notifActive}>
-              <div className="relative">
-                <Bell className="h-[22px] w-[22px]" strokeWidth={notifActive ? 2.4 : 1.8}
+              <span className="nav-icon relative">
+                <Bell
+                  className="h-[22px] w-[22px]"
+                  strokeWidth={notifActive ? 2.5 : 1.8}
                   fill={notifActive ? "currentColor" : "none"}
-                  style={notifActive ? { fillOpacity: 0.15 } : {}} />
+                  style={notifActive ? { fillOpacity: 0.12 } : {}}
+                />
                 {unreadCount > 0 && (
                   <span className="absolute -top-1 -right-1.5 min-w-[14px] h-[14px] bg-red-500 text-white text-[9px] font-black rounded-full flex items-center justify-center px-[3px] leading-none">
                     {unreadCount > 9 ? "9+" : unreadCount}
                   </span>
                 )}
-              </div>
-              <span className="text-[10px] font-semibold leading-none">Notifiche</span>
+              </span>
+              <span className="nav-label">Notifiche</span>
             </Tab>
           </Link>
 
-          {/* Cerca — uniform, same style as all other tabs */}
+          {/* Cerca */}
           <button onClick={() => setSearchOpen(true)} className="flex-1 flex">
             <Tab active={cercaActive}>
-              <Search className="h-[22px] w-[22px]" strokeWidth={cercaActive ? 2.4 : 1.8}
-                fill={cercaActive ? "currentColor" : "none"}
-                style={cercaActive ? { fillOpacity: 0.15 } : {}} />
-              <span className="text-[10px] font-semibold leading-none">Cerca</span>
+              <span className="nav-icon">
+                <Search
+                  className="h-[22px] w-[22px]"
+                  strokeWidth={cercaActive ? 2.5 : 1.8}
+                  fill={cercaActive ? "currentColor" : "none"}
+                  style={cercaActive ? { fillOpacity: 0.12 } : {}}
+                />
+              </span>
+              <span className="nav-label">Cerca</span>
             </Tab>
           </button>
 
-          {/* Scan — inline, β badge */}
+          {/* Scan */}
           <Link href="/scan" className="flex-1 flex">
             <Tab active={scanActive}>
-              <div className="relative">
-                <ScanLine className="h-[22px] w-[22px]" strokeWidth={scanActive ? 2.4 : 1.8} />
+              <span className="nav-icon relative">
+                <ScanLine className="h-[22px] w-[22px]" strokeWidth={scanActive ? 2.5 : 1.8} />
                 <span className="absolute -top-1 -right-2 bg-primary text-white text-[7px] font-black px-[3px] py-[1px] rounded-full leading-none">β</span>
-              </div>
-              <span className="text-[10px] font-semibold leading-none">Scan</span>
+              </span>
+              <span className="nav-label">Scan</span>
             </Tab>
           </Link>
 
           {/* Attività */}
           <Link href="/activity" className="flex-1 flex">
             <Tab active={attivitaActive}>
-              <Activity className="h-[22px] w-[22px]" strokeWidth={attivitaActive ? 2.4 : 1.8} />
-              <span className="text-[10px] font-semibold leading-none">Attività</span>
+              <span className="nav-icon">
+                <Activity className="h-[22px] w-[22px]" strokeWidth={attivitaActive ? 2.5 : 1.8} />
+              </span>
+              <span className="nav-label">Attività</span>
             </Tab>
           </Link>
 
           {/* Account */}
           <Link href="/profile" className="flex-1 flex">
             <Tab active={accountActive}>
-              {avatarUrl ? (
-                <img src={avatarUrl} alt="profilo"
-                  className={`h-[22px] w-[22px] rounded-full object-cover border-2 transition-colors ${
-                    accountActive ? "border-primary" : "border-stone-200 dark:border-stone-600"
-                  }`} />
-              ) : (
-                <User className="h-[22px] w-[22px]" strokeWidth={accountActive ? 2.4 : 1.8}
-                  fill={accountActive ? "currentColor" : "none"}
-                  style={accountActive ? { fillOpacity: 0.15 } : {}} />
-              )}
-              <span className="text-[10px] font-semibold leading-none">Account</span>
+              <span className="nav-icon">
+                {avatarUrl ? (
+                  <img
+                    src={avatarUrl}
+                    alt="profilo"
+                    className={`h-[22px] w-[22px] rounded-full object-cover border-2 transition-all duration-200 ${
+                      accountActive
+                        ? "border-primary ring-1 ring-primary/30"
+                        : "border-stone-200 dark:border-stone-600"
+                    }`}
+                  />
+                ) : (
+                  <User
+                    className="h-[22px] w-[22px]"
+                    strokeWidth={accountActive ? 2.5 : 1.8}
+                    fill={accountActive ? "currentColor" : "none"}
+                    style={accountActive ? { fillOpacity: 0.12 } : {}}
+                  />
+                )}
+              </span>
+              <span className="nav-label">Account</span>
             </Tab>
           </Link>
 

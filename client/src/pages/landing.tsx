@@ -240,11 +240,11 @@ export default function Landing() {
 
           {/* Headline — the most important line on the page */}
           <h1
-            className="slide-up display-serif text-5xl sm:text-6xl lg:text-7xl font-black text-stone-900 dark:text-white mb-6 leading-[1.05]"
+            className="slide-up font-display text-5xl sm:text-6xl lg:text-7xl font-black text-stone-900 dark:text-white mb-6 leading-[1.05]"
             style={{ animationDelay: '80ms' }}
           >
             Trova la birra perfetta.<br />
-            <span className="text-primary">Sempre vicina a te.</span>
+            <span className="text-primary font-display-italic">Sempre vicina a te.</span>
           </h1>
 
           {/* Sub-headline */}
