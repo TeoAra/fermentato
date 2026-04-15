@@ -70,11 +70,11 @@
    LIGHT MODE — COLOUR PALETTE
    ============================ */
 :root {
-  /* Base surfaces — clean off-white, Apple-neutral */
-  --background: hsl(36, 10%, 95%);
-  --foreground: hsl(0, 0%, 11%);
-  --muted: hsl(36, 8%, 92%);
-  --muted-foreground: hsl(0, 0%, 44%);
+  /* Base surfaces — warm cream, premium craft feel */
+  --background: hsl(38, 24%, 93%);
+  --foreground: hsl(25, 14%, 13%);
+  --muted: hsl(38, 16%, 90%);
+  --muted-foreground: hsl(25, 8%, 46%);
 
   /* Card / Popover */
   --popover: hsl(0, 0%, 100%);
@@ -83,8 +83,8 @@
   --card-foreground: hsl(28, 18%, 13%);
 
   /* Borders / Inputs — warm tone */
-  --border: hsl(36, 14%, 87%);
-  --input: hsl(36, 14%, 87%);
+  --border: hsl(36, 16%, 84%);
+  --input: hsl(36, 16%, 84%);
 
   /* Primary — vibrant orange, Fermenta design system */
   --primary: hsl(24, 93%, 49%);

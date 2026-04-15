@@ -257,7 +257,9 @@ export default function Home() {
       {/* ─── Attività in Zona ────────────────────────────────────────────── */}
       <section className="px-4 sm:px-6 lg:px-8 pt-6 pb-3 max-w-7xl mx-auto">
         <div className="flex items-center justify-between mb-4">
-          <h1 className="text-[26px] font-extrabold text-foreground leading-tight">Attività in Zona</h1>
+          <h1 className="text-[28px] font-bold text-foreground leading-tight" style={{ fontFamily: "'Fraunces', Georgia, serif" }}>
+            Attività in Zona
+          </h1>
           {/* GPS accuracy badge */}
           {locationStatus === 'requesting' && (
             <span className="text-[11px] font-semibold text-muted-foreground flex items-center gap-1">
@@ -401,9 +403,8 @@ export default function Home() {
         {(typedUser?.userType === 'pub_owner' || (typedUser?.userType === 'admin' && Array.isArray(myPubs) && myPubs.length > 0)) ? (
           <section className="mb-8">
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-bold text-foreground flex items-center gap-2">
+              <h2 className="text-[18px] font-bold text-foreground flex items-center gap-2.5" style={{ fontFamily: "'Fraunces', Georgia, serif" }}>
                 <span className="w-1 h-5 rounded-full bg-primary flex-shrink-0" />
-                <Store className="h-4 w-4 text-primary" />
                 Il Tuo Pub
               </h2>
               <Link href="/dashboard">
@@ -461,8 +462,8 @@ export default function Home() {
         {(typedUser?.userType !== 'pub_owner' && !(typedUser?.userType === 'admin' && Array.isArray(myPubs) && myPubs.length > 0)) ? (
           <section className="mb-8">
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-bold text-foreground flex items-center gap-2">
-                <Beer className="h-4 w-4 text-primary" />
+              <h2 className="text-[18px] font-bold text-foreground flex items-center gap-2.5" style={{ fontFamily: "'Fraunces', Georgia, serif" }}>
+                <span className="w-1 h-5 rounded-full bg-primary flex-shrink-0" />
                 Locali Vicini
               </h2>
               <Link href="/explore/pubs">
@@ -504,9 +505,8 @@ export default function Home() {
         {typedUser?.userType === 'brewery_owner' && myBreweryData?.brewery && (
           <section className="mb-8">
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-bold text-foreground flex items-center gap-2">
+              <h2 className="text-[18px] font-bold text-foreground flex items-center gap-2.5" style={{ fontFamily: "'Fraunces', Georgia, serif" }}>
                 <span className="w-1 h-5 rounded-full bg-primary flex-shrink-0" />
-                <Building2 className="h-4 w-4 text-primary" />
                 Il Tuo Birrificio
               </h2>
               <Link href="/brewery-dashboard">
@@ -544,9 +544,8 @@ export default function Home() {
         {taplistActivity.length > 0 && typedUser?.userType !== 'pub_owner' && (
           <section className="mb-8">
             <div className="flex items-center justify-between mb-3">
-              <h2 className="text-lg font-bold text-foreground flex items-center gap-2">
+              <h2 className="text-[18px] font-bold text-foreground flex items-center gap-2.5" style={{ fontFamily: "'Fraunces', Georgia, serif" }}>
                 <span className="w-1 h-5 rounded-full bg-primary flex-shrink-0" />
-                <Droplets className="h-4 w-4 text-primary" />
                 In Spina Adesso
               </h2>
               <Link href="/explore/pubs">
@@ -591,9 +590,8 @@ export default function Home() {
         {breweries.length > 0 && typedUser?.userType !== 'pub_owner' && (
           <section className="mb-8">
             <div className="flex items-center justify-between mb-3">
-              <h2 className="text-lg font-bold text-foreground flex items-center gap-2">
+              <h2 className="text-[18px] font-bold text-foreground flex items-center gap-2.5" style={{ fontFamily: "'Fraunces', Georgia, serif" }}>
                 <span className="w-1 h-5 rounded-full bg-primary flex-shrink-0" />
-                <Building2 className="h-4 w-4 text-primary" />
                 Birrifici da Scoprire
               </h2>
               <Link href="/explore/breweries">
@@ -612,9 +610,8 @@ export default function Home() {
         {homeAnnouncements.length > 0 && (
           <section className="mb-8">
             <div className="flex items-center justify-between mb-3">
-              <h2 className="text-lg font-bold text-foreground flex items-center gap-2">
+              <h2 className="text-[18px] font-bold text-foreground flex items-center gap-2.5" style={{ fontFamily: "'Fraunces', Georgia, serif" }}>
                 <span className="w-1 h-5 rounded-full bg-primary flex-shrink-0" />
-                <Megaphone className="h-4 w-4 text-primary" />
                 Ultime dai Birrifici
               </h2>
             </div>
@@ -658,9 +655,8 @@ export default function Home() {
         {isAuthenticated && Array.isArray(popularStyles) && popularStyles.length > 0 && (
           <section className="mb-8">
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-bold text-foreground flex items-center gap-2">
+              <h2 className="text-[18px] font-bold text-foreground flex items-center gap-2.5" style={{ fontFamily: "'Fraunces', Georgia, serif" }}>
                 <span className="w-1 h-5 rounded-full bg-primary flex-shrink-0" />
-                <Beer className="h-4 w-4 text-primary" />
                 Stili più Amati
               </h2>
               <Link href="/explore/beers">
@@ -707,9 +703,8 @@ export default function Home() {
         {user && favorites && Array.isArray(favorites) && favorites.length > 0 ? (
           <section className="mb-8">
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-bold text-foreground flex items-center gap-2">
+              <h2 className="text-[18px] font-bold text-foreground flex items-center gap-2.5" style={{ fontFamily: "'Fraunces', Georgia, serif" }}>
                 <span className="w-1 h-5 rounded-full bg-primary flex-shrink-0" />
-                <Heart className="h-4 w-4 text-primary" />
                 I Tuoi Preferiti
               </h2>
               <Link href="/dashboard?tab=favorites">
