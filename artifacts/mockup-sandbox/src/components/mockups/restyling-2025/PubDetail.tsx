@@ -1,108 +1,152 @@
-import { ChevronLeft, Share2, Heart, Star, MapPin, Navigation, Phone, Clock, Beer, ChevronRight, Wifi } from "lucide-react";
+import { ChevronLeft, Share2, Heart, Star, MapPin, Navigation, Phone, Clock, Beer, Wifi, ChevronRight } from "lucide-react";
 import { BottomNav } from "./_shared/BottomNav";
 
 const TABS = ["Spina", "Cantina", "Info"];
 
 const TAPLIST = [
-  { name: "Tipopils", brewery: "Birrificio Italiano", style: "Pilsner", abv: "5.2%", price: "€5.00", color: "#e9c46a" },
-  { name: "Nebbia IPA", brewery: "Birrificio del Ducato", style: "IPA", abv: "6.2%", price: "€6.00", color: "#d4763e" },
-  { name: "Nora", brewery: "Baladin", style: "Ale speziata", abv: "6.8%", price: "€6.50", color: "#c17f59" },
-  { name: "ReAle Extra", brewery: "Birra del Borgo", style: "IPA", abv: "6.4%", price: "€6.00", color: "#b8651a" },
-  { name: "Verdi Imperial", brewery: "Toccalmatto", style: "Stout", abv: "8.5%", price: "€7.50", color: "#3d2b1f" },
-  { name: "Wayan", brewery: "Baladin", style: "Saison", abv: "5.8%", price: "€6.00", color: "#e6c35c" },
+  { name: "Tipopils", brewery: "Birrificio Italiano", style: "Pilsner", abv: "5.2%", price: "€5.00", hue: "#e9c46a", updated: "12 min fa" },
+  { name: "Nebbia IPA", brewery: "Birrificio del Ducato", style: "IPA", abv: "6.2%", price: "€6.00", hue: "#d4763e", updated: "28 min fa" },
+  { name: "Nora", brewery: "Baladin", style: "Ale speziata", abv: "6.8%", price: "€6.50", hue: "#c17f59", updated: "5 min fa" },
+  { name: "ReAle Extra", brewery: "Birra del Borgo", style: "IPA", abv: "6.4%", price: "€6.00", hue: "#b8651a", updated: "1h fa" },
+  { name: "Verdi Imperial Stout", brewery: "Toccalmatto", style: "Stout", abv: "8.5%", price: "€7.50", hue: "#5c3d28", updated: "3 min fa" },
+  { name: "Wayan", brewery: "Baladin", style: "Saison", abv: "5.8%", price: "€6.00", hue: "#e6c35c", updated: "45 min fa" },
 ];
 
 export function PubDetail() {
   return (
     <div
-      className="relative bg-[#f5f0eb] overflow-hidden"
-      style={{ width: 390, minHeight: 844, fontFamily: "'Poppins', sans-serif" }}
+      className="relative overflow-hidden"
+      style={{ width: 390, minHeight: 844, background: "#0d0805", fontFamily: "'Poppins', sans-serif", color: "#f5ede0" }}
     >
-      <div className="overflow-y-auto" style={{ height: 844, paddingBottom: 70 }}>
-        {/* ── Top Bar (transparent) ── */}
-        <div className="absolute top-0 left-0 right-0 z-30 flex items-center justify-between px-4 h-[52px]">
-          <button className="w-9 h-9 rounded-full bg-black/30 backdrop-blur-md flex items-center justify-center">
-            <ChevronLeft className="w-5 h-5 text-white" />
-          </button>
-          <div className="flex gap-2">
-            <button className="w-9 h-9 rounded-full bg-black/30 backdrop-blur-md flex items-center justify-center">
-              <Heart className="w-[18px] h-[18px] text-white" strokeWidth={2} />
-            </button>
-            <button className="w-9 h-9 rounded-full bg-black/30 backdrop-blur-md flex items-center justify-center">
-              <Share2 className="w-[18px] h-[18px] text-white" strokeWidth={2} />
-            </button>
-          </div>
-        </div>
+      <div className="overflow-y-auto" style={{ height: 844, paddingBottom: 62 }}>
 
-        {/* ── Cover Image ── */}
-        <div className="h-[200px] bg-gradient-to-br from-[#1a0f06] via-[#2d1b0e] to-[#4a3020] flex items-end relative">
-          <div className="absolute inset-0 flex items-center justify-center opacity-20">
-            <span className="text-8xl">🍻</span>
+        {/* ── Hero Cover ── */}
+        <div
+          className="relative h-[200px] flex items-end"
+          style={{
+            background: "linear-gradient(160deg, #1e1510 0%, #0d0805 60%)",
+          }}
+        >
+          {/* Atmospheric top bar */}
+          <div className="absolute top-0 left-0 right-0 flex items-center justify-between px-4 pt-3 z-10">
+            <button
+              className="w-9 h-9 rounded-full flex items-center justify-center"
+              style={{ background: "rgba(13,8,5,0.7)", backdropFilter: "blur(12px)", border: "1px solid rgba(255,255,255,0.08)" }}
+            >
+              <ChevronLeft className="w-5 h-5" style={{ color: "#f5ede0" }} />
+            </button>
+            <div className="flex gap-2">
+              {[Heart, Share2].map((Icon, i) => (
+                <button
+                  key={i}
+                  className="w-9 h-9 rounded-full flex items-center justify-center"
+                  style={{ background: "rgba(13,8,5,0.7)", backdropFilter: "blur(12px)", border: "1px solid rgba(255,255,255,0.08)" }}
+                >
+                  <Icon className="w-[17px] h-[17px]" style={{ color: "#f5ede0" }} strokeWidth={2} />
+                </button>
+              ))}
+            </div>
           </div>
-          <div className="absolute bottom-0 left-0 right-0 h-24 bg-gradient-to-t from-[#f5f0eb] to-transparent" />
+
+          {/* Atmospheric large emoji */}
+          <div className="absolute inset-0 flex items-center justify-center opacity-10">
+            <span className="text-[100px]">🍻</span>
+          </div>
+
+          <div className="absolute bottom-0 left-0 right-0 h-20" style={{ background: "linear-gradient(to top, #0d0805, transparent)" }} />
         </div>
 
         {/* ── Pub Identity ── */}
-        <div className="relative -mt-8 mx-4">
-          <div className="flex items-end gap-3.5">
-            <div className="w-[72px] h-[72px] rounded-2xl bg-white border-[3px] border-white shadow-lg flex items-center justify-center flex-shrink-0">
-              <span className="text-3xl">🍻</span>
+        <div className="relative -mt-6 px-5">
+          <div className="flex items-end gap-4">
+            <div
+              className="w-[70px] h-[70px] rounded-2xl flex items-center justify-center text-3xl flex-shrink-0"
+              style={{
+                background: "#1e1510",
+                border: "2px solid rgba(255,255,255,0.08)",
+                boxShadow: "0 4px 20px rgba(0,0,0,0.5)",
+              }}
+            >
+              🍻
             </div>
             <div className="flex-1 min-w-0 pb-1">
               <h1
-                className="text-[22px] font-bold text-[#1a1207] leading-tight"
-                style={{ fontFamily: "'Fraunces', Georgia, serif" }}
+                className="text-[22px] font-black leading-tight tracking-tight"
+                style={{ fontFamily: "'Fraunces', Georgia, serif", color: "#f5ede0" }}
               >
                 Lambiczoon
               </h1>
               <div className="flex items-center gap-1.5 mt-0.5">
-                <MapPin className="w-3 h-3 text-[#a39889]" />
-                <span className="text-[12px] text-[#7c7065]">Via Friuli 46, Milano</span>
+                <MapPin className="w-3 h-3" style={{ color: "#5a4432" }} />
+                <span className="text-[12px]" style={{ color: "#a89070" }}>Via Friuli 46, Milano</span>
               </div>
             </div>
           </div>
 
-          {/* ── At a Glance Strip ── */}
-          <div className="flex items-center gap-2.5 mt-3 flex-wrap">
-            <span className="flex items-center gap-1 text-[11px] font-bold text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-full">
-              <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full" />
+          {/* Status + stats pills */}
+          <div className="flex items-center gap-2 mt-3 flex-wrap">
+            <span
+              className="flex items-center gap-1.5 text-[11px] font-bold px-3 py-1 rounded-full"
+              style={{ background: "rgba(34,197,94,0.15)", color: "#22c55e", border: "1px solid rgba(34,197,94,0.2)" }}
+            >
+              <span className="w-1.5 h-1.5 rounded-full" style={{ background: "#22c55e" }} />
               Aperto · chiude 01:00
             </span>
-            <span className="flex items-center gap-1 text-[11px] font-semibold text-[#0e7490] bg-[#ecfeff] px-2.5 py-1 rounded-full">
+            <span
+              className="flex items-center gap-1 text-[11px] font-semibold px-2.5 py-1 rounded-full"
+              style={{ background: "rgba(34,211,238,0.1)", color: "#22d3ee" }}
+            >
               <Beer className="w-3 h-3" />
               14 spine
             </span>
-            <span className="flex items-center gap-1 text-[11px] font-semibold text-[#d97706] bg-[#fef3c7] px-2 py-1 rounded-full">
-              <Star className="w-3 h-3 fill-current" />
+            <span
+              className="flex items-center gap-0.5 text-[11px] font-semibold px-2.5 py-1 rounded-full"
+              style={{ background: "rgba(212,169,106,0.1)", color: "#d4a96a" }}
+            >
+              <Star className="w-3 h-3" fill="#d4a96a" />
               4.6
             </span>
           </div>
 
-          {/* ── Quick Actions ── */}
+          {/* Quick Actions */}
           <div className="flex gap-2.5 mt-4">
-            <button className="flex-1 flex items-center justify-center gap-2 h-[42px] bg-[#ea580c] text-white text-[13px] font-semibold rounded-xl shadow-[0_3px_12px_rgba(234,88,12,0.2)]">
+            <button
+              className="flex-1 flex items-center justify-center gap-2 h-[44px] rounded-xl text-[13px] font-bold"
+              style={{
+                background: "linear-gradient(135deg, #f77104, #d45f03)",
+                color: "#fff",
+                boxShadow: "0 3px 16px rgba(247,113,4,0.25)",
+              }}
+            >
               <Navigation className="w-4 h-4" />
               Indicazioni
             </button>
-            <button className="flex items-center justify-center w-[42px] h-[42px] bg-white border border-[#ece5dc] rounded-xl shadow-[0_1px_3px_rgba(0,0,0,0.04)]">
-              <Phone className="w-4 h-4 text-[#7c7065]" strokeWidth={2} />
+            <button
+              className="w-[44px] h-[44px] flex items-center justify-center rounded-xl"
+              style={{ background: "#1e1510", border: "1px solid rgba(255,255,255,0.08)" }}
+            >
+              <Phone className="w-4 h-4" style={{ color: "#a89070" }} strokeWidth={2} />
             </button>
-            <button className="flex items-center justify-center w-[42px] h-[42px] bg-white border border-[#ece5dc] rounded-xl shadow-[0_1px_3px_rgba(0,0,0,0.04)]">
-              <Clock className="w-4 h-4 text-[#7c7065]" strokeWidth={2} />
+            <button
+              className="w-[44px] h-[44px] flex items-center justify-center rounded-xl"
+              style={{ background: "#1e1510", border: "1px solid rgba(255,255,255,0.08)" }}
+            >
+              <Clock className="w-4 h-4" style={{ color: "#a89070" }} strokeWidth={2} />
             </button>
           </div>
         </div>
 
         {/* ── Tab Bar ── */}
-        <div className="flex mt-5 mx-4 bg-white rounded-xl border border-[#ece5dc] p-1 shadow-[0_1px_3px_rgba(0,0,0,0.03)]">
+        <div className="flex mt-5 mx-5 rounded-xl overflow-hidden p-1" style={{ background: "#1e1510", border: "1px solid rgba(255,255,255,0.05)" }}>
           {TABS.map((tab, i) => (
             <button
               key={tab}
-              className={`flex-1 text-[13px] font-semibold py-2 rounded-lg transition-all ${
+              className="flex-1 text-[13px] font-semibold py-2 rounded-lg transition-all"
+              style={
                 i === 0
-                  ? "bg-[#1a1207] text-white shadow-sm"
-                  : "text-[#7c7065] hover:text-[#1a1207]"
-              }`}
+                  ? { background: "rgba(247,113,4,0.9)", color: "#fff" }
+                  : { color: "#5a4432" }
+              }
             >
               {tab}
             </button>
@@ -110,70 +154,92 @@ export function PubDetail() {
         </div>
 
         {/* ── Taplist ── */}
-        <section className="mt-4 mx-4 mb-6">
-          <div className="flex items-baseline justify-between mb-3">
+        <section className="mt-4 mx-5 mb-5">
+          <div className="flex items-center justify-between mb-3">
             <h2
-              className="text-[15px] font-bold text-[#1a1207]"
-              style={{ fontFamily: "'Fraunces', Georgia, serif" }}
+              className="text-[15px] font-bold"
+              style={{ fontFamily: "'Fraunces', Georgia, serif", color: "#f5ede0" }}
             >
               Birre alla spina
             </h2>
-            <span className="text-[11px] text-[#a39889] flex items-center gap-1">
-              <Clock className="w-3 h-3" />
-              Agg. 2h fa
-            </span>
+            <div className="flex items-center gap-1">
+              <span className="w-1.5 h-1.5 rounded-full" style={{ background: "#22c55e" }} />
+              <span className="text-[10px] font-medium" style={{ color: "#a89070" }}>live</span>
+            </div>
           </div>
-          <div className="bg-white rounded-2xl border border-[#ece5dc] shadow-[0_1px_4px_rgba(0,0,0,0.04)] overflow-hidden">
+          <div
+            className="rounded-2xl overflow-hidden"
+            style={{ background: "#1e1510", border: "1px solid rgba(255,255,255,0.05)" }}
+          >
             {TAPLIST.map((beer, i) => (
               <div key={beer.name}>
-                <div className="flex items-center gap-3 px-4 py-3 active:bg-[#faf7f2] transition-colors">
+                {/* Beer color band */}
+                <div
+                  className="flex items-center gap-3 px-4 py-3 relative overflow-hidden"
+                >
                   <div
-                    className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 border-2 border-white shadow-md"
-                    style={{ background: `linear-gradient(135deg, ${beer.color}dd, ${beer.color}88)` }}
+                    className="absolute left-0 top-0 bottom-0 w-[3px]"
+                    style={{ background: beer.hue }}
+                  />
+                  <div
+                    className="w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0 text-sm"
+                    style={{
+                      background: `radial-gradient(circle, ${beer.hue}33, ${beer.hue}11)`,
+                      border: `1.5px solid ${beer.hue}44`,
+                    }}
                   >
-                    <span className="text-sm">🍺</span>
+                    🍺
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-[13px] font-semibold text-[#1a1207] truncate">{beer.name}</p>
-                    <div className="flex items-center gap-1.5 mt-0.5">
-                      <span className="text-[11px] text-[#a39889] truncate">{beer.brewery}</span>
-                    </div>
+                    <p className="text-[13px] font-semibold truncate" style={{ color: "#f5ede0" }}>
+                      {beer.name}
+                    </p>
+                    <p className="text-[10px] mt-0.5" style={{ color: "#5a4432" }}>
+                      {beer.brewery} · {beer.style} · {beer.abv}
+                    </p>
                   </div>
                   <div className="flex flex-col items-end gap-1 flex-shrink-0">
-                    <span className="text-[10px] font-semibold text-[#7c7065] bg-[#f5f0eb] px-2 py-0.5 rounded-full">
-                      {beer.style} · {beer.abv}
-                    </span>
-                    <span className="text-[13px] font-bold text-[#1a1207]" style={{ fontFamily: "'Fraunces', serif" }}>
+                    <span
+                      className="text-[14px] font-bold"
+                      style={{ fontFamily: "'Fraunces', serif", color: "#d4a96a" }}
+                    >
                       {beer.price}
                     </span>
+                    <div className="flex items-center gap-0.5">
+                      <span className="w-1.5 h-1.5 rounded-full" style={{ background: beer.updated.includes("min") ? "#22c55e" : "#5a4432" }} />
+                      <span className="text-[9px]" style={{ color: "#5a4432" }}>{beer.updated}</span>
+                    </div>
                   </div>
                 </div>
-                {i < TAPLIST.length - 1 && <div className="h-px bg-[#f2ede6] ml-[4rem]" />}
+                {i < TAPLIST.length - 1 && (
+                  <div className="h-px ml-[4rem]" style={{ background: "rgba(255,255,255,0.04)" }} />
+                )}
               </div>
             ))}
           </div>
         </section>
 
-        {/* ── Info Quick Cards ── */}
-        <section className="mx-4 mb-6">
-          <div className="grid grid-cols-3 gap-2.5">
-            <div className="bg-white rounded-xl border border-[#ece5dc] p-3 text-center shadow-[0_1px_3px_rgba(0,0,0,0.03)]">
-              <Wifi className="w-4 h-4 text-[#0e7490] mx-auto mb-1" />
-              <span className="text-[10px] font-semibold text-[#1a1207]">Wi-Fi</span>
+        {/* ── Amenities ── */}
+        <div className="flex gap-2 mx-5 mb-6">
+          {[
+            { icon: "📶", label: "Wi-Fi" },
+            { icon: "🐕", label: "Dog OK" },
+            { icon: "🌿", label: "Giardino" },
+            { icon: "🎵", label: "Live music" },
+          ].map((a) => (
+            <div
+              key={a.label}
+              className="flex-1 flex flex-col items-center py-3 rounded-xl"
+              style={{ background: "#1e1510", border: "1px solid rgba(255,255,255,0.05)" }}
+            >
+              <span className="text-base mb-1">{a.icon}</span>
+              <span className="text-[9px] font-medium" style={{ color: "#5a4432" }}>{a.label}</span>
             </div>
-            <div className="bg-white rounded-xl border border-[#ece5dc] p-3 text-center shadow-[0_1px_3px_rgba(0,0,0,0.03)]">
-              <span className="text-base mb-1 block">🐕</span>
-              <span className="text-[10px] font-semibold text-[#1a1207]">Dog friendly</span>
-            </div>
-            <div className="bg-white rounded-xl border border-[#ece5dc] p-3 text-center shadow-[0_1px_3px_rgba(0,0,0,0.03)]">
-              <span className="text-base mb-1 block">🌿</span>
-              <span className="text-[10px] font-semibold text-[#1a1207]">Giardino</span>
-            </div>
-          </div>
-        </section>
+          ))}
+        </div>
       </div>
 
-      <BottomNav active="cerca" />
+      <BottomNav active="cerca" theme="dark" />
     </div>
   );
 }

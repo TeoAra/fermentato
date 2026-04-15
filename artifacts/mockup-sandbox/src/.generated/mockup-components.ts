@@ -7,6 +7,7 @@ export const modules: ModuleMap = {
   "./components/mockups/craft-ux/PubPage.tsx": () => import("../components/mockups/craft-ux/PubPage.tsx"),
   "./components/mockups/instagram-carousel/InstagramCarousel.tsx": () => import("../components/mockups/instagram-carousel/InstagramCarousel.tsx"),
   "./components/mockups/restyling-2025/BeerDetail.tsx": () => import("../components/mockups/restyling-2025/BeerDetail.tsx"),
+  "./components/mockups/restyling-2025/DesignSystem.tsx": () => import("../components/mockups/restyling-2025/DesignSystem.tsx"),
   "./components/mockups/restyling-2025/Explore.tsx": () => import("../components/mockups/restyling-2025/Explore.tsx"),
   "./components/mockups/restyling-2025/HomeFeed.tsx": () => import("../components/mockups/restyling-2025/HomeFeed.tsx"),
   "./components/mockups/restyling-2025/Landing.tsx": () => import("../components/mockups/restyling-2025/Landing.tsx"),

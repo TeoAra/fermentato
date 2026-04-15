@@ -1,0 +1,249 @@
+I already have a live mobile-first web app for **Fermenta.to**.
+Do **not** build a generic new app from scratch.
+
+Your task is to **redesign and restyle the existing product experience** so it feels much more premium, custom, memorable, and product-led.
+
+## Product context
+
+Fermenta.to is a live local tap finder.
+
+Its main value is:
+
+* helping users discover **what beer is currently on tap nearby**
+* making it easy for users to find **real pubs with real live tap lists**
+* helping **as many pubs as possible join the platform**
+* making the product feel useful immediately
+
+This is **not**:
+
+* a generic beer database
+* a brewery magazine
+* a social network clone
+* a generic food delivery UI
+
+It is a **location-based live beer discovery product**.
+
+## Main redesign objective
+
+I want you to **redesign the current live web app UI** with a much stronger and more personal visual identity.
+
+The result must feel inspired by:
+
+* premium food discovery apps
+* restaurant finder apps
+* map + list hybrid mobile experiences
+* polished editorial product design
+* modern craft beer visual culture
+
+But it must **not** feel like:
+
+* a generic AI-generated dashboard
+* a basic SaaS layout
+* a default Tailwind template
+* a sterile startup landing page
+
+## Design direction
+
+Push the UI toward something:
+
+* warmer
+* bolder
+* more premium
+* more atmospheric
+* more memorable
+* more product-specific
+
+Visual keywords:
+
+* dark premium craft-beer atmosphere
+* orange as main accent color
+* warm amber highlights
+* layered gradients
+* depth and glow
+* strong hierarchy
+* expressive cards
+* refined spacing
+* more original composition
+* more “designed”, less “assembled”
+
+## Product priorities to communicate clearly
+
+The redesigned UI must make these things obvious at first glance:
+
+1. **Nearby**
+
+   * this is about what is around the user right now
+
+2. **Live**
+
+   * tap lists are updated recently
+   * freshness matters
+   * “updated X min ago” must feel important
+
+3. **On tap**
+
+   * the key value is discovering what is actually available in pubs
+
+4. **For pubs too**
+
+   * pubs should feel invited to join
+   * the product should clearly show the benefit of being listed and updating tap lists
+
+## What I want you to redesign
+
+Redesign the app experience with these key areas:
+
+### 1. Main discovery screen
+
+This is the most important screen.
+
+It should include:
+
+* strong visual header / hero area
+* location context
+* premium search bar
+* filter chips
+* nearby live beer feed
+* beer cards that feel distinctive and premium
+* visible distance, pub, and freshness
+* clear CTA / tap targets
+
+### 2. Beer cards
+
+Redesign the beer cards so they feel much more unique and product-specific.
+
+Each beer card should communicate:
+
+* beer name
+* brewery
+* pub
+* distance
+* freshness
+* style / ABV
+* live availability
+
+The cards should have more personality and visual hierarchy, not just flat text blocks.
+
+### 3. Map + list relationship
+
+Create a stronger connection between:
+
+* beer discovery
+* nearby pubs
+* map context
+
+I want a more premium map/list hybrid UX, inspired by high-end nearby discovery apps.
+
+### 4. Pub onboarding / pub CTA
+
+Design a section or component that makes pubs want to join.
+
+The value proposition should be very clear:
+
+* get discovered nearby
+* update your tap list quickly
+* bring customers in
+
+This should look like a real growth feature, not a weak secondary banner.
+
+### 5. Active pub list / pub cards
+
+Design pub cards with:
+
+* pub name
+* neighborhood
+* number of taps
+* active/live status
+* CTA to view tap list
+
+## Theme requirements
+
+Support both:
+
+* **dark mode** as the primary/default experience
+* **light mode** as an alternate refined version
+
+### Dark mode should feel:
+
+* immersive
+* premium
+* warm
+* nightlife / craft / beer atmosphere
+
+### Light mode should feel:
+
+* creamy
+* editorial
+* elegant
+* warm, not sterile
+
+## UI references and inspiration
+
+Use inspiration from:
+
+* polished nearby restaurant finder apps
+* premium food app concepts
+* map/list mobile products
+* the best parts of Untappd UX thinking
+* custom product UI from Dribbble / Figma
+
+But keep the design original and tailored to Fermenta.to.
+
+## Important design rules
+
+* Do not make the layout too basic
+* Do not make it look like a generic template
+* Do not overuse standard dashboard patterns
+* Do not make everything equally weighted
+* Do not use flat repetitive cards without depth
+* Do not make the homepage feel like a landing page only
+
+Instead:
+
+* create tension and hierarchy
+* use large bold typography
+* use layered composition
+* create premium visual rhythm
+* make the search and discovery flow feel immediate
+* make the cards feel crafted
+* give the product a recognizable personality
+
+## Technical instructions
+
+* Use React
+* Use Tailwind CSS
+* Use Framer Motion for subtle premium interactions
+* Use lucide-react icons
+* Keep components reusable
+* Build on the assumption that the app already exists
+* Focus on a **UI redesign / restyle / product polish**, not on rebuilding the entire product logic
+
+## Deliverables
+
+I want you to generate:
+
+1. A redesigned **main mobile-first homepage / discovery screen**
+2. A stronger **visual system** for the app
+3. Reusable redesigned components:
+
+   * buttons
+   * search bar
+   * chips
+   * beer cards
+   * pub cards
+   * map overlay card
+   * metrics / freshness badges
+4. Dark and light theme styling
+5. A result that feels much more premium, custom, and memorable than a default AI-generated design
+
+## Final goal
+
+The redesign should make the app feel like:
+
+* a real product with personality
+* a premium local discovery tool
+* something users would actually want to use
+* something pubs would actually want to join
+
+Do not give me a safe generic result.
+Push the visual identity further and make it feel product-designed.
