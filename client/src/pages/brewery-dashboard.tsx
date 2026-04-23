@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { useAuth } from "@/hooks/useAuth";
@@ -29,8 +29,77 @@ import {
 } from "lucide-react";
 import { SiInstagram, SiFacebook, SiTiktok } from "react-icons/si";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Label } from "@/components/ui/label";
 import { BreweryEventsManager } from "@/components/events-manager";
 import { RoleSwitcherBanner } from "@/components/role-switcher-banner";
+
+function CollabBrewerySelector({ selected, onChange, excludeBreweryId }: { selected: { id: number; name: string }[]; onChange: (breweries: { id: number; name: string }[]) => void; excludeBreweryId?: number | null }) {
+  const [query, setQuery] = useState("");
+  const [results, setResults] = useState<any[]>([]);
+  const [showResults, setShowResults] = useState(false);
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const search = useCallback((q: string) => {
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    if (q.length < 2) { setResults([]); return; }
+    debounceRef.current = setTimeout(async () => {
+      try {
+        const res = await fetch(`/api/breweries/search?q=${encodeURIComponent(q)}&limit=10`, { credentials: 'include' });
+        if (!res.ok) return;
+        const data = await res.json();
+        setResults(Array.isArray(data) ? data.filter((b: any) => b.id !== excludeBreweryId && !selected.some((s: any) => s.id === b.id)) : []);
+        setShowResults(true);
+      } catch { setResults([]); }
+    }, 250);
+  }, [excludeBreweryId, selected]);
+
+  const add = (b: { id: number; name: string }) => {
+    onChange([...selected, { id: b.id, name: b.name }]);
+    setQuery(""); setResults([]); setShowResults(false);
+  };
+  const remove = (id: number) => onChange(selected.filter((s: any) => s.id !== id));
+
+  return (
+    <div className="space-y-2">
+      <Label className="text-sm font-bold text-foreground">Birrifici in Collaborazione</Label>
+      {selected.length > 0 && (
+        <div className="flex flex-wrap gap-2">
+          {selected.map((b: any) => (
+            <span key={b.id} className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-sm font-medium bg-purple-100 text-purple-800 dark:bg-purple-900/40 dark:text-purple-200">
+              <Building className="w-3 h-3" />
+              {b.name}
+              <button type="button" onClick={() => remove(b.id)} className="ml-0.5 text-purple-500 hover:text-purple-800">×</button>
+            </span>
+          ))}
+        </div>
+      )}
+      <div className="relative">
+        <Input
+          value={query}
+          onChange={e => { setQuery(e.target.value); search(e.target.value); }}
+          onBlur={() => setTimeout(() => setShowResults(false), 200)}
+          placeholder="Cerca birrificio partner..."
+          className="border-stone-200 rounded-xl h-11"
+          autoComplete="off"
+        />
+        {showResults && results.length > 0 && (
+          <div className="absolute z-50 w-full mt-1 bg-white dark:bg-gray-800 border border-stone-200 rounded-xl shadow-xl max-h-48 overflow-y-auto">
+            {results.map((b: any) => (
+              <button key={b.id} type="button" onMouseDown={e => { e.preventDefault(); add(b); }}
+                className="w-full px-3 py-2 text-left hover:bg-purple-50 dark:hover:bg-purple-900/20 border-b last:border-b-0 flex items-center gap-2 text-sm">
+                {b.logoUrl ? <img src={b.logoUrl} alt="" className="w-6 h-6 rounded-full object-cover" /> : <Building className="w-4 h-4 text-purple-400" />}
+                <span>{b.name}</span>
+                <span className="text-xs text-stone-400 ml-auto">{b.location}</span>
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
+      <p className="text-xs text-stone-500">La birra apparirà automaticamente anche nelle pagine dei birrifici partner.</p>
+    </div>
+  );
+}
 
 const beerFormSchema = z.object({
   name: z.string().min(1, "Il nome è obbligatorio"),
@@ -40,6 +109,9 @@ const beerFormSchema = z.object({
   description: z.string().optional().nullable(),
   color: z.string().optional().nullable(),
   imageUrl: z.string().optional().nullable(),
+  isGlutenFree: z.boolean().default(false),
+  isAlcoholFree: z.boolean().default(false),
+  isCollaboration: z.boolean().default(false),
 });
 
 type BeerFormValues = z.infer<typeof beerFormSchema>;
@@ -397,6 +469,7 @@ export default function BreweryDashboard({ adminBreweryId }: BreweryDashboardPro
   }, []);
 
   const [editingBeer, setEditingBeer] = useState<Beer | null>(null);
+  const [collabBreweries, setCollabBreweries] = useState<{ id: number; name: string }[]>([]);
   const [showAllBeers, setShowAllBeers] = useState(false);
   const [isEditingProfile, setIsEditingProfile] = useState(false);
   const [isEditingImages, setIsEditingImages] = useState(false);
@@ -583,26 +656,38 @@ export default function BreweryDashboard({ adminBreweryId }: BreweryDashboardPro
 
   const openCreateDialog = () => {
     setEditingBeer(null);
-    form.reset({ name: "", style: "", abv: null, ibu: null, description: "", color: "", imageUrl: "" });
+    setCollabBreweries([]);
+    form.reset({ name: "", style: "", abv: null, ibu: null, description: "", color: "", imageUrl: "", isGlutenFree: false, isAlcoholFree: false, isCollaboration: false });
     setDialogOpen(true);
   };
 
   const openEditBeerDialog = (beer: Beer) => {
     setEditingBeer(beer);
+    setCollabBreweries((beer as any).collaborationBreweries ?? []);
     form.reset({
       name: beer.name, style: beer.style,
       abv: beer.abv ? parseFloat(beer.abv) : null,
       ibu: beer.ibu ?? null, description: beer.description ?? "",
       color: beer.color ?? "", imageUrl: beer.imageUrl ?? "",
+      isGlutenFree: (beer as any).isGlutenFree ?? false,
+      isAlcoholFree: (beer as any).isAlcoholFree ?? false,
+      isCollaboration: (beer as any).isCollaboration ?? false,
     });
     setDialogOpen(true);
   };
 
   const onBeerSubmit = (values: BeerFormValues) => {
+    if (values.isCollaboration && collabBreweries.length === 0) {
+      return;
+    }
+    const payload = {
+      ...values,
+      collaborationBreweryIds: values.isCollaboration ? collabBreweries.map(b => b.id) : [],
+    };
     if (editingBeer) {
-      updateBeerMutation.mutate({ id: editingBeer.id, values: values as any });
+      updateBeerMutation.mutate({ id: editingBeer.id, values: payload as any });
     } else {
-      createBeerMutation.mutate(values as any);
+      createBeerMutation.mutate(payload as any);
     }
   };
 
@@ -1479,11 +1564,69 @@ export default function BreweryDashboard({ adminBreweryId }: BreweryDashboardPro
                 />
               </div>
 
+              <div className="space-y-3 p-4 bg-stone-50 rounded-xl border border-stone-100">
+                <p className="text-xs font-bold text-stone-500 uppercase tracking-wider">Caratteristiche Speciali</p>
+                <FormField
+                  control={form.control}
+                  name="isGlutenFree"
+                  render={({ field }) => (
+                    <label className="flex items-center gap-3 cursor-pointer">
+                      <Checkbox
+                        checked={field.value}
+                        onCheckedChange={field.onChange}
+                        className="rounded-md"
+                      />
+                      <span className="text-sm font-medium">Senza Glutine</span>
+                    </label>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="isAlcoholFree"
+                  render={({ field }) => (
+                    <label className="flex items-center gap-3 cursor-pointer">
+                      <Checkbox
+                        checked={field.value}
+                        onCheckedChange={field.onChange}
+                        className="rounded-md"
+                      />
+                      <span className="text-sm font-medium">Analcolica (0,0%)</span>
+                    </label>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="isCollaboration"
+                  render={({ field }) => (
+                    <label className="flex items-center gap-3 cursor-pointer">
+                      <Checkbox
+                        checked={field.value}
+                        onCheckedChange={field.onChange}
+                        className="rounded-md"
+                      />
+                      <span className="text-sm font-medium text-purple-700">Birra in Collaborazione</span>
+                    </label>
+                  )}
+                />
+                {form.watch("isCollaboration") && (
+                  <div className="pt-1">
+                    <CollabBrewerySelector
+                      selected={collabBreweries}
+                      onChange={setCollabBreweries}
+                      excludeBreweryId={isAdminMode ? adminBreweryId : (brewery as any)?.id}
+                    />
+                    {form.watch("isCollaboration") && collabBreweries.length === 0 && (
+                      <p className="text-xs text-red-500 mt-1">Aggiungi almeno un birrificio partner</p>
+                    )}
+                  </div>
+                )}
+              </div>
+
               <div className="flex gap-3 pt-4 border-t border-stone-100">
                 <Button
                   type="submit"
                   className="flex-1 bg-primary hover:bg-primary/90 text-white rounded-xl font-bold h-12 shadow-md"
-                  disabled={createBeerMutation.isPending || updateBeerMutation.isPending}
+                  disabled={createBeerMutation.isPending || updateBeerMutation.isPending || (form.watch("isCollaboration") && collabBreweries.length === 0)}
                 >
                   {createBeerMutation.isPending || updateBeerMutation.isPending ? (
                     <Loader2 className="w-5 h-5 animate-spin" />
