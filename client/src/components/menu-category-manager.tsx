@@ -86,6 +86,7 @@ export default function MenuCategoryManager({ pubId, categories }: MenuCategoryM
 
   const [editingProduct, setEditingProduct] = useState<any>(null);
   const [isEditProductOpen, setIsEditProductOpen] = useState(false);
+  const [editSiblingItems, setEditSiblingItems] = useState<any[]>([]);
   
   // Refs for CREATE form
   const nameRef = useRef<HTMLInputElement>(null);
@@ -492,24 +493,24 @@ export default function MenuCategoryManager({ pubId, categories }: MenuCategoryM
 
   // Category Form Component
   const CategoryForm = ({ isEdit = false }: { isEdit?: boolean }) => (
-    <div className="space-y-6">
+    <div className="space-y-5">
       <div className="space-y-4">
-        <div>
-          <Label htmlFor="category-name" className="text-sm font-medium text-gray-700 dark:text-gray-300">
+        <div className="space-y-2 text-left">
+          <Label htmlFor="category-name" className="text-sm font-bold text-foreground">
             Nome Categoria
           </Label>
-          <Input 
+          <Input
             ref={isEdit ? editNameRef : nameRef}
             id="category-name"
             placeholder="Es. Antipasti, Primi Piatti, Dolci..."
             defaultValue={isEdit ? formData.name : ''}
-            className="mt-1"
+            className="border-stone-200 rounded-xl focus-visible:ring-primary/20 h-11"
             data-testid={isEdit ? "input-edit-category-name" : "input-create-category-name"}
           />
         </div>
         
-        <div>
-          <Label htmlFor="category-description" className="text-sm font-medium text-gray-700 dark:text-gray-300">
+        <div className="space-y-2 text-left">
+          <Label htmlFor="category-description" className="text-sm font-bold text-foreground">
             Descrizione (opzionale)
           </Label>
           <Textarea
@@ -518,17 +519,17 @@ export default function MenuCategoryManager({ pubId, categories }: MenuCategoryM
             placeholder="Breve descrizione della categoria..."
             defaultValue={isEdit ? formData.description : ''}
             rows={3}
-            className="mt-1"
+            className="border-stone-200 rounded-xl focus-visible:ring-primary/20"
             data-testid={isEdit ? "textarea-edit-category-description" : "textarea-create-category-description"}
           />
         </div>
 
-        <div>
-          <Label htmlFor="category-infobox" className="text-sm font-medium text-gray-700 dark:text-gray-300">
+        <div className="space-y-2 text-left">
+          <Label htmlFor="category-infobox" className="text-sm font-bold text-foreground">
             Info Box (opzionale)
           </Label>
-          <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5 mb-1">
-            Nota informativa evidenziata nel PDF del menu (es. "Tutti i nostri piatti sono preparati con ingredienti freschi")
+          <p className="text-xs text-muted-foreground">
+            Nota evidenziata nel PDF del menu (es. "Piatti preparati con ingredienti freschi")
           </p>
           <Textarea
             ref={isEdit ? editInfoBoxRef : infoBoxRef}
@@ -536,16 +537,16 @@ export default function MenuCategoryManager({ pubId, categories }: MenuCategoryM
             placeholder="Es. Tutti i nostri piatti sono preparati con ingredienti locali e di stagione..."
             defaultValue={isEdit ? formData.infoBox : ''}
             rows={2}
-            className="mt-1"
+            className="border-stone-200 rounded-xl focus-visible:ring-primary/20"
           />
         </div>
         
-        <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
-          <div>
-            <Label htmlFor="category-visible" className="text-sm font-medium text-gray-700 dark:text-gray-300">
+        <div className="flex items-center justify-between p-4 bg-stone-50 dark:bg-stone-900/20 rounded-xl border border-stone-200 dark:border-stone-700/30">
+          <div className="text-left">
+            <Label htmlFor="category-visible" className="text-sm font-bold text-foreground">
               Visibile nel menu pubblico
             </Label>
-            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+            <p className="text-xs text-muted-foreground mt-0.5">
               I clienti potranno vedere questa categoria
             </p>
           </div>
@@ -561,9 +562,21 @@ export default function MenuCategoryManager({ pubId, categories }: MenuCategoryM
         </div>
       </div>
       
-      <div className="flex justify-end space-x-3 pt-4 border-t border-gray-200 dark:border-gray-700">
-        <Button 
-          variant="outline" 
+      <div className="flex gap-3 pt-4 border-t border-stone-100">
+        <Button
+          onClick={isEdit ? handleEditSubmit : handleCreateSubmit}
+          disabled={isEdit ? updateCategoryMutation.isPending : createCategoryMutation.isPending}
+          className="flex-1 bg-primary hover:bg-primary/90 text-white rounded-xl h-11 font-bold"
+          data-testid={isEdit ? "button-save-edit" : "button-save-create"}
+        >
+          {(isEdit ? updateCategoryMutation.isPending : createCategoryMutation.isPending) ? (
+            <><div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>Salvando...</>
+          ) : (
+            <><Save className="h-4 w-4 mr-2" />{isEdit ? "Aggiorna Categoria" : "Crea Categoria"}</>
+          )}
+        </Button>
+        <Button
+          variant="outline"
           onClick={() => {
             if (isEdit) {
               setIsEditDialogOpen(false);
@@ -573,26 +586,10 @@ export default function MenuCategoryManager({ pubId, categories }: MenuCategoryM
             }
             resetForm();
           }}
+          className="border-stone-200 hover:bg-stone-50 rounded-xl h-11 px-6"
           data-testid={isEdit ? "button-cancel-edit" : "button-cancel-create"}
         >
           Annulla
-        </Button>
-        <Button 
-          onClick={isEdit ? handleEditSubmit : handleCreateSubmit}
-          disabled={isEdit ? updateCategoryMutation.isPending : createCategoryMutation.isPending}
-          data-testid={isEdit ? "button-save-edit" : "button-save-create"}
-        >
-          {(isEdit ? updateCategoryMutation.isPending : createCategoryMutation.isPending) ? (
-            <>
-              <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
-              Salvando...
-            </>
-          ) : (
-            <>
-              <Save className="h-4 w-4 mr-2" />
-              {isEdit ? "Aggiorna Categoria" : "Crea Categoria"}
-            </>
-          )}
         </Button>
       </div>
     </div>
@@ -608,17 +605,13 @@ export default function MenuCategoryManager({ pubId, categories }: MenuCategoryM
         transition={{ duration: 0.5 }}
       >
         <div>
-          <h2 className="text-2xl font-bold text-gray-900 dark:text-white flex items-center">
-            <motion.div
-              className="p-2 bg-gradient-to-r from-orange-500 to-red-500 rounded-xl mr-3"
-              whileHover={{ scale: 1.1, rotate: 5 }}
-              transition={{ duration: 0.2 }}
-            >
-              <Utensils className="h-6 w-6 text-white" />
-            </motion.div>
+          <h2 className="text-xl font-bold text-foreground flex items-center">
+            <div className="p-2 bg-primary rounded-xl mr-3">
+              <Utensils className="h-5 w-5 text-white" />
+            </div>
             Categorie Menu
           </h2>
-          <p className="text-gray-600 dark:text-gray-400 mt-1">
+          <p className="text-muted-foreground mt-1 text-sm">
             Gestisci le categorie del tuo menu ({categories.length} {categories.length === 1 ? 'categoria' : 'categorie'})
           </p>
         </div>
@@ -629,14 +622,13 @@ export default function MenuCategoryManager({ pubId, categories }: MenuCategoryM
             if (!open) resetForm();
           }}>
             <DialogTrigger asChild>
-              <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-                <Button 
+                <Button
+                  className="bg-primary hover:bg-primary/90 text-white rounded-xl"
                   data-testid="button-add-category"
                 >
                   <Plus className="h-4 w-4 mr-2" />
                   Nuova Categoria
                 </Button>
-              </motion.div>
             </DialogTrigger>
           <DialogContent className="sm:max-w-md" onOpenAutoFocus={(e) => e.preventDefault()}>
             <DialogHeader>
@@ -650,15 +642,14 @@ export default function MenuCategoryManager({ pubId, categories }: MenuCategoryM
             <CategoryForm />
           </DialogContent>
         </Dialog>
-        <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-          <Button 
+          <Button
             onClick={() => setIsAddItemOpen(true)}
             variant="outline"
+            className="border-stone-200 hover:bg-stone-50 rounded-xl"
           >
             <Plus className="h-4 w-4 mr-2" />
             Prodotto
           </Button>
-        </motion.div>
       </div>
       </motion.div>
 
@@ -671,24 +662,13 @@ export default function MenuCategoryManager({ pubId, categories }: MenuCategoryM
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.5 }}
           >
-            <motion.div
-              className="w-20 h-20 bg-gradient-to-r from-gray-200 to-gray-300 dark:from-gray-700 dark:to-gray-600 rounded-full flex items-center justify-center mx-auto mb-6"
-              animate={{ 
-                rotate: [0, 10, -10, 0],
-                scale: [1, 1.1, 1]
-              }}
-              transition={{ 
-                duration: 3,
-                repeat: Infinity,
-                repeatType: "reverse"
-              }}
-            >
-              <Utensils className="h-10 w-10 text-gray-400 dark:text-gray-400" />
-            </motion.div>
-            <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
+            <div className="w-20 h-20 bg-stone-50 dark:bg-stone-900/30 rounded-full flex items-center justify-center mx-auto mb-6">
+              <Utensils className="h-10 w-10 text-primary opacity-20" />
+            </div>
+            <h3 className="text-xl font-semibold text-foreground mb-2">
               Nessuna categoria menu
             </h3>
-            <p className="text-gray-600 dark:text-gray-400 mb-6 max-w-md mx-auto">
+            <p className="text-muted-foreground mb-6 max-w-md mx-auto">
               Inizia creando le categorie per organizzare il tuo menu. Potrai poi aggiungere i prodotti a ciascuna categoria.
             </p>
             <Dialog open={isCreateDialogOpen} onOpenChange={(open) => {
@@ -724,26 +704,21 @@ export default function MenuCategoryManager({ pubId, categories }: MenuCategoryM
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.4, delay: index * 0.1 }}
-                  whileHover={{ y: -5, scale: 1.02 }}
                   className="group"
                 >
-                  <Card className="h-full border-0 shadow-lg bg-white/60 dark:bg-gray-900/60 backdrop-blur-sm hover:shadow-xl transition-all duration-300">
+                  <Card className="h-full bg-white dark:bg-card border border-stone-100 dark:border-border shadow-sm hover:border-primary/20 hover:shadow-md transition-all duration-300 rounded-2xl">
                     <CardContent className="p-6">
                       <div className="flex items-start justify-between mb-4">
                         <div className="flex items-center space-x-4 flex-1">
-                          <motion.div 
-                            className="p-3 bg-gradient-to-br from-orange-500 to-red-500 rounded-xl shadow-lg"
-                            whileHover={{ scale: 1.1, rotate: 5 }}
-                            transition={{ duration: 0.2 }}
-                          >
-                            <IconComponent className="h-6 w-6 text-white" />
-                          </motion.div>
+                          <div className="p-2.5 bg-primary/10 rounded-xl">
+                            <IconComponent className="h-5 w-5 text-primary" />
+                          </div>
                           <div className="flex-1 min-w-0">
-                            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-1 truncate">
+                            <h3 className="text-base font-bold text-foreground mb-1 truncate">
                               {category.name}
                             </h3>
                             {category.description && (
-                              <p className="text-sm text-gray-600 dark:text-gray-400 line-clamp-2">
+                              <p className="text-sm text-muted-foreground line-clamp-2">
                                 {category.description}
                               </p>
                             )}
@@ -757,80 +732,67 @@ export default function MenuCategoryManager({ pubId, categories }: MenuCategoryM
                       </div>
 
                       <div className="flex items-center justify-between mb-3">
-                        <div className="flex items-center space-x-2">
-                          <Badge 
-                            variant={effectiveCategoryIsVisible(category) ? "default" : "secondary"}
-                            className={`${effectiveCategoryIsVisible(category)
-                              ? 'bg-green-100 text-green-800 border-green-200 dark:bg-green-900 dark:text-green-200' 
-                              : 'bg-gray-100 text-gray-800 border-gray-200 dark:bg-gray-800 dark:text-gray-200'
+                        <div className="flex items-center gap-2">
+                          <Badge
+                            className={`text-xs ${effectiveCategoryIsVisible(category)
+                              ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                              : 'bg-stone-100 text-stone-500 border-stone-200'
                             }`}
                           >
                             {effectiveCategoryIsVisible(category) ? (
-                              <>
-                                <Eye className="h-3 w-3 mr-1" />
-                                Visibile
-                              </>
+                              <><Eye className="h-3 w-3 mr-1" />Visibile</>
                             ) : (
-                              <>
-                                <EyeOff className="h-3 w-3 mr-1" />
-                                Nascosta
-                              </>
+                              <><EyeOff className="h-3 w-3 mr-1" />Nascosta</>
                             )}
                           </Badge>
                           <Button
                             size="sm"
                             variant="outline"
                             onClick={() => toggleCategory(category.id)}
-                            className="bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-900 dark:text-blue-200 hover:bg-blue-100"
+                            className="border-stone-200 text-foreground hover:bg-stone-50 text-xs rounded-lg h-7 px-2"
                           >
                             {(category.items || []).filter((i: any) => !i.isInfoBox).length} prodotti
-                            <motion.div
+                            <motion.span
                               animate={{ rotate: expandedCategories.has(category.id) ? 180 : 0 }}
                               transition={{ duration: 0.2 }}
-                              className="ml-2"
+                              className="ml-1 inline-block"
                             >
                               ▼
-                            </motion.div>
+                            </motion.span>
                           </Button>
                         </div>
 
                         <div className="flex items-center space-x-1">
-                          <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}>
-                            <Button 
-                              size="sm" 
-                              variant="ghost" 
-                              onClick={() => toggleVisibilityMutation.mutate({ 
-                                id: category.id, 
-                                isVisible: !category.isVisible 
-                              })}
-                              className="text-gray-600 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900"
-                              data-testid={`button-toggle-visibility-${category.id}`}
-                            >
-                              {effectiveCategoryIsVisible(category) ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                            </Button>
-                          </motion.div>
-                          <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}>
-                            <Button 
-                              size="sm" 
-                              variant="ghost" 
-                              onClick={() => handleEditCategory(category)}
-                              className="text-gray-600 hover:text-orange-600 hover:bg-stone-50 dark:hover:bg-stone-800"
-                              data-testid={`button-edit-category-${category.id}`}
-                            >
-                              <Edit3 className="h-4 w-4" />
-                            </Button>
-                          </motion.div>
-                          <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}>
-                            <Button 
-                              size="sm" 
-                              variant="ghost" 
-                              onClick={() => handleDeleteCategory(category)}
-                              className="text-gray-600 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900"
-                              data-testid={`button-delete-category-${category.id}`}
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          </motion.div>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => toggleVisibilityMutation.mutate({
+                              id: category.id,
+                              isVisible: !category.isVisible
+                            })}
+                            className="text-muted-foreground hover:text-foreground hover:bg-stone-50"
+                            data-testid={`button-toggle-visibility-${category.id}`}
+                          >
+                            {effectiveCategoryIsVisible(category) ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => handleEditCategory(category)}
+                            className="text-muted-foreground hover:text-primary hover:bg-stone-50"
+                            data-testid={`button-edit-category-${category.id}`}
+                          >
+                            <Edit3 className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => handleDeleteCategory(category)}
+                            className="text-muted-foreground hover:text-destructive hover:bg-red-50"
+                            data-testid={`button-delete-category-${category.id}`}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
                         </div>
                       </div>
 
@@ -844,7 +806,7 @@ export default function MenuCategoryManager({ pubId, categories }: MenuCategoryM
                             transition={{ duration: 0.3 }}
                             className="overflow-hidden"
                           >
-                            <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+                            <div className="mt-4 pt-4 border-t border-stone-100 dark:border-border">
                               {category.items && category.items.length > 0 ? (
                                 <div className="space-y-2">
                                   {category.items.map((product: any) => (
@@ -873,7 +835,7 @@ export default function MenuCategoryManager({ pubId, categories }: MenuCategoryM
                                             size="sm"
                                             variant="ghost"
                                             onClick={() => toggleProductVisibilityMutation.mutate({ id: product.id, isVisible: !product.isVisible })}
-                                            className="text-gray-600 hover:text-blue-600 hover:bg-blue-50"
+                                            className="text-muted-foreground hover:text-foreground hover:bg-stone-50"
                                           >
                                             {effectiveProductIsVisible(product) ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                                           </Button>
@@ -881,11 +843,17 @@ export default function MenuCategoryManager({ pubId, categories }: MenuCategoryM
                                             size="sm"
                                             variant="ghost"
                                             onClick={() => {
+                                              const siblings = findAllByName(product.name, product.id);
+                                              const allCatIds = [...new Set([
+                                                ...(product.categoryId ? [product.categoryId] : []),
+                                                ...siblings.map((s: any) => s.categoryId).filter(Boolean)
+                                              ])];
                                               setEditingProduct(product);
-                                              setEditCategoryIds(product.categoryId ? [product.categoryId] : []);
+                                              setEditSiblingItems(siblings);
+                                              setEditCategoryIds(allCatIds);
                                               setIsEditProductOpen(true);
                                             }}
-                                            className="text-gray-600 hover:text-orange-600 hover:bg-stone-50"
+                                            className="text-muted-foreground hover:text-primary hover:bg-stone-50"
                                           >
                                             <Edit3 className="h-4 w-4" />
                                           </Button>
@@ -893,7 +861,7 @@ export default function MenuCategoryManager({ pubId, categories }: MenuCategoryM
                                             size="sm"
                                             variant="ghost"
                                             onClick={() => handleDeleteProduct(product)}
-                                            className="text-gray-600 hover:text-red-600 hover:bg-red-50"
+                                            className="text-muted-foreground hover:text-destructive hover:bg-red-50"
                                           >
                                             <Trash2 className="h-4 w-4" />
                                           </Button>
@@ -902,11 +870,11 @@ export default function MenuCategoryManager({ pubId, categories }: MenuCategoryM
                                     ) : (
                                     <div
                                       key={product.id}
-                                      className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                                      className="flex items-center justify-between p-3 bg-stone-50/50 dark:bg-stone-900/20 rounded-xl hover:bg-stone-100/60 dark:hover:bg-stone-900/40 transition-colors"
                                     >
                                       <div className="flex-1">
                                         <div className="flex items-center gap-2 flex-wrap">
-                                          <h4 className="font-medium text-gray-900 dark:text-white">{product.name}</h4>
+                                          <h4 className="font-medium text-foreground">{product.name}</h4>
                                           {product.isVegetarian && (
                                             <span title="Vegetariano" className="text-sm">🌿</span>
                                           )}
@@ -926,17 +894,17 @@ export default function MenuCategoryManager({ pubId, categories }: MenuCategoryM
                                           )}
                                         </div>
                                         {product.description && (
-                                          <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">{product.description}</p>
+                                          <p className="text-sm text-muted-foreground mt-1">{product.description}</p>
                                         )}
                                         {product.price && (
-                                          <p className="text-sm font-semibold text-green-600 dark:text-green-400 mt-1">€{product.price}</p>
+                                          <p className="text-sm font-semibold text-primary mt-1">€{product.price}</p>
                                         )}
                                         {(() => {
                                           const fa = formatAllergens(product.allergens);
                                           if (!fa.length) return null;
                                           return (
                                             <div className="flex flex-wrap items-center gap-1 mt-1.5">
-                                              <span className="text-[10px] font-medium text-gray-400 uppercase tracking-wide">Allergeni:</span>
+                                              <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wide">Allergeni:</span>
                                               {fa.map(({ emoji, label }: { emoji: string; label: string }, i: number) => (
                                                 <span
                                                   key={i}
@@ -954,7 +922,7 @@ export default function MenuCategoryManager({ pubId, categories }: MenuCategoryM
                                           size="sm"
                                           variant="ghost"
                                           onClick={() => handleToggleProductVisibility(product)}
-                                          className="text-gray-600 hover:text-blue-600 hover:bg-blue-50"
+                                          className="text-muted-foreground hover:text-foreground hover:bg-stone-50"
                                           data-testid={`button-toggle-product-visibility-${product.id}`}
                                         >
                                           {effectiveProductIsVisible(product) ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
@@ -963,11 +931,17 @@ export default function MenuCategoryManager({ pubId, categories }: MenuCategoryM
                                           size="sm"
                                           variant="ghost"
                                           onClick={() => {
+                                            const siblings = findAllByName(product.name, product.id);
+                                            const allCatIds = [...new Set([
+                                              ...(product.categoryId ? [product.categoryId] : []),
+                                              ...siblings.map((s: any) => s.categoryId).filter(Boolean)
+                                            ])];
                                             setEditingProduct(product);
-                                            setEditCategoryIds(product.categoryId ? [product.categoryId] : []);
+                                            setEditSiblingItems(siblings);
+                                            setEditCategoryIds(allCatIds);
                                             setIsEditProductOpen(true);
                                           }}
-                                          className="text-gray-600 hover:text-orange-600 hover:bg-stone-50"
+                                          className="text-muted-foreground hover:text-primary hover:bg-stone-50"
                                           data-testid={`button-edit-product-${product.id}`}
                                         >
                                           <Edit3 className="h-4 w-4" />
@@ -976,7 +950,7 @@ export default function MenuCategoryManager({ pubId, categories }: MenuCategoryM
                                           size="sm"
                                           variant="ghost"
                                           onClick={() => handleDeleteProduct(product)}
-                                          className="text-gray-600 hover:text-red-600 hover:bg-red-50"
+                                          className="text-muted-foreground hover:text-destructive hover:bg-red-50"
                                           data-testid={`button-delete-product-${product.id}`}
                                         >
                                           <Trash2 className="h-4 w-4" />
@@ -987,7 +961,7 @@ export default function MenuCategoryManager({ pubId, categories }: MenuCategoryM
                                   ))}
                                 </div>
                               ) : (
-                                <p className="text-center text-gray-500 dark:text-gray-400 py-4">
+                                <p className="text-center text-muted-foreground py-4 text-sm">
                                   Nessun prodotto in questa categoria
                                 </p>
                               )}
@@ -999,7 +973,7 @@ export default function MenuCategoryManager({ pubId, categories }: MenuCategoryM
                                     setSelectedCategoryIds([category.id]);
                                     setIsAddItemOpen(true);
                                   }}
-                                  className="text-green-600 border-green-200 hover:bg-green-50"
+                                  className="border-stone-200 hover:bg-stone-50 text-foreground rounded-lg"
                                 >
                                   <Plus className="h-3.5 w-3.5 mr-1" />
                                   Prodotto
@@ -1011,7 +985,7 @@ export default function MenuCategoryManager({ pubId, categories }: MenuCategoryM
                                     setInfoBoxCategoryId(category.id);
                                     setIsAddInfoBoxOpen(true);
                                   }}
-                                  className="text-amber-600 border-amber-200 hover:bg-amber-50"
+                                  className="border-stone-200 hover:bg-stone-50 text-muted-foreground rounded-lg"
                                 >
                                   <Info className="h-3.5 w-3.5 mr-1" />
                                   Info Box
@@ -1041,7 +1015,7 @@ export default function MenuCategoryManager({ pubId, categories }: MenuCategoryM
         <DialogContent className="sm:max-w-md" onOpenAutoFocus={(e) => e.preventDefault()}>
           <DialogHeader>
             <DialogTitle className="flex items-center text-xl">
-              <div className="p-2 bg-gradient-to-r from-orange-500 to-red-500 rounded-lg mr-3">
+              <div className="p-2 bg-primary rounded-lg mr-3">
                 <Edit3 className="h-5 w-5 text-white" />
               </div>
               Modifica Categoria
@@ -1057,6 +1031,7 @@ export default function MenuCategoryManager({ pubId, categories }: MenuCategoryM
         if (!open) {
           setEditingProduct(null);
           setEditCategoryIds([]);
+          setEditSiblingItems([]);
         }
       }}>
         <DialogContent className="sm:max-w-md" onOpenAutoFocus={(e) => e.preventDefault()}>
@@ -1066,15 +1041,15 @@ export default function MenuCategoryManager({ pubId, categories }: MenuCategoryM
           {editingProduct && (
             <div className="space-y-4 max-h-[70vh] overflow-y-auto pr-1">
               {/* Category selector (same as create) */}
-              <div>
-                <Label className="text-sm font-medium">Categorie <span className="text-gray-400 font-normal">(seleziona una o più)</span></Label>
-                <div className="mt-1.5 border rounded-md divide-y max-h-36 overflow-y-auto">
+              <div className="space-y-1.5">
+                <Label className="text-sm font-bold text-foreground">Categorie <span className="text-muted-foreground font-normal text-xs">(seleziona una o più)</span></Label>
+                <div className="border border-stone-200 rounded-xl divide-y divide-stone-100 max-h-36 overflow-y-auto">
                   {categories.map((cat) => {
                     const checked = editCategoryIds.includes(cat.id);
                     return (
                       <label
                         key={cat.id}
-                        className={`flex items-center gap-2.5 px-3 py-2 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors ${checked ? 'bg-green-50 dark:bg-green-900/20' : ''}`}
+                        className={`flex items-center gap-2.5 px-3 py-2 cursor-pointer hover:bg-stone-50 transition-colors ${checked ? 'bg-primary/5' : ''}`}
                       >
                         <input
                           type="checkbox"
@@ -1084,39 +1059,42 @@ export default function MenuCategoryManager({ pubId, categories }: MenuCategoryM
                               prev.includes(cat.id) ? prev.filter(id => id !== cat.id) : [...prev, cat.id]
                             );
                           }}
-                          className="accent-green-600 w-4 h-4"
+                          className="accent-primary w-4 h-4"
                         />
-                        <span className="text-sm text-gray-900 dark:text-white">{cat.name}</span>
+                        <span className="text-sm text-foreground">{cat.name}</span>
                       </label>
                     );
                   })}
                 </div>
               </div>
-              <div>
-                <Label>Nome Prodotto</Label>
+              <div className="space-y-1.5">
+                <Label className="text-sm font-bold text-foreground">Nome Prodotto</Label>
                 <Input
                   placeholder="Nome del piatto..."
                   value={editingProduct.name || ''}
                   onChange={(e) => setEditingProduct((prev: any) => ({ ...prev, name: e.target.value }))}
+                  className="border-stone-200 rounded-xl focus-visible:ring-primary/20 h-11"
                 />
               </div>
-              <div>
-                <Label>Prezzo (€)</Label>
+              <div className="space-y-1.5">
+                <Label className="text-sm font-bold text-foreground">Prezzo (€)</Label>
                 <Input
                   type="number"
                   step="0.10"
                   placeholder="12.50"
                   value={editingProduct.price || ''}
                   onChange={(e) => setEditingProduct((prev: any) => ({ ...prev, price: e.target.value }))}
+                  className="border-stone-200 rounded-xl focus-visible:ring-primary/20 h-11"
                 />
               </div>
-              <div>
-                <Label>Descrizione</Label>
+              <div className="space-y-1.5">
+                <Label className="text-sm font-bold text-foreground">Descrizione</Label>
                 <Textarea
                   placeholder="Descrizione del piatto..."
                   value={editingProduct.description || ''}
                   onChange={(e) => setEditingProduct((prev: any) => ({ ...prev, description: e.target.value }))}
                   rows={3}
+                  className="border-stone-200 rounded-xl focus-visible:ring-primary/20"
                 />
               </div>
               {/* Vegetarian / Spicy toggles */}
@@ -1127,7 +1105,7 @@ export default function MenuCategoryManager({ pubId, categories }: MenuCategoryM
                   className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-sm font-medium transition-colors ${
                     editingProduct.isVegetarian
                       ? 'bg-green-100 border-green-400 text-green-800 dark:bg-green-900/40 dark:text-green-300'
-                      : 'border-gray-300 text-gray-500 hover:border-green-400 hover:text-green-700'
+                      : 'border-stone-200 text-muted-foreground hover:border-primary/30 hover:text-foreground'
                   }`}
                 >
                   🌿 Vegetariano
@@ -1138,7 +1116,7 @@ export default function MenuCategoryManager({ pubId, categories }: MenuCategoryM
                   className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-sm font-medium transition-colors ${
                     editingProduct.isSpicy
                       ? 'bg-red-100 border-red-400 text-red-800 dark:bg-red-900/40 dark:text-red-300'
-                      : 'border-gray-300 text-gray-500 hover:border-red-400 hover:text-red-700'
+                      : 'border-stone-200 text-muted-foreground hover:border-primary/30 hover:text-foreground'
                   }`}
                 >
                   🌶️ Piccante
@@ -1167,25 +1145,34 @@ export default function MenuCategoryManager({ pubId, categories }: MenuCategoryM
                       isSpicy: editingProduct.isSpicy ?? false,
                     };
                     try {
-                      // Update existing product (set to first selected category)
-                      await apiRequest(`/api/pubs/${pubId}/menu-items/${editingProduct.id}`, { method: 'PATCH' }, {
-                        ...data,
-                        categoryId: editCategoryIds[0],
-                      });
-                      // Create copies for any additional categories
-                      const extra = editCategoryIds.slice(1);
-                      if (extra.length > 0) {
-                        await Promise.all(
-                          extra.map(catId =>
-                            apiRequest(`/api/pubs/${pubId}/menu-items`, { method: 'POST' }, { ...data, categoryId: catId })
-                          )
-                        );
+                      const allItems = [editingProduct, ...editSiblingItems];
+                      const existingEntries: Array<[number, number]> = [];
+                      for (let i = 0; i < allItems.length; i++) {
+                        const item = allItems[i];
+                        if (item.categoryId) existingEntries.push([item.categoryId, item.id]);
                       }
+                      const newCatIds = new Set(editCategoryIds);
+                      const ops: Promise<any>[] = [];
+                      for (let i = 0; i < existingEntries.length; i++) {
+                        const [catId, itemId] = existingEntries[i];
+                        if (newCatIds.has(catId)) {
+                          ops.push(apiRequest(`/api/pubs/${pubId}/menu-items/${itemId}`, { method: 'PATCH' }, { ...data, categoryId: catId }));
+                          newCatIds.delete(catId);
+                        } else {
+                          ops.push(apiRequest(`/api/pubs/${pubId}/menu-items/${itemId}`, { method: 'DELETE' }));
+                        }
+                      }
+                      const remainingCatIds = Array.from(newCatIds);
+                      for (let i = 0; i < remainingCatIds.length; i++) {
+                        ops.push(apiRequest(`/api/pubs/${pubId}/menu-items`, { method: 'POST' }, { ...data, categoryId: remainingCatIds[i] }));
+                      }
+                      await Promise.all(ops);
                       queryClient.invalidateQueries({ queryKey: ["/api/pubs", String(pubId), "menu"] });
                       queryClient.invalidateQueries({ queryKey: ["/api/pubs", String(pubId), "menu", "all-products"] });
                       setIsEditProductOpen(false);
                       setEditingProduct(null);
                       setEditCategoryIds([]);
+                      setEditSiblingItems([]);
                       toast({ title: "✅ Prodotto aggiornato!" });
                     } catch {
                       toast({ title: "❌ Errore", description: "Impossibile salvare il prodotto", variant: "destructive" });
@@ -1216,15 +1203,15 @@ export default function MenuCategoryManager({ pubId, categories }: MenuCategoryM
           </DialogHeader>
           <div className="space-y-4 max-h-[70vh] overflow-y-auto pr-1">
             {/* Multi-category selector */}
-            <div>
-              <Label className="text-sm font-medium">Categorie <span className="text-gray-400 font-normal">(seleziona una o più)</span></Label>
-              <div className="mt-1.5 border rounded-md divide-y max-h-36 overflow-y-auto">
+            <div className="space-y-1.5">
+              <Label className="text-sm font-bold text-foreground">Categorie <span className="text-muted-foreground font-normal text-xs">(seleziona una o più)</span></Label>
+              <div className="border border-stone-200 rounded-xl divide-y divide-stone-100 max-h-36 overflow-y-auto">
                 {categories.map((cat) => {
                   const checked = selectedCategoryIds.includes(cat.id);
                   return (
                     <label
                       key={cat.id}
-                      className={`flex items-center gap-2.5 px-3 py-2 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors ${checked ? 'bg-green-50 dark:bg-green-900/20' : ''}`}
+                      className={`flex items-center gap-2.5 px-3 py-2 cursor-pointer hover:bg-stone-50 transition-colors ${checked ? 'bg-primary/5' : ''}`}
                     >
                       <input
                         type="checkbox"
@@ -1234,39 +1221,42 @@ export default function MenuCategoryManager({ pubId, categories }: MenuCategoryM
                             prev.includes(cat.id) ? prev.filter(id => id !== cat.id) : [...prev, cat.id]
                           );
                         }}
-                        className="accent-green-600 w-4 h-4"
+                        className="accent-primary w-4 h-4"
                       />
-                      <span className="text-sm text-gray-900 dark:text-white">{cat.name}</span>
+                      <span className="text-sm text-foreground">{cat.name}</span>
                     </label>
                   );
                 })}
               </div>
             </div>
-            <div>
-              <Label>Nome Prodotto</Label>
+            <div className="space-y-1.5">
+              <Label className="text-sm font-bold text-foreground">Nome Prodotto</Label>
               <Input
                 placeholder="Nome del piatto..."
                 value={itemForm.name}
                 onChange={(e) => setItemForm({ ...itemForm, name: e.target.value })}
+                className="border-stone-200 rounded-xl focus-visible:ring-primary/20 h-11"
               />
             </div>
-            <div>
-              <Label>Prezzo (€)</Label>
+            <div className="space-y-1.5">
+              <Label className="text-sm font-bold text-foreground">Prezzo (€)</Label>
               <Input
                 type="number"
                 step="0.10"
                 placeholder="12.50"
                 value={itemForm.price}
                 onChange={(e) => setItemForm({ ...itemForm, price: e.target.value })}
+                className="border-stone-200 rounded-xl focus-visible:ring-primary/20 h-11"
               />
             </div>
-            <div>
-              <Label>Descrizione</Label>
+            <div className="space-y-1.5">
+              <Label className="text-sm font-bold text-foreground">Descrizione</Label>
               <Textarea
                 placeholder="Descrizione del piatto..."
                 value={itemForm.description}
                 onChange={(e) => setItemForm({ ...itemForm, description: e.target.value })}
                 rows={3}
+                className="border-stone-200 rounded-xl focus-visible:ring-primary/20"
               />
             </div>
             {/* Vegetarian / Spicy toggles */}
@@ -1277,7 +1267,7 @@ export default function MenuCategoryManager({ pubId, categories }: MenuCategoryM
                 className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-sm font-medium transition-colors ${
                   itemForm.isVegetarian
                     ? 'bg-green-100 border-green-400 text-green-800 dark:bg-green-900/40 dark:text-green-300'
-                    : 'border-gray-300 text-gray-500 hover:border-green-400 hover:text-green-700'
+                    : 'border-stone-200 text-muted-foreground hover:border-primary/30 hover:text-foreground'
                 }`}
               >
                 🌿 Vegetariano
@@ -1288,7 +1278,7 @@ export default function MenuCategoryManager({ pubId, categories }: MenuCategoryM
                 className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-sm font-medium transition-colors ${
                   itemForm.isSpicy
                     ? 'bg-red-100 border-red-400 text-red-800 dark:bg-red-900/40 dark:text-red-300'
-                    : 'border-gray-300 text-gray-500 hover:border-red-400 hover:text-red-700'
+                    : 'border-stone-200 text-muted-foreground hover:border-primary/30 hover:text-foreground'
                 }`}
               >
                 🌶️ Piccante
@@ -1350,14 +1340,14 @@ export default function MenuCategoryManager({ pubId, categories }: MenuCategoryM
         <DialogContent className="sm:max-w-md" onOpenAutoFocus={(e) => e.preventDefault()}>
           <DialogHeader>
             <DialogTitle className="flex items-center text-xl">
-              <div className="p-2 bg-gradient-to-r from-amber-500 to-orange-500 rounded-lg mr-3">
+              <div className="p-2 bg-primary rounded-lg mr-3">
                 <Info className="h-5 w-5 text-white" />
               </div>
               Aggiungi Info Box
             </DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
-            <p className="text-sm text-gray-600 dark:text-gray-400">
+            <p className="text-sm text-muted-foreground">
               L'info box apparirà come nota evidenziata nella categoria del menu e nel PDF scaricabile.
             </p>
             <div>
@@ -1371,8 +1361,8 @@ export default function MenuCategoryManager({ pubId, categories }: MenuCategoryM
             </div>
             <div className="flex justify-end space-x-2">
               <Button variant="outline" onClick={() => setIsAddInfoBoxOpen(false)}>Annulla</Button>
-              <Button 
-                className="bg-amber-600 hover:bg-amber-700"
+              <Button
+                className="bg-primary hover:bg-primary/90 text-white rounded-xl"
                 disabled={!infoBoxText.trim() || addInfoBoxMutation.isPending}
                 onClick={() => {
                   if (!infoBoxCategoryId || !infoBoxText.trim()) return;

@@ -25,7 +25,7 @@ import {
   Globe, Phone, FileText, Camera, Clock, AlertTriangle, Building,
   Target, Sparkles, Save, X, Share2, ExternalLink, Mail,
   Megaphone, Store, Newspaper, Rocket, Users, QrCode,
-  Trophy, Star, Eye, Heart, MessageSquare, TrendingUp, Send
+  Star, Eye, Heart, MessageSquare, TrendingUp, Send
 } from "lucide-react";
 import { SiInstagram, SiFacebook, SiTiktok } from "react-icons/si";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -453,8 +453,6 @@ export default function BreweryDashboard({ adminBreweryId }: BreweryDashboardPro
   const [showReviewsSection, setShowReviewsSection] = useState(false);
   const [replyingTo, setReplyingTo] = useState<number | null>(null);
   const [replyText, setReplyText] = useState("");
-  const [editingAwards, setEditingAwards] = useState<Array<{name: string; year: number; competition: string; type?: string}>>([]);
-  const [newAward, setNewAward] = useState({ name: "", year: new Date().getFullYear(), competition: "", type: "gold" });
 
   const reviewsQueryKey = isAdminMode
     ? ["/api/admin/brewery", adminBreweryId, "recent-reviews"]
@@ -530,7 +528,7 @@ export default function BreweryDashboard({ adminBreweryId }: BreweryDashboardPro
   const createBeerMutation = useMutation({
     mutationFn: (values: BeerFormValues) => {
       const url = isAdminMode
-        ? `/api/admin/breweries/${adminBreweryId}/beers`
+        ? `/api/admin/brewery/${adminBreweryId}/beers`
         : "/api/brewery/beers";
       return apiRequest(url, { method: "POST" }, values);
     },
@@ -586,8 +584,6 @@ export default function BreweryDashboard({ adminBreweryId }: BreweryDashboardPro
   const openCreateDialog = () => {
     setEditingBeer(null);
     form.reset({ name: "", style: "", abv: null, ibu: null, description: "", color: "", imageUrl: "" });
-    setEditingAwards([]);
-    setNewAward({ name: "", year: new Date().getFullYear(), competition: "", type: "gold" });
     setDialogOpen(true);
   };
 
@@ -599,17 +595,14 @@ export default function BreweryDashboard({ adminBreweryId }: BreweryDashboardPro
       ibu: beer.ibu ?? null, description: beer.description ?? "",
       color: beer.color ?? "", imageUrl: beer.imageUrl ?? "",
     });
-    setEditingAwards((beer as any).awards || []);
-    setNewAward({ name: "", year: new Date().getFullYear(), competition: "", type: "gold" });
     setDialogOpen(true);
   };
 
   const onBeerSubmit = (values: BeerFormValues) => {
-    const payload = { ...values, awards: editingAwards };
     if (editingBeer) {
-      updateBeerMutation.mutate({ id: editingBeer.id, values: payload as any });
+      updateBeerMutation.mutate({ id: editingBeer.id, values: values as any });
     } else {
-      createBeerMutation.mutate(payload as any);
+      createBeerMutation.mutate(values as any);
     }
   };
 
@@ -1484,73 +1477,6 @@ export default function BreweryDashboard({ adminBreweryId }: BreweryDashboardPro
                   maxSize={5}
                   recommendedDimensions="400x400px"
                 />
-              </div>
-
-              {/* Awards editor */}
-              <div className="bg-stone-50/50 dark:bg-stone-900/10 p-5 rounded-3xl border border-stone-200 dark:border-stone-700/30 space-y-4">
-                <label className="text-sm font-bold flex items-center gap-2 text-foreground uppercase tracking-wider">
-                  <Trophy className="h-4 w-4 text-primary" />
-                  Hall of Fame (Premi)
-                </label>
-                {editingAwards.length > 0 && (
-                  <div className="space-y-2 mb-4">
-                    {editingAwards.map((a, i) => (
-                      <div key={i} className="flex items-center gap-3 text-sm bg-white dark:bg-black/40 rounded-xl px-3 py-2 border border-stone-200/50">
-                        <Trophy className={`h-4 w-4 flex-shrink-0 ${a.type === 'gold' ? 'text-yellow-500' : a.type === 'silver' ? 'text-stone-300' : a.type === 'bronze' ? 'text-orange-700' : 'text-primary'}`} />
-                        <span className="flex-1 truncate font-medium">{a.name} — {a.competition} ({a.year})</span>
-                        <button type="button" onClick={() => setEditingAwards(prev => prev.filter((_, j) => j !== i))} className="text-muted-foreground hover:text-destructive p-1">
-                          <X className="h-3.5 w-3.5" />
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                )}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  <Input
-                    placeholder="Nome premio (es. Oro)"
-                    value={newAward.name}
-                    onChange={(e) => setNewAward(prev => ({ ...prev, name: e.target.value }))}
-                    className="text-sm border-stone-200 rounded-xl h-10"
-                  />
-                  <Input
-                    placeholder="Competizione (es. BdA)"
-                    value={newAward.competition}
-                    onChange={(e) => setNewAward(prev => ({ ...prev, competition: e.target.value }))}
-                    className="text-sm border-stone-200 rounded-xl h-10"
-                  />
-                  <Input
-                    type="number"
-                    placeholder="Anno"
-                    value={newAward.year}
-                    onChange={(e) => setNewAward(prev => ({ ...prev, year: parseInt(e.target.value) || new Date().getFullYear() }))}
-                    className="text-sm border-stone-200 rounded-xl h-10"
-                  />
-                  <Select value={newAward.type} onValueChange={(v) => setNewAward(prev => ({ ...prev, type: v }))}>
-                    <SelectTrigger className="text-sm border-stone-200 rounded-xl h-10"><SelectValue /></SelectTrigger>
-                    <SelectContent className="rounded-xl">
-                      <SelectItem value="gold">Oro</SelectItem>
-                      <SelectItem value="silver">Argento</SelectItem>
-                      <SelectItem value="bronze">Bronzo</SelectItem>
-                      <SelectItem value="special">Speciale</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  className="w-full border-stone-200 hover:bg-stone-50 rounded-xl font-bold py-5"
-                  disabled={!newAward.name.trim() || !newAward.competition.trim()}
-                  onClick={() => {
-                    if (newAward.name.trim() && newAward.competition.trim()) {
-                      setEditingAwards(prev => [...prev, { ...newAward }]);
-                      setNewAward({ name: "", year: new Date().getFullYear(), competition: "", type: "gold" });
-                    }
-                  }}
-                >
-                  <Plus className="h-4 w-4 mr-2 text-primary" />
-                  Aggiungi Riconoscimento
-                </Button>
               </div>
 
               <div className="flex gap-3 pt-4 border-t border-stone-100">
