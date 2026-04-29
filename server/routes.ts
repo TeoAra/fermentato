@@ -1,5 +1,7 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
+import { existsSync } from "fs";
+import { join } from "path";
 import { addClient, removeClient, broadcastPubUpdate } from "./pubBroadcast";
 
 // ─── Simple in-memory TTL cache ──────────────────────────────────────────────
@@ -7650,6 +7652,36 @@ ${meta.jsonld ? `<script type="application/ld+json">${JSON.stringify(meta.jsonld
     const { rows } = await pool.query(`SELECT * FROM user_cellar WHERE user_id = $1 AND beer_id = $2`, [userId, req.params.beerId]);
     res.json(rows[0] ?? null);
   });
+
+  // ── App version check + APK download ─────────────────────────────────────
+  // Endpoint letto dall'APK Capacitor all'avvio per verificare se serve aggiornare.
+  // Variabili d'ambiente sul server:
+  //   APP_VERSION      = versione corrente dell'APK (es. "1.0.0")  default: "1.0.0"
+  //   APP_MIN_VERSION  = versione minima richiesta  (es. "1.1.0")  default: "1.0.0"
+  //   APP_RELEASE_NOTES = testo opzionale mostrato nel dialog       default: ""
+  app.get("/api/app-version", (_req, res) => {
+    res.json({
+      current:      process.env.APP_VERSION       ?? "1.0.0",
+      minimum:      process.env.APP_MIN_VERSION    ?? "1.0.0",
+      downloadUrl:  "https://fermenta.to/app/download",
+      releaseNotes: process.env.APP_RELEASE_NOTES  ?? "",
+    });
+  });
+
+  // Scarica l'APK più recente — il file va copiato in <root>/downloads/fermenta.apk
+  // dal build script (build-apk.sh lo fa automaticamente).
+  app.get("/app/download", (_req, res) => {
+    const apkPath = join(process.cwd(), "downloads", "fermenta.apk");
+    if (!existsSync(apkPath)) {
+      return res.status(404).json({
+        error: "APK non disponibile al momento. Riprova più tardi.",
+      });
+    }
+    res.setHeader("Content-Disposition", 'attachment; filename="fermenta.apk"');
+    res.setHeader("Content-Type", "application/vnd.android.package-archive");
+    res.sendFile(apkPath);
+  });
+  // ──────────────────────────────────────────────────────────────────────────
 
   const httpServer = createServer(app);
   return httpServer;

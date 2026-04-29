@@ -151,16 +151,25 @@ build() {
   ./gradlew assembleDebug
 
   APK_PATH="app/build/outputs/apk/debug/app-debug.apk"
+
+  # ── 6/6 Copia APK nella cartella downloads del server ──
+  cd "$APP_DIR"
+  echo "── 6/6 Pubblico APK per download in-app ──"
+  mkdir -p downloads
+  cp "android/$APK_PATH" "downloads/fermenta.apk"
+  echo "    ✅ APK disponibile su https://fermenta.to/app/download"
+
   echo ""
   echo "════════════════════════════════════════════"
   echo "✅ APK pronto!"
   echo "   $APP_DIR/android/$APK_PATH"
   echo ""
-  echo "Per scaricarlo sul tuo PC:"
-  echo "   scp root@45.134.39.247:$APP_DIR/android/$APK_PATH ~/fermenta.apk"
+  echo "Download diretto (telefono): https://fermenta.to/app/download"
+  echo "Per scaricarlo sul PC:       scp root@45.134.39.247:$APP_DIR/android/$APK_PATH ~/fermenta.apk"
   echo ""
-  echo "Per una build release firmata:"
-  echo "   cd $APP_DIR/android && ./gradlew assembleRelease"
+  echo "Per forzare aggiornamento in-app:"
+  echo "   Imposta APP_MIN_VERSION=<nuova_versione> nell'ambiente del server"
+  echo "   e aggiorna client/src/lib/app-version.ts nel prossimo build"
   echo "════════════════════════════════════════════"
 }
 

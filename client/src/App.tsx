@@ -16,6 +16,7 @@ import { MobileHeader } from "@/components/mobile-header";
 import { BottomNavigation } from "@/components/bottom-navigation";
 import { DesktopSidebar } from "@/components/desktop-sidebar";
 import CookieBanner from "@/components/CookieBanner";
+import { AppUpdateCheck } from "@/components/app-update-check";
 import { ThemeProvider } from "@/lib/theme";
 import type { User } from "@shared/schema";
 
@@ -344,6 +345,7 @@ function App() {
           <TooltipProvider>
             <Toaster />
             <Lightbox />
+            <AppUpdateCheck />
             <Router />
             <AutoPushSubscriber />
             <PwaInstallPrompt />
