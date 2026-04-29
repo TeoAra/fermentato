@@ -266,6 +266,29 @@
     display: none;
   }
 
+  /* ── FIX FREEZE TOUCH: Capacitor Android WebView ─────────────────────────
+     Quando un elemento position:fixed con animazione CSS appare/scompare,
+     il compositor di Android crea un nuovo layer GPU e interrompe
+     temporaneamente la coda degli touch events → tutto si congela.
+     Soluzione: azzerare durata animazioni e transizioni sugli elementi
+     che causano il problema (Toast di Radix UI, overlay, banner bottom).
+     I toast vengono comunque visualizzati, solo senza animazione.
+  */
+  [data-capacitor="true"] [role="status"],
+  [data-capacitor="true"] [role="status"] * {
+    animation-duration: 0ms !important;
+    animation-delay: 0ms !important;
+    transition-duration: 0ms !important;
+    transition-delay: 0ms !important;
+  }
+  /* Elimina anche l'animazione degli overlay bottom (push prompt, ecc.) */
+  [data-capacitor="true"] .animate-in {
+    animation: none !important;
+    opacity: 1 !important;
+    transform: none !important;
+  }
+  /* ──────────────────────────────────────────────────────────────────────── */
+
   /* ── Grain texture overlay — premium craft-paper feel ── */
   body::after {
     content: '';
