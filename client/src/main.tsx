@@ -4,6 +4,9 @@ import "./index.css";
 import { Capacitor } from "@capacitor/core";
 
 if (Capacitor.isNativePlatform()) {
+  // Tag the document so CSS can target Capacitor-specific overrides
+  document.documentElement.setAttribute("data-capacitor", "true");
+
   import("@capacitor/status-bar").then(({ StatusBar, Style }) => {
     StatusBar.setOverlaysWebView({ overlay: false }).catch(() => {});
     StatusBar.setStyle({ style: Style.Light }).catch(() => {});
@@ -11,7 +14,9 @@ if (Capacitor.isNativePlatform()) {
   }).catch(() => {});
 }
 
-if ('serviceWorker' in navigator) {
+// Service workers conflict with Capacitor's WebView request handling
+// and can cause fetch hangs on Android. Only register in browser context.
+if (!Capacitor.isNativePlatform() && 'serviceWorker' in navigator) {
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('/sw.js').catch(() => {});
   });

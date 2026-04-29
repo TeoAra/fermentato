@@ -410,6 +410,7 @@ export function PwaInstallPrompt() {
 }
 
 export function PushNotificationPrompt() {
+  if (typeof window !== 'undefined' && (window as any).Capacitor?.isNativePlatform?.()) return null;
   const { isAuthenticated } = useAuth();
   const [show, setShow] = useState(false);
   const [dismissed, setDismissed] = useState(false);
