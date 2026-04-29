@@ -108,6 +108,7 @@ build() {
   # Patch versioni per compatibilità con i plugin Capacitor più recenti
   # AGP 8.9.1+ e compileSdk 36 richiesti da androidx.core 1.17+
   # Capacitor usa variables.gradle per le versioni SDK (NON app/build.gradle)
+  sed -i "s/minSdkVersion = [0-9]*/minSdkVersion = 24/" variables.gradle
   sed -i "s/compileSdkVersion = [0-9]*/compileSdkVersion = 36/" variables.gradle
   sed -i "s/targetSdkVersion = [0-9]*/targetSdkVersion = 36/" variables.gradle
   sed -i "s/com.android.tools.build:gradle:[0-9.]*/com.android.tools.build:gradle:8.9.1/" build.gradle

@@ -1,0 +1,36 @@
+ cd android && ./gradlew assembleDebug
+
+> Configure project :app
+WARNING: Using flatDir should be avoided because it doesn't support any meta-data formats.
+
+> Configure project :capacitor-cordova-android-plugins
+WARNING: Using flatDir should be avoided because it doesn't support any meta-data formats.
+
+> Task :app:processDebugMainManifest FAILED
+/www/nodeapps/fermenta/android/app/src/main/AndroidManifest.xml Error:
+        uses-sdk:minSdkVersion 23 cannot be smaller than version 24 declared in library [io.ionic.libs:ioncamera-android:1.0.1] /root/.gradle/caches/8.11.1/transforms/d12e99f77673a62f28375ad8651d0514/transformed/ioncamera-android-1.0.1/AndroidManifest.xml as the library might be using APIs not available in 23
+        Suggestion: use a compatible library with a minSdk of at most 23,
+                or increase this project's minSdk version to at least 24,
+                or use tools:overrideLibrary="io.ionic.libs.ioncameralib" to force usage (may lead to runtime failures)
+
+See https://developer.android.com/r/studio-ui/build/manifest-merger for more information about the manifest merger.
+
+
+FAILURE: Build failed with an exception.
+
+* What went wrong:
+Execution failed for task ':app:processDebugMainManifest'.
+> Manifest merger failed : uses-sdk:minSdkVersion 23 cannot be smaller than version 24 declared in library [io.ionic.libs:ioncamera-android:1.0.1] /root/.gradle/caches/8.11.1/transforms/d12e99f77673a62f28375ad8651d0514/transformed/ioncamera-android-1.0.1/AndroidManifest.xml as the library might be using APIs not available in 23
+        Suggestion: use a compatible library with a minSdk of at most 23,
+                or increase this project's minSdk version to at least 24,
+                or use tools:overrideLibrary="io.ionic.libs.ioncameralib" to force usage (may lead to runtime failures)
+
+* Try:
+> Run with --stacktrace option to get the stack trace.
+> Run with --info or --debug option to get more log output.
+> Run with --scan to get full insights.
+> Get more help at https://help.gradle.org.
+
+BUILD FAILED in 8s
+54 actionable tasks: 54 executed
+root@luppolino:/www/nodeapps/fermenta/android#
