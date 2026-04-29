@@ -101,6 +101,14 @@ build() {
   echo "── 5/5 Compilo APK ──"
   cd android
   chmod +x gradlew
+
+  # Patch versioni per compatibilità con i plugin Capacitor più recenti
+  # AGP 8.9.1+ richiesto da androidx.core 1.17+
+  sed -i "s/com.android.tools.build:gradle:[0-9.]*/com.android.tools.build:gradle:8.9.1/" build.gradle
+  sed -i "s/compileSdk = [0-9]*/compileSdk = 36/" app/build.gradle
+  sed -i "s/compileSdkVersion [0-9]*/compileSdkVersion 36/" app/build.gradle
+  sed -i "s/gradle-[0-9.]*-bin.zip/gradle-8.12-bin.zip/" gradle/wrapper/gradle-wrapper.properties
+
   ./gradlew assembleDebug
 
   APK_PATH="app/build/outputs/apk/debug/app-debug.apk"
