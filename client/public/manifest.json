@@ -8,12 +8,24 @@
   "display": "standalone",
   "display_override": ["window-controls-overlay", "standalone"],
   "background_color": "#FFF7ED",
-  "theme_color": "#C47A1E",
+  "theme_color": "#f77104",
   "orientation": "portrait-primary",
   "prefer_related_applications": false,
   "lang": "it",
   "dir": "ltr",
   "categories": ["food", "lifestyle", "entertainment"],
+  "launch_handler": {
+    "client_mode": ["navigate-existing", "auto"]
+  },
+  "share_target": {
+    "action": "/search",
+    "method": "GET",
+    "params": {
+      "title": "q",
+      "text": "q",
+      "url": "url"
+    }
+  },
   "icons": [
     {
       "src": "/icons/icon-192.png",
@@ -70,6 +82,13 @@
       "type": "image/png",
       "form_factor": "narrow",
       "label": "Fermenta.to - Home"
+    },
+    {
+      "src": "/brewery-cover.jpg",
+      "sizes": "1280x855",
+      "type": "image/jpeg",
+      "form_factor": "wide",
+      "label": "Fermenta.to - Esplora birrifici"
     }
   ]
 }
