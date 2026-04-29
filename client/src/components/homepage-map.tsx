@@ -1,8 +1,7 @@
-import { useEffect, useRef, useMemo } from "react";
-import { MapContainer, TileLayer, Marker, Popup, Circle, useMap } from "react-leaflet";
-import L from "leaflet";
-import "leaflet/dist/leaflet.css";
+import { useState, useEffect, useRef, useMemo } from "react";
+import { Map, Overlay } from "pigeon-maps";
 import { Capacitor } from "@capacitor/core";
+import { X, Plus, Minus } from "lucide-react";
 
 const PUB_COLOR = "#F77104";
 const BREWERY_COLOR = "#9B4E10";
@@ -16,65 +15,6 @@ function haversineDist(lat1: number, lon1: number, lat2: number, lon2: number): 
   return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 }
 
-function makeIcon(type: "pub" | "brewery", logoUrl?: string | null): L.DivIcon {
-  const color = type === "pub" ? PUB_COLOR : BREWERY_COLOR;
-  const gradEnd = type === "pub" ? "#f5a623" : "#c46520";
-  const emoji = type === "pub" ? "🍻" : "🍺";
-  const imgTag = logoUrl
-    ? `<img src="${logoUrl}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;" onerror="this.style.display='none';this.parentElement.innerText='${emoji}'" />`
-    : emoji;
-
-  return L.divIcon({
-    html: `<div style="
-      width:36px;height:36px;border-radius:50%;
-      background:linear-gradient(135deg,${color},${gradEnd});
-      border:2.5px solid white;
-      box-shadow:0 2px 10px rgba(0,0,0,0.25);
-      display:flex;align-items:center;justify-content:center;
-      font-size:16px;overflow:hidden;cursor:pointer;
-      transition:transform 0.15s ease;
-    ">${imgTag}</div>`,
-    className: "fermenta-leaflet-marker",
-    iconSize: [36, 36],
-    iconAnchor: [18, 18],
-    popupAnchor: [0, -20],
-  });
-}
-
-function makeUserIcon(): L.DivIcon {
-  return L.divIcon({
-    html: `<div style="
-      width:16px;height:16px;border-radius:50%;
-      background:#3B82F6;border:3px solid white;
-      box-shadow:0 0 0 3px rgba(59,130,246,0.35),0 2px 8px rgba(0,0,0,0.2);
-    "></div>`,
-    className: "",
-    iconSize: [16, 16],
-    iconAnchor: [8, 8],
-  });
-}
-
-function FlyToUser({ userLocation, distanceKm }: { userLocation: { lat: number; lng: number } | null | undefined; distanceKm?: number }) {
-  const map = useMap();
-  const didFly = useRef(false);
-
-  useEffect(() => {
-    if (!userLocation || didFly.current) return;
-    const currentCenter = map.getCenter();
-    const dist = haversineDist(currentCenter.lat, currentCenter.lng, userLocation.lat, userLocation.lng);
-    // Fly solo se siamo lontani dalla posizione utente (>500m, es. partendo da Roma fallback)
-    if (dist > 0.5) {
-      didFly.current = true;
-      map.flyTo([userLocation.lat, userLocation.lng], radiusToZoom(distanceKm ?? 10), { duration: 0.8 });
-    } else {
-      didFly.current = true;
-    }
-  }, [userLocation, map, distanceKm]);
-
-  return null;
-}
-
-/** Mappa raggio (km) → livello di zoom ottimale per mostrare il cerchio */
 function radiusToZoom(km: number): number {
   if (km <= 5)  return 13;
   if (km <= 10) return 12;
@@ -85,25 +25,10 @@ function radiusToZoom(km: number): number {
   return 8;
 }
 
-function RadiusZoomController({
-  userLocation,
-  distanceKm,
-}: {
-  userLocation: { lat: number; lng: number } | null | undefined;
-  distanceKm: number | undefined;
-}) {
-  const map = useMap();
-  const prevKm = useRef<number | undefined>(undefined);
-
-  useEffect(() => {
-    if (!userLocation || !distanceKm) return;
-    if (prevKm.current === distanceKm) return; // nessun cambiamento
-    prevKm.current = distanceKm;
-    map.flyTo([userLocation.lat, userLocation.lng], radiusToZoom(distanceKm), { duration: 0.8 });
-  }, [distanceKm, userLocation, map]);
-
-  return null;
-}
+const cartoVoyager = (x: number, y: number, z: number, dpr?: number) => {
+  const s = "abcd"[Math.abs(x + y) % 4];
+  return `https://${s}.basemaps.cartocdn.com/rastertiles/voyager/${z}/${x}/${y}${dpr && dpr >= 2 ? "@2x" : ""}.png`;
+};
 
 interface MapPub {
   id: number;
@@ -136,6 +61,15 @@ interface HomepageMapProps {
   distanceKm?: number;
 }
 
+interface Selected {
+  type: "pub" | "brewery";
+  id: number;
+  name: string;
+  sub: string;
+  href: string;
+  logoUrl?: string | null;
+}
+
 export default function HomepageMap({
   pubs,
   breweries,
@@ -145,23 +79,44 @@ export default function HomepageMap({
   showBreweries = true,
   distanceKm,
 }: HomepageMapProps) {
-  // ── FIX CRITICO: freeze touch su Capacitor Android ──────────────────────────
-  // Il drag handler di Leaflet aggiunge touchmove + touchend al DOCUMENT (non
-  // solo al container della mappa) per tracciare i gesti. Su Android WebView,
-  // questi listener globali intercettano OGNI touch nell'intera app e chiamano
-  // preventDefault(), causando il freeze di qualsiasi tap.
-  // Soluzione: disabilitare dragging e touchZoom su native — Leaflet non aggiunge
-  // mai i listener globali al document, e l'app rimane interattiva.
-  // La mappa è ancora visibile e mostra i pin; i popup funzionano normalmente.
-  const isNative = Capacitor.isNativePlatform();
-  // ─────────────────────────────────────────────────────────────────────────────
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [mapHeight, setMapHeight] = useState(300);
+  const [center, setCenter] = useState<[number, number]>([42.0, 12.5]);
+  const [zoom, setZoom] = useState(5.4);
+  const [selected, setSelected] = useState<Selected | null>(null);
+  const hasFlewRef = useRef(false);
+  const prevDistRef = useRef<number | undefined>();
+
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+    const update = () => setMapHeight(el.offsetHeight);
+    update();
+    const ro = new ResizeObserver(update);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
+
+  useEffect(() => {
+    if (!userLocation || hasFlewRef.current) return;
+    hasFlewRef.current = true;
+    setCenter([userLocation.lat, userLocation.lng]);
+    setZoom(radiusToZoom(distanceKm ?? 10));
+  }, [userLocation, distanceKm]);
+
+  useEffect(() => {
+    if (!userLocation || !distanceKm) return;
+    if (prevDistRef.current === distanceKm) return;
+    prevDistRef.current = distanceKm;
+    setCenter([userLocation.lat, userLocation.lng]);
+    setZoom(radiusToZoom(distanceKm));
+  }, [distanceKm, userLocation]);
 
   const geoFilteredPubs = useMemo(() => {
     if (!showPubs) return [];
     const valid = pubs.filter(p =>
       p.latitude && p.longitude &&
-      !isNaN(parseFloat(p.latitude)) &&
-      !isNaN(parseFloat(p.longitude))
+      !isNaN(parseFloat(p.latitude)) && !isNaN(parseFloat(p.longitude))
     );
     if (!userLocation || !distanceKm) return valid;
     return valid.filter(p =>
@@ -173,8 +128,7 @@ export default function HomepageMap({
     if (!showBreweries) return [];
     const valid = breweries.filter(b =>
       b.latitude && b.longitude &&
-      !isNaN(parseFloat(b.latitude!)) &&
-      !isNaN(parseFloat(b.longitude!))
+      !isNaN(parseFloat(b.latitude!)) && !isNaN(parseFloat(b.longitude!))
     );
     if (!userLocation || !distanceKm) return valid;
     return valid.filter(b =>
@@ -184,16 +138,14 @@ export default function HomepageMap({
 
   const pubCount = geoFilteredPubs.length;
   const breweryCount = geoFilteredBreweries.length;
-
-  const center: [number, number] = userLocation
-    ? [userLocation.lat, userLocation.lng]
-    : [42.0, 12.5];
-  const zoom = userLocation ? radiusToZoom(distanceKm ?? 10) : 5.4;
-
-  const userIcon = useMemo(() => makeUserIcon(), []);
+  const isNative = Capacitor.isNativePlatform();
 
   return (
-    <div className="relative w-full overflow-hidden" style={{ height: "clamp(280px, 50vh, 520px)" }}>
+    <div
+      ref={containerRef}
+      className="relative w-full overflow-hidden"
+      style={{ height: "clamp(280px, 50vh, 520px)" }}
+    >
       {isLoading && (
         <div className="absolute inset-0 z-20 flex items-center justify-center bg-stone-100 dark:bg-stone-800">
           <div className="flex flex-col items-center gap-3">
@@ -203,94 +155,122 @@ export default function HomepageMap({
         </div>
       )}
 
-      <MapContainer
-        center={center}
-        zoom={zoom}
-        style={{ width: "100%", height: "100%" }}
-        zoomControl={false}
-        attributionControl={true}
-        scrollWheelZoom={false}
-        tap={false}
-        // Su Capacitor Android: dragging=false rimuove i listener globali di
-        // Leaflet sul document (touchmove/touchend), eliminando il freeze.
-        dragging={!isNative}
-        touchZoom={!isNative}
-        className="z-0"
-      >
-        <TileLayer
-          url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}@2x.png"
-          attribution='&copy; <a href="https://carto.com">CARTO</a> &copy; <a href="https://openstreetmap.org">OpenStreetMap</a>'
-          subdomains="abcd"
-          maxZoom={20}
-          tileSize={256}
-        />
+      {mapHeight > 0 && (
+        <Map
+          center={center}
+          zoom={zoom}
+          height={mapHeight}
+          onBoundsChanged={({ center: c, zoom: z }) => { setCenter(c); setZoom(z); }}
+          provider={cartoVoyager}
+          dprs={[1, 2]}
+          attribution={false}
+          metaWheelZoom={!isNative}
+          animate={!isNative}
+          onClick={() => setSelected(null)}
+        >
+          {userLocation && (
+            <Overlay anchor={[userLocation.lat, userLocation.lng]} offset={[8, 8]}>
+              <div style={{
+                width: 16, height: 16, borderRadius: "50%",
+                background: "#3B82F6", border: "3px solid white",
+                boxShadow: "0 0 0 3px rgba(59,130,246,0.35), 0 2px 8px rgba(0,0,0,0.2)",
+                pointerEvents: "none",
+              }} />
+            </Overlay>
+          )}
 
-        <FlyToUser userLocation={userLocation} distanceKm={distanceKm} />
-        <RadiusZoomController userLocation={userLocation} distanceKm={distanceKm} />
+          {geoFilteredPubs.map(pub => {
+            const lat = parseFloat(pub.latitude!);
+            const lng = parseFloat(pub.longitude!);
+            const isSelected = selected?.type === "pub" && selected.id === pub.id;
+            return (
+              <Overlay key={`pub-${pub.id}`} anchor={[lat, lng]} offset={[18, 18]}>
+                <div style={{ position: "relative" }}>
+                  <MarkerPin
+                    type="pub"
+                    logoUrl={pub.logoUrl}
+                    isSelected={isSelected}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      if (isSelected) { setSelected(null); return; }
+                      setSelected({
+                        type: "pub", id: pub.id,
+                        name: pub.name,
+                        sub: pub.city || "",
+                        href: pub.slug ? `/pub/${pub.slug}` : `/pub/${pub.id}`,
+                        logoUrl: pub.logoUrl,
+                      });
+                    }}
+                  />
+                  {isSelected && (
+                    <MapPopup selected={selected!} onClose={() => setSelected(null)} />
+                  )}
+                </div>
+              </Overlay>
+            );
+          })}
 
-        {userLocation && distanceKm && (
-          <Circle
-            center={[userLocation.lat, userLocation.lng]}
-            radius={distanceKm * 1000}
-            pathOptions={{
-              color: "#F77104",
-              weight: 1.5,
-              opacity: 0.5,
-              fillColor: "#F77104",
-              fillOpacity: 0.06,
-            }}
-          />
-        )}
+          {geoFilteredBreweries.map(brewery => {
+            const lat = parseFloat(brewery.latitude!);
+            const lng = parseFloat(brewery.longitude!);
+            const isSelected = selected?.type === "brewery" && selected.id === brewery.id;
+            const sub = [brewery.location, brewery.country].filter(Boolean).join(", ");
+            return (
+              <Overlay key={`brewery-${brewery.id}`} anchor={[lat, lng]} offset={[18, 18]}>
+                <div style={{ position: "relative" }}>
+                  <MarkerPin
+                    type="brewery"
+                    logoUrl={brewery.logoUrl}
+                    isSelected={isSelected}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      if (isSelected) { setSelected(null); return; }
+                      setSelected({
+                        type: "brewery", id: brewery.id,
+                        name: brewery.name, sub,
+                        href: `/brewery/${brewery.id}`,
+                        logoUrl: brewery.logoUrl,
+                      });
+                    }}
+                  />
+                  {isSelected && (
+                    <MapPopup selected={selected!} onClose={() => setSelected(null)} />
+                  )}
+                </div>
+              </Overlay>
+            );
+          })}
+        </Map>
+      )}
 
-        {userLocation && (
-          <Marker position={[userLocation.lat, userLocation.lng]} icon={userIcon} />
-        )}
-
-        {geoFilteredPubs.map(pub => {
-          const lat = parseFloat(pub.latitude!);
-          const lng = parseFloat(pub.longitude!);
-          return (
-            <Marker key={`pub-${pub.id}`} position={[lat, lng]} icon={makeIcon("pub", pub.logoUrl)}>
-              <Popup className="fermenta-popup" closeButton={false}>
-                <PopupContent
-                  type="pub"
-                  name={pub.name}
-                  sub={pub.city || ""}
-                  href={pub.slug ? `/pub/${pub.slug}` : `/pub/${pub.id}`}
-                  logoUrl={pub.logoUrl}
-                />
-              </Popup>
-            </Marker>
-          );
-        })}
-
-        {geoFilteredBreweries.map(brewery => {
-          const lat = parseFloat(brewery.latitude!);
-          const lng = parseFloat(brewery.longitude!);
-          const sub = [brewery.location, brewery.country].filter(Boolean).join(", ");
-          return (
-            <Marker key={`brewery-${brewery.id}`} position={[lat, lng]} icon={makeIcon("brewery", brewery.logoUrl)}>
-              <Popup className="fermenta-popup" closeButton={false}>
-                <PopupContent
-                  type="brewery"
-                  name={brewery.name}
-                  sub={sub}
-                  href={`/brewery/${brewery.id}`}
-                  logoUrl={brewery.logoUrl}
-                />
-              </Popup>
-            </Marker>
-          );
-        })}
-      </MapContainer>
-
-      {/* Gradient fade at bottom */}
       <div
         className="absolute bottom-0 left-0 right-0 h-16 pointer-events-none z-10"
         style={{ background: "linear-gradient(to bottom, transparent 0%, var(--background) 100%)" }}
       />
 
-      {/* Count badge */}
+      <div className="absolute top-3 right-3 z-20 flex flex-col gap-1.5">
+        <button
+          onClick={() => setZoom(z => Math.min(z + 1, 18))}
+          className="w-9 h-9 rounded-xl flex items-center justify-center shadow-md transition-colors active:scale-95"
+          style={{ background: "rgba(255,248,242,0.95)", border: "1px solid rgba(247,113,4,0.15)", color: "#5C3D1A" }}
+        >
+          <Plus className="w-4 h-4" strokeWidth={2.5} />
+        </button>
+        <button
+          onClick={() => setZoom(z => Math.max(z - 1, 2))}
+          className="w-9 h-9 rounded-xl flex items-center justify-center shadow-md transition-colors active:scale-95"
+          style={{ background: "rgba(255,248,242,0.95)", border: "1px solid rgba(247,113,4,0.15)", color: "#5C3D1A" }}
+        >
+          <Minus className="w-4 h-4" strokeWidth={2.5} />
+        </button>
+      </div>
+
+      <div className="absolute bottom-5 right-2 z-10 text-[9px] opacity-50 select-none" style={{ color: "#5C3D1A" }}>
+        © <a href="https://carto.com" target="_blank" rel="noopener" style={{ color: "inherit", textDecoration: "none" }}>CARTO</a>
+        {" "}©{" "}
+        <a href="https://openstreetmap.org" target="_blank" rel="noopener" style={{ color: "inherit", textDecoration: "none" }}>OSM</a>
+      </div>
+
       {!isLoading && (pubCount + breweryCount > 0) && (
         <div className="absolute bottom-5 left-3 z-20">
           <div
@@ -317,100 +297,120 @@ export default function HomepageMap({
           </div>
         </div>
       )}
-
-      <style>{`
-        .fermenta-leaflet-marker {
-          background: transparent !important;
-          border: none !important;
-        }
-        .fermenta-leaflet-marker div:hover {
-          transform: scale(1.2);
-          z-index: 999 !important;
-        }
-        .fermenta-popup .leaflet-popup-content-wrapper {
-          border-radius: 14px !important;
-          padding: 0 !important;
-          box-shadow: 0 8px 32px rgba(0,0,0,0.14) !important;
-          border: 1px solid rgba(247,113,4,0.12) !important;
-          overflow: hidden;
-        }
-        .fermenta-popup .leaflet-popup-content {
-          margin: 0 !important;
-        }
-        .fermenta-popup .leaflet-popup-tip-container { display: none !important; }
-        .leaflet-control-attribution {
-          background: rgba(255,248,242,0.85) !important;
-          border-radius: 8px !important;
-          font-size: 10px !important;
-        }
-        .leaflet-control-zoom {
-          border-radius: 10px !important;
-          overflow: hidden;
-          box-shadow: 0 2px 8px rgba(0,0,0,0.12) !important;
-          border: none !important;
-        }
-        .leaflet-control-zoom a {
-          border-radius: 0 !important;
-          border-color: rgba(0,0,0,0.08) !important;
-          color: #5C3D1A !important;
-          font-weight: 700;
-        }
-        .leaflet-control-zoom a:hover {
-          background: #fff8f2 !important;
-        }
-      `}</style>
     </div>
   );
 }
 
-function PopupContent({
-  type, name, sub, href, logoUrl,
+function MarkerPin({
+  type, logoUrl, isSelected, onClick,
 }: {
   type: "pub" | "brewery";
-  name: string;
-  sub: string;
-  href: string;
   logoUrl?: string | null;
+  isSelected: boolean;
+  onClick: (e: React.MouseEvent) => void;
 }) {
   const color = type === "pub" ? PUB_COLOR : BREWERY_COLOR;
   const gradEnd = type === "pub" ? "#f5a623" : "#c46520";
-  const label = type === "pub" ? "PUB" : "BIRRIFICIO";
+  const emoji = type === "pub" ? "🍻" : "🍺";
 
   return (
-    <div style={{ fontFamily: "system-ui,sans-serif", padding: "14px", minWidth: "175px", maxWidth: "220px" }}>
-      <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "10px" }}>
-        {logoUrl && (
-          <img
-            src={logoUrl}
-            alt=""
-            onError={e => { (e.target as HTMLImageElement).style.display = "none"; }}
-            style={{ width: "38px", height: "38px", borderRadius: "10px", objectFit: "cover", flexShrink: 0 }}
-          />
+    <div
+      onClick={onClick}
+      style={{
+        width: 36, height: 36, borderRadius: "50%",
+        background: `linear-gradient(135deg,${color},${gradEnd})`,
+        border: `2.5px solid ${isSelected ? "#F77104" : "white"}`,
+        boxShadow: isSelected
+          ? "0 0 0 3px rgba(247,113,4,0.4), 0 2px 10px rgba(0,0,0,0.25)"
+          : "0 2px 10px rgba(0,0,0,0.25)",
+        display: "flex", alignItems: "center", justifyContent: "center",
+        fontSize: 16, overflow: "hidden", cursor: "pointer",
+        transform: isSelected ? "scale(1.2)" : "scale(1)",
+        transition: "transform 0.15s ease, box-shadow 0.15s ease",
+        position: "relative", zIndex: isSelected ? 100 : 1,
+      }}
+    >
+      {logoUrl ? (
+        <img
+          src={logoUrl}
+          alt=""
+          style={{ width: "100%", height: "100%", objectFit: "cover", borderRadius: "50%" }}
+          onError={e => {
+            const t = e.target as HTMLImageElement;
+            t.style.display = "none";
+            if (t.parentElement) t.parentElement.textContent = emoji;
+          }}
+        />
+      ) : emoji}
+    </div>
+  );
+}
+
+function MapPopup({ selected, onClose }: { selected: Selected; onClose: () => void }) {
+  const color = selected.type === "pub" ? PUB_COLOR : BREWERY_COLOR;
+  const gradEnd = selected.type === "pub" ? "#f5a623" : "#c46520";
+  const label = selected.type === "pub" ? "PUB" : "BIRRIFICIO";
+
+  return (
+    <div
+      style={{
+        position: "absolute",
+        bottom: "calc(100% + 10px)",
+        left: "50%",
+        transform: "translateX(-50%)",
+        minWidth: 180,
+        maxWidth: 230,
+        background: "white",
+        borderRadius: 14,
+        boxShadow: "0 8px 32px rgba(0,0,0,0.14)",
+        border: "1px solid rgba(247,113,4,0.12)",
+        overflow: "visible",
+        zIndex: 200,
+      }}
+      onClick={e => e.stopPropagation()}
+    >
+      <div style={{ padding: "12px 14px 12px" }}>
+        <div style={{ display: "flex", alignItems: "flex-start", gap: 10, marginBottom: 8 }}>
+          {selected.logoUrl && (
+            <img
+              src={selected.logoUrl}
+              alt=""
+              style={{ width: 36, height: 36, borderRadius: 8, objectFit: "cover", flexShrink: 0 }}
+              onError={e => { (e.target as HTMLImageElement).style.display = "none"; }}
+            />
+          )}
+          <div style={{ minWidth: 0, flex: 1 }}>
+            <div style={{ fontWeight: 700, fontSize: 13, color: "#1a1107", lineHeight: 1.25, marginBottom: 4, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+              {selected.name}
+            </div>
+            <div style={{ display: "inline-block", fontSize: "9.5px", fontWeight: 800, letterSpacing: "0.06em", color, background: `${color}18`, padding: "1px 7px", borderRadius: 20 }}>
+              {label}
+            </div>
+          </div>
+          <button
+            onClick={onClose}
+            style={{ flexShrink: 0, background: "rgba(0,0,0,0.06)", border: "none", borderRadius: "50%", width: 20, height: 20, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", padding: 0 }}
+          >
+            <X size={11} style={{ color: "#9B7B5A" }} />
+          </button>
+        </div>
+        {selected.sub && (
+          <div style={{ fontSize: 11, color: "#9B7B5A", marginBottom: 10, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+            📍 {selected.sub}
+          </div>
         )}
-        <div style={{ minWidth: 0, flex: 1 }}>
-          <div style={{ fontWeight: 700, fontSize: "13px", color: "#1a1107", lineHeight: 1.3, marginBottom: "3px" }}>{name}</div>
-          <div style={{
-            display: "inline-block", fontSize: "9.5px", fontWeight: 800, letterSpacing: "0.06em",
-            color, background: `${color}18`, padding: "1px 7px", borderRadius: "20px",
-          }}>{label}</div>
-        </div>
+        <a
+          href={selected.href}
+          style={{
+            display: "block", textAlign: "center", padding: "7px 12px",
+            background: `linear-gradient(135deg,${color},${gradEnd})`,
+            color: "white", borderRadius: 10, textDecoration: "none",
+            fontSize: 12, fontWeight: 700,
+          }}
+        >
+          Scopri →
+        </a>
       </div>
-      {sub && (
-        <div style={{ fontSize: "11px", color: "#9B7B5A", marginBottom: "10px", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-          📍 {sub}
-        </div>
-      )}
-      <a
-        href={href}
-        style={{
-          display: "block", textAlign: "center", padding: "7px 12px",
-          background: `linear-gradient(135deg,${color},${gradEnd})`,
-          color: "white", borderRadius: "10px", textDecoration: "none",
-          fontSize: "12px", fontWeight: 700,
-        }}
-      >
-        Scopri →
-      </a>
     </div>
   );
 }
