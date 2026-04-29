@@ -102,6 +102,9 @@ build() {
   cd android
   chmod +x gradlew
 
+  # Scrivi local.properties con il percorso SDK (necessario per Gradle)
+  echo "sdk.dir=$ANDROID_HOME" > local.properties
+
   # Patch versioni per compatibilità con i plugin Capacitor più recenti
   # AGP 8.9.1+ richiesto da androidx.core 1.17+
   sed -i "s/com.android.tools.build:gradle:[0-9.]*/com.android.tools.build:gradle:8.9.1/" build.gradle
