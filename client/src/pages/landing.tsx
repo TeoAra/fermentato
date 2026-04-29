@@ -262,7 +262,7 @@ export default function Landing() {
             className="slide-up flex flex-col sm:flex-row items-center justify-center gap-3 mb-14"
             style={{ animationDelay: '240ms' }}
           >
-            <a href="/api/login">
+            <Link href="/login">
               <Button
                 size="lg"
                 className="h-14 px-8 text-base font-bold rounded-2xl text-white border-0 shadow-xl shadow-orange-200/50 dark:shadow-orange-900/30 active:scale-[0.97] transition-transform"
@@ -271,7 +271,7 @@ export default function Landing() {
                 <Users className="mr-2 w-5 h-5" />
                 Inizia gratis — è immediato
               </Button>
-            </a>
+            </Link>
             <Link href="/explore/breweries">
               <Button
                 size="lg"
@@ -656,12 +656,12 @@ export default function Landing() {
               <p className="text-white/80 mb-8 text-lg max-w-lg mx-auto">
                 Gratuito per sempre per gli appassionati. Registrati in 30 secondi con Google.
               </p>
-              <a href="/api/login">
+              <Link href="/login">
                 <Button size="lg" className="h-14 px-10 text-base font-black rounded-2xl bg-white text-primary hover:bg-orange-50 border-0 shadow-xl shadow-black/20">
                   <Users className="mr-2 w-5 h-5" />
-                  Accedi con Google — è gratis
+                  Registrati — è gratis
                 </Button>
-              </a>
+              </Link>
               <p className="text-white/60 text-xs mt-4">Nessuna carta di credito · Nessuna email di spam</p>
             </div>
           </div>

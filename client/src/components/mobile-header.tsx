@@ -92,8 +92,11 @@ export function MobileHeader({ onMenuToggle, isMenuOpen }: MobileHeaderProps) {
   return (
     <>
       {/* ── TOP HEADER ──────────────────────────────────────────────────── */}
-      <header className="lg:hidden fixed top-0 left-0 right-0 z-50 h-14 bg-white dark:bg-[hsl(25,14%,8%)] border-b border-stone-100 dark:border-[hsl(25,12%,14%)]">
-        <div className="flex items-center justify-between px-4 h-full">
+      <header
+        className="lg:hidden fixed top-0 left-0 right-0 z-50 bg-white dark:bg-[hsl(25,14%,8%)] border-b border-stone-100 dark:border-[hsl(25,12%,14%)]"
+        style={{ paddingTop: 'env(safe-area-inset-top)' }}
+      >
+        <div className="flex items-center justify-between px-4 h-14">
 
           {/* Logo */}
           <Link href="/">

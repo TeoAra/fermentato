@@ -1,6 +1,15 @@
 import { createRoot } from "react-dom/client";
 import App from "./App";
 import "./index.css";
+import { Capacitor } from "@capacitor/core";
+
+if (Capacitor.isNativePlatform()) {
+  import("@capacitor/status-bar").then(({ StatusBar, Style }) => {
+    StatusBar.setOverlaysWebView({ overlay: false }).catch(() => {});
+    StatusBar.setStyle({ style: Style.Light }).catch(() => {});
+    StatusBar.setBackgroundColor({ color: "#FFF7ED" }).catch(() => {});
+  }).catch(() => {});
+}
 
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {

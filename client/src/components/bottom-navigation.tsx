@@ -32,7 +32,7 @@ export function BottomNavigation() {
   const attivitaActive = isActive("/activity");
   const cercaActive    = searchOpen;
   const scanActive     = isActive("/scan");
-  const accountActive  = isActive("/profile");
+  const accountActive  = isActive("/profile") || isActive("/login") || isActive("/auth");
 
   const Tab = ({
     active,
@@ -134,7 +134,7 @@ export function BottomNavigation() {
           </Link>
 
           {/* Account */}
-          <Link href="/profile" className="flex-1 flex">
+          <Link href={isAuthenticated ? "/dashboard" : "/login"} className="flex-1 flex">
             <Tab active={accountActive}>
               <span className="nav-icon">
                 {avatarUrl ? (

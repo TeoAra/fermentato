@@ -32,6 +32,16 @@
 }
 .dark .tiptap a { color: #fbbf24; }
 
+/* Safe area / header offset per Capacitor native */
+:root {
+  --mobile-top-offset: calc(3.5rem + env(safe-area-inset-top, 0px));
+}
+@media (min-width: 1024px) {
+  :root {
+    --mobile-top-offset: 4rem;
+  }
+}
+
 /* Mobile-first responsive utilities */
 @layer utilities {
   .safe-area-pb {
