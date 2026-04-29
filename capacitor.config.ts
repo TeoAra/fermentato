@@ -5,9 +5,9 @@ const config: CapacitorConfig = {
   appName: 'Fermenta.to',
   webDir: 'dist/public',
   server: {
-    androidScheme: 'https',
-    hostname: 'app.fermenta.to',
-    allowNavigation: ['fermenta.to', '*.fermenta.to'],
+    // Carica sempre dalla produzione — nessun bundle da redistribuire per aggiornare la UI
+    url: 'https://fermenta.to',
+    cleartext: false,
   },
   android: {
     allowMixedContent: false,
@@ -23,7 +23,7 @@ const config: CapacitorConfig = {
       splashImmersive: true,
     },
     StatusBar: {
-      style: 'DARK',
+      style: 'LIGHT',
       backgroundColor: '#FFF7ED',
       overlaysWebView: false,
     },

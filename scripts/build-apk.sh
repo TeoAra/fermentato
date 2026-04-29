@@ -87,7 +87,10 @@ build() {
   echo "── 2/5 Installo dipendenze npm ──"
   npm install
 
-  echo "── 3/5 Build Vite per Capacitor ──"
+  echo "── 3/5 Build Vite (serve per sincronizzare i plugin nativi) ──"
+  # Con server.url impostato, la UI viene caricata da fermenta.to —
+  # non dai file in bundle. Il build serve solo per sincronizzare
+  # le dipendenze native (plugin Capacitor).
   set -a; source .env.capacitor; set +a
   npx vite build
 
