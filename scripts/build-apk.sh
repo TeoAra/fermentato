@@ -10,12 +10,16 @@ set -e
 APP_DIR="/www/nodeapps/fermenta"
 ANDROID_SDK_DIR="$HOME/android-sdk"
 ANDROID_CMD_VERSION="11076708"
-JAVA_PACKAGE="openjdk-17-jdk"
+JAVA_PACKAGE="openjdk-21-jdk"
+JAVA_HOME_PATH="/usr/lib/jvm/java-21-openjdk-amd64"
 
 setup_java() {
-  echo "── Installo Java 17 ──"
+  echo "── Installo Java 21 ──"
   apt-get update -q
   apt-get install -y $JAVA_PACKAGE unzip wget curl
+  update-java-alternatives -s java-1.21.0-openjdk-amd64 2>/dev/null || true
+  export JAVA_HOME="$JAVA_HOME_PATH"
+  export PATH="$JAVA_HOME/bin:$PATH"
   java -version
 }
 
@@ -36,9 +40,12 @@ setup_android_sdk() {
   sdkmanager "platform-tools" "platforms;android-34" "build-tools;34.0.0"
 
   # Aggiungo al profilo per le build future
-  echo "" >> "$HOME/.bashrc"
-  echo "export ANDROID_HOME=$ANDROID_SDK_DIR" >> "$HOME/.bashrc"
-  echo "export PATH=\$PATH:\$ANDROID_HOME/cmdline-tools/latest/bin:\$ANDROID_HOME/platform-tools:\$ANDROID_HOME/build-tools/34.0.0" >> "$HOME/.bashrc"
+  {
+    echo ""
+    echo "export JAVA_HOME=$JAVA_HOME_PATH"
+    echo "export ANDROID_HOME=$ANDROID_SDK_DIR"
+    echo "export PATH=\$JAVA_HOME/bin:\$PATH:\$ANDROID_HOME/cmdline-tools/latest/bin:\$ANDROID_HOME/platform-tools:\$ANDROID_HOME/build-tools/34.0.0"
+  } >> "$HOME/.bashrc"
 
   echo "✅ Android SDK installato in $ANDROID_SDK_DIR"
 }
@@ -58,10 +65,12 @@ build() {
   echo "  Build APK Fermenta.to                     "
   echo "════════════════════════════════════════════"
 
-  # Assicura variabili ambiente
+  # Forza Java 21 (richiesto da @capacitor/camera e altri plugin)
+  export JAVA_HOME="$JAVA_HOME_PATH"
   export ANDROID_HOME="$ANDROID_SDK_DIR"
-  export PATH="$PATH:$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/platform-tools:$ANDROID_HOME/build-tools/34.0.0"
-  export JAVA_HOME="$(dirname $(dirname $(readlink -f $(which java))))"
+  export PATH="$JAVA_HOME/bin:$PATH:$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/platform-tools:$ANDROID_HOME/build-tools/34.0.0"
+
+  java -version
 
   cd "$APP_DIR"
 
@@ -72,12 +81,10 @@ build() {
   npm install
 
   echo "── 3/5 Build Vite per Capacitor ──"
-  # Usa le variabili env per il build mobile (API punta a fermenta.to)
   set -a; source .env.capacitor; set +a
   npx vite build
 
   echo "── 4/5 Aggiungo/sincronizzo piattaforma Android ──"
-  # Prima volta: npx cap add android
   if [ ! -d "android" ]; then
     echo "    Prima build — aggiungo piattaforma Android..."
     npx cap add android
@@ -87,8 +94,6 @@ build() {
   echo "── 5/5 Compilo APK ──"
   cd android
   chmod +x gradlew
-
-  # Build debug APK (installabile senza firma)
   ./gradlew assembleDebug
 
   APK_PATH="app/build/outputs/apk/debug/app-debug.apk"
@@ -110,7 +115,7 @@ case "${1:-}" in
   build) build ;;
   *)
     echo "Uso: bash scripts/build-apk.sh [setup|build]"
-    echo "  setup  — installa Java + Android SDK (solo prima volta, ~10 min)"
+    echo "  setup  — installa Java 21 + Android SDK (solo prima volta, ~10 min)"
     echo "  build  — compila l'APK (ogni volta che vuoi aggiornare)"
     ;;
 esac
