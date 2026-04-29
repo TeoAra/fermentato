@@ -198,6 +198,7 @@ export default function HomepageMap({
         zoomControl={false}
         attributionControl={true}
         scrollWheelZoom={false}
+        tap={false}
         className="z-0"
       >
         <TileLayer

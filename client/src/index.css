@@ -247,12 +247,17 @@
   /* ── Capacitor Android WebView overrides ─────────────────────────────────
      scroll-behavior:smooth and overscroll-behavior-y:none conflict with the
      native WebView's own scroll engine and can cause a hard freeze after the
-     first scroll gesture. -webkit-overflow-scrolling:touch is an iOS-only
-     hint and is a no-op on Android but adds unnecessary processing overhead.
+     first scroll gesture.
+     overscroll-behavior-y:auto triggers an overscroll glow/bounce animation
+     that holds the WebView in "scroll mode" — during which Android does not
+     synthesize click events from taps, making the whole page appear frozen.
+     overscroll-behavior-y:contain keeps overscroll effects local (no parent
+     propagation, no Android overscroll glow) without the freeze that :none
+     causes on some WebView versions.
   */
   [data-capacitor="true"] body {
     scroll-behavior: auto;
-    overscroll-behavior-y: auto;
+    overscroll-behavior-y: contain;
     -webkit-overflow-scrolling: auto;
   }
   /* Prevent the grain texture overlay from accidentally intercepting touches

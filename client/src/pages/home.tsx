@@ -4,6 +4,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link } from "wouter";
 import { useState, useEffect, useMemo, useCallback, useRef, lazy, Suspense } from "react";
 import { usePullToRefresh } from "@/hooks/use-pull-to-refresh";
+import { Capacitor } from "@capacitor/core";
 import { Beer, MapPin, Heart, Store, TrendingUp, Navigation, Building2, ChevronRight, Zap, List, CalendarDays, Megaphone, Newspaper, Rocket, Users, Droplets, Bell, Bookmark, ChevronDown } from "lucide-react";
 import Footer from "@/components/footer";
 import PubCard from "@/components/pub-card";
@@ -60,34 +61,55 @@ export default function Home() {
   }, []);
 
   // Avvio automatico GPS all'apertura (una sola chiamata, si ferma quando accuratezza < 100m)
+  // In Capacitor (Android) ritardiamo di 2 s per evitare che il dialog di permesso sistema
+  // appaia prima che la pagina sia interattiva, il che corrompe lo stato touch del WebView.
   useEffect(() => {
     if (!navigator.geolocation) { setLocationStatus('denied'); return; }
-    setLocationStatus('requesting');
 
-    // Fase 1: posizione veloce da cache di rete
-    navigator.geolocation.getCurrentPosition(
-      applyPosition,
-      () => {},
-      { enableHighAccuracy: false, maximumAge: 60000, timeout: 5000 }
-    );
+    const startGeo = () => {
+      setLocationStatus('requesting');
 
-    // Fase 2: raffinamento GPS — si ferma da solo quando accuratezza < 100m
-    const wid = navigator.geolocation.watchPosition(
-      (pos) => {
-        applyPosition(pos);
-        if (pos.coords.accuracy <= 100) {
-          navigator.geolocation.clearWatch(wid);
+      // Fase 1: posizione veloce da cache di rete
+      navigator.geolocation.getCurrentPosition(
+        applyPosition,
+        () => {},
+        { enableHighAccuracy: false, maximumAge: 60000, timeout: 5000 }
+      );
+
+      // Fase 2: raffinamento GPS — si ferma da solo quando accuratezza < 100m
+      const wid = navigator.geolocation.watchPosition(
+        (pos) => {
+          applyPosition(pos);
+          if (pos.coords.accuracy <= 100) {
+            navigator.geolocation.clearWatch(wid);
+            autoWatchRef.current = null;
+          }
+        },
+        () => { if (!gotGoodPositionRef.current) setLocationStatus('denied'); },
+        { enableHighAccuracy: true, maximumAge: 0, timeout: 25000 }
+      );
+      autoWatchRef.current = wid;
+    };
+
+    // Su Capacitor Android, ritarda per dare tempo al WebView di stabilizzarsi
+    // prima che Android mostri il dialog di permesso geolocalizzazione
+    if (Capacitor.isNativePlatform()) {
+      const t = setTimeout(startGeo, 2000);
+      return () => {
+        clearTimeout(t);
+        if (autoWatchRef.current !== null) {
+          navigator.geolocation.clearWatch(autoWatchRef.current);
           autoWatchRef.current = null;
         }
-      },
-      () => { if (!gotGoodPositionRef.current) setLocationStatus('denied'); },
-      { enableHighAccuracy: true, maximumAge: 0, timeout: 25000 }
-    );
-    autoWatchRef.current = wid;
+      };
+    }
 
+    startGeo();
     return () => {
-      navigator.geolocation.clearWatch(wid);
-      autoWatchRef.current = null;
+      if (autoWatchRef.current !== null) {
+        navigator.geolocation.clearWatch(autoWatchRef.current);
+        autoWatchRef.current = null;
+      }
     };
   }, []); // Dipendenze vuote: si esegue solo al mount, applyPosition è stabile
 
