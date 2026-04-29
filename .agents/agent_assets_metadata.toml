@@ -131,3 +131,15 @@ id = "s4oD4fM1Yz_SoncHrkeba"
 uri = "file://attached_assets/generated_images/carousel_10_community.png"
 type = "image"
 title = "Slide 10 — Community: Unisciti a noi"
+
+[[outputs]]
+id = "JfxdsFPxxGSamKEz-_Kpb"
+uri = "file://client/public/icons/icon-512.png"
+type = "image"
+title = "Icona sorgente (512×512) — questa verrà usata per l'APK"
+
+[[outputs]]
+id = "0zGXxIVsjUQI4nEeTGW0O"
+uri = "file://capacitor-resources/android/mipmap-xxxhdpi/ic_launcher.png"
+type = "image"
+title = "Icona generata per Android xxxhdpi (192×192)"

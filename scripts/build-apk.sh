@@ -104,29 +104,19 @@ build() {
   echo "── 5/6 Applico icone e status bar ──"
   cd android
 
-  # --- Icone app (da icon-512.png) ---
-  ICON_SRC="$APP_DIR/client/public/icons/icon-512.png"
-  if command -v convert >/dev/null 2>&1 && [ -f "$ICON_SRC" ]; then
-    echo "    Genero icone launcher con ImageMagick..."
-    declare -A ICON_SIZES=(
-      [mipmap-mdpi]=48
-      [mipmap-hdpi]=72
-      [mipmap-xhdpi]=96
-      [mipmap-xxhdpi]=144
-      [mipmap-xxxhdpi]=192
-    )
-    for dir in "${!ICON_SIZES[@]}"; do
-      SIZE="${ICON_SIZES[$dir]}"
+  # --- Icone app (pre-generate dal repo, nessuna dipendenza esterna) ---
+  ICONS_SRC="$APP_DIR/capacitor-resources/android"
+  if [ -d "$ICONS_SRC" ]; then
+    echo "    Copio icone launcher dal repo..."
+    for dir in mipmap-mdpi mipmap-hdpi mipmap-xhdpi mipmap-xxhdpi mipmap-xxxhdpi; do
       DEST="app/src/main/res/$dir"
       mkdir -p "$DEST"
-      convert "$ICON_SRC" -resize "${SIZE}x${SIZE}" "$DEST/ic_launcher.png"
-      convert "$ICON_SRC" -resize "${SIZE}x${SIZE}" "$DEST/ic_launcher_round.png"
-      echo "      $dir: ${SIZE}x${SIZE}px"
+      cp "$ICONS_SRC/$dir/ic_launcher.png"       "$DEST/ic_launcher.png"
+      cp "$ICONS_SRC/$dir/ic_launcher_round.png"  "$DEST/ic_launcher_round.png"
     done
-    echo "    ✅ Icone generate"
+    echo "    ✅ Icone copiate (mdpi→xxxhdpi)"
   else
-    echo "    ⚠️  ImageMagick non trovato o icon-512.png mancante — icone non aggiornate"
-    echo "       Per installarle: apt-get install -y imagemagick"
+    echo "    ⚠️  capacitor-resources/android non trovata — icone non aggiornate"
   fi
 
   # --- Status bar color: warm cream (#FFF7ED), icone scure ---
