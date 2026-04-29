@@ -1,8 +1,8 @@
 #!/bin/bash
 # ─────────────────────────────────────────────────────────────────────────────
 # Fermenta.to — APK build script per VPS Ubuntu/Debian
-# Esegui una volta sola: bash scripts/build-apk.sh setup
-# Poi per ogni build: bash scripts/build-apk.sh build
+# Prima volta: bash scripts/build-apk.sh setup
+# Ogni build:  bash scripts/build-apk.sh build
 # ─────────────────────────────────────────────────────────────────────────────
 
 set -e
@@ -10,21 +10,23 @@ set -e
 APP_DIR="/www/nodeapps/fermenta"
 ANDROID_SDK_DIR="$HOME/android-sdk"
 ANDROID_CMD_VERSION="11076708"
-JAVA_PACKAGE="openjdk-21-jdk"
-JAVA_HOME_PATH="/usr/lib/jvm/java-21-openjdk-amd64"
 
 setup_java() {
-  echo "── Installo Java 21 ──"
-  apt-get update -q
-  apt-get install -y $JAVA_PACKAGE unzip wget curl
-  update-java-alternatives -s java-1.21.0-openjdk-amd64 2>/dev/null || true
-  export JAVA_HOME="$JAVA_HOME_PATH"
+  echo "── Installo Java 21 via SDKMAN ──"
+  if [ ! -d "$HOME/.sdkman" ]; then
+    curl -s "https://get.sdkman.io" | bash
+  fi
+  # shellcheck disable=SC1090
+  source "$HOME/.sdkman/bin/sdkman-init.sh"
+  sdk install java 21.0.5-tem || sdk use java 21.0.5-tem
+  export JAVA_HOME="$HOME/.sdkman/candidates/java/current"
   export PATH="$JAVA_HOME/bin:$PATH"
   java -version
 }
 
 setup_android_sdk() {
   echo "── Scarico Android SDK command-line tools ──"
+  apt-get update -q && apt-get install -y unzip wget curl 2>/dev/null || true
   mkdir -p "$ANDROID_SDK_DIR/cmdline-tools"
   wget -q "https://dl.google.com/android/repository/commandlinetools-linux-${ANDROID_CMD_VERSION}_latest.zip" \
     -O /tmp/cmdline-tools.zip
@@ -39,10 +41,13 @@ setup_android_sdk() {
   yes | sdkmanager --licenses > /dev/null 2>&1 || true
   sdkmanager "platform-tools" "platforms;android-34" "build-tools;34.0.0"
 
-  # Aggiungo al profilo per le build future
+  # Salvo le variabili nel profilo per le sessioni future
   {
     echo ""
-    echo "export JAVA_HOME=$JAVA_HOME_PATH"
+    echo "# SDKMAN Java 21"
+    echo "source \"\$HOME/.sdkman/bin/sdkman-init.sh\" 2>/dev/null || true"
+    echo "export JAVA_HOME=\"\$HOME/.sdkman/candidates/java/current\""
+    echo "# Android SDK"
     echo "export ANDROID_HOME=$ANDROID_SDK_DIR"
     echo "export PATH=\$JAVA_HOME/bin:\$PATH:\$ANDROID_HOME/cmdline-tools/latest/bin:\$ANDROID_HOME/platform-tools:\$ANDROID_HOME/build-tools/34.0.0"
   } >> "$HOME/.bashrc"
@@ -65,12 +70,14 @@ build() {
   echo "  Build APK Fermenta.to                     "
   echo "════════════════════════════════════════════"
 
-  # Forza Java 21 (richiesto da @capacitor/camera e altri plugin)
-  export JAVA_HOME="$JAVA_HOME_PATH"
+  # Carica SDKMAN e Java 21
+  # shellcheck disable=SC1090
+  source "$HOME/.sdkman/bin/sdkman-init.sh" 2>/dev/null || true
+  export JAVA_HOME="$HOME/.sdkman/candidates/java/current"
   export ANDROID_HOME="$ANDROID_SDK_DIR"
   export PATH="$JAVA_HOME/bin:$PATH:$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/platform-tools:$ANDROID_HOME/build-tools/34.0.0"
 
-  java -version
+  echo "Java: $(java -version 2>&1 | head -1)"
 
   cd "$APP_DIR"
 
@@ -115,7 +122,7 @@ case "${1:-}" in
   build) build ;;
   *)
     echo "Uso: bash scripts/build-apk.sh [setup|build]"
-    echo "  setup  — installa Java 21 + Android SDK (solo prima volta, ~10 min)"
-    echo "  build  — compila l'APK (ogni volta che vuoi aggiornare)"
+    echo "  setup  — installa Java 21 (SDKMAN) + Android SDK (solo prima volta)"
+    echo "  build  — compila l'APK"
     ;;
 esac
