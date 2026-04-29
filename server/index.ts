@@ -57,6 +57,27 @@ app.use((req, res, next) => {
   next();
 });
 
+// ── Cache control ─────────────────────────────────────────────────────────────
+// L'index.html deve essere sempre fresco: referenzia gli hash dei bundle JS/CSS.
+// Se il WebView Android (Capacitor) lo mette in cache, dopo ogni deploy continua
+// a caricare il vecchio JS e le modifiche al codice non hanno effetto.
+// I file sotto /assets/ hanno hash nel nome (prodotti da Vite) → immutabili.
+app.use((req, res, next) => {
+  const p = req.path;
+  if (p.startsWith('/assets/') || p.startsWith('/app/download')) {
+    // bundle JS/CSS immutabili (hash nel nome) o download APK → cache aggressiva
+    if (p.startsWith('/assets/')) {
+      res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
+    }
+  } else if (!p.startsWith('/api') && !p.match(/\.(png|jpg|jpeg|gif|webp|svg|ico|woff|woff2|ttf|otf|mp4|webm)$/i)) {
+    // HTML e route SPA → mai cachare
+    res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+    res.setHeader('Pragma', 'no-cache');
+    res.setHeader('Expires', '0');
+  }
+  next();
+});
+
 app.use((req, res, next) => {
   const start = Date.now();
   const path = req.path;
