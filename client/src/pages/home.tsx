@@ -5,6 +5,7 @@ import { Link } from "wouter";
 import { useState, useEffect, useMemo, useCallback, useRef, lazy, Suspense } from "react";
 import { usePullToRefresh } from "@/hooks/use-pull-to-refresh";
 import { Capacitor } from "@capacitor/core";
+import { Geolocation } from "@capacitor/geolocation";
 import { Beer, MapPin, Heart, Store, TrendingUp, Navigation, Building2, ChevronRight, Zap, List, CalendarDays, Megaphone, Newspaper, Rocket, Users, Droplets, Bell, Bookmark, ChevronDown } from "lucide-react";
 import Footer from "@/components/footer";
 import PubCard from "@/components/pub-card";
@@ -91,11 +92,27 @@ export default function Home() {
       autoWatchRef.current = wid;
     };
 
-    // Su Capacitor Android, ritarda per dare tempo al WebView di stabilizzarsi
-    // prima che Android mostri il dialog di permesso geolocalizzazione
+    // Su Capacitor Android: usa il plugin nativo per richiedere il permesso
+    // (mostra il dialog di sistema Android), poi avvia navigator.geolocation
     if (Capacitor.isNativePlatform()) {
-      const t = setTimeout(startGeo, 2000);
+      let cancelled = false;
+      const requestAndStart = async () => {
+        try {
+          // requestPermissions() mostra il dialog nativo di sistema
+          const status = await Geolocation.requestPermissions();
+          if (cancelled) return;
+          if (status.location === 'denied' || status.coarseLocation === 'denied') {
+            setLocationStatus('denied');
+            return;
+          }
+        } catch {
+          // permesso già concesso o non disponibile — procedi comunque
+        }
+        if (!cancelled) startGeo();
+      };
+      const t = setTimeout(requestAndStart, 1500);
       return () => {
+        cancelled = true;
         clearTimeout(t);
         if (autoWatchRef.current !== null) {
           navigator.geolocation.clearWatch(autoWatchRef.current);

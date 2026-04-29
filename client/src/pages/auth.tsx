@@ -1,5 +1,6 @@
 import { useState, useCallback, useEffect, useRef } from "react";
 import { useLocation } from "wouter";
+import { Capacitor } from "@capacitor/core";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -164,7 +165,11 @@ export default function AuthPage() {
       await apiRequest("/api/auth/login", { method: "POST" }, { ...data, recaptchaToken: loginRecaptchaToken }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
-      toast({ title: "Benvenuto!", description: "Login effettuato con successo" });
+      // Su Capacitor Android il toast animato (position:fixed + CSS transition) corrompe
+      // il layer touch del WebView e congela l'intera UI — lo saltiamo su native.
+      if (!Capacitor.isNativePlatform()) {
+        toast({ title: "Benvenuto!", description: "Login effettuato con successo" });
+      }
       setLocation(returnToParam || "/");
     },
     onError: (error: any) => {
@@ -188,7 +193,9 @@ export default function AuthPage() {
     onSuccess: (data: any) => {
       if (data?.pendingVerification) { setPendingVerificationEmail(data.email); return; }
       queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
-      toast({ title: "Registrazione completata!", description: "Benvenuto su Fermenta.to" });
+      if (!Capacitor.isNativePlatform()) {
+        toast({ title: "Registrazione completata!", description: "Benvenuto su Fermenta.to" });
+      }
       setLocation(returnToParam || "/");
     },
     onError: (error: any) => {

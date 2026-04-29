@@ -11,7 +11,7 @@ import { useAnalytics } from "./hooks/use-analytics";
 import { usePushBadge } from "@/hooks/use-push-badge";
 import { NavigationProgress } from "@/components/navigation-progress";
 import Lightbox from "@/components/lightbox";
-import { PwaInstallPrompt, PushNotificationPrompt, AutoPushSubscriber } from "@/components/pwa-prompt";
+import { PwaInstallPrompt, PushNotificationPrompt, AutoPushSubscriber, CapacitorPushPrompt } from "@/components/pwa-prompt";
 import { MobileHeader } from "@/components/mobile-header";
 import { BottomNavigation } from "@/components/bottom-navigation";
 import { DesktopSidebar } from "@/components/desktop-sidebar";
@@ -350,6 +350,7 @@ function App() {
             <AutoPushSubscriber />
             <PwaInstallPrompt />
             <PushNotificationPrompt />
+            <CapacitorPushPrompt />
             <CookieBanner />
           </TooltipProvider>
         </QueryClientProvider>

@@ -409,6 +409,88 @@ export function PwaInstallPrompt() {
   );
 }
 
+// ── Prompt notifiche per APK Capacitor Android ────────────────────────────────
+// Usa @capacitor/push-notifications per mostrare il dialog di sistema Android.
+export function CapacitorPushPrompt() {
+  const isNative = typeof window !== 'undefined' && (window as any).Capacitor?.isNativePlatform?.();
+  const { isAuthenticated } = useAuth();
+  const [show, setShow] = useState(false);
+  const [dismissed, setDismissed] = useState(false);
+
+  useEffect(() => {
+    if (!isNative || !isAuthenticated) return;
+
+    const status = localStorage.getItem('capacitor-push-permission');
+    if (status) return; // già gestito
+
+    const isDismissed = localStorage.getItem('capacitor-push-prompt-dismissed');
+    if (isDismissed) {
+      const dismissedAt = parseInt(isDismissed, 10);
+      if (Date.now() - dismissedAt < 7 * 24 * 60 * 60 * 1000) return;
+    }
+
+    const timer = setTimeout(() => setShow(true), 6000);
+    return () => clearTimeout(timer);
+  }, [isNative, isAuthenticated]);
+
+  const handleEnable = async () => {
+    setShow(false);
+    try {
+      const { PushNotifications } = await import("@capacitor/push-notifications");
+      const result = await PushNotifications.requestPermissions();
+      localStorage.setItem('capacitor-push-permission', result.receive);
+      if (result.receive === 'granted') {
+        try { await PushNotifications.register(); } catch { /* FCM non configurato — ok */ }
+      }
+    } catch {}
+  };
+
+  const handleDismiss = () => {
+    setShow(false);
+    setDismissed(true);
+    localStorage.setItem('capacitor-push-prompt-dismissed', Date.now().toString());
+  };
+
+  if (!isNative || !show || dismissed) return null;
+
+  return (
+    <div className="fixed bottom-20 left-4 right-4 z-50 animate-in slide-in-from-bottom-5">
+      <div className="bg-white dark:bg-gray-900 border border-amber-200 dark:border-amber-800 rounded-2xl p-4 shadow-2xl">
+        <div className="flex items-start gap-3">
+          <div className="p-2 bg-gradient-to-br from-amber-500 to-orange-600 rounded-xl flex-shrink-0">
+            <Bell className="w-5 h-5 text-white" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <h3 className="font-semibold text-foreground dark:text-white text-sm">
+              Attiva le notifiche
+            </h3>
+            <p className="text-xs text-muted-foreground dark:text-stone-400 mt-0.5">
+              Ricevi aggiornamenti sulle nuove birre alla spina nei tuoi pub preferiti.
+            </p>
+          </div>
+          <button onClick={handleDismiss} className="text-stone-400 hover:text-muted-foreground">
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+        <div className="flex gap-2 mt-3">
+          <Button
+            onClick={handleEnable}
+            size="sm"
+            className="flex-1 bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 text-white"
+          >
+            <Bell className="w-4 h-4 mr-1" />
+            Attiva
+          </Button>
+          <Button onClick={handleDismiss} size="sm" variant="ghost" className="text-muted-foreground">
+            Non ora
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+}
+// ─────────────────────────────────────────────────────────────────────────────
+
 export function PushNotificationPrompt() {
   if (typeof window !== 'undefined' && (window as any).Capacitor?.isNativePlatform?.()) return null;
   const { isAuthenticated } = useAuth();
