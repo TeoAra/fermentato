@@ -1,5 +1,15 @@
 import { QueryClient, QueryFunction } from "@tanstack/react-query";
 
+// In Capacitor il frontend gira come asset bundlati (non dal server Express),
+// quindi le chiamate relative /api/... vanno prefissate con l'URL del server.
+// VITE_API_BASE_URL viene impostato a https://fermenta.to nel build Capacitor.
+const API_BASE = (import.meta.env.VITE_API_BASE_URL as string) || '';
+
+function resolveUrl(path: string): string {
+  if (path.startsWith('http://') || path.startsWith('https://')) return path;
+  return `${API_BASE}${path}`;
+}
+
 async function throwIfResNotOk(res: Response) {
   if (!res.ok) {
     const contentType = res.headers.get("content-type");
@@ -76,7 +86,7 @@ export async function apiRequest(
     }
   }
 
-  const res = await fetch(path, {
+  const res = await fetch(resolveUrl(path), {
     ...options,
     method,
     headers,
@@ -99,7 +109,7 @@ export const getQueryFn: <T>(options: {
 }) => QueryFunction<T> =
   ({ on401: unauthorizedBehavior }) =>
   async ({ queryKey }) => {
-    const res = await fetch(queryKey.join("/") as string, {
+    const res = await fetch(resolveUrl(queryKey.join("/")), {
       credentials: "include",
     });
 

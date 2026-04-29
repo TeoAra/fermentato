@@ -58,7 +58,9 @@ export function getSession() {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       maxAge: sessionTtl,
-      sameSite: 'lax',
+      // sameSite:'none' permette all'app Capacitor (cross-origin) di inviare i cookie
+      // secure deve essere true quando sameSite='none' (garantito in prod)
+      sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
     },
   });
 }

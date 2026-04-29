@@ -4,3 +4,7 @@ dist
 server/public
 vite.config.ts.*
 *.tar.gzdata-export/
+
+# Capacitor native platform directories (generated on each machine)
+android/
+ios/

@@ -6,6 +6,25 @@ import { setupVite, serveStatic, log } from "./vite";
 const app = express();
 app.use(compression());
 
+// CORS per Capacitor (app nativa) — deve stare PRIMA di qualsiasi route
+const CAPACITOR_ORIGINS = [
+  'https://app.fermenta.to',   // Capacitor hostname configurato
+  'capacitor://localhost',      // fallback Capacitor
+  'https://localhost',          // Capacitor con androidScheme https
+  'http://localhost',           // dev locale
+];
+app.use((req, res, next) => {
+  const origin = req.headers.origin as string | undefined;
+  if (origin && CAPACITOR_ORIGINS.includes(origin)) {
+    res.setHeader('Access-Control-Allow-Origin', origin);
+    res.setHeader('Access-Control-Allow-Credentials', 'true');
+    res.setHeader('Access-Control-Allow-Methods', 'GET,POST,PUT,PATCH,DELETE,OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With');
+    if (req.method === 'OPTIONS') { res.status(204).end(); return; }
+  }
+  next();
+});
+
 // Webhook Stripe deve essere registrato PRIMA di express.json
 // altrimenti il body viene parsato e la verifica della firma fallisce
 app.post(
