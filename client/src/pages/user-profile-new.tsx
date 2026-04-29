@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { Link } from "wouter";
+import { Link, useLocation } from "wouter";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useAuth } from "@/hooks/useAuth";
@@ -181,6 +181,7 @@ export default function UserProfile() {
   const { user, isAuthenticated, isLoading } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const [, setLocation] = useLocation();
   
   const avatarInputRef = useRef<HTMLInputElement>(null);
   const [avatarUploading, setAvatarUploading] = useState(false);
@@ -215,7 +216,7 @@ export default function UserProfile() {
         variant: "destructive",
       });
       setTimeout(() => {
-        window.location.href = "/api/login";
+        setLocation("/login");
       }, 500);
     }
   }, [isAuthenticated, isLoading, toast]);
@@ -317,7 +318,7 @@ export default function UserProfile() {
           description: "Effettuando il login di nuovo...",
           variant: "destructive",
         });
-        setTimeout(() => window.location.href = "/api/login", 500);
+        setTimeout(() => setLocation("/login"), 500);
         return;
       }
       toast({
@@ -347,7 +348,7 @@ export default function UserProfile() {
           description: "Effettuando il login di nuovo...",
           variant: "destructive",
         });
-        setTimeout(() => window.location.href = "/api/login", 500);
+        setTimeout(() => setLocation("/login"), 500);
         return;
       }
       toast({
@@ -990,7 +991,7 @@ export default function UserProfile() {
                                 title: "Account eliminato",
                                 description: "Il tuo account è stato eliminato con successo",
                               });
-                              window.location.href = "/";
+                              setLocation("/");
                             } catch (error) {
                               toast({
                                 title: "Errore",

@@ -1,4 +1,5 @@
 import { useState, useRef, useCallback } from "react";
+import { useLocation } from "wouter";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
@@ -121,6 +122,7 @@ export default function BeerTastingForm({
 }: BeerTastingFormProps) {
   const { isAuthenticated } = useAuth();
   const { toast } = useToast();
+  const [, setLocation] = useLocation();
   const queryClient = useQueryClient();
   const isEditMode = !!existingTasting && !!onCancel;
   const [showForm, setShowForm] = useState(isEditMode || !!autoOpen);
@@ -182,7 +184,7 @@ export default function BeerTastingForm({
   if (!isAuthenticated) {
     return (
       <button
-        onClick={() => window.location.href = "/api/login"}
+        onClick={() => setLocation("/login")}
         className="w-full flex items-center justify-between px-4 py-3 rounded-2xl border border-stone-200 dark:border-stone-700 bg-white dark:bg-card text-sm font-medium text-foreground hover:bg-stone-50 dark:hover:bg-stone-800 transition-colors"
       >
         <span className="flex items-center gap-2 text-muted-foreground">

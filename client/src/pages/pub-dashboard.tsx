@@ -152,7 +152,7 @@ export default function PubDashboard() {
         variant: "destructive",
       });
       setTimeout(() => {
-        window.location.href = "/api/login";
+        setLocation("/login");
       }, 1000);
       return;
     }
@@ -193,7 +193,7 @@ export default function PubDashboard() {
           variant: "destructive",
         });
         setTimeout(() => {
-          window.location.href = "/api/login";
+          setLocation("/login");
         }, 1000);
         return;
       }
@@ -673,7 +673,7 @@ function PubInfoTab({ pub }: { pub: Pub }) {
           variant: "destructive",
         });
         setTimeout(() => {
-          window.location.href = "/api/login";
+          setLocation("/login");
         }, 1000);
         return;
       }
@@ -909,7 +909,7 @@ function OpeningHoursManager({ pub }: { pub: Pub }) {
           variant: "destructive",
         });
         setTimeout(() => {
-          window.location.href = "/api/login";
+          setLocation("/login");
         }, 1000);
         return;
       }

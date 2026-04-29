@@ -27,7 +27,7 @@ const roleIcons: Record<string, any> = {
 };
 
 export function DesktopSidebar() {
-  const [location] = useLocation();
+  const [location, setLocation] = useLocation();
   const { user, isAuthenticated } = useAuth();
   const typedUser = user as UserType | undefined;
   const [searchOpen, setSearchOpen] = useState(false);
@@ -234,7 +234,7 @@ export function DesktopSidebar() {
                     className="flex items-center gap-2 text-[13px] text-red-600 dark:text-red-400 cursor-pointer"
                     onClick={() =>
                       fetch("/api/auth/logout", { method: "POST", credentials: "include" }).then(
-                        () => (window.location.href = "/")
+                        () => setLocation("/")
                       )
                     }
                   >

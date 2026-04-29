@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Link } from "wouter";
+import { Link, useLocation } from "wouter";
 import { useAuth } from "@/hooks/useAuth";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
@@ -35,6 +35,7 @@ type Step = "choose" | "trial-confirm" | "checkout" | "trial-success" | "checkou
 
 export default function AttivaPub() {
   const { isAuthenticated, user } = useAuth();
+  const [, setLocation] = useLocation();
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [step, setStep] = useState<Step>("choose");
@@ -527,7 +528,7 @@ export default function AttivaPub() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-10">
             <Card
               className="border-2 border-dashed border-amber-300 dark:border-amber-700 hover:border-amber-400 dark:hover:border-amber-600 transition-colors cursor-pointer group"
-              onClick={() => isAuthenticated ? setStep("trial-confirm") : window.location.href = "/api/login"}
+              onClick={() => isAuthenticated ? setStep("trial-confirm") : setLocation("/login")}
             >
               <CardContent className="p-6">
                 <div className="flex items-center gap-3 mb-3">

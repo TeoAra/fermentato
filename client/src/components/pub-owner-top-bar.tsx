@@ -1,4 +1,5 @@
 import React from "react";
+import { useLocation } from "wouter";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -37,6 +38,7 @@ export function PubOwnerTopBar({
   user,
   onLogout 
 }: PubOwnerTopBarProps) {
+  const [, navigate] = useLocation();
   return (
     <div className="sticky top-14 lg:top-0 z-40 w-full">
       <motion.div 
@@ -72,7 +74,7 @@ export function PubOwnerTopBar({
                   <p className="text-xs text-muted-foreground">Pannello Gestionale</p>
                 </div>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={() => window.location.href = '/'} className="cursor-pointer">
+                <DropdownMenuItem onClick={() => navigate('/')} className="cursor-pointer">
                   <Home className="mr-2 h-4 w-4" />
                   <span>Torna alla Home</span>
                 </DropdownMenuItem>
@@ -87,7 +89,7 @@ export function PubOwnerTopBar({
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem 
-                  onClick={() => { if (onLogout) onLogout(); else window.location.href = '/'; }}
+                  onClick={() => { if (onLogout) onLogout(); else navigate('/'); }}
                   className="cursor-pointer text-red-600 dark:text-red-400"
                   data-testid="menu-esci"
                 >

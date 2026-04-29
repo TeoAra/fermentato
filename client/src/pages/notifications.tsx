@@ -71,7 +71,7 @@ export default function Notifications() {
   useEffect(() => {
     if (!authLoading && !isAuthenticated) {
       toast({ title: "Accesso richiesto", description: "Effettua l'accesso per vedere le notifiche.", variant: "destructive" });
-      setTimeout(() => { window.location.href = "/api/login"; }, 500);
+      setTimeout(() => { setLocation('/login'); }, 500);
     }
   }, [isAuthenticated, authLoading, toast]);
 

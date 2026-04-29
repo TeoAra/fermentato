@@ -7,7 +7,7 @@ import type { Beer } from "@shared/schema";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { Link } from "wouter";
+import { Link, useLocation } from "wouter";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -141,13 +141,14 @@ function PendingApprovalOverlay({ breweryName, createdAt }: { breweryName: strin
               Richiesta inviata il {new Date(createdAt).toLocaleDateString('it-IT', { day: 'numeric', month: 'long', year: 'numeric' })}
             </p>
           )}
-          <Button
-            variant="outline"
-            className="w-full border-stone-200 dark:border-border hover:bg-stone-50 rounded-xl"
-            onClick={() => window.location.href = '/'}
-          >
-            Torna alla Home
-          </Button>
+          <Link href="/">
+            <Button
+              variant="outline"
+              className="w-full border-stone-200 dark:border-border hover:bg-stone-50 rounded-xl"
+            >
+              Torna alla Home
+            </Button>
+          </Link>
         </CardContent>
       </Card>
     </div>
@@ -175,13 +176,14 @@ function RejectedOverlay({ breweryName, adminNotes }: { breweryName: string; adm
               <strong>Motivazione:</strong> {adminNotes}
             </div>
           )}
-          <Button
-            variant="outline"
-            className="w-full border-stone-200 dark:border-border hover:bg-stone-50 rounded-xl"
-            onClick={() => window.location.href = '/'}
-          >
-            Torna alla Home
-          </Button>
+          <Link href="/">
+            <Button
+              variant="outline"
+              className="w-full border-stone-200 dark:border-border hover:bg-stone-50 rounded-xl"
+            >
+              Torna alla Home
+            </Button>
+          </Link>
         </CardContent>
       </Card>
     </div>
@@ -753,12 +755,13 @@ export default function BreweryDashboard({ adminBreweryId }: BreweryDashboardPro
             <p className="text-muted-foreground text-sm">
               Non hai ancora un birrificio associato al tuo account.
             </p>
-            <Button
-              className="mt-6 w-full bg-primary hover:bg-primary/90 text-white rounded-xl font-semibold shadow-sm"
-              onClick={() => window.location.href = '/'}
-            >
-              Torna alla Home
-            </Button>
+            <Link href="/">
+              <Button
+                className="mt-6 w-full bg-primary hover:bg-primary/90 text-white rounded-xl font-semibold shadow-sm"
+              >
+                Torna alla Home
+              </Button>
+            </Link>
           </CardContent>
         </Card>
       </div>
@@ -790,15 +793,16 @@ export default function BreweryDashboard({ adminBreweryId }: BreweryDashboardPro
 
           <div className="flex items-center gap-2">
             {!isAdminMode && (
+              <Link href={`/brewery/${brewery.slug || brewery.id}`}>
               <Button
                 variant="outline"
                 size="sm"
                 className="hidden sm:flex border-stone-200 dark:border-border hover:bg-stone-50 rounded-xl h-9"
-                onClick={() => window.location.href = `/brewery/${brewery.slug || brewery.id}`}
               >
                 <Eye className="w-4 h-4 mr-2" />
                 Vedi Pubblico
               </Button>
+              </Link>
             )}
             <Button
               variant="outline"

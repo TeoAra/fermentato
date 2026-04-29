@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import { useLocation } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import { Search, X, MapPin, Building, Beer, Clock, TrendingUp, ArrowRight, Sparkles, Loader2, ChevronDown, ChevronUp, PlusCircle, Users } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -106,7 +107,7 @@ export default function SearchDialog({ isOpen, onClose }: SearchDialogProps) {
       if (selected) {
         saveSearch(searchTerm);
         handleClose();
-        window.location.href = `/${selected.type}/${selected.id}`;
+        navigate(`/${selected.type}/${selected.id}`);
       }
     }
   };
@@ -118,10 +119,12 @@ export default function SearchDialog({ isOpen, onClose }: SearchDialogProps) {
     onClose();
   };
 
+  const [, navigate] = useLocation();
+
   const handleResultClick = (type: string, id: number) => {
     saveSearch(searchTerm);
     handleClose();
-    window.location.href = `/${type}/${id}`;
+    navigate(`/${type}/${id}`);
   };
 
   const popularSuggestions = [
@@ -518,7 +521,7 @@ export default function SearchDialog({ isOpen, onClose }: SearchDialogProps) {
                             onClick={() => {
                               saveSearch(searchTerm);
                               handleClose();
-                              window.location.href = `/user/${u.nickname ?? u.id}`;
+                              navigate(`/user/${u.nickname ?? u.id}`);
                             }}
                           >
                             <div className="flex items-center gap-3">

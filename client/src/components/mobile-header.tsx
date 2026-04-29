@@ -29,7 +29,7 @@ const roleIcons: Record<string, any> = {
 };
 
 export function MobileHeader({ onMenuToggle, isMenuOpen }: MobileHeaderProps) {
-  const [location] = useLocation();
+  const [location, setLocation] = useLocation();
   const { isAuthenticated, user } = useAuth();
   const typedUser = user as UserType | undefined;
   const [isSearchOpen, setIsSearchOpen] = useState(false);
@@ -203,7 +203,7 @@ export function MobileHeader({ onMenuToggle, isMenuOpen }: MobileHeaderProps) {
                 <div>
                   <div className="font-semibold text-foreground text-sm">Ospite</div>
                   <button
-                    onClick={() => { onMenuToggle(); window.location.href = '/login'; }}
+                    onClick={() => { onMenuToggle(); setLocation('/login'); }}
                     className="text-xs text-primary font-medium"
                   >
                     Accedi o registrati →
@@ -289,7 +289,7 @@ export function MobileHeader({ onMenuToggle, isMenuOpen }: MobileHeaderProps) {
                 onClick={() => {
                   onMenuToggle();
                   fetch('/api/auth/logout', { method: 'POST', credentials: 'include' })
-                    .then(() => window.location.href = '/');
+                    .then(() => setLocation('/'));
                 }}
                 data-testid="logout-button-mobile"
               >
@@ -299,7 +299,7 @@ export function MobileHeader({ onMenuToggle, isMenuOpen }: MobileHeaderProps) {
             ) : (
               <button
                 className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-primary hover:bg-orange-50 dark:hover:bg-orange-900/20 transition-colors"
-                onClick={() => { onMenuToggle(); window.location.href = '/login'; }}
+                onClick={() => { onMenuToggle(); setLocation('/login'); }}
               >
                 <LogIn className="h-4.5 w-4.5" style={{ width: '18px', height: '18px' }} />
                 <span className="text-sm font-semibold">Accedi</span>

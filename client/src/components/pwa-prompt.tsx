@@ -291,6 +291,7 @@ function IosInstallGuide({ onClose }: { onClose: () => void }) {
 }
 
 export function PwaInstallPrompt() {
+  if (typeof window !== 'undefined' && (window as any).Capacitor?.isNativePlatform?.()) return null;
   const { isAuthenticated } = useAuth();
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
   const [showInstall, setShowInstall] = useState(false);

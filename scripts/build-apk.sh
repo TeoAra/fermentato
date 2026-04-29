@@ -101,8 +101,49 @@ build() {
   fi
   npx cap sync android
 
-  echo "── 5/5 Compilo APK ──"
+  echo "── 5/6 Applico icone e status bar ──"
   cd android
+
+  # --- Icone app (da icon-512.png) ---
+  ICON_SRC="$APP_DIR/client/public/icons/icon-512.png"
+  if command -v convert >/dev/null 2>&1 && [ -f "$ICON_SRC" ]; then
+    echo "    Genero icone launcher con ImageMagick..."
+    declare -A ICON_SIZES=(
+      [mipmap-mdpi]=48
+      [mipmap-hdpi]=72
+      [mipmap-xhdpi]=96
+      [mipmap-xxhdpi]=144
+      [mipmap-xxxhdpi]=192
+    )
+    for dir in "${!ICON_SIZES[@]}"; do
+      SIZE="${ICON_SIZES[$dir]}"
+      DEST="app/src/main/res/$dir"
+      mkdir -p "$DEST"
+      convert "$ICON_SRC" -resize "${SIZE}x${SIZE}" "$DEST/ic_launcher.png"
+      convert "$ICON_SRC" -resize "${SIZE}x${SIZE}" "$DEST/ic_launcher_round.png"
+      echo "      $dir: ${SIZE}x${SIZE}px"
+    done
+    echo "    ✅ Icone generate"
+  else
+    echo "    ⚠️  ImageMagick non trovato o icon-512.png mancante — icone non aggiornate"
+    echo "       Per installarle: apt-get install -y imagemagick"
+  fi
+
+  # --- Status bar color: warm cream (#FFF7ED), icone scure ---
+  STYLES_FILE="app/src/main/res/values/styles.xml"
+  if [ -f "$STYLES_FILE" ]; then
+    echo "    Imposto colore status bar (#FFF7ED, icone scure)..."
+    # Rimuovi eventuali impostazioni precedenti sullo statusBar e windowLightStatusBar
+    sed -i '/<item name="android:statusBarColor">/d' "$STYLES_FILE"
+    sed -i '/<item name="android:windowLightStatusBar">/d' "$STYLES_FILE"
+    sed -i '/<item name="android:navigationBarColor">/d' "$STYLES_FILE"
+    sed -i '/<item name="android:windowLightNavigationBar">/d' "$STYLES_FILE"
+    # Inietta prima del tag </style>
+    sed -i 's|</style>|    <item name="android:statusBarColor">#FFF7ED</item>\n    <item name="android:windowLightStatusBar">true</item>\n    <item name="android:navigationBarColor">#FFF7ED</item>\n    <item name="android:windowLightNavigationBar">true</item>\n</style>|' "$STYLES_FILE"
+    echo "    ✅ Status bar aggiornata"
+  fi
+
+  echo "── 6/6 Compilo APK ──"
   chmod +x gradlew
 
   # Scrivi local.properties con il percorso SDK (necessario per Gradle)

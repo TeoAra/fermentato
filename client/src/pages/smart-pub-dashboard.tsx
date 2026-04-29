@@ -1,6 +1,6 @@
 import React, { useState, useEffect, lazy, Suspense } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Link } from "wouter";
+import { Link, useLocation } from "wouter";
 import { useAuth } from "@/hooks/useAuth";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
@@ -280,6 +280,7 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
   const isAdminMode = !!adminPubId;
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const [, setLocation] = useLocation();
 
   // Logout handler
   const handleLogout = async () => {
@@ -291,11 +292,11 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
       queryClient.clear();
       
       // Redirect to home page
-      window.location.href = '/';
+      setLocation('/');
     } catch (error) {
       console.error('Logout error:', error);
       // Even if logout fails, redirect to home
-      window.location.href = '/';
+      setLocation('/');
     }
   };
   useEffect(() => {

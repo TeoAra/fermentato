@@ -15,7 +15,7 @@ import { ThemeToggle } from "@/components/theme-toggle";
 
 export default function Header() {
   const { user, isAuthenticated } = useAuth();
-  const [location] = useLocation();
+  const [location, setLocation] = useLocation();
   const typedUser = user as UserType | undefined;
   const [searchQuery, setSearchQuery] = useState("");
   const [showResults, setShowResults] = useState(false);
@@ -247,7 +247,7 @@ export default function Header() {
                       data-testid="logout-button"
                       onClick={() => {
                         fetch('/api/auth/logout', { method: 'POST', credentials: 'include' })
-                          .then(() => window.location.href = '/');
+                          .then(() => setLocation('/'));
                       }}
                     >
                       <LogOut className="h-3.5 w-3.5" />
