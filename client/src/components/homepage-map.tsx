@@ -2,6 +2,7 @@ import { useEffect, useRef, useMemo } from "react";
 import { MapContainer, TileLayer, Marker, Popup, Circle, useMap } from "react-leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
+import { Capacitor } from "@capacitor/core";
 
 const PUB_COLOR = "#F77104";
 const BREWERY_COLOR = "#9B4E10";
@@ -144,6 +145,17 @@ export default function HomepageMap({
   showBreweries = true,
   distanceKm,
 }: HomepageMapProps) {
+  // ── FIX CRITICO: freeze touch su Capacitor Android ──────────────────────────
+  // Il drag handler di Leaflet aggiunge touchmove + touchend al DOCUMENT (non
+  // solo al container della mappa) per tracciare i gesti. Su Android WebView,
+  // questi listener globali intercettano OGNI touch nell'intera app e chiamano
+  // preventDefault(), causando il freeze di qualsiasi tap.
+  // Soluzione: disabilitare dragging e touchZoom su native — Leaflet non aggiunge
+  // mai i listener globali al document, e l'app rimane interattiva.
+  // La mappa è ancora visibile e mostra i pin; i popup funzionano normalmente.
+  const isNative = Capacitor.isNativePlatform();
+  // ─────────────────────────────────────────────────────────────────────────────
+
   const geoFilteredPubs = useMemo(() => {
     if (!showPubs) return [];
     const valid = pubs.filter(p =>
@@ -199,6 +211,10 @@ export default function HomepageMap({
         attributionControl={true}
         scrollWheelZoom={false}
         tap={false}
+        // Su Capacitor Android: dragging=false rimuove i listener globali di
+        // Leaflet sul document (touchmove/touchend), eliminando il freeze.
+        dragging={!isNative}
+        touchZoom={!isNative}
         className="z-0"
       >
         <TileLayer
