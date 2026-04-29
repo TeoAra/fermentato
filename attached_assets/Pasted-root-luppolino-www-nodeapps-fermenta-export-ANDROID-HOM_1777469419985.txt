@@ -1,0 +1,60 @@
+root@luppolino:/www/nodeapps/fermenta# export ANDROID_HOME=$HOME/android-sdk
+root@luppolino:/www/nodeapps/fermenta# export PATH=$PATH:$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/platform-tools
+root@luppolino:/www/nodeapps/fermenta# echo "sdk.dir=$HOME/android-sdk" > /www/nodeapps/fermenta/android/local.properties
+root@luppolino:/www/nodeapps/fermenta#
+root@luppolino:/www/nodeapps/fermenta# ./android/gradlew -p android assembleDebug
+
+> Configure project :app
+WARNING: Using flatDir should be avoided because it doesn't support any meta-data formats.
+
+> Configure project :capacitor-cordova-android-plugins
+WARNING: Using flatDir should be avoided because it doesn't support any meta-data formats.
+
+> Task :app:checkDebugAarMetadata FAILED
+
+FAILURE: Build failed with an exception.
+
+* What went wrong:
+Execution failed for task ':app:checkDebugAarMetadata'.
+> A failure occurred while executing com.android.build.gradle.internal.tasks.CheckAarMetadataWorkAction
+   > 2 issues were found when checking AAR metadata:
+
+       1.  Dependency 'androidx.core:core-ktx:1.17.0' requires libraries and applications that
+           depend on it to compile against version 36 or later of the
+           Android APIs.
+
+           :app is currently compiled against android-35.
+
+           Recommended action: Update this project to use a newer compileSdk
+           of at least 36, for example 36.
+
+           Note that updating a library or application's compileSdk (which
+           allows newer APIs to be used) can be done separately from updating
+           targetSdk (which opts the app in to new runtime behavior) and
+           minSdk (which determines which devices the app can be installed
+           on).
+
+       2.  Dependency 'androidx.core:core:1.17.0' requires libraries and applications that
+           depend on it to compile against version 36 or later of the
+           Android APIs.
+
+           :app is currently compiled against android-35.
+
+           Recommended action: Update this project to use a newer compileSdk
+           of at least 36, for example 36.
+
+           Note that updating a library or application's compileSdk (which
+           allows newer APIs to be used) can be done separately from updating
+           targetSdk (which opts the app in to new runtime behavior) and
+           minSdk (which determines which devices the app can be installed
+           on).
+
+* Try:
+> Run with --stacktrace option to get the stack trace.
+> Run with --info or --debug option to get more log output.
+> Run with --scan to get full insights.
+> Get more help at https://help.gradle.org.
+
+BUILD FAILED in 4s
+13 actionable tasks: 1 executed, 12 up-to-date
+root@luppolino:/www/nodeapps/fermenta#
