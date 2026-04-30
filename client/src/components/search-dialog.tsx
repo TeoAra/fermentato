@@ -117,16 +117,20 @@ export default function SearchDialog({ isOpen, onClose }: SearchDialogProps) {
   const totalResults = (searchResults?.pubs?.length || 0) + (searchResults?.breweries?.length || 0) + (searchResults?.beers?.length || 0) + (searchResults?.users?.length || 0);
 
   return (
-    <div className="fixed inset-0 z-[200] flex flex-col">
+    <div
+      className="fixed inset-0 z-[200] flex flex-col items-center"
+      style={{ paddingTop: 'env(safe-area-inset-top)' }}
+    >
       {/* Backdrop */}
       <div
-        className="absolute inset-0 bg-black/40 backdrop-blur-sm"
+        className="absolute inset-0 bg-black/50 backdrop-blur-sm"
         onClick={handleClose}
       />
 
-      {/* Panel — slides from top, full width on mobile, centered card on desktop */}
-      <div className="relative z-10 w-full lg:max-w-2xl lg:mx-auto lg:mt-20 lg:rounded-2xl lg:shadow-2xl flex flex-col bg-white dark:bg-[hsl(25,14%,9%)] overflow-hidden"
-        style={{ maxHeight: 'min(92dvh, 700px)' }}
+      {/* Panel — floating card with lateral margins, rounded on all sides */}
+      <div
+        className="relative z-10 w-full max-w-lg mx-3 mt-2 rounded-2xl shadow-2xl flex flex-col bg-white dark:bg-[hsl(25,14%,9%)] overflow-hidden"
+        style={{ maxHeight: 'calc(min(88dvh, 680px) - env(safe-area-inset-top))' }}
       >
         {/* ── Search bar ── */}
         <div className="flex items-center gap-2.5 px-4 pt-4 pb-3 border-b border-stone-100 dark:border-white/[0.06]">
