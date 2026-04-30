@@ -1260,7 +1260,7 @@ export default function BreweryDetail() {
 
       {/* Beer Edit Dialog */}
       <Dialog open={isBeerEditOpen} onOpenChange={setIsBeerEditOpen}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="w-[calc(100%-24px)] sm:w-full sm:max-w-2xl max-h-[85dvh] overflow-y-auto rounded-2xl">
           <DialogHeader>
             <div className="flex items-center justify-between">
               <DialogTitle className="flex items-center gap-2">
@@ -1279,7 +1279,7 @@ export default function BreweryDetail() {
             </div>
           </DialogHeader>
           <div className="space-y-4 py-2">
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="bedit-name">Nome</Label>
                 <Input
@@ -1299,7 +1299,7 @@ export default function BreweryDetail() {
                 />
               </div>
             </div>
-            <div className="grid grid-cols-3 gap-4">
+            <div className="grid grid-cols-3 gap-3">
               <div className="space-y-2">
                 <Label htmlFor="bedit-abv">ABV (%)</Label>
                 <Input
