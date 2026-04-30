@@ -218,7 +218,7 @@ function Router() {
 
       {/* Main Content — pt-14 mobile header (h-14), desktop topbar is h-16 so lg:pt-16 */}
       <div>
-      <main className="pb-20 lg:pb-8" style={{ paddingTop: 'var(--mobile-top-offset)' }}>
+      <main className="main-content-pb lg:pb-8" style={{ paddingTop: 'var(--mobile-top-offset)' }}>
         <RouteErrorBoundary>
         <Suspense fallback={<PageSkeleton />}>
         <div key={location.split('?')[0]} className="route-fade">

@@ -25,9 +25,13 @@ function radiusToZoom(km: number): number {
   return 8;
 }
 
+// CARTO Positron – pulito e minimalista come Google Maps
 const cartoVoyager = (x: number, y: number, z: number, dpr?: number) => {
   const s = "abcd"[Math.abs(x + y) % 4];
-  return `https://${s}.basemaps.cartocdn.com/rastertiles/voyager/${z}/${x}/${y}${dpr && dpr >= 2 ? "@2x" : ""}.png`;
+  const retina = dpr && dpr >= 2 ? "@2x" : "";
+  const dark = typeof document !== "undefined" && document.documentElement.classList.contains("dark");
+  const style = dark ? "dark_matter_lite" : "light_all";
+  return `https://${s}.basemaps.cartocdn.com/${style}/${z}/${x}/${y}${retina}.png`;
 };
 
 interface MapPub {

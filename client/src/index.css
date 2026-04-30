@@ -523,6 +523,13 @@
   .stagger-item:nth-child(8)  { animation-delay: 260ms; }
   .stagger-item:nth-child(n+9) { animation-delay: 280ms; }
 
+  /* ── Main content bottom padding — clears the 64px nav + safe area (mobile only) ── */
+  @media (max-width: 1023px) {
+    .main-content-pb {
+      padding-bottom: max(calc(64px + env(safe-area-inset-bottom) + 8px), 80px) !important;
+    }
+  }
+
   /* ── Bottom nav pill active state ── */
   .bottom-nav-tab {
     position: relative;
@@ -530,10 +537,10 @@
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: 2px;
+    gap: 3px;
     flex: 1;
-    padding: 8px 0 6px;
-    min-height: 54px;
+    padding: 10px 0 8px;
+    min-height: 64px;
     transition: color 0.2s ease;
     cursor: pointer;
   }
@@ -566,7 +573,7 @@
   .bottom-nav-tab .nav-label {
     position: relative;
     z-index: 1;
-    font-size: 9.5px;
+    font-size: 10px;
     font-weight: 600;
     letter-spacing: 0.01em;
     line-height: 1;
