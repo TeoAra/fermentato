@@ -1,6 +1,5 @@
 // ─────────────────────────────────────────────────────────────────────────────
 // Versione corrente dell'APK Android.
-// INCREMENTARE questo valore PRIMA di fare il build di ogni nuovo APK.
-// Il server legge APP_MIN_VERSION dall'ambiente per forzare l'aggiornamento.
+// Auto-aggiornata da scripts/bump-version.sh ad ogni deploy sul VPS.
 // ─────────────────────────────────────────────────────────────────────────────
-export const APP_VERSION = "1.0.0";
+export const APP_VERSION = "1.0.2";

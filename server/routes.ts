@@ -1,7 +1,16 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
-import { existsSync } from "fs";
+import { existsSync, readFileSync } from "fs";
 import { join } from "path";
+
+// ── Versione app da version.json (auto-incrementata da scripts/bump-version.sh) ──
+function getAppVersion(): string {
+  try {
+    const f = join(process.cwd(), "version.json");
+    if (existsSync(f)) return JSON.parse(readFileSync(f, "utf8")).version ?? "1.0.0";
+  } catch {}
+  return process.env.APP_VERSION ?? "1.0.0";
+}
 import { addClient, removeClient, broadcastPubUpdate } from "./pubBroadcast";
 
 // ─── Simple in-memory TTL cache ──────────────────────────────────────────────
@@ -7660,9 +7669,10 @@ ${meta.jsonld ? `<script type="application/ld+json">${JSON.stringify(meta.jsonld
   //   APP_MIN_VERSION  = versione minima richiesta  (es. "1.1.0")  default: "1.0.0"
   //   APP_RELEASE_NOTES = testo opzionale mostrato nel dialog       default: ""
   app.get("/api/app-version", (_req, res) => {
+    const ver = getAppVersion();
     res.json({
-      current:      process.env.APP_VERSION       ?? "1.0.0",
-      minimum:      process.env.APP_MIN_VERSION    ?? "1.0.0",
+      current:      ver,
+      minimum:      process.env.APP_MIN_VERSION    ?? ver,
       downloadUrl:  "https://fermenta.to/app/download",
       releaseNotes: process.env.APP_RELEASE_NOTES  ?? "",
     });
