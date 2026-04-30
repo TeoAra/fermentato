@@ -48,8 +48,6 @@ const ExplorePubs        = lazy(() => import("@/pages/explore-pubs"));
 const ExploreBreweries   = lazy(() => import("@/pages/explore-breweries"));
 const ExploreBeers       = lazy(() => import("@/pages/explore-beers"));
 const SearchPage         = lazy(() => import("@/pages/search"));
-const ScanPage           = lazy(() => import("@/pages/scan"));
-const ScanHistoryPage    = lazy(() => import("@/pages/scan-history"));
 const AuthPage           = lazy(() => import("@/pages/auth"));
 const DemoLoginPage      = lazy(() => import("@/pages/demo-login-page"));
 const BecomePublican     = lazy(() => import("@/pages/become-publican"));
@@ -273,8 +271,6 @@ function Router() {
           <Route path="/notifications" component={Notifications} />
           <Route path="/user/:nickname" component={UserPublicProfile} />
           <Route path="/search" component={SearchPage} />
-          <Route path="/scan" component={ScanPage} />
-          <Route path="/scan/history" component={ScanHistoryPage} />
           <Route path="/activity" component={Activity} />
           <Route path="/my-cellar" component={MyCellar} />
           <Route path="/my-wishlist" component={MyWishlist} />

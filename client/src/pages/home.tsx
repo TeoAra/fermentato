@@ -202,6 +202,7 @@ export default function Home() {
   const { data: allBreweries } = useQuery({
     queryKey: ["/api/breweries/map"],
     staleTime: 10 * 60 * 1000,
+    enabled: !Capacitor.isNativePlatform(),
   });
 
   const { data: favorites } = useQuery({
@@ -396,25 +397,27 @@ export default function Home() {
         </div>
       </section>
 
-      {/* ─── Mappa ────────────────────────────────────────────────────────── */}
-      <Suspense fallback={<div className="h-64 bg-stone-100 dark:bg-stone-800 animate-pulse rounded-2xl mx-4" />}>
-        <HomepageMap
-          pubs={Array.isArray(pubs) ? pubs : []}
-          breweries={(() => {
-            const src = Array.isArray(allBreweries) ? allBreweries : (Array.isArray(breweries) ? breweries : []);
-            return (src as any[]).filter((b: any) => b.latitude && b.longitude);
-          })()}
-          userLocation={userLocation}
-          isLoading={pubsLoading || breweriesLoading}
-          showPubs={showPubs}
-          showBreweries={showBreweries}
-          distanceKm={userLocation ? distanceKm : undefined}
-          onLocate={(loc) => {
-            setUserLocation(loc);
-            setLocationStatus('granted');
-          }}
-        />
-      </Suspense>
+      {/* ─── Mappa (solo web — su native causa freeze) ─────────────────────── */}
+      {!Capacitor.isNativePlatform() && (
+        <Suspense fallback={<div className="h-64 bg-stone-100 dark:bg-stone-800 animate-pulse rounded-2xl mx-4" />}>
+          <HomepageMap
+            pubs={Array.isArray(pubs) ? pubs : []}
+            breweries={(() => {
+              const src = Array.isArray(allBreweries) ? allBreweries : (Array.isArray(breweries) ? breweries : []);
+              return (src as any[]).filter((b: any) => b.latitude && b.longitude);
+            })()}
+            userLocation={userLocation}
+            isLoading={pubsLoading || breweriesLoading}
+            showPubs={showPubs}
+            showBreweries={showBreweries}
+            distanceKm={userLocation ? distanceKm : undefined}
+            onLocate={(loc) => {
+              setUserLocation(loc);
+              setLocationStatus('granted');
+            }}
+          />
+        </Suspense>
+      )}
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-4 pb-10 lg:pt-6 lg:pb-12">
 
