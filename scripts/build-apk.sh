@@ -111,10 +111,18 @@ build() {
     for dir in mipmap-mdpi mipmap-hdpi mipmap-xhdpi mipmap-xxhdpi mipmap-xxxhdpi; do
       DEST="app/src/main/res/$dir"
       mkdir -p "$DEST"
-      cp "$ICONS_SRC/$dir/ic_launcher.png"       "$DEST/ic_launcher.png"
-      cp "$ICONS_SRC/$dir/ic_launcher_round.png"  "$DEST/ic_launcher_round.png"
+      cp "$ICONS_SRC/$dir/ic_launcher.png"            "$DEST/ic_launcher.png"
+      cp "$ICONS_SRC/$dir/ic_launcher_round.png"       "$DEST/ic_launcher_round.png"
+      cp "$ICONS_SRC/$dir/ic_launcher_foreground.png"  "$DEST/ic_launcher_foreground.png"
     done
-    echo "    ✅ Icone copiate (mdpi→xxxhdpi)"
+
+    # Adaptive icon XML (Android 8.0+): sovrascrive il default Capacitor (X blu)
+    ANYDPI_DEST="app/src/main/res/mipmap-anydpi-v26"
+    mkdir -p "$ANYDPI_DEST"
+    cp "$ICONS_SRC/mipmap-anydpi-v26/ic_launcher.xml"       "$ANYDPI_DEST/ic_launcher.xml"
+    cp "$ICONS_SRC/mipmap-anydpi-v26/ic_launcher_round.xml"  "$ANYDPI_DEST/ic_launcher_round.xml"
+
+    echo "    ✅ Icone copiate (mdpi→xxxhdpi, legacy + adaptive foreground)"
   else
     echo "    ⚠️  capacitor-resources/android non trovata — icone non aggiornate"
   fi
