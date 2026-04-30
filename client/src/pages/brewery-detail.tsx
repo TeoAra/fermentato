@@ -54,7 +54,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
-import { useState, useEffect, useCallback, useMemo, useRef } from "react";
+import { useState, useEffect, useCallback, useMemo, useRef, Suspense, lazy } from "react";
+const CheckinModal = lazy(() => import("@/components/checkin-modal"));
 import ImageWithFallback from "@/components/image-with-fallback";
 import { ImageUpload } from "@/components/image-upload";
 import SuggestChangeDialog from "@/components/SuggestChangeDialog";
@@ -319,6 +320,7 @@ export default function BreweryDetail() {
   };
 
   const canEditBeers = isAdmin || !!(user as any)?.breweryId;
+  const [checkinBeer, setCheckinBeer] = useState<any>(null);
 
   const { data: beers = [], isLoading: beersLoading } = useQuery<Beer[]>({
     queryKey: ["/api/breweries", id, "beers"],
@@ -855,10 +857,19 @@ export default function BreweryDetail() {
                                 {canEditBeers && (
                                   <button
                                     onClick={e => { e.preventDefault(); e.stopPropagation(); openBeerEditDialog(beer); }}
-                                    className="h-8 w-8 flex items-center justify-center rounded-xl transition-all opacity-0 group-hover:opacity-100 hover:bg-primary/10"
+                                    className="h-8 w-8 flex items-center justify-center rounded-xl transition-all hover:bg-primary/10"
                                     title="Modifica birra"
                                   >
                                     <Pencil className="h-3.5 w-3.5 text-primary" />
+                                  </button>
+                                )}
+                                {isAuthenticated && (
+                                  <button
+                                    onClick={e => { e.preventDefault(); e.stopPropagation(); setCheckinBeer(beer); }}
+                                    className="h-8 w-8 flex items-center justify-center rounded-xl transition-all hover:bg-amber-50 dark:hover:bg-amber-900/20"
+                                    title="Check-in"
+                                  >
+                                    <Beer className="h-4 w-4 text-amber-500" />
                                   </button>
                                 )}
                                 <button
@@ -868,7 +879,7 @@ export default function BreweryDetail() {
                                     if (!isAuthenticated) return;
                                     favoriteMutation.mutate({ itemType: 'beer', itemId: beer.id, action: isBeerFavorited(beer.id) ? 'remove' : 'add' });
                                   }}
-                                  className="h-8 w-8 flex items-center justify-center rounded-xl transition-all opacity-0 group-hover:opacity-100 hover:bg-stone-50 dark:hover:bg-stone-900/30"
+                                  className="h-8 w-8 flex items-center justify-center rounded-xl transition-all hover:bg-stone-50 dark:hover:bg-stone-900/30"
                                 >
                                   <Heart className={`h-4 w-4 ${isBeerFavorited(beer.id) ? 'fill-primary text-primary' : 'text-muted-foreground'}`} />
                                 </button>
@@ -1475,6 +1486,23 @@ export default function BreweryDetail() {
           </div>
         </DialogContent>
       </Dialog>
+
+      {checkinBeer && (
+        <Suspense fallback={null}>
+          <CheckinModal
+            open={!!checkinBeer}
+            onClose={() => setCheckinBeer(null)}
+            beer={{
+              id: checkinBeer.id,
+              name: checkinBeer.name,
+              style: checkinBeer.style ?? null,
+              breweryName: brewery?.name ?? null,
+            }}
+            pub={null}
+            tapType="bottiglia"
+          />
+        </Suspense>
+      )}
 
       <Footer />
     </div>

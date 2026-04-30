@@ -92,33 +92,52 @@ export default function Home() {
       autoWatchRef.current = wid;
     };
 
-    // Su Capacitor Android: usa il plugin nativo per richiedere il permesso
-    // (mostra il dialog di sistema Android), poi avvia navigator.geolocation
+    // Su Capacitor Android: se il permesso è già stato richiesto in precedenza
+    // (tramite il card CapacitorLocationPrompt) avviamo direttamente la geo.
+    // Se è la prima volta, aspettiamo l'evento 'capacitor-location-start'
+    // che viene emesso dal card dopo aver ottenuto requestPermissions().
     if (Capacitor.isNativePlatform()) {
       let cancelled = false;
-      const requestAndStart = async () => {
-        try {
-          // requestPermissions() mostra il dialog nativo di sistema
-          const status = await Geolocation.requestPermissions();
-          if (cancelled) return;
-          if (status.location === 'denied' || status.coarseLocation === 'denied') {
-            setLocationStatus('denied');
-            return;
+      const alreadyPrompted = localStorage.getItem('capacitor-location-prompted');
+
+      if (alreadyPrompted) {
+        // Permesso già richiesto in precedenza: avvia direttamente
+        const requestAndStart = async () => {
+          try {
+            const status = await Geolocation.requestPermissions();
+            if (cancelled) return;
+            if (status.location === 'denied' || status.coarseLocation === 'denied') {
+              setLocationStatus('denied');
+              return;
+            }
+          } catch {
+            // permesso già concesso o non disponibile — procedi comunque
           }
-        } catch {
-          // permesso già concesso o non disponibile — procedi comunque
-        }
-        if (!cancelled) startGeo();
-      };
-      const t = setTimeout(requestAndStart, 1500);
-      return () => {
-        cancelled = true;
-        clearTimeout(t);
-        if (autoWatchRef.current !== null) {
-          navigator.geolocation.clearWatch(autoWatchRef.current);
-          autoWatchRef.current = null;
-        }
-      };
+          if (!cancelled) startGeo();
+        };
+        const t = setTimeout(requestAndStart, 500);
+        return () => {
+          cancelled = true;
+          clearTimeout(t);
+          if (autoWatchRef.current !== null) {
+            navigator.geolocation.clearWatch(autoWatchRef.current);
+            autoWatchRef.current = null;
+          }
+        };
+      } else {
+        // Prima volta: il card CapacitorLocationPrompt gestirà requestPermissions().
+        // Qui ascoltiamo solo l'evento per avviare navigator.geolocation.
+        const handler = () => { if (!cancelled) startGeo(); };
+        window.addEventListener('capacitor-location-start', handler, { once: true });
+        return () => {
+          cancelled = true;
+          window.removeEventListener('capacitor-location-start', handler);
+          if (autoWatchRef.current !== null) {
+            navigator.geolocation.clearWatch(autoWatchRef.current);
+            autoWatchRef.current = null;
+          }
+        };
+      }
     }
 
     startGeo();

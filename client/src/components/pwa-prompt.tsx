@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
-import { X, Download, Bell, Share2, Smartphone, ArrowUp, Plus, CheckCircle } from "lucide-react";
+import { X, Download, Bell, Share2, Smartphone, ArrowUp, Plus, CheckCircle, MapPin } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { apiRequest } from "@/lib/queryClient";
 
@@ -409,6 +409,78 @@ export function PwaInstallPrompt() {
   );
 }
 
+// ── Prompt posizione GPS per APK Capacitor Android ────────────────────────────
+// Mostra un card esplicativo prima di richiedere il permesso sistema GPS.
+export function CapacitorLocationPrompt() {
+  const isNative = typeof window !== 'undefined' && (window as any).Capacitor?.isNativePlatform?.();
+  const { isAuthenticated } = useAuth();
+  const [show, setShow] = useState(false);
+  const [dismissed, setDismissed] = useState(false);
+
+  useEffect(() => {
+    if (!isNative || !isAuthenticated) return;
+    if (localStorage.getItem('capacitor-location-prompted')) return;
+    const timer = setTimeout(() => setShow(true), 3000);
+    return () => clearTimeout(timer);
+  }, [isNative, isAuthenticated]);
+
+  const handleEnable = async () => {
+    setShow(false);
+    localStorage.setItem('capacitor-location-prompted', '1');
+    try {
+      const { Geolocation } = await import('@capacitor/geolocation');
+      await Geolocation.requestPermissions();
+    } catch {}
+    // Notifica home.tsx di avviare la geolocalizzazione
+    window.dispatchEvent(new CustomEvent('capacitor-location-start'));
+  };
+
+  const handleDismiss = () => {
+    setShow(false);
+    setDismissed(true);
+    localStorage.setItem('capacitor-location-prompted', 'dismissed');
+  };
+
+  if (!isNative || !show || dismissed) return null;
+
+  return (
+    <div className="fixed bottom-36 left-4 right-4 z-50">
+      <div className="bg-white dark:bg-gray-900 border border-amber-200 dark:border-amber-800 rounded-2xl p-4 shadow-2xl">
+        <div className="flex items-start gap-3">
+          <div className="p-2 bg-gradient-to-br from-amber-500 to-orange-600 rounded-xl flex-shrink-0">
+            <MapPin className="w-5 h-5 text-white" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <h3 className="font-semibold text-foreground dark:text-white text-sm">
+              Attiva la posizione
+            </h3>
+            <p className="text-xs text-muted-foreground dark:text-stone-400 mt-0.5">
+              Per mostrare i pub e le birrerie vicino a te.
+            </p>
+          </div>
+          <button onClick={handleDismiss} className="text-stone-400 hover:text-muted-foreground">
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+        <div className="flex gap-2 mt-3">
+          <Button
+            onClick={handleEnable}
+            size="sm"
+            className="flex-1 bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 text-white"
+          >
+            <MapPin className="w-4 h-4 mr-1" />
+            Attiva
+          </Button>
+          <Button onClick={handleDismiss} size="sm" variant="ghost" className="text-muted-foreground">
+            Non ora
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+}
+// ─────────────────────────────────────────────────────────────────────────────
+
 // ── Prompt notifiche per APK Capacitor Android ────────────────────────────────
 // Usa @capacitor/push-notifications per mostrare il dialog di sistema Android.
 export function CapacitorPushPrompt() {
@@ -439,10 +511,10 @@ export function CapacitorPushPrompt() {
       const { PushNotifications } = await import("@capacitor/push-notifications");
       const result = await PushNotifications.requestPermissions();
       localStorage.setItem('capacitor-push-permission', result.receive);
-      if (result.receive === 'granted') {
-        try { await PushNotifications.register(); } catch { /* FCM non configurato — ok */ }
-      }
-    } catch {}
+      // Non chiamiamo register() — FCM non configurato, causerebbe crash nativo
+    } catch {
+      localStorage.setItem('capacitor-push-permission', 'error');
+    }
   };
 
   const handleDismiss = () => {
@@ -454,7 +526,7 @@ export function CapacitorPushPrompt() {
   if (!isNative || !show || dismissed) return null;
 
   return (
-    <div className="fixed bottom-20 left-4 right-4 z-50 animate-in slide-in-from-bottom-5">
+    <div className="fixed bottom-20 left-4 right-4 z-50">
       <div className="bg-white dark:bg-gray-900 border border-amber-200 dark:border-amber-800 rounded-2xl p-4 shadow-2xl">
         <div className="flex items-start gap-3">
           <div className="p-2 bg-gradient-to-br from-amber-500 to-orange-600 rounded-xl flex-shrink-0">

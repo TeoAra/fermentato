@@ -211,7 +211,7 @@ export default function SearchDialog({ isOpen, onClose }: SearchDialogProps) {
                       <span
                         role="button"
                         onClick={e => removeSearch(s, e as any)}
-                        className="opacity-0 group-hover:opacity-100 focus:opacity-100 text-stone-400 hover:text-stone-600 dark:hover:text-stone-200 transition-opacity p-1"
+                        className="text-stone-400 hover:text-stone-600 dark:hover:text-stone-200 transition-opacity p-1"
                       >
                         <X className="h-3.5 w-3.5" />
                       </span>
