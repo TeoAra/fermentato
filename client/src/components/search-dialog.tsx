@@ -129,29 +129,38 @@ export default function SearchDialog({ isOpen, onClose }: SearchDialogProps) {
         style={{ maxHeight: 'min(92dvh, 700px)' }}
       >
         {/* ── Search bar ── */}
-        <div className="flex items-center gap-3 px-4 pt-4 pb-3 border-b border-stone-100 dark:border-white/[0.06]">
-          <Search className="h-5 w-5 text-stone-400 flex-shrink-0" />
-          <input
-            ref={inputRef}
-            type="search"
-            placeholder="Cerca pub, birrifici, birre..."
-            value={searchTerm}
-            onChange={e => setSearchTerm(e.target.value)}
-            onKeyDown={handleKeyDown}
-            className="flex-1 bg-transparent text-base text-stone-900 dark:text-white placeholder:text-stone-400 focus:outline-none"
-            data-testid="input-search"
-          />
-          {isLoading ? (
-            <Loader2 className="h-4 w-4 animate-spin text-primary flex-shrink-0" />
-          ) : searchTerm ? (
-            <button onClick={() => setSearchTerm("")} className="text-stone-400 hover:text-stone-600 dark:hover:text-stone-300 transition-colors">
-              <X className="h-4 w-4" />
-            </button>
-          ) : (
-            <button onClick={handleClose} className="text-sm text-stone-500 dark:text-stone-400 font-medium pl-2">
-              Annulla
-            </button>
-          )}
+        <div className="flex items-center gap-2.5 px-4 pt-4 pb-3 border-b border-stone-100 dark:border-white/[0.06]">
+          {/* Pill input */}
+          <div className="flex-1 flex items-center gap-2 bg-stone-100 dark:bg-stone-800 rounded-full px-4 py-2.5">
+            <Search className="h-4 w-4 text-stone-400 flex-shrink-0" />
+            <input
+              ref={inputRef}
+              type="search"
+              placeholder="Cerca pub, birrifici, birre..."
+              value={searchTerm}
+              onChange={e => setSearchTerm(e.target.value)}
+              onKeyDown={handleKeyDown}
+              className="flex-1 bg-transparent text-[15px] text-stone-900 dark:text-white placeholder:text-stone-400 focus:outline-none min-w-0"
+              data-testid="input-search"
+            />
+            {isLoading && <Loader2 className="h-3.5 w-3.5 animate-spin text-primary flex-shrink-0" />}
+            {!isLoading && searchTerm && (
+              <button
+                onClick={() => setSearchTerm("")}
+                className="h-4.5 w-4.5 flex items-center justify-center text-stone-400 hover:text-stone-600 dark:hover:text-stone-200 transition-colors flex-shrink-0"
+              >
+                <X className="h-3.5 w-3.5" />
+              </button>
+            )}
+          </div>
+          {/* Circular close button */}
+          <button
+            onClick={handleClose}
+            className="h-9 w-9 flex-shrink-0 flex items-center justify-center rounded-full bg-stone-100 dark:bg-stone-800 text-stone-500 dark:text-stone-400 hover:bg-stone-200 dark:hover:bg-stone-700 active:scale-95 transition-all"
+            aria-label="Chiudi ricerca"
+          >
+            <X className="h-4 w-4" />
+          </button>
         </div>
 
         {/* ── Filters ── */}
