@@ -1,7 +1,7 @@
 import { Helmet } from "react-helmet-async";
 import { useQuery } from "@tanstack/react-query";
 import { useState, useMemo } from "react";
-import { Link } from "wouter";
+import { Link, useSearch } from "wouter";
 import { MapPin, Store, Map, ChevronDown, ChevronRight, Search, X } from "lucide-react";
 import { PubMap } from "@/components/pub-map";
 import PubCard from "@/components/pub-card";
@@ -16,8 +16,12 @@ const statiItaliani = [
 type ViewMode = "list" | "map";
 
 export default function ExplorePubs() {
+  const searchString = useSearch();
+  const params = new URLSearchParams(searchString);
+  const initialView: ViewMode = params.get("view") === "map" ? "map" : "list";
+
   const [openStates, setOpenStates] = useState<string[]>([]);
-  const [viewMode, setViewMode] = useState<ViewMode>("list");
+  const [viewMode, setViewMode] = useState<ViewMode>(initialView);
   const [search, setSearch] = useState("");
 
   const { data: allPubs, isLoading } = useQuery({

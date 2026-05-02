@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "wouter";
 import {
-  Search, X, Beer, MapPin, ChevronRight, Store, Sparkles
+  Search, X, Beer, MapPin, ChevronRight, Store, Sparkles, Map
 } from "lucide-react";
 
 interface FindBeerSheetProps {
@@ -89,7 +89,7 @@ export default function FindBeerSheet({ open, onClose, nearbyPubs = [] }: FindBe
   return (
     <>
       <div
-        className="fixed inset-0 z-[60] bg-black/50 backdrop-blur-[2px]"
+        className="fixed inset-0 z-[60] bg-black/70"
         onClick={onClose}
         style={{ animation: "fadeIn 200ms ease" }}
       />
@@ -164,41 +164,54 @@ export default function FindBeerSheet({ open, onClose, nearbyPubs = [] }: FindBe
           </div>
         </div>
 
-        {Array.isArray(popularStyles) && popularStyles.length > 0 && (
-          <div className="px-4 pb-3 flex-shrink-0">
-            <div className="flex gap-1.5 overflow-x-auto scrollbar-hide">
-              {popularStyles.slice(0, 20).map(s => (
+        {Array.isArray(popularStyles) && popularStyles.length > 0 && (() => {
+          const shortcutStyles = new Set(SHORTCUTS.map(s => s.style).filter(Boolean));
+          const extraStyles = popularStyles.filter(s => !shortcutStyles.has(s.style));
+          if (extraStyles.length === 0) return null;
+          return (
+            <div className="px-4 pb-3 flex-shrink-0">
+              <div className="flex gap-1.5 overflow-x-auto scrollbar-hide">
+                {extraStyles.slice(0, 15).map(s => (
+                  <button
+                    key={s.style}
+                    onClick={() => { setActiveStyle(s.style === activeStyle ? "" : s.style); setQuery(""); setActiveTab("birre"); }}
+                    className={`flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-bold border transition-all tap-scale ${
+                      activeStyle === s.style
+                        ? "bg-primary text-white border-primary"
+                        : "bg-white dark:bg-stone-800/40 text-stone-500 dark:text-stone-400 border-stone-200 dark:border-stone-700"
+                    }`}
+                  >
+                    {s.style.split(" - ")[0].split("/")[0].trim()}
+                  </button>
+                ))}
+              </div>
+            </div>
+          );
+        })()}
+
+        <div className="px-4 pb-3 flex-shrink-0">
+          <div className="flex items-center gap-2">
+            <div className="flex bg-stone-100 dark:bg-stone-800/60 rounded-2xl p-1 gap-1 flex-1">
+              {(["birre", "locali"] as const).map(tab => (
                 <button
-                  key={s.style}
-                  onClick={() => { setActiveStyle(s.style === activeStyle ? "" : s.style); setQuery(""); setActiveTab("birre"); }}
-                  className={`flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-bold border transition-all tap-scale ${
-                    activeStyle === s.style
-                      ? "bg-primary text-white border-primary"
-                      : "bg-white dark:bg-stone-800/40 text-stone-500 dark:text-stone-400 border-stone-200 dark:border-stone-700"
+                  key={tab}
+                  onClick={() => setActiveTab(tab)}
+                  className={`flex-1 py-2.5 rounded-xl text-sm font-bold transition-all ${
+                    activeTab === tab
+                      ? "bg-white dark:bg-stone-700 text-foreground shadow-sm"
+                      : "text-stone-400 dark:text-stone-500"
                   }`}
                 >
-                  {s.style.split(" - ")[0].split("/")[0].trim()}
+                  {tab === "birre" ? "🍺 Birre" : "🏠 Locali"}
                 </button>
               ))}
             </div>
-          </div>
-        )}
-
-        <div className="px-4 pb-3 flex-shrink-0">
-          <div className="flex bg-stone-100 dark:bg-stone-800/60 rounded-2xl p-1 gap-1">
-            {(["birre", "locali"] as const).map(tab => (
-              <button
-                key={tab}
-                onClick={() => setActiveTab(tab)}
-                className={`flex-1 py-2.5 rounded-xl text-sm font-bold transition-all ${
-                  activeTab === tab
-                    ? "bg-white dark:bg-stone-700 text-foreground shadow-sm"
-                    : "text-stone-400 dark:text-stone-500"
-                }`}
-              >
-                {tab === "birre" ? "🍺 Birre" : "🏠 Locali"}
+            <Link href="/explore/pubs?view=map" onClick={onClose}>
+              <button className="flex-shrink-0 flex items-center gap-1.5 px-3 py-2.5 rounded-2xl bg-stone-100 dark:bg-stone-800/60 text-stone-600 dark:text-stone-300 text-sm font-bold border border-stone-200 dark:border-stone-700 tap-scale">
+                <Map className="w-4 h-4 text-primary" />
+                Mappa
               </button>
-            ))}
+            </Link>
           </div>
         </div>
 

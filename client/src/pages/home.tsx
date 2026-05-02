@@ -255,8 +255,8 @@ export default function Home() {
           {/* Dark gradient overlay */}
           <div className="absolute inset-0 bg-gradient-to-t from-black/82 via-black/35 to-black/10 pointer-events-none" />
 
-          {/* Content */}
-          <div className="absolute inset-0 flex flex-col justify-end p-5">
+          {/* Content — pointer-events-none so the map stays interactive */}
+          <div className="absolute inset-0 flex flex-col justify-end p-5 pointer-events-none">
             {/* Location chip */}
             {locationStatus === 'granted' && (
               <div className="flex items-center gap-1 mb-2.5">
@@ -298,9 +298,9 @@ export default function Home() {
           </div>
         </div>
 
-        {/* Filter chips row */}
-        <div className="flex items-center gap-2 mt-3 overflow-x-auto scrollbar-hide pb-0.5">
-          {/* Distance picker */}
+        {/* Filter chips row — distance picker OUTSIDE overflow so dropdown isn't clipped */}
+        <div className="flex items-center gap-2 mt-3 pb-0.5">
+          {/* Distance picker — sits outside overflow context */}
           <div className="relative flex-shrink-0">
             <button
               onClick={() => setShowDistancePicker(v => !v)}
@@ -313,7 +313,7 @@ export default function Home() {
               <>
                 <div className="fixed inset-0 z-40" onClick={() => setShowDistancePicker(false)} />
                 <div className="absolute top-11 left-0 z-50 bg-card border border-border rounded-2xl shadow-card overflow-hidden min-w-[110px]">
-                  {[5, 10, 15, 20, 30, 50, 100].map(d => (
+                  {[1, 5, 10, 15, 20, 30, 50, 100].map(d => (
                     <button
                       key={d}
                       onClick={() => { setDistanceKm(d); setShowDistancePicker(false); }}
@@ -327,34 +327,37 @@ export default function Home() {
             )}
           </div>
 
-          {/* Pub chip */}
-          <button
-            onClick={() => setShowPubs(v => !v)}
-            className={`tap-scale flex-shrink-0 flex items-center gap-1.5 rounded-full px-3.5 py-2 text-[13px] font-bold border transition-colors whitespace-nowrap shadow-card-sm ${
-              showPubs ? 'bg-primary border-primary text-white' : 'bg-card border-border text-foreground'
-            }`}
-          >
-            <Store className="w-3.5 h-3.5" />
-            Pub
-          </button>
-
-          {/* Birrifici chip */}
-          <button
-            onClick={() => setShowBreweries(v => !v)}
-            className={`tap-scale flex-shrink-0 flex items-center gap-1.5 rounded-full px-3.5 py-2 text-[13px] font-bold border transition-colors whitespace-nowrap shadow-card-sm ${
-              showBreweries ? 'bg-amber-500 border-amber-500 text-white' : 'bg-card border-border text-foreground'
-            }`}
-          >
-            <Building2 className="w-3.5 h-3.5" />
-            Birrifici
-          </button>
-
-          {/* Bookmark */}
-          <Link href="/dashboard?tab=favorites" className="flex-shrink-0">
-            <button className="tap-scale w-9 h-9 flex items-center justify-center bg-card border border-border rounded-full shadow-card-sm text-foreground">
-              <Bookmark className="w-4 h-4" />
+          {/* Scrollable chips */}
+          <div className="flex items-center gap-2 overflow-x-auto scrollbar-hide flex-1 min-w-0">
+            {/* Pub chip */}
+            <button
+              onClick={() => setShowPubs(v => !v)}
+              className={`tap-scale flex-shrink-0 flex items-center gap-1.5 rounded-full px-3.5 py-2 text-[13px] font-bold border transition-colors whitespace-nowrap shadow-card-sm ${
+                showPubs ? 'bg-primary border-primary text-white' : 'bg-card border-border text-foreground'
+              }`}
+            >
+              <Store className="w-3.5 h-3.5" />
+              Pub
             </button>
-          </Link>
+
+            {/* Birrifici chip */}
+            <button
+              onClick={() => setShowBreweries(v => !v)}
+              className={`tap-scale flex-shrink-0 flex items-center gap-1.5 rounded-full px-3.5 py-2 text-[13px] font-bold border transition-colors whitespace-nowrap shadow-card-sm ${
+                showBreweries ? 'bg-amber-500 border-amber-500 text-white' : 'bg-card border-border text-foreground'
+              }`}
+            >
+              <Building2 className="w-3.5 h-3.5" />
+              Birrifici
+            </button>
+
+            {/* Bookmark */}
+            <Link href="/dashboard?tab=favorites" className="flex-shrink-0">
+              <button className="tap-scale w-9 h-9 flex items-center justify-center bg-card border border-border rounded-full shadow-card-sm text-foreground">
+                <Bookmark className="w-4 h-4" />
+              </button>
+            </Link>
+          </div>
         </div>
       </div>
 
