@@ -846,7 +846,7 @@ export default function PubDetail() {
           <div className="lg:col-span-3">
             {/* ── TABS ── */}
             <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-                <div className={`sticky ${headerCollapsed ? 'top-[6.5rem]' : 'top-14'} lg:top-16 z-20 bg-white dark:bg-card border-b border-stone-100 dark:border-stone-700/30 transition-[top] duration-200`}>
+                <div className={`fixed left-0 right-0 lg:static lg:sticky lg:left-auto lg:right-auto ${headerCollapsed ? 'top-[6.5rem]' : 'top-14'} lg:top-16 z-[25] lg:z-20 bg-white dark:bg-card border-b border-stone-100 dark:border-stone-700/30 transition-[top] duration-200`}>
                   <div className="flex justify-center overflow-x-auto scrollbar-hide px-1">
                     {[
                       { id: 'taplist', label: 'Spina', icon: <Wine className="h-4 w-4 flex-shrink-0" /> },
@@ -880,6 +880,8 @@ export default function PubDetail() {
                     })}
                   </div>
                 </div>
+                {/* Spacer to compensate for fixed tab bar on mobile */}
+                <div className="h-12 lg:hidden" />
 
                 {/* Taplist Tab */}
                 <TabsContent value="taplist" className="px-4 lg:px-0 pt-4 space-y-4">
