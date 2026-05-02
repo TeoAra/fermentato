@@ -772,15 +772,13 @@ export default function BeerDetail() {
           </div>
         </div>
 
-        {/* Curved wave — OUTSIDE overflow-hidden so it paints on top of the cover */}
-        <svg className="absolute bottom-0 inset-x-0 w-full block pointer-events-none z-10" viewBox="0 0 375 50" preserveAspectRatio="none" style={{ height: '50px' }}>
-          <path d="M0,50 L0,28 Q187.5,-22 375,28 L375,50 Z" fill="hsl(var(--background))" />
-        </svg>
       </div>
 
-      {/* Logo overlap + floating bookmark */}
-      <div className="max-w-2xl mx-auto px-4 lg:px-6 relative">
-        <div className="flex items-end justify-between -mt-12 relative z-10">
+      {/* White card with rounded top — hero transitions cleanly into content */}
+      <div className="bg-background rounded-t-[32px] -mt-8 relative z-10">
+        {/* Logo overlap + floating bookmark */}
+        <div className="max-w-2xl mx-auto px-4 lg:px-6">
+          <div className="flex items-end justify-between -mt-4 relative z-10">
           <button
             onClick={() => { const s = beer?.logoUrl || beer?.imageUrl || beer?.bottleImageUrl; if (s) (window as any).__lightboxOpen?.(s); }}
             className="h-[88px] w-[88px] rounded-full overflow-hidden border-4 border-background bg-white shadow-xl flex-shrink-0 tap-scale"
@@ -800,6 +798,7 @@ export default function BeerDetail() {
             aria-label="Salva">
             <Bookmark className={`h-5 w-5 ${isBeerFavorited ? 'fill-current' : ''}`} />
           </button>
+          </div>
         </div>
       </div>
 

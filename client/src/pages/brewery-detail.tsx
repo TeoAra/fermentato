@@ -610,8 +610,8 @@ export default function BreweryDetail() {
         ])}</script>
       </Helmet>
       
-      {/* ── HERO — full-bleed cover with curved bottom edge ── */}
-      <div className="relative bg-stone-900 lg:hidden">
+      {/* ── HERO — full-bleed cover with rounded-card transition ── */}
+      <div className="relative lg:hidden">
         {/* Cover image container — overflow-hidden so blur doesn't bleed */}
         <div className="relative h-72 overflow-hidden">
           {brewery?.coverImageUrl ? (
@@ -648,13 +648,8 @@ export default function BreweryDetail() {
           </div>
         </div>
 
-        {/* Curved wave — OUTSIDE overflow-hidden so it renders on top of cover */}
-        <svg className="block w-full relative z-10 pointer-events-none -mt-[50px]" viewBox="0 0 375 50" preserveAspectRatio="none" style={{ height: '50px' }}>
-          <path d="M0,50 L0,28 Q187.5,-22 375,28 L375,50 Z" fill="hsl(var(--background))" />
-        </svg>
-
-        {/* Identity block — mobile (logo overlaps wave) */}
-        <div className="bg-background dark:bg-background relative px-4 pb-2">
+        {/* Identity block — white card with rounded top corners, logo overlaps hero */}
+        <div className="bg-background dark:bg-background relative px-4 pb-2 rounded-t-[32px] -mt-8 z-10">
           <div className="flex items-end gap-3 -mt-12 relative z-10">
             <button onClick={() => { const s = brewery?.logoUrl; if (s) (window as any).__lightboxOpen?.(s); }} className="flex-shrink-0 tap-scale">
               <Avatar className="h-24 w-24 rounded-full border-4 border-background dark:border-background shadow-lg bg-stone-800">
@@ -823,10 +818,6 @@ export default function BreweryDetail() {
           className="absolute top-4 right-6 w-10 h-10 rounded-full bg-black/40 backdrop-blur-md flex items-center justify-center tap-scale">
           <Share2 className="h-[18px] w-[18px] text-white" />
         </button>
-        {/* Curved white bottom edge — matches mobile hero */}
-        <svg className="absolute bottom-0 left-0 w-full text-background dark:text-background pointer-events-none" viewBox="0 0 375 50" preserveAspectRatio="none" style={{ height: '50px' }}>
-          <path d="M0,50 L0,28 Q187.5,-22 375,28 L375,50 Z" fill="currentColor" />
-        </svg>
       </div>
 
         {/* ── MAIN CONTENT ── */}

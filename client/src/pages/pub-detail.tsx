@@ -675,8 +675,8 @@ export default function PubDetail() {
         ])}</script>
       </Helmet>
       
-      {/* ── HERO — full-bleed cover with curved bottom edge (mobile) ── */}
-      <div className="relative bg-stone-900 lg:hidden">
+      {/* ── HERO — full-bleed cover with rounded-card transition (mobile) ── */}
+      <div className="relative lg:hidden">
         {/* Cover image container — overflow-hidden so blur doesn't bleed */}
         <div className="relative h-72 overflow-hidden">
           {(pub as any)?.coverImageUrl ? (
@@ -714,13 +714,8 @@ export default function PubDetail() {
           </div>
         </div>
 
-        {/* Curved wave — OUTSIDE overflow-hidden so it renders on top of cover */}
-        <svg className="block w-full relative z-10 pointer-events-none -mt-[50px]" viewBox="0 0 375 50" preserveAspectRatio="none" style={{ height: '50px' }}>
-          <path d="M0,50 L0,28 Q187.5,-22 375,28 L375,50 Z" fill="hsl(var(--background))" />
-        </svg>
-
-        {/* Identity block — mobile (logo overlaps wave) */}
-        <div className="bg-background dark:bg-background relative px-4 pb-2">
+        {/* Identity block — white card with rounded top corners, logo overlaps hero */}
+        <div className="bg-background dark:bg-background relative px-4 pb-2 rounded-t-[32px] -mt-8 z-10">
           <div className="flex items-end gap-3 -mt-12 relative z-10">
             <button onClick={() => { const s = (pub as any)?.logoUrl; if (s) (window as any).__lightboxOpen?.(s); }} aria-label="Apri logo" className="flex-shrink-0 tap-scale">
               <Avatar className="h-24 w-24 rounded-full border-4 border-background dark:border-background shadow-lg bg-stone-800">
@@ -941,10 +936,6 @@ export default function PubDetail() {
             </Link>
           )}
         </div>
-        {/* Curved white bottom edge — matches mobile hero */}
-        <svg className="absolute bottom-0 left-0 w-full text-background dark:text-background pointer-events-none" viewBox="0 0 375 50" preserveAspectRatio="none" style={{ height: '50px' }}>
-          <path d="M0,50 L0,28 Q187.5,-22 375,28 L375,50 Z" fill="currentColor" />
-        </svg>
       </div>
 
       <main className="max-w-7xl mx-auto pb-24">
