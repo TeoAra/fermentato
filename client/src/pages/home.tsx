@@ -11,6 +11,7 @@ import Footer from "@/components/footer";
 import PubCard from "@/components/pub-card";
 import BreweryCard from "@/components/brewery-card";
 import { Button } from "@/components/ui/button";
+import FindBeerSheet from "@/components/FindBeerSheet";
 
 const HomepageMap = lazy(() => import("@/components/homepage-map"));
 
@@ -44,6 +45,7 @@ export default function Home() {
   const [showDistancePicker, setShowDistancePicker] = useState(false);
   const [showPubs, setShowPubs] = useState(true);
   const [showBreweries, setShowBreweries] = useState(true);
+  const [findBeerOpen, setFindBeerOpen] = useState(false);
 
   const ACCURACY_THRESHOLD = 3000;
   const gotGoodPositionRef = useRef(false);
@@ -219,11 +221,12 @@ export default function Home() {
       )}
 
       {/* ═══════════════════════════════════════════════════════════════
-          HERO — Clean map (top, taller) + filter chips + content card
+          HERO — Clean map (top) + filter chips + content card
+          Centered on desktop with max-w-2xl, lighter on the eye
       ═══════════════════════════════════════════════════════════════ */}
-      <div className="px-4 pt-4">
-        {/* Map card — taller, more square shape per mockup */}
-        <div className="relative rounded-3xl overflow-hidden bg-stone-200 dark:bg-stone-900 shadow-card" style={{ height: '300px' }}>
+      <div className="max-w-2xl mx-auto px-4 pt-4">
+        {/* Map card — taller on mobile, more compact on desktop */}
+        <div className="relative rounded-3xl overflow-hidden bg-stone-200 dark:bg-stone-900 shadow-card h-[300px] lg:h-[240px]">
           {!Capacitor.isNativePlatform() ? (
             <div className="absolute inset-0 overflow-hidden">
               <Suspense fallback={<div className="w-full h-full bg-stone-200 dark:bg-stone-800" />}>
@@ -337,16 +340,15 @@ export default function Home() {
             Trova pub, birre e birrifici in un tap.
           </p>
 
-          {/* Two primary CTAs — Trova una birra navigates to IPA */}
+          {/* Two primary CTAs — Trova una birra opens the floating panel */}
           <div className="flex gap-2.5 mt-4">
-            <Link href="/explore/beers?style=IPA" className="flex-1">
-              <button
-                className="tap-scale btn-orange-glow w-full flex items-center justify-center gap-1.5 bg-primary text-white text-sm font-bold px-4 py-3 rounded-2xl shadow-card"
-              >
-                <Beer className="w-4 h-4" />
-                Trova una birra
-              </button>
-            </Link>
+            <button
+              onClick={() => setFindBeerOpen(true)}
+              className="tap-scale btn-orange-glow flex-1 flex items-center justify-center gap-1.5 bg-primary text-white text-sm font-bold px-4 py-3 rounded-2xl shadow-card"
+            >
+              <Beer className="w-4 h-4" />
+              Trova una birra
+            </button>
             <Link href="/explore/pubs" className="flex-1">
               <button className="tap-scale w-full flex items-center justify-center gap-1.5 bg-card text-foreground text-sm font-bold px-4 py-3 rounded-2xl border-2 border-primary/25 shadow-card-sm">
                 <Store className="w-4 h-4 text-primary" />
@@ -959,6 +961,12 @@ export default function Home() {
       </main>
 
       <Footer />
+
+      <FindBeerSheet
+        open={findBeerOpen}
+        onClose={() => setFindBeerOpen(false)}
+        nearbyPubs={sortedPubs}
+      />
     </div>
   );
 }

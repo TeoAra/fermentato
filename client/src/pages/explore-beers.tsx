@@ -98,6 +98,7 @@ export default function ExploreBeers() {
   const [viewMode, setViewMode] = useState<ViewMode>("list");
   const [distanceKm, setDistanceKm] = useState(10);
   const [pubFilter, setPubFilter] = useState<"all" | "open">("all");
+  const [stylesView, setStylesView] = useState<null | "popular" | "discover">(null);
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(() => {
     try { const c = localStorage.getItem("fermenta:userLocation"); return c ? JSON.parse(c) : null; } catch { return null; }
   });
@@ -127,6 +128,29 @@ export default function ExploreBeers() {
     (popularStyles ?? []).forEach(s => map.set(s.style.toLowerCase(), s.count));
     return (api: string) => map.get(api.toLowerCase()) ?? 0;
   }, [popularStyles]);
+
+  // Tutti gli stili ordinati per popolarità (numero di birre con quello stile)
+  const sortedAllStyles = useMemo(() => {
+    if (!popularStyles) return [];
+    const filtered = popularStyles.filter(s => s.style && s.style.trim().length > 1);
+    const sorted = [...filtered].sort((a, b) =>
+      stylesView === "discover" ? a.count - b.count : b.count - a.count,
+    );
+    return sorted.slice(0, 40);
+  }, [popularStyles, stylesView]);
+
+  // Pubs per la mini-mappa sotto la barra di ricerca
+  const { data: allPubsForMap } = useQuery<any[]>({
+    queryKey: ["/api/pubs/all"],
+    staleTime: 5 * 60 * 1000,
+  });
+  const beerMapPins = useMemo(() => {
+    const arr: any[] = Array.isArray(allPubsForMap) ? allPubsForMap : [];
+    return arr
+      .filter(p => p.latitude && p.longitude)
+      .slice(0, 500)
+      .map(p => ({ id: p.id, name: p.name, slug: p.slug, latitude: String(p.latitude), longitude: String(p.longitude), logoUrl: p.logoUrl, type: "pub" as const }));
+  }, [allPubsForMap]);
 
   const { data: styleBeers, isLoading: styleLoading } = useQuery<any[]>({
     queryKey: ["/api/beers/by-style", activeStyle],
@@ -262,9 +286,9 @@ export default function ExploreBeers() {
         // MAIN VIEW — Esplora Birre
         // ═══════════════════════════════════════════════════════════════
         <>
-        {/* Fixed search bar — locked at top below mobile/desktop header */}
+        {/* Fixed search bar + mini map — locked at top below mobile/desktop header */}
         <div className="fixed left-0 right-0 top-14 lg:top-16 z-30 bg-[#F7F4F0]/95 dark:bg-background/95 backdrop-blur-md border-b border-stone-100 dark:border-stone-800/60">
-          <div className="max-w-3xl mx-auto px-4 lg:px-6 py-2.5">
+          <div className="max-w-3xl mx-auto px-4 lg:px-6 py-2.5 space-y-2.5">
             <div className="flex items-center gap-2 bg-white dark:bg-card rounded-2xl px-4 py-2.5 border border-stone-100 dark:border-stone-800/60 shadow-sm">
               <Search className="h-4 w-4 text-stone-400 flex-shrink-0" />
               <input
@@ -280,10 +304,14 @@ export default function ExploreBeers() {
                 <SlidersHorizontal className="h-4 w-4 text-stone-400" />
               )}
             </div>
+            {/* Mini mappa — pin dei pub vicino a te */}
+            <div className="rounded-2xl overflow-hidden border border-stone-100 dark:border-stone-800/60 shadow-sm h-[150px] lg:h-[170px] bg-stone-100 dark:bg-stone-800">
+              <PubMap pins={beerMapPins} height="100%" />
+            </div>
           </div>
         </div>
 
-        <main className="max-w-3xl mx-auto px-4 lg:px-6 pt-[76px] pb-28 lg:pb-12">
+        <main className="max-w-3xl mx-auto px-4 lg:px-6 pt-[244px] lg:pt-[264px] pb-28 lg:pb-12">
           <header className="mb-4">
             <h1 className="text-3xl lg:text-4xl font-extrabold text-foreground tracking-tight">Esplora Birre</h1>
             <p className="text-sm text-stone-500 dark:text-stone-400 mt-1">Scopri nuovi stili e trova la tua prossima preferita</p>
@@ -294,7 +322,42 @@ export default function ExploreBeers() {
             <SearchResultsBlock beers={beers} loading={isLoading} query={freeQuery} onClear={clearAll} />
           )}
 
-          {!freeQuery && (
+          {!freeQuery && stylesView && (
+            // ──────────────────────────────────────────────────────────────
+            // VISTA "TUTTI GLI STILI" — popolari (DESC) o da scoprire (ASC)
+            // ──────────────────────────────────────────────────────────────
+            <section className="mt-2">
+              <div className="flex items-center justify-between mb-4">
+                <button
+                  onClick={() => setStylesView(null)}
+                  className="flex items-center gap-1.5 text-xs font-bold text-primary tap-scale hover:opacity-80"
+                >
+                  <ArrowLeft className="w-3.5 h-3.5" />
+                  Indietro
+                </button>
+                <h2 className="flex items-center gap-2 text-[16px] lg:text-[17px] font-extrabold text-foreground">
+                  {stylesView === "popular" ? <Flame className="w-4 h-4 text-orange-500" /> : <Sparkles className="w-4 h-4 text-amber-500" />}
+                  {stylesView === "popular" ? "Tutti gli stili — popolari" : "Tutti gli stili — da scoprire"}
+                </h2>
+                <span className="text-xs text-stone-400 font-medium">{sortedAllStyles.length}</span>
+              </div>
+              <p className="text-xs text-stone-500 dark:text-stone-400 mb-4">
+                {stylesView === "popular"
+                  ? "Ordinati per numero di birre con quello stile (i più cliccati in alto)."
+                  : "Stili meno comuni — perfetti per esplorare nuovi sapori."}
+              </p>
+              <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-5 gap-2.5">
+                {sortedAllStyles.map(s => {
+                  const meta = getStyleMeta(s.style);
+                  return (
+                    <StyleCard key={s.style} meta={meta} count={s.count} onClick={() => selectStyle(s.style)} />
+                  );
+                })}
+              </div>
+            </section>
+          )}
+
+          {!freeQuery && !stylesView && (
             <>
               {/* Hero card "Cosa si beve vicino a te?" */}
               <CosaSiBeveCard onClick={() => { handleLocate(); selectStyle("IPA"); }} />
@@ -308,7 +371,7 @@ export default function ExploreBeers() {
                       {group.title}
                     </h2>
                     <button
-                      onClick={() => selectStyle(group.items[0].api)}
+                      onClick={() => setStylesView(group.title === "Da scoprire" ? "discover" : "popular")}
                       className="text-xs font-bold text-primary tap-scale hover:opacity-80"
                     >
                       Vedi tutte
