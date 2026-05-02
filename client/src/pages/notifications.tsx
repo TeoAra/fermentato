@@ -340,70 +340,80 @@ export default function Notifications() {
         </div>
       )}
 
-      {/* Notification list */}
-      <div className="space-y-2.5">
-        {visible.map((n) => {
-          const { icon, bg } = getNotificationIcon(n.type);
-          const link = getLink(n);
-          return (
-            <div
-              key={n.id}
-              onClick={() => handleClick(n)}
-              className={`rounded-2xl border cursor-pointer transition-all duration-200 hover:-translate-y-0.5 active:scale-[0.98] ${
-                !n.isRead
-                  ? 'bg-white dark:bg-card border-stone-200 dark:border-stone-700/40 shadow-[0_2px_12px_rgba(247,113,4,0.08)]'
-                  : 'bg-white dark:bg-card border-stone-100 dark:border-border hover:border-stone-200'
-              } hover:shadow-[0_4px_20px_rgba(247,113,4,0.1)]`}
-            >
-              <div className="flex items-start gap-3 p-4">
-                {/* Icon */}
-                <div className={`w-10 h-10 rounded-2xl flex-shrink-0 flex items-center justify-center ${bg}`}>
-                  {icon}
-                </div>
-
-                {/* Content */}
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-start gap-2 justify-between">
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 flex-wrap">
+      {/* Notification list — Nuove / Meno recenti */}
+      <div className="space-y-1">
+        {(() => {
+          const newOnes = visible.filter(n => !n.isRead);
+          const oldOnes = visible.filter(n => n.isRead);
+          const renderCard = (n: any) => {
+            const { icon, bg } = getNotificationIcon(n.type);
+            const link = getLink(n);
+            return (
+              <div
+                key={n.id}
+                onClick={() => handleClick(n)}
+                className={`rounded-2xl border cursor-pointer transition-all duration-200 active:scale-[0.98] ${
+                  !n.isRead
+                    ? 'bg-white dark:bg-card border-stone-200 dark:border-stone-700/40 shadow-[0_2px_12px_rgba(247,113,4,0.08)]'
+                    : 'bg-white dark:bg-card border-stone-100 dark:border-border'
+                } hover:shadow-[0_4px_20px_rgba(247,113,4,0.1)]`}
+              >
+                <div className="flex items-start gap-3 p-4">
+                  <div className={`w-10 h-10 rounded-2xl flex-shrink-0 flex items-center justify-center ${bg}`}>
+                    {icon}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-start gap-2 justify-between">
+                      <div className="flex-1 min-w-0">
                         <span className="text-sm font-bold text-foreground leading-snug">{n.title}</span>
-                        {!n.isRead && (
-                          <span className="inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] font-bold" style={{ background: 'rgba(247,113,4,0.12)', color: '#F77104' }}>
-                            Nuova
+                        <p className="text-xs text-muted-foreground mt-0.5 leading-snug line-clamp-2">{n.message}</p>
+                        <div className="flex items-center gap-3 mt-2">
+                          <span className="text-[10px] text-muted-foreground">
+                            {n.createdAt ? formatDistanceToNow(new Date(n.createdAt), { addSuffix: true, locale: it }) : ''}
                           </span>
-                        )}
+                          {link && (
+                            <span className="text-[10px] font-extrabold text-primary flex items-center gap-0.5 bg-primary/8 px-2 py-0.5 rounded-full">
+                              Apri <ArrowRight className="h-2.5 w-2.5" />
+                            </span>
+                          )}
+                        </div>
                       </div>
-                      <p className="text-xs text-muted-foreground mt-0.5 leading-snug">{n.message}</p>
-                      <div className="flex items-center gap-3 mt-1.5">
-                        <span className="text-[10px] text-muted-foreground">
-                          {n.createdAt ? formatDistanceToNow(new Date(n.createdAt), { addSuffix: true, locale: it }) : ''}
-                        </span>
-                        {link && (
-                          <span className="text-[10px] font-bold text-primary flex items-center gap-0.5">
-                            Apri <ArrowRight className="h-2.5 w-2.5" />
-                          </span>
-                        )}
-                      </div>
+                      <button
+                        onClick={(e) => { e.stopPropagation(); deleteMutation.mutate(n.id); }}
+                        className="p-1.5 rounded-xl text-muted-foreground hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/20 transition-colors flex-shrink-0"
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </button>
                     </div>
-
-                    {/* Delete */}
-                    <button
-                      onClick={(e) => { e.stopPropagation(); deleteMutation.mutate(n.id); }}
-                      className="p-1.5 rounded-xl text-muted-foreground hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/20 transition-colors flex-shrink-0"
-                    >
-                      <Trash2 className="h-3.5 w-3.5" />
-                    </button>
                   </div>
                 </div>
+                {!n.isRead && (
+                  <div className="h-0.5 mx-4 mb-3 rounded-full" style={{ background: 'linear-gradient(90deg, #F77104, #f5a623)' }} />
+                )}
               </div>
-
-              {/* Unread indicator bar */}
-              {!n.isRead && (
-                <div className="h-0.5 mx-4 mb-3 rounded-full" style={{ background: 'linear-gradient(90deg, #F77104, #f5a623)' }} />
+            );
+          };
+          return (
+            <>
+              {newOnes.length > 0 && (
+                <div className="space-y-2">
+                  <p className="text-[10px] font-black uppercase tracking-[0.08em] text-muted-foreground px-1 pb-0.5 pt-1">
+                    Nuove ({newOnes.length})
+                  </p>
+                  {newOnes.map(renderCard)}
+                </div>
               )}
-            </div>
+              {oldOnes.length > 0 && (
+                <div className="space-y-2">
+                  <p className={`text-[10px] font-black uppercase tracking-[0.08em] text-muted-foreground px-1 pb-0.5 ${newOnes.length > 0 ? 'pt-4' : 'pt-1'}`}>
+                    Meno recenti
+                  </p>
+                  {oldOnes.map(renderCard)}
+                </div>
+              )}
+            </>
           );
-        })}
+        })()}
 
         {hasMore && (
           <button

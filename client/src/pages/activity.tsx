@@ -451,43 +451,46 @@ export default function Activity() {
               </div>
             ) : (
               <>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                <div className="grid grid-cols-2 gap-3">
                   {(showMorePubs ? nearbyPubs : nearbyPubs.slice(0, 6)).map((pub: any) => {
                     const openStatus = getOpenStatus(pub.openingHours);
+                    const cover = pub.coverImageUrl || pub.logoUrl || pub.imageUrl;
                     return (
                       <Link key={pub.id} href={`/pub/${pub.id}`}>
-                        <Card className="hover:shadow-lg hover:scale-[1.02] transition-all duration-200 cursor-pointer h-full">
-                          <CardContent className="p-4">
-                            <div className="flex items-start gap-3">
-                              {pub.imageUrl ? (
-                                <img src={pub.imageUrl} alt={pub.name} className="w-11 h-11 rounded-lg object-cover flex-shrink-0" />
-                              ) : (
-                                <div className="w-11 h-11 bg-stone-100 dark:bg-orange-900/20 rounded-lg flex items-center justify-center flex-shrink-0">
-                                  <MapPin className="h-5 w-5 text-orange-600" />
-                                </div>
-                              )}
-                              <div className="flex-1 min-w-0">
-                                <h3 className="font-semibold text-sm mb-1 truncate">{pub.name}</h3>
-                                <p className="text-xs text-muted-foreground mb-2 flex items-center gap-1">
-                                  <span className="line-clamp-1">{pub.city || pub.address?.split(',').pop()?.trim()}</span>
-                                  {userLocation && pub.distance !== null && (
-                                    <span className="font-medium text-blue-600 dark:text-blue-400 whitespace-nowrap">{formatDistance(pub.distance)}</span>
-                                  )}
-                                </p>
-                                <Badge className={`text-xs ${openStatus.color}`}>
-                                  <Clock className="h-3 w-3 mr-1" />
-                                  {openStatus.label}
-                                </Badge>
-                              </div>
+                        <div className="relative h-36 rounded-2xl overflow-hidden bg-stone-800 cursor-pointer tap-scale group">
+                          {cover ? (
+                            <img src={cover} alt={pub.name} className="absolute inset-0 w-full h-full object-cover transition-transform duration-300 group-hover:scale-105" />
+                          ) : (
+                            <div className="absolute inset-0 bg-gradient-to-br from-orange-900/60 to-stone-900 flex items-center justify-center">
+                              <MapPin className="h-8 w-8 text-orange-400/60" />
                             </div>
-                          </CardContent>
-                        </Card>
+                          )}
+                          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
+                          {/* Open status badge */}
+                          <div className="absolute top-2 right-2">
+                            <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full backdrop-blur-sm ${
+                              openStatus.label === 'Aperto' ? 'bg-emerald-500/80 text-white' : 'bg-black/50 text-white/80'
+                            }`}>
+                              {openStatus.label}
+                            </span>
+                          </div>
+                          {/* Info overlay */}
+                          <div className="absolute bottom-0 left-0 right-0 p-2.5">
+                            <p className="text-white font-bold text-sm leading-tight line-clamp-1">{pub.name}</p>
+                            <div className="flex items-center gap-1.5 mt-0.5">
+                              {pub.city && <span className="text-white/65 text-[10px] truncate">{pub.city}</span>}
+                              {userLocation && pub.distance !== null && (
+                                <span className="text-[10px] font-bold text-orange-300 whitespace-nowrap">{formatDistance(pub.distance)}</span>
+                              )}
+                            </div>
+                          </div>
+                        </div>
                       </Link>
                     );
                   })}
                 </div>
                 {nearbyPubs.length > 6 && !showMorePubs && (
-                  <Button variant="outline" className="w-full mt-3" onClick={() => setShowMorePubs(true)}>
+                  <Button variant="outline" className="w-full mt-3 rounded-2xl" onClick={() => setShowMorePubs(true)}>
                     <ChevronDown className="h-4 w-4 mr-2" />
                     Mostra di più ({nearbyPubs.length - 6} altri locali)
                   </Button>

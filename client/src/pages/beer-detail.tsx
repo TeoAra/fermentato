@@ -716,173 +716,172 @@ export default function BeerDetail() {
         </div>
       )}
 
-      {/* ── HERO ── */}
-      <div className="bg-white dark:bg-card border-b border-stone-100 dark:border-stone-700/30">
-        <div className="max-w-7xl mx-auto px-5 pt-6 pb-5">
-          <div className="flex items-start gap-5">
+      {/* ── HERO — immersive artwork ── */}
+      <div className="bg-white dark:bg-card">
+        {/* Artwork strip */}
+        <div className="relative bg-stone-900 overflow-hidden" style={{ height: '188px' }}>
+          {(beer?.imageUrl || beer?.bottleImageUrl) && (
+            <img src={beer?.imageUrl || beer?.bottleImageUrl} alt=""
+              className="absolute inset-0 w-full h-full object-cover blur-xl scale-110 opacity-30" />
+          )}
+          <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-transparent to-black/70" />
 
-            {/* Beer image — tap to expand */}
-            <div className="flex flex-col items-center gap-1.5 flex-shrink-0 mt-1">
-              <button
-                className="active:scale-95 transition-transform"
-                onClick={() => { const s = beer?.imageUrl || beer?.bottleImageUrl; if (s) (window as any).__lightboxOpen?.(s); }}
-                aria-label="Espandi immagine"
-              >
-                <div className="h-[88px] w-[88px] rounded-full border-2 border-white dark:border-stone-700 shadow-md overflow-hidden flex items-center justify-center ring-1 ring-stone-100 dark:ring-stone-700"
-                  style={(beer?.imageUrl || beer?.bottleImageUrl) ? {} : { background: 'linear-gradient(135deg, #fef3e2 0%, #fde8c2 100%)' }}>
-                  {(beer?.imageUrl || beer?.bottleImageUrl) ? (
-                    <img src={beer?.imageUrl || beer?.bottleImageUrl} alt={beer?.name} className="w-full h-full object-cover" />
-                  ) : isSearchingImage ? (
-                    <Loader2 className="h-8 w-8 text-primary animate-spin" />
-                  ) : (
-                    <BeerIcon className="h-10 w-10 text-amber-300" />
-                  )}
+          {/* Back button */}
+          <button onClick={() => window.history.back()}
+            className="absolute top-3 left-4 w-9 h-9 rounded-full bg-black/35 backdrop-blur-md flex items-center justify-center tap-scale">
+            <ArrowLeft className="h-5 w-5 text-white" />
+          </button>
+          {/* Share */}
+          <button onClick={handleShare} data-testid="button-share"
+            className="absolute top-3 right-4 w-9 h-9 rounded-full bg-black/35 backdrop-blur-md flex items-center justify-center tap-scale">
+            <Share2 className="h-[18px] w-[18px] text-white" />
+          </button>
+
+          {/* Beer artwork centered */}
+          <button
+            onClick={() => { const s = beer?.imageUrl || beer?.bottleImageUrl; if (s) (window as any).__lightboxOpen?.(s); }}
+            className="absolute left-1/2 -translate-x-1/2 top-1/2 -translate-y-1/2 tap-scale"
+            aria-label="Espandi immagine"
+          >
+            <div className="h-[108px] w-[108px] rounded-3xl overflow-hidden shadow-2xl border-2 border-white/20 bg-stone-800">
+              {(beer?.imageUrl || beer?.bottleImageUrl) ? (
+                <img src={beer?.imageUrl || beer?.bottleImageUrl} alt={beer?.name} className="w-full h-full object-cover" />
+              ) : isSearchingImage ? (
+                <div className="w-full h-full flex items-center justify-center"><Loader2 className="h-8 w-8 text-primary animate-spin" /></div>
+              ) : (
+                <div className="w-full h-full flex items-center justify-center" style={{ background: 'linear-gradient(135deg, #fef3e2 0%, #fde8c2 100%)' }}>
+                  <BeerIcon className="h-12 w-12 text-amber-300" />
                 </div>
-              </button>
-              {isAuthenticated && ((!beer?.imageUrl && !beer?.bottleImageUrl) || isAdmin) && (
-                <button
-                  onClick={handleFindWebImage}
-                  disabled={isSearchingImage}
-                  className="text-[10px] text-primary font-medium leading-none disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  {isSearchingImage
-                    ? "Cerco…"
-                    : (beer?.imageUrl || beer?.bottleImageUrl)
-                      ? "Re-cerca immagine"
-                      : "Cerca immagine"}
-                </button>
               )}
             </div>
+          </button>
+        </div>
 
-            {/* Info column */}
-            <div className="flex-1 min-w-0">
+        {/* Info section */}
+        <div className="px-5 pt-4 pb-0 border-b border-stone-100 dark:border-stone-800">
+          {/* Style tag */}
+          {beer?.style && (() => {
+            const sc = getBeerStyleColor(beer.style);
+            return (
+              <Link href={`/search?q=${encodeURIComponent(beer.style)}`}>
+                <span className="inline-block text-[11px] font-extrabold px-2.5 py-1 rounded-full mb-1.5 tap-scale" style={{ background: sc.bg, color: sc.text }}>
+                  {beer.style}
+                </span>
+              </Link>
+            );
+          })()}
 
-              {/* Name */}
-              <h1 className="font-display text-2xl font-extrabold text-stone-900 dark:text-white leading-tight tracking-tight">
-                {beer?.name}
-              </h1>
+          {/* Name */}
+          <h1 className="text-[22px] font-extrabold text-foreground leading-tight tracking-tight">
+            {beer?.name}
+          </h1>
 
-              {/* Brewery + collabs */}
-              <div className="flex items-center gap-1.5 flex-wrap mt-1">
-                {beer?.brewery && (
-                  <Link href={`/brewery/${beer.brewery.id}`}>
-                    <span className="text-sm text-stone-500 dark:text-stone-400 hover:text-primary transition-colors font-medium">{beer.brewery.name}</span>
-                  </Link>
-                )}
-                {beerCollabs.length > 0 && beerCollabs.map((b) => (
-                  <span key={b.id} className="inline-flex items-center gap-0.5">
-                    <span className="text-stone-300 dark:text-stone-600 text-xs">×</span>
-                    <Link href={`/brewery/${b.id}`}>
-                      <span className="text-sm text-primary font-medium">{b.name}</span>
-                    </Link>
-                  </span>
-                ))}
-                {beerCollabs.length > 0 && (
-                  <span className="text-[10px] font-bold text-primary bg-primary/10 px-1.5 py-0.5 rounded-full">collab</span>
-                )}
-              </div>
+          {/* Brewery + collabs */}
+          <div className="flex items-center gap-1.5 mt-1 flex-wrap">
+            {beer?.brewery && (
+              <Link href={`/brewery/${beer.brewery.id}`}>
+                <span className="text-sm font-semibold text-primary hover:text-primary/80 transition-colors">{beer.brewery.name}</span>
+              </Link>
+            )}
+            {beerCollabs.length > 0 && beerCollabs.map((b) => (
+              <span key={b.id} className="inline-flex items-center gap-0.5">
+                <span className="text-stone-300 dark:text-stone-600 text-xs">×</span>
+                <Link href={`/brewery/${b.id}`}><span className="text-sm font-semibold text-primary">{b.name}</span></Link>
+              </span>
+            ))}
+            {beerCollabs.length > 0 && <span className="text-[10px] font-bold text-primary bg-primary/10 px-1.5 py-0.5 rounded-full">collab</span>}
+          </div>
 
-              {/* Key pills — ABV + style + GF/0% */}
-              <div className="mt-3 flex items-center gap-1.5 flex-wrap">
-                {beer?.abv && (
-                  <span className="inline-flex items-center text-xs font-semibold text-stone-600 dark:text-stone-300 bg-stone-100 dark:bg-stone-800 px-2.5 py-1 rounded-full">
-                    {beer.abv}% ABV
-                  </span>
-                )}
-                {beer?.style && (() => {
-                  const sc = getBeerStyleColor(beer.style);
-                  return (
-                    <Link href={`/search?q=${encodeURIComponent(beer.style)}`}>
-                      <span className="inline-flex items-center text-xs font-semibold px-2.5 py-1 rounded-full border cursor-pointer" style={{ background: sc.bg, color: sc.text, borderColor: `${sc.text}30` }}>
-                        {beer.style}
-                      </span>
-                    </Link>
-                  );
-                })()}
-                {beer?.isGlutenFree && (
-                  <span className="inline-flex items-center gap-1 text-xs font-semibold text-green-700 dark:text-green-400 bg-green-50 dark:bg-green-950/30 px-2.5 py-1 rounded-full">
-                    <GlutenFreeIcon size={10} className="text-green-600" /> GF
-                  </span>
-                )}
-                {beer?.isAlcoholFree && (
-                  <span className="inline-flex items-center text-xs font-semibold text-stone-600 dark:text-stone-300 bg-stone-100 dark:bg-stone-800 px-2.5 py-1 rounded-full">
-                    0.0%
-                  </span>
-                )}
-              </div>
+          {/* Meta pills row */}
+          <div className="flex items-center gap-1.5 mt-2.5 flex-wrap">
+            {beer?.abv && (
+              <span className="text-xs font-bold text-stone-600 dark:text-stone-300 bg-stone-100 dark:bg-stone-800 px-2.5 py-1.5 rounded-full">
+                {beer.abv}% ABV
+              </span>
+            )}
+            {reviewsData?.avgRating != null && (
+              <button onClick={() => setActiveTab('recensioni')} className="inline-flex items-center gap-1 text-xs font-bold text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/30 px-2.5 py-1.5 rounded-full tap-scale">
+                <Star className="h-3 w-3 fill-current" />
+                {Number(reviewsData.avgRating).toFixed(1)}
+                <span className="opacity-60">({reviewsData.reviewCount})</span>
+              </button>
+            )}
+            {totalLocations > 0 && (
+              <button onClick={() => setActiveTab('dove')} className="inline-flex items-center gap-1 text-xs font-bold text-teal-700 dark:text-teal-400 bg-teal-50 dark:bg-teal-950/30 px-2.5 py-1.5 rounded-full tap-scale">
+                <MapPin className="h-3 w-3" />
+                {totalLocations} {totalLocations === 1 ? 'locale' : 'locali'}
+              </button>
+            )}
+            {beer?.isGlutenFree && (
+              <span className="inline-flex items-center gap-1 text-[10px] font-bold text-green-700 dark:text-green-400 bg-green-50 dark:bg-green-950/30 px-2.5 py-1 rounded-full">
+                <GlutenFreeIcon size={10} className="text-green-600" /> GF
+              </span>
+            )}
+            {beer?.isAlcoholFree && (
+              <span className="text-[10px] font-bold text-stone-600 dark:text-stone-300 bg-stone-100 dark:bg-stone-800 px-2.5 py-1 rounded-full">0.0%</span>
+            )}
+          </div>
 
-              {/* Secondary pills — rating + locations */}
-              {(reviewsData?.avgRating != null || totalLocations > 0) && (
-                <div className="mt-2 flex items-center gap-1.5 flex-wrap">
-                  {reviewsData?.avgRating != null && (
-                    <button onClick={() => setActiveTab('recensioni')} className="inline-flex items-center gap-1 text-xs font-semibold text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/30 px-2.5 py-1 rounded-full">
-                      <Star className="h-3 w-3 fill-current" />
-                      {Number(reviewsData.avgRating).toFixed(1)}
-                      <span className="font-normal opacity-70">({reviewsData.reviewCount})</span>
-                    </button>
-                  )}
-                  {totalLocations > 0 && (
-                    <button onClick={() => setActiveTab('dove')} className="inline-flex items-center gap-1 text-xs font-semibold text-teal-700 dark:text-teal-400 bg-teal-50 dark:bg-teal-950/30 px-2.5 py-1 rounded-full">
-                      <MapPin className="h-3 w-3" />
-                      {totalLocations} {totalLocations === 1 ? 'locale' : 'locali'}
-                    </button>
-                  )}
-                </div>
+          {/* Admin image link */}
+          {isAuthenticated && ((!beer?.imageUrl && !beer?.bottleImageUrl) || isAdmin) && (
+            <button onClick={handleFindWebImage} disabled={isSearchingImage}
+              className="mt-1.5 text-[10px] text-primary font-medium disabled:opacity-50">
+              {isSearchingImage ? "Cerco…" : (beer?.imageUrl || beer?.bottleImageUrl) ? "Re-cerca immagine" : "Cerca immagine"}
+            </button>
+          )}
+
+          {/* ── 3 primary CTAs ── */}
+          <div className="flex items-center gap-2 mt-4 pb-4">
+            {isAuthenticated && (
+              <button onClick={() => setCheckinOpen(true)}
+                className="flex-1 flex items-center justify-center gap-2 bg-primary hover:bg-primary/90 text-white rounded-2xl py-3 text-sm font-extrabold transition-all tap-scale btn-orange-glow shadow-sm">
+                <BeerIcon className="h-4 w-4" />
+                Bevuta
+              </button>
+            )}
+            <button onClick={handleFavoriteToggle} disabled={favoriteMutation.isPending} data-testid="button-favorite"
+              className={`flex items-center justify-center gap-1.5 rounded-2xl py-3 px-4 text-sm font-bold transition-all tap-scale border ${
+                isBeerFavorited
+                  ? 'bg-red-50 dark:bg-red-950/30 border-red-200 dark:border-red-800 text-red-500'
+                  : 'bg-white dark:bg-card border-stone-200 dark:border-stone-700 text-stone-600 dark:text-stone-300'
+              } ${!isAuthenticated ? 'flex-1' : ''}`}>
+              <Heart className={`h-4 w-4 ${isBeerFavorited ? 'fill-current' : ''}`} />
+              {isBeerFavorited ? 'Salvata' : 'Salva'}
+            </button>
+            {isAuthenticated && (
+              <button onClick={() => setActiveTab('recensioni')}
+                className="flex items-center justify-center gap-1.5 rounded-2xl py-3 px-4 text-sm font-bold bg-white dark:bg-card border border-stone-200 dark:border-stone-700 text-stone-600 dark:text-stone-300 transition-all tap-scale">
+                <Star className="h-4 w-4 text-amber-500" />
+                Recensisci
+              </button>
+            )}
+            {/* Secondary actions */}
+            <div className="flex gap-1.5">
+              {isAuthenticated && id && <WishlistButton beerId={parseInt(id)} />}
+              {isAuthenticated && (
+                <button onClick={() => cellarMutation.mutate()} disabled={cellarMutation.isPending}
+                  className={`w-11 h-11 flex items-center justify-center rounded-2xl transition-all tap-scale ${inCellar ? 'bg-primary/10 text-primary' : 'bg-stone-100 dark:bg-stone-800 text-stone-500'}`}>
+                  <Wine className="h-4 w-4" />
+                </button>
               )}
-
-              {/* Action buttons + quick star rating */}
-              <div className="mt-4 flex items-center gap-2 flex-wrap">
-                <button onClick={handleFavoriteToggle} disabled={favoriteMutation.isPending}
-                  title={isBeerFavorited ? 'Rimuovi dai preferiti' : 'Aggiungi ai preferiti'} data-testid="button-favorite"
-                  className={`h-9 w-9 flex items-center justify-center rounded-full transition-all ${isBeerFavorited ? 'bg-red-50 dark:bg-red-950/40 text-red-500' : 'bg-stone-100 dark:bg-stone-800 text-stone-500 hover:text-red-500'}`}>
-                  <Heart className={`h-4 w-4 ${isBeerFavorited ? 'fill-current' : ''}`} />
+              {isAdmin && (
+                <>
+                  <button onClick={openEditDialog} data-testid="button-admin-edit-beer"
+                    className="w-11 h-11 flex items-center justify-center rounded-2xl bg-primary text-white shadow-sm tap-scale">
+                    <Pencil className="h-4 w-4" />
+                  </button>
+                  <button onClick={() => setIsDeleteDialogOpen(true)}
+                    className="w-11 h-11 flex items-center justify-center rounded-2xl bg-red-500 text-white shadow-sm tap-scale hover:bg-red-600">
+                    <Trash2 className="h-4 w-4" />
+                  </button>
+                </>
+              )}
+              {isAuthenticated && !isAdmin && (
+                <button onClick={() => setIsSuggestDialogOpen(true)} data-testid="button-suggest-change"
+                  className="w-11 h-11 flex items-center justify-center rounded-2xl bg-stone-100 dark:bg-stone-800 text-stone-500 dark:text-stone-400 tap-scale">
+                  <Lightbulb className="h-4 w-4" />
                 </button>
-                {isAuthenticated && id && (
-                  <WishlistButton beerId={parseInt(id)} />
-                )}
-                {isAuthenticated && (
-                  <button
-                    onClick={() => cellarMutation.mutate()}
-                    disabled={cellarMutation.isPending}
-                    title={inCellar ? "Rimuovi dalla cantina" : "Aggiungi alla cantina"}
-                    className={`h-9 w-9 flex items-center justify-center rounded-full transition-all ${inCellar ? "bg-primary/10 text-primary" : "bg-stone-100 dark:bg-stone-800 text-stone-500"}`}
-                  >
-                    <Wine className="h-4 w-4" />
-                  </button>
-                )}
-                {isAuthenticated && (
-                  <button
-                    onClick={() => setCheckinOpen(true)}
-                    title="Sto bevendo questa"
-                    className="h-9 w-9 flex items-center justify-center rounded-full bg-stone-100 dark:bg-stone-800 text-stone-500 dark:text-stone-400 hover:text-primary transition-all"
-                  >
-                    <BeerIcon className="h-4 w-4" />
-                  </button>
-                )}
-                <button onClick={handleShare} title="Condividi" data-testid="button-share"
-                  className="h-9 w-9 flex items-center justify-center rounded-full bg-stone-100 dark:bg-stone-800 text-stone-500 dark:text-stone-400 transition-colors">
-                  <Share2 className="h-4 w-4" />
-                </button>
-                {isAdmin && (
-                  <>
-                    <button onClick={openEditDialog} title="Modifica birra" data-testid="button-admin-edit-beer"
-                      className="h-9 w-9 flex items-center justify-center rounded-full bg-primary text-white transition-colors shadow-sm">
-                      <Pencil className="h-4 w-4" />
-                    </button>
-                    <button onClick={() => setIsDeleteDialogOpen(true)} title="Elimina birra"
-                      className="h-9 w-9 flex items-center justify-center rounded-full bg-red-500 text-white transition-colors shadow-sm hover:bg-red-600">
-                      <Trash2 className="h-4 w-4" />
-                    </button>
-                  </>
-                )}
-                {isAuthenticated && !isAdmin && (
-                  <button onClick={() => setIsSuggestDialogOpen(true)} title="Suggerisci modifica" data-testid="button-suggest-change"
-                    className="h-9 w-9 flex items-center justify-center rounded-full bg-stone-100 dark:bg-stone-800 text-stone-500 dark:text-stone-400 transition-colors">
-                    <Lightbulb className="h-4 w-4" />
-                  </button>
-                )}
-              </div>
-
+              )}
             </div>
           </div>
         </div>
@@ -1024,35 +1023,34 @@ export default function BeerDetail() {
               </>
             )}
 
-            {/* Potrebbe piacerti */}
+            {/* Potrebbe piacerti — horizontal carousel */}
             {suggestedBeers.length > 0 && (
               <>
                 <div className="border-t " />
                 <div>
-                  <div className="flex items-center gap-2 mb-4">
+                  <div className="flex items-center gap-2 mb-3">
                     <Sparkles className="h-4 w-4 text-primary" />
                     <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Potrebbe piacerti</h3>
                   </div>
-                  <div className="space-y-1">
+                  <div className="flex gap-3 overflow-x-auto pb-2 -mx-4 px-4 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
                     {suggestedBeers.map((sb: any) => (
                       <Link key={sb.id} href={`/beer/${sb.id}`}>
-                        <div className="flex items-center gap-3 py-2.5 px-3 -mx-3 rounded-xl hover:bg-stone-50 dark:hover:bg-stone-900/20 transition-colors group">
-                          <div className="w-10 h-10 rounded-xl bg-stone-50 dark:bg-[hsl(24,93%,15%)] flex items-center justify-center flex-shrink-0 overflow-hidden border border-stone-200 dark:border-stone-700/30">
+                        <div className="flex-shrink-0 w-[120px] group tap-scale">
+                          <div className="w-full h-[120px] rounded-2xl overflow-hidden bg-stone-100 dark:bg-stone-800 border border-stone-200 dark:border-stone-700/30 flex items-center justify-center mb-2">
                             {sb.imageUrl
-                              ? <img src={sb.imageUrl} alt={sb.name} className="w-full h-full object-cover lightbox-img" />
-                              : <BeerIcon className="h-4 w-4 text-primary" />
+                              ? <img src={sb.imageUrl} alt={sb.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
+                              : <BeerIcon className="h-10 w-10 text-primary/40" />
                             }
                           </div>
-                          <div className="flex-1 min-w-0">
-                            <p className="text-sm font-bold text-foreground group-hover:text-primary transition-colors truncate">{sb.name}</p>
-                            {sb.style && <p className="text-xs text-muted-foreground truncate mt-0.5">{sb.style}{sb.abv ? ` · ${sb.abv}%` : ''}</p>}
+                          <p className="text-xs font-bold text-foreground group-hover:text-primary transition-colors line-clamp-2 leading-snug">{sb.name}</p>
+                          <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
+                            {sb.abv && <span className="text-[10px] text-muted-foreground">{sb.abv}%</span>}
+                            {sb.avgRating != null && (
+                              <span className="flex items-center gap-0.5 text-[10px] font-bold text-amber-500">
+                                <Star className="h-2.5 w-2.5 fill-current" />{sb.avgRating.toFixed(1)}
+                              </span>
+                            )}
                           </div>
-                          {sb.avgRating != null && (
-                            <div className="flex items-center gap-0.5 text-xs font-bold text-primary flex-shrink-0 bg-stone-50 px-2 py-0.5 rounded-full">
-                              <Star className="h-3 w-3 fill-current" />
-                              {sb.avgRating.toFixed(1)}
-                            </div>
-                          )}
                         </div>
                       </Link>
                     ))}
