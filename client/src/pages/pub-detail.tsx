@@ -250,14 +250,6 @@ export default function PubDetail() {
   const [checkinBottle, setCheckinBottle] = useState<any>(null);
   const [fabOpen, setFabOpen] = useState(false);
   const [styleFilter, setStyleFilter] = useState('Tutti');
-  const [headerCollapsed, setHeaderCollapsed] = useState(false);
-
-  // Collapsing header: track scroll position
-  useEffect(() => {
-    const handler = () => setHeaderCollapsed(window.scrollY > 220);
-    window.addEventListener('scroll', handler, { passive: true });
-    return () => window.removeEventListener('scroll', handler);
-  }, []);
 
   // Fire-and-forget: track pub page view for analytics
   useEffect(() => {
@@ -679,34 +671,6 @@ export default function PubDetail() {
         ])}</script>
       </Helmet>
       
-      {/* ── Compact sticky header (appears when scrolled past hero) ── */}
-      {headerCollapsed && (
-        <div className="fixed top-14 left-0 right-0 z-30 lg:hidden bg-white/95 dark:bg-[#0F0F10]/95 backdrop-blur-xl border-b border-stone-100 dark:border-white/[0.05] compact-header-enter">
-          <div className="flex items-center gap-3 px-4 h-12">
-            <Link href="/explore/pubs">
-              <button className="p-1.5 -ml-1.5 rounded-xl hover:bg-stone-100 dark:hover:bg-white/5 tap-scale">
-                <ChevronLeft className="h-5 w-5 text-foreground" />
-              </button>
-            </Link>
-            <div className="flex items-center gap-2 flex-1 min-w-0">
-              <Avatar className="h-7 w-7 rounded-xl flex-shrink-0">
-                <AvatarImage src={(pub as any)?.logoUrl} alt={(pub as any)?.name} className="object-cover" />
-                <AvatarFallback className="bg-stone-100 dark:bg-stone-800 text-stone-600 text-xs font-bold">
-                  {(pub as any)?.name?.[0] || 'P'}
-                </AvatarFallback>
-              </Avatar>
-              <span className="font-bold text-sm text-foreground truncate">{(pub as any)?.name}</span>
-              {openStatus.status === 'open' && (
-                <span className="flex-shrink-0 w-2 h-2 rounded-full bg-green-500" />
-              )}
-            </div>
-            <button onClick={handleSave} className={`h-8 w-8 rounded-full flex items-center justify-center tap-scale ${isFavorite ? 'text-red-500' : 'text-stone-400'}`}>
-              <Heart className={`h-4 w-4 ${isFavorite ? 'fill-current' : ''}`} />
-            </button>
-          </div>
-        </div>
-      )}
-
       {/* ── HERO — full-width cover ── */}
       <div className="relative h-72 overflow-hidden bg-stone-900">
         {(pub as any)?.coverImageUrl ? (
@@ -777,9 +741,8 @@ export default function PubDetail() {
         </div>
       </div>
 
-      {/* ── Info bar + Actions ── */}
+      {/* ── Info bar — un'unica riga di chip identici (Aperto, spine, Salvato, Indicazioni, Vedi birre) ── */}
       <div className="bg-white dark:bg-card border-b border-stone-100 dark:border-stone-800 px-4 py-3">
-        {/* Status chips row */}
         <div className="flex items-center gap-2 flex-wrap">
           <button onClick={handleShowOpeningHours} data-testid="button-show-hours"
             className={`inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-full text-xs font-semibold border transition-colors tap-scale ${
@@ -806,43 +769,36 @@ export default function PubDetail() {
             </div>
           )}
 
+          <button onClick={handleSave} disabled={toggleFavoriteMutation.isPending} data-testid="button-favorite"
+            className={`inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-full text-xs font-semibold border transition-colors tap-scale ${
+              isFavorite
+                ? 'bg-red-50 dark:bg-red-950/30 border-red-200 dark:border-red-800 text-red-500'
+                : 'bg-stone-100 dark:bg-stone-800 text-stone-600 dark:text-stone-300 border-stone-200 dark:border-stone-700'
+            }`}>
+            <Heart className={`h-3.5 w-3.5 ${isFavorite ? 'fill-current' : ''}`} />
+            {isFavorite ? 'Salvato' : 'Salva'}
+          </button>
+
+          {(((pub as any)?.latitude && (pub as any)?.longitude) || (pub as any)?.address) && (
+            <a href={getMapNavigationUrl((pub as any).name, (pub as any).address)} target="_blank" rel="noopener noreferrer"
+              className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-full text-xs font-semibold bg-stone-100 dark:bg-stone-800 text-stone-600 dark:text-stone-300 border border-stone-200 dark:border-stone-700 tap-scale">
+              <Navigation className="h-3.5 w-3.5 text-teal-600 dark:text-teal-400" />
+              Indicazioni
+            </a>
+          )}
+
+          <button onClick={() => setActiveTab('taplist')}
+            className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-full text-xs font-semibold bg-primary/10 dark:bg-primary/15 text-primary border border-primary/25 tap-scale">
+            <Wine className="h-3.5 w-3.5" />
+            Vedi birre
+          </button>
+
           {((favoritesCountData as any)?.count ?? 0) > 0 && (
             <div className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-full text-xs font-semibold bg-stone-100 dark:bg-stone-800 text-stone-500 dark:text-stone-400 border border-stone-200 dark:border-stone-700">
               <Heart className="h-3 w-3 text-red-400" />
               {(favoritesCountData as any).count}
             </div>
           )}
-        </div>
-
-        {/* Action buttons */}
-        <div className="flex items-center gap-2 mt-3">
-          <button onClick={handleSave} disabled={toggleFavoriteMutation.isPending}
-            className={`flex items-center gap-1.5 px-3 py-2 rounded-xl border text-sm font-semibold transition-all tap-scale flex-shrink-0 ${
-              isFavorite
-                ? 'bg-red-50 dark:bg-red-950/30 border-red-200 dark:border-red-800 text-red-500'
-                : 'bg-white dark:bg-card border-stone-200 dark:border-stone-700 text-stone-600 dark:text-stone-300'
-            }`}>
-            <Heart className={`h-4 w-4 ${isFavorite ? 'fill-current' : ''}`} />
-            {isFavorite ? 'Salvato' : 'Salva'}
-          </button>
-
-          {(((pub as any)?.latitude && (pub as any)?.longitude) || (pub as any)?.address) && (
-            <a href={getMapNavigationUrl((pub as any).name, (pub as any).address)} target="_blank" rel="noopener noreferrer"
-              className="flex items-center gap-1.5 px-3 py-2 rounded-xl border border-stone-200 dark:border-stone-700 bg-white dark:bg-card text-stone-600 dark:text-stone-300 text-sm font-semibold tap-scale flex-shrink-0">
-              <Navigation className="h-4 w-4 text-teal-600 dark:text-teal-400" />
-              Indicazioni
-            </a>
-          )}
-
-          <button onClick={() => {
-              setActiveTab('taplist');
-              const tabsEl = document.querySelector('[data-testid="tab-taplist"]');
-              if (tabsEl) tabsEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
-            }}
-            className="flex items-center gap-1.5 px-3 py-2 rounded-xl border border-primary/25 bg-primary/8 dark:bg-primary/12 text-primary text-sm font-semibold transition-all tap-scale flex-shrink-0 hover:bg-primary/12 dark:hover:bg-primary/18">
-            <Wine className="h-4 w-4" />
-            Vedi birre
-          </button>
         </div>
       </div>
 
@@ -853,7 +809,7 @@ export default function PubDetail() {
           <div className="lg:col-span-3">
             {/* ── TABS ── */}
             <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-                <div className={`fixed left-0 right-0 z-20 bg-white dark:bg-card border-b border-stone-100 dark:border-stone-700/30 transition-[top] duration-200 ease-out lg:static lg:top-auto ${headerCollapsed ? 'top-[6.5rem]' : 'top-14'}`}>
+                <div className="fixed left-0 right-0 z-20 bg-white dark:bg-card border-b border-stone-100 dark:border-stone-700/30 top-14 lg:static lg:top-auto">
                   <div className="flex justify-center overflow-x-auto scrollbar-hide px-1">
                     {[
                       { id: 'taplist', label: 'Spina', icon: <Wine className="h-4 w-4 flex-shrink-0" /> },
