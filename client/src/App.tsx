@@ -198,6 +198,16 @@ function Router() {
   // Track page views when routes change
   useAnalytics();
 
+  // Menu open: apply body class so CSS can scale main content
+  useEffect(() => {
+    if (isMobileMenuOpen) {
+      document.body.classList.add('menu-open');
+    } else {
+      document.body.classList.remove('menu-open');
+    }
+    return () => document.body.classList.remove('menu-open');
+  }, [isMobileMenuOpen]);
+
   // Note: Google OAuth new users now go directly to /dashboard (no onboarding redirect)
 
   return (
@@ -207,6 +217,7 @@ function Router() {
       {/* Navigation progress bar */}
       <NavigationProgress />
 
+      <div className="main-content-wrapper">
       {/* Desktop Topbar — full-width sticky top, lg+ only */}
       <DesktopSidebar />
 
@@ -295,6 +306,7 @@ function Router() {
 
       {/* Bottom Navigation — fixed */}
       <BottomNavigation />
+      </div>{/* /main-content-wrapper */}
     </div>
   );
 }
