@@ -140,7 +140,7 @@ export default function LuppolinoMenu({ menu, menuInfoBox }: LuppolinoMenuProps)
 
       <Accordion
         type="multiple"
-        defaultValue={menu.map((c) => `category-${c.id}`)}
+        defaultValue={[]}
         className="space-y-2.5"
       >
         {menu.map((category) => {

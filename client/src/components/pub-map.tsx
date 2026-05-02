@@ -19,7 +19,7 @@ interface PubMapProps {
 }
 
 const ITALY_CENTER: [number, number] = [12.4964, 41.9028];
-const MAP_STYLE = "https://tiles.openfreemap.org/styles/liberty";
+const MAP_STYLE = "https://basemaps.cartocdn.com/gl/positron-gl-style/style.json";
 
 export function PubMap({ pins, height = "100%" }: PubMapProps) {
   const containerRef = useRef<HTMLDivElement>(null);
