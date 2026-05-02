@@ -604,7 +604,7 @@ export default function BreweryDetail() {
       </Helmet>
       
       {/* ── HERO — full-width cover ── */}
-      <div className="relative h-56 overflow-hidden bg-stone-900">
+      <div className="relative h-56 lg:h-80 overflow-hidden bg-stone-900">
         {brewery?.coverImageUrl ? (
           <img src={brewery.coverImageUrl} alt="" className="w-full h-full object-cover" />
         ) : brewery?.logoUrl ? (
@@ -653,8 +653,8 @@ export default function BreweryDetail() {
         </div>
       </div>
 
-      {/* Info bar */}
-      <div className="bg-white dark:bg-card border-b border-stone-100 dark:border-stone-800 px-4 py-3">
+      {/* Info bar — mobile/tablet only (desktop uses sidebar) */}
+      <div className="lg:hidden bg-white dark:bg-card border-b border-stone-100 dark:border-stone-800 px-4 py-3">
         {/* Stat chips */}
         <div className="flex items-center gap-2 flex-wrap">
           {beers.length > 0 && (
@@ -705,8 +705,8 @@ export default function BreweryDetail() {
       </div>
 
         {/* ── MAIN CONTENT ── */}
-        <main className="max-w-7xl mx-auto pb-20">
-          <div className="bg-white dark:bg-card">
+        <main className="max-w-7xl mx-auto pb-20 lg:grid lg:grid-cols-3 lg:gap-8 lg:px-8 lg:pt-8 lg:items-start">
+          <div className="bg-white dark:bg-card lg:col-span-2 lg:rounded-2xl lg:shadow-sm lg:border lg:border-stone-100 dark:lg:border-stone-800 lg:overflow-hidden">
 
             {/* Description preview */}
             {(brewery as any)?.description && (
@@ -1100,6 +1100,141 @@ export default function BreweryDetail() {
               </div>
             </Tabs>
           </div>
+
+          {/* ── DESKTOP SIDEBAR ── */}
+          <aside className="hidden lg:flex lg:flex-col lg:col-span-1 gap-4 sticky top-20">
+            {/* Brewery identity card */}
+            <div className="bg-white dark:bg-card rounded-2xl border border-stone-100 dark:border-stone-800 shadow-sm overflow-hidden">
+              <div className="p-5 space-y-4">
+                {/* Logo + name on desktop */}
+                <div className="flex items-center gap-3">
+                  <Avatar className="h-14 w-14 rounded-2xl border border-stone-100 dark:border-stone-700 shadow-sm bg-stone-800 flex-shrink-0">
+                    <AvatarImage src={brewery?.logoUrl} alt={brewery?.name} className="object-cover" />
+                    <AvatarFallback className="bg-stone-700 text-white text-xl font-bold">{brewery?.name?.[0] || 'B'}</AvatarFallback>
+                  </Avatar>
+                  <div className="flex-1 min-w-0">
+                    <h2 className="font-extrabold text-base text-foreground leading-tight truncate">{brewery?.name}</h2>
+                    {brewery?.location && (
+                      <p className="text-xs text-stone-400 mt-0.5 truncate">{brewery.location}{brewery.region ? ` · ${brewery.region}` : ''}</p>
+                    )}
+                    {brewery?.country && (
+                      <p className="text-xs text-stone-400 truncate">{brewery.country}</p>
+                    )}
+                  </div>
+                </div>
+
+                {/* Stats */}
+                <div className="flex items-center gap-3">
+                  {beers.length > 0 && (
+                    <div className="flex-1 text-center py-2 bg-stone-50 dark:bg-stone-800/40 rounded-xl">
+                      <p className="text-lg font-extrabold text-primary">{beers.length}</p>
+                      <p className="text-[10px] font-bold text-stone-400 uppercase tracking-wide">Birre</p>
+                    </div>
+                  )}
+                  {breweryRating?.avgRating && (
+                    <div className="flex-1 text-center py-2 bg-stone-50 dark:bg-stone-800/40 rounded-xl">
+                      <p className="text-lg font-extrabold text-amber-500">{breweryRating.avgRating.toFixed(1)}</p>
+                      <p className="text-[10px] font-bold text-stone-400 uppercase tracking-wide">{breweryRating.reviewCount} voti</p>
+                    </div>
+                  )}
+                </div>
+
+                {/* Action buttons */}
+                <div className="flex gap-2">
+                  <button onClick={handleFavoriteToggle} disabled={favoriteMutation.isPending}
+                    className={`flex-1 flex items-center justify-center gap-1.5 rounded-xl py-2.5 text-sm font-bold transition-all tap-scale ${
+                      isBreweryFavorited
+                        ? 'bg-stone-100 dark:bg-stone-800 border border-stone-200 dark:border-stone-700 text-stone-600'
+                        : 'bg-primary text-white btn-orange-glow'
+                    }`}>
+                    <Heart className={`h-4 w-4 ${isBreweryFavorited ? 'fill-current text-red-500' : ''}`} />
+                    {isBreweryFavorited ? 'Seguendo' : 'Segui'}
+                  </button>
+                  <button onClick={handleShare}
+                    className="flex-1 flex items-center justify-center gap-1.5 rounded-xl py-2.5 text-sm font-bold bg-white dark:bg-card border border-stone-200 dark:border-stone-700 text-stone-600 dark:text-stone-300 tap-scale">
+                    <Share2 className="h-4 w-4" />
+                    Condividi
+                  </button>
+                </div>
+
+                {/* Description */}
+                {((brewery as any)?.description) && (
+                  <div className="border-t border-stone-100 dark:border-stone-800 pt-4">
+                    <p className="text-sm text-muted-foreground leading-relaxed line-clamp-6">
+                      {(brewery as any).description}
+                    </p>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Contacts & Location */}
+            <div className="bg-white dark:bg-card rounded-2xl border border-stone-100 dark:border-stone-800 shadow-sm p-5 space-y-3">
+              <h3 className="text-xs font-bold text-stone-400 uppercase tracking-widest">Informazioni</h3>
+              {brewery?.websiteUrl && (
+                <a href={brewery.websiteUrl} target="_blank" rel="noopener noreferrer"
+                  className="flex items-center gap-3 p-2.5 rounded-xl hover:bg-stone-50 dark:hover:bg-stone-800/40 transition-colors group">
+                  <div className="w-8 h-8 rounded-lg bg-stone-100 dark:bg-stone-800 flex items-center justify-center flex-shrink-0">
+                    <Globe className="h-4 w-4 text-primary" />
+                  </div>
+                  <span className="text-sm font-semibold text-foreground truncate group-hover:text-primary transition-colors">
+                    {brewery.websiteUrl.replace(/^https?:\/\//, '').replace(/\/$/, '')}
+                  </span>
+                </a>
+              )}
+              {brewery?.location && (
+                <a href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent((brewery.name || '') + ' ' + brewery.location)}`}
+                  target="_blank" rel="noopener noreferrer"
+                  className="flex items-center gap-3 p-2.5 rounded-xl hover:bg-stone-50 dark:hover:bg-stone-800/40 transition-colors group">
+                  <div className="w-8 h-8 rounded-lg bg-stone-100 dark:bg-stone-800 flex items-center justify-center flex-shrink-0">
+                    <MapPin className="h-4 w-4 text-primary" />
+                  </div>
+                  <span className="text-sm font-semibold text-foreground truncate group-hover:text-primary transition-colors">
+                    {brewery.location}
+                  </span>
+                </a>
+              )}
+              {(brewery as any)?.email && (
+                <a href={`mailto:${(brewery as any).email}`}
+                  className="flex items-center gap-3 p-2.5 rounded-xl hover:bg-stone-50 dark:hover:bg-stone-800/40 transition-colors group">
+                  <div className="w-8 h-8 rounded-lg bg-stone-100 dark:bg-stone-800 flex items-center justify-center flex-shrink-0">
+                    <Mail className="h-4 w-4 text-primary" />
+                  </div>
+                  <span className="text-sm font-semibold text-foreground truncate group-hover:text-primary transition-colors">
+                    {(brewery as any).email}
+                  </span>
+                </a>
+              )}
+              {/* Social */}
+              {((brewery as any)?.instagramUrl || (brewery as any)?.facebookUrl) && (
+                <div className="flex gap-2 pt-1">
+                  {(brewery as any)?.instagramUrl && (
+                    <a href={(brewery as any).instagramUrl} target="_blank" rel="noopener noreferrer"
+                      className="w-9 h-9 rounded-lg bg-stone-100 dark:bg-stone-800 flex items-center justify-center text-primary hover:bg-primary hover:text-white transition-colors">
+                      <SiInstagram className="h-4 w-4" />
+                    </a>
+                  )}
+                  {(brewery as any)?.facebookUrl && (
+                    <a href={(brewery as any).facebookUrl} target="_blank" rel="noopener noreferrer"
+                      className="w-9 h-9 rounded-lg bg-stone-100 dark:bg-stone-800 flex items-center justify-center text-primary hover:bg-primary hover:text-white transition-colors">
+                      <SiFacebook className="h-4 w-4" />
+                    </a>
+                  )}
+                </div>
+              )}
+            </div>
+
+            {/* Admin quick-edit */}
+            {isAdmin && (
+              <Link href={`/admin/edit-brewery/${id}`}>
+                <button className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl bg-stone-100 dark:bg-stone-800 text-stone-600 dark:text-stone-300 text-sm font-bold tap-scale hover:bg-stone-200 dark:hover:bg-stone-700 transition-colors">
+                  <Settings className="h-4 w-4" />
+                  Modifica birrificio
+                </button>
+              </Link>
+            )}
+          </aside>
+
         </main>
 
       {/* Admin Edit Dialog - modal={false} allows Google Maps dropdown to receive clicks */}
