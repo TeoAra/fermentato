@@ -1,6 +1,6 @@
 import { Helmet } from "react-helmet-async";
 import { useQuery } from "@tanstack/react-query";
-import { useState, useMemo, useEffect, useCallback, useRef, useLayoutEffect } from "react";
+import { useState, useMemo, useEffect, useCallback, useRef } from "react";
 import { Link } from "wouter";
 import { PubMap } from "@/components/pub-map";
 import { Beer, Search, X, Star, ChevronRight, SlidersHorizontal, Globe, Navigation, Map, ChevronLeft, ChevronRight as ChevronRightIcon } from "lucide-react";
@@ -97,19 +97,6 @@ export default function ExploreBreweries() {
   });
   const [distanceKm, setDistanceKm] = useState(10);
   const [showDistPicker, setShowDistPicker] = useState(false);
-  const headerRef = useRef<HTMLDivElement>(null);
-  const [headerH, setHeaderH] = useState(220);
-
-  useLayoutEffect(() => {
-    if (!headerRef.current) return;
-    const update = () => {
-      if (headerRef.current) setHeaderH(headerRef.current.getBoundingClientRect().height);
-    };
-    update();
-    const ro = new ResizeObserver(update);
-    ro.observe(headerRef.current);
-    return () => ro.disconnect();
-  }, []);
 
   useEffect(() => {
     const t = setTimeout(() => { setDebouncedQ(searchInput); setPage(1); }, 350);
@@ -240,8 +227,8 @@ export default function ExploreBreweries() {
         <meta name="description" content="Esplora oltre 50.000 birrifici artigianali italiani e internazionali. Scopri birre, storia e dove trovarli su Fermenta.to." />
       </Helmet>
 
-      {/* ── Fixed header (search + filters locked at top) ── */}
-      <div ref={headerRef} className="fixed left-0 right-0 top-14 lg:top-16 z-30 bg-white/95 dark:bg-[hsl(25,14%,8%)]/95 backdrop-blur-md border-b border-stone-100 dark:border-stone-800">
+      {/* ── Sticky header (search + filters locked at top) ── */}
+      <div className="sticky top-14 lg:top-16 z-30 bg-white/95 dark:bg-[hsl(25,14%,8%)]/95 backdrop-blur-md border-b border-stone-100 dark:border-stone-800">
         <div className="max-w-5xl mx-auto px-4 lg:px-6 pt-3 pb-2">
           {/* Title row */}
           <div className="flex items-center justify-between mb-3">
@@ -362,10 +349,7 @@ export default function ExploreBreweries() {
       </div>
 
       {/* ── Content ── */}
-      <main
-        className="max-w-5xl mx-auto px-4 lg:px-6 pb-28 lg:pb-12"
-        style={{ paddingTop: headerH + 12 }}
-      >
+      <main className="max-w-5xl mx-auto px-4 lg:px-6 pt-3 pb-28 lg:pb-12">
         {isLoading ? (
           <div className="space-y-3">
             {[...Array(8)].map((_, i) => (

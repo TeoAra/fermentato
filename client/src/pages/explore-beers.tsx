@@ -288,8 +288,8 @@ export default function ExploreBeers() {
         // MAIN VIEW — Esplora Birre
         // ═══════════════════════════════════════════════════════════════
         <>
-        {/* Fixed search bar + mini map — locked at top below mobile/desktop header */}
-        <div className="fixed left-0 right-0 top-14 lg:top-16 z-30 bg-[#F7F4F0]/95 dark:bg-background/95 backdrop-blur-md border-b border-stone-100 dark:border-stone-800/60">
+        {/* Sticky search bar + mini map — locked at top below mobile/desktop header */}
+        <div className="sticky top-14 lg:top-16 z-30 bg-[#F7F4F0]/95 dark:bg-background/95 backdrop-blur-md border-b border-stone-100 dark:border-stone-800/60">
           <div className="max-w-3xl mx-auto px-4 lg:px-6 py-2.5 space-y-2.5">
             <div className="flex items-center gap-2 bg-white dark:bg-card rounded-2xl px-4 py-2.5 border border-stone-100 dark:border-stone-800/60 shadow-sm">
               <Search className="h-4 w-4 text-stone-400 flex-shrink-0" />
@@ -313,7 +313,7 @@ export default function ExploreBeers() {
           </div>
         </div>
 
-        <main className="max-w-3xl mx-auto px-4 lg:px-6 pt-[334px] lg:pt-[354px] pb-28 lg:pb-12">
+        <main className="max-w-3xl mx-auto px-4 lg:px-6 pt-4 pb-28 lg:pb-12">
           <header className="mb-4">
             <h1 className="text-3xl lg:text-4xl font-extrabold text-foreground tracking-tight">Esplora Birre</h1>
             <p className="text-sm text-stone-500 dark:text-stone-400 mt-1">Scopri nuovi stili e trova la tua prossima preferita</p>

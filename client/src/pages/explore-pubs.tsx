@@ -1,6 +1,6 @@
 import { Helmet } from "react-helmet-async";
 import { useQuery } from "@tanstack/react-query";
-import { useState, useMemo, useEffect, useRef, useLayoutEffect } from "react";
+import { useState, useMemo, useEffect, useRef } from "react";
 import { Link, useSearch } from "wouter";
 import { MapPin, Store, Map, Search, X, Star, ChevronRight, SlidersHorizontal, Navigation, Bookmark } from "lucide-react";
 import { PubMap } from "@/components/pub-map";
@@ -56,19 +56,6 @@ export default function ExplorePubs() {
   });
 
   const inputRef = useRef<HTMLInputElement>(null);
-  const headerRef = useRef<HTMLDivElement>(null);
-  const [headerH, setHeaderH] = useState(180);
-
-  useLayoutEffect(() => {
-    if (!headerRef.current) return;
-    const update = () => {
-      if (headerRef.current) setHeaderH(headerRef.current.getBoundingClientRect().height);
-    };
-    update();
-    const ro = new ResizeObserver(update);
-    ro.observe(headerRef.current);
-    return () => ro.disconnect();
-  }, []);
 
   const { data: allPubs, isLoading } = useQuery({
     queryKey: ["/api/pubs/all"],
@@ -156,8 +143,8 @@ export default function ExplorePubs() {
         <meta name="description" content="Trova pub, birrerie e locali craft beer in Italia. Consulta taplist in tempo reale, orari e posizione su mappa." />
       </Helmet>
 
-      {/* ── Fixed header (search bar + filters stay locked at top) ── */}
-      <div ref={headerRef} className="fixed left-0 right-0 top-14 lg:top-16 z-30 bg-white/95 dark:bg-[hsl(25,14%,8%)]/95 backdrop-blur-md border-b border-stone-100 dark:border-stone-800">
+      {/* ── Sticky header (search bar + filters stay locked at top) ── */}
+      <div className="sticky top-14 lg:top-16 z-30 bg-white/95 dark:bg-[hsl(25,14%,8%)]/95 backdrop-blur-md border-b border-stone-100 dark:border-stone-800">
         <div className="max-w-5xl mx-auto px-4 lg:px-6 pt-3 pb-2">
           {/* Title row */}
           <div className="flex items-center justify-between mb-3">
@@ -261,10 +248,7 @@ export default function ExplorePubs() {
       </div>
 
       {/* ── Content ── */}
-      <main
-        className="max-w-5xl mx-auto px-4 lg:px-6 pb-28 lg:pb-12"
-        style={{ paddingTop: headerH + 12 }}
-      >
+      <main className="max-w-5xl mx-auto px-4 lg:px-6 pt-3 pb-28 lg:pb-12">
         {isLoading ? (
           <div className="space-y-3">
             {[...Array(6)].map((_, i) => (
