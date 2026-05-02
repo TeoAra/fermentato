@@ -221,12 +221,11 @@ export default function Home() {
       )}
 
       {/* ═══════════════════════════════════════════════════════════════
-          HERO CARD — Map + CTA + Filter chips
+          HERO — Clean map (top) + content card (below) per mockup
       ═══════════════════════════════════════════════════════════════ */}
       <div className="px-4 pt-4">
-        <div className="relative rounded-3xl overflow-hidden bg-stone-300 dark:bg-stone-900" style={{ height: '260px' }}>
-
-          {/* Background: interactive map on web, premium gradient on native */}
+        {/* Map card — uncluttered, blue dot truly at the visual center */}
+        <div className="relative rounded-3xl overflow-hidden bg-stone-200 dark:bg-stone-900 shadow-card" style={{ height: '220px' }}>
           {!Capacitor.isNativePlatform() ? (
             <div className="absolute inset-0 overflow-hidden">
               <Suspense fallback={<div className="w-full h-full bg-stone-200 dark:bg-stone-800" />}>
@@ -252,50 +251,61 @@ export default function Home() {
             />
           )}
 
-          {/* Dark gradient overlay */}
-          <div className="absolute inset-0 bg-gradient-to-t from-black/82 via-black/35 to-black/10 pointer-events-none" />
-
-          {/* Content — pointer-events-none so the map stays interactive */}
-          <div className="absolute inset-0 flex flex-col justify-end p-5 pointer-events-none">
-            {/* Location chip */}
+          {/* Floating location chip — top-left, doesn't obscure the map center */}
+          <div className="absolute top-3 left-3 z-10 pointer-events-none">
             {locationStatus === 'granted' && (
-              <div className="flex items-center gap-1 mb-2.5">
-                <span className="inline-flex items-center gap-1.5 text-[10px] font-extrabold uppercase tracking-widest bg-primary text-white rounded-full px-2.5 py-1">
-                  <MapPin className="w-2.5 h-2.5" />
-                  {locationAccuracy != null && locationAccuracy < 1000 ? `±${Math.round(locationAccuracy)}m` : 'La tua zona'}
-                </span>
-              </div>
+              <span className="inline-flex items-center gap-1.5 text-[11px] font-extrabold bg-white/95 dark:bg-card/95 backdrop-blur-md text-primary rounded-full px-2.5 py-1.5 shadow-card-sm border border-primary/15">
+                <MapPin className="w-3 h-3" />
+                {locationAccuracy != null && locationAccuracy < 1000 ? `Vicino a te · ±${Math.round(locationAccuracy)}m` : 'Vicino a te'}
+              </span>
             )}
             {locationStatus === 'requesting' && (
-              <div className="flex items-center gap-1 mb-2.5">
-                <span className="inline-flex items-center gap-1.5 text-[10px] font-extrabold uppercase tracking-widest bg-amber-500 text-white rounded-full px-2.5 py-1 animate-pulse">
-                  <Navigation className="w-2.5 h-2.5" />
-                  Ricerca GPS…
-                </span>
-              </div>
+              <span className="inline-flex items-center gap-1.5 text-[11px] font-extrabold bg-amber-500 text-white rounded-full px-2.5 py-1.5 animate-pulse shadow-card-sm">
+                <Navigation className="w-3 h-3" />
+                Ricerca GPS…
+              </span>
             )}
-
-            <h1 className="text-[22px] font-extrabold text-white leading-snug mb-3" style={{ textShadow: '0 2px 8px rgba(0,0,0,0.3)' }}>
-              Scopri cosa bere<br />vicino a te
-            </h1>
-
-            <div className="flex gap-2 pointer-events-auto">
-              <button
-                onClick={() => setFindBeerOpen(true)}
-                className="tap-scale btn-orange-glow flex items-center gap-1.5 bg-primary text-white text-sm font-bold px-4 py-2.5 rounded-2xl shadow-lg"
-              >
-                <Beer className="w-4 h-4" />
-                Trova una birra
-              </button>
-              <button
-                onClick={handleRequestLocation}
-                className="tap-scale flex items-center gap-1.5 text-white text-sm font-bold px-4 py-2.5 rounded-2xl border border-white/40 bg-white/15 backdrop-blur-sm"
-              >
-                <Navigation className="w-4 h-4" />
-                Vicino a me
-              </button>
-            </div>
           </div>
+        </div>
+
+        {/* Content card BELOW the map — headline + CTAs + stats (per mockup) */}
+        <div className="mt-4">
+          <h1 className="text-[26px] sm:text-[30px] font-extrabold text-foreground leading-[1.15] tracking-tight">
+            Scopri cosa bere<br />
+            <span className="text-primary">vicino a te.</span>
+          </h1>
+          <p className="text-sm text-muted-foreground mt-2 leading-relaxed">
+            La app per chi ama la birra artigianale.<br className="hidden sm:block" />
+            Trova pub, birre e birrifici in un tap.
+          </p>
+
+          {/* Two primary CTAs */}
+          <div className="flex gap-2.5 mt-4">
+            <button
+              onClick={() => setFindBeerOpen(true)}
+              className="tap-scale btn-orange-glow flex-1 flex items-center justify-center gap-1.5 bg-primary text-white text-sm font-bold px-4 py-3 rounded-2xl shadow-card"
+            >
+              <Beer className="w-4 h-4" />
+              Trova una birra
+            </button>
+            <Link href="/explore/pubs" className="flex-1">
+              <button className="tap-scale w-full flex items-center justify-center gap-1.5 bg-card text-foreground text-sm font-bold px-4 py-3 rounded-2xl border-2 border-primary/25 shadow-card-sm">
+                <Store className="w-4 h-4 text-primary" />
+                Esplora pub
+              </button>
+            </Link>
+          </div>
+
+          {/* GPS opt-in (only when not granted) */}
+          {locationStatus !== 'granted' && (
+            <button
+              onClick={handleRequestLocation}
+              className="tap-scale w-full mt-2.5 flex items-center justify-center gap-1.5 text-primary text-[13px] font-bold px-4 py-2 rounded-2xl bg-orange-50 dark:bg-orange-900/20 border border-primary/15"
+            >
+              <Navigation className="w-3.5 h-3.5" />
+              Attiva la posizione
+            </button>
+          )}
         </div>
 
         {/* Filter chips row — distance picker OUTSIDE overflow so dropdown isn't clipped */}

@@ -852,11 +852,7 @@ export default function PubDetail() {
           <div className="lg:col-span-3">
             {/* ── TABS ── */}
             <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-                {/* Spacer reserved for the fixed tab bar on mobile (prevents layout jump) */}
-                {headerCollapsed && <div className="h-12 lg:hidden" aria-hidden="true" />}
-                <div className={`${headerCollapsed
-                  ? 'fixed top-[6.5rem] left-0 right-0 z-30 lg:sticky lg:top-16 lg:left-auto lg:right-auto lg:z-20'
-                  : 'sticky top-14 lg:top-16 z-20'} bg-white dark:bg-card border-b border-stone-100 dark:border-stone-700/30`}>
+                <div className={`sticky ${headerCollapsed ? 'top-[6.5rem]' : 'top-14'} lg:top-16 z-20 bg-white dark:bg-card border-b border-stone-100 dark:border-stone-700/30 transition-[top] duration-200 ease-out`}>
                   <div className="flex justify-center overflow-x-auto scrollbar-hide px-1">
                     {[
                       { id: 'taplist', label: 'Spina', icon: <Wine className="h-4 w-4 flex-shrink-0" /> },

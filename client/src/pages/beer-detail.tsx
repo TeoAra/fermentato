@@ -830,60 +830,65 @@ export default function BeerDetail() {
             </button>
           )}
 
-          {/* ── 3 primary CTAs ── */}
-          <div className="flex items-center gap-2 mt-4 pb-4">
-            {isAuthenticated && (
-              <button onClick={() => setCheckinOpen(true)}
-                className="flex-1 flex items-center justify-center gap-2 bg-primary hover:bg-primary/90 text-white rounded-2xl py-3 text-sm font-extrabold transition-all tap-scale btn-orange-glow shadow-sm">
+          {/* ── Primary CTAs row — 3 evenly-sized buttons (mockup spec) ── */}
+          <div className="flex items-stretch gap-2 mt-4">
+            {isAuthenticated ? (
+              <button onClick={() => setCheckinOpen(true)} data-testid="button-checkin"
+                className="flex-[1.6] flex items-center justify-center gap-2 bg-primary hover:bg-primary/90 text-white rounded-2xl py-3 text-sm font-extrabold transition-all tap-scale btn-orange-glow shadow-sm">
                 <BeerIcon className="h-4 w-4" />
                 Bevuta
               </button>
-            )}
+            ) : null}
             <button onClick={handleFavoriteToggle} disabled={favoriteMutation.isPending} data-testid="button-favorite"
-              className={`flex items-center justify-center gap-1.5 rounded-2xl py-3 px-4 text-sm font-bold transition-all tap-scale border ${
+              className={`flex-1 flex items-center justify-center gap-1.5 rounded-2xl py-3 text-sm font-bold transition-all tap-scale border ${
                 isBeerFavorited
                   ? 'bg-red-50 dark:bg-red-950/30 border-red-200 dark:border-red-800 text-red-500'
                   : 'bg-white dark:bg-card border-stone-200 dark:border-stone-700 text-stone-600 dark:text-stone-300'
-              } ${!isAuthenticated ? 'flex-1' : ''}`}>
+              }`}>
               <Heart className={`h-4 w-4 ${isBeerFavorited ? 'fill-current' : ''}`} />
               {isBeerFavorited ? 'Salvata' : 'Salva'}
             </button>
             {isAuthenticated && (
-              <button onClick={() => setActiveTab('recensioni')}
-                className="flex items-center justify-center gap-1.5 rounded-2xl py-3 px-4 text-sm font-bold bg-white dark:bg-card border border-stone-200 dark:border-stone-700 text-stone-600 dark:text-stone-300 transition-all tap-scale">
+              <button onClick={() => setActiveTab('recensioni')} data-testid="button-review"
+                className="flex-1 flex items-center justify-center gap-1.5 rounded-2xl py-3 text-sm font-bold bg-white dark:bg-card border border-stone-200 dark:border-stone-700 text-stone-600 dark:text-stone-300 transition-all tap-scale">
                 <Star className="h-4 w-4 text-amber-500" />
                 Recensisci
               </button>
             )}
-            {/* Secondary actions */}
-            <div className="flex gap-1.5">
+          </div>
+
+          {/* ── Secondary actions — small icon row, only when relevant ── */}
+          {(isAuthenticated || isAdmin) && (
+            <div className="flex items-center gap-1.5 mt-2 pb-4">
               {isAuthenticated && id && <WishlistButton beerId={parseInt(id)} />}
               {isAuthenticated && (
-                <button onClick={() => cellarMutation.mutate()} disabled={cellarMutation.isPending}
-                  className={`w-11 h-11 flex items-center justify-center rounded-2xl transition-all tap-scale ${inCellar ? 'bg-primary/10 text-primary' : 'bg-stone-100 dark:bg-stone-800 text-stone-500'}`}>
+                <button onClick={() => cellarMutation.mutate()} disabled={cellarMutation.isPending} title="Aggiungi alla cantina"
+                  className={`h-9 w-9 flex items-center justify-center rounded-xl transition-all tap-scale ${inCellar ? 'bg-primary/10 text-primary' : 'bg-stone-100 dark:bg-stone-800 text-stone-500'}`}>
                   <Wine className="h-4 w-4" />
+                </button>
+              )}
+              {isAuthenticated && !isAdmin && (
+                <button onClick={() => setIsSuggestDialogOpen(true)} data-testid="button-suggest-change" title="Suggerisci modifica"
+                  className="h-9 w-9 flex items-center justify-center rounded-xl bg-stone-100 dark:bg-stone-800 text-stone-500 dark:text-stone-400 tap-scale">
+                  <Lightbulb className="h-4 w-4" />
                 </button>
               )}
               {isAdmin && (
                 <>
-                  <button onClick={openEditDialog} data-testid="button-admin-edit-beer"
-                    className="w-11 h-11 flex items-center justify-center rounded-2xl bg-primary text-white shadow-sm tap-scale">
+                  <div className="ml-auto" />
+                  <button onClick={openEditDialog} data-testid="button-admin-edit-beer" title="Modifica"
+                    className="h-9 w-9 flex items-center justify-center rounded-xl bg-primary text-white shadow-sm tap-scale">
                     <Pencil className="h-4 w-4" />
                   </button>
-                  <button onClick={() => setIsDeleteDialogOpen(true)}
-                    className="w-11 h-11 flex items-center justify-center rounded-2xl bg-red-500 text-white shadow-sm tap-scale hover:bg-red-600">
+                  <button onClick={() => setIsDeleteDialogOpen(true)} title="Elimina"
+                    className="h-9 w-9 flex items-center justify-center rounded-xl bg-red-500 text-white shadow-sm tap-scale hover:bg-red-600">
                     <Trash2 className="h-4 w-4" />
                   </button>
                 </>
               )}
-              {isAuthenticated && !isAdmin && (
-                <button onClick={() => setIsSuggestDialogOpen(true)} data-testid="button-suggest-change"
-                  className="w-11 h-11 flex items-center justify-center rounded-2xl bg-stone-100 dark:bg-stone-800 text-stone-500 dark:text-stone-400 tap-scale">
-                  <Lightbulb className="h-4 w-4" />
-                </button>
-              )}
             </div>
-          </div>
+          )}
+          {!(isAuthenticated || isAdmin) && <div className="pb-4" />}
         </div>
       </div>
 

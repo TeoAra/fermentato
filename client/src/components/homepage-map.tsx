@@ -147,8 +147,7 @@ export default function HomepageMap({
   return (
     <div
       ref={containerRef}
-      className="relative w-full overflow-hidden"
-      style={{ height: "clamp(280px, 50vh, 520px)" }}
+      className="relative w-full h-full overflow-hidden"
     >
       {isLoading && (
         <div className="absolute inset-0 z-20 flex items-center justify-center bg-stone-100 dark:bg-stone-800">
@@ -246,11 +245,6 @@ export default function HomepageMap({
           })}
         </Map>
       )}
-
-      <div
-        className="absolute bottom-0 left-0 right-0 h-16 pointer-events-none z-10"
-        style={{ background: "linear-gradient(to bottom, transparent 0%, var(--background) 100%)" }}
-      />
 
       <div className="absolute top-3 right-3 z-20 flex flex-col gap-1.5">
         <button
