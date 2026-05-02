@@ -301,7 +301,7 @@ export default function Notifications() {
                 Metti "Mi Piace" ai festival dalla sezione <strong>Attività</strong> per ricevere aggiornamenti.
               </p>
               <div className="flex gap-2">
-                <a href="/attivita" className="flex-1">
+                <a href="/activity" className="flex-1">
                   <button className="w-full flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold bg-violet-50 dark:bg-violet-950/20 text-violet-700 dark:text-violet-400 hover:bg-violet-100 transition-colors">
                     <CalendarDays className="h-3.5 w-3.5" />Vedi festival
                   </button>

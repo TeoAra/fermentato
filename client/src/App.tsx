@@ -76,6 +76,8 @@ const SupportoPage       = lazy(() => import("@/pages/static-page").then(m => ({
 const MyCellar           = lazy(() => import("@/pages/my-cellar"));
 const MyWishlist         = lazy(() => import("@/pages/my-wishlist"));
 const MyStats            = lazy(() => import("@/pages/my-stats"));
+const Scan               = lazy(() => import("@/pages/scan"));
+const ScanHistory        = lazy(() => import("@/pages/scan-history"));
 // ─────────────────────────────────────────────────────────────────────────────
 
 const PageSkeleton = () => (
@@ -296,6 +298,8 @@ function Router() {
           <Route path="/festival" component={CreaFestival} />
           <Route path="/registra-festival" component={RegistraFestival} />
           <Route path="/reset-password" component={ResetPassword} />
+          <Route path="/scan/history" component={ScanHistory} />
+          <Route path="/scan" component={Scan} />
           <Route component={NotFound} />
         </Switch>
         </div>

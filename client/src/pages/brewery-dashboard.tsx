@@ -772,7 +772,7 @@ export default function BreweryDashboard({ adminBreweryId }: BreweryDashboardPro
 
   return (
     <div className="min-h-screen bg-background pb-12">
-      {!isAdminMode && <RoleSwitcherBanner />}
+      {!isAdminMode && <RoleSwitcherBanner currentView="brewery" />}
       
       {/* Header Bar */}
       <header className="sticky top-0 z-30 bg-white dark:bg-card border-b border-stone-100 dark:border-border shadow-sm">
@@ -831,7 +831,7 @@ export default function BreweryDashboard({ adminBreweryId }: BreweryDashboardPro
             src={brewery.coverImageUrl || "/brewery-cover.jpg"}
             alt={brewery.name}
             className="w-full h-full object-cover"
-            fallbackType="brewery"
+            imageType="brewery"
           />
           <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
           
@@ -1165,7 +1165,7 @@ export default function BreweryDashboard({ adminBreweryId }: BreweryDashboardPro
                             {review.nickname || review.firstName || 'Appassionato Anonimo'}
                           </span>
                           <span className="text-xs text-muted-foreground font-medium">su</span>
-                          <Link href={`/beers/${review.beerId}`}>
+                          <Link href={`/beer/${review.beerId}`}>
                             <span className="text-xs font-bold text-primary hover:underline cursor-pointer">{review.beerName}</span>
                           </Link>
                           <div className="flex items-center gap-0.5 ml-1">

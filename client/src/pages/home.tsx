@@ -71,7 +71,7 @@ export default function Home() {
       if (Capacitor.isNativePlatform()) {
         try {
           const perm = await Geolocation.requestPermissions();
-          if (perm.location === 'granted' || perm.location === 'limited') {
+          if (perm.location === 'granted' || (perm.location as string) === 'limited') {
             setLocationStatus('requesting');
             const pos = await Geolocation.getCurrentPosition({ enableHighAccuracy: false, timeout: 10000 });
             applyPosition({ coords: { latitude: pos.coords.latitude, longitude: pos.coords.longitude, accuracy: pos.coords.accuracy ?? 999 } } as any);

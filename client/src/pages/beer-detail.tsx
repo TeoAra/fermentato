@@ -85,6 +85,8 @@ interface Beer {
   bottleImageUrl?: string;
   color?: string;
   isBottled?: boolean;
+  isGlutenFree?: boolean | null;
+  isAlcoholFree?: boolean | null;
   breweryId: number;
   brewery?: {
     id: number;
@@ -224,7 +226,7 @@ export default function BeerDetail() {
     }, 250);
   }, []);
   
-  const isAdmin = (user as any)?.activeRole === 'admin' || (!((user as any)?.activeRole) && user?.userType === 'admin');
+  const isAdmin = (user as any)?.activeRole === 'admin' || (!((user as any)?.activeRole) && (user as any)?.userType === 'admin');
   
   const { data: beer, isLoading: beerLoading } = useQuery<Beer>({
     queryKey: ["/api/beers", id],
@@ -333,9 +335,9 @@ export default function BeerDetail() {
       toast({ title: `Birra "${beer.name}" eliminata` });
       const breweryId = (beer as any)?.brewery?.id ?? (beer as any)?.breweryId;
       if (breweryId) {
-        setLocation(`/breweries/${breweryId}`);
+        navigate(`/brewery/${breweryId}`);
       } else {
-        setLocation('/');
+        navigate('/');
       }
     } catch (err: any) {
       toast({ title: "Errore nell'eliminazione", description: err?.message, variant: "destructive" });
