@@ -3,7 +3,7 @@ import { Link, useLocation } from "wouter";
 import { useAuth } from "@/hooks/useAuth";
 import { useState, type ReactNode } from "react";
 import { useQuery } from "@tanstack/react-query";
-import SearchDialog from "@/components/search-dialog";
+import FindBeerSheet from "@/components/FindBeerSheet";
 
 export function BottomNavigation() {
   const [location] = useLocation();
@@ -53,7 +53,7 @@ export function BottomNavigation() {
 
   return (
     <>
-      <SearchDialog isOpen={searchOpen} onClose={() => setSearchOpen(false)} />
+      <FindBeerSheet open={searchOpen} onClose={() => setSearchOpen(false)} />
 
       <nav
         className="lg:hidden fixed bottom-0 left-0 right-0 z-[55] bg-white/95 dark:bg-[#0F0F10]/96 backdrop-blur-xl border-t border-stone-100/80 dark:border-white/[0.05]"

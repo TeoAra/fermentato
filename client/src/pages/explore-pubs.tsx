@@ -273,7 +273,7 @@ export default function ExplorePubs() {
       )}
 
       {/* ── Content ── */}
-      <main className="px-4 py-4 pb-28 lg:pb-12 max-w-2xl mx-auto">
+      <main className="px-4 py-4 pb-28 lg:pb-12 max-w-2xl mx-auto lg:max-w-none lg:mx-0 lg:px-6">
         {isLoading ? (
           <div className="space-y-3">
             {[...Array(6)].map((_, i) => (

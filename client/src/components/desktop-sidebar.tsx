@@ -8,7 +8,7 @@ import {
   DropdownMenuSeparator, DropdownMenuTrigger, DropdownMenuLabel,
 } from "@/components/ui/dropdown-menu";
 import { ThemeToggle } from "@/components/theme-toggle";
-import SearchDialog from "@/components/search-dialog";
+import FindBeerSheet from "@/components/FindBeerSheet";
 import { useState } from "react";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import type { User as UserType } from "@shared/schema";
@@ -71,7 +71,7 @@ export function DesktopSidebar() {
 
   return (
     <>
-      <SearchDialog isOpen={searchOpen} onClose={() => setSearchOpen(false)} />
+      <FindBeerSheet open={searchOpen} onClose={() => setSearchOpen(false)} />
 
       {/* ── Desktop Topbar ── hidden on mobile, shown on lg+ */}
       <header className="hidden lg:flex fixed top-0 left-0 right-0 z-50 h-16 items-center border-b border-stone-200 dark:border-[hsl(25,12%,14%)] bg-white/97 dark:bg-[hsl(25,14%,8%)]/97 backdrop-blur-xl">

@@ -1,6 +1,6 @@
 import React, { lazy, Suspense, useState, useMemo, useEffect, useRef } from "react";
 import { Helmet } from "react-helmet-async";
-import { useParams, Link } from "wouter";
+import { useParams, Link, useLocation } from "wouter";
 import { GlutenFreeSmallBadge, AlcoholFreeBadge } from "@/components/beer-badges";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { 
@@ -239,6 +239,7 @@ const PubStatsCard = ({
 
 export default function PubDetail() {
   const { id } = useParams();
+  const [, setLocation] = useLocation();
   const { user, isAuthenticated } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -611,7 +612,7 @@ export default function PubDetail() {
   const seoUrl = `https://fermenta.to/pub/${id}`;
 
   return (
-    <div className="min-h-screen bg-background dark:bg-background slide-up">
+    <div className="min-h-screen bg-background dark:bg-background">
       <Helmet>
         <title>{seoTitle}</title>
         <meta name="description" content={seoDesc} />
@@ -846,7 +847,11 @@ export default function PubDetail() {
           <div className="lg:col-span-3">
             {/* ── TABS ── */}
             <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-                <div className="sticky top-14 lg:top-16 z-20 bg-white dark:bg-card border-b border-stone-100 dark:border-stone-700/30">
+                {/* Spacer reserved for the fixed tab bar on mobile (prevents layout jump) */}
+                {headerCollapsed && <div className="h-12 lg:hidden" aria-hidden="true" />}
+                <div className={`${headerCollapsed
+                  ? 'fixed top-[6.5rem] left-0 right-0 z-30 lg:sticky lg:top-16 lg:left-auto lg:right-auto lg:z-20'
+                  : 'sticky top-14 lg:top-16 z-20'} bg-white dark:bg-card border-b border-stone-100 dark:border-stone-700/30`}>
                   <div className="flex justify-center overflow-x-auto scrollbar-hide px-1">
                     {[
                       { id: 'taplist', label: 'Spina', icon: <Wine className="h-4 w-4 flex-shrink-0" /> },
@@ -1280,8 +1285,8 @@ export default function PubDetail() {
 
       <Footer />
 
-      {/* ── FAB: floating action button (mobile only) ── */}
-      {isAuthenticated && (
+      {/* ── FAB: floating action button (mobile only) — always present ── */}
+      {(
         <div className="fixed bottom-24 right-4 z-40 lg:hidden flex flex-col items-end gap-3">
           {/* Expanded items */}
           {fabOpen && (
@@ -1291,7 +1296,16 @@ export default function PubDetail() {
                   Segna bevuta
                 </span>
                 <button
-                  onClick={() => { setFabOpen(false); setCheckinBottle(null); }}
+                  onClick={() => {
+                    setFabOpen(false);
+                    if (!isAuthenticated) {
+                      toast({ title: "Accedi per registrare una bevuta", description: "Effettua il login per continuare." });
+                      setLocation(`/auth?redirect=${encodeURIComponent(`/pub/${id}`)}`);
+                      return;
+                    }
+                    setCheckinBottle(null);
+                    setActiveTab('taplist');
+                  }}
                   className="w-12 h-12 rounded-full bg-white dark:bg-[#1A1A1C] border border-stone-200 dark:border-white/10 shadow-xl flex items-center justify-center tap-scale"
                 >
                   <BeerIcon className="h-5 w-5 text-primary" />
@@ -1302,7 +1316,15 @@ export default function PubDetail() {
                   Recensisci
                 </span>
                 <button
-                  onClick={() => { setFabOpen(false); setActiveTab('reviews'); }}
+                  onClick={() => {
+                    setFabOpen(false);
+                    if (!isAuthenticated) {
+                      toast({ title: "Accedi per recensire", description: "Effettua il login per lasciare una recensione." });
+                      setLocation(`/auth?redirect=${encodeURIComponent(`/pub/${id}`)}`);
+                      return;
+                    }
+                    setActiveTab('reviews');
+                  }}
                   className="w-12 h-12 rounded-full bg-white dark:bg-[#1A1A1C] border border-stone-200 dark:border-white/10 shadow-xl flex items-center justify-center tap-scale"
                 >
                   <Star className="h-5 w-5 text-amber-500" />

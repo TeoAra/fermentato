@@ -97,16 +97,16 @@ export default function FindBeerSheet({ open, onClose, nearbyPubs = [] }: FindBe
       <div
         ref={sheetRef}
         className="fixed z-[61] bg-background dark:bg-[#0F0F10] shadow-2xl flex flex-col
-                   inset-x-0 bottom-0 rounded-t-[28px] max-h-[92dvh]
-                   lg:inset-x-auto lg:bottom-auto lg:left-1/2 lg:-translate-x-1/2 lg:top-[7vh] lg:w-full lg:max-w-xl lg:rounded-2xl lg:max-h-[84vh]"
+                   inset-x-0 bottom-0 rounded-t-[28px] max-h-[88dvh]
+                   md:inset-x-auto md:bottom-auto md:left-1/2 md:-translate-x-1/2 md:top-[6vh] md:w-[calc(100vw-2rem)] md:max-w-2xl md:rounded-3xl md:max-h-[86vh] md:border md:border-stone-200 md:dark:border-stone-800"
         style={{ animation: "sheetSlideUp 300ms cubic-bezier(0.32,0.72,0,1)" }}
       >
         {/* Drag handle — mobile only */}
-        <div className="flex justify-center pt-3 pb-1 flex-shrink-0 lg:hidden">
+        <div className="flex justify-center pt-3 pb-1 flex-shrink-0 md:hidden">
           <div className="w-10 h-[3.5px] rounded-full bg-stone-200 dark:bg-stone-700" />
         </div>
         {/* Desktop top padding */}
-        <div className="hidden lg:block h-3 flex-shrink-0" />
+        <div className="hidden md:block h-3 flex-shrink-0" />
 
         <div className="px-4 pt-2 pb-3 flex-shrink-0">
           <div className="flex items-center gap-3 mb-1">

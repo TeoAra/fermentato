@@ -8,7 +8,7 @@ import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import type { User as UserType } from "@shared/schema";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { useState } from "react";
-import SearchDialog from "@/components/search-dialog";
+import FindBeerSheet from "@/components/FindBeerSheet";
 
 interface MobileHeaderProps {
   onMenuToggle: () => void;
@@ -345,7 +345,7 @@ export function MobileHeader({ onMenuToggle, isMenuOpen }: MobileHeaderProps) {
         </SheetContent>
       </Sheet>
 
-      <SearchDialog isOpen={isSearchOpen} onClose={() => setIsSearchOpen(false)} />
+      <FindBeerSheet open={isSearchOpen} onClose={() => setIsSearchOpen(false)} />
     </>
   );
 }

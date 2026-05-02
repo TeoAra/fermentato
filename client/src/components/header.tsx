@@ -8,7 +8,7 @@ import { useState, useRef, useEffect } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import SearchResults from "@/components/search-results";
-import SearchDialog from "@/components/search-dialog";
+import FindBeerSheet from "@/components/FindBeerSheet";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger, DropdownMenuLabel, DropdownMenuSub, DropdownMenuSubTrigger, DropdownMenuSubContent } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ThemeToggle } from "@/components/theme-toggle";
@@ -265,8 +265,8 @@ export default function Header() {
         </div>
       </header>
 
-      <SearchDialog
-        isOpen={isSearchOpen}
+      <FindBeerSheet
+        open={isSearchOpen}
         onClose={() => setIsSearchOpen(false)}
       />
     </>
