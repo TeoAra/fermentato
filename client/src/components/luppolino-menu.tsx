@@ -80,8 +80,8 @@ function MenuItemRow({
             </Badge>
           )}
         </div>
-        {item.description && (
-          <p className={`text-xs text-muted-foreground mt-0.5 leading-snug ${open ? '' : 'line-clamp-1'}`}>
+        {item.description && !open && (
+          <p className="text-xs text-muted-foreground mt-0.5 leading-snug line-clamp-1">
             {item.description}
           </p>
         )}
