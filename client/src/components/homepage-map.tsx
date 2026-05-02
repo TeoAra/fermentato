@@ -66,6 +66,7 @@ interface HomepageMapProps {
   showControls?: boolean;
   externalZoom?: number;
   onZoomChange?: (z: number) => void;
+  fixedHeight?: number;
 }
 
 interface Selected {
@@ -88,9 +89,10 @@ export default function HomepageMap({
   showControls = true,
   externalZoom,
   onZoomChange,
+  fixedHeight,
 }: HomepageMapProps) {
   const containerRef = useRef<HTMLDivElement>(null);
-  const [mapHeight, setMapHeight] = useState(300);
+  const [mapHeight, setMapHeight] = useState(fixedHeight ?? 300);
   const [center, setCenter] = useState<[number, number]>([42.0, 12.5]);
   const [zoom, setZoom] = useState(externalZoom ?? 5.4);
 
@@ -105,14 +107,21 @@ export default function HomepageMap({
   const prevDistRef = useRef<number | undefined>();
 
   useEffect(() => {
+    if (fixedHeight) {
+      setMapHeight(fixedHeight);
+      return;
+    }
     const el = containerRef.current;
     if (!el) return;
-    const update = () => setMapHeight(el.offsetHeight);
+    const update = () => {
+      const h = el.offsetHeight;
+      if (h > 0) setMapHeight(h);
+    };
     update();
     const ro = new ResizeObserver(update);
     ro.observe(el);
     return () => ro.disconnect();
-  }, []);
+  }, [fixedHeight]);
 
   useEffect(() => {
     if (!userLocation || hasFlewRef.current) return;
@@ -160,8 +169,8 @@ export default function HomepageMap({
   return (
     <div
       ref={containerRef}
-      className="relative w-full h-full overflow-hidden"
-      style={{ touchAction: "pan-y" }}
+      className="relative w-full overflow-hidden"
+      style={{ touchAction: "pan-y", height: fixedHeight ? `${fixedHeight}px` : '100%', maxHeight: fixedHeight ? `${fixedHeight}px` : undefined }}
     >
       {isLoading && (
         <div className="absolute inset-0 z-20 flex items-center justify-center bg-stone-100 dark:bg-stone-800">

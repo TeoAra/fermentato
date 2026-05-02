@@ -226,9 +226,9 @@ export default function Home() {
       ═══════════════════════════════════════════════════════════════ */}
       <div className="max-w-2xl mx-auto px-4 pt-4">
         {/* Map card — taller on mobile, more compact on desktop */}
-        <div className="relative rounded-3xl overflow-hidden bg-stone-200 dark:bg-stone-900 shadow-card h-[300px] lg:h-[240px]">
+        <div className="relative rounded-3xl overflow-hidden bg-stone-200 dark:bg-stone-900 shadow-card h-[300px] lg:h-[240px]" style={{ maxHeight: 300 }}>
           {!Capacitor.isNativePlatform() ? (
-            <div className="absolute inset-0 overflow-hidden">
+            <div className="absolute inset-0 overflow-hidden" style={{ maxHeight: '100%' }}>
               <Suspense fallback={<div className="w-full h-full bg-stone-200 dark:bg-stone-800" />}>
                 <HomepageMap
                   pubs={Array.isArray(pubs) ? pubs as any[] : []}
@@ -243,6 +243,7 @@ export default function Home() {
                   distanceKm={userLocation ? distanceKm : undefined}
                   onLocate={(loc) => { setUserLocation(loc); setLocationStatus('granted'); }}
                   showControls={false}
+                  fixedHeight={300}
                 />
               </Suspense>
             </div>
