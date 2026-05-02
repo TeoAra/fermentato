@@ -2786,7 +2786,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!Number.isFinite(pubId)) {
         return res.status(400).json({ message: 'Invalid pub id' });
       }
-      const limit = Math.min(parseInt(req.query.limit as string) || 8, 30);
+      const parsedLimit = parseInt(req.query.limit as string);
+      const limit = Math.max(1, Math.min(Number.isFinite(parsedLimit) && parsedLimit > 0 ? parsedLimit : 8, 30));
       const activities = await storage.getPubRecentActivities(pubId, limit);
       res.set('Cache-Control', 'public, max-age=60');
       res.json(activities);
