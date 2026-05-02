@@ -4,6 +4,7 @@ import { useState, useEffect, useMemo } from "react";
 import { Link, useLocation } from "wouter";
 import { Beer, ArrowLeft, Search, X, ChevronRight, SlidersHorizontal, Bookmark, Star, Map as MapIcon, Navigation, Dices, MapPin, Flame, Sparkles, Trophy } from "lucide-react";
 import { PubMap } from "@/components/pub-map";
+import FindBeerSheet from "@/components/FindBeerSheet";
 
 type ViewMode = "list" | "map";
 type StyleTab = "birre" | "dove";
@@ -99,6 +100,7 @@ export default function ExploreBeers() {
   const [distanceKm, setDistanceKm] = useState(10);
   const [pubFilter, setPubFilter] = useState<"all" | "open">("all");
   const [stylesView, setStylesView] = useState<null | "popular" | "discover">(null);
+  const [findBeerOpen, setFindBeerOpen] = useState(false);
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(() => {
     try { const c = localStorage.getItem("fermenta:userLocation"); return c ? JSON.parse(c) : null; } catch { return null; }
   });
@@ -305,13 +307,13 @@ export default function ExploreBeers() {
               )}
             </div>
             {/* Mini mappa — pin dei pub vicino a te */}
-            <div className="rounded-2xl overflow-hidden border border-stone-100 dark:border-stone-800/60 shadow-sm h-[150px] lg:h-[170px] bg-stone-100 dark:bg-stone-800">
+            <div className="rounded-2xl overflow-hidden border border-stone-100 dark:border-stone-800/60 shadow-sm h-[240px] lg:h-[260px] bg-stone-100 dark:bg-stone-800">
               <PubMap pins={beerMapPins} height="100%" />
             </div>
           </div>
         </div>
 
-        <main className="max-w-3xl mx-auto px-4 lg:px-6 pt-[244px] lg:pt-[264px] pb-28 lg:pb-12">
+        <main className="max-w-3xl mx-auto px-4 lg:px-6 pt-[334px] lg:pt-[354px] pb-28 lg:pb-12">
           <header className="mb-4">
             <h1 className="text-3xl lg:text-4xl font-extrabold text-foreground tracking-tight">Esplora Birre</h1>
             <p className="text-sm text-stone-500 dark:text-stone-400 mt-1">Scopri nuovi stili e trova la tua prossima preferita</p>
@@ -360,7 +362,7 @@ export default function ExploreBeers() {
           {!freeQuery && !stylesView && (
             <>
               {/* Hero card "Cosa si beve vicino a te?" */}
-              <CosaSiBeveCard onClick={() => { handleLocate(); selectStyle("IPA"); }} />
+              <CosaSiBeveCard onClick={() => setFindBeerOpen(true)} />
 
               {/* Style sections */}
               {STYLE_GROUPS.map(group => (
@@ -481,6 +483,12 @@ export default function ExploreBeers() {
           )}
         </main>
       )}
+
+      <FindBeerSheet
+        open={findBeerOpen}
+        onClose={() => setFindBeerOpen(false)}
+        nearbyPubs={pubs}
+      />
     </div>
   );
 }

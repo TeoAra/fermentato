@@ -191,7 +191,7 @@ export default function ExplorePubs() {
           </div>
 
           {/* Mini mappa — pin di tutti i pub (filtrati dalla ricerca/zona) */}
-          <div className="rounded-2xl overflow-hidden border border-stone-100 dark:border-stone-800/60 shadow-sm h-[150px] lg:h-[170px] bg-stone-100 dark:bg-stone-800 mb-3">
+          <div className="rounded-2xl overflow-hidden border border-stone-100 dark:border-stone-800/60 shadow-sm h-[240px] lg:h-[260px] bg-stone-100 dark:bg-stone-800 mb-3">
             <PubMap pins={(filtered.length > 0 ? filtered : pubsArr).map((p: any) => ({ id: p.id, name: p.name, slug: p.slug, latitude: String(p.latitude || ""), longitude: String(p.longitude || ""), logoUrl: p.logoUrl, type: "pub" as const }))} height="100%" />
           </div>
 
