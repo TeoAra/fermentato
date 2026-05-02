@@ -23,6 +23,9 @@ import {
   ShieldCheck,
   ChevronRight,
   ChevronLeft,
+  ChevronDown,
+  ArrowLeft,
+  MoreHorizontal,
   Plus,
   Star,
   X as XIcon,
@@ -251,6 +254,7 @@ export default function PubDetail() {
   const [checkinBottle, setCheckinBottle] = useState<any>(null);
   const [fabOpen, setFabOpen] = useState(false);
   const [styleFilter, setStyleFilter] = useState('Tutti');
+  const [descExpanded, setDescExpanded] = useState(false);
 
   // Fire-and-forget: track pub page view for analytics
   useEffect(() => {
@@ -679,133 +683,269 @@ export default function PubDetail() {
         ])}</script>
       </Helmet>
       
-      {/* ── HERO — full-width cover ── */}
-      <div className="relative h-72 overflow-hidden bg-stone-900">
-        {(pub as any)?.coverImageUrl ? (
-          <img src={(pub as any).coverImageUrl} alt="" className="w-full h-full object-cover" />
-        ) : (pub as any)?.logoUrl ? (
-          <img src={(pub as any).logoUrl} alt="" className="w-full h-full object-cover blur-2xl scale-110 opacity-50" />
-        ) : (
-          <div className="w-full h-full bg-gradient-to-br from-stone-800 via-stone-700 to-stone-900" />
-        )}
-        {/* Gradient overlay */}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/25 to-black/35" />
-
-        {/* Back button */}
-        <Link href="/explore/pubs" className="absolute top-3 left-4 w-9 h-9 rounded-full bg-black/35 backdrop-blur-md flex items-center justify-center tap-scale">
-          <ChevronLeft className="h-5 w-5 text-white" />
-        </Link>
-
-        {/* Share + Bookmark + Manage */}
-        <div className="absolute top-3 right-4 flex gap-2">
-          <button onClick={handleSave} disabled={toggleFavoriteMutation.isPending} data-testid="button-save"
-            className="w-9 h-9 rounded-full bg-black/35 backdrop-blur-md flex items-center justify-center tap-scale">
-            <Heart className={`h-[18px] w-[18px] ${isFavorite ? 'fill-white text-white' : 'text-white'}`} />
-          </button>
-          <button onClick={handleShare} data-testid="button-share"
-            className="w-9 h-9 rounded-full bg-black/35 backdrop-blur-md flex items-center justify-center tap-scale">
-            <Share2 className="h-[18px] w-[18px] text-white" />
-          </button>
-          {canManage && (
-            <Link href={isAdmin ? `/admin/edit-pub/${id}` : "/dashboard"}>
-              <button data-testid="button-manage"
-                className="w-9 h-9 rounded-full bg-primary/80 backdrop-blur-md flex items-center justify-center tap-scale">
-                <Settings className="h-[18px] w-[18px] text-white" />
-              </button>
-            </Link>
+      {/* ── HERO — full-bleed cover with curved bottom edge (mobile) ── */}
+      <div className="relative bg-stone-900 lg:hidden">
+        <div className="relative h-72 overflow-hidden">
+          {(pub as any)?.coverImageUrl ? (
+            <img src={(pub as any).coverImageUrl} alt="" className="w-full h-full object-cover" />
+          ) : (pub as any)?.logoUrl ? (
+            <img src={(pub as any).logoUrl} alt="" className="w-full h-full object-cover blur-2xl scale-110 opacity-50" />
+          ) : (
+            <div className="w-full h-full bg-gradient-to-br from-stone-800 via-stone-700 to-stone-900" />
           )}
+          <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-black/10 to-black/40" />
+
+          {/* Top bar: back / share / bookmark / manage */}
+          <Link href="/explore/pubs" aria-label="Indietro"
+            className="absolute top-3 left-4 w-10 h-10 rounded-full bg-black/40 backdrop-blur-md flex items-center justify-center tap-scale">
+            <ArrowLeft className="h-5 w-5 text-white" />
+          </Link>
+          <div className="absolute top-3 right-4 flex items-center gap-2">
+            <button onClick={handleShare} aria-label="Condividi" data-testid="button-share"
+              className="w-10 h-10 rounded-full bg-black/40 backdrop-blur-md flex items-center justify-center tap-scale">
+              <Share2 className="h-[18px] w-[18px] text-white" />
+            </button>
+            {canManage ? (
+              <Link href={isAdmin ? `/admin/edit-pub/${id}` : "/dashboard"} aria-label="Gestisci pub">
+                <button data-testid="button-manage"
+                  className="w-10 h-10 rounded-full bg-black/40 backdrop-blur-md flex items-center justify-center tap-scale">
+                  <Settings className="h-[18px] w-[18px] text-white" />
+                </button>
+              </Link>
+            ) : (
+              <button aria-label="Altre opzioni"
+                className="w-10 h-10 rounded-full bg-black/40 backdrop-blur-md flex items-center justify-center tap-scale">
+                <MoreHorizontal className="h-[18px] w-[18px] text-white" />
+              </button>
+            )}
+          </div>
+
+          {/* Curved white bottom edge */}
+          <svg className="absolute bottom-0 left-0 w-full text-background dark:text-background" viewBox="0 0 375 40" preserveAspectRatio="none" style={{ height: '40px' }}>
+            <path d="M0,40 L0,20 Q187.5,-10 375,20 L375,40 Z" fill="currentColor" />
+          </svg>
         </div>
 
-        {/* Bottom info overlay */}
-        <div className="absolute bottom-0 left-0 right-0 px-4 pb-4">
-          <div className="flex items-end gap-3">
-            <button
-              className="flex-shrink-0 tap-scale"
-              onClick={() => { const s = (pub as any)?.logoUrl; if (s) (window as any).__lightboxOpen?.(s); }}
-            >
-              <Avatar className="h-[72px] w-[72px] rounded-2xl border-2 border-white/25 shadow-xl bg-stone-800">
+        {/* Identity block — mobile (logo overlaps curve) */}
+        <div className="bg-background dark:bg-background relative px-4 pb-2">
+          <div className="flex items-end gap-3 -mt-12 relative z-10">
+            <button onClick={() => { const s = (pub as any)?.logoUrl; if (s) (window as any).__lightboxOpen?.(s); }} aria-label="Apri logo" className="flex-shrink-0 tap-scale">
+              <Avatar className="h-24 w-24 rounded-full border-4 border-background dark:border-background shadow-lg bg-stone-800">
                 <AvatarImage src={(pub as any)?.logoUrl} alt={(pub as any)?.name} className="object-cover" />
-                <AvatarFallback className="bg-stone-700 text-white text-3xl font-bold">
-                  {(pub as any)?.name?.[0] || 'P'}
-                </AvatarFallback>
+                <AvatarFallback className="bg-stone-700 text-white text-3xl font-bold">{(pub as any)?.name?.[0] || 'P'}</AvatarFallback>
               </Avatar>
             </button>
-            <div className="flex-1 min-w-0 pb-0.5">
-              <div className="flex items-center gap-2">
-                <h1 className="text-xl font-extrabold text-white leading-tight tracking-tight drop-shadow-sm">
-                  {(pub as any)?.name}
-                </h1>
-                {(pub as any)?.isVerified && (
-                  <div title="Pub Verificato" className="flex items-center justify-center bg-emerald-500 rounded-full w-5 h-5 flex-shrink-0">
-                    <ShieldCheck className="h-3 w-3 text-white" />
-                  </div>
-                )}
-              </div>
-              {(pub as any)?.city && (
-                <p className="text-sm text-white/70 font-medium mt-0.5">{(pub as any).city}{(pub as any)?.address ? `, ${(pub as any).address.split(',')[0]}` : ''}</p>
+            <button onClick={handleSave} disabled={toggleFavoriteMutation.isPending} aria-label={isFavorite ? 'Rimuovi dai preferiti' : 'Salva'}
+              data-testid="button-save"
+              className={`ml-auto mb-2 w-10 h-10 rounded-full flex items-center justify-center tap-scale border transition-all ${
+                isFavorite
+                  ? 'bg-primary/10 border-primary/40 text-primary'
+                  : 'bg-white dark:bg-stone-900/40 border-stone-200 dark:border-stone-700 text-foreground hover:border-primary/40'
+              }`}>
+              <Heart className={`h-5 w-5 ${isFavorite ? 'fill-primary text-primary' : ''}`} />
+            </button>
+          </div>
+
+          <div className="mt-3 space-y-2">
+            <div className="flex items-center gap-2">
+              <h1 className="text-2xl font-extrabold text-foreground leading-tight tracking-tight">{(pub as any)?.name}</h1>
+              {(pub as any)?.isVerified && (
+                <div title="Pub Verificato" className="flex items-center justify-center bg-primary rounded-full w-5 h-5 flex-shrink-0 shadow-sm">
+                  <ShieldCheck className="h-3 w-3 text-white" />
+                </div>
               )}
             </div>
+
+            {/* Rating + location row */}
+            <div className="flex items-center gap-2 text-sm text-stone-600 dark:text-stone-300 flex-wrap">
+              {((favoritesCountData as any)?.count ?? 0) > 0 && (
+                <div className="flex items-center gap-1">
+                  <Heart className="h-4 w-4 fill-red-500 text-red-500" />
+                  <span className="font-bold text-foreground">{(favoritesCountData as any).count}</span>
+                </div>
+              )}
+              {(((favoritesCountData as any)?.count ?? 0) > 0 && ((pub as any)?.city || (pub as any)?.address)) && (
+                <span className="text-stone-400 dark:text-stone-500">·</span>
+              )}
+              {((pub as any)?.city || (pub as any)?.address) && (
+                <div className="flex items-center gap-1 min-w-0">
+                  <MapPin className="h-3.5 w-3.5 text-stone-500 dark:text-stone-400 flex-shrink-0" />
+                  <span className="truncate">
+                    {(pub as any)?.city || (pub as any)?.address?.split(',')[0]}{(pub as any)?.region ? ` (${(pub as any).region})` : ''}{(pub as any)?.country ? `, ${(pub as any).country}` : ', Italia'}
+                  </span>
+                </div>
+              )}
+            </div>
+
+            {/* Badges row: Aperto ora + spine */}
+            <div className="flex items-center gap-2 flex-wrap pt-1">
+              <button onClick={handleShowOpeningHours} data-testid="button-show-hours"
+                className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold border transition-colors tap-scale ${
+                  openStatus.status === 'open'
+                    ? 'bg-emerald-50 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-400 border-emerald-100 dark:border-emerald-900/40'
+                    : openStatus.status === 'closing_soon' || openStatus.status === 'opening_soon'
+                    ? 'bg-orange-50 dark:bg-orange-950/30 text-primary border-orange-100 dark:border-orange-900/40'
+                    : 'bg-red-50 dark:bg-red-950/30 text-red-700 dark:text-red-400 border-red-100 dark:border-red-900/40'
+                }`}>
+                <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${
+                  openStatus.status === 'open' ? 'bg-emerald-500' :
+                  openStatus.status === 'closing_soon' || openStatus.status === 'opening_soon' ? 'bg-primary' : 'bg-red-500'
+                }`} />
+                {openStatus.status === 'open' && 'Aperto ora'}
+                {openStatus.status === 'closing_soon' && 'Sta chiudendo'}
+                {openStatus.status === 'opening_soon' && 'Sta per aprire'}
+                {openStatus.status === 'closed' && 'Chiuso'}
+              </button>
+
+              {Array.isArray(tapList) && tapList.length > 0 && (
+                <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold bg-orange-50 dark:bg-orange-950/30 text-primary border border-orange-100 dark:border-orange-900/40">
+                  <BeerIcon className="h-3.5 w-3.5" />
+                  {tapList.length} spine disponibili
+                </span>
+              )}
+            </div>
+
+            {/* Description with read-more toggle */}
+            {(pub as any)?.description && (
+              <div className="pt-2">
+                <p className={`text-sm text-stone-600 dark:text-stone-400 leading-relaxed whitespace-pre-line ${descExpanded ? '' : 'line-clamp-3'}`}>
+                  {(pub as any).description}
+                </p>
+                {((pub as any).description as string).length > 140 && (
+                  <button
+                    onClick={() => setDescExpanded(v => !v)}
+                    className="mt-1 text-sm font-bold text-primary inline-flex items-center gap-0.5 tap-scale"
+                  >
+                    {descExpanded ? 'Mostra meno' : 'Leggi di più'}
+                    <ChevronDown className={`h-4 w-4 transition-transform ${descExpanded ? 'rotate-180' : ''}`} />
+                  </button>
+                )}
+              </div>
+            )}
+          </div>
+
+          {/* 4 action cards row */}
+          <div className="grid grid-cols-4 gap-2 mt-4">
+            {(((pub as any)?.latitude && (pub as any)?.longitude) || (pub as any)?.address) ? (
+              <a
+                href={getMapNavigationUrl((pub as any).name, (pub as any).address)}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex flex-col items-center justify-center gap-1 rounded-2xl py-3 px-1 bg-stone-50 dark:bg-stone-900/40 border border-stone-100 dark:border-stone-800 hover:border-primary/30 transition-all tap-scale"
+                data-testid="link-directions"
+              >
+                <Navigation className="h-5 w-5 text-primary" />
+                <span className="text-[11px] font-bold text-foreground leading-tight">Indicazioni</span>
+                <span className="text-[10px] text-stone-500 dark:text-stone-400 leading-tight">Maps</span>
+              </a>
+            ) : (
+              <div className="flex flex-col items-center justify-center gap-1 rounded-2xl py-3 px-1 bg-stone-50/40 dark:bg-stone-900/20 border border-stone-100 dark:border-stone-800 opacity-50">
+                <Navigation className="h-5 w-5 text-stone-400" />
+                <span className="text-[11px] font-bold text-stone-400 leading-tight">Indicazioni</span>
+                <span className="text-[10px] text-stone-400 leading-tight">N/D</span>
+              </div>
+            )}
+
+            {(pub as any)?.phone ? (
+              <a
+                href={`tel:${(pub as any).phone}`}
+                className="flex flex-col items-center justify-center gap-1 rounded-2xl py-3 px-1 bg-stone-50 dark:bg-stone-900/40 border border-stone-100 dark:border-stone-800 hover:border-primary/30 transition-all tap-scale"
+                data-testid="link-phone"
+              >
+                <Phone className="h-5 w-5 text-foreground" />
+                <span className="text-[11px] font-bold text-foreground leading-tight">Chiama</span>
+                <span className="text-[10px] text-stone-500 dark:text-stone-400 leading-tight truncate max-w-full px-1">
+                  {(pub as any).phone}
+                </span>
+              </a>
+            ) : (
+              <div className="flex flex-col items-center justify-center gap-1 rounded-2xl py-3 px-1 bg-stone-50/40 dark:bg-stone-900/20 border border-stone-100 dark:border-stone-800 opacity-50">
+                <Phone className="h-5 w-5 text-stone-400" />
+                <span className="text-[11px] font-bold text-stone-400 leading-tight">Chiama</span>
+                <span className="text-[10px] text-stone-400 leading-tight">N/D</span>
+              </div>
+            )}
+
+            {(pub as any)?.websiteUrl ? (
+              <a
+                href={(pub as any).websiteUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex flex-col items-center justify-center gap-1 rounded-2xl py-3 px-1 bg-stone-50 dark:bg-stone-900/40 border border-stone-100 dark:border-stone-800 hover:border-primary/30 transition-all tap-scale"
+                data-testid="link-website"
+              >
+                <Globe className="h-5 w-5 text-foreground" />
+                <span className="text-[11px] font-bold text-foreground leading-tight">Sito web</span>
+                <span className="text-[10px] text-stone-500 dark:text-stone-400 leading-tight truncate max-w-full px-1">
+                  {(pub as any).websiteUrl.replace(/^https?:\/\//, '').replace(/^www\./, '').split('/')[0]}
+                </span>
+              </a>
+            ) : (
+              <div className="flex flex-col items-center justify-center gap-1 rounded-2xl py-3 px-1 bg-stone-50/40 dark:bg-stone-900/20 border border-stone-100 dark:border-stone-800 opacity-50">
+                <Globe className="h-5 w-5 text-stone-400" />
+                <span className="text-[11px] font-bold text-stone-400 leading-tight">Sito web</span>
+                <span className="text-[10px] text-stone-400 leading-tight">N/D</span>
+              </div>
+            )}
+
+            {(pub as any)?.instagramUrl ? (
+              <a
+                href={(pub as any).instagramUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex flex-col items-center justify-center gap-1 rounded-2xl py-3 px-1 bg-stone-50 dark:bg-stone-900/40 border border-stone-100 dark:border-stone-800 hover:border-primary/30 transition-all tap-scale"
+                data-testid="link-instagram"
+              >
+                <Instagram className="h-5 w-5 text-foreground" />
+                <span className="text-[11px] font-bold text-foreground leading-tight">Instagram</span>
+                <span className="text-[10px] text-stone-500 dark:text-stone-400 leading-tight truncate max-w-full px-1">
+                  @{(pub as any).instagramUrl.replace(/^https?:\/\/(www\.)?instagram\.com\//i, '').replace(/\/.*$/, '').replace(/^@/, '') || 'instagram'}
+                </span>
+              </a>
+            ) : (
+              <button
+                onClick={handleShare}
+                className="flex flex-col items-center justify-center gap-1 rounded-2xl py-3 px-1 bg-stone-50 dark:bg-stone-900/40 border border-stone-100 dark:border-stone-800 hover:border-primary/30 transition-all tap-scale"
+                data-testid="button-share-pub"
+              >
+                <Share2 className="h-5 w-5 text-foreground" />
+                <span className="text-[11px] font-bold text-foreground leading-tight">Condividi</span>
+                <span className="text-[10px] text-stone-500 dark:text-stone-400 leading-tight">Con amici</span>
+              </button>
+            )}
           </div>
         </div>
       </div>
 
-      {/* ── Info bar — un'unica riga di chip identici (Aperto, spine, Salvato, Indicazioni, Vedi birre) ── */}
-      <div className="bg-white dark:bg-card border-b border-stone-100 dark:border-stone-800 px-4 py-3">
-        <div className="flex items-center gap-2 flex-wrap">
-          <button onClick={handleShowOpeningHours} data-testid="button-show-hours"
-            className={`inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-full text-xs font-semibold border transition-colors tap-scale ${
-              openStatus.status === 'open'
-                ? 'bg-green-50 dark:bg-green-950 text-green-700 dark:text-green-300 border-green-200 dark:border-green-800'
-                : openStatus.status === 'closing_soon' || openStatus.status === 'opening_soon'
-                ? 'bg-primary/8 text-primary border-primary/20'
-                : 'bg-red-50 dark:bg-red-950 text-red-700 dark:text-red-300 border-red-200 dark:border-red-800'
-            }`}>
-            <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${
-              openStatus.status === 'open' ? 'bg-green-500' :
-              openStatus.status === 'closing_soon' || openStatus.status === 'opening_soon' ? 'bg-primary' : 'bg-red-500'
-            }`} />
-            {openStatus.status === 'open' && 'Aperto ora'}
-            {openStatus.status === 'closing_soon' && 'Sta chiudendo'}
-            {openStatus.status === 'opening_soon' && 'Sta per aprire'}
-            {openStatus.status === 'closed' && 'Chiuso'}
+      {/* ── HERO — desktop (kept compact, sidebar handles identity) ── */}
+      <div className="relative h-80 overflow-hidden bg-stone-900 hidden lg:block">
+        {(pub as any)?.coverImageUrl ? (
+          <img src={(pub as any).coverImageUrl} alt="" className="w-full h-full object-cover" />
+        ) : (pub as any)?.logoUrl ? (
+          <img src={(pub as any).logoUrl} alt="" className="w-full h-full object-cover blur-2xl scale-110 opacity-40" />
+        ) : (
+          <div className="w-full h-full bg-gradient-to-br from-stone-800 via-stone-700 to-stone-900" />
+        )}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-black/30" />
+        <Link href="/explore/pubs" aria-label="Indietro"
+          className="absolute top-4 left-6 w-10 h-10 rounded-full bg-black/40 backdrop-blur-md flex items-center justify-center tap-scale">
+          <ArrowLeft className="h-5 w-5 text-white" />
+        </Link>
+        <div className="absolute top-4 right-6 flex items-center gap-2">
+          <button onClick={handleSave} disabled={toggleFavoriteMutation.isPending} aria-label={isFavorite ? 'Rimuovi dai preferiti' : 'Salva'}
+            className="w-10 h-10 rounded-full bg-black/40 backdrop-blur-md flex items-center justify-center tap-scale">
+            <Heart className={`h-[18px] w-[18px] ${isFavorite ? 'fill-white text-white' : 'text-white'}`} />
           </button>
-
-          {Array.isArray(tapList) && tapList.length > 0 && (
-            <div className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-full text-xs font-semibold bg-stone-100 dark:bg-stone-800 text-stone-600 dark:text-stone-300 border border-stone-200 dark:border-stone-700">
-              <BeerIcon className="h-3.5 w-3.5 text-primary" />
-              {tapList.length} spine
-            </div>
-          )}
-
-          <button onClick={handleSave} disabled={toggleFavoriteMutation.isPending} data-testid="button-favorite"
-            className={`inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-full text-xs font-semibold border transition-colors tap-scale ${
-              isFavorite
-                ? 'bg-red-50 dark:bg-red-950/30 border-red-200 dark:border-red-800 text-red-500'
-                : 'bg-stone-100 dark:bg-stone-800 text-stone-600 dark:text-stone-300 border-stone-200 dark:border-stone-700'
-            }`}>
-            <Heart className={`h-3.5 w-3.5 ${isFavorite ? 'fill-current' : ''}`} />
-            {isFavorite ? 'Salvato' : 'Salva'}
+          <button onClick={handleShare} aria-label="Condividi"
+            className="w-10 h-10 rounded-full bg-black/40 backdrop-blur-md flex items-center justify-center tap-scale">
+            <Share2 className="h-[18px] w-[18px] text-white" />
           </button>
-
-          {(((pub as any)?.latitude && (pub as any)?.longitude) || (pub as any)?.address) && (
-            <a href={getMapNavigationUrl((pub as any).name, (pub as any).address)} target="_blank" rel="noopener noreferrer"
-              className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-full text-xs font-semibold bg-stone-100 dark:bg-stone-800 text-stone-600 dark:text-stone-300 border border-stone-200 dark:border-stone-700 tap-scale">
-              <Navigation className="h-3.5 w-3.5 text-teal-600 dark:text-teal-400" />
-              Indicazioni
-            </a>
-          )}
-
-          <button onClick={() => setActiveTab('taplist')}
-            className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-full text-xs font-semibold bg-primary/10 dark:bg-primary/15 text-primary border border-primary/25 tap-scale">
-            <Wine className="h-3.5 w-3.5" />
-            Vedi birre
-          </button>
-
-          {((favoritesCountData as any)?.count ?? 0) > 0 && (
-            <div className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-full text-xs font-semibold bg-stone-100 dark:bg-stone-800 text-stone-500 dark:text-stone-400 border border-stone-200 dark:border-stone-700">
-              <Heart className="h-3 w-3 text-red-400" />
-              {(favoritesCountData as any).count}
-            </div>
+          {canManage && (
+            <Link href={isAdmin ? `/admin/edit-pub/${id}` : "/dashboard"} aria-label="Gestisci pub">
+              <button className="w-10 h-10 rounded-full bg-primary/80 backdrop-blur-md flex items-center justify-center tap-scale">
+                <Settings className="h-[18px] w-[18px] text-white" />
+              </button>
+            </Link>
           )}
         </div>
       </div>
@@ -815,45 +955,36 @@ export default function PubDetail() {
         <div className="grid grid-cols-1 lg:grid-cols-4">
           {/* Main Content */}
           <div className="lg:col-span-3">
-            {/* ── TABS ── */}
+            {/* ── TABS — underline style (mockup) ── */}
             <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-                <div className="fixed left-0 right-0 z-20 bg-white dark:bg-card border-b border-stone-100 dark:border-stone-700/30 top-14 lg:static lg:top-auto">
-                  <div className="flex justify-center overflow-x-auto scrollbar-hide px-1">
+                <div className="bg-white dark:bg-card border-b border-stone-200 dark:border-stone-800 px-4">
+                  <div className="flex items-center justify-around gap-1 overflow-x-auto scrollbar-hide">
                     {[
-                      { id: 'taplist', label: 'Spina', icon: <Wine className="h-4 w-4 flex-shrink-0" /> },
-                      { id: 'bottles', label: 'Cantina', icon: <Sparkles className="h-4 w-4 flex-shrink-0" /> },
-                      { id: 'menu', label: 'Menù', icon: <span className="flex-shrink-0 leading-none text-[15px]">🍽️</span> },
-                      ...(Array.isArray(pubEvents) && pubEvents.length > 0 ? [{ id: 'events', label: 'Serate', icon: <Calendar className="h-4 w-4 flex-shrink-0" /> }] : []),
-                      { id: 'info', label: 'Info', icon: <Info className="h-4 w-4 flex-shrink-0" />, mobileOnly: true },
-                    ].map((tab) => {
+                      { id: 'taplist', label: 'Spine' },
+                      { id: 'bottles', label: 'Cantina' },
+                      { id: 'menu', label: 'Menu' },
+                      ...(Array.isArray(pubEvents) && pubEvents.length > 0 ? [{ id: 'events', label: 'Serate' }] : []),
+                      { id: 'info', label: 'Info', mobileOnly: true },
+                    ].map((tab: any) => {
                       const isTab = activeTab === tab.id;
                       return (
                         <button
                           key={tab.id}
                           data-testid={`tab-${tab.id}`}
                           onClick={() => setActiveTab(tab.id)}
-                          className={`${tab.mobileOnly ? 'lg:hidden' : ''} flex items-center gap-1.5 px-4 py-3.5 text-sm font-semibold whitespace-nowrap transition-all relative flex-shrink-0 ${
+                          className={`${tab.mobileOnly ? 'lg:hidden' : ''} relative flex-1 lg:flex-none lg:px-4 py-3.5 text-sm font-bold whitespace-nowrap transition-colors ${
                             isTab
-                              ? 'text-primary dark:text-orange-400'
-                              : 'text-stone-500 dark:text-stone-400'
+                              ? 'text-primary'
+                              : 'text-stone-500 dark:text-stone-400 hover:text-foreground'
                           }`}
                         >
-                          {isTab && <span className="absolute bottom-0 left-0 right-0 h-[2.5px] bg-primary rounded-t-full" />}
-                          {tab.icon}
                           {tab.label}
-                          {tab.badge && tab.badge > 0 ? (
-                            <span className={`text-[10px] font-black min-w-[16px] h-[16px] rounded-full flex items-center justify-center px-[3px] ${isTab ? 'bg-primary/10 text-primary dark:text-orange-400' : 'bg-stone-100 dark:bg-stone-700 text-stone-400'}`}>
-                              {tab.badge}
-                            </span>
-                          ) : null}
+                          {isTab && <span className="absolute bottom-0 left-0 right-0 h-[2.5px] bg-primary rounded-t-full" />}
                         </button>
                       );
                     })}
                   </div>
                 </div>
-
-                {/* Spacer for fixed tab bar on mobile */}
-                <div className="h-[52px] lg:hidden" />
 
                 {/* Taplist Tab */}
                 <TabsContent value="taplist" className="px-4 lg:px-0 pt-4 space-y-4">
