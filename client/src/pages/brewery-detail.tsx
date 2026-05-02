@@ -822,6 +822,10 @@ export default function BreweryDetail() {
           className="absolute top-4 right-6 w-10 h-10 rounded-full bg-black/40 backdrop-blur-md flex items-center justify-center tap-scale">
           <Share2 className="h-[18px] w-[18px] text-white" />
         </button>
+        {/* Curved white bottom edge — matches mobile hero */}
+        <svg className="absolute bottom-0 left-0 w-full text-background dark:text-background pointer-events-none" viewBox="0 0 375 50" preserveAspectRatio="none" style={{ height: '50px' }}>
+          <path d="M0,50 L0,28 Q187.5,-22 375,28 L375,50 Z" fill="currentColor" />
+        </svg>
       </div>
 
         {/* ── MAIN CONTENT ── */}

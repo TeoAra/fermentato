@@ -47,7 +47,7 @@ import ImageWithFallback from "@/components/image-with-fallback";
 import { PubQRCode } from "@/components/pub-qr-code";
 import { EventCategoryBadge, EventShareButtons, EventInterestButton } from "@/components/events-manager";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { format, isFuture, formatDistanceToNow } from "date-fns";
+import { format, isFuture } from "date-fns";
 import { it as itLocale } from "date-fns/locale";
 import { getMapNavigationUrl } from "@/lib/utils";
 import { usePubLiveUpdates } from "@/hooks/usePubLiveUpdates";
@@ -252,7 +252,7 @@ export default function PubDetail() {
   const [selectedEvent, setSelectedEvent] = useState<any>(null);
   const [checkinBottle, setCheckinBottle] = useState<any>(null);
   const [fabOpen, setFabOpen] = useState(false);
-  const [styleFilter, setStyleFilter] = useState('Tutti');
+  const styleFilter = 'Tutti';
   const [descExpanded, setDescExpanded] = useState(false);
 
   // Fire-and-forget: track pub page view for analytics
@@ -940,6 +940,10 @@ export default function PubDetail() {
             </Link>
           )}
         </div>
+        {/* Curved white bottom edge — matches mobile hero */}
+        <svg className="absolute bottom-0 left-0 w-full text-background dark:text-background pointer-events-none" viewBox="0 0 375 50" preserveAspectRatio="none" style={{ height: '50px' }}>
+          <path d="M0,50 L0,28 Q187.5,-22 375,28 L375,50 Z" fill="currentColor" />
+        </svg>
       </div>
 
       <main className="max-w-7xl mx-auto pb-24">
