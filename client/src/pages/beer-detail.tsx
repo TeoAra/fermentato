@@ -724,7 +724,7 @@ export default function BeerDetail() {
            HERO — full-bleed artwork + curved white edge (mockup spec)
          ═══════════════════════════════════════════════════════════ */}
       <div className="relative">
-        <div className="relative w-full h-[280px] md:h-[340px] bg-stone-900 overflow-hidden">
+        <div className="relative w-full h-72 lg:h-80 bg-stone-900 overflow-hidden">
           {(beer?.imageUrl || beer?.bottleImageUrl) ? (
             <>
               <img src={beer?.imageUrl || beer?.bottleImageUrl} alt=""
@@ -771,8 +771,8 @@ export default function BeerDetail() {
           </div>
 
           {/* Curved white edge at bottom — transitions hero to content */}
-          <svg className="absolute bottom-0 left-0 right-0 w-full block pointer-events-none" viewBox="0 0 375 40" preserveAspectRatio="none" style={{ height: '32px' }}>
-            <path d="M0,40 L0,22 Q187.5,-6 375,22 L375,40 Z" fill="hsl(var(--background))" />
+          <svg className="absolute bottom-0 left-0 right-0 w-full block pointer-events-none" viewBox="0 0 375 50" preserveAspectRatio="none" style={{ height: '50px' }}>
+            <path d="M0,50 L0,28 Q187.5,-22 375,28 L375,50 Z" fill="hsl(var(--background))" />
           </svg>
         </div>
       </div>

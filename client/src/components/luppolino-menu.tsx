@@ -1,7 +1,6 @@
-import { useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
-import { ChefHat, Info, ChevronDown } from "lucide-react";
+import { ChefHat, Info } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 
 interface LuppolinoMenuProps {
@@ -49,23 +48,21 @@ function MenuItemRow({
   item: LuppolinoMenuProps["menu"][number]["items"][number];
   formattedAllergens: { emoji: string; label: string }[] | null;
 }) {
-  const [open, setOpen] = useState(false);
-  const hasExtras =
-    !!item.description ||
-    (formattedAllergens && formattedAllergens.length > 0);
-
-  const headerInner = (
-    <>
+  return (
+    <div
+      className={`flex gap-3 px-3 py-3 ${!item.isAvailable ? 'opacity-50' : ''}`}
+      data-testid={`menu-item-${item.id}`}
+    >
       {item.imageUrl ? (
         <img
           src={item.imageUrl}
           alt={item.name}
-          className="w-12 h-12 object-cover rounded-xl flex-shrink-0"
+          className="w-12 h-12 object-cover rounded-xl flex-shrink-0 mt-0.5"
         />
       ) : null}
-      <div className="flex-1 min-w-0 text-left">
+      <div className="flex-1 min-w-0">
         <div className="flex items-baseline gap-2">
-          <span className="text-sm font-bold text-foreground leading-tight truncate">
+          <span className="text-sm font-bold text-foreground leading-tight flex-1">
             {item.name}
           </span>
           {item.isVegetarian && (
@@ -79,73 +76,32 @@ function MenuItemRow({
               N/D
             </Badge>
           )}
+          <span className="text-sm font-black text-primary whitespace-nowrap flex-shrink-0">
+            {formatPrice(item.price)}
+          </span>
         </div>
-        {item.description && !open && (
-          <p className="text-xs text-muted-foreground mt-0.5 leading-snug line-clamp-1">
+        {item.description && (
+          <p className="text-xs text-muted-foreground mt-1 leading-snug whitespace-pre-line">
             {item.description}
           </p>
         )}
-      </div>
-      <div className="flex items-center gap-1.5 flex-shrink-0">
-        <span className="text-sm font-black text-primary whitespace-nowrap">
-          {formatPrice(item.price)}
-        </span>
-        {hasExtras && (
-          <ChevronDown className={`h-4 w-4 text-stone-400 transition-transform ${open ? 'rotate-180' : ''}`} />
+        {formattedAllergens && formattedAllergens.length > 0 && (
+          <div className="flex flex-wrap items-center gap-1 mt-1.5">
+            <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wide mr-0.5">
+              Allergeni:
+            </span>
+            {formattedAllergens.map(({ emoji, label }, index) => (
+              <span
+                key={index}
+                className="inline-flex items-center gap-0.5 px-1.5 py-0.5 bg-amber-50 dark:bg-amber-950/40 text-amber-800 dark:text-amber-300 rounded-full text-[10px] font-semibold border border-amber-100 dark:border-amber-800/40"
+              >
+                <span>{emoji}</span>
+                <span>{label}</span>
+              </span>
+            ))}
+          </div>
         )}
       </div>
-    </>
-  );
-
-  if (!hasExtras) {
-    return (
-      <div
-        className={`flex items-center gap-3 px-3 py-2.5 rounded-xl ${!item.isAvailable ? 'opacity-50' : ''}`}
-        data-testid={`menu-item-${item.id}`}
-      >
-        {headerInner}
-      </div>
-    );
-  }
-
-  return (
-    <div
-      className={`rounded-xl overflow-hidden ${!item.isAvailable ? 'opacity-50' : ''}`}
-      data-testid={`menu-item-${item.id}`}
-    >
-      <button
-        type="button"
-        onClick={() => setOpen(v => !v)}
-        aria-expanded={open}
-        className="w-full flex items-center gap-3 px-3 py-2.5 text-left transition-colors hover:bg-stone-50 dark:hover:bg-white/[0.03] tap-scale"
-      >
-        {headerInner}
-      </button>
-      {open && (
-        <div className="px-3 pb-3 pt-0 space-y-2 border-t border-stone-100 dark:border-stone-800/60">
-          {item.description && (
-            <p className="text-xs text-muted-foreground leading-relaxed pt-2 whitespace-pre-line">
-              {item.description}
-            </p>
-          )}
-          {formattedAllergens && formattedAllergens.length > 0 && (
-            <div className="flex flex-wrap items-center gap-1">
-              <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wide">
-                Allergeni:
-              </span>
-              {formattedAllergens.map(({ emoji, label }, index) => (
-                <span
-                  key={index}
-                  className="inline-flex items-center gap-0.5 px-1.5 py-0.5 bg-amber-50 dark:bg-amber-950/40 text-amber-800 dark:text-amber-300 rounded-full text-[10px] font-semibold border border-amber-100 dark:border-amber-800/40"
-                >
-                  <span>{emoji}</span>
-                  <span>{label}</span>
-                </span>
-              ))}
-            </div>
-          )}
-        </div>
-      )}
     </div>
   );
 }
@@ -218,7 +174,7 @@ export default function LuppolinoMenu({ menu, menuInfoBox }: LuppolinoMenuProps)
                 </div>
               </AccordionTrigger>
 
-              <AccordionContent className="px-3 pb-3">
+              <AccordionContent className="px-2 pb-3">
                 <div className="space-y-1 pt-1">
                   {category.infoBox && <div className="px-1 pb-2"><InfoBoxCard text={category.infoBox} /></div>}
                   {infoBoxItems.map((item) => (

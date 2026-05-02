@@ -647,8 +647,8 @@ export default function BreweryDetail() {
           </div>
 
           {/* Curved white bottom edge */}
-          <svg className="absolute bottom-0 left-0 w-full text-background dark:text-background" viewBox="0 0 375 40" preserveAspectRatio="none" style={{ height: '40px' }}>
-            <path d="M0,40 L0,20 Q187.5,-10 375,20 L375,40 Z" fill="currentColor" />
+          <svg className="absolute bottom-0 left-0 w-full text-background dark:text-background pointer-events-none" viewBox="0 0 375 50" preserveAspectRatio="none" style={{ height: '50px' }}>
+            <path d="M0,50 L0,28 Q187.5,-22 375,28 L375,50 Z" fill="currentColor" />
           </svg>
         </div>
 

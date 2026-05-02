@@ -49,7 +49,6 @@ import { EventCategoryBadge, EventShareButtons, EventInterestButton } from "@/co
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { format, isFuture, formatDistanceToNow } from "date-fns";
 import { it as itLocale } from "date-fns/locale";
-import type { PubRecentActivity } from "@shared/schema";
 import { getMapNavigationUrl } from "@/lib/utils";
 import { usePubLiveUpdates } from "@/hooks/usePubLiveUpdates";
 import { NextTapVoting } from "@/components/NextTapVoting";
@@ -359,13 +358,6 @@ export default function PubDetail() {
   });
 
   const isFavorite = (isFavoriteData as any)?.isFavorite || false;
-
-  // Recent activities feed for this pub (Spina tab)
-  const { data: pubRecentActivities = [] } = useQuery<PubRecentActivity[]>({
-    queryKey: ['/api/pubs', pubNumericId, 'recent-activities'],
-    enabled: !!pubNumericId,
-    staleTime: 60_000,
-  });
 
   // Toggle favorite mutation with optimistic UI + undo toast
   const toggleFavoriteMutation = useMutation({
@@ -721,8 +713,8 @@ export default function PubDetail() {
           </div>
 
           {/* Curved white bottom edge */}
-          <svg className="absolute bottom-0 left-0 w-full text-background dark:text-background" viewBox="0 0 375 40" preserveAspectRatio="none" style={{ height: '40px' }}>
-            <path d="M0,40 L0,20 Q187.5,-10 375,20 L375,40 Z" fill="currentColor" />
+          <svg className="absolute bottom-0 left-0 w-full text-background dark:text-background pointer-events-none" viewBox="0 0 375 50" preserveAspectRatio="none" style={{ height: '50px' }}>
+            <path d="M0,50 L0,28 Q187.5,-22 375,28 L375,50 Z" fill="currentColor" />
           </svg>
         </div>
 
@@ -988,122 +980,6 @@ export default function PubDetail() {
 
                 {/* Taplist Tab */}
                 <TabsContent value="taplist" className="px-4 lg:px-0 pt-4 space-y-4">
-                  {/* In evidenza — horizontal carousel of first taps */}
-                  {!tapLoading && Array.isArray(tapList) && tapList.length > 0 && (
-                    <div>
-                      <div className="flex items-center justify-between mb-2 px-1">
-                        <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">In evidenza</p>
-                        <button
-                          onClick={() => {
-                            const el = document.getElementById('pub-taplist-anchor');
-                            if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                          }}
-                          className="text-[11px] font-bold text-primary hover:underline"
-                        >
-                          Vedi tutto
-                        </button>
-                      </div>
-                      <div className="flex gap-3 overflow-x-auto pb-2 -mx-4 px-4 lg:-mx-0 lg:px-0 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
-                        {(Array.isArray(tapList) ? tapList : [])
-                          .filter((tap: any) => tap?.beer?.id != null)
-                          .slice(0, 6)
-                          .map((tap: any) => {
-                          const beer = tap.beer || {};
-                          const sc = getBeerStyleColor(beer.style || '');
-                          const priceList: string[] = [];
-                          if (Array.isArray(tap.prices) && tap.prices.length) {
-                            tap.prices.slice(0, 1).forEach((p: any) => {
-                              const num = parseFloat(p.price);
-                              if (!isNaN(num) && num > 0) priceList.push(`${p.size ? p.size + ' ' : ''}€${num.toFixed(2).replace('.', ',')}`);
-                            });
-                          } else if (tap.priceSmall && parseFloat(tap.priceSmall) > 0) {
-                            priceList.push(`€${parseFloat(tap.priceSmall).toFixed(2).replace('.', ',')}`);
-                          } else if (tap.priceMedium && parseFloat(tap.priceMedium) > 0) {
-                            priceList.push(`€${parseFloat(tap.priceMedium).toFixed(2).replace('.', ',')}`);
-                          }
-                          return (
-                            <Link key={tap.id} href={`/beer/${beer.id}`}>
-                              <div className="flex-shrink-0 w-[150px] transition-transform duration-150 ease-out active:scale-[0.97]">
-                                <div className="w-full h-[100px] rounded-2xl overflow-hidden bg-stone-100 dark:bg-stone-800 border border-stone-100 dark:border-stone-700/30 mb-2 relative">
-                                  {(beer.imageUrl || beer.logoUrl) ? (
-                                    <img src={beer.imageUrl || beer.logoUrl} alt={beer.name} className="w-full h-full object-cover" />
-                                  ) : (
-                                    <div className="w-full h-full flex items-center justify-center" style={{ background: sc.bg }}>
-                                      <BeerIcon className="h-8 w-8" style={{ color: sc.text }} />
-                                    </div>
-                                  )}
-                                </div>
-                                <p className="text-xs font-bold text-foreground line-clamp-1 leading-tight">{beer.name}</p>
-                                <p className="text-[10px] text-muted-foreground line-clamp-1 leading-tight mt-0.5">
-                                  {beer.style || '—'}{beer.abv ? ` · ${beer.abv}%` : ''}
-                                </p>
-                                {priceList.length > 0 && (
-                                  <span className="inline-block mt-1 text-xs font-extrabold text-primary bg-primary/10 px-2.5 py-1.5 rounded-full">{priceList[0]}</span>
-                                )}
-                              </div>
-                            </Link>
-                          );
-                        })}
-                      </div>
-                    </div>
-                  )}
-
-
-                  {/* Attività recenti — recent customer check-ins / saves on this pub */}
-                  {Array.isArray(pubRecentActivities) && pubRecentActivities.length > 0 && (
-                    <div className="rounded-2xl border border-stone-100 dark:border-stone-800 bg-card overflow-hidden">
-                      <div className="flex items-center justify-between px-4 pt-3 pb-2">
-                        <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Attività recenti</p>
-                      </div>
-                      <ul className="divide-y divide-stone-100 dark:divide-stone-800">
-                        {pubRecentActivities.slice(0, 5).map((a) => {
-                          const initial = (a.userName || 'U').charAt(0).toUpperCase();
-                          const timeAgo = a.createdAt
-                            ? formatDistanceToNow(new Date(a.createdAt), { addSuffix: true, locale: itLocale })
-                            : '';
-                          return (
-                            <li key={a.id} className="flex items-center gap-3 px-4 py-3">
-                              <Avatar className="h-9 w-9 flex-shrink-0">
-                                {a.userImage ? <AvatarImage src={a.userImage} alt={a.userName} /> : null}
-                                <AvatarFallback className="bg-primary/15 text-primary text-xs font-bold">{initial}</AvatarFallback>
-                              </Avatar>
-                              <div className="flex-1 min-w-0">
-                                <p className="text-sm text-foreground leading-tight">
-                                  <span className="font-bold">{a.userName}</span>
-                                  {a.type === 'tasting' && a.beerName ? (
-                                    a.rating != null ? (
-                                      <>
-                                        {' '}<span className="text-muted-foreground">ha recensito</span>{' '}
-                                        {a.beerId ? (
-                                          <Link href={`/beer/${a.beerId}`} className="font-semibold text-primary hover:underline">{a.beerName}</Link>
-                                        ) : <span className="font-semibold">{a.beerName}</span>}
-                                        {' '}
-                                        <span className="inline-flex items-center gap-0.5 text-amber-500 font-bold text-xs">
-                                          <Star className="w-3 h-3 fill-current" />{a.rating.toFixed(1)}
-                                        </span>
-                                      </>
-                                    ) : (
-                                      <>
-                                        {' '}<span className="text-muted-foreground">ha bevuto</span>{' '}
-                                        {a.beerId ? (
-                                          <Link href={`/beer/${a.beerId}`} className="font-semibold text-primary hover:underline">{a.beerName}</Link>
-                                        ) : <span className="font-semibold">{a.beerName}</span>}
-                                      </>
-                                    )
-                                  ) : (
-                                    <> <span className="text-muted-foreground">ha salvato questo locale</span></>
-                                  )}
-                                </p>
-                                <p className="text-[11px] text-muted-foreground mt-0.5">{timeAgo}</p>
-                              </div>
-                            </li>
-                          );
-                        })}
-                      </ul>
-                    </div>
-                  )}
-
-                  <div id="pub-taplist-anchor" />
                   {tapLoading ? (
                     <div className="space-y-3">
                       {[...Array(3)].map((_, i) => (
@@ -1123,21 +999,7 @@ export default function PubDetail() {
 
                 {/* Bottles Tab */}
                 <TabsContent value="bottles" className="pt-0">
-                  {/* Filter chips */}
-                  <div className="flex gap-2 px-4 py-3 overflow-x-auto scrollbar-hide border-b border-stone-100 dark:border-stone-800">
-                    {['Tutti', 'IPA', 'Stout', 'Sour', 'Altro'].map(f => (
-                      <button key={f} onClick={() => setStyleFilter(f)}
-                        className={`flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-bold transition-all tap-scale ${
-                          styleFilter === f
-                            ? 'bg-primary text-white shadow-sm'
-                            : 'bg-stone-100 dark:bg-stone-800 text-stone-600 dark:text-stone-300 hover:bg-stone-200 dark:hover:bg-stone-700'
-                        }`}>
-                        {f}
-                      </button>
-                    ))}
-                  </div>
-
-                  <div className="px-4 pt-3 pb-1">
+                  <div className="px-4 pt-4 pb-1">
                     <p className="text-xs font-semibold text-muted-foreground">
                       {filteredBottles.length} birre disponibili
                     </p>
