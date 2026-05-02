@@ -1087,6 +1087,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         avgRating: sql<number>`ROUND(AVG(CASE WHEN ${userBeerTastings.rating} IS NOT NULL THEN ${userBeerTastings.rating} END)::numeric, 2)`,
         reviewCount: sql<number>`COUNT(CASE WHEN ${userBeerTastings.rating} IS NOT NULL THEN 1 END)`,
         favoriteCount: sql<number>`(SELECT COUNT(*) FROM favorites f WHERE f.item_type = 'beer' AND f.item_id = ${beers.id})`,
+        locationCount: sql<number>`(SELECT COUNT(DISTINCT pub_id) FROM (SELECT pub_id FROM tap_list WHERE beer_id = ${beers.id} AND COALESCE(is_active, true) = true UNION SELECT pub_id FROM bottle_list WHERE beer_id = ${beers.id} AND COALESCE(is_active, true) = true) AS combined)::int`,
       })
       .from(beers)
       .leftJoin(userBeerTastings, eq(beers.id, userBeerTastings.beerId))
@@ -1138,6 +1139,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           avgRating: b.avgRating ? parseFloat(String(b.avgRating)) : null,
           reviewCount: Number(b.reviewCount || 0),
           favoriteCount: Number(b.favoriteCount || 0),
+          locationCount: Number(b.locationCount || 0),
           collaboratingBreweries,
           isCollabBeer,
         };
