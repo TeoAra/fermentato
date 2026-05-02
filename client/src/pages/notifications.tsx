@@ -352,7 +352,7 @@ export default function Notifications() {
               <div
                 key={n.id}
                 onClick={() => handleClick(n)}
-                className={`rounded-2xl border cursor-pointer transition-all duration-200 active:scale-[0.98] ${
+                className={`rounded-2xl border cursor-pointer transition-all duration-200 ease-out active:scale-[0.98] ${
                   !n.isRead
                     ? 'bg-white dark:bg-card border-stone-200 dark:border-stone-700/40 shadow-[0_2px_12px_rgba(247,113,4,0.08)]'
                     : 'bg-white dark:bg-card border-stone-100 dark:border-border'
@@ -372,7 +372,7 @@ export default function Notifications() {
                             {n.createdAt ? formatDistanceToNow(new Date(n.createdAt), { addSuffix: true, locale: it }) : ''}
                           </span>
                           {link && (
-                            <span className="text-[10px] font-extrabold text-primary flex items-center gap-0.5 bg-primary/8 px-2 py-0.5 rounded-full">
+                            <span className="text-xs font-extrabold text-primary inline-flex items-center gap-0.5 bg-primary/10 px-2.5 py-1.5 rounded-full">
                               Apri <ArrowRight className="h-2.5 w-2.5" />
                             </span>
                           )}

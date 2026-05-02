@@ -500,13 +500,20 @@ export default function Activity() {
           </section>
 
           <section>
-            <h2 className="text-base font-semibold text-foreground dark:text-white mb-3 flex items-center gap-2">
-              <Beer className="h-4 w-4 text-orange-600" />
-              Birre preferite in zona
-              {favoriteBeersNearby.length > 0 && (
-                <Badge className="ml-1 bg-orange-500 text-white text-xs px-1.5 py-0">{favoriteBeersNearby.length}</Badge>
+            <div className="flex items-center justify-between mb-3">
+              <h2 className="text-base font-semibold text-foreground dark:text-white flex items-center gap-2">
+                <Beer className="h-4 w-4 text-orange-600" />
+                Birre più popolari in zona
+                {favoriteBeersNearby.length > 0 && (
+                  <Badge className="ml-1 bg-orange-500 text-white text-xs px-1.5 py-0">{favoriteBeersNearby.length}</Badge>
+                )}
+              </h2>
+              {favoriteBeersNearby.length > 3 && (
+                <Link href="/explore/beers">
+                  <button className="text-[11px] font-bold text-primary hover:underline">Vedi tutto</button>
+                </Link>
               )}
-            </h2>
+            </div>
             {loadingFavoriteBeers ? (
               <div className="flex items-center justify-center py-8">
                 <Loader2 className="h-7 w-7 animate-spin text-orange-600" />
@@ -517,23 +524,41 @@ export default function Activity() {
                 <p className="text-sm text-muted-foreground">Nessuna birra preferita trovata entro {radius} km</p>
               </div>
             ) : (
-              <div className="space-y-3">
-                {favoriteBeersNearby.slice(0, 5).map((item: any) => (
-                  <Card key={item.id} className="hover:shadow-sm transition-shadow">
-                    <CardContent className="p-4">
-                      <div className="flex items-start gap-3">
-                        <div className="w-10 h-10 rounded-lg bg-stone-100 dark:bg-orange-900/20 flex items-center justify-center flex-shrink-0">
-                          <Beer className="h-5 w-5 text-orange-600" />
+              <div className="flex gap-3 overflow-x-auto pb-2 -mx-4 px-4 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+                {favoriteBeersNearby
+                  .slice(0, 8)
+                  .filter((item: any) => (item?.beer?.id ?? item?.id) != null)
+                  .map((item: any) => {
+                  const beer = item.beer ?? item;
+                  const img = beer?.imageUrl || beer?.logoUrl || beer?.brewery?.logoUrl;
+                  return (
+                    <Link key={item.id ?? beer?.id} href={`/beer/${beer?.id ?? item.id}`}>
+                      <div className="flex-shrink-0 w-[140px] group transition-transform duration-150 ease-out active:scale-[0.97]">
+                        <div className="w-full h-[140px] rounded-2xl overflow-hidden bg-stone-100 dark:bg-stone-800 border border-stone-100 dark:border-stone-700/30 mb-2 relative">
+                          {img ? (
+                            <img src={img} alt={beer?.name} className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105" />
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-stone-50 to-stone-100 dark:from-stone-800 dark:to-stone-900">
+                              <Beer className="h-10 w-10 text-orange-400/50" />
+                            </div>
+                          )}
+                          {item.distance != null && (
+                            <span className="absolute top-1.5 right-1.5 text-[10px] font-bold bg-black/55 text-white px-1.5 py-0.5 rounded-full backdrop-blur-sm">
+                              {formatDistance(item.distance)}
+                            </span>
+                          )}
                         </div>
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm font-semibold text-foreground dark:text-white truncate">{item.beer?.name ?? item.name}</p>
-                          <p className="text-xs text-stone-400 truncate">{item.pub?.name ?? item.beer?.brewery?.name ?? ""}</p>
-                          <p className="text-xs font-medium text-blue-600 dark:text-blue-400 mt-1">{formatDistance(item.distance)}</p>
-                        </div>
+                        <p className="text-xs font-bold text-foreground line-clamp-1 leading-tight">{beer?.name}</p>
+                        <p className="text-[10px] text-muted-foreground line-clamp-1 leading-tight mt-0.5">
+                          {beer?.style || beer?.brewery?.name || item.pub?.name || ''}
+                        </p>
+                        {beer?.abv && (
+                          <p className="text-[10px] font-bold text-primary mt-0.5">{beer.abv}% ABV</p>
+                        )}
                       </div>
-                    </CardContent>
-                  </Card>
-                ))}
+                    </Link>
+                  );
+                })}
               </div>
             )}
           </section>

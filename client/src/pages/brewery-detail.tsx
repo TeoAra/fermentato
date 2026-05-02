@@ -806,17 +806,17 @@ export default function BreweryDetail() {
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                           {displayedBeers.map((beer: Beer) => (
                             <Link key={beer.id} href={`/beer/${beer.id}`}>
-                              <div className={`bg-white dark:bg-card rounded-2xl p-4 flex items-center gap-4 shadow-sm border border-stone-100 dark:border-border hover:border-primary/20 dark:hover:border-primary/25 cursor-pointer transition-all group relative ${(beer as any).isHidden ? 'opacity-50 grayscale' : ''}`}>
+                              <div className={`bg-white dark:bg-card rounded-2xl p-3 flex items-center gap-3 shadow-sm border border-stone-100 dark:border-border hover:border-primary/30 hover:shadow-[0_4px_20px_rgba(247,113,4,0.08)] dark:hover:border-primary/25 cursor-pointer transition-all duration-200 ease-out active:scale-[0.98] group relative ${(beer as any).isHidden ? 'opacity-50 grayscale' : ''}`}>
                                 <div className="relative">
                                   {beer.imageUrl ? (
                                     <img 
                                       src={beer.imageUrl} 
                                       alt={beer.name} 
-                                      className="w-14 h-14 rounded-2xl object-contain p-0.5 lightbox-img bg-stone-50 dark:bg-stone-900/30"
+                                      className="w-16 h-16 rounded-2xl object-cover lightbox-img bg-stone-50 dark:bg-stone-900/30"
                                     />
                                   ) : (
-                                    <div className="w-14 h-14 rounded-2xl bg-stone-100 dark:bg-stone-800 flex items-center justify-center">
-                                      <Beer className="h-6 w-6 text-stone-400 dark:text-stone-500" />
+                                    <div className="w-16 h-16 rounded-2xl bg-stone-100 dark:bg-stone-800 flex items-center justify-center">
+                                      <Beer className="h-7 w-7 text-stone-400 dark:text-stone-500" />
                                     </div>
                                   )}
                                   {isBeerTasted(beer.id) && (
@@ -839,25 +839,25 @@ export default function BreweryDetail() {
                                     )}
                                   </div>
                                   
-                                  <div className="flex items-center gap-2 mt-1 flex-wrap">
+                                  <div className="flex items-center gap-1.5 mt-1.5 flex-wrap">
                                     {(() => {
                                       const sc = getBeerStyleColor(beer.style);
                                       return (
-                                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-full uppercase truncate max-w-[120px]" style={{ background: sc.bg, color: sc.text }}>
+                                        <span className="text-xs font-bold px-2.5 py-1.5 rounded-full uppercase truncate max-w-[140px]" style={{ background: sc.bg, color: sc.text }}>
                                           {beer.style}
                                         </span>
                                       );
                                     })()}
                                     {beer.abv && (
-                                      <span className="bg-stone-50 dark:bg-stone-900/20 text-stone-600 dark:text-stone-400 text-[10px] font-bold px-2 py-0.5 rounded-full">
-                                        {beer.abv}%
+                                      <span className="bg-stone-100 dark:bg-stone-800 text-stone-700 dark:text-stone-300 text-xs font-extrabold px-2.5 py-1.5 rounded-full">
+                                        {beer.abv}% ABV
                                       </span>
                                     )}
                                     {beer.isCollaboration && (
-                                      <div className="flex items-center gap-1 text-[10px] font-bold text-violet-700 dark:text-violet-400 px-2 py-0.5 bg-violet-50 dark:bg-violet-900/20 rounded-full">
+                                      <span className="inline-flex items-center gap-1 text-xs font-bold text-violet-700 dark:text-violet-400 px-2.5 py-1.5 bg-violet-50 dark:bg-violet-900/20 rounded-full">
                                         <Users className="h-2.5 w-2.5" />
                                         COLLAB
-                                      </div>
+                                      </span>
                                     )}
                                   </div>
                                 </div>
@@ -1066,8 +1066,8 @@ export default function BreweryDetail() {
                   <div className="space-y-4">
                     <div className="flex items-center justify-between">
                       <h2 className="text-xl font-bold text-foreground">Dove trovarci</h2>
-                      <span className="bg-stone-50 text-primary text-[10px] font-bold px-3 py-1 rounded-full">
-                        ${distribution.length} LOCALI
+                      <span className="bg-stone-50 dark:bg-stone-800/40 text-primary text-[10px] font-bold px-3 py-1 rounded-full">
+                        {distribution.length} {distribution.length === 1 ? 'LOCALE' : 'LOCALI'}
                       </span>
                     </div>
                     

@@ -849,6 +849,68 @@ export default function PubDetail() {
 
                 {/* Taplist Tab */}
                 <TabsContent value="taplist" className="px-4 lg:px-0 pt-4 space-y-4">
+                  {/* In evidenza — horizontal carousel of first taps */}
+                  {!tapLoading && Array.isArray(tapList) && tapList.length > 0 && (
+                    <div>
+                      <div className="flex items-center justify-between mb-2 px-1">
+                        <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">In evidenza</p>
+                        <button
+                          onClick={() => {
+                            const el = document.getElementById('pub-taplist-anchor');
+                            if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                          }}
+                          className="text-[11px] font-bold text-primary hover:underline"
+                        >
+                          Vedi tutto
+                        </button>
+                      </div>
+                      <div className="flex gap-3 overflow-x-auto pb-2 -mx-4 px-4 lg:-mx-0 lg:px-0 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+                        {(Array.isArray(tapList) ? tapList : [])
+                          .filter((tap: any) => tap?.beer?.id != null)
+                          .slice(0, 6)
+                          .map((tap: any) => {
+                          const beer = tap.beer || {};
+                          const sc = getBeerStyleColor(beer.style || '');
+                          const priceList: string[] = [];
+                          if (Array.isArray(tap.prices) && tap.prices.length) {
+                            tap.prices.slice(0, 1).forEach((p: any) => {
+                              const num = parseFloat(p.price);
+                              if (!isNaN(num) && num > 0) priceList.push(`${p.size ? p.size + ' ' : ''}€${num.toFixed(2).replace('.', ',')}`);
+                            });
+                          } else if (tap.priceSmall && parseFloat(tap.priceSmall) > 0) {
+                            priceList.push(`€${parseFloat(tap.priceSmall).toFixed(2).replace('.', ',')}`);
+                          } else if (tap.priceMedium && parseFloat(tap.priceMedium) > 0) {
+                            priceList.push(`€${parseFloat(tap.priceMedium).toFixed(2).replace('.', ',')}`);
+                          }
+                          return (
+                            <Link key={tap.id} href={`/beer/${beer.id}`}>
+                              <div className="flex-shrink-0 w-[150px] transition-transform duration-150 ease-out active:scale-[0.97]">
+                                <div className="w-full h-[100px] rounded-2xl overflow-hidden bg-stone-100 dark:bg-stone-800 border border-stone-100 dark:border-stone-700/30 mb-2 relative">
+                                  {(beer.imageUrl || beer.logoUrl) ? (
+                                    <img src={beer.imageUrl || beer.logoUrl} alt={beer.name} className="w-full h-full object-cover" />
+                                  ) : (
+                                    <div className="w-full h-full flex items-center justify-center" style={{ background: sc.bg }}>
+                                      <BeerIcon className="h-8 w-8" style={{ color: sc.text }} />
+                                    </div>
+                                  )}
+                                </div>
+                                <p className="text-xs font-bold text-foreground line-clamp-1 leading-tight">{beer.name}</p>
+                                <p className="text-[10px] text-muted-foreground line-clamp-1 leading-tight mt-0.5">
+                                  {beer.style || '—'}{beer.abv ? ` · ${beer.abv}%` : ''}
+                                </p>
+                                {priceList.length > 0 && (
+                                  <span className="inline-block mt-1 text-xs font-extrabold text-primary bg-primary/10 px-2.5 py-1.5 rounded-full">{priceList[0]}</span>
+                                )}
+                              </div>
+                            </Link>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+
+
+                  <div id="pub-taplist-anchor" />
                   {tapLoading ? (
                     <div className="space-y-3">
                       {[...Array(3)].map((_, i) => (
