@@ -839,14 +839,14 @@ export default function PubDetail() {
         </div>
       </div>
 
-      <main className="max-w-7xl mx-auto pb-12">
+      <main className="max-w-7xl mx-auto pb-24">
         {/* Main Content Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-4">
           {/* Main Content */}
           <div className="lg:col-span-3">
             {/* ── TABS ── */}
             <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-                <div className="sticky top-14 lg:top-16 z-10 bg-white dark:bg-card border-b border-stone-100 dark:border-stone-700/30">
+                <div className={`sticky ${headerCollapsed ? 'top-[6.5rem]' : 'top-14'} lg:top-16 z-20 bg-white dark:bg-card border-b border-stone-100 dark:border-stone-700/30 transition-[top] duration-200`}>
                   <div className="flex justify-center overflow-x-auto scrollbar-hide px-1">
                     {[
                       { id: 'taplist', label: 'Spina', icon: <Wine className="h-4 w-4 flex-shrink-0" /> },

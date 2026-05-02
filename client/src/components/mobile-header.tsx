@@ -179,11 +179,11 @@ export function MobileHeader({ onMenuToggle, isMenuOpen }: MobileHeaderProps) {
         </div>
       </header>
 
-      {/* ── SLIDE-OUT MENU (from LEFT) ──────────────────────────────────── */}
+      {/* ── SLIDE-OUT MENU (from RIGHT) ─────────────────────────────────── */}
       <Sheet open={isMenuOpen} onOpenChange={(open) => { if (!open) onMenuToggle(); }}>
         <SheetContent
-          side="left"
-          className="w-[300px] p-0 flex flex-col bg-white dark:bg-[#0F0F10] border-r border-stone-100/80 dark:border-white/[0.06]"
+          side="right"
+          className="w-[300px] p-0 flex flex-col bg-white dark:bg-[#0F0F10] border-l border-stone-100/80 dark:border-white/[0.06]"
         >
           <SheetTitle className="sr-only">Menu di navigazione</SheetTitle>
 
