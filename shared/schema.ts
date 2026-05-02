@@ -488,6 +488,17 @@ export type Favorite = typeof favorites.$inferSelect;
 
 export type InsertUserActivity = typeof userActivities.$inferInsert;
 export type UserActivity = typeof userActivities.$inferSelect;
+export type PubRecentActivity = {
+  id: string;
+  type: 'tasting' | 'saved_pub';
+  userId: string;
+  userName: string;
+  userImage: string | null;
+  beerId: number | null;
+  beerName: string | null;
+  rating: number | null;
+  createdAt: string | Date;
+};
 
 export type InsertRating = typeof ratings.$inferInsert;
 export type Rating = typeof ratings.$inferSelect;

@@ -38,6 +38,7 @@ import {
   type InsertFavorite,
   type UserActivity,
   type InsertUserActivity,
+  type PubRecentActivity,
   type UserBeerTasting,
   type InsertUserBeerTasting,
   type PubSize,
@@ -273,6 +274,7 @@ export interface IStorage {
   // User activities operations
   getUserActivities(userId: string, limit?: number): Promise<UserActivity[]>;
   addUserActivity(activity: InsertUserActivity): Promise<UserActivity>;
+  getPubRecentActivities(pubId: number, limit?: number): Promise<PubRecentActivity[]>;
 
   // Beer tastings operations
   getUserBeerTastings(userId: string): Promise<UserBeerTasting[]>;
@@ -1294,6 +1296,56 @@ export class DatabaseStorage implements IStorage {
   async addUserActivity(activityData: InsertUserActivity): Promise<UserActivity> {
     const [activity] = await db.insert(userActivities).values(activityData).returning();
     return activity;
+  }
+
+  async getPubRecentActivities(pubId: number, limit: number = 8): Promise<PubRecentActivity[]> {
+    const rows = await db.execute(sql`
+      SELECT * FROM (
+        SELECT
+          'tasting'::text AS type,
+          ('t-' || ubt.id) AS id,
+          ubt.user_id AS user_id,
+          COALESCE(NULLIF(u.nickname, ''), NULLIF(u.first_name, ''), 'Utente') AS user_name,
+          u.profile_image_url AS user_image,
+          ubt.beer_id AS beer_id,
+          b.name AS beer_name,
+          ubt.rating::float AS rating,
+          COALESCE(ubt.tasted_at, ubt.created_at) AS created_at
+        FROM user_beer_tastings ubt
+        JOIN users u ON u.id = ubt.user_id
+        JOIN beers b ON b.id = ubt.beer_id
+        WHERE ubt.pub_id = ${pubId}
+        UNION ALL
+        SELECT
+          'saved_pub'::text AS type,
+          ('f-' || f.id) AS id,
+          f.user_id AS user_id,
+          COALESCE(NULLIF(u.nickname, ''), NULLIF(u.first_name, ''), 'Utente') AS user_name,
+          u.profile_image_url AS user_image,
+          NULL::integer AS beer_id,
+          NULL::text AS beer_name,
+          NULL::float AS rating,
+          f.created_at AS created_at
+        FROM favorites f
+        JOIN users u ON u.id = f.user_id
+        WHERE f.item_type = 'pub' AND f.item_id = ${pubId}
+      ) combined
+      WHERE created_at IS NOT NULL
+      ORDER BY created_at DESC
+      LIMIT ${limit}
+    `);
+    const data: any[] = (rows as any).rows ?? rows;
+    return data.map((r: any) => ({
+      id: String(r.id),
+      type: r.type as 'tasting' | 'saved_pub',
+      userId: r.user_id,
+      userName: r.user_name,
+      userImage: r.user_image ?? null,
+      beerId: r.beer_id ?? null,
+      beerName: r.beer_name ?? null,
+      rating: r.rating != null ? Number(r.rating) : null,
+      createdAt: r.created_at,
+    }));
   }
 
   // Beer tastings operations
@@ -2384,6 +2436,13 @@ class StorageWrapper implements IStorage {
     return this.dbCall(
       () => this.databaseStorage.addUserActivity(activity),
       async () => { throw new Error('Not implemented in memory storage'); }
+    );
+  }
+
+  async getPubRecentActivities(pubId: number, limit?: number): Promise<PubRecentActivity[]> {
+    return this.dbCall(
+      () => this.databaseStorage.getPubRecentActivities(pubId, limit),
+      async () => { return []; }
     );
   }
 

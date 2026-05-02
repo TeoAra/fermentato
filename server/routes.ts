@@ -2779,6 +2779,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Recent activities for a specific pub (public — used on pub detail Spina tab)
+  app.get('/api/pubs/:id/recent-activities', async (req, res) => {
+    try {
+      const pubId = parseInt(req.params.id, 10);
+      if (!Number.isFinite(pubId)) {
+        return res.status(400).json({ message: 'Invalid pub id' });
+      }
+      const limit = Math.min(parseInt(req.query.limit as string) || 8, 30);
+      const activities = await storage.getPubRecentActivities(pubId, limit);
+      res.set('Cache-Control', 'public, max-age=60');
+      res.json(activities);
+    } catch (error) {
+      console.error('Error fetching pub recent activities:', error);
+      res.status(500).json({ message: 'Failed to fetch pub activities' });
+    }
+  });
+
   // Get user beer tastings
   app.get('/api/user/beer-tastings', isAuthenticated, async (req: any, res) => {
     try {
