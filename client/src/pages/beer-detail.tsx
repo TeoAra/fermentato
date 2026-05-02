@@ -724,6 +724,7 @@ export default function BeerDetail() {
            HERO — full-bleed artwork + curved white edge (mockup spec)
          ═══════════════════════════════════════════════════════════ */}
       <div className="relative">
+        {/* Cover image container — overflow-hidden so blur doesn't bleed outside */}
         <div className="relative w-full h-72 lg:h-80 bg-stone-900 overflow-hidden">
           {(beer?.imageUrl || beer?.bottleImageUrl) ? (
             <>
@@ -769,12 +770,12 @@ export default function BeerDetail() {
               </button>
             )}
           </div>
-
-          {/* Curved white edge at bottom — transitions hero to content */}
-          <svg className="absolute bottom-0 left-0 right-0 w-full block pointer-events-none" viewBox="0 0 375 50" preserveAspectRatio="none" style={{ height: '50px' }}>
-            <path d="M0,50 L0,28 Q187.5,-22 375,28 L375,50 Z" fill="hsl(var(--background))" />
-          </svg>
         </div>
+
+        {/* Curved wave — OUTSIDE overflow-hidden so it paints on top of the cover */}
+        <svg className="absolute bottom-0 inset-x-0 w-full block pointer-events-none z-10" viewBox="0 0 375 50" preserveAspectRatio="none" style={{ height: '50px' }}>
+          <path d="M0,50 L0,28 Q187.5,-22 375,28 L375,50 Z" fill="hsl(var(--background))" />
+        </svg>
       </div>
 
       {/* Logo overlap + floating bookmark */}

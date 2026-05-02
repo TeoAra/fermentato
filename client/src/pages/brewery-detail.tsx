@@ -612,6 +612,7 @@ export default function BreweryDetail() {
       
       {/* ── HERO — full-bleed cover with curved bottom edge ── */}
       <div className="relative bg-stone-900 lg:hidden">
+        {/* Cover image container — overflow-hidden so blur doesn't bleed */}
         <div className="relative h-72 overflow-hidden">
           {brewery?.coverImageUrl ? (
             <img src={brewery.coverImageUrl} alt="" className="w-full h-full object-cover" />
@@ -645,14 +646,14 @@ export default function BreweryDetail() {
               </button>
             ) : null}
           </div>
-
-          {/* Curved white bottom edge */}
-          <svg className="absolute bottom-0 left-0 w-full text-background dark:text-background pointer-events-none" viewBox="0 0 375 50" preserveAspectRatio="none" style={{ height: '50px' }}>
-            <path d="M0,50 L0,28 Q187.5,-22 375,28 L375,50 Z" fill="currentColor" />
-          </svg>
         </div>
 
-        {/* Identity block — mobile (logo overlaps curve) */}
+        {/* Curved wave — OUTSIDE overflow-hidden so it renders on top of cover */}
+        <svg className="block w-full relative z-10 pointer-events-none -mt-[50px]" viewBox="0 0 375 50" preserveAspectRatio="none" style={{ height: '50px' }}>
+          <path d="M0,50 L0,28 Q187.5,-22 375,28 L375,50 Z" fill="hsl(var(--background))" />
+        </svg>
+
+        {/* Identity block — mobile (logo overlaps wave) */}
         <div className="bg-background dark:bg-background relative px-4 pb-2">
           <div className="flex items-end gap-3 -mt-12 relative z-10">
             <button onClick={() => { const s = brewery?.logoUrl; if (s) (window as any).__lightboxOpen?.(s); }} className="flex-shrink-0 tap-scale">
