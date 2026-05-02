@@ -11,6 +11,7 @@ import Footer from "@/components/footer";
 import PubCard from "@/components/pub-card";
 import BreweryCard from "@/components/brewery-card";
 import { Button } from "@/components/ui/button";
+import FindBeerSheet from "@/components/FindBeerSheet";
 
 const HomepageMap = lazy(() => import("@/components/homepage-map"));
 
@@ -44,6 +45,7 @@ export default function Home() {
   const [showDistancePicker, setShowDistancePicker] = useState(false);
   const [showPubs, setShowPubs] = useState(true);
   const [showBreweries, setShowBreweries] = useState(true);
+  const [findBeerOpen, setFindBeerOpen] = useState(false);
 
   const ACCURACY_THRESHOLD = 3000;
   const gotGoodPositionRef = useRef(false);
@@ -222,11 +224,11 @@ export default function Home() {
           HERO CARD — Map + CTA + Filter chips
       ═══════════════════════════════════════════════════════════════ */}
       <div className="px-4 pt-4">
-        <div className="relative rounded-3xl overflow-hidden bg-stone-300 dark:bg-stone-900" style={{ height: '210px' }}>
+        <div className="relative rounded-3xl overflow-hidden bg-stone-300 dark:bg-stone-900" style={{ height: '260px' }}>
 
           {/* Background: interactive map on web, premium gradient on native */}
           {!Capacitor.isNativePlatform() ? (
-            <div className="absolute inset-0 pointer-events-none overflow-hidden">
+            <div className="absolute inset-0 overflow-hidden">
               <Suspense fallback={<div className="w-full h-full bg-stone-200 dark:bg-stone-800" />}>
                 <HomepageMap
                   pubs={Array.isArray(pubs) ? pubs as any[] : []}
@@ -278,12 +280,13 @@ export default function Home() {
             </h1>
 
             <div className="flex gap-2 pointer-events-auto">
-              <Link href="/explore/beers">
-                <button className="tap-scale btn-orange-glow flex items-center gap-1.5 bg-primary text-white text-sm font-bold px-4 py-2.5 rounded-2xl shadow-lg">
-                  <Beer className="w-4 h-4" />
-                  Trova una birra
-                </button>
-              </Link>
+              <button
+                onClick={() => setFindBeerOpen(true)}
+                className="tap-scale btn-orange-glow flex items-center gap-1.5 bg-primary text-white text-sm font-bold px-4 py-2.5 rounded-2xl shadow-lg"
+              >
+                <Beer className="w-4 h-4" />
+                Trova una birra
+              </button>
               <button
                 onClick={handleRequestLocation}
                 className="tap-scale flex items-center gap-1.5 text-white text-sm font-bold px-4 py-2.5 rounded-2xl border border-white/40 bg-white/15 backdrop-blur-sm"
@@ -297,21 +300,6 @@ export default function Home() {
 
         {/* Filter chips row */}
         <div className="flex items-center gap-2 mt-3 overflow-x-auto scrollbar-hide pb-0.5">
-          {/* GPS chip */}
-          <button
-            onClick={handleRequestLocation}
-            className={`tap-scale flex-shrink-0 flex items-center gap-1.5 rounded-full px-3.5 py-2 text-[13px] font-bold border shadow-card-sm transition-colors whitespace-nowrap ${
-              locationStatus === 'granted'
-                ? 'bg-primary border-primary text-white'
-                : locationStatus === 'requesting'
-                  ? 'bg-amber-50 dark:bg-amber-900/20 border-amber-400 text-amber-600 dark:text-amber-400 animate-pulse'
-                  : 'bg-card border-border text-foreground dark:bg-card'
-            }`}
-          >
-            <Navigation className="w-3.5 h-3.5" />
-            {locationStatus === 'requesting' ? 'GPS…' : 'GPS'}
-          </button>
-
           {/* Distance picker */}
           <div className="relative flex-shrink-0">
             <button
@@ -961,6 +949,12 @@ export default function Home() {
       </main>
 
       <Footer />
+
+      <FindBeerSheet
+        open={findBeerOpen}
+        onClose={() => setFindBeerOpen(false)}
+        nearbyPubs={sortedPubs}
+      />
     </div>
   );
 }

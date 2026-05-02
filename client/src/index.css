@@ -810,6 +810,14 @@
   70%  { transform: scale(1.07); }
   100% { transform: scale(1); }
 }
+@keyframes sheetSlideUp {
+  from { transform: translateY(100%); }
+  to   { transform: translateY(0); }
+}
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
 
 .skeleton {
   background: linear-gradient(90deg, var(--muted) 25%, transparent 50%, var(--muted) 75%);
