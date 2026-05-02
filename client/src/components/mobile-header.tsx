@@ -130,36 +130,8 @@ export function MobileHeader({ onMenuToggle, isMenuOpen }: MobileHeaderProps) {
       >
         <div className="flex items-center justify-between px-4 h-14">
 
-          {/* Hamburger — left side */}
-          <button
-            onClick={onMenuToggle}
-            className="p-2 -ml-1 text-stone-500 dark:text-stone-400 hover:text-primary dark:hover:text-primary hover:bg-stone-100 dark:hover:bg-white/8 rounded-xl transition-colors tap-scale"
-            aria-label={isMenuOpen ? "Chiudi menu" : "Apri menu"}
-          >
-            {isMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
-          </button>
-
-          {/* Logo — center */}
-          <Link href="/" className="absolute left-1/2 -translate-x-1/2">
-            <img src="/logo-full.png" alt="Fermenta.to" className="h-7 w-auto block dark:hidden"
-              onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }} />
-            <img src="/logo-dark-mode.png" alt="Fermenta.to" className="h-7 w-auto hidden dark:block"
-              onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }} />
-          </Link>
-
-          {/* Right icons */}
+          {/* Left: Avatar / Bell */}
           <div className="flex items-center gap-0.5">
-            {/* Bell */}
-            {isAuthenticated && (
-              <Link href="/notifications" className="relative p-2.5 tap-scale">
-                <Bell className="h-5 w-5 text-stone-500 dark:text-stone-400" />
-                {(unreadData?.count ?? 0) > 0 && (
-                  <span className="absolute top-1.5 right-1.5 h-[14px] w-[14px] bg-red-500 text-white text-[9px] font-bold rounded-full flex items-center justify-center leading-none">
-                    {(unreadData?.count ?? 0) > 9 ? '9+' : unreadData?.count}
-                  </span>
-                )}
-              </Link>
-            )}
             {/* Avatar */}
             {isAuthenticated && typedUser ? (
               <Link href="/dashboard" className="p-1 tap-scale">
@@ -175,7 +147,35 @@ export function MobileHeader({ onMenuToggle, isMenuOpen }: MobileHeaderProps) {
                 <User className="h-5 w-5 text-stone-500 dark:text-stone-400" />
               </Link>
             )}
+            {/* Bell */}
+            {isAuthenticated && (
+              <Link href="/notifications" className="relative p-2.5 tap-scale">
+                <Bell className="h-5 w-5 text-stone-500 dark:text-stone-400" />
+                {(unreadData?.count ?? 0) > 0 && (
+                  <span className="absolute top-1.5 right-1.5 h-[14px] w-[14px] bg-red-500 text-white text-[9px] font-bold rounded-full flex items-center justify-center leading-none">
+                    {(unreadData?.count ?? 0) > 9 ? '9+' : unreadData?.count}
+                  </span>
+                )}
+              </Link>
+            )}
           </div>
+
+          {/* Logo — center */}
+          <Link href="/" className="absolute left-1/2 -translate-x-1/2">
+            <img src="/logo-full.png" alt="Fermenta.to" className="h-7 w-auto block dark:hidden"
+              onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }} />
+            <img src="/logo-dark-mode.png" alt="Fermenta.to" className="h-7 w-auto hidden dark:block"
+              onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }} />
+          </Link>
+
+          {/* Right: Hamburger */}
+          <button
+            onClick={onMenuToggle}
+            className="p-2 -mr-1 text-stone-500 dark:text-stone-400 hover:text-primary dark:hover:text-primary hover:bg-stone-100 dark:hover:bg-white/8 rounded-xl transition-colors tap-scale"
+            aria-label={isMenuOpen ? "Chiudi menu" : "Apri menu"}
+          >
+            {isMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+          </button>
         </div>
       </header>
 
@@ -265,7 +265,6 @@ export function MobileHeader({ onMenuToggle, isMenuOpen }: MobileHeaderProps) {
                 <SectionLabel>Azioni veloci</SectionLabel>
                 <ActionItem icon={PlusCircle} label="Aggiungi bevuta" color="bg-primary/10 text-primary" onClick={() => { onMenuToggle(); setLocation('/dashboard'); }} />
                 <ActionItem icon={MessageSquare} label="Scrivi recensione" color="bg-blue-50 dark:bg-blue-950/30 text-blue-600 dark:text-blue-400" onClick={() => { onMenuToggle(); setLocation('/activity'); }} />
-                <ActionItem icon={MapPin} label="Aggiungi locale" color="bg-emerald-50 dark:bg-emerald-950/30 text-emerald-600 dark:text-emerald-400" onClick={() => { onMenuToggle(); setLocation('/registra-pub'); }} />
 
                 <SectionLabel>Account</SectionLabel>
                 <MenuItem href="/dashboard" icon={User} label="Il mio profilo" />

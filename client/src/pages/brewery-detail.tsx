@@ -767,16 +767,18 @@ export default function BreweryDetail() {
                         {beerStyles.map(style => {
                           const sc = getBeerStyleColor(style || '');
                           const isActive = activeStyleFilter === style;
+                          const shortStyle = (style || '').replace(/\s*[-–/]\s*.+$/, '').trim() || style;
                           return (
                             <button
                               key={style}
                               onClick={() => { setActiveStyleFilter(style!); setVisibleCount(9); }}
-                              className="px-3 py-1.5 rounded-full text-xs font-bold transition-all shadow-sm"
+                              className="px-2.5 py-1 rounded-full text-[11px] font-medium transition-all shadow-sm max-w-[140px] truncate"
                               style={isActive
                                 ? { background: sc.text, color: '#fff', boxShadow: `0 2px 8px ${sc.text}50` }
                                 : { background: sc.bg, color: sc.text }}
+                              title={style || ''}
                             >
-                              {style}
+                              {shortStyle}
                             </button>
                           );
                         })}

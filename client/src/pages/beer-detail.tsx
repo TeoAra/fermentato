@@ -887,7 +887,7 @@ export default function BeerDetail() {
         </div>
       </div>
 
-      <main className="max-w-7xl mx-auto pb-12">
+      <main className="max-w-7xl mx-auto pb-24">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
           <div className="z-10 bg-background dark:bg-background border-b border-gray-200 dark:border-gray-800">
             <TabsList className="flex w-full h-auto bg-transparent p-0 rounded-none shadow-none border-none overflow-x-auto scrollbar-hide">
@@ -921,14 +921,10 @@ export default function BeerDetail() {
           <TabsContent value="scheda" className="px-4 lg:px-6 pt-5 pb-10 space-y-6">
 
             {/* Specs grid */}
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
               <div className="rounded-2xl p-3 bg-white dark:bg-card border border-stone-100 dark:border-border flex items-center gap-2.5">
                 <Target className="h-4 w-4 text-primary flex-shrink-0" />
                 <div><p className="text-[10px] uppercase tracking-wider font-semibold text-muted-foreground">ABV</p><p className="text-sm font-bold text-foreground">{beer?.abv ? `${beer.abv}%` : '—'}</p></div>
-              </div>
-              <div className="rounded-2xl p-3 bg-white dark:bg-card border border-stone-100 dark:border-border flex items-center gap-2.5">
-                <Sparkles className="h-4 w-4 text-primary flex-shrink-0" />
-                <div className="min-w-0"><p className="text-[10px] uppercase tracking-wider font-semibold text-muted-foreground">Stile</p><p className="text-sm font-bold text-foreground leading-tight line-clamp-2">{beer?.style || '—'}</p></div>
               </div>
               {beer?.color && (
                 <div className="rounded-2xl p-3 bg-white dark:bg-card border border-stone-100 dark:border-border flex items-center gap-2.5">
