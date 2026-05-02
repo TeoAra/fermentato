@@ -620,6 +620,131 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Popular beers nearby — ranked by check-in count + favorite count among
+  // pubs within `radiusKm` of the supplied (lat, lng). Used by the
+  // "Birre più popolari in zona" carousel on /activity.
+  app.get("/api/beers/popular-nearby", async (req, res) => {
+    try {
+      const lat = parseFloat(req.query.lat as string);
+      const lng = parseFloat(req.query.lng as string);
+      const radiusKm = Math.min(500, parseFloat(req.query.radiusKm as string) || 10);
+      const limit = Math.min(50, parseInt(req.query.limit as string) || 12);
+      if (!isFinite(lat) || !isFinite(lng)) {
+        return res.status(400).json({ message: "lat and lng query params are required" });
+      }
+
+      const cacheKey = `beers:popular-nearby:${lat.toFixed(3)}:${lng.toFixed(3)}:${radiusKm}:${limit}`;
+      const rows = await memCached(cacheKey, 2 * 60 * 1000, async () => {
+        const result = await db.execute(sql`
+          WITH nearby_pubs AS (
+            SELECT id, name, latitude, longitude,
+              (6371 * acos(LEAST(1.0, GREATEST(-1.0,
+                cos(radians(${lat})) * cos(radians(latitude::float))
+                * cos(radians(longitude::float) - radians(${lng}))
+                + sin(radians(${lat})) * sin(radians(latitude::float))
+              )))) AS distance
+            FROM pubs
+            WHERE latitude IS NOT NULL AND longitude IS NOT NULL
+          ),
+          nearby_in_range AS (
+            SELECT * FROM nearby_pubs WHERE distance <= ${radiusKm}
+          ),
+          beer_pubs AS (
+            SELECT t.beer_id, t.pub_id
+            FROM tap_list t
+            JOIN nearby_in_range np ON np.id = t.pub_id
+            WHERE t.is_active = true
+            UNION
+            SELECT bl.beer_id, bl.pub_id
+            FROM bottle_list bl
+            JOIN nearby_in_range np ON np.id = bl.pub_id
+            WHERE bl.is_active = true
+          ),
+          nearest_pub_per_beer AS (
+            SELECT DISTINCT ON (bp.beer_id)
+              bp.beer_id, bp.pub_id, np.distance, np.name AS pub_name,
+              np.latitude AS pub_latitude, np.longitude AS pub_longitude
+            FROM beer_pubs bp
+            JOIN nearby_in_range np ON np.id = bp.pub_id
+            ORDER BY bp.beer_id, np.distance ASC
+          ),
+          tasting_counts AS (
+            SELECT ubt.beer_id, COUNT(*)::int AS tasting_count
+            FROM user_beer_tastings ubt
+            JOIN nearby_in_range np ON np.id = ubt.pub_id
+            WHERE ubt.beer_id IN (SELECT beer_id FROM beer_pubs)
+            GROUP BY ubt.beer_id
+          ),
+          favorite_counts AS (
+            SELECT item_id AS beer_id, COUNT(*)::int AS favorite_count
+            FROM favorites
+            WHERE item_type = 'beer'
+              AND item_id IN (SELECT beer_id FROM beer_pubs)
+            GROUP BY item_id
+          )
+          SELECT
+            b.id AS beer_id,
+            b.name AS beer_name,
+            b.style AS beer_style,
+            b.abv AS beer_abv,
+            b.image_url AS beer_image_url,
+            br.id AS brewery_id,
+            br.name AS brewery_name,
+            br.logo_url AS brewery_logo_url,
+            np.pub_id AS pub_id,
+            np.pub_name AS pub_name,
+            np.pub_latitude AS pub_latitude,
+            np.pub_longitude AS pub_longitude,
+            np.distance AS distance,
+            COALESCE(tc.tasting_count, 0) AS tasting_count,
+            COALESCE(fc.favorite_count, 0) AS favorite_count,
+            (COALESCE(tc.tasting_count, 0) * 2 + COALESCE(fc.favorite_count, 0)) AS popularity_score
+          FROM nearest_pub_per_beer np
+          JOIN beers b ON b.id = np.beer_id
+          LEFT JOIN breweries br ON br.id = b.brewery_id
+          LEFT JOIN tasting_counts tc ON tc.beer_id = b.id
+          LEFT JOIN favorite_counts fc ON fc.beer_id = b.id
+          WHERE COALESCE(b.is_hidden, false) = false
+            AND (COALESCE(tc.tasting_count, 0) > 0 OR COALESCE(fc.favorite_count, 0) > 0)
+          ORDER BY popularity_score DESC, np.distance ASC, b.name ASC
+          LIMIT ${limit}
+        `);
+
+        return (result.rows as any[]).map((r: any) => ({
+          id: Number(r.beer_id),
+          distance: r.distance != null ? Number(r.distance) : null,
+          tastingCount: Number(r.tasting_count) || 0,
+          favoriteCount: Number(r.favorite_count) || 0,
+          popularityScore: Number(r.popularity_score) || 0,
+          beer: {
+            id: Number(r.beer_id),
+            name: r.beer_name,
+            style: r.beer_style,
+            abv: r.beer_abv,
+            imageUrl: r.beer_image_url,
+            brewery: r.brewery_id ? {
+              id: Number(r.brewery_id),
+              name: r.brewery_name,
+              logoUrl: r.brewery_logo_url,
+            } : null,
+          },
+          pub: r.pub_id ? {
+            id: Number(r.pub_id),
+            name: r.pub_name,
+            latitude: r.pub_latitude,
+            longitude: r.pub_longitude,
+          } : null,
+        }));
+      });
+
+      res.setHeader('Cache-Control', 'public, max-age=60, stale-while-revalidate=300');
+      res.json(rows);
+    } catch (error) {
+      console.error("Error fetching popular beers nearby:", error);
+      res.status(500).json({ message: "Failed to fetch popular beers nearby" });
+    }
+  });
+
   // Similar beers by style
   app.get("/api/beers/:id/similar", async (req, res) => {
     try {

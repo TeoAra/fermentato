@@ -242,6 +242,12 @@ export default function Activity() {
   const earnedBadges = badges.filter((b: any) => b.earned);
   const { data: allPubs, isLoading: loadingPubs } = useQuery({ queryKey: ["/api/pubs"] });
   const { data: favoriteBeers = [], isLoading: loadingFavoriteBeers } = useQuery<any[]>({ queryKey: ["/api/favorites/beer"], enabled: auth });
+  const { data: popularBeersNearbyData = [], isLoading: loadingPopularBeers } = useQuery<any[]>({
+    queryKey: ["/api/beers/popular-nearby", userLocation?.lat, userLocation?.lng, radius],
+    queryFn: () =>
+      fetch(`/api/beers/popular-nearby?lat=${userLocation!.lat}&lng=${userLocation!.lng}&radiusKm=${radius}&limit=12`).then((r) => r.json()),
+    enabled: !!userLocation,
+  });
   const { data: upcomingEvents = [], isLoading: loadingEvents } = useQuery<any[]>({ queryKey: ["/api/events/upcoming"] });
   const { data: activeFestivals = [], isLoading: loadingFestivals } = useQuery<any[]>({ queryKey: ["/api/festivals/public"] });
   const nearbyPubs = useMemo(() => {
@@ -296,6 +302,21 @@ export default function Activity() {
       .filter(Boolean)
       .sort((a: any, b: any) => a.distance - b.distance);
   }, [favoriteBeers, userLocation, radius]);
+
+  // Prefer the aggregated "popular nearby" data (ranked by check-ins +
+  // favorites across all users), and fall back to the user's own
+  // favoriteBeersNearby when the aggregated list is empty.
+  const aggregatedReady = !loadingPopularBeers && Array.isArray(popularBeersNearbyData);
+  const useFallback = aggregatedReady && popularBeersNearbyData.length === 0;
+  const popularBeersNearby = useMemo(() => {
+    if (Array.isArray(popularBeersNearbyData) && popularBeersNearbyData.length > 0) {
+      return popularBeersNearbyData;
+    }
+    return favoriteBeersNearby;
+  }, [popularBeersNearbyData, favoriteBeersNearby]);
+  // Show loader while the aggregated dataset is still in flight; only
+  // wait on the favorites query when we know we're going to fall back.
+  const loadingPopularSection = loadingPopularBeers || (useFallback && loadingFavoriteBeers);
 
   const dismissChange = (id: number) => {
     setDismissedIds(prev => {
@@ -504,28 +525,28 @@ export default function Activity() {
               <h2 className="text-base font-semibold text-foreground dark:text-white flex items-center gap-2">
                 <Beer className="h-4 w-4 text-orange-600" />
                 Birre più popolari in zona
-                {favoriteBeersNearby.length > 0 && (
-                  <Badge className="ml-1 bg-orange-500 text-white text-xs px-1.5 py-0">{favoriteBeersNearby.length}</Badge>
+                {popularBeersNearby.length > 0 && (
+                  <Badge className="ml-1 bg-orange-500 text-white text-xs px-1.5 py-0">{popularBeersNearby.length}</Badge>
                 )}
               </h2>
-              {favoriteBeersNearby.length > 3 && (
+              {popularBeersNearby.length > 3 && (
                 <Link href="/explore/beers">
                   <button className="text-[11px] font-bold text-primary hover:underline">Vedi tutto</button>
                 </Link>
               )}
             </div>
-            {loadingFavoriteBeers ? (
+            {loadingPopularSection ? (
               <div className="flex items-center justify-center py-8">
                 <Loader2 className="h-7 w-7 animate-spin text-orange-600" />
               </div>
-            ) : favoriteBeersNearby.length === 0 ? (
+            ) : popularBeersNearby.length === 0 ? (
               <div className="text-center py-6 bg-stone-50 dark:bg-stone-800/50 rounded-xl">
                 <Beer className="h-9 w-9 text-stone-400 mx-auto mb-2" />
-                <p className="text-sm text-muted-foreground">Nessuna birra preferita trovata entro {radius} km</p>
+                <p className="text-sm text-muted-foreground">Nessuna birra popolare trovata entro {radius} km</p>
               </div>
             ) : (
               <div className="flex gap-3 overflow-x-auto pb-2 -mx-4 px-4 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
-                {favoriteBeersNearby
+                {popularBeersNearby
                   .slice(0, 8)
                   .filter((item: any) => (item?.beer?.id ?? item?.id) != null)
                   .map((item: any) => {
