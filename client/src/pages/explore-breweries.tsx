@@ -1,9 +1,9 @@
 import { Helmet } from "react-helmet-async";
 import { useQuery } from "@tanstack/react-query";
-import { useState, useMemo, useEffect, useCallback, Suspense, lazy } from "react";
+import { useState, useMemo, useEffect, useCallback } from "react";
 import { Link } from "wouter";
-const HomepageMap = lazy(() => import("@/components/homepage-map"));
-import { Beer, Search, X, Star, ChevronRight, SlidersHorizontal, Globe, Navigation, TrendingUp, Flame, ChevronLeft, ChevronRight as ChevronRightIcon } from "lucide-react";
+import { PubMap } from "@/components/pub-map";
+import { Beer, Search, X, Star, ChevronRight, SlidersHorizontal, Globe, Navigation, Map, ChevronLeft, ChevronRight as ChevronRightIcon } from "lucide-react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
@@ -82,13 +82,15 @@ function formatDist(km: number): string {
   return km < 1 ? `${Math.round(km * 1000)} m` : `${km.toFixed(1)} km`;
 }
 
-type QuickFilter = "all" | "nearby" | "top" | "italian" | "international" | "micro" | "new";
+type QuickFilter = "all" | "nearby" | "top" | "italian" | "international";
+type ViewMode = "list" | "map";
 const PAGE_SIZE = 30;
 
 export default function ExploreBreweries() {
   const [searchInput, setSearchInput] = useState("");
   const [debouncedQ, setDebouncedQ] = useState("");
   const [quickFilter, setQuickFilter] = useState<QuickFilter>("all");
+  const [viewMode, setViewMode] = useState<ViewMode>("list");
   const [page, setPage] = useState(1);
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(() => {
     try { const c = localStorage.getItem("fermenta:userLocation"); return c ? JSON.parse(c) : null; } catch { return null; }
@@ -185,8 +187,6 @@ export default function ExploreBreweries() {
     { key: "top", label: "Top rated", icon: <Star className="w-3 h-3" /> },
     { key: "italian", label: "🇮🇹 Italiani", icon: null },
     { key: "international", label: "Internazionali", icon: null },
-    { key: "micro", label: "Microbirrifici", icon: <Flame className="w-3 h-3" /> },
-    { key: "new", label: "Nuovi", icon: <span className="text-[9px] font-black bg-green-400 text-white rounded-sm px-0.5">NEW</span> },
   ];
 
   const breweryMapPins = useMemo(() =>
@@ -196,23 +196,53 @@ export default function ExploreBreweries() {
     [breweries]
   );
 
+  if (viewMode === "map") {
+    return (
+      <div className="fixed inset-x-0 bottom-0 top-14 z-40 bg-background">
+        <div className="absolute top-3 left-3 right-3 z-50 flex items-center gap-2 pointer-events-none">
+          <button
+            onClick={() => setViewMode("list")}
+            className="pointer-events-auto flex items-center gap-1.5 px-3 py-2 rounded-2xl text-sm font-bold bg-white dark:bg-card shadow-lg border border-stone-100 dark:border-border text-foreground tap-scale"
+          >
+            ← Lista
+          </button>
+          <div className="flex-1 pointer-events-auto flex items-center gap-2 px-3 py-2 rounded-2xl bg-white dark:bg-card shadow-lg border border-stone-100 dark:border-border">
+            <Beer className="h-4 w-4 text-primary flex-shrink-0" />
+            <span className="text-sm font-bold text-foreground">{breweryMapPins.length} birrifici</span>
+          </div>
+        </div>
+        {isLoading ? (
+          <div className="w-full h-full bg-stone-100 dark:bg-stone-800 animate-pulse" />
+        ) : (
+          <PubMap pins={breweryMapPins} height="100%" />
+        )}
+      </div>
+    );
+  }
+
   return (
-    <div className="min-h-screen bg-[#F7F4F0] dark:bg-background slide-up lg:flex lg:items-start">
+    <div className="min-h-screen bg-[#F7F4F0] dark:bg-background">
       <Helmet>
         <title>Birrifici Artigianali Italiani | Fermenta.to</title>
         <meta name="description" content="Esplora oltre 50.000 birrifici artigianali italiani e internazionali. Scopri birre, storia e dove trovarli su Fermenta.to." />
       </Helmet>
 
-      {/* ── LEFT COLUMN ── */}
-      <div className="lg:flex-1 lg:min-w-0 min-h-screen">
-
       {/* ── Sticky header ── */}
       <div className="sticky top-14 lg:top-16 z-30 bg-white/95 dark:bg-[hsl(25,14%,8%)]/95 backdrop-blur-md border-b border-stone-100 dark:border-stone-800">
-        <div className="px-4 pt-3 pb-2">
-          {/* Title */}
-          <div className="mb-3">
-            <h1 className="text-xl font-extrabold text-foreground">Esplora Birrifici</h1>
-            <p className="text-xs text-stone-400 dark:text-stone-500">Scopri i migliori birrifici vicino a te</p>
+        <div className="max-w-5xl mx-auto px-4 lg:px-6 pt-3 pb-2">
+          {/* Title row */}
+          <div className="flex items-center justify-between mb-3">
+            <div>
+              <h1 className="text-xl lg:text-2xl font-extrabold text-foreground">Esplora Birrifici</h1>
+              <p className="text-xs text-stone-400 dark:text-stone-500">Scopri i migliori birrifici vicino a te</p>
+            </div>
+            <button
+              onClick={() => setViewMode("map")}
+              className="flex items-center gap-1.5 px-3.5 py-2 rounded-2xl text-xs font-bold bg-primary/10 dark:bg-primary/15 text-primary tap-scale border border-primary/20 hover:bg-primary/15 dark:hover:bg-primary/20 transition-colors"
+            >
+              <Map className="w-3.5 h-3.5" />
+              Mappa
+            </button>
           </div>
 
           {/* Search */}
@@ -231,7 +261,7 @@ export default function ExploreBreweries() {
           </div>
 
           {/* Quick filter chips */}
-          <div className="flex items-center gap-2 overflow-x-auto scrollbar-hide pb-1">
+          <div className="flex items-center gap-2 overflow-x-auto scrollbar-hide pb-1 -mx-4 px-4 lg:-mx-6 lg:px-6">
             {/* Distance chip (only shown when nearby active) */}
             {quickFilter === "nearby" && (
               <div className="relative flex-shrink-0">
@@ -280,7 +310,7 @@ export default function ExploreBreweries() {
 
           {/* Country pills */}
           {quickFilter === "all" && !debouncedQ && topCountries.length > 0 && (
-            <div className="flex gap-1.5 overflow-x-auto scrollbar-hide pt-2 pb-1">
+            <div className="flex gap-1.5 overflow-x-auto scrollbar-hide pt-2 pb-1 -mx-4 px-4 lg:-mx-6 lg:px-6">
               {topCountries.slice(0, 15).map(c => {
                 const isItaly = c.country === "Italy" || c.country === "Italia";
                 return (
@@ -304,7 +334,7 @@ export default function ExploreBreweries() {
         </div>
 
         {/* Result count */}
-        <div className="px-4 pb-2">
+        <div className="max-w-5xl mx-auto px-4 lg:px-6 pb-2">
           <p className="text-[11px] text-stone-400 dark:text-stone-500 font-medium">
             {isLoading ? "Caricamento…" : `${total.toLocaleString("it-IT")} birrifici trovati`}
             {quickFilter === "italian" ? " italiani" : quickFilter === "international" ? " internazionali" : ""}
@@ -314,7 +344,7 @@ export default function ExploreBreweries() {
       </div>
 
       {/* ── Content ── */}
-      <main className="px-4 py-4 pb-28 lg:pb-12 max-w-2xl mx-auto lg:max-w-none lg:mx-0 lg:px-6">
+      <main className="max-w-5xl mx-auto px-4 lg:px-6 py-4 pb-28 lg:pb-12">
         {isLoading ? (
           <div className="space-y-3">
             {[...Array(8)].map((_, i) => (
@@ -362,7 +392,7 @@ export default function ExploreBreweries() {
             </div>
 
             {/* Brewery list */}
-            <div className="space-y-2.5">
+            <div className="space-y-2.5 lg:grid lg:grid-cols-2 lg:gap-3 lg:space-y-0">
               {breweries.map((brewery: any) => (
                 <BreweryListCard key={brewery.id} brewery={brewery} showDist={quickFilter === "nearby" && !!userLocation} />
               ))}
@@ -395,23 +425,6 @@ export default function ExploreBreweries() {
           </>
         )}
       </main>
-
-      </div>{/* end LEFT COLUMN */}
-
-      {/* ── RIGHT COLUMN: Map (desktop only) ── */}
-      <div className="hidden lg:flex lg:flex-col lg:sticky lg:top-16 lg:h-[calc(100vh-4rem)] lg:w-[420px] xl:w-[500px] lg:flex-shrink-0 border-l border-stone-100 dark:border-stone-800 overflow-hidden">
-        <Suspense fallback={<div className="w-full h-full bg-stone-100 dark:bg-stone-800 animate-pulse" />}>
-          <HomepageMap
-            pubs={[]}
-            breweries={breweryMapPins}
-            userLocation={userLocation}
-            showPubs={false}
-            showBreweries={true}
-            distanceKm={quickFilter === "nearby" && userLocation ? distanceKm : undefined}
-            onLocate={loc => { setUserLocation(loc); setPage(1); }}
-          />
-        </Suspense>
-      </div>
 
     </div>
   );

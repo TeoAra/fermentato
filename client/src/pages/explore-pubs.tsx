@@ -1,11 +1,9 @@
 import { Helmet } from "react-helmet-async";
 import { useQuery } from "@tanstack/react-query";
-import { useState, useMemo, useEffect, useRef, Suspense, lazy } from "react";
+import { useState, useMemo, useEffect, useRef } from "react";
 import { Link, useSearch } from "wouter";
 import { MapPin, Store, Map, Search, X, Star, ChevronRight, SlidersHorizontal, Navigation, Bookmark } from "lucide-react";
 import { PubMap } from "@/components/pub-map";
-
-const HomepageMap = lazy(() => import("@/components/homepage-map"));
 
 type ViewMode = "list" | "map";
 type QuickFilter = "all" | "nearby" | "top" | "open";
@@ -139,29 +137,26 @@ export default function ExplorePubs() {
   }
 
   return (
-    <div className="min-h-screen bg-[#F7F4F0] dark:bg-background slide-up lg:flex lg:items-start">
+    <div className="min-h-screen bg-[#F7F4F0] dark:bg-background">
       <Helmet>
         <title>Pub e Birrerie Artigianali in Italia | Fermenta.to</title>
         <meta name="description" content="Trova pub, birrerie e locali craft beer in Italia. Consulta taplist in tempo reale, orari e posizione su mappa." />
       </Helmet>
 
-      {/* ── LEFT COLUMN ── */}
-      <div className="lg:flex-1 lg:min-w-0 min-h-screen">
-
       {/* ── Sticky header ── */}
       <div className="sticky top-14 lg:top-16 z-30 bg-white/95 dark:bg-[hsl(25,14%,8%)]/95 backdrop-blur-md border-b border-stone-100 dark:border-stone-800">
-        <div className="px-4 pt-3 pb-2">
+        <div className="max-w-5xl mx-auto px-4 lg:px-6 pt-3 pb-2">
           {/* Title row */}
           <div className="flex items-center justify-between mb-3">
             <div>
-              <h1 className="text-xl font-extrabold text-foreground">Esplora Pub</h1>
+              <h1 className="text-xl lg:text-2xl font-extrabold text-foreground">Esplora Pub</h1>
               <p className="text-xs text-stone-400 dark:text-stone-500">Scopri i migliori pub vicino a te</p>
             </div>
             <button
               onClick={() => setViewMode("map")}
-              className="flex items-center gap-1.5 px-3 py-2 rounded-2xl text-xs font-bold bg-stone-100 dark:bg-stone-800 text-stone-600 dark:text-stone-300 tap-scale border border-stone-200 dark:border-stone-700"
+              className="flex items-center gap-1.5 px-3.5 py-2 rounded-2xl text-xs font-bold bg-primary/10 dark:bg-primary/15 text-primary tap-scale border border-primary/20 hover:bg-primary/15 dark:hover:bg-primary/20 transition-colors"
             >
-              <Map className="w-3.5 h-3.5 text-primary" />
+              <Map className="w-3.5 h-3.5" />
               Mappa
             </button>
           </div>
@@ -183,7 +178,7 @@ export default function ExplorePubs() {
           </div>
 
           {/* Distance + filter chips */}
-          <div className="flex items-center gap-2 overflow-x-auto scrollbar-hide pb-1">
+          <div className="flex items-center gap-2 overflow-x-auto scrollbar-hide pb-1 -mx-4 px-4 lg:-mx-6 lg:px-6">
             {/* Distance chip */}
             <div className="relative flex-shrink-0">
               <button
@@ -236,7 +231,7 @@ export default function ExplorePubs() {
         </div>
 
         {!isLoading && (
-          <div className="px-4 pb-2">
+          <div className="max-w-5xl mx-auto px-4 lg:px-6 pb-2">
             <p className="text-[11px] text-stone-400 dark:text-stone-500 font-medium">
               {search || quickFilter !== "all"
                 ? `${filtered.length} risultati`
@@ -247,33 +242,8 @@ export default function ExplorePubs() {
         )}
       </div>
 
-      {/* ── Mini map (mobile/tablet only) ── */}
-      {!search && quickFilter !== "top" && (
-        <div className="px-4 pt-4 lg:hidden">
-          <div className="relative rounded-2xl overflow-hidden bg-stone-200 dark:bg-stone-800" style={{ height: 280 }}>
-            <Suspense fallback={<div className="w-full h-full bg-stone-200 dark:bg-stone-800 animate-pulse" />}>
-              <HomepageMap
-                pubs={pubsArr}
-                breweries={[]}
-                userLocation={userLocation}
-                showPubs={true}
-                showBreweries={false}
-                distanceKm={quickFilter === "nearby" && userLocation ? distanceKm : undefined}
-                onLocate={loc => { setUserLocation(loc); setQuickFilter("nearby"); }}
-              />
-            </Suspense>
-            <button
-              onClick={handleLocate}
-              className="absolute top-2 right-2 z-20 w-8 h-8 rounded-xl flex items-center justify-center bg-white/90 dark:bg-card/90 shadow-md tap-scale"
-            >
-              <Navigation className="w-4 h-4 text-primary" />
-            </button>
-          </div>
-        </div>
-      )}
-
       {/* ── Content ── */}
-      <main className="px-4 py-4 pb-28 lg:pb-12 max-w-2xl mx-auto lg:max-w-none lg:mx-0 lg:px-6">
+      <main className="max-w-5xl mx-auto px-4 lg:px-6 py-4 pb-28 lg:pb-12">
         {isLoading ? (
           <div className="space-y-3">
             {[...Array(6)].map((_, i) => (
@@ -353,7 +323,7 @@ export default function ExplorePubs() {
               )}
             </div>
 
-            <div className="space-y-2.5">
+            <div className="space-y-2.5 lg:grid lg:grid-cols-2 lg:gap-3 lg:space-y-0">
               {filtered.map((pub: any) => (
                 <PubListCard key={pub.id} pub={pub} showDist={quickFilter === "nearby" && userLocation != null} />
               ))}
@@ -361,23 +331,6 @@ export default function ExplorePubs() {
           </>
         )}
       </main>
-
-      </div>{/* end LEFT COLUMN */}
-
-      {/* ── RIGHT COLUMN: Map (desktop only) ── */}
-      <div className="hidden lg:flex lg:flex-col lg:sticky lg:top-16 lg:h-[calc(100vh-4rem)] lg:w-[420px] xl:w-[500px] lg:flex-shrink-0 border-l border-stone-100 dark:border-stone-800 overflow-hidden">
-        <Suspense fallback={<div className="w-full h-full bg-stone-100 dark:bg-stone-800 animate-pulse" />}>
-          <HomepageMap
-            pubs={pubsArr}
-            breweries={[]}
-            userLocation={userLocation}
-            showPubs={true}
-            showBreweries={false}
-            distanceKm={quickFilter === "nearby" && userLocation ? distanceKm : undefined}
-            onLocate={loc => { setUserLocation(loc); setQuickFilter("nearby"); }}
-          />
-        </Suspense>
-      </div>
 
     </div>
   );
