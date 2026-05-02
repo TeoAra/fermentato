@@ -288,8 +288,8 @@ export default function ExploreBeers() {
         // MAIN VIEW — Esplora Birre
         // ═══════════════════════════════════════════════════════════════
         <>
-        {/* Sticky search bar + mini map — locked at top below mobile/desktop header */}
-        <div className="sticky top-14 lg:top-16 z-30 bg-[#F7F4F0]/95 dark:bg-background/95 backdrop-blur-md border-b border-stone-100 dark:border-stone-800/60">
+        {/* Search bar + mini map — scorre con la pagina */}
+        <div className="bg-[#F7F4F0]/95 dark:bg-background/95 backdrop-blur-md border-b border-stone-100 dark:border-stone-800/60">
           <div className="max-w-3xl mx-auto px-4 lg:px-6 py-2.5 space-y-2.5">
             <div className="flex items-center gap-2 bg-white dark:bg-card rounded-2xl px-4 py-2.5 border border-stone-100 dark:border-stone-800/60 shadow-sm">
               <Search className="h-4 w-4 text-stone-400 flex-shrink-0" />

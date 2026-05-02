@@ -143,8 +143,8 @@ export default function ExplorePubs() {
         <meta name="description" content="Trova pub, birrerie e locali craft beer in Italia. Consulta taplist in tempo reale, orari e posizione su mappa." />
       </Helmet>
 
-      {/* ── Sticky header (search bar + filters stay locked at top) ── */}
-      <div className="sticky top-14 lg:top-16 z-30 bg-white/95 dark:bg-[hsl(25,14%,8%)]/95 backdrop-blur-md border-b border-stone-100 dark:border-stone-800">
+      {/* ── Header (scorre con la pagina) ── */}
+      <div className="bg-white/95 dark:bg-[hsl(25,14%,8%)]/95 backdrop-blur-md border-b border-stone-100 dark:border-stone-800">
         <div className="max-w-5xl mx-auto px-4 lg:px-6 pt-3 pb-2">
           {/* Title row */}
           <div className="flex items-center justify-between mb-3">
