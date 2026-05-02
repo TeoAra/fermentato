@@ -80,25 +80,30 @@
    LIGHT MODE — COLOUR PALETTE
    ============================ */
 :root {
-  /* Base surfaces — warm cream, premium craft feel */
-  --background: hsl(38, 24%, 93%);
-  --foreground: hsl(25, 14%, 13%);
-  --muted: hsl(38, 16%, 90%);
-  --muted-foreground: hsl(25, 8%, 46%);
+  /* Base surfaces — clean neutral, 8pt grid system */
+  --background: hsl(0, 0%, 97%);
+  --foreground: hsl(0, 0%, 7%);
+  --muted: hsl(0, 0%, 94%);
+  --muted-foreground: hsl(0, 0%, 40%);
 
   /* Card / Popover */
   --popover: hsl(0, 0%, 100%);
-  --popover-foreground: hsl(28, 18%, 13%);
+  --popover-foreground: hsl(0, 0%, 7%);
   --card: hsl(0, 0%, 100%);
-  --card-foreground: hsl(28, 18%, 13%);
+  --card-foreground: hsl(0, 0%, 7%);
 
-  /* Borders / Inputs — warm tone */
-  --border: hsl(36, 16%, 84%);
-  --input: hsl(36, 16%, 84%);
+  /* Borders / Inputs */
+  --border: hsl(0, 0%, 88%);
+  --input: hsl(0, 0%, 88%);
 
-  /* Primary — vibrant orange, Fermenta design system */
-  --primary: hsl(24, 93%, 49%);
+  /* Primary — #FF7A00 Fermenta orange */
+  --primary: hsl(29, 100%, 50%);
   --primary-foreground: hsl(0, 0%, 100%);
+
+  /* Shadow tokens — 8pt elevation system */
+  --shadow-card: 0 8px 24px rgba(0, 0, 0, 0.08);
+  --shadow-card-hover: 0 12px 32px rgba(0, 0, 0, 0.12);
+  --shadow-card-sm: 0 2px 8px rgba(0, 0, 0, 0.06);
 
   /* Secondary — warm dark slate */
   --secondary: hsl(25, 20%, 22%);
@@ -150,29 +155,34 @@
    DARK MODE — COLOUR PALETTE
    ============================ */
 .dark {
-  /* Base surfaces — anthracite dark gray */
-  --background: hsl(220, 5%, 14%);
-  --foreground: hsl(220, 8%, 94%);
-  --muted: hsl(220, 5%, 20%);
-  --muted-foreground: hsl(220, 6%, 62%);
+  /* Base surfaces — ultra-premium #0F0F10 / #1A1A1C (Spotify+Apple Music) */
+  --background: hsl(240, 3%, 6%);
+  --foreground: hsl(0, 0%, 100%);
+  --muted: hsl(240, 3%, 14%);
+  --muted-foreground: hsl(0, 0%, 63%);
 
   /* Card / Popover */
-  --popover: hsl(220, 5%, 18%);
-  --popover-foreground: hsl(220, 8%, 94%);
-  --card: hsl(220, 5%, 18%);
-  --card-foreground: hsl(220, 8%, 94%);
+  --popover: hsl(240, 3%, 11%);
+  --popover-foreground: hsl(0, 0%, 100%);
+  --card: hsl(240, 3%, 11%);
+  --card-foreground: hsl(0, 0%, 100%);
 
   /* Borders / Inputs */
-  --border: hsl(220, 5%, 27%);
-  --input: hsl(220, 5%, 27%);
+  --border: hsl(240, 3%, 18%);
+  --input: hsl(240, 3%, 18%);
 
-  /* Primary — vibrant orange for dark bg */
-  --primary: hsl(24, 93%, 55%);
+  /* Primary — slightly brighter orange on dark */
+  --primary: hsl(29, 100%, 56%);
   --primary-foreground: hsl(0, 0%, 100%);
 
   /* Secondary */
-  --secondary: hsl(220, 5%, 25%);
-  --secondary-foreground: hsl(220, 8%, 94%);
+  --secondary: hsl(240, 3%, 18%);
+  --secondary-foreground: hsl(0, 0%, 100%);
+
+  /* Shadow tokens dark — deeper for dark bg */
+  --shadow-card: 0 8px 24px rgba(0, 0, 0, 0.40);
+  --shadow-card-hover: 0 12px 32px rgba(0, 0, 0, 0.55);
+  --shadow-card-sm: 0 2px 8px rgba(0, 0, 0, 0.30);
 
   /* Accent — violet dark mode */
   --accent: hsl(258, 35%, 28%);
@@ -191,29 +201,29 @@
   --ring: hsl(24, 93%, 55%);
   --radius: 1rem;
 
-  /* Glassmorphism */
-  --glass-bg: hsla(220, 5%, 18%, 0.82);
-  --glass-border: hsla(220, 20%, 100%, 0.07);
-  --glass-shadow: hsla(0, 0%, 0%, 0.28);
+  /* Glassmorphism dark */
+  --glass-bg: hsla(240, 3%, 11%, 0.85);
+  --glass-border: hsla(240, 20%, 100%, 0.07);
+  --glass-shadow: hsla(0, 0%, 0%, 0.35);
 
   /* Surfaces */
-  --surface-primary: hsl(220, 5%, 18%);
-  --surface-secondary: hsl(220, 5%, 20%);
-  --surface-tertiary: hsl(220, 5%, 23%);
+  --surface-primary: hsl(240, 3%, 11%);
+  --surface-secondary: hsl(240, 3%, 14%);
+  --surface-tertiary: hsl(240, 3%, 17%);
 
-  /* Elevations — lighter shadows on lighter bg */
-  --elevation-1: 0 1px 3px hsla(0, 0%, 0%, 0.28), 0 1px 2px hsla(0, 0%, 0%, 0.36);
-  --elevation-2: 0 4px 14px hsla(0, 0%, 0%, 0.34), 0 2px 4px hsla(0, 0%, 0%, 0.28);
-  --elevation-3: 0 12px 30px hsla(0, 0%, 0%, 0.42), 0 4px 10px hsla(0, 0%, 0%, 0.32);
-  --elevation-glass: 0 8px 32px hsla(0, 0%, 0%, 0.28);
+  /* Elevations */
+  --elevation-1: 0 1px 3px hsla(0, 0%, 0%, 0.40), 0 1px 2px hsla(0, 0%, 0%, 0.50);
+  --elevation-2: 0 4px 14px hsla(0, 0%, 0%, 0.50), 0 2px 4px hsla(0, 0%, 0%, 0.40);
+  --elevation-3: 0 12px 30px hsla(0, 0%, 0%, 0.60), 0 4px 10px hsla(0, 0%, 0%, 0.45);
+  --elevation-glass: 0 8px 32px hsla(0, 0%, 0%, 0.40);
 
   /* Brand Gradients — Dark */
-  --gradient-beer-primary: linear-gradient(135deg, hsl(38, 88%, 50%) 0%, hsl(25, 82%, 52%) 100%);
-  --gradient-beer-secondary: linear-gradient(135deg, hsl(38, 88%, 50%) 0%, hsl(44, 88%, 54%) 100%);
+  --gradient-beer-primary: linear-gradient(135deg, hsl(29, 100%, 52%) 0%, hsl(20, 95%, 48%) 100%);
+  --gradient-beer-secondary: linear-gradient(135deg, hsl(29, 100%, 52%) 0%, hsl(44, 88%, 54%) 100%);
   --gradient-stats: linear-gradient(135deg, hsl(174, 54%, 40%) 0%, hsl(195, 62%, 44%) 100%);
   --gradient-success: linear-gradient(135deg, hsl(142, 52%, 38%) 0%, hsl(158, 56%, 40%) 100%);
-  --gradient-warning: linear-gradient(135deg, hsl(38, 88%, 50%) 0%, hsl(44, 88%, 54%) 100%);
-  --gradient-hero: linear-gradient(135deg, hsl(220, 5%, 14%) 0%, hsl(220, 5%, 18%) 100%);
+  --gradient-warning: linear-gradient(135deg, hsl(29, 100%, 52%) 0%, hsl(44, 88%, 54%) 100%);
+  --gradient-hero: linear-gradient(135deg, hsl(240, 3%, 6%) 0%, hsl(240, 3%, 11%) 100%);
 }
 
 @layer base {
@@ -408,6 +418,44 @@
   .slide-up { animation: slideUp 0.45s cubic-bezier(0.22, 1, 0.36, 1) 80ms both; }
   .scale-in { animation: scaleIn 0.35s cubic-bezier(0.22, 1, 0.36, 1) both; }
   .route-fade { animation: routeFade 0.22s cubic-bezier(0.22, 1, 0.36, 1) both; }
+
+  /* ── tap-scale — 120ms spring press (8pt motion system) ── */
+  .tap-scale {
+    transition: transform 120ms cubic-bezier(0.34, 1.56, 0.64, 1);
+    -webkit-tap-highlight-color: transparent;
+    cursor: pointer;
+  }
+  .tap-scale:active {
+    transform: scale(0.97);
+    transition-duration: 80ms;
+    transition-timing-function: ease-out;
+  }
+
+  /* ── shadow-card — card elevation token ── */
+  .shadow-card  { box-shadow: var(--shadow-card); }
+  .shadow-card-hover:hover { box-shadow: var(--shadow-card-hover); }
+  .shadow-card-sm { box-shadow: var(--shadow-card-sm); }
+
+  /* ── Orange CTA glow — dark mode only ── */
+  .dark .btn-orange-glow {
+    box-shadow: 0 0 20px rgba(255, 122, 0, 0.35), 0 4px 12px rgba(255, 122, 0, 0.20);
+  }
+
+  /* ── Glass card — Spotify/Apple Music style ── */
+  .glass-card-dark {
+    background: rgba(26, 26, 28, 0.75);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+  }
+
+  /* ── Section header standard ── */
+  .section-title {
+    font-size: 18px;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    color: var(--foreground);
+  }
 
   .interactive-card {
     transition: box-shadow 0.22s cubic-bezier(0.22, 1, 0.36, 1), transform 0.22s cubic-bezier(0.22, 1, 0.36, 1);
