@@ -905,12 +905,12 @@ export default function BeerDetail() {
           {/* ═══════════ 4 Action buttons ═══════════ */}
           <div className="grid grid-cols-4 gap-2 mt-3">
             <button
-              onClick={() => isAuthenticated ? setCheckinOpen(true) : toast({ title: 'Accedi per registrare la bevuta', variant: 'destructive' })}
+              onClick={() => isAuthenticated ? setCheckinOpen(true) : toast({ title: 'Accedi per registrare il check-in', variant: 'destructive' })}
               data-testid="button-checkin"
               className="flex flex-col items-center justify-center gap-1 bg-primary text-white rounded-2xl py-3 text-xs font-bold tap-scale shadow-sm btn-orange-glow"
             >
               <BeerIcon className="h-4 w-4" />
-              Bevuta
+              Check in
             </button>
             <button
               onClick={handleFavoriteToggle}
@@ -943,39 +943,67 @@ export default function BeerDetail() {
             </button>
           </div>
 
-          {/* Optional admin/utility row */}
+          {/* ═══════════ Secondary actions (Wishlist · Cantina · Suggerisci) ═══════════ */}
           {(isAuthenticated || isAdmin) && (
-            <div className="flex items-center gap-1.5 mt-3 flex-wrap">
-              {isAuthenticated && id && <WishlistButton beerId={parseInt(id)} />}
+            <div className="mt-3 flex items-center gap-1.5 flex-wrap">
+              {isAuthenticated && id && (
+                <WishlistButton beerId={parseInt(id)} variant="pill" />
+              )}
               {isAuthenticated && (
-                <button onClick={() => cellarMutation.mutate()} disabled={cellarMutation.isPending} title="Aggiungi alla cantina"
-                  className={`h-9 w-9 flex items-center justify-center rounded-xl transition-all tap-scale ${inCellar ? 'bg-primary/10 text-primary' : 'bg-stone-100 dark:bg-stone-800 text-stone-500'}`}>
-                  <Wine className="h-4 w-4" />
+                <button
+                  onClick={() => cellarMutation.mutate()}
+                  disabled={cellarMutation.isPending}
+                  data-testid="button-cellar"
+                  className={`inline-flex items-center gap-1.5 px-3 h-9 rounded-full text-xs font-bold border tap-scale transition-all whitespace-nowrap ${
+                    inCellar
+                      ? 'bg-primary/10 border-primary/30 text-primary'
+                      : 'bg-card border-stone-200 dark:border-stone-700 text-stone-600 dark:text-stone-300 hover:border-primary/30'
+                  }`}
+                  title={inCellar ? 'Rimuovi dalla cantina' : 'Aggiungi alla cantina'}
+                >
+                  <Wine className={`h-4 w-4 ${inCellar ? 'fill-current' : ''}`} />
+                  <span>{inCellar ? 'In cantina' : 'Cantina'}</span>
                 </button>
               )}
               {isAuthenticated && !isAdmin && (
-                <button onClick={() => setIsSuggestDialogOpen(true)} data-testid="button-suggest-change" title="Suggerisci modifica"
-                  className="h-9 w-9 flex items-center justify-center rounded-xl bg-stone-100 dark:bg-stone-800 text-stone-500 dark:text-stone-400 tap-scale">
+                <button
+                  onClick={() => setIsSuggestDialogOpen(true)}
+                  data-testid="button-suggest-change"
+                  className="inline-flex items-center gap-1.5 px-3 h-9 rounded-full text-xs font-bold border bg-card border-stone-200 dark:border-stone-700 text-stone-600 dark:text-stone-300 hover:border-primary/30 tap-scale transition-all whitespace-nowrap"
+                  title="Suggerisci una modifica a questa scheda"
+                >
                   <Lightbulb className="h-4 w-4" />
+                  <span>Suggerisci modifica</span>
                 </button>
               )}
+
               {isAdmin && (
-                <>
-                  <div className="ml-auto" />
-                  <button onClick={openEditDialog} data-testid="button-admin-edit-beer" title="Modifica"
-                    className="h-9 w-9 flex items-center justify-center rounded-xl bg-primary text-white shadow-sm tap-scale">
+                <div className="ml-auto flex items-center gap-1.5">
+                  <button
+                    onClick={openEditDialog}
+                    data-testid="button-admin-edit-beer"
+                    title="Modifica"
+                    className="h-9 w-9 flex items-center justify-center rounded-full bg-primary text-white shadow-sm tap-scale"
+                  >
                     <Pencil className="h-4 w-4" />
                   </button>
-                  <button onClick={() => setIsDeleteDialogOpen(true)} title="Elimina"
-                    className="h-9 w-9 flex items-center justify-center rounded-xl bg-red-500 text-white shadow-sm tap-scale hover:bg-red-600">
+                  <button
+                    onClick={() => setIsDeleteDialogOpen(true)}
+                    title="Elimina"
+                    className="h-9 w-9 flex items-center justify-center rounded-full bg-red-500 text-white shadow-sm tap-scale hover:bg-red-600"
+                  >
                     <Trash2 className="h-4 w-4" />
                   </button>
-                </>
+                </div>
               )}
+
               {((!beer?.imageUrl && !beer?.bottleImageUrl) || isAdmin) && (
-                <button onClick={handleFindWebImage} disabled={isSearchingImage}
-                  className="text-[10px] text-primary font-bold disabled:opacity-50 ml-auto px-2 tap-scale">
-                  {isSearchingImage ? "Cerco…" : (beer?.imageUrl || beer?.bottleImageUrl) ? "Re-cerca img" : "Cerca img"}
+                <button
+                  onClick={handleFindWebImage}
+                  disabled={isSearchingImage}
+                  className={`${isAdmin ? '' : 'ml-auto'} text-[11px] text-primary font-bold disabled:opacity-50 px-2 h-9 tap-scale`}
+                >
+                  {isSearchingImage ? 'Cerco…' : (beer?.imageUrl || beer?.bottleImageUrl) ? 'Re-cerca img' : 'Cerca img'}
                 </button>
               )}
             </div>
