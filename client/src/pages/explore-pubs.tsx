@@ -139,14 +139,17 @@ export default function ExplorePubs() {
   }
 
   return (
-    <div className="min-h-screen bg-[#F7F4F0] dark:bg-background slide-up">
+    <div className="min-h-screen bg-[#F7F4F0] dark:bg-background slide-up lg:flex lg:items-start">
       <Helmet>
         <title>Pub e Birrerie Artigianali in Italia | Fermenta.to</title>
         <meta name="description" content="Trova pub, birrerie e locali craft beer in Italia. Consulta taplist in tempo reale, orari e posizione su mappa." />
       </Helmet>
 
+      {/* ── LEFT COLUMN ── */}
+      <div className="lg:flex-1 lg:min-w-0 min-h-screen">
+
       {/* ── Sticky header ── */}
-      <div className="sticky top-14 z-30 bg-white/95 dark:bg-[hsl(25,14%,8%)]/95 backdrop-blur-md border-b border-stone-100 dark:border-stone-800">
+      <div className="sticky top-14 lg:top-16 z-30 bg-white/95 dark:bg-[hsl(25,14%,8%)]/95 backdrop-blur-md border-b border-stone-100 dark:border-stone-800">
         <div className="px-4 pt-3 pb-2">
           {/* Title row */}
           <div className="flex items-center justify-between mb-3">
@@ -244,10 +247,10 @@ export default function ExplorePubs() {
         )}
       </div>
 
-      {/* ── Mini map ── */}
+      {/* ── Mini map (mobile/tablet only) ── */}
       {!search && quickFilter !== "top" && (
-        <div className="px-4 pt-4">
-          <div className="relative rounded-2xl overflow-hidden bg-stone-200 dark:bg-stone-800" style={{ height: 180 }}>
+        <div className="px-4 pt-4 lg:hidden">
+          <div className="relative rounded-2xl overflow-hidden bg-stone-200 dark:bg-stone-800" style={{ height: 280 }}>
             <Suspense fallback={<div className="w-full h-full bg-stone-200 dark:bg-stone-800 animate-pulse" />}>
               <HomepageMap
                 pubs={pubsArr}
@@ -270,7 +273,7 @@ export default function ExplorePubs() {
       )}
 
       {/* ── Content ── */}
-      <main className="px-4 py-4 pb-28 max-w-2xl mx-auto">
+      <main className="px-4 py-4 pb-28 lg:pb-12 max-w-2xl mx-auto">
         {isLoading ? (
           <div className="space-y-3">
             {[...Array(6)].map((_, i) => (
@@ -358,6 +361,24 @@ export default function ExplorePubs() {
           </>
         )}
       </main>
+
+      </div>{/* end LEFT COLUMN */}
+
+      {/* ── RIGHT COLUMN: Map (desktop only) ── */}
+      <div className="hidden lg:flex lg:flex-col lg:sticky lg:top-16 lg:h-[calc(100vh-4rem)] lg:w-[420px] xl:w-[500px] lg:flex-shrink-0 border-l border-stone-100 dark:border-stone-800 overflow-hidden">
+        <Suspense fallback={<div className="w-full h-full bg-stone-100 dark:bg-stone-800 animate-pulse" />}>
+          <HomepageMap
+            pubs={pubsArr}
+            breweries={[]}
+            userLocation={userLocation}
+            showPubs={true}
+            showBreweries={false}
+            distanceKm={quickFilter === "nearby" && userLocation ? distanceKm : undefined}
+            onLocate={loc => { setUserLocation(loc); setQuickFilter("nearby"); }}
+          />
+        </Suspense>
+      </div>
+
     </div>
   );
 }

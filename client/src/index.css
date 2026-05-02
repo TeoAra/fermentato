@@ -477,7 +477,6 @@
   }
   .main-content-wrapper {
     transition: transform 280ms ease-out, border-radius 280ms ease-out;
-    will-change: transform;
   }
 
   /* ── Collapsing compact header ── */
