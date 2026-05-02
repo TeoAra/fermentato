@@ -161,6 +161,7 @@ export default function HomepageMap({
     <div
       ref={containerRef}
       className="relative w-full h-full overflow-hidden"
+      style={{ touchAction: "pan-y" }}
     >
       {isLoading && (
         <div className="absolute inset-0 z-20 flex items-center justify-center bg-stone-100 dark:bg-stone-800">
@@ -180,7 +181,8 @@ export default function HomepageMap({
           provider={cartoVoyager}
           dprs={[1, 2]}
           attribution={false}
-          metaWheelZoom={!isNative}
+          metaWheelZoom={true}
+          metaWheelZoomWarning={false}
           animate={!isNative}
           onClick={() => setSelected(null)}
         >
