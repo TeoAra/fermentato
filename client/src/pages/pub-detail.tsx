@@ -49,6 +49,7 @@ import { it as itLocale } from "date-fns/locale";
 import { getMapNavigationUrl } from "@/lib/utils";
 import { usePubLiveUpdates } from "@/hooks/usePubLiveUpdates";
 import { NextTapVoting } from "@/components/NextTapVoting";
+import { Map as PigeonMap, Overlay as PigeonOverlay } from "pigeon-maps";
 
 const CheckinModal = lazy(() => import("@/components/checkin-modal"));
 
@@ -852,7 +853,7 @@ export default function PubDetail() {
           <div className="lg:col-span-3">
             {/* ── TABS ── */}
             <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-                <div className={`sticky ${headerCollapsed ? 'top-[6.5rem]' : 'top-14'} lg:top-16 z-20 bg-white dark:bg-card border-b border-stone-100 dark:border-stone-700/30 transition-[top] duration-200 ease-out`}>
+                <div className={`fixed left-0 right-0 z-20 bg-white dark:bg-card border-b border-stone-100 dark:border-stone-700/30 transition-[top] duration-200 ease-out lg:static lg:top-auto ${headerCollapsed ? 'top-[6.5rem]' : 'top-14'}`}>
                   <div className="flex justify-center overflow-x-auto scrollbar-hide px-1">
                     {[
                       { id: 'taplist', label: 'Spina', icon: <Wine className="h-4 w-4 flex-shrink-0" /> },
@@ -886,6 +887,9 @@ export default function PubDetail() {
                     })}
                   </div>
                 </div>
+
+                {/* Spacer for fixed tab bar on mobile */}
+                <div className="h-[52px] lg:hidden" />
 
                 {/* Taplist Tab */}
                 <TabsContent value="taplist" className="px-4 lg:px-0 pt-4 space-y-4">
@@ -1059,22 +1063,47 @@ export default function PubDetail() {
 
                 {/* Info Tab – only shown on mobile; desktop uses sidebar */}
                 <TabsContent value="info" className="lg:hidden pb-8 tab-enter">
-                  {/* Map — OpenStreetMap iframe */}
-                  {(pub as any)?.latitude && (pub as any)?.longitude ? (
-                    <div className="overflow-hidden bg-stone-100 dark:bg-stone-900">
-                      <iframe
-                        src={`https://www.openstreetmap.org/export/embed.html?bbox=${(pub as any).longitude - 0.006},${(pub as any).latitude - 0.004},${(pub as any).longitude + 0.006},${(pub as any).latitude + 0.004}&layer=mapnik&marker=${(pub as any).latitude},${(pub as any).longitude}`}
-                        className="w-full border-0"
-                        style={{ height: '176px' }}
-                        loading="lazy"
-                        title="Mappa"
-                      />
-                    </div>
-                  ) : (pub as any)?.address ? (
-                    <div className="h-32 bg-stone-100 dark:bg-stone-800 flex items-center justify-center">
-                      <MapPin className="h-8 w-8 text-stone-400" />
-                    </div>
-                  ) : null}
+                  {/* Map — pigeon-maps con posizione esatta del pub */}
+                  {(() => {
+                    const lat = parseFloat((pub as any)?.latitude);
+                    const lon = parseFloat((pub as any)?.longitude);
+                    const hasCoords = !isNaN(lat) && !isNaN(lon);
+                    const cartoTile = (x: number, y: number, z: number, dpr?: number) => {
+                      const s = "abcd"[Math.abs(x + y) % 4];
+                      const retina = dpr && dpr >= 2 ? "@2x" : "";
+                      const dark = typeof document !== "undefined" && document.documentElement.classList.contains("dark");
+                      const style = dark ? "dark_matter_lite" : "light_all";
+                      return `https://${s}.basemaps.cartocdn.com/${style}/${z}/${x}/${y}${retina}.png`;
+                    };
+                    if (hasCoords) return (
+                      <div className="overflow-hidden" style={{ height: 180 }}>
+                        <PigeonMap
+                          center={[lat, lon]}
+                          zoom={16}
+                          height={180}
+                          provider={cartoTile}
+                          attribution={false}
+                          dprs={[1, 2]}
+                          metaWheelZoom={false}
+                        >
+                          <PigeonOverlay anchor={[lat, lon]} offset={[10, 10]}>
+                            <div style={{
+                              width: 20, height: 20, borderRadius: "50%",
+                              background: "#F77104", border: "3px solid white",
+                              boxShadow: "0 0 0 3px rgba(247,113,4,0.35), 0 2px 8px rgba(0,0,0,0.25)",
+                              pointerEvents: "none",
+                            }} />
+                          </PigeonOverlay>
+                        </PigeonMap>
+                      </div>
+                    );
+                    if ((pub as any)?.address) return (
+                      <div className="h-32 bg-stone-100 dark:bg-stone-800 flex items-center justify-center">
+                        <MapPin className="h-8 w-8 text-stone-400" />
+                      </div>
+                    );
+                    return null;
+                  })()}
 
                   <div className="px-4 pt-4 space-y-3">
                     {/* Address + Navigation */}

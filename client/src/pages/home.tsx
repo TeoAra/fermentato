@@ -46,6 +46,7 @@ export default function Home() {
   const [showPubs, setShowPubs] = useState(true);
   const [showBreweries, setShowBreweries] = useState(true);
   const [findBeerOpen, setFindBeerOpen] = useState(false);
+  const [mapZoom, setMapZoom] = useState(5.4);
 
   const ACCURACY_THRESHOLD = 3000;
   const gotGoodPositionRef = useRef(false);
@@ -241,6 +242,9 @@ export default function Home() {
                   showBreweries={showBreweries}
                   distanceKm={userLocation ? distanceKm : undefined}
                   onLocate={(loc) => { setUserLocation(loc); setLocationStatus('granted'); }}
+                  showControls={false}
+                  externalZoom={mapZoom}
+                  onZoomChange={setMapZoom}
                 />
               </Suspense>
             </div>
@@ -267,6 +271,28 @@ export default function Home() {
             )}
           </div>
         </div>
+
+        {/* Zoom controls below the map */}
+        {!Capacitor.isNativePlatform() && (
+          <div className="flex justify-end gap-1.5 mt-2">
+            <button
+              onClick={() => setMapZoom(z => Math.min(z + 1, 18))}
+              className="w-9 h-9 rounded-xl flex items-center justify-center shadow-sm active:scale-95 transition-transform border"
+              style={{ background: "rgba(255,248,242,0.97)", borderColor: "rgba(247,113,4,0.2)", color: "#5C3D1A" }}
+              aria-label="Zoom in"
+            >
+              <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M7 2v10M2 7h10" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round"/></svg>
+            </button>
+            <button
+              onClick={() => setMapZoom(z => Math.max(z - 1, 2))}
+              className="w-9 h-9 rounded-xl flex items-center justify-center shadow-sm active:scale-95 transition-transform border"
+              style={{ background: "rgba(255,248,242,0.97)", borderColor: "rgba(247,113,4,0.2)", color: "#5C3D1A" }}
+              aria-label="Zoom out"
+            >
+              <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M2 7h10" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round"/></svg>
+            </button>
+          </div>
+        )}
 
         {/* Content card BELOW the map — headline + CTAs + stats (per mockup) */}
         <div className="mt-4">

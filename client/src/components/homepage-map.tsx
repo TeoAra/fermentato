@@ -63,6 +63,9 @@ interface HomepageMapProps {
   showPubs?: boolean;
   showBreweries?: boolean;
   distanceKm?: number;
+  showControls?: boolean;
+  externalZoom?: number;
+  onZoomChange?: (z: number) => void;
 }
 
 interface Selected {
@@ -82,11 +85,21 @@ export default function HomepageMap({
   showPubs = true,
   showBreweries = true,
   distanceKm,
+  showControls = true,
+  externalZoom,
+  onZoomChange,
 }: HomepageMapProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [mapHeight, setMapHeight] = useState(300);
   const [center, setCenter] = useState<[number, number]>([42.0, 12.5]);
-  const [zoom, setZoom] = useState(5.4);
+  const [zoom, setZoom] = useState(externalZoom ?? 5.4);
+
+  const updateZoom = (z: number) => {
+    setZoom(z);
+    onZoomChange?.(z);
+  };
+
+  const displayZoom = externalZoom !== undefined ? externalZoom : zoom;
   const [selected, setSelected] = useState<Selected | null>(null);
   const hasFlewRef = useRef(false);
   const prevDistRef = useRef<number | undefined>();
@@ -105,7 +118,7 @@ export default function HomepageMap({
     if (!userLocation || hasFlewRef.current) return;
     hasFlewRef.current = true;
     setCenter([userLocation.lat, userLocation.lng]);
-    setZoom(radiusToZoom(distanceKm ?? 10));
+    updateZoom(radiusToZoom(distanceKm ?? 10));
   }, [userLocation, distanceKm]);
 
   useEffect(() => {
@@ -113,7 +126,7 @@ export default function HomepageMap({
     if (prevDistRef.current === distanceKm) return;
     prevDistRef.current = distanceKm;
     setCenter([userLocation.lat, userLocation.lng]);
-    setZoom(radiusToZoom(distanceKm));
+    updateZoom(radiusToZoom(distanceKm));
   }, [distanceKm, userLocation]);
 
   const geoFilteredPubs = useMemo(() => {
@@ -161,9 +174,9 @@ export default function HomepageMap({
       {mapHeight > 0 && (
         <Map
           center={center}
-          zoom={zoom}
+          zoom={displayZoom}
           height={mapHeight}
-          onBoundsChanged={({ center: c, zoom: z }) => { setCenter(c); setZoom(z); }}
+          onBoundsChanged={({ center: c, zoom: z }) => { setCenter(c); updateZoom(z); }}
           provider={cartoVoyager}
           dprs={[1, 2]}
           attribution={false}
@@ -246,22 +259,24 @@ export default function HomepageMap({
         </Map>
       )}
 
-      <div className="absolute top-3 right-3 z-20 flex flex-col gap-1.5">
-        <button
-          onClick={() => setZoom(z => Math.min(z + 1, 18))}
-          className="w-9 h-9 rounded-xl flex items-center justify-center shadow-md transition-colors active:scale-95"
-          style={{ background: "rgba(255,248,242,0.95)", border: "1px solid rgba(247,113,4,0.15)", color: "#5C3D1A" }}
-        >
-          <Plus className="w-4 h-4" strokeWidth={2.5} />
-        </button>
-        <button
-          onClick={() => setZoom(z => Math.max(z - 1, 2))}
-          className="w-9 h-9 rounded-xl flex items-center justify-center shadow-md transition-colors active:scale-95"
-          style={{ background: "rgba(255,248,242,0.95)", border: "1px solid rgba(247,113,4,0.15)", color: "#5C3D1A" }}
-        >
-          <Minus className="w-4 h-4" strokeWidth={2.5} />
-        </button>
-      </div>
+      {showControls && (
+        <div className="absolute top-3 right-3 z-20 flex flex-col gap-1.5">
+          <button
+            onClick={() => updateZoom(Math.min(displayZoom + 1, 18))}
+            className="w-9 h-9 rounded-xl flex items-center justify-center shadow-md transition-colors active:scale-95"
+            style={{ background: "rgba(255,248,242,0.95)", border: "1px solid rgba(247,113,4,0.15)", color: "#5C3D1A" }}
+          >
+            <Plus className="w-4 h-4" strokeWidth={2.5} />
+          </button>
+          <button
+            onClick={() => updateZoom(Math.max(displayZoom - 1, 2))}
+            className="w-9 h-9 rounded-xl flex items-center justify-center shadow-md transition-colors active:scale-95"
+            style={{ background: "rgba(255,248,242,0.95)", border: "1px solid rgba(247,113,4,0.15)", color: "#5C3D1A" }}
+          >
+            <Minus className="w-4 h-4" strokeWidth={2.5} />
+          </button>
+        </div>
+      )}
 
       <div className="absolute bottom-5 right-2 z-10 text-[9px] opacity-50 select-none" style={{ color: "#5C3D1A" }}>
         © <a href="https://carto.com" target="_blank" rel="noopener" style={{ color: "inherit", textDecoration: "none" }}>CARTO</a>
