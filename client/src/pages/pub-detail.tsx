@@ -833,8 +833,13 @@ export default function PubDetail() {
             </a>
           )}
 
-          <button onClick={() => setActiveTab('taplist')}
-            className="flex-1 bg-primary hover:bg-primary/90 text-white rounded-xl py-2 text-sm font-bold transition-all tap-scale btn-orange-glow shadow-sm">
+          <button onClick={() => {
+              setActiveTab('taplist');
+              const tabsEl = document.querySelector('[data-testid="tab-taplist"]');
+              if (tabsEl) tabsEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }}
+            className="flex items-center gap-1.5 px-3 py-2 rounded-xl border border-primary/25 bg-primary/8 dark:bg-primary/12 text-primary text-sm font-semibold transition-all tap-scale flex-shrink-0 hover:bg-primary/12 dark:hover:bg-primary/18">
+            <Wine className="h-4 w-4" />
             Vedi birre
           </button>
         </div>
