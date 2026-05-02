@@ -507,6 +507,43 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Pubs serving a specific beer style on tap (used by Esplora Birre → Dove berle)
+  app.get("/api/pubs/by-style", async (req, res) => {
+    try {
+      const style = (req.query.style as string)?.trim();
+      if (!style) return res.status(400).json({ message: "style param required" });
+      const cacheKey = `pubs:by-style:v1:${style.toLowerCase()}`;
+      const result = await memCached(cacheKey, 5 * 60 * 1000, async () => {
+        const rows = await db
+          .select({
+            id: pubs.id,
+            name: pubs.name,
+            slug: pubs.slug,
+            city: pubs.city,
+            region: pubs.region,
+            latitude: pubs.latitude,
+            longitude: pubs.longitude,
+            coverImageUrl: pubs.coverImageUrl,
+            logoUrl: pubs.logoUrl,
+            rating: pubs.rating,
+            openingHours: pubs.openingHours,
+            tapCount: sql<number>`COUNT(DISTINCT ${tapList.id})::int`,
+          })
+          .from(pubs)
+          .innerJoin(tapList, eq(tapList.pubId, pubs.id))
+          .innerJoin(beers, eq(beers.id, tapList.beerId))
+          .where(sql`lower(${beers.style}) = lower(${style}) AND ${tapList.isActive} = true AND ${tapList.isVisible} = true`)
+          .groupBy(pubs.id);
+        return rows;
+      });
+      res.setHeader('Cache-Control', 'public, max-age=60, stale-while-revalidate=300');
+      res.json(result);
+    } catch (error) {
+      console.error("Error fetching pubs by style:", error);
+      res.status(500).json({ message: "Failed to fetch pubs by style" });
+    }
+  });
+
   // Get all breweries for explore page
   app.get("/api/breweries/all", async (req, res) => {
     try {
