@@ -1,6 +1,7 @@
+import { useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
-import { ChefHat, Info } from "lucide-react";
+import { ChefHat, Info, ChevronDown } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 
 interface LuppolinoMenuProps {
@@ -32,6 +33,119 @@ function InfoBoxCard({ text }: { text: string }) {
       <p className="text-xs text-amber-900 dark:text-amber-200 leading-relaxed whitespace-pre-line">
         {text}
       </p>
+    </div>
+  );
+}
+
+function formatPrice(price: string | number) {
+  const num = typeof price === 'string' ? parseFloat(price) : Number(price);
+  return isNaN(num) ? '—' : `€ ${num.toFixed(2).replace('.', ',')}`;
+}
+
+function MenuItemRow({
+  item,
+  formattedAllergens,
+}: {
+  item: LuppolinoMenuProps["menu"][number]["items"][number];
+  formattedAllergens: { emoji: string; label: string }[] | null;
+}) {
+  const [open, setOpen] = useState(false);
+  const hasExtras =
+    !!item.description ||
+    (formattedAllergens && formattedAllergens.length > 0);
+
+  const headerInner = (
+    <>
+      {item.imageUrl ? (
+        <img
+          src={item.imageUrl}
+          alt={item.name}
+          className="w-12 h-12 object-cover rounded-xl flex-shrink-0"
+        />
+      ) : null}
+      <div className="flex-1 min-w-0 text-left">
+        <div className="flex items-baseline gap-2">
+          <span className="text-sm font-bold text-foreground leading-tight truncate">
+            {item.name}
+          </span>
+          {item.isVegetarian && (
+            <span className="text-sm flex-shrink-0" title="Vegetariano">🌿</span>
+          )}
+          {item.isSpicy && (
+            <span className="text-sm flex-shrink-0" title="Piccante">🌶️</span>
+          )}
+          {!item.isAvailable && (
+            <Badge variant="destructive" className="text-[10px] px-1 py-0 h-4 flex-shrink-0">
+              N/D
+            </Badge>
+          )}
+        </div>
+        {item.description && (
+          <p className={`text-xs text-muted-foreground mt-0.5 leading-snug ${open ? '' : 'line-clamp-1'}`}>
+            {item.description}
+          </p>
+        )}
+      </div>
+      <div className="flex items-center gap-1.5 flex-shrink-0">
+        <span className="text-sm font-black text-primary whitespace-nowrap">
+          {formatPrice(item.price)}
+        </span>
+        {hasExtras && (
+          <ChevronDown className={`h-4 w-4 text-stone-400 transition-transform ${open ? 'rotate-180' : ''}`} />
+        )}
+      </div>
+    </>
+  );
+
+  if (!hasExtras) {
+    return (
+      <div
+        className={`flex items-center gap-3 px-3 py-2.5 rounded-xl ${!item.isAvailable ? 'opacity-50' : ''}`}
+        data-testid={`menu-item-${item.id}`}
+      >
+        {headerInner}
+      </div>
+    );
+  }
+
+  return (
+    <div
+      className={`rounded-xl overflow-hidden ${!item.isAvailable ? 'opacity-50' : ''}`}
+      data-testid={`menu-item-${item.id}`}
+    >
+      <button
+        type="button"
+        onClick={() => setOpen(v => !v)}
+        aria-expanded={open}
+        className="w-full flex items-center gap-3 px-3 py-2.5 text-left transition-colors hover:bg-stone-50 dark:hover:bg-white/[0.03] tap-scale"
+      >
+        {headerInner}
+      </button>
+      {open && (
+        <div className="px-3 pb-3 pt-0 space-y-2 border-t border-stone-100 dark:border-stone-800/60">
+          {item.description && (
+            <p className="text-xs text-muted-foreground leading-relaxed pt-2 whitespace-pre-line">
+              {item.description}
+            </p>
+          )}
+          {formattedAllergens && formattedAllergens.length > 0 && (
+            <div className="flex flex-wrap items-center gap-1">
+              <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wide">
+                Allergeni:
+              </span>
+              {formattedAllergens.map(({ emoji, label }, index) => (
+                <span
+                  key={index}
+                  className="inline-flex items-center gap-0.5 px-1.5 py-0.5 bg-amber-50 dark:bg-amber-950/40 text-amber-800 dark:text-amber-300 rounded-full text-[10px] font-semibold border border-amber-100 dark:border-amber-800/40"
+                >
+                  <span>{emoji}</span>
+                  <span>{label}</span>
+                </span>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }
@@ -68,7 +182,11 @@ export default function LuppolinoMenu({ menu, menuInfoBox }: LuppolinoMenuProps)
     <div className="space-y-2.5">
       {menuInfoBox && <InfoBoxCard text={menuInfoBox} />}
 
-      <Accordion type="multiple" className="space-y-2.5">
+      <Accordion
+        type="multiple"
+        defaultValue={menu.map((c) => `category-${c.id}`)}
+        className="space-y-2.5"
+      >
         {menu.map((category) => {
           const regularItems = category.items?.filter(item => !item.isInfoBox) || [];
           const infoBoxItems = category.items?.filter(item => item.isInfoBox) || [];
@@ -81,88 +199,44 @@ export default function LuppolinoMenu({ menu, menuInfoBox }: LuppolinoMenuProps)
               data-testid={`menu-category-${category.id}`}
             >
               <AccordionTrigger className="px-5 py-4 hover:no-underline hover:bg-background dark:hover:bg-stone-900/10 transition-colors [&>svg]:text-primary [&>svg]:h-4 [&>svg]:w-4">
-                <div className="text-left flex-1">
-                  <span className="text-base font-bold text-foreground">
-                    {category.name}
-                  </span>
+                <div className="text-left flex-1 min-w-0">
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-extrabold text-primary uppercase tracking-wider">
+                      {category.name}
+                    </span>
+                    {regularItems.length > 0 && (
+                      <span className="text-[10px] font-bold text-stone-400 dark:text-stone-500">
+                        · {regularItems.length}
+                      </span>
+                    )}
+                  </div>
                   {category.description && (
-                    <p className="text-xs text-muted-foreground font-normal mt-0.5 leading-snug">
+                    <p className="text-xs text-muted-foreground font-normal mt-1 leading-snug">
                       {category.description}
                     </p>
                   )}
                 </div>
               </AccordionTrigger>
 
-              <AccordionContent className="px-4 pb-4">
-                <div className="space-y-2 pt-1">
-                  {category.infoBox && <InfoBoxCard text={category.infoBox} />}
+              <AccordionContent className="px-3 pb-3">
+                <div className="space-y-1 pt-1">
+                  {category.infoBox && <div className="px-1 pb-2"><InfoBoxCard text={category.infoBox} /></div>}
                   {infoBoxItems.map((item) => (
-                    <InfoBoxCard key={item.id} text={item.description || item.name} />
+                    <div key={item.id} className="px-1 pb-2">
+                      <InfoBoxCard text={item.description || item.name} />
+                    </div>
                   ))}
 
                   {regularItems.length > 0 ? (
-                    regularItems.map((item) => {
-                      const formattedAllergens = formatAllergens(item.allergens);
-                      return (
-                        <div
+                    <div className="divide-y divide-stone-100 dark:divide-stone-800/60">
+                      {regularItems.map((item) => (
+                        <MenuItemRow
                           key={item.id}
-                          className={`flex gap-3 p-3 rounded-2xl border border-stone-100 dark:border-[hsl(25,12%,18%)] bg-background/60 dark:bg-[hsl(25,14%,12%)] hover:bg-background dark:hover:bg-stone-900/10 transition-colors ${!item.isAvailable ? 'opacity-50' : ''}`}
-                          data-testid={`menu-item-${item.id}`}
-                        >
-                          {item.imageUrl && (
-                            <img
-                              src={item.imageUrl}
-                              alt={item.name}
-                              className="w-14 h-14 object-cover rounded-xl flex-shrink-0"
-                            />
-                          )}
-                          <div className="flex-1 min-w-0">
-                            <div className="flex justify-between items-start gap-2">
-                              <div className="min-w-0 flex-1">
-                                <span className="text-sm font-bold text-foreground leading-tight">
-                                  {item.name}
-                                </span>
-                                {item.isVegetarian && (
-                                  <span className="ml-1.5 text-sm" title="Vegetariano">🌿</span>
-                                )}
-                                {item.isSpicy && (
-                                  <span className="ml-0.5 text-sm" title="Piccante">🌶️</span>
-                                )}
-                                {!item.isAvailable && (
-                                  <Badge variant="destructive" className="ml-1.5 text-[10px] px-1 py-0 h-4">
-                                    N/D
-                                  </Badge>
-                                )}
-                              </div>
-                              <span className="text-sm font-black text-primary flex-shrink-0">
-                                €{typeof item.price === 'string' ? parseFloat(item.price).toFixed(2) : Number(item.price).toFixed(2)}
-                              </span>
-                            </div>
-                            {item.description && (
-                              <p className="text-xs text-muted-foreground mt-0.5 leading-snug">
-                                {item.description}
-                              </p>
-                            )}
-                            {formattedAllergens && formattedAllergens.length > 0 && (
-                              <div className="flex flex-wrap items-center gap-1 mt-1.5">
-                                <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wide">
-                                  Allergeni:
-                                </span>
-                                {formattedAllergens.map(({ emoji, label }, index) => (
-                                  <span
-                                    key={index}
-                                    className="inline-flex items-center gap-0.5 px-1.5 py-0.5 bg-amber-50 dark:bg-amber-950/40 text-amber-800 dark:text-amber-300 rounded-full text-[10px] font-semibold border border-amber-100 dark:border-amber-800/40"
-                                  >
-                                    <span>{emoji}</span>
-                                    <span>{label}</span>
-                                  </span>
-                                ))}
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                      );
-                    })
+                          item={item}
+                          formattedAllergens={formatAllergens(item.allergens)}
+                        />
+                      ))}
+                    </div>
                   ) : infoBoxItems.length === 0 && !category.infoBox ? (
                     <p className="text-xs text-muted-foreground italic text-center py-4">Categoria in allestimento</p>
                   ) : null}
