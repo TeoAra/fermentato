@@ -813,6 +813,10 @@
   from { transform: translateY(100%); }
   to   { transform: translateY(0); }
 }
+@keyframes findBeerCardIn {
+  from { opacity: 0; transform: translate(-50%, -50%) scale(0.94); }
+  to   { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+}
 @keyframes fadeIn {
   from { opacity: 0; }
   to   { opacity: 1; }
