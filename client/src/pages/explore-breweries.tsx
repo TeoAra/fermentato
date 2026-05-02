@@ -35,7 +35,7 @@ const countryNameMap: Record<string, string> = {
   "Latvia": "Lettonia", "Serbia": "Serbia", "Lithuania": "Lituania",
   "Belarus": "Bielorussia", "Costa Rica": "Costa Rica", "Bulgaria": "Bulgaria",
   "Philippines": "Filippine", "Ecuador": "Ecuador", "Taiwan": "Taiwan",
-  "Mexico": "Messico", "Hong Kong": "Hong Kong", "Singapore": "Singapore",
+  "Hong Kong": "Hong Kong", "Singapore": "Singapore",
 };
 
 const countryFlags: Record<string, string> = {

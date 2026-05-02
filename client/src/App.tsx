@@ -304,9 +304,10 @@ function Router() {
       </main>
       </div>
 
-      {/* Bottom Navigation — fixed */}
-      <BottomNavigation />
       </div>{/* /main-content-wrapper */}
+
+      {/* Bottom Navigation — fixed to viewport, outside main-content-wrapper to avoid will-change:transform containing-block trap */}
+      <BottomNavigation />
     </div>
   );
 }
