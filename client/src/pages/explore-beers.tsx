@@ -210,9 +210,18 @@ export default function ExploreBeers() {
 
   async function surpriseMe() {
     try {
-      const r = await fetch("/api/beers?random=true&limit=1");
+      // Pesca da quelle più cliccate/visualizzate negli ultimi 14 giorni
+      const r = await fetch("/api/beers/trending?limit=20&days=14");
       const data = await r.json();
-      const b = (data.beers ?? data ?? [])[0];
+      const list = Array.isArray(data) ? data : (data.beers ?? []);
+      if (list.length > 0) {
+        const pick = list[Math.floor(Math.random() * list.length)];
+        if (pick?.id) { setLocation(`/beer/${pick.id}`); return; }
+      }
+      // Fallback: random tra tutte se trending è vuoto
+      const r2 = await fetch("/api/beers?random=true&limit=1");
+      const d2 = await r2.json();
+      const b = (d2.beers ?? d2 ?? [])[0];
       if (b?.id) setLocation(`/beer/${b.id}`);
     } catch {}
   }
@@ -252,28 +261,33 @@ export default function ExploreBeers() {
         // ═══════════════════════════════════════════════════════════════
         // MAIN VIEW — Esplora Birre
         // ═══════════════════════════════════════════════════════════════
-        <main className="max-w-3xl mx-auto px-4 lg:px-6 pt-4 pb-28 lg:pb-12">
+        <>
+        {/* Fixed search bar — locked at top below mobile/desktop header */}
+        <div className="fixed left-0 right-0 top-14 lg:top-16 z-30 bg-[#F7F4F0]/95 dark:bg-background/95 backdrop-blur-md border-b border-stone-100 dark:border-stone-800/60">
+          <div className="max-w-3xl mx-auto px-4 lg:px-6 py-2.5">
+            <div className="flex items-center gap-2 bg-white dark:bg-card rounded-2xl px-4 py-2.5 border border-stone-100 dark:border-stone-800/60 shadow-sm">
+              <Search className="h-4 w-4 text-stone-400 flex-shrink-0" />
+              <input
+                value={inputValue}
+                onChange={e => setInputValue(e.target.value)}
+                onKeyDown={e => { if (e.key === "Enter" && inputValue.trim()) runSearch(inputValue.trim()); }}
+                placeholder="Cerca birra, stile o birrificio…"
+                className="flex-1 bg-transparent text-sm text-foreground placeholder:text-stone-400 outline-none min-w-0 font-medium"
+              />
+              {inputValue ? (
+                <button onClick={clearAll} className="tap-scale"><X className="h-4 w-4 text-stone-400" /></button>
+              ) : (
+                <SlidersHorizontal className="h-4 w-4 text-stone-400" />
+              )}
+            </div>
+          </div>
+        </div>
+
+        <main className="max-w-3xl mx-auto px-4 lg:px-6 pt-[76px] pb-28 lg:pb-12">
           <header className="mb-4">
             <h1 className="text-3xl lg:text-4xl font-extrabold text-foreground tracking-tight">Esplora Birre</h1>
             <p className="text-sm text-stone-500 dark:text-stone-400 mt-1">Scopri nuovi stili e trova la tua prossima preferita</p>
           </header>
-
-          {/* Search bar */}
-          <div className="flex items-center gap-2 bg-white dark:bg-card rounded-2xl px-4 py-3 mb-5 border border-stone-100 dark:border-stone-800/60 shadow-sm">
-            <Search className="h-4 w-4 text-stone-400 flex-shrink-0" />
-            <input
-              value={inputValue}
-              onChange={e => setInputValue(e.target.value)}
-              onKeyDown={e => { if (e.key === "Enter" && inputValue.trim()) runSearch(inputValue.trim()); }}
-              placeholder="Cerca birra, stile o birrificio…"
-              className="flex-1 bg-transparent text-sm text-foreground placeholder:text-stone-400 outline-none min-w-0 font-medium"
-            />
-            {inputValue ? (
-              <button onClick={clearAll} className="tap-scale"><X className="h-4 w-4 text-stone-400" /></button>
-            ) : (
-              <SlidersHorizontal className="h-4 w-4 text-stone-400" />
-            )}
-          </div>
 
           {/* Search results inline */}
           {freeQuery && (
@@ -332,6 +346,7 @@ export default function ExploreBeers() {
             </>
           )}
         </main>
+        </>
       ) : (
         // ═══════════════════════════════════════════════════════════════
         // STYLE SELECTED VIEW — Hai selezionato X

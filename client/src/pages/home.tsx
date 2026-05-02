@@ -11,7 +11,6 @@ import Footer from "@/components/footer";
 import PubCard from "@/components/pub-card";
 import BreweryCard from "@/components/brewery-card";
 import { Button } from "@/components/ui/button";
-import FindBeerSheet from "@/components/FindBeerSheet";
 
 const HomepageMap = lazy(() => import("@/components/homepage-map"));
 
@@ -45,8 +44,6 @@ export default function Home() {
   const [showDistancePicker, setShowDistancePicker] = useState(false);
   const [showPubs, setShowPubs] = useState(true);
   const [showBreweries, setShowBreweries] = useState(true);
-  const [findBeerOpen, setFindBeerOpen] = useState(false);
-  const [mapZoom, setMapZoom] = useState(5.4);
 
   const ACCURACY_THRESHOLD = 3000;
   const gotGoodPositionRef = useRef(false);
@@ -222,11 +219,11 @@ export default function Home() {
       )}
 
       {/* ═══════════════════════════════════════════════════════════════
-          HERO — Clean map (top) + content card (below) per mockup
+          HERO — Clean map (top, taller) + filter chips + content card
       ═══════════════════════════════════════════════════════════════ */}
       <div className="px-4 pt-4">
-        {/* Map card — uncluttered, blue dot truly at the visual center */}
-        <div className="relative rounded-3xl overflow-hidden bg-stone-200 dark:bg-stone-900 shadow-card" style={{ height: '220px' }}>
+        {/* Map card — taller, more square shape per mockup */}
+        <div className="relative rounded-3xl overflow-hidden bg-stone-200 dark:bg-stone-900 shadow-card" style={{ height: '300px' }}>
           {!Capacitor.isNativePlatform() ? (
             <div className="absolute inset-0 overflow-hidden">
               <Suspense fallback={<div className="w-full h-full bg-stone-200 dark:bg-stone-800" />}>
@@ -243,8 +240,6 @@ export default function Home() {
                   distanceKm={userLocation ? distanceKm : undefined}
                   onLocate={(loc) => { setUserLocation(loc); setLocationStatus('granted'); }}
                   showControls={false}
-                  externalZoom={mapZoom}
-                  onZoomChange={setMapZoom}
                 />
               </Suspense>
             </div>
@@ -272,71 +267,9 @@ export default function Home() {
           </div>
         </div>
 
-        {/* Zoom controls below the map */}
-        {!Capacitor.isNativePlatform() && (
-          <div className="flex justify-end gap-1.5 mt-2">
-            <button
-              onClick={() => setMapZoom(z => Math.min(z + 1, 18))}
-              className="w-9 h-9 rounded-xl flex items-center justify-center shadow-sm active:scale-95 transition-transform border"
-              style={{ background: "rgba(255,248,242,0.97)", borderColor: "rgba(247,113,4,0.2)", color: "#5C3D1A" }}
-              aria-label="Zoom in"
-            >
-              <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M7 2v10M2 7h10" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round"/></svg>
-            </button>
-            <button
-              onClick={() => setMapZoom(z => Math.max(z - 1, 2))}
-              className="w-9 h-9 rounded-xl flex items-center justify-center shadow-sm active:scale-95 transition-transform border"
-              style={{ background: "rgba(255,248,242,0.97)", borderColor: "rgba(247,113,4,0.2)", color: "#5C3D1A" }}
-              aria-label="Zoom out"
-            >
-              <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M2 7h10" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round"/></svg>
-            </button>
-          </div>
-        )}
-
-        {/* Content card BELOW the map — headline + CTAs + stats (per mockup) */}
-        <div className="mt-4">
-          <h1 className="text-[26px] sm:text-[30px] font-extrabold text-foreground leading-[1.15] tracking-tight">
-            Scopri cosa bere<br />
-            <span className="text-primary">vicino a te.</span>
-          </h1>
-          <p className="text-sm text-muted-foreground mt-2 leading-relaxed">
-            La app per chi ama la birra artigianale.<br className="hidden sm:block" />
-            Trova pub, birre e birrifici in un tap.
-          </p>
-
-          {/* Two primary CTAs */}
-          <div className="flex gap-2.5 mt-4">
-            <button
-              onClick={() => setFindBeerOpen(true)}
-              className="tap-scale btn-orange-glow flex-1 flex items-center justify-center gap-1.5 bg-primary text-white text-sm font-bold px-4 py-3 rounded-2xl shadow-card"
-            >
-              <Beer className="w-4 h-4" />
-              Trova una birra
-            </button>
-            <Link href="/explore/pubs" className="flex-1">
-              <button className="tap-scale w-full flex items-center justify-center gap-1.5 bg-card text-foreground text-sm font-bold px-4 py-3 rounded-2xl border-2 border-primary/25 shadow-card-sm">
-                <Store className="w-4 h-4 text-primary" />
-                Esplora pub
-              </button>
-            </Link>
-          </div>
-
-          {/* GPS opt-in (only when not granted) */}
-          {locationStatus !== 'granted' && (
-            <button
-              onClick={handleRequestLocation}
-              className="tap-scale w-full mt-2.5 flex items-center justify-center gap-1.5 text-primary text-[13px] font-bold px-4 py-2 rounded-2xl bg-orange-50 dark:bg-orange-900/20 border border-primary/15"
-            >
-              <Navigation className="w-3.5 h-3.5" />
-              Attiva la posizione
-            </button>
-          )}
-        </div>
-
-        {/* Filter chips row — distance picker OUTSIDE overflow so dropdown isn't clipped */}
+        {/* Filter chips IMMEDIATELY below the map — km, Pub, Birrifici, Preferiti */}
         <div className="flex items-center gap-2 mt-3 pb-0.5">
-          {/* Distance picker — sits outside overflow context */}
+          {/* Distance picker */}
           <div className="relative flex-shrink-0">
             <button
               onClick={() => setShowDistancePicker(v => !v)}
@@ -365,7 +298,6 @@ export default function Home() {
 
           {/* Scrollable chips */}
           <div className="flex items-center gap-2 overflow-x-auto scrollbar-hide flex-1 min-w-0">
-            {/* Pub chip */}
             <button
               onClick={() => setShowPubs(v => !v)}
               className={`tap-scale flex-shrink-0 flex items-center gap-1.5 rounded-full px-3.5 py-2 text-[13px] font-bold border transition-colors whitespace-nowrap shadow-card-sm ${
@@ -376,7 +308,6 @@ export default function Home() {
               Pub
             </button>
 
-            {/* Birrifici chip */}
             <button
               onClick={() => setShowBreweries(v => !v)}
               className={`tap-scale flex-shrink-0 flex items-center gap-1.5 rounded-full px-3.5 py-2 text-[13px] font-bold border transition-colors whitespace-nowrap shadow-card-sm ${
@@ -387,13 +318,53 @@ export default function Home() {
               Birrifici
             </button>
 
-            {/* Bookmark */}
             <Link href="/dashboard?tab=favorites" className="flex-shrink-0">
-              <button className="tap-scale w-9 h-9 flex items-center justify-center bg-card border border-border rounded-full shadow-card-sm text-foreground">
+              <button className="tap-scale w-9 h-9 flex items-center justify-center bg-card border border-border rounded-full shadow-card-sm text-foreground" aria-label="Preferiti">
                 <Bookmark className="w-4 h-4" />
               </button>
             </Link>
           </div>
+        </div>
+
+        {/* Content card BELOW the chips — headline + CTAs */}
+        <div className="mt-4">
+          <h1 className="text-[26px] sm:text-[30px] font-extrabold text-foreground leading-[1.15] tracking-tight">
+            Scopri cosa bere<br />
+            <span className="text-primary">vicino a te.</span>
+          </h1>
+          <p className="text-sm text-muted-foreground mt-2 leading-relaxed">
+            La app per chi ama la birra artigianale.<br className="hidden sm:block" />
+            Trova pub, birre e birrifici in un tap.
+          </p>
+
+          {/* Two primary CTAs — Trova una birra navigates to IPA */}
+          <div className="flex gap-2.5 mt-4">
+            <Link href="/explore/beers?style=IPA" className="flex-1">
+              <button
+                className="tap-scale btn-orange-glow w-full flex items-center justify-center gap-1.5 bg-primary text-white text-sm font-bold px-4 py-3 rounded-2xl shadow-card"
+              >
+                <Beer className="w-4 h-4" />
+                Trova una birra
+              </button>
+            </Link>
+            <Link href="/explore/pubs" className="flex-1">
+              <button className="tap-scale w-full flex items-center justify-center gap-1.5 bg-card text-foreground text-sm font-bold px-4 py-3 rounded-2xl border-2 border-primary/25 shadow-card-sm">
+                <Store className="w-4 h-4 text-primary" />
+                Esplora pub
+              </button>
+            </Link>
+          </div>
+
+          {/* GPS opt-in (only when not granted) */}
+          {locationStatus !== 'granted' && (
+            <button
+              onClick={handleRequestLocation}
+              className="tap-scale w-full mt-2.5 flex items-center justify-center gap-1.5 text-primary text-[13px] font-bold px-4 py-2 rounded-2xl bg-orange-50 dark:bg-orange-900/20 border border-primary/15"
+            >
+              <Navigation className="w-3.5 h-3.5" />
+              Attiva la posizione
+            </button>
+          )}
         </div>
       </div>
 
@@ -988,12 +959,6 @@ export default function Home() {
       </main>
 
       <Footer />
-
-      <FindBeerSheet
-        open={findBeerOpen}
-        onClose={() => setFindBeerOpen(false)}
-        nearbyPubs={sortedPubs}
-      />
     </div>
   );
 }
