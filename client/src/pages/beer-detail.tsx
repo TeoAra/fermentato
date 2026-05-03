@@ -59,6 +59,7 @@ import BeerTastingForm from "@/components/BeerTastingForm";
 import { WishlistButton } from "@/components/WishlistButton";
 import ImageWithFallback from "@/components/image-with-fallback";
 import { ImageUpload } from "@/components/image-upload";
+import { WebImageSearchButton } from "@/components/web-image-search-button";
 import SuggestChangeDialog from "@/components/SuggestChangeDialog";
 
 function getBeerStyleColor(style: string): { bg: string; text: string } {
@@ -1579,16 +1580,26 @@ export default function BeerDetail() {
               </div>
             )}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <ImageUpload
-                label="Immagine Birra"
-                description="Immagine principale della birra"
-                currentImageUrl={editForm.imageUrl || undefined}
-                onImageChange={(url) => setEditForm(prev => ({ ...prev, imageUrl: url ?? '' }))}
-                folder="beer-images"
-                aspectRatio="square"
-                maxSize={5}
-                recommendedDimensions="400x400px"
-              />
+              <div className="space-y-2">
+                <div className="flex items-center justify-between gap-2">
+                  <span className="text-xs text-muted-foreground">Trova automaticamente l'immagine</span>
+                  <WebImageSearchButton
+                    endpoint={`/api/beers/${id}/find-image-preview`}
+                    responseKey="imageUrl"
+                    onFound={(url) => setEditForm(prev => ({ ...prev, imageUrl: url }))}
+                  />
+                </div>
+                <ImageUpload
+                  label="Immagine Birra"
+                  description="Immagine principale della birra"
+                  currentImageUrl={editForm.imageUrl || undefined}
+                  onImageChange={(url) => setEditForm(prev => ({ ...prev, imageUrl: url ?? '' }))}
+                  folder="beer-images"
+                  aspectRatio="square"
+                  maxSize={5}
+                  recommendedDimensions="400x400px"
+                />
+              </div>
               <ImageUpload
                 label="Immagine Bottiglia"
                 description="Foto della bottiglia"

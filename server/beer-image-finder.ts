@@ -328,19 +328,26 @@ async function fetchImageBase64(
   } catch { return null; }
 }
 
+type PickMethod = 'vision' | 'url-fallback' | 'auto-single' | 'no-key';
+type PickResult = { url: string; method: PickMethod } | null;
+
 /**
  * Use Gemini Vision to pick the best candidate image.
  * Downloads up to 4 candidates and asks Gemini to visually identify the correct beer.
  * Falls back to URL-only picking if images can't be fetched.
+ *
+ * Returns the chosen URL plus the method used so callers can decide how much
+ * to trust the result. Only `'vision'` means a real visual verification.
  */
 async function geminiPickBestImage(
   beerName: string,
   breweryName: string,
   candidates: string[]
-): Promise<string | null> {
+): Promise<PickResult> {
   const key = GEMINI_API_KEY();
-  if (!key || candidates.length === 0) return candidates[0] ?? null;
-  if (candidates.length === 1) return candidates[0];
+  if (!key) return candidates[0] ? { url: candidates[0], method: 'no-key' } : null;
+  if (candidates.length === 0) return null;
+  if (candidates.length === 1) return { url: candidates[0], method: 'auto-single' };
 
   // ── Try vision-based picking first (top 4 candidates) ───────────────────
   const topCandidates = candidates.slice(0, 4);
@@ -385,7 +392,7 @@ async function geminiPickBestImage(
         if (letterIdx >= 0 && letterIdx < visionParts.length) {
           const chosen = visionParts[letterIdx].url;
           console.log(`[beer-img] gemini vision picked "${firstLetter}" (raw="${raw}"): ${chosen.substring(0, 60)}`);
-          return chosen;
+          return { url: chosen, method: 'vision' };
         }
         // NONE or unrecognised → fall through to URL-only
         console.log(`[beer-img] gemini vision: no match for "${beerName}" (raw="${raw}") — running URL-only on all ${candidates.length} candidates`);
@@ -430,7 +437,7 @@ ${candidates.map((u, i) => `${i}: ${u}`).join("\n")}`;
     const idx = parseInt(raw);
     if (!isNaN(idx) && idx >= 0 && idx < candidates.length) {
       console.log(`[beer-img] gemini url-only picked index ${idx}: ${candidates[idx].substring(0, 60)}`);
-      return candidates[idx];
+      return { url: candidates[idx], method: 'url-fallback' };
     }
     console.log(`[beer-img] gemini url-only returned no match (raw="${raw}") for "${beerName}" — skipping image assignment`);
     return null;
@@ -495,10 +502,134 @@ async function isImageUrl(url: string): Promise<boolean> {
   } catch { return false; }
 }
 
-// ─── Main entry point ────────────────────────────────────────────────────────
+// ─── Search core (no DB writes) ──────────────────────────────────────────────
+
+export type BeerImageResult = {
+  url: string | null;
+  source: string | null;          // 'whatabeer' | 'untappd' | 'brewery' | 'gemini-vision' | 'gemini-url'
+  confidence: 'high' | 'low' | 'none';
+};
 
 /**
- * Finds and saves the best web image for a beer.
+ * Search-only entry point. Returns the best web image URL with a confidence
+ * label, without uploading or touching the DB.
+ *
+ * Confidence rules (strict — when unsure, returns 'none' so callers can ignore):
+ *  - HIGH: Gemini Vision visually picked a candidate, OR a trusted beer DB
+ *    (WhataBeer / Untappd) returned an image that itself was matched on the
+ *    beer name, OR the brewery's official site returned an og:image with a
+ *    name-match score ≥ 0.5 (already enforced inside `fetchBreweryOgImage`).
+ *  - LOW:  Gemini's URL-only fallback picked an index from generic web results.
+ *  - NONE: nothing found, or nothing was confident enough.
+ */
+export async function findBestBeerImage(
+  beerName: string,
+  breweryName: string,
+  breweryWebsite: string | null | undefined,
+): Promise<BeerImageResult> {
+  console.log(`[beer-img] searching image for "${beerName}" by "${breweryName}"`);
+
+  type Candidate = { url: string; source: string; trusted: boolean };
+  const candidates: Candidate[] = [];
+  const push = (c: Candidate) => {
+    if (!candidates.some(x => x.url === c.url)) candidates.push(c);
+  };
+
+  // Run all sources in parallel — ONE Gemini grounding call only
+  const [untappdImg, breweryOg, googlePages, ddgMedaglione, ddgLabel, ddgBeerOnly] = await Promise.all([
+    fetchUntappdImage(beerName, breweryName),
+    fetchBreweryOgImage(breweryWebsite ?? "", beerName),
+    googleViaGeminiGrounding(beerName, breweryName),
+    ddgSearchImages(`"${beerName}" "${breweryName}" beer label logo medaglione`, 10),
+    ddgSearchImages(`"${beerName}" "${breweryName}" birra etichetta badge`, 6),
+    ddgSearchImages(`"${beerName}" birra artigianale etichetta label medaglione`, 6),
+  ]);
+
+  // Priority 1 — WhataBeer (Italian craft DB, name-matched on scrape)
+  const wbUrls = googlePages.filter(u => u.includes("whatabeer.com/birrifici/"));
+  const nonWbPages = googlePages.filter(u => !u.includes("whatabeer.com"));
+  let whataBeerImg: string | null = null;
+  for (const wbUrl of wbUrls.slice(0, 2)) {
+    whataBeerImg = await scrapeWhataBeerPage(wbUrl.split("?")[0], beerName);
+    if (whataBeerImg) break;
+  }
+  if (whataBeerImg?.startsWith("http") && (await isImageUrl(whataBeerImg))) {
+    push({ url: whataBeerImg, source: "whatabeer", trusted: true });
+  }
+
+  // Priority 2 — Untappd label (search already matched name+brewery)
+  if (untappdImg?.startsWith("http") && (await isImageUrl(untappdImg))) {
+    push({ url: untappdImg, source: "untappd", trusted: true });
+  }
+
+  // Priority 3 — Brewery official website (matchScore ≥ 0.5 already enforced)
+  if (breweryOg?.startsWith("http") && (await isImageUrl(breweryOg))) {
+    push({ url: breweryOg, source: "brewery", trusted: true });
+  }
+
+  // Priority 4 — Google grounding → og:images from other domains
+  const googleImages = await extractOgImages(nonWbPages);
+  const googleChecks = await Promise.all(
+    googleImages
+      .filter(img => img.startsWith("http"))
+      .map(async img => ({ img, ok: await isImageUrl(img) })),
+  );
+  for (const { img, ok } of googleChecks) {
+    if (ok) push({ url: img, source: "google", trusted: false });
+  }
+
+  // Priority 5 — DDG (scored to prefer square/medallion shots)
+  const allDdg = [...ddgMedaglione, ...ddgLabel, ...ddgBeerOnly];
+  const scoredDdg = allDdg
+    .filter(r => r.image?.startsWith("http"))
+    .map(r => ({ r, score: scoreDdgImage(r) }))
+    .filter(({ score }) => score >= 0)
+    .sort((a, b) => b.score - a.score);
+  for (const { r } of scoredDdg) {
+    if (candidates.length >= 8) break;
+    push({ url: r.image, source: "ddg", trusted: false });
+  }
+
+  if (candidates.length === 0) {
+    console.log(`[beer-img] no candidates for "${beerName}"`);
+    return { url: null, source: null, confidence: "none" };
+  }
+
+  console.log(`[beer-img] ${candidates.length} candidates for "${beerName}", asking Gemini to pick`);
+
+  const candidateUrls = candidates.slice(0, 8).map(c => c.url);
+  const pick = await geminiPickBestImage(beerName, breweryName, candidateUrls);
+
+  // Strict confidence: HIGH only when visually verified, OR when the chosen
+  // URL is itself a trusted (name-matched) DB source.
+  if (pick) {
+    const matched = candidates.find(c => c.url === pick.url);
+    const isTrusted = matched?.trusted === true;
+    if (pick.method === 'vision' || isTrusted) {
+      return {
+        url: pick.url,
+        source: matched?.source ?? "gemini-vision",
+        confidence: "high",
+      };
+    }
+    console.log(`[beer-img] picker chose untrusted URL via ${pick.method} for "${beerName}" — ignoring (low confidence)`);
+  }
+
+  // Picker rejected everything (NONE) — fall back to a trusted source if any.
+  const trusted = candidates.find(c => c.trusted);
+  if (trusted) {
+    console.log(`[beer-img] using trusted source (${trusted.source}) for "${beerName}"`);
+    return { url: trusted.url, source: trusted.source, confidence: "high" };
+  }
+
+  console.log(`[beer-img] no confident match for "${beerName}" — ignoring`);
+  return { url: null, source: null, confidence: "none" };
+}
+
+// ─── Cloudinary upload + DB persist ──────────────────────────────────────────
+
+/**
+ * Searches and (if confident) saves the best web image for a beer.
  * Designed to be called fire-and-forget via setImmediate().
  * Only updates if the beer currently has no image_url, or if forceUpdate=true.
  */
@@ -507,7 +638,7 @@ export async function findAndUpdateBeerImage(
   beerName: string,
   breweryName: string,
   breweryWebsite: string | null | undefined,
-  forceUpdate = false
+  forceUpdate = false,
 ): Promise<void> {
   try {
     if (!forceUpdate) {
@@ -520,107 +651,41 @@ export async function findAndUpdateBeerImage(
       if (existing) console.log(`[beer-img] beer ${beerId} has placeholder image (Unsplash), replacing`);
     }
 
-    console.log(`[beer-img] searching image for "${beerName}" by "${breweryName}" (id=${beerId})`);
-    const candidates: string[] = [];
-
-    // ── Run all sources in parallel — ONE Gemini call only ──────────────────
-    const [untappdImg, breweryOg, googlePages, ddgMedaglione, ddgLabel, ddgBeerOnly] = await Promise.all([
-      fetchUntappdImage(beerName, breweryName),
-      fetchBreweryOgImage(breweryWebsite ?? "", beerName),
-      googleViaGeminiGrounding(beerName, breweryName),
-      // DDG image search (fails fast in 3s if rate-limited)
-      ddgSearchImages(`"${beerName}" "${breweryName}" beer label logo medaglione`, 10),
-      ddgSearchImages(`"${beerName}" "${breweryName}" birra etichetta badge`, 6),
-      ddgSearchImages(`"${beerName}" birra artigianale etichetta label medaglione`, 6),
-    ]);
-
-    // Priority 1: WhataBeer — scrape any WhataBeer /birrifici/ pages from Gemini results
-    const wbUrls = googlePages.filter(u => u.includes("whatabeer.com/birrifici/"));
-    const nonWbPages = googlePages.filter(u => !u.includes("whatabeer.com"));
-    let whataBeerImg: string | null = null;
-    for (const wbUrl of wbUrls.slice(0, 2)) {
-      whataBeerImg = await scrapeWhataBeerPage(wbUrl.split("?")[0], beerName);
-      if (whataBeerImg) break;
-    }
-    if (whataBeerImg && whataBeerImg.startsWith("http")) {
-      if (await isImageUrl(whataBeerImg)) {
-        candidates.push(whataBeerImg);
-        console.log(`[beer-img] ✓ whatabeer candidate: ${whataBeerImg.substring(0, 60)}`);
-      }
-    }
-
-    // Priority 2: Untappd — biggest beer DB, always a label image
-    if (untappdImg && untappdImg.startsWith("http") && !candidates.includes(untappdImg)) {
-      if (await isImageUrl(untappdImg)) {
-        candidates.push(untappdImg);
-        console.log(`[beer-img] ✓ untappd candidate: ${untappdImg.substring(0, 60)}`);
-      }
-    }
-
-    // Priority 3: Brewery official website
-    if (breweryOg && breweryOg.startsWith("http") && !candidates.includes(breweryOg)) {
-      if (await isImageUrl(breweryOg)) {
-        candidates.push(breweryOg);
-        console.log(`[beer-img] brewery site candidate: ${breweryOg.substring(0, 60)}`);
-      }
-    }
-
-    // Priority 4: Google grounding → extract og:images from non-WhataBeer pages
-    const googleImages = await extractOgImages(nonWbPages);
-    const googleChecks = await Promise.all(
-      googleImages
-        .filter(img => img.startsWith("http") && !candidates.includes(img))
-        .map(async img => ({ img, ok: await isImageUrl(img) }))
-    );
-    for (const { img, ok } of googleChecks) {
-      if (ok) candidates.push(img);
-    }
-
-    // Priority 6: DuckDuckGo — scored and sorted to prefer square/medallion images
-    const allDdg = [...ddgMedaglione, ...ddgLabel, ...ddgBeerOnly];
-    const scoredDdg = allDdg
-      .filter(r => r.image?.startsWith("http") && !candidates.includes(r.image))
-      .map(r => ({ r, score: scoreDdgImage(r) }))
-      .filter(({ score }) => score >= 0) // reject clearly bad images
-      .sort((a, b) => b.score - a.score);
-
-    for (const { r } of scoredDdg) {
-      if (candidates.length >= 8) break;
-      candidates.push(r.image);
-    }
-
-    if (candidates.length === 0) {
-      console.log(`[beer-img] no candidates found for beer ${beerId}`);
+    const result = await findBestBeerImage(beerName, breweryName, breweryWebsite);
+    if (result.confidence !== "high" || !result.url) {
+      console.log(`[beer-img] no confident image for beer ${beerId} — leaving as-is`);
       return;
     }
 
-    console.log(`[beer-img] ${candidates.length} candidates for beer ${beerId}, asking Gemini to pick best`);
+    console.log(`[beer-img] best for beer ${beerId} (${result.source}): ${result.url.substring(0, 80)}`);
 
-    let bestUrl = await geminiPickBestImage(beerName, breweryName, candidates.slice(0, 8));
-
-    // Trusted fallback: if Gemini can't decide, use WhataBeer or Untappd directly —
-    // these are beer-specific DBs whose images are always per-beer, no Gemini needed.
-    if (!bestUrl) {
-      const trustedFallback = [whataBeerImg, untappdImg].find(u => u && u.startsWith("http"));
-      if (trustedFallback) {
-        console.log(`[beer-img] using trusted fallback for beer ${beerId}: ${trustedFallback.substring(0, 60)}`);
-        bestUrl = trustedFallback;
-      }
-    }
-
-    if (!bestUrl) {
-      console.log(`[beer-img] no suitable image found for beer ${beerId}`);
-      return;
-    }
-
-    console.log(`[beer-img] best for beer ${beerId}: ${bestUrl.substring(0, 80)}`);
-
-    const cloudUrl = await uploadBestImage(bestUrl, beerId);
+    const cloudUrl = await uploadBestImage(result.url, beerId);
     if (!cloudUrl) return;
 
     await pool.query("UPDATE beers SET image_url = $1 WHERE id = $2", [cloudUrl, beerId]);
     console.log(`[beer-img] ✓ beer ${beerId} image updated: ${cloudUrl.substring(0, 80)}`);
   } catch (e: any) {
     console.error(`[beer-img] error for beer ${beerId}: ${e?.message?.substring(0, 100)}`);
+  }
+}
+
+// ─── Re-host arbitrary URL onto Cloudinary (used by preview-then-save flow) ──
+
+export async function rehostImageOnCloudinary(
+  imageUrl: string,
+  folder: string,
+  publicIdHint: string,
+): Promise<string | null> {
+  try {
+    const result = await cloudinary.uploader.upload(imageUrl, {
+      public_id: `${folder}/${publicIdHint}_${Date.now()}`,
+      resource_type: "image",
+      transformation: [{ width: 900, crop: "limit", quality: "auto:best", fetch_format: "auto" }],
+      overwrite: true,
+    });
+    return result.secure_url;
+  } catch (e: any) {
+    console.warn(`[img] rehost failed: ${e?.message?.substring(0, 80)}`);
+    return null;
   }
 }

@@ -45,7 +45,8 @@ import { initVapid, sendPushToUser, sendPushToUserImmediate, sendPushToAdmins } 
 import { testSmtpConnection } from "./email";
 import { translateToItalian, looksItalian } from "./translate";
 import { generateEmbedding, pgVector, beerEmbedText } from "./embeddings";
-import { findAndUpdateBeerImage, isPlaceholderImage } from "./beer-image-finder";
+import { findAndUpdateBeerImage, isPlaceholderImage, findBestBeerImage, rehostImageOnCloudinary } from "./beer-image-finder";
+import { findBestBreweryLogo, uploadBreweryLogo } from "./brewery-image-finder";
 
 const VAPID_PUBLIC_KEY = process.env.VAPID_PUBLIC_KEY || '';
 
@@ -6958,6 +6959,91 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Manually trigger web image search for a beer (admin or beer owner)
+  // POST /api/beers/:id/find-image-preview
+  // Synchronous: returns the best web image URL (NOT saved) so the user can
+  // accept/reject it inside an edit dialog. Returns { imageUrl: null } when
+  // the search isn't confident — UI then falls back to manual upload.
+  app.post("/api/beers/:id/find-image-preview", isAuthenticated, async (req: any, res) => {
+    try {
+      const beerId = parseInt(req.params.id);
+      if (isNaN(beerId)) return res.status(400).json({ message: "invalid id" });
+
+      const info = (await pool.query(`
+        SELECT b.name, b.brewery_id, br.name AS brewery_name, br.website_url
+        FROM beers b
+        LEFT JOIN breweries br ON br.id = b.brewery_id
+        WHERE b.id = $1
+      `, [beerId])).rows[0];
+      if (!info) return res.status(404).json({ message: "beer not found" });
+
+      // Authorise: admin or owner of the beer's brewery
+      const userId = (req.user as any).id;
+      const user = await storage.getUser(userId);
+      const effectiveRole = user?.activeRole || user?.userType;
+      const isAdminUser = effectiveRole === "admin";
+      const isOwner = user?.breweryId != null && user.breweryId === info.brewery_id;
+      if (!isAdminUser && !isOwner) {
+        return res.status(403).json({ message: "Not authorized" });
+      }
+
+      const result = await findBestBeerImage(info.name, info.brewery_name ?? "", info.website_url);
+      if (result.confidence !== "high" || !result.url) {
+        return res.json({ imageUrl: null, confidence: result.confidence, source: result.source });
+      }
+
+      // Re-host onto Cloudinary so the URL is stable + transformable.
+      const cloudUrl = await rehostImageOnCloudinary(result.url, "beer-images", `web_${beerId}`);
+      res.json({
+        imageUrl: cloudUrl ?? result.url,
+        confidence: "high",
+        source: result.source,
+      });
+    } catch (e: any) {
+      console.error("[find-image-preview] error:", e?.message);
+      res.status(500).json({ message: e?.message ?? "search failed" });
+    }
+  });
+
+  // POST /api/breweries/:id/find-logo-preview
+  // Synchronous brewery logo search — same preview-then-confirm pattern as above.
+  app.post("/api/breweries/:id/find-logo-preview", isAuthenticated, async (req: any, res) => {
+    try {
+      const breweryId = parseInt(req.params.id);
+      if (isNaN(breweryId)) return res.status(400).json({ message: "invalid id" });
+
+      // Authorise: admin or owner of this brewery
+      const userId = (req.user as any).id;
+      const user = await storage.getUser(userId);
+      const effectiveRole = user?.activeRole || user?.userType;
+      const isAdminUser = effectiveRole === "admin";
+      const isOwner = user?.breweryId === breweryId;
+      if (!isOwner && !isAdminUser) {
+        return res.status(403).json({ message: "Not authorized" });
+      }
+
+      const info = (await pool.query(
+        `SELECT name, website_url, location FROM breweries WHERE id = $1`,
+        [breweryId],
+      )).rows[0];
+      if (!info) return res.status(404).json({ message: "brewery not found" });
+
+      const result = await findBestBreweryLogo(info.name, info.website_url, info.location);
+      if (result.confidence !== "high" || !result.url) {
+        return res.json({ logoUrl: null, confidence: result.confidence, source: result.source });
+      }
+
+      const cloudUrl = await uploadBreweryLogo(result.url, breweryId);
+      res.json({
+        logoUrl: cloudUrl ?? result.url,
+        confidence: "high",
+        source: result.source,
+      });
+    } catch (e: any) {
+      console.error("[find-logo-preview] error:", e?.message);
+      res.status(500).json({ message: e?.message ?? "search failed" });
+    }
+  });
+
   // POST /api/beers/:id/find-web-image   body: { force?: boolean }
   app.post("/api/beers/:id/find-web-image", isAuthenticated, async (req: any, res) => {
     try {
@@ -6966,13 +7052,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (isNaN(beerId)) return res.status(400).json({ error: "invalid id" });
 
       const beerInfo = await pool.query(`
-        SELECT b.name, b.image_url, br.name AS brewery_name, br.website_url
+        SELECT b.name, b.image_url, b.brewery_id, br.name AS brewery_name, br.website_url
         FROM beers b
         LEFT JOIN breweries br ON br.id = b.brewery_id
         WHERE b.id = $1
       `, [beerId]);
       const info = beerInfo.rows[0];
       if (!info) return res.status(404).json({ error: "beer not found" });
+
+      // Authorise: admin or owner of the beer's brewery — same rule as preview.
+      const userId = (req.user as any).id;
+      const user = await storage.getUser(userId);
+      const effectiveRole = user?.activeRole || user?.userType;
+      const isAdminUser = effectiveRole === "admin";
+      const isOwner = user?.breweryId != null && user.breweryId === info.brewery_id;
+      if (!isAdminUser && !isOwner) {
+        return res.status(403).json({ error: "Not authorized" });
+      }
       if (info.image_url && !isPlaceholderImage(info.image_url) && !force) return res.json({ status: "skipped", reason: "already has image" });
 
       // Acknowledge immediately; search runs in background

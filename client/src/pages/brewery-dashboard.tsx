@@ -17,6 +17,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { ImageUpload } from "@/components/image-upload";
+import { WebImageSearchButton } from "@/components/web-image-search-button";
 import { AddressAutocomplete } from "@/components/AddressAutocomplete";
 import RichTextEditor from "@/components/rich-text-editor";
 import ImageWithFallback from "@/components/image-with-fallback";
@@ -1412,7 +1413,18 @@ export default function BreweryDashboard({ adminBreweryId }: BreweryDashboardPro
           </DialogHeader>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 py-6">
             <div className="space-y-2 text-left">
-              <label className="text-sm font-bold text-foreground">Logo Brand</label>
+              <div className="flex items-center justify-between gap-2">
+                <label className="text-sm font-bold text-foreground">Logo Brand</label>
+                {brewery?.id && (
+                  <WebImageSearchButton
+                    endpoint={`/api/breweries/${brewery.id}/find-logo-preview`}
+                    responseKey="logoUrl"
+                    label="Cerca logo"
+                    onFound={(url) => handleImageUpload(url, 'logo')}
+                    notFoundMessage="Logo non trovato con sicurezza. Caricalo manualmente."
+                  />
+                )}
+              </div>
               <ImageUpload
                 label="Logo Birrificio"
                 description="Formato quadrato raccomandato"
@@ -1535,7 +1547,16 @@ export default function BreweryDashboard({ adminBreweryId }: BreweryDashboardPro
               />
               
               <div className="space-y-2">
-                <label className="text-sm font-bold text-foreground">Immagine Prodotto</label>
+                <div className="flex items-center justify-between gap-2">
+                  <label className="text-sm font-bold text-foreground">Immagine Prodotto</label>
+                  {editingBeer?.id && (
+                    <WebImageSearchButton
+                      endpoint={`/api/beers/${editingBeer.id}/find-image-preview`}
+                      responseKey="imageUrl"
+                      onFound={(url) => form.setValue("imageUrl", url)}
+                    />
+                  )}
+                </div>
                 <ImageUpload
                   label="Immagine Birra"
                   description="Carica una foto della bottiglia o del bicchiere"
