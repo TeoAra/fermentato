@@ -219,7 +219,7 @@ export default function ExplorePubs() {
 
       {/* ── Header (scorre con la pagina) ── */}
       <div className="bg-white/95 dark:bg-[hsl(25,14%,8%)]/95 backdrop-blur-md border-b border-stone-100 dark:border-stone-800">
-        <div className="max-w-5xl mx-auto px-4 lg:px-6 pt-3 pb-2">
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 pt-3 pb-2">
           {/* Title row */}
           <div className="flex items-center justify-between mb-3">
             <div>
@@ -327,7 +327,7 @@ export default function ExplorePubs() {
         </div>
 
         {!isLoading && (
-          <div className="max-w-5xl mx-auto px-4 lg:px-6 pb-2">
+          <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 pb-2">
             <p className="text-[11px] text-stone-400 dark:text-stone-500 font-medium">
               {search || quickFilter !== "all"
                 ? `${filtered.length} risultati`
@@ -339,7 +339,7 @@ export default function ExplorePubs() {
       </div>
 
       {/* ── Content ── */}
-      <main className="max-w-5xl mx-auto px-4 lg:px-6 pt-3 pb-28 lg:pb-12">
+      <main className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 pt-3 pb-28 lg:pb-12">
         {isLoading ? (
           <div className="space-y-3">
             {[...Array(6)].map((_, i) => (

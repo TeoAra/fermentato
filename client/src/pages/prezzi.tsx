@@ -38,7 +38,7 @@ export default function PrezziPage() {
         url="https://fermenta.to/prezzi"
       />
 
-      <div className="max-w-5xl mx-auto px-4 pb-24">
+      <div className="w-full max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 pb-24">
 
         {/* Hero */}
         <div className="text-center mb-14 pt-6">

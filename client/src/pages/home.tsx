@@ -371,7 +371,7 @@ export default function Home() {
         </div>
       </div>
 
-      <main className="px-4 pt-5 pb-28 max-w-3xl mx-auto lg:max-w-7xl">
+      <main className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-5 pb-28">
 
         {/* GPS denied banner */}
         {locationStatus === 'denied' && (
