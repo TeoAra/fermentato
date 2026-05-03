@@ -45,6 +45,7 @@ import {
 import { formatDistanceToNow } from "date-fns";
 import { it } from "date-fns/locale";
 import { Link } from "wouter";
+import { PageContainer } from "@/components/layout/page-container";
 
 const ROLE_LABELS: Record<string, string> = {
   customer: "Cliente",
@@ -177,7 +178,7 @@ export default function AdminDashboard() {
 
   return (
     <div className="min-h-screen bg-background">
-      <div className="container mx-auto px-4 py-6 max-w-7xl space-y-6">
+      <PageContainer variant="wide" className="py-6 space-y-6">
         <div className="flex items-center gap-4">
           <Link href="/admin">
             <Button variant="outline" size="sm" className="border-stone-200 dark:border-border hover:bg-stone-50 rounded-xl">
@@ -632,7 +633,7 @@ export default function AdminDashboard() {
           )}
         </TabsContent>
       </Tabs>
-      </div>
+      </PageContainer>
 
       {/* ===== EDIT ROLE DIALOG ===== */}
       <Dialog open={!!editTarget} onOpenChange={(open) => { if (!open) setEditTarget(null); }}>

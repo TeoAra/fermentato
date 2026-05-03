@@ -823,8 +823,8 @@ export default function BreweryDetail() {
       </div>
 
         {/* ── MAIN CONTENT ── */}
-        <PageContainer as="main" variant="wide" noPadding className="pb-20 lg:grid lg:grid-cols-3 lg:gap-8 lg:pt-8 lg:items-start">
-          <div className="bg-white dark:bg-card lg:col-span-2 lg:rounded-2xl lg:shadow-sm lg:border lg:border-stone-100 dark:lg:border-stone-800 lg:overflow-hidden">
+        <PageContainer as="main" variant="wide" noPadding className="pb-20 lg:grid lg:grid-cols-[1fr_320px] lg:gap-8 lg:pt-8 lg:items-start lg:min-h-0">
+          <div className="bg-white dark:bg-card min-h-0 lg:rounded-2xl lg:shadow-sm lg:border lg:border-stone-100 dark:lg:border-stone-800 lg:overflow-hidden">
 
 
             {/* Tabs Section — underline style per mockup */}
@@ -1239,7 +1239,7 @@ export default function BreweryDetail() {
           </div>
 
           {/* ── DESKTOP SIDEBAR ── */}
-          <aside className="hidden lg:flex lg:flex-col lg:col-span-1 gap-4 sticky top-20">
+          <aside className="hidden lg:flex lg:flex-col gap-4 sticky top-20 self-start">
             {/* Brewery identity card */}
             <div className="bg-white dark:bg-card rounded-2xl border border-stone-100 dark:border-stone-800 shadow-sm overflow-hidden">
               <div className="p-5 space-y-4">

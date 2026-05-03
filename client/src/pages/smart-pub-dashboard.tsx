@@ -85,6 +85,7 @@ import { AddressAutocomplete } from "@/components/AddressAutocomplete";
 import { SiFacebook, SiInstagram, SiX, SiTiktok } from "react-icons/si";
 import { RoleSwitcherBanner } from "@/components/role-switcher-banner";
 import { StatsGrid } from "@/components/dashboard-primitives";
+import { PageContainer } from "@/components/layout/page-container";
 
 const MenuPdfDownload = lazy(() =>
   import("@/components/menu-pdf-download").then(m => ({ default: m.MenuPdfDownload }))
@@ -1895,8 +1896,8 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
       
       {/* Main Content */}
       <div className="flex-1">
-        <div className="p-4 sm:p-6 md:p-8">
-          <div className="max-w-7xl mx-auto">
+        <div className="py-4 sm:py-6 md:py-8">
+          <PageContainer variant="wide">
 
             {/* Subscription banner — always visible */}
             {renderSubscriptionBanner()}
@@ -1947,7 +1948,7 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
                 )}
               </>
             )}
-          </div>
+          </PageContainer>
         </div>
       </div>
 

@@ -41,6 +41,7 @@ import {
 import { Link } from "wouter";
 import { formatDistanceToNow } from "date-fns";
 import { it } from "date-fns/locale";
+import { PageContainer } from "@/components/layout/page-container";
 
 type DashboardSection = 'overview' | 'favorites' | 'activity' | 'profile' | 'settings' | 'discoveries';
 
@@ -673,8 +674,8 @@ export default function UserDashboard() {
         
         {/* Main Content */}
         <div className="flex-1 md:ml-64">
-          <div className="p-6 md:p-8">
-            <div className="max-w-7xl mx-auto">
+          <div className="py-6 md:py-8">
+            <PageContainer variant="wide">
               {currentSection === 'overview' && renderOverview()}
               {currentSection === 'favorites' && renderFavorites()}
               
@@ -696,7 +697,7 @@ export default function UserDashboard() {
                   </div>
                 </div>
               )}
-            </div>
+            </PageContainer>
           </div>
         </div>
       </div>

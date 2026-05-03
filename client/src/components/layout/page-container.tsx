@@ -1,11 +1,12 @@
 import { cn } from "@/lib/utils";
 import type { ElementType, HTMLAttributes, ReactNode } from "react";
 
-type Variant = "narrow" | "standard" | "wide";
+type Variant = "narrow" | "standard" | "hero" | "wide";
 
 const VARIANT_MAX_WIDTH: Record<Variant, string> = {
   narrow: "max-w-3xl",
   standard: "max-w-5xl",
+  hero: "max-w-6xl",
   wide: "max-w-7xl",
 };
 

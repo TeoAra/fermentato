@@ -13,6 +13,7 @@ import PubCard from "@/components/pub-card";
 import BreweryCard from "@/components/brewery-card";
 import { lazy, Suspense } from "react";
 const HomepageMap = lazy(() => import("@/components/homepage-map"));
+import { PageContainer } from "@/components/layout/page-container";
 
 function useCountUp(target: number, duration = 1400, startDelay = 300) {
   const [value, setValue] = useState(0);
@@ -228,7 +229,7 @@ export default function Landing() {
           <div className="absolute inset-0 bg-[radial-gradient(ellipse_80%_60%_at_50%_-10%,rgba(247,113,4,0.07),transparent)]" />
         </div>
 
-        <div className="relative max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pt-20 pb-24 lg:pt-12 lg:pb-32 text-center">
+        <PageContainer variant="hero" className="relative pt-20 pb-24 lg:pt-12 lg:pb-32 text-center">
 
           {/* Eyebrow pill */}
           <div
@@ -304,7 +305,7 @@ export default function Landing() {
               ))}
             </div>
           )}
-        </div>
+        </PageContainer>
 
         {/* Smooth fade into next section */}
         <div className="absolute bottom-0 left-0 right-0 h-16 bg-gradient-to-b from-transparent to-background" />
@@ -312,7 +313,7 @@ export default function Landing() {
 
       {/* ─── SOCIAL PROOF BAR ────────────────────────────────────────────── */}
       <section className="border-y border-stone-100 dark:border-stone-800 bg-white/50 dark:bg-white/3 py-5">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 flex flex-wrap items-center justify-center gap-8 text-sm text-stone-500 dark:text-stone-400">
+        <PageContainer variant="hero" className="flex flex-wrap items-center justify-center gap-8 text-sm text-stone-500 dark:text-stone-400">
           <span className="flex items-center gap-2 font-medium">
             <CheckCircle2 className="w-4 h-4 text-green-500" /> 100% gratuito per gli utenti
           </span>
@@ -328,12 +329,12 @@ export default function Landing() {
           <span className="flex items-center gap-2 font-medium">
             <Shield className="w-4 h-4 text-blue-500" /> Dati verificati dalla community
           </span>
-        </div>
+        </PageContainer>
       </section>
 
       {/* ─── VALUE PROPS ─────────────────────────────────────────────────── */}
       <section ref={valuePropsReveal.ref} className={`${valuePropsReveal.className} py-20 lg:py-28`}>
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+        <PageContainer variant="hero">
           <div className="text-center mb-14">
             <p className="text-sm font-bold uppercase tracking-widest text-primary mb-3">Perché Fermenta.to</p>
             <h2 className="display-serif text-4xl lg:text-5xl font-black text-stone-900 dark:text-white mb-4 leading-tight">
@@ -390,12 +391,12 @@ export default function Landing() {
               </Link>
             ))}
           </div>
-        </div>
+        </PageContainer>
       </section>
 
       {/* ─── MAP + GPS ───────────────────────────────────────────────────── */}
       <section ref={mapReveal.ref} className={`${mapReveal.className} py-6 pb-20`}>
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+        <PageContainer variant="hero">
           <div className="flex items-end justify-between mb-8 flex-wrap gap-4">
             <div>
               <p className="text-sm font-bold uppercase tracking-widest text-primary mb-2">
@@ -451,12 +452,12 @@ export default function Landing() {
               </Button>
             </div>
           )}
-        </div>
+        </PageContainer>
       </section>
 
       {/* ─── PUB VICINI ──────────────────────────────────────────────────── */}
       <section ref={pubsReveal.ref} className={`${pubsReveal.className} py-6 pb-20 bg-white/40 dark:bg-white/2`}>
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+        <PageContainer variant="hero">
           <div className="flex items-center justify-between mb-10">
             <div>
               <p className="text-sm font-bold uppercase tracking-widest text-primary mb-2">Locali</p>
@@ -481,12 +482,12 @@ export default function Landing() {
               ))}
             </div>
           )}
-        </div>
+        </PageContainer>
       </section>
 
       {/* ─── BIRRIFICI ───────────────────────────────────────────────────── */}
       <section ref={breweriesReveal.ref} className={`${breweriesReveal.className} py-6 pb-20`}>
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+        <PageContainer variant="hero">
           <div className="flex items-center justify-between mb-10">
             <div>
               <p className="text-sm font-bold uppercase tracking-widest text-primary mb-2">Produttori</p>
@@ -512,12 +513,12 @@ export default function Landing() {
               ))}
             </div>
           )}
-        </div>
+        </PageContainer>
       </section>
 
       {/* ─── FOR BUSINESS ────────────────────────────────────────────────── */}
       <section ref={businessReveal.ref} className={`${businessReveal.className} py-20 lg:py-28`}>
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+        <PageContainer variant="hero">
           <div className="text-center mb-14">
             <p className="text-sm font-bold uppercase tracking-widest text-primary mb-3">Per le attività</p>
             <h2 className="display-serif text-4xl font-black text-stone-900 dark:text-white mb-4">
@@ -644,12 +645,12 @@ export default function Landing() {
               </div>
             </div>
           </div>
-        </div>
+        </PageContainer>
       </section>
 
       {/* ─── FINAL CTA ───────────────────────────────────────────────────── */}
       <section className="py-20 lg:py-28">
-        <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+        <PageContainer variant="narrow" className="text-center">
           <div className="rounded-3xl p-12 lg:p-16 relative overflow-hidden"
             style={{ background: "linear-gradient(135deg, #F77104 0%, #f98a0e 50%, #f5a623 100%)" }}>
             <div className="absolute inset-0 opacity-10"
@@ -671,7 +672,7 @@ export default function Landing() {
               <p className="text-white/60 text-xs mt-4">Nessuna carta di credito · Nessuna email di spam</p>
             </div>
           </div>
-        </div>
+        </PageContainer>
       </section>
 
       <Footer />

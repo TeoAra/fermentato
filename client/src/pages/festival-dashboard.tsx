@@ -27,6 +27,7 @@ import {
 import { format } from "date-fns";
 import { it } from "date-fns/locale";
 import { useLocation } from "wouter";
+import { PageContainer } from "@/components/layout/page-container";
 
 function useDebounce<T>(value: T, delay: number): T {
   const [debouncedValue, setDebouncedValue] = useState<T>(value);
@@ -1488,8 +1489,8 @@ export default function FestivalDashboard() {
   return (
     <div className="min-h-screen bg-stone-50 dark:bg-gray-900">
       {/* Header */}
-      <div className="bg-gradient-to-r from-amber-600 to-orange-600 text-white px-4 py-4">
-        <div className="max-w-5xl mx-auto flex items-center justify-between gap-4 flex-wrap">
+      <div className="bg-gradient-to-r from-amber-600 to-orange-600 text-white py-4">
+        <PageContainer variant="standard" className="flex items-center justify-between gap-4 flex-wrap">
           <div>
             <h1 className="text-xl font-bold flex items-center gap-2">
               <Beer className="h-6 w-6" />Festival Dashboard
@@ -1515,10 +1516,10 @@ export default function FestivalDashboard() {
               <Plus className="h-4 w-4 mr-1" />Nuovo festival
             </Button>
           </div>
-        </div>
+        </PageContainer>
       </div>
 
-      <div className="max-w-5xl mx-auto px-4 py-6 space-y-6">
+      <PageContainer variant="standard" className="py-6 space-y-6">
         {/* Festival selector */}
         {listLoading ? (
           <div className="flex items-center gap-2 text-muted-foreground"><Loader2 className="h-4 w-4 animate-spin" />Caricamento...</div>
@@ -1861,7 +1862,7 @@ export default function FestivalDashboard() {
             )}
           </>
         )}
-      </div>
+      </PageContainer>
 
       {/* Modals */}
       {showCreateDialog && (

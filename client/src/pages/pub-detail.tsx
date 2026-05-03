@@ -939,9 +939,9 @@ export default function PubDetail() {
 
       <PageContainer as="main" variant="wide" noPadding className="pb-24">
         {/* Main Content Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-4 lg:items-start">
+        <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] lg:items-start lg:min-h-0">
           {/* Main Content */}
-          <div className="lg:col-span-3">
+          <div className="min-h-0">
             {/* ── TABS — underline style (mockup) ── */}
             <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
                 <div className="bg-white dark:bg-card border-b border-stone-200 dark:border-stone-800 px-4">
