@@ -7,10 +7,28 @@ if (Capacitor.isNativePlatform()) {
   // Tag the document so CSS can target Capacitor-specific overrides
   document.documentElement.setAttribute("data-capacitor", "true");
 
+  // Status bar: icone scure su sfondo crema chiaro, no overlay del WebView
+  // (su Android 13/14 evita il notch/edge-to-edge sopra la UI).
   import("@capacitor/status-bar").then(({ StatusBar, Style }) => {
     StatusBar.setOverlaysWebView({ overlay: false }).catch(() => {});
-    StatusBar.setStyle({ style: Style.Light }).catch(() => {});
+    StatusBar.setStyle({ style: Style.Dark }).catch(() => {});
     StatusBar.setBackgroundColor({ color: "#FFF7ED" }).catch(() => {});
+  }).catch(() => {});
+
+  // Splash screen: nascondiamo manualmente al ready del DOM, con un
+  // timeout di sicurezza a 3.5s per evitare che resti bloccato in caso
+  // di errore di rete iniziale (config launchAutoHide=false).
+  import("@capacitor/splash-screen").then(({ SplashScreen }) => {
+    let hidden = false;
+    const hide = () => {
+      if (hidden) return;
+      hidden = true;
+      SplashScreen.hide({ fadeOutDuration: 300 }).catch(() => {});
+    };
+    // Nascondi appena React ha renderizzato qualcosa di visibile
+    requestAnimationFrame(() => setTimeout(hide, 350));
+    // Fallback duro: dopo 3.5s nascondi comunque
+    setTimeout(hide, 3500);
   }).catch(() => {});
 }
 

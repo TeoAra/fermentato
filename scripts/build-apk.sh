@@ -7,9 +7,22 @@
 
 set -e
 
-APP_DIR="/www/nodeapps/fermenta"
+APP_DIR="${FERMENTA_APP_DIR:-/www/nodeapps/fermenta}"
 ANDROID_SDK_DIR="$HOME/android-sdk"
 ANDROID_CMD_VERSION="11076708"
+DEEP_LINK_HOST="fermenta.to"
+
+# Verifica preliminare strumenti — fallisci presto se manca qualcosa
+check_prereqs() {
+  local missing=0
+  for cmd in node npm git curl unzip; do
+    if ! command -v "$cmd" >/dev/null 2>&1; then
+      echo "❌ Manca '$cmd' — installalo prima di procedere"
+      missing=1
+    fi
+  done
+  [ $missing -eq 0 ] || exit 1
+}
 
 setup_java() {
   echo "── Installo Java 21 via SDKMAN ──"
@@ -59,10 +72,64 @@ setup() {
   echo "════════════════════════════════════════════"
   echo "  Setup ambiente Android SDK - una tantum   "
   echo "════════════════════════════════════════════"
+  check_prereqs
   setup_java
   setup_android_sdk
   echo ""
   echo "✅ Setup completato! Ora esegui: bash scripts/build-apk.sh build"
+}
+
+# Inietta nel <activity android:name=".MainActivity"> dell'AndroidManifest:
+#   - intent-filter per deep link https://fermenta.to/* (App Links autoVerify)
+#   - intent-filter per fermentato:// custom scheme (fallback)
+patch_android_manifest() {
+  local MANIFEST="app/src/main/AndroidManifest.xml"
+  if [ ! -f "$MANIFEST" ]; then
+    echo "    ⚠️  AndroidManifest.xml non trovato — skip patch deep link"
+    return
+  fi
+
+  # Skip se la patch è già presente (idempotente)
+  if grep -q "FERMENTA_DEEP_LINK" "$MANIFEST"; then
+    echo "    ℹ️  Deep link già patchato in AndroidManifest"
+    return
+  fi
+
+  echo "    Inietto intent-filter deep link per $DEEP_LINK_HOST..."
+  # Inserisci subito prima della chiusura </activity> della MainActivity SPECIFICA.
+  # Stateful awk: traccia se siamo dentro <activity android:name=".MainActivity">
+  # e inietta solo nella sua </activity>, non nel primo </activity> trovato.
+  awk -v host="$DEEP_LINK_HOST" '
+    /<activity[^>]*android:name="\.MainActivity"/ { inMain = 1 }
+    inMain && /<\/activity>/ && !injected {
+      print "            <!-- FERMENTA_DEEP_LINK: HTTPS App Links -->"
+      print "            <intent-filter android:autoVerify=\"true\">"
+      print "                <action android:name=\"android.intent.action.VIEW\" />"
+      print "                <category android:name=\"android.intent.category.DEFAULT\" />"
+      print "                <category android:name=\"android.intent.category.BROWSABLE\" />"
+      print "                <data android:scheme=\"https\" android:host=\"" host "\" />"
+      print "            </intent-filter>"
+      print "            <!-- FERMENTA_DEEP_LINK: custom scheme fallback -->"
+      print "            <intent-filter>"
+      print "                <action android:name=\"android.intent.action.VIEW\" />"
+      print "                <category android:name=\"android.intent.category.DEFAULT\" />"
+      print "                <category android:name=\"android.intent.category.BROWSABLE\" />"
+      print "                <data android:scheme=\"fermentato\" />"
+      print "            </intent-filter>"
+      injected = 1
+      inMain = 0
+    }
+    /<\/activity>/ { inMain = 0 }
+    { print }
+  ' "$MANIFEST" > "$MANIFEST.new" && mv "$MANIFEST.new" "$MANIFEST"
+
+  # Self-check: il marker DEVE comparire ora nel manifest, altrimenti la patch ha fallito
+  # (es. MainActivity non trovata col nome atteso).
+  if ! grep -q "FERMENTA_DEEP_LINK" "$MANIFEST"; then
+    echo "❌ Patch deep link fallita: <activity android:name=\".MainActivity\"> non trovata in $MANIFEST"
+    exit 1
+  fi
+  echo "    ✅ Deep link intent-filter aggiunto a MainActivity"
 }
 
 build() {
@@ -70,12 +137,23 @@ build() {
   echo "  Build APK Fermenta.to                     "
   echo "════════════════════════════════════════════"
 
+  check_prereqs
+
   # Carica SDKMAN e Java 21
   # shellcheck disable=SC1090
   source "$HOME/.sdkman/bin/sdkman-init.sh" 2>/dev/null || true
   export JAVA_HOME="$HOME/.sdkman/candidates/java/current"
   export ANDROID_HOME="$ANDROID_SDK_DIR"
   export PATH="$JAVA_HOME/bin:$PATH:$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/platform-tools:$ANDROID_HOME/build-tools/34.0.0"
+
+  if ! command -v java >/dev/null 2>&1; then
+    echo "❌ Java non trovato nel PATH. Esegui prima: bash scripts/build-apk.sh setup"
+    exit 1
+  fi
+  if [ ! -d "$ANDROID_HOME" ]; then
+    echo "❌ Android SDK non trovato in $ANDROID_HOME. Esegui prima: bash scripts/build-apk.sh setup"
+    exit 1
+  fi
 
   echo "Java: $(java -version 2>&1 | head -1)"
 
@@ -140,6 +218,9 @@ build() {
     sed -i 's|</style>|    <item name="android:statusBarColor">#FFF7ED</item>\n    <item name="android:windowLightStatusBar">true</item>\n    <item name="android:navigationBarColor">#FFF7ED</item>\n    <item name="android:windowLightNavigationBar">true</item>\n</style>|' "$STYLES_FILE"
     echo "    ✅ Status bar aggiornata"
   fi
+
+  # --- Deep link: intent-filter su MainActivity per https://fermenta.to/* ---
+  patch_android_manifest
 
   echo "── 6/6 Compilo APK ──"
   chmod +x gradlew

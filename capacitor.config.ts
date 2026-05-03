@@ -16,14 +16,19 @@ const config: CapacitorConfig = {
   },
   plugins: {
     SplashScreen: {
-      launchShowDuration: 1800,
+      // Non auto-nascondere lo splash: lo facciamo da main.tsx con un
+      // timeout di sicurezza, così su retina/network lento non resta bloccato.
+      launchAutoHide: false,
+      launchShowDuration: 3000,
+      launchFadeOutDuration: 300,
       backgroundColor: '#FFF7ED',
       showSpinner: false,
       splashFullScreen: true,
       splashImmersive: true,
     },
     StatusBar: {
-      style: 'LIGHT',
+      // 'DARK' = icone scure su sfondo chiaro (warm cream)
+      style: 'DARK',
       backgroundColor: '#FFF7ED',
       overlaysWebView: false,
     },
