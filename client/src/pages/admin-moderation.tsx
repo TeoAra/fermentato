@@ -68,6 +68,18 @@ export default function AdminModeration() {
     enabled: isAuthenticated && user?.userType === "admin",
   });
 
+  // Counter "in attesa" coerente, indipendente dal filtro corrente
+  const { data: pendingMeta } = useQuery<{ count: number }>({
+    queryKey: ["/api/admin/reports/pending-count"],
+    queryFn: async () => {
+      const res = await fetch("/api/admin/reports/pending-count", { credentials: "include" });
+      if (!res.ok) return { count: 0 };
+      return res.json();
+    },
+    enabled: isAuthenticated && user?.userType === "admin",
+    refetchInterval: 60000,
+  });
+
   const reportActionMutation = useMutation({
     mutationFn: async ({ reportId, action }: { reportId: number; action: "resolve" | "dismiss" }) =>
       apiRequest(`/api/admin/reports/${reportId}/${action}`, { method: "POST" }),
@@ -96,7 +108,8 @@ export default function AdminModeration() {
 
   if (!isAuthenticated || user?.userType !== "admin") return null;
 
-  const pendingCount = statusFilter === "pending" ? reports.length : 0;
+  // Counter sempre coerente, anche su tab "risolte" / "archiviate" / "tutte"
+  const pendingCount = pendingMeta?.count ?? (statusFilter === "pending" ? reports.length : 0);
 
   return (
     <div className="bg-background min-h-screen">

@@ -2,7 +2,7 @@ import { eq, count, desc, asc, sql, or, ilike, and } from "drizzle-orm";
 import { db, pool } from "./db";
 import { beers, breweries, users, pubs, publicanRequests, breweryRequests, reviewReports, userBeerTastings, pubEvents, breweryEvents, contentSuggestions, additionRequests, scanLogs, favorites } from "@shared/schema";
 import type { Express } from "express";
-import { isAuthenticated, isAdmin, isAdminOrBreweryOwner } from "./auth";
+import { isAuthenticated, isAdmin } from "./auth";
 import { sendPushToUser, sendPushToAdmins } from "./push-utils";
 import { storage } from "./storage";
 
@@ -539,6 +539,16 @@ export function registerAdminRoutes(app: Express) {
   });
 
   // Reports endpoints (mock for now since we don't have reports table)
+  // Pending count for badge (coerente con stats)
+  app.get("/api/admin/reports/pending-count", isAuthenticated, isAdmin, async (_req, res) => {
+    try {
+      const [{ value }] = await db.select({ value: count() }).from(reviewReports).where(eq(reviewReports.status, 'pending'));
+      res.json({ count: Number(value) });
+    } catch {
+      res.json({ count: 0 });
+    }
+  });
+
   app.get("/api/admin/reports", isAuthenticated, isAdmin, async (req: any, res) => {
     try {
       const statusFilter = req.query.status as string | undefined;
@@ -1307,7 +1317,7 @@ export function registerAdminRoutes(app: Express) {
   };
 
   // List all addition requests (admin sees all; brewery_owner sees only their brewery's beer requests)
-  app.get("/api/admin/addition-requests", isAuthenticated, isAdminOrBreweryOwner, async (req: any, res) => {
+  app.get("/api/admin/addition-requests", isAuthenticated, isAdmin, async (req: any, res) => {
     try {
       const userId = req.user?.claims?.sub || req.user?.id;
       const userRecord = await db.select({ userType: users.userType, roles: users.roles, breweryId: users.breweryId })
@@ -1357,7 +1367,7 @@ export function registerAdminRoutes(app: Express) {
   });
 
   // Approve addition request → create beer or brewery in DB
-  app.patch("/api/admin/addition-requests/:id/approve", isAuthenticated, isAdminOrBreweryOwner, async (req: any, res) => {
+  app.patch("/api/admin/addition-requests/:id/approve", isAuthenticated, isAdmin, async (req: any, res) => {
     try {
       const userId = req.user?.claims?.sub || req.user?.id;
       const userRecord = await db.select({ userType: users.userType, roles: users.roles, breweryId: users.breweryId })
@@ -1434,7 +1444,7 @@ export function registerAdminRoutes(app: Express) {
   });
 
   // Reject addition request
-  app.patch("/api/admin/addition-requests/:id/reject", isAuthenticated, isAdminOrBreweryOwner, async (req: any, res) => {
+  app.patch("/api/admin/addition-requests/:id/reject", isAuthenticated, isAdmin, async (req: any, res) => {
     try {
       const userId = req.user?.claims?.sub || req.user?.id;
       const userRecord = await db.select({ userType: users.userType, roles: users.roles, breweryId: users.breweryId })
